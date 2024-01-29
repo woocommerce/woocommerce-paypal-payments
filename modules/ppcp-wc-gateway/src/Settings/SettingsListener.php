@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
@@ -153,6 +154,13 @@ class SettingsListener {
 	private $partner_merchant_id_sandbox;
 
 	/**
+	 * Billing Agreements endpoint.
+	 *
+	 * @var BillingAgreementsEndpoint
+	 */
+	private $billing_agreements_endpoint;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -162,21 +170,22 @@ class SettingsListener {
 	/**
 	 * SettingsListener constructor.
 	 *
-	 * @param Settings            $settings The settings.
-	 * @param array               $setting_fields The setting fields.
-	 * @param WebhookRegistrar    $webhook_registrar The Webhook Registrar.
-	 * @param Cache               $cache The Cache.
-	 * @param State               $state The state.
-	 * @param Bearer              $bearer The bearer.
-	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Cache               $signup_link_cache The signup link cache.
-	 * @param array               $signup_link_ids Signup link ids.
-	 * @param Cache               $pui_status_cache The PUI status cache.
-	 * @param Cache               $dcc_status_cache The DCC status cache.
-	 * @param RedirectorInterface $redirector The HTTP redirector.
-	 * @param string              $partner_merchant_id_production Partner merchant ID production.
-	 * @param string              $partner_merchant_id_sandbox Partner merchant ID sandbox.
-	 * @param ?LoggerInterface    $logger The logger.
+	 * @param Settings                  $settings The settings.
+	 * @param array                     $setting_fields The setting fields.
+	 * @param WebhookRegistrar          $webhook_registrar The Webhook Registrar.
+	 * @param Cache                     $cache The Cache.
+	 * @param State                     $state The state.
+	 * @param Bearer                    $bearer The bearer.
+	 * @param string                    $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Cache                     $signup_link_cache The signup link cache.
+	 * @param array                     $signup_link_ids Signup link ids.
+	 * @param Cache                     $pui_status_cache The PUI status cache.
+	 * @param Cache                     $dcc_status_cache The DCC status cache.
+	 * @param RedirectorInterface       $redirector The HTTP redirector.
+	 * @param string                    $partner_merchant_id_production Partner merchant ID production.
+	 * @param string                    $partner_merchant_id_sandbox Partner merchant ID sandbox.
+	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint Billing Agreements endpoint.
+	 * @param ?LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -193,6 +202,7 @@ class SettingsListener {
 		RedirectorInterface $redirector,
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
+		BillingAgreementsEndpoint $billing_agreements_endpoint,
 		LoggerInterface $logger = null
 	) {
 
@@ -210,6 +220,7 @@ class SettingsListener {
 		$this->redirector                     = $redirector;
 		$this->partner_merchant_id_production = $partner_merchant_id_production;
 		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
+		$this->billing_agreements_endpoint    = $billing_agreements_endpoint;
 		$this->logger                         = $logger ?: new NullLogger();
 	}
 
@@ -367,7 +378,9 @@ class SettingsListener {
 		$vault_enabled     = wc_clean( wp_unslash( $_POST['ppcp']['vault_enabled'] ?? '' ) );
 		$subscription_mode = wc_clean( wp_unslash( $_POST['ppcp']['subscriptions_mode'] ?? '' ) );
 
-		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' ) {
+		$reference_transaction_enabled = $this->billing_agreements_endpoint->reference_transaction_enabled();
+
+		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled === true ) {
 			$this->settings->set( 'vault_enabled', true );
 			$this->settings->persist();
 		}

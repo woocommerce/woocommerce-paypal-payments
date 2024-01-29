@@ -333,6 +333,7 @@ return array(
 			$container->get( 'http.redirector' ),
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
+			$container->get( 'api.endpoint.billing-agreements' ),
 			$logger
 		);
 	},
