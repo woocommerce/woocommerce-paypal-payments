@@ -368,8 +368,9 @@ return array(
 		$order_endpoint      = $container->get( 'api.endpoint.order' );
 		$payments_endpoint   = $container->get( 'api.endpoint.payments' );
 		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
+		$prefix           = $container->get( 'api.prefix' );
 		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
-		return new RefundProcessor( $order_endpoint, $payments_endpoint, $refund_fees_updater, $logger );
+		return new RefundProcessor( $order_endpoint, $payments_endpoint, $refund_fees_updater, $prefix, $logger );
 	},
 	'wcgateway.processor.authorized-payments'              => static function ( ContainerInterface $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
