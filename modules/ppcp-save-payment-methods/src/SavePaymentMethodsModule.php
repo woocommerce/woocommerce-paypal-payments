@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
@@ -55,6 +56,30 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			return;
 		}
 
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
+		assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			function() use ( $settings, $billing_agreements_endpoint ) {
+				$reference_transaction_enabled = $billing_agreements_endpoint->reference_transaction_enabled();
+				if ( $reference_transaction_enabled !== true ) {
+					$settings->set( 'vault_enabled', false );
+					$settings->persist();
+				}
+			}
+		);
+
+		if (
+			( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) )
+			&& ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) )
+		) {
+			return;
+		}
+
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
 			function( array $localized_script_data ) use ( $c ) {
@@ -78,8 +103,12 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data, string $payment_method, array $request_data ): array {
+			function( array $data, string $payment_method, array $request_data ) use ( $settings ): array {
 				if ( $payment_method === CreditCardGateway::ID ) {
+					if ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) ) {
+						return $data;
+					}
+
 					$save_payment_method = $request_data['save_payment_method'] ?? false;
 					if ( $save_payment_method ) {
 						$data['payment_source'] = array(
@@ -106,6 +135,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				if ( $payment_method === PayPalGateway::ID ) {
+					if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
+						return $data;
+					}
+
 					$funding_source = $request_data['funding_source'] ?? null;
 
 					if ( $funding_source && $funding_source === 'venmo' ) {

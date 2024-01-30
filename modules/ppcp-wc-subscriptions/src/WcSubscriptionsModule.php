@@ -158,7 +158,16 @@ class WcSubscriptionsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function( array $methods ) use ( $c ) : array {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $methods ) use ( $c ) {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
 				if ( ! is_wc_endpoint_url( 'order-pay' ) ) {
 					return $methods;
 				}
