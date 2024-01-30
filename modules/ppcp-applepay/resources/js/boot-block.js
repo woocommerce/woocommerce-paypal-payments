@@ -1,7 +1,10 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
-import {cartHasSubscriptionProducts} from '../../../ppcp-blocks/resources/js/Helper/Subscription'
+import {
+    cartHasSubscriptionProducts,
+    isPayPalSubscription
+} from '../../../ppcp-blocks/resources/js/Helper/Subscription'
 import ApplepayManager from "./ApplepayManager";
 import {loadCustomScript} from "@paypal/paypal-js";
 
@@ -51,7 +54,10 @@ const ApplePayComponent = () => {
 
 const features = ['products'];
 
-if (cartHasSubscriptionProducts(ppcpConfig)) {
+if (cartHasSubscriptionProducts(ppcpConfig)
+    && ! isPayPalSubscription(ppcpConfig)
+    && ppcpConfig.can_save_vault_token
+) {
     features.push('subscriptions');
 }
 

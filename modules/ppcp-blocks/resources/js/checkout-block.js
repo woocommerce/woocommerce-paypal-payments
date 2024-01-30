@@ -477,6 +477,14 @@ if(cartHasSubscriptionProducts(config.scriptData)) {
         block_enabled = false;
     }
 
+    // Don't render if vaulting disabled and is in vault subscription mode
+    if(
+        ! isPayPalSubscription(config.scriptData)
+        && ! config.scriptData.can_save_vault_token
+    ) {
+        block_enabled = false;
+    }
+
     // Don't render buttons if in subscription mode and product not associated with a PayPal subscription
     if(
         isPayPalSubscription(config.scriptData)
