@@ -62,11 +62,13 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
 		assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
 
-		$reference_transaction_enabled = $billing_agreements_endpoint->reference_transaction_enabled();
-		if ( $reference_transaction_enabled !== true ) {
-			$settings->set( 'vault_enabled', false );
-			$settings->persist();
-		}
+		add_action( 'woocommerce_paypal_payments_gateway_migrate_on_update', function() use($settings, $billing_agreements_endpoint) {
+			$reference_transaction_enabled = $billing_agreements_endpoint->reference_transaction_enabled();
+			if ( $reference_transaction_enabled !== true ) {
+				$settings->set( 'vault_enabled', false );
+				$settings->persist();
+			}
+		});
 
 		if (
 			( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) )
