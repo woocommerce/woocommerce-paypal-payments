@@ -421,6 +421,18 @@ return array(
 	},
 
 	'wcgateway.settings.fields.subscriptions_mode'         => static function ( ContainerInterface $container ): array {
+		$subscription_mode_options = array(
+			'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
+			'subscriptions_api'            => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
+			'disable_paypal_subscriptions' => __( 'Disable PayPal for subscriptions', 'woocommerce-paypal-payments' ),
+		);
+
+		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
+		$reference_transaction_enabled = $billing_agreements_endpoint->reference_transaction_enabled();
+		if ( $reference_transaction_enabled !== true ) {
+			unset( $subscription_mode_options['vaulting_api'] );
+		}
+
 		return array(
 			'title'        => __( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
 			'type'         => 'select',
@@ -429,11 +441,7 @@ return array(
 			'desc_tip'     => true,
 			'description'  => __( 'Utilize PayPal Vaulting for flexible subscription processing with saved payment methods, create “PayPal Subscriptions” to bill customers at regular intervals, or disable PayPal for subscription-type products.', 'woocommerce-paypal-payments' ),
 			'default'      => 'vaulting_api',
-			'options'      => array(
-				'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
-				'subscriptions_api'            => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
-				'disable_paypal_subscriptions' => __( 'Disable PayPal for subscriptions', 'woocommerce-paypal-payments' ),
-			),
+			'options'      => $subscription_mode_options,
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
