@@ -70,10 +70,6 @@ class ApplepayButton {
 
         if (this.isEligible) {
             this.fetchTransactionInfo().then(() => {
-                const isSubscriptionProduct = this.ppcpConfig?.data_client_id?.has_subscriptions === true;
-                if (isSubscriptionProduct) {
-                    return;
-                }
                 this.addButton();
                 const id_minicart = "#apple-" + this.buttonConfig.button.mini_cart_wrapper;
                 const id = "#apple-" + this.buttonConfig.button.wrapper;
