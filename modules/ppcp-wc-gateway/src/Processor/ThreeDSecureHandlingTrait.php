@@ -34,7 +34,7 @@ trait ThreeDSecureHandlingTrait {
 	): void {
 
 		$payment_source = $order->payment_source();
-		if ( ! $payment_source ) {
+		if ( ! $payment_source || $payment_source->name() !== 'card' ) {
 			return;
 		}
 
