@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
@@ -57,6 +58,16 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 		$settings = $c->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
+
+		$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
+		assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
+
+		$reference_transaction_enabled = $billing_agreements_endpoint->reference_transaction_enabled();
+		if ( $reference_transaction_enabled !== true ) {
+			$settings->set( 'vault_enabled', false );
+			$settings->persist();
+		}
+
 		if (
 			( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) )
 			&& ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) )
