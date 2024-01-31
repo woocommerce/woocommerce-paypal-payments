@@ -105,8 +105,13 @@ class VaultingModule implements ModuleInterface {
 					return $tokens;
 				}
 
+				$is_post = isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST';
+
 				// Exclude ApplePay tokens from payment pages.
-				if ( is_checkout() || is_cart() || is_product() ) {
+				if (
+					( is_checkout() || is_cart() || is_product() )
+					&& ! $is_post // Don't check on POST so we have all payment methods on form submissions.
+				) {
 					foreach ( $tokens as $index => $token ) {
 						if ( $token instanceof PaymentTokenApplePay ) {
 							unset( $tokens[ $index ] );

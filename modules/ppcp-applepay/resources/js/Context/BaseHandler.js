@@ -13,7 +13,7 @@ class BaseHandler {
     isVaultV3Mode() {
         return this.ppcpConfig?.save_payment_methods?.id_token // vault v3
             && ! this.ppcpConfig?.data_client_id?.paypal_subscriptions_enabled // not PayPal Subscriptions mode
-            && this.ppcpConfig?.ppcpConfig.can_save_vault_token; // vault is enabled
+            && this.ppcpConfig?.can_save_vault_token; // vault is enabled
     }
 
     validateContext() {
