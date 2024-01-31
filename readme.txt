@@ -184,6 +184,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Fatal error in WooCommerce PayPal Payments plugin after 2.5.0 update #1985
 * Fix - Can not refund order purchased with Vault v3 Card payment #1997
 * Fix - PayPal Vaulting Subscriptions mode setting visible when merchant not enabled for Reference Transactions #1999
+* Fix - card-fields parameter included in button script despite Advanced Card Processing disabled #2005
 * Enhancement - Add setup URL for reference transactions #1964
 * Enhancement - Improve PUI performance for variable products #1950
 
