@@ -39,4 +39,21 @@ class PaymentTokenHelper {
 
 		return false;
 	}
+
+	/**
+	 * Checks if given token exist as WC Payment Token.
+	 *
+	 * @param array  $wc_tokens WC Payment Tokens.
+	 * @param string $class_name Class name of the token.
+	 * @return null|WC_Payment_Token
+	 */
+	public function first_token_of_type( array $wc_tokens, string $class_name ) {
+		foreach ( $wc_tokens as $wc_token ) {
+			if ( $wc_token instanceof $class_name ) {
+				return $wc_token;
+			}
+		}
+
+		return null;
+	}
 }

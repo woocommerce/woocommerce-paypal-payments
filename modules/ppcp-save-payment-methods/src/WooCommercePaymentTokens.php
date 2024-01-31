@@ -85,7 +85,13 @@ class WooCommercePaymentTokens {
 			return 0;
 		}
 
-		$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
+		// Try to update existing token of type before creating a new one.
+		$payment_token_paypal = $this->payment_token_helper->first_token_of_type( $wc_tokens, PaymentTokenPayPal::class );
+
+		if ( ! $payment_token_paypal ) {
+			$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
+		}
+
 		assert( $payment_token_paypal instanceof PaymentTokenPayPal );
 
 		$payment_token_paypal->set_token( $token );
@@ -127,7 +133,13 @@ class WooCommercePaymentTokens {
 			return 0;
 		}
 
-		$payment_token_venmo = $this->payment_token_factory->create( 'venmo' );
+		// Try to update existing token of type before creating a new one.
+		$payment_token_venmo = $this->payment_token_helper->first_token_of_type( $wc_tokens, PaymentTokenVenmo::class );
+
+		if ( ! $payment_token_venmo ) {
+			$payment_token_venmo = $this->payment_token_factory->create( 'venmo' );
+		}
+
 		assert( $payment_token_venmo instanceof PaymentTokenVenmo );
 
 		$payment_token_venmo->set_token( $token );
@@ -167,7 +179,13 @@ class WooCommercePaymentTokens {
 			return 0;
 		}
 
-		$payment_token_applepay = $this->payment_token_factory->create( 'apple_pay' );
+		// Try to update existing token of type before creating a new one.
+		$payment_token_applepay = $this->payment_token_helper->first_token_of_type( $wc_tokens, PaymentTokenApplePay::class );
+
+		if ( ! $payment_token_applepay ) {
+			$payment_token_applepay = $this->payment_token_factory->create( 'apple_pay' );
+		}
+
 		assert( $payment_token_applepay instanceof PaymentTokenApplePay );
 
 		$payment_token_applepay->set_token( $token );
