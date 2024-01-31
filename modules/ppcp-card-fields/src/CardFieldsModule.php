@@ -39,6 +39,12 @@ class CardFieldsModule implements ModuleInterface {
 			return;
 		}
 
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		if ( ! $settings->has( 'dcc_enabled' ) || ! $settings->get( 'dcc_enabled' ) ) {
+			return;
+		}
+
 		/**
 		 * Param types removed to avoid third-party issues.
 		 *
