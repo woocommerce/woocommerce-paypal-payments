@@ -135,5 +135,13 @@ trait CreditCardOrderInfoHandlingTrait {
 			sprintf( __( 'CVV2 Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['cvv_match'] ) )
 		);
 		$wc_order->add_order_note( $cvv_response_order_note );
+
+		$wc_order->update_meta_data( PayPalGateway::FRAUD_RESULT_META_KEY, $fraud_responses );
+		$wc_order->save_meta_data();
+
+		/**
+		 * Fired when the fraud result information is added to WC order.
+		 */
+		do_action( 'woocommerce_paypal_payments_fraud_result_added', $wc_order, $order );
 	}
 }
