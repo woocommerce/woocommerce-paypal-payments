@@ -101,7 +101,6 @@ trait CreditCardOrderInfoHandlingTrait {
 			return;
 		}
 
-
 		$fraud_responses               = $fraud->to_array();
 		$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
 		/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
