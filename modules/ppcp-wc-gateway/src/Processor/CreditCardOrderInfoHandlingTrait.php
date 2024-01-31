@@ -1,6 +1,6 @@
 <?php
 /**
- * Common operations performed for handling the 3DS authentication.
+ * Common operations performed for handling the ACDC order info.
  *
  * @package WooCommerce\PayPalCommerce\WcGateway\Processor
  */
@@ -10,14 +10,15 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\FraudProcessorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
- * Trait ThreeDSecureHandlingTrait.
+ * Trait CreditCardOrderInfoHandlingTrait.
  */
-trait ThreeDSecureHandlingTrait {
+trait CreditCardOrderInfoHandlingTrait {
 
 	/**
 	 * Handles the 3DS details.
@@ -82,5 +83,58 @@ trait ThreeDSecureHandlingTrait {
 			 */
 			do_action( 'woocommerce_paypal_payments_thee_d_secure_added', $wc_order, $order );
 		}
+	}
+
+	/**
+	 * Handles the fraud processor response details.
+	 *
+	 * Adds the order note with the fraud processor response details.
+	 * Adds the order meta with the fraud processor response details.
+	 *
+	 * @param FraudProcessorResponse $fraud The fraud processor response (AVS, CVV ...).
+	 * @param Order                  $order The PayPal order.
+	 * @param WC_Order               $wc_order The WC order.
+	 */
+	protected function handle_fraud( FraudProcessorResponse $fraud, Order $order, WC_Order $wc_order ): void {
+		$payment_source = $order->payment_source();
+		if ( ! $payment_source || $payment_source->name() !== 'card' ) {
+			return;
+		}
+
+
+		$fraud_responses               = $fraud->to_array();
+		$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
+		/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
+		$avs_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
+		$avs_response_order_note_result_format = '<ul class="ppcp_avs_result">
+                                                                <li>%1$s</li>
+                                                                <ul class="ppcp_avs_result_inner">
+                                                                    <li>%2$s</li>
+                                                                    <li>%3$s</li>
+                                                                </ul>
+                                                            </ul>';
+		$avs_response_order_note_result        = sprintf(
+			$avs_response_order_note_result_format,
+			/* translators: %s is fraud AVS code */
+			sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['avs_code'] ) ),
+			/* translators: %s is fraud AVS address match */
+			sprintf( __( 'Address Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['address_match'] ) ),
+			/* translators: %s is fraud AVS postal match */
+			sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) )
+		);
+		$avs_response_order_note = sprintf(
+			$avs_response_order_note_format,
+			esc_html( $avs_response_order_note_title ),
+			wp_kses_post( $avs_response_order_note_result )
+		);
+		$wc_order->add_order_note( $avs_response_order_note );
+
+		$cvv_response_order_note_format = '<ul class="ppcp_cvv_result"><li>%1$s</li></ul>';
+		$cvv_response_order_note        = sprintf(
+			$cvv_response_order_note_format,
+			/* translators: %s is fraud CVV match */
+			sprintf( __( 'CVV2 Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['cvv_match'] ) )
+		);
+		$wc_order->add_order_note( $cvv_response_order_note );
 	}
 }

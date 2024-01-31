@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\ThreeDSecureHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -57,7 +57,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class WCGatewayModule implements ModuleInterface {
 
-	use ThreeDSecureHandlingTrait;
+	use CreditCardOrderInfoHandlingTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -107,45 +107,11 @@ class WCGatewayModule implements ModuleInterface {
 					$wc_order->save_meta_data();
 				}
 
+				$order = $c->get( 'session.handler' )->order();
 				$fraud = $capture->fraud_processor_response();
 				if ( $fraud ) {
-					$fraud_responses               = $fraud->to_array();
-					$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
-					/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
-					$avs_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
-					$avs_response_order_note_result_format = '<ul class="ppcp_avs_result">
-                                                                <li>%1$s</li>
-                                                                <ul class="ppcp_avs_result_inner">
-                                                                    <li>%2$s</li>
-                                                                    <li>%3$s</li>
-                                                                </ul>
-                                                            </ul>';
-					$avs_response_order_note_result        = sprintf(
-						$avs_response_order_note_result_format,
-						/* translators: %s is fraud AVS code */
-						sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['avs_code'] ) ),
-						/* translators: %s is fraud AVS address match */
-						sprintf( __( 'Address Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['address_match'] ) ),
-						/* translators: %s is fraud AVS postal match */
-						sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) )
-					);
-					$avs_response_order_note = sprintf(
-						$avs_response_order_note_format,
-						esc_html( $avs_response_order_note_title ),
-						wp_kses_post( $avs_response_order_note_result )
-					);
-					$wc_order->add_order_note( $avs_response_order_note );
-
-					$cvv_response_order_note_format = '<ul class="ppcp_cvv_result"><li>%1$s</li></ul>';
-					$cvv_response_order_note        = sprintf(
-						$cvv_response_order_note_format,
-						/* translators: %s is fraud CVV match */
-						sprintf( __( 'CVV2 Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['cvv_match'] ) )
-					);
-					$wc_order->add_order_note( $cvv_response_order_note );
+					$this->handle_fraud( $fraud, $order, $wc_order );
 				}
-
-				$order = $c->get( 'session.handler' )->order();
 				$this->handle_three_d_secure( $order, $wc_order );
 			},
 			10,
@@ -156,6 +122,10 @@ class WCGatewayModule implements ModuleInterface {
 			'woocommerce_paypal_payments_order_authorized',
 			function ( WC_Order $wc_order, Authorization $authorization ) use ( $c ) {
 				$order = $c->get( 'session.handler' )->order();
+				$fraud = $authorization->fraud_processor_response();
+				if ( $fraud ) {
+					$this->handle_fraud( $fraud, $order, $wc_order );
+				}
 				$this->handle_three_d_secure( $order, $wc_order );
 			},
 			10,
