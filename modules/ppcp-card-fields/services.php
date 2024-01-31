@@ -462,14 +462,6 @@ return array(
 					'TWD',
 					'USD',
 				),
-				'US' => array(
-					'AUD',
-					'CAD',
-					'EUR',
-					'GBP',
-					'JPY',
-					'USD',
-				),
 				'NL' => array(
 					'AUD',
 					'BRL',
