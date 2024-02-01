@@ -498,7 +498,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			$wc_order->save();
 		}
 
-		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) ) {
+		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) && ! $this->subscription_helper->paypal_subscription_id() ) {
 			$user_id = (int) $wc_order->get_customer_id();
 			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
 			if ( ! array_filter(
