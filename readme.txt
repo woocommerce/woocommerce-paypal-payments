@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.5.2 - xxxx-xx-xx =
+= 2.5.2 - 2024-02-01 =
 * Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE error for merchants without reference transactions #1984
 * Fix - Fatal error in WooCommerce PayPal Payments plugin after 2.5.0 update #1985
 * Fix - Can not refund order purchased with Vault v3 Card payment #1997
