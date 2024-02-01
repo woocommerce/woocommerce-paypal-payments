@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.2
-Stable tag: 2.5.2
+Stable tag: 2.5.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,15 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.5.3 - xxxx-xx-xx =
+* Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
+* Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
+* Enhancement - Enable card fields for ACDC and Vault v3 supported countries/currencies #2007
+* Enhancement - Update ACDC supported currencies list #1991
+* Enhancement - Check if the $wpdb->wc_orders exists before query #1996
+* Enhancement - Remove MercadoPago from disable funding sources #2003
+* Enhancement - Improve onboarding notice text #2002
 
 = 2.5.2 - 2024-02-01 =
 * Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE error for merchants without reference transactions #1984
