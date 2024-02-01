@@ -1,5 +1,14 @@
 *** Changelog ***
 
+= 2.5.3 - xxxx-xx-xx =
+* Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
+* Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
+* Enhancement - Enable card fields for ACDC and Vault v3 supported countries/currencies #2007
+* Enhancement - Update ACDC supported currencies list #1991
+* Enhancement - Check if the $wpdb->wc_orders exists before query #1996
+* Enhancement - Remove MercadoPago from disable funding sources #2003
+* Enhancement - Improve onboarding notice text #2002
+
 = 2.5.2 - 2024-02-01 =
 * Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE error for merchants without reference transactions #1984
 * Fix - Fatal error in WooCommerce PayPal Payments plugin after 2.5.0 update #1985
