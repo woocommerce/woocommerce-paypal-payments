@@ -346,9 +346,10 @@ class SettingsListener {
 	/**
 	 * Prevent enabling both Pay Later messaging and PayPal vaulting
 	 *
+	 * @return void
 	 * @throws RuntimeException When API request fails.
 	 */
-	public function listen_for_vaulting_enabled() {
+	public function listen_for_vaulting_enabled(): void {
 		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
 			return;
 		}
