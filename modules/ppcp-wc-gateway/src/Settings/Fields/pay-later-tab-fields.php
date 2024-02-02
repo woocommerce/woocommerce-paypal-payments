@@ -378,7 +378,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Cart.
 		'pay_later_cart_messaging_heading'                => array(
-			'heading'      => __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Pay Later Messaging on Classic Cart', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array(),
@@ -502,7 +502,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Checkout.
 		'pay_later_checkout_messaging_heading'            => array(
-			'heading'      => __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Pay Later Messaging on Classic Checkout', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array(),

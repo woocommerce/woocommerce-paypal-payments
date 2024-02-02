@@ -393,7 +393,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'refresh_feature_status'                        => array(
 			'title'        => __( 'Refresh feature availability status', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
-			'text'         => '<button type="button" class="button ppcp-refresh-feature-status">' . esc_html__( 'Check available features', 'woocommerce-paypal-payments' ) . '</button>',
+			'text'         => '<button type="button" class="button ppcp-refresh-feature-status">' . esc_html__( 'Check available features', 'woocommerce-paypal-payments' ) . '</button><div class="ppcp-status-text"></div>',
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -404,6 +404,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'title'        => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => $container->get( 'wcgateway.settings.connection.dcc-status-text' ),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array( 'dcc' ),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'ppcp_reference_transactions_status'            => array(
+			'title'        => __( 'Advanced PayPal Wallet', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => $container->get( 'wcgateway.settings.connection.reference-transactions-status-text' ),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),

@@ -131,6 +131,10 @@ trait ContextTrait {
 			return 'add-payment-method';
 		}
 
+		if ( $this->is_block_editor() ) {
+			return 'block-editor';
+		}
+
 		return 'mini-cart';
 	}
 
@@ -206,5 +210,29 @@ trait ContextTrait {
 		$page_id = wc_get_page_id( 'myaccount' );
 
 		return $page_id && is_page( $page_id ) && isset( $wp->query_vars['add-payment-method'] );
+	}
+
+	/**
+	 * Checks whether this user is changing the payment method for a subscription.
+	 *
+	 * @return bool
+	 */
+	private function is_subscription_change_payment_method_page(): bool {
+		if ( isset( $_GET['change_payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return wcs_is_subscription( wc_clean( wp_unslash( $_GET['change_payment_method'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if it is the block editor page.
+	 */
+	protected function is_block_editor(): bool {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return false;
+		}
+		$screen = get_current_screen();
+		return $screen && $screen->is_block_editor();
 	}
 }

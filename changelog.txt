@@ -1,16 +1,54 @@
 *** Changelog ***
 
-= 2.4.3 - xxxx-xx-xx =
+= 2.5.3 - xxxx-xx-xx =
+* Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
+* Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
+* Enhancement - Enable card fields for ACDC and Vault v3 supported countries/currencies #2007
+* Enhancement - Update ACDC supported currencies list #1991
+* Enhancement - Check if the $wpdb->wc_orders exists before query #1996
+* Enhancement - Remove MercadoPago from disable funding sources #2003
+* Enhancement - Improve onboarding notice text #2002
+
+= 2.5.2 - 2024-02-01 =
+* Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE error for merchants without reference transactions #1984
+* Fix - Fatal error in WooCommerce PayPal Payments plugin after 2.5.0 update #1985
+* Fix - Can not refund order purchased with Vault v3 Card payment #1997
+* Fix - PayPal Vaulting Subscriptions mode setting visible when merchant not enabled for Reference Transactions #1999
+* Fix - card-fields parameter included in button script despite Advanced Card Processing disabled #2005
+* Enhancement - Add setup URL for reference transactions #1964
+* Enhancement - Improve PUI performance for variable products #1950
+
+= 2.5.1 - 2024-01-24 =
+* Temporary revert Vaulting integration changes introduced in 2.5.0
+
+= 2.5.0 - 2024-01-22 =
+* Fix - WC Subscriptions change subscription payment #1953
+* Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
+* Enhancement - Enable Vault v3 and Card Fields by default for US merchants #1967
+* Enhancement - Vault v3 WC Subscriptions integration #1920
+* Enhancement - Implement early WC validation for Hosted Card Fields #1925
+* Enhancement - Rename button locations #1946
+* Enhancement - Improve Apple Pay validation notice text #1938
+* Enhancement - Improve feature availability check UX #1941
+* Enhancement - Make all hosted card fields strings translatable #1926
+* Enhancement - PHP 8.2 deprecations #1939
+* Enhancement - Subscription support on Block Cart & Block Express Checkout #1956
+* Enhancement - Venmo Vaulting integration #1958
+* Enhancement - Add package tracking support for UK #1970
+
+= 2.4.3 - 2024-01-04 =
 * Fix - PayPal Subscription initiated without a WooCommerce order #1907
 * Fix - Block Checkout reloads when submitting order with empty fields #1904
 * Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
 * Fix - "Order does not contain intent" error for ACDC renewals when triggering 3D Secure #1888
+* Fix - PayPal Subscriptions button greyed out (inactive) on Checkout page for variable subscription products #1914
 * Enhancement - Add button to reload feature eligibility status from Connection tab #1902
 * Enhancement - Apple Pay validation message improvements #1901
 * Enhancement - Improve support for Classic Cart & Classic Checkout blocks #1894
 * Enhancement - Ensure uniform button appearance for PayPal, Google Pay, and Apple Pay buttons #1900
 * Enhancement - remove string translations for package tracking carriers from repository #1885
 * Enhancement - Incorrect margins when PayPal buttons are rendered as separate gateways. #1908
+* Enhancement - Improved button spacing when Apple Pay is enabled but current buyer is not eligible #1922
 * Feature preview - Save payment methods (Vault v3) integration  #1779
 
 = 2.4.2 - 2023-12-04 =
@@ -125,7 +163,7 @@
 * Feature preview - Google Pay integration #1654
 
 = 2.2.2 - 2023-08-29 =
-* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529
 * Enhancement - HPOS compatibility issues #1594
 * Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
 

@@ -9,10 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
-use WooCommerce\PayPalCommerce\PayPalSubscriptions\DeactivatePlanEndpoint;
-use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionsApiHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
@@ -44,5 +43,10 @@ return array(
 		$factory  = $container->get( 'api.factory.payment-token' );
 		$endpoint = $container->get( 'api.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
+	},
+	'wc-subscriptions.endpoint.subscription-change-payment-method' => static function( ContainerInterface $container ): SubscriptionChangePaymentMethod {
+		return new SubscriptionChangePaymentMethod(
+			$container->get( 'button.request-data' )
+		);
 	},
 );

@@ -1,6 +1,15 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
-import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
+import {
+    mergeWcAddress,
+    paypalAddressToWc,
+    paypalOrderToWcAddresses,
+    paypalSubscriptionToWcAddresses
+} from "./Helper/Address";
+import {
+    cartHasSubscriptionProducts,
+    isPayPalSubscription
+} from "./Helper/Subscription";
 import {
     loadPaypalScriptPromise
 } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
@@ -8,12 +17,14 @@ import {
     normalizeStyleForFundingSource
 } from '../../../ppcp-button/resources/js/modules/Helper/Style'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
-
+import BlockCheckoutMessagesBootstrap from "./Bootstrap/BlockCheckoutMessagesBootstrap";
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
 window.ppcpFundingSource = config.fundingSource;
 
 let registeredContext = false;
+
+let paypalScriptPromise = null;
 
 const PayPalComponent = ({
                              onClick,
@@ -32,6 +43,16 @@ const PayPalComponent = ({
 
     const [paypalOrder, setPaypalOrder] = useState(null);
     const [gotoContinuationOnError, setGotoContinuationOnError] = useState(false);
+
+    const [paypalScriptLoaded, setPaypalScriptLoaded] = useState(false);
+
+    if (!paypalScriptLoaded) {
+        if (!paypalScriptPromise) {
+            // for editor, since canMakePayment was not called
+            paypalScriptPromise = loadPaypalScriptPromise(config.scriptData)
+        }
+        paypalScriptPromise.then(() => setPaypalScriptLoaded(true));
+    }
 
     const methodId = fundingSource ? `${config.id}-${fundingSource}` : config.id;
 
@@ -82,6 +103,78 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic);
             }
             return json.data.id;
+        } catch (err) {
+            console.error(err);
+
+            onError(err.message);
+
+            onClose();
+
+            throw err;
+        }
+    };
+
+    const createSubscription = async (data, actions) => {
+        return actions.subscription.create({
+            'plan_id': config.scriptData.subscription_plan_id
+        });
+    };
+
+    const handleApproveSubscription = async (data, actions) => {
+        try {
+            const subscription = await actions.subscription.get();
+
+            if (subscription) {
+                const addresses = paypalSubscriptionToWcAddresses(subscription);
+
+                let promises = [
+                    // save address on server
+                    wp.data.dispatch('wc/store/cart').updateCustomerData({
+                        billing_address: addresses.billingAddress,
+                        shipping_address: addresses.shippingAddress,
+                    }),
+                ];
+                if (!config.finalReviewEnabled) {
+                    // set address in UI
+                    promises.push(wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress));
+                    if (shippingData.needsShipping) {
+                        promises.push(wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress))
+                    }
+                }
+                await Promise.all(promises);
+            }
+
+            setPaypalOrder(subscription);
+
+            const res = await fetch(config.scriptData.ajax.approve_subscription.endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    nonce: config.scriptData.ajax.approve_subscription.nonce,
+                    order_id: data.orderID,
+                    subscription_id: data.subscriptionID
+                })
+            });
+
+            const json = await res.json();
+
+            if (!json.success) {
+                if (typeof actions !== 'undefined' && typeof actions.restart !== 'undefined') {
+                    return actions.restart();
+                }
+                if (json.data?.message) {
+                    throw new Error(json.data.message);
+                }
+
+                throw new Error(config.scriptData.labels.error.generic)
+            }
+
+            if (config.finalReviewEnabled) {
+                location.href = getCheckoutRedirectUrl();
+            } else {
+                setGotoContinuationOnError(true);
+                onSubmit();
+            }
         } catch (err) {
             console.error(err);
 
@@ -193,6 +286,7 @@ const PayPalComponent = ({
     };
 
     let handleShippingChange = null;
+    let handleSubscriptionShippingChange = null;
     if (shippingData.needsShipping && !config.finalReviewEnabled) {
         handleShippingChange = async (data, actions) => {
             try {
@@ -223,6 +317,30 @@ const PayPalComponent = ({
                 if (!json.success) {
                     throw new Error(json.data.message);
                 }
+            } catch (e) {
+                console.error(e);
+
+                actions.reject();
+            }
+        };
+
+        handleSubscriptionShippingChange = async (data, actions) => {
+            console.log('--- handleSubscriptionShippingChange', data, actions);
+
+            try {
+                const shippingOptionId = data.selected_shipping_option?.id;
+                if (shippingOptionId) {
+                    await shippingData.setSelectedRates(shippingOptionId);
+                }
+
+                const address = paypalAddressToWc(data.shipping_address);
+
+                await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                    shipping_address: address,
+                });
+
+                await shippingData.setShippingAddress(address);
+
             } catch (e) {
                 console.error(e);
 
@@ -309,7 +427,26 @@ const PayPalComponent = ({
 
     const style = normalizeStyleForFundingSource(config.scriptData.button.style, fundingSource);
 
-    const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
+    if (!paypalScriptLoaded) {
+        return null;
+    }
+
+    const PayPalButton = paypal.Buttons.driver("react", { React, ReactDOM });
+
+    if(isPayPalSubscription(config.scriptData)) {
+        return (
+            <PayPalButton
+                fundingSource={fundingSource}
+                style={style}
+                onClick={handleClick}
+                onCancel={onClose}
+                onError={onClose}
+                createSubscription={createSubscription}
+                onApprove={handleApproveSubscription}
+                onShippingChange={handleSubscriptionShippingChange}
+            />
+        );
+    }
 
     return (
         <PayPalButton
@@ -326,61 +463,95 @@ const PayPalComponent = ({
 }
 
 const features = ['products'];
+let block_enabled = true;
 
-if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
-    let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
-    if (config.placeOrderButtonDescription) {
-        descriptionElement = <div>
-            <p dangerouslySetInnerHTML={{__html: config.description}}></p>
-            <p style={{textAlign: 'center'}} className={'ppcp-place-order-description'} dangerouslySetInnerHTML={{__html: config.placeOrderButtonDescription}}></p>
-        </div>;
+if(cartHasSubscriptionProducts(config.scriptData)) {
+    // Don't show buttons on block cart page if using vault v2 and user is not logged in
+    if (
+        ! config.scriptData.user.is_logged
+        && config.scriptData.context === "cart-block"
+        && ! isPayPalSubscription(config.scriptData) // using vaulting
+        && ! config.scriptData?.save_payment_methods?.id_token // not vault v3
+    ) {
+        block_enabled = false;
     }
 
-    registerPaymentMethod({
-        name: config.id,
-        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-        content: descriptionElement,
-        edit: descriptionElement,
-        placeOrderButtonLabel: config.placeOrderButtonText,
-        ariaLabel: config.title,
-        canMakePayment: () => config.enabled,
-        supports: {
-            features: features,
-        },
-    });
+    // Don't render buttons if in subscription mode and product not associated with a PayPal subscription
+    if(
+        isPayPalSubscription(config.scriptData)
+        && !config.scriptData.subscription_product_allowed
+    ) {
+        block_enabled = false;
+    }
+
+    features.push('subscriptions');
 }
 
-if (config.scriptData.continuation) {
-    registerPaymentMethod({
-        name: config.id,
-        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-        content: <PayPalComponent isEditing={false}/>,
-        edit: <PayPalComponent isEditing={true}/>,
-        ariaLabel: config.title,
-        canMakePayment: () => true,
-        supports: {
-            features: [...features, 'ppcp_continuation'],
-        },
-    });
-} else if (!config.usePlaceOrder) {
-    const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+if (block_enabled) {
+    if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
+        let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
+        if (config.placeOrderButtonDescription) {
+            descriptionElement = <div>
+                <p dangerouslySetInnerHTML={{__html: config.description}}></p>
+                <p style={{textAlign: 'center'}} className={'ppcp-place-order-description'} dangerouslySetInnerHTML={{__html: config.placeOrderButtonDescription}}></p>
+            </div>;
+        }
 
-    for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
-        registerExpressPaymentMethod({
-            name: `${config.id}-${fundingSource}`,
-            paymentMethodId: config.id,
+        registerPaymentMethod({
+            name: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-            content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-            edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+            content: descriptionElement,
+            edit: descriptionElement,
+            placeOrderButtonLabel: config.placeOrderButtonText,
             ariaLabel: config.title,
-            canMakePayment: async () => {
-                await paypalScriptPromise;
-
-                return paypal.Buttons({fundingSource}).isEligible();
+            canMakePayment: () => {
+                return config.enabled;
             },
             supports: {
                 features: features,
             },
         });
+    }
+
+    if (config.scriptData.continuation) {
+        registerPaymentMethod({
+            name: config.id,
+            label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+            content: <PayPalComponent isEditing={false}/>,
+            edit: <PayPalComponent isEditing={true}/>,
+            ariaLabel: config.title,
+            canMakePayment: () => {
+                return true;
+            },
+            supports: {
+                features: [...features, 'ppcp_continuation'],
+            },
+        });
+    } else if (!config.usePlaceOrder) {
+        for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+            registerExpressPaymentMethod({
+                name: `${config.id}-${fundingSource}`,
+                paymentMethodId: config.id,
+                label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+                content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
+                edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+                ariaLabel: config.title,
+                canMakePayment: async () => {
+                    if (!paypalScriptPromise) {
+                        paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+                        paypalScriptPromise.then(() => {
+                            const messagesBootstrap = new BlockCheckoutMessagesBootstrap(config.scriptData);
+                            messagesBootstrap.init();
+                        });
+                    }
+                    await paypalScriptPromise;
+
+                    return paypal.Buttons({fundingSource}).isEligible();
+                },
+                supports: {
+                    features: features,
+                },
+            });
+        }
     }
 }

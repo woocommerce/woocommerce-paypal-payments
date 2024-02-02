@@ -355,11 +355,25 @@ document.addEventListener(
         }
 
         // Logic to handle the "Check available features" button.
-        ((props) => {
-            const $btn = jQuery(props.button);
+        (($, props, anchor) => {
+            const $btn = $(props.button);
+
+            const printStatus = (message, showSpinner) => {
+                const html = message + (showSpinner ? '<span class="spinner is-active" style="float: none;"></span>' : '');
+                $btn.siblings('.ppcp-status-text').html(html);
+            };
+
+            // If the reload comes from a successful refresh.
+            if (typeof URLSearchParams === 'function' && (new URLSearchParams(window.location.search)).get('feature-refreshed')) {
+                printStatus('<span class="success">✔️ ' + props.messages.success + '</span>');
+                $('html, body').animate({
+                    scrollTop: $(anchor).offset().top
+                }, 500);
+            }
 
             $btn.click(async () => {
                 $btn.prop('disabled', true);
+                printStatus(props.messages.waiting, true);
 
                 const response = await fetch(
                     props.endpoint,
@@ -380,14 +394,18 @@ document.addEventListener(
                 const responseData = await response.json();
 
                 if (!responseData.success) {
-                    alert(responseData.data.message);
+                    printStatus(responseData.data.message);
                     $btn.prop('disabled', false);
                 } else {
-                    window.location.reload();
+                    window.location.href += (window.location.href.indexOf('?') > -1 ? '&' : '?') + "feature-refreshed=1#";
                 }
             });
 
-        })(PayPalCommerceGatewaySettings.ajax.refresh_feature_status);
+        })(
+            jQuery,
+            PayPalCommerceGatewaySettings.ajax.refresh_feature_status,
+            '#field-credentials_feature_onboarding_heading'
+        );
 
     }
 );

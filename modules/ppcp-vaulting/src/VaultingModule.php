@@ -54,7 +54,11 @@ class VaultingModule implements ModuleInterface {
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		add_action(
 			'woocommerce_created_customer',
-			function( int $customer_id ) use ( $subscription_helper ) {
+			function( int $customer_id ) use ( $subscription_helper, $container ) {
+				if ( $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' ) ) {
+					return;
+				}
+
 				$session = WC()->session;
 				if ( ! $session ) {
 					return;
@@ -191,8 +195,18 @@ class VaultingModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function( array $methods ): array {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $methods ) {
 				global $wp;
+
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
 				if (
 					isset( $wp->query_vars['add-payment-method'] )
 					&& apply_filters( 'woocommerce_paypal_payments_disable_add_payment_method', true )

@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -393,7 +394,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	private function render_message_wrapper_registrar(): bool {
-		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() || ! $this->settings_status->has_pay_later_messaging_locations() ) {
 			return false;
 		}
 
@@ -605,7 +606,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'product':
 				return $smart_button_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:
-				return $smart_button_enabled_for_mini_cart;
+				return $smart_button_enabled_for_mini_cart || $this->is_block_editor();
 		}
 	}
 
@@ -618,6 +619,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+			return false;
+		}
+
 		if ( ! $this->messages_apply->for_country() || $this->is_free_trial_cart() ) {
 			return false;
 		}
@@ -625,6 +630,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		$location = $this->location();
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
+
+		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' ) && PayLaterBlockModule::is_enabled();
 
 		switch ( $location ) {
 			case 'checkout':
@@ -634,8 +641,13 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'shop':
 			case 'home':
 				return $messaging_enabled_for_current_location;
+			case 'block-editor':
+				return true;
+			case 'checkout-block':
+			case 'cart-block':
+				return $has_paylater_block || $this->is_block_editor();
 			default:
-				return false;
+				return $has_paylater_block;
 		}
 	}
 
@@ -843,9 +855,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		$product = wc_get_product();
-		$amount  = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
-
-		if ( is_checkout() || is_cart() ) {
+		$amount  = 0;
+		if ( is_a( $product, WC_Product::class ) ) {
+			$amount = wc_get_price_including_tax( $product );
+		} elseif ( isset( WC()->cart ) ) {
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
@@ -863,6 +876,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return array(
 			'wrapper'   => '#ppcp-messages',
 			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
+			'block'     => array(
+				'enabled' => PayLaterBlockModule::is_enabled(),
+			),
 			'amount'    => $amount,
 			'placement' => $placement,
 			'style'     => array(
@@ -878,7 +894,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				'ratio'  => $ratio,
 			),
 		);
-
 	}
 
 	/**
@@ -1041,6 +1056,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 				),
 			),
+			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
@@ -1154,6 +1170,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'basic_checkout_validation_enabled'       => $this->basic_checkout_validation_enabled,
 			'early_checkout_validation_enabled'       => $this->early_validation_enabled,
 			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
+			'user'                                    => array(
+				'is_logged' => is_user_logged_in(),
+			),
 		);
 
 		if ( 'pay-now' === $this->context() ) {
@@ -1237,6 +1256,16 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
 		);
+
+		if (
+			$this->settings->has( 'subscriptions_mode' )
+			&& $this->settings->get( 'subscriptions_mode' ) === 'vaulting_api'
+			&& apply_filters( 'woocommerce_paypal_payments_save_payment_methods_eligible', false )
+		) {
+			// Remove vault parameter to allow for Venmo with Save Payment Methods (Vault V3).
+			unset( $params['vault'] );
+		}
+
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
 			&& defined( 'WP_DEBUG' ) && \WP_DEBUG
@@ -1447,8 +1476,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			$context = 'general';
 		}
 
-		return $this->get_style_value( "button_{$context}_${style}" )
-			?? $this->get_style_value( "button_${style}" )
+		return $this->get_style_value( "button_{$context}_{$style}" )
+			?? $this->get_style_value( "button_{$style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
 			?? $this->normalize_style_value( $defaults[ $style ] ?? '' );
 	}
@@ -1463,7 +1492,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return string|int
 	 */
 	private function style_for_apm( string $style, string $apm, $default = null ) {
-		return $this->get_style_value( "${apm}_button_${style}" )
+		return $this->get_style_value( "{$apm}_button_{$style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
 			?? $this->style_for_context( $style, 'checkout' );
 	}
@@ -1584,14 +1613,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 * The filter returning the action name that will be used for rendering Pay Later messages.
 		 */
 		$hook = (string) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_hook",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_hook",
 			$default_hook
 		);
 		/**
 		 * The filter returning the action priority that will be used for rendering Pay Later messages.
 		 */
 		$priority = (int) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_priority",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_priority",
 			$default_priority
 		);
 		return array(
@@ -1615,14 +1644,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 * The filter returning the action name that will be used for rendering Pay Later messages.
 		 */
 		$block_name = (string) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_block",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_block",
 			$default_block
 		);
 		/**
 		 * The filter returning the action priority that will be used for rendering Pay Later messages.
 		 */
 		$priority = (int) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_block_priority",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_block_priority",
 			$default_priority
 		);
 		return array(

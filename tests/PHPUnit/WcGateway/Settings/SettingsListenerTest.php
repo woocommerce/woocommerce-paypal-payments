@@ -2,8 +2,10 @@
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use Psr\Log\LoggerInterface;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use WooCommerce\PayPalCommerce\Helper\StubRedirectionException;
@@ -12,7 +14,6 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
-use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 class SettingsListenerTest extends ModularTestCase
@@ -40,6 +41,8 @@ class SettingsListenerTest extends ModularTestCase
 		$signup_link_ids = array();
         $pui_status_cache = Mockery::mock(Cache::class);
         $dcc_status_cache = Mockery::mock(Cache::class);
+		$billing_agreement_endpoint = Mockery::mock(BillingAgreementsEndpoint::class);
+		$logger = Mockery::mock(LoggerInterface::class);
 
 		$testee = new SettingsListener(
 			$settings,
@@ -55,7 +58,9 @@ class SettingsListenerTest extends ModularTestCase
             $dcc_status_cache,
 			new RedirectorStub(),
 			'',
-			''
+			'',
+			$billing_agreement_endpoint,
+			$logger
 		);
 
 		$_GET['section'] = PayPalGateway::ID;

@@ -39,6 +39,12 @@ class CardFieldsModule implements ModuleInterface {
 			return;
 		}
 
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		if ( ! $settings->has( 'dcc_enabled' ) || ! $settings->get( 'dcc_enabled' ) ) {
+			return;
+		}
+
 		/**
 		 * Param types removed to avoid third-party issues.
 		 *
@@ -78,6 +84,17 @@ class CardFieldsModule implements ModuleInterface {
 					$new_field = $default_fields['card-name-field'];
 					unset( $default_fields['card-name-field'] );
 					array_unshift( $default_fields, $new_field );
+				}
+
+				if ( apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_number', true ) ) {
+					if ( isset( $default_fields['card-number-field'] ) ) {
+						// Replaces the default card number placeholder with a translatable one.
+						$default_fields['card-number-field'] = str_replace(
+							'&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;',
+							esc_attr__( 'Card number', 'woocommerce-paypal-payments' ),
+							$default_fields['card-number-field']
+						);
+					}
 				}
 
 				return $default_fields;
