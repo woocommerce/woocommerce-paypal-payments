@@ -168,7 +168,8 @@ class WcSubscriptionsModule implements ModuleInterface {
 					return $methods;
 				}
 
-				if ( ! is_wc_endpoint_url( 'order-pay' ) ) {
+				//phpcs:disable WordPress.Security.NonceVerification.Recommended
+				if ( ! ( isset( $_GET['change_payment_method'] ) && is_wc_endpoint_url( 'order-pay' ) ) ) {
 					return $methods;
 				}
 
