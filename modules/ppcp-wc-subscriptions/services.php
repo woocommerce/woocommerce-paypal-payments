@@ -27,6 +27,7 @@ return array(
 		$environment           = $container->get( 'onboarding.environment' );
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
+		$funding_source_renderer       = $container->get( 'wcgateway.funding-source.renderer' );
 		return new RenewalHandler(
 			$logger,
 			$repository,
@@ -36,7 +37,8 @@ return array(
 			$payer_factory,
 			$environment,
 			$settings,
-			$authorized_payments_processor
+			$authorized_payments_processor,
+			$funding_source_renderer
 		);
 	},
 	'wc-subscriptions.repository.payment-token' => static function ( ContainerInterface $container ): PaymentTokenRepository {
