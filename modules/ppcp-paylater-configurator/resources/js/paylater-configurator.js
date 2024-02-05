@@ -1,6 +1,7 @@
 document.addEventListener( 'DOMContentLoaded', () => {
     const form = document.querySelector('#mainform');
-    form.insertAdjacentHTML('afterend', '<div id="messaging-configurator"></div>');
+    const table = form.querySelector('.form-table');
+    table.insertAdjacentHTML('afterend', '<div id="messaging-configurator"></div>');
 
     merchantConfigurators.Messaging({
         config: PcpPayLaterConfigurator.config,
