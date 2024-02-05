@@ -2,6 +2,7 @@
 
 = 2.5.3 - xxxx-xx-xx =
 * Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
+* Fix - Pay by link - Germany - PayPal buttons are not visible on Pay for order page #2014
 * Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
 * Enhancement - Enable card fields for ACDC and Vault v3 supported countries/currencies #2007
 * Enhancement - Update ACDC supported currencies list #1991
