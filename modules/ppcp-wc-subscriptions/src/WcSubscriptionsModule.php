@@ -111,6 +111,17 @@ class WcSubscriptionsModule implements ModuleInterface {
 							$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
 							$subscription->save();
 						}
+
+						// Update the initial payment method title if not the same as the first order.
+						$payment_method_title = $parent_order->get_payment_method_title();
+						if (
+							$payment_method_title
+							&& $subscription instanceof \WC_Subscription
+							&& $subscription->get_payment_method_title() !== $payment_method_title
+						) {
+							$subscription->set_payment_method_title( $payment_method_title );
+							$subscription->save();
+						}
 					}
 				}
 			}

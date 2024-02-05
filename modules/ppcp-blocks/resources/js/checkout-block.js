@@ -326,8 +326,6 @@ const PayPalComponent = ({
         };
 
         handleSubscriptionShippingChange = async (data, actions) => {
-            console.log('--- handleSubscriptionShippingChange', data, actions);
-
             try {
                 const shippingOptionId = data.selected_shipping_option?.id;
                 if (shippingOptionId) {
