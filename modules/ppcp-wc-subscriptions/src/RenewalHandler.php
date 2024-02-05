@@ -483,8 +483,8 @@ class RenewalHandler {
 	/**
 	 * Updates the payment source name to the one really used for the payment.
 	 *
-	 * @param PaymentSource $payment_source
-	 * @param \WC_Order $wc_order
+	 * @param PaymentSource $payment_source The Payment Source.
+	 * @param \WC_Order     $wc_order WC order.
 	 * @return void
 	 */
 	private function update_payment_source( PaymentSource $payment_source, \WC_Order $wc_order ): void {
