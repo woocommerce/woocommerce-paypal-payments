@@ -1,7 +1,24 @@
 document.addEventListener( 'DOMContentLoaded', () => {
     const form = document.querySelector('#mainform');
     const table = form.querySelector('.form-table');
+
     table.insertAdjacentHTML('afterend', '<div id="messaging-configurator"></div>');
+
+
+    window.addEventListener('load', () => {
+        const form = document.querySelector('#mainform');
+        const messagingConfigurator = form.querySelector('#messaging-configurator');
+        const publishButton = messagingConfigurator.querySelector('#configurator-publishButton');
+
+        if (publishButton) {
+            publishButton.style.display = 'none';
+        }
+
+        form.addEventListener('submit', () => {
+            publishButton.click();
+        });
+    });
+
 
     merchantConfigurators.Messaging({
         config: PcpPayLaterConfigurator.config,
@@ -9,7 +26,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         partnerClientId: PcpPayLaterConfigurator.partnerClientId,
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
-        placements: ['cart', 'checkout', 'product', 'category', 'homepage'],
+        placements: ['cart', 'checkout', 'product', 'category', 'homepage', 'custom_placement'],
         onSave: data => {
             fetch(PcpPayLaterConfigurator.ajax.save_config.endpoint, {
                 method: 'POST',
