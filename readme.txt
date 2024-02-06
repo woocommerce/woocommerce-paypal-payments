@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.5.3 - xxxx-xx-xx =
+= 2.5.3 - 2024-02-06 =
 * Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
 * Fix - Pay by link - Germany - PayPal buttons are not visible on Pay for order page #2014
 * Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
