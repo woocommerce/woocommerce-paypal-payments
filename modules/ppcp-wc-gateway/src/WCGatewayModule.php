@@ -108,6 +108,10 @@ class WCGatewayModule implements ModuleInterface {
 				}
 
 				$order = $c->get( 'session.handler' )->order();
+				if ( ! $order ) {
+					return;
+				}
+
 				$fraud = $capture->fraud_processor_response();
 				if ( $fraud ) {
 					$this->handle_fraud( $fraud, $order, $wc_order );
@@ -122,6 +126,10 @@ class WCGatewayModule implements ModuleInterface {
 			'woocommerce_paypal_payments_order_authorized',
 			function ( WC_Order $wc_order, Authorization $authorization ) use ( $c ) {
 				$order = $c->get( 'session.handler' )->order();
+				if ( ! $order ) {
+					return;
+				}
+
 				$fraud = $authorization->fraud_processor_response();
 				if ( $fraud ) {
 					$this->handle_fraud( $fraud, $order, $wc_order );
