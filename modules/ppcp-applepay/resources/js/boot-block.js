@@ -1,8 +1,10 @@
 import {useEffect, useState} from '@wordpress/element';
-import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
+import {registerExpressPaymentMethod} from '@woocommerce/blocks-registry';
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {cartHasSubscriptionProducts} from '../../../ppcp-blocks/resources/js/Helper/Subscription'
 import ApplepayManager from "./ApplepayManager";
 import {loadCustomScript} from "@paypal/paypal-js";
+import CheckoutHandler from "./Context/CheckoutHandler";
 
 const ppcpData = wc.wcSettings.getSetting('ppcp-gateway_data');
 const ppcpConfig = ppcpData.scriptData;
@@ -49,6 +51,13 @@ const ApplePayComponent = () => {
 }
 
 const features = ['products'];
+
+if (
+    cartHasSubscriptionProducts(ppcpConfig)
+    && (new CheckoutHandler(buttonConfig, ppcpConfig)).isVaultV3Mode()
+) {
+    features.push('subscriptions');
+}
 
 registerExpressPaymentMethod({
     name: buttonData.id,

@@ -87,6 +87,7 @@ const PayPalComponent = ({
                     bn_code: '',
                     context: config.scriptData.context,
                     payment_method: 'ppcp-gateway',
+                    funding_source: window.ppcpFundingSource ?? 'paypal',
                     createaccount: false
                 }),
             });
@@ -325,8 +326,6 @@ const PayPalComponent = ({
         };
 
         handleSubscriptionShippingChange = async (data, actions) => {
-            console.log('--- handleSubscriptionShippingChange', data, actions);
-
             try {
                 const shippingOptionId = data.selected_shipping_option?.id;
                 if (shippingOptionId) {
@@ -472,6 +471,14 @@ if(cartHasSubscriptionProducts(config.scriptData)) {
         && config.scriptData.context === "cart-block"
         && ! isPayPalSubscription(config.scriptData) // using vaulting
         && ! config.scriptData?.save_payment_methods?.id_token // not vault v3
+    ) {
+        block_enabled = false;
+    }
+
+    // Don't render if vaulting disabled and is in vault subscription mode
+    if(
+        ! isPayPalSubscription(config.scriptData)
+        && ! config.scriptData.can_save_vault_token
     ) {
         block_enabled = false;
     }

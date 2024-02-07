@@ -22,9 +22,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -106,6 +110,13 @@ class RenewalHandler {
 	protected $authorized_payments_processor;
 
 	/**
+	 * The funding source renderer.
+	 *
+	 * @var FundingSourceRenderer
+	 */
+	protected $funding_source_renderer;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface             $logger The logger.
@@ -117,6 +128,7 @@ class RenewalHandler {
 	 * @param Environment                 $environment The environment.
 	 * @param Settings                    $settings The Settings.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
+	 * @param FundingSourceRenderer       $funding_source_renderer The funding source renderer.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -127,7 +139,8 @@ class RenewalHandler {
 		PayerFactory $payer_factory,
 		Environment $environment,
 		Settings $settings,
-		AuthorizedPaymentsProcessor $authorized_payments_processor
+		AuthorizedPaymentsProcessor $authorized_payments_processor,
+		FundingSourceRenderer $funding_source_renderer
 	) {
 
 		$this->logger                        = $logger;
@@ -139,6 +152,7 @@ class RenewalHandler {
 		$this->environment                   = $environment;
 		$this->settings                      = $settings;
 		$this->authorized_payments_processor = $authorized_payments_processor;
+		$this->funding_source_renderer       = $funding_source_renderer;
 	}
 
 	/**
@@ -202,11 +216,31 @@ class RenewalHandler {
 		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
 			foreach ( $wc_tokens as $token ) {
+				$name       = 'paypal';
+				$properties = array(
+					'vault_id' => $token->get_token(),
+				);
+
+				if ( $token instanceof PaymentTokenPayPal ) {
+					$name = 'paypal';
+				}
+
+				if ( $token instanceof PaymentTokenVenmo ) {
+					$name = 'venmo';
+				}
+
+				if ( $token instanceof PaymentTokenApplePay ) {
+					$name                            = 'apple_pay';
+					$properties['stored_credential'] = array(
+						'payment_initiator' => 'MERCHANT',
+						'payment_type'      => 'RECURRING',
+						'usage'             => 'SUBSEQUENT',
+					);
+				}
+
 				$payment_source = new PaymentSource(
-					'paypal',
-					(object) array(
-						'vault_id' => $token->get_token(),
-					)
+					$name,
+					(object) $properties
 				);
 
 				break;
@@ -387,6 +421,11 @@ class RenewalHandler {
 		if ( $transaction_id ) {
 			$this->update_transaction_id( $transaction_id, $wc_order );
 
+			$payment_source = $order->payment_source();
+			if ( $payment_source instanceof PaymentSource ) {
+				$this->update_payment_source( $payment_source, $wc_order );
+			}
+
 			$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id(), array( 'order_type' => 'any' ) );
 			foreach ( $subscriptions as $id => $subscription ) {
 				$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
@@ -439,5 +478,30 @@ class RenewalHandler {
 			'card',
 			(object) $properties
 		);
+	}
+
+	/**
+	 * Updates the payment source name to the one really used for the payment.
+	 *
+	 * @param PaymentSource $payment_source The Payment Source.
+	 * @param \WC_Order     $wc_order WC order.
+	 * @return void
+	 */
+	private function update_payment_source( PaymentSource $payment_source, \WC_Order $wc_order ): void {
+		if ( ! $payment_source->name() ) {
+			return;
+		}
+		try {
+			$wc_order->set_payment_method_title( $this->funding_source_renderer->render_name( $payment_source->name() ) );
+			$wc_order->save();
+		} catch ( \Exception $e ) {
+			$this->logger->error(
+				sprintf(
+					'Failed to update payment source to "%1$s" on order %2$d',
+					$payment_source->name(),
+					$wc_order->get_id()
+				)
+			);
+		}
 	}
 }

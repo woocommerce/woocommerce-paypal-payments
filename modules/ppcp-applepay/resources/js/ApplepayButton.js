@@ -70,10 +70,6 @@ class ApplepayButton {
 
         if (this.isEligible) {
             this.fetchTransactionInfo().then(() => {
-                const isSubscriptionProduct = this.ppcpConfig?.data_client_id?.has_subscriptions === true;
-                if (isSubscriptionProduct) {
-                    return;
-                }
                 this.addButton();
                 const id_minicart = "#apple-" + this.buttonConfig.button.mini_cart_wrapper;
                 const id = "#apple-" + this.buttonConfig.button.wrapper;
@@ -213,6 +209,8 @@ class ApplepayButton {
         this.log('onButtonClick', this.context);
 
         const paymentRequest = this.paymentRequest();
+
+        window.ppcpFundingSource = 'apple_pay'; // Do this on another place like on create order endpoint handler.
 
         // Trigger woocommerce validation if we are in the checkout page.
         if (this.context === 'checkout') {
