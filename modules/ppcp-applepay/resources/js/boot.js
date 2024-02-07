@@ -21,6 +21,15 @@ import ApplepayManager from "./ApplepayManager";
         }
     });
 
+    // Use set timeout as it's unnecessary to refresh upon Minicart initial render.
+    setTimeout(() => {
+        jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
+            if (manager) {
+                manager.reinit();
+            }
+        });
+    }, 1000);
+
     document.addEventListener(
         'DOMContentLoaded',
         () => {

@@ -107,7 +107,7 @@ class PaymentTokensMigration {
 				}
 			} elseif ( $token->source()->paypal ) {
 				$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $id, PayPalGateway::ID );
-				if ( $this->payment_token_helper->token_exist( $wc_tokens, $token->id() ) ) {
+				if ( $this->payment_token_helper->token_exist( $wc_tokens, $token->id(), PaymentTokenPayPal::class ) ) {
 					$this->logger->info( 'Token already exist for user ' . (string) $id );
 					continue;
 				}

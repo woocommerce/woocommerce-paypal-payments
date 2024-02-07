@@ -57,7 +57,7 @@ class ConnectAdminNotice {
 		$message = sprintf(
 			/* translators: %1$s the gateway name. */
 			__(
-				'PayPal Payments is almost ready. To get started, <a href="%1$s">connect your account</a>.',
+				'PayPal Payments is almost ready. To get started, connect your account with the <b>Activate PayPal</b> button <a href="%1$s">on the Account Setup page</a>.',
 				'woocommerce-paypal-payments'
 			),
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )

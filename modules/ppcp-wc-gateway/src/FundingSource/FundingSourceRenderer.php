@@ -56,6 +56,8 @@ class FundingSourceRenderer {
 	 * @param string $id The ID of the funding source, such as 'venmo'.
 	 */
 	public function render_name( string $id ): string {
+		$id = $this->sanitize_id( $id );
+
 		if ( array_key_exists( $id, $this->funding_sources ) ) {
 			if ( in_array( $id, $this->own_funding_sources, true ) ) {
 				return $this->funding_sources[ $id ];
@@ -78,6 +80,8 @@ class FundingSourceRenderer {
 	 * @param string $id The ID of the funding source, such as 'venmo'.
 	 */
 	public function render_description( string $id ): string {
+		$id = $this->sanitize_id( $id );
+
 		if ( array_key_exists( $id, $this->funding_sources ) ) {
 			return sprintf(
 				/* translators: %s - Sofort, BLIK, iDeal, Mercado Pago, etc. */
@@ -89,5 +93,15 @@ class FundingSourceRenderer {
 		return $this->settings->has( 'description' ) ?
 			$this->settings->get( 'description' )
 			: __( 'Pay via PayPal.', 'woocommerce-paypal-payments' );
+	}
+
+	/**
+	 * Sanitizes the id to a standard format.
+	 *
+	 * @param string $id The funding source id.
+	 * @return string
+	 */
+	private function sanitize_id( string $id ): string {
+		return str_replace( '_', '', strtolower( $id ) );
 	}
 }

@@ -25,3 +25,17 @@
 .ppcp-button-apm {
 	@include apm-button.button;
 }
+
+.ppcp-status-text {
+	padding-top: 4px;
+
+	.error {
+		color: red;
+		font-weight: bold;
+	}
+
+	.success {
+		color: green;
+		font-weight: bold;
+	}
+}

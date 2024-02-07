@@ -79,6 +79,10 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 			$include_shipping = (bool) wc_clean( wp_unslash( $_GET['shipping'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 			$script_data = $this->smart_button->script_data();
+			if ( ! $script_data ) {
+				wp_send_json_error();
+				return false;
+			}
 
 			$total = (float) WC()->cart->get_total( 'numeric' );
 

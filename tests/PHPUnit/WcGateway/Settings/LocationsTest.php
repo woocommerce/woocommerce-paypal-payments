@@ -40,16 +40,16 @@ class LocationsTest extends ModularTestCase
 			['product', 'cart', 'checkout', 'mini-cart'],
 			[
 				'product' => 'Single Product',
-				'cart' => 'Cart',
-				'checkout' => 'Checkout',
+				'cart' => 'Classic Cart',
+				'checkout' => 'Classic Checkout',
 				'mini-cart' => 'Mini Cart',
 			],
 		];
 		yield [
 			['cart', 'checkout'],
 			[
-				'cart' => 'Cart',
-				'checkout' => 'Checkout',
+				'cart' => 'Classic Cart',
+				'checkout' => 'Classic Checkout',
 			],
 		];
 		yield [

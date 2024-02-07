@@ -42,7 +42,7 @@ return array(
 		// Connection tab fields.
 		$fields = $insert_after(
 			$fields,
-			'ppcp_dcc_status',
+			'ppcp_reference_transactions_status',
 			array(
 				'googlepay_status' => array(
 					'title'        => __( 'Google Pay Payments', 'woocommerce-paypal-payments' ),

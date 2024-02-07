@@ -109,6 +109,8 @@ class CreditCardGatewayTest extends TestCase
 		$session->shouldReceive('set')->andReturn([]);
 		$session->shouldReceive('get')->andReturn('');
 
+		when('is_checkout')->justReturn(true);
+
 		$savedCreditCard = 'abc123';
 		$_POST['saved_credit_card'] = $savedCreditCard;
 
