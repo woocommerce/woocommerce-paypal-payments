@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 
 /**
@@ -25,7 +26,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	/**
 	 * The SmartButton.
 	 *
-	 * @var SmartButton
+	 * @var SmartButtonInterface
 	 */
 	private $smart_button;
 
@@ -39,14 +40,14 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	/**
 	 * ChangeCartEndpoint constructor.
 	 *
-	 * @param SmartButton        $smart_button The SmartButton.
-	 * @param \WC_Cart           $cart The current WC cart object.
-	 * @param RequestData        $request_data The request data helper.
-	 * @param CartProductsHelper $cart_products The cart products helper.
-	 * @param LoggerInterface    $logger The logger.
+	 * @param SmartButtonInterface $smart_button The SmartButton.
+	 * @param \WC_Cart             $cart The current WC cart object.
+	 * @param RequestData          $request_data The request data helper.
+	 * @param CartProductsHelper   $cart_products The cart products helper.
+	 * @param LoggerInterface      $logger The logger.
 	 */
 	public function __construct(
-		SmartButton $smart_button,
+		SmartButtonInterface $smart_button,
 		\WC_Cart $cart,
 		RequestData $request_data,
 		CartProductsHelper $cart_products,
@@ -68,6 +69,11 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	 * @throws Exception On error.
 	 */
 	protected function handle_data(): bool {
+		if ( ! $this->smart_button instanceof SmartButton ) {
+			wp_send_json_error();
+			return false;
+		}
+
 		$products = $this->products_from_request();
 
 		if ( ! $products ) {
