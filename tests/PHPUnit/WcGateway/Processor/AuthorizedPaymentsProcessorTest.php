@@ -251,7 +251,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	}
 
 	private function createAuthorization(string $id, string $status): Authorization {
-		return new Authorization($id, new AuthorizationStatus($status));
+		return new Authorization($id, new AuthorizationStatus($status), null);
 	}
 
 	private function createCapture(string $id, string $status): Capture {

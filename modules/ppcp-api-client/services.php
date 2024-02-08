@@ -417,7 +417,7 @@ return array(
 		return new PaymentsFactory( $authorizations_factory, $capture_factory, $refund_factory );
 	},
 	'api.factory.authorization'                      => static function ( ContainerInterface $container ): AuthorizationFactory {
-		return new AuthorizationFactory();
+		return new AuthorizationFactory( $container->get( 'api.factory.fraud-processor-response' ) );
 	},
 	'api.factory.exchange-rate'                      => static function ( ContainerInterface $container ): ExchangeRateFactory {
 		return new ExchangeRateFactory();
