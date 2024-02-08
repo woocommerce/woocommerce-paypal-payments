@@ -72,6 +72,8 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
         scriptOptions['data-user-id-token'] = userIdToken;
     }
 
+    scriptOptions['data-client-metadata-id'] = 'ppcp-cm-id';
+
     // Load PayPal script
     loadScript(scriptOptions)
         .then(callback)
