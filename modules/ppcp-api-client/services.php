@@ -1475,6 +1475,11 @@ return array(
 					'amex'       => array( 'CAD' ),
 					'jcb'        => array( 'CAD' ),
 				),
+				'LI' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array(),
+				),
 				'LT' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
