@@ -192,6 +192,11 @@ class CaptureCardPayment implements EndpointInterface {
 			'payment_source' => array(
 				'card' => array(
 					'vault_id' => $vault_id,
+					'stored_credential' => array(
+						'payment_initiator' => 'CUSTOMER',
+						'payment_type' => 'UNSCHEDULED',
+						'usage' => 'SUBSEQUENT'
+					),
 				),
 			),
 		);
