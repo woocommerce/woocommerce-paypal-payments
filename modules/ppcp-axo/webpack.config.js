@@ -10,7 +10,7 @@ module.exports = {
     plugins: [ new DependencyExtractionWebpackPlugin() ],
     entry: {
         'boot': path.resolve('./resources/js/boot.js'),
-        "styles": path.resolve('./resources/css/styles.scss')
+        'styles': path.resolve('./resources/css/styles.scss')
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),
