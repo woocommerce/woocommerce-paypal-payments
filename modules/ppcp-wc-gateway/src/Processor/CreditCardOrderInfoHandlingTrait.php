@@ -46,7 +46,7 @@ trait CreditCardOrderInfoHandlingTrait {
 			$card_authentication_result_factory = new CardAuthenticationResultFactory();
 			$result                             = $card_authentication_result_factory->from_paypal_response( $authentication_result );
 
-			$three_d_response_order_note_title = __( '3DS authentication result', 'woocommerce-paypal-payments' );
+			$three_d_response_order_note_title = __( '3DS Authentication Result', 'woocommerce-paypal-payments' );
 			/* translators: %1$s is 3DS order note title, %2$s is 3DS order note result markup */
 			$three_d_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
 			$three_d_response_order_note_result_format = '<ul class="ppcp_3ds_result">
