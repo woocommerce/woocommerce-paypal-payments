@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WP_Error;
 
@@ -83,6 +84,13 @@ class CaptureCardPayment implements EndpointInterface {
 	private $session_handler;
 
 	/**
+	 * Real Time Account Updater helper.
+	 *
+	 * @var RealTimeAccountUpdaterHelper
+	 */
+	private $real_time_account_updater_helper;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -92,14 +100,15 @@ class CaptureCardPayment implements EndpointInterface {
 	/**
 	 * CaptureCardPayment constructor.
 	 *
-	 * @param RequestData         $request_data The request data.
-	 * @param string              $host The host.
-	 * @param Bearer              $bearer The bearer.
-	 * @param OrderFactory        $order_factory The order factory.
-	 * @param PurchaseUnitFactory $purchase_unit_factory The purchase unit factory.
-	 * @param OrderEndpoint       $order_endpoint The order endpoint.
-	 * @param SessionHandler      $session_handler The session handler.
-	 * @param LoggerInterface     $logger The logger.
+	 * @param RequestData                  $request_data The request data.
+	 * @param string                       $host The host.
+	 * @param Bearer                       $bearer The bearer.
+	 * @param OrderFactory                 $order_factory The order factory.
+	 * @param PurchaseUnitFactory          $purchase_unit_factory The purchase unit factory.
+	 * @param OrderEndpoint                $order_endpoint The order endpoint.
+	 * @param SessionHandler               $session_handler The session handler.
+	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
+	 * @param LoggerInterface              $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -109,16 +118,18 @@ class CaptureCardPayment implements EndpointInterface {
 		PurchaseUnitFactory $purchase_unit_factory,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
+		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		LoggerInterface $logger
 	) {
-		$this->request_data          = $request_data;
-		$this->host                  = $host;
-		$this->bearer                = $bearer;
-		$this->order_factory         = $order_factory;
-		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->order_endpoint        = $order_endpoint;
-		$this->logger                = $logger;
-		$this->session_handler       = $session_handler;
+		$this->request_data                     = $request_data;
+		$this->host                             = $host;
+		$this->bearer                           = $bearer;
+		$this->order_factory                    = $order_factory;
+		$this->purchase_unit_factory            = $purchase_unit_factory;
+		$this->order_endpoint                   = $order_endpoint;
+		$this->session_handler                  = $session_handler;
+		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
+		$this->logger                           = $logger;
 	}
 
 	/**
@@ -148,6 +159,8 @@ class CaptureCardPayment implements EndpointInterface {
 					$status         = $order->status ?? '';
 					$payment_source = isset( $order->payment_source->card ) ? 'card' : '';
 					if ( $id && $status && $payment_source ) {
+						$this->real_time_account_updater_helper->update_wc_token_from_paypal_response( $order, $token );
+
 						WC()->session->set(
 							'ppcp_saved_payment_card',
 							array(
@@ -191,11 +204,11 @@ class CaptureCardPayment implements EndpointInterface {
 			),
 			'payment_source' => array(
 				'card' => array(
-					'vault_id' => $vault_id,
+					'vault_id'          => $vault_id,
 					'stored_credential' => array(
 						'payment_initiator' => 'CUSTOMER',
-						'payment_type' => 'UNSCHEDULED',
-						'usage' => 'SUBSEQUENT'
+						'payment_type'      => 'UNSCHEDULED',
+						'usage'             => 'SUBSEQUENT',
 					),
 				),
 			),

@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -723,6 +724,9 @@ return array(
 			$container->get( 'save-payment-methods.wc-payment-tokens' )
 		);
 	},
+	'save-payment-methods.helpers.real-time-account-updater' => static function ( ContainerInterface $container ) : RealTimeAccountUpdaterHelper {
+		return new RealTimeAccountUpdaterHelper();
+	},
 	'save-payment-methods.endpoint.capture-card-payment' => static function( ContainerInterface $container ): CaptureCardPayment {
 		return new CaptureCardPayment(
 			$container->get( 'button.request-data' ),
@@ -732,6 +736,7 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'session.handler' ),
+			$container->get( 'save-payment-methods.helpers.real-time-account-updater' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
