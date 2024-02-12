@@ -1,17 +1,31 @@
 import AxoManager from "./AxoManager";
+import {loadPaypalScript} from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
 
-const bootstrap = () => {
-    const axo = new AxoManager();
+const bootstrap = (jQuery) => {
+    const axo = new AxoManager(jQuery);
 }
 
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
-        if (!typeof (PayPalCommerceGateway)) {
-            console.error('PayPal button could not be configured.');
-            return;
-        }
+(function ({
+   ppcpConfig,
+   jQuery
+}) {
 
-        bootstrap();
-    },
-);
+    document.addEventListener(
+        'DOMContentLoaded',
+        () => {
+            if (!typeof (PayPalCommerceGateway)) {
+                console.error('AXO could not be configured.');
+                return;
+            }
+
+            // Load PayPal
+            loadPaypalScript(ppcpConfig, () => {
+                bootstrap(jQuery);
+            });
+        },
+    );
+
+})({
+    ppcpConfig: window.PayPalCommerceGateway,
+    jQuery: window.jQuery
+});

@@ -123,14 +123,13 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		foreach ($cards as $card) {
 			$images[] = '<img
-				title="' . $card['title'] . '"
-				style="float: left;"
-				src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/' . $card['file'] . '"
 				class="ppcp-card-icon"
+				title="' . $card['title'] . '"
+				src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/' . $card['file'] . '"
 			> ';
 		}
 
-		return '<div style="padding: 4px 0 16px 25px;">' . implode( '', $images ) . '</div>';
+		return '<div class="axo-card-icons">' . implode( '', $images ) . '</div>';
 	}
 
 }

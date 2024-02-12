@@ -1,192 +1,210 @@
 import Fastlane from "./Entity/Fastlane";
+import MockData from "./Helper/MockData";
+import {log} from "./Helper/Debug";
+import {hide, show} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 
 class AxoManager {
 
-    constructor() {
+    constructor(jQuery) {
         this.initialized = false;
         this.fastlane = new Fastlane();
+        this.$ = jQuery;
 
+        this.elements = {
+            gatewayRadioButton: {
+                selector: '#payment_method_ppcp-axo-gateway',
+            },
+            defaultSubmitButton: {
+                selector: '#place_order',
+            },
+            paymentContainer: {
+                id: 'axo-payment-container',
+                selector: '#axo-payment-container',
+                className: 'axo-payment-container'
+            },
+            watermarkContainer: {
+                id: 'axo-watermark-container',
+                selector: '#axo-watermark-container',
+                className: 'axo-watermark-container'
+            },
+            submitButtonContainer: {
+                selector: '#axo-submit-button-container'
+            },
+            fieldBillingEmail: {
+                selector: '#billing_email_field'
+            },
+        }
 
-        jQuery(document).on('change', '#payment_method_ppcp-axo-gateway', (ev) => {
-            if(ev.target.checked) {
-                let emailRow = document.querySelector('#billing_email_field');
-                jQuery(emailRow.parentNode).prepend(emailRow);
-                emailRow.querySelector('input').focus();
+        this.styles = {
+            root: {
+                backgroundColorPrimary: '#ffffff'
+            }
+        }
 
-                this.init();
+        this.locale = 'en_us';
 
-                // show stuff
-                jQuery('#place_order').hide();
-                jQuery('#axo-submit-button-container').show();
-                jQuery('#payment-container').show();
+        // Listen to Gateway Radio button changes.
+        this.$(document).on('change', this.elements.gatewayRadioButton.selector, (ev) => {
+            if (ev.target.checked) {
+                this.showAxo();
             } else {
-                console.log('Checkbox is not checked.');
-
-                // hide stuff
-                jQuery('#place_order').show();
-                jQuery('#axo-submit-button-container').hide();
-                jQuery('#payment-container').hide();
+                this.hideAxo();
             }
         });
 
-        let gatewaysRenderedInterval = setInterval(() => {
-            console.log('not rendered');
-            if (document.querySelector('.wc_payment_methods')) {
-                console.log('YES rendered');
-                clearInterval(gatewaysRenderedInterval);
-                jQuery('#payment_method_ppcp-axo-gateway').trigger('change');
-            }
-        }, 100);
-
-        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
-            jQuery('#payment_method_ppcp-axo-gateway').trigger('change');
+        this.$(document).on('updated_checkout payment_method_selected', () => {
+            this.triggerGatewayChange();
         });
 
-        jQuery(document).on('click', '.ppcp-axo-order-button', () => {
-            try {
-
-                this.connectCardComponent.tokenize({
-                    name: {
-                        fullName: "John Doe"
-                    },
-                    billingAddress: {
-                        addressLine1: "2211 North 1st St",
-                        adminArea1: "San Jose",
-                        adminArea2: "CA",
-                        postalCode: "95131",
-                        countryCode: "US"
-                    }
-                }).then((response) => {
-
-                    // Send the nonce and previously captured device data to server to complete checkout
-                    this.log('nonce: ' + response.nonce);
-                    alert('nonce: ' + response.nonce);
-
-                    // fetch('submit.php', {
-                    //     method: 'POST',
-                    //     headers: {
-                    //         'Content-Type': 'application/json',
-                    //     },
-                    //     body: JSON.stringify({
-                    //         nonce: nonce
-                    //     }),
-                    // })
-                    //
-                    //     .then(response => {
-                    //         if (!response.ok) {
-                    //             throw new Error('Network response was not ok');
-                    //         }
-                    //         return response.json();
-                    //     })
-                    //     .then(data => {
-                    //         console.log('Submit response', data);
-                    //         this.log(JSON.stringify(data));
-                    //     })
-                    //     .catch(error => {
-                    //         console.error('There has been a problem with your fetch operation:', error);
-                    //     });
-
-                });
-
-            } catch (e) {
-                console.log('Error tokenizing.');
-            }
-
+        this.$(document).on('click', this.elements.submitButtonContainer.selector + ' button', () => {
+            this.onClickSubmitButton();
             return false;
         });
 
     }
 
-    init() {
+    showAxo() {
+        this.moveEmail();
+        this.init();
+
+        show(this.elements.watermarkContainer.selector);
+        show(this.elements.paymentContainer.selector);
+        show(this.elements.submitButtonContainer.selector);
+        hide(this.elements.defaultSubmitButton.selector);
+    }
+
+    hideAxo() {
+        hide(this.elements.watermarkContainer.selector);
+        hide(this.elements.paymentContainer.selector);
+        hide(this.elements.submitButtonContainer.selector);
+        show(this.elements.defaultSubmitButton.selector);
+    }
+
+    moveEmail() {
+        // Move email row to first place.
+        let emailRow = document.querySelector(this.elements.fieldBillingEmail.selector);
+        emailRow.parentNode.prepend(emailRow);
+        emailRow.querySelector('input').focus();
+    }
+
+    async init() {
         if (this.initialized) {
             return;
         }
         this.initialized = true;
 
-        this.initManager();
+        await this.connect();
+        this.insertDomElements();
+        this.renderWatermark();
+        this.watchEmail();
     }
 
-    async initManager() {
-        window.localStorage.setItem('axoEnv', 'sandbox');
-
-        const styles = {
-            root: {
-                backgroundColorPrimary: "#ffffff"
-            }
-        }
-
-        const locale = 'en_us';
+    async connect() {
+        window.localStorage.setItem('axoEnv', 'sandbox'); // TODO: check sandbox
 
         await this.fastlane.connect({
-            locale,
-            styles
+            locale: this.locale,
+            styles: this.styles
         });
 
         this.fastlane.setLocale('en_us');
+    }
 
-        this.emailInput = document.querySelector('#billing_email_field input');
-
-        jQuery(this.emailInput).after(`
-            <div id="watermark-container" style="max-width: 200px; margin-top: 10px;"></div>
+    insertDomElements() {
+        this.emailInput = document.querySelector(this.elements.fieldBillingEmail.selector + ' input');
+        this.emailInput.insertAdjacentHTML('afterend', `
+            <div class="${this.elements.watermarkContainer.className}" id="${this.elements.watermarkContainer.id}"></div>
         `);
 
-        jQuery('.payment_method_ppcp-axo-gateway').append(`
-            <div id="payment-container"></div>
+        const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
+        gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
+            <div class="${this.elements.paymentContainer.className}" id="${this.elements.paymentContainer.id}"></div>
         `);
+    }
 
+    triggerGatewayChange() {
+        this.$(this.elements.gatewayRadioButton.selector).trigger('change');
+    }
+
+    renderWatermark() {
         this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo: true
-        }).render('#watermark-container');
+        }).render(this.elements.watermarkContainer.selector);
+    }
 
-        this.emailInput.addEventListener("change", async ()=> {
-            this.emailUpdated();
+    watchEmail() {
+        this.emailInput = document.querySelector(this.elements.fieldBillingEmail.selector + ' input');
+        this.emailInput.addEventListener('change', async ()=> {
+            this.onChangeEmail();
         });
 
         if (this.emailInput.value) {
-            this.emailUpdated();
+            this.onChangeEmail();
         }
     }
 
-    async emailUpdated () {
-        this.log('Email changed: ' + this.emailInput.value);
+    async onChangeEmail () {
+        log('Email changed: ' + this.emailInput.value);
 
         if (!this.emailInput.checkValidity()) {
-            this.log('The email address is not valid.');
+            log('The email address is not valid.');
             return;
         }
 
         const { customerContextId } = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
         if (customerContextId) {
-            // Email is associated with a Connect profile or aPayPal member
-            // Authenticate the customer to get access to their profile
-            this.log('Email is associated with a Connect profile or a PayPal member');
+            // Email is associated with a Connect profile or a PayPal member.
+            // Authenticate the customer to get access to their profile.
+            log('Email is associated with a Connect profile or a PayPal member');
         } else {
             // No profile found with this email address.
             // This is a guest customer.
-            this.log('No profile found with this email address.');
-
-            const fields = {
-                phoneNumber: {
-                    prefill: "1234567890"
-                },
-
-                cardholderName: {} // optionally pass this to show the card holder name
-            };
-
-            jQuery("#payment-container").css({
-                'padding': '1rem 0',
-                'background-color': '#ffffff',
-            });
+            log('No profile found with this email address.');
 
             this.connectCardComponent = await this.fastlane
-                .FastlaneCardComponent({fields})
-                .render("#payment-container");
+                .FastlaneCardComponent(MockData.cardComponent())
+                .render(this.elements.paymentContainer.selector);
         }
     }
 
-    log(message) {
-        console.log('[AXO] ', message);
+    onClickSubmitButton() {
+        try {
+            this.connectCardComponent.tokenize(MockData.cardComponentTokenize()).then((response) => {
+                this.submit(response.nonce);
+            });
+        } catch (e) {
+            log('Error tokenizing.');
+        }
+    }
+
+    submit(nonce) {
+        // Send the nonce and previously captured device data to server to complete checkout
+        log('nonce: ' + nonce);
+        alert('nonce: ' + nonce);
+
+        // fetch('submit.php', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({
+        //         nonce: nonce
+        //     }),
+        // })
+        //     .then(response => {
+        //         if (!response.ok) {
+        //             throw new Error('Network response was not ok');
+        //         }
+        //         return response.json();
+        //     })
+        //     .then(data => {
+        //         log('Submit response', data);
+        //         log(JSON.stringify(data));
+        //     })
+        //     .catch(error => {
+        //         console.error('There has been a problem with your fetch operation:', error);
+        //     });
     }
 
 }
