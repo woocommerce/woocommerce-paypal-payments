@@ -25,6 +25,13 @@ class RealTimeAccountUpdaterHelper {
 	 * @return void
 	 */
 	public function update_wc_token_from_paypal_response( stdClass $order, WC_Payment_Token $token ): void {
+		if (
+			$token->get_type() !== 'CC'
+			|| ! in_array( $token->get_card_type(), array( 'VISA', 'MASTERCARD' ), true )
+		) {
+			return;
+		}
+
 		$expiry    = $order->payment_source->card->expiry ?? '';
 		$wc_expiry = $token->get_expiry_month() . '-' . $token->get_expiry_year();
 
