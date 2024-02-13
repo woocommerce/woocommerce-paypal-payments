@@ -63,6 +63,7 @@ return array(
 			'pay_later_home_message_flex_color',
 			'pay_later_home_message_flex_ratio',
 			'pay_later_home_message_preview',
+			'pay_later_messaging_enabled',
 		);
 		foreach ( $old_fields as $old_field ) {
 			unset( $fields[ $old_field ] );

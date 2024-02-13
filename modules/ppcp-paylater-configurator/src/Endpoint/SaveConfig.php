@@ -96,6 +96,7 @@ class SaveConfig {
 	 */
 	private function save_config( array $config ): void {
 		$this->settings->set( 'pay_later_enable_styling_per_messaging_location', true );
+		$this->settings->set( 'pay_later_messaging_enabled', true );
 
 		$enabled_locations = array();
 
