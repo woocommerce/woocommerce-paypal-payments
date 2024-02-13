@@ -105,15 +105,16 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 					'ppcp-paylater-configurator',
 					'PcpPayLaterConfigurator',
 					array(
-						'ajax'             => array(
+						'ajax'                   => array(
 							'save_config' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( SaveConfig::ENDPOINT ),
 								'nonce'    => wp_create_nonce( SaveConfig::nonce() ),
 							),
 						),
-						'config'           => $config_factory->from_settings( $settings ),
-						'merchantClientId' => $settings->get( 'client_id' ),
-						'partnerClientId'  => $c->get( 'api.partner_merchant_id' ),
+						'config'                 => $config_factory->from_settings( $settings ),
+						'merchantClientId'       => $settings->get( 'client_id' ),
+						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
+						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
 					)
 				);
 			}
