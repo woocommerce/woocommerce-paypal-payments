@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Gateway;
 
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * Class AXOGateway.
@@ -19,10 +20,22 @@ class AxoGateway extends WC_Payment_Gateway {
 	const ID = 'ppcp-axo-gateway';
 
 	/**
+	 * The settings.
+	 *
+	 * @var ContainerInterface
+	 */
+	protected $config;
+
+	/**
 	 * AXOGateway constructor.
+	 *
+	 * @param ContainerInterface       $config The settings.
 	 */
 	public function __construct(
+		ContainerInterface $config
 	) {
+		$this->config = $config;
+
 		$this->id = self::ID;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
@@ -51,7 +64,8 @@ class AxoGateway extends WC_Payment_Gateway {
 //		$this->icon                     = esc_url( $this->module_url ) . 'assets/images/axo.svg'; // TODO
 //		$this->environment              = $environment;
 
-		$this->update_option( 'enabled', 'yes' ); // TODO : depend on settings
+		$is_axo_enabled = $this->config->has( 'axo_enabled' ) && $this->config->get( 'axo_enabled' );
+		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
 	}
 
 	/**

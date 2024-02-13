@@ -36,8 +36,12 @@ class AxoModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_payment_gateways',
-			function ( $methods ): array {
-				$methods[] = new AxoGateway();
+			function ( $methods ) use ( $c ): array {
+				$settings = $c->get( 'wcgateway.settings' );
+
+				$methods[] = new AxoGateway(
+					$settings
+				);
 				return $methods;
 			},
 			1,
