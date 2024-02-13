@@ -282,13 +282,16 @@ class RenewalHandler {
 			$this->handle_paypal_order( $wc_order, $order );
 
 			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-				$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+				$card_payment_source = $order->payment_source();
+				if ( $card_payment_source ) {
+					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+					$last_token  = end( $wc_tokens );
+					$expiry      = $card_payment_source->properties()->expiry ?? '';
+					$last_digits = $card_payment_source->properties()->last_digits ?? '';
 
-				$last_token  = end( $wc_tokens );
-				$expiry      = $order->payment_source()->properties()->expiry ?? '';
-				$last_digits = $order->payment_source()->properties()->last_digits ?? '';
-				if ( $last_token && $expiry && $last_digits ) {
-					$this->real_time_account_updater_helper->update_wc_card_token( $expiry, $last_digits, $last_token );
+					if ( $last_token && $expiry && $last_digits ) {
+						$this->real_time_account_updater_helper->update_wc_card_token( $expiry, $last_digits, $last_token );
+					}
 				}
 			}
 
