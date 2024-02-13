@@ -453,24 +453,19 @@ class RenewalHandler {
 			'vault_id' => $token,
 		);
 
-		if (
-			$this->settings->has( '3d_secure_contingency' )
-			&& ( $this->settings->get( '3d_secure_contingency' ) === 'SCA_ALWAYS' || $this->settings->get( '3d_secure_contingency' ) === 'SCA_WHEN_REQUIRED' )
-		) {
-			$stored_credentials = array(
-				'payment_initiator' => 'MERCHANT',
-				'payment_type'      => 'RECURRING',
-				'usage'             => 'SUBSEQUENT',
-			);
+		$stored_credentials = array(
+			'payment_initiator' => 'MERCHANT',
+			'payment_type'      => 'RECURRING',
+			'usage'             => 'SUBSEQUENT',
+		);
 
-			$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
-			foreach ( $subscriptions as $post_id => $subscription ) {
-				$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
-				if ( $previous_transaction_reference ) {
-					$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
-					$properties['stored_credentials']                     = $stored_credentials;
-					break;
-				}
+		$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
+		foreach ( $subscriptions as $post_id => $subscription ) {
+			$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
+			if ( $previous_transaction_reference ) {
+				$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
+				$properties['stored_credentials']                     = $stored_credentials;
+				break;
 			}
 		}
 
