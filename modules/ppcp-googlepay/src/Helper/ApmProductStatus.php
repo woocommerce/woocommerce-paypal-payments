@@ -100,6 +100,11 @@ class ApmProductStatus {
 			return false;
 		}
 
+		$status_override = apply_filters( 'woocommerce_paypal_payments_google_pay_product_status', null );
+		if ( null !== $status_override ) {
+			return $status_override;
+		}
+
 		// If status was already checked on this request return the same result.
 		if ( null !== $this->current_status ) {
 			return $this->current_status;
