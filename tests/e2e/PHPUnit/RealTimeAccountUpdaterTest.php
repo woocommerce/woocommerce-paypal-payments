@@ -22,19 +22,9 @@ class RealTimeAccountUpdaterTest extends TestCase
 
 	public function testUpdateCard()
 	{
-		$response = (object)[
-			'payment_source' => (object)[
-				'card' => (object)[
-					'last_digits' => '0004',
-					'expiry' => '2042-02',
-					'brand' => 'VISA',
-				]
-			]
-		];
-
 		$token = $this->createToken();
 
-		(new RealTimeAccountUpdaterHelper())->update_wc_token_from_paypal_response($response, $token);
+		(new RealTimeAccountUpdaterHelper())->update_wc_card_token('2042-02', '0004', $token);
 
 		$this->assertTrue($token->get_expiry_year() === '2042');
 		$this->assertTrue($token->get_expiry_month() === '02');
@@ -43,19 +33,9 @@ class RealTimeAccountUpdaterTest extends TestCase
 
 	public function testUpdateOnlyAllowedCards()
 	{
-		$response = (object)[
-			'payment_source' => (object)[
-				'card' => (object)[
-					'last_digits' => '0004',
-					'expiry' => '2042-02',
-					'brand' => 'AMEX',
-				]
-			]
-		];
-
 		$token = $this->createToken('AMEX');
 
-		(new RealTimeAccountUpdaterHelper())->update_wc_token_from_paypal_response($response, $token);
+		(new RealTimeAccountUpdaterHelper())->update_wc_card_token('2042-02', '0004', $token);
 
 		$this->assertTrue($token->get_expiry_year() === '2025');
 		$this->assertTrue($token->get_expiry_month() === '01');

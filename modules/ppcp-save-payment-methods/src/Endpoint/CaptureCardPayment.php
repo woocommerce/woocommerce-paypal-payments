@@ -158,8 +158,14 @@ class CaptureCardPayment implements EndpointInterface {
 					$id             = $order->id ?? '';
 					$status         = $order->status ?? '';
 					$payment_source = isset( $order->payment_source->card ) ? 'card' : '';
-					if ( $id && $status && $payment_source ) {
-						$this->real_time_account_updater_helper->update_wc_token_from_paypal_response( $order, $token );
+					$expiry         = $order->payment_source->card->expiry ?? '';
+					$last_digits    = $order->payment_source->card->last_digits ?? '';
+					if ( $id && $status && $payment_source && $expiry && $last_digits ) {
+						$this->real_time_account_updater_helper->update_wc_card_token(
+							$expiry,
+							$last_digits,
+							$token
+						);
 
 						WC()->session->set(
 							'ppcp_saved_payment_card',

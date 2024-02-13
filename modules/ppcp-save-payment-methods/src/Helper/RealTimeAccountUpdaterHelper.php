@@ -18,13 +18,12 @@ use WC_Payment_Token;
 class RealTimeAccountUpdaterHelper {
 
 	/**
-	 * Updates WC Payment Token from PayPal response.
-	 *
-	 * @param stdClass         $order PayPal order response data.
+	 * @param string           $expiry Card expìry.
+	 * @param string           $last_digits Card last 4 digits.
 	 * @param WC_Payment_Token $token WC Payment Token.
 	 * @return void
 	 */
-	public function update_wc_token_from_paypal_response( stdClass $order, WC_Payment_Token $token ): void {
+	public function update_wc_card_token( string $expiry, string $last_digits, WC_Payment_Token $token ): void {
 		if (
 			$token->get_type() !== 'CC'
 			|| ! in_array( $token->get_card_type(), array( 'VISA', 'MASTERCARD' ), true )
@@ -32,9 +31,7 @@ class RealTimeAccountUpdaterHelper {
 			return;
 		}
 
-		$expiry    = $order->payment_source->card->expiry ?? '';
 		$wc_expiry = $token->get_expiry_month() . '-' . $token->get_expiry_year();
-
 		if ( $expiry !== $wc_expiry ) {
 			$expiry_split = explode( '-', $expiry );
 			$token->set_expiry_year( $expiry_split[0] );
@@ -42,7 +39,6 @@ class RealTimeAccountUpdaterHelper {
 			$token->save();
 		}
 
-		$last_digits    = $order->payment_source->card->last_digits ?? '';
 		$wc_last_digits = $token->get_last4();
 		if ( $last_digits !== $wc_last_digits ) {
 			$token->set_last4( $last_digits );
