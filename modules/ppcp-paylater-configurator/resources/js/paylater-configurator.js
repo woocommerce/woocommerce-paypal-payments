@@ -1,24 +1,20 @@
 document.addEventListener( 'DOMContentLoaded', () => {
     const form = document.querySelector('#mainform');
     const table = form.querySelector('.form-table');
+    const saveChangesButton = form.querySelector('.woocommerce-save-button');
+    const publishButtonClassName = PcpPayLaterConfigurator.publishButtonClassName;
 
     table.insertAdjacentHTML('afterend', '<div id="messaging-configurator"></div>');
 
 
-    window.addEventListener('load', () => {
-        const form = document.querySelector('#mainform');
-        const messagingConfigurator = form.querySelector('#messaging-configurator');
-        const publishButton = messagingConfigurator.querySelector('#configurator-publishButton');
+    saveChangesButton.addEventListener('click', () => {
+        form.querySelector('.' + publishButtonClassName).click();
 
-        if (publishButton) {
-            publishButton.style.display = 'none';
-        }
-
-        form.addEventListener('submit', () => {
-            publishButton.click();
-        });
+        // Delay the page refresh by a few milliseconds to ensure changes take effect
+        setTimeout(() => {
+            location.reload();
+        }, 1000);
     });
-
 
     merchantConfigurators.Messaging({
         config: PcpPayLaterConfigurator.config,
@@ -27,7 +23,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
         placements: ['cart', 'checkout', 'product', 'category', 'homepage', 'custom_placement'],
-        onSave: data => {
+        styleOverrides: {
+            button: publishButtonClassName,
+        },
+    onSave: data => {
             fetch(PcpPayLaterConfigurator.ajax.save_config.endpoint, {
                 method: 'POST',
                 headers: {
