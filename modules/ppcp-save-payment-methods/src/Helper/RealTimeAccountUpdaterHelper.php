@@ -18,7 +18,9 @@ use WC_Payment_Token_CC;
 class RealTimeAccountUpdaterHelper {
 
 	/**
-	 * @param string           $expiry Card expìry.
+	 * Updates WC card token with the given data.
+	 *
+	 * @param string           $expiry Card expiry.
 	 * @param string           $last_digits Card last 4 digits.
 	 * @param WC_Payment_Token $token WC Payment Token.
 	 * @return void
