@@ -25,6 +25,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
         placements: ['cart', 'checkout', 'product', 'category', 'homepage', 'custom_placement'],
         styleOverrides: {
             button: publishButtonClassName,
+            header: PcpPayLaterConfigurator.headerClassName,
+            subheader: PcpPayLaterConfigurator.subheaderClassName
         },
     onSave: data => {
             fetch(PcpPayLaterConfigurator.ajax.save_config.endpoint, {

@@ -115,6 +115,8 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 						'merchantClientId'       => $settings->get( 'client_id' ),
 						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
 						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
+						'headerClassName'        => 'ppcp-paylater-configurator-header',
+						'subheaderClassName'     => 'ppcp-paylater-configurator-subheader',
 					)
 				);
 			}
