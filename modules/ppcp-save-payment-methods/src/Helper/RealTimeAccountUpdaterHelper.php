@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Helper;
 
-use stdClass;
 use WC_Payment_Token;
+use WC_Payment_Token_CC;
 
 /**
  * Class RealTimeAccountUpdaterHelper
@@ -25,7 +25,8 @@ class RealTimeAccountUpdaterHelper {
 	 */
 	public function update_wc_card_token( string $expiry, string $last_digits, WC_Payment_Token $token ): void {
 		if (
-			$token->get_type() !== 'CC'
+			! is_a( $token, WC_Payment_Token_CC::class )
+			|| $token->get_type() !== 'CC'
 			|| ! in_array( $token->get_card_type(), array( 'VISA', 'MASTERCARD' ), true )
 		) {
 			return;
