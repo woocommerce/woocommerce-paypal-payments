@@ -84,6 +84,23 @@ return array(
 					'requirements' => array(),
 					'gateway'      => 'paypal',
 				),
+				'axo_email_widget'               => array(
+					'title'        => __( 'Email Widget', 'woocommerce-paypal-payments' ),
+					'type'         => 'select',
+					'desc_tip'     => true,
+					'description'  => __(
+						'This controls if the Hosted Email Widget should be used.',
+						'woocommerce-paypal-payments'
+					),
+					'classes'      => array( 'ppcp-field-indent' ),
+					'class'        => array(),
+					'input_class'  => array( 'wc-enhanced-select' ),
+					'default'      => 'pay',
+					'options'      => PropertiesDictionary::email_widget_options(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
 				'axo_address_widget'             => array(
 					'title'        => __( 'Address Widget', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
@@ -101,7 +118,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'axo_payment_widget'            => array(
+				'axo_payment_widget'             => array(
 					'title'        => __( 'Payment Widget', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,

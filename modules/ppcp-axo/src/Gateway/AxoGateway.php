@@ -24,24 +24,30 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @var ContainerInterface
 	 */
-	protected $config;
+	protected $ppcp_settings;
 
 	/**
 	 * AXOGateway constructor.
 	 *
-	 * @param ContainerInterface       $config The settings.
+	 * @param ContainerInterface $ppcp_settings The settings.
 	 */
 	public function __construct(
-		ContainerInterface $config
+		ContainerInterface $ppcp_settings
 	) {
-		$this->config = $config;
+		$this->ppcp_settings = $ppcp_settings;
 
 		$this->id = self::ID;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title', $this->method_title );
+		$is_axo_enabled = $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' );
+		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
+
+		$this->title = $this->ppcp_settings->has( 'axo_gateway_title' )
+			? $this->ppcp_settings->get( 'axo_gateway_title' )
+			: $this->get_option( 'title', $this->method_title );
+
 		$this->description = $this->get_option( 'description', __( '', 'woocommerce-paypal-payments' ) );
 
 		$this->init_form_fields();
@@ -63,9 +69,6 @@ class AxoGateway extends WC_Payment_Gateway {
 
 //		$this->icon                     = esc_url( $this->module_url ) . 'assets/images/axo.svg'; // TODO
 //		$this->environment              = $environment;
-
-		$is_axo_enabled = $this->config->has( 'axo_enabled' ) && $this->config->get( 'axo_enabled' );
-		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
 	}
 
 	/**
@@ -117,7 +120,7 @@ class AxoGateway extends WC_Payment_Gateway {
 //	 */
 //	private function is_enabled(): bool {
 //		return true;
-//		//return $this->config->has( 'axo_enabled' ) && $this->config->get( 'axo_enabled' ); // TODO
+//		//return $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' ); // TODO
 //	}
 
 	/**

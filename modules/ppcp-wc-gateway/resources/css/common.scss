@@ -11,9 +11,21 @@
 	opacity: 0.5;
 }
 
-.ppcp-field-indent {
-	th {
-		padding-left: 20px;
+.ppcp-settings-field {
+	border-left: 1px solid transparent;
+	border-right: 1px solid transparent;
+
+	&.ppcp-field-indent {
+		background-color: #f9f9f9;
+		border: 1px solid #c3c4c7;
+
+		th {
+			padding-left: 20px;
+		}
+
+		& + .ppcp-field-indent {
+			border-top: 2px solid transparent;
+		}
 	}
 }
 
@@ -37,14 +49,5 @@
 	.success {
 		color: green;
 		font-weight: bold;
-	}
-}
-
-.ppcp-field-indent {
-	background-color: #f9f9f9;
-	border: 1px solid #c3c4c7;
-
-	& + .ppcp-field-indent {
-		border-top: 2px solid transparent;
 	}
 }

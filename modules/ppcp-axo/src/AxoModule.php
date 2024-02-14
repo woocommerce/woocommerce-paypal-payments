@@ -9,7 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
-use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -37,11 +38,7 @@ class AxoModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_payment_gateways',
 			function ( $methods ) use ( $c ): array {
-				$settings = $c->get( 'wcgateway.settings' );
-
-				$methods[] = new AxoGateway(
-					$settings
-				);
+				$methods[] = $c->get('axo.gateway');
 				return $methods;
 			},
 			1,
@@ -69,36 +66,15 @@ class AxoModule implements ModuleInterface {
 				add_action(
 					'wp_enqueue_scripts',
 					static function () use ( $c ) {
-						$module_url = $c->get( 'axo.url' );
-						$version = '1';
+						$manager = $c->get( 'axo.manager' );
+						assert( $manager instanceof AxoManager );
 
-						// Register styles.
-						wp_register_style(
-							'wc-ppcp-axo',
-							untrailingslashit( $module_url ) . '/assets/css/styles.css',
-							array(),
-							$version
-						);
-						wp_enqueue_style( 'wc-ppcp-axo' );
+						$smart_button = $c->get( 'button.smart-button' );
+						assert( $smart_button instanceof SmartButtonInterface );
 
-						// Register scripts.
-						wp_register_script(
-							'wc-ppcp-axo',
-							untrailingslashit( $module_url ) . '/assets/js/boot.js',
-							array(),
-							$version,
-							true
-						);
-						wp_enqueue_script( 'wc-ppcp-axo' );
-
-						wp_localize_script(
-							'wc-ppcp-axo',
-							'wc_ppcp_axo',
-							array(
-								// TODO
-							)
-						);
-
+						if ( $smart_button->should_load_ppcp_script() ) {
+							$manager->enqueue();
+						}
 					}
 				);
 
