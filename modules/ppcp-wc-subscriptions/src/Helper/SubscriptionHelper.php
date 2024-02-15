@@ -16,29 +16,12 @@ use WC_Product_Subscription_Variation;
 use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class SubscriptionHelper
  */
 class SubscriptionHelper {
-
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
-
-	/**
-	 * SubscriptionHelper constructor.
-	 *
-	 * @param Settings $settings The settings.
-	 */
-	public function __construct( Settings $settings ) {
-		$this->settings = $settings;
-	}
 
 	/**
 	 * Whether the current product is a subscription.
@@ -308,7 +291,7 @@ class SubscriptionHelper {
 	 * @return string
 	 */
 	public function previous_transaction( WC_Subscription $subscription ): string {
-		$orders = $subscription->get_related_orders( 'all', array( 'parent', 'renewal' ) );
+		$orders = $subscription->get_related_orders( 'ids', array( 'parent', 'renewal' ) );
 		if ( ! $orders ) {
 			return '';
 		}

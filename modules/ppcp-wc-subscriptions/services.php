@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
 	'wc-subscriptions.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
-		return new SubscriptionHelper( $container->get( 'wcgateway.settings' ) );
+		return new SubscriptionHelper();
 	},
 	'wc-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
