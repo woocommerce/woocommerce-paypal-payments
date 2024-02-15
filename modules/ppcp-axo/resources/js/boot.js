@@ -1,14 +1,15 @@
 import AxoManager from "./AxoManager";
 import {loadPaypalScript} from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
 
-const bootstrap = (jQuery) => {
-    const axo = new AxoManager(jQuery);
-}
-
 (function ({
+   axoConfig,
    ppcpConfig,
    jQuery
 }) {
+
+    const bootstrap = () => {
+        const axo = new AxoManager(axoConfig, ppcpConfig);
+    }
 
     document.addEventListener(
         'DOMContentLoaded',
@@ -20,12 +21,13 @@ const bootstrap = (jQuery) => {
 
             // Load PayPal
             loadPaypalScript(ppcpConfig, () => {
-                bootstrap(jQuery);
+                bootstrap();
             });
         },
     );
 
 })({
+    axoConfig: window.wc_ppcp_axo,
     ppcpConfig: window.PayPalCommerceGateway,
     jQuery: window.jQuery
 });

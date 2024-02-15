@@ -109,7 +109,7 @@ class AxoModule implements ModuleInterface {
 	 * Renders the HTML for the AXO submit button.
 	 */
 	public function axo_button_renderer() {
-		$id = 'axo-submit-button-container';
+		$id = 'ppcp-axo-submit-button-container';
 
 		/**
 		 * The WC filter returning the WC order button text.

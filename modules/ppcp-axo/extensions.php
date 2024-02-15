@@ -58,6 +58,7 @@ return array(
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_gateway_title' )
+									->action_visible( 'axo_email_widget' )
 									->action_visible( 'axo_address_widget' )
 									->action_visible( 'axo_payment_widget' )
 									->to_array(),

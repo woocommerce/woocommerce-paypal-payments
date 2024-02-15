@@ -19,10 +19,10 @@ class MockData {
             },
             billingAddress: {
                 addressLine1: "2211 North 1st St",
-                    adminArea1: "San Jose",
-                    adminArea2: "CA",
-                    postalCode: "95131",
-                    countryCode: "US"
+                adminArea1: "San Jose",
+                adminArea2: "CA",
+                postalCode: "95131",
+                countryCode: "US"
             }
         }
     }

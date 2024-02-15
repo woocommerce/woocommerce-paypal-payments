@@ -5,7 +5,10 @@ import {hide, show} from '../../../ppcp-button/resources/js/modules/Helper/Hidin
 
 class AxoManager {
 
-    constructor(jQuery) {
+    constructor(axoConfig, ppcpConfig) {
+        this.axoConfig = axoConfig;
+        this.ppcpConfig = ppcpConfig;
+
         this.initialized = false;
         this.fastlane = new Fastlane();
         this.$ = jQuery;
@@ -18,20 +21,25 @@ class AxoManager {
                 selector: '#place_order',
             },
             paymentContainer: {
-                id: 'axo-payment-container',
-                selector: '#axo-payment-container',
-                className: 'axo-payment-container'
+                id: 'ppcp-axo-payment-container',
+                selector: '#ppcp-axo-payment-container',
+                className: 'ppcp-axo-payment-container'
             },
             watermarkContainer: {
-                id: 'axo-watermark-container',
-                selector: '#axo-watermark-container',
-                className: 'axo-watermark-container'
+                id: 'ppcp-axo-watermark-container',
+                selector: '#ppcp-axo-watermark-container',
+                className: 'ppcp-axo-watermark-container'
             },
-            submitButtonContainer: {
-                selector: '#axo-submit-button-container'
+            emailWidgetContainer: {
+                id: 'ppcp-axo-email-widget',
+                selector: '#ppcp-axo-email-widget',
+                className: 'ppcp-axo-email-widget'
             },
             fieldBillingEmail: {
                 selector: '#billing_email_field'
+            },
+            submitButtonContainer: {
+                selector: '#ppcp-axo-submit-button-container'
             },
         }
 
@@ -64,27 +72,52 @@ class AxoManager {
     }
 
     showAxo() {
-        this.moveEmail();
+        this.initEmail();
         this.init();
 
+        show(this.elements.emailWidgetContainer.selector);
         show(this.elements.watermarkContainer.selector);
         show(this.elements.paymentContainer.selector);
         show(this.elements.submitButtonContainer.selector);
         hide(this.elements.defaultSubmitButton.selector);
+
+        if (this.useEmailWidget()) {
+            hide(this.elements.fieldBillingEmail.selector);
+        }
     }
 
     hideAxo() {
+        hide(this.elements.emailWidgetContainer.selector);
         hide(this.elements.watermarkContainer.selector);
         hide(this.elements.paymentContainer.selector);
         hide(this.elements.submitButtonContainer.selector);
         show(this.elements.defaultSubmitButton.selector);
+
+        if (this.useEmailWidget()) {
+            show(this.elements.fieldBillingEmail.selector);
+        }
     }
 
-    moveEmail() {
-        // Move email row to first place.
+    initEmail() {
         let emailRow = document.querySelector(this.elements.fieldBillingEmail.selector);
-        emailRow.parentNode.prepend(emailRow);
-        emailRow.querySelector('input').focus();
+
+        if (this.useEmailWidget()) {
+
+            // Display email widget.
+            if (!document.querySelector(this.elements.emailWidgetContainer.selector)) {
+                emailRow.parentNode.insertAdjacentHTML('afterbegin', `
+                    <div id="${this.elements.emailWidgetContainer.id}" class="${this.elements.emailWidgetContainer.className}">
+                    --- EMAIL WIDGET PLACEHOLDER ---
+                    </div>
+                `);
+            }
+
+        } else {
+
+            // Move email row to first place.
+            emailRow.parentNode.prepend(emailRow);
+            emailRow.querySelector('input').focus();
+        }
     }
 
     async init() {
@@ -118,7 +151,7 @@ class AxoManager {
 
         const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
         gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
-            <div class="${this.elements.paymentContainer.className}" id="${this.elements.paymentContainer.id}"></div>
+            <div id="${this.elements.paymentContainer.id}" class="${this.elements.paymentContainer.className} hidden"></div>
         `);
     }
 
@@ -133,13 +166,22 @@ class AxoManager {
     }
 
     watchEmail() {
-        this.emailInput = document.querySelector(this.elements.fieldBillingEmail.selector + ' input');
-        this.emailInput.addEventListener('change', async ()=> {
-            this.onChangeEmail();
-        });
 
-        if (this.emailInput.value) {
-            this.onChangeEmail();
+        if (this.useEmailWidget()) {
+
+            // TODO
+
+        } else {
+
+            this.emailInput = document.querySelector(this.elements.fieldBillingEmail.selector + ' input');
+            this.emailInput.addEventListener('change', async ()=> {
+                this.onChangeEmail();
+            });
+
+            if (this.emailInput.value) {
+                this.onChangeEmail();
+            }
+
         }
     }
 
@@ -161,6 +203,8 @@ class AxoManager {
             // No profile found with this email address.
             // This is a guest customer.
             log('No profile found with this email address.');
+
+            document.querySelector(this.elements.paymentContainer.selector)?.classList.remove('hidden');
 
             this.connectCardComponent = await this.fastlane
                 .FastlaneCardComponent(MockData.cardComponent())
@@ -205,6 +249,10 @@ class AxoManager {
         //     .catch(error => {
         //         console.error('There has been a problem with your fetch operation:', error);
         //     });
+    }
+
+    useEmailWidget() {
+        return this.axoConfig?.widgets?.email === 'use_widget';
     }
 
 }

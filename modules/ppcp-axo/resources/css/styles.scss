@@ -1,5 +1,5 @@
 
-.axo-card-icons {
+.ppcp-axo-card-icons {
 	padding: 4px 0 16px 25px;
 
 	.ppcp-card-icon {
@@ -7,12 +7,26 @@
 	}
 }
 
-.axo-watermark-container {
+.ppcp-axo-watermark-container {
 	max-width: 200px;
 	margin-top: 10px;
 }
 
-.axo-payment-container {
+.ppcp-axo-payment-container {
 	padding: 1rem 0;
 	background-color: #ffffff;
+
+	&.hidden {
+		display: none;
+	}
+}
+
+.ppcp-axo-email-widget {
+	border: 1px solid #cccccc;
+	background-color: #eeeeee;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	text-align: center;
+	font-weight: bold;
+	color: #000000;
 }
