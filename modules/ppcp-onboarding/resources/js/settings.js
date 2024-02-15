@@ -368,7 +368,7 @@ document.addEventListener(
 
                 const description = document.getElementById('field-vault_enabled')?.getElementsByClassName('description')[0];
                 if (description) {
-                    description.innerHTML = PayPalCommerceGatewaySettings.vaulting_must_enable_advance_wallet_message;
+                    description.innerHTML = PayPalCommerceGatewaySettings.vaulting_must_enable_advanced_wallet_message;
                 }
             }
         }
