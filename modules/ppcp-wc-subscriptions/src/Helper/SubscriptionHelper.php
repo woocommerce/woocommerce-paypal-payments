@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -298,5 +299,36 @@ class SubscriptionHelper {
 			'payorder' => is_wc_endpoint_url( 'order-pay' ) && $this->order_pay_contains_subscription(),
 			'cart'     => $this->cart_contains_subscription(),
 		);
+	}
+
+	/**
+	 * Returns previous order transaction from the given subscription.
+	 *
+	 * @param WC_Subscription $subscription WooCommerce Subscription.
+	 * @return string
+	 */
+	public function previous_transaction( WC_Subscription $subscription ): string {
+		$orders = $subscription->get_related_orders( 'all', array( 'parent', 'renewal' ) );
+		if ( ! $orders ) {
+			return '';
+		}
+
+		// Sort orders by key descending.
+		krsort( $orders );
+
+		// Removes first order (the current processing order).
+		unset( $orders[ array_key_first( $orders ) ] );
+
+		foreach ( $orders as $order_id ) {
+			$order = wc_get_order( $order_id );
+			if ( in_array( $order->get_status(), array( 'processing', 'completed' ), true ) ) {
+				$transaction_id = $order->get_transaction_id() ?? '';
+				if ( $transaction_id ) {
+					return $transaction_id;
+				}
+			}
+		}
+
+		return '';
 	}
 }

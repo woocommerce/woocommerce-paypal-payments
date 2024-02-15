@@ -37,6 +37,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class RenewalHandler
@@ -125,6 +126,13 @@ class RenewalHandler {
 	private $real_time_account_updater_helper;
 
 	/**
+	 * Subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface              $logger The logger.
@@ -138,6 +146,7 @@ class RenewalHandler {
 	 * @param AuthorizedPaymentsProcessor  $authorized_payments_processor The Authorized Payments Processor.
 	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
+	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -150,7 +159,8 @@ class RenewalHandler {
 		Settings $settings,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		FundingSourceRenderer $funding_source_renderer,
-		RealTimeAccountUpdaterHelper $real_time_account_updater_helper
+		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
+		SubscriptionHelper $subscription_helper
 	) {
 
 		$this->logger                           = $logger;
@@ -164,6 +174,7 @@ class RenewalHandler {
 		$this->authorized_payments_processor    = $authorized_payments_processor;
 		$this->funding_source_renderer          = $funding_source_renderer;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
+		$this->subscription_helper              = $subscription_helper;
 	}
 
 	/**
@@ -451,12 +462,6 @@ class RenewalHandler {
 			if ( $payment_source instanceof PaymentSource ) {
 				$this->update_payment_source( $payment_source, $wc_order );
 			}
-
-			$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id(), array( 'order_type' => 'any' ) );
-			foreach ( $subscriptions as $id => $subscription ) {
-				$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
-				$subscription->save();
-			}
 		}
 
 		$this->handle_new_order_status( $order, $wc_order );
@@ -479,19 +484,17 @@ class RenewalHandler {
 			'vault_id' => $token,
 		);
 
-		$stored_credentials = array(
-			'payment_initiator' => 'MERCHANT',
-			'payment_type'      => 'RECURRING',
-			'usage'             => 'SUBSEQUENT',
-		);
-
 		$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
-		foreach ( $subscriptions as $post_id => $subscription ) {
-			$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
-			if ( $previous_transaction_reference ) {
-				$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
-				$properties['stored_credentials']                     = $stored_credentials;
-				break;
+		$subscription  = end( $subscriptions );
+		if ( $subscription ) {
+			$transaction = $this->subscription_helper->previous_transaction( $subscription );
+			if ( $transaction ) {
+				$properties['stored_credentials'] = array(
+					'payment_initiator'              => 'MERCHANT',
+					'payment_type'                   => 'RECURRING',
+					'usage'                          => 'SUBSEQUENT',
+					'previous_transaction_reference' => $transaction,
+				);
 			}
 		}
 
