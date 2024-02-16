@@ -21,4 +21,14 @@ trait ItemTrait {
 		$description = strip_shortcodes( wp_strip_all_tags( $description ) );
 		return substr( $description, 0, 127 ) ?: '';
 	}
+
+	/**
+	 * Prepares the sku for sending to PayPal.
+	 *
+	 * @param string $sku Item sku.
+	 * @return string
+	 */
+	protected function prepare_sku( string $sku ): string {
+		return substr( wp_strip_all_tags( $sku ), 0, 127 ) ?: '';
+	}
 }
