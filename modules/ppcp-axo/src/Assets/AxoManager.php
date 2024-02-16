@@ -163,4 +163,37 @@ class AxoManager {
 		);
 	}
 
+	/**
+	 * Returns the action name that PayPal AXO button will use for rendering on the checkout page.
+	 *
+	 * @return string
+	 */
+	public function checkout_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal AXO button will use for rendering on the checkout page.
+		 */
+		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_axo_renderer_hook', 'woocommerce_review_order_after_submit' );
+	}
+
+	/**
+	 * Renders the HTML for the AXO submit button.
+	 */
+	public function render_checkout_button() {
+		$id = 'ppcp-axo-submit-button-container';
+
+		/**
+		 * The WC filter returning the WC order button text.
+		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
+		 */
+		$label = apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) );
+
+		printf(
+			'<div id="%1$s" style="display: none;">
+				<button type="submit" class="button alt ppcp-axo-order-button">%2$s</button>
+			</div>',
+			esc_attr( $id ),
+			esc_html( $label )
+		);
+	}
+
 }

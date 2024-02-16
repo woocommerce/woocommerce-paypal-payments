@@ -41,7 +41,18 @@ return array(
 
 	'axo.gateway' => static function ( ContainerInterface $container ): AxoGateway {
 		return new AxoGateway(
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'axo.card_icons' )
+		);
+	},
+
+	'axo.card_icons' => static function ( ContainerInterface $container ): array {
+		return array(
+			array('title' => 'Visa',             'file' => 'visa-dark.svg'),
+			array('title' => 'MasterCard',       'file' => 'mastercard-dark.svg'),
+			array('title' => 'American Express', 'file' => 'amex.svg'),
+			array('title' => 'Discover',         'file' => 'discover.svg'),
 		);
 	},
 

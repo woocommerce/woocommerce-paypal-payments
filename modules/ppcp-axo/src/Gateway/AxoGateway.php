@@ -27,16 +27,34 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $ppcp_settings;
 
 	/**
+	 * The WcGateway module URL.
+	 *
+	 * @var string
+	 */
+	protected $wcgateway_module_url;
+
+	/**
+	 * The card icons.
+	 *
+	 * @var array
+	 */
+	protected $card_icons;
+
+	/**
 	 * AXOGateway constructor.
 	 *
 	 * @param ContainerInterface $ppcp_settings The settings.
 	 */
 	public function __construct(
-		ContainerInterface $ppcp_settings
+		ContainerInterface $ppcp_settings,
+		string $wcgateway_module_url,
+		array $card_icons
 	) {
-		$this->ppcp_settings = $ppcp_settings;
-
 		$this->id = self::ID;
+
+		$this->ppcp_settings        = $ppcp_settings;
+		$this->wcgateway_module_url = $wcgateway_module_url;
+		$this->card_icons           = $card_icons;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
@@ -108,41 +126,24 @@ class AxoGateway extends WC_Payment_Gateway {
 		return $result;
 	}
 
-//	public function is_available()
-//	{
-//		return $this->is_enabled(); // parent::is_available();
-//	}
-//
-//	/**
-//	 * Returns if the gateway is enabled.
-//	 *
-//	 * @return bool
-//	 */
-//	private function is_enabled(): bool {
-//		return true;
-//		//return $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' ); // TODO
-//	}
-
 	/**
 	 * Returns the icons of the gateway.
 	 *
 	 * @return string
 	 */
 	public function get_icon() {
+		$icon = parent::get_icon();
+
+		if ( empty( $this->card_icons ) ) {
+			return $icon;
+		}
+
 		$images = array();
-
-		$cards = array(
-			array('title' => 'Visa',             'file' => 'visa-dark.svg'),
-			array('title' => 'MasterCard',       'file' => 'mastercard-dark.svg'),
-			array('title' => 'American Express', 'file' => 'amex.svg'),
-			array('title' => 'Discover',         'file' => 'discover.svg'),
-		);
-
-		foreach ($cards as $card) {
+		foreach ($this->card_icons as $card) {
 			$images[] = '<img
 				class="ppcp-card-icon"
 				title="' . $card['title'] . '"
-				src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/' . $card['file'] . '"
+				src="' . esc_url( $this->wcgateway_module_url ) . 'assets/images/' . $card['file'] . '"
 			> ';
 		}
 

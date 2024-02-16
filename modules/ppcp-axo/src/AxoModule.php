@@ -61,14 +61,13 @@ class AxoModule implements ModuleInterface {
 		add_action(
 			'init',
 			static function () use ( $c ) {
+				$manager = $c->get( 'axo.manager' );
+				assert( $manager instanceof AxoManager );
 
 				// Enqueue frontend scripts.
 				add_action(
 					'wp_enqueue_scripts',
-					static function () use ( $c ) {
-						$manager = $c->get( 'axo.manager' );
-						assert( $manager instanceof AxoManager );
-
+					static function () use ( $c, $manager ) {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
@@ -78,52 +77,18 @@ class AxoModule implements ModuleInterface {
 					}
 				);
 
+				// Render submit button.
+				add_action(
+					$manager->checkout_button_renderer_hook(),
+					static function () use ( $c, $manager ) {
+						$manager->render_checkout_button();
+					}
+				);
+
 			},
 			1
 		);
 
-		add_action(
-			$this->checkout_button_renderer_hook(),
-			array(
-				$this,
-				'axo_button_renderer',
-			),
-			11
-		);
-
-	}
-
-	/**
-	 * Returns the action name that PayPal AXO button will use for rendering on the checkout page.
-	 *
-	 * @return string
-	 */
-	private function checkout_button_renderer_hook(): string {
-		/**
-		 * The filter returning the action name that PayPal AXO button will use for rendering on the checkout page.
-		 */
-		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_axo_renderer_hook', 'woocommerce_review_order_after_submit' );
-	}
-
-	/**
-	 * Renders the HTML for the AXO submit button.
-	 */
-	public function axo_button_renderer() {
-		$id = 'ppcp-axo-submit-button-container';
-
-		/**
-		 * The WC filter returning the WC order button text.
-		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
-		 */
-		$label = apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) );
-
-		printf(
-			'<div id="%1$s" style="display: none;">
-				<button type="submit" class="button alt ppcp-axo-order-button">%2$s</button>
-			</div>',
-			esc_attr( $id ),
-			esc_html( $label )
-		);
 	}
 
 	/**
