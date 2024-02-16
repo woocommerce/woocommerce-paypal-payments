@@ -5,8 +5,8 @@ namespace WooCommerce\PayPalCommerce\Tests\E2e;
 
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 
 class RealTimeAccountUpdaterTest extends TestCase
 {
