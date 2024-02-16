@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
 
 /**
  * Class SellerStatusFactory
@@ -37,6 +38,17 @@ class SellerStatusFactory {
 			isset( $json->products ) ? (array) $json->products : array()
 		);
 
-		return new SellerStatus( $products );
+		$capabilities = array_map(
+			function( $json ) : SellerStatusCapability {
+				$capability = new SellerStatusCapability(
+					isset( $json->name ) ? (string) $json->name : '',
+					isset( $json->status ) ? (string) $json->status : ''
+				);
+				return $capability;
+			},
+			isset( $json->capabilities ) ? (array) $json->capabilities : array()
+		);
+
+		return new SellerStatus( $products, $capabilities );
 	}
 }

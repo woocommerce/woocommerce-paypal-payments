@@ -6,6 +6,7 @@
  */
 
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
+use WooCommerce\PayPalCommerce\PayLaterConfigurator\PayLaterConfiguratorModule;
 use WooCommerce\PayPalCommerce\PluginModule;
 
 return function ( string $root_dir ): iterable {
@@ -69,6 +70,10 @@ return function ( string $root_dir ): iterable {
 
 	if ( PayLaterBlockModule::is_enabled() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
+	}
+
+	if ( PayLaterConfiguratorModule::is_enabled() ) {
+		$modules[] = ( require "$modules_dir/ppcp-paylater-configurator/module.php" )();
 	}
 
 	return $modules;

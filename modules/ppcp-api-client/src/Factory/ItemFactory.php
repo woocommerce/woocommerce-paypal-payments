@@ -66,7 +66,7 @@ class ItemFactory {
 					$quantity,
 					$this->prepare_description( $product->get_description() ),
 					null,
-					$product->get_sku(),
+					$this->prepare_sku( $product->get_sku() ),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 					$product->get_permalink(),
 					$image[0] ?? '',
@@ -143,7 +143,7 @@ class ItemFactory {
 			$quantity,
 			$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
 			null,
-			$product instanceof WC_Product ? $product->get_sku() : '',
+			$product instanceof WC_Product ? $this->prepare_sku( $product->get_sku() ) : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 			$product instanceof WC_Product ? $product->get_permalink() : '',
 			$image[0] ?? ''

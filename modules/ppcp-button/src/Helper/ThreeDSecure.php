@@ -78,7 +78,7 @@ class ThreeDSecure {
 		if ( $authentication_result ) {
 			$result = $this->card_authentication_result_factory->from_paypal_response( $authentication_result );
 
-			$this->logger->info( '3DS authentication result: ' . wc_print_r( $result->to_array(), true ) );
+			$this->logger->info( '3DS Authentication Result: ' . wc_print_r( $result->to_array(), true ) );
 
 			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
 				return self::PROCCEED;

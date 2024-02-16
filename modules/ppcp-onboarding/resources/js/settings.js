@@ -359,6 +359,20 @@ document.addEventListener(
             );
         }
 
+        const referenceTransactionsCheck = () => {
+            if (
+                typeof PayPalCommerceGatewaySettings !== 'undefined'
+                && PayPalCommerceGatewaySettings.reference_transaction_enabled !== '1'
+            ) {
+                document.getElementById('ppcp-vault_enabled')?.setAttribute('disabled', 'disabled');
+
+                const description = document.getElementById('field-vault_enabled')?.getElementsByClassName('description')[0];
+                if (description) {
+                    description.innerHTML = PayPalCommerceGatewaySettings.vaulting_must_enable_advanced_wallet_message;
+                }
+            }
+        }
+
         (() => {
             removeDisabledCardIcons('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
 
@@ -408,6 +422,8 @@ document.addEventListener(
             );
 
             togglePayLaterMessageFields();
+
+            referenceTransactionsCheck()
         })();
     }
 )
