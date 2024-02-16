@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Helper;
+namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 
 use WC_Payment_Token;
 use WC_Payment_Token_CC;

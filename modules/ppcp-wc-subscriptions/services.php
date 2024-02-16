@@ -12,13 +12,17 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
-	'wc-subscriptions.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
+	'wc-subscriptions.helper'                            => static function ( ContainerInterface $container ): SubscriptionHelper {
 		return new SubscriptionHelper();
 	},
-	'wc-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
+	'wc-subscriptions.helpers.real-time-account-updater' => static function ( ContainerInterface $container ) : RealTimeAccountUpdaterHelper {
+		return new RealTimeAccountUpdaterHelper();
+	},
+	'wc-subscriptions.renewal-handler'                   => static function ( ContainerInterface $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		$repository            = $container->get( 'vaulting.repository.payment-token' );
 		$endpoint              = $container->get( 'api.endpoint.order' );
@@ -39,11 +43,11 @@ return array(
 			$settings,
 			$authorized_payments_processor,
 			$funding_source_renderer,
-			$container->get( 'save-payment-methods.helpers.real-time-account-updater' ),
+			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
 			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
-	'wc-subscriptions.repository.payment-token' => static function ( ContainerInterface $container ): PaymentTokenRepository {
+	'wc-subscriptions.repository.payment-token'          => static function ( ContainerInterface $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
 		$endpoint = $container->get( 'api.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );

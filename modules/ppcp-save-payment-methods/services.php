@@ -820,9 +820,6 @@ return array(
 			$container->get( 'save-payment-methods.wc-payment-tokens' )
 		);
 	},
-	'save-payment-methods.helpers.real-time-account-updater' => static function ( ContainerInterface $container ) : RealTimeAccountUpdaterHelper {
-		return new RealTimeAccountUpdaterHelper();
-	},
 	'save-payment-methods.endpoint.capture-card-payment' => static function( ContainerInterface $container ): CaptureCardPayment {
 		return new CaptureCardPayment(
 			$container->get( 'button.request-data' ),
