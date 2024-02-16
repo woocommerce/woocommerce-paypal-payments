@@ -910,11 +910,6 @@ return array(
 			unset( $fields['subscriptions_mode'] );
 		}
 
-		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
-		if ( ! $billing_agreements_endpoint->reference_transaction_enabled() ) {
-			unset( $fields['vault_enabled'] );
-		}
-
 		/**
 		 * Depending on your store location, some credit cards can't be used.
 		 * Here, we filter them out.
