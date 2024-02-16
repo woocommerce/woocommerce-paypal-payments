@@ -131,6 +131,16 @@ return array(
 			$fields,
 			'allow_card_button_gateway',
 			array(
+				'spacer' => array(
+					'title'        => __( '', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'         => '',
+					'class'        => array(),
+					'classes'      => array( 'ppcp-active-spacer' ),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
 				'applepay_button_enabled'             => array(
 					'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 					'type'              => 'checkbox',
@@ -160,6 +170,7 @@ return array(
 									->action_visible( 'applepay_button_type' )
 									->action_visible( 'applepay_button_language' )
 									->action_visible( 'applepay_checkout_data_mode' )
+									->action_class( 'applepay_button_enabled', 'active' )
 									->to_array(),
 							)
 						),

@@ -538,6 +538,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 							->rule()
 							->condition_element( 'subtotal_mismatch_behavior', PurchaseUnitSanitizer::MODE_EXTRA_LINE )
 							->action_visible( 'subtotal_mismatch_line_name' )
+							->action_class( 'subtotal_mismatch_behavior', 'active' )
 							->to_array(),
 					)
 				),
@@ -548,6 +549,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'text',
 			'desc_tip'     => true,
 			'description'  => __( 'The name of the extra line that will be sent to PayPal to correct the subtotal mismatch.', 'woocommerce-paypal-payments' ),
+			'classes'      => array( 'ppcp-field-indent' ),
 			'maxlength'    => 22,
 			'default'      => '',
 			'screens'      => array(

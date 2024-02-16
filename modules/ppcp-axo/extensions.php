@@ -61,6 +61,7 @@ return array(
 									->action_visible( 'axo_email_widget' )
 									->action_visible( 'axo_address_widget' )
 									->action_visible( 'axo_payment_widget' )
+									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
 							)
 						),

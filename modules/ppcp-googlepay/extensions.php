@@ -129,6 +129,7 @@ return array(
 									->action_visible( 'googlepay_button_color' )
 									->action_visible( 'googlepay_button_language' )
 									->action_visible( 'googlepay_button_shipping_enabled' )
+									->action_class( 'googlepay_button_enabled', 'active' )
 									->to_array(),
 							)
 						),
