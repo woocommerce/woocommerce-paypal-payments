@@ -40,20 +40,18 @@ trait CreditCardOrderInfoHandlingTrait {
 		}
 
 		$authentication_result = $payment_source->properties()->authentication_result ?? null;
-		$card_brand            = $payment_source->properties()->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
 
 		if ( $authentication_result ) {
 			$card_authentication_result_factory = new CardAuthenticationResultFactory();
 			$result                             = $card_authentication_result_factory->from_paypal_response( $authentication_result );
 
-			$three_d_response_order_note_title = __( '3DS authentication result', 'woocommerce-paypal-payments' );
+			$three_d_response_order_note_title = __( '3DS Authentication Result', 'woocommerce-paypal-payments' );
 			/* translators: %1$s is 3DS order note title, %2$s is 3DS order note result markup */
 			$three_d_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
 			$three_d_response_order_note_result_format = '<ul class="ppcp_3ds_result">
                                                                 <li>%1$s</li>
                                                                 <li>%2$s</li>
                                                                 <li>%3$s</li>
-                                                                <li>%4$s</li>
                                                             </ul>';
 			$three_d_response_order_note_result        = sprintf(
 				$three_d_response_order_note_result_format,
@@ -62,9 +60,7 @@ trait CreditCardOrderInfoHandlingTrait {
 				/* translators: %s is enrollment status */
 				sprintf( __( 'Enrollment Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->enrollment_status() ) ),
 				/* translators: %s is authentication status */
-				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) ),
-				/* translators: %s is card brand */
-				sprintf( __( 'Card Brand: %s', 'woocommerce-paypal-payments' ), esc_html( $card_brand ) )
+				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) )
 			);
 			$three_d_response_order_note = sprintf(
 				$three_d_response_order_note_format,
@@ -74,8 +70,7 @@ trait CreditCardOrderInfoHandlingTrait {
 
 			$wc_order->add_order_note( $three_d_response_order_note );
 
-			$meta_details = array_merge( $result->to_array(), array( 'card_brand' => $card_brand ) );
-			$wc_order->update_meta_data( PayPalGateway::THREE_D_AUTH_RESULT_META_KEY, $meta_details );
+			$wc_order->update_meta_data( PayPalGateway::THREE_D_AUTH_RESULT_META_KEY, $result->to_array() );
 			$wc_order->save_meta_data();
 
 			/**
@@ -101,7 +96,9 @@ trait CreditCardOrderInfoHandlingTrait {
 			return;
 		}
 
-		$fraud_responses               = $fraud->to_array();
+		$fraud_responses = $fraud->to_array();
+		$card_brand      = $payment_source->properties()->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
+
 		$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
 		/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
 		$avs_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
@@ -111,6 +108,7 @@ trait CreditCardOrderInfoHandlingTrait {
                                                                     <li>%2$s</li>
                                                                     <li>%3$s</li>
                                                                 </ul>
+                                                                <li>%4$s</li>
                                                             </ul>';
 		$avs_response_order_note_result        = sprintf(
 			$avs_response_order_note_result_format,
@@ -119,7 +117,9 @@ trait CreditCardOrderInfoHandlingTrait {
 			/* translators: %s is fraud AVS address match */
 			sprintf( __( 'Address Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['address_match'] ) ),
 			/* translators: %s is fraud AVS postal match */
-			sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) )
+			sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) ),
+			/* translators: %s is card brand */
+			sprintf( __( 'Card Brand: %s', 'woocommerce-paypal-payments' ), esc_html( $card_brand ) )
 		);
 		$avs_response_order_note = sprintf(
 			$avs_response_order_note_format,
@@ -136,7 +136,8 @@ trait CreditCardOrderInfoHandlingTrait {
 		);
 		$wc_order->add_order_note( $cvv_response_order_note );
 
-		$wc_order->update_meta_data( PayPalGateway::FRAUD_RESULT_META_KEY, $fraud_responses );
+		$meta_details = array_merge( $fraud_responses, array( 'card_brand' => $card_brand ) );
+		$wc_order->update_meta_data( PayPalGateway::FRAUD_RESULT_META_KEY, $meta_details );
 		$wc_order->save_meta_data();
 
 		/**
