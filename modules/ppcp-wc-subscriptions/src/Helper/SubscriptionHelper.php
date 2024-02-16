@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 
+use WC_Order;
 use WC_Product;
 use WC_Product_Subscription_Variation;
 use WC_Subscription;
@@ -304,8 +305,8 @@ class SubscriptionHelper {
 
 		foreach ( $orders as $order_id ) {
 			$order = wc_get_order( $order_id );
-			if ( in_array( $order->get_status(), array( 'processing', 'completed' ), true ) ) {
-				$transaction_id = $order->get_transaction_id() ?? '';
+			if ( is_a( $order, WC_Order::class ) && in_array( $order->get_status(), array( 'processing', 'completed' ), true ) ) {
+				$transaction_id = $order->get_transaction_id();
 				if ( $transaction_id ) {
 					return $transaction_id;
 				}
