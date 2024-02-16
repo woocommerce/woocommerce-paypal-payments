@@ -36,6 +36,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class RenewalHandler
@@ -117,18 +119,34 @@ class RenewalHandler {
 	protected $funding_source_renderer;
 
 	/**
+	 * Real Time Account Updater helper.
+	 *
+	 * @var RealTimeAccountUpdaterHelper
+	 */
+	private $real_time_account_updater_helper;
+
+	/**
+	 * Subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
-	 * @param LoggerInterface             $logger The logger.
-	 * @param PaymentTokenRepository      $repository The payment token repository.
-	 * @param OrderEndpoint               $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
-	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
-	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param Environment                 $environment The environment.
-	 * @param Settings                    $settings The Settings.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-	 * @param FundingSourceRenderer       $funding_source_renderer The funding source renderer.
+	 * @param LoggerInterface              $logger The logger.
+	 * @param PaymentTokenRepository       $repository The payment token repository.
+	 * @param OrderEndpoint                $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory          $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory    $shipping_preference_factory The shipping_preference factory.
+	 * @param PayerFactory                 $payer_factory The payer factory.
+	 * @param Environment                  $environment The environment.
+	 * @param Settings                     $settings The Settings.
+	 * @param AuthorizedPaymentsProcessor  $authorized_payments_processor The Authorized Payments Processor.
+	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
+	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
+	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -140,19 +158,23 @@ class RenewalHandler {
 		Environment $environment,
 		Settings $settings,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		FundingSourceRenderer $funding_source_renderer
+		FundingSourceRenderer $funding_source_renderer,
+		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
+		SubscriptionHelper $subscription_helper
 	) {
 
-		$this->logger                        = $logger;
-		$this->repository                    = $repository;
-		$this->order_endpoint                = $order_endpoint;
-		$this->purchase_unit_factory         = $purchase_unit_factory;
-		$this->shipping_preference_factory   = $shipping_preference_factory;
-		$this->payer_factory                 = $payer_factory;
-		$this->environment                   = $environment;
-		$this->settings                      = $settings;
-		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->funding_source_renderer       = $funding_source_renderer;
+		$this->logger                           = $logger;
+		$this->repository                       = $repository;
+		$this->order_endpoint                   = $order_endpoint;
+		$this->purchase_unit_factory            = $purchase_unit_factory;
+		$this->shipping_preference_factory      = $shipping_preference_factory;
+		$this->payer_factory                    = $payer_factory;
+		$this->environment                      = $environment;
+		$this->settings                         = $settings;
+		$this->authorized_payments_processor    = $authorized_payments_processor;
+		$this->funding_source_renderer          = $funding_source_renderer;
+		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
+		$this->subscription_helper              = $subscription_helper;
 	}
 
 	/**
@@ -248,9 +270,10 @@ class RenewalHandler {
 		}
 
 		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
-			foreach ( $wc_tokens as $token ) {
-				$payment_source = $this->card_payment_source( $token->get_token(), $wc_order );
+			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+			$last_token = end( $wc_tokens );
+			if ( $last_token ) {
+				$payment_source = $this->card_payment_source( $last_token->get_token(), $wc_order );
 			}
 		}
 
@@ -268,6 +291,20 @@ class RenewalHandler {
 			);
 
 			$this->handle_paypal_order( $wc_order, $order );
+
+			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+				$card_payment_source = $order->payment_source();
+				if ( $card_payment_source ) {
+					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+					$last_token  = end( $wc_tokens );
+					$expiry      = $card_payment_source->properties()->expiry ?? '';
+					$last_digits = $card_payment_source->properties()->last_digits ?? '';
+
+					if ( $last_token && $expiry && $last_digits ) {
+						$this->real_time_account_updater_helper->update_wc_card_token( $expiry, $last_digits, $last_token );
+					}
+				}
+			}
 
 			$this->logger->info(
 				sprintf(
@@ -425,12 +462,6 @@ class RenewalHandler {
 			if ( $payment_source instanceof PaymentSource ) {
 				$this->update_payment_source( $payment_source, $wc_order );
 			}
-
-			$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id(), array( 'order_type' => 'any' ) );
-			foreach ( $subscriptions as $id => $subscription ) {
-				$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
-				$subscription->save();
-			}
 		}
 
 		$this->handle_new_order_status( $order, $wc_order );
@@ -453,24 +484,17 @@ class RenewalHandler {
 			'vault_id' => $token,
 		);
 
-		if (
-			$this->settings->has( '3d_secure_contingency' )
-			&& ( $this->settings->get( '3d_secure_contingency' ) === 'SCA_ALWAYS' || $this->settings->get( '3d_secure_contingency' ) === 'SCA_WHEN_REQUIRED' )
-		) {
-			$stored_credentials = array(
-				'payment_initiator' => 'MERCHANT',
-				'payment_type'      => 'RECURRING',
-				'usage'             => 'SUBSEQUENT',
-			);
-
-			$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
-			foreach ( $subscriptions as $post_id => $subscription ) {
-				$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
-				if ( $previous_transaction_reference ) {
-					$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
-					$properties['stored_credentials']                     = $stored_credentials;
-					break;
-				}
+		$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
+		$subscription  = end( $subscriptions );
+		if ( $subscription ) {
+			$transaction = $this->subscription_helper->previous_transaction( $subscription );
+			if ( $transaction ) {
+				$properties['stored_credentials'] = array(
+					'payment_initiator'              => 'MERCHANT',
+					'payment_type'                   => 'RECURRING',
+					'usage'                          => 'SUBSEQUENT',
+					'previous_transaction_reference' => $transaction,
+				);
 			}
 		}
 
