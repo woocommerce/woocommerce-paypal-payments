@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.2
-Stable tag: 2.5.3
+Stable tag: 2.5.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,18 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.5.4 - xxxx-xx-xx =
+* Fix - Cannot enable Apple Pay when API credentials were manually created #2015
+* Fix - Cart simulation type error #1943
+* Enhancement - Apple Pay recurring payments #1986
+* Enhancement - Use Pay Later Messaging configurator #1924
+* Enhancement - Real Time Account Updater (RTAU) integration #2027
+* Enhancement - Prepare the SKU for sending to PayPal #2033
+* Enhancement - Store the Card Brand in Address Verification Result instead of 3DS authentication result #2026
+* Enhancement - Update country eligibility for AdvancedCard Processing, Apple Pay, Google Pay #2019
+* Enhancement - Disable PayPal Vaulting setting instead of hiding it when Reference Transactions not available #2029
+* Enhancement - Store three d secure enrollment status and authentication status responses in wc order #1980
 
 = 2.5.3 - 2024-02-06 =
 * Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
