@@ -9,13 +9,27 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo\Gateway;
 
+use Psr\Log\LoggerInterface;
+use WC_Order;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
 /**
  * Class AXOGateway.
  */
 class AxoGateway extends WC_Payment_Gateway {
+	use OrderMetaTrait;
 
 	const ID = 'ppcp-axo-gateway';
 
@@ -41,16 +55,70 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $card_icons;
 
 	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	protected $order_endpoint;
+
+	/**
+	 * The purchase unit factory.
+	 *
+	 * @var PurchaseUnitFactory
+	 */
+	protected $purchase_unit_factory;
+
+	/**
+	 * The shipping preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	protected $shipping_preference_factory;
+
+	/**
+	 * The transaction url provider.
+	 *
+	 * @var TransactionUrlProvider
+	 */
+	protected $transaction_url_provider;
+
+	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * AXOGateway constructor.
 	 *
-	 * @param ContainerInterface $ppcp_settings The settings.
-	 * @param string             $wcgateway_module_url The WcGateway module URL.
-	 * @param array              $card_icons The card icons.
+	 * @param ContainerInterface        $ppcp_settings The settings.
+	 * @param string                    $wcgateway_module_url The WcGateway module URL.
+	 * @param array                     $card_icons The card icons.
+	 * @param OrderEndpoint             $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
+	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
+	 * @param Environment               $environment The environment.
+	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
 		ContainerInterface $ppcp_settings,
 		string $wcgateway_module_url,
-		array $card_icons
+		array $card_icons,
+		OrderEndpoint $order_endpoint,
+		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
+		TransactionUrlProvider $transaction_url_provider,
+		Environment $environment,
+		LoggerInterface $logger
 	) {
 		$this->id = self::ID;
 
@@ -80,6 +148,14 @@ class AxoGateway extends WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
+
+		$this->order_endpoint              = $order_endpoint;
+		$this->purchase_unit_factory       = $purchase_unit_factory;
+		$this->shipping_preference_factory = $shipping_preference_factory;
+		$this->logger                      = $logger;
+
+		$this->transaction_url_provider = $transaction_url_provider;
+		$this->environment              = $environment;
 	}
 
 	/**
@@ -106,8 +182,78 @@ class AxoGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
+		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
-		// TODO ...
+		$nonce = 'tokencc_bh_vkjzxd_tgpd3n_qmjs7k_3vhxzg_p82';
+
+		try {
+			$shipping_preference = $this->shipping_preference_factory->from_state(
+				$purchase_unit,
+				'checkout'
+			);
+
+			$payment_source_properties = new \stdClass();
+			$payment_source_properties->single_use_token = $nonce;
+
+			$payment_source = new PaymentSource(
+				'card',
+				$payment_source_properties
+			);
+
+			$order = $this->order_endpoint->create(
+				array( $purchase_unit ),
+				$shipping_preference,
+				null,
+				null,
+				'',
+				ApplicationContext::USER_ACTION_CONTINUE,
+				'',
+				array(),
+				$payment_source
+			);
+
+			//$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+			// TODO: inject dependency
+			PPCP::container()->get( 'session.handler' )->replace_order( $order );
+			PPCP::container()->get( 'wcgateway.order-processor' )->process( $wc_order );
+
+
+
+//			$payment_source = array(
+//				'oxxo' => array(
+//					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+//					'email'        => $wc_order->get_billing_email(),
+//					'country_code' => $wc_order->get_billing_country(),
+//				),
+//			);
+//			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id(), $payment_source );
+//			foreach ( $payment_method->links as $link ) {
+//				if ( $link->rel === 'payer-action' ) {
+//					$payer_action = $link->href;
+//					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $payer_action );
+//					$wc_order->save_meta_data();
+//				}
+//			}
+		} catch ( RuntimeException $exception ) {
+			$error = $exception->getMessage();
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
+			}
+
+			$this->logger->error( $error );
+			wc_add_notice( $error, 'error' );
+
+			$wc_order->update_status(
+				'failed',
+				$error
+			);
+
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
 
 		WC()->cart->empty_cart();
 
@@ -143,4 +289,16 @@ class AxoGateway extends WC_Payment_Gateway {
 		return '<div class="ppcp-axo-card-icons">' . implode( '', $images ) . '</div>';
 	}
 
+	/**
+	 * Return transaction url for this gateway and given order.
+	 *
+	 * @param WC_Order $order WC order to get transaction url by.
+	 *
+	 * @return string
+	 */
+	public function get_transaction_url( $order ): string {
+		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
+
+		return parent::get_transaction_url( $order );
+	}
 }

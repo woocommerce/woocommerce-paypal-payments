@@ -206,7 +206,7 @@ class AxoManager {
 
             document.querySelector(this.elements.paymentContainer.selector)?.classList.remove('hidden');
 
-            this.connectCardComponent = await this.fastlane
+            this.cardComponent = await this.fastlane
                 .FastlaneCardComponent(MockData.cardComponent())
                 .render(this.elements.paymentContainer.selector);
         }
@@ -214,7 +214,7 @@ class AxoManager {
 
     onClickSubmitButton() {
         try {
-            this.connectCardComponent.tokenize(MockData.cardComponentTokenize()).then((response) => {
+            this.cardComponent.tokenize(MockData.cardComponentTokenize()).then((response) => {
                 this.submit(response.nonce);
             });
         } catch (e) {
@@ -249,6 +249,9 @@ class AxoManager {
         //     .catch(error => {
         //         console.error('There has been a problem with your fetch operation:', error);
         //     });
+
+        // Submit form.
+        document.querySelector(this.elements.defaultSubmitButton.selector).click();
     }
 
     useEmailWidget() {

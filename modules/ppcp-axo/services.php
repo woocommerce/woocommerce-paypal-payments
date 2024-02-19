@@ -43,7 +43,13 @@ return array(
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.url' ),
-			$container->get( 'axo.card_icons' )
+			$container->get( 'axo.card_icons' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 

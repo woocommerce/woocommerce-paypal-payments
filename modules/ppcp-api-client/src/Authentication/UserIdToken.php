@@ -74,18 +74,25 @@ class UserIdToken {
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token&intent=sdk_init';
 		if ( $target_customer_id ) {
-			$url = add_query_arg(
-				array(
-					'target_customer_id' => $target_customer_id,
-				),
-				$url
-			);
+//			$url = add_query_arg(
+//				array(
+//					'target_customer_id' => $target_customer_id,
+//				),
+//				$url
+//			);
 		}
+
+		// TODO fix this to use Bearer instead of Basic auth:
+		$settings = PPCP::container()->get( 'wcgateway.settings' );
+		$key    = $settings->has( 'client_id' ) && $settings->get( 'client_id' ) ? $settings->get( 'client_id' ) : null;
+		$secret = $settings->has( 'client_secret' ) && $settings->get( 'client_secret' ) ? $settings->get( 'client_secret' ) : null;
 
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
+//				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Authorization' => 'Basic ' . base64_encode( "$key:$secret" ),
+
 				'Content-Type'  => 'application/x-www-form-urlencoded',
 			),
 		);
