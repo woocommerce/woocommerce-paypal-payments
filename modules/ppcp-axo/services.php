@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
-	'axo.url' => static function ( ContainerInterface $container ): string {
+	'axo.url'        => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -26,7 +26,7 @@ return array(
 		);
 	},
 
-	'axo.manager' => static function ( ContainerInterface $container ): AxoManager {
+	'axo.manager'    => static function ( ContainerInterface $container ): AxoManager {
 		return new AxoManager(
 			$container->get( 'axo.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -39,7 +39,7 @@ return array(
 		);
 	},
 
-	'axo.gateway' => static function ( ContainerInterface $container ): AxoGateway {
+	'axo.gateway'    => static function ( ContainerInterface $container ): AxoGateway {
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.url' ),
@@ -49,10 +49,22 @@ return array(
 
 	'axo.card_icons' => static function ( ContainerInterface $container ): array {
 		return array(
-			array('title' => 'Visa',             'file' => 'visa-dark.svg'),
-			array('title' => 'MasterCard',       'file' => 'mastercard-dark.svg'),
-			array('title' => 'American Express', 'file' => 'amex.svg'),
-			array('title' => 'Discover',         'file' => 'discover.svg'),
+			array(
+				'title' => 'Visa',
+				'file'  => 'visa-dark.svg',
+			),
+			array(
+				'title' => 'MasterCard',
+				'file'  => 'mastercard-dark.svg',
+			),
+			array(
+				'title' => 'American Express',
+				'file'  => 'amex.svg',
+			),
+			array(
+				'title' => 'Discover',
+				'file'  => 'discover.svg',
+			),
 		);
 	},
 

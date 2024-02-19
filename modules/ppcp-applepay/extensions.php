@@ -131,8 +131,8 @@ return array(
 			$fields,
 			'allow_card_button_gateway',
 			array(
-				'spacer' => array(
-					'title'        => __( '', 'woocommerce-paypal-payments' ),
+				'spacer'                              => array(
+					'title'        => '',
 					'type'         => 'ppcp-text',
 					'text'         => '',
 					'class'        => array(),

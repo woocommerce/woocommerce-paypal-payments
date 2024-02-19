@@ -159,7 +159,7 @@ class AxoManager {
 				'email'   => $email_widget ?: 'render',
 				'address' => $address_widget ?: 'render',
 				'payment' => $payment_widget ?: 'render',
-			)
+			),
 		);
 	}
 

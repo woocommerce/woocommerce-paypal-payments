@@ -44,6 +44,8 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * AXOGateway constructor.
 	 *
 	 * @param ContainerInterface $ppcp_settings The settings.
+	 * @param string             $wcgateway_module_url The WcGateway module URL.
+	 * @param array              $card_icons The card icons.
 	 */
 	public function __construct(
 		ContainerInterface $ppcp_settings,
@@ -66,7 +68,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			? $this->ppcp_settings->get( 'axo_gateway_title' )
 			: $this->get_option( 'title', $this->method_title );
 
-		$this->description = $this->get_option( 'description', __( '', 'woocommerce-paypal-payments' ) );
+		$this->description = $this->get_option( 'description', '' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -78,15 +80,6 @@ class AxoGateway extends WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
-
-//		$this->order_endpoint              = $order_endpoint;
-//		$this->purchase_unit_factory       = $purchase_unit_factory;
-//		$this->shipping_preference_factory = $shipping_preference_factory;
-//		$this->module_url                  = $module_url;
-//		$this->logger                      = $logger;
-
-//		$this->icon                     = esc_url( $this->module_url ) . 'assets/images/axo.svg'; // TODO
-//		$this->environment              = $environment;
 	}
 
 	/**
@@ -94,7 +87,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 */
 	public function init_form_fields() {
 		$this->form_fields = array(
-			'enabled'     => array(
+			'enabled' => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
 				'label'       => __( 'AXO', 'woocommerce-paypal-payments' ),
@@ -112,7 +105,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$wc_order      = wc_get_order( $order_id );
+		$wc_order = wc_get_order( $order_id );
 
 		// TODO ...
 
@@ -139,7 +132,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		}
 
 		$images = array();
-		foreach ($this->card_icons as $card) {
+		foreach ( $this->card_icons as $card ) {
 			$images[] = '<img
 				class="ppcp-card-icon"
 				title="' . $card['title'] . '"

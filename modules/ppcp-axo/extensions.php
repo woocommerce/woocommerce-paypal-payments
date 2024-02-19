@@ -35,7 +35,7 @@ return array(
 			$fields,
 			'vault_enabled',
 			array(
-				'axo_enabled'          => array(
+				'axo_enabled'        => array(
 					'title'             => __( 'Fastlane', 'woocommerce-paypal-payments' ),
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Fastlane Checkout', 'woocommerce-paypal-payments' )
@@ -67,7 +67,7 @@ return array(
 						),
 					),
 				),
-				'axo_gateway_title'           => array(
+				'axo_gateway_title'  => array(
 					'title'        => __( 'Gateway Title', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
@@ -86,7 +86,7 @@ return array(
 					'requirements' => array(),
 					'gateway'      => 'paypal',
 				),
-				'axo_email_widget'               => array(
+				'axo_email_widget'   => array(
 					'title'        => __( 'Email Widget', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -103,7 +103,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'axo_address_widget'             => array(
+				'axo_address_widget' => array(
 					'title'        => __( 'Address Widget', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -120,7 +120,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'axo_payment_widget'             => array(
+				'axo_payment_widget' => array(
 					'title'        => __( 'Payment Widget', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
