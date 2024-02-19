@@ -126,6 +126,10 @@ class PaymentTokenChecker {
 			return;
 		}
 
+		if ( ! in_array( $wc_order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
+			return;
+		}
+
 		if ( $wc_order->get_status() === 'processing' || 'capture' !== $intent ) {
 			return;
 		}
