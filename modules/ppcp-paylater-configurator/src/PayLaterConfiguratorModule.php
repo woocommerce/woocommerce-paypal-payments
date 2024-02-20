@@ -50,7 +50,12 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 		$messages_apply = $c->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
-		if ( ! $messages_apply->for_country() ) {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
+
+		if ( $vault_enabled || ! $messages_apply->for_country() ) {
 			return;
 		}
 
@@ -68,9 +73,6 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
 			return;
 		}
-
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
 
 		add_action(
 			'init',

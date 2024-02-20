@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
@@ -63,8 +64,16 @@ return array(
 			'pay_later_home_message_flex_color',
 			'pay_later_home_message_flex_ratio',
 			'pay_later_home_message_preview',
-			'pay_later_messaging_enabled',
 		);
+
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
+
+		if ( ! $vault_enabled ) {
+			$old_fields[] = 'pay_later_messaging_enabled';
+		}
+
 		foreach ( $old_fields as $old_field ) {
 			unset( $fields[ $old_field ] );
 		}
