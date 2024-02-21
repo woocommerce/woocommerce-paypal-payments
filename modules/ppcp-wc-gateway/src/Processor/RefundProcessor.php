@@ -22,6 +22,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundCapture;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 
@@ -107,6 +109,10 @@ class RefundProcessor {
 	 */
 	public function process( WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
 		try {
+			if ( ! in_array( $wc_order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
+				return true;
+			}
+
 			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 			if ( ! $order_id ) {
 				throw new RuntimeException( 'PayPal order ID not found in meta.' );
