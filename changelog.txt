@@ -11,6 +11,8 @@
 * Enhancement - Update country eligibility for AdvancedCard Processing, Apple Pay, Google Pay #2019
 * Enhancement - Disable PayPal Vaulting setting instead of hiding it when Reference Transactions not available #2029
 * Enhancement - Store three d secure enrollment status and authentication status responses in wc order #1980
+* Enhancement - Add more checks to prevent "PayPal order ID not found" errors #2038
+* Enhancement - Disable messaging configurator when vault is enabled #2042
 
 = 2.5.3 - 2024-02-06 =
 * Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
