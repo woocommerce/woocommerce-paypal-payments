@@ -51,13 +51,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
-			'description'  => sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'When enabled, %1$sPayPal Pay Later messaging%2$s is displayed for eligible customers.%3$sCustomers automatically see the most relevant Pay Later offering.', 'woocommerce-paypal-payments' ),
-				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-messaging" target="_blank">',
-				'</a>',
-				'</ br>'
-			),
 		),
 		'pay_later_messaging_enabled'                     => array(
 			'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
