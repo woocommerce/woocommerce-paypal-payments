@@ -872,6 +872,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		$text_color    = $this->settings->has( "{$setting_name_prefix}_color" ) ? $this->settings->get( "{$setting_name_prefix}_color" ) : 'black';
 		$style_color   = $this->settings->has( "{$setting_name_prefix}_flex_color" ) ? $this->settings->get( "{$setting_name_prefix}_flex_color" ) : 'blue';
 		$ratio         = $this->settings->has( "{$setting_name_prefix}_flex_ratio" ) ? $this->settings->get( "{$setting_name_prefix}_flex_ratio" ) : '1x1';
+		$text_size     = $this->settings->has( "{$setting_name_prefix}_text_size" ) ? $this->settings->get( "{$setting_name_prefix}_text_size" ) : '12';
 
 		return array(
 			'wrapper'   => '#ppcp-messages',
@@ -889,6 +890,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				),
 				'text'   => array(
 					'color' => $text_color,
+					'size'  => $text_size,
 				),
 				'color'  => $style_color,
 				'ratio'  => $ratio,
