@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 
 return array(
 	'blocks.url'                           => static function ( ContainerInterface $container ): string {
@@ -28,7 +29,9 @@ return array(
 		return new PayPalPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'button.smart-button' ),
+			function () use ( $container ): SmartButtonInterface {
+				return $container->get( 'button.smart-button' );
+			},
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'wcgateway.paypal-gateway' ),
