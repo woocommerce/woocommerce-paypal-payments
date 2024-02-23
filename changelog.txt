@@ -4,7 +4,6 @@
 * Fix - Cannot enable Apple Pay when API credentials were manually created #2015
 * Fix - Cart simulation type error #1943
 * Enhancement - Apple Pay recurring payments #1986
-* Enhancement - Use Pay Later Messaging configurator #1924
 * Enhancement - Real Time Account Updater (RTAU) integration #2027
 * Enhancement - Prepare the SKU for sending to PayPal #2033
 * Enhancement - Store the Card Brand in Address Verification Result instead of 3DS authentication result #2026
@@ -13,6 +12,7 @@
 * Enhancement - Store three d secure enrollment status and authentication status responses in wc order #1980
 * Enhancement - Add more checks to prevent "PayPal order ID not found" errors #2038
 * Enhancement - Disable messaging configurator when vault is enabled #2042
+* Feature preview - Pay Later Messaging configurator #1924
 
 = 2.5.3 - 2024-02-06 =
 * Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
