@@ -948,7 +948,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return bool
 	 */
 	private function has_subscriptions(): bool {
-		if ( ! $this->subscription_helper->accept_only_automatic_payment_gateways() ) {
+		if (
+			! $this->subscription_helper->accept_only_automatic_payment_gateways()
+			&& $this->paypal_subscriptions_enabled() !== true
+		) {
 			return false;
 		}
 		if ( is_product() ) {
