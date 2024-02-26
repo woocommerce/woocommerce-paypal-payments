@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -392,6 +393,10 @@ return array(
 	'wcgateway.admin.render-authorize-action'              => static function ( ContainerInterface $container ): RenderAuthorizeAction {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
 		return new RenderAuthorizeAction( $column );
+	},
+	'wcgateway.admin.render-reauthorize-action'            => static function ( ContainerInterface $container ): RenderReauthorizeAction {
+		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+		return new RenderReauthorizeAction( $column );
 	},
 	'wcgateway.admin.order-payment-status'                 => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
