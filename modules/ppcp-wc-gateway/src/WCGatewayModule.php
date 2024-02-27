@@ -642,6 +642,20 @@ class WCGatewayModule implements ModuleInterface {
 				$authorized_payments_processor->capture_authorized_payment( $wc_order );
 			}
 		);
+
+		add_action(
+			'woocommerce_order_action_ppcp_reauthorize_order',
+			static function ( WC_Order $wc_order ) use ( $container ) {
+
+				/**
+				 * The authorized payments processor.
+				 *
+				 * @var AuthorizedPaymentsProcessor $authorized_payments_processor
+				 */
+				$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
+				$authorized_payments_processor->reauthorize_payment( $wc_order );
+			}
+		);
 	}
 
 	/**

@@ -9,9 +9,6 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-
 /**
  * Class RenderReauthorizeAction
  */
@@ -47,7 +44,7 @@ class RenderReauthorizeAction {
 		}
 
 		$order_actions['ppcp_reauthorize_order'] = esc_html__(
-			'Reauthorized PayPal payment',
+			'Reauthorize PayPal payment',
 			'woocommerce-paypal-payments'
 		);
 		return $order_actions;

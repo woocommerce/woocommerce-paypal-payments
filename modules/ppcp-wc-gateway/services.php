@@ -381,13 +381,15 @@ return array(
 		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		$amount_factory      = $container->get( 'api.factory.amount' );
 		return new AuthorizedPaymentsProcessor(
 			$order_endpoint,
 			$payments_endpoint,
 			$logger,
 			$notice,
 			$settings,
-			$subscription_helper
+			$subscription_helper,
+			$amount_factory
 		);
 	},
 	'wcgateway.admin.render-authorize-action'              => static function ( ContainerInterface $container ): RenderAuthorizeAction {
