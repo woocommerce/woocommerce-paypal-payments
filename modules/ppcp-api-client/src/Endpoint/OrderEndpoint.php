@@ -179,7 +179,6 @@ class OrderEndpoint {
 	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
 	 * @param Payer|null         $payer The payer off the order.
 	 * @param PaymentToken|null  $payment_token The payment token.
-	 * @param string             $paypal_request_id The PayPal request id.
 	 * @param string             $user_action The user action.
 	 * @param string             $payment_method WC payment method.
 	 * @param array              $request_data Request data.
@@ -193,7 +192,6 @@ class OrderEndpoint {
 		string $shipping_preference,
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
-		string $paypal_request_id = '',
 		string $user_action = ApplicationContext::USER_ACTION_CONTINUE,
 		string $payment_method = '',
 		array $request_data = array(),

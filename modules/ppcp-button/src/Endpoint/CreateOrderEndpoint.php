@@ -466,7 +466,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_preference,
 				$payer,
 				null,
-				'',
 				$action,
 				$payment_method,
 				$data
@@ -489,8 +488,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				return $this->api_endpoint->create(
 					array( $this->purchase_unit ),
 					$shipping_preference,
-					$payer,
-					null
+					$payer
 				);
 			}
 

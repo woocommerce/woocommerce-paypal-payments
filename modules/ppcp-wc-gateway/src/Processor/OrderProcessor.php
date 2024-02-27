@@ -285,7 +285,6 @@ class OrderProcessor {
 			$shipping_preference,
 			$this->payer_factory->from_wc_order( $wc_order ),
 			null,
-			'',
 			ApplicationContext::USER_ACTION_PAY_NOW
 		);
 
