@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.5.4 - xxxx-xx-xx =
+= 2.5.4 - 2024-02-27 =
 * Fix - Cannot enable Apple Pay when API credentials were manually created #2015
 * Fix - Cart simulation type error #1943
 * Enhancement - Apple Pay recurring payments #1986
