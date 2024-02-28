@@ -208,6 +208,7 @@ return array(
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
+			$container->get( 'api.repository.experience-context' ),
 			$logger
 		);
 	},

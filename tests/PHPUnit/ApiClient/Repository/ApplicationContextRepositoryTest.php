@@ -13,7 +13,7 @@ class ApplicationContextRepositoryTest extends TestCase
      */
     public function test_valid_bcp47_code($input, $output)
     {
-        $testee = $this->getMockBuilder(ApplicationContextRepository::class)
+        $testee = $this->getMockBuilder(ExperienceContextRepository::class)
             ->disableOriginalConstructor()
             ->getMock();
 

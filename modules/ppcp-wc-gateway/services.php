@@ -13,7 +13,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -362,7 +362,8 @@ return array(
 			$order_helper,
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),
-			$container->get( 'api.factory.shipping-preference' )
+			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'api.repository.experience-context' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
@@ -642,15 +643,15 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => ApplicationContext::LANDING_PAGE_LOGIN,
+				'default'      => ExperienceContext::LANDING_PAGE_LOGIN,
 				'desc_tip'     => true,
 				'description'  => __(
 					'Type of PayPal page to display.',
 					'woocommerce-paypal-payments'
 				),
 				'options'      => array(
-					ApplicationContext::LANDING_PAGE_LOGIN => __( 'Login (PayPal account login)', 'woocommerce-paypal-payments' ),
-					ApplicationContext::LANDING_PAGE_BILLING => __( 'Billing (Non-PayPal account)', 'woocommerce-paypal-payments' ),
+					ExperienceContext::LANDING_PAGE_LOGIN => __( 'Login (PayPal account login)', 'woocommerce-paypal-payments' ),
+					ExperienceContext::LANDING_PAGE_BILLING => __( 'Billing (Non-PayPal account)', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
 					State::STATE_START,

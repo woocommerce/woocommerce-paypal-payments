@@ -15,16 +15,18 @@ use stdClass;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
@@ -158,6 +160,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $funding_sources_without_redirect;
 
 	/**
+	 * Experience context repository.
+	 *
+	 * @var ExperienceContextRepository
+	 */
+	private $experience_context_repository;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -165,30 +174,24 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
-	 * The form data, or empty if not available.
-	 *
-	 * @var array
-	 */
-	private $form = array();
-
-	/**
 	 * CreateOrderEndpoint constructor.
 	 *
-	 * @param RequestData               $request_data The RequestData object.
-	 * @param PurchaseUnitFactory       $purchase_unit_factory The PurchaseUnit factory.
-	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping_preference factory.
-	 * @param OrderEndpoint             $order_endpoint The OrderEndpoint object.
-	 * @param PayerFactory              $payer_factory The PayerFactory object.
-	 * @param SessionHandler            $session_handler The SessionHandler object.
-	 * @param Settings                  $settings The Settings object.
-	 * @param EarlyOrderHandler         $early_order_handler The EarlyOrderHandler object.
-	 * @param bool                      $registration_needed  Whether a new user must be registered during checkout.
-	 * @param string                    $card_billing_data_mode The value of card_billing_data_mode from the settings.
-	 * @param bool                      $early_validation_enabled Whether to execute WC validation of the checkout form.
-	 * @param string[]                  $pay_now_contexts The contexts that should have the Pay Now button.
-	 * @param bool                      $handle_shipping_in_paypal If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
-	 * @param string[]                  $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
-	 * @param LoggerInterface           $logger The logger.
+	 * @param RequestData                 $request_data The RequestData object.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The PurchaseUnit factory.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
+	 * @param OrderEndpoint               $order_endpoint The OrderEndpoint object.
+	 * @param PayerFactory                $payer_factory The PayerFactory object.
+	 * @param SessionHandler              $session_handler The SessionHandler object.
+	 * @param Settings                    $settings The Settings object.
+	 * @param EarlyOrderHandler           $early_order_handler The EarlyOrderHandler object.
+	 * @param bool                        $registration_needed  Whether a new user must be registered during checkout.
+	 * @param string                      $card_billing_data_mode The value of card_billing_data_mode from the settings.
+	 * @param bool                        $early_validation_enabled Whether to execute WC validation of the checkout form.
+	 * @param string[]                    $pay_now_contexts The contexts that should have the Pay Now button.
+	 * @param bool                        $handle_shipping_in_paypal If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
+	 * @param string[]                    $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 * @param ExperienceContextRepository $experience_context_repository Experience context repository.
+	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -205,6 +208,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		array $pay_now_contexts,
 		bool $handle_shipping_in_paypal,
 		array $funding_sources_without_redirect,
+		ExperienceContextRepository $experience_context_repository,
 		LoggerInterface $logger
 	) {
 
@@ -222,6 +226,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->pay_now_contexts                 = $pay_now_contexts;
 		$this->handle_shipping_in_paypal        = $handle_shipping_in_paypal;
 		$this->funding_sources_without_redirect = $funding_sources_without_redirect;
+		$this->experience_context_repository    = $experience_context_repository;
 		$this->logger                           = $logger;
 	}
 
@@ -438,17 +443,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$funding_source
 		);
 
-		$action = in_array( $this->parsed_request_data['context'], $this->pay_now_contexts, true ) ?
-			ApplicationContext::USER_ACTION_PAY_NOW : ApplicationContext::USER_ACTION_CONTINUE;
-
 		if ( 'card' === $funding_source ) {
 			if ( CardBillingMode::MINIMAL_INPUT === $this->card_billing_data_mode ) {
-				if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
+				if ( ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
 					if ( $payer ) {
 						$payer->set_address( null );
 					}
 				}
-				if ( ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
+				if ( ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
 					if ( $payer ) {
 						$payer->set_name( null );
 					}
@@ -460,13 +462,23 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
+		$payment_source     = null;
+		$experience_context = $this->experience_context_repository->current_context( $shipping_preference );
+		if ( $funding_source ) {
+			$payment_source = new PaymentSource(
+				$funding_source,
+				(object) array(
+					'experience_context' => (object) $experience_context->to_array(),
+				)
+			);
+		}
+
 		try {
 			return $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
 				$payer,
-				null,
-				$action,
+				$payment_source,
 				$payment_method,
 				$data
 			);

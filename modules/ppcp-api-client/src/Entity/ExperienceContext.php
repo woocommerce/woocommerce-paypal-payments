@@ -12,9 +12,9 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
- * Class ApplicationContext
+ * Class ExperienceContext
  */
-class ApplicationContext {
+class ExperienceContext {
 
 	const LANDING_PAGE_LOGIN         = 'LOGIN';
 	const LANDING_PAGE_BILLING       = 'BILLING';

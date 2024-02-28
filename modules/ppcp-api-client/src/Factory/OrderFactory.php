@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 
 /**
  * Class OrderFactory
@@ -36,38 +36,38 @@ class OrderFactory {
 	private $payer_factory;
 
 	/**
-	 * The ApplicationContext repository.
+	 * The ExperienceContextRepository.
 	 *
-	 * @var ApplicationContextRepository
+	 * @var ExperienceContextRepository
 	 */
-	private $application_context_repository;
+	private $experience_context_repository;
 
 	/**
 	 * The ApplicationContext factory.
 	 *
-	 * @var ApplicationContextFactory
+	 * @var ExperienceContextFactory
 	 */
-	private $application_context_factory;
+	private $experience_context_factory;
 
 	/**
 	 * OrderFactory constructor.
 	 *
-	 * @param PurchaseUnitFactory          $purchase_unit_factory The PurchaseUnit factory.
-	 * @param PayerFactory                 $payer_factory The Payer factory.
-	 * @param ApplicationContextRepository $application_context_repository The Application Context repository.
-	 * @param ApplicationContextFactory    $application_context_factory The Application Context factory.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The PurchaseUnit factory.
+	 * @param PayerFactory                $payer_factory The Payer factory.
+	 * @param ExperienceContextRepository $experience_context_repository The Application Context repository.
+	 * @param ExperienceContextFactory    $experience_context_factory The Application Context factory.
 	 */
 	public function __construct(
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
-		ApplicationContextRepository $application_context_repository,
-		ApplicationContextFactory $application_context_factory
+		ExperienceContextRepository $experience_context_repository,
+		ExperienceContextFactory $experience_context_factory
 	) {
 
-		$this->purchase_unit_factory          = $purchase_unit_factory;
-		$this->payer_factory                  = $payer_factory;
-		$this->application_context_repository = $application_context_repository;
-		$this->application_context_factory    = $application_context_factory;
+		$this->purchase_unit_factory         = $purchase_unit_factory;
+		$this->payer_factory                 = $payer_factory;
+		$this->experience_context_repository = $experience_context_repository;
+		$this->experience_context_factory    = $experience_context_factory;
 	}
 
 	/**
@@ -85,7 +85,7 @@ class OrderFactory {
 			$order->id(),
 			$purchase_units,
 			$order->status(),
-			$order->application_context(),
+			$order->experience_context(),
 			$order->payment_source(),
 			$order->payer(),
 			$order->intent(),
@@ -141,7 +141,7 @@ class OrderFactory {
 			$this->payer_factory->from_paypal_response( $order_data->payer )
 			: null;
 		$application_context = ( isset( $order_data->application_context ) ) ?
-			$this->application_context_factory->from_paypal_response( $order_data->application_context )
+			$this->experience_context_factory->from_paypal_response( $order_data->application_context )
 			: null;
 
 		$payment_source = null;

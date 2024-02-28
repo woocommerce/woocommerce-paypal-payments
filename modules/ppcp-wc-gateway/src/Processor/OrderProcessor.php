@@ -13,7 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
@@ -23,9 +23,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
@@ -145,6 +147,14 @@ class OrderProcessor {
 	private $restore_order_data = array();
 
 	/**
+	 * Experience context repository.
+	 *
+	 * @var ExperienceContextRepository
+	 */
+	private $experience_context_repository;
+
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -160,6 +170,7 @@ class OrderProcessor {
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The PurchaseUnit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
 	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
+	 * @param ExperienceContextRepository $experience_context_repository Experience context repository.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -174,7 +185,8 @@ class OrderProcessor {
 		OrderHelper $order_helper,
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
-		ShippingPreferenceFactory $shipping_preference_factory
+		ShippingPreferenceFactory $shipping_preference_factory,
+		ExperienceContextRepository $experience_context_repository
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -190,6 +202,7 @@ class OrderProcessor {
 		$this->purchase_unit_factory         = $purchase_unit_factory;
 		$this->payer_factory                 = $payer_factory;
 		$this->shipping_preference_factory   = $shipping_preference_factory;
+		$this->experience_context_repository = $experience_context_repository;
 	}
 
 	/**
@@ -280,15 +293,25 @@ class OrderProcessor {
 	public function create_order( WC_Order $wc_order ): Order {
 		$pu                  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$shipping_preference = $this->shipping_preference_factory->from_state( $pu, 'checkout' );
-		$order               = $this->order_endpoint->create(
+
+		$payment_source      = null;
+		$payment_source_name = $this->payment_source_name( $wc_order->get_payment_method() );
+		$experience_context  = $this->experience_context_repository->current_context( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW );
+		if ( $payment_source_name ) {
+			$payment_source = new PaymentSource(
+				$payment_source_name,
+				(object) array(
+					'experience_context' => (object) $experience_context->to_array(),
+				)
+			);
+		}
+
+		return $this->order_endpoint->create(
 			array( $pu ),
 			$shipping_preference,
 			$this->payer_factory->from_wc_order( $wc_order ),
-			null,
-			ApplicationContext::USER_ACTION_PAY_NOW
+			$payment_source
 		);
-
-		return $order;
 	}
 
 	/**
@@ -416,5 +439,23 @@ class OrderProcessor {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Returns the payment source name from the give payment method.
+	 *
+	 * @param string $payment_method WC Order payment method.
+	 * @return string
+	 */
+	private function payment_source_name( string $payment_method ): string {
+		if ( $payment_method === PayPalGateway::ID ) {
+			return 'paypal';
+		}
+
+		if ( $payment_method === CreditCardGateway::ID ) {
+			return 'card';
+		}
+
+		return '';
 	}
 }

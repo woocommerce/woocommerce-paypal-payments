@@ -7,7 +7,7 @@ use Hamcrest\Matchers;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -23,7 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 use Mockery;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -66,7 +66,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
@@ -80,7 +79,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -127,7 +125,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
@@ -141,7 +138,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -181,7 +177,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -193,7 +188,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -247,7 +241,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -259,7 +252,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -316,7 +308,6 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -328,7 +319,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -361,7 +351,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -373,7 +362,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -413,7 +401,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -425,7 +412,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -467,7 +453,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -481,7 +466,6 @@ class OrderEndpointTest extends TestCase
                 $patchCollectionFactory,
                 $intent,
                 $logger,
-                $applicationContextRepository,
 				$subscription_helper,
                 false,
                 $fraudnet
@@ -547,7 +531,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -561,7 +544,6 @@ class OrderEndpointTest extends TestCase
                 $patchCollectionFactory,
                 $intent,
                 $logger,
-                $applicationContextRepository,
 				$subscription_helper,
                 false,
                 $fraudnet
@@ -649,7 +631,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -661,7 +642,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -745,7 +725,6 @@ class OrderEndpointTest extends TestCase
         $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
 
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -759,7 +738,6 @@ class OrderEndpointTest extends TestCase
                 $patchCollectionFactory,
                 $intent,
                 $logger,
-                $applicationContextRepository,
 				$subscription_helper,
                 false,
                 $fraudnet
@@ -820,7 +798,6 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $fraudnet = Mockery::mock(FraudNet::class);
@@ -832,7 +809,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -875,15 +851,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContext = Mockery::mock(ApplicationContext::class);
-        $applicationContext
-            ->expects('to_array')
-            ->andReturn(['applicationContext']);
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationContextRepository
-            ->expects('current_context')
-            ->with(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, ApplicationContext::USER_ACTION_CONTINUE)
-            ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
@@ -896,7 +863,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -941,7 +907,7 @@ class OrderEndpointTest extends TestCase
             ->expects('email_address')
             ->andReturn('');
 
-        $result = $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, $payer);
+        $result = $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING, $payer);
         $this->assertEquals($expectedOrder, $result);
     }
 
@@ -978,15 +944,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContext = Mockery::mock(ApplicationContext::class);
-        $applicationContext
-            ->expects('to_array')
-            ->andReturn(['applicationContext']);
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationContextRepository
-            ->expects('current_context')
-            ->with(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, ApplicationContext::USER_ACTION_CONTINUE)
-            ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
@@ -999,7 +956,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -1030,7 +986,7 @@ class OrderEndpointTest extends TestCase
         $payer = Mockery::mock(Payer::class);
         $payer->expects('email_address')->andReturn('email@email.com');
         $payer->expects('to_array')->andReturn(['payer']);
-        $result = $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
+        $result = $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
         $this->assertEquals($expectedOrder, $result);
     }
 
@@ -1058,15 +1014,6 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
-        $applicationContext = Mockery::mock(ApplicationContext::class);
-        $applicationContext
-            ->expects('to_array')
-            ->andReturn(['applicationContext']);
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationContextRepository
-            ->expects('current_context')
-            ->with(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, ApplicationContext::USER_ACTION_CONTINUE)
-            ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
@@ -1079,7 +1026,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -1122,7 +1068,7 @@ class OrderEndpointTest extends TestCase
         $payer = Mockery::mock(Payer::class);
         $payer->expects('email_address')->andReturn('email@email.com');
         $payer->expects('to_array')->andReturn(['payer']);
-        $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, $payer);
+        $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING, $payer);
     }
 
     public function testCreateForPurchaseUnitsIsNot201()
@@ -1150,15 +1096,6 @@ class OrderEndpointTest extends TestCase
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
         $logger->shouldReceive('warning');
-        $applicationContext = Mockery::mock(ApplicationContext::class);
-        $applicationContext
-            ->expects('to_array')
-            ->andReturn(['applicationContext']);
-        $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationContextRepository
-            ->expects('current_context')
-            ->with(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, ApplicationContext::USER_ACTION_CONTINUE)
-            ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
@@ -1171,7 +1108,6 @@ class OrderEndpointTest extends TestCase
             $patchCollectionFactory,
             $intent,
             $logger,
-            $applicationContextRepository,
 			$subscription_helper,
             false,
             $fraudnet
@@ -1214,7 +1150,7 @@ class OrderEndpointTest extends TestCase
         $payer = Mockery::mock(Payer::class);
         $payer->expects('email_address')->andReturn('email@email.com');
         $payer->expects('to_array')->andReturn(['payer']);
-        $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
+        $testee->create([$purchaseUnit], ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
     }
 }
 

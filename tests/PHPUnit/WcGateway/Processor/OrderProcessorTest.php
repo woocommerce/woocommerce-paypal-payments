@@ -7,6 +7,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Dictionary;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -149,7 +150,8 @@ class OrderProcessorTest extends TestCase
 			$order_helper,
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
-			Mockery::mock(ShippingPreferenceFactory::class)
+			Mockery::mock(ShippingPreferenceFactory::class),
+			Mockery::mock(ExperienceContextRepository::class)
         );
 
         $wcOrder
@@ -279,7 +281,8 @@ class OrderProcessorTest extends TestCase
 			$order_helper,
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
-			Mockery::mock(ShippingPreferenceFactory::class)
+			Mockery::mock(ShippingPreferenceFactory::class),
+			Mockery::mock(ExperienceContextRepository::class)
         );
 
         $wcOrder
@@ -391,7 +394,8 @@ class OrderProcessorTest extends TestCase
 			$order_helper,
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
-			Mockery::mock(ShippingPreferenceFactory::class)
+			Mockery::mock(ShippingPreferenceFactory::class),
+			Mockery::mock(ExperienceContextRepository::class)
         );
 
         $wcOrder

@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WC_Customer;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -144,14 +144,18 @@ class VaultedCreditCardHandler {
 		WC_Order $wc_order
 	): WC_Order {
 		$tokens         = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
-		$selected_token = null;
+		$payment_source = null;
 		foreach ( $tokens as $token ) {
 			if ( $token->id() === $saved_credit_card ) {
-				$selected_token = $token;
+				$payment_source = new PaymentSource(
+					'token',
+					(object) $token->to_array()
+				);
+
 				break;
 			}
 		}
-		if ( ! $selected_token ) {
+		if ( ! $payment_source ) {
 			throw new RuntimeException( 'Saved card token not found.' );
 		}
 
@@ -167,7 +171,7 @@ class VaultedCreditCardHandler {
 				array( $purchase_unit ),
 				$shipping_preference,
 				$payer,
-				$selected_token
+				$payment_source
 			);
 
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Repository;
 
 use Hamcrest\Matchers;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\MockInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -44,13 +44,13 @@ class ApplicationContextRepositoryTest extends TestCase
         expect('get_user_locale')
             ->andReturn($userLocale);
 
-        /* @var ApplicationContextRepository $testee */
+        /* @var ExperienceContextRepository $testee */
         $testee = $this->buildTestee()[1];
 
         $context = $testee->current_context($shippingPreference);
 
         self::assertInstanceOf(
-            ApplicationContext::class,
+            ExperienceContext::class,
             $context
         );
 
@@ -72,17 +72,17 @@ class ApplicationContextRepositoryTest extends TestCase
             'default test' => [
                 'container' => [
                     'brand_name' => 'Acme corp.',
-                    'landing_page' => ApplicationContext::LANDING_PAGE_BILLING,
+                    'landing_page' => ExperienceContext::LANDING_PAGE_BILLING,
 					'payee_preferred' => '',
                 ],
                 'user_locale' => 'de_DE',
-                'shippingPreference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+                'shippingPreference' => ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
                 'expected' => [
                     'locale' => 'de-DE',
                     'brand_name' => 'Acme corp.',
-                    'landing_page' => ApplicationContext::LANDING_PAGE_BILLING,
-                    'shipping_preference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
-					'payment_method_preference' => ApplicationContext::PAYMENT_METHOD_UNRESTRICTED,
+                    'landing_page' => ExperienceContext::LANDING_PAGE_BILLING,
+                    'shipping_preference' => ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+					'payment_method_preference' => ExperienceContext::PAYMENT_METHOD_UNRESTRICTED,
                 ],
             ],
         ];
@@ -101,7 +101,7 @@ class ApplicationContextRepositoryTest extends TestCase
     {
         if (! self::$mocks) {
             $config = \Mockery::mock(ContainerInterface::class);
-            $testee = new ApplicationContextRepository($config);
+            $testee = new ExperienceContextRepository($config);
 
             self::$mocks = [
                 $config,

@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WC_Cart;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 
 /**
@@ -35,7 +35,7 @@ class ShippingPreferenceFactory {
 	): string {
 		$contains_physical_goods = $purchase_unit->contains_physical_goods();
 		if ( ! $contains_physical_goods ) {
-			return ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+			return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
 		}
 
 		$has_shipping              = null !== $purchase_unit->shipping();
@@ -45,20 +45,20 @@ class ShippingPreferenceFactory {
 		if ( $shipping_address_is_fixed ) {
 			// Checkout + no address given? Probably something weird happened, like no form validation?
 			if ( ! $has_shipping ) {
-				return ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+				return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
 			}
 
-			return ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
+			return ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
 		}
 
 		if ( 'card' === $funding_source ) {
 			if ( ! $has_shipping ) {
-				return ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+				return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
 			}
 			// Looks like GET_FROM_FILE does not work for the vaulted card button.
-			return ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
+			return ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
 		}
 
-		return ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE;
+		return ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE;
 	}
 }

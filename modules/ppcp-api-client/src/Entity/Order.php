@@ -65,11 +65,11 @@ class Order {
 	private $update_time;
 
 	/**
-	 * The application context.
+	 * The experience context.
 	 *
-	 * @var ApplicationContext|null
+	 * @var ExperienceContext|null
 	 */
-	private $application_context;
+	private $experience_context;
 
 	/**
 	 * The payment source.
@@ -83,21 +83,21 @@ class Order {
 	 *
 	 * @see https://developer.paypal.com/docs/api/orders/v2/#orders-create-response
 	 *
-	 * @param string                  $id The ID.
-	 * @param PurchaseUnit[]          $purchase_units The purchase units.
-	 * @param OrderStatus             $order_status The order status.
-	 * @param ApplicationContext|null $application_context The application context.
-	 * @param PaymentSource|null      $payment_source The payment source.
-	 * @param Payer|null              $payer The payer.
-	 * @param string                  $intent The intent.
-	 * @param \DateTime|null          $create_time The create time.
-	 * @param \DateTime|null          $update_time The update time.
+	 * @param string                 $id The ID.
+	 * @param PurchaseUnit[]         $purchase_units The purchase units.
+	 * @param OrderStatus            $order_status The order status.
+	 * @param ExperienceContext|null $experience_context The application context.
+	 * @param PaymentSource|null     $payment_source The payment source.
+	 * @param Payer|null             $payer The payer.
+	 * @param string                 $intent The intent.
+	 * @param \DateTime|null         $create_time The create time.
+	 * @param \DateTime|null         $update_time The update time.
 	 */
 	public function __construct(
 		string $id,
 		array $purchase_units,
 		OrderStatus $order_status,
-		ApplicationContext $application_context = null,
+		ExperienceContext $experience_context = null,
 		PaymentSource $payment_source = null,
 		Payer $payer = null,
 		string $intent = 'CAPTURE',
@@ -105,15 +105,15 @@ class Order {
 		\DateTime $update_time = null
 	) {
 
-		$this->id                  = $id;
-		$this->application_context = $application_context;
-		$this->payer               = $payer;
-		$this->order_status        = $order_status;
-		$this->intent              = ( 'CAPTURE' === $intent ) ? 'CAPTURE' : 'AUTHORIZE';
-		$this->purchase_units      = $purchase_units;
-		$this->create_time         = $create_time;
-		$this->update_time         = $update_time;
-		$this->payment_source      = $payment_source;
+		$this->id                 = $id;
+		$this->experience_context = $experience_context;
+		$this->payer              = $payer;
+		$this->order_status       = $order_status;
+		$this->intent             = ( 'CAPTURE' === $intent ) ? 'CAPTURE' : 'AUTHORIZE';
+		$this->purchase_units     = $purchase_units;
+		$this->create_time        = $create_time;
+		$this->update_time        = $update_time;
+		$this->payment_source     = $payment_source;
 	}
 
 	/**
@@ -180,13 +180,13 @@ class Order {
 	}
 
 	/**
-	 * Returns the application context.
+	 * Returns the experience context.
 	 *
-	 * @return ApplicationContext|null
+	 * @return ExperienceContext|null
 	 */
-	public function application_context() {
+	public function experience_context() {
 
-		return $this->application_context;
+		return $this->experience_context;
 	}
 
 	/**
@@ -225,8 +225,8 @@ class Order {
 		if ( $this->update_time() ) {
 			$order['update_time'] = $this->update_time()->format( 'Y-m-d\TH:i:sO' );
 		}
-		if ( $this->application_context() ) {
-			$order['application_context'] = $this->application_context()->to_array();
+		if ( $this->experience_context() ) {
+			$order['application_context'] = $this->experience_context()->to_array();
 		}
 
 		return $order;

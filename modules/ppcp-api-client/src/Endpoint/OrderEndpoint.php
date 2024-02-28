@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -19,14 +19,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
@@ -89,13 +87,6 @@ class OrderEndpoint {
 	private $logger;
 
 	/**
-	 * The application context repository.
-	 *
-	 * @var ApplicationContextRepository
-	 */
-	private $application_context_repository;
-
-	/**
 	 * True if FraudNet support is enabled in settings, otherwise false.
 	 *
 	 * @var bool
@@ -119,17 +110,16 @@ class OrderEndpoint {
 	/**
 	 * OrderEndpoint constructor.
 	 *
-	 * @param string                       $host The host.
-	 * @param Bearer                       $bearer The bearer.
-	 * @param OrderFactory                 $order_factory The order factory.
-	 * @param PatchCollectionFactory       $patch_collection_factory The patch collection factory.
-	 * @param string                       $intent The intent.
-	 * @param LoggerInterface              $logger The logger.
-	 * @param ApplicationContextRepository $application_context_repository The application context repository.
-	 * @param SubscriptionHelper           $subscription_helper The subscription helper.
-	 * @param bool                         $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
-	 * @param FraudNet                     $fraudnet The FraudNet entity.
-	 * @param string                       $bn_code The BN Code.
+	 * @param string                 $host The host.
+	 * @param Bearer                 $bearer The bearer.
+	 * @param OrderFactory           $order_factory The order factory.
+	 * @param PatchCollectionFactory $patch_collection_factory The patch collection factory.
+	 * @param string                 $intent The intent.
+	 * @param LoggerInterface        $logger The logger.
+	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
+	 * @param bool                   $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
+	 * @param FraudNet               $fraudnet The FraudNet entity.
+	 * @param string                 $bn_code The BN Code.
 	 */
 	public function __construct(
 		string $host,
@@ -138,24 +128,22 @@ class OrderEndpoint {
 		PatchCollectionFactory $patch_collection_factory,
 		string $intent,
 		LoggerInterface $logger,
-		ApplicationContextRepository $application_context_repository,
 		SubscriptionHelper $subscription_helper,
 		bool $is_fraudnet_enabled,
 		FraudNet $fraudnet,
 		string $bn_code = ''
 	) {
 
-		$this->host                           = $host;
-		$this->bearer                         = $bearer;
-		$this->order_factory                  = $order_factory;
-		$this->patch_collection_factory       = $patch_collection_factory;
-		$this->intent                         = $intent;
-		$this->logger                         = $logger;
-		$this->application_context_repository = $application_context_repository;
-		$this->bn_code                        = $bn_code;
-		$this->is_fraudnet_enabled            = $is_fraudnet_enabled;
-		$this->subscription_helper            = $subscription_helper;
-		$this->fraudnet                       = $fraudnet;
+		$this->host                     = $host;
+		$this->bearer                   = $bearer;
+		$this->order_factory            = $order_factory;
+		$this->patch_collection_factory = $patch_collection_factory;
+		$this->intent                   = $intent;
+		$this->logger                   = $logger;
+		$this->bn_code                  = $bn_code;
+		$this->is_fraudnet_enabled      = $is_fraudnet_enabled;
+		$this->subscription_helper      = $subscription_helper;
+		$this->fraudnet                 = $fraudnet;
 	}
 
 	/**
@@ -178,11 +166,9 @@ class OrderEndpoint {
 	 * @param PurchaseUnit[]     $items The purchase unit items for the order.
 	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
 	 * @param Payer|null         $payer The payer off the order.
-	 * @param PaymentToken|null  $payment_token The payment token.
-	 * @param string             $user_action The user action.
+	 * @param PaymentSource|null $payment_source The payment source.
 	 * @param string             $payment_method WC payment method.
 	 * @param array              $request_data Request data.
-	 * @param PaymentSource|null $payment_source The payment source.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -191,20 +177,18 @@ class OrderEndpoint {
 		array $items,
 		string $shipping_preference,
 		Payer $payer = null,
-		PaymentToken $payment_token = null,
-		string $user_action = ApplicationContext::USER_ACTION_CONTINUE,
+		PaymentSource $payment_source = null,
 		string $payment_method = '',
-		array $request_data = array(),
-		PaymentSource $payment_source = null
+		array $request_data = array()
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
-			'intent'              => apply_filters( 'woocommerce_paypal_payments_order_intent', $this->intent ),
-			'purchase_units'      => array_map(
+			'intent'         => apply_filters( 'woocommerce_paypal_payments_order_intent', $this->intent ),
+			'purchase_units' => array_map(
 				static function ( PurchaseUnit $item ) use ( $shipping_preference ): array {
 					$data = $item->to_array();
 
-					if ( $shipping_preference !== ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
+					if ( $shipping_preference !== ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
 						// Shipping options are not allowed to be sent when not getting the address from PayPal.
 						unset( $data['shipping']['options'] );
 					}
@@ -213,14 +197,9 @@ class OrderEndpoint {
 				},
 				$items
 			),
-			'application_context' => $this->application_context_repository
-				->current_context( $shipping_preference, $user_action )->to_array(),
 		);
 		if ( $payer && ! empty( $payer->email_address() ) ) {
 			$data['payer'] = $payer->to_array();
-		}
-		if ( $payment_token ) {
-			$data['payment_source']['token'] = $payment_token->to_array();
 		}
 		if ( $payment_source ) {
 			$data['payment_source'] = array(

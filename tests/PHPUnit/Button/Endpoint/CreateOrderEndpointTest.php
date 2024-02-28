@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ExperienceContextRepository;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -154,6 +155,7 @@ class CreateOrderEndpointTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $early_order_handler = Mockery::mock(EarlyOrderHandler::class);
 		$settings->shouldReceive('has')->andReturnFalse();
+		$experience_context_repository = Mockery::mock(ExperienceContextRepository::class);
 
         $testee = new CreateOrderEndpoint(
             $request_data,
@@ -170,6 +172,7 @@ class CreateOrderEndpointTest extends TestCase
 			['checkout'],
 			false,
 			['paypal'],
+			$experience_context_repository,
 			new NullLogger()
         );
         return array($payer_factory, $testee);
