@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -646,6 +647,8 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'woocommerce_order_action_ppcp_reauthorize_order',
 			static function ( WC_Order $wc_order ) use ( $container ) {
+				$admin_notices = $container->get( 'admin-notices.repository' );
+				assert( $admin_notices instanceof Repository );
 
 				/**
 				 * The authorized payments processor.
@@ -653,7 +656,17 @@ class WCGatewayModule implements ModuleInterface {
 				 * @var AuthorizedPaymentsProcessor $authorized_payments_processor
 				 */
 				$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-				$authorized_payments_processor->reauthorize_payment( $wc_order );
+
+				if ( $authorized_payments_processor->reauthorize_payment( $wc_order ) !== AuthorizedPaymentsProcessor::SUCCESSFUL ) {
+					$message = sprintf(
+						'%1$s %2$s',
+						esc_html__( 'Reauthorization with PayPal failed: ', 'woocommerce-paypal-payments' ),
+						$authorized_payments_processor->reauthorization_failure_reason() ?: ''
+					);
+					$admin_notices->persist( new Message( $message, 'error' ) );
+				} else {
+					$admin_notices->persist( new Message( 'Payment reauthorized.', 'info' ) );
+				}
 			}
 		);
 	}
