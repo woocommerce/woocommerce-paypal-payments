@@ -105,7 +105,7 @@ class AuthorizedPaymentsProcessor {
 	 *
 	 * @var string
 	 */
-	private $reauthorization_failure_reason;
+	private $reauthorization_failure_reason = '';
 
 	/**
 	 * AuthorizedPaymentsProcessor constructor.
