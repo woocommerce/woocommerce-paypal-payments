@@ -45,7 +45,19 @@ class AdminNotices implements ModuleInterface {
 
 		add_action(
 			Repository::NOTICES_FILTER,
+			/**
+			 * Adds persisted notices to the notices array.
+			 *
+			 * @param array $notices The notices.
+			 * @return array
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $notices ) use ( $c ) {
+				if ( ! is_array( $notices ) ) {
+					return $notices;
+				}
+
 				$admin_notices = $c->get( 'admin-notices.repository' );
 				assert( $admin_notices instanceof Repository );
 
