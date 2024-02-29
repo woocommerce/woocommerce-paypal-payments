@@ -396,13 +396,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		if ( $this->is_pay_later_tab() ) {
-			return sprintf(
-			// translators: %1$s is </ br> HTML tag and %2$s, %3$s are the opening and closing of HTML <i> tag.
-				__( 'Let customers pay over time while you get paid up front — at no additional cost.%1$sPayPal’s pay later options are boosting merchant conversion rates and increasing cart sizes by 39%%. %2$s(PayPal Q2 Earnings-2021.)%3$s', 'woocommerce-paypal-payments' ),
-				'</ br>',
-				'<i>',
-				'</ i>'
-			);
+			return '';
 		}
 
 		if ( is_admin() ) {

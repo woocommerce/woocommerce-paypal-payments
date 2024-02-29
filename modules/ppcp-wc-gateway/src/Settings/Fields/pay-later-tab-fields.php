@@ -44,51 +44,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 	};
 
 	$pay_later_fields = array(
-		'pay_later_button_heading'                        => array(
-			'heading'      => __( 'Pay Later Button', 'woocommerce-paypal-payments' ),
-			'type'         => 'ppcp-heading',
-			'screens'      => array( State::STATE_ONBOARDED ),
-			'requirements' => array( 'messages' ),
-			'gateway'      => Settings::PAY_LATER_TAB_ID,
-			'description'  => sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'When enabled, a %1$sPay Later button%2$s is displayed for eligible customers.%3$sPayPal buttons must be enabled to display the Pay Later button.', 'woocommerce-paypal-payments' ),
-				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-buttons" target="_blank">',
-				'</a>',
-				'</ br>'
-			),
-		),
-		'pay_later_button_enabled'                        => array(
-			'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'label'        => esc_html( $pay_later_messaging_enabled_label ),
-			'default'      => true,
-			'screens'      => array( State::STATE_ONBOARDED ),
-			'requirements' => array( 'messages' ),
-			'gateway'      => Settings::PAY_LATER_TAB_ID,
-			'input_class'  => $vault_enabled ? array( 'ppcp-disabled-checkbox' ) : array(),
-		),
-		'pay_later_button_locations'                      => array(
-			'title'        => __( 'Pay Later Button Locations', 'woocommerce-paypal-payments' ),
-			'type'         => 'ppcp-multiselect',
-			'class'        => array(),
-			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => $container->get( 'wcgateway.settings.pay-later.default-button-locations' ),
-			'desc_tip'     => false,
-			'description'  => __( 'Select where the Pay Later button should be displayed.', 'woocommerce-paypal-payments' ),
-			'options'      => $container->get( 'wcgateway.settings.pay-later.button-locations' ),
-			'screens'      => array( State::STATE_ONBOARDED ),
-			'requirements' => array( 'messages' ),
-			'gateway'      => Settings::PAY_LATER_TAB_ID,
-		),
-		'pay_later_button_preview'                        => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpPayLaterButtonPreview', 'button', $button_message ),
-			'screens'      => array( State::STATE_ONBOARDED ),
-			'requirements' => array( 'messages' ),
-			'gateway'      => Settings::PAY_LATER_TAB_ID,
-		),
-
 		// Messaging.
 		'pay_later_messaging_heading'                     => array(
 			'heading'      => __( 'Pay Later Messaging', 'woocommerce-paypal-payments' ),
@@ -96,13 +51,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
-			'description'  => sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'When enabled, %1$sPayPal Pay Later messaging%2$s is displayed for eligible customers.%3$sCustomers automatically see the most relevant Pay Later offering.', 'woocommerce-paypal-payments' ),
-				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-messaging" target="_blank">',
-				'</a>',
-				'</ br>'
-			),
 		),
 		'pay_later_messaging_enabled'                     => array(
 			'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
@@ -867,6 +815,50 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'pay_later_home_message_preview'                  => array(
 			'type'         => 'ppcp-text',
 			'text'         => $render_preview_element( 'ppcpHomeMessagePreview', 'message', $messaging_message ),
+			'screens'      => array( State::STATE_ONBOARDED ),
+			'requirements' => array( 'messages' ),
+			'gateway'      => Settings::PAY_LATER_TAB_ID,
+		),
+		'pay_later_button_heading'                        => array(
+			'heading'      => __( 'Pay Later Button', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-heading',
+			'screens'      => array( State::STATE_ONBOARDED ),
+			'requirements' => array( 'messages' ),
+			'gateway'      => Settings::PAY_LATER_TAB_ID,
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'When enabled, a %1$sPay Later button%2$s is displayed for eligible customers.%3$sPayPal buttons must be enabled to display the Pay Later button.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-buttons" target="_blank">',
+				'</a>',
+				'</ br>'
+			),
+		),
+		'pay_later_button_enabled'                        => array(
+			'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
+			'type'         => 'checkbox',
+			'label'        => esc_html( $pay_later_messaging_enabled_label ),
+			'default'      => true,
+			'screens'      => array( State::STATE_ONBOARDED ),
+			'requirements' => array( 'messages' ),
+			'gateway'      => Settings::PAY_LATER_TAB_ID,
+			'input_class'  => $vault_enabled ? array( 'ppcp-disabled-checkbox' ) : array(),
+		),
+		'pay_later_button_locations'                      => array(
+			'title'        => __( 'Pay Later Button Locations', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-multiselect',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => $container->get( 'wcgateway.settings.pay-later.default-button-locations' ),
+			'desc_tip'     => false,
+			'description'  => __( 'Select where the Pay Later button should be displayed.', 'woocommerce-paypal-payments' ),
+			'options'      => $container->get( 'wcgateway.settings.pay-later.button-locations' ),
+			'screens'      => array( State::STATE_ONBOARDED ),
+			'requirements' => array( 'messages' ),
+			'gateway'      => Settings::PAY_LATER_TAB_ID,
+		),
+		'pay_later_button_preview'                        => array(
+			'type'         => 'ppcp-text',
+			'text'         => $render_preview_element( 'ppcpPayLaterButtonPreview', 'button', $button_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,

@@ -1,10 +1,18 @@
 document.addEventListener( 'DOMContentLoaded', () => {
     const form = document.querySelector('#mainform');
     const table = form.querySelector('.form-table');
+    const headingRow = table.querySelector('#field-pay_later_messaging_heading');
     const saveChangesButton = form.querySelector('.woocommerce-save-button');
     const publishButtonClassName = PcpPayLaterConfigurator.publishButtonClassName;
 
-    table.insertAdjacentHTML('afterend', '<div id="messaging-configurator"></div>');
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = `<div id='messaging-configurator'></div>`;
+
+    // Get the new row element from the container
+    const newRow = tempContainer.firstChild;
+
+    // Insert the new row after the headingRow
+    headingRow.parentNode.insertBefore(newRow, headingRow.nextSibling);
 
 
     saveChangesButton.addEventListener('click', () => {
