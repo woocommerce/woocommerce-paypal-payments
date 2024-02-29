@@ -67,10 +67,10 @@ class ThreeDSecure {
 			return self::NO_DECISION;
 		}
 
-		if ( ! $payment_source->properties()->brand ?? '' ) {
+		if ( ! ( $payment_source->properties()->brand ?? '' ) ) {
 			return self::NO_DECISION;
 		}
-		if ( ! $payment_source->properties()->authentication_result ?? '' ) {
+		if ( ! ( $payment_source->properties()->authentication_result ?? '' ) ) {
 			return self::NO_DECISION;
 		}
 
