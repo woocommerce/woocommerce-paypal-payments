@@ -383,6 +383,7 @@ class SettingsListener {
 
 		if ( $reference_transaction_enabled !== true ) {
 			$this->settings->set( 'vault_enabled', false );
+			$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
 			$this->settings->persist();
 		}
 
