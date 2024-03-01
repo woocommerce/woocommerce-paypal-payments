@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WP_Error;
 
@@ -91,6 +92,13 @@ class CaptureCardPayment implements EndpointInterface {
 	private $real_time_account_updater_helper;
 
 	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	private $settings;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -108,6 +116,7 @@ class CaptureCardPayment implements EndpointInterface {
 	 * @param OrderEndpoint                $order_endpoint The order endpoint.
 	 * @param SessionHandler               $session_handler The session handler.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
+	 * @param Settings                     $settings The settings.
 	 * @param LoggerInterface              $logger The logger.
 	 */
 	public function __construct(
@@ -119,6 +128,7 @@ class CaptureCardPayment implements EndpointInterface {
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
+		Settings $settings,
 		LoggerInterface $logger
 	) {
 		$this->request_data                     = $request_data;
@@ -130,6 +140,7 @@ class CaptureCardPayment implements EndpointInterface {
 		$this->session_handler                  = $session_handler;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
 		$this->logger                           = $logger;
+		$this->settings                         = $settings;
 	}
 
 	/**
@@ -198,10 +209,11 @@ class CaptureCardPayment implements EndpointInterface {
 	 * @throws RuntimeException When request fails.
 	 */
 	private function create_order( string $vault_id ): stdClass {
-		$items = array( $this->purchase_unit_factory->from_wc_cart() );
+		$intent = $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+		$items  = array( $this->purchase_unit_factory->from_wc_cart() );
 
 		$data = array(
-			'intent'         => 'CAPTURE',
+			'intent'         => $intent,
 			'purchase_units' => array_map(
 				static function ( PurchaseUnit $item ): array {
 					return $item->to_array( true, false );
