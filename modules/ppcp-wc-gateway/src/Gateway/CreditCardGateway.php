@@ -16,6 +16,7 @@ use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
@@ -115,18 +116,25 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $subscription_helper;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	protected $logger;
-
-	/**
 	 * The payments endpoint
 	 *
 	 * @var PaymentsEndpoint
 	 */
 	protected $payments_endpoint;
+
+	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	private $environment;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
 	/**
 	 * CreditCardGateway constructor.
@@ -140,9 +148,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param State                    $state The state.
 	 * @param TransactionUrlProvider   $transaction_url_provider Service able to provide view transaction url base.
 	 * @param SubscriptionHelper       $subscription_helper The subscription helper.
-	 * @param LoggerInterface          $logger The logger.
 	 * @param PaymentsEndpoint         $payments_endpoint The payments endpoint.
 	 * @param VaultedCreditCardHandler $vaulted_credit_card_handler The vaulted credit card handler.
+	 * @param Environment              $environment The environment.
+	 * @param LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -154,9 +163,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
-		LoggerInterface $logger,
 		PaymentsEndpoint $payments_endpoint,
-		VaultedCreditCardHandler $vaulted_credit_card_handler
+		VaultedCreditCardHandler $vaulted_credit_card_handler,
+		Environment $environment,
+		LoggerInterface $logger
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -168,9 +178,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->state                       = $state;
 		$this->transaction_url_provider    = $transaction_url_provider;
 		$this->subscription_helper         = $subscription_helper;
-		$this->logger                      = $logger;
 		$this->payments_endpoint           = $payments_endpoint;
 		$this->vaulted_credit_card_handler = $vaulted_credit_card_handler;
+		$this->environment                 = $environment;
+		$this->logger                      = $logger;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
@@ -370,6 +381,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( $saved_payment_card ) {
 			if ( $saved_payment_card['payment_source'] === 'card' && $saved_payment_card['status'] === 'COMPLETED' ) {
 				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $saved_payment_card['order_id'] );
+				$wc_order->update_meta_data(
+					PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
+					$this->environment->current_environment_is( Environment::SANDBOX ) ? 'sandbox' : 'live'
+				);
 				$wc_order->save_meta_data();
 
 				$this->update_transaction_id( $saved_payment_card['order_id'], $wc_order );

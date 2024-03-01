@@ -127,9 +127,10 @@ return array(
 			$state,
 			$transaction_url_provider,
 			$subscription_helper,
-			$logger,
 			$payments_endpoint,
-			$vaulted_credit_card_handler
+			$vaulted_credit_card_handler,
+			$container->get( 'onboarding.environment' ),
+			$logger
 		);
 	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
