@@ -130,6 +130,7 @@ return array(
 			$payments_endpoint,
 			$vaulted_credit_card_handler,
 			$container->get( 'onboarding.environment' ),
+			$container->get( 'api.endpoint.order' ),
 			$logger
 		);
 	},

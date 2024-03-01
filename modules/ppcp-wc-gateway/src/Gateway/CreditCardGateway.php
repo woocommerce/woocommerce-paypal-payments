@@ -13,12 +13,15 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -34,7 +37,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait;
+	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -130,6 +133,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $environment;
 
 	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	private $order_endpoint;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -151,6 +161,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param PaymentsEndpoint         $payments_endpoint The payments endpoint.
 	 * @param VaultedCreditCardHandler $vaulted_credit_card_handler The vaulted credit card handler.
 	 * @param Environment              $environment The environment.
+	 * @param OrderEndpoint            $order_endpoint The order endpoint.
 	 * @param LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
@@ -166,6 +177,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		PaymentsEndpoint $payments_endpoint,
 		VaultedCreditCardHandler $vaulted_credit_card_handler,
 		Environment $environment,
+		OrderEndpoint $order_endpoint,
 		LoggerInterface $logger
 	) {
 		$this->id                          = self::ID;
@@ -181,6 +193,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->payments_endpoint           = $payments_endpoint;
 		$this->vaulted_credit_card_handler = $vaulted_credit_card_handler;
 		$this->environment                 = $environment;
+		$this->order_endpoint              = $order_endpoint;
 		$this->logger                      = $logger;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
@@ -387,12 +400,35 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				);
 				$wc_order->save_meta_data();
 
-				$this->update_transaction_id( $saved_payment_card['order_id'], $wc_order );
-				$wc_order->payment_complete();
+				$order_id = $saved_payment_card['order_id'] ?? '';
+				if ( $order_id ) {
+					$order = $this->order_endpoint->order( $order_id );
+					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+
+					if ( $order->intent() === 'AUTHORIZE' ) {
+						$order = $this->order_endpoint->authorize( $order );
+
+						$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+
+						if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
+							$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
+						}
+					}
+
+					$transaction_id = $this->get_paypal_order_transaction_id( $order );
+					if ( $transaction_id ) {
+						$this->update_transaction_id( $transaction_id, $wc_order );
+					}
+
+					$this->handle_new_order_status( $order, $wc_order );
+				}
+
 				WC()->session->set( 'ppcp_saved_payment_card', null );
 
 				return $this->handle_payment_success( $wc_order );
 			}
+
+			WC()->session->set( 'ppcp_saved_payment_card', null );
 		}
 
 		/**
