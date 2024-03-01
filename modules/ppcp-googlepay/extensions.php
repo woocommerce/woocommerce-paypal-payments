@@ -62,7 +62,7 @@ return array(
 			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
 			return $insert_after(
 				$fields,
-				'allow_card_button_gateway',
+				'digital_wallet_heading',
 				array(
 					'googlepay_button_enabled' => array(
 						'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
@@ -80,7 +80,7 @@ return array(
 							. '</p>',
 						'default'           => 'yes',
 						'screens'           => array( State::STATE_ONBOARDED ),
-						'gateway'           => 'paypal',
+						'gateway'           => 'dcc',
 						'requirements'      => array(),
 						'custom_attributes' => array(
 							'data-ppcp-display' => wp_json_encode(
@@ -101,7 +101,7 @@ return array(
 		// Standard Payments tab fields.
 		return $insert_after(
 			$fields,
-			'allow_card_button_gateway',
+			'digital_wallet_heading',
 			array(
 				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
@@ -117,7 +117,7 @@ return array(
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
-					'gateway'           => 'paypal',
+					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
 						'data-ppcp-display' => wp_json_encode(
@@ -149,7 +149,7 @@ return array(
 					'default'      => 'pay',
 					'options'      => PropertiesDictionary::button_types(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'googlepay_button_color'            => array(
@@ -167,7 +167,7 @@ return array(
 					'default'      => 'black',
 					'options'      => PropertiesDictionary::button_colors(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'googlepay_button_language'         => array(
@@ -184,7 +184,7 @@ return array(
 					'default'      => 'en',
 					'options'      => PropertiesDictionary::button_languages(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'googlepay_button_shipping_enabled' => array(
@@ -199,7 +199,7 @@ return array(
 					'label'        => __( 'Enable Google Pay shipping callback', 'woocommerce-paypal-payments' ),
 					'default'      => 'no',
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 			)

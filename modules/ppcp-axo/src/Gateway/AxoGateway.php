@@ -181,7 +181,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$wc_order = wc_get_order( $order_id );
+		$wc_order      = wc_get_order( $order_id );
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		$nonce = 'tokencc_bh_vkjzxd_tgpd3n_qmjs7k_3vhxzg_p82';
@@ -192,7 +192,7 @@ class AxoGateway extends WC_Payment_Gateway {
 				'checkout'
 			);
 
-			$payment_source_properties = new \stdClass();
+			$payment_source_properties                   = new \stdClass();
 			$payment_source_properties->single_use_token = $nonce;
 
 			$payment_source = new PaymentSource(

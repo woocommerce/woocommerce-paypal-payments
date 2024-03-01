@@ -33,7 +33,7 @@ return array(
 		// Standard Payments tab fields.
 		return $insert_after(
 			$fields,
-			'vault_enabled',
+			'vault_enabled_dcc',
 			array(
 				'axo_enabled'        => array(
 					'title'             => __( 'Fastlane', 'woocommerce-paypal-payments' ),
@@ -49,7 +49,7 @@ return array(
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
-					'gateway'           => 'paypal',
+					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
 						'data-ppcp-display' => wp_json_encode(
@@ -84,7 +84,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 				),
 				'axo_email_widget'   => array(
 					'title'        => __( 'Email Widget', 'woocommerce-paypal-payments' ),
@@ -100,7 +100,7 @@ return array(
 					'default'      => 'pay',
 					'options'      => PropertiesDictionary::email_widget_options(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'axo_address_widget' => array(
@@ -117,7 +117,7 @@ return array(
 					'default'      => 'pay',
 					'options'      => PropertiesDictionary::address_widget_options(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'axo_payment_widget' => array(
@@ -135,7 +135,7 @@ return array(
 					'default'      => 'black',
 					'options'      => PropertiesDictionary::payment_widget_options(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 			)

@@ -91,7 +91,7 @@ return array(
 			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
 			return $insert_after(
 				$fields,
-				'allow_card_button_gateway',
+				'digital_wallet_heading',
 				array(
 					'applepay_button_enabled' => array(
 						'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
@@ -109,7 +109,7 @@ return array(
 							. '</p>',
 						'default'           => 'yes',
 						'screens'           => array( State::STATE_ONBOARDED ),
-						'gateway'           => 'paypal',
+						'gateway'           => 'dcc',
 						'requirements'      => array(),
 						'custom_attributes' => array(
 							'data-ppcp-display' => wp_json_encode(
@@ -129,7 +129,7 @@ return array(
 
 		return $insert_after(
 			$fields,
-			'allow_card_button_gateway',
+			'digital_wallet_heading',
 			array(
 				'spacer'                              => array(
 					'title'        => '',
@@ -138,7 +138,7 @@ return array(
 					'class'        => array(),
 					'classes'      => array( 'ppcp-active-spacer' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_button_enabled'             => array(
@@ -155,7 +155,7 @@ return array(
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
-					'gateway'           => 'paypal',
+					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
 						'data-ppcp-display' => wp_json_encode(
@@ -194,7 +194,7 @@ return array(
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_button_domain_validation'   => array(
@@ -217,7 +217,7 @@ return array(
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_button_device_eligibility'  => array(
@@ -235,7 +235,7 @@ return array(
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_button_type'                => array(
@@ -252,7 +252,7 @@ return array(
 					'default'      => 'pay',
 					'options'      => PropertiesDictionary::button_types(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_button_color'               => array(
@@ -270,7 +270,7 @@ return array(
 					'default'      => 'black',
 					'options'      => PropertiesDictionary::button_colors(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_button_language'            => array(
@@ -287,7 +287,7 @@ return array(
 					'default'      => 'en',
 					'options'      => PropertiesDictionary::button_languages(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 				'applepay_checkout_data_mode'         => array(
@@ -301,7 +301,7 @@ return array(
 					'default'      => PropertiesDictionary::BILLING_DATA_MODE_DEFAULT,
 					'options'      => PropertiesDictionary::billing_data_modes(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
+					'gateway'      => 'dcc',
 					'requirements' => array(),
 				),
 			)
