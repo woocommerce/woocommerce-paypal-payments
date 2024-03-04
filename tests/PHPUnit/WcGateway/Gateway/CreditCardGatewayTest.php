@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -32,6 +34,8 @@ class CreditCardGatewayTest extends TestCase
 	private $logger;
 	private $paymentsEndpoint;
 	private $vaultedCreditCardHandler;
+	private $environment;
+	private $orderEndpoint;
 	private $testee;
 
 	public function setUp(): void
@@ -50,6 +54,8 @@ class CreditCardGatewayTest extends TestCase
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 		$this->vaultedCreditCardHandler = Mockery::mock(VaultedCreditCardHandler::class);
+		$this->environment = Mockery::mock(Environment::class);
+		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 
 		$this->state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 		$this->config->shouldReceive('has')->andReturn(true);
@@ -67,9 +73,11 @@ class CreditCardGatewayTest extends TestCase
 			$this->state,
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
-			$this->logger,
 			$this->paymentsEndpoint,
-			$this->vaultedCreditCardHandler
+			$this->vaultedCreditCardHandler,
+			$this->environment,
+			$this->orderEndpoint,
+			$this->logger
 		);
 	}
 
