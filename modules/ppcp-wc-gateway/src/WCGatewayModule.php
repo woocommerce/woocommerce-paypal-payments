@@ -666,6 +666,10 @@ class WCGatewayModule implements ModuleInterface {
 					$admin_notices->persist( new Message( $message, 'error' ) );
 				} else {
 					$admin_notices->persist( new Message( 'Payment reauthorized.', 'info' ) );
+
+					$wc_order->add_order_note(
+						__( 'Payment reauthorized.', 'woocommerce-paypal-payments' )
+					);
 				}
 			}
 		);
