@@ -79,7 +79,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 			static function () use ( $c, $settings ) {
 				wp_enqueue_script(
 					'ppcp-paylater-configurator-lib',
-					'https://www.paypalobjects.com/merchant-library/preview/merchant-configurator.js',
+					'https://www.paypalobjects.com/merchant-library/merchant-configurator.js',
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
