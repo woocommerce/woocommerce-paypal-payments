@@ -156,6 +156,7 @@ class SaveConfig {
 			case 'cart':
 			case 'checkout':
 			case 'product':
+			case 'product_preview':
 				return $placement;
 			case 'category':
 				return 'shop';
