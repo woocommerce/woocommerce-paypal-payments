@@ -27,6 +27,7 @@ class ConfigFactory {
 			$this->location_to_configurator_placement( 'product' ) => $this->for_location( $settings, 'product' ),
 			$this->location_to_configurator_placement( 'shop' ) => $this->for_location( $settings, 'shop' ),
 			$this->location_to_configurator_placement( 'home' ) => $this->for_location( $settings, 'home' ),
+			$this->location_to_configurator_placement( 'product_preview' ) => $this->for_location( $settings, 'product_preview' ),
 		);
 	}
 
@@ -76,6 +77,7 @@ class ConfigFactory {
 			case 'cart':
 			case 'checkout':
 			case 'product':
+			case 'product_preview':
 				return $location;
 			case 'shop':
 				return 'category';
