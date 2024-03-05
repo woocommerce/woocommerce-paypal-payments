@@ -29,7 +29,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_configurator_enabled',
-			getenv( 'PCP_PAYLATER_CONFIGURATOR' ) === '1'
+			getenv( 'PCP_PAYLATER_CONFIGURATOR' ) !== '0'
 		);
 	}
 
