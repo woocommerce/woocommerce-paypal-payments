@@ -829,6 +829,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
+			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

@@ -248,9 +248,14 @@ class IncomingWebhookEndpoint {
 			}
 		}
 
+		$event_type = $request['event_type'] ?: '';
+		if ( in_array( $event_type, array( 'BILLING_AGREEMENTS.AGREEMENT.CREATED' ), true ) ) {
+			return $this->success_response();
+		}
+
 		$message = sprintf(
 			'Could not find handler for request type %s',
-			$request['event_type'] ?: ''
+			$event_type
 		);
 		return $this->failure_response( $message );
 	}
