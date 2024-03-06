@@ -489,7 +489,7 @@ class RenewalHandler {
 		if ( $subscription ) {
 			$transaction = $this->subscription_helper->previous_transaction( $subscription );
 			if ( $transaction ) {
-				$properties['stored_credentials'] = array(
+				$properties['stored_credential'] = array(
 					'payment_initiator'              => 'MERCHANT',
 					'payment_type'                   => 'RECURRING',
 					'usage'                          => 'SUBSEQUENT',
