@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -140,6 +141,20 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $order_endpoint;
 
 	/**
+	 * Capture card payment.
+	 *
+	 * @var CaptureCardPayment
+	 */
+	private $capture_card_payment;
+
+	/**
+	 * The prefix.
+	 *
+	 * @var string
+	 */
+	private $prefix;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -162,6 +177,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param VaultedCreditCardHandler $vaulted_credit_card_handler The vaulted credit card handler.
 	 * @param Environment              $environment The environment.
 	 * @param OrderEndpoint            $order_endpoint The order endpoint.
+	 * @param CaptureCardPayment $capture_card_payment Capture card payment.
+	 * @param string $prefix The prefix.
 	 * @param LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
@@ -178,6 +195,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		VaultedCreditCardHandler $vaulted_credit_card_handler,
 		Environment $environment,
 		OrderEndpoint $order_endpoint,
+		CaptureCardPayment $capture_card_payment,
+		string $prefix,
 		LoggerInterface $logger
 	) {
 		$this->id                          = self::ID;
@@ -194,6 +213,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->vaulted_credit_card_handler = $vaulted_credit_card_handler;
 		$this->environment                 = $environment;
 		$this->order_endpoint              = $order_endpoint;
+		$this->capture_card_payment = $capture_card_payment;
+		$this->prefix = $prefix;
 		$this->logger                      = $logger;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
@@ -390,19 +411,16 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			);
 		}
 
-		$saved_payment_card = WC()->session->get( 'ppcp_saved_payment_card' );
-		if ( $saved_payment_card ) {
-			if ( $saved_payment_card['payment_source'] === 'card' && $saved_payment_card['status'] === 'COMPLETED' ) {
-				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $saved_payment_card['order_id'] );
-				$wc_order->update_meta_data(
-					PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
-					$this->environment->current_environment_is( Environment::SANDBOX ) ? 'sandbox' : 'live'
-				);
-				$wc_order->save_meta_data();
+		$card_payment_token_id = wc_clean( wp_unslash( $_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? '' ) );
+		if($card_payment_token_id) {
+			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
+			foreach ( $tokens as $token ) {
+				if ( $token->get_id() === (int) $card_payment_token_id ) {
+					$custom_id = $wc_order->get_order_number();
+					$invoice_id      = $this->prefix . $wc_order->get_order_number();
+					$create_order = $this->capture_card_payment->create_order($token->get_token(), $custom_id, $invoice_id);
 
-				$order_id = $saved_payment_card['order_id'] ?? '';
-				if ( $order_id ) {
-					$order = $this->order_endpoint->order( $order_id );
+					$order = $this->order_endpoint->order( $create_order->id );
 					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
 					if ( $order->intent() === 'AUTHORIZE' ) {
@@ -421,14 +439,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 					}
 
 					$this->handle_new_order_status( $order, $wc_order );
+
+					return $this->handle_payment_success( $wc_order );
 				}
-
-				WC()->session->set( 'ppcp_saved_payment_card', null );
-
-				return $this->handle_payment_success( $wc_order );
 			}
-
-			WC()->session->set( 'ppcp_saved_payment_card', null );
 		}
 
 		/**
