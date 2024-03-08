@@ -1,8 +1,10 @@
-import Fastlane from "./Entity/Fastlane";
+import Fastlane from "./Connection/Fastlane";
 import MockData from "./Helper/MockData";
 import {log} from "./Helper/Debug";
-import {hide, show} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
-import FormFieldGroup from "./Helper/FormFieldGroup";
+import DomElementCollection from "./Components/DomElementCollection";
+import ShippingView from "./Views/ShippingView";
+import BillingView from "./Views/BillingView";
+import CardView from "./Views/CardView";
 
 class AxoManager {
 
@@ -23,48 +25,7 @@ class AxoManager {
             card: null,
         }
 
-        this.elements = {
-            gatewayRadioButton: {
-                selector: '#payment_method_ppcp-axo-gateway',
-            },
-            defaultSubmitButton: {
-                selector: '#place_order',
-            },
-            paymentContainer: {
-                id: 'ppcp-axo-payment-container',
-                selector: '#ppcp-axo-payment-container',
-                className: 'ppcp-axo-payment-container'
-            },
-            watermarkContainer: {
-                id: 'ppcp-axo-watermark-container',
-                selector: '#ppcp-axo-watermark-container',
-                className: 'ppcp-axo-watermark-container'
-            },
-            emailWidgetContainer: {
-                id: 'ppcp-axo-email-widget',
-                selector: '#ppcp-axo-email-widget',
-                className: 'ppcp-axo-email-widget'
-            },
-            shippingAddressContainer: {
-                id: 'ppcp-axo-shipping-address-container',
-                selector: '#ppcp-axo-shipping-address-container',
-                className: 'ppcp-axo-shipping-address-container',
-                anchorSelector: '.woocommerce-shipping-fields'
-            },
-            billingAddressContainer: {
-                id: 'ppcp-axo-billing-address-container',
-                selector: '#ppcp-axo-billing-address-container',
-                className: 'ppcp-axo-billing-address-container',
-                anchorSelector: '.woocommerce-billing-fields__field-wrapper'
-            },
-            fieldBillingEmail: {
-                selector: '#billing_email_field'
-            },
-            submitButtonContainer: {
-                selector: '#ppcp-axo-submit-button-container',
-                buttonSelector: '#ppcp-axo-submit-button-container button'
-            },
-        }
+        this.el = new DomElementCollection();
 
         this.styles = {
             root: {
@@ -76,226 +37,15 @@ class AxoManager {
 
         this.registerEventHandlers();
 
-        this.shippingFormFields = new FormFieldGroup({
-            baseSelector: '.woocommerce-checkout',
-            contentSelector: this.elements.shippingAddressContainer.selector,
-            template: (data) => {
-                const valueOfSelect = (selectSelector, key) => {
-                    const selectElement = document.querySelector(selectSelector);
-                    const option = selectElement.querySelector(`option[value="${key}"]`);
-                    return option ? option.textContent : key;
-                }
-
-                if (data.isEditing()) {
-                    return `
-                        <div style="margin-bottom: 20px;">
-                            <h3>Shipping details <a href="javascript:void(0)" data-ppcp-axo-save-shipping-address style="margin-left: 20px;">Save</a></h3>
-                        </div>
-                    `;
-                }
-                if (data.isEmpty()) {
-                    return `
-                        <div style="margin-bottom: 20px;">
-                            <h3>Shipping details <a href="javascript:void(0)" data-ppcp-axo-change-shipping-address style="margin-left: 20px;">Edit</a></h3>
-                            <div>Please fill in your shipping details.</div>
-                        </div>
-                    `;
-                }
-                return `
-                    <div style="margin-bottom: 20px;">
-                        <h3>Shipping details <a href="javascript:void(0)" data-ppcp-axo-change-shipping-address style="margin-left: 20px;">Edit</a></h3>
-                        <div>${data.value('company')}</div>
-                        <div>${data.value('firstName')} ${data.value('lastName')}</div>
-                        <div>${data.value('street1')}</div>
-                        <div>${data.value('street2')}</div>
-                        <div>${data.value('postCode')} ${data.value('city')}</div>
-                        <div>${valueOfSelect('#shipping_state', data.value('stateCode'))}</div>
-                        <div>${valueOfSelect('#shipping_country', data.value('countryCode'))}</div>
-                    </div>
-                `;
-            },
-            fields: {
-                firstName: {
-                    'key': 'firstName',
-                    'selector': '#shipping_first_name_field',
-                    'valuePath': 'shipping.name.firstName',
-                },
-                lastName: {
-                    'selector': '#shipping_last_name_field',
-                    'valuePath': 'shipping.name.lastName',
-                },
-                street1: {
-                    'selector': '#shipping_address_1_field',
-                    'valuePath': 'shipping.address.addressLine1',
-                },
-                street2: {
-                    'selector': '#shipping_address_2_field',
-                    'valuePath': null
-                },
-                postCode: {
-                    'selector': '#shipping_postcode_field',
-                    'valuePath': 'shipping.address.postalCode',
-                },
-                city: {
-                    'selector': '#shipping_city_field',
-                    'valuePath': 'shipping.address.adminArea2',
-                },
-                stateCode: {
-                    'selector': '#shipping_state_field',
-                    'valuePath': 'shipping.address.adminArea1',
-                },
-                countryCode: {
-                    'selector': '#shipping_country_field',
-                    'valuePath': 'shipping.address.countryCode',
-                },
-                company: {
-                    'selector': '#shipping_company_field',
-                    'valuePath': null,
-                },
-                shipDifferentAddress: {
-                    'selector': '#ship-to-different-address',
-                    'valuePath': null,
-                }
-            }
-        });
-
-        this.billingFormFields = new FormFieldGroup({
-            baseSelector: '.woocommerce-checkout',
-            contentSelector: this.elements.billingAddressContainer.selector,
-            template: (data) => {
-                const valueOfSelect = (selectSelector, key) => {
-                    const selectElement = document.querySelector(selectSelector);
-                    const option = selectElement.querySelector(`option[value="${key}"]`);
-                    return option ? option.textContent : key;
-                }
-
-                if (data.isEditing()) {
-                    return `
-                        <div style="margin-bottom: 20px;">
-                            <h4><a href="javascript:void(0)" data-ppcp-axo-save-billing-address>Save</a></h4>
-                        </div>
-                    `;
-                }
-                if (data.isEmpty()) {
-                    return `
-                        <div style="margin-bottom: 20px;">
-                            <div>Please fill in your billing details.</div>
-                            <h4><a href="javascript:void(0)" data-ppcp-axo-change-billing-address>Edit</a></h4>
-                        </div>
-                    `;
-                }
-                return `
-                    <div style="margin-bottom: 20px;">
-                        <h4>Billing address</h4>
-                        <div>${data.value('company')}</div>
-                        <div>${data.value('firstName')} ${data.value('lastName')}</div>
-                        <div>${data.value('street1')}</div>
-                        <div>${data.value('street2')}</div>
-                        <div>${data.value('postCode')} ${data.value('city')}</div>
-                        <div>${valueOfSelect('#billing_state', data.value('stateCode'))}</div>
-                        <div>${valueOfSelect('#billing_country', data.value('countryCode'))}</div>
-                        <div>${data.value('phone')}</div>
-                        <h4><a href="javascript:void(0)" data-ppcp-axo-change-billing-address>Edit</a></h4>
-                    </div>
-                `;
-            },
-            fields: {
-                firstName: {
-                    'selector': '#billing_first_name_field',
-                    'valuePath': 'billing.name.firstName',
-                },
-                lastName: {
-                    'selector': '#billing_last_name_field',
-                    'valuePath': 'billing.name.lastName',
-                },
-                street1: {
-                    'selector': '#billing_address_1_field',
-                    'valuePath': 'billing.address.addressLine1',
-                },
-                street2: {
-                    'selector': '#billing_address_2_field',
-                    'valuePath': null
-                },
-                postCode: {
-                    'selector': '#billing_postcode_field',
-                    'valuePath': 'billing.address.postalCode',
-                },
-                city: {
-                    'selector': '#billing_city_field',
-                    'valuePath': 'billing.address.adminArea2',
-                },
-                stateCode: {
-                    'selector': '#billing_state_field',
-                    'valuePath': 'billing.address.adminArea1',
-                },
-                countryCode: {
-                    'selector': '#billing_country_field',
-                    'valuePath': 'billing.address.countryCode',
-                },
-                company: {
-                    'selector': '#billing_company_field',
-                    'valuePath': null,
-                },
-                phone: {
-                    'selector': '#billing_phone_field',
-                    'valuePath': null,
-                },
-            }
-        });
-
-        this.cardFormFields = new FormFieldGroup({
-            baseSelector: '.ppcp-axo-payment-container',
-            contentSelector: this.elements.paymentContainer.selector,
-            template: (data) => {
-                const selectOtherPaymentMethod = () => {
-                    if (!this.hideGatewaySelection) {
-                        return '';
-                    }
-                    return `<p style="margin-top: 40px; text-align: center;"><a href="javascript:void(0)" data-ppcp-axo-show-gateway-selection>Select other payment method</a></p>`;
-                };
-
-                if (data.isEmpty()) {
-                    return `
-                        <div style="margin-bottom: 20px; text-align: center;">
-                            <div>Please fill in your card details.</div>
-                            <h4><a href="javascript:void(0)" data-ppcp-axo-change-card>Edit</a></h4>
-                            ${selectOtherPaymentMethod()}
-                        </div>
-                    `;
-                }
-                return `
-                    <div style="margin-bottom: 20px;">
-                        <h3>Card Details <a href="javascript:void(0)" data-ppcp-axo-change-card>Edit</a></h3>
-                        <div>${data.value('name')}</div>
-                        <div>${data.value('brand')}</div>
-                        <div>${data.value('lastDigits') ? '************' + data.value('lastDigits'): ''}</div>
-                        <div>${data.value('expiry')}</div>
-                        ${selectOtherPaymentMethod()}
-                    </div>
-                `;
-            },
-            fields: {
-                brand: {
-                    'valuePath': 'card.paymentSource.card.brand',
-                },
-                expiry: {
-                    'valuePath': 'card.paymentSource.card.expiry',
-                },
-                lastDigits: {
-                    'valuePath': 'card.paymentSource.card.lastDigits',
-                },
-                name: {
-                    'valuePath': 'card.paymentSource.card.name',
-                },
-            }
-        });
-
+        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector);
+        this.billingView = new BillingView(this.el.billingAddressContainer.selector);
+        this.cardView = new CardView(this.el.paymentContainer.selector, this);
     }
 
     registerEventHandlers() {
 
         // Listen to Gateway Radio button changes.
-        this.$(document).on('change', this.elements.gatewayRadioButton.selector, (ev) => {
+        this.el.gatewayRadioButton.on('change', (ev) => {
             if (ev.target.checked) {
                 this.showAxo();
             } else {
@@ -308,7 +58,7 @@ class AxoManager {
         });
 
         // On checkout form submitted.
-        this.$(document).on('click', this.elements.submitButtonContainer.buttonSelector, () => {
+        this.$(document).on('click', this.el.submitButton.selector, () => {
             this.onClickSubmitButton();
             return false;
         });
@@ -319,7 +69,7 @@ class AxoManager {
             if (this.isConnectProfile) {
                 console.log('profile', this.fastlane.profile);
 
-                //this.shippingFormFields.deactivate();
+                //this.shippingView.deactivate();
 
                 const { selectionChanged, selectedAddress } = await this.fastlane.profile.showShippingAddressSelector();
 
@@ -327,20 +77,20 @@ class AxoManager {
 
                 if (selectionChanged) {
                     this.setShipping(selectedAddress);
-                    this.shippingFormFields.activate();
+                    this.shippingView.activate();
                 }
             } else {
                 let checkbox = document.querySelector('#ship-to-different-address-checkbox');
                 if (checkbox && !checkbox.checked) {
                     jQuery(checkbox).trigger('click');
                 }
-                this.shippingFormFields.deactivate();
+                this.shippingView.deactivate();
             }
 
         });
 
         this.$(document).on('click', '*[data-ppcp-axo-save-shipping-address]', async () => {
-            this.shippingFormFields.activate();
+            this.shippingView.activate();
         });
 
         // Click change billing address link.
@@ -348,12 +98,12 @@ class AxoManager {
             if (this.isConnectProfile) {
                 this.$('*[data-ppcp-axo-change-card]').trigger('click');
             } else {
-                this.billingFormFields.deactivate();
+                this.billingView.deactivate();
             }
         });
 
         this.$(document).on('click', '*[data-ppcp-axo-save-billing-address]', async () => {
-            this.billingFormFields.activate();
+            this.billingView.activate();
         });
 
         // Click change card link.
@@ -376,7 +126,7 @@ class AxoManager {
         this.$(document).on('click', '*[data-ppcp-axo-show-gateway-selection]', async () => {
             this.hideGatewaySelection = false;
             this.$('.wc_payment_methods label').show();
-            this.cardFormFields.refresh();
+            this.cardView.refresh();
         });
 
     }
@@ -385,41 +135,41 @@ class AxoManager {
         this.initPlacements();
         this.initFastlane();
 
-        this.shippingFormFields.activate();
-        this.billingFormFields.activate();
+        this.shippingView.activate();
+        this.billingView.activate();
 
-        show(this.elements.emailWidgetContainer.selector);
-        show(this.elements.watermarkContainer.selector);
-        show(this.elements.paymentContainer.selector);
-        show(this.elements.submitButtonContainer.selector);
-        hide(this.elements.defaultSubmitButton.selector);
+        this.el.emailWidgetContainer.show();
+        this.el.watermarkContainer.show();
+        this.el.paymentContainer.show();
+        this.el.submitButtonContainer.show();
+        this.el.defaultSubmitButton.hide();
 
         if (this.useEmailWidget()) {
-            hide(this.elements.fieldBillingEmail.selector);
+            this.el.fieldBillingEmail.hide();
         }
     }
 
     hideAxo() {
-        this.shippingFormFields.deactivate();
-        this.billingFormFields.deactivate();
+        this.shippingView.deactivate();
+        this.billingView.deactivate();
 
-        hide(this.elements.emailWidgetContainer.selector);
-        hide(this.elements.watermarkContainer.selector);
-        hide(this.elements.paymentContainer.selector);
-        hide(this.elements.submitButtonContainer.selector);
-        show(this.elements.defaultSubmitButton.selector);
+        this.el.emailWidgetContainer.hide();
+        this.el.watermarkContainer.hide();
+        this.el.paymentContainer.hide();
+        this.el.submitButtonContainer.hide();
+        this.el.defaultSubmitButton.show();
 
         if (this.useEmailWidget()) {
-            show(this.elements.fieldBillingEmail.selector);
+            this.el.fieldBillingEmail.show();
         }
     }
 
     initPlacements() {
-        let emailRow = document.querySelector(this.elements.fieldBillingEmail.selector);
+        let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
 
-        const bc = this.elements.billingAddressContainer;
-        const sc = this.elements.shippingAddressContainer;
-        const ec = this.elements.emailWidgetContainer;
+        const bc = this.el.billingAddressContainer;
+        const sc = this.el.shippingAddressContainer;
+        const ec = this.el.emailWidgetContainer;
 
         if (!document.querySelector(bc.selector)) {
             document.querySelector(bc.anchorSelector).insertAdjacentHTML('beforeend', `
@@ -476,25 +226,25 @@ class AxoManager {
     }
 
     insertDomElements() {
-        this.emailInput = document.querySelector(this.elements.fieldBillingEmail.selector + ' input');
+        this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
         this.emailInput.insertAdjacentHTML('afterend', `
-            <div class="${this.elements.watermarkContainer.className}" id="${this.elements.watermarkContainer.id}"></div>
+            <div class="${this.el.watermarkContainer.className}" id="${this.el.watermarkContainer.id}"></div>
         `);
 
         const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
         gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
-            <div id="${this.elements.paymentContainer.id}" class="${this.elements.paymentContainer.className} hidden"></div>
+            <div id="${this.el.paymentContainer.id}" class="${this.el.paymentContainer.className} hidden"></div>
         `);
     }
 
     triggerGatewayChange() {
-        this.$(this.elements.gatewayRadioButton.selector).trigger('change');
+        this.el.gatewayRadioButton.trigger('change');
     }
 
     renderWatermark() {
         this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo: true
-        }).render(this.elements.watermarkContainer.selector);
+        }).render(this.el.watermarkContainer.selector);
     }
 
     watchEmail() {
@@ -505,7 +255,7 @@ class AxoManager {
 
         } else {
 
-            this.emailInput = document.querySelector(this.elements.fieldBillingEmail.selector + ' input');
+            this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
             this.emailInput.addEventListener('change', async ()=> {
                 this.onChangeEmail();
             });
@@ -530,7 +280,7 @@ class AxoManager {
 
         const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
-        show(this.elements.paymentContainer.selector);
+        this.el.paymentContainer.show();
 
         if (lookupResponse.customerContextId) {
             // Email is associated with a Connect profile or a PayPal member.
@@ -546,7 +296,7 @@ class AxoManager {
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
 
-                // document.querySelector(this.elements.paymentContainer.selector).innerHTML =
+                // document.querySelector(this.el.paymentContainer.selector).innerHTML =
                 //     '<a href="javascript:void(0)" data-ppcp-axo-change-card>Change card</a>';
 
                 // Add addresses
@@ -558,9 +308,9 @@ class AxoManager {
                 this.hideGatewaySelection = true;
                 this.$('.wc_payment_methods label').hide();
 
-                this.shippingFormFields.activate();
-                this.billingFormFields.activate();
-                this.cardFormFields.activate();
+                this.shippingView.activate();
+                this.billingView.activate();
+                this.cardView.activate();
 
             } else {
                 // authentication failed or canceled by the customer
@@ -574,23 +324,23 @@ class AxoManager {
 
             this.cardComponent = await this.fastlane
                 .FastlaneCardComponent(MockData.cardComponent())
-                .render(this.elements.paymentContainer.selector);
+                .render(this.el.paymentContainer.selector);
         }
     }
 
     setShipping(shipping) {
         this.data.shipping = shipping;
-        this.shippingFormFields.setData(this.data);
+        this.shippingView.setData(this.data);
     }
 
     setBilling(billing) {
         this.data.billing = billing;
-        this.billingFormFields.setData(this.data);
+        this.billingView.setData(this.data);
     }
 
     setCard(card) {
         this.data.card = card;
-        this.cardFormFields.setData(this.data);
+        this.cardView.setData(this.data);
     }
 
     onClickSubmitButton() {
@@ -609,7 +359,7 @@ class AxoManager {
         alert('nonce: ' + nonce);
 
         // Submit form.
-        document.querySelector(this.elements.defaultSubmitButton.selector).click();
+        this.el.defaultSubmitButton.click();
     }
 
     useEmailWidget() {

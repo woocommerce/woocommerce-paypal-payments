@@ -49,7 +49,10 @@ class DomElementCollection {
 
         this.submitButtonContainer = new DomElement({
             selector: '#ppcp-axo-submit-button-container',
-            buttonSelector: '#ppcp-axo-submit-button-container button'
+        });
+
+        this.submitButton = new DomElement({
+            selector: '#ppcp-axo-submit-button-container button'
         });
     }
 }
