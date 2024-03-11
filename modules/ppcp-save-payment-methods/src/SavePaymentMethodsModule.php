@@ -79,6 +79,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		) {
 			return;
 		}
+
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
 			function( array $localized_script_data ) use ( $c ) {
