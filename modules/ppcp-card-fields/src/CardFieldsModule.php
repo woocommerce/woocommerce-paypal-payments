@@ -97,6 +97,17 @@ class CardFieldsModule implements ModuleInterface {
 					}
 				}
 
+				if ( apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_cvv', true ) ) {
+					if ( isset( $default_fields['card-cvc-field'] ) ) {
+						// Replaces the default card cvc placeholder with a translatable one (which also matches the CVV field label).
+						$default_fields['card-cvc-field'] = str_replace(
+							'CVC',
+							esc_attr__( 'CVV', 'woocommerce-paypal-payments' ),
+							$default_fields['card-cvc-field']
+						);
+					}
+				}
+
 				return $default_fields;
 			},
 			10,
