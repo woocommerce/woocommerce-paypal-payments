@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
@@ -92,6 +94,20 @@ class AuthorizedPaymentsProcessor {
 	private $subscription_helper;
 
 	/**
+	 * The amount factory.
+	 *
+	 * @var AmountFactory
+	 */
+	private $amount_factory;
+
+	/**
+	 * The reauthorization failure reason.
+	 *
+	 * @var string
+	 */
+	private $reauthorization_failure_reason = '';
+
+	/**
 	 * AuthorizedPaymentsProcessor constructor.
 	 *
 	 * @param OrderEndpoint              $order_endpoint The Order endpoint.
@@ -100,6 +116,7 @@ class AuthorizedPaymentsProcessor {
 	 * @param AuthorizeOrderActionNotice $notice The notice.
 	 * @param ContainerInterface         $config The settings.
 	 * @param SubscriptionHelper         $subscription_helper The subscription helper.
+	 * @param AmountFactory              $amount_factory The amount factory.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
@@ -107,7 +124,8 @@ class AuthorizedPaymentsProcessor {
 		LoggerInterface $logger,
 		AuthorizeOrderActionNotice $notice,
 		ContainerInterface $config,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		AmountFactory $amount_factory
 	) {
 
 		$this->order_endpoint      = $order_endpoint;
@@ -116,6 +134,7 @@ class AuthorizedPaymentsProcessor {
 		$this->notice              = $notice;
 		$this->config              = $config;
 		$this->subscription_helper = $subscription_helper;
+		$this->amount_factory      = $amount_factory;
 	}
 
 	/**
@@ -247,6 +266,67 @@ class AuthorizedPaymentsProcessor {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Reauthorizes an authorized payment for an WooCommerce order.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 *
+	 * @return string The status or reauthorization id.
+	 */
+	public function reauthorize_payment( WC_Order $wc_order ): string {
+		$this->reauthorization_failure_reason = '';
+
+		try {
+			$order = $this->paypal_order_from_wc_order( $wc_order );
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Could not get PayPal order from WC order: ' . $exception->getMessage() );
+			if ( $exception->getCode() === 404 ) {
+				return self::NOT_FOUND;
+			}
+			return self::INACCESSIBLE;
+		}
+
+		$amount = $this->amount_factory->from_wc_order( $wc_order );
+
+		$authorizations            = $this->all_authorizations( $order );
+		$uncaptured_authorizations = $this->authorizations_to_capture( ...$authorizations );
+
+		if ( ! $uncaptured_authorizations ) {
+			if ( $this->captured_authorizations( ...$authorizations ) ) {
+				$this->logger->info( 'Authorizations already captured.' );
+				return self::ALREADY_CAPTURED;
+			}
+
+			$this->logger->info( 'Bad authorization.' );
+			return self::BAD_AUTHORIZATION;
+		}
+
+		$authorization = end( $uncaptured_authorizations );
+
+		try {
+			$this->payments_endpoint->reauthorize( $authorization->id(), new Money( $amount->value(), $amount->currency_code() ) );
+		} catch ( PayPalApiException $exception ) {
+			$this->reauthorization_failure_reason = $exception->details()[0]->description ?? null;
+			$this->logger->error( 'Reauthorization failed: ' . $exception->name() . ' | ' . $this->reauthorization_failure_reason );
+			return self::FAILED;
+
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Failed to capture authorization: ' . $exception->getMessage() );
+			return self::FAILED;
+		}
+
+		return self::SUCCESSFUL;
+	}
+
+	/**
+	 * The reason for a failed reauthorization.
+	 *
+	 * @return string
+	 */
+	public function reauthorization_failure_reason(): string {
+		return $this->reauthorization_failure_reason;
 	}
 
 	/**
@@ -392,4 +472,5 @@ class AuthorizedPaymentsProcessor {
 			}
 		);
 	}
+
 }

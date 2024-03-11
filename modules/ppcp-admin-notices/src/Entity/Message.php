@@ -92,4 +92,18 @@ class Message {
 	public function wrapper(): string {
 		return $this->wrapper;
 	}
+
+	/**
+	 * Returns the object as array.
+	 *
+	 * @return array
+	 */
+	public function to_array(): array {
+		return array(
+			'type'        => $this->type,
+			'message'     => $this->message,
+			'dismissable' => $this->dismissable,
+			'wrapper'     => $this->wrapper,
+		);
+	}
 }

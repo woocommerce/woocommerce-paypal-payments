@@ -1,6 +1,6 @@
 <?php
 /**
- * Renders the order action "Capture authorized PayPal payment"
+ * Renders the order action "Reauthorize PayPal payment"
  *
  * @package WooCommerce\PayPalCommerce\WcGateway\Admin
  */
@@ -10,9 +10,9 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
 /**
- * Class RenderAuthorizeAction
+ * Class RenderReauthorizeAction
  */
-class RenderAuthorizeAction {
+class RenderReauthorizeAction {
 	/**
 	 * The capture info column.
 	 *
@@ -43,8 +43,8 @@ class RenderAuthorizeAction {
 			return $order_actions;
 		}
 
-		$order_actions['ppcp_authorize_order'] = esc_html__(
-			'Capture authorized PayPal payment',
+		$order_actions['ppcp_reauthorize_order'] = esc_html__(
+			'Reauthorize PayPal payment',
 			'woocommerce-paypal-payments'
 		);
 		return $order_actions;
