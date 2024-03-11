@@ -132,6 +132,8 @@ class CaptureCardPayment {
 	 * Creates PayPal order from the given card vault id.
 	 *
 	 * @param string $vault_id Vault id.
+	 * @param string $custom_id Custom id.
+	 * @param string $invoice_id Invoice id.
 	 * @return stdClass
 	 * @throws RuntimeException When request fails.
 	 */
@@ -157,8 +159,8 @@ class CaptureCardPayment {
 					),
 				),
 			),
-			'custom_id' => $custom_id,
-			'invoice_id' => $invoice_id,
+			'custom_id'      => $custom_id,
+			'invoice_id'     => $invoice_id,
 		);
 
 		$bearer = $this->bearer->bearer();
