@@ -80,26 +80,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			return;
 		}
 
-		add_filter(
-			'woocommerce_paypal_payments_localized_script_data',
-			function( array $localized_script_data ) use ( $c ) {
-				$api = $c->get( 'api.user-id-token' );
-				assert( $api instanceof UserIdToken );
-
-				$logger = $c->get( 'woocommerce.logger.woocommerce' );
-				assert( $logger instanceof LoggerInterface );
-
-				$localized_script_data = $this->add_id_token_to_script_data( $api, $logger, $localized_script_data );
-
-				$localized_script_data['ajax']['capture_card_payment'] = array(
-					'endpoint' => \WC_AJAX::get_endpoint( CaptureCardPayment::ENDPOINT ),
-					'nonce'    => wp_create_nonce( CaptureCardPayment::nonce() ),
-				);
-
-				return $localized_script_data;
-			}
-		);
-
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
@@ -399,16 +379,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				return $supports;
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . CaptureCardPayment::ENDPOINT,
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'save-payment-methods.endpoint.capture-card-payment' );
-				assert( $endpoint instanceof CaptureCardPayment );
-
-				$endpoint->handle_request();
 			}
 		);
 
