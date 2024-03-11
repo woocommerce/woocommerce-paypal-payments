@@ -389,45 +389,4 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			}
 		);
 	}
-
-	/**
-	 * Adds id token to localized script data.
-	 *
-	 * @param UserIdToken     $api User id token api.
-	 * @param LoggerInterface $logger The logger.
-	 * @param array           $localized_script_data The localized script data.
-	 * @return array
-	 */
-	private function add_id_token_to_script_data(
-		UserIdToken $api,
-		LoggerInterface $logger,
-		array $localized_script_data
-	): array {
-		try {
-			$target_customer_id = '';
-			if ( is_user_logged_in() ) {
-				$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-				if ( ! $target_customer_id ) {
-					$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
-				}
-			}
-
-			$id_token                                      = $api->id_token( $target_customer_id );
-			$localized_script_data['save_payment_methods'] = array(
-				'id_token' => $id_token,
-			);
-
-			$localized_script_data['data_client_id']['set_attribute'] = false;
-
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
-				$error = $exception->get_details( $error );
-			}
-
-			$logger->error( $error );
-		}
-
-		return $localized_script_data;
-	}
 }
