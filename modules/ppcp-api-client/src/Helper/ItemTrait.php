@@ -14,7 +14,7 @@ trait ItemTrait {
 	/**
 	 * Cleans up item strings (title and description for example) and prepares them for sending to PayPal.
 	 *
-	 * @param string $description Item description.
+	 * @param string $string Item string.
 	 * @return string
 	 */
 	protected function prepare_item_string( string $string ): string {
