@@ -131,6 +131,8 @@ return array(
 			$vaulted_credit_card_handler,
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'api.endpoint.order' ),
+			$container->get( 'save-payment-methods.endpoint.capture-card-payment' ),
+			$container->get( 'api.prefix' ),
 			$logger
 		);
 	},

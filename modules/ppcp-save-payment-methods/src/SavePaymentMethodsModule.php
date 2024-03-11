@@ -89,14 +89,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				$logger = $c->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 
-				$localized_script_data = $this->add_id_token_to_script_data( $api, $logger, $localized_script_data );
-
-				$localized_script_data['ajax']['capture_card_payment'] = array(
-					'endpoint' => \WC_AJAX::get_endpoint( CaptureCardPayment::ENDPOINT ),
-					'nonce'    => wp_create_nonce( CaptureCardPayment::nonce() ),
-				);
-
-				return $localized_script_data;
+				return $this->add_id_token_to_script_data( $api, $logger, $localized_script_data );
 			}
 		);
 
@@ -399,16 +392,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				return $supports;
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . CaptureCardPayment::ENDPOINT,
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'save-payment-methods.endpoint.capture-card-payment' );
-				assert( $endpoint instanceof CaptureCardPayment );
-
-				$endpoint->handle_request();
 			}
 		);
 

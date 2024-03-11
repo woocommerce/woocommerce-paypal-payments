@@ -127,19 +127,7 @@ class CardFieldsRenderer {
 
             const paymentToken = document.querySelector('input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked')?.value
             if(paymentToken && paymentToken !== 'new') {
-                fetch(this.defaultConfig.ajax.capture_card_payment.endpoint, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    body: JSON.stringify({
-                        nonce: this.defaultConfig.ajax.capture_card_payment.nonce,
-                        payment_token: paymentToken
-                    })
-                }).then((res) => {
-                    return res.json();
-                }).then((data) => {
-                    document.querySelector('#place_order').click();
-                });
-
+                document.querySelector('#place_order').click();
                 return;
             }
 
