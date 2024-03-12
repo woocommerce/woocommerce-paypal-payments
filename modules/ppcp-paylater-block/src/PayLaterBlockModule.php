@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -22,14 +23,24 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class PayLaterBlockModule implements ModuleInterface {
 	/**
-	 * Returns whether the block should be loaded.
+	 * Returns whether the block module should be loaded.
 	 */
-	public static function is_enabled(): bool {
+	public static function is_module_loading_required(): bool {
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
-			getenv( 'PCP_PAYLATER_BLOCK' ) === '1'
+			getenv( 'PCP_PAYLATER_BLOCK' ) !== '0'
 		);
+	}
+
+	/**
+	 * Returns whether the block is enabled.
+	 *
+	 * @param SettingsStatus $settings_status The Settings status helper.
+	 * @return bool true if the block is enabled, otherwise false.
+	 */
+	public static function is_block_enabled( SettingsStatus $settings_status ): bool {
+		return self::is_module_loading_required() && $settings_status->is_pay_later_messaging_enabled_for_location( 'product_preview' );
 	}
 
 	/**
@@ -71,13 +82,15 @@ class PayLaterBlockModule implements ModuleInterface {
 					$script_handle,
 					'PcpPayLaterBlock',
 					array(
-						'ajax'            => array(
+						'ajax'                => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled' => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'vaultingEnabled'     => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'placementEnabled'    => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 					)
 				);
 

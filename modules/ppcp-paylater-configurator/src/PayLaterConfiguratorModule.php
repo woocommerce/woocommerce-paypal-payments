@@ -29,7 +29,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_configurator_enabled',
-			getenv( 'PCP_PAYLATER_CONFIGURATOR' ) === '1'
+			getenv( 'PCP_PAYLATER_CONFIGURATOR' ) !== '0'
 		);
 	}
 
@@ -79,7 +79,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 			static function () use ( $c, $settings ) {
 				wp_enqueue_script(
 					'ppcp-paylater-configurator-lib',
-					'https://www.paypalobjects.com/merchant-library/preview/merchant-configurator.js',
+					'https://www.paypalobjects.com/merchant-library/merchant-configurator.js',
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true

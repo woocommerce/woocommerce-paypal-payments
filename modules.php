@@ -68,7 +68,7 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-save-payment-methods/module.php" )();
 	}
 
-	if ( PayLaterBlockModule::is_enabled() ) {
+	if ( PayLaterBlockModule::is_module_loading_required() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 
