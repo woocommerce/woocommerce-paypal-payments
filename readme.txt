@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.2
-Stable tag: 2.5.4
+Stable tag: 2.6.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,22 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.6.0 - xxxx-xx-xx =
+* Fix - invoice_id not included in API call when creating payment with saved card #2086
+* Fix - Typo in SCA indicators for ACDC Vault transactions #2083
+* Fix - Payments with saved card tokens use Capture intent when Authorize is configured #2069
+* Fix - WooPayments multi-currency causing currency mismatch error on Block Cart & Checkout pages #2054
+* Fix - "Must pass createSubscription with intent=subscription" error with PayPal Subscriptions mode #2058
+* Fix - "Proceed to PayPal" button displayed for Free trial PayPal Subscription products when payment token is saved #2041
+* Fix - ACDC payments with new credit card may fail when debugging is enabled (JSON malformed by warning) #2051
+* Enhancement - Add Pay Later Messaging block #1897
+* Enhancement - Submit the form instead of refreshing the page to show the save notice #2081
+* Enhancement - Integrate pay later messaging block with the messaging configurator #2080
+* Enhancement - Reauthorize authorized payments #2062
+* Enhancement - Do not handle VAULT.PAYMENT-TOKEN.CREATED webhook for Vault v3 #2079
+* Enhancement - Improve the messaging configurator styles #2053
+* Enhancement - Ensure PayPal Vaulting is not selected as Subscriptions Mode when Reference Transactions are disabled #2057
 
 = 2.5.4 - 2024-02-27 =
 * Fix - Cannot enable Apple Pay when API credentials were manually created #2015

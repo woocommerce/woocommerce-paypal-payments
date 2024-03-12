@@ -1,5 +1,21 @@
 *** Changelog ***
 
+= 2.6.0 - xxxx-xx-xx =
+* Fix - invoice_id not included in API call when creating payment with saved card #2086
+* Fix - Typo in SCA indicators for ACDC Vault transactions #2083
+* Fix - Payments with saved card tokens use Capture intent when Authorize is configured #2069
+* Fix - WooPayments multi-currency causing currency mismatch error on Block Cart & Checkout pages #2054
+* Fix - "Must pass createSubscription with intent=subscription" error with PayPal Subscriptions mode #2058
+* Fix - "Proceed to PayPal" button displayed for Free trial PayPal Subscription products when payment token is saved #2041
+* Fix - ACDC payments with new credit card may fail when debugging is enabled (JSON malformed by warning) #2051
+* Enhancement - Add Pay Later Messaging block #1897
+* Enhancement - Submit the form instead of refreshing the page to show the save notice #2081
+* Enhancement - Integrate pay later messaging block with the messaging configurator #2080
+* Enhancement - Reauthorize authorized payments #2062
+* Enhancement - Do not handle VAULT.PAYMENT-TOKEN.CREATED webhook for Vault v3 #2079
+* Enhancement - Improve the messaging configurator styles #2053
+* Enhancement - Ensure PayPal Vaulting is not selected as Subscriptions Mode when Reference Transactions are disabled #2057
+
 = 2.5.4 - 2024-02-27 =
 * Fix - Cannot enable Apple Pay when API credentials were manually created #2015
 * Fix - Cart simulation type error #1943
