@@ -22,12 +22,12 @@ class ConfigFactory {
 	 */
 	public function from_settings( Settings $settings ): array {
 		return array(
-			$this->location_to_configurator_placement( 'cart' ) => $this->for_location( $settings, 'cart' ),
-			$this->location_to_configurator_placement( 'checkout' ) => $this->for_location( $settings, 'checkout' ),
-			$this->location_to_configurator_placement( 'product' ) => $this->for_location( $settings, 'product' ),
-			$this->location_to_configurator_placement( 'shop' ) => $this->for_location( $settings, 'shop' ),
-			$this->location_to_configurator_placement( 'home' ) => $this->for_location( $settings, 'home' ),
-			$this->location_to_configurator_placement( 'product_preview' ) => $this->for_location( $settings, 'product_preview' ),
+			'cart'            => $this->for_location( $settings, 'cart' ),
+			'checkout'        => $this->for_location( $settings, 'checkout' ),
+			'product'         => $this->for_location( $settings, 'product' ),
+			'shop'            => $this->for_location( $settings, 'shop' ),
+			'home'            => $this->for_location( $settings, 'home' ),
+			'product_preview' => $this->for_location( $settings, 'product_preview' ),
 		);
 	}
 
@@ -40,8 +40,7 @@ class ConfigFactory {
 	private function for_location( Settings $settings, string $location ): array {
 		$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
 
-		$placement = $this->location_to_configurator_placement( $location );
-		if ( in_array( $placement, array( 'category', 'homepage' ), true ) ) {
+		if ( in_array( $location, array( 'shop', 'home' ), true ) ) {
 			$config = array(
 				'layout' => 'flex',
 				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black', array( 'black', 'blue', 'white', 'white-no-border' ) ),
@@ -61,31 +60,10 @@ class ConfigFactory {
 		return array_merge(
 			array(
 				'status'    => in_array( $location, $selected_locations, true ) ? 'enabled' : 'disabled',
-				'placement' => $placement,
+				'placement' => $location,
 			),
 			$config
 		);
-	}
-
-	/**
-	 * Converts the location name from the old settings into the configurator placement.
-	 *
-	 * @param string $location The location name in the old settings.
-	 */
-	private function location_to_configurator_placement( string $location ): string {
-		switch ( $location ) {
-			case 'cart':
-			case 'checkout':
-			case 'product':
-			case 'product_preview':
-				return $location;
-			case 'shop':
-				return 'category';
-			case 'home':
-				return 'homepage';
-			default:
-				return '';
-		}
 	}
 
 	/**

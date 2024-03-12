@@ -30,7 +30,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         partnerClientId: PcpPayLaterConfigurator.partnerClientId,
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
-        placements: ['cart', 'checkout', 'product', 'category', 'homepage', 'product_preview'],
+        placements: ['cart', 'checkout', 'product', 'shop', 'home', 'product_preview'],
         styleOverrides: {
             button: publishButtonClassName,
             header: PcpPayLaterConfigurator.headerClassName,
