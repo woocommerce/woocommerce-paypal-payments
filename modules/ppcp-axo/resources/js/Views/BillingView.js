@@ -1,36 +1,35 @@
-import FormFieldGroup from "../Helper/FormFieldGroup";
+import FormFieldGroup from "../Components/FormFieldGroup";
 
 class BillingView {
 
-    constructor(selector) {
+    constructor(selector, elements) {
+        this.el = elements;
+
         this.billingFormFields = new FormFieldGroup({
             baseSelector: '.woocommerce-checkout',
             contentSelector: selector,
             template: (data) => {
                 const valueOfSelect = (selectSelector, key) => {
+                    if (!key) {
+                        return '';
+                    }
                     const selectElement = document.querySelector(selectSelector);
                     const option = selectElement.querySelector(`option[value="${key}"]`);
                     return option ? option.textContent : key;
                 }
 
-                if (data.isEditing()) {
-                    return `
-                        <div style="margin-bottom: 20px;">
-                            <h4><a href="javascript:void(0)" data-ppcp-axo-save-billing-address>Save</a></h4>
-                        </div>
-                    `;
-                }
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px;">
+                            <h3>Billing details <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                             <div>Please fill in your billing details.</div>
-                            <h4><a href="javascript:void(0)" data-ppcp-axo-change-billing-address>Edit</a></h4>
                         </div>
                     `;
                 }
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h4>Billing address</h4>
+                        <h3>Billing details <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <div>${data.value('email')}</div>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
@@ -39,11 +38,13 @@ class BillingView {
                         <div>${valueOfSelect('#billing_state', data.value('stateCode'))}</div>
                         <div>${valueOfSelect('#billing_country', data.value('countryCode'))}</div>
                         <div>${data.value('phone')}</div>
-                        <h4><a href="javascript:void(0)" data-ppcp-axo-change-billing-address>Edit</a></h4>
                     </div>
                 `;
             },
             fields: {
+                email: {
+                    'valuePath': 'email',
+                },
                 firstName: {
                     'selector': '#billing_first_name_field',
                     'valuePath': 'billing.name.firstName',

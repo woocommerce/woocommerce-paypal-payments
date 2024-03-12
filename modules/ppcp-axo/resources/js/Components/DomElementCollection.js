@@ -23,6 +23,10 @@ class DomElementCollection {
             className: 'ppcp-axo-watermark-container'
         });
 
+        this.allFields = new DomElement({
+            selector: '#customer_details .form-row, #customer_details .woocommerce-shipping-fields'
+        });
+
         this.emailWidgetContainer = new DomElement({
             id: 'ppcp-axo-email-widget',
             selector: '#ppcp-axo-email-widget',
@@ -54,6 +58,27 @@ class DomElementCollection {
         this.submitButton = new DomElement({
             selector: '#ppcp-axo-submit-button-container button'
         });
+
+        this.changeShippingAddressLink = new DomElement({
+            selector: '*[data-ppcp-axo-change-shipping-address]',
+            attributes: 'data-ppcp-axo-change-shipping-address',
+        });
+
+        this.changeBillingAddressLink = new DomElement({
+            selector: '*[data-ppcp-axo-change-billing-address]',
+            attributes: 'data-ppcp-axo-change-billing-address',
+        });
+
+        this.changeCardLink = new DomElement({
+            selector: '*[data-ppcp-axo-change-card]',
+            attributes: 'data-ppcp-axo-change-card',
+        });
+
+        this.showGatewaySelectionLink = new DomElement({
+            selector: '*[data-ppcp-axo-show-gateway-selection]',
+            attributes: 'data-ppcp-axo-show-gateway-selection',
+        });
+
     }
 }
 

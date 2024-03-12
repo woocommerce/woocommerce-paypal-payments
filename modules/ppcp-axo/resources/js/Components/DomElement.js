@@ -8,6 +8,7 @@ class DomElement {
         this.selector = this.config.selector;
         this.id = this.config.id || null;
         this.className = this.config.className || null;
+        this.attributes = this.config.attributes || null;
         this.anchorSelector = this.config.anchorSelector || null;
     }
 
@@ -19,12 +20,12 @@ class DomElement {
         this.$(document).on(action, this.selector, callable);
     }
 
-    hide(important = false) {
-        setVisible(this.selector, false, important);
+    hide() {
+        this.$(this.selector).hide();
     }
 
     show() {
-        setVisible(this.selector, true);
+        this.$(this.selector).show();
     }
 
     click() {

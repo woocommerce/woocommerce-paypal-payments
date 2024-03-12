@@ -17,6 +17,7 @@ class AxoManager {
         this.$ = jQuery;
 
         this.isConnectProfile = false;
+        this.isNewProfile = false;
         this.hideGatewaySelection = false;
 
         this.data = {
@@ -37,9 +38,9 @@ class AxoManager {
 
         this.registerEventHandlers();
 
-        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector);
-        this.billingView = new BillingView(this.el.billingAddressContainer.selector);
-        this.cardView = new CardView(this.el.paymentContainer.selector, this);
+        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector, this.el);
+        this.billingView = new BillingView(this.el.billingAddressContainer.selector, this.el);
+        this.cardView = new CardView(this.el.paymentContainer.selector, this.el, this);
     }
 
     registerEventHandlers() {
@@ -58,14 +59,13 @@ class AxoManager {
         });
 
         // On checkout form submitted.
-        this.$(document).on('click', this.el.submitButton.selector, () => {
+        this.el.submitButton.on('click', () => {
             this.onClickSubmitButton();
             return false;
-        });
+        })
 
         // Click change shipping address link.
-        this.$(document).on('click', '*[data-ppcp-axo-change-shipping-address]', async () => {
-
+        this.el.changeShippingAddressLink.on('click', async () => {
             if (this.isConnectProfile) {
                 console.log('profile', this.fastlane.profile);
 
@@ -79,35 +79,18 @@ class AxoManager {
                     this.setShipping(selectedAddress);
                     this.shippingView.activate();
                 }
-            } else {
-                let checkbox = document.querySelector('#ship-to-different-address-checkbox');
-                if (checkbox && !checkbox.checked) {
-                    jQuery(checkbox).trigger('click');
-                }
-                this.shippingView.deactivate();
             }
-
-        });
-
-        this.$(document).on('click', '*[data-ppcp-axo-save-shipping-address]', async () => {
-            this.shippingView.activate();
         });
 
         // Click change billing address link.
-        this.$(document).on('click', '*[data-ppcp-axo-change-billing-address]', async () => {
+        this.el.changeBillingAddressLink.on('click', async () => {
             if (this.isConnectProfile) {
-                this.$('*[data-ppcp-axo-change-card]').trigger('click');
-            } else {
-                this.billingView.deactivate();
+                this.el.changeCardLink.trigger('click');
             }
         });
 
-        this.$(document).on('click', '*[data-ppcp-axo-save-billing-address]', async () => {
-            this.billingView.activate();
-        });
-
         // Click change card link.
-        this.$(document).on('click', '*[data-ppcp-axo-change-card]', async () => {
+        this.el.changeCardLink.on('click', async () => {
             console.log('profile', this.fastlane.profile);
 
             const response = await this.fastlane.profile.showCardSelector();
@@ -123,7 +106,7 @@ class AxoManager {
         });
 
         // Cancel "continuation" mode.
-        this.$(document).on('click', '*[data-ppcp-axo-show-gateway-selection]', async () => {
+        this.el.showGatewaySelectionLink.on('click', async () => {
             this.hideGatewaySelection = false;
             this.$('.wc_payment_methods label').show();
             this.cardView.refresh();
@@ -135,21 +118,35 @@ class AxoManager {
         this.initPlacements();
         this.initFastlane();
 
-        this.shippingView.activate();
-        this.billingView.activate();
+        if (!this.isNewProfile && !this.isConnectProfile) {
+            this.el.allFields.hide();
+        }
 
-        this.el.emailWidgetContainer.show();
+        if (this.useEmailWidget()) {
+            this.el.emailWidgetContainer.show();
+            this.el.fieldBillingEmail.hide();
+        } else {
+            this.el.emailWidgetContainer.hide();
+            this.el.fieldBillingEmail.show();
+        }
+
+        if (this.isConnectProfile) {
+            this.shippingView.activate();
+            this.billingView.activate();
+
+            this.el.emailWidgetContainer.hide();
+            this.el.fieldBillingEmail.hide();
+        }
+
         this.el.watermarkContainer.show();
         this.el.paymentContainer.show();
         this.el.submitButtonContainer.show();
         this.el.defaultSubmitButton.hide();
-
-        if (this.useEmailWidget()) {
-            this.el.fieldBillingEmail.hide();
-        }
     }
 
     hideAxo() {
+        this.el.allFields.show();
+
         this.shippingView.deactivate();
         this.billingView.deactivate();
 
@@ -159,9 +156,8 @@ class AxoManager {
         this.el.submitButtonContainer.hide();
         this.el.defaultSubmitButton.show();
 
-        if (this.useEmailWidget()) {
-            this.el.fieldBillingEmail.show();
-        }
+        this.el.emailWidgetContainer.hide();
+        this.el.fieldBillingEmail.show();
     }
 
     initPlacements() {
@@ -271,16 +267,20 @@ class AxoManager {
         log('Email changed: ' + this.emailInput.value);
 
         this.isConnectProfile = false;
+        this.isNewProfile = false;
         this.hideGatewaySelection = false;
+
+        this.el.allFields.hide();
 
         if (!this.emailInput.checkValidity()) {
             log('The email address is not valid.');
             return;
         }
 
-        const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
+        this.data.email = this.emailInput.value;
+        this.billingView.setData(this.data);
 
-        this.el.paymentContainer.show();
+        const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
         if (lookupResponse.customerContextId) {
             // Email is associated with a Connect profile or a PayPal member.
@@ -295,6 +295,10 @@ class AxoManager {
 
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
+
+                this.el.allFields.show();
+                this.el.paymentContainer.show();
+
 
                 // document.querySelector(this.el.paymentContainer.selector).innerHTML =
                 //     '<a href="javascript:void(0)" data-ppcp-axo-change-card>Change card</a>';
@@ -321,6 +325,11 @@ class AxoManager {
             // No profile found with this email address.
             // This is a guest customer.
             log('No profile found with this email address.');
+
+            this.el.allFields.show();
+            this.el.paymentContainer.show();
+
+            this.isNewProfile = true;
 
             this.cardComponent = await this.fastlane
                 .FastlaneCardComponent(MockData.cardComponent())

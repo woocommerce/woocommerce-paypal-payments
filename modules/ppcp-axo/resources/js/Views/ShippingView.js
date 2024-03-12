@@ -1,36 +1,34 @@
-import FormFieldGroup from "../Helper/FormFieldGroup";
+import FormFieldGroup from "../Components/FormFieldGroup";
 
 class ShippingView {
 
-    constructor(selector) {
+    constructor(selector, elements) {
+        this.el = elements;
+
         this.shippingFormFields = new FormFieldGroup({
             baseSelector: '.woocommerce-checkout',
             contentSelector: selector,
             template: (data) => {
                 const valueOfSelect = (selectSelector, key) => {
+                    if (!key) {
+                        return '';
+                    }
                     const selectElement = document.querySelector(selectSelector);
                     const option = selectElement.querySelector(`option[value="${key}"]`);
                     return option ? option.textContent : key;
                 }
 
-                if (data.isEditing()) {
-                    return `
-                        <div style="margin-bottom: 20px;">
-                            <h3>Shipping details <a href="javascript:void(0)" data-ppcp-axo-save-shipping-address style="margin-left: 20px;">Save</a></h3>
-                        </div>
-                    `;
-                }
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px;">
-                            <h3>Shipping details <a href="javascript:void(0)" data-ppcp-axo-change-shipping-address style="margin-left: 20px;">Edit</a></h3>
+                            <h3>Shipping details <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                             <div>Please fill in your shipping details.</div>
                         </div>
                     `;
                 }
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h3>Shipping details <a href="javascript:void(0)" data-ppcp-axo-change-shipping-address style="margin-left: 20px;">Edit</a></h3>
+                        <h3>Shipping details <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>

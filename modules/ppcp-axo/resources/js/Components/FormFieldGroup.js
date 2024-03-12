@@ -66,17 +66,14 @@ class MockData {
                     },
                     isEmpty: () => {
                         let isEmpty = true;
-                        Object.values(this.fields).forEach((valuefield) => {
-                            if (this.getDataValue(valuefield.valuePath)) {
+                        Object.values(this.fields).forEach((valueField) => {
+                            if (this.getDataValue(valueField.valuePath)) {
                                 isEmpty = false;
                                 return false;
                             }
                         });
                         return isEmpty;
-                    },
-                    isEditing: () => {
-                        return ! this.active;
-                    },
+                    }
                 });
             }
 
