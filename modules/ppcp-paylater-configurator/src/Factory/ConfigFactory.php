@@ -22,12 +22,12 @@ class ConfigFactory {
 	 */
 	public function from_settings( Settings $settings ): array {
 		return array(
-			'cart'             => $this->for_location( $settings, 'cart' ),
-			'checkout'         => $this->for_location( $settings, 'checkout' ),
-			'product'          => $this->for_location( $settings, 'product' ),
-			'shop'             => $this->for_location( $settings, 'shop' ),
-			'home'             => $this->for_location( $settings, 'home' ),
-			'woocommerceBlock' => $this->for_location( $settings, 'woocommerceBlock' ),
+			'cart'            => $this->for_location( $settings, 'cart' ),
+			'checkout'        => $this->for_location( $settings, 'checkout' ),
+			'product'         => $this->for_location( $settings, 'product' ),
+			'shop'            => $this->for_location( $settings, 'shop' ),
+			'home'            => $this->for_location( $settings, 'home' ),
+			'product_preview' => $this->for_location( $settings, 'product_preview' ),
 		);
 	}
 
