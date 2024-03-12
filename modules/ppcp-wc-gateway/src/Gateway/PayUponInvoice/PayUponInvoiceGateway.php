@@ -202,7 +202,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'type'        => 'text',
 				'default'     => get_bloginfo( 'name' ) ?? '',
 				'desc_tip'    => true,
-				'description' => __( 'Merchant name displayed in Ratepay\'s payment instructions.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Merchant name displayed in Ratepay\'s payment instructions. Should not exceed 127 characters.', 'woocommerce-paypal-payments' ),
+				'maxlength'   => 127,
+				'custom_attributes' => array(
+					'pattern' => '.{1,127}',
+					'autocomplete' => 'off',
+					'required' => ''
+				),
 			),
 			'logo_url'                      => array(
 				'title'       => __( 'Logo URL', 'woocommerce-paypal-payments' ),
@@ -210,6 +216,11 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'default'     => '',
 				'desc_tip'    => true,
 				'description' => __( 'Logo to be presented on Ratepay\'s payment instructions.', 'woocommerce-paypal-payments' ),
+				'custom_attributes' => array(
+					'pattern' => '.+',
+					'autocomplete' => 'off',
+					'required' => ''
+				),
 			),
 			'customer_service_instructions' => array(
 				'title'       => __( 'Customer service instructions', 'woocommerce-paypal-payments' ),
@@ -217,6 +228,11 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'default'     => '',
 				'desc_tip'    => true,
 				'description' => __( 'Customer service instructions to be presented on Ratepay\'s payment instructions.', 'woocommerce-paypal-payments' ),
+				'custom_attributes' => array(
+					'pattern' => '.+',
+					'autocomplete' => 'off',
+					'required' => ''
+				),
 			),
 		);
 	}
