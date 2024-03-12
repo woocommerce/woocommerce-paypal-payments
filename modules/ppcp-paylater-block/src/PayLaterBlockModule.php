@@ -82,13 +82,15 @@ class PayLaterBlockModule implements ModuleInterface {
 					$script_handle,
 					'PcpPayLaterBlock',
 					array(
-						'ajax'            => array(
+						'ajax'                => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled' => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'vaultingEnabled'     => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'placementEnabled'    => self::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ),
+						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 					)
 				);
 
