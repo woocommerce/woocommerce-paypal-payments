@@ -98,7 +98,7 @@ class FilePathPluginFactory implements FilePathPluginFactoryInterface {
 			$this->create_version( $plugin_data['Version'] ),
 			$base_dir,
 			$base_name,
-			'blah',
+			$plugin_data['Title'],
 			$plugin_data['Description'],
 			$text_domain,
 			$this->create_version( $plugin_data['RequiresPHP'] ),
