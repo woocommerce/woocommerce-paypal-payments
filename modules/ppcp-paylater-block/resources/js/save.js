@@ -1,7 +1,7 @@
 import { useBlockProps } from '@wordpress/block-editor';
 
 export default function save( { attributes } ) {
-    const { layout, logo, position, color, flexColor, flexRatio, placement, id } = attributes;
+    const { layout, logo, position, color, size, flexColor, flexRatio, placement, id } = attributes;
     const paypalAttributes = layout === 'flex' ? {
         'data-pp-style-layout': 'flex',
         'data-pp-style-color': flexColor,
@@ -11,6 +11,7 @@ export default function save( { attributes } ) {
         'data-pp-style-logo-type': logo,
         'data-pp-style-logo-position': position,
         'data-pp-style-text-color': color,
+        'data-pp-style-text-size': size,
     };
     if (placement && placement !== 'auto') {
         paypalAttributes['data-pp-placement'] = placement;
