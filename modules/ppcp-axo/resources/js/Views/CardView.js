@@ -32,10 +32,10 @@ class CardView {
                 const expiry = data.value('expiry').split('-');
 
                 const cardIcons = {
-                    'VISA':             'visa-dark.svg',
-                    'MASTERCARD_CARD':  'mastercard-dark.svg',
-                    'AMEX':             'amex.svg',
-                    'DISCOVER':         'discover.svg',
+                    'VISA':        'visa-dark.svg',
+                    'MASTER_CARD': 'mastercard-dark.svg',
+                    'AMEX':        'amex.svg',
+                    'DISCOVER':    'discover.svg',
                 };
 
                 return `
