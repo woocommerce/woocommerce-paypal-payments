@@ -46,7 +46,7 @@ class ConfigFactory {
 				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black', array( 'black', 'blue', 'white', 'white-no-border' ) ),
 				'ratio'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_ratio", '8x1', array( '8x1', '20x1' ) ),
 			);
-		} elseif($location !== 'woocommerceBlock') {
+		} elseif ( $location !== 'woocommerceBlock' ) {
 			$config = array(
 				'layout'        => 'text',
 				'logo-position' => $this->get_or_default( $settings, "pay_later_{$location}_message_position", 'left' ),
@@ -62,7 +62,7 @@ class ConfigFactory {
 				'status'    => in_array( $location, $selected_locations, true ) ? 'enabled' : 'disabled',
 				'placement' => $location,
 			),
-			$config ?? []
+			$config ?? array()
 		);
 	}
 
