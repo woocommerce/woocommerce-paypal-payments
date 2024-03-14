@@ -22,12 +22,12 @@ class ConfigFactory {
 	 */
 	public function from_settings( Settings $settings ): array {
 		return array(
-			'cart'            => $this->for_location( $settings, 'cart' ),
-			'checkout'        => $this->for_location( $settings, 'checkout' ),
-			'product'         => $this->for_location( $settings, 'product' ),
-			'shop'            => $this->for_location( $settings, 'shop' ),
-			'home'            => $this->for_location( $settings, 'home' ),
-			'product_preview' => $this->for_location( $settings, 'product_preview' ),
+			'cart'             => $this->for_location( $settings, 'cart' ),
+			'checkout'         => $this->for_location( $settings, 'checkout' ),
+			'product'          => $this->for_location( $settings, 'product' ),
+			'shop'             => $this->for_location( $settings, 'shop' ),
+			'home'             => $this->for_location( $settings, 'home' ),
+			'woocommerceBlock' => $this->for_location( $settings, 'woocommerceBlock' ),
 		);
 	}
 
@@ -46,7 +46,7 @@ class ConfigFactory {
 				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black', array( 'black', 'blue', 'white', 'white-no-border' ) ),
 				'ratio'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_ratio", '8x1', array( '8x1', '20x1' ) ),
 			);
-		} else {
+		} elseif($location !== 'woocommerceBlock') {
 			$config = array(
 				'layout'        => 'text',
 				'logo-position' => $this->get_or_default( $settings, "pay_later_{$location}_message_position", 'left' ),
