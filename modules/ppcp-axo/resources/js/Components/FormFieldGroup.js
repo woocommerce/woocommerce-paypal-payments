@@ -48,36 +48,40 @@ class MockData {
 
         content.innerHTML = '';
 
+        if (!this.active) {
+            this.hideField(this.contentSelector);
+        } else {
+            this.showField(this.contentSelector);
+        }
+
         Object.keys(this.fields).forEach((key) => {
             const field = this.fields[key];
 
             if (this.active) {
                 this.hideField(field.selector);
-                //this.showField(this.contentSelector);
             } else {
                 this.showField(field.selector);
-                //this.hideField(this.contentSelector);
             }
-
-            if (typeof this.template === 'function') {
-                content.innerHTML = this.template({
-                    value: (valueKey) => {
-                        return this.getDataValue(this.fields[valueKey].valuePath);
-                    },
-                    isEmpty: () => {
-                        let isEmpty = true;
-                        Object.values(this.fields).forEach((valueField) => {
-                            if (this.getDataValue(valueField.valuePath)) {
-                                isEmpty = false;
-                                return false;
-                            }
-                        });
-                        return isEmpty;
-                    }
-                });
-            }
-
         });
+
+        if (typeof this.template === 'function') {
+            content.innerHTML = this.template({
+                value: (valueKey) => {
+                    return this.getDataValue(this.fields[valueKey].valuePath);
+                },
+                isEmpty: () => {
+                    let isEmpty = true;
+                    Object.values(this.fields).forEach((valueField) => {
+                        if (this.getDataValue(valueField.valuePath)) {
+                            isEmpty = false;
+                            return false;
+                        }
+                    });
+                    return isEmpty;
+                }
+            });
+        }
+
     }
 
     showField(selector) {

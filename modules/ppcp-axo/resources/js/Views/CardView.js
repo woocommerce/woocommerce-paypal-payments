@@ -20,19 +20,40 @@ class CardView {
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px; text-align: center;">
-                            <div>Please fill in your card details.</div>
-                            <h4><a href="javascript:void(0)" ${this.el.changeCardLink.attributes}>Edit</a></h4>
+                            <div style="border:2px solid #cccccc; border-radius: 10px; padding: 26px 20px; margin-bottom: 20px; background-color:#f6f6f6">
+                                <div>Please fill in your card details.</div>
+                            </div>
+                            <h4><a href="javascript:void(0)" ${this.el.changeCardLink.attributes}>Add card details</a></h4>
                             ${selectOtherPaymentMethod()}
                         </div>
                     `;
                 }
+
+                const expiry = data.value('expiry').split('-');
+
+                const cardIcons = {
+                    'VISA':             'visa-dark.svg',
+                    'MASTERCARD_CARD':  'mastercard-dark.svg',
+                    'AMEX':             'amex.svg',
+                    'DISCOVER':         'discover.svg',
+                };
+
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h3>Card Details <a href="javascript:void(0)" ${this.el.changeCardLink.attributes}>Edit</a></h3>
-                        <div>${data.value('name')}</div>
-                        <div>${data.value('brand')}</div>
-                        <div>${data.value('lastDigits') ? '************' + data.value('lastDigits'): ''}</div>
-                        <div>${data.value('expiry')}</div>
+                        <h3>Card Details <a href="javascript:void(0)" ${this.el.changeCardLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <div style="border:2px solid #cccccc; border-radius: 10px; padding: 16px 20px; background-color:#f6f6f6">
+                            <div style="float: right;">
+                                <img
+                                    class="ppcp-card-icon"
+                                    title="${data.value('brand')}"
+                                    src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/${cardIcons[data.value('brand')]}"
+                                    alt="${data.value('brand')}"
+                                >
+                            </div>
+                            <div style="font-family: monospace; font-size: 1rem; margin-top: 10px;">${data.value('lastDigits') ? '**** **** **** ' + data.value('lastDigits'): ''}</div>
+                            <div>${expiry[1]}/${expiry[0]}</div>
+                            <div style="text-transform: uppercase">${data.value('name')}</div>
+                        </div>
                         ${selectOtherPaymentMethod()}
                     </div>
                 `;

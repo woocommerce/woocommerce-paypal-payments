@@ -21,14 +21,14 @@ class BillingView {
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px;">
-                            <h3>Billing details <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                            <h3>Billing <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                             <div>Please fill in your billing details.</div>
                         </div>
                     `;
                 }
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h3>Billing details <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <h3>Billing <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                         <div>${data.value('email')}</div>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
@@ -89,12 +89,20 @@ class BillingView {
         });
     }
 
+    isActive() {
+        return this.billingFormFields.active;
+    }
+
     activate() {
         this.billingFormFields.activate();
     }
 
     deactivate() {
         this.billingFormFields.deactivate();
+    }
+
+    refresh() {
+        this.billingFormFields.refresh();
     }
 
     setData(data) {

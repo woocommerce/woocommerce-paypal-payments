@@ -21,14 +21,14 @@ class ShippingView {
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px;">
-                            <h3>Shipping details <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                            <h3>Shipping <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                             <div>Please fill in your shipping details.</div>
                         </div>
                     `;
                 }
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h3>Shipping details <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <h3>Shipping <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
@@ -85,12 +85,20 @@ class ShippingView {
         });
     }
 
+    isActive() {
+        return this.shippingFormFields.active;
+    }
+
     activate() {
         this.shippingFormFields.activate();
     }
 
     deactivate() {
         this.shippingFormFields.deactivate();
+    }
+
+    refresh() {
+        this.shippingFormFields.refresh();
     }
 
     setData(data) {

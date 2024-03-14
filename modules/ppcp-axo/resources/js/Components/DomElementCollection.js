@@ -23,8 +23,15 @@ class DomElementCollection {
             className: 'ppcp-axo-watermark-container'
         });
 
-        this.allFields = new DomElement({
-            selector: '#customer_details .form-row, #customer_details .woocommerce-shipping-fields'
+        this.customerDetails = new DomElement({
+            selector: '#customer_details > *:not(#ppcp-axo-customer-details)'
+        });
+
+        this.axoCustomerDetails = new DomElement({
+            id: 'ppcp-axo-customer-details',
+            selector: '#ppcp-axo-customer-details',
+            className: 'ppcp-axo-customer-details',
+            anchorSelector: '#customer_details'
         });
 
         this.emailWidgetContainer = new DomElement({
@@ -36,15 +43,13 @@ class DomElementCollection {
         this.shippingAddressContainer = new DomElement({
             id: 'ppcp-axo-shipping-address-container',
             selector: '#ppcp-axo-shipping-address-container',
-            className: 'ppcp-axo-shipping-address-container',
-            anchorSelector: '.woocommerce-shipping-fields'
+            className: 'ppcp-axo-shipping-address-container'
         });
 
         this.billingAddressContainer = new DomElement({
             id: 'ppcp-axo-billing-address-container',
             selector: '#ppcp-axo-billing-address-container',
-            className: 'ppcp-axo-billing-address-container',
-            anchorSelector: '.woocommerce-billing-fields__field-wrapper'
+            className: 'ppcp-axo-billing-address-container'
         });
 
         this.fieldBillingEmail = new DomElement({

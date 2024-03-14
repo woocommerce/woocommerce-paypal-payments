@@ -214,11 +214,9 @@ class AxoGateway extends WC_Payment_Gateway {
 
 			//$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
-			// TODO: inject dependency
+			// TODO: inject dependency.
 			PPCP::container()->get( 'session.handler' )->replace_order( $order );
 			PPCP::container()->get( 'wcgateway.order-processor' )->process( $wc_order );
-
-
 
 //			$payment_source = array(
 //				'oxxo' => array(
