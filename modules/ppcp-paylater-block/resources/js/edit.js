@@ -7,7 +7,7 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 import PayPalMessages from "./components/PayPalMessages";
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
-    const { layout, logo, position, color, flexColor, flexRatio, placement, id } = attributes;
+    const { layout, logo, position, color, size, flexColor, flexRatio, placement, id } = attributes;
     const isFlex = layout === 'flex';
 
     const [paypalScriptState, setPaypalScriptState] = useState(null);
@@ -30,6 +30,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         ratio: flexRatio,
         text: {
             color,
+            size
         },
     };
 
@@ -129,10 +130,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     { !isFlex && (<SelectControl
                         label={__('Logo', 'woocommerce-paypal-payments')}
                         options={[
-                            { label: __('Primary', 'woocommerce-paypal-payments'), value: 'primary' },
-                            { label: __('Alternative', 'woocommerce-paypal-payments'), value: 'alternative' },
+                            { label: __('Full logo', 'woocommerce-paypal-payments'), value: 'primary' },
+                            { label: __('Monogram', 'woocommerce-paypal-payments'), value: 'alternative' },
                             { label: __('Inline', 'woocommerce-paypal-payments'), value: 'inline' },
-                            { label: __('None', 'woocommerce-paypal-payments'), value: 'none' },
+                            { label: __('Message only', 'woocommerce-paypal-payments'), value: 'none' },
                         ]}
                         value={logo}
                         onChange={(value) => setAttributes({logo: value})}
@@ -150,13 +151,23 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     { !isFlex && (<SelectControl
                         label={__('Text Color', 'woocommerce-paypal-payments')}
                         options={[
-                            { label: __( 'Black', 'woocommerce-paypal-payments' ), value: 'black' },
-                            { label: __( 'White', 'woocommerce-paypal-payments' ), value: 'white' },
+                            { label: __( 'Black / Blue logo', 'woocommerce-paypal-payments' ), value: 'black' },
+                            { label: __( 'White / White logo', 'woocommerce-paypal-payments' ), value: 'white' },
                             { label: __( 'Monochrome', 'woocommerce-paypal-payments' ), value: 'monochrome' },
-                            { label: __( 'Grayscale', 'woocommerce-paypal-payments' ), value: 'grayscale' },
+                            { label: __( 'Black / Gray logo', 'woocommerce-paypal-payments' ), value: 'grayscale' },
                         ]}
                         value={color}
                         onChange={(value) => setAttributes({color: value})}
+                    />)}
+                    { !isFlex && (<SelectControl
+                        label={__('Text Size', 'woocommerce-paypal-payments')}
+                        options={[
+                            { label: __( 'Small', 'woocommerce-paypal-payments' ), value: '12' },
+                            { label: __( 'Medium', 'woocommerce-paypal-payments' ), value: '14' },
+                            { label: __( 'Large', 'woocommerce-paypal-payments' ), value: '16' },
+                        ]}
+                        value={size}
+                        onChange={(value) => setAttributes({size: value})}
                     />)}
                     { isFlex && (<SelectControl
                         label={__('Color', 'woocommerce-paypal-payments')}
@@ -164,10 +175,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                             { label: __( 'Blue', 'woocommerce-paypal-payments' ), value: 'blue' },
                             { label: __( 'Black', 'woocommerce-paypal-payments' ), value: 'black' },
                             { label: __( 'White', 'woocommerce-paypal-payments' ), value: 'white' },
-                            { label: __( 'White no border', 'woocommerce-paypal-payments' ), value: 'white-no-border' },
-                            { label: __( 'Gray', 'woocommerce-paypal-payments' ), value: 'gray' },
-                            { label: __( 'Monochrome', 'woocommerce-paypal-payments' ), value: 'monochrome' },
-                            { label: __( 'Grayscale', 'woocommerce-paypal-payments' ), value: 'grayscale' },
+                            { label: __( 'White (no border)', 'woocommerce-paypal-payments' ), value: 'white-no-border' },
                         ]}
                         value={flexColor}
                         onChange={(value) => setAttributes({flexColor: value})}
@@ -175,8 +183,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     { isFlex && (<SelectControl
                         label={__('Ratio', 'woocommerce-paypal-payments')}
                         options={[
-                            { label: __( '1x1', 'woocommerce-paypal-payments' ), value: '1x1' },
-                            { label: __( '1x4', 'woocommerce-paypal-payments' ), value: '1x4' },
                             { label: __( '8x1', 'woocommerce-paypal-payments' ), value: '8x1' },
                             { label: __( '20x1', 'woocommerce-paypal-payments' ), value: '20x1' },
                         ]}
