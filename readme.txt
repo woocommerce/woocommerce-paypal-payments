@@ -194,6 +194,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Do not handle VAULT.PAYMENT-TOKEN.CREATED webhook for Vault v3 #2079
 * Enhancement - Improve the messaging configurator styles #2053
 * Enhancement - Ensure PayPal Vaulting is not selected as Subscriptions Mode when Reference Transactions are disabled #2057
+* Enhancement - Pay later messaging configurator & messaging block adjustments #2096
 
 = 2.5.4 - 2024-02-27 =
 * Fix - Cannot enable Apple Pay when API credentials were manually created #2015
