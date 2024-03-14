@@ -62,7 +62,7 @@ class ConfigFactory {
 				'status'    => in_array( $location, $selected_locations, true ) ? 'enabled' : 'disabled',
 				'placement' => $location,
 			),
-			$config
+			$config ?? []
 		);
 	}
 
