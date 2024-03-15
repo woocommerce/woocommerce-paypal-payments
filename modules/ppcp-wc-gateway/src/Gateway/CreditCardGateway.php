@@ -19,19 +19,19 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class CreditCardGateway
