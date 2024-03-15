@@ -80,6 +80,10 @@ class WooCommercePaymentTokens {
 		string $email
 	): int {
 
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenPayPal::class ) ) {
 			return 0;
