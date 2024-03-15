@@ -287,7 +287,11 @@ const PayPalComponent = ({
     };
 
     let handleShippingChange = null;
+    let handleShippingOptionsChange = null;
+    let handleShippingAddressChange = null;
     let handleSubscriptionShippingChange = null;
+    let handleSubscriptionShippingOptionsChange = null;
+    let handleSubscriptionShippingAddressChange = null;
     if (shippingData.needsShipping && !config.finalReviewEnabled) {
         handleShippingChange = async (data, actions) => {
             try {
@@ -296,13 +300,15 @@ const PayPalComponent = ({
                     await shippingData.setSelectedRates(shippingOptionId);
                 }
 
-                const address = paypalAddressToWc(data.shipping_address);
+                if (data.shipping_address) {
+                    const address = paypalAddressToWc(data.shipping_address);
 
-                await wp.data.dispatch('wc/store/cart').updateCustomerData({
-                    shipping_address: address,
-                });
+                    await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                        shipping_address: address,
+                    });
 
-                await shippingData.setShippingAddress(address);
+                    await shippingData.setShippingAddress(address);
+                }
 
                 const res = await fetch(config.ajax.update_shipping.endpoint, {
                     method: 'POST',
@@ -325,6 +331,20 @@ const PayPalComponent = ({
             }
         };
 
+        handleShippingOptionsChange = (data, actions) => {
+            handleShippingChange({
+                orderID: data.orderID,
+                selected_shipping_option: data.selectedShippingOption
+            }, actions);
+        };
+
+        handleShippingAddressChange = (data, actions) => {
+            handleShippingChange({
+                orderID: data.orderID,
+                shipping_address: data.shippingAddress
+            }, actions);
+        };
+
         handleSubscriptionShippingChange = async (data, actions) => {
             try {
                 const shippingOptionId = data.selected_shipping_option?.id;
@@ -345,6 +365,20 @@ const PayPalComponent = ({
 
                 actions.reject();
             }
+        };
+
+        handleSubscriptionShippingOptionsChange = (data, actions) => {
+            handleSubscriptionShippingChange({
+                orderID: data.orderID,
+                selected_shipping_option: data.selectedShippingOption
+            }, actions);
+        };
+
+        handleSubscriptionShippingAddressChange = (data, actions) => {
+            handleSubscriptionShippingChange({
+                orderID: data.orderID,
+                shipping_address: data.shippingAddress
+            }, actions);
         };
     }
 
@@ -443,6 +477,8 @@ const PayPalComponent = ({
                 createSubscription={createSubscription}
                 onApprove={handleApproveSubscription}
                 onShippingChange={handleSubscriptionShippingChange}
+                onShippingOptionsChange={handleSubscriptionShippingOptionsChange}
+                onShippingAddressChange={handleSubscriptionShippingAddressChange}
             />
         );
     }
@@ -457,6 +493,8 @@ const PayPalComponent = ({
             createOrder={createOrder}
             onApprove={handleApprove}
             onShippingChange={handleShippingChange}
+            onShippingOptionsChange={handleShippingOptionsChange}
+            onShippingAddressChange={handleShippingAddressChange}
         />
     );
 }
