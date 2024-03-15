@@ -13,6 +13,7 @@ use WC_Order;
 use WC_Subscription;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
@@ -133,6 +134,13 @@ class RenewalHandler {
 	private $subscription_helper;
 
 	/**
+	 * Payment tokens endpoint
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface              $logger The logger.
@@ -147,6 +155,7 @@ class RenewalHandler {
 	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
+	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -160,7 +169,8 @@ class RenewalHandler {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		FundingSourceRenderer $funding_source_renderer,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		PaymentTokensEndpoint $payment_tokens_endpoint
 	) {
 
 		$this->logger                           = $logger;
@@ -175,6 +185,7 @@ class RenewalHandler {
 		$this->funding_source_renderer          = $funding_source_renderer;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
 		$this->subscription_helper              = $subscription_helper;
+		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
 	}
 
 	/**
@@ -236,8 +247,18 @@ class RenewalHandler {
 		// Vault v3.
 		$payment_source = null;
 		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
+			$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
+			if ( ! $customer_id ) {
+				$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
+			}
+
+			$wc_tokens       = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
+			$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
 			foreach ( $wc_tokens as $token ) {
+				if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
+					continue;
+				}
+
 				$name       = 'paypal';
 				$properties = array(
 					'vault_id' => $token->get_token(),

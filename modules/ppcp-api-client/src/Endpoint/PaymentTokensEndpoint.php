@@ -92,4 +92,41 @@ class PaymentTokensEndpoint {
 			throw new PayPalApiException( $json, $status_code );
 		}
 	}
+
+	/**
+	 * Returns all payment tokens for the given customer.
+	 *
+	 * @param string $customer_id
+	 * @return array
+	 */
+	public function payment_tokens_for_customer( string $customer_id ): array {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v3/vault/payment-tokens?customer_id=' . $customer_id;
+		$args   = array(
+			'method'  => 'GET',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( $response instanceof WP_Error ) {
+			throw new RuntimeException( $response->get_error_message() );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException( $json, $status_code );
+		}
+
+		$tokens         = array();
+		$payment_tokens = $json->payment_tokens ?? array();
+		foreach ( $payment_tokens as $payment_token ) {
+			$tokens[] = $payment_token->id;
+		}
+
+		return $tokens;
+	}
 }

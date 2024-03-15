@@ -44,7 +44,8 @@ return array(
 			$authorized_payments_processor,
 			$funding_source_renderer,
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
-			$container->get( 'wc-subscriptions.helper' )
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'api.endpoint.payment-tokens' )
 		);
 	},
 	'wc-subscriptions.repository.payment-token'          => static function ( ContainerInterface $container ): PaymentTokenRepository {
