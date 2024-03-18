@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -252,8 +253,13 @@ class RenewalHandler {
 				$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
 			}
 
-			$wc_tokens       = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
-			$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+			try {
+				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+			} catch ( RuntimeException $exception ) {
+				$customer_tokens = array();
+			}
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
 			foreach ( $wc_tokens as $token ) {
 				if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
 					$token->delete();
