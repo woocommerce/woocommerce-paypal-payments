@@ -48,7 +48,7 @@ class ConfigFactory {
 			);
 		} elseif ( $location !== 'woocommerceBlock' ) {
 			$config = array(
-				'layout'        => 'text',
+				'layout'        => $this->get_or_default( $settings, "pay_later_{$location}_message_layout", 'text' ),
 				'logo-position' => $this->get_or_default( $settings, "pay_later_{$location}_message_position", 'left' ),
 				'logo-type'     => $this->get_or_default( $settings, "pay_later_{$location}_message_logo", 'inline' ),
 				'text-color'    => $this->get_or_default( $settings, "pay_later_{$location}_message_color", 'black' ),
