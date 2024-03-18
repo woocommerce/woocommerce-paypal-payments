@@ -43,8 +43,8 @@ class ConfigFactory {
 		if ( in_array( $location, array( 'shop', 'home' ), true ) ) {
 			$config = array(
 				'layout' => $this->get_or_default( $settings, "pay_later_{$location}_message_layout", 'flex' ),
-				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black', array( 'black', 'blue', 'white', 'white-no-border' ) ),
-				'ratio'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_ratio", '8x1', array( '8x1', '20x1' ) ),
+				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black' ),
+				'ratio'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_ratio", '8x1' ),
 			);
 		} elseif ( $location !== 'woocommerceBlock' ) {
 			$config = array(
