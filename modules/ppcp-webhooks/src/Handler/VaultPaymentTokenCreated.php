@@ -120,6 +120,8 @@ class VaultPaymentTokenCreated implements RequestHandler {
 			return $this->success_response();
 		}
 
+		$this->logger->info(wc_print_r($request['resource'], true));
+
 		$customer_id = null !== $request['resource'] && isset( $request['resource']['customer_id'] )
 			? $request['resource']['customer_id']
 			: '';

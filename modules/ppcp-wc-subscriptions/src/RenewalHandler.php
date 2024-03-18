@@ -256,6 +256,7 @@ class RenewalHandler {
 			$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
 			foreach ( $wc_tokens as $token ) {
 				if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
+					$token->delete();
 					continue;
 				}
 
