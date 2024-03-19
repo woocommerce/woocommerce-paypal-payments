@@ -13,7 +13,6 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
