@@ -40,10 +40,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         partnerClientId: PcpPayLaterConfigurator.partnerClientId,
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
-        placements: ['cart', 'checkout', 'product', 'shop', 'home'],
-        custom_placement:[{
-            message_reference: 'woocommerceBlock',
-        }],
+        placements: ['cart', 'checkout', 'product', 'shop', 'home', 'woocommerceBlock'],
         styleOverrides: {
             button: publishButtonClassName,
             header: PcpPayLaterConfigurator.headerClassName,
