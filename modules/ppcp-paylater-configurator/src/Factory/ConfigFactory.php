@@ -66,7 +66,7 @@ class ConfigFactory {
 	 *     layout: string,
 	 *     color: string,
 	 *     ratio: string,
-	 *     status: string,
+	 *     status: "disabled"|"enabled",
 	 *     placement: string
 	 * } The configurator config map.
 	 */
@@ -85,7 +85,7 @@ class ConfigFactory {
 	 *
 	 * @param array $selected_locations The list of selected locations.
 	 * @return array{
-	 *     status: string,
+	 *     status: "disabled"|"enabled",
 	 *     message_reference: string
 	 * } The configurator config map.
 	 */
@@ -108,7 +108,7 @@ class ConfigFactory {
 	 *     logo-type: string,
 	 *     text-color: string,
 	 *     text-size: string,
-	 *     status: string,
+	 *     status: "disabled"|"enabled",
 	 *     placement: string
 	 * } The configurator config map.
 	 */
@@ -131,9 +131,9 @@ class ConfigFactory {
 	 * @param string     $key The key.
 	 * @param mixed      $default The default value.
 	 * @param array|null $allowed_values The list of allowed values, or null if all values are allowed.
-	 * @return mixed
+	 * @return string
 	 */
-	private function get_or_default( Settings $settings, string $key, $default, ?array $allowed_values = null ) {
+	private function get_or_default( Settings $settings, string $key, $default, ?array $allowed_values = null ): string {
 		if ( $settings->has( $key ) ) {
 			$value = $settings->get( $key );
 			if ( ! $allowed_values || in_array( $value, $allowed_values, true ) ) {
