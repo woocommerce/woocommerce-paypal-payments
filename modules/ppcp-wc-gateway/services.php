@@ -135,6 +135,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
 			$logger
 		);
 	},
@@ -1587,7 +1588,7 @@ return array(
 			)
 		);
 	},
-	'wcgateway.endpoint.capture-card-payment' => static function( ContainerInterface $container ): CaptureCardPayment {
+	'wcgateway.endpoint.capture-card-payment'              => static function( ContainerInterface $container ): CaptureCardPayment {
 		return new CaptureCardPayment(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
