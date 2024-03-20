@@ -298,6 +298,24 @@ class RenewalHandler {
 		}
 
 		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+			$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
+			if ( ! $customer_id ) {
+				$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
+			}
+
+			try {
+				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+			} catch ( RuntimeException $exception ) {
+				$customer_tokens = array();
+			}
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+			foreach ( $wc_tokens as $token ) {
+				if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
+					$token->delete();
+				}
+			}
+
 			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
 			$last_token = end( $wc_tokens );
 			if ( $last_token ) {
