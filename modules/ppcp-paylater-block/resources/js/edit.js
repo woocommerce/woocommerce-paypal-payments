@@ -194,7 +194,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                         help={ __( 'Used for the analytics dashboard in the merchant account.', 'woocommerce-paypal-payments' ) }
                         options={ [
                             { label: __( 'Detect automatically', 'woocommerce-paypal-payments' ), value: 'auto' },
-                            { label: __( 'Product Page', 'woocommerce-paypal-payments' ), value: 'product-page' },
+                            { label: __( 'Product Page', 'woocommerce-paypal-payments' ), value: 'product' },
                             { label: __( 'Cart', 'woocommerce-paypal-payments' ), value: 'cart' },
                             { label: __( 'Checkout', 'woocommerce-paypal-payments' ), value: 'checkout' },
                             { label: __( 'Home', 'woocommerce-paypal-payments' ), value: 'home' },
