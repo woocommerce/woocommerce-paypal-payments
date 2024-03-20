@@ -97,7 +97,7 @@ define( 'PAYPAL_INTEGRATION_DATE', '2024-03-12' );
 				 */
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
-			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
+			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php', false );
 			$plugin_version           = $plugin_data['Version'] ?? null;
 			$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 			if ( $installed_plugin_version !== $plugin_version ) {
