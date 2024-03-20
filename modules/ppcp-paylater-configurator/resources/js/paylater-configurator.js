@@ -29,7 +29,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
             setTimeout(() => {
                 saveChangesButton.click(); // Trigger click event on saveChangesButton
                 isSaving = false; // Reset flag when saving is complete
-            }, 500); // Adjust the delay as needed
+            }, 1000); // Adjust the delay as needed
         }
     });
 

@@ -117,7 +117,7 @@ class ConfigFactory {
 			'layout'        => $this->get_or_default( $settings, "pay_later_{$location}_message_layout", 'text' ),
 			'logo-position' => $this->get_or_default( $settings, "pay_later_{$location}_message_position", 'left' ),
 			'logo-type'     => $this->get_or_default( $settings, "pay_later_{$location}_message_logo", 'inline' ),
-			'text-color'    => $this->get_or_default( $settings, "pay_later_{$location}_message_text_color", 'black' ),
+			'text-color'    => $this->get_or_default( $settings, "pay_later_{$location}_message_color", 'black' ),
 			'text-size'     => $this->get_or_default( $settings, "pay_later_{$location}_message_text_size", '12' ),
 			'status'        => in_array( $location, $selected_locations, true ) ? 'enabled' : 'disabled',
 			'placement'     => $location,

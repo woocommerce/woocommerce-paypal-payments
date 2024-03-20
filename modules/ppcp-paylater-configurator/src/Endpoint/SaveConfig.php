@@ -129,7 +129,7 @@ class SaveConfig {
 		$this->set_value_if_present( $config, 'logo-type', "pay_later_{$location}_message_logo" );
 		$this->set_value_if_present( $config, 'logo-color', "pay_later_{$location}_message_color" );
 		$this->set_value_if_present( $config, 'text-size', "pay_later_{$location}_message_text_size" );
-		$this->set_value_if_present( $config, 'text-color', "pay_later_{$location}_message_text_color" );
+		$this->set_value_if_present( $config, 'text-color', "pay_later_{$location}_message_color" );
 	}
 
 	/**
