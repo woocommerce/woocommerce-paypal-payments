@@ -345,7 +345,7 @@ class RenewalHandler {
 				foreach ( $customer_tokens as $customer_token ) {
 					if ( $customer_token['payment_source']->name() === 'card' ) {
 						$this->wc_payment_tokens->create_payment_token_card(
-							get_current_user_id(),
+							$user_id,
 							(object) array(
 								'id'             => $customer_token['id'],
 								'payment_source' => (object) array(
