@@ -132,6 +132,10 @@ class WooCommercePaymentTokens {
 		string $email
 	): int {
 
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenVenmo::class ) ) {
 			return 0;
@@ -178,6 +182,10 @@ class WooCommercePaymentTokens {
 		string $token
 	): int {
 
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenApplePay::class ) ) {
 			return 0;
@@ -216,6 +224,10 @@ class WooCommercePaymentTokens {
 	 * @return int
 	 */
 	public function create_payment_token_card( int $customer_id, stdClass $payment_token ): int {
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, CreditCardGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $payment_token->id ) ) {
 			return 0;
