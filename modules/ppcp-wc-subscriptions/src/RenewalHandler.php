@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -142,6 +143,13 @@ class RenewalHandler {
 	private $payment_tokens_endpoint;
 
 	/**
+	 * WooCommerce payments tokens factory.
+	 *
+	 * @var WooCommercePaymentTokens
+	 */
+	private $wc_payment_tokens;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface              $logger The logger.
@@ -157,6 +165,7 @@ class RenewalHandler {
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
 	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param WooCommercePaymentTokens     $wc_payment_tokens WooCommerce payments tokens factory.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -171,7 +180,8 @@ class RenewalHandler {
 		FundingSourceRenderer $funding_source_renderer,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		SubscriptionHelper $subscription_helper,
-		PaymentTokensEndpoint $payment_tokens_endpoint
+		PaymentTokensEndpoint $payment_tokens_endpoint,
+		WooCommercePaymentTokens $wc_payment_tokens
 	) {
 
 		$this->logger                           = $logger;
@@ -187,6 +197,7 @@ class RenewalHandler {
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
 		$this->subscription_helper              = $subscription_helper;
 		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
+		$this->wc_payment_tokens                = $wc_payment_tokens;
 	}
 
 	/**
@@ -260,8 +271,27 @@ class RenewalHandler {
 			}
 
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
+
+			if ( $customer_tokens && empty( $wc_tokens ) ) {
+				foreach ( $customer_tokens as $customer_token ) {
+					if ( $customer_token['payment_source']->name() === 'paypal' ) {
+						$this->wc_payment_tokens->create_payment_token_paypal(
+							$user_id,
+							$customer_token['id'],
+							$customer_token['payment_source']->properties()->email_address ?? ''
+						);
+					}
+				}
+			}
+
+			$customer_token_ids = array();
+			foreach ( $customer_tokens as $customer_token ) {
+				$customer_token_ids[] = $customer_token['id'];
+			}
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
 			foreach ( $wc_tokens as $token ) {
-				if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
+				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
 					$token->delete();
 					continue;
 				}
@@ -309,9 +339,27 @@ class RenewalHandler {
 				$customer_tokens = array();
 			}
 
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
+
+			if ( $customer_tokens && empty( $wc_tokens ) ) {
+				foreach ( $customer_tokens as $customer_token ) {
+					if ( $customer_token['payment_source']->name() === 'card' ) {
+						$this->wc_payment_tokens->create_payment_token_card(
+							get_current_user_id(),
+							$customer_token['id']
+						);
+					}
+				}
+			}
+
+			$customer_token_ids = array();
+			foreach ( $customer_tokens as $customer_token ) {
+				$customer_token_ids[] = $customer_token['id'];
+			}
+
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
 			foreach ( $wc_tokens as $token ) {
-				if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
+				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
 					$token->delete();
 				}
 			}

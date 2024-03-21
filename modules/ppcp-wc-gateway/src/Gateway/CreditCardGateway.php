@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
@@ -163,6 +164,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $payment_tokens_endpoint;
 
 	/**
+	 * WooCommerce payment tokens factory.
+	 *
+	 * @var WooCommercePaymentTokens
+	 */
+	private $wc_payment_tokens;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -188,6 +196,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param CaptureCardPayment       $capture_card_payment Capture card payment.
 	 * @param string                   $prefix The prefix.
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens factory.
 	 * @param LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
@@ -207,6 +216,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		CaptureCardPayment $capture_card_payment,
 		string $prefix,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
+		WooCommercePaymentTokens $wc_payment_tokens,
 		LoggerInterface $logger
 	) {
 		$this->id                          = self::ID;
@@ -226,6 +236,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->capture_card_payment        = $capture_card_payment;
 		$this->prefix                      = $prefix;
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
+		$this->wc_payment_tokens           = $wc_payment_tokens;
 		$this->logger                      = $logger;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
@@ -436,10 +447,28 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				$customer_tokens = array();
 			}
 
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
+
+			if ( $customer_tokens && empty( $wc_tokens ) ) {
+				foreach ( $customer_tokens as $customer_token ) {
+					if ( $customer_token['payment_source']->name() === 'card' ) {
+						$this->wc_payment_tokens->create_payment_token_card(
+							get_current_user_id(),
+							$customer_token['id']
+						);
+					}
+				}
+			}
+
+			$customer_token_ids = array();
+			foreach ( $customer_tokens as $customer_token ) {
+				$customer_token_ids[] = $customer_token['id'];
+			}
+
 			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 			foreach ( $tokens as $token ) {
 				if ( $token->get_id() === (int) $card_payment_token_id ) {
-					if ( ! in_array( $token->get_token(), $customer_tokens, true ) ) {
+					if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
 						$token->delete();
 						continue;
 					}
