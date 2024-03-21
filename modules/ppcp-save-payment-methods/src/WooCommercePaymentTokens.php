@@ -223,7 +223,7 @@ class WooCommercePaymentTokens {
 
 		$token = new WC_Payment_Token_CC();
 		$token->set_token( $payment_token->id );
-		$token->set_user_id( get_current_user_id() );
+		$token->set_user_id( $customer_id );
 		$token->set_gateway_id( CreditCardGateway::ID );
 
 		$token->set_last4( $payment_token->payment_source->card->last_digits ?? '' );

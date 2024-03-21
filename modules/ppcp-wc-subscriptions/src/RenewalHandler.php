@@ -362,14 +362,14 @@ class RenewalHandler {
 				$customer_token_ids[] = $customer_token['id'];
 			}
 
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 			foreach ( $wc_tokens as $token ) {
 				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
 					$token->delete();
 				}
 			}
 
-			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 			$last_token = end( $wc_tokens );
 			if ( $last_token ) {
 				$payment_source = $this->card_payment_source( $last_token->get_token(), $wc_order );
@@ -394,7 +394,7 @@ class RenewalHandler {
 			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
 				$card_payment_source = $order->payment_source();
 				if ( $card_payment_source ) {
-					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 					$last_token  = end( $wc_tokens );
 					$expiry      = $card_payment_source->properties()->expiry ?? '';
 					$last_digits = $card_payment_source->properties()->last_digits ?? '';
