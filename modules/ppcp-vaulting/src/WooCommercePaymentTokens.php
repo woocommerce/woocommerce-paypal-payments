@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -38,6 +39,13 @@ class WooCommercePaymentTokens {
 	private $payment_token_factory;
 
 	/**
+	 * Payment tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -47,18 +55,21 @@ class WooCommercePaymentTokens {
 	/**
 	 * WooCommercePaymentTokens constructor.
 	 *
-	 * @param PaymentTokenHelper  $payment_token_helper The payment token helper.
-	 * @param PaymentTokenFactory $payment_token_factory The payment token factory.
-	 * @param LoggerInterface     $logger The logger.
+	 * @param PaymentTokenHelper    $payment_token_helper The payment token helper.
+	 * @param PaymentTokenFactory   $payment_token_factory The payment token factory.
+	 * @param PaymentTokensEndpoint $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param LoggerInterface       $logger The logger.
 	 */
 	public function __construct(
 		PaymentTokenHelper $payment_token_helper,
 		PaymentTokenFactory $payment_token_factory,
+		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger
 	) {
-		$this->payment_token_helper  = $payment_token_helper;
-		$this->payment_token_factory = $payment_token_factory;
-		$this->logger                = $logger;
+		$this->payment_token_helper    = $payment_token_helper;
+		$this->payment_token_factory   = $payment_token_factory;
+		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
+		$this->logger                  = $logger;
 	}
 
 	/**
@@ -255,6 +266,7 @@ class WooCommercePaymentTokens {
 		$token->save();
 		return $token->get_id();
 	}
+
 	/**
 	 * Returns PayPal payment tokens for the given WP user id.
 	 *
