@@ -9,9 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
+use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Subscription;
 use WC_Payment_Tokens;
+use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
@@ -19,17 +20,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -259,29 +258,12 @@ class RenewalHandler {
 		// Vault v3.
 		$payment_source = null;
 		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
-			$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
-			if ( ! $customer_id ) {
-				$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
-			}
-
-			try {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
-			} catch ( RuntimeException $exception ) {
-				$customer_tokens = array();
-			}
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
 
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
 
 			if ( $customer_tokens && empty( $wc_tokens ) ) {
-				foreach ( $customer_tokens as $customer_token ) {
-					if ( $customer_token['payment_source']->name() === 'paypal' ) {
-						$this->wc_payment_tokens->create_payment_token_paypal(
-							$user_id,
-							$customer_token['id'],
-							$customer_token['payment_source']->properties()->email_address ?? ''
-						);
-					}
-				}
+				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, $user_id );
 			}
 
 			$customer_token_ids = array();
@@ -328,33 +310,12 @@ class RenewalHandler {
 		}
 
 		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-			$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
-			if ( ! $customer_id ) {
-				$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
-			}
-
-			try {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
-			} catch ( RuntimeException $exception ) {
-				$customer_tokens = array();
-			}
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
 
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 
 			if ( $customer_tokens && empty( $wc_tokens ) ) {
-				foreach ( $customer_tokens as $customer_token ) {
-					if ( $customer_token['payment_source']->name() === 'card' ) {
-						$this->wc_payment_tokens->create_payment_token_card(
-							$user_id,
-							(object) array(
-								'id'             => $customer_token['id'],
-								'payment_source' => (object) array(
-									$customer_token['payment_source']->name() => $customer_token['payment_source']->properties(),
-								),
-							)
-						);
-					}
-				}
+				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, $user_id );
 			}
 
 			$customer_token_ids = array();

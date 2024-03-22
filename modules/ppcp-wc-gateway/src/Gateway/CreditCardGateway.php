@@ -20,10 +20,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
@@ -455,33 +455,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$card_payment_token_id = wc_clean( wp_unslash( $_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? '' ) );
 		if ( $card_payment_token_id ) {
-			$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-			if ( ! $customer_id ) {
-				$customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
-			}
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( get_current_user_id() );
 
-			try {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
-			} catch ( RuntimeException $exception ) {
-				$customer_tokens = array();
-			}
-
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), self::ID );
 
 			if ( $customer_tokens && empty( $wc_tokens ) ) {
-				foreach ( $customer_tokens as $customer_token ) {
-					if ( $customer_token['payment_source']->name() === 'card' ) {
-						$this->wc_payment_tokens->create_payment_token_card(
-							get_current_user_id(),
-							(object) array(
-								'id'             => $customer_token['id'],
-								'payment_source' => (object) array(
-									$customer_token['payment_source']->name() => $customer_token['payment_source']->properties(),
-								),
-							)
-						);
-					}
-				}
+				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, get_current_user_id() );
 			}
 
 			$customer_token_ids = array();

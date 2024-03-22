@@ -7,18 +7,14 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
+namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use Exception;
 use Psr\Log\LoggerInterface;
 use stdClass;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenHelper;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -258,5 +254,56 @@ class WooCommercePaymentTokens {
 
 		$token->save();
 		return $token->get_id();
+	}
+	/**
+	 * Returns PayPal payment tokens for the given WP user id.
+	 *
+	 * @param int $user_id WP user id.
+	 * @return array
+	 */
+	public function customer_tokens( int $user_id ): array {
+		$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
+		if ( ! $customer_id ) {
+			$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
+		}
+
+		try {
+			$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+		} catch ( RuntimeException $exception ) {
+			$customer_tokens = array();
+		}
+
+		return $customer_tokens;
+	}
+
+	/**
+	 * Creates WC payment tokens for the given WP user id using PayPal payment tokens as source.
+	 *
+	 * @param array $customer_tokens PayPal customer payment tokens.
+	 * @param int   $user_id WP user id.
+	 * @return void
+	 */
+	public function create_wc_tokens( array $customer_tokens, int $user_id ): void {
+		foreach ( $customer_tokens as $customer_token ) {
+			if ( $customer_token['payment_source']->name() === 'paypal' ) {
+				$this->create_payment_token_paypal(
+					$user_id,
+					$customer_token['id'],
+					$customer_token['payment_source']->properties()->email_address ?? ''
+				);
+			}
+
+			if ( $customer_token['payment_source']->name() === 'card' ) {
+				$this->create_payment_token_card(
+					$user_id,
+					(object) array(
+						'id'             => $customer_token['id'],
+						'payment_source' => (object) array(
+							$customer_token['payment_source']->name() => $customer_token['payment_source']->properties(),
+						),
+					)
+				);
+			}
+		}
 	}
 }

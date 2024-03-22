@@ -804,18 +804,11 @@ return array(
 			$container->get( 'api.endpoint.payment-method-tokens' )
 		);
 	},
-	'save-payment-methods.wc-payment-tokens'             => static function( ContainerInterface $container ): WooCommercePaymentTokens {
-		return new WooCommercePaymentTokens(
-			$container->get( 'vaulting.payment-token-helper' ),
-			$container->get( 'vaulting.payment-token-factory' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
 	'save-payment-methods.endpoint.create-payment-token' => static function ( ContainerInterface $container ): CreatePaymentToken {
 		return new CreatePaymentToken(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' ),
-			$container->get( 'save-payment-methods.wc-payment-tokens' )
+			$container->get( 'vaulting.wc-payment-tokens' )
 		);
 	},
 );

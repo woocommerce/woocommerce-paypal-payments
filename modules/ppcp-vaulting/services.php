@@ -56,4 +56,11 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'vaulting.wc-payment-tokens'          => static function( ContainerInterface $container ): WooCommercePaymentTokens {
+		return new WooCommercePaymentTokens(
+			$container->get( 'vaulting.payment-token-helper' ),
+			$container->get( 'vaulting.payment-token-factory' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 );

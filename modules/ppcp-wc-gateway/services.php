@@ -136,7 +136,7 @@ return array(
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'save-payment-methods.wc-payment-tokens' ),
+			$container->get( 'vaulting.wc-payment-tokens' ),
 			$logger
 		);
 	},
