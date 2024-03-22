@@ -339,7 +339,7 @@ class RenewalHandler {
 				$customer_tokens = array();
 			}
 
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 
 			if ( $customer_tokens && empty( $wc_tokens ) ) {
 				foreach ( $customer_tokens as $customer_token ) {
