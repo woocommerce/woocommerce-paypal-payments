@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.6.0 - xxxx-xx-xx =
+= 2.6.0 - 2024-03-20 =
 * Fix - invoice_id not included in API call when creating payment with saved card #2086
 * Fix - Typo in SCA indicators for ACDC Vault transactions #2083
 * Fix - Payments with saved card tokens use Capture intent when Authorize is configured #2069

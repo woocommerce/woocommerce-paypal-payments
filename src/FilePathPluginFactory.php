@@ -65,7 +65,7 @@ class FilePathPluginFactory implements FilePathPluginFactoryInterface {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
-		$plugin_data = get_plugin_data( $filePath );
+		$plugin_data = get_plugin_data( $filePath, false );
 		if ( empty( $plugin_data ) ) {
 			throw new UnexpectedValueException(
 				sprintf(

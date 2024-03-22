@@ -313,8 +313,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	public function form() {
 		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_label' ), 10, 3 );
+		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_placeholder' ), 10, 3 );
 		parent::form();
 		remove_action( 'gettext', 'replace_credit_card_cvv_label' );
+		remove_action( 'gettext', 'replace_credit_card_cvv_placeholder' );
 	}
 
 	/**
@@ -328,6 +330,23 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	public function replace_credit_card_cvv_label( string $translation, string $text, string $domain ): string {
 		if ( 'woocommerce' !== $domain || 'Card code' !== $text ) {
+			return $translation;
+		}
+
+		return __( 'CVV', 'woocommerce-paypal-payments' );
+	}
+
+	/**
+	 * Replace WooCommerce credit card CVV field placeholder.
+	 *
+	 * @param string $translation Translated text.
+	 * @param string $text Original text to translate.
+	 * @param string $domain Text domain.
+	 *
+	 * @return string Translated field.
+	 */
+	public function replace_credit_card_cvv_placeholder( string $translation, string $text, string $domain ): string {
+		if ( 'woocommerce' !== $domain || 'CVC' !== $text || ! apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_cvv', true ) ) {
 			return $translation;
 		}
 

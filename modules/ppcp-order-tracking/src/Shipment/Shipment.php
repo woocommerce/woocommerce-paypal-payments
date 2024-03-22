@@ -169,10 +169,10 @@ class Shipment implements ShipmentInterface {
 			$image                     = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
 			$ppcp_order_item = new Item(
-				mb_substr( $item->get_name(), 0, 127 ),
+				$this->prepare_item_string( $item->get_name() ),
 				new Money( $price_without_tax_rounded, $currency ),
 				$quantity,
-				$this->prepare_description( $product->get_description() ),
+				$this->prepare_item_string( $product->get_description() ),
 				null,
 				$this->prepare_sku( $product->get_sku() ),
 				$product->is_virtual() ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
