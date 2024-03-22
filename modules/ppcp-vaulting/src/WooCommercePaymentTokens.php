@@ -306,6 +306,11 @@ class WooCommercePaymentTokens {
 			}
 
 			if ( $customer_token['payment_source']->name() === 'card' ) {
+				/**
+				 * Suppress ArgumentTypeCoercion
+				 *
+				 * @psalm-suppress ArgumentTypeCoercion
+				 */
 				$this->create_payment_token_card(
 					$user_id,
 					(object) array(
