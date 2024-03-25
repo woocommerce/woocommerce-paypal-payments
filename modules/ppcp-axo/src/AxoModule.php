@@ -38,29 +38,35 @@ class AxoModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_payment_gateways',
 			function ( $methods ) use ( $c ): array {
-				$methods[] = $c->get( 'axo.gateway' );
+				$gateway = $c->get( 'axo.gateway' );
+
+				// Check if the module is applicable, correct country, currency, ... etc.
+				if ( ! $c->get( 'axo.eligible' ) ) {
+					return $methods;
+				}
+
+				// TODO: check product status eligibility.
+
+				if ( is_user_logged_in() ) {
+					return $methods;
+				}
+
+				$methods[] = $gateway;
 				return $methods;
 			},
 			1,
 			9
 		);
 
-		/**
-		 * Param types removed to avoid third-party issues.
-		 *
-		 * @psalm-suppress MissingClosureParamType
-		 */
-		add_filter(
-			'woocommerce_paypal_payments_sdk_components_hook',
-			function( $components ) {
-				$components[] = 'connect';
-				return $components;
-			}
-		);
-
 		add_action(
 			'init',
 			static function () use ( $c ) {
+
+				// Check if the module is applicable, correct country, currency, ... etc.
+				if ( ! $c->get( 'axo.eligible' ) ) {
+					return;
+				}
+
 				$manager = $c->get( 'axo.manager' );
 				assert( $manager instanceof AxoManager );
 
@@ -82,6 +88,19 @@ class AxoModule implements ModuleInterface {
 					$manager->checkout_button_renderer_hook(),
 					static function () use ( $c, $manager ) {
 						$manager->render_checkout_button();
+					}
+				);
+
+				/**
+				 * Param types removed to avoid third-party issues.
+				 *
+				 * @psalm-suppress MissingClosureParamType
+				 */
+				add_filter(
+					'woocommerce_paypal_payments_sdk_components_hook',
+					function( $components ) {
+						$components[] = 'connect';
+						return $components;
 					}
 				);
 

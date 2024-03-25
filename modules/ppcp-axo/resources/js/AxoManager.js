@@ -540,7 +540,7 @@ class AxoManager {
         alert('nonce: ' + nonce);
 
         // Submit form.
-        this.el.defaultSubmitButton.click();
+//        this.el.defaultSubmitButton.click();
     }
 
     useEmailWidget() {

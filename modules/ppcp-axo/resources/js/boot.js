@@ -8,7 +8,7 @@ import {loadPaypalScript} from "../../../ppcp-button/resources/js/modules/Helper
 }) {
 
     const bootstrap = () => {
-        const axo = new AxoManager(axoConfig, ppcpConfig);
+        new AxoManager(axoConfig, ppcpConfig);
     }
 
     document.addEventListener(

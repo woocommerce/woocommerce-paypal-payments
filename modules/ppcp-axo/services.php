@@ -11,9 +11,40 @@ namespace WooCommerce\PayPalCommerce\Axo;
 
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
+
+	// If AXO can be configured.
+	'axo.eligible'                          => static function ( ContainerInterface $container ): bool {
+		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
+		assert( $apm_applies instanceof ApmApplies );
+
+		return $apm_applies->for_country_currency();
+	},
+
+	'axo.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
+		return new ApmApplies(
+			$container->get( 'axo.supported-country-currency-matrix' ),
+			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.country' )
+		);
+	},
+
+	// If AXO is configured and onboarded.
+	'axo.available'                         => static function ( ContainerInterface $container ): bool {
+// TODO
+//		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
+//			$status = $container->get( 'googlepay.helpers.apm-product-status' );
+//			assert( $status instanceof ApmProductStatus );
+//			/**
+//			 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
+//			 */
+//			return apply_filters( 'woocommerce_paypal_payments_googlepay_product_status', $status->is_active() );
+//		}
+		return true;
+	},
 
 	'axo.url'        => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
@@ -71,6 +102,23 @@ return array(
 				'title' => 'Discover',
 				'file'  => 'discover.svg',
 			),
+		);
+	},
+
+	/**
+	 * The matrix which countries and currency combinations can be used for AXO.
+	 */
+	'axo.supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which countries and currency combinations can be used for AXO.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_axo_supported_country_currency_matrix',
+			array(
+				'US' => array(
+					'USD',
+				),
+			)
 		);
 	},
 
