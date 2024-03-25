@@ -4,21 +4,23 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
 class CreditCardGatewayTest extends TestCase
@@ -34,6 +36,8 @@ class CreditCardGatewayTest extends TestCase
 	private $subscriptionHelper;
 	private $captureCardPayment;
 	private $prefix;
+	private $paymentTokensEndpoint;
+	private $wcPaymentTokens;
 	private $logger;
 	private $paymentsEndpoint;
 	private $vaultedCreditCardHandler;
@@ -56,6 +60,8 @@ class CreditCardGatewayTest extends TestCase
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->captureCardPayment = Mockery::mock(CaptureCardPayment::class);
 		$this->prefix = 'some-prefix';
+		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
+		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 		$this->vaultedCreditCardHandler = Mockery::mock(VaultedCreditCardHandler::class);
@@ -84,6 +90,8 @@ class CreditCardGatewayTest extends TestCase
 			$this->orderEndpoint,
 			$this->captureCardPayment,
 			$this->prefix,
+			$this->paymentTokensEndpoint,
+			$this->wcPaymentTokens,
 			$this->logger
 		);
 	}

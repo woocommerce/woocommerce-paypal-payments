@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -132,8 +133,10 @@ return array(
 			$vaulted_credit_card_handler,
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'save-payment-methods.endpoint.capture-card-payment' ),
+			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'vaulting.wc-payment-tokens' ),
 			$logger
 		);
 	},
@@ -1584,6 +1587,19 @@ return array(
 				'sv_SE' => __( 'Swedish', 'woocommerce-paypal-payments' ),
 				'th_TH' => __( 'Thai', 'woocommerce-paypal-payments' ),
 			)
+		);
+	},
+	'wcgateway.endpoint.capture-card-payment'              => static function( ContainerInterface $container ): CaptureCardPayment {
+		return new CaptureCardPayment(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

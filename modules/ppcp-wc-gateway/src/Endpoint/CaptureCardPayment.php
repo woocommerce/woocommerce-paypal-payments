@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
+namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;

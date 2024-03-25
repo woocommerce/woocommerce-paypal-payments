@@ -7,18 +7,15 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
+namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use Exception;
 use Psr\Log\LoggerInterface;
 use stdClass;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenHelper;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -42,6 +39,13 @@ class WooCommercePaymentTokens {
 	private $payment_token_factory;
 
 	/**
+	 * Payment tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -51,18 +55,21 @@ class WooCommercePaymentTokens {
 	/**
 	 * WooCommercePaymentTokens constructor.
 	 *
-	 * @param PaymentTokenHelper  $payment_token_helper The payment token helper.
-	 * @param PaymentTokenFactory $payment_token_factory The payment token factory.
-	 * @param LoggerInterface     $logger The logger.
+	 * @param PaymentTokenHelper    $payment_token_helper The payment token helper.
+	 * @param PaymentTokenFactory   $payment_token_factory The payment token factory.
+	 * @param PaymentTokensEndpoint $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param LoggerInterface       $logger The logger.
 	 */
 	public function __construct(
 		PaymentTokenHelper $payment_token_helper,
 		PaymentTokenFactory $payment_token_factory,
+		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger
 	) {
-		$this->payment_token_helper  = $payment_token_helper;
-		$this->payment_token_factory = $payment_token_factory;
-		$this->logger                = $logger;
+		$this->payment_token_helper    = $payment_token_helper;
+		$this->payment_token_factory   = $payment_token_factory;
+		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
+		$this->logger                  = $logger;
 	}
 
 	/**
@@ -79,6 +86,10 @@ class WooCommercePaymentTokens {
 		string $token,
 		string $email
 	): int {
+
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
 
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenPayPal::class ) ) {
@@ -128,6 +139,10 @@ class WooCommercePaymentTokens {
 		string $email
 	): int {
 
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenVenmo::class ) ) {
 			return 0;
@@ -174,6 +189,10 @@ class WooCommercePaymentTokens {
 		string $token
 	): int {
 
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenApplePay::class ) ) {
 			return 0;
@@ -212,6 +231,10 @@ class WooCommercePaymentTokens {
 	 * @return int
 	 */
 	public function create_payment_token_card( int $customer_id, stdClass $payment_token ): int {
+		if ( $customer_id === 0 ) {
+			return 0;
+		}
+
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, CreditCardGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $payment_token->id ) ) {
 			return 0;
@@ -219,7 +242,7 @@ class WooCommercePaymentTokens {
 
 		$token = new WC_Payment_Token_CC();
 		$token->set_token( $payment_token->id );
-		$token->set_user_id( get_current_user_id() );
+		$token->set_user_id( $customer_id );
 		$token->set_gateway_id( CreditCardGateway::ID );
 
 		$token->set_last4( $payment_token->payment_source->card->last_digits ?? '' );
@@ -242,5 +265,62 @@ class WooCommercePaymentTokens {
 
 		$token->save();
 		return $token->get_id();
+	}
+
+	/**
+	 * Returns PayPal payment tokens for the given WP user id.
+	 *
+	 * @param int $user_id WP user id.
+	 * @return array
+	 */
+	public function customer_tokens( int $user_id ): array {
+		$customer_id = get_user_meta( $user_id, '_ppcp_target_customer_id', true );
+		if ( ! $customer_id ) {
+			$customer_id = get_user_meta( $user_id, 'ppcp_customer_id', true );
+		}
+
+		try {
+			$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+		} catch ( RuntimeException $exception ) {
+			$customer_tokens = array();
+		}
+
+		return $customer_tokens;
+	}
+
+	/**
+	 * Creates WC payment tokens for the given WP user id using PayPal payment tokens as source.
+	 *
+	 * @param array $customer_tokens PayPal customer payment tokens.
+	 * @param int   $user_id WP user id.
+	 * @return void
+	 */
+	public function create_wc_tokens( array $customer_tokens, int $user_id ): void {
+		foreach ( $customer_tokens as $customer_token ) {
+			if ( $customer_token['payment_source']->name() === 'paypal' ) {
+				$this->create_payment_token_paypal(
+					$user_id,
+					$customer_token['id'],
+					$customer_token['payment_source']->properties()->email_address ?? ''
+				);
+			}
+
+			if ( $customer_token['payment_source']->name() === 'card' ) {
+				/**
+				 * Suppress ArgumentTypeCoercion
+				 *
+				 * @psalm-suppress ArgumentTypeCoercion
+				 */
+				$this->create_payment_token_card(
+					$user_id,
+					(object) array(
+						'id'             => $customer_token['id'],
+						'payment_source' => (object) array(
+							$customer_token['payment_source']->name() => $customer_token['payment_source']->properties(),
+						),
+					)
+				);
+			}
+		}
 	}
 }

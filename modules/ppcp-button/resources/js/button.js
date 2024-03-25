@@ -241,7 +241,6 @@ document.addEventListener(
         if (!typeof (PayPalCommerceGateway)) {
             console.error('PayPal button could not be configured.');
             return;
-            return;
         }
 
         if (

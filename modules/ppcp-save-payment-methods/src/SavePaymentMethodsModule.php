@@ -19,9 +19,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -197,7 +197,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
 
-					$wc_payment_tokens = $c->get( 'save-payment-methods.wc-payment-tokens' );
+					$wc_payment_tokens = $c->get( 'vaulting.wc-payment-tokens' );
 					assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
 					if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {

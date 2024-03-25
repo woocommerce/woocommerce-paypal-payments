@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
+use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Subscription;
 use WC_Payment_Tokens;
+use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
@@ -25,8 +27,8 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -133,6 +135,20 @@ class RenewalHandler {
 	private $subscription_helper;
 
 	/**
+	 * Payment tokens endpoint
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
+	 * WooCommerce payments tokens factory.
+	 *
+	 * @var WooCommercePaymentTokens
+	 */
+	private $wc_payment_tokens;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface              $logger The logger.
@@ -147,6 +163,8 @@ class RenewalHandler {
 	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
+	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param WooCommercePaymentTokens     $wc_payment_tokens WooCommerce payments tokens factory.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -160,7 +178,9 @@ class RenewalHandler {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		FundingSourceRenderer $funding_source_renderer,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		PaymentTokensEndpoint $payment_tokens_endpoint,
+		WooCommercePaymentTokens $wc_payment_tokens
 	) {
 
 		$this->logger                           = $logger;
@@ -175,6 +195,8 @@ class RenewalHandler {
 		$this->funding_source_renderer          = $funding_source_renderer;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
 		$this->subscription_helper              = $subscription_helper;
+		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
+		$this->wc_payment_tokens                = $wc_payment_tokens;
 	}
 
 	/**
@@ -236,8 +258,26 @@ class RenewalHandler {
 		// Vault v3.
 		$payment_source = null;
 		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
+
+			if ( $customer_tokens && empty( $wc_tokens ) ) {
+				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, $user_id );
+			}
+
+			$customer_token_ids = array();
+			foreach ( $customer_tokens as $customer_token ) {
+				$customer_token_ids[] = $customer_token['id'];
+			}
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
 			foreach ( $wc_tokens as $token ) {
+				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
+					$token->delete();
+					continue;
+				}
+
 				$name       = 'paypal';
 				$properties = array(
 					'vault_id' => $token->get_token(),
@@ -270,7 +310,27 @@ class RenewalHandler {
 		}
 
 		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
+
+			if ( $customer_tokens && empty( $wc_tokens ) ) {
+				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, $user_id );
+			}
+
+			$customer_token_ids = array();
+			foreach ( $customer_tokens as $customer_token ) {
+				$customer_token_ids[] = $customer_token['id'];
+			}
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
+			foreach ( $wc_tokens as $token ) {
+				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
+					$token->delete();
+				}
+			}
+
+			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 			$last_token = end( $wc_tokens );
 			if ( $last_token ) {
 				$payment_source = $this->card_payment_source( $last_token->get_token(), $wc_order );
@@ -295,7 +355,7 @@ class RenewalHandler {
 			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
 				$card_payment_source = $order->payment_source();
 				if ( $card_payment_source ) {
-					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
 					$last_token  = end( $wc_tokens );
 					$expiry      = $card_payment_source->properties()->expiry ?? '';
 					$last_digits = $card_payment_source->properties()->last_digits ?? '';
