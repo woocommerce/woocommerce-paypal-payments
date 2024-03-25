@@ -1318,7 +1318,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				$disable_funding,
 				array_diff(
 					array_keys( $this->all_funding_sources ),
-					array( 'venmo', 'paylater' )
+					array( 'venmo', 'paylater', 'paypal' )
 				)
 			);
 		}
@@ -1338,6 +1338,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		} else {
 			$disable_funding[] = 'paylater';
 		}
+
+		// Make sure paypal is not sent in disable funding.
+		$disable_funding = array_filter(
+			$disable_funding,
+			function( $value ) {
+				return $value !== 'paypal';
+			}
+		);
 
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
