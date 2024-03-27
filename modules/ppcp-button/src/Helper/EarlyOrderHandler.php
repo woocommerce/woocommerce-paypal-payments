@@ -159,6 +159,15 @@ class EarlyOrderHandler {
 		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+
+		$payer = $order->payer();
+		if ( $payer && $wc_order instanceof \WC_Order ) {
+			$payer_email = $payer->email_address();
+			if ( $payer_email ) {
+				$wc_order->update_meta_data( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY, $payer_email );
+			}
+		}
+
 		$wc_order->save_meta_data();
 
 		/**

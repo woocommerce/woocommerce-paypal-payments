@@ -48,6 +48,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
 	const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
 	const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
+	const ORDER_PAYER_EMAIL_META_KEY    = '_ppcp_paypal_payer_email';
 	const FEES_META_KEY                 = '_ppcp_paypal_fees';
 	const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
 	const REFUNDS_META_KEY              = '_ppcp_refunds';

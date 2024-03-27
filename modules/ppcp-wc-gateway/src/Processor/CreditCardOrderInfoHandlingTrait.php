@@ -52,6 +52,7 @@ trait CreditCardOrderInfoHandlingTrait {
                                                                 <li>%1$s</li>
                                                                 <li>%2$s</li>
                                                                 <li>%3$s</li>
+                                                                <li>%4$s</li>
                                                             </ul>';
 			$three_d_response_order_note_result        = sprintf(
 				$three_d_response_order_note_result_format,
@@ -60,7 +61,9 @@ trait CreditCardOrderInfoHandlingTrait {
 				/* translators: %s is enrollment status */
 				sprintf( __( 'Enrollment Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->enrollment_status() ) ),
 				/* translators: %s is authentication status */
-				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) )
+				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) ),
+				/* translators: %s card last digits */
+				sprintf( __( 'Card Last Digits: %s', 'woocommerce-paypal-payments' ), esc_html( $payment_source->properties()->last_digits ?? '' ) )
 			);
 			$three_d_response_order_note = sprintf(
 				$three_d_response_order_note_format,
@@ -76,7 +79,7 @@ trait CreditCardOrderInfoHandlingTrait {
 			/**
 			 * Fired when the 3DS information is added to WC order.
 			 */
-			do_action( 'woocommerce_paypal_payments_thee_d_secure_added', $wc_order, $order );
+			do_action( 'woocommerce_paypal_payments_three_d_secure_added', $wc_order, $order );
 		}
 	}
 

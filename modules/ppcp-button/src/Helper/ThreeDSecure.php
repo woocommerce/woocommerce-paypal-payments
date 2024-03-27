@@ -57,21 +57,24 @@ class ThreeDSecure {
 	 *
 	 * @link https://developer.paypal.com/docs/business/checkout/add-capabilities/3d-secure/#authenticationresult
 	 *
-	 * @param Order $order The order for which the decission is needed.
+	 * @param Order $order The order for which the decision is needed.
 	 *
 	 * @return int
 	 */
 	public function proceed_with_order( Order $order ): int {
+
+		do_action( 'woocommerce_paypal_payments_three_d_secure_before_check', $order );
+
 		$payment_source = $order->payment_source();
 		if ( ! $payment_source ) {
-			return self::NO_DECISION;
+			return $this->return_decision( self::NO_DECISION, $order );
 		}
 
 		if ( ! ( $payment_source->properties()->brand ?? '' ) ) {
-			return self::NO_DECISION;
+			return $this->return_decision( self::NO_DECISION, $order );
 		}
 		if ( ! ( $payment_source->properties()->authentication_result ?? '' ) ) {
-			return self::NO_DECISION;
+			return $this->return_decision( self::NO_DECISION, $order );
 		}
 
 		$authentication_result = $payment_source->properties()->authentication_result ?? null;
@@ -81,18 +84,31 @@ class ThreeDSecure {
 			$this->logger->info( '3DS Authentication Result: ' . wc_print_r( $result->to_array(), true ) );
 
 			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
-				return self::PROCCEED;
+				return $this->return_decision( self::PROCCEED, $order );
 			}
 
 			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
-				return self::RETRY;
+				return $this->return_decision( self::RETRY, $order );
 			}
 			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_NO ) {
-				return $this->no_liability_shift( $result );
+				return $this->return_decision( $this->no_liability_shift( $result ), $order );
 			}
 		}
 
-		return self::NO_DECISION;
+		return $this->return_decision( self::NO_DECISION, $order );
+	}
+
+	/**
+	 * Processes and returns a ThreeD secure decision.
+	 *
+	 * @param int   $decision The ThreeD secure decision.
+	 * @param Order $order The PayPal Order object.
+	 * @return int
+	 */
+	public function return_decision( int $decision, Order $order ) {
+		$decision = apply_filters( 'woocommerce_paypal_payments_three_d_secure_decision', $decision, $order );
+		do_action( 'woocommerce_paypal_payments_three_d_secure_after_check', $order, $decision );
+		return $decision;
 	}
 
 	/**

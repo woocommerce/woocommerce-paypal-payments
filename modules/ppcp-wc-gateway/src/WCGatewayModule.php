@@ -448,6 +448,20 @@ class WCGatewayModule implements ModuleInterface {
 				delete_transient( 'ppcp_reference_transaction_enabled' );
 			}
 		);
+
+		add_action(
+			'woocommerce_admin_order_data_after_billing_address',
+			function ( \WC_Order $wc_order ) {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
+					return;
+				}
+
+				$email = $wc_order->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
+				if ( $email ) {
+					echo '<p><strong>' . esc_html__( 'PayPal buyer account', 'woocommerce-paypal-payments' ) . ':</strong><br>' . esc_attr( $email ) . '</p>';
+				}
+			}
+		);
 	}
 
 	/**

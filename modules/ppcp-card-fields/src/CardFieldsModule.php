@@ -115,17 +115,19 @@ class CardFieldsModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
+				$three_d_secure_contingency =
+					$settings->has( '3d_secure_contingency' )
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+						: '';
+
 				if (
-				$settings->has( '3d_secure_contingency' )
-				&& (
-					$settings->get( '3d_secure_contingency' ) === 'SCA_ALWAYS'
-					|| $settings->get( '3d_secure_contingency' ) === 'SCA_WHEN_REQUIRED'
-				)
+					$three_d_secure_contingency === 'SCA_ALWAYS'
+					|| $three_d_secure_contingency === 'SCA_WHEN_REQUIRED'
 				) {
 					$data['payment_source']['card'] = array(
 						'attributes' => array(
 							'verification' => array(
-								'method' => $settings->get( '3d_secure_contingency' ),
+								'method' => $three_d_secure_contingency,
 							),
 						),
 					);
