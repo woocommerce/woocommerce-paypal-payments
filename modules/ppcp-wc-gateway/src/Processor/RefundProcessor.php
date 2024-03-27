@@ -22,6 +22,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundCapture;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 
@@ -57,6 +59,13 @@ class RefundProcessor {
 	private $logger;
 
 	/**
+	 * The prefix.
+	 *
+	 * @var string
+	 */
+	private $prefix;
+
+	/**
 	 * The refund fees updater.
 	 *
 	 * @var RefundFeesUpdater
@@ -69,13 +78,21 @@ class RefundProcessor {
 	 * @param OrderEndpoint     $order_endpoint The order endpoint.
 	 * @param PaymentsEndpoint  $payments_endpoint The payments endpoint.
 	 * @param RefundFeesUpdater $refund_fees_updater The refund fees updater.
+	 * @param string            $prefix The prefix.
 	 * @param LoggerInterface   $logger The logger.
 	 */
-	public function __construct( OrderEndpoint $order_endpoint, PaymentsEndpoint $payments_endpoint, RefundFeesUpdater $refund_fees_updater, LoggerInterface $logger ) {
+	public function __construct(
+		OrderEndpoint $order_endpoint,
+		PaymentsEndpoint $payments_endpoint,
+		RefundFeesUpdater $refund_fees_updater,
+		string $prefix,
+		LoggerInterface $logger
+	) {
 
 		$this->order_endpoint      = $order_endpoint;
 		$this->payments_endpoint   = $payments_endpoint;
 		$this->refund_fees_updater = $refund_fees_updater;
+		$this->prefix              = $prefix;
 		$this->logger              = $logger;
 	}
 
@@ -92,6 +109,10 @@ class RefundProcessor {
 	 */
 	public function process( WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
 		try {
+			if ( ! in_array( $wc_order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
+				return true;
+			}
+
 			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 			if ( ! $order_id ) {
 				throw new RuntimeException( 'PayPal order ID not found in meta.' );
@@ -164,7 +185,7 @@ class RefundProcessor {
 		$capture = $captures[0];
 		$refund  = new RefundCapture(
 			$capture,
-			$capture->invoice_id(),
+			$capture->invoice_id() ?: $this->prefix . $wc_order->get_order_number(),
 			$reason,
 			new Amount(
 				new Money( $amount, $wc_order->get_currency() )

@@ -17,8 +17,8 @@ return array(
 		return array_merge(
 			$locations,
 			array(
-				'checkout-block-express' => _x( 'Block Express Checkout', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
-				'cart-block'             => _x( 'Block Cart', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
+				'checkout-block-express' => _x( 'Express Checkout', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
+				'cart-block'             => _x( 'Cart', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
 			)
 		);
 	},
@@ -45,7 +45,7 @@ return array(
 					'title'        => __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
 					'label'        => __(
-						'Require customers to confirm express payments from the Block Cart and Block Express Checkout on the checkout page.
+						'Require customers to confirm express payments from the Cart and Express Checkout on the checkout page.
 <p class="description">If this setting is not enabled, <a href="https://woocommerce.com/document/woocommerce-paypal-payments/#blocks-faq" target="_blank">payment confirmation on the checkout will be skipped</a>.
 Skipping the final confirmation on the checkout page may impact the buyer experience during the PayPal payment process.</p>',
 						'woocommerce-paypal-payments'

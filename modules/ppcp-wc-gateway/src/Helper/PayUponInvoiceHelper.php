@@ -98,7 +98,11 @@ class PayUponInvoiceHelper {
 		if ( $cart && ! is_checkout_pay_page() ) {
 			$items = $cart->get_cart_contents();
 			foreach ( $items as $item ) {
-				$product = wc_get_product( $item['product_id'] );
+				$product_id = $item['product_id'];
+				if ( isset( $item['variation_id'] ) && $item['variation_id'] ) {
+					$product_id = $item['variation_id'];
+				}
+				$product = wc_get_product( $product_id );
 				if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
 					return false;
 				}

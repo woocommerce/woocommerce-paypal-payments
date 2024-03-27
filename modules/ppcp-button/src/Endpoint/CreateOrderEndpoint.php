@@ -294,7 +294,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			if ( $this->early_validation_enabled
 				&& $this->form
 				&& 'checkout' === $data['context']
-				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID ), true )
+				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID ), true )
 			) {
 				$this->validate_form( $this->form );
 			}
@@ -422,6 +422,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @throws RuntimeException If create order request fails.
 	 * @throws PayPalApiException If create order request fails.
+	 *
 	 * phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 	 */
 	private function create_paypal_order( \WC_Order $wc_order = null, string $payment_method = '', array $data = array() ): Order {

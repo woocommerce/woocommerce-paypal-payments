@@ -36,7 +36,11 @@ trait FreeTrialHandlerTrait {
 
 		foreach ( $cart->get_cart() as $item ) {
 			$product = $item['data'] ?? null;
-			if ( $product && WC_Subscriptions_Product::is_subscription( $product ) ) {
+			if (
+				$product
+				&& WC_Subscriptions_Product::is_subscription( $product )
+				&& ! $product->get_meta( 'ppcp_subscription_plan' )
+			) {
 				return true;
 			}
 		}

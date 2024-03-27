@@ -41,7 +41,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * The smart button script loading handler.
 	 *
-	 * @var SmartButtonInterface
+	 * @var SmartButtonInterface|callable
 	 */
 	private $smart_button;
 
@@ -125,25 +125,25 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * Assets constructor.
 	 *
-	 * @param string               $module_url The url of this module.
-	 * @param string               $version    The assets version.
-	 * @param SmartButtonInterface $smart_button The smart button script loading handler.
-	 * @param Settings             $plugin_settings The settings.
-	 * @param SettingsStatus       $settings_status The Settings status helper.
-	 * @param PayPalGateway        $gateway The WC gateway.
-	 * @param bool                 $final_review_enabled Whether the final review is enabled.
-	 * @param CancelView           $cancellation_view The cancellation view.
-	 * @param SessionHandler       $session_handler The Session handler.
-	 * @param bool                 $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
-	 * @param bool                 $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
-	 * @param string               $place_order_button_text The text for the standard "Place order" button.
-	 * @param string               $place_order_button_description The text for additional "Place order" description.
-	 * @param array                $all_funding_sources All existing funding sources for PayPal buttons.
+	 * @param string                        $module_url The url of this module.
+	 * @param string                        $version    The assets version.
+	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
+	 * @param Settings                      $plugin_settings The settings.
+	 * @param SettingsStatus                $settings_status The Settings status helper.
+	 * @param PayPalGateway                 $gateway The WC gateway.
+	 * @param bool                          $final_review_enabled Whether the final review is enabled.
+	 * @param CancelView                    $cancellation_view The cancellation view.
+	 * @param SessionHandler                $session_handler The Session handler.
+	 * @param bool                          $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
+	 * @param bool                          $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
+	 * @param string                        $place_order_button_text The text for the standard "Place order" button.
+	 * @param string                        $place_order_button_description The text for additional "Place order" description.
+	 * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
-		SmartButtonInterface $smart_button,
+		$smart_button,
 		Settings $plugin_settings,
 		SettingsStatus $settings_status,
 		PayPalGateway $gateway,
@@ -209,7 +209,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_data() {
-		$script_data = $this->smart_button->script_data();
+		$script_data = $this->smart_button()->script_data();
 
 		if ( isset( $script_data['continuation'] ) ) {
 			$url = add_query_arg( array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ), wc_get_checkout_url() );
@@ -224,19 +224,22 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			}
 		}
 
-		$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
-		$funding_sources          = array_values(
-			array_diff(
-				array_keys( $this->all_funding_sources ),
-				$disabled_funding_sources
-			)
-		);
+		$funding_sources = array();
+		if ( ! $this->is_editing() ) {
+			$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
+			$funding_sources          = array_values(
+				array_diff(
+					array_keys( $this->all_funding_sources ),
+					$disabled_funding_sources
+				)
+			);
+		}
 
 		return array(
 			'id'                          => $this->gateway->id,
 			'title'                       => $this->gateway->title,
 			'description'                 => $this->gateway->description,
-			'enabled'                     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
+			'enabled'                     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'checkout' ),
 			'fundingSource'               => $this->session_handler->funding_source(),
 			'finalReviewEnabled'          => $this->final_review_enabled,
 			'addPlaceOrderMethod'         => $this->add_place_order_method,
@@ -252,5 +255,33 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			),
 			'scriptData'                  => $script_data,
 		);
+	}
+
+	/**
+	 * Checks if it is the block editing mode.
+	 */
+	private function is_editing(): bool {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return false;
+		}
+		$screen = get_current_screen();
+		return $screen && $screen->is_block_editor();
+	}
+
+	/**
+	 * The smart button.
+	 *
+	 * @return SmartButtonInterface
+	 */
+	private function smart_button(): SmartButtonInterface {
+		if ( $this->smart_button instanceof SmartButtonInterface ) {
+			return $this->smart_button;
+		}
+
+		if ( is_callable( $this->smart_button ) ) {
+			$this->smart_button = ( $this->smart_button )();
+		}
+
+		return $this->smart_button;
 	}
 }

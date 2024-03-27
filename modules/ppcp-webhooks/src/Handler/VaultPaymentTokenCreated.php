@@ -115,6 +115,11 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$resource_version = $request['resource_version'] ?? '';
+		if ( $resource_version && $resource_version !== '2.0' ) {
+			return $this->success_response();
+		}
+
 		$customer_id = null !== $request['resource'] && isset( $request['resource']['customer_id'] )
 			? $request['resource']['customer_id']
 			: '';

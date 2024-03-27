@@ -63,7 +63,7 @@ export const paypalAddressToWc = (address) => {
  * @returns {Object}
  */
 export const paypalShippingToWc = (shipping) => {
-    const [firstName, lastName] = splitFullName(shipping.name.full_name);
+    const [firstName, lastName] = (shipping.name ? splitFullName(shipping.name.full_name) : ['','']);
     return {
         ...paypalAddressToWc(shipping.address),
         first_name: firstName,
@@ -84,6 +84,22 @@ export const paypalPayerToWc = (payer) => {
         first_name: firstName,
         last_name: lastName,
         email: payer.email_address,
+    }
+}
+
+/**
+ * @param {Object} subscriber
+ * @returns {Object}
+ */
+export const paypalSubscriberToWc = (subscriber) => {
+    const firstName = subscriber?.name?.given_name ?? '';
+    const lastName = subscriber?.name?.surname ?? '';
+    const address = subscriber.address ? paypalAddressToWc(subscriber.shipping_address.address) : {};
+    return {
+        ...address,
+        first_name: firstName,
+        last_name: lastName,
+        email: subscriber.email_address,
     }
 }
 
@@ -127,6 +143,17 @@ export const paypalOrderToWcAddresses = (order) => {
         }
     }
 
+    return {billingAddress, shippingAddress};
+}
+
+/**
+ *
+ * @param subscription
+ * @returns {{shippingAddress: Object, billingAddress: Object}}
+ */
+export const paypalSubscriptionToWcAddresses = (subscription) => {
+    const shippingAddress = paypalSubscriberToWc(subscription.subscriber);
+    let billingAddress = shippingAddress;
     return {billingAddress, shippingAddress};
 }
 

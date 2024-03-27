@@ -71,7 +71,7 @@ return array(
 		// Connection tab fields.
 		$fields = $insert_after(
 			$fields,
-			'ppcp_dcc_status',
+			'ppcp_reference_transactions_status',
 			array(
 				'applepay_status' => array(
 					'title'        => __( 'Apple Pay Payments', 'woocommerce-paypal-payments' ),

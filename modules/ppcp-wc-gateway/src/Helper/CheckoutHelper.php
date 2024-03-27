@@ -91,22 +91,12 @@ class CheckoutHelper {
 	/**
 	 * Ensures product is neither downloadable nor virtual.
 	 *
-	 * @param WC_Product $product WC product.
+	 * @param WC_Product $product WC product (can be a variation).
 	 * @return bool
 	 */
-	public function is_physical_product( WC_Product $product ):bool {
+	public function is_physical_product( WC_Product $product ): bool {
 		if ( $product->is_downloadable() || $product->is_virtual() ) {
 			return false;
-		}
-
-		if ( is_a( $product, WC_Product_Variable::class ) ) {
-			foreach ( $product->get_available_variations( 'object' ) as $variation ) {
-				if ( is_a( $variation, WC_Product_Variation::class ) ) {
-					if ( true === $variation->is_downloadable() || true === $variation->is_virtual() ) {
-						return false;
-					}
-				}
-			}
 		}
 
 		return true;

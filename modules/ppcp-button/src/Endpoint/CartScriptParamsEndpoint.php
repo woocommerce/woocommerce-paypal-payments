@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 
 /**
  * Class CartScriptParamsEndpoint.
@@ -25,7 +26,7 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 	/**
 	 * The SmartButton.
 	 *
-	 * @var SmartButton
+	 * @var SmartButtonInterface
 	 */
 	private $smart_button;
 
@@ -39,11 +40,11 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 	/**
 	 * CartScriptParamsEndpoint constructor.
 	 *
-	 * @param SmartButton     $smart_button he SmartButton.
-	 * @param LoggerInterface $logger The logger.
+	 * @param SmartButtonInterface $smart_button he SmartButton.
+	 * @param LoggerInterface      $logger The logger.
 	 */
 	public function __construct(
-		SmartButton $smart_button,
+		SmartButtonInterface $smart_button,
 		LoggerInterface $logger
 	) {
 		$this->smart_button = $smart_button;
@@ -66,6 +67,11 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
+			if ( ! $this->smart_button instanceof SmartButton ) {
+				wp_send_json_error();
+				return false;
+			}
+
 			if ( is_callable( 'wc_maybe_define_constant' ) ) {
 				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
 			}
@@ -73,6 +79,10 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 			$include_shipping = (bool) wc_clean( wp_unslash( $_GET['shipping'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 			$script_data = $this->smart_button->script_data();
+			if ( ! $script_data ) {
+				wp_send_json_error();
+				return false;
+			}
 
 			$total = (float) WC()->cart->get_total( 'numeric' );
 
