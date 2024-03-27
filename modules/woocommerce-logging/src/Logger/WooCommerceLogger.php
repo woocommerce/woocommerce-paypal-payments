@@ -55,7 +55,7 @@ class WooCommerceLogger implements LoggerInterface {
 	 * @param string $message The message.
 	 * @param array  $context The context.
 	 */
-	public function log( $level, $message, array $context = array() ) {
+	public function log( $level, $message, array $context = array() ): void {
 		if ( ! isset( $context['source'] ) ) {
 			$context['source'] = $this->source;
 		}
