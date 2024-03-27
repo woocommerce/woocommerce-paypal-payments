@@ -2,17 +2,14 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, Spinner } from '@wordpress/components';
+import { PayPalScriptProvider, PayPalMessages } from "@paypal/react-paypal-js";
 import { useScriptParams } from "./hooks/script-params";
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
-import PayPalMessages from "./components/PayPalMessages";
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
     const { layout, logo, position, color, size, flexColor, flexRatio, placement, id } = attributes;
     const isFlex = layout === 'flex';
 
-    const [paypalScriptState, setPaypalScriptState] = useState(null);
-
-    const [rendered, setRendered] = useState(false);
+    const [loaded, setLoaded] = useState(false);
 
     let amount = undefined;
     const postContent = String(wp.data.select('core/editor')?.getEditedPostContent());
@@ -39,8 +36,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         classes = ['ppcp-paylater-block-preview', 'ppcp-paylater-unavailable', 'block-editor-warning'];
     }
     const props = useBlockProps({className: classes});
-
-    const loadingElement = <div {...props}><Spinner/></div>;
 
     useEffect(() => {
         if (!id) {
@@ -90,34 +85,25 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         </div>
     }
 
-    let scriptParams = useScriptParams(PcpPayLaterBlock.ajax.cart_script_params);
+    const scriptParams = useScriptParams(PcpPayLaterBlock.ajax.cart_script_params);
     if (scriptParams === null) {
-        return loadingElement;
+        return (<div {...props}><Spinner/></div>)
     }
-    if (scriptParams === false) {
-        scriptParams = {
-            url_params: {
-                clientId: 'test',
-            }
+
+    const urlParams = scriptParams === false ? {
+        clientId: 'test',
+        components: 'messages',
+    } : {
+        ...scriptParams.url_params,
+        ...{
+            components: 'messages',
         }
     }
-    scriptParams.url_params.components = 'messages,buttons,funding-eligibility';
 
-    if (!paypalScriptState) {
-        loadPaypalScript(scriptParams, () => {
-            setPaypalScriptState('loaded')
-        }, () => {
-            setPaypalScriptState('failed')
-        });
-    }
-    if (paypalScriptState !== 'loaded') {
-        return loadingElement;
-    }
-
-	return (
-		<>
-			<InspectorControls>
-				<PanelBody title={ __( 'Settings', 'woocommerce-paypal-payments' ) }>
+    return (
+        <>
+            <InspectorControls>
+                <PanelBody title={ __( 'Settings', 'woocommerce-paypal-payments' ) }>
                     <SelectControl
                         label={ __( 'Layout', 'woocommerce-paypal-payments' ) }
                         options={ [
@@ -204,20 +190,25 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                         value={ placement }
                         onChange={ ( value ) => setAttributes( { placement: value } ) }
                     />
-				</PanelBody>
-			</InspectorControls>
+                </PanelBody>
+            </InspectorControls>
             <div {...props}>
                 <div className={'ppcp-overlay-child'}>
-                    <PayPalMessages
-                        style={previewStyle}
-                        amount={amount}
-                        onRender={() => setRendered(true)}
-                    />
+                    <PayPalScriptProvider
+                        options={urlParams}
+                    >
+                        <PayPalMessages
+                            style={previewStyle}
+                            forceReRender={[previewStyle]}
+                            onRender={() => setLoaded(true)}
+                            amount={amount}
+                        />
+                    </PayPalScriptProvider>
                 </div>
                 <div className={'ppcp-overlay-child ppcp-unclicable-overlay'}> {/* make the message not clickable */}
-                    {!rendered && (<Spinner/>)}
+                    {!loaded && (<Spinner/>)}
                 </div>
             </div>
-		</>
-	);
+        </>
+    );
 }

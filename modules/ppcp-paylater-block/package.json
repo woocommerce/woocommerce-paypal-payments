@@ -10,6 +10,7 @@
         "Edge >= 14"
     ],
     "dependencies": {
+        "@paypal/react-paypal-js": "^8.2.0",
         "core-js": "^3.25.0"
     },
     "devDependencies": {

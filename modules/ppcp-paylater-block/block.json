@@ -26,6 +26,10 @@
             "type": "string",
             "default": "black"
         },
+        "size": {
+            "type": "string",
+            "default": "14"
+        },
         "flexColor": {
             "type": "string",
             "default": "white"
