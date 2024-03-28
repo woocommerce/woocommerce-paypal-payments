@@ -92,6 +92,8 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$customer = Mockery::mock(WC_Customer::class);
 
 		$payer = Mockery::mock(Payer::class);
+		$payer->shouldReceive('email_address');
+
 		$this->payerFactory->shouldReceive('from_wc_order')
 			->andReturn($payer);
 		$this->shippingPreferenceFactory->shouldReceive('from_state')
@@ -100,6 +102,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$order = Mockery::mock(Order::class);
 		$order->shouldReceive('id')->andReturn('1');
 		$order->shouldReceive('intent')->andReturn('CAPTURE');
+		$order->shouldReceive('payer')->andReturn($payer);
 
 		$paymentSource = Mockery::mock(PaymentSource::class);
 		$paymentSource->shouldReceive('name')->andReturn('card');

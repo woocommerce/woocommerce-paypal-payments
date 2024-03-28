@@ -89,6 +89,7 @@ private $testee;
 		$order->shouldReceive('id')->andReturn('1');
 		$order->shouldReceive('intent');
 		$order->shouldReceive('payment_source');
+		$order->shouldReceive('payer');
 
 		$this->orderEndpoint
 			->shouldReceive('create')
