@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-
-return static function (): ModuleInterface {
+return static function (): ButtonModule {
 	return new ButtonModule();
 };

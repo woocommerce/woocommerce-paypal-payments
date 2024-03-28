@@ -12,31 +12,37 @@ namespace WooCommerce\PayPalCommerce\Uninstall;
 use Exception;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Uninstall\Assets\ClearDatabaseAssets;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class UninstallModule
  */
-class UninstallModule implements ModuleInterface {
+class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $container ): bool {
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		if ( Settings::CONNECTION_TAB_ID === $page_id ) {
 			$this->registerClearDatabaseAssets( $container->get( 'uninstall.clear-db-assets' ) );
@@ -50,6 +56,8 @@ class UninstallModule implements ModuleInterface {
 		$action_names           = $container->get( 'uninstall.ppcp-all-action-names' );
 
 		$this->handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names, $action_names );
+
+		return true;
 	}
 
 	/**

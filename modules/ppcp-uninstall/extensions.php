@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'wcgateway.settings.fields' => static function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => static function ( array $fields, ContainerInterface $container ): array {
 		$uninstall_fields = array(
 			'uninstall_heading'               => array(
 				'heading'      => __( 'Uninstall/Clear Database', 'woocommerce-paypal-payments' ),

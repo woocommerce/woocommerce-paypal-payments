@@ -10,9 +10,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
@@ -22,8 +23,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 /**
  * Class OrderTrackingModule
  */
-class OrderTrackingModule implements ModuleInterface {
-
+class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 	use TrackingAvailabilityTrait;
 
 	public const PPCP_TRACKING_INFO_META_NAME = '_ppcp_paypal_tracking_info_meta_name';
@@ -31,11 +32,15 @@ class OrderTrackingModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -44,7 +49,7 @@ class OrderTrackingModule implements ModuleInterface {
 	 * @param ContainerInterface $c A services container instance.
 	 * @throws NotFoundException
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function run( ContainerInterface $c ): bool {
 		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
 		assert( $endpoint instanceof OrderTrackingEndpoint );
 
@@ -109,5 +114,7 @@ class OrderTrackingModule implements ModuleInterface {
 			10,
 			2
 		);
+
+		return true;
 	}
 }

@@ -5,13 +5,8 @@
  * @package WooCommerce\PayPalCommerce
  */
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CachingContainer;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CompositeCachingServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CompositeContainer;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\DelegatingContainer;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ProxyContainer;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties\PluginProperties;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return function (
@@ -34,38 +29,15 @@ return function (
 	 */
 	$modules = apply_filters( 'woocommerce_paypal_payments_modules', $modules );
 
-	$providers = array_map(
-		function ( ModuleInterface $module ): ServiceProviderInterface {
-			return $module->setup();
-		},
-		$modules
-	);
-
-	$provider        = new CompositeCachingServiceProvider( $providers );
-	$proxy_container = new ProxyContainer();
-	// TODO: caching does not work currently,
-	// may want to consider fixing it later (pass proxy as parent to DelegatingContainer)
-	// for now not fixed since we were using this behavior for long time and fixing it now may break things.
-	$container = new DelegatingContainer( $provider );
-	/**
-	 * Skip iterable vs array check.
-	 *
-	 * @psalm-suppress PossiblyInvalidArgument
-	 */
-	$app_container = new CachingContainer(
-		new CompositeContainer(
-			array_merge(
-				$additional_containers,
-				array( $container )
-			)
-		)
-	);
-	$proxy_container->setInnerContainer( $app_container );
+	// Initialize plugin.
+	$properties = PluginProperties::new( __FILE__ );
+	$bootstrap  = Package::new( $properties );
 
 	foreach ( $modules as $module ) {
-		/* @var $module ModuleInterface module */
-		$module->run( $app_container );
+		$bootstrap->addModule( $module );
 	}
 
-	return $app_container;
+	$bootstrap->boot();
+
+	return $bootstrap->container();
 };

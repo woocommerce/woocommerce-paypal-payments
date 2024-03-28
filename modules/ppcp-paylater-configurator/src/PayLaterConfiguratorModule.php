@@ -12,16 +12,19 @@ namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayLaterConfiguratorModule
  */
-class PayLaterConfiguratorModule implements ModuleInterface {
+class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+
 	/**
 	 * Returns whether the module should be loaded.
 	 */
@@ -36,17 +39,21 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 		$messages_apply = $c->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
@@ -56,7 +63,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
 
 		if ( $vault_enabled || ! $messages_apply->for_country() ) {
-			return;
+			return true;
 		}
 
 		add_action(
@@ -71,7 +78,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 		$current_page_id = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
 
 		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
-			return;
+			return true;
 		}
 
 		add_action(
@@ -123,6 +130,8 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 				);
 			}
 		);
+
+		return true;
 	}
 
 	/**
