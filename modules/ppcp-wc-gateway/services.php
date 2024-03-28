@@ -965,7 +965,8 @@ return array(
 			'sofort'     => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'      => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'trustly'    => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'paylater'   => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'paylater'   => _x( 'PayPal Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'paypal'     => _x( 'PayPal', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
 
@@ -988,6 +989,7 @@ return array(
 			array_flip(
 				array(
 					'paylater',
+					'paypal',
 				)
 			)
 		);

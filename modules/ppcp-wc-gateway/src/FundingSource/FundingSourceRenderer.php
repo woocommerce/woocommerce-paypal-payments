@@ -34,7 +34,7 @@ class FundingSourceRenderer {
 	 *
 	 * @var string[]
 	 */
-	protected $own_funding_sources = array( 'venmo', 'paylater' );
+	protected $own_funding_sources = array( 'venmo', 'paylater', 'paypal' );
 
 	/**
 	 * FundingSourceRenderer constructor.
