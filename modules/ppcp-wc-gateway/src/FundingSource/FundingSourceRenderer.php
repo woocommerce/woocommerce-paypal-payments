@@ -63,7 +63,7 @@ class FundingSourceRenderer {
 				return $this->funding_sources[ $id ];
 			}
 			return sprintf(
-				/* translators: %s - Sofort, BLIK, iDeal, Mercado Pago, etc. */
+				/* translators: %s - BLIK, iDeal, Mercado Pago, etc. */
 				__( '%s (via PayPal)', 'woocommerce-paypal-payments' ),
 				$this->funding_sources[ $id ]
 			);
@@ -84,7 +84,7 @@ class FundingSourceRenderer {
 
 		if ( array_key_exists( $id, $this->funding_sources ) ) {
 			return sprintf(
-				/* translators: %s - Sofort, BLIK, iDeal, Mercado Pago, etc. */
+				/* translators: %s - BLIK, iDeal, Mercado Pago, etc. */
 				__( 'Pay via %s.', 'woocommerce-paypal-payments' ),
 				$this->funding_sources[ $id ]
 			);

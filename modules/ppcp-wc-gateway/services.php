@@ -962,7 +962,6 @@ return array(
 			'ideal'      => _x( 'iDEAL', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'mybank'     => _x( 'MyBank', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'p24'        => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'sofort'     => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'      => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'trustly'    => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'paylater'   => _x( 'PayPal Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
