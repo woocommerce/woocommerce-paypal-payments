@@ -56,6 +56,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
 
 	/**
+	 * List of payment sources wich we are expected to store the payer email in the WC Order metadata.
+	 */
+	const PAYMENT_SOURCES_WITH_PAYER_EMAIL = array( 'paypal', 'paylater', 'venmo' );
+
+	/**
 	 * The Settings Renderer.
 	 *
 	 * @var SettingsRenderer

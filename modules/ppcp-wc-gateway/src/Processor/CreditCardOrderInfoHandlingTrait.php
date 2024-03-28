@@ -52,7 +52,6 @@ trait CreditCardOrderInfoHandlingTrait {
                                                                 <li>%1$s</li>
                                                                 <li>%2$s</li>
                                                                 <li>%3$s</li>
-                                                                <li>%4$s</li>
                                                             </ul>';
 			$three_d_response_order_note_result        = sprintf(
 				$three_d_response_order_note_result_format,
@@ -61,9 +60,7 @@ trait CreditCardOrderInfoHandlingTrait {
 				/* translators: %s is enrollment status */
 				sprintf( __( 'Enrollment Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->enrollment_status() ) ),
 				/* translators: %s is authentication status */
-				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) ),
-				/* translators: %s card last digits */
-				sprintf( __( 'Card Last Digits: %s', 'woocommerce-paypal-payments' ), esc_html( $payment_source->properties()->last_digits ?? '' ) )
+				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) )
 			);
 			$three_d_response_order_note = sprintf(
 				$three_d_response_order_note_format,
@@ -99,8 +96,9 @@ trait CreditCardOrderInfoHandlingTrait {
 			return;
 		}
 
-		$fraud_responses = $fraud->to_array();
-		$card_brand      = $payment_source->properties()->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
+		$fraud_responses  = $fraud->to_array();
+		$card_brand       = $payment_source->properties()->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
+		$card_last_digits = $payment_source->properties()->last_digits ?? __( 'N/A', 'woocommerce-paypal-payments' );
 
 		$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
 		/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
@@ -112,6 +110,7 @@ trait CreditCardOrderInfoHandlingTrait {
                                                                     <li>%3$s</li>
                                                                 </ul>
                                                                 <li>%4$s</li>
+                                                                <li>%5$s</li>
                                                             </ul>';
 		$avs_response_order_note_result        = sprintf(
 			$avs_response_order_note_result_format,
@@ -122,7 +121,9 @@ trait CreditCardOrderInfoHandlingTrait {
 			/* translators: %s is fraud AVS postal match */
 			sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) ),
 			/* translators: %s is card brand */
-			sprintf( __( 'Card Brand: %s', 'woocommerce-paypal-payments' ), esc_html( $card_brand ) )
+			sprintf( __( 'Card Brand: %s', 'woocommerce-paypal-payments' ), esc_html( $card_brand ) ),
+			/* translators: %s card last digits */
+			sprintf( __( 'Card Last Digits: %s', 'woocommerce-paypal-payments' ), esc_html( $card_last_digits ) )
 		);
 		$avs_response_order_note = sprintf(
 			$avs_response_order_note_format,

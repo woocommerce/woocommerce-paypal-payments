@@ -458,7 +458,7 @@ class WCGatewayModule implements ModuleInterface {
 
 				$email = $wc_order->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
 				if ( $email ) {
-					echo '<p><strong>' . esc_html__( 'PayPal buyer account', 'woocommerce-paypal-payments' ) . ':</strong><br>' . esc_attr( $email ) . '</p>';
+					echo '<p><strong>' . esc_html__( 'PayPal email address', 'woocommerce-paypal-payments' ) . ':</strong><br>' . esc_attr( $email ) . '</p>';
 				}
 			}
 		);

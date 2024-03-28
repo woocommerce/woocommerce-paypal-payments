@@ -46,7 +46,11 @@ trait OrderMetaTrait {
 		}
 
 		$payer = $order->payer();
-		if ( $payer ) {
+		if (
+			$payer
+			&& $payment_source
+			&& in_array( $payment_source, PayPalGateway::PAYMENT_SOURCES_WITH_PAYER_EMAIL, true )
+		) {
 			$payer_email = $payer->email_address();
 			if ( $payer_email ) {
 				$wc_order->update_meta_data( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY, $payer_email );
