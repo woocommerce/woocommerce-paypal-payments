@@ -90,13 +90,12 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         return (<div {...props}><Spinner/></div>)
     }
 
-    const urlParams = scriptParams === false ? {
+    const urlParams = {
         clientId: 'test',
-        components: 'messages',
-    } : {
         ...scriptParams.url_params,
         ...{
             components: 'messages',
+            dataNamespace: 'ppcp-block-editor-paylater-message',
         }
     }
 
