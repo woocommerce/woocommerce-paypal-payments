@@ -449,17 +449,38 @@ class WCGatewayModule implements ModuleInterface {
 			}
 		);
 
-		add_action(
-			'woocommerce_admin_order_data_after_billing_address',
-			function ( \WC_Order $wc_order ) {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
-					return;
+		/**
+		 * Param types removed to avoid third-party issues.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_admin_billing_fields',
+			function ( $fields ) {
+				global $theorder;
+
+				if ( ! is_array( $fields ) ) {
+					return $fields;
 				}
 
-				$email = $wc_order->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
-				if ( $email ) {
-					echo '<p><strong>' . esc_html__( 'PayPal email address', 'woocommerce-paypal-payments' ) . ':</strong><br>' . esc_attr( $email ) . '</p>';
+				if ( ! $theorder instanceof WC_Order ) {
+					return $fields;
 				}
+
+				$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
+
+				if ( ! $email ) {
+					return $fields;
+				}
+
+				$fields['paypal_email'] = array(
+					'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
+					'value'             => $email,
+					'wrapper_class'     => 'form-field-wide',
+					'custom_attributes' => array( 'disabled' => 'disabled' ),
+				);
+
+				return $fields;
 			}
 		);
 	}
