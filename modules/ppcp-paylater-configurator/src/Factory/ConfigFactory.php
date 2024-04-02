@@ -27,7 +27,7 @@ class ConfigFactory {
 			'product'          => $this->for_location( $settings, 'product' ),
 			'shop'             => $this->for_location( $settings, 'shop' ),
 			'home'             => $this->for_location( $settings, 'home' ),
-			'custom_placement' => $this->for_location( $settings, 'woocommerceBlock' ),
+			'custom_placement' => array( $this->for_location( $settings, 'woocommerceBlock' ) ),
 		);
 	}
 
@@ -91,7 +91,7 @@ class ConfigFactory {
 	 */
 	private function for_woocommerce_block( array $selected_locations ): array {
 		return array(
-			'status'            => in_array( 'woocommerceBlock', $selected_locations, true ) ? 'enabled' : 'disabled',
+			'status'            => in_array( 'custom_placement', $selected_locations, true ) ? 'enabled' : 'disabled',
 			'message_reference' => 'woocommerceBlock',
 		);
 	}
