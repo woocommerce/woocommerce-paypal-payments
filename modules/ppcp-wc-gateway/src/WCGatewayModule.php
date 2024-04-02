@@ -473,6 +473,14 @@ class WCGatewayModule implements ModuleInterface {
 					return $fields;
 				}
 
+				// Is payment source is paypal exclude all non paypal funding sources.
+				$payment_source           = $theorder->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ?: '';
+				$is_paypal_funding_source = ( strpos( $theorder->get_payment_method_title(), '(via PayPal)' ) === false );
+
+				if ( $payment_source === 'paypal' && ! $is_paypal_funding_source ) {
+					return $fields;
+				}
+
 				$fields['paypal_email'] = array(
 					'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
 					'value'             => $email,
