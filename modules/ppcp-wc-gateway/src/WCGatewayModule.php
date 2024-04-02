@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GenericButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -501,6 +502,44 @@ class WCGatewayModule implements ModuleInterface {
 				if ( $paypal_gateway_enabled && $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
+
+
+				// TODO: testing
+				$methods[] = new GenericButtonGateway(
+					'ppcp-venmo-button-gateway',
+					$container->get( 'wcgateway.settings.render' ),
+					$container->get( 'wcgateway.order-processor' ),
+					$container->get( 'wcgateway.settings' ),
+					$container->get( 'session.handler' ),
+					$container->get( 'wcgateway.processor.refunds' ),
+					$container->get( 'onboarding.state' ),
+					$container->get( 'wcgateway.transaction-url-provider' ),
+					$container->get( 'wc-subscriptions.helper' ),
+					$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
+					$container->get( 'onboarding.environment' ),
+					$container->get( 'vaulting.repository.payment-token' ),
+					$container->get( 'woocommerce.logger.woocommerce' ),
+					$container->get( 'api.factory.paypal-checkout-url' ),
+					$container->get( 'wcgateway.place-order-button-text' )
+				);
+
+				$methods[] = new GenericButtonGateway(
+					'ppcp-sofort-button-gateway',
+					$container->get( 'wcgateway.settings.render' ),
+					$container->get( 'wcgateway.order-processor' ),
+					$container->get( 'wcgateway.settings' ),
+					$container->get( 'session.handler' ),
+					$container->get( 'wcgateway.processor.refunds' ),
+					$container->get( 'onboarding.state' ),
+					$container->get( 'wcgateway.transaction-url-provider' ),
+					$container->get( 'wc-subscriptions.helper' ),
+					$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
+					$container->get( 'onboarding.environment' ),
+					$container->get( 'vaulting.repository.payment-token' ),
+					$container->get( 'woocommerce.logger.woocommerce' ),
+					$container->get( 'api.factory.paypal-checkout-url' ),
+					$container->get( 'wcgateway.place-order-button-text' )
+				);
 
 				$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
 				assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
