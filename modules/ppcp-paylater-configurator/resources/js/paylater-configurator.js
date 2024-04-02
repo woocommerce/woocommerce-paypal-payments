@@ -33,14 +33,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
         }
     });
 
-
     merchantConfigurators.Messaging({
         config: PcpPayLaterConfigurator.config,
         merchantClientId: PcpPayLaterConfigurator.merchantClientId,
         partnerClientId: PcpPayLaterConfigurator.partnerClientId,
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
-        placements: ['cart', 'checkout', 'product', 'shop', 'home', 'woocommerceBlock'],
+        placements: ['cart', 'checkout', 'product', 'shop', 'home', 'custom_placement'],
         styleOverrides: {
             button: publishButtonClassName,
             header: PcpPayLaterConfigurator.headerClassName,
