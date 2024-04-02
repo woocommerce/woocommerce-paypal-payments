@@ -420,6 +420,10 @@ class SmartButton implements SmartButtonInterface {
 					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
 				case 'cart':
 					return $this->messages_renderer_hook( $location, $this->proceed_to_checkout_button_renderer_hook(), 19 );
+				case 'checkout-block':
+					return $this->messages_renderer_hook( $location, 'ppcp-paylater-message-block', 10 );
+				case 'cart-block':
+					return $this->messages_renderer_hook( $location, 'ppcp-paylater-message-block', 10 );
 				case 'pay-now':
 					return $this->messages_renderer_hook( $location, $default_pay_order_hook, 10 );
 				case 'product':
@@ -577,10 +581,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
-		if ( in_array( $this->context(), array( 'checkout-block', 'cart-block' ), true ) ) {
-			return false;
-		}
-
 		return $this->should_load_buttons() || $this->should_load_messages() || $this->can_render_dcc();
 	}
 
@@ -632,7 +632,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 
 		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' ) && PayLaterBlockModule::is_block_enabled( $this->settings_status );
-
 		switch ( $location ) {
 			case 'checkout':
 			case 'cart':
@@ -644,8 +643,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'block-editor':
 				return true;
 			case 'checkout-block':
+				return $has_paylater_block;
 			case 'cart-block':
-				return $has_paylater_block || $this->is_block_editor();
+				return $has_paylater_block;
 			default:
 				return $has_paylater_block;
 		}
@@ -1856,8 +1856,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = array() ): bool {
-		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
-			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
+		return true;
 	}
 
 	/**

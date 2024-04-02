@@ -18,7 +18,9 @@ const blockId = 'woocommerce-paypal-payments/paylater-messages';
 registerBlockType( blockId, {
     icon: paypalIcon,
     edit: Edit,
-    save,
+    save() {
+        return null;
+    },
 } );
 
 document.addEventListener( 'DOMContentLoaded', () => {

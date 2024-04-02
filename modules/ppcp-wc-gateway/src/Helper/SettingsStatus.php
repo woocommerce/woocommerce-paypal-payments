@@ -36,7 +36,7 @@ class SettingsStatus {
 	 * Checks whether Pay Later messaging is enabled.
 	 */
 	public function is_pay_later_messaging_enabled(): bool {
-		return $this->settings->has( 'pay_later_messaging_enabled' ) && $this->settings->get( 'pay_later_messaging_enabled' );
+		return true;
 	}
 
 	/**
@@ -55,9 +55,7 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_pay_later_messaging_enabled_for_location( string $location ): bool {
-		return $this->is_pay_later_messaging_enabled() &&
-			$this->has_pay_later_messaging_locations() &&
-			$this->is_enabled_for_location( 'pay_later_messaging_locations', $location );
+		return true;
 	}
 
 	/**

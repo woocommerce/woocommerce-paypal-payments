@@ -22,5 +22,7 @@ export default function save( { attributes } ) {
         ...paypalAttributes,
     };
 
-	return <div { ...useBlockProps.save(props) }></div>;
+	return <div {...useBlockProps.save(props)}>
+        <div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>
+    </div>;
 }
