@@ -185,18 +185,25 @@ class SmartButton implements SmartButtonInterface {
 	private $funding_sources_without_redirect;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
 	 * Session handler.
 	 *
 	 * @var SessionHandler
 	 */
 	private $session_handler;
+
+	/**
+	 * Whether Vault v3 module is enabled.
+	 *
+	 * @var bool
+	 */
+	private $vault_v3_enabled;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
 
 	/**
 	 * SmartButton constructor.
@@ -220,6 +227,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param string[]               $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 * @param bool                   $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -242,6 +250,7 @@ class SmartButton implements SmartButtonInterface {
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
+		bool $vault_v3_enabled,
 		LoggerInterface $logger
 	) {
 
@@ -264,6 +273,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->pay_now_contexts                  = $pay_now_contexts;
 		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
+		$this->vault_v3_enabled                  = $vault_v3_enabled;
 		$this->logger                            = $logger;
 	}
 
@@ -1063,6 +1073,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
+			'vault_v3_enabled'                        => $this->vault_v3_enabled,
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
 			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),

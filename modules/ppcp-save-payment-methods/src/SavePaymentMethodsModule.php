@@ -312,6 +312,14 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
 								),
 							),
+							'labels' => array(
+								'error' => array(
+									'generic' => __(
+										'Something went wrong. Please try again or choose another payment source.',
+										'woocommerce-paypal-payments'
+									),
+								)
+							),
 						)
 					);
 				} catch ( RuntimeException $exception ) {

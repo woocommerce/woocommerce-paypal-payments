@@ -137,7 +137,12 @@ const bootstrap = () => {
         }
 
         const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
-        if (isFreeTrial && data.fundingSource !== 'card' && ! PayPalCommerceGateway.subscription_plan_id) {
+        if (
+            isFreeTrial
+            && data.fundingSource !== 'card'
+            && ! PayPalCommerceGateway.subscription_plan_id
+            && ! PayPalCommerceGateway.vault_v3_enabled
+        ) {
             freeTrialHandler.handle();
             return actions.reject();
         }
