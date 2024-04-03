@@ -99,9 +99,12 @@ class SaveConfig {
 		$this->settings->set( 'pay_later_messaging_enabled', true );
 
 		$enabled_locations = array();
-
 		foreach ( $config as $placement => $data ) {
 			$this->save_config_for_location( $data, $placement );
+
+			if ( $placement === 'custom_placement' ) {
+				$data = $data[0] ?? array();
+			}
 
 			if ( $data['status'] === 'enabled' ) {
 				$enabled_locations[] = $placement;
@@ -129,6 +132,7 @@ class SaveConfig {
 		$this->set_value_if_present( $config, 'logo-type', "pay_later_{$location}_message_logo" );
 		$this->set_value_if_present( $config, 'logo-color', "pay_later_{$location}_message_color" );
 		$this->set_value_if_present( $config, 'text-size', "pay_later_{$location}_message_text_size" );
+		$this->set_value_if_present( $config, 'text-color', "pay_later_{$location}_message_color" );
 	}
 
 	/**

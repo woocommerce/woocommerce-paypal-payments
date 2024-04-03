@@ -29,10 +29,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
             setTimeout(() => {
                 saveChangesButton.click(); // Trigger click event on saveChangesButton
                 isSaving = false; // Reset flag when saving is complete
-            }, 500); // Adjust the delay as needed
+            }, 1000); // Adjust the delay as needed
         }
     });
-
 
     merchantConfigurators.Messaging({
         config: PcpPayLaterConfigurator.config,
@@ -40,10 +39,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         partnerClientId: PcpPayLaterConfigurator.partnerClientId,
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
-        placements: ['cart', 'checkout', 'product', 'shop', 'home'],
-        custom_placement:[{
-            message_reference: 'woocommerceBlock',
-        }],
+        placements: ['cart', 'checkout', 'product', 'shop', 'home', 'custom_placement'],
         styleOverrides: {
             button: publishButtonClassName,
             header: PcpPayLaterConfigurator.headerClassName,
