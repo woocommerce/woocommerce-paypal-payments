@@ -459,6 +459,10 @@ class WCGatewayModule implements ModuleInterface {
 			function ( $fields ) {
 				global $theorder;
 
+				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
+					return $fields;
+				}
+
 				if ( ! is_array( $fields ) ) {
 					return $fields;
 				}
