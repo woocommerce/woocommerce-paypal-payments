@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\StandardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
@@ -147,14 +148,17 @@ class SectionsRenderer {
 	 * @return array
 	 */
 	private function sections(): array {
-		$sections = array(
-			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
-			PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
-			Settings::PAY_LATER_TAB_ID  => __( 'Pay Later', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
-			CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
-			OXXOGateway::ID             => __( 'OXXO', 'woocommerce-paypal-payments' ),
-			PayUponInvoiceGateway::ID   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+		$sections = array_merge(
+			array(
+				Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
+				PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+				Settings::PAY_LATER_TAB_ID  => __( 'Pay Later', 'woocommerce-paypal-payments' ),
+				CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
+				CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
+				OXXOGateway::ID             => __( 'OXXO', 'woocommerce-paypal-payments' ),
+				PayUponInvoiceGateway::ID   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+			),
+			StandardButtonGateway::names()
 		);
 
 		// Remove for all not registered in WC gateways that cannot render anything in this case.

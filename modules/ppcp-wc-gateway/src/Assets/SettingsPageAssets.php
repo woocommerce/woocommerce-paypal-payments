@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\StandardButtonGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -205,7 +206,13 @@ class SettingsPageAssets {
 		$section = wc_clean( wp_unslash( $_GET['section'] ?? '' ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		return 'checkout' === $tab && in_array( $section, array( PayPalGateway::ID, CardButtonGateway::ID ), true );
+		return 'checkout' === $tab && in_array(
+			$section,
+			array_merge(
+				array( PayPalGateway::ID, CardButtonGateway::ID ),
+				StandardButtonGateway::ids()
+			),
+		true );
 	}
 
 	/**

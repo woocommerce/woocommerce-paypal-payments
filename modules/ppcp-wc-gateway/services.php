@@ -25,6 +25,8 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\StandardButtonGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FundingSources;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -183,14 +185,17 @@ return array(
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
 		return in_array(
 			$section,
-			array(
-				Settings::CONNECTION_TAB_ID,
-				PayPalGateway::ID,
-				CreditCardGateway::ID,
-				PayUponInvoiceGateway::ID,
-				CardButtonGateway::ID,
-				OXXOGateway::ID,
-				Settings::PAY_LATER_TAB_ID,
+			array_merge(
+				array(
+					Settings::CONNECTION_TAB_ID,
+					PayPalGateway::ID,
+					CreditCardGateway::ID,
+					PayUponInvoiceGateway::ID,
+					CardButtonGateway::ID,
+					OXXOGateway::ID,
+					Settings::PAY_LATER_TAB_ID,
+				),
+				StandardButtonGateway::ids()
 			),
 			true
 		);
@@ -419,13 +424,15 @@ return array(
 		return new FeesRenderer();
 	},
 	'wcgateway.settings.should-render-settings'            => static function ( ContainerInterface $container ): bool {
-
-		$sections = array(
-			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
-			PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
-			Settings::PAY_LATER_TAB_ID  => __( 'Pay Later', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
-			CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
+		$sections = array_merge(
+			array(
+				Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
+				PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+				Settings::PAY_LATER_TAB_ID  => __( 'Pay Later', 'woocommerce-paypal-payments' ),
+				CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
+				CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
+			),
+			StandardButtonGateway::names()
 		);
 
 		$current_page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
@@ -734,6 +741,30 @@ return array(
 				'requirements' => array(),
 				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
 			),
+			'separate_card_button_gateways'   => array(
+				'title'        => __( 'Separate gateways for selected Alternative Payment Methods', 'woocommerce-paypal-payments' ),
+				'type'         => 'ppcp-multiselect',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => array(),
+				'desc_tip'     => false,
+				'description'  => sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+					__( 'Choose to separate specific %1$sAlternative Payment Methods%2$s such as Credit Cards, Venmo, or others into a separate gateway.', 'woocommerce-paypal-payments' ),
+					'<a
+						href="https://developer.paypal.com/docs/checkout/apm/"
+						target="_blank"
+					>',
+					'</a>'
+				),
+				'options'      => $container->get( 'wcgateway.settings.funding-sources' ),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'allow_card_button_gateway'   => array(
 				'title'        => __( 'Create gateway for Standard Card Button', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
@@ -952,28 +983,11 @@ return array(
 	},
 
 	'wcgateway.all-funding-sources'                        => static function( ContainerInterface $container ): array {
-		return array(
-			'card'       => _x( 'Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'sepa'       => _x( 'SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'bancontact' => _x( 'Bancontact', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'blik'       => _x( 'BLIK', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'eps'        => _x( 'eps', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'giropay'    => _x( 'giropay', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'ideal'      => _x( 'iDEAL', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'mybank'     => _x( 'MyBank', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'p24'        => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'venmo'      => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'trustly'    => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'paylater'   => _x( 'PayPal Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'paypal'     => _x( 'PayPal', 'Name of payment method', 'woocommerce-paypal-payments' ),
-		);
+		return FundingSources::all();
 	},
 
 	'wcgateway.extra-funding-sources'                      => static function( ContainerInterface $container ): array {
-		return array(
-			'googlepay' => _x( 'Google Pay', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'applepay'  => _x( 'Apple Pay', 'Name of payment method', 'woocommerce-paypal-payments' ),
-		);
+		return FundingSources::extra();
 	},
 
 	/**
@@ -983,15 +997,7 @@ return array(
 		return array( 'paypal', 'paylater', 'venmo', 'card' );
 	},
 	'wcgateway.settings.funding-sources'                   => static function( ContainerInterface $container ): array {
-		return array_diff_key(
-			$container->get( 'wcgateway.all-funding-sources' ),
-			array_flip(
-				array(
-					'paylater',
-					'paypal',
-				)
-			)
-		);
+		return FundingSources::optional();
 	},
 
 	'wcgateway.checkout.address-preset'                    => static function( ContainerInterface $container ): CheckoutPayPalAddressPreset {
@@ -1500,12 +1506,15 @@ return array(
 		return $container->get( 'wcgateway.button.default-locations' );
 	},
 	'wcgateway.ppcp-gateways'                              => static function ( ContainerInterface $container ): array {
-		return array(
-			PayPalGateway::ID,
-			CreditCardGateway::ID,
-			PayUponInvoiceGateway::ID,
-			CardButtonGateway::ID,
-			OXXOGateway::ID,
+		return array_merge(
+			array(
+				PayPalGateway::ID,
+				CreditCardGateway::ID,
+				PayUponInvoiceGateway::ID,
+				CardButtonGateway::ID,
+				OXXOGateway::ID,
+			),
+			StandardButtonGateway::ids()
 		);
 	},
 	'wcgateway.gateway-repository'                         => static function ( ContainerInterface $container ): GatewayRepository {

@@ -1,6 +1,6 @@
 <?php
 /**
- * The Standard Card Button Gateway
+ * The Button Gateway
  *
  * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FundingSources;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -28,11 +29,38 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 
 /**
- * Class GenericButtonGateway
+ * Class StandardButtonGateway
  */
-class GenericButtonGateway extends \WC_Payment_Gateway {
-
+class StandardButtonGateway extends \WC_Payment_Gateway {
 	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait;
+
+	/**
+	 * The registered gateways.
+	 *
+	 * @var self[]
+	 */
+	static private $gateways = array();
+
+	/**
+	 * All possible gateway key / name pairs.
+	 *
+	 * @var string[]
+	 */
+	static private $gateway_names = array();
+
+	/**
+	 * The funding source key.
+	 *
+	 * @var string
+	 */
+	protected $funding_source_key;
+
+	/**
+	 * The funding source name.
+	 *
+	 * @var string
+	 */
+	protected $funding_source_name;
 
 	/**
 	 * The Settings Renderer.
@@ -135,6 +163,8 @@ class GenericButtonGateway extends \WC_Payment_Gateway {
 	/**
 	 * CardButtonGateway constructor.
 	 *
+	 * @param string                  $funding_source_key The funding source key.
+	 * @param string                  $funding_source_name The funding source name.
 	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor          $order_processor The Order Processor.
 	 * @param ContainerInterface      $config The settings.
@@ -151,7 +181,8 @@ class GenericButtonGateway extends \WC_Payment_Gateway {
 	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
 	 */
 	public function __construct(
-		string $id,
+		string $funding_source_key,
+		string $funding_source_name,
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
@@ -167,7 +198,9 @@ class GenericButtonGateway extends \WC_Payment_Gateway {
 		callable $paypal_checkout_url_factory,
 		string $place_order_button_text
 	) {
-		$this->id                          = $id;
+		$this->funding_source_key          = $funding_source_key;
+		$this->funding_source_name         = $funding_source_name;
+		$this->id                          = self::build_id( $this->funding_source_key );
 		$this->settings_renderer           = $settings_renderer;
 		$this->order_processor             = $order_processor;
 		$this->config                      = $config;
@@ -208,9 +241,13 @@ class GenericButtonGateway extends \WC_Payment_Gateway {
 			);
 		}
 
-		$this->method_title       = __( 'PayPal - Generic Button', 'woocommerce-paypal-payments' ) . $this->id;
-		$this->method_description = __( 'The separate payment gateway with the card button. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' );
-		$this->title              = $this->get_option( 'title', __( 'Generic Button (' . $this->id . ')', 'woocommerce-paypal-payments' ) );
+		$this->method_title       = 'PayPal - ' . $this->funding_source_name;
+		$this->method_description = sprintf(
+		/* translators: %s - Venmo, Sofort, etc. */
+			__( 'The separate payment gateway with the %s. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' ),
+			$this->funding_source_name
+		);
+		$this->title              = $this->get_option( 'title', $this->funding_source_name );
 		$this->description        = $this->get_option( 'description', '' );
 
 		$this->init_form_fields();
@@ -242,7 +279,11 @@ class GenericButtonGateway extends \WC_Payment_Gateway {
 			'enabled'     => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable Standard Card Button gateway', 'woocommerce-paypal-payments' ),
+				'label'       => sprintf(
+				/* translators: %s - Venmo, Sofort, etc. */
+					__( 'Enable %s gateway', 'woocommerce-paypal-payments' ),
+					$this->funding_source_name
+				),
 				'default'     => $this->default_enabled ? 'yes' : 'no',
 				'desc_tip'    => true,
 				'description' => __( 'Enable/Disable the separate payment gateway with the card button.', 'woocommerce-paypal-payments' ),
@@ -375,4 +416,47 @@ class GenericButtonGateway extends \WC_Payment_Gateway {
 	protected function settings_renderer(): SettingsRenderer {
 		return $this->settings_renderer;
 	}
+
+	/**
+	 * Returns a gateway id based on a funding source key.
+	 *
+	 * @param string $funding_source
+	 * @return string
+	 */
+	public static function build_id( string $funding_source ): string {
+		return 'ppcp-' . $funding_source . '-button-gateway';
+	}
+
+	/**
+	 * Registers a new gateway instance.
+	 *
+	 * @param self $gateway
+	 * @return void
+	 */
+	public static function register( self $gateway ) {
+		self::$gateways[ $gateway->id ] = $gateway;
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function ids(): array	{
+		return array_keys( self::names() );
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function names(): array	{
+		if ( self::$gateway_names ) {
+			return self::$gateway_names;
+		}
+
+		self::$gateway_names = array();
+		foreach ( FundingSources::optional() as $key => $name ) {
+			self::$gateway_names[ self::build_id( $key ) ] = $name;
+		}
+		return self::$gateway_names;
+	}
+
 }
