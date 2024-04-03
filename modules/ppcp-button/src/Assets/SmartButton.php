@@ -1000,11 +1000,21 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		if ( $this->settings->has( '3d_secure_contingency' ) ) {
 			$value = $this->settings->get( '3d_secure_contingency' );
 			if ( $value ) {
-				return $value;
+				return $this->return_3ds_contingency( $value );
 			}
 		}
 
-		return 'SCA_WHEN_REQUIRED';
+		return $this->return_3ds_contingency( 'SCA_WHEN_REQUIRED' );
+	}
+
+	/**
+	 * Processes and returns the 3D Secure contingency.
+	 *
+	 * @param string $contingency The ThreeD secure contingency.
+	 * @return string
+	 */
+	private function return_3ds_contingency( string $contingency ): string {
+		return apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $contingency );
 	}
 
 	/**
