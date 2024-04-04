@@ -263,6 +263,24 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Returns the funding source key.
+	 *
+	 * @return string
+	 */
+	public function funding_source_key(): string {
+		return $this->funding_source_key;
+	}
+
+	/**
+	 * Returns the funding source name.
+	 *
+	 * @return string
+	 */
+	public function funding_source_name(): string {
+		return $this->funding_source_name;
+	}
+
+	/**
 	 * Whether the Gateway needs to be setup.
 	 *
 	 * @return bool
@@ -435,6 +453,15 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 	 */
 	public static function register( self $gateway ) {
 		self::$gateways[ $gateway->id ] = $gateway;
+	}
+
+	/**
+	 * Returns the registered gateways
+	 *
+	 * @return array
+	 */
+	public static function registered_gateways(): array {
+		return self::$gateways;
 	}
 
 	/**

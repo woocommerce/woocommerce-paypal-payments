@@ -119,11 +119,22 @@ class CheckoutBootstap {
         this.renderer.render(actionHandler.configuration(), {}, actionHandler.configuration());
     }
 
+    matchesIdInObject(obj, str) {
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                if (obj[key].id === str) {
+                    return true; // Found a match
+                }
+            }
+        }
+        return false; // No match found
+    }
+
     updateUi() {
         const currentPaymentMethod = getCurrentPaymentMethod();
         const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
         const isCard = currentPaymentMethod === PaymentMethods.CARDS;
-        const isSeparateButtonGateway = [PaymentMethods.CARD_BUTTON].includes(currentPaymentMethod);
+        const isSeparateButtonGateway = this.matchesIdInObject(this.gateway.separate_buttons, currentPaymentMethod);
         const isSavedCard = isCard && isSavedCardSelected();
         const isNotOurGateway = !isPaypal && !isCard && !isSeparateButtonGateway;
         const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;

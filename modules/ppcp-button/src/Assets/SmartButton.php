@@ -34,6 +34,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\StandardButtonGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -540,6 +541,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				function (): void {
 					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_payorder_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
+
+					foreach ( StandardButtonGateway::ids() as $gateway_id ) {
+						$this->button_renderer( $gateway_id );
+					}
 				},
 				20
 			);
@@ -548,6 +553,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				function (): void {
 					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_checkout_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
+
+					foreach ( StandardButtonGateway::ids() as $gateway_id ) {
+						$this->button_renderer( $gateway_id );
+					}
 				}
 			);
 
@@ -1101,18 +1110,39 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					)
 				),
 			),
-			'separate_buttons'                        => array(
-				'card' => array(
-					'id'      => CardButtonGateway::ID,
-					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
-					'style'   => $this->normalize_style(
-						array(
-							'shape'  => $this->style_for_apm( 'shape', 'card' ),
-							'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
-							'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
-						)
-					),
+			'separate_buttons'                        => array_merge(
+				array(
+					'card' => array(
+						'id'      => CardButtonGateway::ID,
+						'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
+						'style'   => $this->normalize_style(
+							array(
+								'shape'  => $this->style_for_apm( 'shape', 'card' ),
+								'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
+								'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
+							)
+						),
+					)
 				),
+				( function () {
+					$return = array();
+
+					foreach ( StandardButtonGateway::registered_gateways() as $gateway ) {
+						$return[ $gateway->funding_source_key() ] = array(
+							'id'      => $gateway->id,
+							'wrapper' => '#ppc-button-' . $gateway->id,
+							'style'   => $this->normalize_style(
+								array(
+									'shape'  => $this->style_for_apm( 'shape', 'card' ),
+									'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
+									'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
+								)
+							),
+						);
+					}
+
+					return $return;
+				} )()
 			),
 			'hosted_fields'                           => array(
 				'wrapper'     => '#ppcp-hosted-fields',
@@ -1313,6 +1343,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			}
 		}
 
+		// Only allow venmo, paylater and paypal buttons on block pages.
 		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
 			$disable_funding = array_merge(
 				$disable_funding,
