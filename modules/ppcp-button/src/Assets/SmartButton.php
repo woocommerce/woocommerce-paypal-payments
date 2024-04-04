@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Product;
 use WC_Product_Variation;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -199,6 +200,13 @@ class SmartButton implements SmartButtonInterface {
 	private $vault_v3_enabled;
 
 	/**
+	 * Payment tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -228,6 +236,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param string[]               $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param bool                   $vault_v3_enabled Whether Vault v3 module is enabled.
+	 * @param PaymentTokensEndpoint  $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -251,6 +260,7 @@ class SmartButton implements SmartButtonInterface {
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
 		bool $vault_v3_enabled,
+		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger
 	) {
 
@@ -275,6 +285,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
 		$this->vault_v3_enabled                  = $vault_v3_enabled;
 		$this->logger                            = $logger;
+		$this->payment_tokens_endpoint           = $payment_tokens_endpoint;
 	}
 
 	/**
@@ -1915,8 +1926,18 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 */
 	private function get_vaulted_paypal_email(): string {
 		try {
-			$tokens = $this->get_payment_tokens();
+			$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+			if ( $customer_id ) {
+				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				foreach ( $customer_tokens as $token ) {
+					$email_address = $token['payment_source']->properties()->email_address ?? '';
+					if ( $email_address ) {
+						return $email_address;
+					}
+				}
+			}
 
+			$tokens = $this->get_payment_tokens();
 			foreach ( $tokens as $token ) {
 				if ( isset( $token->source()->paypal ) ) {
 					return $token->source()->paypal->payer->email_address;
@@ -1925,6 +1946,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		} catch ( Exception $exception ) {
 			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
 		}
+
 		return '';
 	}
 

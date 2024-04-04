@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -180,6 +181,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $paypal_checkout_url_factory;
 
 	/**
+	 * Payment tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
@@ -199,6 +207,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param OrderEndpoint           $order_endpoint The order endpoint.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
+	 * @param PaymentTokensEndpoint   $payment_tokens_endpoint Payment tokens endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -217,7 +226,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		string $api_shop_country,
 		OrderEndpoint $order_endpoint,
 		callable $paypal_checkout_url_factory,
-		string $place_order_button_text
+		string $place_order_button_text,
+		PaymentTokensEndpoint $payment_tokens_endpoint
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -300,7 +310,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			)
 		);
 
-		$this->order_endpoint = $order_endpoint;
+		$this->order_endpoint          = $order_endpoint;
+		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
 	}
 
 	/**
@@ -501,6 +512,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) && ! $this->subscription_helper->paypal_subscription_id() ) {
+			$customer_id = get_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', true );
+			if ( $customer_id ) {
+				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				foreach ( $customer_tokens as $token ) {
+					$payment_source_name = $token['payment_source']->name() ?? '';
+					if ( $payment_source_name === 'paypal' || $payment_source_name === 'venmo' ) {
+						$wc_order->payment_complete();
+						return $this->handle_payment_success( $wc_order );
+					}
+				}
+			}
+
 			$user_id = (int) $wc_order->get_customer_id();
 			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
 			if ( ! array_filter(
@@ -513,7 +536,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			}
 
 			$wc_order->payment_complete();
-
 			return $this->handle_payment_success( $wc_order );
 		}
 

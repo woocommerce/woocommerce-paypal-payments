@@ -103,7 +103,8 @@ return array(
 			$api_shop_country,
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'api.endpoint.payment-tokens' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
