@@ -141,7 +141,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
-										'permit_multiple_payment_tokens' => true,
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', true ),
 									),
 								),
 							),
@@ -167,7 +167,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
-										'permit_multiple_payment_tokens' => true,
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', true ),
 									),
 								),
 							),
