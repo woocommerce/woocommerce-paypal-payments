@@ -192,6 +192,8 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Sync shipping options with Venmo when skipping final confirmation on Checkout #2108
 * Enhancement - Card Fields: Add a filter for the CVC field and update the placeholder to match the label #2089
 * Enhancement - Product Title: Sanitize before sending to PayPal #2090
+* Enhancement - Add filter for disabling permit_multiple_payment_tokens vault attribute #2136
+* Enhancement - Filter to hide PayPal email address not working on order detail #2137
 
 = 2.6.0 - 2024-03-20 =
 * Fix - invoice_id not included in API call when creating payment with saved card #2086
