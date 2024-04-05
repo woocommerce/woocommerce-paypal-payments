@@ -183,6 +183,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Payment tokens fixes and adjustments #2106
 * Fix - Pay upon Invoice: Add input validation to Experience Context fields #2092
 * Fix - Disable markup in get_plugin_data() returns to fix an issue with wptexturize() #2094
+* Fix - Problem changing the shipping option in block pages #2142
 * Enhancement - Pay later messaging configurator improvements #2107
 * Enhancement - Replace the middleware URL from connect.woocommerce.com to api.woocommerce.com/integrations #2130
 * Enhancement - Remove all Sofort references as it has been deprecated #2124
