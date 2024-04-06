@@ -144,6 +144,55 @@ class CheckoutActionHandler {
             }
         }
     }
+
+    addPaymentMethodConfiguration() {
+        return {
+            createVaultSetupToken: async () => {
+                const response = await fetch(this.config.ajax.create_setup_token.endpoint, {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.create_setup_token.nonce,
+                    })
+                });
+
+                const result = await response.json()
+                if (result.data.id) {
+                    return result.data.id
+                }
+
+                console.error(result)
+            },
+            onApprove: async ({vaultSetupToken}) => {
+                const response = await fetch(this.config.ajax.create_payment_token.endpoint, {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.create_payment_token.nonce,
+                        vault_setup_token: vaultSetupToken,
+                        return_url: location.href,
+                    })
+                })
+
+                const result = await response.json();
+                if (result.success === true) {
+                    window.location.href = location.href;
+                    return;
+                }
+
+                console.error(result)
+            },
+            onError: (error) => {
+                console.error(error)
+            }
+        }
+    }
 }
 
 export default CheckoutActionHandler;

@@ -34,6 +34,8 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -1090,6 +1092,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				),
 				'cart_script_params'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
+				),
+				'create_setup_token'   => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+				),
+				'create_payment_token' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
 				),
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
