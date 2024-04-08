@@ -1,7 +1,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 
 import Edit from './edit';
-import save from './save';
 
 const paypalIcon = (
     <svg width="584.798" height="720" viewBox="0 0 154.728 190.5">

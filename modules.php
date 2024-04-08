@@ -72,6 +72,8 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 
+	$modules[] = ( require "$modules_dir/ppcp-paylater-wc-blocks/module.php" )();
+
 	if ( PayLaterConfiguratorModule::is_enabled() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-configurator/module.php" )();
 	}

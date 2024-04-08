@@ -414,16 +414,18 @@ class SmartButton implements SmartButtonInterface {
 			wp_is_block_theme()
 		);
 
-		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme ): ?array {
+		$has_paylater_block =
+			PayLaterBlockModule::is_block_enabled($this->settings_status) &&
+			has_block('woocommerce-paypal-payments/paylater-messages') ||
+			has_block('woocommerce-paypal-payments/checkout-paylater-messages') ||
+			has_block('woocommerce-paypal-payments/cart-paylater-messages');
+
+		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme, $has_paylater_block ): ?array {
 			switch ( $location ) {
 				case 'checkout':
 					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
 				case 'cart':
 					return $this->messages_renderer_hook( $location, $this->proceed_to_checkout_button_renderer_hook(), 19 );
-				case 'checkout-block':
-					return $this->messages_renderer_hook( $location, 'ppcp-paylater-message-block', 10 );
-				case 'cart-block':
-					return $this->messages_renderer_hook( $location, 'ppcp-paylater-message-block', 10 );
 				case 'pay-now':
 					return $this->messages_renderer_hook( $location, $default_pay_order_hook, 10 );
 				case 'product':
@@ -437,11 +439,14 @@ class SmartButton implements SmartButtonInterface {
 						? $this->messages_renderer_block( $location, 'core/navigation', 10 )
 						: $this->messages_renderer_hook( $location, 'loop_start', 20 );
 				default:
-					return null;
+					return $has_paylater_block
+						? $this->messages_renderer_hook( $location, 'ppcp_paylater_message_block', 10 )
+						: null;
 			}
 		};
 
 		$hook = $get_hook( $location );
+
 		if ( ! $hook ) {
 			return false;
 		}
@@ -472,7 +477,7 @@ class SmartButton implements SmartButtonInterface {
 				function () {
 					echo '
 <script>
-document.querySelector("#payment").before(document.querySelector("#ppcp-messages"))
+document.querySelector("#payment").before(document.querySelector(".ppcp-messages"))
 </script>';
 				}
 			);
@@ -631,7 +636,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 
-		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' ) && PayLaterBlockModule::is_block_enabled( $this->settings_status );
+		$has_paylater_block =
+			has_block('woocommerce-paypal-payments/paylater-messages') ||
+			has_block('woocommerce-paypal-payments/checkout-paylater-messages') ||
+			(
+				has_block('woocommerce-paypal-payments/cart-paylater-messages') &&
+				PayLaterBlockModule::is_block_enabled( $this->settings_status )
+			);
+
 		switch ( $location ) {
 			case 'checkout':
 			case 'cart':
@@ -642,10 +654,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				return $messaging_enabled_for_current_location;
 			case 'block-editor':
 				return true;
-			case 'checkout-block':
-				return $has_paylater_block;
-			case 'cart-block':
-				return $has_paylater_block;
 			default:
 				return $has_paylater_block;
 		}
@@ -765,7 +773,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 */
 		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
 
-		$messages_placeholder = '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+		$messages_placeholder = '<div class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 
 		if ( is_array( $block_params ) && ( $block_params['blockName'] ?? false ) ) {
 			$this->render_after_block(
@@ -864,6 +872,19 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
 		$location             = $styling_per_location ? $location : 'general';
+
+		// Map checkout-block and cart-block message options to checkout and cart options.
+		switch ( $location ) {
+			case 'checkout-block':
+				$location = 'checkout';
+				break;
+			case 'cart-block':
+				$location = 'cart';
+				break;
+			default:
+				break;
+		}
+
 		$setting_name_prefix  = "pay_later_{$location}_message";
 
 		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
@@ -875,7 +896,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		$text_size     = $this->settings->has( "{$setting_name_prefix}_text_size" ) ? $this->settings->get( "{$setting_name_prefix}_text_size" ) : '12';
 
 		return array(
-			'wrapper'   => '#ppcp-messages',
+			'wrapper'   => '.ppcp-messages',
 			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
 			'block'     => array(
 				'enabled' => PayLaterBlockModule::is_block_enabled( $this->settings_status ),
