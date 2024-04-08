@@ -549,7 +549,7 @@ class AxoManager {
     onClickSubmitButton() {
         if (this.data.card) { // Ryan flow
             log('Ryan flow.');
-            this.submit(this.data.card.paymentToken);
+            this.submit(this.data.card.getPaymentToken());
 
         } else { // Gary flow
             log('Gary flow.');

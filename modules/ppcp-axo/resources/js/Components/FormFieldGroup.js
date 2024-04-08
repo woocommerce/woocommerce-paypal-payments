@@ -99,6 +99,8 @@ class FormFieldGroup {
     }
 
     inputValue(name) {
+        console.log('inputValue:name', this.fields[name].selector);
+
         return document.querySelector(this.fields[name].selector).value;
     }
 
