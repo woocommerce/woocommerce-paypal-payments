@@ -184,7 +184,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		$wc_order      = wc_get_order( $order_id );
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
-		$nonce = 'tokencc_bh_vkjzxd_tgpd3n_qmjs7k_3vhxzg_p82';
+		$nonce = wc_clean( wp_unslash( $_POST['axo_nonce'] ?? '' ) );
 
 		try {
 			$shipping_preference = $this->shipping_preference_factory->from_state(

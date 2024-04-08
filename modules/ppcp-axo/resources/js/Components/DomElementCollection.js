@@ -84,6 +84,11 @@ class DomElementCollection {
             attributes: 'data-ppcp-axo-show-gateway-selection',
         });
 
+        this.axoNonceInput = new DomElement({
+            id: 'ppcp-axo-nonce',
+            selector: '#ppcp-axo-nonce',
+        });
+
     }
 }
 

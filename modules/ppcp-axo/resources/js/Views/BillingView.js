@@ -109,6 +109,14 @@ class BillingView {
         this.billingFormFields.setData(data);
     }
 
+    inputValue(name) {
+        return this.billingFormFields.inputValue(name);
+    }
+
+    fullName() {
+        return `${this.inputValue('firstName')} ${this.inputValue('lastName')}`.trim();
+    }
+
 }
 
 export default BillingView;

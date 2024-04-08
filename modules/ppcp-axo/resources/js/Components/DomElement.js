@@ -29,8 +29,13 @@ class DomElement {
     }
 
     click() {
-        document.querySelector(this.selector).click();
+        this.get().click();
     }
+
+    get() {
+        return document.querySelector(this.selector);
+    }
+
 }
 
 export default DomElement;

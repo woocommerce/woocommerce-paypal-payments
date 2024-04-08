@@ -1,5 +1,4 @@
 import Fastlane from "./Connection/Fastlane";
-import MockData from "./Helper/MockData";
 import {log} from "./Helper/Debug";
 import DomElementCollection from "./Components/DomElementCollection";
 import ShippingView from "./Views/ShippingView";
@@ -26,6 +25,7 @@ class AxoManager {
         };
 
         this.data = {
+            email: null,
             billing: null,
             shipping: null,
             card: null,
@@ -101,6 +101,9 @@ class AxoManager {
             console.log('card response', response);
 
             if (response.selectionChanged) {
+
+                console.log('response.selectedCard.paymentToken', response.selectedCard.paymentToken);
+
                 this.setCard(response.selectedCard);
                 this.setBilling({
                     address: response.selectedCard.paymentSource.card.billingAddress
@@ -433,6 +436,8 @@ class AxoManager {
     }
 
     async onChangeEmail () {
+        this.clearData();
+
         if (!this.status.active) {
             log('Email checking skipped, AXO not active.');
             return;
@@ -479,8 +484,12 @@ class AxoManager {
 
                 // Add addresses
                 this.setShipping(authResponse.profileData.shippingAddress);
-                // TODO : set billing
+                this.setBilling({
+                    address: authResponse.profileData.card.paymentSource.card.billingAddress
+                });
                 this.setCard(authResponse.profileData.card);
+
+                console.log('authResponse', authResponse);
 
                 this.setStatus('validEmail', true);
                 this.setStatus('hasProfile', true);
@@ -503,10 +512,23 @@ class AxoManager {
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
 
+            console.log('this.cardComponentData()', this.cardComponentData());
+
             this.cardComponent = await this.fastlane
-                .FastlaneCardComponent(MockData.cardComponent())
+                .FastlaneCardComponent(
+                    this.cardComponentData()
+                )
                 .render(this.el.paymentContainer.selector + '-form');
         }
+    }
+
+    clearData() {
+        this.data = {
+            email: null,
+            billing: null,
+            shipping: null,
+            card: null,
+        };
     }
 
     setShipping(shipping) {
@@ -525,12 +547,50 @@ class AxoManager {
     }
 
     onClickSubmitButton() {
-        try {
-            this.cardComponent.tokenize(MockData.cardComponentTokenize()).then((response) => {
-                this.submit(response.nonce);
-            });
-        } catch (e) {
-            log('Error tokenizing.');
+        if (this.data.card) { // Ryan flow
+            log('Ryan flow.');
+            this.submit(this.data.card.paymentToken);
+
+        } else { // Gary flow
+            log('Gary flow.');
+            console.log('this.tokenizeData()', this.tokenizeData());
+
+            try {
+                this.cardComponent.tokenize(
+                    this.tokenizeData()
+                ).then((response) => {
+                    this.submit(response.nonce);
+                });
+            } catch (e) {
+                log('Error tokenizing.');
+            }
+        }
+    }
+
+    cardComponentData() {
+        return {
+            fields: {
+                phoneNumber: {
+                    prefill: this.billingView.inputValue('phone')
+                },
+                cardholderName: {} // optionally pass this to show the card holder name
+            }
+        }
+    }
+
+    tokenizeData() {
+        return {
+            name: {
+                fullName: this.billingView.fullName()
+            },
+            billingAddress: {
+                addressLine1: this.billingView.inputValue('street1'),
+                addressLine2: this.billingView.inputValue('street2'),
+                adminArea1: this.billingView.inputValue('city'),
+                adminArea2: this.billingView.inputValue('stateCode'),
+                postalCode: this.billingView.inputValue('postCode'),
+                countryCode: this.billingView.inputValue('countryCode'),
+            }
         }
     }
 
@@ -540,7 +600,13 @@ class AxoManager {
         alert('nonce: ' + nonce);
 
         // Submit form.
-//        this.el.defaultSubmitButton.click();
+        if (!this.el.axoNonceInput.get()) {
+            this.$('.woocommerce-checkout').append(`<input type="hidden" id="${this.el.axoNonceInput.id}" name="axo_nonce" value="" />`);
+        }
+
+        this.el.axoNonceInput.get().value = nonce;
+
+        this.el.defaultSubmitButton.click();
     }
 
     useEmailWidget() {

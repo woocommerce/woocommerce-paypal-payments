@@ -1,5 +1,5 @@
 
-class MockData {
+class FormFieldGroup {
 
     constructor(config) {
         this.data = {};
@@ -97,6 +97,11 @@ class MockData {
             field.classList.add('ppcp-axo-field-hidden');
         }
     }
+
+    inputValue(name) {
+        return document.querySelector(this.fields[name].selector).value;
+    }
+
 }
 
-export default MockData;
+export default FormFieldGroup;

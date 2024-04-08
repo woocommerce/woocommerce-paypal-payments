@@ -99,7 +99,7 @@ class AxoModule implements ModuleInterface {
 				add_filter(
 					'woocommerce_paypal_payments_sdk_components_hook',
 					function( $components ) {
-						$components[] = 'connect';
+						$components[] = 'fastlane';
 						return $components;
 					}
 				);
