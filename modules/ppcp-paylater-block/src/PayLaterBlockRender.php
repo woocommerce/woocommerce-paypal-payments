@@ -9,36 +9,31 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
-// Early return if $attributes is not set or not an array.
 if ( ! isset( $attributes ) || ! is_array( $attributes ) ) {
 	return;
 }
 
-// Escape the 'id' attribute to prevent XSS vulnerabilities.
 $html = '<div id="' . esc_attr( $attributes['id'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 
-// Create an instance of WP_HTML_Tag_Processor with your HTML content.
 $processor = new \WP_HTML_Tag_Processor( $html );
 
-// Find the first div tag.
 if ( $processor->next_tag( 'div' ) ) {
-	$layout = $attributes['layout'] ?? 'text'; // Default to 'text' layout if not set.
+	$layout = esc_attr( $attributes['layout'] ) ?? 'text';
 
 	if ( 'flex' === $layout ) {
 		$processor->set_attribute( 'data-pp-style-layout', 'flex' );
-		$processor->set_attribute( 'data-pp-style-color', $attributes['flexColor'] ?? '' );
-		$processor->set_attribute( 'data-pp-style-ratio', $attributes['flexRatio'] ?? '' );
+		$processor->set_attribute( 'data-pp-style-color', esc_attr( $attributes['flexColor'] ) ?? '' );
+		$processor->set_attribute( 'data-pp-style-ratio', esc_attr( $attributes['flexRatio'] ) ?? '' );
 	} else {
-		// Apply 'text' layout attributes.
 		$processor->set_attribute( 'data-pp-style-layout', 'text' );
-		$processor->set_attribute( 'data-pp-style-logo-type', $attributes['logo'] ?? '' );
-		$processor->set_attribute( 'data-pp-style-logo-position', $attributes['position'] ?? '' );
-		$processor->set_attribute( 'data-pp-style-text-color', $attributes['color'] ?? '' );
-		$processor->set_attribute( 'data-pp-style-text-size', $attributes['size'] ?? '' );
+		$processor->set_attribute( 'data-pp-style-logo-type', esc_attr( $attributes['logo'] ) ?? '' );
+		$processor->set_attribute( 'data-pp-style-logo-position', esc_attr( $attributes['position'] ) ?? '' );
+		$processor->set_attribute( 'data-pp-style-text-color', esc_attr( $attributes['color'] ) ?? '' );
+		$processor->set_attribute( 'data-pp-style-text-size', esc_attr( $attributes['size'] ) ?? '' );
 	}
 
 	if ( ( $attributes['placement'] ?? 'auto' ) !== 'auto' ) {
-		$processor->set_attribute( 'data-pp-placement', $attributes['placement'] );
+		$processor->set_attribute( 'data-pp-placement', esc_attr( $attributes['placement'] ) );
 	}
 }
 
