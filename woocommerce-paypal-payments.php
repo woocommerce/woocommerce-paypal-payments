@@ -8,6 +8,7 @@
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
  * Requires PHP: 7.2
+ * Requires Plugins: woocommerce
  * WC requires at least: 3.9
  * WC tested up to: 8.7
  * Text Domain: woocommerce-paypal-payments
