@@ -415,10 +415,10 @@ class SmartButton implements SmartButtonInterface {
 		);
 
 		$has_paylater_block =
-			PayLaterBlockModule::is_block_enabled($this->settings_status) &&
-			has_block('woocommerce-paypal-payments/paylater-messages') ||
-			has_block('woocommerce-paypal-payments/checkout-paylater-messages') ||
-			has_block('woocommerce-paypal-payments/cart-paylater-messages');
+			PayLaterBlockModule::is_block_enabled( $this->settings_status ) &&
+			has_block( 'woocommerce-paypal-payments/paylater-messages' ) ||
+			has_block( 'woocommerce-paypal-payments/checkout-paylater-messages' ) ||
+			has_block( 'woocommerce-paypal-payments/cart-paylater-messages' );
 
 		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme, $has_paylater_block ): ?array {
 			switch ( $location ) {
@@ -638,9 +638,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$has_paylater_block =
 			PayLaterBlockModule::is_block_enabled( $this->settings_status ) &&
-			has_block('woocommerce-paypal-payments/paylater-messages') ||
-			has_block('woocommerce-paypal-payments/checkout-paylater-messages') ||
-			has_block('woocommerce-paypal-payments/cart-paylater-messages');
+			has_block( 'woocommerce-paypal-payments/paylater-messages' ) ||
+			has_block( 'woocommerce-paypal-payments/checkout-paylater-messages' ) ||
+			has_block( 'woocommerce-paypal-payments/cart-paylater-messages' );
 
 		switch ( $location ) {
 			case 'checkout':
@@ -883,7 +883,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				break;
 		}
 
-		$setting_name_prefix  = "pay_later_{$location}_message";
+		$setting_name_prefix = "pay_later_{$location}_message";
 
 		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
 		$logo_type     = $this->settings->has( "{$setting_name_prefix}_logo" ) ? $this->settings->get( "{$setting_name_prefix}_logo" ) : 'primary';

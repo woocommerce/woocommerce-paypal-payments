@@ -40,7 +40,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 	 * Returns whether the block is enabled.
 	 *
 	 * @param SettingsStatus $settings_status The Settings status helper.
-	 * @param string $location The location to check.
+	 * @param string         $location The location to check.
 	 * @return bool true if the block is enabled, otherwise false.
 	 */
 	public static function is_block_enabled( SettingsStatus $settings_status, string $location ): bool {
@@ -51,7 +51,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 	 * Returns whether the placement is enabled.
 	 *
 	 * @param SettingsStatus $settings_status The Settings status helper.
-	 * @param string $location The location to check.
+	 * @param string         $location The location to check.
 	 * @return bool true if the placement is enabled, otherwise false.
 	 */
 	public static function is_placement_enabled( SettingsStatus $settings_status, string $location ) : bool {
@@ -82,17 +82,22 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		$settings = $c->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		add_action( 'woocommerce_blocks_loaded', function() use ( $c ): void {
-			add_action(
-				'woocommerce_blocks_checkout_block_registration',
-				function( $integration_registry ) use ( $c ): void {
-					$integration_registry->register( new PayLaterWCBlocksIntegration(
-						$c->get( 'paylater-wc-blocks.url' ),
-						$c->get( 'ppcp.asset-version' )
-					) );
-				}
-			);
-		});
+		add_action(
+			'woocommerce_blocks_loaded',
+			function() use ( $c ): void {
+				add_action(
+					'woocommerce_blocks_checkout_block_registration',
+					function( $integration_registry ) use ( $c ): void {
+						$integration_registry->register(
+							new PayLaterWCBlocksIntegration(
+								$c->get( 'paylater-wc-blocks.url' ),
+								$c->get( 'ppcp.asset-version' )
+							)
+						);
+					}
+				);
+			}
+		);
 
 		add_action(
 			'init',
@@ -172,16 +177,16 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 			function( $categories ): array {
 				return array_merge(
 					$categories,
-					[
-						[
+					array(
+						array(
 							'slug'  => 'ppcp-cart-paylater-messages-block',
 							'title' => __( 'PayPal Cart Pay Later Messages Blocks', 'woocommerce-paypal-payments' ),
-						],
-						[
+						),
+						array(
 							'slug'  => 'ppcp-checkout-paylater-messages-block',
 							'title' => __( 'PayPal Checkout Pay Later Messages Blocks', 'woocommerce-paypal-payments' ),
-						],
-					]
+						),
+					)
 				);
 			},
 			10,
@@ -194,17 +199,22 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		 * @psalm-suppress PossiblyFalseArgument
 		 */
 		register_block_type(
-			dirname( realpath( __FILE__ ), 2) . '/resources/js/CartPayLaterMessagesBlock',
-			[
+			dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
+			array(
 				'render_callback' => function ( $attributes ) use ( $c ) {
 					$renderer = $c->get( 'paylater-wc-blocks.renderer' );
 					ob_start();
+                    // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
 					echo $renderer->render(
-						$attributes, 'cart',  $c
+                        // phpcs:ignore
+						$attributes,
+						'cart',
+                        // phpcs:ignore
+						$c
 					);
 					return ob_get_clean();
-				}
-			]
+				},
+			)
 		);
 
 		/**
@@ -213,17 +223,22 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		 * @psalm-suppress PossiblyFalseArgument
 		 */
 		register_block_type(
-			dirname( realpath( __FILE__ ), 2) . '/resources/js/CheckoutPayLaterMessagesBlock',
-			[
+			dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
+			array(
 				'render_callback' => function ( $attributes ) use ( $c ) {
 					$renderer = $c->get( 'paylater-wc-blocks.renderer' );
 					ob_start();
+                    // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
 					echo $renderer->render(
-						$attributes, 'checkout',  $c
+                        // phpcs:ignore
+						$attributes,
+						'checkout',
+                        // phpcs:ignore
+						$c
 					);
 					return ob_get_clean();
-				}
-			]
+				},
+			)
 		);
 	}
 

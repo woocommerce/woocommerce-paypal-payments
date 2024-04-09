@@ -40,6 +40,8 @@ if ( $processor->next_tag( 'div' ) ) {
 $updated_html = (string) $processor;
 ?>
 
-<div id="ppcp-paylater-message-block" <?php echo get_block_wrapper_attributes(); ?>>
-	<?php echo $updated_html; ?>
+<div id="ppcp-paylater-message-block" <?php echo wp_kses_data( get_block_wrapper_attributes() ); ?>>
+	<?php
+		echo $updated_html; // phpcs:ignore -- No need to escape it, all added attributes have been sanitized above.
+	?>
 </div>

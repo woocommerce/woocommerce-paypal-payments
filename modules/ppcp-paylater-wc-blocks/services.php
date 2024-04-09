@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'paylater-wc-blocks.url' => static function ( ContainerInterface $container ): string {
+	'paylater-wc-blocks.url'      => static function ( ContainerInterface $container ): string {
 		/**
 		 * Cannot return false for this path.
 		 *

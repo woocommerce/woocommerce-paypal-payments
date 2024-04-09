@@ -15,8 +15,20 @@ use Automattic\WooCommerce\Blocks\Integrations\IntegrationInterface;
  * Class for integrating with WooCommerce Blocks
  */
 class PayLaterWCBlocksIntegration implements IntegrationInterface {
-    protected $paylater_wc_blocks_url;
-    protected $ppcp_asset_version;
+
+	/**
+	 * The URL of the Pay Later WooCommerce Blocks plugin.
+	 *
+	 * @var string
+	 */
+	protected $paylater_wc_blocks_url;
+
+	/**
+	 * The version of the Pay Later WooCommerce Blocks plugin.
+	 *
+	 * @var string
+	 */
+	protected $ppcp_asset_version;
 
 	/**
 	 * Constructor
@@ -24,10 +36,10 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 * @param string $paylater_wc_blocks_url The URL of the Pay Later WooCommerce Blocks plugin.
 	 * @param string $ppcp_asset_version The version of the Pay Later WooCommerce Blocks plugin.
 	 */
-    public function __construct( string $paylater_wc_blocks_url, string $ppcp_asset_version ) {
-        $this->paylater_wc_blocks_url = $paylater_wc_blocks_url;
-        $this->ppcp_asset_version = $ppcp_asset_version;
-    }
+	public function __construct( string $paylater_wc_blocks_url, string $ppcp_asset_version ) {
+		$this->paylater_wc_blocks_url = $paylater_wc_blocks_url;
+		$this->ppcp_asset_version     = $ppcp_asset_version;
+	}
 
 	/**
 	 * The name of the integration.
@@ -64,31 +76,31 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 * @return void
 	 */
 	private function register_main_integration() : void {
-		$cart_block_script_path = 'assets/js/ppcp-cart-paylater-messages-block.js';
+		$cart_block_script_path     = 'assets/js/ppcp-cart-paylater-messages-block.js';
 		$checkout_block_script_path = 'assets/js/ppcp-checkout-paylater-messages-block.js';
-		$style_path  = 'build/style-index.css';
+		$style_path                 = 'build/style-index.css';
 
-		$cart_block_script_url = $this->paylater_wc_blocks_url . $cart_block_script_path;
+		$cart_block_script_url     = $this->paylater_wc_blocks_url . $cart_block_script_path;
 		$checkout_block_script_url = $this->paylater_wc_blocks_url . $checkout_block_script_path;
 
-		$style_url  = $this->paylater_wc_blocks_url . $style_path;
+		$style_url = $this->paylater_wc_blocks_url . $style_path;
 
-		$cart_block_script_asset_path = $this->paylater_wc_blocks_url . 'assets/ppcp-cart-paylater-messages-block.asset.php';
+		$cart_block_script_asset_path     = $this->paylater_wc_blocks_url . 'assets/ppcp-cart-paylater-messages-block.asset.php';
 		$checkout_block_script_asset_path = $this->paylater_wc_blocks_url . 'assets/ppcp-checkout-paylater-messages-block.asset.php';
 
-		$cart_block_script_asset      = file_exists( $cart_block_script_asset_path )
+		$cart_block_script_asset = file_exists( $cart_block_script_asset_path )
 			? require $cart_block_script_asset_path
-			: [
-				'dependencies' => [],
+			: array(
+				'dependencies' => array(),
 				'version'      => $this->get_file_version( $cart_block_script_asset_path ),
-			];
+			);
 
-		$checkout_block_script_asset      = file_exists( $checkout_block_script_asset_path )
+		$checkout_block_script_asset = file_exists( $checkout_block_script_asset_path )
 			? require $checkout_block_script_asset_path
-			: [
-				'dependencies' => [],
+			: array(
+				'dependencies' => array(),
 				'version'      => $this->get_file_version( $checkout_block_script_asset_path ),
-			];
+			);
 
 		wp_register_script(
 			'ppcp-cart-paylater-messages-block',
@@ -125,7 +137,7 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 * @return string[]
 	 */
 	public function get_script_handles(): array {
-		return [ 'ppcp-checkout-paylater-messages-block', 'ppcp-cart-paylater-messages-block', 'ppcp-cart-paylater-messages-block-frontend', 'ppcp-checkout-paylater-messages-block-frontend' ];
+		return array( 'ppcp-checkout-paylater-messages-block', 'ppcp-cart-paylater-messages-block', 'ppcp-cart-paylater-messages-block-frontend', 'ppcp-checkout-paylater-messages-block-frontend' );
 	}
 
 	/**
@@ -134,7 +146,7 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 * @return string[]
 	 */
 	public function get_editor_script_handles(): array {
-		return [ 'ppcp-cart-paylater-wc-blocks-editor', 'ppcp-checkout-paylater-wc-blocks-editor', 'ppcp-checkout-paylater-messages-block', 'ppcp-cart-paylater-messages-block' ];
+		return array( 'ppcp-cart-paylater-wc-blocks-editor', 'ppcp-checkout-paylater-wc-blocks-editor', 'ppcp-checkout-paylater-messages-block', 'ppcp-cart-paylater-messages-block' );
 	}
 
 	/**
@@ -144,9 +156,9 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 */
 	public function get_script_data(): array {
 
-		return [
+		return array(
 			'ppcp-paylater-wc-blocks-active' => true,
-		];
+		);
 	}
 
 	/**
@@ -155,27 +167,26 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 * @return void
 	 */
 	public function register_paylater_wc_blocks_editor_scripts(): void {
-		$cart_block_script_path = 'assets/js/cart-paylater-messages-block.js';
-		$checkout_block_script_path = 'assets/js/checkout-paylater-messages-block.js';
-		$cart_block_script_url = $this->paylater_wc_blocks_url . $cart_block_script_path;
-		$checkout_block_script_url = $this->paylater_wc_blocks_url . $checkout_block_script_path;
-		$cart_block_script_asset_path = $this->paylater_wc_blocks_url . 'assets/cart-paylater-messages-block.asset.php';
+		$cart_block_script_path           = 'assets/js/cart-paylater-messages-block.js';
+		$checkout_block_script_path       = 'assets/js/checkout-paylater-messages-block.js';
+		$cart_block_script_url            = $this->paylater_wc_blocks_url . $cart_block_script_path;
+		$checkout_block_script_url        = $this->paylater_wc_blocks_url . $checkout_block_script_path;
+		$cart_block_script_asset_path     = $this->paylater_wc_blocks_url . 'assets/cart-paylater-messages-block.asset.php';
 		$checkout_block_script_asset_path = $this->paylater_wc_blocks_url . 'assets/checkout-paylater-messages-block.asset.php';
 
 		$cart_block_script_asset = file_exists( $cart_block_script_asset_path )
 			? require $cart_block_script_asset_path
-			: [
-				'dependencies' => [],
+			: array(
+				'dependencies' => array(),
 				'version'      => $this->get_file_version( $cart_block_script_asset_path ),
-			];
+			);
 
 		$checkout_block_script_asset = file_exists( $checkout_block_script_asset_path )
 			? require $checkout_block_script_asset_path
-			: [
-				'dependencies' => [],
+			: array(
+				'dependencies' => array(),
 				'version'      => $this->get_file_version( $checkout_block_script_asset_path ),
-			];
-
+			);
 
 		wp_register_script(
 			'ppcp-cart-paylater-wc-blocks-editor',
@@ -212,26 +223,26 @@ class PayLaterWCBlocksIntegration implements IntegrationInterface {
 	 * @return void
 	 */
 	public function register_paylater_wc_blocks_frontend_scripts(): void {
-		$cart_block_script_path = 'assets/js/cart-paylater-messages-block-frontend.js';
-		$checkout_block_script_path = 'assets/js/checkout-paylater-messages-block-frontend.js';
-		$cart_block_script_url = $this->paylater_wc_blocks_url . $cart_block_script_path;
-		$checkout_block_script_url = $this->paylater_wc_blocks_url . $checkout_block_script_path;
-		$cart_block_script_asset_path = $this->paylater_wc_blocks_url . 'assets/cart-paylater-messages-block-frontend.asset.php';
+		$cart_block_script_path           = 'assets/js/cart-paylater-messages-block-frontend.js';
+		$checkout_block_script_path       = 'assets/js/checkout-paylater-messages-block-frontend.js';
+		$cart_block_script_url            = $this->paylater_wc_blocks_url . $cart_block_script_path;
+		$checkout_block_script_url        = $this->paylater_wc_blocks_url . $checkout_block_script_path;
+		$cart_block_script_asset_path     = $this->paylater_wc_blocks_url . 'assets/cart-paylater-messages-block-frontend.asset.php';
 		$checkout_block_script_asset_path = $this->paylater_wc_blocks_url . 'assets/checkout-paylater-messages-block-frontend.asset.php';
 
 		$cart_block_script_asset = file_exists( $cart_block_script_asset_path )
 			? require $cart_block_script_asset_path
-			: [
-				'dependencies' => [],
+			: array(
+				'dependencies' => array(),
 				'version'      => $this->get_file_version( $cart_block_script_asset_path ),
-			];
+			);
 
 		$checkout_block_script_asset = file_exists( $checkout_block_script_asset_path )
 			? require $checkout_block_script_asset_path
-			: [
-				'dependencies' => [],
+			: array(
+				'dependencies' => array(),
 				'version'      => $this->get_file_version( $checkout_block_script_asset_path ),
-			];
+			);
 
 		wp_register_script(
 			'ppcp-cart-paylater-messages-block-frontend',
