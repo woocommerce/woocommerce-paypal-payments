@@ -188,6 +188,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $payment_tokens_endpoint;
 
 	/**
+	 * Whether Vault v3 module is enabled.
+	 *
+	 * @var bool
+	 */
+	private $vault_v3_enabled;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
@@ -208,6 +215,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
 	 * @param PaymentTokensEndpoint   $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param bool $vault_v3_enabled Whether Vault v3 module is enabled.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -227,7 +235,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		OrderEndpoint $order_endpoint,
 		callable $paypal_checkout_url_factory,
 		string $place_order_button_text,
-		PaymentTokensEndpoint $payment_tokens_endpoint
+		PaymentTokensEndpoint $payment_tokens_endpoint,
+		bool $vault_v3_enabled
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -247,6 +256,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->api_shop_country            = $api_shop_country;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->order_button_text           = $place_order_button_text;
+		$this->order_endpoint          = $order_endpoint;
+		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
+		$this->vault_v3_enabled = $vault_v3_enabled;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
@@ -309,9 +321,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
-
-		$this->order_endpoint          = $order_endpoint;
-		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
 	}
 
 	/**
