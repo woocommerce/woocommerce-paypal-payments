@@ -167,22 +167,21 @@ class CheckoutActionHandler {
                 console.error(result)
             },
             onApprove: async ({vaultSetupToken}) => {
-                const response = await fetch(this.config.ajax.create_payment_token.endpoint, {
+                const response = await fetch(this.config.ajax.create_payment_token_for_guest.endpoint, {
                     method: "POST",
                     credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        nonce: this.config.ajax.create_payment_token.nonce,
+                        nonce: this.config.ajax.create_payment_token_for_guest.nonce,
                         vault_setup_token: vaultSetupToken,
-                        return_url: location.href,
                     })
                 })
 
                 const result = await response.json();
                 if (result.success === true) {
-                    window.location.href = location.href;
+                    document.querySelector('#place_order').click()
                     return;
                 }
 

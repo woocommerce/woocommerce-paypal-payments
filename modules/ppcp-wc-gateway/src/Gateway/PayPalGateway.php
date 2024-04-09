@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -195,6 +196,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $vault_v3_enabled;
 
 	/**
+	 * WooCommerce payment tokens.
+	 *
+	 * @var WooCommercePaymentTokens
+	 */
+	private $wc_payment_tokens;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
@@ -216,6 +224,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
 	 * @param PaymentTokensEndpoint   $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param bool $vault_v3_enabled Whether Vault v3 module is enabled.
+	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -236,7 +245,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		callable $paypal_checkout_url_factory,
 		string $place_order_button_text,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
-		bool $vault_v3_enabled
+		bool $vault_v3_enabled,
+		WooCommercePaymentTokens $wc_payment_tokens
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -259,6 +269,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->order_endpoint          = $order_endpoint;
 		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
 		$this->vault_v3_enabled = $vault_v3_enabled;
+		$this->wc_payment_tokens = $wc_payment_tokens;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
@@ -520,7 +531,37 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			$wc_order->save();
 		}
 
-		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) && ! $this->subscription_helper->paypal_subscription_id() ) {
+		if (
+			'card' !== $funding_source
+			&& $this->is_free_trial_order( $wc_order )
+			&& ! $this->subscription_helper->paypal_subscription_id()
+		) {
+			$ppcp_guest_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial') ?? null;
+			if($this->vault_v3_enabled && $ppcp_guest_payment_for_free_trial) {
+				$customer_id = $ppcp_guest_payment_for_free_trial->customer->id ?? '';
+				if($customer_id) {
+					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
+				}
+
+				if ( isset( $ppcp_guest_payment_for_free_trial->payment_source->paypal ) ) {
+					$email = '';
+					if ( isset( $ppcp_guest_payment_for_free_trial->payment_source->paypal->email_address ) ) {
+						$email = $ppcp_guest_payment_for_free_trial->payment_source->paypal->email_address;
+					}
+
+					$this->wc_payment_tokens->create_payment_token_paypal(
+						$wc_order->get_customer_id(),
+						$ppcp_guest_payment_for_free_trial->id,
+						$email
+					);
+				}
+
+				WC()->session->set( 'ppcp_guest_payment_for_free_trial', null);
+
+				$wc_order->payment_complete();
+				return $this->handle_payment_success( $wc_order );
+			}
+
 			$customer_id = get_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', true );
 			if ( $customer_id ) {
 				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
