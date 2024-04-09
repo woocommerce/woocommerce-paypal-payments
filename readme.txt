@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.6.1 - xxxx-xx-xx =
+= 2.6.1 - 2024-04-09 =
 * Fix - Payment tokens fixes and adjustments #2106
 * Fix - Pay upon Invoice: Add input validation to Experience Context fields #2092
 * Fix - Disable markup in get_plugin_data() returns to fix an issue with wptexturize() #2094
