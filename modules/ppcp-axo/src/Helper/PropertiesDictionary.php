@@ -15,7 +15,7 @@ namespace WooCommerce\PayPalCommerce\Axo\Helper;
 class PropertiesDictionary {
 
 	/**
-	 * Returns the possible list of possible email widget options.
+	 * Returns the list of possible email widget options.
 	 *
 	 * @return array
 	 */
@@ -27,7 +27,7 @@ class PropertiesDictionary {
 	}
 
 	/**
-	 * Returns the possible list of possible address widget options.
+	 * Returns the list of possible address widget options.
 	 *
 	 * @return array
 	 */
@@ -39,7 +39,7 @@ class PropertiesDictionary {
 	}
 
 	/**
-	 * Returns the possible list of possible address widget options.
+	 * Returns the list of possible address widget options.
 	 *
 	 * @return array
 	 */
@@ -47,6 +47,18 @@ class PropertiesDictionary {
 		return array(
 			'render'     => __( 'Render payment options list', 'woocommerce-paypal-payments' ),
 			'use_widget' => __( 'Use payment widget', 'woocommerce-paypal-payments' ),
+		);
+	}
+
+	/**
+	 * Returns the list of possible privacy options.
+	 *
+	 * @return array
+	 */
+	public static function privacy_options(): array {
+		return array(
+			'yes' => __( 'Yes (Recommended)', 'woocommerce-paypal-payments' ),
+			'no'  => __( 'No', 'woocommerce-paypal-payments' ),
 		);
 	}
 

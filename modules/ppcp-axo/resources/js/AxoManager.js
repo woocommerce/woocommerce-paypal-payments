@@ -47,8 +47,12 @@ class AxoManager {
         this.billingView = new BillingView(this.el.billingAddressContainer.selector, this.el);
         this.cardView = new CardView(this.el.paymentContainer.selector + '-details', this.el, this);
 
-        document.testAxoStatus = (key, value) => {
+        document.axoDebugSetStatus = (key, value) => {
             this.setStatus(key, value);
+        }
+
+        document.axoDebugObject = (key, value) => {
+            console.log(this);
         }
     }
 
@@ -549,7 +553,8 @@ class AxoManager {
     onClickSubmitButton() {
         if (this.data.card) { // Ryan flow
             log('Ryan flow.');
-            this.submit(this.data.card.getPaymentToken());
+            console.log('this.data.card', this.data.card);
+            this.submit(this.data.card.id);
 
         } else { // Gary flow
             log('Gary flow.');

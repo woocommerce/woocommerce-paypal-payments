@@ -23,7 +23,9 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 
 /**
  * Class AXOGateway.
@@ -46,6 +48,13 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @var string
 	 */
 	protected $wcgateway_module_url;
+
+	/**
+	 * The processor for orders.
+	 *
+	 * @var OrderProcessor
+	 */
+	protected $order_processor;
 
 	/**
 	 * The card icons.
@@ -101,6 +110,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @param ContainerInterface        $ppcp_settings The settings.
 	 * @param string                    $wcgateway_module_url The WcGateway module URL.
+	 * @param OrderProcessor            $order_processor The Order processor.
 	 * @param array                     $card_icons The card icons.
 	 * @param OrderEndpoint             $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
@@ -112,6 +122,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	public function __construct(
 		ContainerInterface $ppcp_settings,
 		string $wcgateway_module_url,
+		OrderProcessor $order_processor,
 		array $card_icons,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
@@ -124,10 +135,11 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		$this->ppcp_settings        = $ppcp_settings;
 		$this->wcgateway_module_url = $wcgateway_module_url;
+		$this->order_processor      = $order_processor;
 		$this->card_icons           = $card_icons;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'Accept credit cards with Fastlane’s latest solution.', 'woocommerce-paypal-payments' );
 
 		$is_axo_enabled = $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' );
 		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
@@ -182,6 +194,12 @@ class AxoGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order      = wc_get_order( $order_id );
+
+		$payment_method_title = __( 'Credit Card (via Fastlane by PayPal)', 'woocommerce-paypal-payments' );
+
+		$wc_order->set_payment_method_title( $payment_method_title );
+		$wc_order->save();
+
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		$nonce = wc_clean( wp_unslash( $_POST['axo_nonce'] ?? '' ) );
@@ -212,27 +230,8 @@ class AxoGateway extends WC_Payment_Gateway {
 				$payment_source
 			);
 
-			//$this->add_paypal_meta( $wc_order, $order, $this->environment );
+			$this->order_processor->process_captured_and_authorized( $wc_order, $order );
 
-			// TODO: inject dependency.
-			PPCP::container()->get( 'session.handler' )->replace_order( $order );
-			PPCP::container()->get( 'wcgateway.order-processor' )->process( $wc_order );
-
-//			$payment_source = array(
-//				'oxxo' => array(
-//					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-//					'email'        => $wc_order->get_billing_email(),
-//					'country_code' => $wc_order->get_billing_country(),
-//				),
-//			);
-//			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id(), $payment_source );
-//			foreach ( $payment_method->links as $link ) {
-//				if ( $link->rel === 'payer-action' ) {
-//					$payer_action = $link->href;
-//					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $payer_action );
-//					$wc_order->save_meta_data();
-//				}
-//			}
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
 			if ( is_a( $exception, PayPalApiException::class ) ) {
@@ -299,4 +298,28 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		return parent::get_transaction_url( $order );
 	}
+
+	/**
+	 * Return the gateway's title.
+	 *
+	 * @return string
+	 */
+	public function get_title() {
+		if ( is_admin() ) {
+			// $theorder and other things for retrieving the order or post info are not available
+			// in the constructor, so must do it here.
+			global $theorder;
+			if ( $theorder instanceof WC_Order ) {
+				if ( $theorder->get_payment_method() === self::ID ) {
+					$payment_method_title = $theorder->get_payment_method_title();
+					if ( $payment_method_title ) {
+						$this->title = $payment_method_title;
+					}
+				}
+			}
+		}
+
+		return parent::get_title();
+	}
+
 }

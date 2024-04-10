@@ -39,6 +39,8 @@ return array(
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
 
+		$module_url = $container->get( 'googlepay.url' );
+
 		// Connection tab fields.
 		$fields = $insert_after(
 			$fields,
@@ -66,6 +68,11 @@ return array(
 				array(
 					'googlepay_button_enabled' => array(
 						'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
+						'title_html'        => sprintf(
+							'<img src="%sassets/images/googlepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+							$module_url,
+							__( 'Google Pay', 'woocommerce-paypal-payments' )
+						),
 						'type'              => 'checkbox',
 						'class'             => array( 'ppcp-grayed-out-text' ),
 						'input_class'       => array( 'ppcp-disabled-checkbox' ),
@@ -93,6 +100,7 @@ return array(
 								)
 							),
 						),
+						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' )
 					),
 				)
 			);
@@ -105,6 +113,11 @@ return array(
 			array(
 				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
+					'title_html'        => sprintf(
+						'<img src="%sassets/images/googlepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						$module_url,
+						__( 'Google Pay', 'woocommerce-paypal-payments' )
+					),
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Google Pay button', 'woocommerce-paypal-payments' )
 						. '<p class="description">'
@@ -134,6 +147,7 @@ return array(
 							)
 						),
 					),
+					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' )
 				),
 				'googlepay_button_type'             => array(
 					'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),

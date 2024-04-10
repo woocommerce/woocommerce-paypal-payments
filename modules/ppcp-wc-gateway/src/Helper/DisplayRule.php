@@ -16,8 +16,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class DisplayRule {
 
-	const CONDITION_TYPE_ELEMENT = 'element';
-	const CONDITION_TYPE_BOOL    = 'bool';
+	const CONDITION_TYPE_ELEMENT     = 'element';
+	const CONDITION_TYPE_BOOL        = 'bool';
+	const CONDITION_TYPE_JS_VARIABLE = 'js_variable';
 
 	const CONDITION_OPERATION_EQUALS     = 'equals';
 	const CONDITION_OPERATION_NOT_EQUALS = 'not_equals';
@@ -131,6 +132,24 @@ class DisplayRule {
 		}
 
 		$this->condition_is_true( $this->resolve_operation( $settings_value, $value, $operation ) );
+		return $this;
+	}
+
+	/**
+	 * Adds a condition related to js variable check.
+	 *
+	 * @param string $variable_name The javascript variable name.
+	 * @param mixed  $value The value to enable / disable the condition.
+	 * @return self
+	 */
+	public function condition_js_variable( string $variable_name, $value ): self {
+		$this->add_condition(
+			array(
+				'type'     => self::CONDITION_TYPE_JS_VARIABLE,
+				'variable' => $variable_name,
+				'value'    => $value,
+			)
+		);
 		return $this;
 	}
 

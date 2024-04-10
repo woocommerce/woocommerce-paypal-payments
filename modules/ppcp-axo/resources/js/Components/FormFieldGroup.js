@@ -99,9 +99,19 @@ class FormFieldGroup {
     }
 
     inputValue(name) {
-        console.log('inputValue:name', this.fields[name].selector);
+        const baseSelector = this.fields[name].selector;
 
-        return document.querySelector(this.fields[name].selector).value;
+        const select = document.querySelector(baseSelector + ' input');
+        if (select) {
+            return select.value;
+        }
+
+        const input = document.querySelector(baseSelector + ' input');
+        if (input) {
+            return input.value;
+        }
+
+        return '';
     }
 
 }

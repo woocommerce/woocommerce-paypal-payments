@@ -14,39 +14,6 @@ $background-ident-color: #fbfbfb;
 	opacity: 0.5;
 }
 
-.ppcp-settings-field {
-	border-left: 1px solid transparent;
-	border-right: 1px solid transparent;
-
-	&.active {
-		background-color: $background-ident-color;
-		border: 1px solid $border-color;
-
-		th {
-			padding-left: 20px;
-		}
-	}
-
-	&.ppcp-field-indent {
-		background-color: $background-ident-color;
-		border: 1px solid $border-color;
-
-		th {
-			padding-left: 40px;
-		}
-
-		th, td {
-			border-top: 1px solid $border-color;
-		}
-
-		& + .ppcp-field-indent {
-			th, td {
-				border-top: 1px solid $background-ident-color;
-			}
-		}
-	}
-}
-
 .ppcp-active-spacer {
 	th, td {
 		padding: 0;
@@ -74,5 +41,53 @@ $background-ident-color: #fbfbfb;
 	.success {
 		color: green;
 		font-weight: bold;
+	}
+}
+
+.ppcp-align-label-center {
+	th {
+		text-align: center;
+	}
+}
+
+.ppcp-valign-label-middle {
+	th {
+		vertical-align: middle;
+	}
+}
+
+// Box indented fields.
+@media screen and (min-width: 800px) {
+	.ppcp-settings-field {
+		border-left: 1px solid transparent;
+		border-right: 1px solid transparent;
+
+		&.active {
+			background-color: $background-ident-color;
+			border: 1px solid $border-color;
+
+			th {
+				padding-left: 20px;
+			}
+		}
+
+		&.ppcp-field-indent {
+			background-color: $background-ident-color;
+			border: 1px solid $border-color;
+
+			th, &.ppcp-settings-field-heading td  {
+				padding-left: 40px;
+			}
+
+			th, td {
+				border-top: 1px solid $border-color;
+			}
+
+			& + .ppcp-field-indent {
+				th, td {
+					border-top: 1px solid $background-ident-color;
+				}
+			}
+		}
 	}
 }

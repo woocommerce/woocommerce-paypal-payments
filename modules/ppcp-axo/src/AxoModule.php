@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Axo;
 
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -40,6 +41,12 @@ class AxoModule implements ModuleInterface {
 			function ( $methods ) use ( $c ): array {
 				$gateway = $c->get( 'axo.gateway' );
 
+				// Add the gateway in admin area.
+				if ( is_admin() ) {
+					$methods[] = $gateway;
+					return $methods;
+				}
+
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
 					return $methods;
@@ -56,6 +63,22 @@ class AxoModule implements ModuleInterface {
 			},
 			1,
 			9
+		);
+
+		add_filter(
+			'ppcp_onboarding_dcc_table_rows',
+			function ( $rows, $renderer ): array {
+				if ( $renderer instanceof  OnboardingOptionsRenderer ) {
+					$rows[] = $renderer->render_table_row(
+						__( 'Fastlane by PayPal', 'woocommerce-paypal-payments' ),
+						__( 'Yes', 'woocommerce-paypal-payments' ),
+						__( 'Help accelerate guest checkout with PayPal\'s autofill solution.', 'woocommerce-paypal-payments' )
+					);
+				}
+				return $rows;
+			},
+			10,
+			2
 		);
 
 		add_action(

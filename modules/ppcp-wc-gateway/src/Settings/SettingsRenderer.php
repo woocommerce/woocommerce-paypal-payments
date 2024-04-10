@@ -262,7 +262,7 @@ class SettingsRenderer {
 		$html = sprintf(
 			'<h3 class="wc-settings-sub-title %s">%s</h3>',
 			esc_attr( implode( ' ', $config['class'] ) ),
-			esc_html( $config['heading'] )
+			isset( $config['heading_html'] ) ? $config['heading_html'] : esc_html( $config['heading'] )
 		);
 
 		return $html;
@@ -385,10 +385,10 @@ $data_rows_html
 			?>
 		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 			<?php if ( 'ppcp-heading' !== $config['type'] && isset( $config['title'] ) ) : ?>
-			<th scope="row">
+			<th scope="row" valign="bottom">
 				<label
 					for="<?php echo esc_attr( $id ); ?>"
-				><?php echo esc_html( $config['title'] ); ?></label>
+				><?php echo isset( $config['title_html'] ) ? $config['title_html'] : esc_html( $config['title'] ); ?></label>
 				<?php if ( isset( $config['desc_tip'] ) && $config['desc_tip'] ) : ?>
 				<span
 						class="woocommerce-help-tip"

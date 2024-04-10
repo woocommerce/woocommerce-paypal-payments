@@ -34,15 +34,6 @@ return array(
 
 	// If AXO is configured and onboarded.
 	'axo.available'                         => static function ( ContainerInterface $container ): bool {
-// TODO
-//		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
-//			$status = $container->get( 'googlepay.helpers.apm-product-status' );
-//			assert( $status instanceof ApmProductStatus );
-//			/**
-//			 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
-//			 */
-//			return apply_filters( 'woocommerce_paypal_payments_googlepay_product_status', $status->is_active() );
-//		}
 		return true;
 	},
 
@@ -74,6 +65,7 @@ return array(
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'axo.card_icons' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
