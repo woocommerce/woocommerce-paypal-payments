@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WP_HTML_Tag_Processor;
 
 /**
  * Class PayLaterBlockRenderer
@@ -31,7 +30,12 @@ class PayLaterBlockRenderer {
 
 			$html = '<div id="' . esc_attr( $attributes['id'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 
-			$processor = new WP_HTML_Tag_Processor( $html );
+			/**
+			 * Class exist in WordPress.
+			 *
+			 * @psalm-suppress UndefinedClass
+			 */
+			$processor = new \WP_HTML_Tag_Processor( $html );
 
 			if ( $processor->next_tag( 'div' ) ) {
 				$layout = $attributes['layout'] ?? 'text';
