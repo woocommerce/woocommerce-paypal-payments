@@ -102,7 +102,7 @@ class PayLaterBlockModule implements ModuleInterface {
 				register_block_type(
 					dirname( realpath( __FILE__ ), 2 ),
 					array(
-						'render_callback' => function ( $attributes ) use ( $c ) {
+						'render_callback' => function ( array $attributes ) use ( $c ) {
 							$renderer = $c->get( 'paylater-block.renderer' );
 							ob_start();
 							// phpcs:ignore -- No need to escape it, the PayLaterBlockRenderer class is responsible for escaping.

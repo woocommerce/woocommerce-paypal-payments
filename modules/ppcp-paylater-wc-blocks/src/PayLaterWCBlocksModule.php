@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
+use Automattic\WooCommerce\Blocks\Integrations\IntegrationRegistry;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -87,7 +88,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 			function () use ( $c ): void {
 				add_action(
 					'woocommerce_blocks_checkout_block_registration',
-					function ( $integration_registry ) use ( $c ): void {
+					function ( IntegrationRegistry $integration_registry ) use ( $c ): void {
 						$integration_registry->register(
 							new PayLaterWCBlocksIntegration(
 								$c->get( 'paylater-wc-blocks.url' ),
@@ -167,7 +168,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		 */
 		add_action(
 			'block_categories_all',
-			function ( $categories ): array {
+			function ( array $categories ): array {
 				return array_merge(
 					$categories,
 					array(
@@ -195,7 +196,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 			register_block_type(
 				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
 				array(
-					'render_callback' => function ( $attributes ) use ( $c ) {
+					'render_callback' => function ( array $attributes ) use ( $c ) {
 						$renderer = $c->get( 'paylater-wc-blocks.renderer' );
 						ob_start();
                         // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
@@ -221,7 +222,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 			register_block_type(
 				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
 				array(
-					'render_callback' => function ( $attributes ) use ( $c ) {
+					'render_callback' => function ( array $attributes ) use ( $c ) {
 						$renderer = $c->get( 'paylater-wc-blocks.renderer' );
 						ob_start();
                         // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
