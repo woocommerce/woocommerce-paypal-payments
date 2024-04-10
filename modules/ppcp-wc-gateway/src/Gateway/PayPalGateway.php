@@ -205,25 +205,25 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	/**
 	 * PayPalGateway constructor.
 	 *
-	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
-	 * @param FundingSourceRenderer   $funding_source_renderer The funding source renderer.
-	 * @param OrderProcessor          $order_processor The Order Processor.
-	 * @param ContainerInterface      $config The settings.
-	 * @param SessionHandler          $session_handler The Session Handler.
-	 * @param RefundProcessor         $refund_processor The Refund Processor.
-	 * @param State                   $state The state.
-	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
-	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
-	 * @param string                  $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Environment             $environment The environment.
-	 * @param PaymentTokenRepository  $payment_token_repository The payment token repository.
-	 * @param LoggerInterface         $logger The logger.
-	 * @param string                  $api_shop_country The api shop country.
-	 * @param OrderEndpoint           $order_endpoint The order endpoint.
-	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
-	 * @param PaymentTokensEndpoint   $payment_tokens_endpoint Payment tokens endpoint.
-	 * @param bool $vault_v3_enabled Whether Vault v3 module is enabled.
+	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
+	 * @param FundingSourceRenderer    $funding_source_renderer The funding source renderer.
+	 * @param OrderProcessor           $order_processor The Order Processor.
+	 * @param ContainerInterface       $config The settings.
+	 * @param SessionHandler           $session_handler The Session Handler.
+	 * @param RefundProcessor          $refund_processor The Refund Processor.
+	 * @param State                    $state The state.
+	 * @param TransactionUrlProvider   $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param SubscriptionHelper       $subscription_helper The subscription helper.
+	 * @param string                   $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Environment              $environment The environment.
+	 * @param PaymentTokenRepository   $payment_token_repository The payment token repository.
+	 * @param LoggerInterface          $logger The logger.
+	 * @param string                   $api_shop_country The api shop country.
+	 * @param OrderEndpoint            $order_endpoint The order endpoint.
+	 * @param callable(string):string  $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
+	 * @param string                   $place_order_button_text The text for the standard "Place order" button.
+	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param bool                     $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
 	 */
 	public function __construct(
@@ -266,10 +266,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->api_shop_country            = $api_shop_country;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->order_button_text           = $place_order_button_text;
-		$this->order_endpoint          = $order_endpoint;
-		$this->payment_tokens_endpoint = $payment_tokens_endpoint;
-		$this->vault_v3_enabled = $vault_v3_enabled;
-		$this->wc_payment_tokens = $wc_payment_tokens;
+		$this->order_endpoint              = $order_endpoint;
+		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
+		$this->vault_v3_enabled            = $vault_v3_enabled;
+		$this->wc_payment_tokens           = $wc_payment_tokens;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
@@ -536,10 +536,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			&& $this->is_free_trial_order( $wc_order )
 			&& ! $this->subscription_helper->paypal_subscription_id()
 		) {
-			$ppcp_guest_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial') ?? null;
-			if($this->vault_v3_enabled && $ppcp_guest_payment_for_free_trial) {
+			$ppcp_guest_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial' ) ?? null;
+			if ( $this->vault_v3_enabled && $ppcp_guest_payment_for_free_trial ) {
 				$customer_id = $ppcp_guest_payment_for_free_trial->customer->id ?? '';
-				if($customer_id) {
+				if ( $customer_id ) {
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
 				}
 
@@ -556,7 +556,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					);
 				}
 
-				WC()->session->set( 'ppcp_guest_payment_for_free_trial', null);
+				WC()->session->set( 'ppcp_guest_payment_for_free_trial', null );
 
 				$wc_order->payment_complete();
 				return $this->handle_payment_success( $wc_order );

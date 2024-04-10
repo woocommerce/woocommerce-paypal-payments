@@ -1059,46 +1059,46 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'redirect'                                => wc_get_checkout_url(),
 			'context'                                 => $this->context(),
 			'ajax'                                    => array(
-				'simulate_cart'        => array(
+				'simulate_cart'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
 				),
-				'change_cart'          => array(
+				'change_cart'                    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'create_order'         => array(
+				'create_order'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order'        => array(
+				'approve_order'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'approve_subscription' => array(
+				'approve_subscription'           => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveSubscriptionEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveSubscriptionEndpoint::nonce() ),
 				),
-				'vault_paypal'         => array(
+				'vault_paypal'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
-				'save_checkout_form'   => array(
+				'save_checkout_form'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SaveCheckoutFormEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SaveCheckoutFormEndpoint::nonce() ),
 				),
-				'validate_checkout'    => array(
+				'validate_checkout'              => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
 				),
-				'cart_script_params'   => array(
+				'cart_script_params'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 				),
-				'create_setup_token'   => array(
+				'create_setup_token'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
 				),
-				'create_payment_token' => array(
+				'create_payment_token'           => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
 				),
