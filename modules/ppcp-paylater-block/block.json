@@ -49,6 +49,5 @@
 	},
 	"textdomain": "woocommerce-paypal-payments",
 	"editorScript": "ppcp-paylater-block",
-	"editorStyle": "file:./assets/css/edit.css",
-    "render": "file:./src/PayLaterBlockRender.php"
+	"editorStyle": "file:./assets/css/edit.css"
 }
