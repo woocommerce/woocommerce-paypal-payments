@@ -5,7 +5,7 @@ class BillingView {
     constructor(selector, elements) {
         this.el = elements;
 
-        this.billingFormFields = new FormFieldGroup({
+        this.group = new FormFieldGroup({
             baseSelector: '.woocommerce-checkout',
             contentSelector: selector,
             template: (data) => {
@@ -81,40 +81,44 @@ class BillingView {
                     'selector': '#billing_company_field',
                     'valuePath': null,
                 },
-                phone: {
-                    'selector': '#billing_phone_field',
-                    'valuePath': null,
-                },
+                // phone: {
+                //     'selector': '#billing_phone_field',
+                //     'valuePath': null,
+                // },
             }
         });
     }
 
     isActive() {
-        return this.billingFormFields.active;
+        return this.group.active;
     }
 
     activate() {
-        this.billingFormFields.activate();
+        this.group.activate();
     }
 
     deactivate() {
-        this.billingFormFields.deactivate();
+        this.group.deactivate();
     }
 
     refresh() {
-        this.billingFormFields.refresh();
+        this.group.refresh();
     }
 
     setData(data) {
-        this.billingFormFields.setData(data);
+        this.group.setData(data);
     }
 
     inputValue(name) {
-        return this.billingFormFields.inputValue(name);
+        return this.group.inputValue(name);
     }
 
     fullName() {
         return `${this.inputValue('firstName')} ${this.inputValue('lastName')}`.trim();
+    }
+
+    copyDataToForm() {
+        return this.group.copyDataToForm();
     }
 
 }

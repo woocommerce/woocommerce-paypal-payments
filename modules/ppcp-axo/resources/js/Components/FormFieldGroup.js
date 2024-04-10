@@ -17,10 +17,17 @@ class FormFieldGroup {
         this.refresh();
     }
 
-    getDataValue(path) {
+    dataValue(fieldKey) {
+        if (!fieldKey || !this.fields[fieldKey]) {
+            return '';
+        }
+
+        const path = this.fields[fieldKey].valuePath;
+
         if (!path) {
             return '';
         }
+
         const value = path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined) ? acc[key] : undefined, this.data);
         return value ? value : '';
     }
@@ -66,13 +73,13 @@ class FormFieldGroup {
 
         if (typeof this.template === 'function') {
             content.innerHTML = this.template({
-                value: (valueKey) => {
-                    return this.getDataValue(this.fields[valueKey].valuePath);
+                value: (fieldKey) => {
+                    return this.dataValue(fieldKey);
                 },
                 isEmpty: () => {
                     let isEmpty = true;
-                    Object.values(this.fields).forEach((valueField) => {
-                        if (this.getDataValue(valueField.valuePath)) {
+                    Object.keys(this.fields).forEach((fieldKey) => {
+                        if (this.dataValue(fieldKey)) {
                             isEmpty = false;
                             return false;
                         }
@@ -98,20 +105,47 @@ class FormFieldGroup {
         }
     }
 
-    inputValue(name) {
+    inputElement(name) {
         const baseSelector = this.fields[name].selector;
 
-        const select = document.querySelector(baseSelector + ' input');
+        const select = document.querySelector(baseSelector + ' select');
         if (select) {
-            return select.value;
+            return select;
         }
 
         const input = document.querySelector(baseSelector + ' input');
         if (input) {
-            return input.value;
+            return input;
         }
 
-        return '';
+        return null;
+    }
+
+    inputValue(name) {
+        const el = this.inputElement(name);
+        return el ? el.value : '';
+    }
+
+    copyDataToForm() {
+
+        Object.keys(this.fields).forEach((fieldKey) => {
+            const field = this.fields[fieldKey];
+
+            if (!field.valuePath || !field.selector) {
+                return true;
+            }
+
+            const inputElement = this.inputElement(fieldKey);
+
+            if (!inputElement) {
+                return true;
+            }
+
+            jQuery(inputElement).val(
+                this.dataValue(fieldKey)
+            );
+        });
+
     }
 
 }

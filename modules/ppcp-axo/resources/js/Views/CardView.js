@@ -6,7 +6,7 @@ class CardView {
         this.el = elements;
         this.manager = manager;
 
-        this.cardFormFields = new FormFieldGroup({
+        this.group = new FormFieldGroup({
             baseSelector: '.ppcp-axo-payment-container',
             contentSelector: selector,
             template: (data) => {
@@ -76,19 +76,37 @@ class CardView {
     }
 
     activate() {
-        this.cardFormFields.activate();
+        this.group.activate();
     }
 
     deactivate() {
-        this.cardFormFields.deactivate();
+        this.group.deactivate();
     }
 
     refresh() {
-        this.cardFormFields.refresh();
+        this.group.refresh();
     }
 
     setData(data) {
-        this.cardFormFields.setData(data);
+        this.group.setData(data);
+    }
+
+    copyDataToForm() {
+        const name = this.group.dataValue('name');
+        const { firstName, lastName } = this.splitName(name);
+
+        jQuery('#billing_first_name').val(firstName);
+        jQuery('#billing_last_name').val(lastName);
+
+        return this.group.copyDataToForm();
+    }
+
+    splitName(fullName) {
+        let nameParts = fullName.trim().split(' ');
+        let firstName = nameParts[0];
+        let lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+
+        return { firstName, lastName };
     }
 
 }

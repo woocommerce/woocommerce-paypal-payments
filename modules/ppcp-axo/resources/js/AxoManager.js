@@ -51,8 +51,9 @@ class AxoManager {
             this.setStatus(key, value);
         }
 
-        document.axoDebugObject = (key, value) => {
+        document.axoDebugObject = () => {
             console.log(this);
+            return this;
         }
     }
 
@@ -351,6 +352,27 @@ class AxoManager {
             `);
         }
 
+        // Watermark container
+        const wc = this.el.watermarkContainer;
+        if (!document.querySelector(wc.selector)) {
+            this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
+            this.emailInput.insertAdjacentHTML('afterend', `
+                <div class="${wc.className}" id="${wc.id}"></div>
+            `);
+        }
+
+        // Payment container
+        const pc = this.el.paymentContainer;
+        if (!document.querySelector(pc.selector)) {
+            const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
+            gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
+                <div id="${pc.id}" class="${pc.className} hidden">
+                    <div id="${pc.id}-form" class="${pc.className}-form"></div>
+                    <div id="${pc.id}-details" class="${pc.className}-details"></div>
+                </div>
+            `);
+        }
+
         if (this.useEmailWidget()) {
 
             // Display email widget.
@@ -379,7 +401,6 @@ class AxoManager {
         this.initialized = true;
 
         await this.connect();
-        this.insertDomElements();
         this.renderWatermark();
         this.watchEmail();
     }
@@ -393,21 +414,6 @@ class AxoManager {
         });
 
         this.fastlane.setLocale('en_us');
-    }
-
-    insertDomElements() {
-        this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
-        this.emailInput.insertAdjacentHTML('afterend', `
-            <div class="${this.el.watermarkContainer.className}" id="${this.el.watermarkContainer.id}"></div>
-        `);
-
-        const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
-        gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
-            <div id="${this.el.paymentContainer.id}" class="${this.el.paymentContainer.className} hidden">
-                <div id="${this.el.paymentContainer.id}-form" class="${this.el.paymentContainer.className}-form"></div>
-                <div id="${this.el.paymentContainer.id}-details" class="${this.el.paymentContainer.className}-details"></div>
-            </div>
-        `);
     }
 
     triggerGatewayChange() {
@@ -551,14 +557,20 @@ class AxoManager {
     }
 
     onClickSubmitButton() {
+        // TODO: validate data.
+
         if (this.data.card) { // Ryan flow
             log('Ryan flow.');
-            console.log('this.data.card', this.data.card);
+
+            jQuery('#ship-to-different-address-checkbox').prop('checked', 'checked');
+            this.billingView.copyDataToForm();
+            this.shippingView.copyDataToForm();
+            this.cardView.copyDataToForm();
+
             this.submit(this.data.card.id);
 
         } else { // Gary flow
             log('Gary flow.');
-            console.log('this.tokenizeData()', this.tokenizeData());
 
             try {
                 this.cardComponent.tokenize(

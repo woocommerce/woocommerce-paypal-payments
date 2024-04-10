@@ -5,7 +5,7 @@ class ShippingView {
     constructor(selector, elements) {
         this.el = elements;
 
-        this.shippingFormFields = new FormFieldGroup({
+        this.group = new FormFieldGroup({
             baseSelector: '.woocommerce-checkout',
             contentSelector: selector,
             template: (data) => {
@@ -86,23 +86,27 @@ class ShippingView {
     }
 
     isActive() {
-        return this.shippingFormFields.active;
+        return this.group.active;
     }
 
     activate() {
-        this.shippingFormFields.activate();
+        this.group.activate();
     }
 
     deactivate() {
-        this.shippingFormFields.deactivate();
+        this.group.deactivate();
     }
 
     refresh() {
-        this.shippingFormFields.refresh();
+        this.group.refresh();
     }
 
     setData(data) {
-        this.shippingFormFields.setData(data);
+        this.group.setData(data);
+    }
+
+    copyDataToForm() {
+        return this.group.copyDataToForm();
     }
 
 }

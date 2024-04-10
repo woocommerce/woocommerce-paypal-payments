@@ -209,9 +209,9 @@ return array(
 							'Advanced Style Settings (optional) %1$sSee more%2$s %3$sSee less%4$s',
 							'woocommerce-paypal-payments'
 						),
-						'<a href="javascript:void(0)" id="ppcp-axo-style-more" onclick="jQuery(this).hide(); jQuery(\'#ppcp-axo-style-less\').show(); document.ppcpAxoShowStyles = true; jQuery(document).trigger(\'ppcp-display-change\');" style="font-weight: normal; text-decoration: none;">',
+						'<a href="javascript:void(0)" id="ppcp-axo-style-more" onclick="jQuery(this).hide(); jQuery(\'#ppcp-axo-style-less\').show(); document.ppcpAxoShowStyles = true; jQuery(document).trigger(\'ppcp-display-change\');" style="font-weight: normal;">',
 						'</a>',
-						'<a href="javascript:void(0)" id="ppcp-axo-style-less" onclick="jQuery(this).hide(); jQuery(\'#ppcp-axo-style-more\').show(); document.ppcpAxoShowStyles = false; jQuery(document).trigger(\'ppcp-display-change\');" style="font-weight: normal; text-decoration: none; display: none;">',
+						'<a href="javascript:void(0)" id="ppcp-axo-style-less" onclick="jQuery(this).hide(); jQuery(\'#ppcp-axo-style-more\').show(); document.ppcpAxoShowStyles = false; jQuery(document).trigger(\'ppcp-display-change\');" style="font-weight: normal; display: none;">',
 						'</a>'
 					),
 					'type'         => 'ppcp-heading',
@@ -219,13 +219,10 @@ return array(
 						sprintf(
 						// translators: %1$s and %2$s is a link tag.
 							__(
-								'Leave the default styling, or customize how Fastlane looks on your website. See PayPal\'s developer docs for info',
+								'Leave the default styling, or customize how Fastlane looks on your website. %1$sSee PayPal\'s developer docs%2$s for info',
 								'woocommerce-paypal-payments'
 							),
-							'<a
-                            rel="noreferrer noopener"
-                            href="https://woo.com/document/woocommerce-paypal-payments/#vaulting-a-card"
-                            >',
+							'<a href="https://www.paypal.com/us/fastlane" target="_blank">',
 							'</a>'
 						)
 					),

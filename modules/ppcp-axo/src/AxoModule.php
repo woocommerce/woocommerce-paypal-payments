@@ -127,6 +127,13 @@ class AxoModule implements ModuleInterface {
 					}
 				);
 
+				add_action('wp_head', function () {
+					echo '
+						<!-- PayPal Insights SDK JS library -->
+						<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>
+					';
+				});
+
 			},
 			1
 		);
