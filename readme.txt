@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
-Tested up to: 6.4
+Tested up to: 6.5
 Requires PHP: 7.2
-Stable tag: 2.6.0
+Stable tag: 2.6.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,24 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.6.1 - 2024-04-09 =
+* Fix - Payment tokens fixes and adjustments #2106
+* Fix - Pay upon Invoice: Add input validation to Experience Context fields #2092
+* Fix - Disable markup in get_plugin_data() returns to fix an issue with wptexturize() #2094
+* Fix - Problem changing the shipping option in block pages #2142
+* Fix - Saved payment token deleted after payment with another saved payment token #2146
+* Enhancement - Pay later messaging configurator improvements #2107
+* Enhancement - Replace the middleware URL from connect.woocommerce.com to api.woocommerce.com/integrations #2130
+* Enhancement - Remove all Sofort references as it has been deprecated #2124
+* Enhancement - Improve funding source names #2118
+* Enhancement - More fraud prevention capabilities by storing additional data in the order #2125
+* Enhancement - Update ACDC currency eligibility for AMEX #2129
+* Enhancement - Sync shipping options with Venmo when skipping final confirmation on Checkout #2108
+* Enhancement - Card Fields: Add a filter for the CVC field and update the placeholder to match the label #2089
+* Enhancement - Product Title: Sanitize before sending to PayPal #2090
+* Enhancement - Add filter for disabling permit_multiple_payment_tokens vault attribute #2136
+* Enhancement - Filter to hide PayPal email address not working on order detail #2137
 
 = 2.6.0 - 2024-03-20 =
 * Fix - invoice_id not included in API call when creating payment with saved card #2086

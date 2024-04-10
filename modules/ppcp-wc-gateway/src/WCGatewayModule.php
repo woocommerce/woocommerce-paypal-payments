@@ -448,6 +448,53 @@ class WCGatewayModule implements ModuleInterface {
 				delete_transient( 'ppcp_reference_transaction_enabled' );
 			}
 		);
+
+		/**
+		 * Param types removed to avoid third-party issues.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_admin_billing_fields',
+			function ( $fields ) {
+				global $theorder;
+
+				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
+					return $fields;
+				}
+
+				if ( ! is_array( $fields ) ) {
+					return $fields;
+				}
+
+				if ( ! $theorder instanceof WC_Order ) {
+					return $fields;
+				}
+
+				$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
+
+				if ( ! $email ) {
+					return $fields;
+				}
+
+				// Is payment source is paypal exclude all non paypal funding sources.
+				$payment_source           = $theorder->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ?: '';
+				$is_paypal_funding_source = ( strpos( $theorder->get_payment_method_title(), '(via PayPal)' ) === false );
+
+				if ( $payment_source === 'paypal' && ! $is_paypal_funding_source ) {
+					return $fields;
+				}
+
+				$fields['paypal_email'] = array(
+					'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
+					'value'             => $email,
+					'wrapper_class'     => 'form-field-wide',
+					'custom_attributes' => array( 'disabled' => 'disabled' ),
+				);
+
+				return $fields;
+			}
+		);
 	}
 
 	/**

@@ -141,7 +141,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
-										'permit_multiple_payment_tokens' => true,
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
 									),
 								),
 							),
@@ -167,7 +167,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
-										'permit_multiple_payment_tokens' => true,
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
 									),
 								),
 							),
@@ -281,7 +281,11 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					$settings = $c->get( 'wcgateway.settings' );
 					assert( $settings instanceof Settings );
-					$verification_method = $settings->has( '3d_secure_contingency' ) ? $settings->get( '3d_secure_contingency' ) : '';
+
+					$verification_method =
+						$settings->has( '3d_secure_contingency' )
+							? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+							: '';
 
 					$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 

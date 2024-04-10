@@ -1009,11 +1009,21 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		if ( $this->settings->has( '3d_secure_contingency' ) ) {
 			$value = $this->settings->get( '3d_secure_contingency' );
 			if ( $value ) {
-				return $value;
+				return $this->return_3ds_contingency( $value );
 			}
 		}
 
-		return 'SCA_WHEN_REQUIRED';
+		return $this->return_3ds_contingency( 'SCA_WHEN_REQUIRED' );
+	}
+
+	/**
+	 * Processes and returns the 3D Secure contingency.
+	 *
+	 * @param string $contingency The ThreeD secure contingency.
+	 * @return string
+	 */
+	private function return_3ds_contingency( string $contingency ): string {
+		return apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $contingency );
 	}
 
 	/**
@@ -1337,7 +1347,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				$disable_funding,
 				array_diff(
 					array_keys( $this->all_funding_sources ),
-					array( 'venmo', 'paylater' )
+					array( 'venmo', 'paylater', 'paypal' )
 				)
 			);
 		}
@@ -1357,6 +1367,20 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		} else {
 			$disable_funding[] = 'paylater';
 		}
+
+		$disable_funding = array_filter(
+			$disable_funding,
+			/**
+			 * Make sure paypal is not sent in disable funding.
+			 *
+			 * @param string $funding_source The funding_source.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $funding_source ) {
+				return $funding_source !== 'paypal';
+			}
+		);
 
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );

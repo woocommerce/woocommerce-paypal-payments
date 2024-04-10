@@ -300,6 +300,7 @@ const PayPalComponent = ({
             try {
                 const shippingOptionId = data.selectedShippingOption?.id;
                 if (shippingOptionId) {
+                    await wp.data.dispatch('wc/store/cart').selectShippingRate(shippingOptionId);
                     await shippingData.setSelectedRates(shippingOptionId);
                 }
 
@@ -359,6 +360,7 @@ const PayPalComponent = ({
             try {
                 const shippingOptionId = data.selectedShippingOption?.id;
                 if (shippingOptionId) {
+                    await wp.data.dispatch('wc/store/cart').selectShippingRate(shippingOptionId);
                     await shippingData.setSelectedRates(shippingOptionId);
                 }
             } catch (e) {
