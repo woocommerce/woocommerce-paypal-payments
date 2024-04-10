@@ -84,10 +84,10 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_blocks_loaded',
-			function() use ( $c ): void {
+			function () use ( $c ): void {
 				add_action(
 					'woocommerce_blocks_checkout_block_registration',
-					function( $integration_registry ) use ( $c ): void {
+					function ( $integration_registry ) use ( $c ): void {
 						$integration_registry->register(
 							new PayLaterWCBlocksIntegration(
 								$c->get( 'paylater-wc-blocks.url' ),
@@ -158,13 +158,6 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
 					)
 				);
-
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
-				register_block_type( dirname( realpath( __FILE__ ), 2 ) );
 			},
 			20
 		);
@@ -174,7 +167,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		 */
 		add_action(
 			'block_categories_all',
-			function( $categories ): array {
+			function ( $categories ): array {
 				return array_merge(
 					$categories,
 					array(
@@ -198,48 +191,52 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		 *
 		 * @psalm-suppress PossiblyFalseArgument
 		 */
-		register_block_type(
-			dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
-			array(
-				'render_callback' => function ( $attributes ) use ( $c ) {
-					$renderer = $c->get( 'paylater-wc-blocks.renderer' );
-					ob_start();
-                    // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
-					echo $renderer->render(
+		if ( function_exists( 'register_block_type' ) ) {
+			register_block_type(
+				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
+				array(
+					'render_callback' => function ( $attributes ) use ( $c ) {
+						$renderer = $c->get( 'paylater-wc-blocks.renderer' );
+						ob_start();
+                        // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
+                        echo $renderer->render(
                         // phpcs:ignore
-						$attributes,
-						'cart',
-                        // phpcs:ignore
-						$c
-					);
-					return ob_get_clean();
-				},
-			)
-		);
+                            $attributes,
+							'cart',
+                            // phpcs:ignore
+                            $c
+						);
+						return ob_get_clean();
+					},
+				)
+			);
+		}
 
 		/**
 		 * Cannot return false for this path.
 		 *
 		 * @psalm-suppress PossiblyFalseArgument
 		 */
-		register_block_type(
-			dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
-			array(
-				'render_callback' => function ( $attributes ) use ( $c ) {
-					$renderer = $c->get( 'paylater-wc-blocks.renderer' );
-					ob_start();
-                    // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
-					echo $renderer->render(
+		if ( function_exists( 'register_block_type' ) ) {
+			register_block_type(
+				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
+				array(
+					'render_callback' => function ( $attributes ) use ( $c ) {
+						$renderer = $c->get( 'paylater-wc-blocks.renderer' );
+						ob_start();
+                        // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
+                        echo $renderer->render(
                         // phpcs:ignore
-						$attributes,
-						'checkout',
-                        // phpcs:ignore
-						$c
-					);
-					return ob_get_clean();
-				},
-			)
-		);
+                            $attributes,
+							'checkout',
+                            // phpcs:ignore
+                            $c
+						);
+						return ob_get_clean();
+					},
+				)
+			);
+		}
 	}
 
 	/**
