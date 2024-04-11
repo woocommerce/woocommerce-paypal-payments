@@ -103,7 +103,10 @@ return array(
 			$api_shop_country,
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'vaulting.vault-v3-enabled' ),
+			$container->get( 'vaulting.wc-payment-tokens' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {

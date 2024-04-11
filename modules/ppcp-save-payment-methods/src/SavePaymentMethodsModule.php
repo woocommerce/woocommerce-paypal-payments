@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -316,6 +317,14 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
 								),
 							),
+							'labels'                  => array(
+								'error' => array(
+									'generic' => __(
+										'Something went wrong. Please try again or choose another payment source.',
+										'woocommerce-paypal-payments'
+									),
+								),
+							),
 						)
 					);
 				} catch ( RuntimeException $exception ) {
@@ -358,6 +367,16 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token' );
 				assert( $endpoint instanceof CreatePaymentToken );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CreatePaymentTokenForGuest::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token-for-guest' );
+				assert( $endpoint instanceof CreatePaymentTokenForGuest );
 
 				$endpoint->handle_request();
 			}

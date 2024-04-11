@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Product;
 use WC_Product_Variation;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -33,6 +34,9 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -185,18 +189,32 @@ class SmartButton implements SmartButtonInterface {
 	private $funding_sources_without_redirect;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
 	 * Session handler.
 	 *
 	 * @var SessionHandler
 	 */
 	private $session_handler;
+
+	/**
+	 * Whether Vault v3 module is enabled.
+	 *
+	 * @var bool
+	 */
+	private $vault_v3_enabled;
+
+	/**
+	 * Payment tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
 
 	/**
 	 * SmartButton constructor.
@@ -220,6 +238,8 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param string[]               $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 * @param bool                   $vault_v3_enabled Whether Vault v3 module is enabled.
+	 * @param PaymentTokensEndpoint  $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -242,6 +262,8 @@ class SmartButton implements SmartButtonInterface {
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
+		bool $vault_v3_enabled,
+		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger
 	) {
 
@@ -264,7 +286,9 @@ class SmartButton implements SmartButtonInterface {
 		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->pay_now_contexts                  = $pay_now_contexts;
 		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
+		$this->vault_v3_enabled                  = $vault_v3_enabled;
 		$this->logger                            = $logger;
+		$this->payment_tokens_endpoint           = $payment_tokens_endpoint;
 	}
 
 	/**
@@ -1035,44 +1059,57 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'redirect'                                => wc_get_checkout_url(),
 			'context'                                 => $this->context(),
 			'ajax'                                    => array(
-				'simulate_cart'        => array(
+				'simulate_cart'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
 				),
-				'change_cart'          => array(
+				'change_cart'                    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'create_order'         => array(
+				'create_order'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order'        => array(
+				'approve_order'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'approve_subscription' => array(
+				'approve_subscription'           => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveSubscriptionEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveSubscriptionEndpoint::nonce() ),
 				),
-				'vault_paypal'         => array(
+				'vault_paypal'                   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
-				'save_checkout_form'   => array(
+				'save_checkout_form'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SaveCheckoutFormEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SaveCheckoutFormEndpoint::nonce() ),
 				),
-				'validate_checkout'    => array(
+				'validate_checkout'              => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
 				),
-				'cart_script_params'   => array(
+				'cart_script_params'             => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
+				),
+				'create_setup_token'             => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+				),
+				'create_payment_token'           => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+				),
+				'create_payment_token_for_guest' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
 				),
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
+			'vault_v3_enabled'                        => $this->vault_v3_enabled,
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
 			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),
@@ -1904,8 +1941,18 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 */
 	private function get_vaulted_paypal_email(): string {
 		try {
-			$tokens = $this->get_payment_tokens();
+			$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+			if ( $customer_id ) {
+				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+				foreach ( $customer_tokens as $token ) {
+					$email_address = $token['payment_source']->properties()->email_address ?? '';
+					if ( $email_address ) {
+						return $email_address;
+					}
+				}
+			}
 
+			$tokens = $this->get_payment_tokens();
 			foreach ( $tokens as $token ) {
 				if ( isset( $token->source()->paypal ) ) {
 					return $token->source()->paypal->payer->email_address;
@@ -1914,6 +1961,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		} catch ( Exception $exception ) {
 			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
 		}
+
 		return '';
 	}
 

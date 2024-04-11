@@ -116,6 +116,14 @@ class CheckoutBootstap {
             return;
         }
 
+        if(
+            PayPalCommerceGateway.is_free_trial_cart
+            && PayPalCommerceGateway.vault_v3_enabled
+        ) {
+            this.renderer.render(actionHandler.addPaymentMethodConfiguration(), {}, actionHandler.configuration());
+            return;
+        }
+
         this.renderer.render(actionHandler.configuration(), {}, actionHandler.configuration());
     }
 
