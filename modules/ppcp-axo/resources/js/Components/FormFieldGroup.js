@@ -22,6 +22,10 @@ class FormFieldGroup {
             return '';
         }
 
+        if (typeof this.fields[fieldKey].valueCallback === 'function') {
+            return this.fields[fieldKey].valueCallback(this.data);
+        }
+
         const path = this.fields[fieldKey].valuePath;
 
         if (!path) {
@@ -64,7 +68,7 @@ class FormFieldGroup {
         Object.keys(this.fields).forEach((key) => {
             const field = this.fields[key];
 
-            if (this.active) {
+            if (this.active && !field.showInput) {
                 this.hideField(field.selector);
             } else {
                 this.showField(field.selector);
@@ -106,6 +110,7 @@ class FormFieldGroup {
     }
 
     inputElement(name) {
+        console.log('inputElement', name);
         const baseSelector = this.fields[name].selector;
 
         const select = document.querySelector(baseSelector + ' select');

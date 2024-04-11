@@ -21,7 +21,7 @@ return array(
 		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country_currency();
+		return $apm_applies->for_country_currency() && $apm_applies->for_settings();
 	},
 
 	'axo.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {

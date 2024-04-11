@@ -587,9 +587,6 @@ class AxoManager {
     cardComponentData() {
         return {
             fields: {
-                phoneNumber: {
-                    prefill: this.billingView.inputValue('phone')
-                },
                 cardholderName: {} // optionally pass this to show the card holder name
             }
         }

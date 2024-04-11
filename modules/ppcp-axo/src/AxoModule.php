@@ -35,24 +35,21 @@ class AxoModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
-
 		add_filter(
 			'woocommerce_payment_gateways',
 			function ( $methods ) use ( $c ): array {
 				$gateway = $c->get( 'axo.gateway' );
-
-				// Add the gateway in admin area.
-				if ( is_admin() ) {
-					$methods[] = $gateway;
-					return $methods;
-				}
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
 					return $methods;
 				}
 
-				// TODO: check product status eligibility.
+				// Add the gateway in admin area.
+				if ( is_admin() ) {
+					$methods[] = $gateway;
+					return $methods;
+				}
 
 				if ( is_user_logged_in() ) {
 					return $methods;

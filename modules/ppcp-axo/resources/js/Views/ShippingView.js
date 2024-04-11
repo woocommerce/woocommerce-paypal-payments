@@ -14,6 +14,11 @@ class ShippingView {
                         return '';
                     }
                     const selectElement = document.querySelector(selectSelector);
+
+                    if (!selectElement) {
+                        return ${key};
+                    }
+
                     const option = selectElement.querySelector(`option[value="${key}"]`);
                     return option ? option.textContent : key;
                 }
@@ -36,6 +41,7 @@ class ShippingView {
                         <div>${data.value('postCode')} ${data.value('city')}</div>
                         <div>${valueOfSelect('#shipping_state', data.value('stateCode'))}</div>
                         <div>${valueOfSelect('#shipping_country', data.value('countryCode'))}</div>
+                        <div>${data.value('phone')}</div>
                     </div>
                 `;
             },
@@ -80,6 +86,20 @@ class ShippingView {
                 shipDifferentAddress: {
                     'selector': '#ship-to-different-address',
                     'valuePath': null,
+                },
+                phone: {
+                    'selector': '#billing_phone_field', // There is no shipping phone field.
+                    'valueCallback': function (data) {
+                        let phone = '';
+                        const cc = data?.shipping?.phoneNumber?.countryCode;
+                        const number = data?.shipping?.phoneNumber?.nationalNumber;
+
+                        if (cc) {
+                            phone = `+${cc} `;
+                        }
+                        phone += number;
+                        return phone;
+                    }
                 }
             }
         });
