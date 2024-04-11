@@ -30,11 +30,6 @@ class PayLaterBlockRenderer {
 
 			$html = '<div id="' . esc_attr( $attributes['id'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 
-			/**
-			 * Class exist in WordPress.
-			 *
-			 * @psalm-suppress UndefinedClass
-			 */
 			$processor = new \WP_HTML_Tag_Processor( $html );
 
 			if ( $processor->next_tag( 'div' ) ) {
@@ -57,7 +52,7 @@ class PayLaterBlockRenderer {
 				}
 			}
 
-			$updated_html = (string) $processor;
+			$updated_html = $processor->get_updated_html();
 
 			return sprintf(
 				'<div id="ppcp-paylater-message-block" %1$s>%2$s</div>',
