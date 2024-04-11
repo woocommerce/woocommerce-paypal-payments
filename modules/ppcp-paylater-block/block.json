@@ -45,7 +45,7 @@
 	},
 	"supports": {
 		"html": false,
-        "multiple": false
+		"multiple": false
 	},
 	"textdomain": "woocommerce-paypal-payments",
 	"editorScript": "ppcp-paylater-block",
