@@ -139,7 +139,7 @@ class OnboardingOptionsRenderer {
 
 		$basic_table_rows = apply_filters( 'ppcp_onboarding_basic_table_rows', $basic_table_rows );
 
-		$items[]          = '
+		$items[] = '
 <li>
 	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" checked ' .
@@ -197,7 +197,7 @@ class OnboardingOptionsRenderer {
 
 			$dcc_table_rows = apply_filters( 'ppcp_onboarding_dcc_table_rows', $dcc_table_rows, $this );
 
-			$items[]        = '
+			$items[] = '
 <li>
 	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" ' .

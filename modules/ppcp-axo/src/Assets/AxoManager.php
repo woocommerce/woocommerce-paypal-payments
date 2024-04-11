@@ -155,7 +155,7 @@ class AxoManager {
 		$payment_widget = $this->settings->has( 'axo_payment_widget' ) ? $this->settings->get( 'axo_payment_widget' ) : null;
 
 		return array(
-			'widgets' => array(
+			'widgets'  => array(
 				'email'   => $email_widget ?: 'render',
 				'address' => $address_widget ?: 'render',
 				'payment' => $payment_widget ?: 'render',
@@ -163,12 +163,17 @@ class AxoManager {
 			'insights' => array(
 				'enabled'    => true,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
-				'session_id' => substr( md5( WC()->session->get_customer_unique_id() ), 0, 16 ),
+				'session_id' =>
+					substr(
+						method_exists( WC()->session, 'get_customer_unique_id' ) ? md5( WC()->session->get_customer_unique_id() ) : '',
+						0,
+						16
+					),
 				'amount'     => array(
 					'currency_code' => get_woocommerce_currency(),
-					'value'         => WC()->cart->get_total( 'numeric' )
-				)
-			)
+					'value'         => WC()->cart->get_total( 'numeric' ),
+				),
+			),
 		);
 	}
 
@@ -187,7 +192,7 @@ class AxoManager {
 	/**
 	 * Renders the HTML for the AXO submit button.
 	 */
-	public function render_checkout_button() {
+	public function render_checkout_button(): void {
 		$id = 'ppcp-axo-submit-button-container';
 
 		/**

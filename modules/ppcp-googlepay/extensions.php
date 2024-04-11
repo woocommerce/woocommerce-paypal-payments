@@ -100,7 +100,7 @@ return array(
 								)
 							),
 						),
-						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' )
+						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 					),
 				)
 			);
@@ -147,7 +147,7 @@ return array(
 							)
 						),
 					),
-					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' )
+					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 				),
 				'googlepay_button_type'             => array(
 					'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),

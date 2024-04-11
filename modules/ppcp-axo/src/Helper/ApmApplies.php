@@ -71,7 +71,7 @@ class ApmApplies {
 	 * @return bool
 	 */
 	public function for_settings(): bool {
-		if ( get_option('woocommerce_ship_to_destination') === 'billing_only' ) { // Force shipping to the customer billing address
+		if ( get_option( 'woocommerce_ship_to_destination' ) === 'billing_only' ) { // Force shipping to the customer billing address.
 			return false;
 		}
 		return true;

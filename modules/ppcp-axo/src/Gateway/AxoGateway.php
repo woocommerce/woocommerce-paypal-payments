@@ -193,7 +193,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$wc_order      = wc_get_order( $order_id );
+		$wc_order = wc_get_order( $order_id );
 
 		$payment_method_title = __( 'Credit Card (via Fastlane by PayPal)', 'woocommerce-paypal-payments' );
 
@@ -202,6 +202,7 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$nonce = wc_clean( wp_unslash( $_POST['axo_nonce'] ?? '' ) );
 
 		try {

@@ -37,7 +37,16 @@ class AxoModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 		add_filter(
 			'woocommerce_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $methods ) use ( $c ): array {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
 				$gateway = $c->get( 'axo.gateway' );
 
 				// Check if the module is applicable, correct country, currency, ... etc.
@@ -64,8 +73,17 @@ class AxoModule implements ModuleInterface {
 
 		add_filter(
 			'ppcp_onboarding_dcc_table_rows',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $rows, $renderer ): array {
-				if ( $renderer instanceof  OnboardingOptionsRenderer ) {
+				if ( ! is_array( $rows ) ) {
+					return $rows;
+				}
+
+				if ( $renderer instanceof OnboardingOptionsRenderer ) {
 					$rows[] = $renderer->render_table_row(
 						__( 'Fastlane by PayPal', 'woocommerce-paypal-payments' ),
 						__( 'Yes', 'woocommerce-paypal-payments' ),
@@ -124,12 +142,13 @@ class AxoModule implements ModuleInterface {
 					}
 				);
 
-				add_action('wp_head', function () {
-					echo '
-						<!-- PayPal Insights SDK JS library -->
-						<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>
-					';
-				});
+				add_action(
+					'wp_head',
+					function () {
+						// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
+					}
+				);
 
 			},
 			1

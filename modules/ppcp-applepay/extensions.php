@@ -129,7 +129,7 @@ return array(
 								)
 							),
 						),
-						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' )
+						'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 					),
 				)
 			);
@@ -188,7 +188,7 @@ return array(
 							)
 						),
 					),
-					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' )
+					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 				),
 				'applepay_button_domain_registration' => array(
 					'title'        => __( 'Domain Registration', 'woocommerce-paypal-payments' ),

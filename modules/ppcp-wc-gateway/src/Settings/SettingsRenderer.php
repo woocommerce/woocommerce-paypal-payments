@@ -388,7 +388,12 @@ $data_rows_html
 			<th scope="row" valign="bottom">
 				<label
 					for="<?php echo esc_attr( $id ); ?>"
-				><?php echo isset( $config['title_html'] ) ? $config['title_html'] : esc_html( $config['title'] ); ?></label>
+				>
+					<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo isset( $config['title_html'] ) ? $config['title_html'] : esc_html( $config['title'] );
+					?>
+				</label>
 				<?php if ( isset( $config['desc_tip'] ) && $config['desc_tip'] ) : ?>
 				<span
 						class="woocommerce-help-tip"
