@@ -4,6 +4,7 @@ import DomElementCollection from "./Components/DomElementCollection";
 import ShippingView from "./Views/ShippingView";
 import BillingView from "./Views/BillingView";
 import CardView from "./Views/CardView";
+import PayPalInsights from "./Insights/PayPalInsights";
 
 class AxoManager {
 
@@ -55,9 +56,43 @@ class AxoManager {
             console.log(this);
             return this;
         }
+
+        if (
+            this.axoConfig?.insights?.enabled
+            && this.axoConfig?.insights?.client_id
+            && this.axoConfig?.insights?.session_id
+        ) {
+            PayPalInsights.config(this.axoConfig?.insights?.client_id, { debug: true });
+            PayPalInsights.setSessionId(this.axoConfig?.insights?.session_id);
+            PayPalInsights.trackJsLoad();
+
+            if (document.querySelector('.woocommerce-checkout')) {
+                PayPalInsights.trackBeginCheckout({
+                    amount: this.axoConfig?.insights?.amount,
+                    page_type: 'checkout',
+                    user_data: {
+                        country: 'US',
+                        is_store_member: false,
+                    }
+                });
+            }
+        }
     }
 
     registerEventHandlers() {
+
+        jQuery(document).on('change', 'input[name=payment_method]', (ev) => {
+            const map = {
+                'ppcp-axo-gateway': 'card',
+                'ppcp-gateway': 'paypal',
+            }
+
+            PayPalInsights.trackSelectPaymentMethod({
+                payment_method_selected: map[ev.target.value] || 'other',
+                page_type: 'checkout'
+            });
+        });
+
 
         // Listen to Gateway Radio button changes.
         this.el.gatewayRadioButton.on('change', (ev) => {
@@ -83,7 +118,7 @@ class AxoManager {
             if (this.status.hasProfile) {
                 const { selectionChanged, selectedAddress } = await this.fastlane.profile.showShippingAddressSelector();
 
-                console.log('selectedAddress', selectedAddress);
+                //console.log('selectedAddress', selectedAddress);
 
                 if (selectionChanged) {
                     this.setShipping(selectedAddress);
@@ -103,11 +138,11 @@ class AxoManager {
         this.el.changeCardLink.on('click', async () => {
             const response = await this.fastlane.profile.showCardSelector();
 
-            console.log('card response', response);
+            //console.log('card response', response);
 
             if (response.selectionChanged) {
 
-                console.log('response.selectedCard.paymentToken', response.selectedCard.paymentToken);
+                //console.log('response.selectedCard.paymentToken', response.selectedCard.paymentToken);
 
                 this.setCard(response.selectedCard);
                 this.setBilling({
@@ -478,6 +513,15 @@ class AxoManager {
         this.data.email = this.emailInput.value;
         this.billingView.setData(this.data);
 
+        if (!this.fastlane.identity) {
+            log('Not initialized.');
+            return;
+        }
+
+        PayPalInsights.trackSubmitCheckoutEmail({
+            page_type: 'checkout'
+        });
+
         const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
         if (lookupResponse.customerContextId) {
@@ -499,7 +543,7 @@ class AxoManager {
                 });
                 this.setCard(authResponse.profileData.card);
 
-                console.log('authResponse', authResponse);
+                //console.log('authResponse', authResponse);
 
                 this.setStatus('validEmail', true);
                 this.setStatus('hasProfile', true);
@@ -522,7 +566,7 @@ class AxoManager {
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
 
-            console.log('this.cardComponentData()', this.cardComponentData());
+            //console.log('this.cardComponentData()', this.cardComponentData());
 
             this.cardComponent = await this.fastlane
                 .FastlaneCardComponent(
@@ -619,6 +663,16 @@ class AxoManager {
         }
 
         this.el.axoNonceInput.get().value = nonce;
+
+        PayPalInsights.trackEndCheckout({
+            amount: this.axoConfig?.insights?.amount,
+            page_type: 'checkout',
+            payment_method_selected: 'card',
+            user_data: {
+                country: 'US',
+                is_store_member: false,
+            }
+        });
 
         this.el.defaultSubmitButton.click();
     }

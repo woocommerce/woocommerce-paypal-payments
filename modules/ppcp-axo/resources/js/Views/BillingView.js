@@ -16,7 +16,7 @@ class BillingView {
                     const selectElement = document.querySelector(selectSelector);
 
                     if (!selectElement) {
-                        return ${key};
+                        return key;
                     }
 
                     const option = selectElement.querySelector(`option[value="${key}"]`);

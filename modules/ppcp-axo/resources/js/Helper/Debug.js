@@ -1,4 +1,4 @@
 
 export function log(...args) {
-    console.log('[AXO] ', ...args);
+    //console.log('[AXO] ', ...args);
 }

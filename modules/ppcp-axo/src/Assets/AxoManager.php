@@ -160,6 +160,15 @@ class AxoManager {
 				'address' => $address_widget ?: 'render',
 				'payment' => $payment_widget ?: 'render',
 			),
+			'insights' => array(
+				'enabled'    => true,
+				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
+				'session_id' => substr( md5( WC()->session->get_customer_unique_id() ), 0, 16 ),
+				'amount'     => array(
+					'currency_code' => get_woocommerce_currency(),
+					'value'         => WC()->cart->get_total( 'numeric' )
+				)
+			)
 		);
 	}
 

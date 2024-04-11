@@ -16,7 +16,7 @@ class ShippingView {
                     const selectElement = document.querySelector(selectSelector);
 
                     if (!selectElement) {
-                        return ${key};
+                        return key;
                     }
 
                     const option = selectElement.querySelector(`option[value="${key}"]`);
@@ -88,7 +88,7 @@ class ShippingView {
                     'valuePath': null,
                 },
                 phone: {
-                    'selector': '#billing_phone_field', // There is no shipping phone field.
+                    //'selector': '#billing_phone_field', // There is no shipping phone field.
                     'valueCallback': function (data) {
                         let phone = '';
                         const cc = data?.shipping?.phoneNumber?.countryCode;

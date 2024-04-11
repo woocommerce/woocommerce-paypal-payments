@@ -88,6 +88,8 @@ return array(
 									->action_visible( 'axo_email_widget' )
 									->action_visible( 'axo_address_widget' )
 									->action_visible( 'axo_payment_widget' )
+									->action_visible( 'axo_privacy' )
+									->action_visible( 'axo_style_heading' )
 									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
 								$display_manager
@@ -104,9 +106,9 @@ return array(
 									->action_visible( 'axo_style_input_bg_color' )
 									->action_visible( 'axo_style_input_border_radius' )
 									->action_visible( 'axo_style_input_border_color' )
-									->action_visible( 'axo_style_root_border_width' )
-									->action_visible( 'axo_style_root_text_color_base' )
-									->action_visible( 'axo_style_root_focus_border_color' )
+									->action_visible( 'axo_style_input_border_width' )
+									->action_visible( 'axo_style_input_text_color_base' )
+									->action_visible( 'axo_style_input_focus_border_color' )
 									->to_array(),
 							)
 						),
@@ -352,7 +354,7 @@ return array(
 					'requirements' => array(),
 					'gateway'      => 'dcc',
 				),
-				'axo_style_root_border_width' => array(
+				'axo_style_input_border_width' => array(
 					'title'        => __( 'Border Width', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
@@ -362,7 +364,7 @@ return array(
 					'requirements' => array(),
 					'gateway'      => 'dcc',
 				),
-				'axo_style_root_text_color_base' => array(
+				'axo_style_input_text_color_base' => array(
 					'title'        => __( 'Text Color Base', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
@@ -372,7 +374,7 @@ return array(
 					'requirements' => array(),
 					'gateway'      => 'dcc',
 				),
-				'axo_style_root_focus_border_color' => array(
+				'axo_style_input_focus_border_color' => array(
 					'title'        => __( 'Focus Border Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),

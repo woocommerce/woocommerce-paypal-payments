@@ -11,43 +11,46 @@ class PayPalInsights {
     /**
      * @returns {PayPalInsights}
      */
-    static getInstance() {
+    static init() {
         if (!PayPalInsights.instance) {
             PayPalInsights.instance = new PayPalInsights();
         }
         return PayPalInsights.instance;
     }
 
-    track(eventName, data) {
+    static track(eventName, data) {
+        PayPalInsights.init();
         paypalInsight('event', eventName, data);
     }
 
     static config (clientId, data) {
+        PayPalInsights.init();
         paypalInsight('config', clientId, data);
     }
 
     static setSessionId (sessionId) {
+        PayPalInsights.init();
         paypalInsight('set', { session_id: sessionId });
     }
 
     static trackJsLoad () {
-        PayPalInsights.getInstance().track('js_load', { timestamp: Date.now() });
+        PayPalInsights.track('js_load', { timestamp: Date.now() });
     }
 
     static trackBeginCheckout (data) {
-        PayPalInsights.getInstance().track('begin_checkout', data);
+        PayPalInsights.track('begin_checkout', data);
     }
 
     static trackSubmitCheckoutEmail (data) {
-        PayPalInsights.getInstance().track('submit_checkout_email', data);
+        PayPalInsights.track('submit_checkout_email', data);
     }
 
     static trackSelectPaymentMethod (data) {
-        PayPalInsights.getInstance().track('select_payment_method', data);
+        PayPalInsights.track('select_payment_method', data);
     }
 
     static trackEndCheckout (data) {
-        PayPalInsights.getInstance().track('end_checkout', data);
+        PayPalInsights.track('end_checkout', data);
     }
 
 }
