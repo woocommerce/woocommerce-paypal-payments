@@ -118,7 +118,7 @@ class PayPalBearer implements Bearer {
 	private function newBearer(): Token {
 		$key    = $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) ? $this->settings->get( 'client_id' ) : $this->key;
 		$secret = $this->settings->has( 'client_secret' ) && $this->settings->get( 'client_secret' ) ? $this->settings->get( 'client_secret' ) : $this->secret;
-		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&intent=sdk_init';
+		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
 
 		$args     = array(
 			'method'  => 'POST',
