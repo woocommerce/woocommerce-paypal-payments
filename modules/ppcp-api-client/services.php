@@ -1408,32 +1408,32 @@ return array(
 				'BE' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'USD', 'CAD' ),
+					'amex'       => array(),
 				),
 				'BG' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'CY' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'CZ' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'CZK' ),
+					'amex'       => array(),
 				),
 				'DE' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'DK' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'DKK' ),
+					'amex'       => array(),
 				),
 				'EE' => array(
 					'mastercard' => array(),
@@ -1443,32 +1443,32 @@ return array(
 				'ES' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'FI' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'FR' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'GB' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'GBP', 'USD' ),
+					'amex'       => array(),
 				),
 				'GR' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'HU' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'HUF' ),
+					'amex'       => array(),
 				),
 				'IE' => array(
 					'mastercard' => array(),
@@ -1478,7 +1478,7 @@ return array(
 				'IT' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'US' => array(
 					'mastercard' => array(),
@@ -1489,7 +1489,7 @@ return array(
 				'CA' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'CAD' ),
+					'amex'       => array( 'CAD', 'USD' ),
 					'jcb'        => array( 'CAD' ),
 				),
 				'LI' => array(
@@ -1500,22 +1500,22 @@ return array(
 				'LT' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'LU' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'LV' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'USD' ),
+					'amex'       => array(),
 				),
 				'MT' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'MX' => array(
 					'mastercard' => array(),
@@ -1525,7 +1525,7 @@ return array(
 				'NL' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'USD' ),
+					'amex'       => array(),
 				),
 				'NO' => array(
 					'mastercard' => array(),
@@ -1535,32 +1535,32 @@ return array(
 				'PL' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'USD', 'GBP', 'PLN' ),
+					'amex'       => array(),
 				),
 				'PT' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'USD', 'CAD', 'GBP' ),
+					'amex'       => array(),
 				),
 				'RO' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'USD' ),
+					'amex'       => array(),
 				),
 				'SE' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'SEK' ),
+					'amex'       => array(),
 				),
 				'SI' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR' ),
+					'amex'       => array(),
 				),
 				'SK' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array( 'EUR', 'GBP' ),
+					'amex'       => array(),
 				),
 				'JP' => array(
 					'mastercard' => array(),

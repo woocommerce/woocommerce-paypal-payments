@@ -61,10 +61,10 @@ class ItemFactory {
 
 				$price = (float) $item['line_subtotal'] / (float) $item['quantity'];
 				return new Item(
-					mb_substr( $product->get_name(), 0, 127 ),
+					$this->prepare_item_string( $product->get_name() ),
 					new Money( $price, $this->currency ),
 					$quantity,
-					$this->prepare_description( $product->get_description() ),
+					$this->prepare_item_string( $product->get_description() ),
 					null,
 					$this->prepare_sku( $product->get_sku() ),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
@@ -138,10 +138,10 @@ class ItemFactory {
 		$image                     = $product instanceof WC_Product ? wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' ) : '';
 
 		return new Item(
-			mb_substr( $item->get_name(), 0, 127 ),
+			$this->prepare_item_string( $item->get_name() ),
 			new Money( $price_without_tax_rounded, $currency ),
 			$quantity,
-			$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
+			$product instanceof WC_Product ? $this->prepare_item_string( $product->get_description() ) : '',
 			null,
 			$product instanceof WC_Product ? $this->prepare_sku( $product->get_sku() ) : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
@@ -160,7 +160,7 @@ class ItemFactory {
 	 */
 	private function from_wc_order_fee( \WC_Order_Item_Fee $item, \WC_Order $order ): Item {
 		return new Item(
-			$item->get_name(),
+			$this->prepare_item_string( $item->get_name() ),
 			new Money( (float) $item->get_amount(), $order->get_currency() ),
 			$item->get_quantity(),
 			'',

@@ -65,7 +65,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="American Express" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/></a>
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="Discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/></a>
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal-dark.svg"/></a>
-			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="Sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="BLIK" src="' . esc_url( $module_url ) . 'assets/images/blik.svg"/></a>
 		</div>
 		<div class="ppcp-onboarding-header-apm-logos">
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#apple-pay" target="_blank"><img alt="Apple Pay" src="' . esc_url( $module_url ) . 'assets/images/button-Apple-Pay.png"/></a>

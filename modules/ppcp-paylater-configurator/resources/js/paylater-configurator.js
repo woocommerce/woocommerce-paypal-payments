@@ -15,13 +15,22 @@ document.addEventListener( 'DOMContentLoaded', () => {
     headingRow.parentNode.insertBefore(newRow, headingRow.nextSibling);
 
 
-    saveChangesButton.addEventListener('click', () => {
-        form.querySelector('.' + publishButtonClassName).click();
+    let isSaving = false; // Flag variable to track whether saving is in progress
 
-        // Delay the page refresh by a few milliseconds to ensure changes take effect
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
+    saveChangesButton.addEventListener('click', () => {
+        // Check if saving is not already in progress
+        if (!isSaving) {
+            isSaving = true; // Set flag to indicate saving is in progress
+
+            // Trigger the click event on the publish button
+            form.querySelector('.' + publishButtonClassName).click();
+
+            // Trigger click event on saveChangesButton after a short delay
+            setTimeout(() => {
+                saveChangesButton.click(); // Trigger click event on saveChangesButton
+                isSaving = false; // Reset flag when saving is complete
+            }, 1000); // Adjust the delay as needed
+        }
     });
 
     merchantConfigurators.Messaging({
@@ -30,7 +39,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
         partnerClientId: PcpPayLaterConfigurator.partnerClientId,
         partnerName: 'WooCommerce',
         bnCode: 'Woo_PPCP',
-        placements: ['cart', 'checkout', 'product', 'category', 'homepage', 'custom_placement'],
+        placements: ['cart', 'checkout', 'product', 'shop', 'home', 'custom_placement'],
         styleOverrides: {
             button: publishButtonClassName,
             header: PcpPayLaterConfigurator.headerClassName,

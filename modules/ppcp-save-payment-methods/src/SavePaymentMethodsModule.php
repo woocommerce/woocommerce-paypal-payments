@@ -19,9 +19,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -141,7 +142,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
-										'permit_multiple_payment_tokens' => true,
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
 									),
 								),
 							),
@@ -167,7 +168,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
-										'permit_multiple_payment_tokens' => true,
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
 									),
 								),
 							),
@@ -197,7 +198,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
 
-					$wc_payment_tokens = $c->get( 'save-payment-methods.wc-payment-tokens' );
+					$wc_payment_tokens = $c->get( 'vaulting.wc-payment-tokens' );
 					assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
 					if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
@@ -281,7 +282,11 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					$settings = $c->get( 'wcgateway.settings' );
 					assert( $settings instanceof Settings );
-					$verification_method = $settings->has( '3d_secure_contingency' ) ? $settings->get( '3d_secure_contingency' ) : '';
+
+					$verification_method =
+						$settings->has( '3d_secure_contingency' )
+							? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+							: '';
 
 					$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
@@ -310,6 +315,14 @@ class SavePaymentMethodsModule implements ModuleInterface {
 								'subscription_change_payment_method' => array(
 									'endpoint' => \WC_AJAX::get_endpoint( SubscriptionChangePaymentMethod::ENDPOINT ),
 									'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
+								),
+							),
+							'labels'                  => array(
+								'error' => array(
+									'generic' => __(
+										'Something went wrong. Please try again or choose another payment source.',
+										'woocommerce-paypal-payments'
+									),
 								),
 							),
 						)
@@ -354,6 +367,16 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token' );
 				assert( $endpoint instanceof CreatePaymentToken );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CreatePaymentTokenForGuest::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token-for-guest' );
+				assert( $endpoint instanceof CreatePaymentTokenForGuest );
 
 				$endpoint->handle_request();
 			}

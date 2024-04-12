@@ -15,30 +15,33 @@ use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class CreditCardGateway
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
+	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -155,6 +158,20 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $prefix;
 
 	/**
+	 * Payment tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private $payment_tokens_endpoint;
+
+	/**
+	 * WooCommerce payment tokens factory.
+	 *
+	 * @var WooCommercePaymentTokens
+	 */
+	private $wc_payment_tokens;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -179,6 +196,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param OrderEndpoint            $order_endpoint The order endpoint.
 	 * @param CaptureCardPayment       $capture_card_payment Capture card payment.
 	 * @param string                   $prefix The prefix.
+	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
+	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens factory.
 	 * @param LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
@@ -197,6 +216,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		OrderEndpoint $order_endpoint,
 		CaptureCardPayment $capture_card_payment,
 		string $prefix,
+		PaymentTokensEndpoint $payment_tokens_endpoint,
+		WooCommercePaymentTokens $wc_payment_tokens,
 		LoggerInterface $logger
 	) {
 		$this->id                          = self::ID;
@@ -215,6 +236,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->order_endpoint              = $order_endpoint;
 		$this->capture_card_payment        = $capture_card_payment;
 		$this->prefix                      = $prefix;
+		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
+		$this->wc_payment_tokens           = $wc_payment_tokens;
 		$this->logger                      = $logger;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
@@ -291,8 +314,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	public function form() {
 		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_label' ), 10, 3 );
+		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_placeholder' ), 10, 3 );
 		parent::form();
 		remove_action( 'gettext', 'replace_credit_card_cvv_label' );
+		remove_action( 'gettext', 'replace_credit_card_cvv_placeholder' );
 	}
 
 	/**
@@ -306,6 +331,23 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	public function replace_credit_card_cvv_label( string $translation, string $text, string $domain ): string {
 		if ( 'woocommerce' !== $domain || 'Card code' !== $text ) {
+			return $translation;
+		}
+
+		return __( 'CVV', 'woocommerce-paypal-payments' );
+	}
+
+	/**
+	 * Replace WooCommerce credit card CVV field placeholder.
+	 *
+	 * @param string $translation Translated text.
+	 * @param string $text Original text to translate.
+	 * @param string $domain Text domain.
+	 *
+	 * @return string Translated field.
+	 */
+	public function replace_credit_card_cvv_placeholder( string $translation, string $text, string $domain ): string {
+		if ( 'woocommerce' !== $domain || 'CVC' !== $text || ! apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_cvv', true ) ) {
 			return $translation;
 		}
 
@@ -413,10 +455,39 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$card_payment_token_id = wc_clean( wp_unslash( $_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? '' ) );
+
+		if ( $this->is_free_trial_order( $wc_order ) && $card_payment_token_id ) {
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( get_current_user_id() );
+			foreach ( $customer_tokens as $token ) {
+				if ( $token['payment_source']->name() === 'card' ) {
+					$wc_order->payment_complete();
+					return $this->handle_payment_success( $wc_order );
+				}
+			}
+		}
+
 		if ( $card_payment_token_id ) {
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( get_current_user_id() );
+
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), self::ID );
+
+			if ( $customer_tokens && empty( $wc_tokens ) ) {
+				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, get_current_user_id() );
+			}
+
+			$customer_token_ids = array();
+			foreach ( $customer_tokens as $customer_token ) {
+				$customer_token_ids[] = $customer_token['id'];
+			}
+
 			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
 			foreach ( $tokens as $token ) {
 				if ( $token->get_id() === (int) $card_payment_token_id ) {
+					if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
+						$token->delete();
+						continue;
+					}
+
 					$custom_id    = $wc_order->get_order_number();
 					$invoice_id   = $this->prefix . $wc_order->get_order_number();
 					$create_order = $this->capture_card_payment->create_order( $token->get_token(), $custom_id, $invoice_id );

@@ -99,14 +99,15 @@ class SaveConfig {
 		$this->settings->set( 'pay_later_messaging_enabled', true );
 
 		$enabled_locations = array();
-
 		foreach ( $config as $placement => $data ) {
-			$location = $this->configurator_placement_to_location( $placement );
+			$this->save_config_for_location( $data, $placement );
 
-			$this->save_config_for_location( $data, $location );
+			if ( $placement === 'custom_placement' ) {
+				$data = $data[0] ?? array();
+			}
 
 			if ( $data['status'] === 'enabled' ) {
-				$enabled_locations[] = $location;
+				$enabled_locations[] = $placement;
 			}
 		}
 
@@ -131,6 +132,7 @@ class SaveConfig {
 		$this->set_value_if_present( $config, 'logo-type', "pay_later_{$location}_message_logo" );
 		$this->set_value_if_present( $config, 'logo-color', "pay_later_{$location}_message_color" );
 		$this->set_value_if_present( $config, 'text-size', "pay_later_{$location}_message_text_size" );
+		$this->set_value_if_present( $config, 'text-color', "pay_later_{$location}_message_color" );
 	}
 
 	/**
@@ -143,26 +145,6 @@ class SaveConfig {
 	private function set_value_if_present( array $config, string $key, string $settings_key ): void {
 		if ( isset( $config[ $key ] ) ) {
 			$this->settings->set( $settings_key, $config[ $key ] );
-		}
-	}
-
-	/**
-	 * Converts the configurator placement into location in the old settings.
-	 *
-	 * @param string $placement The configurator placement.
-	 */
-	private function configurator_placement_to_location( string $placement ): string {
-		switch ( $placement ) {
-			case 'cart':
-			case 'checkout':
-			case 'product':
-				return $placement;
-			case 'category':
-				return 'shop';
-			case 'homepage':
-				return 'home';
-			default:
-				return '';
 		}
 	}
 }
