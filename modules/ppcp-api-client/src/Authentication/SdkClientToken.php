@@ -15,9 +15,9 @@ use WooCommerce\PayPalCommerce\PPCP;
 use WP_Error;
 
 /**
- * Class UserIdToken
+ * Class SdkClientToken
  */
-class UserIdToken {
+class SdkClientToken {
 
 	use RequestTrait;
 
@@ -43,7 +43,7 @@ class UserIdToken {
 	private $logger;
 
 	/**
-	 * UserIdToken constructor.
+	 * SdkClientToken constructor.
 	 *
 	 * @param string          $host The host.
 	 * @param Bearer          $bearer The bearer.
@@ -60,7 +60,7 @@ class UserIdToken {
 	}
 
 	/**
-	 * Returns `id_token` which uniquely identifies the payer.
+	 * Returns `sdk_client_token` which uniquely identifies the payer.
 	 *
 	 * @param string $target_customer_id Vaulted customer id.
 	 *
@@ -69,10 +69,10 @@ class UserIdToken {
 	 * @throws PayPalApiException If the request fails.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
-	public function id_token( string $target_customer_id = '' ): string {
+	public function sdk_client_token( string $target_customer_id = '' ): string {
 		$bearer = $this->bearer->bearer();
 
-		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
+		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init';
 		if ( $target_customer_id ) {
 			$url = add_query_arg(
 				array(
@@ -101,6 +101,6 @@ class UserIdToken {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		return $json->id_token;
+		return $json->access_token;
 	}
 }

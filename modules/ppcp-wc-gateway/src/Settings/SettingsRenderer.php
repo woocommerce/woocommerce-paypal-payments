@@ -385,7 +385,7 @@ $data_rows_html
 			?>
 		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 			<?php if ( 'ppcp-heading' !== $config['type'] && isset( $config['title'] ) ) : ?>
-			<th scope="row" valign="bottom">
+			<th scope="row">
 				<label
 					for="<?php echo esc_attr( $id ); ?>"
 				>

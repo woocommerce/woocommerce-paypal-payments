@@ -44,7 +44,7 @@ class PayPalBearerTest extends TestCase
         expect('wp_remote_get')
             ->andReturnUsing(
                 function ($url, $args) use ($json, $key, $secret, $host, $headers) {
-                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
+                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials&intent=sdk_init') {
                         return false;
                     }
                     if ($args['method'] !== 'POST') {
@@ -99,7 +99,7 @@ class PayPalBearerTest extends TestCase
         expect('wp_remote_get')
             ->andReturnUsing(
                 function ($url, $args) use ($json, $key, $secret, $host, $headers) {
-                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
+                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials&intent=sdk_init') {
                         return false;
                     }
                     if ($args['method'] !== 'POST') {
@@ -175,7 +175,7 @@ class PayPalBearerTest extends TestCase
         expect('wp_remote_get')
             ->andReturnUsing(
                 function ($url, $args) use ($json, $key, $secret, $host, $headers) {
-                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
+                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials&intent=sdk_init') {
                         return false;
                     }
                     if ($args['method'] !== 'POST') {
@@ -225,7 +225,7 @@ class PayPalBearerTest extends TestCase
         expect('wp_remote_get')
             ->andReturnUsing(
                 function ($url, $args) use ($json, $key, $secret, $host, $headers) {
-                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
+                    if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials&intent=sdk_init') {
                         return false;
                     }
                     if ($args['method'] !== 'POST') {

@@ -9,6 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
@@ -35,6 +40,8 @@ class AxoModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$module = $this;
+
 		add_filter(
 			'woocommerce_payment_gateways',
 			/**
@@ -71,34 +78,9 @@ class AxoModule implements ModuleInterface {
 			9
 		);
 
-		add_filter(
-			'ppcp_onboarding_dcc_table_rows',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function ( $rows, $renderer ): array {
-				if ( ! is_array( $rows ) ) {
-					return $rows;
-				}
-
-				if ( $renderer instanceof OnboardingOptionsRenderer ) {
-					$rows[] = $renderer->render_table_row(
-						__( 'Fastlane by PayPal', 'woocommerce-paypal-payments' ),
-						__( 'Yes', 'woocommerce-paypal-payments' ),
-						__( 'Help accelerate guest checkout with PayPal\'s autofill solution.', 'woocommerce-paypal-payments' )
-					);
-				}
-				return $rows;
-			},
-			10,
-			2
-		);
-
 		add_action(
 			'init',
-			static function () use ( $c ) {
+			static function () use ( $c, $module ) {
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
@@ -150,10 +132,87 @@ class AxoModule implements ModuleInterface {
 					}
 				);
 
+				add_filter(
+					'woocommerce_paypal_payments_localized_script_data',
+					function( array $localized_script_data ) use ( $c, $module ) {
+						$api = $c->get( 'api.sdk-client-token' );
+						assert( $api instanceof SdkClientToken );
+
+						$logger = $c->get( 'woocommerce.logger.woocommerce' );
+						assert( $logger instanceof LoggerInterface );
+
+						return $module->add_sdk_client_token_to_script_data( $api, $logger, $localized_script_data );
+					}
+				);
+
+				add_filter(
+					'ppcp_onboarding_dcc_table_rows',
+					/**
+					 * Param types removed to avoid third-party issues.
+					 *
+					 * @psalm-suppress MissingClosureParamType
+					 */
+					function ( $rows, $renderer ): array {
+						if ( ! is_array( $rows ) ) {
+							return $rows;
+						}
+
+						if ( $renderer instanceof OnboardingOptionsRenderer ) {
+							$rows[] = $renderer->render_table_row(
+								__( 'Fastlane by PayPal', 'woocommerce-paypal-payments' ),
+								__( 'Yes', 'woocommerce-paypal-payments' ),
+								__( 'Help accelerate guest checkout with PayPal\'s autofill solution.', 'woocommerce-paypal-payments' )
+							);
+						}
+						return $rows;
+					},
+					10,
+					2
+				);
+
 			},
 			1
 		);
 
+	}
+
+	/**
+	 * Adds id token to localized script data.
+	 *
+	 * @param SdkClientToken  $api User id token api.
+	 * @param LoggerInterface $logger The logger.
+	 * @param array           $localized_script_data The localized script data.
+	 * @return array
+	 */
+	private function add_sdk_client_token_to_script_data(
+		SdkClientToken $api,
+		LoggerInterface $logger,
+		array $localized_script_data
+	): array {
+		try {
+			$target_customer_id = '';
+			if ( is_user_logged_in() ) {
+				$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+				if ( ! $target_customer_id ) {
+					$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
+				}
+			}
+
+			$sdk_client_token             = $api->sdk_client_token( $target_customer_id );
+			$localized_script_data['axo'] = array(
+				'sdk_client_token' => $sdk_client_token,
+			);
+
+		} catch ( RuntimeException $exception ) {
+			$error = $exception->getMessage();
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
+			}
+
+			$logger->error( $error );
+		}
+
+		return $localized_script_data;
 	}
 
 	/**

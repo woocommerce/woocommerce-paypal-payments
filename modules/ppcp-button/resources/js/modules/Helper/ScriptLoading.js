@@ -72,6 +72,11 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
         scriptOptions['data-user-id-token'] = userIdToken;
     }
 
+    const sdkClientToken = config?.axo?.sdk_client_token;
+    if(sdkClientToken) {
+        scriptOptions['data-sdk-client-token'] = sdkClientToken;
+    }
+
     scriptOptions['data-client-metadata-id'] = 'ppcp-cm-id';
 
     // Load PayPal script
