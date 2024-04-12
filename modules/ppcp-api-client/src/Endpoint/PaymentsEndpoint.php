@@ -194,6 +194,53 @@ class PaymentsEndpoint {
 	}
 
 	/**
+	 * Reauthorizes an order.
+	 *
+	 * @param string     $authorization_id The id.
+	 * @param Money|null $amount The amount to capture. If not specified, the whole authorized amount is captured.
+	 *
+	 * @return string
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function reauthorize( string $authorization_id, ?Money $amount = null ) : string {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization_id . '/reauthorize';
+
+		$data = array();
+		if ( $amount ) {
+			$data['amount'] = $amount->to_array();
+		}
+
+		$args = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
+			),
+			'body'    => wp_json_encode( $data, JSON_FORCE_OBJECT ),
+		);
+
+		$response = $this->request( $url, $args );
+		$json     = json_decode( $response['body'] );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( 'Could not reauthorize authorized payment.' );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 201 !== $status_code || ! is_object( $json ) ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $json->id;
+	}
+
+	/**
 	 * Refunds a payment.
 	 *
 	 * @param RefundCapture $refund The refund to be processed.

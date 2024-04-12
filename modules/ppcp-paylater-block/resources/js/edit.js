@@ -7,7 +7,7 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 import PayPalMessages from "./components/PayPalMessages";
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
-    const { layout, logo, position, color, flexColor, flexRatio, placement, id } = attributes;
+    const { layout, logo, position, color, size, flexColor, flexRatio, placement, id } = attributes;
     const isFlex = layout === 'flex';
 
     const [paypalScriptState, setPaypalScriptState] = useState(null);
@@ -30,11 +30,12 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         ratio: flexRatio,
         text: {
             color,
+            size
         },
     };
 
     let classes = ['ppcp-paylater-block-preview', 'ppcp-overlay-parent'];
-    if (PcpPayLaterBlock.vaultingEnabled) {
+    if (PcpPayLaterBlock.vaultingEnabled || !PcpPayLaterBlock.placementEnabled) {
         classes = ['ppcp-paylater-block-preview', 'ppcp-paylater-unavailable', 'block-editor-warning'];
     }
     const props = useBlockProps({className: classes});
@@ -55,6 +56,27 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                 <div className={'class="block-editor-warning__actions"'}>
                     <span className={'block-editor-warning__action'}>
                         <a href={PcpPayLaterBlock.settingsUrl} className={'components-button is-primary'}>
+                            {__('PayPal Payments Settings', 'woocommerce-paypal-payments')}
+                        </a>
+                    </span>
+                    <span className={'block-editor-warning__action'}>
+                        <button onClick={() => wp.data.dispatch( 'core/block-editor' ).removeBlock(clientId)} type={'button'} className={'components-button is-secondary'}>
+                            {__('Remove Block', 'woocommerce-paypal-payments')}
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+
+    if (!PcpPayLaterBlock.placementEnabled) {
+        return <div {...props}>
+            <div className={'block-editor-warning__contents'}>
+                <h3>{__('PayPal Pay Later Messaging', 'woocommerce-paypal-payments')}</h3>
+                <p className={'block-editor-warning__message'}>{__('Pay Later Messaging cannot be used while the “WooCommerce Block” messaging placement is disabled. Enable the placement in the PayPal Payments Pay Later settings to reactivate this block.', 'woocommerce-paypal-payments')}</p>
+                <div className={'class="block-editor-warning__actions"'}>
+                    <span className={'block-editor-warning__action'}>
+                        <a href={PcpPayLaterBlock.payLaterSettingsUrl} className={'components-button is-primary'}>
                             {__('PayPal Payments Settings', 'woocommerce-paypal-payments')}
                         </a>
                     </span>
@@ -108,10 +130,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     { !isFlex && (<SelectControl
                         label={__('Logo', 'woocommerce-paypal-payments')}
                         options={[
-                            { label: __('Primary', 'woocommerce-paypal-payments'), value: 'primary' },
-                            { label: __('Alternative', 'woocommerce-paypal-payments'), value: 'alternative' },
+                            { label: __('Full logo', 'woocommerce-paypal-payments'), value: 'primary' },
+                            { label: __('Monogram', 'woocommerce-paypal-payments'), value: 'alternative' },
                             { label: __('Inline', 'woocommerce-paypal-payments'), value: 'inline' },
-                            { label: __('None', 'woocommerce-paypal-payments'), value: 'none' },
+                            { label: __('Message only', 'woocommerce-paypal-payments'), value: 'none' },
                         ]}
                         value={logo}
                         onChange={(value) => setAttributes({logo: value})}
@@ -129,13 +151,23 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     { !isFlex && (<SelectControl
                         label={__('Text Color', 'woocommerce-paypal-payments')}
                         options={[
-                            { label: __( 'Black', 'woocommerce-paypal-payments' ), value: 'black' },
-                            { label: __( 'White', 'woocommerce-paypal-payments' ), value: 'white' },
+                            { label: __( 'Black / Blue logo', 'woocommerce-paypal-payments' ), value: 'black' },
+                            { label: __( 'White / White logo', 'woocommerce-paypal-payments' ), value: 'white' },
                             { label: __( 'Monochrome', 'woocommerce-paypal-payments' ), value: 'monochrome' },
-                            { label: __( 'Grayscale', 'woocommerce-paypal-payments' ), value: 'grayscale' },
+                            { label: __( 'Black / Gray logo', 'woocommerce-paypal-payments' ), value: 'grayscale' },
                         ]}
                         value={color}
                         onChange={(value) => setAttributes({color: value})}
+                    />)}
+                    { !isFlex && (<SelectControl
+                        label={__('Text Size', 'woocommerce-paypal-payments')}
+                        options={[
+                            { label: __( 'Small', 'woocommerce-paypal-payments' ), value: '12' },
+                            { label: __( 'Medium', 'woocommerce-paypal-payments' ), value: '14' },
+                            { label: __( 'Large', 'woocommerce-paypal-payments' ), value: '16' },
+                        ]}
+                        value={size}
+                        onChange={(value) => setAttributes({size: value})}
                     />)}
                     { isFlex && (<SelectControl
                         label={__('Color', 'woocommerce-paypal-payments')}
@@ -143,10 +175,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                             { label: __( 'Blue', 'woocommerce-paypal-payments' ), value: 'blue' },
                             { label: __( 'Black', 'woocommerce-paypal-payments' ), value: 'black' },
                             { label: __( 'White', 'woocommerce-paypal-payments' ), value: 'white' },
-                            { label: __( 'White no border', 'woocommerce-paypal-payments' ), value: 'white-no-border' },
-                            { label: __( 'Gray', 'woocommerce-paypal-payments' ), value: 'gray' },
-                            { label: __( 'Monochrome', 'woocommerce-paypal-payments' ), value: 'monochrome' },
-                            { label: __( 'Grayscale', 'woocommerce-paypal-payments' ), value: 'grayscale' },
+                            { label: __( 'White (no border)', 'woocommerce-paypal-payments' ), value: 'white-no-border' },
                         ]}
                         value={flexColor}
                         onChange={(value) => setAttributes({flexColor: value})}
@@ -154,8 +183,6 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     { isFlex && (<SelectControl
                         label={__('Ratio', 'woocommerce-paypal-payments')}
                         options={[
-                            { label: __( '1x1', 'woocommerce-paypal-payments' ), value: '1x1' },
-                            { label: __( '1x4', 'woocommerce-paypal-payments' ), value: '1x4' },
                             { label: __( '8x1', 'woocommerce-paypal-payments' ), value: '8x1' },
                             { label: __( '20x1', 'woocommerce-paypal-payments' ), value: '20x1' },
                         ]}
@@ -167,12 +194,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                         help={ __( 'Used for the analytics dashboard in the merchant account.', 'woocommerce-paypal-payments' ) }
                         options={ [
                             { label: __( 'Detect automatically', 'woocommerce-paypal-payments' ), value: 'auto' },
+                            { label: __( 'Product Page', 'woocommerce-paypal-payments' ), value: 'product' },
                             { label: __( 'Cart', 'woocommerce-paypal-payments' ), value: 'cart' },
-                            { label: __( 'Payment', 'woocommerce-paypal-payments' ), value: 'payment' },
-                            { label: __( 'Product', 'woocommerce-paypal-payments' ), value: 'product' },
-                            { label: __( 'Product list', 'woocommerce-paypal-payments' ), value: 'product-list' },
+                            { label: __( 'Checkout', 'woocommerce-paypal-payments' ), value: 'checkout' },
                             { label: __( 'Home', 'woocommerce-paypal-payments' ), value: 'home' },
-                            { label: __( 'Category', 'woocommerce-paypal-payments' ), value: 'category' },
+                            { label: __( 'Shop', 'woocommerce-paypal-payments' ), value: 'shop' },
                         ] }
                         value={ placement }
                         onChange={ ( value ) => setAttributes( { placement: value } ) }

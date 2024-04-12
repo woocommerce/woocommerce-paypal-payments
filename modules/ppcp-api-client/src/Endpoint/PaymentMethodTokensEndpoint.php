@@ -115,7 +115,7 @@ class PaymentMethodTokensEndpoint {
 	 * @throws RuntimeException When something when wrong with the request.
 	 * @throws PayPalApiException When something when wrong setting up the token.
 	 */
-	public function payment_tokens( PaymentSource $payment_source ): stdClass {
+	public function create_payment_token( PaymentSource $payment_source ): stdClass {
 		$data = array(
 			'payment_source' => array(
 				$payment_source->name() => $payment_source->properties(),

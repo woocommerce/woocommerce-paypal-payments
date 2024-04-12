@@ -11,10 +11,12 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -56,6 +58,8 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class WCGatewayModule implements ModuleInterface {
 
+	use CreditCardOrderInfoHandlingTrait;
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -92,7 +96,7 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_paypal_payments_order_captured',
-			function ( WC_Order $wc_order, Capture $capture ) {
+			function ( WC_Order $wc_order, Capture $capture ) use ( $c ) {
 				$breakdown = $capture->seller_receivable_breakdown();
 				if ( $breakdown ) {
 					$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
@@ -104,43 +108,34 @@ class WCGatewayModule implements ModuleInterface {
 					$wc_order->save_meta_data();
 				}
 
+				$order = $c->get( 'session.handler' )->order();
+				if ( ! $order ) {
+					return;
+				}
+
 				$fraud = $capture->fraud_processor_response();
 				if ( $fraud ) {
-					$fraud_responses               = $fraud->to_array();
-					$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
-					/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
-					$avs_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
-					$avs_response_order_note_result_format = '<ul class="ppcp_avs_result">
-                                                                <li>%1$s</li>
-                                                                <ul class="ppcp_avs_result_inner">
-                                                                    <li>%2$s</li>
-                                                                    <li>%3$s</li>
-                                                                </ul>
-                                                            </ul>';
-					$avs_response_order_note_result        = sprintf(
-						$avs_response_order_note_result_format,
-						/* translators: %s is fraud AVS code */
-						sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['avs_code'] ) ),
-						/* translators: %s is fraud AVS address match */
-						sprintf( __( 'Address Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['address_match'] ) ),
-						/* translators: %s is fraud AVS postal match */
-						sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) )
-					);
-					$avs_response_order_note = sprintf(
-						$avs_response_order_note_format,
-						esc_html( $avs_response_order_note_title ),
-						wp_kses_post( $avs_response_order_note_result )
-					);
-					$wc_order->add_order_note( $avs_response_order_note );
-
-					$cvv_response_order_note_format = '<ul class="ppcp_cvv_result"><li>%1$s</li></ul>';
-					$cvv_response_order_note        = sprintf(
-						$cvv_response_order_note_format,
-						/* translators: %s is fraud CVV match */
-						sprintf( __( 'CVV2 Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['cvv_match'] ) )
-					);
-					$wc_order->add_order_note( $cvv_response_order_note );
+					$this->handle_fraud( $fraud, $order, $wc_order );
 				}
+				$this->handle_three_d_secure( $order, $wc_order );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_order_authorized',
+			function ( WC_Order $wc_order, Authorization $authorization ) use ( $c ) {
+				$order = $c->get( 'session.handler' )->order();
+				if ( ! $order ) {
+					return;
+				}
+
+				$fraud = $authorization->fraud_processor_response();
+				if ( $fraud ) {
+					$this->handle_fraud( $fraud, $order, $wc_order );
+				}
+				$this->handle_three_d_secure( $order, $wc_order );
 			},
 			10,
 			2
@@ -187,7 +182,8 @@ class WCGatewayModule implements ModuleInterface {
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 				$c->get( 'wcgateway.settings.funding-sources' ),
 				$c->get( 'wcgateway.is-ppcp-settings-page' ),
-				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' )
+				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ),
+				$c->get( 'api.endpoint.billing-agreements' )
 			);
 			$assets->register_assets();
 		}
@@ -452,6 +448,53 @@ class WCGatewayModule implements ModuleInterface {
 				delete_transient( 'ppcp_reference_transaction_enabled' );
 			}
 		);
+
+		/**
+		 * Param types removed to avoid third-party issues.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_admin_billing_fields',
+			function ( $fields ) {
+				global $theorder;
+
+				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
+					return $fields;
+				}
+
+				if ( ! is_array( $fields ) ) {
+					return $fields;
+				}
+
+				if ( ! $theorder instanceof WC_Order ) {
+					return $fields;
+				}
+
+				$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
+
+				if ( ! $email ) {
+					return $fields;
+				}
+
+				// Is payment source is paypal exclude all non paypal funding sources.
+				$payment_source           = $theorder->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ?: '';
+				$is_paypal_funding_source = ( strpos( $theorder->get_payment_method_title(), '(via PayPal)' ) === false );
+
+				if ( $payment_source === 'paypal' && ! $is_paypal_funding_source ) {
+					return $fields;
+				}
+
+				$fields['paypal_email'] = array(
+					'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
+					'value'             => $email,
+					'wrapper_class'     => 'form-field-wide',
+					'custom_attributes' => array( 'disabled' => 'disabled' ),
+				);
+
+				return $fields;
+			}
+		);
 	}
 
 	/**
@@ -619,13 +662,18 @@ class WCGatewayModule implements ModuleInterface {
 					return $order_actions;
 				}
 
-				$render = $container->get( 'wcgateway.admin.render-authorize-action' );
+				$render_reauthorize = $container->get( 'wcgateway.admin.render-reauthorize-action' );
+				$render_authorize   = $container->get( 'wcgateway.admin.render-authorize-action' );
+
 				/**
 				 * Renders the authorize action in the select field.
 				 *
 				 * @var RenderAuthorizeAction $render
 				 */
-				return $render->render( $order_actions, $theorder );
+				return $render_reauthorize->render(
+					$render_authorize->render( $order_actions, $theorder ),
+					$theorder
+				);
 			}
 		);
 
@@ -640,6 +688,36 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 				$authorized_payments_processor->capture_authorized_payment( $wc_order );
+			}
+		);
+
+		add_action(
+			'woocommerce_order_action_ppcp_reauthorize_order',
+			static function ( WC_Order $wc_order ) use ( $container ) {
+				$admin_notices = $container->get( 'admin-notices.repository' );
+				assert( $admin_notices instanceof Repository );
+
+				/**
+				 * The authorized payments processor.
+				 *
+				 * @var AuthorizedPaymentsProcessor $authorized_payments_processor
+				 */
+				$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
+
+				if ( $authorized_payments_processor->reauthorize_payment( $wc_order ) !== AuthorizedPaymentsProcessor::SUCCESSFUL ) {
+					$message = sprintf(
+						'%1$s %2$s',
+						esc_html__( 'Reauthorization with PayPal failed: ', 'woocommerce-paypal-payments' ),
+						$authorized_payments_processor->reauthorization_failure_reason() ?: ''
+					);
+					$admin_notices->persist( new Message( $message, 'error' ) );
+				} else {
+					$admin_notices->persist( new Message( 'Payment reauthorized.', 'info' ) );
+
+					$wc_order->add_order_note(
+						__( 'Payment reauthorized.', 'woocommerce-paypal-payments' )
+					);
+				}
 			}
 		);
 	}

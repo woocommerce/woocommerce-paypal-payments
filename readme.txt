@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
-Tested up to: 6.4
+Tested up to: 6.5
 Requires PHP: 7.2
-Stable tag: 2.5.3
+Stable tag: 2.6.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,55 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.6.1 - 2024-04-09 =
+* Fix - Payment tokens fixes and adjustments #2106
+* Fix - Pay upon Invoice: Add input validation to Experience Context fields #2092
+* Fix - Disable markup in get_plugin_data() returns to fix an issue with wptexturize() #2094
+* Fix - Problem changing the shipping option in block pages #2142
+* Fix - Saved payment token deleted after payment with another saved payment token #2146
+* Enhancement - Pay later messaging configurator improvements #2107
+* Enhancement - Replace the middleware URL from connect.woocommerce.com to api.woocommerce.com/integrations #2130
+* Enhancement - Remove all Sofort references as it has been deprecated #2124
+* Enhancement - Improve funding source names #2118
+* Enhancement - More fraud prevention capabilities by storing additional data in the order #2125
+* Enhancement - Update ACDC currency eligibility for AMEX #2129
+* Enhancement - Sync shipping options with Venmo when skipping final confirmation on Checkout #2108
+* Enhancement - Card Fields: Add a filter for the CVC field and update the placeholder to match the label #2089
+* Enhancement - Product Title: Sanitize before sending to PayPal #2090
+* Enhancement - Add filter for disabling permit_multiple_payment_tokens vault attribute #2136
+* Enhancement - Filter to hide PayPal email address not working on order detail #2137
+
+= 2.6.0 - 2024-03-20 =
+* Fix - invoice_id not included in API call when creating payment with saved card #2086
+* Fix - Typo in SCA indicators for ACDC Vault transactions #2083
+* Fix - Payments with saved card tokens use Capture intent when Authorize is configured #2069
+* Fix - WooPayments multi-currency causing currency mismatch error on Block Cart & Checkout pages #2054
+* Fix - "Must pass createSubscription with intent=subscription" error with PayPal Subscriptions mode #2058
+* Fix - "Proceed to PayPal" button displayed for Free trial PayPal Subscription products when payment token is saved #2041
+* Fix - ACDC payments with new credit card may fail when debugging is enabled (JSON malformed by warning) #2051
+* Enhancement - Add Pay Later Messaging block #1897
+* Enhancement - Submit the form instead of refreshing the page to show the save notice #2081
+* Enhancement - Integrate pay later messaging block with the messaging configurator #2080
+* Enhancement - Reauthorize authorized payments #2062
+* Enhancement - Do not handle VAULT.PAYMENT-TOKEN.CREATED webhook for Vault v3 #2079
+* Enhancement - Improve the messaging configurator styles #2053
+* Enhancement - Ensure PayPal Vaulting is not selected as Subscriptions Mode when Reference Transactions are disabled #2057
+* Enhancement - Pay later messaging configurator & messaging block adjustments #2096
+
+= 2.5.4 - 2024-02-27 =
+* Fix - Cannot enable Apple Pay when API credentials were manually created #2015
+* Fix - Cart simulation type error #1943
+* Enhancement - Apple Pay recurring payments #1986
+* Enhancement - Real Time Account Updater (RTAU) integration #2027
+* Enhancement - Prepare the SKU for sending to PayPal #2033
+* Enhancement - Store the Card Brand in Address Verification Result instead of 3DS authentication result #2026
+* Enhancement - Update country eligibility for AdvancedCard Processing, Apple Pay, Google Pay #2019
+* Enhancement - Disable PayPal Vaulting setting instead of hiding it when Reference Transactions not available #2029
+* Enhancement - Store three d secure enrollment status and authentication status responses in wc order #1980
+* Enhancement - Add more checks to prevent "PayPal order ID not found" errors #2038
+* Enhancement - Disable messaging configurator when vault is enabled #2042
+* Feature preview - Pay Later Messaging configurator #1924
 
 = 2.5.3 - 2024-02-06 =
 * Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979

@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -72,14 +73,16 @@ return array(
 		return $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;
 	},
 
-	'applepay.apple-product-status'              => static function( ContainerInterface $container ): AppleProductStatus {
-		return new AppleProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'onboarding.state' ),
-			$container->get( 'api.helper.failure-registry' )
-		);
-	},
+	'applepay.apple-product-status'              => SingletonDecorator::make(
+		static function( ContainerInterface $container ): AppleProductStatus {
+			return new AppleProductStatus(
+				$container->get( 'wcgateway.settings' ),
+				$container->get( 'api.endpoint.partners' ),
+				$container->get( 'onboarding.state' ),
+				$container->get( 'api.helper.failure-registry' )
+			);
+		}
+	),
 	'applepay.available'                         => static function ( ContainerInterface $container ): bool {
 		if ( apply_filters( 'woocommerce_paypal_payments_applepay_validate_product_status', true ) ) {
 			$status = $container->get( 'applepay.apple-product-status' );
@@ -172,6 +175,30 @@ return array(
 			'woocommerce_paypal_payments_applepay_supported_country_currency_matrix',
 			array(
 				'AU' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
+				'AT' => array(
 					'AUD',
 					'BRL',
 					'CAD',
@@ -483,6 +510,30 @@ return array(
 					'TWD',
 					'USD',
 				),
+				'IE' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
 				'IT' => array(
 					'AUD',
 					'BRL',
@@ -508,6 +559,30 @@ return array(
 					'USD',
 				),
 				'LV' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
+				'LI' => array(
 					'AUD',
 					'BRL',
 					'CAD',
@@ -580,6 +655,30 @@ return array(
 					'USD',
 				),
 				'MT' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
+				'NO' => array(
 					'AUD',
 					'BRL',
 					'CAD',

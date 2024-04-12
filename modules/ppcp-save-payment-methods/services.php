@@ -9,9 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -34,6 +34,30 @@ return array(
 			'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix',
 			array(
 				'AU' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
+				'AT' => array(
 					'AUD',
 					'BRL',
 					'CAD',
@@ -345,6 +369,30 @@ return array(
 					'TWD',
 					'USD',
 				),
+				'IE' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
 				'IT' => array(
 					'AUD',
 					'BRL',
@@ -370,6 +418,30 @@ return array(
 					'USD',
 				),
 				'LV' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
+				'LI' => array(
 					'AUD',
 					'BRL',
 					'CAD',
@@ -442,6 +514,30 @@ return array(
 					'USD',
 				),
 				'MT' => array(
+					'AUD',
+					'BRL',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'ILS',
+					'JPY',
+					'MXN',
+					'NOK',
+					'NZD',
+					'PHP',
+					'PLN',
+					'SEK',
+					'SGD',
+					'THB',
+					'TWD',
+					'USD',
+				),
+				'NO' => array(
 					'AUD',
 					'BRL',
 					'CAD',
@@ -709,30 +805,17 @@ return array(
 			$container->get( 'api.endpoint.payment-method-tokens' )
 		);
 	},
-	'save-payment-methods.wc-payment-tokens'             => static function( ContainerInterface $container ): WooCommercePaymentTokens {
-		return new WooCommercePaymentTokens(
-			$container->get( 'vaulting.payment-token-helper' ),
-			$container->get( 'vaulting.payment-token-factory' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
 	'save-payment-methods.endpoint.create-payment-token' => static function ( ContainerInterface $container ): CreatePaymentToken {
 		return new CreatePaymentToken(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' ),
-			$container->get( 'save-payment-methods.wc-payment-tokens' )
+			$container->get( 'vaulting.wc-payment-tokens' )
 		);
 	},
-	'save-payment-methods.endpoint.capture-card-payment' => static function( ContainerInterface $container ): CaptureCardPayment {
-		return new CaptureCardPayment(
+	'save-payment-methods.endpoint.create-payment-token-for-guest' => static function ( ContainerInterface $container ): CreatePaymentTokenForGuest {
+		return new CreatePaymentTokenForGuest(
 			$container->get( 'button.request-data' ),
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'api.factory.order' ),
-			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'session.handler' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'api.endpoint.payment-method-tokens' )
 		);
 	},
 );

@@ -312,11 +312,12 @@ class ItemFactoryTest extends TestCase
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
+
         /**
          * @var Item $item
          */
-        $this->assertEquals(mb_substr($name, 0, 127), $item->name());
-        $this->assertEquals(substr($description, 0, 127), $item->description());
+        $this->assertEquals(substr( strip_shortcodes( wp_strip_all_tags( $name ) ), 0, 127 ), $item->name());
+        $this->assertEquals(substr( strip_shortcodes( wp_strip_all_tags( $description ) ), 0, 127 ), $item->description());
     }
 
     public function testFromPayPalResponse()

@@ -41,7 +41,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * The smart button script loading handler.
 	 *
-	 * @var SmartButtonInterface
+	 * @var SmartButtonInterface|callable
 	 */
 	private $smart_button;
 
@@ -125,25 +125,25 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * Assets constructor.
 	 *
-	 * @param string               $module_url The url of this module.
-	 * @param string               $version    The assets version.
-	 * @param SmartButtonInterface $smart_button The smart button script loading handler.
-	 * @param Settings             $plugin_settings The settings.
-	 * @param SettingsStatus       $settings_status The Settings status helper.
-	 * @param PayPalGateway        $gateway The WC gateway.
-	 * @param bool                 $final_review_enabled Whether the final review is enabled.
-	 * @param CancelView           $cancellation_view The cancellation view.
-	 * @param SessionHandler       $session_handler The Session handler.
-	 * @param bool                 $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
-	 * @param bool                 $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
-	 * @param string               $place_order_button_text The text for the standard "Place order" button.
-	 * @param string               $place_order_button_description The text for additional "Place order" description.
-	 * @param array                $all_funding_sources All existing funding sources for PayPal buttons.
+	 * @param string                        $module_url The url of this module.
+	 * @param string                        $version    The assets version.
+	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
+	 * @param Settings                      $plugin_settings The settings.
+	 * @param SettingsStatus                $settings_status The Settings status helper.
+	 * @param PayPalGateway                 $gateway The WC gateway.
+	 * @param bool                          $final_review_enabled Whether the final review is enabled.
+	 * @param CancelView                    $cancellation_view The cancellation view.
+	 * @param SessionHandler                $session_handler The Session handler.
+	 * @param bool                          $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
+	 * @param bool                          $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
+	 * @param string                        $place_order_button_text The text for the standard "Place order" button.
+	 * @param string                        $place_order_button_description The text for additional "Place order" description.
+	 * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
-		SmartButtonInterface $smart_button,
+		$smart_button,
 		Settings $plugin_settings,
 		SettingsStatus $settings_status,
 		PayPalGateway $gateway,
@@ -209,7 +209,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_data() {
-		$script_data = $this->smart_button->script_data();
+		$script_data = $this->smart_button()->script_data();
 
 		if ( isset( $script_data['continuation'] ) ) {
 			$url = add_query_arg( array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ), wc_get_checkout_url() );
@@ -266,5 +266,22 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		}
 		$screen = get_current_screen();
 		return $screen && $screen->is_block_editor();
+	}
+
+	/**
+	 * The smart button.
+	 *
+	 * @return SmartButtonInterface
+	 */
+	private function smart_button(): SmartButtonInterface {
+		if ( $this->smart_button instanceof SmartButtonInterface ) {
+			return $this->smart_button;
+		}
+
+		if ( is_callable( $this->smart_button ) ) {
+			$this->smart_button = ( $this->smart_button )();
+		}
+
+		return $this->smart_button;
 	}
 }

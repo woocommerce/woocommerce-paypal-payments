@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Helper;
 
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -100,6 +101,11 @@ class ApmProductStatus {
 			return false;
 		}
 
+		$status_override = apply_filters( 'woocommerce_paypal_payments_google_pay_product_status', null );
+		if ( null !== $status_override ) {
+			return $status_override;
+		}
+
 		// If status was already checked on this request return the same result.
 		if ( null !== $this->current_status ) {
 			return $this->current_status;
@@ -128,19 +134,30 @@ class ApmProductStatus {
 		}
 
 		// Check the seller status for the intended capability.
+		$has_capability = false;
 		foreach ( $seller_status->products() as $product ) {
 			if ( $product->name() !== 'PAYMENT_METHODS' ) {
 				continue;
 			}
 
 			if ( in_array( self::CAPABILITY_NAME, $product->capabilities(), true ) ) {
-				// Capability found, persist status and return true.
-				$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
-				$this->settings->persist();
-
-				$this->current_status = true;
-				return $this->current_status;
+				$has_capability = true;
 			}
+		}
+
+		foreach ( $seller_status->capabilities() as $capability ) {
+			if ( $capability->name() === self::CAPABILITY_NAME && $capability->status() === SellerStatusCapability::STATUS_ACTIVE ) {
+				$has_capability = true;
+			}
+		}
+
+		if ( $has_capability ) {
+			// Capability found, persist status and return true.
+			$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
+			$this->settings->persist();
+
+			$this->current_status = true;
+			return $this->current_status;
 		}
 
 		// Capability not found, persist status and return false.

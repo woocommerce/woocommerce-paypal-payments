@@ -88,6 +88,32 @@ function ppcp_capture_order( WC_Order $wc_order ): void {
 }
 
 /**
+ * Reauthorizes the PayPal order.
+ *
+ * @param WC_Order $wc_order The WC order.
+ * @throws InvalidArgumentException When the order cannot be captured.
+ * @throws Exception When the operation fails.
+ */
+function ppcp_reauthorize_order( WC_Order $wc_order ): void {
+	$intent = strtoupper( (string) $wc_order->get_meta( PayPalGateway::INTENT_META_KEY ) );
+
+	if ( $intent !== 'AUTHORIZE' ) {
+		throw new InvalidArgumentException( 'Only orders with "authorize" intent can be reauthorized.' );
+	}
+	$captured = wc_string_to_bool( $wc_order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY ) );
+	if ( $captured ) {
+		throw new InvalidArgumentException( 'The order is already captured.' );
+	}
+
+	$authorized_payment_processor = PPCP::container()->get( 'wcgateway.processor.authorized-payments' );
+	assert( $authorized_payment_processor instanceof AuthorizedPaymentsProcessor );
+
+	if ( $authorized_payment_processor->reauthorize_payment( $wc_order ) !== AuthorizedPaymentsProcessor::SUCCESSFUL ) {
+		throw new RuntimeException( $authorized_payment_processor->reauthorization_failure_reason() ?: 'Reauthorization failed.' );
+	}
+}
+
+/**
  * Refunds the PayPal order.
  * Note that you can use wc_refund_payment() to trigger the refund in WC and PayPal.
  *

@@ -19,9 +19,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -89,14 +90,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				$logger = $c->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 
-				$localized_script_data = $this->add_id_token_to_script_data( $api, $logger, $localized_script_data );
-
-				$localized_script_data['ajax']['capture_card_payment'] = array(
-					'endpoint' => \WC_AJAX::get_endpoint( CaptureCardPayment::ENDPOINT ),
-					'nonce'    => wp_create_nonce( CaptureCardPayment::nonce() ),
-				);
-
-				return $localized_script_data;
+				return $this->add_id_token_to_script_data( $api, $logger, $localized_script_data );
 			}
 		);
 
@@ -148,6 +142,21 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
+									),
+								),
+							),
+						);
+					} elseif ( $funding_source && $funding_source === 'apple_pay' ) {
+						$data['payment_source'] = array(
+							'apple_pay' => array(
+								'stored_credential' => array(
+									'payment_initiator' => 'CUSTOMER',
+									'payment_type'      => 'RECURRING',
+								),
+								'attributes'        => array(
+									'vault' => array(
+										'store_in_vault' => 'ON_SUCCESS',
 									),
 								),
 							),
@@ -159,6 +168,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
+										'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
 									),
 								),
 							),
@@ -188,7 +198,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
 
-					$wc_payment_tokens = $c->get( 'save-payment-methods.wc-payment-tokens' );
+					$wc_payment_tokens = $c->get( 'vaulting.wc-payment-tokens' );
 					assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
 					if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
@@ -207,11 +217,29 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					}
 
 					if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
-						$wc_payment_tokens->create_payment_token_paypal(
-							$wc_order->get_customer_id(),
-							$token_id,
-							$payment_source->properties()->email_address ?? ''
-						);
+						switch ( $payment_source->name() ) {
+							case 'venmo':
+								$wc_payment_tokens->create_payment_token_venmo(
+									$wc_order->get_customer_id(),
+									$token_id,
+									$payment_source->properties()->email_address ?? ''
+								);
+								break;
+							case 'apple_pay':
+								$wc_payment_tokens->create_payment_token_applepay(
+									$wc_order->get_customer_id(),
+									$token_id
+								);
+								break;
+							case 'paypal':
+							default:
+								$wc_payment_tokens->create_payment_token_paypal(
+									$wc_order->get_customer_id(),
+									$token_id,
+									$payment_source->properties()->email_address ?? ''
+								);
+								break;
+						}
 					}
 				}
 			},
@@ -254,7 +282,11 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					$settings = $c->get( 'wcgateway.settings' );
 					assert( $settings instanceof Settings );
-					$verification_method = $settings->has( '3d_secure_contingency' ) ? $settings->get( '3d_secure_contingency' ) : '';
+
+					$verification_method =
+						$settings->has( '3d_secure_contingency' )
+							? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+							: '';
 
 					$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
@@ -283,6 +315,14 @@ class SavePaymentMethodsModule implements ModuleInterface {
 								'subscription_change_payment_method' => array(
 									'endpoint' => \WC_AJAX::get_endpoint( SubscriptionChangePaymentMethod::ENDPOINT ),
 									'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
+								),
+							),
+							'labels'                  => array(
+								'error' => array(
+									'generic' => __(
+										'Something went wrong. Please try again or choose another payment source.',
+										'woocommerce-paypal-payments'
+									),
 								),
 							),
 						)
@@ -333,6 +373,16 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		);
 
 		add_action(
+			'wc_ajax_' . CreatePaymentTokenForGuest::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token-for-guest' );
+				assert( $endpoint instanceof CreatePaymentTokenForGuest );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
 			'woocommerce_paypal_payments_before_delete_payment_token',
 			function( string $token_id ) use ( $c ) {
 				try {
@@ -365,16 +415,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				return $supports;
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . CaptureCardPayment::ENDPOINT,
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'save-payment-methods.endpoint.capture-card-payment' );
-				assert( $endpoint instanceof CaptureCardPayment );
-
-				$endpoint->handle_request();
 			}
 		);
 

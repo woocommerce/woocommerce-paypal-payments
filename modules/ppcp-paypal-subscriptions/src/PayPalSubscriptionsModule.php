@@ -196,7 +196,7 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $actions, $subscription ): array {
+			function( $actions, $subscription = null ): array {
 				if ( ! is_array( $actions ) || ! is_a( $subscription, WC_Subscription::class ) ) {
 					return $actions;
 				}

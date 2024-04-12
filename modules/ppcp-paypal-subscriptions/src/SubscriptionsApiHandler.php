@@ -114,7 +114,7 @@ class SubscriptionsApiHandler {
 	 */
 	public function create_product( WC_Product $product ) {
 		try {
-			$subscription_product = $this->products_endpoint->create( $product->get_title(), $this->prepare_description( $product->get_description() ) );
+			$subscription_product = $this->products_endpoint->create( $this->prepare_item_string( $product->get_title() ), $this->prepare_item_string( $product->get_description() ) );
 			$product->update_meta_data( 'ppcp_subscription_product', $subscription_product->to_array() );
 			$product->save();
 		} catch ( RuntimeException $exception ) {
@@ -169,7 +169,7 @@ class SubscriptionsApiHandler {
 				$catalog_product_name        = $catalog_product->name() ?: '';
 				$catalog_product_description = $catalog_product->description() ?: '';
 
-				$wc_product_description = $this->prepare_description( $product->get_description() ) ?: $product->get_title();
+				$wc_product_description = $this->prepare_item_string( $product->get_description() ) ?: $this->prepare_item_string( $product->get_title() );
 
 				if ( $catalog_product_name !== $product->get_title() || $catalog_product_description !== $wc_product_description ) {
 					$data = array();

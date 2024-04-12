@@ -78,6 +78,8 @@ class StatusReportModule implements ModuleInterface {
 
 				$had_ppec_plugin = PPECHelper::is_plugin_configured();
 
+				$subscription_mode_options = $c->get( 'wcgateway.settings.fields.subscriptions_mode_options' );
+
 				$items = array(
 					array(
 						'label'          => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
@@ -169,7 +171,7 @@ class StatusReportModule implements ModuleInterface {
 						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->subscriptions_mode_text(
 							$subscription_helper->plugin_is_active(),
-							$settings->has( 'subscriptions_mode' ) ? (string) $settings->get( 'subscriptions_mode' ) : '',
+							$settings->has( 'subscriptions_mode' ) ? (string) $subscription_mode_options[ $settings->get( 'subscriptions_mode' ) ] : '',
 							$subscriptions_mode_settings
 						),
 					),

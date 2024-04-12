@@ -104,11 +104,14 @@ class WcSubscriptionsModule implements ModuleInterface {
 				if ( count( $subscription->get_related_orders() ) === 1 ) {
 					$parent_order = $subscription->get_parent();
 					if ( is_a( $parent_order, WC_Order::class ) ) {
-						$order_repository = $c->get( 'api.repository.order' );
-						$order            = $order_repository->for_wc_order( $parent_order );
-						$transaction_id   = $this->get_paypal_order_transaction_id( $order );
-						if ( $transaction_id ) {
-							$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
+						// Update the initial payment method title if not the same as the first order.
+						$payment_method_title = $parent_order->get_payment_method_title();
+						if (
+							$payment_method_title
+							&& $subscription instanceof \WC_Subscription
+							&& $subscription->get_payment_method_title() !== $payment_method_title
+						) {
+							$subscription->set_payment_method_title( $payment_method_title );
 							$subscription->save();
 						}
 					}
@@ -311,7 +314,7 @@ class WcSubscriptionsModule implements ModuleInterface {
 			foreach ( $tokens as $token ) {
 				$output     .= '<li>';
 					$output .= sprintf( '<input name="saved_paypal_payment" type="radio" value="%s" style="width:auto;" checked="checked">', $token->get_id() );
-					$output .= sprintf( '<label for="saved_paypal_payment">%s</label>', $token->get_meta( 'email' ) ?? '' );
+					$output .= sprintf( '<label for="saved_paypal_payment">%s / %s</label>', $token->get_type(), $token->get_meta( 'email' ) ?? '' );
 				$output     .= '</li>';
 			}
 			$output .= '</ul>';

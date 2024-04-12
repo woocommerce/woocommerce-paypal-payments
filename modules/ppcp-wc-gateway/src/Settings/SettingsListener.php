@@ -381,6 +381,12 @@ class SettingsListener {
 
 		$reference_transaction_enabled = $this->billing_agreements_endpoint->reference_transaction_enabled();
 
+		if ( $reference_transaction_enabled !== true ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
+			$this->settings->persist();
+		}
+
 		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled === true ) {
 			$this->settings->set( 'vault_enabled', true );
 			$this->settings->persist();

@@ -23,6 +23,8 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -102,7 +104,10 @@ return array(
 			$api_shop_country,
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'vaulting.vault-v3-enabled' ),
+			$container->get( 'vaulting.wc-payment-tokens' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -128,9 +133,15 @@ return array(
 			$state,
 			$transaction_url_provider,
 			$subscription_helper,
-			$logger,
 			$payments_endpoint,
-			$vaulted_credit_card_handler
+			$vaulted_credit_card_handler,
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
+			$container->get( 'api.prefix' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'vaulting.wc-payment-tokens' ),
+			$logger
 		);
 	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
@@ -381,18 +392,24 @@ return array(
 		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		$amount_factory      = $container->get( 'api.factory.amount' );
 		return new AuthorizedPaymentsProcessor(
 			$order_endpoint,
 			$payments_endpoint,
 			$logger,
 			$notice,
 			$settings,
-			$subscription_helper
+			$subscription_helper,
+			$amount_factory
 		);
 	},
 	'wcgateway.admin.render-authorize-action'              => static function ( ContainerInterface $container ): RenderAuthorizeAction {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
 		return new RenderAuthorizeAction( $column );
+	},
+	'wcgateway.admin.render-reauthorize-action'            => static function ( ContainerInterface $container ): RenderReauthorizeAction {
+		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+		return new RenderReauthorizeAction( $column );
 	},
 	'wcgateway.admin.order-payment-status'                 => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
@@ -405,7 +422,6 @@ return array(
 	'wcgateway.admin.fees-renderer'                        => static function ( ContainerInterface $container ): FeesRenderer {
 		return new FeesRenderer();
 	},
-
 	'wcgateway.settings.should-render-settings'            => static function ( ContainerInterface $container ): bool {
 
 		$sections = array(
@@ -420,13 +436,15 @@ return array(
 
 		return array_key_exists( $current_page_id, $sections );
 	},
-
-	'wcgateway.settings.fields.subscriptions_mode'         => static function ( ContainerInterface $container ): array {
-		$subscription_mode_options = array(
+	'wcgateway.settings.fields.subscriptions_mode_options' => static function ( ContainerInterface $container ): array {
+		return array(
 			'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
 			'subscriptions_api'            => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
 			'disable_paypal_subscriptions' => __( 'Disable PayPal for subscriptions', 'woocommerce-paypal-payments' ),
 		);
+	},
+	'wcgateway.settings.fields.subscriptions_mode'         => static function ( ContainerInterface $container ): array {
+		$subscription_mode_options = $container->get( 'wcgateway.settings.fields.subscriptions_mode_options' );
 
 		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
 		$reference_transaction_enabled = $billing_agreements_endpoint->reference_transaction_enabled();
@@ -441,7 +459,7 @@ return array(
 			'input_class'  => array( 'wc-enhanced-select' ),
 			'desc_tip'     => true,
 			'description'  => __( 'Utilize PayPal Vaulting for flexible subscription processing with saved payment methods, create “PayPal Subscriptions” to bill customers at regular intervals, or disable PayPal for subscription-type products.', 'woocommerce-paypal-payments' ),
-			'default'      => 'vaulting_api',
+			'default'      => array_key_first( $subscription_mode_options ),
 			'options'      => $subscription_mode_options,
 			'screens'      => array(
 				State::STATE_ONBOARDED,
@@ -964,11 +982,6 @@ return array(
 			unset( $fields['subscriptions_mode'] );
 		}
 
-		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
-		if ( ! $billing_agreements_endpoint->reference_transaction_enabled() ) {
-			unset( $fields['vault_enabled'] );
-		}
-
 		/**
 		 * Depending on your store location, some credit cards can't be used.
 		 * Here, we filter them out.
@@ -1006,10 +1019,10 @@ return array(
 			'ideal'      => _x( 'iDEAL', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'mybank'     => _x( 'MyBank', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'p24'        => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'sofort'     => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'      => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'trustly'    => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'paylater'   => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'paylater'   => _x( 'PayPal Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'paypal'     => _x( 'PayPal', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
 
@@ -1032,6 +1045,7 @@ return array(
 			array_flip(
 				array(
 					'paylater',
+					'paypal',
 				)
 			)
 		);
@@ -1632,6 +1646,19 @@ return array(
 				'sv_SE' => __( 'Swedish', 'woocommerce-paypal-payments' ),
 				'th_TH' => __( 'Thai', 'woocommerce-paypal-payments' ),
 			)
+		);
+	},
+	'wcgateway.endpoint.capture-card-payment'              => static function( ContainerInterface $container ): CaptureCardPayment {
+		return new CaptureCardPayment(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );
