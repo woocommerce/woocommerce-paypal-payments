@@ -12,7 +12,7 @@ class CheckoutActionHandler {
         this.spinner = spinner;
     }
 
-    subscriptionsConfiguration(subscription_plan) {
+    subscriptionsConfiguration(subscription_plan_id) {
         return {
             createSubscription: async (data, actions) => {
                 try {
@@ -22,7 +22,7 @@ class CheckoutActionHandler {
                 }
 
                 return actions.subscription.create({
-                    'plan_id': subscription_plan
+                    'plan_id': subscription_plan_id
                 });
             },
             onApprove: (data, actions) => {
