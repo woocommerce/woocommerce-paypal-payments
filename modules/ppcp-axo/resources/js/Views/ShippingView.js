@@ -125,8 +125,8 @@ class ShippingView {
         this.group.setData(data);
     }
 
-    copyDataToForm() {
-        return this.group.copyDataToForm();
+    toSubmitData(data) {
+        return this.group.toSubmitData(data);
     }
 
 }

@@ -51,11 +51,11 @@ class BillingView {
                 },
                 firstName: {
                     'selector': '#billing_first_name_field',
-                    'valuePath': 'billing.name.firstName',
+                    'valuePath': null
                 },
                 lastName: {
                     'selector': '#billing_last_name_field',
-                    'valuePath': 'billing.name.lastName',
+                    'valuePath': null
                 },
                 street1: {
                     'selector': '#billing_address_1_field',
@@ -117,8 +117,8 @@ class BillingView {
         return `${this.inputValue('firstName')} ${this.inputValue('lastName')}`.trim();
     }
 
-    copyDataToForm() {
-        return this.group.copyDataToForm();
+    toSubmitData(data) {
+        return this.group.toSubmitData(data);
     }
 
 }

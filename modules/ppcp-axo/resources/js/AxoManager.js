@@ -5,6 +5,7 @@ import ShippingView from "./Views/ShippingView";
 import BillingView from "./Views/BillingView";
 import CardView from "./Views/CardView";
 import PayPalInsights from "./Insights/PayPalInsights";
+import {disable,enable} from "../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler";
 
 class AxoManager {
 
@@ -607,11 +608,13 @@ class AxoManager {
             log('Ryan flow.');
 
             jQuery('#ship-to-different-address-checkbox').prop('checked', 'checked');
-            this.billingView.copyDataToForm();
-            this.shippingView.copyDataToForm();
-            this.cardView.copyDataToForm();
 
-            this.submit(this.data.card.id);
+            let data = {};
+            this.billingView.toSubmitData(data);
+            this.shippingView.toSubmitData(data);
+            this.cardView.toSubmitData(data);
+
+            this.submit(this.data.card.id, data);
 
         } else { // Gary flow
             log('Gary flow.');
@@ -652,14 +655,10 @@ class AxoManager {
         }
     }
 
-    submit(nonce) {
+    submit(nonce, data) {
         // Send the nonce and previously captured device data to server to complete checkout
-        log('nonce: ' + nonce);
-        alert('nonce: ' + nonce);
-
-        // Submit form.
         if (!this.el.axoNonceInput.get()) {
-            this.$('.woocommerce-checkout').append(`<input type="hidden" id="${this.el.axoNonceInput.id}" name="axo_nonce" value="" />`);
+            this.$('form.woocommerce-checkout').append(`<input type="hidden" id="${this.el.axoNonceInput.id}" name="axo_nonce" value="" />`);
         }
 
         this.el.axoNonceInput.get().value = nonce;
@@ -674,7 +673,39 @@ class AxoManager {
             }
         });
 
-        this.el.defaultSubmitButton.click();
+        if (data) {
+
+            // Ryan flow.
+            const form = document.querySelector('form.woocommerce-checkout');
+            const formData = new FormData(form);
+
+            disable('.woocommerce-checkout-payment');
+
+            // Fill in form data.
+            Object.keys(data).forEach((key) => {
+                formData.set(key, data[key]);
+            });
+
+            fetch(wc_checkout_params.checkout_url, { // TODO: maybe create a new endpoint to process_payment.
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.json())
+                .then(responseData => {
+                    if (responseData.redirect) {
+                        window.location.href = responseData.redirect;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    enable('.woocommerce-checkout-payment');
+                });
+
+        } else {
+            // Gary flow.
+            this.el.defaultSubmitButton.click();
+        }
+
     }
 
     useEmailWidget() {

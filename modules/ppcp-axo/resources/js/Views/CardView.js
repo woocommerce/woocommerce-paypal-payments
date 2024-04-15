@@ -91,14 +91,14 @@ class CardView {
         this.group.setData(data);
     }
 
-    copyDataToForm() {
+    toSubmitData(data) {
         const name = this.group.dataValue('name');
         const { firstName, lastName } = this.splitName(name);
 
-        jQuery('#billing_first_name').val(firstName);
-        jQuery('#billing_last_name').val(lastName);
+        data['firstName'] = firstName;
+        data['lastName'] = lastName;
 
-        return this.group.copyDataToForm();
+        return this.group.toSubmitData(data);
     }
 
     splitName(fullName) {

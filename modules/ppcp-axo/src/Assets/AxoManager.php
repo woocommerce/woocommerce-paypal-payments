@@ -203,7 +203,7 @@ class AxoManager {
 
 		printf(
 			'<div id="%1$s" style="display: none;">
-				<button type="submit" class="button alt ppcp-axo-order-button">%2$s</button>
+				<button type="button" class="button alt ppcp-axo-order-button">%2$s</button>
 			</div>',
 			esc_attr( $id ),
 			esc_html( $label )

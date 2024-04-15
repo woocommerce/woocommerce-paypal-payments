@@ -131,8 +131,7 @@ class FormFieldGroup {
         return el ? el.value : '';
     }
 
-    copyDataToForm() {
-
+    toSubmitData(data) {
         Object.keys(this.fields).forEach((fieldKey) => {
             const field = this.fields[fieldKey];
 
@@ -146,11 +145,8 @@ class FormFieldGroup {
                 return true;
             }
 
-            jQuery(inputElement).val(
-                this.dataValue(fieldKey)
-            );
+            data[inputElement.name] = this.dataValue(fieldKey);
         });
-
     }
 
 }
