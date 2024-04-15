@@ -436,7 +436,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'desc_tip'     => true,
 			'label'        => $container->get( 'wcgateway.settings.fraudnet-label' ),
 			'description'  => __( 'FraudNet is a JavaScript library developed by PayPal and embedded into a merchant’s web page to collect browser-based data to help reduce fraud.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
+			'default'      => true,
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
