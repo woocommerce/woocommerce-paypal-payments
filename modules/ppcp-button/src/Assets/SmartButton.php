@@ -33,6 +33,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
+use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -415,10 +416,19 @@ class SmartButton implements SmartButtonInterface {
 		);
 
 		$has_paylater_block =
-			PayLaterBlockModule::is_block_enabled( $this->settings_status ) &&
-			has_block( 'woocommerce-paypal-payments/paylater-messages' ) ||
-			has_block( 'woocommerce-paypal-payments/checkout-paylater-messages' ) ||
-			has_block( 'woocommerce-paypal-payments/cart-paylater-messages' );
+			(
+				PayLaterBlockModule::is_block_enabled( $this->settings_status ) &&
+				has_block( 'woocommerce-paypal-payments/paylater-messages' )
+			) ||
+			(
+				PayLaterWCBlocksModule::is_block_enabled( $this->settings_status, $location ) &&
+				(
+					has_block( 'woocommerce-paypal-payments/checkout-paylater-messages' ) ||
+					has_block( 'woocommerce-paypal-payments/cart-paylater-messages' )
+				)
+			);
+
+		die(var_dump($has_paylater_block));
 
 		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme, $has_paylater_block ): ?array {
 			switch ( $location ) {
@@ -1899,7 +1909,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = array() ): bool {
-		return true;
+		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
+			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 	}
 
 	/**
