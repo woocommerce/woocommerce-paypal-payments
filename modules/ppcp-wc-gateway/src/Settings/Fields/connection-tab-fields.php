@@ -522,8 +522,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'options'           => array(
-				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
+				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'           => array(
 				State::STATE_START,
