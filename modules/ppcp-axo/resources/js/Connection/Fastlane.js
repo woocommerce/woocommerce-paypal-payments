@@ -15,11 +15,9 @@ class Fastlane {
             window.paypal.Fastlane(config)
                 .then((result) => {
                     this.init(result);
-                    console.log('[AXO] Connected', result);
                     resolve();
                 })
                 .catch((error) => {
-                    console.error('[AXO] Failed to connect', error);
                     reject();
                 });
         });
@@ -32,8 +30,6 @@ class Fastlane {
         this.FastlaneCardComponent = this.connection.FastlaneCardComponent;
         this.FastlanePaymentComponent = this.connection.FastlanePaymentComponent;
         this.FastlaneWatermarkComponent = this.connection.FastlaneWatermarkComponent
-
-        console.log('[AXO] Fastlane initialized', this);
     }
 
     setLocale(locale) {

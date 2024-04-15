@@ -119,8 +119,6 @@ class AxoManager {
             if (this.status.hasProfile) {
                 const { selectionChanged, selectedAddress } = await this.fastlane.profile.showShippingAddressSelector();
 
-                //console.log('selectedAddress', selectedAddress);
-
                 if (selectionChanged) {
                     this.setShipping(selectedAddress);
                     this.shippingView.refresh();
@@ -139,12 +137,7 @@ class AxoManager {
         this.el.changeCardLink.on('click', async () => {
             const response = await this.fastlane.profile.showCardSelector();
 
-            //console.log('card response', response);
-
             if (response.selectionChanged) {
-
-                //console.log('response.selectedCard.paymentToken', response.selectedCard.paymentToken);
-
                 this.setCard(response.selectedCard);
                 this.setBilling({
                     address: response.selectedCard.paymentSource.card.billingAddress
@@ -544,8 +537,6 @@ class AxoManager {
                 });
                 this.setCard(authResponse.profileData.card);
 
-                //console.log('authResponse', authResponse);
-
                 this.setStatus('validEmail', true);
                 this.setStatus('hasProfile', true);
 
@@ -566,8 +557,6 @@ class AxoManager {
 
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
-
-            //console.log('this.cardComponentData()', this.cardComponentData());
 
             this.cardComponent = await this.fastlane
                 .FastlaneCardComponent(
@@ -678,8 +667,9 @@ class AxoManager {
             // Ryan flow.
             const form = document.querySelector('form.woocommerce-checkout');
             const formData = new FormData(form);
+            const submitContainerSelector = '.woocommerce-checkout-payment';
 
-            disable('.woocommerce-checkout-payment');
+            disable(submitContainerSelector);
 
             // Fill in form data.
             Object.keys(data).forEach((key) => {
@@ -698,7 +688,7 @@ class AxoManager {
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    enable('.woocommerce-checkout-payment');
+                    enable(submitContainerSelector);
                 });
 
         } else {

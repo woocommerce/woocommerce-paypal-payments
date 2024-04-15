@@ -110,7 +110,6 @@ class FormFieldGroup {
     }
 
     inputElement(name) {
-        console.log('inputElement', name);
         const baseSelector = this.fields[name].selector;
 
         const select = document.querySelector(baseSelector + ' select');
