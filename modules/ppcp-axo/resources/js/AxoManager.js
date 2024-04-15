@@ -435,7 +435,9 @@ class AxoManager {
     }
 
     async connect() {
-        window.localStorage.setItem('axoEnv', 'sandbox'); // TODO: check sandbox
+        if (this.axoConfig.environment.is_sandbox) {
+            window.localStorage.setItem('axoEnv', 'sandbox');
+        }
 
         await this.fastlane.connect({
             locale: this.locale,

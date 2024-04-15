@@ -150,17 +150,14 @@ class AxoManager {
 	 * @return array
 	 */
 	private function script_data() {
-		$email_widget   = $this->settings->has( 'axo_email_widget' ) ? $this->settings->get( 'axo_email_widget' ) : null;
-		$address_widget = $this->settings->has( 'axo_address_widget' ) ? $this->settings->get( 'axo_address_widget' ) : null;
-		$payment_widget = $this->settings->has( 'axo_payment_widget' ) ? $this->settings->get( 'axo_payment_widget' ) : null;
-
 		return array(
-			'widgets'  => array(
-				'email'   => $email_widget ?: 'render',
-				'address' => $address_widget ?: 'render',
-				'payment' => $payment_widget ?: 'render',
+			'environment' => array(
+				'is_sandbox' => $this->environment->current_environment() === 'sandbox',
 			),
-			'insights' => array(
+			'widgets'     => array(
+				'email' => 'render',
+			),
+			'insights'    => array(
 				'enabled'    => true,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>

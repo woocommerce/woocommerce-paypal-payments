@@ -84,15 +84,13 @@ return array(
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_gateway_title' )
-									->action_visible( 'axo_email_widget' )
-									->action_visible( 'axo_address_widget' )
-									->action_visible( 'axo_payment_widget' )
 									->action_visible( 'axo_privacy' )
 									->action_visible( 'axo_style_heading' )
 									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
 								$display_manager
 									->rule()
+									->condition_element( 'axo_enabled', '1' )
 									->condition_js_variable( 'ppcpAxoShowStyles', true )
 									->action_visible( 'axo_style_root_heading' )
 									->action_visible( 'axo_style_root_bg_color' )
