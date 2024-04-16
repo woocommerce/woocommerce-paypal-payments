@@ -1122,7 +1122,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 								'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
 							)
 						),
-					)
+					),
 				),
 				( function () {
 					$return = array();

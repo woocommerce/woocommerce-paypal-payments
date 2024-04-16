@@ -484,7 +484,7 @@ class WCGatewayModule implements ModuleInterface {
 				// Add separate button gateways.
 				if ( $paypal_gateway_enabled && $settings->has( 'separate_card_button_gateways' ) ) {
 					$separate_gateway_keys = $settings->get( 'separate_card_button_gateways' );
-					$funding_sources = $container->get( 'wcgateway.settings.funding-sources' );
+					$funding_sources       = $container->get( 'wcgateway.settings.funding-sources' );
 
 					foreach ( $separate_gateway_keys as $separate_gateway_key ) {
 						$gateway = new StandardButtonGateway(

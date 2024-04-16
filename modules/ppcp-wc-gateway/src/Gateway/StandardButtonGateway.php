@@ -39,14 +39,14 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 	 *
 	 * @var self[]
 	 */
-	static private $gateways = array();
+	private static $gateways = array();
 
 	/**
 	 * All possible gateway key / name pairs.
 	 *
 	 * @var string[]
 	 */
-	static private $gateway_names = array();
+	private static $gateway_names = array();
 
 	/**
 	 * The funding source key.
@@ -247,8 +247,8 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 			__( 'The separate payment gateway with the %s. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' ),
 			$this->funding_source_name
 		);
-		$this->title              = $this->get_option( 'title', $this->funding_source_name );
-		$this->description        = $this->get_option( 'description', '' );
+		$this->title       = $this->get_option( 'title', $this->funding_source_name );
+		$this->description = $this->get_option( 'description', '' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -438,7 +438,7 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 	/**
 	 * Returns a gateway id based on a funding source key.
 	 *
-	 * @param string $funding_source
+	 * @param string $funding_source The funding source.
 	 * @return string
 	 */
 	public static function build_id( string $funding_source ): string {
@@ -448,7 +448,7 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 	/**
 	 * Registers a new gateway instance.
 	 *
-	 * @param self $gateway
+	 * @param self $gateway The funding gateway.
 	 * @return void
 	 */
 	public static function register( self $gateway ) {
@@ -465,16 +465,20 @@ class StandardButtonGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Returns all gateway IDs.
+	 *
 	 * @return string[]
 	 */
-	public static function ids(): array	{
+	public static function ids(): array {
 		return array_keys( self::names() );
 	}
 
 	/**
+	 * Returns all gateway names.
+	 *
 	 * @return string[]
 	 */
-	public static function names(): array	{
+	public static function names(): array {
 		if ( self::$gateway_names ) {
 			return self::$gateway_names;
 		}

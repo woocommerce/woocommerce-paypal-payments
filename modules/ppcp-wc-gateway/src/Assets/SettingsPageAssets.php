@@ -212,7 +212,8 @@ class SettingsPageAssets {
 				array( PayPalGateway::ID, CardButtonGateway::ID ),
 				StandardButtonGateway::ids()
 			),
-		true );
+			true
+		);
 	}
 
 	/**
