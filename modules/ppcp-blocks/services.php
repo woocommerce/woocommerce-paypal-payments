@@ -45,6 +45,13 @@ return array(
 			$container->get( 'wcgateway.all-funding-sources' )
 		);
 	},
+	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {
+		return new AdvancedCardPaymentMethod(
+			$container->get( 'blocks.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.credit-card-gateway' )
+		);
+	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof ContainerInterface );
