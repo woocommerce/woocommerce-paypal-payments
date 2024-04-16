@@ -6,6 +6,7 @@ import {
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
 import BootstrapHelper from "../Helper/BootstrapHelper";
+import SeparateButtons from "../Helper/SeparateButtons";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, spinner, errorHandler) {
@@ -19,11 +20,14 @@ class CheckoutBootstap {
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleButtonStatus();
         }, true);
+
+        this.separateButtons = new SeparateButtons(this.gateway.separate_buttons);
     }
 
     init() {
         this.render();
         this.handleButtonStatus();
+        this.separateButtons.init();
 
         // Unselect saved card.
         // WC saves form values, so with our current UI it would be a bit weird
@@ -164,6 +168,8 @@ class CheckoutBootstap {
         }
 
         jQuery(document.body).trigger('ppcp_checkout_rendered');
+
+        this.separateButtons.refresh();
     }
 
     shouldShowMessages() {
