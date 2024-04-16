@@ -451,10 +451,10 @@ class AxoManager {
         this.el.gatewayRadioButton.trigger('change');
     }
 
-    renderWatermark() {
-        this.fastlane.FastlaneWatermarkComponent({
+    async renderWatermark() {
+        (await this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo: true
-        }).render(this.el.watermarkContainer.selector);
+        })).render(this.el.watermarkContainer.selector);
     }
 
     watchEmail() {
