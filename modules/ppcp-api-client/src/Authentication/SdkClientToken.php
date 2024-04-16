@@ -70,7 +70,9 @@ class SdkClientToken {
 	 */
 	public function sdk_client_token( string $target_customer_id = '' ): string {
 		$bearer = $this->bearer->bearer();
-		$domain = $_SERVER['HTTP_HOST'];
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$domain = wp_unslash( $_SERVER['HTTP_HOST'] ?? '' );
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=*.' . $domain;
 
