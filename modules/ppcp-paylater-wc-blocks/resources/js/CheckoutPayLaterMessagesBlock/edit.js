@@ -6,7 +6,7 @@ import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from '../../../../ppcp-paylater-block/resources/js/hooks/script-params';
 
 export default function Edit({ attributes, clientId, setAttributes }) {
-    const { id } = attributes;
+    const { id, ppcpId } = attributes;
 
     const [loaded, setLoaded] = useState(false);
 
@@ -47,10 +47,10 @@ export default function Edit({ attributes, clientId, setAttributes }) {
     const props = useBlockProps({ className: classes });
 
     useEffect(() => {
-        if (!id) {
-            setAttributes({ id: 'ppcp-' + clientId });
+        if (!ppcpId) {
+            setAttributes({ ppcpId: 'ppcp-' + clientId });
         }
-    }, [id, clientId]);
+    }, [ppcpId, clientId]);
 
     if (PcpCheckoutPayLaterBlock.vaultingEnabled) {
         return (

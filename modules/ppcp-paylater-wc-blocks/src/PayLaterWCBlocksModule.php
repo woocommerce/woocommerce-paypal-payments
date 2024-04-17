@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
-use Automattic\WooCommerce\Blocks\Integrations\IntegrationRegistry;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -19,6 +18,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksUtils;
 
 /**
  * Class PayLaterWCBlocksModule
@@ -84,33 +84,16 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 		assert( $settings instanceof Settings );
 
 		add_action(
-			'woocommerce_blocks_loaded',
-			function () use ( $c ): void {
-				add_action(
-					'woocommerce_blocks_checkout_block_registration',
-					function ( IntegrationRegistry $integration_registry ) use ( $c ): void {
-						$integration_registry->register(
-							new PayLaterWCBlocksIntegration(
-								$c->get( 'paylater-wc-blocks.url' ),
-								$c->get( 'ppcp.asset-version' )
-							)
-						);
-					}
-				);
-			}
-		);
-
-		add_action(
 			'init',
 			function () use ( $c, $settings ): void {
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
-				$script_handle = 'ppcp-cart-paylater-messages-block';
+				$script_handle = 'ppcp-cart-paylater-block';
 
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-wc-blocks.url' ) . '/assets/js/paylater-block.js',
+					$c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block.js',
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -133,11 +116,11 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 					)
 				);
 
-				$script_handle = 'ppcp-checkout-paylater-messages-block';
+				$script_handle = 'ppcp-checkout-paylater-block';
 
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-wc-blocks.url' ) . '/assets/js/paylater-block.js',
+					$c->get( 'paylater-wc-blocks.url' ) . 'assets/js/checkout-paylater-block.js',
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -197,17 +180,12 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
 				array(
 					'render_callback' => function ( array $attributes ) use ( $c ) {
-						$renderer = $c->get( 'paylater-wc-blocks.renderer' );
-						ob_start();
-                        // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
-                        echo $renderer->render(
-                        // phpcs:ignore
-                            $attributes,
+						return PayLaterWCBlocksUtils::render_paylater_block(
+							$attributes['id'] ?? 'woocommerce-paypal-payments/cart-paylater-messages',
+							$attributes['ppcpId'] ?? 'ppcp-cart-paylater-messages',
 							'cart',
-                            // phpcs:ignore
-                            $c
+							$c
 						);
-						return ob_get_clean();
 					},
 				)
 			);
@@ -223,21 +201,54 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
 				array(
 					'render_callback' => function ( array $attributes ) use ( $c ) {
-						$renderer = $c->get( 'paylater-wc-blocks.renderer' );
-						ob_start();
-                        // phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
-                        echo $renderer->render(
-                        // phpcs:ignore
-                            $attributes,
+						return PayLaterWCBlocksUtils::render_paylater_block(
+							$attributes['id'] ?? 'woocommerce-paypal-payments/checkout-paylater-messages',
+							$attributes['ppcpId'] ?? 'ppcp-checkout-paylater-messages',
 							'checkout',
-                            // phpcs:ignore
-                            $c
+							$c
 						);
-						return ob_get_clean();
 					},
 				)
 			);
 		}
+
+		// This is a fallback for the default Cart block that haven't been saved with the inserted Pay Later messaging block.
+		add_filter(
+			'render_block_woocommerce/cart-totals-block',
+			function ( string $block_content ) use ( $c ) {
+				if ( false === strpos( $block_content, 'woocommerce-paypal-payments/cart-paylater-messages' ) ) {
+					return PayLaterWCBlocksUtils::render_and_insert_paylater_block(
+						$block_content,
+						'woocommerce-paypal-payments/cart-paylater-messages',
+						'ppcp-cart-paylater-messages',
+						'cart',
+						$c
+					);
+				}
+				return $block_content;
+			},
+			10,
+			1
+		);
+
+		// This is a fallback for the default Checkout block that haven't been saved with the inserted Checkout - Pay Later messaging block.
+		add_filter(
+			'render_block_woocommerce/checkout-totals-block',
+			function ( string $block_content ) use ( $c ) {
+				if ( false === strpos( $block_content, 'woocommerce-paypal-payments/checkout-paylater-messages' ) ) {
+					return PayLaterWCBlocksUtils::render_and_insert_paylater_block(
+						$block_content,
+						'woocommerce-paypal-payments/checkout-paylater-messages',
+						'ppcp-checkout-paylater-messages',
+						'checkout',
+						$c
+					);
+				}
+				return $block_content;
+			},
+			10,
+			1
+		);
 	}
 
 	/**

@@ -38,3 +38,4 @@ registerBlockType(metadata, {
         return null;
     },
 });
+

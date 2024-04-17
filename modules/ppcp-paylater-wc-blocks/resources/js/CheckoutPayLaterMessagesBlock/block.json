@@ -9,8 +9,12 @@
 	"parent": [ "woocommerce/checkout-totals-block" ],
 	"attributes": {
 		"id": {
-			"type": "string"
+			"type": "string",
+            "default": "woocommerce-paypal-payments/checkout-paylater-messages"
 		},
+        "ppcpId": {
+            "type": "string"
+        },
 		"lock": {
 			"type": "object",
 			"default": {

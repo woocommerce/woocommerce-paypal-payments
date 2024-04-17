@@ -8,7 +8,11 @@
 	"example": {},
 	"parent": [ "woocommerce/cart-totals-block" ],
 	"attributes": {
-		"id": {
+        "id": {
+            "type": "string",
+            "default": "woocommerce-paypal-payments/cart-paylater-messages"
+        },
+		"ppcpId": {
 			"type": "string"
 		},
 		"lock": {

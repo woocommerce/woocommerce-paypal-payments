@@ -428,8 +428,6 @@ class SmartButton implements SmartButtonInterface {
 				)
 			);
 
-		die(var_dump($has_paylater_block));
-
 		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme, $has_paylater_block ): ?array {
 			switch ( $location ) {
 				case 'checkout':
@@ -646,11 +644,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 
-		$has_paylater_block =
-			PayLaterBlockModule::is_block_enabled( $this->settings_status ) &&
-			has_block( 'woocommerce-paypal-payments/paylater-messages' ) ||
-			has_block( 'woocommerce-paypal-payments/checkout-paylater-messages' ) ||
-			has_block( 'woocommerce-paypal-payments/cart-paylater-messages' );
+		$has_paylater_block = PayLaterBlockModule::is_block_enabled( $this->settings_status ) && has_block( 'woocommerce-paypal-payments/paylater-messages' );
+
+		if ( 'cart-block' === $location || 'checkout-block' === $location ) {
+			return true;
+		}
 
 		switch ( $location ) {
 			case 'checkout':

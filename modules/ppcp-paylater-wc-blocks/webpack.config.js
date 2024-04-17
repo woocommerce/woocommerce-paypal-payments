@@ -9,45 +9,19 @@ module.exports = {
     target: "web",
     plugins: [new DependencyExtractionWebpackPlugin()],
     entry: {
-        "ppcp-cart-paylater-messages-block": path.resolve(
-            process.cwd(),
-            "resources",
-            "js",
-            "ppcp-cart-paylater-messages-block.js"
-        ),
-        "ppcp-checkout-paylater-messages-block": path.resolve(
-            process.cwd(),
-            "resources",
-            "js",
-            "ppcp-checkout-paylater-messages-block.js"
-        ),
-        "cart-paylater-messages-block": path.resolve(
+        "cart-paylater-block": path.resolve(
             process.cwd(),
             "resources",
             "js",
             "CartPayLaterMessagesBlock",
-            "index.js"
+            "cart-paylater-block.js"
         ),
-        "checkout-paylater-messages-block": path.resolve(
+        "checkout-paylater-block": path.resolve(
             process.cwd(),
             "resources",
             "js",
             "CheckoutPayLaterMessagesBlock",
-            "index.js"
-        ),
-        "cart-paylater-messages-block-frontend": path.resolve(
-            process.cwd(),
-            "resources",
-            "js",
-            "CartPayLaterMessagesBlock",
-            "frontend.js"
-        ),
-        "checkout-paylater-messages-block-frontend": path.resolve(
-            process.cwd(),
-            "resources",
-            "js",
-            "CheckoutPayLaterMessagesBlock",
-            "frontend.js"
+            "checkout-paylater-block.js"
         ),
     },
     output: {
