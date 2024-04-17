@@ -78,6 +78,8 @@ class AxoManager {
                 });
             }
         }
+
+        this.triggerGatewayChange();
     }
 
     registerEventHandlers() {
