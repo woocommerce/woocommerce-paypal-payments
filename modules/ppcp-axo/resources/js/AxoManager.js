@@ -562,10 +562,9 @@ class AxoManager {
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
 
-            this.cardComponent = await this.fastlane.FastlaneCardComponent(
+            this.cardComponent = (await this.fastlane.FastlaneCardComponent(
                 this.cardComponentData()
-            );
-            this.cardComponent.render(this.el.paymentContainer.selector + '-form');
+            )).render(this.el.paymentContainer.selector + '-form');
         }
     }
 
@@ -612,13 +611,14 @@ class AxoManager {
             log('Gary flow.');
 
             try {
-                this.cardComponent.tokenize(
+                this.cardComponent.getPaymentToken(
                     this.tokenizeData()
                 ).then((response) => {
-                    this.submit(response.nonce);
+                    this.submit(response.id);
                 });
             } catch (e) {
                 log('Error tokenizing.');
+                alert('Error tokenizing data.');
             }
         }
     }
@@ -670,9 +670,8 @@ class AxoManager {
             // Ryan flow.
             const form = document.querySelector('form.woocommerce-checkout');
             const formData = new FormData(form);
-            const submitContainerSelector = '.woocommerce-checkout-payment';
 
-            disable(submitContainerSelector);
+            this.showLoading();
 
             // Fill in form data.
             Object.keys(data).forEach((key) => {
@@ -694,7 +693,7 @@ class AxoManager {
                             }, 500);
                         }
                         console.error('Failure:', responseData);
-                        enable(submitContainerSelector);
+                        this.hideLoading();
                         return;
                     }
                     if (responseData.redirect) {
@@ -703,7 +702,7 @@ class AxoManager {
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    enable(submitContainerSelector);
+                    this.hideLoading();
                 });
 
         } else {
@@ -711,6 +710,18 @@ class AxoManager {
             this.el.defaultSubmitButton.click();
         }
 
+    }
+
+    showLoading() {
+        const submitContainerSelector = '.woocommerce-checkout-payment';
+        jQuery('form.woocommerce-checkout').append('<div class="blockUI blockOverlay" style="z-index: 1000; border: medium; margin: 0px; padding: 0px; width: 100%; height: 100%; top: 0px; left: 0px; background: rgb(255, 255, 255); opacity: 0.6; cursor: default; position: absolute;"></div>');
+        disable(submitContainerSelector);
+    }
+
+    hideLoading() {
+        const submitContainerSelector = '.woocommerce-checkout-payment';
+        jQuery('form.woocommerce-checkout .blockOverlay').remove();
+        enable(submitContainerSelector);
     }
 
     useEmailWidget() {
