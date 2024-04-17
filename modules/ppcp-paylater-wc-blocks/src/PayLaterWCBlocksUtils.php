@@ -44,7 +44,7 @@ class PayLaterWCBlocksUtils {
 	public static function render_and_insert_paylater_block( string $block_content, string $block_id, string $ppcp_id, string $context, $container ): string {
 		$paylater_message_block = self::render_paylater_block( $block_id, $ppcp_id, $context, $container );
 		if ( false !== $paylater_message_block ) {
-			return self::insert_before_last_div($block_content, $paylater_message_block);
+			return self::insert_before_last_div( $block_content, $paylater_message_block );
 		}
 		return $block_content;
 	}
@@ -64,10 +64,14 @@ class PayLaterWCBlocksUtils {
 		// phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
 		echo $renderer->render(
 			array(
+				// phpcs:ignore
 				'id'     => $block_id,
+				// phpcs:ignore
 				'ppcpId' => $ppcp_id,
 			),
+			// phpcs:ignore
 			$context,
+			// phpcs:ignore
 			$container
 		);
 		return ob_get_clean();
