@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
@@ -34,15 +35,24 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private $gateway;
 
+	/**
+	 * The smart button script loading handler.
+	 *
+	 * @var SmartButtonInterface|callable
+	 */
+	private $smart_button;
+
 	public function __construct(
 		string $module_url,
 		string $version,
-		CreditCardGateway $gateway
+		CreditCardGateway $gateway,
+		$smart_button
 	) {
-		$this->name       = CreditCardGateway::ID;
-		$this->module_url = $module_url;
-		$this->version    = $version;
-		$this->gateway    = $gateway;
+		$this->name         = CreditCardGateway::ID;
+		$this->module_url   = $module_url;
+		$this->version      = $version;
+		$this->gateway      = $gateway;
+		$this->smart_button = $smart_button;
 	}
 
 	public function initialize() {}
@@ -73,10 +83,30 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_data() {
+		$script_data = $this->smart_button()->script_data();
+
 		return array(
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
+			'scriptData'  => $script_data,
 		);
+	}
+
+	/**
+	 * The smart button.
+	 *
+	 * @return SmartButtonInterface
+	 */
+	private function smart_button(): SmartButtonInterface {
+		if ( $this->smart_button instanceof SmartButtonInterface ) {
+			return $this->smart_button;
+		}
+
+		if ( is_callable( $this->smart_button ) ) {
+			$this->smart_button = ( $this->smart_button )();
+		}
+
+		return $this->smart_button;
 	}
 }

@@ -49,7 +49,10 @@ return array(
 		return new AdvancedCardPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'wcgateway.credit-card-gateway' )
+			$container->get( 'wcgateway.credit-card-gateway' ),
+			function () use ( $container ): SmartButtonInterface {
+				return $container->get( 'button.smart-button' );
+			}
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
