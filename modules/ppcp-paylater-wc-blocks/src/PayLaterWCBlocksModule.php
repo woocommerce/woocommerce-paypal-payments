@@ -156,12 +156,8 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 					$categories,
 					array(
 						array(
-							'slug'  => 'ppcp-cart-paylater-messages-block',
-							'title' => __( 'PayPal Cart Pay Later Messages Blocks', 'woocommerce-paypal-payments' ),
-						),
-						array(
-							'slug'  => 'ppcp-checkout-paylater-messages-block',
-							'title' => __( 'PayPal Checkout Pay Later Messages Blocks', 'woocommerce-paypal-payments' ),
+							'slug'  => 'woocommerce-paypal-payments',
+							'title' => __( 'PayPal Blocks', 'woocommerce-paypal-payments' ),
 						),
 					)
 				);
