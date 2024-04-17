@@ -3,7 +3,7 @@
 	"apiVersion": 3,
 	"name": "woocommerce-paypal-payments/cart-paylater-messages",
 	"title": "Cart - PayPal Pay Later messaging",
-	"category": "woocommerce",
+	"category": "woocommerce-paypal-payments",
 	"description": "PayPal Pay Later messaging will be displayed for eligible customers. Customers automatically see the most relevant Pay Later offering.",
 	"example": {},
 	"parent": [ "woocommerce/cart-totals-block" ],
