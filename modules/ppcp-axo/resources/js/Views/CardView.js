@@ -95,8 +95,8 @@ class CardView {
         const name = this.group.dataValue('name');
         const { firstName, lastName } = this.splitName(name);
 
-        data['firstName'] = firstName;
-        data['lastName'] = lastName;
+        data['billing_first_name'] = firstName;
+        data['billing_last_name'] = lastName ? lastName : firstName;
 
         return this.group.toSubmitData(data);
     }

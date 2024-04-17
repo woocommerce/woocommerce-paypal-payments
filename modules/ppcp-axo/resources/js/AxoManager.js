@@ -82,7 +82,7 @@ class AxoManager {
 
     registerEventHandlers() {
 
-        jQuery(document).on('change', 'input[name=payment_method]', (ev) => {
+        this.$(document).on('change', 'input[name=payment_method]', (ev) => {
             const map = {
                 'ppcp-axo-gateway': 'card',
                 'ppcp-gateway': 'paypal',
@@ -598,7 +598,7 @@ class AxoManager {
         if (this.data.card) { // Ryan flow
             log('Ryan flow.');
 
-            jQuery('#ship-to-different-address-checkbox').prop('checked', 'checked');
+            this.$('#ship-to-different-address-checkbox').prop('checked', 'checked');
 
             let data = {};
             this.billingView.toSubmitData(data);
@@ -684,6 +684,18 @@ class AxoManager {
             })
                 .then(response => response.json())
                 .then(responseData => {
+                    if (responseData.result === 'failure') {
+                        if (responseData.messages) {
+                            const $notices = this.$('.woocommerce-notices-wrapper').eq(0);
+                            $notices.html(responseData.messages);
+                            this.$('html, body').animate({
+                                scrollTop: $notices.offset().top
+                            }, 500);
+                        }
+                        console.error('Failure:', responseData);
+                        enable(submitContainerSelector);
+                        return;
+                    }
                     if (responseData.redirect) {
                         window.location.href = responseData.redirect;
                     }
