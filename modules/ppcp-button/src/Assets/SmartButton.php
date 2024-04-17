@@ -1365,7 +1365,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				$disable_funding,
 				array_diff(
 					array_keys( $this->all_funding_sources ),
-					array( 'venmo', 'paylater', 'paypal' )
+					array( 'venmo', 'paylater', 'paypal', 'card' )
 				)
 			);
 		}
