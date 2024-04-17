@@ -22,10 +22,10 @@ class PayLaterWCBlocksUtils {
 	 * @return string The block content with the content inserted.
 	 */
 	public static function insert_before_last_div( string $block_content, string $content_to_insert ): string {
-		$lastIndex = strrpos( $block_content, '</div>' );
+		$last_index = strrpos( $block_content, '</div>' );
 
-		if ( $lastIndex !== false ) {
-			$block_content = substr_replace( $block_content, $content_to_insert, $lastIndex, 0 );
+		if ( $last_index !== false ) {
+			$block_content = substr_replace( $block_content, $content_to_insert, $last_index, 0 );
 		}
 
 		return $block_content;
