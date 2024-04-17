@@ -562,11 +562,10 @@ class AxoManager {
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
 
-            this.cardComponent = await this.fastlane
-                .FastlaneCardComponent(
-                    this.cardComponentData()
-                )
-                .render(this.el.paymentContainer.selector + '-form');
+            this.cardComponent = await this.fastlane.FastlaneCardComponent(
+                this.cardComponentData()
+            );
+            this.cardComponent.render(this.el.paymentContainer.selector + '-form');
         }
     }
 
