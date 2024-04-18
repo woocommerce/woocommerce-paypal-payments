@@ -1,0 +1,733 @@
+import Fastlane from "./Connection/Fastlane";
+import {log} from "./Helper/Debug";
+import DomElementCollection from "./Components/DomElementCollection";
+import ShippingView from "./Views/ShippingView";
+import BillingView from "./Views/BillingView";
+import CardView from "./Views/CardView";
+import PayPalInsights from "./Insights/PayPalInsights";
+import {disable,enable} from "../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler";
+
+class AxoManager {
+
+    constructor(axoConfig, ppcpConfig) {
+        this.axoConfig = axoConfig;
+        this.ppcpConfig = ppcpConfig;
+
+        this.initialized = false;
+        this.fastlane = new Fastlane();
+        this.$ = jQuery;
+
+        this.hideGatewaySelection = false;
+
+        this.status = {
+            active: false,
+            validEmail: false,
+            hasProfile: false,
+            useEmailWidget: this.useEmailWidget()
+        };
+
+        this.data = {
+            email: null,
+            billing: null,
+            shipping: null,
+            card: null,
+        };
+
+        this.el = new DomElementCollection();
+
+        this.styles = {
+            root: {
+                backgroundColorPrimary: '#ffffff'
+            }
+        };
+
+        this.locale = 'en_us';
+
+        this.registerEventHandlers();
+
+        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector, this.el);
+        this.billingView = new BillingView(this.el.billingAddressContainer.selector, this.el);
+        this.cardView = new CardView(this.el.paymentContainer.selector + '-details', this.el, this);
+
+        document.axoDebugSetStatus = (key, value) => {
+            this.setStatus(key, value);
+        }
+
+        document.axoDebugObject = () => {
+            console.log(this);
+            return this;
+        }
+
+        if (
+            this.axoConfig?.insights?.enabled
+            && this.axoConfig?.insights?.client_id
+            && this.axoConfig?.insights?.session_id
+        ) {
+            PayPalInsights.config(this.axoConfig?.insights?.client_id, { debug: true });
+            PayPalInsights.setSessionId(this.axoConfig?.insights?.session_id);
+            PayPalInsights.trackJsLoad();
+
+            if (document.querySelector('.woocommerce-checkout')) {
+                PayPalInsights.trackBeginCheckout({
+                    amount: this.axoConfig?.insights?.amount,
+                    page_type: 'checkout',
+                    user_data: {
+                        country: 'US',
+                        is_store_member: false,
+                    }
+                });
+            }
+        }
+
+        this.triggerGatewayChange();
+    }
+
+    registerEventHandlers() {
+
+        this.$(document).on('change', 'input[name=payment_method]', (ev) => {
+            const map = {
+                'ppcp-axo-gateway': 'card',
+                'ppcp-gateway': 'paypal',
+            }
+
+            PayPalInsights.trackSelectPaymentMethod({
+                payment_method_selected: map[ev.target.value] || 'other',
+                page_type: 'checkout'
+            });
+        });
+
+
+        // Listen to Gateway Radio button changes.
+        this.el.gatewayRadioButton.on('change', (ev) => {
+            if (ev.target.checked) {
+                this.activateAxo();
+            } else {
+                this.deactivateAxo();
+            }
+        });
+
+        this.$(document).on('updated_checkout payment_method_selected', () => {
+            this.triggerGatewayChange();
+        });
+
+        // On checkout form submitted.
+        this.el.submitButton.on('click', () => {
+            this.onClickSubmitButton();
+            return false;
+        })
+
+        // Click change shipping address link.
+        this.el.changeShippingAddressLink.on('click', async () => {
+            if (this.status.hasProfile) {
+                const { selectionChanged, selectedAddress } = await this.fastlane.profile.showShippingAddressSelector();
+
+                if (selectionChanged) {
+                    this.setShipping(selectedAddress);
+                    this.shippingView.refresh();
+                }
+            }
+        });
+
+        // Click change billing address link.
+        this.el.changeBillingAddressLink.on('click', async () => {
+            if (this.status.hasProfile) {
+                this.el.changeCardLink.trigger('click');
+            }
+        });
+
+        // Click change card link.
+        this.el.changeCardLink.on('click', async () => {
+            const response = await this.fastlane.profile.showCardSelector();
+
+            if (response.selectionChanged) {
+                this.setCard(response.selectedCard);
+                this.setBilling({
+                    address: response.selectedCard.paymentSource.card.billingAddress
+                });
+            }
+        });
+
+        // Cancel "continuation" mode.
+        this.el.showGatewaySelectionLink.on('click', async () => {
+            this.hideGatewaySelection = false;
+            this.$('.wc_payment_methods label').show();
+            this.cardView.refresh();
+        });
+
+    }
+
+    rerender() {
+        /**
+         * active              | 0 1 1 1
+         * validEmail          | * 0 1 1
+         * hasProfile          | * * 0 1
+         * --------------------------------
+         * defaultSubmitButton | 1 0 0 0
+         * defaultEmailField   | 1 0 0 0
+         * defaultFormFields   | 1 0 1 0
+         * extraFormFields     | 0 0 0 1
+         * axoEmailField       | 0 1 0 0
+         * axoProfileViews     | 0 0 0 1
+         * axoPaymentContainer | 0 0 1 1
+         * axoSubmitButton     | 0 0 1 1
+         */
+        const scenario = this.identifyScenario(
+            this.status.active,
+            this.status.validEmail,
+            this.status.hasProfile
+        );
+
+        log('Scenario', scenario);
+
+        // Reset some elements to a default status.
+        this.el.watermarkContainer.hide();
+
+        if (scenario.defaultSubmitButton) {
+            this.el.defaultSubmitButton.show();
+        } else {
+            this.el.defaultSubmitButton.hide();
+        }
+
+        if (scenario.defaultEmailField) {
+            this.el.fieldBillingEmail.show();
+        } else {
+            this.el.fieldBillingEmail.hide();
+        }
+
+        if (scenario.defaultFormFields) {
+            this.el.customerDetails.show();
+        } else {
+            this.el.customerDetails.hide();
+        }
+
+        if (scenario.extraFormFields) {
+            this.el.customerDetails.show();
+            // Hiding of unwanted will be handled by the axoProfileViews handler.
+        }
+
+        if (scenario.axoEmailField) {
+            this.showAxoEmailField();
+            this.el.watermarkContainer.show();
+
+            // Move watermark to after email.
+            this.$(this.el.fieldBillingEmail.selector).append(
+                this.$(this.el.watermarkContainer.selector)
+            );
+
+        } else {
+            this.el.emailWidgetContainer.hide();
+            if (!scenario.defaultEmailField) {
+                this.el.fieldBillingEmail.hide();
+            }
+        }
+
+        if (scenario.axoProfileViews) {
+            this.shippingView.activate();
+            this.billingView.activate();
+            this.cardView.activate();
+
+            // Move watermark to after shipping.
+            this.$(this.el.shippingAddressContainer.selector).after(
+                this.$(this.el.watermarkContainer.selector)
+            );
+
+            this.el.watermarkContainer.show();
+
+        } else {
+            this.shippingView.deactivate();
+            this.billingView.deactivate();
+            this.cardView.deactivate();
+        }
+
+        if (scenario.axoPaymentContainer) {
+            this.el.paymentContainer.show();
+        } else {
+            this.el.paymentContainer.hide();
+        }
+
+        if (scenario.axoSubmitButton) {
+            this.el.submitButtonContainer.show();
+        } else {
+            this.el.submitButtonContainer.hide();
+        }
+
+        this.ensureBillingFieldsConsistency();
+        this.ensureShippingFieldsConsistency();
+    }
+
+    identifyScenario(active, validEmail, hasProfile) {
+        let response = {
+            defaultSubmitButton: false,
+            defaultEmailField: false,
+            defaultFormFields: false,
+            extraFormFields: false,
+            axoEmailField: false,
+            axoProfileViews: false,
+            axoPaymentContainer: false,
+            axoSubmitButton: false,
+        }
+
+        if (active && validEmail && hasProfile) {
+            response.extraFormFields = true;
+            response.axoProfileViews = true;
+            response.axoPaymentContainer = true;
+            response.axoSubmitButton = true;
+            return response;
+        }
+        if (active && validEmail && !hasProfile) {
+            response.defaultFormFields = true;
+            response.axoEmailField = true;
+            response.axoPaymentContainer = true;
+            response.axoSubmitButton = true;
+            return response;
+        }
+        if (active && !validEmail) {
+            response.axoEmailField = true;
+            return response;
+        }
+        if (!active) {
+            response.defaultSubmitButton = true;
+            response.defaultEmailField = true;
+            response.defaultFormFields = true;
+            return response;
+        }
+        throw new Error('Invalid scenario.');
+    }
+
+    ensureBillingFieldsConsistency() {
+        const $billingFields = this.$('.woocommerce-billing-fields .form-row:visible');
+        const $billingHeaders = this.$('.woocommerce-billing-fields h3');
+        if (this.billingView.isActive()) {
+            if ($billingFields.length) {
+                $billingHeaders.show();
+            } else {
+                $billingHeaders.hide();
+            }
+        } else {
+            $billingHeaders.show();
+        }
+    }
+
+    ensureShippingFieldsConsistency() {
+        const $shippingFields = this.$('.woocommerce-shipping-fields .form-row:visible');
+        const $shippingHeaders = this.$('.woocommerce-shipping-fields h3');
+        if (this.shippingView.isActive()) {
+            if ($shippingFields.length) {
+                $shippingHeaders.show();
+            } else {
+                $shippingHeaders.hide();
+            }
+        } else {
+            $shippingHeaders.show();
+        }
+    }
+
+    showAxoEmailField() {
+        if (this.status.useEmailWidget) {
+            this.el.emailWidgetContainer.show();
+            this.el.fieldBillingEmail.hide();
+        } else {
+            this.el.emailWidgetContainer.hide();
+            this.el.fieldBillingEmail.show();
+        }
+    }
+
+    setStatus(key, value) {
+        this.status[key] = value;
+
+        log('Status updated', JSON.parse(JSON.stringify(this.status)));
+
+        this.rerender();
+    }
+
+    activateAxo() {
+        this.initPlacements();
+        this.initFastlane();
+        this.setStatus('active', true);
+
+        const emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
+        if (emailInput && this.lastEmailCheckedIdentity !== emailInput.value) {
+            this.onChangeEmail();
+        }
+    }
+
+    deactivateAxo() {
+        this.setStatus('active', false);
+    }
+
+    initPlacements() {
+        const wrapper = this.el.axoCustomerDetails;
+
+        // Customer details container.
+        if (!document.querySelector(wrapper.selector)) {
+            document.querySelector(wrapper.anchorSelector).insertAdjacentHTML('afterbegin', `
+                <div id="${wrapper.id}" class="${wrapper.className}"></div>
+            `);
+        }
+
+        const wrapperElement = document.querySelector(wrapper.selector);
+
+        // Billing view container.
+        const bc = this.el.billingAddressContainer;
+        if (!document.querySelector(bc.selector)) {
+            wrapperElement.insertAdjacentHTML('beforeend', `
+                <div id="${bc.id}" class="${bc.className}"></div>
+            `);
+        }
+
+        // Shipping view container.
+        const sc = this.el.shippingAddressContainer;
+        if (!document.querySelector(sc.selector)) {
+            wrapperElement.insertAdjacentHTML('beforeend', `
+                <div id="${sc.id}" class="${sc.className}"></div>
+            `);
+        }
+
+        // Watermark container
+        const wc = this.el.watermarkContainer;
+        if (!document.querySelector(wc.selector)) {
+            this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
+            this.emailInput.insertAdjacentHTML('afterend', `
+                <div class="${wc.className}" id="${wc.id}"></div>
+            `);
+        }
+
+        // Payment container
+        const pc = this.el.paymentContainer;
+        if (!document.querySelector(pc.selector)) {
+            const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
+            gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
+                <div id="${pc.id}" class="${pc.className} hidden">
+                    <div id="${pc.id}-form" class="${pc.className}-form"></div>
+                    <div id="${pc.id}-details" class="${pc.className}-details"></div>
+                </div>
+            `);
+        }
+
+        if (this.useEmailWidget()) {
+
+            // Display email widget.
+            const ec = this.el.emailWidgetContainer;
+            if (!document.querySelector(ec.selector)) {
+                wrapperElement.insertAdjacentHTML('afterbegin', `
+                    <div id="${ec.id}" class="${ec.className}">
+                    --- EMAIL WIDGET PLACEHOLDER ---
+                    </div>
+                `);
+            }
+
+        } else {
+
+            // Move email to the AXO container.
+            let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
+            wrapperElement.prepend(emailRow);
+            emailRow.querySelector('input').focus();
+        }
+    }
+
+    async initFastlane() {
+        if (this.initialized) {
+            return;
+        }
+        this.initialized = true;
+
+        await this.connect();
+        this.renderWatermark();
+        this.watchEmail();
+    }
+
+    async connect() {
+        if (this.axoConfig.environment.is_sandbox) {
+            window.localStorage.setItem('axoEnv', 'sandbox');
+        }
+
+        await this.fastlane.connect({
+            locale: this.locale,
+            styles: this.styles
+        });
+
+        this.fastlane.setLocale('en_us');
+    }
+
+    triggerGatewayChange() {
+        this.el.gatewayRadioButton.trigger('change');
+    }
+
+    async renderWatermark() {
+        (await this.fastlane.FastlaneWatermarkComponent({
+            includeAdditionalInfo: true
+        })).render(this.el.watermarkContainer.selector);
+    }
+
+    watchEmail() {
+
+        if (this.useEmailWidget()) {
+
+            // TODO
+
+        } else {
+
+            this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
+            this.emailInput.addEventListener('change', async ()=> {
+                this.onChangeEmail();
+            });
+
+            if (this.emailInput.value) {
+                this.onChangeEmail();
+            }
+        }
+    }
+
+    async onChangeEmail () {
+        this.clearData();
+
+        if (!this.status.active) {
+            log('Email checking skipped, AXO not active.');
+            return;
+        }
+
+        if (!this.emailInput) {
+            log('Email field not initialized.');
+            return;
+        }
+
+        log('Email changed: ' + (this.emailInput ? this.emailInput.value : '<empty>'));
+
+        this.$(this.el.paymentContainer.selector + '-detail').html('');
+        this.$(this.el.paymentContainer.selector + '-form').html('');
+
+        this.setStatus('validEmail', false);
+        this.setStatus('hasProfile', false);
+
+        this.hideGatewaySelection = false;
+
+        this.lastEmailCheckedIdentity = this.emailInput.value;
+
+        if (!this.emailInput.value || !this.emailInput.checkValidity()) {
+            log('The email address is not valid.');
+            return;
+        }
+
+        this.data.email = this.emailInput.value;
+        this.billingView.setData(this.data);
+
+        if (!this.fastlane.identity) {
+            log('Not initialized.');
+            return;
+        }
+
+        PayPalInsights.trackSubmitCheckoutEmail({
+            page_type: 'checkout'
+        });
+
+        const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
+
+        if (lookupResponse.customerContextId) {
+            // Email is associated with a Connect profile or a PayPal member.
+            // Authenticate the customer to get access to their profile.
+            log('Email is associated with a Connect profile or a PayPal member');
+
+            const authResponse = await this.fastlane.identity.triggerAuthenticationFlow(lookupResponse.customerContextId);
+
+            log('AuthResponse', authResponse);
+
+            if (authResponse.authenticationState === 'succeeded') {
+                log(JSON.stringify(authResponse));
+
+                // Add addresses
+                this.setShipping(authResponse.profileData.shippingAddress);
+                this.setBilling({
+                    address: authResponse.profileData.card.paymentSource.card.billingAddress
+                });
+                this.setCard(authResponse.profileData.card);
+
+                this.setStatus('validEmail', true);
+                this.setStatus('hasProfile', true);
+
+                this.hideGatewaySelection = true;
+                this.$('.wc_payment_methods label').hide();
+
+                this.rerender();
+
+            } else {
+                // authentication failed or canceled by the customer
+                log("Authentication Failed")
+            }
+
+        } else {
+            // No profile found with this email address.
+            // This is a guest customer.
+            log('No profile found with this email address.');
+
+            this.setStatus('validEmail', true);
+            this.setStatus('hasProfile', false);
+
+            this.cardComponent = (await this.fastlane.FastlaneCardComponent(
+                this.cardComponentData()
+            )).render(this.el.paymentContainer.selector + '-form');
+        }
+    }
+
+    clearData() {
+        this.data = {
+            email: null,
+            billing: null,
+            shipping: null,
+            card: null,
+        };
+    }
+
+    setShipping(shipping) {
+        this.data.shipping = shipping;
+        this.shippingView.setData(this.data);
+    }
+
+    setBilling(billing) {
+        this.data.billing = billing;
+        this.billingView.setData(this.data);
+    }
+
+    setCard(card) {
+        this.data.card = card;
+        this.cardView.setData(this.data);
+    }
+
+    onClickSubmitButton() {
+        // TODO: validate data.
+
+        if (this.data.card) { // Ryan flow
+            log('Ryan flow.');
+
+            this.$('#ship-to-different-address-checkbox').prop('checked', 'checked');
+
+            let data = {};
+            this.billingView.toSubmitData(data);
+            this.shippingView.toSubmitData(data);
+            this.cardView.toSubmitData(data);
+
+            this.submit(this.data.card.id, data);
+
+        } else { // Gary flow
+            log('Gary flow.');
+
+            try {
+                this.cardComponent.getPaymentToken(
+                    this.tokenizeData()
+                ).then((response) => {
+                    this.submit(response.id);
+                });
+            } catch (e) {
+                log('Error tokenizing.');
+                alert('Error tokenizing data.');
+            }
+        }
+    }
+
+    cardComponentData() {
+        return {
+            fields: {
+                cardholderName: {} // optionally pass this to show the card holder name
+            }
+        }
+    }
+
+    tokenizeData() {
+        return {
+            name: {
+                fullName: this.billingView.fullName()
+            },
+            billingAddress: {
+                addressLine1: this.billingView.inputValue('street1'),
+                addressLine2: this.billingView.inputValue('street2'),
+                adminArea1: this.billingView.inputValue('city'),
+                adminArea2: this.billingView.inputValue('stateCode'),
+                postalCode: this.billingView.inputValue('postCode'),
+                countryCode: this.billingView.inputValue('countryCode'),
+            }
+        }
+    }
+
+    submit(nonce, data) {
+        // Send the nonce and previously captured device data to server to complete checkout
+        if (!this.el.axoNonceInput.get()) {
+            this.$('form.woocommerce-checkout').append(`<input type="hidden" id="${this.el.axoNonceInput.id}" name="axo_nonce" value="" />`);
+        }
+
+        this.el.axoNonceInput.get().value = nonce;
+
+        PayPalInsights.trackEndCheckout({
+            amount: this.axoConfig?.insights?.amount,
+            page_type: 'checkout',
+            payment_method_selected: 'card',
+            user_data: {
+                country: 'US',
+                is_store_member: false,
+            }
+        });
+
+        if (data) {
+
+            // Ryan flow.
+            const form = document.querySelector('form.woocommerce-checkout');
+            const formData = new FormData(form);
+
+            this.showLoading();
+
+            // Fill in form data.
+            Object.keys(data).forEach((key) => {
+                formData.set(key, data[key]);
+            });
+
+            fetch(wc_checkout_params.checkout_url, { // TODO: maybe create a new endpoint to process_payment.
+                method: "POST",
+                body: formData
+            })
+                .then(response => response.json())
+                .then(responseData => {
+                    if (responseData.result === 'failure') {
+                        if (responseData.messages) {
+                            const $notices = this.$('.woocommerce-notices-wrapper').eq(0);
+                            $notices.html(responseData.messages);
+                            this.$('html, body').animate({
+                                scrollTop: $notices.offset().top
+                            }, 500);
+                        }
+                        console.error('Failure:', responseData);
+                        this.hideLoading();
+                        return;
+                    }
+                    if (responseData.redirect) {
+                        window.location.href = responseData.redirect;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    this.hideLoading();
+                });
+
+        } else {
+            // Gary flow.
+            this.el.defaultSubmitButton.click();
+        }
+
+    }
+
+    showLoading() {
+        const submitContainerSelector = '.woocommerce-checkout-payment';
+        jQuery('form.woocommerce-checkout').append('<div class="blockUI blockOverlay" style="z-index: 1000; border: medium; margin: 0px; padding: 0px; width: 100%; height: 100%; top: 0px; left: 0px; background: rgb(255, 255, 255); opacity: 0.6; cursor: default; position: absolute;"></div>');
+        disable(submitContainerSelector);
+    }
+
+    hideLoading() {
+        const submitContainerSelector = '.woocommerce-checkout-payment';
+        jQuery('form.woocommerce-checkout .blockOverlay').remove();
+        enable(submitContainerSelector);
+    }
+
+    useEmailWidget() {
+        return this.axoConfig?.widgets?.email === 'use_widget';
+    }
+
+}
+
+export default AxoManager;
