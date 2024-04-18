@@ -39,6 +39,12 @@ class CardFieldsModule implements ModuleInterface {
 			return;
 		}
 
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		if ( ! $settings->has( 'dcc_enabled' ) || ! $settings->get( 'dcc_enabled' ) ) {
+			return;
+		}
+
 		/**
 		 * Param types removed to avoid third-party issues.
 		 *
@@ -80,6 +86,17 @@ class CardFieldsModule implements ModuleInterface {
 					array_unshift( $default_fields, $new_field );
 				}
 
+				if ( apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_number', true ) ) {
+					if ( isset( $default_fields['card-number-field'] ) ) {
+						// Replaces the default card number placeholder with a translatable one.
+						$default_fields['card-number-field'] = str_replace(
+							'&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;',
+							esc_attr__( 'Card number', 'woocommerce-paypal-payments' ),
+							$default_fields['card-number-field']
+						);
+					}
+				}
+
 				return $default_fields;
 			},
 			10,
@@ -89,20 +106,28 @@ class CardFieldsModule implements ModuleInterface {
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data ) use ( $c ): array {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
+				if ( $payment_method !== CreditCardGateway::ID ) {
+					return $data;
+				}
+
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
+				$three_d_secure_contingency =
+					$settings->has( '3d_secure_contingency' )
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+						: '';
+
 				if (
-				$settings->has( '3d_secure_contingency' )
-				&& (
-					$settings->get( '3d_secure_contingency' ) === 'SCA_ALWAYS'
-					|| $settings->get( '3d_secure_contingency' ) === 'SCA_WHEN_REQUIRED'
-				)
+					$three_d_secure_contingency === 'SCA_ALWAYS'
+					|| $three_d_secure_contingency === 'SCA_WHEN_REQUIRED'
 				) {
 					$data['payment_source']['card'] = array(
 						'attributes' => array(
 							'verification' => array(
-								'method' => $settings->get( '3d_secure_contingency' ),
+								'method' => $three_d_secure_contingency,
 							),
 						),
 					);

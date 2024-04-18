@@ -7,7 +7,7 @@ class PayNowHandler extends BaseHandler {
 
     validateContext() {
         if ( this.ppcpConfig?.locations_with_subscription_product?.payorder ) {
-            return false;
+            return this.isVaultV3Mode();
         }
         return true;
     }

@@ -3,8 +3,9 @@
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use Mockery;
@@ -16,6 +17,8 @@ class SettingsPagesAssetsTest extends TestCase
 		$moduleUrl = 'http://example.com/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway';
 		$modulePath = '/var/www/html/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway';
 		$subscriptionsHelper = Mockery::mock(SubscriptionHelper::class);
+		$billingAgreementEndpoint = Mockery::mock(BillingAgreementsEndpoint::class);
+
 
 		$testee = new SettingsPageAssets(
 		    $moduleUrl,
@@ -29,7 +32,8 @@ class SettingsPagesAssetsTest extends TestCase
             array(),
             array(),
 			true,
-			false
+			false,
+			$billingAgreementEndpoint
 		);
 
 		when('is_admin')

@@ -15,9 +15,6 @@ document.addEventListener(
 
         jQuery( '*[data-ppcp-display]' ).each( (index, el) => {
             const rules = jQuery(el).data('ppcpDisplay');
-
-            // console.log('rules', rules);
-
             for (const rule of rules) {
                 displayManager.addRule(rule);
             }

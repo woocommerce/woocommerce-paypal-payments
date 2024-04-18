@@ -7,7 +7,6 @@ class ButtonModuleWatcher {
     }
 
     watchContextBootstrap(callable) {
-        console.log('ButtonModuleWatcher.js: watchContextBootstrap', this.contextBootstrapRegistry)
         this.contextBootstrapWatchers.push(callable);
         Object.values(this.contextBootstrapRegistry).forEach(callable);
     }

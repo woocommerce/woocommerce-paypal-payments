@@ -107,14 +107,6 @@ class Order {
 
 		$this->id                  = $id;
 		$this->application_context = $application_context;
-		$this->purchase_units      = array_values(
-			array_filter(
-				$purchase_units,
-				static function ( $unit ): bool {
-					return is_a( $unit, PurchaseUnit::class );
-				}
-			)
-		);
 		$this->payer               = $payer;
 		$this->order_status        = $order_status;
 		$this->intent              = ( 'CAPTURE' === $intent ) ? 'CAPTURE' : 'AUTHORIZE';
@@ -235,9 +227,6 @@ class Order {
 		}
 		if ( $this->application_context() ) {
 			$order['application_context'] = $this->application_context()->to_array();
-		}
-		if ( $this->payment_source() ) {
-			$order['payment_source'] = $this->payment_source()->to_array();
 		}
 
 		return $order;

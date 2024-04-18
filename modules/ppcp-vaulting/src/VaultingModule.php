@@ -51,10 +51,14 @@ class VaultingModule implements ModuleInterface {
 
 		$listener->listen();
 
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		add_action(
 			'woocommerce_created_customer',
-			function( int $customer_id ) use ( $subscription_helper ) {
+			function( int $customer_id ) use ( $subscription_helper, $container ) {
+				if ( $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' ) ) {
+					return;
+				}
+
 				$session = WC()->session;
 				if ( ! $session ) {
 					return;
@@ -77,9 +81,48 @@ class VaultingModule implements ModuleInterface {
 				if ( $type === 'WC_Payment_Token_PayPal' ) {
 					return PaymentTokenPayPal::class;
 				}
+				if ( $type === 'WC_Payment_Token_Venmo' ) {
+					return PaymentTokenVenmo::class;
+				}
+				if ( $type === 'WC_Payment_Token_ApplePay' ) {
+					return PaymentTokenApplePay::class;
+				}
 
 				return $type;
 			}
+		);
+
+		add_filter(
+			'woocommerce_get_customer_payment_tokens',
+			/**
+			 * Filter available payment tokens depending on context.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			function( $tokens, $customer_id, $gateway_id ) {
+				if ( ! is_array( $tokens ) ) {
+					return $tokens;
+				}
+
+				$is_post = isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST';
+
+				// Exclude ApplePay tokens from payment pages.
+				if (
+					( is_checkout() || is_cart() || is_product() )
+					&& ! $is_post // Don't check on POST so we have all payment methods on form submissions.
+				) {
+					foreach ( $tokens as $index => $token ) {
+						if ( $token instanceof PaymentTokenApplePay ) {
+							unset( $tokens[ $index ] );
+						}
+					}
+				}
+
+				return $tokens;
+			},
+			10,
+			3
 		);
 
 		add_filter(
@@ -94,10 +137,18 @@ class VaultingModule implements ModuleInterface {
 					return $item;
 				}
 
-				if ( strtolower( $payment_token->get_type() ) === 'paypal' ) {
-					assert( $payment_token instanceof PaymentTokenPayPal );
-					$item['method']['brand'] = $payment_token->get_email();
+				if ( $payment_token instanceof PaymentTokenPayPal ) {
+					$item['method']['brand'] = 'PayPal / ' . $payment_token->get_email();
+					return $item;
+				}
 
+				if ( $payment_token instanceof PaymentTokenVenmo ) {
+					$item['method']['brand'] = 'Venmo / ' . $payment_token->get_email();
+					return $item;
+				}
+
+				if ( $payment_token instanceof PaymentTokenApplePay ) {
+					$item['method']['brand'] = 'ApplePay #' . ( (string) $payment_token->get_id() );
 					return $item;
 				}
 
@@ -137,6 +188,8 @@ class VaultingModule implements ModuleInterface {
 					}
 
 					try {
+						do_action( 'woocommerce_paypal_payments_before_delete_payment_token', $token->get_token() );
+
 						$payment_token_endpoint = $container->get( 'api.endpoint.payment-token' );
 						$payment_token_endpoint->delete_token_by_id( $token->get_token() );
 					} catch ( RuntimeException $exception ) {
@@ -189,9 +242,22 @@ class VaultingModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function( array $methods ): array {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $methods ) {
 				global $wp;
-				if ( isset( $wp->query_vars['add-payment-method'] ) ) {
+
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
+				if (
+					isset( $wp->query_vars['add-payment-method'] )
+					&& apply_filters( 'woocommerce_paypal_payments_disable_add_payment_method', true )
+				) {
 					unset( $methods[ PayPalGateway::ID ] );
 				}
 

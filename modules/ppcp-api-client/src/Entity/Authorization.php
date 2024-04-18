@@ -29,18 +29,28 @@ class Authorization {
 	private $authorization_status;
 
 	/**
+	 * The fraud processor response (AVS, CVV ...).
+	 *
+	 * @var FraudProcessorResponse|null
+	 */
+	protected $fraud_processor_response;
+
+	/**
 	 * Authorization constructor.
 	 *
-	 * @param string              $id The id.
-	 * @param AuthorizationStatus $authorization_status The status.
+	 * @param string                      $id The id.
+	 * @param AuthorizationStatus         $authorization_status The status.
+	 * @param FraudProcessorResponse|null $fraud_processor_response The fraud processor response (AVS, CVV ...).
 	 */
 	public function __construct(
 		string $id,
-		AuthorizationStatus $authorization_status
+		AuthorizationStatus $authorization_status,
+		?FraudProcessorResponse $fraud_processor_response
 	) {
 
-		$this->id                   = $id;
-		$this->authorization_status = $authorization_status;
+		$this->id                       = $id;
+		$this->authorization_status     = $authorization_status;
+		$this->fraud_processor_response = $fraud_processor_response;
 	}
 
 	/**
@@ -72,14 +82,29 @@ class Authorization {
 	}
 
 	/**
+	 * Returns the fraud processor response (AVS, CVV ...).
+	 *
+	 * @return FraudProcessorResponse|null
+	 */
+	public function fraud_processor_response() : ?FraudProcessorResponse {
+		return $this->fraud_processor_response;
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
 	 */
 	public function to_array(): array {
-		return array(
+		$data = array(
 			'id'     => $this->id,
 			'status' => $this->authorization_status->name(),
 		);
+
+		if ( $this->fraud_processor_response ) {
+			$data['fraud_processor_response'] = $this->fraud_processor_response->to_array();
+		}
+
+		return $data;
 	}
 }

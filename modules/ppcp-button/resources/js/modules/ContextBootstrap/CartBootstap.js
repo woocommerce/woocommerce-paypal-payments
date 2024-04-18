@@ -90,7 +90,12 @@ class CartBootstrap {
             PayPalCommerceGateway.data_client_id.has_subscriptions
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
-            this.renderer.render(actionHandler.subscriptionsConfiguration());
+            let subscription_plan_id = PayPalCommerceGateway.subscription_plan_id
+            if(PayPalCommerceGateway.variable_paypal_subscription_variation_from_cart !== '') {
+                subscription_plan_id = PayPalCommerceGateway.variable_paypal_subscription_variation_from_cart
+            }
+
+            this.renderer.render(actionHandler.subscriptionsConfiguration(subscription_plan_id));
 
             if(!PayPalCommerceGateway.subscription_product_allowed) {
                 this.gateway.button.is_disabled = true;

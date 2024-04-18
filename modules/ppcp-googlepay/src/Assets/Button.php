@@ -311,7 +311,7 @@ class Button implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					echo '<span id="ppc-button-googlepay-container-minicart" class="ppcp-button-googlepay ppcp-button-minicart"></span>';
+					echo '<span id="ppc-button-googlepay-container-minicart" class="ppcp-button-apm ppcp-button-googlepay ppcp-button-minicart"></span>';
 				},
 				21
 			);
@@ -325,7 +325,7 @@ class Button implements ButtonInterface {
 	 */
 	private function googlepay_button(): void {
 		?>
-		<div id="ppc-button-googlepay-container" class="ppcp-button-googlepay">
+		<div id="ppc-button-googlepay-container" class="ppcp-button-apm ppcp-button-googlepay">
 			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
 		<?php

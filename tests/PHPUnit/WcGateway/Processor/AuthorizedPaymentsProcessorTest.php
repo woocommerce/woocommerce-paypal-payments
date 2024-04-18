@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
 use Mockery\MockInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use WC_Order;
@@ -19,7 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Mockery;
@@ -69,6 +70,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 		$this->config = Mockery::mock(ContainerInterface::class);
 		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+		$this->amount_factory = Mockery::mock(AmountFactory::class);
 
 		$this->testee = new AuthorizedPaymentsProcessor(
 			$this->orderEndpoint,
@@ -76,7 +78,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			new NullLogger(),
 			$this->notice,
 			$this->config,
-			$this->subscription_helper
+			$this->subscription_helper,
+			$this->amount_factory
 		);
 	}
 
@@ -251,7 +254,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	}
 
 	private function createAuthorization(string $id, string $status): Authorization {
-		return new Authorization($id, new AuthorizationStatus($status));
+		return new Authorization($id, new AuthorizationStatus($status), null);
 	}
 
 	private function createCapture(string $id, string $status): Capture {

@@ -15,9 +15,13 @@ class MessageRenderer {
 
         const options = {
             amount,
-            placement: this.config.placement,
-            style: this.config.style
         };
+        if (this.config.placement) {
+            options.placement = this.config.placement;
+        }
+        if (this.config.style) {
+            options.style = this.config.style;
+        }
 
         // sometimes the element is destroyed while the options stay the same
         if (document.querySelector(this.config.wrapper).getAttribute('data-render-number') !== this.currentNumber.toString()) {

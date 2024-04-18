@@ -3,10 +3,13 @@ import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hidin
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 import UpdatePaymentData from "./Helper/UpdatePaymentData";
+import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/ApmButtons";
 
 class GooglepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
+        apmButtonsInit(ppcpConfig);
+
         this.isInitialized = false;
 
         this.context = context;

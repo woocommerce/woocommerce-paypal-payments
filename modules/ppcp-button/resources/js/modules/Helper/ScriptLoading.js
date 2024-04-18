@@ -56,12 +56,20 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
 
     // Build the PayPal script options.
     let scriptOptions = keysToCamelCase(config.url_params);
-    scriptOptions = merge(scriptOptions, config.script_attributes);
+    if (config.script_attributes) {
+        scriptOptions = merge(scriptOptions, config.script_attributes);
+    }
 
     // Load PayPal script for special case with data-client-token
-    if (config.data_client_id.set_attribute) {
+    if (config.data_client_id?.set_attribute) {
         dataClientIdAttributeHandler(scriptOptions, config.data_client_id, callback, errorCallback);
         return;
+    }
+
+    // Adds data-user-id-token to script options.
+    const userIdToken = config?.save_payment_methods?.id_token;
+    if(userIdToken) {
+        scriptOptions['data-user-id-token'] = userIdToken;
     }
 
     // Load PayPal script
@@ -79,5 +87,13 @@ export const loadPaypalScriptPromise = (config) => {
 export const loadPaypalJsScript = (options, buttons, container) => {
     loadScript(options).then((paypal) => {
         paypal.Buttons(buttons).render(container);
+    });
+}
+
+export const loadPaypalJsScriptPromise = (options) => {
+    return new Promise((resolve, reject) => {
+        loadScript(options)
+            .then(resolve)
+            .catch(reject);
     });
 }

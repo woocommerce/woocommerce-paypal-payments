@@ -65,7 +65,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="American Express" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/></a>
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="Discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/></a>
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal-dark.svg"/></a>
-			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="Sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="BLIK" src="' . esc_url( $module_url ) . 'assets/images/blik.svg"/></a>
 		</div>
 		<div class="ppcp-onboarding-header-apm-logos">
 			<a href="https://woo.com/document/woocommerce-paypal-payments/#apple-pay" target="_blank"><img alt="Apple Pay" src="' . esc_url( $module_url ) . 'assets/images/button-Apple-Pay.png"/></a>
@@ -390,10 +390,30 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 		),
+		'refresh_feature_status'                        => array(
+			'title'        => __( 'Refresh feature availability status', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => '<button type="button" class="button ppcp-refresh-feature-status">' . esc_html__( 'Check available features', 'woocommerce-paypal-payments' ) . '</button><div class="ppcp-status-text"></div>',
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
 		'ppcp_dcc_status'                               => array(
 			'title'        => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => $container->get( 'wcgateway.settings.connection.dcc-status-text' ),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array( 'dcc' ),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'ppcp_reference_transactions_status'            => array(
+			'title'        => __( 'Advanced PayPal Wallet', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => $container->get( 'wcgateway.settings.connection.reference-transactions-status-text' ),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -416,7 +436,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'desc_tip'     => true,
 			'label'        => $container->get( 'wcgateway.settings.fraudnet-label' ),
 			'description'  => __( 'FraudNet is a JavaScript library developed by PayPal and embedded into a merchant’s web page to collect browser-based data to help reduce fraud.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
+			'default'      => true,
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -502,8 +522,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'options'           => array(
-				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
+				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'           => array(
 				State::STATE_START,

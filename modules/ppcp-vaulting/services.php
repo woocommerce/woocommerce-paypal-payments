@@ -31,7 +31,7 @@ return array(
 	},
 	'vaulting.credit-card-handler'        => function( ContainerInterface $container ): VaultedCreditCardHandler {
 		return new VaultedCreditCardHandler(
-			$container->get( 'subscription.helper' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),
@@ -55,5 +55,16 @@ return array(
 			$container->get( 'vaulting.payment-token-helper' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+	'vaulting.wc-payment-tokens'          => static function( ContainerInterface $container ): WooCommercePaymentTokens {
+		return new WooCommercePaymentTokens(
+			$container->get( 'vaulting.payment-token-helper' ),
+			$container->get( 'vaulting.payment-token-factory' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'vaulting.vault-v3-enabled'           => static function( ContainerInterface $container ): bool {
+		return $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
 	},
 );

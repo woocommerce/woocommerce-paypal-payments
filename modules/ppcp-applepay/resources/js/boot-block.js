@@ -1,8 +1,10 @@
 import {useEffect, useState} from '@wordpress/element';
-import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
+import {registerExpressPaymentMethod} from '@woocommerce/blocks-registry';
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {cartHasSubscriptionProducts} from '../../../ppcp-blocks/resources/js/Helper/Subscription'
 import ApplepayManager from "./ApplepayManager";
 import {loadCustomScript} from "@paypal/paypal-js";
+import CheckoutHandler from "./Context/CheckoutHandler";
 
 const ppcpData = wc.wcSettings.getSetting('ppcp-gateway_data');
 const ppcpConfig = ppcpData.scriptData;
@@ -23,12 +25,6 @@ const ApplePayComponent = () => {
         const manager = new ApplepayManager(buttonConfig, ppcpConfig);
         manager.init();
     };
-    useEffect(() => {
-        const bodyClass = 'ppcp-has-applepay-block';
-        if (!document.body.classList.contains(bodyClass)) {
-            document.body.classList.add(bodyClass);
-        }
-    }, []);
 
     useEffect(() => {
         // Load ApplePay SDK
@@ -50,11 +46,18 @@ const ApplePayComponent = () => {
     }, [paypalLoaded, applePayLoaded]);
 
     return (
-        <div id={buttonConfig.button.wrapper.replace('#', '')}></div>
+        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-apm ppcp-button-applepay"></div>
     );
 }
 
 const features = ['products'];
+
+if (
+    cartHasSubscriptionProducts(ppcpConfig)
+    && (new CheckoutHandler(buttonConfig, ppcpConfig)).isVaultV3Mode()
+) {
+    features.push('subscriptions');
+}
 
 registerExpressPaymentMethod({
     name: buttonData.id,

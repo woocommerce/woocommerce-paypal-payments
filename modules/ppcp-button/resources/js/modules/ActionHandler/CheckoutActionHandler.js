@@ -2,6 +2,7 @@ import 'formdata-polyfill';
 import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
 import {payerData} from "../Helper/PayerData";
 import {getCurrentPaymentMethod} from "../Helper/CheckoutMethodState";
+import validateCheckoutForm from "../Helper/CheckoutFormValidation";
 
 class CheckoutActionHandler {
 
@@ -11,11 +12,17 @@ class CheckoutActionHandler {
         this.spinner = spinner;
     }
 
-    subscriptionsConfiguration() {
+    subscriptionsConfiguration(subscription_plan_id) {
         return {
-            createSubscription: (data, actions) => {
+            createSubscription: async (data, actions) => {
+                try {
+                    await validateCheckoutForm(this.config);
+                } catch (error) {
+                    throw {type: 'form-validation-error'};
+                }
+
                 return actions.subscription.create({
-                    'plan_id': this.config.subscription_plan_id
+                    'plan_id': subscription_plan_id
                 });
             },
             onApprove: (data, actions) => {
@@ -56,6 +63,8 @@ class CheckoutActionHandler {
             const paymentMethod = getCurrentPaymentMethod();
             const fundingSource = window.ppcpFundingSource;
 
+            const savePaymentMethod = !!document.getElementById('wc-ppcp-credit-card-gateway-new-payment-method')?.checked;
+
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
                 headers: {
@@ -72,7 +81,8 @@ class CheckoutActionHandler {
                     funding_source: fundingSource,
                     // send as urlencoded string to handle complex fields via PHP functions the same as normal form submit
                     form_encoded: new URLSearchParams(formData).toString(),
-                    createaccount: createaccount
+                    createaccount: createaccount,
+                    save_payment_method: savePaymentMethod
                 })
             }).then(function (res) {
                 return res.json();
@@ -131,6 +141,54 @@ class CheckoutActionHandler {
                 }
 
                 this.errorHandler.genericError();
+            }
+        }
+    }
+
+    addPaymentMethodConfiguration() {
+        return {
+            createVaultSetupToken: async () => {
+                const response = await fetch(this.config.ajax.create_setup_token.endpoint, {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.create_setup_token.nonce,
+                    })
+                });
+
+                const result = await response.json()
+                if (result.data.id) {
+                    return result.data.id
+                }
+
+                console.error(result)
+            },
+            onApprove: async ({vaultSetupToken}) => {
+                const response = await fetch(this.config.ajax.create_payment_token_for_guest.endpoint, {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.create_payment_token_for_guest.nonce,
+                        vault_setup_token: vaultSetupToken,
+                    })
+                })
+
+                const result = await response.json();
+                if (result.success === true) {
+                    document.querySelector('#place_order').click()
+                    return;
+                }
+
+                console.error(result)
+            },
+            onError: (error) => {
+                console.error(error)
             }
         }
     }

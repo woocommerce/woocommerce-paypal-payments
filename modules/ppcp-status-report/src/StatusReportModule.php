@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -65,7 +65,7 @@ class StatusReportModule implements ModuleInterface {
 				$messages_apply = $c->get( 'button.helper.messages-apply' );
 
 				/* @var SubscriptionHelper $subscription_helper The subscription helper class. */
-				$subscription_helper = $c->get( 'subscription.helper' );
+				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 
 				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
 				assert( $last_webhook_storage instanceof WebhookEventStorage );
@@ -77,6 +77,8 @@ class StatusReportModule implements ModuleInterface {
 				$renderer = $c->get( 'status-report.renderer' );
 
 				$had_ppec_plugin = PPECHelper::is_plugin_configured();
+
+				$subscription_mode_options = $c->get( 'wcgateway.settings.fields.subscriptions_mode_options' );
 
 				$items = array(
 					array(
@@ -169,7 +171,7 @@ class StatusReportModule implements ModuleInterface {
 						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->subscriptions_mode_text(
 							$subscription_helper->plugin_is_active(),
-							$settings->has( 'subscriptions_mode' ) ? (string) $settings->get( 'subscriptions_mode' ) : '',
+							$settings->has( 'subscriptions_mode' ) ? (string) $subscription_mode_options[ $settings->get( 'subscriptions_mode' ) ] : '',
 							$subscriptions_mode_settings
 						),
 					),

@@ -273,7 +273,7 @@ class AvailabilityNotice {
 				$message = sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag for the well-known file, %3$s and %4$s are the opening and closing of HTML <a> tag for the help document.
 					__(
-						'Apple Pay Validation Error. Please ensure the presentment of the correct %1$sdomain association file%2$s for Apple to validate your domain. %3$sLearn more%4$s about the Apple Pay requirements',
+						'Apple Pay has not yet been validated. Use the Apple Pay button in your shop for Apple to validate your domain. If this message persists after using the button, please verify your website displays the correct %1$sdomain association file%2$s. More details about the Apple Pay setup can be found in the %3$sPayPal Payments documentation%4$s.',
 						'woocommerce-paypal-payments'
 					),
 					'<a href="/.well-known/apple-developer-merchantid-domain-association" target="_blank">',

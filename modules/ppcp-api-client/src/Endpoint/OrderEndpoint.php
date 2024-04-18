@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -27,7 +28,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WP_Error;
 
@@ -174,12 +175,15 @@ class OrderEndpoint {
 	/**
 	 * Creates an order.
 	 *
-	 * @param PurchaseUnit[]    $items The purchase unit items for the order.
-	 * @param string            $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
-	 * @param Payer|null        $payer The payer off the order.
-	 * @param PaymentToken|null $payment_token The payment token.
-	 * @param string            $paypal_request_id The paypal request id.
-	 * @param string            $user_action The user action.
+	 * @param PurchaseUnit[]     $items The purchase unit items for the order.
+	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
+	 * @param Payer|null         $payer The payer off the order.
+	 * @param PaymentToken|null  $payment_token The payment token.
+	 * @param string             $paypal_request_id The PayPal request id.
+	 * @param string             $user_action The user action.
+	 * @param string             $payment_method WC payment method.
+	 * @param array              $request_data Request data.
+	 * @param PaymentSource|null $payment_source The payment source.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -190,7 +194,10 @@ class OrderEndpoint {
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
 		string $paypal_request_id = '',
-		string $user_action = ApplicationContext::USER_ACTION_CONTINUE
+		string $user_action = ApplicationContext::USER_ACTION_CONTINUE,
+		string $payment_method = '',
+		array $request_data = array(),
+		PaymentSource $payment_source = null
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
@@ -217,11 +224,16 @@ class OrderEndpoint {
 		if ( $payment_token ) {
 			$data['payment_source']['token'] = $payment_token->to_array();
 		}
+		if ( $payment_source ) {
+			$data['payment_source'] = array(
+				$payment_source->name() => $payment_source->properties(),
+			);
+		}
 
 		/**
 		 * The filter can be used to modify the order creation request body data.
 		 */
-		$data = apply_filters( 'ppcp_create_order_request_body_data', $data );
+		$data = apply_filters( 'ppcp_create_order_request_body_data', $data, $payment_method, $request_data );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args = array(
 			'method'  => 'POST',
@@ -260,26 +272,25 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
+
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
 			$error = new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
+
+			$this->logger->warning(
 				sprintf(
 					'Failed to create order. PayPal API response: %1$s',
 					$error->getMessage()
-				),
-				array(
-					'args'     => $args,
-					'response' => $response,
 				)
 			);
+
 			throw $error;
 		}
+
 		$order = $this->order_factory->from_paypal_response( $json );
 
 		do_action( 'woocommerce_paypal_payments_paypal_order_created', $order );

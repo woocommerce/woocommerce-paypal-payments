@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -25,7 +26,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -265,6 +266,8 @@ class OrderProcessor {
 		if ( $this->capture_authorized_downloads( $order ) ) {
 			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 		}
+
+		do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
 	}
 
 	/**
@@ -349,12 +352,16 @@ class OrderProcessor {
 	 * @return bool
 	 */
 	private function order_is_ready_for_process( Order $order ): bool {
-
 		if ( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::CREATED ) ) {
 			return true;
 		}
 
-		if ( ! $order->payment_source() || ! $order->payment_source()->card() ) {
+		$payment_source = $order->payment_source();
+		if ( ! $payment_source ) {
+			return false;
+		}
+
+		if ( $payment_source->name() !== 'card' ) {
 			return false;
 		}
 

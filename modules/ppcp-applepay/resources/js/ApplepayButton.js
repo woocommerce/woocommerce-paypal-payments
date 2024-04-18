@@ -5,10 +5,13 @@ import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/Butto
 import FormValidator from "../../../ppcp-button/resources/js/modules/Helper/FormValidator";
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
+import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/ApmButtons";
 
 class ApplepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
+        apmButtonsInit(ppcpConfig);
+
         this.isInitialized = false;
 
         this.context = context;
@@ -30,6 +33,9 @@ class ApplepayButton {
 
         // Stores initialization data sent to the button.
         this.initialPaymentRequest = null;
+
+        // Default eligibility status.
+        this.isEligible = true;
 
         this.log = function() {
             if ( this.buttonConfig.is_debug ) {
@@ -60,14 +66,10 @@ class ApplepayButton {
         this.initEventHandlers();
         this.isInitialized = true;
         this.applePayConfig = config;
-        const isEligible = this.applePayConfig.isEligible;
+        this.isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin;
 
-        if (isEligible) {
+        if (this.isEligible) {
             this.fetchTransactionInfo().then(() => {
-                const isSubscriptionProduct = this.ppcpConfig?.data_client_id?.has_subscriptions === true;
-                if (isSubscriptionProduct) {
-                    return;
-                }
                 this.addButton();
                 const id_minicart = "#apple-" + this.buttonConfig.button.mini_cart_wrapper;
                 const id = "#apple-" + this.buttonConfig.button.wrapper;
@@ -84,6 +86,10 @@ class ApplepayButton {
                     });
                 }
             });
+        } else {
+            jQuery('#' + this.buttonConfig.button.wrapper).hide();
+            jQuery('#' + this.buttonConfig.button.mini_cart_wrapper).hide();
+            jQuery('#express-payment-method-ppcp-applepay').hide();
         }
     }
 
@@ -130,6 +136,10 @@ class ApplepayButton {
         const wrapper_id = '#' + wrapper;
 
         const syncButtonVisibility = () => {
+            if (!this.isEligible) {
+                return;
+            }
+
             const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
             setVisible(wrapper_id, $ppcpButtonWrapper.is(':visible'));
             setEnabled(wrapper_id, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));
@@ -179,13 +189,13 @@ class ApplepayButton {
             appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
         }
 
-        jQuery('#' + wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
+        const $wrapper = jQuery('#' + wrapper);
+        $wrapper.addClass('ppcp-button-' + ppcpStyle.shape);
 
         if (ppcpStyle.height) {
-            jQuery('#' + wrapper).css('--apple-pay-button-height', `${ppcpStyle.height}px`)
+            $wrapper.css('--apple-pay-button-height', `${ppcpStyle.height}px`)
+            $wrapper.css('height', `${ppcpStyle.height}px`)
         }
-
-        jQuery(wrapper).append(appleContainer);
     }
 
     //------------------------
@@ -199,6 +209,8 @@ class ApplepayButton {
         this.log('onButtonClick', this.context);
 
         const paymentRequest = this.paymentRequest();
+
+        window.ppcpFundingSource = 'apple_pay'; // Do this on another place like on create order endpoint handler.
 
         // Trigger woocommerce validation if we are in the checkout page.
         if (this.context === 'checkout') {

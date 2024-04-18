@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
-
 use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -24,7 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -94,6 +93,7 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -231,6 +231,7 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -358,6 +359,7 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')

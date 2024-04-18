@@ -1,3 +1,4 @@
+@use "../../../ppcp-button/resources/css/mixins/apm-button" as apm-button;
 
 .ppcp-field-hidden {
 	display: none !important;
@@ -13,5 +14,28 @@
 .ppcp-field-indent {
 	th {
 		padding-left: 20px;
+	}
+}
+
+// Prevents spacing after button group.
+.ppcp-button-preview-inner {
+	line-height: 0;
+}
+
+.ppcp-button-apm {
+	@include apm-button.button;
+}
+
+.ppcp-status-text {
+	padding-top: 4px;
+
+	.error {
+		color: red;
+		font-weight: bold;
+	}
+
+	.success {
+		color: green;
+		font-weight: bold;
 	}
 }
