@@ -9,11 +9,11 @@ class CartActionHandler {
         this.errorHandler = errorHandler;
     }
 
-    subscriptionsConfiguration() {
+    subscriptionsConfiguration(subscription_plan_id) {
         return {
             createSubscription: (data, actions) => {
                 return actions.subscription.create({
-                    'plan_id': this.config.subscription_plan_id
+                    'plan_id': subscription_plan_id
                 });
             },
             onApprove: (data, actions) => {
