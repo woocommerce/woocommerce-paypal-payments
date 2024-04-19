@@ -36,7 +36,7 @@ class ApplicationContextRepositoryTest extends TestCase
                 ->andReturn($value);
         }
 
-	    expect('network_home_url')
+	    expect('home_url')
 		    ->andReturn('https://example.com/');
 	    expect('wc_get_checkout_url')
 		    ->andReturn('https://example.com/checkout/');

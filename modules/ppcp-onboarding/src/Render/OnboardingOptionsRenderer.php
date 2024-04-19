@@ -136,7 +136,10 @@ class OnboardingOptionsRenderer {
 				__( 'For Standard payments, Casual sellers may connect their Personal PayPal account in eligible countries to sell on WooCommerce. For Advanced payments, a Business PayPal account is required.', 'woocommerce-paypal-payments' )
 			),
 		);
-		$items[]          = '
+
+		$basic_table_rows = apply_filters( 'ppcp_onboarding_basic_table_rows', $basic_table_rows );
+
+		$items[] = '
 <li>
 	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" checked ' .
@@ -191,7 +194,10 @@ class OnboardingOptionsRenderer {
 					__( 'For Standard payments, Casual sellers may connect their Personal PayPal account in eligible countries to sell on WooCommerce. For Advanced payments, a Business PayPal account is required.', 'woocommerce-paypal-payments' )
 				),
 			);
-			$items[]        = '
+
+			$dcc_table_rows = apply_filters( 'ppcp_onboarding_dcc_table_rows', $dcc_table_rows, $this );
+
+			$items[] = '
 <li>
 	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" ' .
@@ -224,7 +230,7 @@ class OnboardingOptionsRenderer {
 	 * @param string $note The additional description text, such as about conditions.
 	 * @return string
 	 */
-	private function render_table_row( string $header, string $value, string $tooltip = '', string $note = '' ): string {
+	public function render_table_row( string $header, string $value, string $tooltip = '', string $note = '' ): string {
 		$value_html = $value;
 		if ( $note ) {
 			$value_html .= '<br/><span class="ppcp-muted-text">' . $note . '</span>';

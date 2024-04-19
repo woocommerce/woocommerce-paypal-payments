@@ -64,4 +64,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'vaulting.vault-v3-enabled'           => static function( ContainerInterface $container ): bool {
+		return $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
+	},
 );

@@ -120,8 +120,13 @@ const PayPalComponent = ({
     };
 
     const createSubscription = async (data, actions) => {
+        let planId = config.scriptData.subscription_plan_id;
+        if (config.scriptData.variable_paypal_subscription_variation_from_cart !== '') {
+            planId = config.scriptData.variable_paypal_subscription_variation_from_cart;
+        }
+
         return actions.subscription.create({
-            'plan_id': config.scriptData.subscription_plan_id
+            'plan_id': planId
         });
     };
 
@@ -299,6 +304,7 @@ const PayPalComponent = ({
             try {
                 const shippingOptionId = data.selectedShippingOption?.id;
                 if (shippingOptionId) {
+                    await wp.data.dispatch('wc/store/cart').selectShippingRate(shippingOptionId);
                     await shippingData.setSelectedRates(shippingOptionId);
                 }
 
@@ -358,6 +364,7 @@ const PayPalComponent = ({
             try {
                 const shippingOptionId = data.selectedShippingOption?.id;
                 if (shippingOptionId) {
+                    await wp.data.dispatch('wc/store/cart').selectShippingRate(shippingOptionId);
                     await shippingData.setSelectedRates(shippingOptionId);
                 }
             } catch (e) {

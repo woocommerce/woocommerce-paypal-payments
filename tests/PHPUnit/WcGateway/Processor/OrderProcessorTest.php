@@ -93,6 +93,7 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -230,6 +231,7 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -357,6 +359,7 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')

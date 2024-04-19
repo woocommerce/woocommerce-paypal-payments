@@ -12,7 +12,7 @@ import ErrorHandler from "../../../ppcp-button/resources/js/modules/ErrorHandler
 import {cardFieldStyles} from "../../../ppcp-button/resources/js/modules/Helper/CardFieldsHelper";
 
 const errorHandler = new ErrorHandler(
-    PayPalCommerceGateway.labels.error.generic,
+    ppcp_add_payment_method.labels.error.generic,
     document.querySelector('.woocommerce-notices-wrapper')
 );
 

@@ -1,0 +1,40 @@
+
+.ppcp-axo-card-icons {
+	padding: 4px 0 16px 25px;
+
+	.ppcp-card-icon {
+		float: left !important;
+	}
+}
+
+.ppcp-axo-watermark-container {
+	max-width: 200px;
+	margin-top: 10px;
+}
+
+.ppcp-axo-payment-container {
+	padding: 1rem 0;
+	background-color: #ffffff;
+
+	&.hidden {
+		display: none;
+	}
+}
+
+.ppcp-axo-email-widget {
+	border: 1px solid #cccccc;
+	background-color: #eeeeee;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	text-align: center;
+	font-weight: bold;
+	color: #000000;
+}
+
+.ppcp-axo-field-hidden {
+	display: none;
+}
+
+.ppcp-axo-customer-details {
+	margin-bottom: 40px;
+}

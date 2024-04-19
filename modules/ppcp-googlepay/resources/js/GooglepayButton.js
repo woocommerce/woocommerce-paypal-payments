@@ -28,7 +28,7 @@ class GooglepayButton {
 
         this.log = function() {
             if ( this.buttonConfig.is_debug ) {
-                console.log('[GooglePayButton]', ...arguments);
+                //console.log('[GooglePayButton]', ...arguments);
             }
         }
     }
