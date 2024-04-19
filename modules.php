@@ -76,5 +76,12 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-configurator/module.php" )();
 	}
 
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.axo_enabled',
+		getenv( 'PCP_AXO_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
+	}
+
 	return $modules;
 };

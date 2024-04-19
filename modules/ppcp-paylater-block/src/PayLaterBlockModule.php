@@ -40,7 +40,7 @@ class PayLaterBlockModule implements ModuleInterface {
 	 * @return bool true if the block is enabled, otherwise false.
 	 */
 	public static function is_block_enabled( SettingsStatus $settings_status ): bool {
-		return self::is_module_loading_required() && $settings_status->is_pay_later_messaging_enabled_for_location( 'woocommerceBlock' );
+		return self::is_module_loading_required() && $settings_status->is_pay_later_messaging_enabled_for_location( 'custom_placement' );
 	}
 
 	/**

@@ -54,7 +54,7 @@ class ApplicationContextRepository {
 		$payment_preference = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
 			ApplicationContext::PAYMENT_METHOD_IMMEDIATE_PAYMENT_REQUIRED : ApplicationContext::PAYMENT_METHOD_UNRESTRICTED;
 		$context            = new ApplicationContext(
-			network_home_url( \WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) ),
+			home_url( \WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) ),
 			(string) wc_get_checkout_url(),
 			(string) $brand_name,
 			$locale,

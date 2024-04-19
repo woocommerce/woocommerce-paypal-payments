@@ -271,6 +271,40 @@ class OrderProcessor {
 	}
 
 	/**
+	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @param Order    $order The PayPal order.
+	 *
+	 * @throws Exception If processing fails.
+	 */
+	public function process_captured_and_authorized( WC_Order $wc_order, Order $order ): void {
+		$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+		if ( $order->intent() === 'AUTHORIZE' ) {
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+
+			if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
+				$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
+			}
+		}
+
+		$transaction_id = $this->get_paypal_order_transaction_id( $order );
+
+		if ( $transaction_id ) {
+			$this->update_transaction_id( $transaction_id, $wc_order );
+		}
+
+		$this->handle_new_order_status( $order, $wc_order );
+
+		if ( $this->capture_authorized_downloads( $order ) ) {
+			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+		}
+
+		do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
+	}
+
+	/**
 	 * Creates a PayPal order for the given WC order.
 	 *
 	 * @param WC_Order $wc_order The WC order.

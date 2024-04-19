@@ -1,6 +1,6 @@
 import BaseAction from "./BaseAction";
 
-class ElementAction extends BaseAction {
+class VisibilityAction extends BaseAction {
 
     run(status) {
 
@@ -32,4 +32,4 @@ class ElementAction extends BaseAction {
 
 }
 
-export default ElementAction;
+export default VisibilityAction;

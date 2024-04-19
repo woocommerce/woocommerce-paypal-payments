@@ -262,7 +262,7 @@ class SettingsRenderer {
 		$html = sprintf(
 			'<h3 class="wc-settings-sub-title %s">%s</h3>',
 			esc_attr( implode( ' ', $config['class'] ) ),
-			esc_html( $config['heading'] )
+			isset( $config['heading_html'] ) ? $config['heading_html'] : esc_html( $config['heading'] )
 		);
 
 		return $html;
@@ -388,7 +388,12 @@ $data_rows_html
 			<th scope="row">
 				<label
 					for="<?php echo esc_attr( $id ); ?>"
-				><?php echo esc_html( $config['title'] ); ?></label>
+				>
+					<?php
+						// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo isset( $config['title_html'] ) ? $config['title_html'] : esc_html( $config['title'] );
+					?>
+				</label>
 				<?php if ( isset( $config['desc_tip'] ) && $config['desc_tip'] ) : ?>
 				<span
 						class="woocommerce-help-tip"

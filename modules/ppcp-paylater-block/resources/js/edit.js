@@ -194,12 +194,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                         help={ __( 'Used for the analytics dashboard in the merchant account.', 'woocommerce-paypal-payments' ) }
                         options={ [
                             { label: __( 'Detect automatically', 'woocommerce-paypal-payments' ), value: 'auto' },
+                            { label: __( 'Product Page', 'woocommerce-paypal-payments' ), value: 'product' },
                             { label: __( 'Cart', 'woocommerce-paypal-payments' ), value: 'cart' },
-                            { label: __( 'Payment', 'woocommerce-paypal-payments' ), value: 'payment' },
-                            { label: __( 'Product', 'woocommerce-paypal-payments' ), value: 'product' },
-                            { label: __( 'Product list', 'woocommerce-paypal-payments' ), value: 'product-list' },
+                            { label: __( 'Checkout', 'woocommerce-paypal-payments' ), value: 'checkout' },
                             { label: __( 'Home', 'woocommerce-paypal-payments' ), value: 'home' },
-                            { label: __( 'Category', 'woocommerce-paypal-payments' ), value: 'category' },
+                            { label: __( 'Shop', 'woocommerce-paypal-payments' ), value: 'shop' },
                         ] }
                         value={ placement }
                         onChange={ ( value ) => setAttributes( { placement: value } ) }

@@ -91,7 +91,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'title'        => __( 'Customize Smart Buttons Per Location', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
-			'default'      => true,
+			'default'      => false,
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',

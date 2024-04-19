@@ -45,6 +45,18 @@ trait OrderMetaTrait {
 			$wc_order->update_meta_data( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY, $payment_source );
 		}
 
+		$payer = $order->payer();
+		if (
+			$payer
+			&& $payment_source
+			&& in_array( $payment_source, PayPalGateway::PAYMENT_SOURCES_WITH_PAYER_EMAIL, true )
+		) {
+			$payer_email = $payer->email_address();
+			if ( $payer_email ) {
+				$wc_order->update_meta_data( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY, $payer_email );
+			}
+		}
+
 		$wc_order->save();
 
 		do_action( 'woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order );
