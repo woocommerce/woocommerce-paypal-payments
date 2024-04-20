@@ -65,7 +65,7 @@ class PayLaterWCBlocksUtils {
 		echo $renderer->render(
 			array(
 				// phpcs:ignore
-				'id'     => $block_id,
+				'blockId'     => $block_id,
 				// phpcs:ignore
 				'ppcpId' => $ppcp_id,
 			),

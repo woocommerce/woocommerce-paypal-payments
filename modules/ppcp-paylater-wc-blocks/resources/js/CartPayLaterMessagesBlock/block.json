@@ -8,7 +8,7 @@
 	"example": {},
 	"parent": [ "woocommerce/cart-totals-block" ],
 	"attributes": {
-        "id": {
+        "blockId": {
             "type": "string",
             "default": "woocommerce-paypal-payments/cart-paylater-messages"
         },

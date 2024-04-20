@@ -177,7 +177,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 				array(
 					'render_callback' => function ( array $attributes ) use ( $c ) {
 						return PayLaterWCBlocksUtils::render_paylater_block(
-							$attributes['id'] ?? 'woocommerce-paypal-payments/cart-paylater-messages',
+							$attributes['blockId'] ?? 'woocommerce-paypal-payments/cart-paylater-messages',
 							$attributes['ppcpId'] ?? 'ppcp-cart-paylater-messages',
 							'cart',
 							$c
@@ -198,7 +198,7 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 				array(
 					'render_callback' => function ( array $attributes ) use ( $c ) {
 						return PayLaterWCBlocksUtils::render_paylater_block(
-							$attributes['id'] ?? 'woocommerce-paypal-payments/checkout-paylater-messages',
+							$attributes['blockId'] ?? 'woocommerce-paypal-payments/checkout-paylater-messages',
 							$attributes['ppcpId'] ?? 'ppcp-checkout-paylater-messages',
 							'checkout',
 							$c
