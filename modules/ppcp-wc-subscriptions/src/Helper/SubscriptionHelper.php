@@ -315,4 +315,29 @@ class SubscriptionHelper {
 
 		return '';
 	}
+
+	/**
+	 * Returns the variation subscription plan id from the cart.
+	 *
+	 * @return string
+	 */
+	public function paypal_subscription_variation_from_cart(): string {
+		$cart = WC()->cart ?? null;
+		if ( ! $cart || $cart->is_empty() ) {
+			return '';
+		}
+
+		$items = $cart->get_cart_contents();
+		foreach ( $items as $item ) {
+			$variation_id = $item['variation_id'] ?? 0;
+			if ( $variation_id ) {
+				$variation_product = wc_get_product( $variation_id ) ?? '';
+				if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
+					return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
+				}
+			}
+		}
+
+		return '';
+	}
 }

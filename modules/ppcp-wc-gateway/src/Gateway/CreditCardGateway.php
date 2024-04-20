@@ -33,6 +33,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
@@ -40,7 +41,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
+	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -454,6 +455,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$card_payment_token_id = wc_clean( wp_unslash( $_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? '' ) );
+
+		if ( $this->is_free_trial_order( $wc_order ) && $card_payment_token_id ) {
+			$customer_tokens = $this->wc_payment_tokens->customer_tokens( get_current_user_id() );
+			foreach ( $customer_tokens as $token ) {
+				if ( $token['payment_source']->name() === 'card' ) {
+					$wc_order->payment_complete();
+					return $this->handle_payment_success( $wc_order );
+				}
+			}
+		}
+
 		if ( $card_payment_token_id ) {
 			$customer_tokens = $this->wc_payment_tokens->customer_tokens( get_current_user_id() );
 

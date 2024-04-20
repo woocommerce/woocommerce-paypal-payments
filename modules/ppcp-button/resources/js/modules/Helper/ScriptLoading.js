@@ -60,6 +60,13 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
         scriptOptions = merge(scriptOptions, config.script_attributes);
     }
 
+    // Axo SDK options
+    const sdkClientToken = config?.axo?.sdk_client_token;
+    if(sdkClientToken) {
+        scriptOptions['data-sdk-client-token'] = sdkClientToken;
+        scriptOptions['data-client-metadata-id'] = 'ppcp-cm-id';
+    }
+
     // Load PayPal script for special case with data-client-token
     if (config.data_client_id?.set_attribute) {
         dataClientIdAttributeHandler(scriptOptions, config.data_client_id, callback, errorCallback);

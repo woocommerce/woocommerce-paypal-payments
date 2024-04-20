@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -103,7 +104,10 @@ return array(
 			$api_shop_country,
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'vaulting.vault-v3-enabled' ),
+			$container->get( 'vaulting.wc-payment-tokens' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -806,25 +810,6 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
-			'vault_enabled_dcc'           => array(
-				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'desc_tip'     => true,
-				'label'        => sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Securely store your customers’ credit cards for a seamless checkout experience and subscription features. Payment methods are saved in the secure %1$sPayPal Vault%2$s.', 'woocommerce-paypal-payments' ),
-					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
-					'</a>'
-				),
-				'description'  => __( 'Allow registered buyers to save Credit Card payments.', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'dcc',
-				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
-			),
 			'3d_secure_heading'           => array(
 				'heading'      => __( '3D Secure', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
@@ -881,6 +866,52 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
+			'saved_payments_heading'      => array(
+				'heading'      => __( 'Saved Payments', 'woocommerce-paypal-payments' ),
+				'type'         => 'ppcp-heading',
+				'description'  => wp_kses_post(
+					sprintf(
+					// translators: %1$s and %2$s is a link tag.
+						__(
+							'PayPal can securely store your customers’ payment methods for
+							%1$sfuture payments and subscriptions%2$s, simplifying the checkout
+							process and enabling recurring transactions on your website.',
+							'woocommerce-paypal-payments'
+						),
+						'<a
+                            rel="noreferrer noopener"
+                            href="https://woo.com/document/woocommerce-paypal-payments/#vaulting-a-card"
+                            >',
+						'</a>'
+					)
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(
+					'dcc',
+				),
+				'gateway'      => 'dcc',
+			),
+			'vault_enabled_dcc'           => array(
+				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+					__( 'Securely store your customers’ credit cards for a seamless checkout experience and subscription features. Payment methods are saved in the secure %1$sPayPal Vault%2$s.', 'woocommerce-paypal-payments' ),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
+					'</a>'
+				),
+				'description'  => __( 'Allow registered buyers to save Credit Card payments.', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'dcc',
+				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
+			),
 			'paypal_saved_payments'       => array(
 				'heading'      => __( 'Saved payments', 'woocommerce-paypal-payments' ),
 				'description'  => sprintf(
@@ -918,6 +949,32 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
+			),
+			'digital_wallet_heading'      => array(
+				'heading'      => __( 'Digital Wallet Services', 'woocommerce-paypal-payments' ),
+				'type'         => 'ppcp-heading',
+				'description'  => wp_kses_post(
+					sprintf(
+					// translators: %1$s and %2$s is a link tag.
+						__(
+							'PayPal supports digital wallet services like Apple Pay or Google Pay
+							to give your buyers more options to pay without a PayPal account.',
+							'woocommerce-paypal-payments'
+						),
+						'<a
+                            rel="noreferrer noopener"
+                            href="https://woo.com/document/woocommerce-paypal-payments/#vaulting-a-card"
+                            >',
+						'</a>'
+					)
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(
+					'dcc',
+				),
+				'gateway'      => 'dcc',
 			),
 		);
 
@@ -1506,6 +1563,7 @@ return array(
 			PayUponInvoiceGateway::ID,
 			CardButtonGateway::ID,
 			OXXOGateway::ID,
+			AxoGateway::ID,
 		);
 	},
 	'wcgateway.gateway-repository'                         => static function ( ContainerInterface $container ): GatewayRepository {

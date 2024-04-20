@@ -140,7 +140,13 @@ trait CreditCardOrderInfoHandlingTrait {
 		);
 		$wc_order->add_order_note( $cvv_response_order_note );
 
-		$meta_details = array_merge( $fraud_responses, array( 'card_brand' => $card_brand ) );
+		$meta_details = array_merge(
+			$fraud_responses,
+			array(
+				'card_brand'       => $card_brand,
+				'card_last_digits' => $card_last_digits,
+			)
+		);
 		$wc_order->update_meta_data( PayPalGateway::FRAUD_RESULT_META_KEY, $meta_details );
 		$wc_order->save_meta_data();
 

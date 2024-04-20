@@ -436,7 +436,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'desc_tip'     => true,
 			'label'        => $container->get( 'wcgateway.settings.fraudnet-label' ),
 			'description'  => __( 'FraudNet is a JavaScript library developed by PayPal and embedded into a merchant’s web page to collect browser-based data to help reduce fraud.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
+			'default'      => true,
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -522,8 +522,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'woocommerce-paypal-payments'
 			),
 			'options'           => array(
-				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
+				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 			),
 			'screens'           => array(
 				State::STATE_START,
@@ -538,6 +538,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 							->rule()
 							->condition_element( 'subtotal_mismatch_behavior', PurchaseUnitSanitizer::MODE_EXTRA_LINE )
 							->action_visible( 'subtotal_mismatch_line_name' )
+							->action_class( 'subtotal_mismatch_behavior', 'active' )
 							->to_array(),
 					)
 				),
@@ -548,6 +549,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'text',
 			'desc_tip'     => true,
 			'description'  => __( 'The name of the extra line that will be sent to PayPal to correct the subtotal mismatch.', 'woocommerce-paypal-payments' ),
+			'classes'      => array( 'ppcp-field-indent' ),
 			'maxlength'    => 22,
 			'default'      => '',
 			'screens'      => array(

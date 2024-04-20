@@ -94,7 +94,7 @@ class CreatePaymentToken implements EndpointInterface {
 				)
 			);
 
-			$result = $this->payment_method_tokens_endpoint->payment_tokens( $payment_source );
+			$result = $this->payment_method_tokens_endpoint->create_payment_token( $payment_source );
 
 			if ( is_user_logged_in() && isset( $result->customer->id ) ) {
 				$current_user_id = get_current_user_id();

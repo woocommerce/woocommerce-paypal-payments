@@ -106,13 +106,25 @@ class CheckoutBootstap {
             PayPalCommerceGateway.data_client_id.has_subscriptions
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
-            this.renderer.render(actionHandler.subscriptionsConfiguration(), {}, actionHandler.configuration());
+            let subscription_plan_id = PayPalCommerceGateway.subscription_plan_id
+            if(PayPalCommerceGateway.variable_paypal_subscription_variation_from_cart !== '') {
+                subscription_plan_id = PayPalCommerceGateway.variable_paypal_subscription_variation_from_cart
+            }
+            this.renderer.render(actionHandler.subscriptionsConfiguration(subscription_plan_id), {}, actionHandler.configuration());
 
             if(!PayPalCommerceGateway.subscription_product_allowed) {
                 this.gateway.button.is_disabled = true;
                 this.handleButtonStatus();
             }
 
+            return;
+        }
+
+        if(
+            PayPalCommerceGateway.is_free_trial_cart
+            && PayPalCommerceGateway.vault_v3_enabled
+        ) {
+            this.renderer.render(actionHandler.addPaymentMethodConfiguration(), {}, actionHandler.configuration());
             return;
         }
 

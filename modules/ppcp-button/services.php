@@ -145,6 +145,8 @@ return array(
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
+			$container->get( 'vaulting.vault-v3-enabled' ),
+			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
