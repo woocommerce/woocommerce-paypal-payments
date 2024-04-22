@@ -616,7 +616,6 @@ if (block_enabled) {
                 ariaLabel: config.title,
                 canMakePayment: async () => {
                     if (!paypalScriptPromise) {
-                        config.scriptData.url_params.components = 'buttons';
                         paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
                         paypalScriptPromise.then(() => {
                             const messagesBootstrap = new BlockCheckoutMessagesBootstrap(config.scriptData);
