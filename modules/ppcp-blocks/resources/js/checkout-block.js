@@ -16,6 +16,7 @@ import {
 import {
     loadPaypalScriptPromise
 } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import {
     normalizeStyleForFundingSource
 } from '../../../ppcp-button/resources/js/modules/Helper/Style'
@@ -507,6 +508,30 @@ const PayPalComponent = ({
     );
 }
 
+const BlockEditorPayPalComponent =  ({
+                                        fundingSource,
+                                    }) => {
+
+    const urlParams = {
+        clientId: 'test',
+        ...config.scriptData.url_params,
+        dataNamespace: 'ppcp-blocks-editor-paypal-buttons',
+        components: 'buttons',
+    }
+    return (
+        <PayPalScriptProvider
+            options={urlParams}
+       >
+            <PayPalButtons
+                fundingSource={fundingSource}
+                onClick={(data, actions) => {
+                    return false;
+                }}
+            />
+        </PayPalScriptProvider>
+    )
+}
+
 const features = ['products'];
 let block_enabled = true;
 
@@ -571,7 +596,7 @@ if (block_enabled) {
             name: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
             content: <PayPalComponent isEditing={false}/>,
-            edit: <PayPalComponent isEditing={true}/>,
+            edit: <BlockEditorPayPalComponent fundingSource={fundingSource} />,
             ariaLabel: config.title,
             canMakePayment: () => {
                 return true;
@@ -587,7 +612,7 @@ if (block_enabled) {
                 paymentMethodId: config.id,
                 label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
                 content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-                edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+                edit: <BlockEditorPayPalComponent fundingSource={fundingSource} />,
                 ariaLabel: config.title,
                 canMakePayment: async () => {
                     if (!paypalScriptPromise) {
