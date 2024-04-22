@@ -1429,9 +1429,45 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return array
 	 */
 	private function attributes(): array {
-		return array(
+		$attributes = array(
 			'data-partner-attribution-id' => $this->bn_code_for_context( $this->context() ),
 		);
+
+		$page_type_attribute = $this->page_type_attribute();
+		if ( $page_type_attribute ) {
+			$attributes['data-page-type'] = $page_type_attribute;
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Retrieves the value for page type attribute(data-page-type) used for the JS SDK.
+	 *
+	 * @return string
+	 */
+	protected function page_type_attribute(): string {
+		if ( is_search() ) {
+			return 'search-results';
+		}
+
+		switch ( $this->location() ) {
+			case 'product':
+				return 'product-details';
+			case 'shop':
+				return 'product-listing';
+			case 'home':
+				return 'mini-cart';
+			case 'cart-block':
+			case 'cart':
+				return 'cart';
+			case 'checkout-block':
+			case 'checkout':
+			case 'pay-now':
+				return 'checkout';
+			default:
+				return '';
+		}
 	}
 
 	/**
