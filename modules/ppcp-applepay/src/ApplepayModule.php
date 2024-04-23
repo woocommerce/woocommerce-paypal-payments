@@ -231,6 +231,13 @@ class ApplepayModule implements ModuleInterface {
 		);
 	}
 
+	/**
+	 * Enqueues the editor assets.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @param ApplePayButton     $button The button.
+	 * @return void
+	 */
 	public function load_block_editor_assets( ContainerInterface $c, ApplePayButton $button ): void {
 		// Enqueue backend scripts.
 		add_action(

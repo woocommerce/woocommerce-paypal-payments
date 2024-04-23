@@ -468,9 +468,9 @@ class ApplePayButton implements ButtonInterface {
 			return false;
 		}
 		return wp_verify_nonce(
-				$nonce,
-				'woocommerce-process_checkout'
-			) === 1;
+			$nonce,
+			'woocommerce-process_checkout'
+		) === 1;
 	}
 
 	/**
@@ -559,11 +559,11 @@ class ApplePayButton implements ButtonInterface {
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
-					$cart,
-					$customer_address,
-					$shipping_method,
-					$shipping_method_id
-				);
+						$cart,
+						$customer_address,
+						$shipping_method,
+						$shipping_method_id
+					);
 			}
 			$cart->calculate_shipping();
 			$cart->calculate_fees();
@@ -717,7 +717,7 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	protected function calculate_totals_cart_page(
 		array $customer_address,
-			  $shipping_method = null
+		$shipping_method = null
 	): array {
 
 		$results = array();
@@ -742,11 +742,11 @@ class ApplePayButton implements ButtonInterface {
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					)               = $this->cart_shipping_methods(
-					$cart,
-					$customer_address,
-					$shipping_method,
-					$shipping_method_id
-				);
+						$cart,
+						$customer_address,
+						$shipping_method,
+						$shipping_method_id
+					);
 			}
 			$cart->calculate_shipping();
 			$cart->calculate_fees();
