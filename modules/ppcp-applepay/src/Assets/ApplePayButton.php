@@ -468,9 +468,9 @@ class ApplePayButton implements ButtonInterface {
 			return false;
 		}
 		return wp_verify_nonce(
-			$nonce,
-			'woocommerce-process_checkout'
-		) === 1;
+				$nonce,
+				'woocommerce-process_checkout'
+			) === 1;
 	}
 
 	/**
@@ -559,11 +559,11 @@ class ApplePayButton implements ButtonInterface {
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
-						$cart,
-						$customer_address,
-						$shipping_method,
-						$shipping_method_id
-					);
+					$cart,
+					$customer_address,
+					$shipping_method,
+					$shipping_method_id
+				);
 			}
 			$cart->calculate_shipping();
 			$cart->calculate_fees();
@@ -717,7 +717,7 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	protected function calculate_totals_cart_page(
 		array $customer_address,
-		$shipping_method = null
+			  $shipping_method = null
 	): array {
 
 		$results = array();
@@ -742,11 +742,11 @@ class ApplePayButton implements ButtonInterface {
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					)               = $this->cart_shipping_methods(
-						$cart,
-						$customer_address,
-						$shipping_method,
-						$shipping_method_id
-					);
+					$cart,
+					$customer_address,
+					$shipping_method,
+					$shipping_method_id
+				);
 			}
 			$cart->calculate_shipping();
 			$cart->calculate_fees();
@@ -1044,17 +1044,9 @@ class ApplePayButton implements ButtonInterface {
 	}
 
 	/**
-	 * Enqueues scripts/styles for admin.
+	 * Enqueues scripts for admin.
 	 */
 	public function enqueue_admin(): void {
-		wp_register_style(
-			'wc-ppcp-applepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
-			array(),
-			$this->version
-		);
-		wp_enqueue_style( 'wc-ppcp-applepay-admin' );
-
 		wp_register_script(
 			'wc-ppcp-applepay-admin',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
@@ -1069,6 +1061,19 @@ class ApplePayButton implements ButtonInterface {
 			'wc_ppcp_applepay_admin',
 			$this->script_data_for_admin()
 		);
+	}
+
+	/**
+	 * Enqueues styles for admin.
+	 */
+	public function enqueue_admin_styles(): void {
+		wp_register_style(
+			'wc-ppcp-applepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-applepay-admin' );
 	}
 
 	/**
