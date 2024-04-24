@@ -60,6 +60,19 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 	}
 
 	/**
+	 * Returns whether the under cart totals placement is enabled.
+	 *
+	 * @return bool true if the under cart totals placement is enabled, otherwise false.
+	 */
+	public function is_under_cart_totals_placement_enabled() : bool {
+		return apply_filters(
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_wc_blocks_cart_under_totals_enabled',
+			true
+		);
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
@@ -103,16 +116,17 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 					$script_handle,
 					'PcpCartPayLaterBlock',
 					array(
-						'ajax'                => array(
+						'ajax'                        => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
-						'config'              => $config_factory->from_settings( $settings ),
-						'settingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-						'vaultingEnabled'     => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
-						'placementEnabled'    => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
-						'payLaterSettingsUrl' => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'config'                      => $config_factory->from_settings( $settings ),
+						'settingsUrl'                 => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'vaultingEnabled'             => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
+						'placementEnabled'            => self::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), 'cart' ),
+						'payLaterSettingsUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' ),
+						'underTotalsPlacementEnabled' => self::is_under_cart_totals_placement_enabled(),
 					)
 				);
 
@@ -218,7 +232,8 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 						'woocommerce-paypal-payments/cart-paylater-messages',
 						'ppcp-cart-paylater-messages',
 						'cart',
-						$c
+						$c,
+						self::is_under_cart_totals_placement_enabled()
 					);
 				}
 				return $block_content;
@@ -245,6 +260,27 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 			10,
 			1
 		);
+
+		// Since there's no regular way we can place the Pay Later messaging block under the cart totals block, we need a custom script.
+		if ( self::is_under_cart_totals_placement_enabled() ) {
+			add_action(
+				'enqueue_block_editor_assets',
+				function () use ( $c, $settings ): void {
+					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
+					$path   = $c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block-inserter.js';
+
+					wp_register_script(
+						$handle,
+						$path,
+						array( 'wp-blocks', 'wp-data', 'wp-element' ),
+						$c->get( 'ppcp.asset-version' ),
+						true
+					);
+
+					wp_enqueue_script( $handle );
+				}
+			);
+		}
 	}
 
 	/**
