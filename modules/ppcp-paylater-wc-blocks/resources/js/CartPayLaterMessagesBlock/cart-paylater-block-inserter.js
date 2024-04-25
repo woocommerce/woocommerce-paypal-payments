@@ -3,8 +3,30 @@
     const { select, dispatch, subscribe } = wp.data;
     const getBlocks = () => select('core/block-editor').getBlocks() || [];
 
-    // Store the initial list of block client IDs
-    let blockList = getBlocks().map(block => block.clientId);
+    const { addFilter } = wp.hooks;
+    const { assign } = lodash;
+
+    // We need to make sure the block is unlocked so that it doesn't get automatically inserted as the last block
+    addFilter(
+        'blocks.registerBlockType',
+        'woocommerce-paypal-payments/modify-cart-paylater-messages',
+        (settings, name) => {
+            if (name === 'woocommerce-paypal-payments/cart-paylater-messages') {
+                const newAttributes = assign({}, settings.attributes, {
+                    lock: assign({}, settings.attributes.lock, {
+                        default: assign({}, settings.attributes.lock.default, {
+                            remove: false
+                        })
+                    })
+                });
+
+                return assign({}, settings, {
+                    attributes: newAttributes
+                });
+            }
+            return settings;
+        }
+    );
 
     /**
      * Subscribes to changes in the block editor, specifically checking for the presence of 'woocommerce/cart'.
@@ -91,11 +113,9 @@
         dispatch('core/block-editor').insertBlock(newBlock, parentBlock.innerBlocks.length - offset, parentBlock.clientId);
 
         // Lock the block after it has been inserted
-        setTimeout(() => {
-            dispatch('core/block-editor').updateBlockAttributes(newBlock.clientId, {
-                lock: { remove: true }
-            });
-        }, 1000);
+        dispatch('core/block-editor').updateBlockAttributes(newBlock.clientId, {
+            lock: { remove: true }
+        });
     }
 
     /**

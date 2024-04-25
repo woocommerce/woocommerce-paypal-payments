@@ -24,7 +24,7 @@ class PayLaterWCBlocksUtils {
 	public static function insert_before_last_div( string $block_content, string $content_to_insert ): string {
 		$last_index = strrpos( $block_content, '</div>' );
 
-		if ( $last_index !== false ) {
+		if ( false !== $last_index ) {
 			$block_content = substr_replace( $block_content, $content_to_insert, $last_index, 0 );
 		}
 
@@ -65,7 +65,7 @@ class PayLaterWCBlocksUtils {
 		$cart_express_payment_block = '<div data-block-name="woocommerce/cart-express-payment-block" class="wp-block-woocommerce-cart-express-payment-block"></div>';
 
 		if ( false !== $paylater_message_block ) {
-			if ( $is_under_cart_totals_placement_enabled && 'cart' === $context ) {
+			if ( $is_under_cart_totals_placement_enabled && $context === 'cart' ) {
 				return self::insert_before_opening_div( $block_content, $paylater_message_block, $cart_express_payment_block );
 			} else {
 				return self::insert_before_last_div( $block_content, $paylater_message_block );

@@ -9,8 +9,6 @@ import { registerBlockType } from '@wordpress/blocks';
 import Edit from './edit';
 import metadata from './block.json';
 
-const { underTotalsPlacementEnabled } = window.PcpCartPayLaterBlock;
-
 const paypalIcon = (
     <svg width="584.798" height="720" viewBox="0 0 154.728 190.5">
         <g transform="translate(898.192 276.071)">
@@ -32,8 +30,6 @@ const paypalIcon = (
         </g>
     </svg>
 );
-
-metadata.attributes.lock.default.remove = !Boolean(underTotalsPlacementEnabled);
 
 registerBlockType(metadata, {
     icon: paypalIcon,
