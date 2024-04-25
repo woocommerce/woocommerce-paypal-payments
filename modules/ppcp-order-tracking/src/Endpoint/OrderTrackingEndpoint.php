@@ -275,7 +275,7 @@ class OrderTrackingEndpoint {
 
 		$host         = trailingslashit( $this->host );
 		$paypal_order = ppcp_get_paypal_order( $wc_order );
-		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
+		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
 		$tracker_id   = $this->find_tracker_id( $capture_id, $tracking_number );
 		$url          = "{$host}v1/shipping/trackers/{$tracker_id}";
 
