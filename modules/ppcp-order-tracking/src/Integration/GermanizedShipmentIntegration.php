@@ -83,7 +83,7 @@ class GermanizedShipmentIntegration implements Integration {
 					return;
 				}
 
-				$paypal_order    = ppcp_get_paypal_order($wc_order);
+				$paypal_order    = ppcp_get_paypal_order( $wc_order );
 				$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
 				$wc_order_id     = $wc_order->get_id();
 				$tracking_number = $shipment->get_tracking_id();

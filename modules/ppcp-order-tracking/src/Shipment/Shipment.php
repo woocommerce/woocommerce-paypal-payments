@@ -97,7 +97,7 @@ class Shipment implements ShipmentInterface {
 		$this->carrier            = $carrier;
 		$this->carrier_name_other = $carrier_name_other;
 		$this->line_items         = $line_items;
-		$this->capture_id     = $capture_id;
+		$this->capture_id         = $capture_id;
 		$this->wc_order_id        = $wc_order_id;
 	}
 
@@ -228,7 +228,7 @@ class Shipment implements ShipmentInterface {
 	 */
 	public function to_array(): array {
 		$shipment = array(
-			'capture_id'  => $this->capture_id(),
+			'capture_id'      => $this->capture_id(),
 			'tracking_number' => $this->tracking_number(),
 			'status'          => $this->status(),
 			'carrier'         => $this->carrier(),

@@ -101,10 +101,10 @@ class WcShippingTaxIntegration implements Integration {
 						continue;
 					}
 
-					$paypal_order    = ppcp_get_paypal_order($wc_order);
-					$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
-					$carrier        = $label['carrier_id'] ?? $label['service_name'] ?? '';
-					$items          = array_map( 'intval', $label['product_ids'] ?? array() );
+					$paypal_order = ppcp_get_paypal_order( $wc_order );
+					$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
+					$carrier      = $label['carrier_id'] ?? $label['service_name'] ?? '';
+					$items        = array_map( 'intval', $label['product_ids'] ?? array() );
 
 					if ( ! $carrier || ! $capture_id ) {
 						continue;

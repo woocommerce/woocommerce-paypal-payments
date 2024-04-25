@@ -80,7 +80,7 @@ class YithShipmentIntegration implements Integration {
 					return;
 				}
 
-				$paypal_order = ppcp_get_paypal_order($wc_order);
+				$paypal_order = ppcp_get_paypal_order( $wc_order );
 				$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$tracking_number = wc_clean( wp_unslash( $_POST['ywot_tracking_code'] ?? '' ) );

@@ -189,7 +189,6 @@ class OrderTrackingEndpoint {
 		do_action( 'woocommerce_paypal_payments_before_tracking_is_added', $order_id, $shipment_request_data );
 
 		$response = $this->request( $url, $args );
-		write_log($response);
 
 		if ( is_wp_error( $response ) ) {
 			$args = array(
@@ -275,7 +274,7 @@ class OrderTrackingEndpoint {
 		}
 
 		$host         = trailingslashit( $this->host );
-		$paypal_order = ppcp_get_paypal_order($wc_order);
+		$paypal_order = ppcp_get_paypal_order( $wc_order );
 		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
 		$tracker_id   = $this->find_tracker_id( $capture_id, $tracking_number );
 		$url          = "{$host}v1/shipping/trackers/{$tracker_id}";
@@ -324,7 +323,7 @@ class OrderTrackingEndpoint {
 		}
 
 		$host         = trailingslashit( $this->host );
-		$paypal_order = ppcp_get_paypal_order($wc_order);
+		$paypal_order = ppcp_get_paypal_order( $wc_order );
 		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
 		$url          = "{$host}v1/shipping/trackers?transaction_id={$capture_id}";
 
@@ -387,7 +386,7 @@ class OrderTrackingEndpoint {
 		$carrier = $data['carrier'] ?? '';
 
 		$tracking_info = array(
-			'capture_id'     => $data['capture_id'] ?? '',
+			'capture_id'         => $data['capture_id'] ?? '',
 			'status'             => $data['status'] ?? '',
 			'tracking_number'    => $data['tracking_number'] ?? '',
 			'carrier'            => $carrier,
@@ -423,7 +422,7 @@ class OrderTrackingEndpoint {
 		$carrier = $request_values['carrier'] ?? '';
 
 		$data_to_check = array(
-			'capture_id'  	  => $request_values['capture_id'] ?? '',
+			'capture_id'      => $request_values['capture_id'] ?? '',
 			'status'          => $request_values['status'] ?? '',
 			'tracking_number' => $request_values['tracking_number'] ?? '',
 			'carrier'         => $carrier,
@@ -512,7 +511,7 @@ class OrderTrackingEndpoint {
 			unset( $shipment_data['capture_id'] );
 			unset( $shipment_data['items'] );
 			$shipment_data['transaction_id'] = $shipment->capture_id();
-			$shipment_data = array( 'trackers' => array( $shipment_data ) );
+			$shipment_data                   = array( 'trackers' => array( $shipment_data ) );
 		}
 
 		$url  = $this->should_use_new_api ? "{$host}v2/checkout/orders/{$paypal_order_id}/track" : "{$host}v1/shipping/trackers";
