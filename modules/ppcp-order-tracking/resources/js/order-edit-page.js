@@ -9,7 +9,7 @@ document.addEventListener(
 
         const includeAllItemsCheckbox = document.getElementById('include-all-items');
         const shipmentsWrapper = '#ppcp_order-tracking .ppcp-tracking-column.shipments';
-        const transactionId = document.querySelector('.ppcp-tracking-transaction_id');
+        const captureId = document.querySelector('.ppcp-tracking-capture_id');
         const orderId = document.querySelector('.ppcp-tracking-order_id');
         const carrier = document.querySelector('.ppcp-tracking-carrier');
         const carrierNameOther = document.querySelector('.ppcp-tracking-carrier_name_other');
@@ -86,7 +86,7 @@ document.addEventListener(
                     credentials: 'same-origin',
                     body: JSON.stringify({
                         nonce: config.ajax.tracking_info.nonce,
-                        transaction_id: transactionId ? transactionId.value : null,
+                        capture_id: captureId ? captureId.value : null,
                         tracking_number: trackingNumber ? trackingNumber.value : null,
                         status: status ? status.value : null,
                         carrier: carrier ? carrier.value : null,
@@ -113,6 +113,7 @@ document.addEventListener(
                     if (noShipemntsContainer) {
                         noShipemntsContainer.parentNode.removeChild(noShipemntsContainer);
                     }
+                    trackingNumber.value = ''
                 });
             })
         }
@@ -135,7 +136,7 @@ document.addEventListener(
                     credentials: 'same-origin',
                     body: JSON.stringify({
                         nonce: config.ajax.tracking_info.nonce,
-                        transaction_id: transactionId ? transactionId.value : null,
+                        capture_id: captureId ? captureId.value : null,
                         tracking_number: shipmentTrackingNumber ? shipmentTrackingNumber.value : null,
                         status: shipmentStatus ? shipmentStatus.value : null,
                         carrier: shipmentCarrier ? shipmentCarrier.value : null,
