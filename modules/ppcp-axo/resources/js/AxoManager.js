@@ -6,6 +6,7 @@ import BillingView from "./Views/BillingView";
 import CardView from "./Views/CardView";
 import PayPalInsights from "./Insights/PayPalInsights";
 import {disable,enable} from "../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler";
+import {getCurrentPaymentMethod} from "../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState";
 
 class AxoManager {
 
@@ -154,6 +155,14 @@ class AxoManager {
             this.cardView.refresh();
         });
 
+        // Prevents sending checkout form when pressing Enter key on input field
+        // and triggers customer lookup
+        this.$('form.woocommerce-checkout input').on('keydown', async (ev) => {
+            if(ev.key === 'Enter' && getCurrentPaymentMethod() === 'ppcp-axo-gateway' ) {
+                ev.preventDefault();
+                await this.lookupCustomerByEmail();
+            }
+        });
     }
 
     rerender() {
@@ -520,6 +529,10 @@ class AxoManager {
             page_type: 'checkout'
         });
 
+        await this.lookupCustomerByEmail();
+    }
+
+    async lookupCustomerByEmail() {
         const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
         if (lookupResponse.customerContextId) {
