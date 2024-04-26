@@ -84,7 +84,7 @@ class PayLaterWCBlocksUtils {
 	 * @return false|string Rendered content.
 	 */
 	public static function render_paylater_block( string $block_id, string $ppcp_id, string $context, $container ) {
-		$renderer = $container->get( 'paylater-wc-blocks.renderer' );
+		$renderer = $container->get( 'paylater-wc-blocks.' . $context . '-renderer' );
 		ob_start();
 		// phpcs:ignore -- No need to escape it, the PayLaterWCBlocksRenderer class is responsible for escaping.
 		echo $renderer->render(
