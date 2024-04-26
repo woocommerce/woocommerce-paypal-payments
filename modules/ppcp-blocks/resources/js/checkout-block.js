@@ -508,9 +508,7 @@ const PayPalComponent = ({
     );
 }
 
-const BlockEditorPayPalComponent =  ({
-                                        fundingSource,
-                                    }) => {
+const BlockEditorPayPalComponent = () => {
 
     const urlParams = {
         clientId: 'test',
@@ -523,7 +521,6 @@ const BlockEditorPayPalComponent =  ({
             options={urlParams}
        >
             <PayPalButtons
-                fundingSource={fundingSource}
                 onClick={(data, actions) => {
                     return false;
                 }}
@@ -596,7 +593,7 @@ if (block_enabled) {
             name: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
             content: <PayPalComponent isEditing={false}/>,
-            edit: <BlockEditorPayPalComponent fundingSource={fundingSource} />,
+            edit: <BlockEditorPayPalComponent />,
             ariaLabel: config.title,
             canMakePayment: () => {
                 return true;
@@ -612,7 +609,7 @@ if (block_enabled) {
                 paymentMethodId: config.id,
                 label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
                 content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-                edit: <BlockEditorPayPalComponent fundingSource={fundingSource} />,
+                edit: <BlockEditorPayPalComponent />,
                 ariaLabel: config.title,
                 canMakePayment: async () => {
                     if (!paypalScriptPromise) {
