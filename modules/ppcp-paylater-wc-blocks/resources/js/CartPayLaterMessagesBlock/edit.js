@@ -6,7 +6,7 @@ import { PayPalScriptProvider, PayPalMessages } from '@paypal/react-paypal-js';
 import { useScriptParams } from '../../../../ppcp-paylater-block/resources/js/hooks/script-params';
 
 export default function Edit({ attributes, clientId, setAttributes }) {
-    const { id, ppcpId } = attributes;
+    const { ppcpId } = attributes;
 
     const [loaded, setLoaded] = useState(false);
 

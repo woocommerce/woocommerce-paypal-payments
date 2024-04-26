@@ -16,6 +16,13 @@ module.exports = {
             "CartPayLaterMessagesBlock",
             "cart-paylater-block.js"
         ),
+        "cart-paylater-block-inserter": path.resolve(
+            process.cwd(),
+            "resources",
+            "js",
+            "CartPayLaterMessagesBlock",
+            "cart-paylater-block-inserter.js"
+        ),
         "checkout-paylater-block": path.resolve(
             process.cwd(),
             "resources",
