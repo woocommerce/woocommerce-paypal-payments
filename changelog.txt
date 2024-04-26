@@ -4,6 +4,7 @@
 * Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
 * Fix - Incorrect Pricing Issue with Variable Subscriptions in PayPal Subscriptions Mode #2156
 * Fix - Wrong return_url in multisite setup when using subdomains #2157
+* Fix - Fix the fundingSource is not defined error on Block Checkout #2185
 * Enhancement - Add the data-page-type attribute for JS SDK #2161
 * Enhancement - Save Card Last Digits in order meta for Advanced Card Payments #2149
 * Enhancement - Refactor the Pay Later Messaging block and add dedicated Cart/Checkout blocks #2153
