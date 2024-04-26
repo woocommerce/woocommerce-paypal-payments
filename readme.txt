@@ -190,6 +190,8 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Optimize default settings for new store configurations #2158
 * Enhancement - Improve tooltip information for tagline #2154
 * Enhancement - Improve error message on certain exceptions #1354
+* Enhancement - Cart Pay Later block: Change the default insert position #2179
+* Enhancement - Messages Bootstrap: Add a render retry functionality #2181
 
 = 2.6.1 - 2024-04-09 =
 * Fix - Payment tokens fixes and adjustments #2106
