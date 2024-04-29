@@ -57,9 +57,9 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(
-						'dcc',
+						array('dcc', 'axo'),
 					),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_enabled'                        => array(
 					'title'             => __( 'Fastlane', 'woocommerce-paypal-payments' ),
@@ -75,7 +75,7 @@ return array(
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
-					'gateway'           => 'dcc',
+					'gateway'           => array('dcc', 'axo'),
 					'requirements'      => array(),
 					'custom_attributes' => array(
 						'data-ppcp-display' => wp_json_encode(
@@ -129,7 +129,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_privacy'                        => array(
 					'title'        => __( 'Privacy', 'woocommerce-paypal-payments' ),
@@ -145,7 +145,7 @@ return array(
 					'default'      => 'yes',
 					'options'      => PropertiesDictionary::privacy_options(),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 					'requirements' => array(),
 				),
 				'axo_style_heading'                  => array(
@@ -179,9 +179,9 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(
-						'dcc',
+						array('dcc', 'axo'),
 					),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 
 				'axo_style_root_heading'             => array(
@@ -193,8 +193,8 @@ return array(
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'requirements' => array( 'dcc' ),
-					'gateway'      => 'dcc',
+					'requirements' => array( array('dcc', 'axo') ),
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_root_bg_color'            => array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
@@ -204,7 +204,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_root_error_color'         => array(
 					'title'        => __( 'Error Color', 'woocommerce-paypal-payments' ),
@@ -214,7 +214,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_root_font_family'         => array(
 					'title'        => __( 'Font Family', 'woocommerce-paypal-payments' ),
@@ -224,7 +224,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_root_font_size_base'      => array(
 					'title'        => __( 'Font Size Base', 'woocommerce-paypal-payments' ),
@@ -234,7 +234,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_root_padding'             => array(
 					'title'        => __( 'Padding', 'woocommerce-paypal-payments' ),
@@ -244,7 +244,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_root_primary_color'       => array(
 					'title'        => __( 'Primary Color', 'woocommerce-paypal-payments' ),
@@ -254,7 +254,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_heading'            => array(
 					'heading'      => __( 'Input Settings', 'woocommerce-paypal-payments' ),
@@ -265,8 +265,8 @@ return array(
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'requirements' => array( 'dcc' ),
-					'gateway'      => 'dcc',
+					'requirements' => array( array('dcc', 'axo') ),
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_bg_color'           => array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
@@ -276,7 +276,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_border_radius'      => array(
 					'title'        => __( 'Border Radius', 'woocommerce-paypal-payments' ),
@@ -286,7 +286,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_border_color'       => array(
 					'title'        => __( 'Border Color', 'woocommerce-paypal-payments' ),
@@ -296,7 +296,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_border_width'       => array(
 					'title'        => __( 'Border Width', 'woocommerce-paypal-payments' ),
@@ -306,7 +306,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_text_color_base'    => array(
 					'title'        => __( 'Text Color Base', 'woocommerce-paypal-payments' ),
@@ -316,7 +316,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 				'axo_style_input_focus_border_color' => array(
 					'title'        => __( 'Focus Border Color', 'woocommerce-paypal-payments' ),
@@ -326,7 +326,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => 'dcc',
+					'gateway'      => array('dcc', 'axo'),
 				),
 
 			)

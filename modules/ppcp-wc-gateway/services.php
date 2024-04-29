@@ -195,6 +195,7 @@ return array(
 				CardButtonGateway::ID,
 				OXXOGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
+				AxoGateway::ID,
 			),
 			true
 		);
