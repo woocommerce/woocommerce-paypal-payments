@@ -76,7 +76,7 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
 
     // Adds data-user-id-token to script options.
     const userIdToken = config?.save_payment_methods?.id_token;
-    if(userIdToken && getCurrentPaymentMethod() !== 'ppcp-axo-gateway') {
+    if(userIdToken && !sdkClientToken) {
         scriptOptions['data-user-id-token'] = userIdToken;
     }
 
