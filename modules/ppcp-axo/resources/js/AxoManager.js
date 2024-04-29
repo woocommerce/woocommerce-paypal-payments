@@ -160,7 +160,6 @@ class AxoManager {
         this.$('form.woocommerce-checkout input').on('keydown', async (ev) => {
             if(ev.key === 'Enter' && getCurrentPaymentMethod() === 'ppcp-axo-gateway' ) {
                 ev.preventDefault();
-                await this.lookupCustomerByEmail();
             }
         });
     }
