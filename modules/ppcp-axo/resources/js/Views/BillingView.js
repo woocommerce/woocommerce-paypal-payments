@@ -42,6 +42,7 @@ class BillingView {
                         <div>${data.value('postCode')} ${data.value('city')}</div>
                         <div>${valueOfSelect('#billing_state', data.value('stateCode'))}</div>
                         <div>${valueOfSelect('#billing_country', data.value('countryCode'))}</div>
+                        <div>${valueOfSelect('#billing_phone', data.value('phone'))}</div>
                     </div>
                 `;
             },
@@ -84,6 +85,10 @@ class BillingView {
                 company: {
                     'selector': '#billing_company_field',
                     'valuePath': null,
+                },
+                phone: {
+                    'selector': '#billing_phone_field',
+                    'valuePath': null
                 }
             }
         });
