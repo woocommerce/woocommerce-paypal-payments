@@ -122,7 +122,7 @@ return array(
 						'woocommerce-paypal-payments'
 					),
 					'default'      => __(
-						'Fastlane Debit & Credit Cards',
+						'Debit & Credit Cards',
 						'woocommerce-paypal-payments'
 					),
 					'screens'      => array(
