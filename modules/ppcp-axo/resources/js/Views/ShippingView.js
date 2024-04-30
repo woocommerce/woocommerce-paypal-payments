@@ -26,14 +26,20 @@ class ShippingView {
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px;">
-                            <h3>Shipping <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                            <div class="axo-checkout-header-section">
+                                <h3>Shipping</h3>
+                                <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes}>Edit</a>
+                            </div>
                             <div>Please fill in your shipping details.</div>
                         </div>
                     `;
                 }
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h3>Shipping <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <div class="axo-checkout-header-section">
+                            <h3>Shipping</h3>
+                            <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes}>Edit</a>
+                        </div>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
