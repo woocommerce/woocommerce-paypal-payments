@@ -63,6 +63,7 @@ return array(
 
 	'axo.gateway'                           => static function ( ContainerInterface $container ): AxoGateway {
 		return new AxoGateway(
+			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.order-processor' ),

@@ -21,17 +21,26 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 
 /**
  * Class AXOGateway.
  */
 class AxoGateway extends WC_Payment_Gateway {
-	use OrderMetaTrait;
+	use OrderMetaTrait, GatewaySettingsRendererTrait;
 
 	const ID = 'ppcp-axo-gateway';
+
+	/**
+	 * The Settings Renderer.
+	 *
+	 * @var SettingsRenderer
+	 */
+	protected $settings_renderer;
 
 	/**
 	 * The settings.
@@ -106,6 +115,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	/**
 	 * AXOGateway constructor.
 	 *
+	 * @param SettingsRenderer          $settings_renderer The settings renderer.
 	 * @param ContainerInterface        $ppcp_settings The settings.
 	 * @param string                    $wcgateway_module_url The WcGateway module URL.
 	 * @param OrderProcessor            $order_processor The Order processor.
@@ -118,6 +128,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
+		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
 		string $wcgateway_module_url,
 		OrderProcessor $order_processor,
@@ -131,13 +142,14 @@ class AxoGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
+		$this->settings_renderer    = $settings_renderer;
 		$this->ppcp_settings        = $ppcp_settings;
 		$this->wcgateway_module_url = $wcgateway_module_url;
 		$this->order_processor      = $order_processor;
 		$this->card_icons           = $card_icons;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Accept credit cards with Fastlane’s latest solution.', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'PayPal Fastlane offers an accelerated checkout experience that recognizes guest shoppers and autofills their details so they can pay in seconds.', 'woocommerce-paypal-payments' );
 
 		$is_axo_enabled = $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' );
 		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
@@ -180,6 +192,9 @@ class AxoGateway extends WC_Payment_Gateway {
 				'default'     => 'no',
 				'desc_tip'    => true,
 				'description' => __( 'Enable/Disable AXO payment gateway.', 'woocommerce-paypal-payments' ),
+			),
+			'ppcp'    => array(
+				'type' => 'ppcp',
 			),
 		);
 	}
@@ -321,4 +336,12 @@ class AxoGateway extends WC_Payment_Gateway {
 		return parent::get_title();
 	}
 
+	/**
+	 * Returns the settings renderer.
+	 *
+	 * @return SettingsRenderer
+	 */
+	protected function settings_renderer(): SettingsRenderer {
+		return $this->settings_renderer;
+	}
 }
