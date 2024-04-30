@@ -230,6 +230,8 @@ class AxoManager {
         }
 
         if (scenario.axoProfileViews) {
+            this.el.billingAddressContainer.hide();
+
             this.shippingView.activate();
             this.billingView.activate();
             this.cardView.activate();
