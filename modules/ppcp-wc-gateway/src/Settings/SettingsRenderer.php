@@ -369,6 +369,12 @@ $data_rows_html
 			) {
 				continue;
 			}
+			if (
+				in_array( 'axo', $config['requirements'], true )
+				&& $this->api_shop_country !== 'US'
+			) {
+				continue;
+			}
 			$value        = $this->settings->has( $field ) ? $this->settings->get( $field ) : ( isset( $config['value'] ) ? $config['value']() : null );
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
