@@ -4,6 +4,7 @@
 
 	.ppcp-card-icon {
 		float: left !important;
+		max-height: 25px;
 	}
 }
 
@@ -37,4 +38,18 @@
 
 .ppcp-axo-customer-details {
 	margin-bottom: 40px;
+}
+
+.axo-checkout-header-section {
+	display: flex;
+	align-items: baseline;
+	gap: 1em;
+}
+
+.ppcp-axo-order-button {
+		float: none;
+		width: 100%;
+		box-sizing: border-box;
+		margin: var(--global-md-spacing) 0 1em;
+		padding: 0.6em 1em;
 }
