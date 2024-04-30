@@ -40,7 +40,6 @@ class BillingView {
                             <h3>Billing</h3>
                             <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes}>Edit</a>
                         </div>
-                        <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes}>Edit</a>
                         <div>${data.value('email')}</div>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
