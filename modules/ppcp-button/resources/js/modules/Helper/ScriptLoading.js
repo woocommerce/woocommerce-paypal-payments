@@ -3,6 +3,7 @@ import {loadScript} from "@paypal/paypal-js";
 import widgetBuilder from "../Renderer/WidgetBuilder";
 import merge from "deepmerge";
 import {keysToCamelCase} from "./Utils";
+import {getCurrentPaymentMethod} from "./CheckoutMethodState";
 
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 let options = window.ppcpWidgetBuilder = window.ppcpWidgetBuilder || {
@@ -75,7 +76,7 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
 
     // Adds data-user-id-token to script options.
     const userIdToken = config?.save_payment_methods?.id_token;
-    if(userIdToken) {
+    if(userIdToken && !sdkClientToken) {
         scriptOptions['data-user-id-token'] = userIdToken;
     }
 
