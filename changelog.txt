@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.7.0 - xxxx-xx-xx =
+= 2.7.0 - 2024-04-30 =
 * Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
 * Fix - Incorrect Pricing Issue with Variable Subscriptions in PayPal Subscriptions Mode #2156
 * Fix - Wrong return_url in multisite setup when using subdomains #2157
