@@ -90,6 +90,10 @@ class BillingView {
                 company: {
                     'selector': '#billing_company_field',
                     'valuePath': null,
+                },
+                phone: {
+                    'selector': '#billing_phone_field',
+                    'valuePath': 'billing.phoneNumber'
                 }
             }
         });
