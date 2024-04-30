@@ -34,6 +34,7 @@ class ShippingView {
                 return `
                     <div style="margin-bottom: 20px;">
                         <h3>Shipping <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <div>${data.value('email')}</div>
                         <div>${data.value('company')}</div>
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
@@ -46,6 +47,9 @@ class ShippingView {
                 `;
             },
             fields: {
+                email: {
+                    'valuePath': 'email',
+                },
                 firstName: {
                     'key': 'firstName',
                     'selector': '#shipping_first_name_field',
