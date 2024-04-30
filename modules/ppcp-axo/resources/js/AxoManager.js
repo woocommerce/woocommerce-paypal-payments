@@ -551,7 +551,8 @@ class AxoManager {
                 // Add addresses
                 this.setShipping(authResponse.profileData.shippingAddress);
                 this.setBilling({
-                    address: authResponse.profileData.card.paymentSource.card.billingAddress
+                    address: authResponse.profileData.card.paymentSource.card.billingAddress,
+                    phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
                 });
                 this.setCard(authResponse.profileData.card);
 
