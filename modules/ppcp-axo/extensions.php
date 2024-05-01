@@ -152,6 +152,19 @@ return array(
 					'gateway'      => array( 'dcc', 'axo' ),
 					'requirements' => array( 'axo' ),
 				),
+				'axo_name_on_card'                   => array(
+					'title'        => __( 'Display "Name on Card" field', 'woocommerce-paypal-payments' ),
+					'type'         => 'checkbox',
+					'default'      => 'yes',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'class'        => array(),
+					'label'        => __( 'Enable "Name on Card" field', 'woocommerce-paypal-payments' ),
+					'desc_tip'     => true,
+					'description'  => __( 'Enable to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => array( 'dcc', 'axo' ),
+					'requirements' => array( 'axo' ),
+				),
 				'axo_style_heading'                  => array(
 					'heading'      => __( 'Advanced Style Settings (optional)', 'woocommerce-paypal-payments' ),
 					'heading_html' => sprintf(

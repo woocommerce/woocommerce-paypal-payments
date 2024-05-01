@@ -190,6 +190,7 @@ class AxoManager {
 					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
 				),
 			),
+			'name_on_card'  => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
 		);
 	}
 

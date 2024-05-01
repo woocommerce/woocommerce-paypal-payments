@@ -639,10 +639,13 @@ class AxoManager {
     }
 
     cardComponentData() {
+        let fields = {};
+        if(this.axoConfig.name_on_card === '1') {
+            fields.cardholderName = {};
+        }
+
         return {
-            fields: {
-                cardholderName: {} // optionally pass this to show the card holder name
-            },
+            fields: fields,
             styles: this.remove_keys_with_empty_string(this.axoConfig.style_options)
         }
     }
