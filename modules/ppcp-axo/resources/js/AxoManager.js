@@ -463,9 +463,9 @@ class AxoManager {
         this.el.gatewayRadioButton.trigger('change');
     }
 
-    async renderWatermark() {
+    async renderWatermark(includeAdditionalInfo = true) {
         (await this.fastlane.FastlaneWatermarkComponent({
-            includeAdditionalInfo: true
+            includeAdditionalInfo
         })).render(this.el.watermarkContainer.selector);
     }
 
@@ -562,6 +562,8 @@ class AxoManager {
                 this.hideGatewaySelection = true;
                 this.$('.wc_payment_methods label').hide();
 
+                await this.renderWatermark(false);
+
                 this.rerender();
 
             } else {
@@ -576,6 +578,8 @@ class AxoManager {
 
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
+
+            await this.renderWatermark(true);
 
             this.cardComponent = (await this.fastlane.FastlaneCardComponent(
                 this.cardComponentData()
