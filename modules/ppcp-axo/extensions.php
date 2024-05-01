@@ -94,6 +94,7 @@ return array(
 									->action_visible( 'axo_style_root_bg_color' )
 									->action_visible( 'axo_style_root_error_color' )
 									->action_visible( 'axo_style_root_font_family' )
+									->action_visible( 'axo_style_root_text_color_base' )
 									->action_visible( 'axo_style_root_font_size_base' )
 									->action_visible( 'axo_style_root_padding' )
 									->action_visible( 'axo_style_root_primary_color' )
@@ -201,7 +202,7 @@ return array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#ffffff',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -212,7 +213,7 @@ return array(
 					'title'        => __( 'Error Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#d9360b',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -223,7 +224,18 @@ return array(
 					'title'        => __( 'Font Family', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => 'PayPal Open',
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_text_color_base'     => array(
+					'title'        => __( 'Text Color Base', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -234,7 +246,7 @@ return array(
 					'title'        => __( 'Font Size Base', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '16px',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -245,7 +257,7 @@ return array(
 					'title'        => __( 'Padding', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '4px',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -256,7 +268,7 @@ return array(
 					'title'        => __( 'Primary Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#0057ff',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -279,7 +291,7 @@ return array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#ffffff',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -290,7 +302,7 @@ return array(
 					'title'        => __( 'Border Radius', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '0.25em',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -301,7 +313,7 @@ return array(
 					'title'        => __( 'Border Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#dadddd',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -312,7 +324,7 @@ return array(
 					'title'        => __( 'Border Width', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '1px',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -323,7 +335,7 @@ return array(
 					'title'        => __( 'Text Color Base', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#010b0d',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -334,7 +346,7 @@ return array(
 					'title'        => __( 'Focus Border Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#0057ff',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),

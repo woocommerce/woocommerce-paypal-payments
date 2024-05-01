@@ -642,7 +642,8 @@ class AxoManager {
         return {
             fields: {
                 cardholderName: {} // optionally pass this to show the card holder name
-            }
+            },
+            styles: this.remove_keys_with_empty_string(this.axoConfig.style_options)
         }
     }
 
@@ -741,6 +742,20 @@ class AxoManager {
 
     useEmailWidget() {
         return this.axoConfig?.widgets?.email === 'use_widget';
+    }
+
+    remove_keys_with_empty_string = (obj) => {
+        for(let key of Object.keys(obj)){
+            if (obj[key] === ''){
+                delete obj[key];
+            }
+            else if (typeof obj[key] === 'object'){
+                obj[key] = this.remove_keys_with_empty_string(obj[key]);
+                if (Object.keys(obj[key]).length === 0 ) delete obj[key];
+            }
+        }
+
+        return Array.isArray(obj) ? obj.filter(val => val) : obj;
     }
 
 }
