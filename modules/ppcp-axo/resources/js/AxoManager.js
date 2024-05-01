@@ -646,7 +646,7 @@ class AxoManager {
 
         return {
             fields: fields,
-            styles: this.remove_keys_with_empty_string(this.axoConfig.style_options)
+            styles: this.delete_keys_with_empty_string(this.axoConfig.style_options)
         }
     }
 
@@ -696,6 +696,9 @@ class AxoManager {
             Object.keys(data).forEach((key) => {
                 formData.set(key, data[key]);
             });
+
+            // Set type of user (Ryan) to be received on WC gateway process payment request.
+            formData.set('fastlane_member', true);
 
             fetch(wc_checkout_params.checkout_url, { // TODO: maybe create a new endpoint to process_payment.
                 method: "POST",
@@ -747,13 +750,13 @@ class AxoManager {
         return this.axoConfig?.widgets?.email === 'use_widget';
     }
 
-    remove_keys_with_empty_string = (obj) => {
+    delete_keys_with_empty_string = (obj) => {
         for(let key of Object.keys(obj)){
             if (obj[key] === ''){
                 delete obj[key];
             }
             else if (typeof obj[key] === 'object'){
-                obj[key] = this.remove_keys_with_empty_string(obj[key]);
+                obj[key] = this.delete_keys_with_empty_string(obj[key]);
                 if (Object.keys(obj[key]).length === 0 ) delete obj[key];
             }
         }
