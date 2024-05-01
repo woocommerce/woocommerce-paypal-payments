@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class AxoModule
@@ -75,6 +76,31 @@ class AxoModule implements ModuleInterface {
 			},
 			1,
 			9
+		);
+
+		// Hides credit card gateway on checkout when using Fastlane.
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $methods ) use ( $c ): array {
+				if ( ! is_array( $methods ) || ! $c->get( 'axo.eligible' ) ) {
+					return $methods;
+				}
+
+				if (
+					! is_admin()
+					&& is_user_logged_in() === false
+					&& isset( $methods[ CreditCardGateway::ID ] )
+				) {
+					unset( $methods[ CreditCardGateway::ID ] );
+				}
+
+				return $methods;
+			}
 		);
 
 		add_action(
