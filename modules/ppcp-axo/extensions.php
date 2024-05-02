@@ -83,6 +83,7 @@ return array(
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_gateway_title' )
 									->action_visible( 'axo_privacy' )
+									->action_visible( 'axo_name_on_card' )
 									->action_visible( 'axo_style_heading' )
 									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
@@ -153,14 +154,12 @@ return array(
 					'requirements' => array( 'axo' ),
 				),
 				'axo_name_on_card'                   => array(
-					'title'        => __( 'Display "Name on Card" field', 'woocommerce-paypal-payments' ),
+					'title'        => __( 'Display Name on Card', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
 					'default'      => 'yes',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'label'        => __( 'Enable "Name on Card" field', 'woocommerce-paypal-payments' ),
-					'desc_tip'     => true,
-					'description'  => __( 'Enable to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
+					'label'        => __( 'Enable this to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => array( 'dcc', 'axo' ),
 					'requirements' => array( 'axo' ),
