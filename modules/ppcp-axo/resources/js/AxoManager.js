@@ -431,7 +431,6 @@ class AxoManager {
             // Move email to the AXO container.
             let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
             wrapperElement.prepend(emailRow);
-            emailRow.querySelector('input').focus();
         }
     }
 
