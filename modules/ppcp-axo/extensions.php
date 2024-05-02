@@ -135,7 +135,7 @@ return array(
 					'title'        => __( 'Privacy', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'label'        => __(
-						'Require customers to confirm express payments from the Cart and Express Checkout on the checkout page.
+						'This setting will control whether Fastlane branding is shown by email field.
 <p class="description">PayPal powers this accelerated checkout solution from Fastlane. Since you\'ll share consumers\' email addresses with PayPal, please consult your legal advisors on the apropriate privacy setting for your business.</p>',
 						'woocommerce-paypal-payments'
 					),
