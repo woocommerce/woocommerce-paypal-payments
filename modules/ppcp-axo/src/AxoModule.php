@@ -254,14 +254,6 @@ class AxoModule implements ModuleInterface {
 	/**
 	 * Condition to evaluate if Credit Card gateway should be hidden.
 	 *
-	 * @param array $methods
-	 * @param bool $is_axo_enabled
-	 * @return bool
-	 */
-
-	/**
-	 * Condition to evaluate if Credit Card gateway should be hidden.
-	 *
 	 * @param array    $methods WC payment methods.
 	 * @param Settings $settings The settings.
 	 * @return bool
