@@ -249,7 +249,7 @@ return array(
 				'axo_style_root_font_family'         => array(
 					'title'        => __( 'Font Family', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
-					'placeholder'  => 'PayPal Open',
+					'placeholder'  => 'PayPal-Open',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
 					'screens'      => array(
