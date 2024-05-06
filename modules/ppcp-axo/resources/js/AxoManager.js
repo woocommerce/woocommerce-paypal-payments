@@ -547,13 +547,16 @@ class AxoManager {
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
 
-                // Add addresses
                 this.setShipping(authResponse.profileData.shippingAddress);
-                this.setBilling({
-                    address: authResponse.profileData.card.paymentSource.card.billingAddress,
-                    phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
-                });
-                this.setCard(authResponse.profileData.card);
+
+                const billingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
+                if(billingAddress) {
+                    this.setBilling({
+                        address: billingAddress,
+                        phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
+                    });
+                    this.setCard(authResponse.profileData.card);
+                }
 
                 this.setStatus('validEmail', true);
                 this.setStatus('hasProfile', true);
