@@ -45,9 +45,9 @@ return array(
 					'title'        => __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
 					'label'        => __(
-						'Require customers to confirm express payments from the Cart and Express Checkout on the checkout page.
-<p class="description">If this setting is not enabled, <a href="https://woocommerce.com/document/woocommerce-paypal-payments/#blocks-faq" target="_blank">payment confirmation on the checkout will be skipped</a>.
-Skipping the final confirmation on the checkout page may impact the buyer experience during the PayPal payment process.</p>',
+						'Enable this option to require customers to manually confirm express payments on the checkout page.
+<p class="description">This ensures they can review the order, update shipping options, and fill in eventual custom fields necessary for the transaction.</p>
+<p class="description">If this is disabled, the system will automatically synchronize shipping options with PayPal and bypass the final checkout confirmation. This expedites the checkout process but prevents buyers from filling in eventual custom fields and reviewing final details before finalizing the payment.</p>',
 						'woocommerce-paypal-payments'
 					),
 					'default'      => false,
