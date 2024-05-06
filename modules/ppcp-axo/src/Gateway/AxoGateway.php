@@ -300,7 +300,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			> ';
 		}
 
-		return '<div class="ppcp-axo-card-icons">' . implode( '', $images ) . '</div>';
+		return implode( '', $images );
 	}
 
 	/**
