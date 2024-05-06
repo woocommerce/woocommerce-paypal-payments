@@ -162,6 +162,20 @@ class AxoManager {
                 ev.preventDefault();
             }
         });
+
+        // Listening to status update event
+        document.addEventListener('axo_status_updated', (ev) => {
+            const termsField = document.querySelector("[name='terms-field']");
+            if(termsField) {
+                const status = ev.detail;
+
+                if(status.active && status.validEmail === false && status.hasProfile === false) {
+                    termsField.parentElement.style.display = 'none';
+                } else {
+                    termsField.parentElement.style.display = 'block';
+                }
+            }
+        });
     }
 
     rerender() {
@@ -346,6 +360,8 @@ class AxoManager {
         this.status[key] = value;
 
         log('Status updated', JSON.parse(JSON.stringify(this.status)));
+
+        document.dispatchEvent(new CustomEvent("axo_status_updated", {detail: this.status}));
 
         this.rerender();
     }
