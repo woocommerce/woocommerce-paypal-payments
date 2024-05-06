@@ -586,7 +586,17 @@ class AxoManager {
 
             } else {
                 // authentication failed or canceled by the customer
+                // set status as guest customer
                 log("Authentication Failed")
+
+                this.setStatus('validEmail', true);
+                this.setStatus('hasProfile', false);
+
+                await this.renderWatermark(true);
+
+                this.cardComponent = (await this.fastlane.FastlaneCardComponent(
+                    this.cardComponentData()
+                )).render(this.el.paymentContainer.selector + '-form');
             }
 
         } else {
