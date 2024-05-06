@@ -45,7 +45,7 @@ class ShippingView {
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
                         <div>${data.value('street2')}</div>
-                        <div>${data.value('city')} ${valueOfSelect('#billing_state', data.value('stateCode'))} ${data.value('postCode')} </div>
+                        <div>${data.value('city')}, ${valueOfSelect('#billing_state', data.value('stateCode'))} ${data.value('postCode')} </div>
                         <div>${valueOfSelect('#billing_country', data.value('countryCode'))}</div>
                         <div>${data.value('phone')}</div>
                     </div>
