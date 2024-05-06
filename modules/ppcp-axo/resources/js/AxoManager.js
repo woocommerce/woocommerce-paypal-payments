@@ -626,6 +626,8 @@ class AxoManager {
             this.shippingView.toSubmitData(data);
             this.cardView.toSubmitData(data);
 
+            this.ensureBillingPhoneNumber(data);
+
             this.submit(this.data.card.id, data);
 
         } else { // Gary flow
@@ -771,6 +773,20 @@ class AxoManager {
         return Array.isArray(obj) ? obj.filter(val => val) : obj;
     }
 
+    ensureBillingPhoneNumber(data) {
+        if (data.billing_phone === '') {
+            let phone = '';
+            const cc = this.data?.shipping?.phoneNumber?.countryCode;
+            const number = this.data?.shipping?.phoneNumber?.nationalNumber;
+
+            if (cc) {
+                phone = `+${cc} `;
+            }
+            phone += number;
+
+            data.billing_phone = phone;
+        }
+    }
 }
 
 export default AxoManager;
