@@ -37,6 +37,20 @@ return array(
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
 
+		$label = __(
+			'Enable this option to require customers to manually confirm express payments on the checkout page.
+<p class="description">This ensures they can review the order, update shipping options, and fill in eventual custom fields necessary for the transaction.</p>
+<p class="description">If this is disabled, the system will automatically synchronize shipping options with PayPal and bypass the final checkout confirmation. This expedites the checkout process but prevents buyers from filling in eventual custom fields and reviewing final details before finalizing the payment.</p>',
+			'woocommerce-paypal-payments'
+		);
+
+		if ( wc_terms_and_conditions_page_id() > 0 ) {
+			$label .= __(
+				'<p class="description ppcp-important"><span>Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Please be aware that disabling this option may prevent buyers from being able to consent to the terms when using a PayPal express payment method, as the final checkout confirmation will be skipped.</p>',
+				'woocommerce-paypal-payments'
+			);
+		}
+
 		return $insert_after(
 			$fields,
 			'smart_button_locations',
@@ -44,12 +58,7 @@ return array(
 				'blocks_final_review_enabled' => array(
 					'title'        => __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
-					'label'        => __(
-						'Enable this option to require customers to manually confirm express payments on the checkout page.
-<p class="description">This ensures they can review the order, update shipping options, and fill in eventual custom fields necessary for the transaction.</p>
-<p class="description">If this is disabled, the system will automatically synchronize shipping options with PayPal and bypass the final checkout confirmation. This expedites the checkout process but prevents buyers from filling in eventual custom fields and reviewing final details before finalizing the payment.</p>',
-						'woocommerce-paypal-payments'
-					),
+					'label'        => $label,
 					'default'      => false,
 					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 					'requirements' => array(),
