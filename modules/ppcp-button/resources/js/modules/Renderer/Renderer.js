@@ -3,6 +3,10 @@ import {loadScript} from "@paypal/paypal-js";
 import {keysToCamelCase} from "../Helper/Utils";
 import widgetBuilder from "./WidgetBuilder";
 import {normalizeStyleForFundingSource} from "../Helper/Style";
+import {
+    handleShippingOptionsChange,
+    handleShippingAddressChange,
+} from "../Helper/ShippingHandler.js";
 
 class Renderer {
     constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
@@ -64,6 +68,10 @@ class Renderer {
         }
     }
 
+    shouldHandleShippingInPaypal = () => {
+        return this.defaultSettings.should_handle_shipping_in_paypal;
+    }
+
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
         if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) ) {
             // Try to render registered buttons again in case they were removed from the DOM by an external source.
@@ -86,6 +94,8 @@ class Renderer {
                     }
                     this.handleOnButtonsInit(wrapper, data, actions);
                 },
+                onShippingOptionsChange: (data, actions) => this.shouldHandleShippingInPaypal() ? handleShippingOptionsChange(data, actions, this.defaultSettings) : null,
+                onShippingAddressChange: (data, actions) => this.shouldHandleShippingInPaypal() ? handleShippingAddressChange(data, actions, this.defaultSettings) : null,
             }
         }
 

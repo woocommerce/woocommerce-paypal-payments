@@ -147,7 +147,8 @@ return array(
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'button.handle-shipping-in-paypal' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
@@ -157,7 +158,13 @@ return array(
 		);
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
-		return array( 'checkout', 'pay-now' );
+		$defaults = array( 'checkout', 'pay-now' );
+
+		if ( $container->get( 'button.handle-shipping-in-paypal' ) ) {
+			return array_merge( $defaults, array( 'cart', 'product', 'mini-cart' ) );
+		}
+
+		return $defaults;
 	},
 	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
@@ -342,6 +349,6 @@ return array(
 	 * May result in slower popup performance, additional loading.
 	 */
 	'button.handle-shipping-in-paypal'            => static function ( ContainerInterface $container ): bool {
-		return false;
+		return ! $container->get( 'blocks.settings.final_review_enabled' );
 	},
 );
