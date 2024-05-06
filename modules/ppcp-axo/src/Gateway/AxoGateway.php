@@ -299,11 +299,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		$icons     = $this->card_icons;
 		$icons_src = esc_url( $this->wcgateway_module_url ) . 'assets/images/';
 
-//		if ( $this->card_icons_axo ) {
-//			$icons     = $this->card_icons_axo;
-//			$icons_src = esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/';
-//		}
-
 		if ( empty( $this->card_icons ) ) {
 			return $icon;
 		}
