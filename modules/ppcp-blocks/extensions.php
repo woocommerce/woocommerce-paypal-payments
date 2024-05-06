@@ -50,7 +50,7 @@ return array(
 Skipping the final confirmation on the checkout page may impact the buyer experience during the PayPal payment process.</p>',
 						'woocommerce-paypal-payments'
 					),
-					'default'      => true,
+					'default'      => false,
 					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 					'requirements' => array(),
 					'gateway'      => 'paypal',
