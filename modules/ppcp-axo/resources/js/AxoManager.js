@@ -642,10 +642,11 @@ class AxoManager {
     }
 
     cardComponentData() {
-        let fields = {};
-        if(this.axoConfig.name_on_card === '1') {
-            fields.cardholderName = {};
-        }
+        const fields = {
+            cardholderName: {
+                enabled: true
+            }
+        };
 
         return {
             fields: fields,
