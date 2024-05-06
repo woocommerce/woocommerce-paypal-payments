@@ -162,6 +162,20 @@ class AxoManager {
                 ev.preventDefault();
             }
         });
+
+        // Listening to status update event
+        document.addEventListener('axo_status_updated', (ev) => {
+            const termsField = document.querySelector("[name='terms-field']");
+            if(termsField) {
+                const status = ev.detail;
+
+                if(status.active && status.validEmail === false && status.hasProfile === false) {
+                    termsField.parentElement.style.display = 'none';
+                } else {
+                    termsField.parentElement.style.display = 'block';
+                }
+            }
+        });
     }
 
     rerender() {
@@ -346,6 +360,8 @@ class AxoManager {
         this.status[key] = value;
 
         log('Status updated', JSON.parse(JSON.stringify(this.status)));
+
+        document.dispatchEvent(new CustomEvent("axo_status_updated", {detail: this.status}));
 
         this.rerender();
     }
@@ -547,13 +563,16 @@ class AxoManager {
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
 
-                // Add addresses
                 this.setShipping(authResponse.profileData.shippingAddress);
-                this.setBilling({
-                    address: authResponse.profileData.card.paymentSource.card.billingAddress,
-                    phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
-                });
-                this.setCard(authResponse.profileData.card);
+
+                const billingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
+                if(billingAddress) {
+                    this.setBilling({
+                        address: billingAddress,
+                        phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
+                    });
+                    this.setCard(authResponse.profileData.card);
+                }
 
                 this.setStatus('validEmail', true);
                 this.setStatus('hasProfile', true);
@@ -623,6 +642,8 @@ class AxoManager {
             this.shippingView.toSubmitData(data);
             this.cardView.toSubmitData(data);
 
+            this.ensureBillingPhoneNumber(data);
+
             this.submit(this.data.card.id, data);
 
         } else { // Gary flow
@@ -642,10 +663,11 @@ class AxoManager {
     }
 
     cardComponentData() {
-        let fields = {};
-        if(this.axoConfig.name_on_card === '1') {
-            fields.cardholderName = {};
-        }
+        const fields = {
+            cardholderName: {
+                enabled: true
+            }
+        };
 
         return {
             fields: fields,
@@ -767,6 +789,20 @@ class AxoManager {
         return Array.isArray(obj) ? obj.filter(val => val) : obj;
     }
 
+    ensureBillingPhoneNumber(data) {
+        if (data.billing_phone === '') {
+            let phone = '';
+            const cc = this.data?.shipping?.phoneNumber?.countryCode;
+            const number = this.data?.shipping?.phoneNumber?.nationalNumber;
+
+            if (cc) {
+                phone = `+${cc} `;
+            }
+            phone += number;
+
+            data.billing_phone = phone;
+        }
+    }
 }
 
 export default AxoManager;
