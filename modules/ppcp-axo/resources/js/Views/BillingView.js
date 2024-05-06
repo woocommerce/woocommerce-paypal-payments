@@ -91,7 +91,7 @@ class BillingView {
                     'selector': '#billing_company_field',
                     'valuePath': null,
                 },
-                phoneNumber: {
+                phone: {
                     'selector': '#billing_phone_field',
                     'valuePath': 'billing.phoneNumber'
                 }
