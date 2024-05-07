@@ -690,8 +690,8 @@ class AxoManager {
             billingAddress: {
                 addressLine1: this.billingView.inputValue('street1'),
                 addressLine2: this.billingView.inputValue('street2'),
-                adminArea1: this.billingView.inputValue('city'),
-                adminArea2: this.billingView.inputValue('stateCode'),
+                adminArea1: this.billingView.inputValue('stateCode'),
+                adminArea2: this.billingView.inputValue('city'),
                 postalCode: this.billingView.inputValue('postCode'),
                 countryCode: this.billingView.inputValue('countryCode'),
             }
