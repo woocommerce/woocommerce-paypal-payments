@@ -168,12 +168,9 @@ class AxoManager {
             const termsField = document.querySelector("[name='terms-field']");
             if(termsField) {
                 const status = ev.detail;
+                const shouldHide = status.active && status.validEmail === false && status.hasProfile === false;
 
-                if(status.active && status.validEmail === false && status.hasProfile === false) {
-                    termsField.parentElement.style.display = 'none';
-                } else {
-                    termsField.parentElement.style.display = 'block';
-                }
+                termsField.parentElement.style.display = shouldHide ? 'none' : 'block';
             }
         });
     }
@@ -681,7 +678,7 @@ class AxoManager {
 
         return {
             fields: fields,
-            styles: this.delete_keys_with_empty_string(this.axoConfig.style_options)
+            styles: this.deleteKeysWithEmptyString(this.axoConfig.style_options)
         }
     }
 
@@ -785,13 +782,13 @@ class AxoManager {
         return this.axoConfig?.widgets?.email === 'use_widget';
     }
 
-    delete_keys_with_empty_string = (obj) => {
+    deleteKeysWithEmptyString = (obj) => {
         for(let key of Object.keys(obj)){
             if (obj[key] === ''){
                 delete obj[key];
             }
             else if (typeof obj[key] === 'object'){
-                obj[key] = this.delete_keys_with_empty_string(obj[key]);
+                obj[key] = this.deleteKeysWithEmptyString(obj[key]);
                 if (Object.keys(obj[key]).length === 0 ) delete obj[key];
             }
         }
