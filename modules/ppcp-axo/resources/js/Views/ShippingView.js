@@ -2,9 +2,9 @@ import FormFieldGroup from "../Components/FormFieldGroup";
 
 class ShippingView {
 
-    constructor(selector, elements) {
+    constructor(selector, elements, states) {
         this.el = elements;
-
+        this.states = states;
         this.group = new FormFieldGroup({
             baseSelector: '.woocommerce-checkout',
             contentSelector: selector,
@@ -34,6 +34,10 @@ class ShippingView {
                         </div>
                     `;
                 }
+                const countryCode = data.value('countryCode');
+                const stateCode = data.value('stateCode');
+                const stateName = (this.states[countryCode] && this.states[countryCode][stateCode]) ? this.states[countryCode][stateCode] : stateCode;
+
                 return `
                     <div style="margin-bottom: 20px;">
                         <div class="axo-checkout-header-section">
@@ -45,8 +49,8 @@ class ShippingView {
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
                         <div>${data.value('street2')}</div>
-                        <div>${data.value('city')}, ${valueOfSelect('#billing_state', data.value('stateCode'))} ${data.value('postCode')} </div>
-                        <div>${valueOfSelect('#billing_country', data.value('countryCode'))}</div>
+                        <div>${data.value('city')}, ${stateName} ${data.value('postCode')}</div>
+                        <div>${valueOfSelect('#billing_country', countryCode)}</div>
                         <div>${data.value('phone')}</div>
                     </div>
                 `;
