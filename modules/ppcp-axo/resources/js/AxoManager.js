@@ -162,6 +162,17 @@ class AxoManager {
                 ev.preventDefault();
             }
         });
+
+        // Listening to status update event
+        document.addEventListener('axo_status_updated', (ev) => {
+            const termsField = document.querySelector("[name='terms-field']");
+            if(termsField) {
+                const status = ev.detail;
+                const shouldHide = status.active && status.validEmail === false && status.hasProfile === false;
+
+                termsField.parentElement.style.display = shouldHide ? 'none' : 'block';
+            }
+        });
     }
 
     rerender() {
@@ -347,6 +358,8 @@ class AxoManager {
 
         log('Status updated', JSON.parse(JSON.stringify(this.status)));
 
+        document.dispatchEvent(new CustomEvent("axo_status_updated", {detail: this.status}));
+
         this.rerender();
     }
 
@@ -431,7 +444,6 @@ class AxoManager {
             // Move email to the AXO container.
             let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
             wrapperElement.prepend(emailRow);
-            emailRow.querySelector('input').focus();
         }
     }
 
@@ -463,9 +475,9 @@ class AxoManager {
         this.el.gatewayRadioButton.trigger('change');
     }
 
-    async renderWatermark() {
+    async renderWatermark(includeAdditionalInfo = true) {
         (await this.fastlane.FastlaneWatermarkComponent({
-            includeAdditionalInfo: true
+            includeAdditionalInfo
         })).render(this.el.watermarkContainer.selector);
     }
 
@@ -548,13 +560,16 @@ class AxoManager {
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
 
-                // Add addresses
                 this.setShipping(authResponse.profileData.shippingAddress);
-                this.setBilling({
-                    address: authResponse.profileData.card.paymentSource.card.billingAddress,
-                    phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
-                });
-                this.setCard(authResponse.profileData.card);
+
+                const billingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
+                if(billingAddress) {
+                    this.setBilling({
+                        address: billingAddress,
+                        phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
+                    });
+                    this.setCard(authResponse.profileData.card);
+                }
 
                 this.setStatus('validEmail', true);
                 this.setStatus('hasProfile', true);
@@ -562,11 +577,23 @@ class AxoManager {
                 this.hideGatewaySelection = true;
                 this.$('.wc_payment_methods label').hide();
 
+                await this.renderWatermark(false);
+
                 this.rerender();
 
             } else {
                 // authentication failed or canceled by the customer
+                // set status as guest customer
                 log("Authentication Failed")
+
+                this.setStatus('validEmail', true);
+                this.setStatus('hasProfile', false);
+
+                await this.renderWatermark(true);
+
+                this.cardComponent = (await this.fastlane.FastlaneCardComponent(
+                    this.cardComponentData()
+                )).render(this.el.paymentContainer.selector + '-form');
             }
 
         } else {
@@ -576,6 +603,8 @@ class AxoManager {
 
             this.setStatus('validEmail', true);
             this.setStatus('hasProfile', false);
+
+            await this.renderWatermark(true);
 
             this.cardComponent = (await this.fastlane.FastlaneCardComponent(
                 this.cardComponentData()
@@ -620,6 +649,8 @@ class AxoManager {
             this.shippingView.toSubmitData(data);
             this.cardView.toSubmitData(data);
 
+            this.ensureBillingPhoneNumber(data);
+
             this.submit(this.data.card.id, data);
 
         } else { // Gary flow
@@ -639,10 +670,15 @@ class AxoManager {
     }
 
     cardComponentData() {
-        return {
-            fields: {
-                cardholderName: {} // optionally pass this to show the card holder name
+        const fields = {
+            cardholderName: {
+                enabled: true
             }
+        };
+
+        return {
+            fields: fields,
+            styles: this.deleteKeysWithEmptyString(this.axoConfig.style_options)
         }
     }
 
@@ -692,6 +728,9 @@ class AxoManager {
             Object.keys(data).forEach((key) => {
                 formData.set(key, data[key]);
             });
+
+            // Set type of user (Ryan) to be received on WC gateway process payment request.
+            formData.set('fastlane_member', true);
 
             fetch(wc_checkout_params.checkout_url, { // TODO: maybe create a new endpoint to process_payment.
                 method: "POST",
@@ -743,6 +782,34 @@ class AxoManager {
         return this.axoConfig?.widgets?.email === 'use_widget';
     }
 
+    deleteKeysWithEmptyString = (obj) => {
+        for(let key of Object.keys(obj)){
+            if (obj[key] === ''){
+                delete obj[key];
+            }
+            else if (typeof obj[key] === 'object'){
+                obj[key] = this.deleteKeysWithEmptyString(obj[key]);
+                if (Object.keys(obj[key]).length === 0 ) delete obj[key];
+            }
+        }
+
+        return Array.isArray(obj) ? obj.filter(val => val) : obj;
+    }
+
+    ensureBillingPhoneNumber(data) {
+        if (data.billing_phone === '') {
+            let phone = '';
+            const cc = this.data?.shipping?.phoneNumber?.countryCode;
+            const number = this.data?.shipping?.phoneNumber?.nationalNumber;
+
+            if (cc) {
+                phone = `+${cc} `;
+            }
+            phone += number;
+
+            data.billing_phone = phone;
+        }
+    }
 }
 
 export default AxoManager;

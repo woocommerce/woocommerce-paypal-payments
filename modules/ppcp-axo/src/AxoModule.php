@@ -20,6 +20,8 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class AxoModule
@@ -75,6 +77,33 @@ class AxoModule implements ModuleInterface {
 			},
 			1,
 			9
+		);
+
+		// Hides credit card gateway on checkout when using Fastlane.
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $methods ) use ( $c ): array {
+				if ( ! is_array( $methods ) || ! $c->get( 'axo.eligible' ) ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( apply_filters(
+					'woocommerce_paypal_payments_axo_hide_credit_card_gateway',
+					$this->hide_credit_card_when_using_fastlane( $methods, $settings )
+				) ) {
+					unset( $methods[ CreditCardGateway::ID ] );
+				}
+
+				return $methods;
+			}
 		);
 
 		add_action(
@@ -220,5 +249,21 @@ class AxoModule implements ModuleInterface {
 	 * @return string|void
 	 */
 	public function getKey() {
+	}
+
+	/**
+	 * Condition to evaluate if Credit Card gateway should be hidden.
+	 *
+	 * @param array    $methods WC payment methods.
+	 * @param Settings $settings The settings.
+	 * @return bool
+	 */
+	private function hide_credit_card_when_using_fastlane( array $methods, Settings $settings ): bool {
+		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
+
+		return ! is_admin()
+			&& is_user_logged_in() === false
+			&& isset( $methods[ CreditCardGateway::ID ] )
+			&& $is_axo_enabled;
 	}
 }
