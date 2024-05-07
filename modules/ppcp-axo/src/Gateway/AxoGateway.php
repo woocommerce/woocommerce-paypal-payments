@@ -71,6 +71,13 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $card_icons;
 
 	/**
+	 * The AXO card icons.
+	 *
+	 * @var array
+	 */
+	protected $card_icons_axo;
+
+	/**
 	 * The order endpoint.
 	 *
 	 * @var OrderEndpoint
@@ -120,6 +127,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param string                    $wcgateway_module_url The WcGateway module URL.
 	 * @param OrderProcessor            $order_processor The Order processor.
 	 * @param array                     $card_icons The card icons.
+	 * @param array                     $card_icons_axo The card icons.
 	 * @param OrderEndpoint             $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
@@ -133,6 +141,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		string $wcgateway_module_url,
 		OrderProcessor $order_processor,
 		array $card_icons,
+		array $card_icons_axo,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
@@ -147,6 +156,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->wcgateway_module_url = $wcgateway_module_url;
 		$this->order_processor      = $order_processor;
 		$this->card_icons           = $card_icons;
+		$this->card_icons_axo       = $card_icons_axo;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'PayPal Fastlane offers an accelerated checkout experience that recognizes guest shoppers and autofills their details so they can pay in seconds.', 'woocommerce-paypal-payments' );
@@ -285,22 +295,25 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @return string
 	 */
 	public function get_icon() {
-		$icon = parent::get_icon();
+		$icon      = parent::get_icon();
+		$icons     = $this->card_icons;
+		$icons_src = esc_url( $this->wcgateway_module_url ) . 'assets/images/';
 
 		if ( empty( $this->card_icons ) ) {
 			return $icon;
 		}
 
 		$images = array();
-		foreach ( $this->card_icons as $card ) {
+
+		foreach ( $icons as $card ) {
 			$images[] = '<img
 				class="ppcp-card-icon"
 				title="' . $card['title'] . '"
-				src="' . esc_url( $this->wcgateway_module_url ) . 'assets/images/' . $card['file'] . '"
+				src="' . $icons_src . $card['file'] . '"
 			> ';
 		}
 
-		return '<div class="ppcp-axo-card-icons">' . implode( '', $images ) . '</div>';
+		return implode( '', $images );
 	}
 
 	/**
