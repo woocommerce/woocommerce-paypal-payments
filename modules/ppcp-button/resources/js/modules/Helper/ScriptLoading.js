@@ -3,6 +3,7 @@ import {loadScript} from "@paypal/paypal-js";
 import widgetBuilder from "../Renderer/WidgetBuilder";
 import merge from "deepmerge";
 import {keysToCamelCase} from "./Utils";
+import {getCurrentPaymentMethod} from "./CheckoutMethodState";
 
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 let options = window.ppcpWidgetBuilder = window.ppcpWidgetBuilder || {
@@ -60,6 +61,13 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
         scriptOptions = merge(scriptOptions, config.script_attributes);
     }
 
+    // Axo SDK options
+    const sdkClientToken = config?.axo?.sdk_client_token;
+    if(sdkClientToken) {
+        scriptOptions['data-sdk-client-token'] = sdkClientToken;
+        scriptOptions['data-client-metadata-id'] = 'ppcp-cm-id';
+    }
+
     // Load PayPal script for special case with data-client-token
     if (config.data_client_id?.set_attribute) {
         dataClientIdAttributeHandler(scriptOptions, config.data_client_id, callback, errorCallback);
@@ -68,7 +76,7 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
 
     // Adds data-user-id-token to script options.
     const userIdToken = config?.save_payment_methods?.id_token;
-    if(userIdToken) {
+    if(userIdToken && !sdkClientToken) {
         scriptOptions['data-user-id-token'] = userIdToken;
     }
 

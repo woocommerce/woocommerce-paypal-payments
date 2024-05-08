@@ -16,8 +16,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class DisplayRule {
 
-	const CONDITION_TYPE_ELEMENT = 'element';
-	const CONDITION_TYPE_BOOL    = 'bool';
+	const CONDITION_TYPE_ELEMENT     = 'element';
+	const CONDITION_TYPE_BOOL        = 'bool';
+	const CONDITION_TYPE_JS_VARIABLE = 'js_variable';
 
 	const CONDITION_OPERATION_EQUALS     = 'equals';
 	const CONDITION_OPERATION_NOT_EQUALS = 'not_equals';
@@ -26,10 +27,12 @@ class DisplayRule {
 	const CONDITION_OPERATION_EMPTY      = 'empty';
 	const CONDITION_OPERATION_NOT_EMPTY  = 'not_empty';
 
-	const ACTION_TYPE_ELEMENT = 'element';
+	const ACTION_TYPE_VISIBILITY = 'visibility';
+	const ACTION_TYPE_ATTRIBUTE  = 'attribute';
 
 	const ACTION_VISIBLE = 'visible';
 	const ACTION_ENABLE  = 'enable';
+	const ACTION_CLASS   = 'class';
 
 	/**
 	 * The element selector.
@@ -133,6 +136,24 @@ class DisplayRule {
 	}
 
 	/**
+	 * Adds a condition related to js variable check.
+	 *
+	 * @param string $variable_name The javascript variable name.
+	 * @param mixed  $value The value to enable / disable the condition.
+	 * @return self
+	 */
+	public function condition_js_variable( string $variable_name, $value ): self {
+		$this->add_condition(
+			array(
+				'type'     => self::CONDITION_TYPE_JS_VARIABLE,
+				'variable' => $variable_name,
+				'value'    => $value,
+			)
+		);
+		return $this;
+	}
+
+	/**
 	 * Adds a condition to show/hide the element.
 	 *
 	 * @param string $selector The condition selector.
@@ -140,9 +161,27 @@ class DisplayRule {
 	public function action_visible( string $selector ): self {
 		$this->add_action(
 			array(
-				'type'     => self::ACTION_TYPE_ELEMENT,
+				'type'     => self::ACTION_TYPE_VISIBILITY,
 				'selector' => $selector,
 				'action'   => self::ACTION_VISIBLE,
+			)
+		);
+		return $this;
+	}
+
+	/**
+	 * Adds a condition to add/remove a html class.
+	 *
+	 * @param string $selector The condition selector.
+	 * @param string $class The class.
+	 */
+	public function action_class( string $selector, string $class ): self {
+		$this->add_action(
+			array(
+				'type'       => self::ACTION_TYPE_ATTRIBUTE,
+				'selector'   => $selector,
+				'html_class' => $class,
+				'action'     => self::ACTION_CLASS,
 			)
 		);
 		return $this;
@@ -156,7 +195,7 @@ class DisplayRule {
 	public function action_enable( string $selector ): self {
 		$this->add_action(
 			array(
-				'type'     => self::ACTION_TYPE_ELEMENT,
+				'type'     => self::ACTION_TYPE_VISIBILITY,
 				'selector' => $selector,
 				'action'   => self::ACTION_ENABLE,
 			)

@@ -6,6 +6,7 @@
  */
 
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
+use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\PayLaterConfiguratorModule;
 use WooCommerce\PayPalCommerce\PluginModule;
 
@@ -72,8 +73,19 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 
+	if ( PayLaterWCBlocksModule::is_module_loading_required() ) {
+		$modules[] = ( require "$modules_dir/ppcp-paylater-wc-blocks/module.php" )();
+	}
+
 	if ( PayLaterConfiguratorModule::is_enabled() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-configurator/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.axo_enabled',
+		getenv( 'PCP_AXO_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
 	}
 
 	return $modules;

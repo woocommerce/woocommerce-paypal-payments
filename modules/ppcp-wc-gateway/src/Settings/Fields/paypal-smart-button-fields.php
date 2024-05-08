@@ -91,7 +91,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'title'        => __( 'Customize Smart Buttons Per Location', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
-			'default'      => true,
+			'default'      => false,
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
@@ -126,7 +126,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
 			'desc_tip'     => true,
 			'description'  => __(
-				'Add the tagline. This line will only show up, if you select a horizontal layout.',
+				'Enable to show the tagline below the payment button. Requires button width of 300px minimum to appear.',
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
@@ -272,7 +272,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
 			'desc_tip'     => true,
 			'description'  => __(
-				'Add the tagline. This line will only show up, if you select a horizontal layout.',
+				'Enable to show the tagline below the payment button. Requires button width of 300px minimum to appear.',
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
@@ -412,7 +412,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => false,
 			'desc_tip'     => true,
 			'description'  => __(
-				'Add the tagline. This line will only show up, if you select a horizontal layout.',
+				'Enable to show the tagline below the payment button. Requires button width of 300px minimum to appear.',
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
@@ -552,7 +552,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => false,
 			'desc_tip'     => true,
 			'description'  => __(
-				'Add the tagline. This line will only show up, if you select a horizontal layout.',
+				'Enable to show the tagline below the payment button. Requires button width of 300px minimum to appear.',
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(
@@ -692,7 +692,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => false,
 			'desc_tip'     => true,
 			'description'  => __(
-				'Add the tagline. This line will only show up, if you select a horizontal layout.',
+				'Enable to show the tagline below the payment button. Requires button width of 300px minimum to appear.',
 				'woocommerce-paypal-payments'
 			),
 			'screens'      => array(

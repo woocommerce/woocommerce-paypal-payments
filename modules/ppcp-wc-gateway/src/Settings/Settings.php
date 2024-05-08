@@ -142,7 +142,7 @@ class Settings implements ContainerInterface {
 				'woocommerce-paypal-payments'
 			),
 			'smart_button_locations'                   => $this->default_button_locations,
-			'smart_button_enable_styling_per_location' => true,
+			'smart_button_enable_styling_per_location' => false,
 			'pay_later_messaging_enabled'              => true,
 			'pay_later_button_enabled'                 => true,
 			'pay_later_button_locations'               => $this->default_pay_later_button_locations,

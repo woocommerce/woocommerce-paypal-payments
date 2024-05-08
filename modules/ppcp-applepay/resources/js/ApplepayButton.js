@@ -39,7 +39,7 @@ class ApplepayButton {
 
         this.log = function() {
             if ( this.buttonConfig.is_debug ) {
-                console.log('[ApplePayButton]', ...arguments);
+                //console.log('[ApplePayButton]', ...arguments);
             }
         }
 

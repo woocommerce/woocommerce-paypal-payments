@@ -16,6 +16,7 @@ import {
 import {
     loadPaypalScriptPromise
 } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import {
     normalizeStyleForFundingSource
 } from '../../../ppcp-button/resources/js/modules/Helper/Style'
@@ -120,8 +121,13 @@ const PayPalComponent = ({
     };
 
     const createSubscription = async (data, actions) => {
+        let planId = config.scriptData.subscription_plan_id;
+        if (config.scriptData.variable_paypal_subscription_variation_from_cart !== '') {
+            planId = config.scriptData.variable_paypal_subscription_variation_from_cart;
+        }
+
         return actions.subscription.create({
-            'plan_id': config.scriptData.subscription_plan_id
+            'plan_id': planId
         });
     };
 
@@ -502,6 +508,27 @@ const PayPalComponent = ({
     );
 }
 
+const BlockEditorPayPalComponent = () => {
+
+    const urlParams = {
+        clientId: 'test',
+        ...config.scriptData.url_params,
+        dataNamespace: 'ppcp-blocks-editor-paypal-buttons',
+        components: 'buttons',
+    }
+    return (
+        <PayPalScriptProvider
+            options={urlParams}
+       >
+            <PayPalButtons
+                onClick={(data, actions) => {
+                    return false;
+                }}
+            />
+        </PayPalScriptProvider>
+    )
+}
+
 const features = ['products'];
 let block_enabled = true;
 
@@ -566,7 +593,7 @@ if (block_enabled) {
             name: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
             content: <PayPalComponent isEditing={false}/>,
-            edit: <PayPalComponent isEditing={true}/>,
+            edit: <BlockEditorPayPalComponent />,
             ariaLabel: config.title,
             canMakePayment: () => {
                 return true;
@@ -582,7 +609,7 @@ if (block_enabled) {
                 paymentMethodId: config.id,
                 label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
                 content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-                edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+                edit: <BlockEditorPayPalComponent />,
                 ariaLabel: config.title,
                 canMakePayment: async () => {
                     if (!paypalScriptPromise) {

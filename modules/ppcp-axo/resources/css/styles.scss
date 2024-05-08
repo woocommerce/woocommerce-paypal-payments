@@ -1,0 +1,45 @@
+.ppcp-axo-watermark-container {
+	max-width: 200px;
+	margin-top: 10px;
+}
+
+.ppcp-axo-payment-container {
+	padding: 1rem 0;
+	background-color: #ffffff;
+
+	&.hidden {
+		display: none;
+	}
+}
+
+.ppcp-axo-email-widget {
+	border: 1px solid #cccccc;
+	background-color: #eeeeee;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	text-align: center;
+	font-weight: bold;
+	color: #000000;
+}
+
+.ppcp-axo-field-hidden {
+	display: none;
+}
+
+.ppcp-axo-customer-details {
+	margin-bottom: 40px;
+}
+
+.axo-checkout-header-section {
+	display: flex;
+	align-items: baseline;
+	gap: 1em;
+}
+
+.ppcp-axo-order-button {
+		float: none;
+		width: 100%;
+		box-sizing: border-box;
+		margin: var(--global-md-spacing) 0 1em;
+		padding: 0.6em 1em;
+}
