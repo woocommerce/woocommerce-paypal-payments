@@ -34,6 +34,8 @@ class AxoManager {
             card: null,
         };
 
+        this.states = this.axoConfig.woocommerce.states;
+
         this.el = new DomElementCollection();
 
         this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
@@ -48,7 +50,7 @@ class AxoManager {
 
         this.registerEventHandlers();
 
-        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector, this.el);
+        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector, this.el, this.states );
         this.billingView = new BillingView(this.el.billingAddressContainer.selector, this.el);
         this.cardView = new CardView(this.el.paymentContainer.selector + '-details', this.el, this);
 
