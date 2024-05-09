@@ -1044,17 +1044,9 @@ class ApplePayButton implements ButtonInterface {
 	}
 
 	/**
-	 * Enqueues scripts/styles for admin.
+	 * Enqueues scripts for admin.
 	 */
 	public function enqueue_admin(): void {
-		wp_register_style(
-			'wc-ppcp-applepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
-			array(),
-			$this->version
-		);
-		wp_enqueue_style( 'wc-ppcp-applepay-admin' );
-
 		wp_register_script(
 			'wc-ppcp-applepay-admin',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
@@ -1069,6 +1061,19 @@ class ApplePayButton implements ButtonInterface {
 			'wc_ppcp_applepay_admin',
 			$this->script_data_for_admin()
 		);
+	}
+
+	/**
+	 * Enqueues styles for admin.
+	 */
+	public function enqueue_admin_styles(): void {
+		wp_register_style(
+			'wc-ppcp-applepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-applepay-admin' );
 	}
 
 	/**

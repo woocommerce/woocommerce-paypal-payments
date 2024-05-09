@@ -155,11 +155,11 @@ class PayPalApiException extends RuntimeException {
 			return $json->message;
 		}
 		$improved_keys_messages = array(
-			'PAYMENT_DENIED'           => __( 'PayPal rejected the payment. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
-			'TRANSACTION_REFUSED'      => __( 'The transaction has been refused by the payment processor. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
-			'DUPLICATE_INVOICE_ID'     => __( 'The transaction has been refused because the Invoice ID already exists. Please create a new order or reach out to the store owner.', 'woocommerce-paypal-payments' ),
-			'PAYER_CANNOT_PAY'         => __( 'There was a problem processing this transaction. Please reach out to the store owner.', 'woocommerce-paypal-payments' ),
-			'PAYEE_ACCOUNT_RESTRICTED' => __( 'There was a problem processing this transaction. Please reach out to the store owner.', 'woocommerce-paypal-payments' ),
+			'PAYMENT_DENIED'              => __( 'PayPal rejected the payment. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
+			'TRANSACTION_REFUSED'         => __( 'The transaction has been refused by the payment processor. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
+			'DUPLICATE_INVOICE_ID'        => __( 'The transaction has been refused because the Invoice ID already exists. Please create a new order or reach out to the store owner.', 'woocommerce-paypal-payments' ),
+			'PAYER_CANNOT_PAY'            => __( 'There was a problem processing this transaction. Please reach out to the store owner.', 'woocommerce-paypal-payments' ),
+			'PAYEE_ACCOUNT_RESTRICTED'    => __( 'There was a problem processing this transaction. Please reach out to the store owner.', 'woocommerce-paypal-payments' ),
 			'AGREEMENT_ALREADY_CANCELLED' => __( 'The requested agreement is already canceled. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
 		);
 		$improved_errors        = array_filter(
