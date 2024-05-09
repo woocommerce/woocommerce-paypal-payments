@@ -191,6 +191,12 @@ class AxoManager {
 				),
 			),
 			'name_on_card'  => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'woocommerce'   => array(
+				'states' => array(
+					'US' => WC()->countries->get_states( 'US' ),
+					'CA' => WC()->countries->get_states( 'CA' ),
+				),
+			),
 		);
 	}
 
