@@ -6,6 +6,7 @@ node_modules
 yarn-error.log
 modules/*/vendor/*
 modules/*/assets/*
+!modules/ppcp-wc-gateway/assets/images
 *.zip
 .env
 .env.e2e
