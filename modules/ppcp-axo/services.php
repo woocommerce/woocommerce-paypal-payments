@@ -102,28 +102,32 @@ return array(
 	'axo.card_icons.axo'                    => static function ( ContainerInterface $container ): array {
 		return array(
 			array(
-				'title' => 'Dinersclub',
-				'file'  => 'dinersclub-light.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover-light.svg',
-			),
-			array(
-				'title' => 'JCB',
-				'file'  => 'jcb-light.svg',
+				'title' => 'Visa',
+				'file'  => 'visa-light.svg',
 			),
 			array(
 				'title' => 'MasterCard',
 				'file'  => 'mastercard-light.svg',
 			),
 			array(
-				'title' => 'UnionPay',
-				'file'  => 'unionpay-light.svg',
+				'title' => 'Amex',
+				'file'  => 'amex-light.svg',
 			),
 			array(
-				'title' => 'Visa',
-				'file'  => 'visa-light.svg',
+				'title' => 'Discover',
+				'file'  => 'discover-light.svg',
+			),
+			array(
+				'title' => 'Diners Club',
+				'file'  => 'dinersclub-light.svg',
+			),
+			array(
+				'title' => 'JCB',
+				'file'  => 'jcb-light.svg',
+			),
+			array(
+				'title' => 'UnionPay',
+				'file'  => 'unionpay-light.svg',
 			),
 		);
 	},

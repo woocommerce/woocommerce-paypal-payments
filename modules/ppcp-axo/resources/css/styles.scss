@@ -44,6 +44,13 @@
 		padding: 0.6em 1em;
 }
 
-label[for="payment_method_ppcp-axo-gateway"] .ppcp-card-icon {
-	max-height: 25px;
+#payment .payment_methods li label[for="payment_method_ppcp-axo-gateway"] {
+	img {
+		float: none;
+		vertical-align: middle;
+	}
+
+	.ppcp-card-icon {
+		max-height: 25px;
+	}
 }
