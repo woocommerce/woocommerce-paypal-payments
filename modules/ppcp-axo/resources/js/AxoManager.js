@@ -583,15 +583,24 @@ class AxoManager {
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
 
-                this.setShipping(authResponse.profileData.shippingAddress);
+                const shippingData = authResponse.profileData.shippingAddress;
+                if(shippingData) {
+                    this.setShipping(shippingData);
+                }
 
-                const billingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
-                if(billingAddress) {
-                    this.setBilling({
-                        address: billingAddress,
-                        phoneNumber: authResponse.profileData.shippingAddress.phoneNumber.nationalNumber ?? ''
-                    });
+                const cardBillingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
+                if(cardBillingAddress) {
                     this.setCard(authResponse.profileData.card);
+
+                    const billingData = {
+                        address: cardBillingAddress,
+                    };
+                    const phoneNumber = authResponse.profileData?.shippingAddress?.phoneNumber?.nationalNumber ?? '';
+                    if(phoneNumber) {
+                        billingData.phoneNumber = phoneNumber
+                    }
+
+                    this.setBilling(billingData);
                 }
 
                 this.setStatus('validEmail', true);

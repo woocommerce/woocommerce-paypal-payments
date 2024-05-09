@@ -38,6 +38,20 @@ class ShippingView {
                 const stateCode = data.value('stateCode');
                 const stateName = (this.states[countryCode] && this.states[countryCode][stateCode]) ? this.states[countryCode][stateCode] : stateCode;
 
+                if(
+                    this.hasEmptyValues(data, stateName)
+                ) {
+                    return `
+                        <div style="margin-bottom: 20px;">
+                            <div class="axo-checkout-header-section">
+                                <h3>Shipping</h3>
+                                <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes}>Edit</a>
+                            </div>
+                            <div>Please fill in your shipping details.</div>
+                        </div>
+                    `;
+                }
+
                 return `
                     <div style="margin-bottom: 20px;">
                         <div class="axo-checkout-header-section">
@@ -116,6 +130,15 @@ class ShippingView {
                 }
             }
         });
+    }
+
+    hasEmptyValues(data, stateName) {
+        return !data.value('email')
+            || !data.value('firstName')
+            || !data.value('lastName')
+            || !data.value('street1')
+            || !data.value('city')
+            || !stateName;
     }
 
     isActive() {
