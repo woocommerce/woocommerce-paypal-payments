@@ -23,13 +23,14 @@ use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * The OrderTrackingEndpoint.
  *
  * @psalm-type SupportedStatuses = 'SHIPPED'|'ON_HOLD'|'DELIVERED'|'CANCELLED'
  * @psalm-type TrackingInfo = array{
- *     transaction_id: string,
+ *     capture_id: string,
  *     status: SupportedStatuses,
  *     tracking_number: string,
  *     carrier: string,
@@ -222,7 +223,7 @@ class OrderTrackingEndpoint {
 	 */
 	public function update_tracking_information( ShipmentInterface $shipment, int $order_id ) : void {
 		$host          = trailingslashit( $this->host );
-		$tracker_id    = $this->find_tracker_id( $shipment->transaction_id(), $shipment->tracking_number() );
+		$tracker_id    = $this->find_tracker_id( $shipment->capture_id(), $shipment->tracking_number() );
 		$url           = "{$host}v1/shipping/trackers/{$tracker_id}";
 		$shipment_data = $shipment->to_array();
 
@@ -272,9 +273,11 @@ class OrderTrackingEndpoint {
 			return null;
 		}
 
-		$host       = trailingslashit( $this->host );
-		$tracker_id = $this->find_tracker_id( $wc_order->get_transaction_id(), $tracking_number );
-		$url        = "{$host}v1/shipping/trackers/{$tracker_id}";
+		$host         = trailingslashit( $this->host );
+		$paypal_order = ppcp_get_paypal_order( $wc_order );
+		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
+		$tracker_id   = $this->find_tracker_id( $capture_id, $tracking_number );
+		$url          = "{$host}v1/shipping/trackers/{$tracker_id}";
 
 		$args = array(
 			'method'  => 'GET',
@@ -319,9 +322,10 @@ class OrderTrackingEndpoint {
 			return array();
 		}
 
-		$host           = trailingslashit( $this->host );
-		$transaction_id = $wc_order->get_transaction_id();
-		$url            = "{$host}v1/shipping/trackers?transaction_id={$transaction_id}";
+		$host         = trailingslashit( $this->host );
+		$paypal_order = ppcp_get_paypal_order( $wc_order );
+		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
+		$url          = "{$host}v1/shipping/trackers?transaction_id={$capture_id}";
 
 		$args = array(
 			'method'  => 'GET',
@@ -382,7 +386,7 @@ class OrderTrackingEndpoint {
 		$carrier = $data['carrier'] ?? '';
 
 		$tracking_info = array(
-			'transaction_id'     => $data['transaction_id'] ?? '',
+			'capture_id'         => $data['capture_id'] ?? '',
 			'status'             => $data['status'] ?? '',
 			'tracking_number'    => $data['tracking_number'] ?? '',
 			'carrier'            => $carrier,
@@ -395,7 +399,7 @@ class OrderTrackingEndpoint {
 
 		return $this->shipment_factory->create_shipment(
 			$wc_order_id,
-			$tracking_info['transaction_id'],
+			$tracking_info['capture_id'],
 			$tracking_info['tracking_number'],
 			$tracking_info['status'],
 			$tracking_info['carrier'],
@@ -418,7 +422,7 @@ class OrderTrackingEndpoint {
 		$carrier = $request_values['carrier'] ?? '';
 
 		$data_to_check = array(
-			'transaction_id'  => $request_values['transaction_id'] ?? '',
+			'capture_id'      => $request_values['capture_id'] ?? '',
 			'status'          => $request_values['status'] ?? '',
 			'tracking_number' => $request_values['tracking_number'] ?? '',
 			'carrier'         => $carrier,
@@ -458,14 +462,14 @@ class OrderTrackingEndpoint {
 	}
 
 	/**
-	 * Finds the tracker ID from given transaction ID and tracking number.
+	 * Finds the tracker ID from given capture ID and tracking number.
 	 *
-	 * @param string $transaction_id The transaction ID.
+	 * @param string $capture_id The capture ID.
 	 * @param string $tracking_number The tracking number.
 	 * @return string The tracker ID.
 	 */
-	protected function find_tracker_id( string $transaction_id, string $tracking_number ): string {
-		return ! empty( $tracking_number ) ? "{$transaction_id}-{$tracking_number}" : "{$transaction_id}-NOTRACKER";
+	protected function find_tracker_id( string $capture_id, string $tracking_number ): string {
+		return ! empty( $tracking_number ) ? "{$capture_id}-{$tracking_number}" : "{$capture_id}-NOTRACKER";
 	}
 
 	/**
@@ -503,21 +507,18 @@ class OrderTrackingEndpoint {
 		$host            = trailingslashit( $this->host );
 		$shipment_data   = $shipment->to_array();
 
-		$old_api_data = $shipment_data;
-		unset( $old_api_data['items'] );
-		$request_shipment_data = array( 'trackers' => array( $old_api_data ) );
-
-		if ( $this->should_use_new_api ) {
-			unset( $shipment_data['transaction_id'] );
-			$shipment_data['capture_id'] = $shipment->transaction_id();
-			$request_shipment_data       = $shipment_data;
+		if ( ! $this->should_use_new_api ) {
+			unset( $shipment_data['capture_id'] );
+			unset( $shipment_data['items'] );
+			$shipment_data['transaction_id'] = $shipment->capture_id();
+			$shipment_data                   = array( 'trackers' => array( $shipment_data ) );
 		}
 
 		$url  = $this->should_use_new_api ? "{$host}v2/checkout/orders/{$paypal_order_id}/track" : "{$host}v1/shipping/trackers";
 		$args = array(
 			'method'  => 'POST',
 			'headers' => $this->request_headers(),
-			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $request_shipment_data, $wc_order->get_id() ) ),
+			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $shipment_data, $wc_order->get_id() ) ),
 		);
 
 		return array(

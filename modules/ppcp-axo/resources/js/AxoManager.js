@@ -36,6 +36,8 @@ class AxoManager {
 
         this.el = new DomElementCollection();
 
+        this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
+
         this.styles = {
             root: {
                 backgroundColorPrimary: '#ffffff'
@@ -160,7 +162,19 @@ class AxoManager {
         this.$('form.woocommerce-checkout input').on('keydown', async (ev) => {
             if(ev.key === 'Enter' && getCurrentPaymentMethod() === 'ppcp-axo-gateway' ) {
                 ev.preventDefault();
+                log('Enter key attempt');
+                log('emailInput', this.emailInput.value);
+                log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+                if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
+                    await this.onChangeEmail();
+                }
             }
+        });
+
+        // Clear last email checked identity when email field is focused.
+        this.$('#billing_email_field input').on('focus', (ev) => {
+            log('Clear the last email checked:', this.lastEmailCheckedIdentity);
+            this.lastEmailCheckedIdentity = '';
         });
 
         // Listening to status update event
@@ -368,8 +382,10 @@ class AxoManager {
         this.initFastlane();
         this.setStatus('active', true);
 
-        const emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
-        if (emailInput && this.lastEmailCheckedIdentity !== emailInput.value) {
+        log('Attempt on activation');
+        log('emailInput', this.emailInput.value);
+        log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+        if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
             this.onChangeEmail();
         }
     }
@@ -409,7 +425,6 @@ class AxoManager {
         // Watermark container
         const wc = this.el.watermarkContainer;
         if (!document.querySelector(wc.selector)) {
-            this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
             this.emailInput.insertAdjacentHTML('afterend', `
                 <div class="${wc.className}" id="${wc.id}"></div>
             `);
@@ -488,12 +503,18 @@ class AxoManager {
             // TODO
 
         } else {
-
-            this.emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
             this.emailInput.addEventListener('change', async ()=> {
-                this.onChangeEmail();
+                log('Change event attempt');
+                log('emailInput', this.emailInput.value);
+                log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+                if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
+                    this.onChangeEmail();
+                }
             });
 
+            log('Last, this.emailInput.value attempt');
+            log('emailInput', this.emailInput.value);
+            log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
             if (this.emailInput.value) {
                 this.onChangeEmail();
             }
