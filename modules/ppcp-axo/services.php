@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
 return array(
 
@@ -145,4 +146,31 @@ return array(
 		);
 	},
 
+	'axo.checkout-config-notice'            => static function ( ContainerInterface $container ) : string {
+		$checkout_page_link = get_edit_post_link( wc_get_page_id( 'checkout' ) );
+
+		if ( CartCheckoutDetector::has_elementor_checkout() ) {
+			$notice_content = sprintf(
+				/* translators: %1$s: URL to the Checkout edit page. */
+				__(
+					'<span class="highlight">Important:</span> Your store has a <a href="%1$s">Checkout page</a> with the Elementor Checkout widget configured. Fastlane requires your current Checkout page to include a <code>Classic Checkout</code> or <code>[woocommerce_checkout]</code> shortcode to accelerate the payment process.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $checkout_page_link )
+			);
+		} elseif ( CartCheckoutDetector::has_block_checkout() ) {
+			$notice_content = sprintf(
+				/* translators: %1$s: URL to the Checkout edit page. */
+				__(
+					'<span class="highlight">Important:</span> Your store has a <a href="%1$s">Checkout page</a> with the WooCommerce Checkout block configured. Fastlane requires your current Checkout page to include a <code>Classic Checkout</code> or <code>[woocommerce_checkout]</code> shortcode to accelerate the payment process.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $checkout_page_link )
+			);
+		} else {
+			return '';
+		}
+
+		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
+	},
 );

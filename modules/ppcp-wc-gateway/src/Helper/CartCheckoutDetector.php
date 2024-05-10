@@ -17,28 +17,30 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 class CartCheckoutDetector {
 
 	/**
-	 * Returns Elementor widgets if they exist (for a specific page).
-	 * @param $page_id
-	 * @return array
+	 * Returns a list of Elementor widgets if they exist for a specific page.
+	 *
+	 * @param int $page_id The ID of the page.
+	 *
+	 * @return array List of widget types if any exist, otherwise an empty array.
 	 */
-	private function get_elementor_widgets( $page_id ): array {
+	private static function get_elementor_widgets( $page_id ): array {
 		$elementor_data = get_post_meta( $page_id, '_elementor_data' );
 
-		if ( isset($elementor_data[0] ) ) {
-			// parse elementor json and found all widgets in json for specific page
-			$reg_exp = '/"widgetType":"([^"]*)/i';
+		if ( isset( $elementor_data[0] ) ) {
+			// Parse the Elementor json and find all widgets for a specific page.
+			$reg_exp      = '/"widgetType":"([^"]*)/i';
 			$output_array = array();
 
 			if ( is_array( $elementor_data[0] ) ) {
-				$elementor_data[0] = json_encode( $elementor_data[0] );
+				$elementor_data[0] = wp_json_encode( $elementor_data[0] );
 			}
 
 			preg_match_all( $reg_exp, $elementor_data[0], $output_array, PREG_SET_ORDER );
 
 			$widgets_list = array();
 
-			foreach( $output_array as $found ) {
-				if ( !isset( $found[1] ) ) {
+			foreach ( $output_array as $found ) {
+				if ( ! isset( $found[1] ) ) {
 					continue;
 				}
 
@@ -57,11 +59,11 @@ class CartCheckoutDetector {
 	 *
 	 * @return bool
 	 */
-	public function has_elementor_checkout(): bool {
-		$elementor_widgets = $this->get_elementor_widgets( wc_get_page_id( 'checkout' ) );
+	public static function has_elementor_checkout(): bool {
+		$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'checkout' ) );
 
 		if ( $elementor_widgets ) {
-			return in_array( 'woocommerce-checkout-page', $elementor_widgets);
+			return in_array( 'woocommerce-checkout-page', $elementor_widgets, true );
 		}
 
 		return false;
@@ -72,11 +74,11 @@ class CartCheckoutDetector {
 	 *
 	 * @return bool
 	 */
-	public function has_elementor_cart(): bool {
-		$elementor_widgets = $this->get_elementor_widgets( wc_get_page_id( 'cart' ) );
+	public static function has_elementor_cart(): bool {
+		$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'cart' ) );
 
 		if ( $elementor_widgets ) {
-			return in_array( 'woocommerce-cart-page', $elementor_widgets);
+			return in_array( 'woocommerce-cart-page', $elementor_widgets, true );
 		}
 
 		return false;
@@ -87,7 +89,7 @@ class CartCheckoutDetector {
 	 *
 	 * @return bool
 	 */
-	public function has_block_checkout(): bool {
+	public static function has_block_checkout(): bool {
 		$checkout_page_id = wc_get_page_id( 'checkout' );
 		return $checkout_page_id && has_block( 'woocommerce/checkout', $checkout_page_id );
 	}
@@ -97,7 +99,7 @@ class CartCheckoutDetector {
 	 *
 	 * @return bool
 	 */
-	public function has_block_cart(): bool {
+	public static function has_block_cart(): bool {
 		$cart_page_id = wc_get_page_id( 'cart' );
 		return $cart_page_id && has_block( 'woocommerce/cart', $cart_page_id );
 	}
@@ -107,7 +109,7 @@ class CartCheckoutDetector {
 	 *
 	 * @return bool
 	 */
-	public function has_classic_checkout(): bool {
+	public static function has_classic_checkout(): bool {
 		$checkout_page_id = wc_get_page_id( 'checkout' );
 		return $checkout_page_id && has_block( 'woocommerce/classic-shortcode', $checkout_page_id );
 	}
@@ -117,7 +119,7 @@ class CartCheckoutDetector {
 	 *
 	 * @return bool
 	 */
-	public function has_classic_cart(): bool {
+	public static function has_classic_cart(): bool {
 		$cart_page_id = wc_get_page_id( 'cart' );
 		return $cart_page_id && has_block( 'woocommerce/classic-shortcode', $cart_page_id );
 	}
