@@ -1452,9 +1452,10 @@ return array(
 					'amex'       => array(),
 				),
 				'FR' => array(
-					'mastercard' => array(),
-					'visa'       => array(),
-					'amex'       => array(),
+					'mastercard'     => array(),
+					'visa'           => array(),
+					'amex'           => array(),
+					'carte-bancaire' => array( 'EUR' ),
 				),
 				'GB' => array(
 					'mastercard' => array(),
@@ -1482,10 +1483,11 @@ return array(
 					'amex'       => array(),
 				),
 				'US' => array(
-					'mastercard' => array(),
-					'visa'       => array(),
-					'amex'       => array( 'USD' ),
-					'discover'   => array( 'USD' ),
+					'mastercard'     => array(),
+					'visa'           => array(),
+					'amex'           => array( 'USD' ),
+					'discover'       => array( 'USD' ),
+					'debit-networks' => array(),
 				),
 				'CA' => array(
 					'mastercard' => array(),
@@ -1568,6 +1570,7 @@ return array(
 					'visa'       => array(),
 					'amex'       => array( 'JPY' ),
 					'jcb'        => array( 'JPY' ),
+					'diners'     => array(),
 				),
 			)
 		);
