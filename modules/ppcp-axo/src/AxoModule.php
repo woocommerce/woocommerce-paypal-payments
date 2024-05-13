@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -196,6 +197,16 @@ class AxoModule implements ModuleInterface {
 					},
 					10,
 					2
+				);
+
+				// Set Axo as the default payment method on checkout for guest customers.
+				add_action(
+					'template_redirect',
+					function () {
+						if ( ! is_user_logged_in() && is_checkout() && ! is_wc_endpoint_url() ) {
+							WC()->session->set( 'chosen_payment_method', AxoGateway::ID );
+						}
+					}
 				);
 
 			},
