@@ -161,7 +161,7 @@ return array(
 					'class'        => array(),
 					'label'        => __( 'Enable this to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => array(),
+					'gateway'      => array( 'dcc', 'axo' ),
 					'requirements' => array( 'axo' ),
 				),
 				'axo_style_heading'                  => array(
