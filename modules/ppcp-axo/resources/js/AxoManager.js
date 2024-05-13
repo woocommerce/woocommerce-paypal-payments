@@ -702,14 +702,12 @@ class AxoManager {
     }
 
     cardComponentData() {
-        const fields = {
-            cardholderName: {
-                enabled: true
-            }
-        };
-
         return {
-            fields: fields,
+            fields: {
+                cardholderName: {
+                    enabled: this.axoConfig.name_on_card === '1'
+                }
+            },
             styles: this.deleteKeysWithEmptyString(this.axoConfig.style_options)
         }
     }
