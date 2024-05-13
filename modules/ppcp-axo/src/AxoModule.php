@@ -110,7 +110,7 @@ class AxoModule implements ModuleInterface {
 
 		add_action(
 			'init',
-			static function () use ( $c, $module ) {
+			function () use ( $c, $module ) {
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
