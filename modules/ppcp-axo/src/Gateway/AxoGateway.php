@@ -159,7 +159,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->card_icons_axo       = $card_icons_axo;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'PayPal Fastlane offers an accelerated checkout experience that recognizes guest shoppers and autofills their details so they can pay in seconds.', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'Fastlane accelerates the checkout experience for guest shoppers and autofills their details so they can pay in seconds. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' );
 
 		$is_axo_enabled = $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' );
 		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
