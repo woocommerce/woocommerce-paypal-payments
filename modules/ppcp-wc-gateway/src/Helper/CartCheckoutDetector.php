@@ -60,7 +60,7 @@ class CartCheckoutDetector {
 	 * @return bool
 	 */
 	public static function has_elementor_checkout(): bool {
-		// Check if Elementor is installed and activated
+		// Check if Elementor is installed and activated.
 		if ( did_action( 'elementor/loaded' ) ) {
 			$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'checkout' ) );
 

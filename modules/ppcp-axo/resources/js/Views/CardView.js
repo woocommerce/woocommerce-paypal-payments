@@ -52,7 +52,7 @@ class CardView {
                                 <img
                                     class="ppcp-card-icon"
                                     title="${data.value('brand')}"
-                                    src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/axo/${cardIcons[data.value('brand')]}"
+                                    src="${window.wc_ppcp_axo.module_url}/assets/images/axo/${cardIcons[data.value('brand')]}"
                                     alt="${data.value('brand')}"
                                 >
                             </div>
