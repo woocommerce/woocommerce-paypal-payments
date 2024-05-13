@@ -197,6 +197,7 @@ class AxoManager {
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
+			'module_url' => untrailingslashit( $this->module_url ),
 		);
 	}
 
