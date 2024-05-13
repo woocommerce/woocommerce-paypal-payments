@@ -147,25 +147,41 @@ return array(
 	},
 
 	'axo.checkout-config-notice'            => static function ( ContainerInterface $container ) : string {
-		$checkout_page_link = get_edit_post_link( wc_get_page_id( 'checkout' ) );
+		$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
+		$block_checkout_docs_link = __(
+			'https://woocommerce.com/document/cart-checkout-blocks-status/#reverting-to-the-cart-and-checkout-shortcodes',
+			'woocommerce-paypal-payments'
+		);
 
 		if ( CartCheckoutDetector::has_elementor_checkout() ) {
 			$notice_content = sprintf(
-				/* translators: %1$s: URL to the Checkout edit page. */
+				/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
 				__(
-					'<span class="highlight">Important:</span> Your store has a <a href="%1$s">Checkout page</a> with the Elementor Checkout widget configured. Fastlane requires your current Checkout page to include a <code>Classic Checkout</code> or <code>[woocommerce_checkout]</code> shortcode to accelerate the payment process.',
+					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store currently uses the <code>Elementor Checkout widget</code>. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
 					'woocommerce-paypal-payments'
 				),
-				esc_url( $checkout_page_link )
+				esc_url( $checkout_page_link ),
+				esc_url( $block_checkout_docs_link )
 			);
 		} elseif ( CartCheckoutDetector::has_block_checkout() ) {
 			$notice_content = sprintf(
-				/* translators: %1$s: URL to the Checkout edit page. */
+				/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
 				__(
-					'<span class="highlight">Important:</span> Your store has a <a href="%1$s">Checkout page</a> with the WooCommerce Checkout block configured. Fastlane requires your current Checkout page to include a <code>Classic Checkout</code> or <code>[woocommerce_checkout]</code> shortcode to accelerate the payment process.',
+					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store currently uses the WooCommerce <code>Checkout</code> block. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
 					'woocommerce-paypal-payments'
 				),
-				esc_url( $checkout_page_link )
+				esc_url( $checkout_page_link ),
+				esc_url( $block_checkout_docs_link )
+			);
+		} elseif ( ! CartCheckoutDetector::has_classic_checkout() ) {
+			$notice_content = sprintf(
+			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
+				__(
+					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store does not seem to be properly configured or uses an incompatible <code>third-party Checkout</code> solution. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $checkout_page_link ),
+				esc_url( $block_checkout_docs_link )
 			);
 		} else {
 			return '';
