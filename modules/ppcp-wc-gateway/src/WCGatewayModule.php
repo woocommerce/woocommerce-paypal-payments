@@ -627,6 +627,7 @@ class WCGatewayModule implements ModuleInterface {
 				$field = $renderer->render_password( $field, $key, $args, $value );
 				$field = $renderer->render_heading( $field, $key, $args, $value );
 				$field = $renderer->render_table( $field, $key, $args, $value );
+				$field = $renderer->render_html( $field, $key, $args, $value );
 				return $field;
 			},
 			10,
