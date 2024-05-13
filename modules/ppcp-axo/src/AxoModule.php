@@ -285,7 +285,7 @@ class AxoModule implements ModuleInterface {
 	 * @param Settings $settings The settings.
 	 * @return bool
 	 */
-	private function should_render_fastlane( Settings $settings): bool {
+	private function should_render_fastlane( Settings $settings ): bool {
 		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
 
 		return ! is_user_logged_in()
