@@ -437,7 +437,7 @@ class AxoManager {
         if (!document.querySelector(pc.selector)) {
             const gatewayPaymentContainer = document.querySelector('.payment_method_ppcp-axo-gateway');
             gatewayPaymentContainer.insertAdjacentHTML('beforeend', `
-                <div id="${pc.id}" class="${pc.className} hidden">
+                <div id="${pc.id}" class="${pc.className} axo-hidden">
                     <div id="${pc.id}-form" class="${pc.className}-form"></div>
                     <div id="${pc.id}-details" class="${pc.className}-details"></div>
                 </div>
