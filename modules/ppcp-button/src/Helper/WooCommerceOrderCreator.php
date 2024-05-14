@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use RuntimeException;
 use WC_Order;
 use WC_Order_Item_Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -61,6 +62,10 @@ class WooCommerceOrderCreator {
 	public function create_from_paypal_order( Order $order, array $line_items ): WC_Order {
 		$wc_order = wc_create_order();
 
+		if ( ! $wc_order instanceof WC_Order ) {
+			throw new RuntimeException( 'Problem creating WC order.' );
+		}
+
 		$this->configure_line_items( $wc_order, $line_items );
 		$this->configure_shipping( $wc_order, $order->payer(), $order->purchase_units()[0]->shipping() );
 		$this->configure_payment_source( $wc_order );
@@ -86,7 +91,13 @@ class WooCommerceOrderCreator {
 			$args         = $variation_id > 0 ? array( 'variation_id' => $variation_id ) : array();
 			$quantity     = $line_item['quantity'] ?? 0;
 
-			$wc_order->add_product( wc_get_product( $product_id ), $quantity, $args );
+			$item = wc_get_product( $product_id );
+
+			if ( ! $item ) {
+				return;
+			}
+
+			$wc_order->add_product( $item, $quantity, $args );
 		}
 	}
 
@@ -94,51 +105,60 @@ class WooCommerceOrderCreator {
 	 * Configures the shipping & billing addresses for WC order from given payer.
 	 *
 	 * @param WC_Order      $wc_order The WC order.
-	 * @param Payer         $payer The payer.
+	 * @param Payer|null    $payer The payer.
 	 * @param Shipping|null $shipping The shipping.
 	 * @return void
 	 */
-	protected function configure_shipping( WC_Order $wc_order, Payer $payer, ?Shipping $shipping ): void {
+	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping ): void {
 		$shipping_address = null;
+		$billing_address = null;
+		$shipping_options = null;
 
-		$address = $payer->address();
+		if ( $payer  && $address = $payer->address() ) {
+			$payerName = $payer->name();
 
-		$billing_address = array(
-			'first_name' => $payer->name()->given_name() ?? '',
-			'last_name'  => $payer->name()->surname() ?? '',
-			'address_1'  => $address->address_line_1() ?? '',
-			'address_2'  => $address->address_line_2() ?? '',
-			'city'       => $address->admin_area_2() ?? '',
-			'state'      => $address->admin_area_1() ?? '',
-			'postcode'   => $address->postal_code() ?? '',
-			'country'    => $address->country_code() ?? '',
-		);
+			$billing_address = array(
+				'first_name' => $payerName ? $payerName->given_name() : '',
+				'last_name'  => $payerName ? $payerName->surname() : '',
+				'address_1'  => $address->address_line_1(),
+				'address_2'  => $address->address_line_2(),
+				'city'       => $address->admin_area_2(),
+				'state'      => $address->admin_area_1(),
+				'postcode'   => $address->postal_code(),
+				'country'    => $address->country_code(),
+			);
+		}
 
 		if ( $shipping ) {
 			$address = $shipping->address();
 
 			$shipping_address = array(
-				'first_name' => $shipping->name() ?? '',
+				'first_name' => $shipping->name(),
 				'last_name'  => '',
-				'address_1'  => $address->address_line_1() ?? '',
-				'address_2'  => $address->address_line_2() ?? '',
-				'city'       => $address->admin_area_2() ?? '',
-				'state'      => $address->admin_area_1() ?? '',
-				'postcode'   => $address->postal_code() ?? '',
-				'country'    => $address->country_code() ?? '',
+				'address_1'  => $address->address_line_1(),
+				'address_2'  => $address->address_line_2(),
+				'city'       => $address->admin_area_2(),
+				'state'      => $address->admin_area_1(),
+				'postcode'   => $address->postal_code(),
+				'country'    => $address->country_code(),
 			);
+
+			$shipping_options = $shipping->options()[0] ?? '';
 		}
 
-		$wc_order->set_shipping_address( $shipping_address ?? $billing_address );
-		$wc_order->set_billing_address( $billing_address );
+		if ( $shipping_address ) {
+			$wc_order->set_shipping_address( $shipping_address );
+		}
 
-		$shipping_options = $shipping->options()[0] ?? '';
+		if ( $billing_address || $shipping_address ) {
+			$wc_order->set_billing_address( $billing_address ?: $shipping_address );
+		}
 
 		if ( $shipping_options ) {
 			$shipping = new WC_Order_Item_Shipping();
 			$shipping->set_method_title( $shipping_options->label() );
 			$shipping->set_method_id( $shipping_options->id() );
-			$shipping->set_total( $shipping_options->amount()->value() );
+			$shipping->set_total( $shipping_options->amount()->value_str() );
 
 			$wc_order->add_item( $shipping );
 		}
@@ -153,7 +173,10 @@ class WooCommerceOrderCreator {
 	protected function configure_payment_source( WC_Order $wc_order ): void {
 		$funding_source = $this->session_handler->funding_source();
 		$wc_order->set_payment_method( PayPalGateway::ID );
-		$wc_order->set_payment_method_title( $this->funding_source_renderer->render_name( $funding_source ) );
+
+		if ( $funding_source ) {
+			$wc_order->set_payment_method_title( $this->funding_source_renderer->render_name( $funding_source ) );
+		}
 	}
 
 	/**
