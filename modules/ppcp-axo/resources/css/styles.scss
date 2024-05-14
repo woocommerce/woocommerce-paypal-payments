@@ -7,7 +7,7 @@
 	padding: 1rem 0;
 	background-color: #ffffff;
 
-	&.hidden {
+	&.axo-hidden {
 		display: none;
 	}
 }
@@ -42,4 +42,15 @@
 		box-sizing: border-box;
 		margin: var(--global-md-spacing) 0 1em;
 		padding: 0.6em 1em;
+}
+
+#payment .payment_methods li label[for="payment_method_ppcp-axo-gateway"] {
+	img {
+		float: none;
+		vertical-align: middle;
+	}
+
+	.ppcp-card-icon {
+		max-height: 25px;
+	}
 }

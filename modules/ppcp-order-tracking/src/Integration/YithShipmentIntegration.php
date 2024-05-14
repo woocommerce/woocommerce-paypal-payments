@@ -15,11 +15,15 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Integration;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class YithShipmentIntegration.
  */
 class YithShipmentIntegration implements Integration {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The shipment factory.
@@ -76,20 +80,21 @@ class YithShipmentIntegration implements Integration {
 					return;
 				}
 
-				$transaction_id = $wc_order->get_transaction_id();
+				$paypal_order = ppcp_get_paypal_order( $wc_order );
+				$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$tracking_number = wc_clean( wp_unslash( $_POST['ywot_tracking_code'] ?? '' ) );
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$carrier = wc_clean( wp_unslash( $_POST['ywot_carrier_name'] ?? '' ) );
 
-				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
+				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $capture_id ) {
 					return;
 				}
 
 				try {
 					$ppcp_shipment = $this->shipment_factory->create_shipment(
 						$order_id,
-						$transaction_id,
+						$capture_id,
 						$tracking_number,
 						'SHIPPED',
 						'OTHER',

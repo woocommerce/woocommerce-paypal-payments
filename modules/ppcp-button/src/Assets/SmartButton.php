@@ -1506,7 +1506,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	private function bn_code_for_context( string $context ): string {
 
 		$codes = $this->bn_codes();
-		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : '';
+		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : 'Woo_PPCP';
 	}
 
 	/**

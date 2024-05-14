@@ -1,5 +1,12 @@
 *** Changelog ***
 
+= 2.7.1 - xxxx-xx-xx =
+* Fix - Ensure package tracking data is sent to original PayPal transaction #2180
+* Fix - Set the 'Woo_PPCP' as a default value for data-partner-attribution-id #2188
+* Fix - Allow PUI Gateway for refund processor #2192
+* Fix - Notice on newly created block cart checkout #2211
+* Fix - Apple Pay button in the editor #2177
+
 = 2.7.0 - 2024-04-30 =
 * Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
 * Fix - Incorrect Pricing Issue with Variable Subscriptions in PayPal Subscriptions Mode #2156

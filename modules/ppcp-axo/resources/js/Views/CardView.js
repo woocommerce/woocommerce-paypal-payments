@@ -32,10 +32,13 @@ class CardView {
                 const expiry = data.value('expiry').split('-');
 
                 const cardIcons = {
-                    'VISA':        'visa-dark.svg',
-                    'MASTER_CARD': 'mastercard-dark.svg',
+                    'VISA':        'visa-light.svg',
+                    'MASTER_CARD': 'mastercard-light.svg',
                     'AMEX':        'amex.svg',
                     'DISCOVER':    'discover.svg',
+                    'DINERS':      'dinersclub-light.svg',
+                    'JCB':         'jcb-light.svg',
+                    'UNIONPAY':    'unionpay-light.svg',
                 };
 
                 return `
@@ -49,7 +52,7 @@ class CardView {
                                 <img
                                     class="ppcp-card-icon"
                                     title="${data.value('brand')}"
-                                    src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/${cardIcons[data.value('brand')]}"
+                                    src="${window.wc_ppcp_axo.module_url}/assets/images/axo/${cardIcons[data.value('brand')]}"
                                     alt="${data.value('brand')}"
                                 >
                             </div>

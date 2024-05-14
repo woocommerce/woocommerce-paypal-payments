@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
+use WooCommerce\PayPalCommerce\Axo\Helper\NoticeRenderer;
 use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -69,7 +70,7 @@ return array(
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Fastlane by PayPal', 'woocommerce-paypal-payments' )
 						. '<p class="description">'
-						. __( 'Help accelerate checkout for guests with PayPal\'s autofill solution.', 'woocommerce-paypal-payments' )
+						. __( 'Help accelerate the checkout process for guests with PayPal\'s autofill solution. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' )
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
@@ -82,6 +83,7 @@ return array(
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_gateway_title' )
+									->action_visible( 'axo_checkout_config_notice' )
 									->action_visible( 'axo_privacy' )
 									->action_visible( 'axo_name_on_card' )
 									->action_visible( 'axo_style_heading' )
@@ -111,6 +113,18 @@ return array(
 						),
 					),
 					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+				),
+				'axo_checkout_config_notice'         => array(
+					'heading'      => '',
+					'html'         => $container->get( 'axo.checkout-config-notice' ),
+					'type'         => 'ppcp-html',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'class'        => array(),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'dcc', 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
 				),
 				'axo_gateway_title'                  => array(
 					'title'        => __( 'Gateway Title', 'woocommerce-paypal-payments' ),
@@ -161,7 +175,7 @@ return array(
 					'class'        => array(),
 					'label'        => __( 'Enable this to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => array(),
+					'gateway'      => array( 'dcc', 'axo' ),
 					'requirements' => array( 'axo' ),
 				),
 				'axo_style_heading'                  => array(
