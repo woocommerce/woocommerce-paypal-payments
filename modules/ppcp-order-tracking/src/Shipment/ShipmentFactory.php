@@ -19,13 +19,13 @@ class ShipmentFactory implements ShipmentFactoryInterface {
 	 */
 	public function create_shipment(
 		int $wc_order_id,
-		string $transaction_id,
+		string $capture_id,
 		string $tracking_number,
 		string $status,
 		string $carrier,
 		string $carrier_name_other,
 		array $line_items
 	): ShipmentInterface {
-		return new Shipment( $wc_order_id, $transaction_id, $tracking_number, $status, $carrier, $carrier_name_other, $line_items );
+		return new Shipment( $wc_order_id, $capture_id, $tracking_number, $status, $carrier, $carrier_name_other, $line_items );
 	}
 }

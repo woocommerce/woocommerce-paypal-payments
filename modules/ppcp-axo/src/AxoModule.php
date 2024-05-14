@@ -14,12 +14,16 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
 /**
  * Class AxoModule
@@ -77,9 +81,36 @@ class AxoModule implements ModuleInterface {
 			9
 		);
 
+		// Hides credit card gateway on checkout when using Fastlane.
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $methods ) use ( $c ): array {
+				if ( ! is_array( $methods ) || ! $c->get( 'axo.eligible' ) ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( apply_filters(
+					'woocommerce_paypal_payments_axo_hide_credit_card_gateway',
+					$this->hide_credit_card_when_using_fastlane( $methods, $settings )
+				) ) {
+					unset( $methods[ CreditCardGateway::ID ] );
+				}
+
+				return $methods;
+			}
+		);
+
 		add_action(
 			'init',
-			static function () use ( $c, $module ) {
+			function () use ( $c, $module ) {
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
@@ -169,6 +200,19 @@ class AxoModule implements ModuleInterface {
 					2
 				);
 
+				// Set Axo as the default payment method on checkout for guest customers.
+				add_action(
+					'template_redirect',
+					function () use ( $c ) {
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+
+						if ( $this->should_render_fastlane( $settings ) ) {
+							WC()->session->set( 'chosen_payment_method', AxoGateway::ID );
+						}
+					}
+				);
+
 			},
 			1
 		);
@@ -220,5 +264,32 @@ class AxoModule implements ModuleInterface {
 	 * @return string|void
 	 */
 	public function getKey() {
+	}
+
+	/**
+	 * Condition to evaluate if Credit Card gateway should be hidden.
+	 *
+	 * @param array    $methods WC payment methods.
+	 * @param Settings $settings The settings.
+	 * @return bool
+	 */
+	private function hide_credit_card_when_using_fastlane( array $methods, Settings $settings ): bool {
+		return $this->should_render_fastlane( $settings ) && isset( $methods[ CreditCardGateway::ID ] );
+	}
+
+	/**
+	 * Condition to evaluate if Fastlane should be rendered.
+	 *
+	 * Fastlane should only render on the classic checkout, when Fastlane is enabled in the settings and also only for guest customers.
+	 *
+	 * @param Settings $settings The settings.
+	 * @return bool
+	 */
+	private function should_render_fastlane( Settings $settings ): bool {
+		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
+
+		return ! is_user_logged_in()
+			&& CartCheckoutDetector::has_classic_checkout()
+			&& $is_axo_enabled;
 	}
 }

@@ -803,6 +803,15 @@ return array(
 					'elo'             => _x( 'Elo', 'Name of credit card', 'woocommerce-paypal-payments' ),
 					'hiper'           => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
 				),
+				'options_axo'  => array(
+					'visa-light'       => _x( 'Visa (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'mastercard-light' => _x( 'Mastercard (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'amex-light'       => _x( 'Amex (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'discover-light'   => _x( 'Discover (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'dinersclub-light' => _x( 'Diners Club (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'jcb-light'        => _x( 'JCB (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'unionpay-light'   => _x( 'UnionPay (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+				),
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),

@@ -2,9 +2,9 @@ import FormFieldGroup from "../Components/FormFieldGroup";
 
 class ShippingView {
 
-    constructor(selector, elements) {
+    constructor(selector, elements, states) {
         this.el = elements;
-
+        this.states = states;
         this.group = new FormFieldGroup({
             baseSelector: '.woocommerce-checkout',
             contentSelector: selector,
@@ -34,6 +34,24 @@ class ShippingView {
                         </div>
                     `;
                 }
+                const countryCode = data.value('countryCode');
+                const stateCode = data.value('stateCode');
+                const stateName = (this.states[countryCode] && this.states[countryCode][stateCode]) ? this.states[countryCode][stateCode] : stateCode;
+
+                if(
+                    this.hasEmptyValues(data, stateName)
+                ) {
+                    return `
+                        <div style="margin-bottom: 20px;">
+                            <div class="axo-checkout-header-section">
+                                <h3>Shipping</h3>
+                                <a href="javascript:void(0)" ${this.el.changeShippingAddressLink.attributes}>Edit</a>
+                            </div>
+                            <div>Please fill in your shipping details.</div>
+                        </div>
+                    `;
+                }
+
                 return `
                     <div style="margin-bottom: 20px;">
                         <div class="axo-checkout-header-section">
@@ -45,9 +63,8 @@ class ShippingView {
                         <div>${data.value('firstName')} ${data.value('lastName')}</div>
                         <div>${data.value('street1')}</div>
                         <div>${data.value('street2')}</div>
-                        <div>${data.value('postCode')} ${data.value('city')}</div>
-                        <div>${valueOfSelect('#shipping_state', data.value('stateCode'))}</div>
-                        <div>${valueOfSelect('#shipping_country', data.value('countryCode'))}</div>
+                        <div>${data.value('city')}, ${stateName} ${data.value('postCode')}</div>
+                        <div>${valueOfSelect('#billing_country', countryCode)}</div>
                         <div>${data.value('phone')}</div>
                     </div>
                 `;
@@ -113,6 +130,15 @@ class ShippingView {
                 }
             }
         });
+    }
+
+    hasEmptyValues(data, stateName) {
+        return !data.value('email')
+            || !data.value('firstName')
+            || !data.value('lastName')
+            || !data.value('street1')
+            || !data.value('city')
+            || !stateName;
     }
 
     isActive() {

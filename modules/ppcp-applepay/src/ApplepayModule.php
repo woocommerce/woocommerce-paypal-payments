@@ -92,6 +92,7 @@ class ApplepayModule implements ModuleInterface {
 				}
 
 				$module->load_admin_assets( $c, $apple_payment_method );
+				$module->load_block_editor_assets( $c, $apple_payment_method );
 			},
 			1
 		);
@@ -178,6 +179,13 @@ class ApplepayModule implements ModuleInterface {
 			}
 		);
 		add_action(
+			'enqueue_block_editor_assets',
+			function () use ( $c, $button ) {
+				$button->enqueue_admin_styles();
+			}
+		);
+
+		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'applepay.blocks-payment-method' ) );
@@ -207,6 +215,7 @@ class ApplepayModule implements ModuleInterface {
 				 * @psalm-suppress UndefinedInterfaceMethod
 				 */
 				$button->enqueue_admin();
+				$button->enqueue_admin_styles();
 			}
 		);
 
@@ -218,6 +227,28 @@ class ApplepayModule implements ModuleInterface {
 					$settings['components'][] = 'applepay';
 				}
 				return $settings;
+			}
+		);
+	}
+
+	/**
+	 * Enqueues the editor assets.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @param ApplePayButton     $button The button.
+	 * @return void
+	 */
+	public function load_block_editor_assets( ContainerInterface $c, ApplePayButton $button ): void {
+		// Enqueue backend scripts.
+		add_action(
+			'enqueue_block_editor_assets',
+			static function () use ( $c, $button ) {
+				/**
+				 * Should add this to the ButtonInterface.
+				 *
+				 * @psalm-suppress UndefinedInterfaceMethod
+				 */
+				$button->enqueue_admin_styles();
 			}
 		);
 	}

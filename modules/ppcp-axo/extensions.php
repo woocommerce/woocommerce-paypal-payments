@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
+use WooCommerce\PayPalCommerce\Axo\Helper\NoticeRenderer;
 use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -69,7 +70,7 @@ return array(
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Fastlane by PayPal', 'woocommerce-paypal-payments' )
 						. '<p class="description">'
-						. __( 'Help accelerate checkout for guests with PayPal\'s autofill solution.', 'woocommerce-paypal-payments' )
+						. __( 'Help accelerate the checkout process for guests with PayPal\'s autofill solution. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' )
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
@@ -82,7 +83,9 @@ return array(
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_gateway_title' )
+									->action_visible( 'axo_checkout_config_notice' )
 									->action_visible( 'axo_privacy' )
+									->action_visible( 'axo_name_on_card' )
 									->action_visible( 'axo_style_heading' )
 									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
@@ -94,6 +97,7 @@ return array(
 									->action_visible( 'axo_style_root_bg_color' )
 									->action_visible( 'axo_style_root_error_color' )
 									->action_visible( 'axo_style_root_font_family' )
+									->action_visible( 'axo_style_root_text_color_base' )
 									->action_visible( 'axo_style_root_font_size_base' )
 									->action_visible( 'axo_style_root_padding' )
 									->action_visible( 'axo_style_root_primary_color' )
@@ -109,6 +113,18 @@ return array(
 						),
 					),
 					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
+				),
+				'axo_checkout_config_notice'         => array(
+					'heading'      => '',
+					'html'         => $container->get( 'axo.checkout-config-notice' ),
+					'type'         => 'ppcp-html',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'class'        => array(),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'dcc', 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
 				),
 				'axo_gateway_title'                  => array(
 					'title'        => __( 'Gateway Title', 'woocommerce-paypal-payments' ),
@@ -133,7 +149,7 @@ return array(
 					'title'        => __( 'Privacy', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'label'        => __(
-						'Require customers to confirm express payments from the Cart and Express Checkout on the checkout page.
+						'This setting will control whether Fastlane branding is shown by email field.
 <p class="description">PayPal powers this accelerated checkout solution from Fastlane. Since you\'ll share consumers\' email addresses with PayPal, please consult your legal advisors on the apropriate privacy setting for your business.</p>',
 						'woocommerce-paypal-payments'
 					),
@@ -147,6 +163,17 @@ return array(
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'default'      => 'yes',
 					'options'      => PropertiesDictionary::privacy_options(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => array( 'dcc', 'axo' ),
+					'requirements' => array( 'axo' ),
+				),
+				'axo_name_on_card'                   => array(
+					'title'        => __( 'Display Name on Card', 'woocommerce-paypal-payments' ),
+					'type'         => 'checkbox',
+					'default'      => 'yes',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'class'        => array(),
+					'label'        => __( 'Enable this to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => array( 'dcc', 'axo' ),
 					'requirements' => array( 'axo' ),
@@ -200,52 +227,9 @@ return array(
 				'axo_style_root_bg_color'            => array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '#ffffff',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#ffffff',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_style_root_error_color'         => array(
-					'title'        => __( 'Error Color', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#d9360b',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_style_root_font_family'         => array(
-					'title'        => __( 'Font Family', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => 'PayPal Open',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_style_root_font_size_base'      => array(
-					'title'        => __( 'Font Size Base', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '16px',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_style_root_padding'             => array(
-					'title'        => __( 'Padding', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '4px',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -255,8 +239,69 @@ return array(
 				'axo_style_root_primary_color'       => array(
 					'title'        => __( 'Primary Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '#0057F',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#0057ff',
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_error_color'         => array(
+					'title'        => __( 'Error Color', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'placeholder'  => '#D9360B',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_font_family'         => array(
+					'title'        => __( 'Font Family', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'placeholder'  => 'PayPal-Open',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_text_color_base'     => array(
+					'title'        => __( 'Text Color Base', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'placeholder'  => '#010B0D',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_font_size_base'      => array(
+					'title'        => __( 'Font Size Base', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'placeholder'  => '16px',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_padding'             => array(
+					'title'        => __( 'Padding', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'placeholder'  => '4px',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -278,8 +323,9 @@ return array(
 				'axo_style_input_bg_color'           => array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '#ffffff',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#ffffff',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -289,8 +335,9 @@ return array(
 				'axo_style_input_border_radius'      => array(
 					'title'        => __( 'Border Radius', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '0.25em',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '0.25em',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -300,8 +347,9 @@ return array(
 				'axo_style_input_border_color'       => array(
 					'title'        => __( 'Border Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '#DADDDD',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#dadddd',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -311,8 +359,9 @@ return array(
 				'axo_style_input_border_width'       => array(
 					'title'        => __( 'Border Width', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '1px',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '1px',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -322,8 +371,9 @@ return array(
 				'axo_style_input_text_color_base'    => array(
 					'title'        => __( 'Text Color Base', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '#010B0D',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#010b0d',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),
@@ -333,8 +383,9 @@ return array(
 				'axo_style_input_focus_border_color' => array(
 					'title'        => __( 'Focus Border Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
+					'placeholder'  => '#0057FF',
 					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '#0057ff',
+					'default'      => '',
 					'screens'      => array(
 						State::STATE_ONBOARDED,
 					),

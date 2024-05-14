@@ -16,16 +16,18 @@ use WooCommerce\PayPalCommerce\Compat\Integration;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\TrackingAvailabilityTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_HTTP_Response;
 use WP_REST_Request;
 use WP_REST_Server;
+use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class WcShippingTaxIntegration.
  */
 class WcShippingTaxIntegration implements Integration {
 
-	use TrackingAvailabilityTrait;
+	use TrackingAvailabilityTrait, TransactionIdHandlingTrait;
 
 	/**
 	 * The shipment factory.
@@ -99,15 +101,16 @@ class WcShippingTaxIntegration implements Integration {
 						continue;
 					}
 
-					$transaction_id = $wc_order->get_transaction_id();
-					$carrier        = $label['carrier_id'] ?? $label['service_name'] ?? '';
-					$items          = array_map( 'intval', $label['product_ids'] ?? array() );
+					$paypal_order = ppcp_get_paypal_order( $wc_order );
+					$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
+					$carrier      = $label['carrier_id'] ?? $label['service_name'] ?? '';
+					$items        = array_map( 'intval', $label['product_ids'] ?? array() );
 
-					if ( ! $carrier || ! $transaction_id ) {
+					if ( ! $carrier || ! $capture_id ) {
 						continue;
 					}
 
-					$this->sync_tracking( $order_id, $transaction_id, $tracking_number, $carrier, $items );
+					$this->sync_tracking( $order_id, $capture_id, $tracking_number, $carrier, $items );
 				}
 
 				return $response;
@@ -122,7 +125,7 @@ class WcShippingTaxIntegration implements Integration {
 	 * Syncs (add | update) the PayPal tracking with given info.
 	 *
 	 * @param int    $wc_order_id The WC order ID.
-	 * @param string $transaction_id The transaction ID.
+	 * @param string $capture_id The capture ID.
 	 * @param string $tracking_number The tracking number.
 	 * @param string $carrier The shipment carrier.
 	 * @param int[]  $items The list of line items IDs.
@@ -130,7 +133,7 @@ class WcShippingTaxIntegration implements Integration {
 	 */
 	protected function sync_tracking(
 		int $wc_order_id,
-		string $transaction_id,
+		string $capture_id,
 		string $tracking_number,
 		string $carrier,
 		array $items
@@ -138,7 +141,7 @@ class WcShippingTaxIntegration implements Integration {
 		try {
 			$ppcp_shipment = $this->shipment_factory->create_shipment(
 				$wc_order_id,
-				$transaction_id,
+				$capture_id,
 				$tracking_number,
 				'SHIPPED',
 				'OTHER',

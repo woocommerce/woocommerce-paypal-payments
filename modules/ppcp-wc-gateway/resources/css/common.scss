@@ -56,13 +56,22 @@ $background-ident-color: #fbfbfb;
 	}
 }
 
-.ppcp-important {
-	background: white;
-	padding: 5px 5px 5px 15px;
-	border-left: 2px solid #dba617;
+.ppcp-notice {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left-width: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	margin: 5px 15px 2px;
+	padding: 1px 12px;
+}
 
-	span {
+.ppcp-notice-warning {
+	border-left-color: #dba617;
+
+	.highlight {
+		background: transparent;
 		color: #dba617;
+		font-weight: 600;
 	}
 }
 
@@ -87,6 +96,18 @@ $background-ident-color: #fbfbfb;
 
 			th, &.ppcp-settings-field-heading td  {
 				padding-left: 40px;
+				padding-right: 40px;
+			}
+
+			.ppcp-notice  {
+				margin-left: 40px;
+				margin-right: 10px;
+				padding: 1px 12px;
+
+				p {
+					margin: .5em 0;
+					padding: 2px;
+				}
 			}
 
 			th, td {

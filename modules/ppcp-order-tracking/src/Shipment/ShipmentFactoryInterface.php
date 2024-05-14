@@ -20,7 +20,7 @@ interface ShipmentFactoryInterface {
 	 * Returns the new shipment instance.
 	 *
 	 * @param int    $wc_order_id The WC order ID.
-	 * @param string $transaction_id The transaction ID.
+	 * @param string $capture_id The capture ID.
 	 * @param string $tracking_number The tracking number.
 	 * @param string $status The shipment status.
 	 * @param string $carrier The shipment carrier.
@@ -32,7 +32,7 @@ interface ShipmentFactoryInterface {
 	 */
 	public function create_shipment(
 		int $wc_order_id,
-		string $transaction_id,
+		string $capture_id,
 		string $tracking_number,
 		string $status,
 		string $carrier,
