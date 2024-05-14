@@ -79,6 +79,13 @@ class AxoManager {
 	private $session_handler;
 
 	/**
+	 * The WcGateway module URL.
+	 *
+	 * @var string
+	 */
+	private $wcgateway_module_url;
+
+	/**
 	 * AxoManager constructor.
 	 *
 	 * @param string          $module_url The URL to the module.
@@ -89,6 +96,7 @@ class AxoManager {
 	 * @param SettingsStatus  $settings_status The Settings status helper.
 	 * @param string          $currency 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
+	 * @param string          $wcgateway_module_url The WcGateway module URL.
 	 */
 	public function __construct(
 		string $module_url,
@@ -98,7 +106,8 @@ class AxoManager {
 		Environment $environment,
 		SettingsStatus $settings_status,
 		string $currency,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		string $wcgateway_module_url
 	) {
 
 		$this->module_url      = $module_url;
@@ -109,6 +118,7 @@ class AxoManager {
 		$this->settings_status = $settings_status;
 		$this->currency        = $currency;
 		$this->logger          = $logger;
+		$this->wcgateway_module_url = $wcgateway_module_url;
 	}
 
 	/**
@@ -197,7 +207,7 @@ class AxoManager {
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'module_url' => untrailingslashit( $this->module_url ),
+			'icons_directory' => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
 		);
 	}
 
