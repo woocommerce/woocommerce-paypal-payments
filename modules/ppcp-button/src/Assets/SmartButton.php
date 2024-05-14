@@ -1279,7 +1279,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'user'                                    => array(
 				'is_logged' => is_user_logged_in(),
 			),
-			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal
+			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
 		);
 
 		if ( 'pay-now' === $this->context() ) {
