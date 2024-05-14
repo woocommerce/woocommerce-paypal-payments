@@ -89,7 +89,7 @@ class SubscriptionHelper {
 	 */
 	public function accept_only_automatic_payment_gateways(): bool {
 
-		if ( ! $this->plugin_is_active() ) {
+		if ( ! $this->plugin_is_active() || ! class_exists( \WC_Subscriptions_Admin::class ) ) {
 			return false;
 		}
 		$accept_manual_renewals = 'no' !== get_option(
