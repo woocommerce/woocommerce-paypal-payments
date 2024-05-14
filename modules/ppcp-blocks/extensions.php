@@ -46,7 +46,7 @@ return array(
 
 		if ( wc_terms_and_conditions_page_id() > 0 ) {
 			$label .= __(
-				'<p class="description ppcp-important"><span>Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Please be aware that disabling this option may prevent buyers from being able to consent to the terms when using a PayPal express payment method, as the final checkout confirmation will be skipped.</p>',
+				'<div class="ppcp-notice ppcp-notice-warning"><p><span class="highlight">Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Please be aware that disabling this option may prevent buyers from being able to consent to the terms when using a PayPal express payment method, as the final checkout confirmation will be skipped.</p></div>',
 				'woocommerce-paypal-payments'
 			);
 		}
