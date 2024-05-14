@@ -20,7 +20,11 @@ const onApprove = (context, errorHandler) => {
                     errorHandler.genericError();
                 });
             }
-            location.href = context.config.redirect;
+
+            let orderReceivedUrl = data.data?.order_received_url
+
+            location.href = orderReceivedUrl ? orderReceivedUrl : context.config.redirect;
+
         });
 
     }
