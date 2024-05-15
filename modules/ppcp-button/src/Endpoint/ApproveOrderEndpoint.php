@@ -237,7 +237,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			$this->session_handler->replace_order( $order );
 
 			if ( ! $this->final_review_enabled && ! $this->is_checkout() ) {
-				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart->get_cart() );
+				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
 				$this->gateway->process_payment( $wc_order->get_id() );
 				$order_received_url = $wc_order->get_checkout_order_received_url();
 

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use RuntimeException;
+use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -55,21 +56,22 @@ class WooCommerceOrderCreator {
 	/**
 	 * Creates WC order based on given PayPal order.
 	 *
-	 * @param Order $order The PayPal order.
-	 * @param array $line_items The list of line item IDs.
+	 * @param Order   $order The PayPal order.
+	 * @param WC_Cart $wc_cart The Cart.
 	 * @return WC_Order The WC order.
 	 */
-	public function create_from_paypal_order( Order $order, array $line_items ): WC_Order {
+	public function create_from_paypal_order( Order $order, WC_Cart $wc_cart ): WC_Order {
 		$wc_order = wc_create_order();
 
 		if ( ! $wc_order instanceof WC_Order ) {
 			throw new RuntimeException( 'Problem creating WC order.' );
 		}
 
-		$this->configure_line_items( $wc_order, $line_items );
+		$this->configure_line_items( $wc_order, $wc_cart );
 		$this->configure_shipping( $wc_order, $order->payer(), $order->purchase_units()[0]->shipping() );
 		$this->configure_payment_source( $wc_order );
 		$this->configure_customer( $wc_order );
+		$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
 
 		$wc_order->calculate_totals();
 		$wc_order->save();
@@ -81,23 +83,25 @@ class WooCommerceOrderCreator {
 	 * Configures the line items.
 	 *
 	 * @param WC_Order $wc_order The WC order.
-	 * @param array    $line_items The list of line item IDs.
+	 * @param WC_Cart  $wc_cart The Cart.
 	 * @return void
 	 */
-	protected function configure_line_items( WC_Order $wc_order, array $line_items ): void {
-		foreach ( $line_items as $line_item ) {
-			$product_id   = $line_item['product_id'] ?? 0;
-			$variation_id = $line_item['variation_id'] ?? 0;
+	protected function configure_line_items( WC_Order $wc_order, WC_Cart $wc_cart ): void {
+		$cart_contents = $wc_cart->get_cart();
+
+		foreach ( $cart_contents as $item ) {
+			$product_id   = $item['product_id'] ?? 0;
+			$variation_id = $item['variation_id'] ?? 0;
 			$args         = $variation_id > 0 ? array( 'variation_id' => $variation_id ) : array();
-			$quantity     = $line_item['quantity'] ?? 0;
+			$quantity     = $item['quantity'] ?? 0;
 
-			$item = wc_get_product( $product_id );
+			$product = wc_get_product( $product_id );
 
-			if ( ! $item ) {
+			if ( ! $product ) {
 				return;
 			}
 
-			$wc_order->add_product( $item, $quantity, $args );
+			$wc_order->add_product( $product, $quantity, $args );
 		}
 	}
 
@@ -111,21 +115,22 @@ class WooCommerceOrderCreator {
 	 */
 	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping ): void {
 		$shipping_address = null;
-		$billing_address = null;
+		$billing_address  = null;
 		$shipping_options = null;
 
-		if ( $payer  && $address = $payer->address() ) {
-			$payerName = $payer->name();
+		if ( $payer ) {
+			$address    = $payer->address();
+			$payer_name = $payer->name();
 
 			$billing_address = array(
-				'first_name' => $payerName ? $payerName->given_name() : '',
-				'last_name'  => $payerName ? $payerName->surname() : '',
-				'address_1'  => $address->address_line_1(),
-				'address_2'  => $address->address_line_2(),
-				'city'       => $address->admin_area_2(),
-				'state'      => $address->admin_area_1(),
-				'postcode'   => $address->postal_code(),
-				'country'    => $address->country_code(),
+				'first_name' => $payer_name ? $payer_name->given_name() : '',
+				'last_name'  => $payer_name ? $payer_name->surname() : '',
+				'address_1'  => $address ? $address->address_line_1() : '',
+				'address_2'  => $address ? $address->address_line_2() : '',
+				'city'       => $address ? $address->admin_area_2() : '',
+				'state'      => $address ? $address->admin_area_1() : '',
+				'postcode'   => $address ? $address->postal_code() : '',
+				'country'    => $address ? $address->country_code() : '',
 			);
 		}
 
@@ -190,6 +195,19 @@ class WooCommerceOrderCreator {
 
 		if ( $current_user->ID !== 0 ) {
 			$wc_order->set_customer_id( $current_user->ID );
+		}
+	}
+
+	/**
+	 * Configures the applied coupons.
+	 *
+	 * @param WC_Order $wc_order The WC order.
+	 * @param string[] $coupons The list of applied coupons.
+	 * @return void
+	 */
+	protected function configure_coupons( WC_Order $wc_order, array $coupons ): void {
+		foreach ( $coupons as $coupon_code ) {
+			$wc_order->apply_coupon( $coupon_code );
 		}
 	}
 
