@@ -620,13 +620,18 @@ class ApplePayButton implements ButtonInterface {
 	): array {
 
 		$shipping_methods_array = array();
-		$shipping_methods       = WC()->shipping->calculate_shipping(
+		/**
+		 * The argument is defined only in docblock.
+		 *
+		 * @psalm-suppress InvalidScalarArgument
+		 */
+		$shipping_methods = WC()->shipping->calculate_shipping(
 			$this->getShippingPackages(
 				$customer_address,
 				$cart->get_total( 'edit' )
 			)
 		);
-		$done                   = false;
+		$done             = false;
 		foreach ( $shipping_methods[0]['rates'] as $rate ) {
 			$shipping_methods_array[] = array(
 				'label'      => $rate->get_label(),
