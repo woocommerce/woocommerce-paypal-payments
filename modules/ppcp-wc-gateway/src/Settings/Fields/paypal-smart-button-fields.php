@@ -60,6 +60,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 		),
+		'smart_button_locations_notice'            => array(
+			'heading'      => '',
+			'html'         => $container->get( 'axo.smart-button-location-notice' ),
+			'type'         => 'ppcp-html',
+			'classes'      => array(),
+			'class'        => array(),
+			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
 		'smart_button_locations'                   => array(
 			'title'        => __( 'Smart Button Locations', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-multiselect',
