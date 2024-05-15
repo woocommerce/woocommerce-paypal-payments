@@ -1,4 +1,10 @@
-import {useEffect} from '@wordpress/element';
+import {
+    PayPalScriptProvider,
+    PayPalCardFieldsProvider,
+    PayPalCardFieldsForm,
+} from "@paypal/react-paypal-js";
+
+import {CheckoutHandler} from "./checkout-handler";
 
 export function CardFields({config, eventRegistration, emitResponse}) {
     const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
@@ -30,7 +36,7 @@ export function CardFields({config, eventRegistration, emitResponse}) {
         }
     };
 
-    const handleApprove = async (data, actions) => {
+    const onApprove = async (data, actions) => {
         try {
             const res = await fetch(config.scriptData.ajax.approve_order.endpoint, {
                 method: 'POST',
@@ -52,50 +58,27 @@ export function CardFields({config, eventRegistration, emitResponse}) {
         }
     };
 
-    const cardField = paypal.CardFields({
-        createOrder: () => {
-            return createOrder();
-        },
-        onApprove: (data, actions) => {
-            return handleApprove(data, actions);
-        },
-        onError: function (error) {
-            console.error(error)
-        }
-    });
-
-    useEffect(() => {
-        const unsubscribe = onPaymentSetup(() => {
-
-            cardField.submit()
-                .catch((error) => {
-                    console.error(error)
-                    return {type: responseTypes.ERROR};
-                });
-
-            return true;
-        });
-        return unsubscribe;
-    }, [onPaymentSetup]);
-
-    useEffect(() => {
-        if (cardField.isEligible()) {
-            const numberField = cardField.NumberField();
-            numberField.render("#card-number-field-container");
-
-            const cvvField = cardField.CVVField();
-            cvvField.render("#card-cvv-field-container");
-
-            const expiryField = cardField.ExpiryField();
-            expiryField.render("#card-expiry-field-container");
-        }
-    }, []);
-
     return (
         <>
-            <div id="card-number-field-container"></div>
-            <div id="card-expiry-field-container"></div>
-            <div id="card-cvv-field-container"></div>
+            <PayPalScriptProvider
+                options={{
+                    clientId:
+                        "abc123",
+                    components: "card-fields",
+                    dataNamespace: 'custom-namespace',
+                }}
+            >
+                <PayPalCardFieldsProvider
+                    createOrder={createOrder}
+                    onApprove={onApprove}
+                    onError={(err) => {
+                        console.log(err);
+                    }}
+                >
+                    <PayPalCardFieldsForm/>
+                    <CheckoutHandler onPaymentSetup={onPaymentSetup} responseTypes={responseTypes}/>
+                </PayPalCardFieldsProvider>
+            </PayPalScriptProvider>
         </>
     )
 }
