@@ -139,7 +139,17 @@ export const paypalOrderToWcAddresses = (order) => {
         billingAddress = paypalPayerToWc(order.payer);
         // no billing address, such as if billing address retrieval is not allowed in the merchant account
         if (!billingAddress.address_line_1) {
-            billingAddress = {...shippingAddress, ...paypalPayerToWc(order.payer)};
+            // use only non empty values from payer address, otherwise it will override shipping address
+            let payerAddress = Object.fromEntries(
+                Object.entries(billingAddress).filter(
+                    ([key, value]) => value !== '' && key !== 'country'
+                )
+            );
+
+            billingAddress = {
+                ...shippingAddress,
+                ...payerAddress
+            };
         }
     }
 
