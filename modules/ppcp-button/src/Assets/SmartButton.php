@@ -1280,6 +1280,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'is_logged' => is_user_logged_in(),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
 		if ( 'pay-now' === $this->context() ) {
@@ -1360,7 +1361,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
-			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
+			'commit'           => 'false',
 			'intent'           => $intent,
 		);
 
