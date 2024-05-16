@@ -10,7 +10,7 @@ const onApprove = (context, errorHandler) => {
                 nonce: context.config.ajax.approve_order.nonce,
                 order_id:data.orderID,
                 funding_source: window.ppcpFundingSource,
-                should_create_wc_order: true
+                should_create_wc_order: !context.config.vaultingEnabled || data.paymentSource !== 'venmo'
             })
         }).then((res)=>{
             return res.json();
