@@ -68,8 +68,13 @@ class Renderer {
         }
     }
 
-    shouldHandleShippingInPaypal = () => {
-        return this.defaultSettings.should_handle_shipping_in_paypal;
+    shouldHandleShippingInPaypal = (venmoButtonClicked) => {
+        if (!this.defaultSettings.should_handle_shipping_in_paypal) {
+            console.log('no')
+            return false;
+        }
+
+        return !venmoButtonClicked || !this.defaultSettings.vaultingEnabled;
     }
 
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
@@ -83,19 +88,24 @@ class Renderer {
             contextConfig.fundingSource = fundingSource;
         }
 
+        let venmoButtonClicked = false;
+
         const buttonsOptions = () => {
             return {
                 style,
                 ...contextConfig,
-                onClick: this.onSmartButtonClick,
+                onClick: (data, actions) => {
+                    venmoButtonClicked = data.fundingSource === 'venmo'
+                    this.onSmartButtonClick
+                },
                 onInit: (data, actions) => {
                     if (this.onSmartButtonsInit) {
                         this.onSmartButtonsInit(data, actions);
                     }
                     this.handleOnButtonsInit(wrapper, data, actions);
                 },
-                onShippingOptionsChange: (data, actions) => this.shouldHandleShippingInPaypal() ? handleShippingOptionsChange(data, actions, this.defaultSettings) : null,
-                onShippingAddressChange: (data, actions) => this.shouldHandleShippingInPaypal() ? handleShippingAddressChange(data, actions, this.defaultSettings) : null,
+                onShippingOptionsChange: (data, actions) => this.shouldHandleShippingInPaypal(venmoButtonClicked) ? handleShippingOptionsChange(data, actions, this.defaultSettings) : null,
+                onShippingAddressChange: (data, actions) => this.shouldHandleShippingInPaypal(venmoButtonClicked) ? handleShippingAddressChange(data, actions, this.defaultSettings) : null,
             }
         }
 
