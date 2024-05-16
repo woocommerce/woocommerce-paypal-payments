@@ -7,21 +7,11 @@ export const CheckoutHandler = ({onPaymentSetup, responseTypes}) => {
     useEffect(() => {
         const unsubscribe = onPaymentSetup(async () => {
 
-            cardFieldsForm.submit()
-                .then(() => {
-                    return {
-                        type: responseTypes.SUCCESS,
-                        meta: {
-                            paymentMethodData: {
-                                foo: 'bar',
-                            }
-                        }
-                    };
-                })
-                .catch((err) => {
+            await cardFieldsForm.submit()
+                .catch((error) => {
+                    console.error(error)
                     return {
                         type: responseTypes.ERROR,
-                        message: err
                     }
                 });
         })

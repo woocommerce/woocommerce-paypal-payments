@@ -10,69 +10,65 @@ export function CardFields({config, eventRegistration, emitResponse}) {
     const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
-    const createOrder = async () => {
-        try {
-            const res = await fetch(config.scriptData.ajax.create_order.endpoint, {
-                method: 'POST',
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    nonce: config.scriptData.ajax.create_order.nonce,
-                    context: config.scriptData.context,
-                    payment_method: 'ppcp-credit-card-gateway',
-                    createaccount: false
-                }),
+    async function createOrder() {
+        return fetch(config.scriptData.ajax.create_order.endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                nonce: config.scriptData.ajax.create_order.nonce,
+                context: config.scriptData.context,
+                payment_method: 'ppcp-credit-card-gateway',
+                createaccount: false
+            }),
+        })
+            .then((response) => response.json())
+            .then((order) => {
+                return order.data.id;
+            })
+            .catch((err) => {
+                console.error(err);
             });
+    }
 
-            const json = await res.json();
-            if (!json.success) {
-                console.error(json)
-            }
-
-            console.log(json.data.id)
-
-            return json.data.id;
-        } catch (err) {
-            console.error(err);
-        }
-    };
-
-    const onApprove = async (data, actions) => {
-        try {
-            const res = await fetch(config.scriptData.ajax.approve_order.endpoint, {
-                method: 'POST',
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    nonce: config.scriptData.ajax.approve_order.nonce,
-                    order_id: data.orderID,
-                })
+    function onApprove(data) {
+        fetch(config.scriptData.ajax.approve_order.endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                order_id: data.orderID,
+                nonce: config.scriptData.ajax.approve_order.nonce,
+            }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                console.log(data)
+                return {
+                    type: responseTypes.SUCCESS,
+                };
+            })
+            .catch((err) => {
+                console.error(err);
             });
-
-            const json = await res.json();
-            if (!json.success) {
-                console.error(json)
-            }
-
-            console.log(json)
-        } catch (err) {
-            console.error(err);
-        }
-    };
+    }
 
     return (
         <>
             <PayPalScriptProvider
                 options={{
-                    clientId:
-                        "abc123",
+                    clientId: config.scriptData.client_id,
                     components: "card-fields",
-                    dataNamespace: 'custom-namespace',
+                    dataNamespace: 'ppcp-block-card-fields',
                 }}
             >
                 <PayPalCardFieldsProvider
                     createOrder={createOrder}
                     onApprove={onApprove}
                     onError={(err) => {
-                        console.log(err);
+                        console.error(err);
                     }}
                 >
                     <PayPalCardFieldsForm/>
