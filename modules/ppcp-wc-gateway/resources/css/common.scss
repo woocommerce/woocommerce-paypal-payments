@@ -68,15 +68,26 @@ $background-ident-color: #fbfbfb;
 		margin-top: 4px;
 		margin-bottom: 4px;
 	}
+
+	.highlight {
+		background: transparent;
+		font-weight: 600;
+	}
 }
 
 .ppcp-notice-warning {
 	border-left-color: #dba617;
 
 	.highlight {
-		background: transparent;
 		color: #dba617;
-		font-weight: 600;
+	}
+}
+
+.ppcp-notice-error {
+	border-left-color: #d63638;
+
+	.highlight {
+		color: #d63638;
 	}
 }
 

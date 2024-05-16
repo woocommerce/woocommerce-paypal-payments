@@ -194,7 +194,7 @@ return array(
 			return '';
 		}
 
-		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
+		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
 	},
 
 	'axo.smart-button-location-notice'      => static function ( ContainerInterface $container ) : string {
@@ -222,6 +222,6 @@ return array(
 			return '';
 		}
 
-		return '<div class="ppcp-notice"><p>' . $notice_content . '</p></div>';
+		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
 );
