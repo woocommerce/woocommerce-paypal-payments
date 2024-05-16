@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use RuntimeException;
 use WC_Cart;
 use WC_Order;
+use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
@@ -89,19 +90,31 @@ class WooCommerceOrderCreator {
 	protected function configure_line_items( WC_Order $wc_order, WC_Cart $wc_cart ): void {
 		$cart_contents = $wc_cart->get_cart();
 
-		foreach ( $cart_contents as $item ) {
-			$product_id   = $item['product_id'] ?? 0;
-			$variation_id = $item['variation_id'] ?? 0;
-			$args         = $variation_id > 0 ? array( 'variation_id' => $variation_id ) : array();
-			$quantity     = $item['quantity'] ?? 0;
+		foreach ( $cart_contents as $cart_item ) {
+			$product_id           = $cart_item['product_id'] ?? 0;
+			$variation_id         = $cart_item['variation_id'] ?? 0;
+			$quantity             = $cart_item['quantity'] ?? 0;
+			$variation_attributes = $cart_item['variation'];
 
-			$product = wc_get_product( $product_id );
+			$item = new WC_Order_Item_Product();
+			$item->set_product_id( $product_id );
+			$item->set_quantity( $quantity );
 
+			if ( $variation_id ) {
+				$item->set_variation_id( $variation_id );
+				$item->set_variation( $variation_attributes );
+			}
+
+			$product = wc_get_product( $variation_id ?: $product_id );
 			if ( ! $product ) {
 				return;
 			}
 
-			$wc_order->add_product( $product, $quantity, $args );
+			$item->set_name( $product->get_name() );
+			$item->set_subtotal( $product->get_price() * $quantity );
+			$item->set_total( $product->get_price() * $quantity );
+
+			$wc_order->add_item( $item );
 		}
 	}
 
