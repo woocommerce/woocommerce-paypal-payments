@@ -60,6 +60,7 @@ class WooCommerceOrderCreator {
 	 * @param Order   $order The PayPal order.
 	 * @param WC_Cart $wc_cart The Cart.
 	 * @return WC_Order The WC order.
+	 * @throws RuntimeException if problem creating.
 	 */
 	public function create_from_paypal_order( Order $order, WC_Cart $wc_cart ): WC_Order {
 		$wc_order = wc_create_order();
