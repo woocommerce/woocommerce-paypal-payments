@@ -51,6 +51,8 @@ return array(
 			);
 		}
 
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+
 		return $insert_after(
 			$fields,
 			'smart_button_locations',
@@ -63,6 +65,8 @@ return array(
 					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 					'requirements' => array(),
 					'gateway'      => 'paypal',
+					'class'        => array( 'ppcp-grayed-out-text' ),
+					'input_class'  => $subscription_helper->plugin_is_active() ? array( 'ppcp-disabled-checkbox' ) : array(),
 				),
 			)
 		);
