@@ -411,7 +411,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'ppcp_reference_transactions_status'            => array(
-			'title'        => __( 'Advanced PayPal Wallet', 'woocommerce-paypal-payments' ),
+			'title'        => __( 'Save PayPal & Venmo payment methods', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => $container->get( 'wcgateway.settings.connection.reference-transactions-status-text' ),
 			'screens'      => array(
