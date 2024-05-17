@@ -347,6 +347,7 @@ return array(
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$logger
 		);
 	},
@@ -1461,7 +1462,7 @@ return array(
 
 		$button_text = $enabled
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
-			: esc_html__( 'Enable Advanced PayPal Wallet', 'woocommerce-paypal-payments' );
+			: esc_html__( 'Enable saving PayPal & Venmo', 'woocommerce-paypal-payments' );
 
 		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
 			? $container->get( 'wcgateway.enable-reference-transactions-url-live' )

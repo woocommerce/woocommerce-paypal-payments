@@ -3,16 +3,15 @@
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use Psr\Log\LoggerInterface;
-use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
-use WooCommerce\PayPalCommerce\Helper\StubRedirectionException;
 use WooCommerce\PayPalCommerce\ModularTestCase;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use function Brain\Monkey\Functions\when;
 
@@ -42,6 +41,7 @@ class SettingsListenerTest extends ModularTestCase
         $pui_status_cache = Mockery::mock(Cache::class);
         $dcc_status_cache = Mockery::mock(Cache::class);
 		$billing_agreement_endpoint = Mockery::mock(BillingAgreementsEndpoint::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$logger = Mockery::mock(LoggerInterface::class);
 
 		$testee = new SettingsListener(
@@ -60,6 +60,7 @@ class SettingsListenerTest extends ModularTestCase
 			'',
 			'',
 			$billing_agreement_endpoint,
+			$subscription_helper,
 			$logger
 		);
 
