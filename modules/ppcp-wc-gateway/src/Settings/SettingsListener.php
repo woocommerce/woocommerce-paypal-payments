@@ -23,7 +23,6 @@ use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -162,13 +161,6 @@ class SettingsListener {
 	private $billing_agreements_endpoint;
 
 	/**
-	 * The subscription helper
-	 *
-	 * @var SubscriptionHelper
-	 */
-	protected $subscription_helper;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -193,7 +185,6 @@ class SettingsListener {
 	 * @param string                    $partner_merchant_id_production Partner merchant ID production.
 	 * @param string                    $partner_merchant_id_sandbox Partner merchant ID sandbox.
 	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint Billing Agreements endpoint.
-	 * @param SubscriptionHelper        $subscription_helper The subscription helper.
 	 * @param ?LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
@@ -212,7 +203,6 @@ class SettingsListener {
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
 		BillingAgreementsEndpoint $billing_agreements_endpoint,
-		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger = null
 	) {
 
@@ -231,7 +221,6 @@ class SettingsListener {
 		$this->partner_merchant_id_production = $partner_merchant_id_production;
 		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
 		$this->billing_agreements_endpoint    = $billing_agreements_endpoint;
-		$this->subscription_helper            = $subscription_helper;
 		$this->logger                         = $logger ?: new NullLogger();
 	}
 
@@ -400,11 +389,6 @@ class SettingsListener {
 
 		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled === true ) {
 			$this->settings->set( 'vault_enabled', true );
-			$this->settings->persist();
-		}
-
-		if ( $this->subscription_helper->plugin_is_active() ) {
-			$this->settings->set( 'blocks_final_review_enabled', true );
 			$this->settings->persist();
 		}
 

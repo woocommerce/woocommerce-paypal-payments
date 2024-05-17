@@ -10,7 +10,6 @@ const onApprove = (context, errorHandler) => {
                 nonce: context.config.ajax.approve_order.nonce,
                 order_id:data.orderID,
                 funding_source: window.ppcpFundingSource,
-                should_create_wc_order: !context.config.vaultingEnabled || data.paymentSource !== 'venmo'
             })
         }).then((res)=>{
             return res.json();
@@ -21,11 +20,7 @@ const onApprove = (context, errorHandler) => {
                     errorHandler.genericError();
                 });
             }
-
-            let orderReceivedUrl = data.data?.order_received_url
-
-            location.href = orderReceivedUrl ? orderReceivedUrl : context.config.redirect;
-
+            location.href = context.config.redirect;
         });
 
     }

@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
-use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -148,8 +147,7 @@ return array(
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'button.handle-shipping-in-paypal' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
@@ -159,13 +157,7 @@ return array(
 		);
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
-		$defaults = array( 'checkout', 'pay-now' );
-
-		if ( $container->get( 'button.handle-shipping-in-paypal' ) ) {
-			return array_merge( $defaults, array( 'cart', 'product', 'mini-cart' ) );
-		}
-
-		return $defaults;
+		return array( 'checkout', 'pay-now' );
 	},
 	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
@@ -229,17 +221,14 @@ return array(
 		return new EarlyOrderHandler( $state, $order_processor, $session_handler );
 	},
 	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
-		$request_data         = $container->get( 'button.request-data' );
-		$order_endpoint       = $container->get( 'api.endpoint.order' );
-		$session_handler      = $container->get( 'session.handler' );
-		$three_d_secure       = $container->get( 'button.helper.three-d-secure' );
-		$settings             = $container->get( 'wcgateway.settings' );
-		$dcc_applies          = $container->get( 'api.helpers.dccapplies' );
-		$order_helper         = $container->get( 'api.order-helper' );
-		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
-		$wc_order_creator     = $container->get( 'button.helper.wc-order-creator' );
-		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
-		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
+		$request_data    = $container->get( 'button.request-data' );
+		$order_endpoint  = $container->get( 'api.endpoint.order' );
+		$session_handler = $container->get( 'session.handler' );
+		$three_d_secure  = $container->get( 'button.helper.three-d-secure' );
+		$settings        = $container->get( 'wcgateway.settings' );
+		$dcc_applies     = $container->get( 'api.helpers.dccapplies' );
+		$order_helper = $container->get( 'api.order-helper' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ApproveOrderEndpoint(
 			$request_data,
 			$order_endpoint,
@@ -248,9 +237,6 @@ return array(
 			$settings,
 			$dcc_applies,
 			$order_helper,
-			$final_review_enabled,
-			$gateway,
-			$wc_order_creator,
 			$logger
 		);
 	},
@@ -356,10 +342,6 @@ return array(
 	 * May result in slower popup performance, additional loading.
 	 */
 	'button.handle-shipping-in-paypal'            => static function ( ContainerInterface $container ): bool {
-		return ! $container->get( 'blocks.settings.final_review_enabled' );
-	},
-
-	'button.helper.wc-order-creator'              => static function ( ContainerInterface $container ): WooCommerceOrderCreator {
-		return new WooCommerceOrderCreator( $container->get( 'wcgateway.funding-source.renderer' ), $container->get( 'session.handler' ) );
+		return false;
 	},
 );

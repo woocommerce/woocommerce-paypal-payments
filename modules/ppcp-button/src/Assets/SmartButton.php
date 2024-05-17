@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
@@ -219,13 +218,6 @@ class SmartButton implements SmartButtonInterface {
 	private $logger;
 
 	/**
-	 * Whether the shipping should be handled in PayPal.
-	 *
-	 * @var bool
-	 */
-	private $should_handle_shipping_in_paypal;
-
-	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
@@ -250,7 +242,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param PaymentTokensEndpoint  $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param LoggerInterface        $logger The logger.
-	 * @param bool                   $should_handle_shipping_in_paypal Whether the shipping should be handled in PayPal.
 	 */
 	public function __construct(
 		string $module_url,
@@ -274,8 +265,7 @@ class SmartButton implements SmartButtonInterface {
 		array $funding_sources_without_redirect,
 		bool $vault_v3_enabled,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
-		LoggerInterface $logger,
-		bool $should_handle_shipping_in_paypal
+		LoggerInterface $logger
 	) {
 
 		$this->module_url                        = $module_url;
@@ -300,7 +290,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->vault_v3_enabled                  = $vault_v3_enabled;
 		$this->logger                            = $logger;
 		$this->payment_tokens_endpoint           = $payment_tokens_endpoint;
-		$this->should_handle_shipping_in_paypal  = $should_handle_shipping_in_paypal;
 	}
 
 	/**
@@ -1144,21 +1133,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
 				),
-				'update_shipping'                => array(
-					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
-				),
-				'update_customer_shipping'       => array(
-					'shipping_options'       => array(
-						'endpoint' => '/wp-json/wc/store/cart/select-shipping-rate',
-					),
-					'shipping_address'       => array(
-						'cart_endpoint'            => '/wp-json/wc/store/cart/',
-						'update_customer_endpoint' => '/wp-json/wc/store/v1/cart/update-customer/',
-					),
-					'wp_rest_nonce'          => wp_create_nonce( 'wc_store_api' ),
-					'update_shipping_method' => \WC_AJAX::get_endpoint( 'update_shipping_method' ),
-				),
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
@@ -1279,8 +1253,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'user'                                    => array(
 				'is_logged' => is_user_logged_in(),
 			),
-			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
-			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
 		if ( 'pay-now' === $this->context() ) {
@@ -1361,7 +1333,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
-			'commit'           => 'false',
+			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
 		);
 
