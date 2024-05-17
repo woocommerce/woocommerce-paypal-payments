@@ -236,6 +236,10 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$this->session_handler->replace_order( $order );
 
+			$final_review_enabled_setting = $this->settings->has( 'blocks_final_review_enabled' ) && $this->settings->get( 'blocks_final_review_enabled' );
+			$final_review_enabled_setting ? $this->settings->set( 'blocks_final_review_enabled', false ) : $this->settings->set( 'blocks_final_review_enabled', true );
+			$this->settings->persist();
+
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
 			if ( ! $this->final_review_enabled && ! $this->is_checkout() && $should_create_wc_order ) {
 				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
