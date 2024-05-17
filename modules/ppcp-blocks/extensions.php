@@ -60,6 +60,8 @@ return array(
 			);
 		}
 
+		$should_disable_checkbox = $subscription_helper->plugin_is_active() || apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false );
+
 		return $insert_after(
 			$fields,
 			'smart_button_locations',
@@ -73,7 +75,7 @@ return array(
 					'requirements' => array(),
 					'gateway'      => 'paypal',
 					'class'        => array( 'ppcp-grayed-out-text' ),
-					'input_class'  => $subscription_helper->plugin_is_active() ? array( 'ppcp-disabled-checkbox' ) : array(),
+					'input_class'  => $should_disable_checkbox ? array( 'ppcp-disabled-checkbox' ) : array(),
 				),
 			)
 		);

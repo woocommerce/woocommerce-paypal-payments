@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class ApproveOrderEndpoint
@@ -105,6 +106,13 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	protected $wc_order_creator;
 
 	/**
+	 * The Subscription Helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -124,6 +132,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @param bool                    $final_review_enabled Whether the final review is enabled.
 	 * @param PayPalGateway           $gateway The WC gateway.
 	 * @param WooCommerceOrderCreator $wc_order_creator The WooCommerce order creator.
+	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 * @param LoggerInterface         $logger The logger.
 	 */
 	public function __construct(
@@ -137,6 +146,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		bool $final_review_enabled,
 		PayPalGateway $gateway,
 		WooCommerceOrderCreator $wc_order_creator,
+		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger
 	) {
 
@@ -150,6 +160,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		$this->final_review_enabled = $final_review_enabled;
 		$this->gateway              = $gateway;
 		$this->wc_order_creator     = $wc_order_creator;
+		$this->subscription_helper  = $subscription_helper;
 		$this->logger               = $logger;
 	}
 
@@ -236,6 +247,10 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$this->session_handler->replace_order( $order );
 
+			if ( ! $this->subscription_helper->plugin_is_active() && apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false ) ) {
+				$this->toggle_final_review_enabled_setting();
+			}
+
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
 			if ( ! $this->final_review_enabled && ! $this->is_checkout() && $should_create_wc_order ) {
 				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
@@ -259,5 +274,16 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			);
 			return false;
 		}
+	}
+
+	/**
+	 * Will toggle the "final confirmation" checkbox.
+	 *
+	 * @return void
+	 */
+	protected function toggle_final_review_enabled_setting(): void {
+		$final_review_enabled_setting = $this->settings->has( 'blocks_final_review_enabled' ) && $this->settings->get( 'blocks_final_review_enabled' );
+		$final_review_enabled_setting ? $this->settings->set( 'blocks_final_review_enabled', false ) : $this->settings->set( 'blocks_final_review_enabled', true );
+		$this->settings->persist();
 	}
 }

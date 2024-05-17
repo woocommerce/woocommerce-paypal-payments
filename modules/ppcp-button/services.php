@@ -239,6 +239,7 @@ return array(
 		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
 		$wc_order_creator     = $container->get( 'button.helper.wc-order-creator' );
 		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
+		$subscription_helper              = $container->get( 'wc-subscriptions.helper' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ApproveOrderEndpoint(
 			$request_data,
@@ -251,6 +252,7 @@ return array(
 			$final_review_enabled,
 			$gateway,
 			$wc_order_creator,
+			$subscription_helper,
 			$logger
 		);
 	},
