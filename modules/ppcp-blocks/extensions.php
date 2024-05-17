@@ -53,6 +53,13 @@ return array(
 
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 
+		if ( $subscription_helper->plugin_is_active() ) {
+			$label .= __(
+				'<div class="ppcp-notice ppcp-notice-warning"><p><span class="highlight">Important:</span> Cannot be deactivated while the WooCommerce Subscriptions plugin is active.</p></div>',
+				'woocommerce-paypal-payments'
+			);
+		}
+
 		return $insert_after(
 			$fields,
 			'smart_button_locations',
