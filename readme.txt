@@ -185,6 +185,8 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Allow PUI Gateway for refund processor #2192
 * Fix - Notice on newly created block cart checkout #2211
 * Fix - Apple Pay button in the editor #2177
+* Fix - Allow shipping callback and skipping confirmation page from any express button #2236
+* Enhancement - Use admin theme color #1602
 
 = 2.7.0 - 2024-04-30 =
 * Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
