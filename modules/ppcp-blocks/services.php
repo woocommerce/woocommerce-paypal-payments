@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -70,6 +71,11 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'blocks.endpoint.get-paypal-order-from-session'      => static function ( ContainerInterface $container ): GetPayPalOrderFromSession {
+		return new GetPayPalOrderFromSession(
+			$container->get( 'session.handler' )
 		);
 	},
 

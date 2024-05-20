@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -85,6 +86,16 @@ class BlocksModule implements ModuleInterface {
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'blocks.endpoint.update-shipping' );
 				assert( $endpoint instanceof UpdateShippingEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . GetPayPalOrderFromSession::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'blocks.endpoint.get-paypal-order-from-session' );
+				assert( $endpoint instanceof GetPayPalOrderFromSession );
 
 				$endpoint->handle_request();
 			}

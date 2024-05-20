@@ -1,3 +1,5 @@
+import {useEffect, useState} from '@wordpress/element';
+
 import {
     PayPalScriptProvider,
     PayPalCardFieldsProvider,
@@ -7,8 +9,10 @@ import {
 import {CheckoutHandler} from "./checkout-handler";
 
 export function CardFields({config, eventRegistration, emitResponse}) {
-    const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
+    const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
+
+    const [cardFieldsForm, setCardFieldsForm] = useState();
 
     async function createOrder() {
         return fetch(config.scriptData.ajax.create_order.endpoint, {
@@ -20,7 +24,6 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                 nonce: config.scriptData.ajax.create_order.nonce,
                 context: config.scriptData.context,
                 payment_method: 'ppcp-credit-card-gateway',
-                createaccount: false
             }),
         })
             .then((response) => response.json())
@@ -46,14 +49,52 @@ export function CardFields({config, eventRegistration, emitResponse}) {
             .then((response) => response.json())
             .then((data) => {
                 console.log(data)
-                return {
-                    type: responseTypes.SUCCESS,
-                };
             })
             .catch((err) => {
                 console.error(err);
             });
     }
+
+    const getCardFieldsForm = (cardFieldsForm) => {
+        setCardFieldsForm(cardFieldsForm)
+    }
+
+    const wait = (milliseconds) => {
+        return new Promise((resolve) => {
+            console.log('start...')
+            setTimeout(() => {
+                console.log('resolve')
+                resolve()
+            }, milliseconds)
+        })
+    }
+
+    useEffect(
+        () =>
+            onPaymentSetup(() => {
+                async function handlePaymentProcessing() {
+                    await cardFieldsForm.submit();
+
+                    // TODO temporary workaround to wait for PayPal order in the session
+                    await wait(3000)
+
+                    const response = await fetch(config.scriptData.ajax.get_paypal_order_from_session.endpoint)
+                    const result = await response.json()
+
+                    return {
+                        type: responseTypes.SUCCESS,
+                        meta: {
+                            paymentMethodData: {
+                                'paypal_order_id': result.data,
+                            },
+                        },
+                    };
+                }
+
+                return handlePaymentProcessing();
+            }),
+        [onPaymentSetup, cardFieldsForm]
+    );
 
     return (
         <>
@@ -72,7 +113,7 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                     }}
                 >
                     <PayPalCardFieldsForm/>
-                    <CheckoutHandler onPaymentSetup={onPaymentSetup} responseTypes={responseTypes}/>
+                    <CheckoutHandler getCardFieldsForm={getCardFieldsForm}/>
                 </PayPalCardFieldsProvider>
             </PayPalScriptProvider>
         </>
