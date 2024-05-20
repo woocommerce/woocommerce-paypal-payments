@@ -24,7 +24,8 @@ class AxoManager {
             active: false,
             validEmail: false,
             hasProfile: false,
-            useEmailWidget: this.useEmailWidget()
+            useEmailWidget: this.useEmailWidget(),
+            hasCard: false,
         };
 
         this.data = {
@@ -257,11 +258,12 @@ class AxoManager {
         }
 
         if (scenario.axoProfileViews) {
-            this.el.billingAddressContainer.hide();
 
             this.shippingView.activate();
-            this.billingView.activate();
-            this.cardView.activate();
+
+            if (this.status.hasCard) {
+                this.cardView.activate();
+            }
 
             // Move watermark to after shipping.
             this.$(this.el.shippingAddressContainer.selector).after(
@@ -584,12 +586,20 @@ class AxoManager {
                 log(JSON.stringify(authResponse));
 
                 const shippingData = authResponse.profileData.shippingAddress;
-                if(shippingData) {
+                if (shippingData) {
                     this.setShipping(shippingData);
                 }
 
+                if (authResponse.profileData.card) {
+                    this.setStatus('hasCard', true);
+                } else {
+                    this.cardComponent = (await this.fastlane.FastlaneCardComponent(
+                        this.cardComponentData()
+                    )).render(this.el.paymentContainer.selector + '-form');
+                }
+
                 const cardBillingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
-                if(cardBillingAddress) {
+                if (cardBillingAddress) {
                     this.setCard(authResponse.profileData.card);
 
                     const billingData = {
