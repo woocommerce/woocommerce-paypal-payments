@@ -78,17 +78,9 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                     // TODO temporary workaround to wait for PayPal order in the session
                     await wait(3000)
 
-                    const response = await fetch(config.scriptData.ajax.get_paypal_order_from_session.endpoint)
-                    const result = await response.json()
-
                     return {
                         type: responseTypes.SUCCESS,
-                        meta: {
-                            paymentMethodData: {
-                                'paypal_order_id': result.data,
-                            },
-                        },
-                    };
+                    }
                 }
 
                 return handlePaymentProcessing();

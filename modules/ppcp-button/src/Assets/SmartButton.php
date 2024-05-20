@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
@@ -1159,10 +1158,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					),
 					'wp_rest_nonce'          => wp_create_nonce( 'wc_store_api' ),
 					'update_shipping_method' => \WC_AJAX::get_endpoint( 'update_shipping_method' ),
-				),
-				'get_paypal_order_from_session' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( GetPayPalOrderFromSession::ENDPOINT ),
-					'nonce'    => wp_create_nonce( GetPayPalOrderFromSession::nonce() ),
 				),
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
