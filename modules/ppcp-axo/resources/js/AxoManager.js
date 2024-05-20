@@ -156,6 +156,7 @@ class AxoManager {
         this.el.showGatewaySelectionLink.on('click', async () => {
             this.hideGatewaySelection = false;
             this.$('.wc_payment_methods label').show();
+            this.$('.wc_payment_methods input').show();
             this.cardView.refresh();
         });
 
@@ -608,6 +609,7 @@ class AxoManager {
 
                 this.hideGatewaySelection = true;
                 this.$('.wc_payment_methods label').hide();
+                this.$('.wc_payment_methods input').hide();
 
                 await this.renderWatermark(false);
 
