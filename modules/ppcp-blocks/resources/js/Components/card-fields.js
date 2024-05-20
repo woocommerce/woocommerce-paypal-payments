@@ -7,53 +7,13 @@ import {
 } from "@paypal/react-paypal-js";
 
 import {CheckoutHandler} from "./checkout-handler";
+import {createOrder, onApprove} from "../card-fields-config";
 
 export function CardFields({config, eventRegistration, emitResponse}) {
     const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [cardFieldsForm, setCardFieldsForm] = useState();
-
-    async function createOrder() {
-        return fetch(config.scriptData.ajax.create_order.endpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                nonce: config.scriptData.ajax.create_order.nonce,
-                context: config.scriptData.context,
-                payment_method: 'ppcp-credit-card-gateway',
-            }),
-        })
-            .then((response) => response.json())
-            .then((order) => {
-                return order.data.id;
-            })
-            .catch((err) => {
-                console.error(err);
-            });
-    }
-
-    function onApprove(data) {
-        fetch(config.scriptData.ajax.approve_order.endpoint, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                order_id: data.orderID,
-                nonce: config.scriptData.ajax.approve_order.nonce,
-            }),
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log(data)
-            })
-            .catch((err) => {
-                console.error(err);
-            });
-    }
 
     const getCardFieldsForm = (cardFieldsForm) => {
         setCardFieldsForm(cardFieldsForm)
@@ -67,7 +27,7 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                 resolve()
             }, milliseconds)
         })
-    }
+    };
 
     useEffect(
         () =>
@@ -75,7 +35,7 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                 async function handlePaymentProcessing() {
                     await cardFieldsForm.submit();
 
-                    // TODO temporary workaround to wait for PayPal order in the session
+                    // TODO temporary workaround to wait for onApprove to resolve
                     await wait(3000)
 
                     return {
