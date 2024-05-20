@@ -10,6 +10,7 @@ export async function createOrder() {
             nonce: config.scriptData.ajax.create_order.nonce,
             context: config.scriptData.context,
             payment_method: 'ppcp-credit-card-gateway',
+            save_payment_method: true,
         }),
     })
         .then((response) => response.json())
