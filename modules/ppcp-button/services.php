@@ -258,7 +258,10 @@ return array(
 		return new ApproveSubscriptionEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'session.handler' )
+			$container->get( 'session.handler' ),
+			$container->get( 'blocks.settings.final_review_enabled' ),
+			$container->get( 'button.helper.wc-order-creator' ),
+			$container->get( 'wcgateway.paypal-gateway' )
 		);
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
@@ -360,6 +363,10 @@ return array(
 	},
 
 	'button.helper.wc-order-creator'              => static function ( ContainerInterface $container ): WooCommerceOrderCreator {
-		return new WooCommerceOrderCreator( $container->get( 'wcgateway.funding-source.renderer' ), $container->get( 'session.handler' ) );
+		return new WooCommerceOrderCreator(
+			$container->get( 'wcgateway.funding-source.renderer' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wc-subscriptions.helper' )
+		);
 	},
 );
