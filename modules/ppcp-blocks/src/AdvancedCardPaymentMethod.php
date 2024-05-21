@@ -13,6 +13,9 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
+/**
+ * Class AdvancedCardPaymentMethod
+ */
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * The URL of this module.
@@ -42,6 +45,14 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private $smart_button;
 
+	/**
+	 * AdvancedCardPaymentMethod constructor.
+	 *
+	 * @param string                        $module_url The URL of this module.
+	 * @param string                        $version The assets version.
+	 * @param CreditCardGateway             $gateway Credit card gateway.
+	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
+	 */
 	public function __construct(
 		string $module_url,
 		string $version,
@@ -55,6 +66,9 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		$this->smart_button = $smart_button;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public function initialize() {}
 
 	/**
@@ -90,6 +104,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
 			'scriptData'  => $script_data,
+			'supports'    => $this->gateway->supports,
 		);
 	}
 
