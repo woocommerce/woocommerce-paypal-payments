@@ -10,4 +10,8 @@ registerPaymentMethod({
     edit: <div></div>,
     ariaLabel: config.title,
     canMakePayment: () => {return true},
+    supports: {
+        showSavedCards: true,
+        showSaveOption: true
+    }
 })

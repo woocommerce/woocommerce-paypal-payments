@@ -8,10 +8,5 @@ export const CheckoutHandler = ({getCardFieldsForm}) => {
         getCardFieldsForm(cardFieldsForm)
     }, []);
 
-    return (
-        <>
-            <input type="checkbox" id="save" name="save"/>
-            <label htmlFor="save">Save your card</label>
-        </>
-    )
+    return null
 }
