@@ -73,11 +73,6 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'blocks.endpoint.get-paypal-order-from-session'      => static function ( ContainerInterface $container ): GetPayPalOrderFromSession {
-		return new GetPayPalOrderFromSession(
-			$container->get( 'session.handler' )
-		);
-	},
 
 	'blocks.add-place-order-method'        => function ( ContainerInterface $container ) : bool {
 		/**
