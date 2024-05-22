@@ -12,7 +12,6 @@ registerPaymentMethod({
     canMakePayment: () => {return true},
     supports: {
         showSavedCards: true,
-        showSaveOption: true,
         features: config.supports
     }
 })

@@ -12,11 +12,13 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class AdvancedCardPaymentMethod
  */
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
+
 	/**
 	 * The URL of this module.
 	 *
@@ -46,24 +48,34 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	private $smart_button;
 
 	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
+
+	/**
 	 * AdvancedCardPaymentMethod constructor.
 	 *
 	 * @param string                        $module_url The URL of this module.
 	 * @param string                        $version The assets version.
 	 * @param CreditCardGateway             $gateway Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
+	 * @param Settings                      $settings The settings.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
 		CreditCardGateway $gateway,
-		$smart_button
+		$smart_button,
+		Settings $settings
 	) {
 		$this->name         = CreditCardGateway::ID;
 		$this->module_url   = $module_url;
 		$this->version      = $version;
 		$this->gateway      = $gateway;
 		$this->smart_button = $smart_button;
+		$this->settings     = $settings;
 	}
 
 	/**
@@ -100,11 +112,13 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		$script_data = $this->smart_button()->script_data();
 
 		return array(
-			'id'          => $this->name,
-			'title'       => $this->gateway->title,
-			'description' => $this->gateway->description,
-			'scriptData'  => $script_data,
-			'supports'    => $this->gateway->supports,
+			'id'                  => $this->name,
+			'title'               => $this->gateway->title,
+			'description'         => $this->gateway->description,
+			'scriptData'          => $script_data,
+			'supports'            => $this->gateway->supports,
+			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
+			'is_vaulting_enabled' => $this->settings->has( 'vault_enabled_dcc' ) && $this->settings->get( 'vault_enabled_dcc' ),
 		);
 	}
 

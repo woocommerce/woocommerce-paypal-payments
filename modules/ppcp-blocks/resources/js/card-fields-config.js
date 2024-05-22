@@ -10,7 +10,7 @@ export async function createOrder() {
             nonce: config.scriptData.ajax.create_order.nonce,
             context: config.scriptData.context,
             payment_method: 'ppcp-credit-card-gateway',
-            save_payment_method: true,
+            save_payment_method: localStorage.getItem('ppcp-save-card-payment') === 'true',
         }),
     })
         .then((response) => response.json())
@@ -36,6 +36,7 @@ export function onApprove(data) {
         .then((response) => response.json())
         .then((data) => {
             console.log(data)
+            localStorage.removeItem('ppcp-save-card-payment');
         })
         .catch((err) => {
             console.error(err);

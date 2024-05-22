@@ -53,7 +53,8 @@ return array(
 			$container->get( 'wcgateway.credit-card-gateway' ),
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
-			}
+			},
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {

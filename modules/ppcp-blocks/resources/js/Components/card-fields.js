@@ -14,9 +14,12 @@ export function CardFields({config, eventRegistration, emitResponse}) {
     const {responseTypes} = emitResponse;
 
     const [cardFieldsForm, setCardFieldsForm] = useState();
-
     const getCardFieldsForm = (cardFieldsForm) => {
         setCardFieldsForm(cardFieldsForm)
+    }
+
+    const getSavePayment = (savePayment) => {
+        localStorage.setItem('ppcp-save-card-payment', savePayment);
     }
 
     const wait = (milliseconds) => {
@@ -65,7 +68,12 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                     }}
                 >
                     <PayPalCardFieldsForm/>
-                    <CheckoutHandler getCardFieldsForm={getCardFieldsForm}/>
+                    <CheckoutHandler
+                        getCardFieldsForm={getCardFieldsForm}
+                        getSavePayment={getSavePayment}
+                        saveCardText={config.save_card_text}
+                        is_vaulting_enabled={config.is_vaulting_enabled}
+                    />
                 </PayPalCardFieldsProvider>
             </PayPalScriptProvider>
         </>
