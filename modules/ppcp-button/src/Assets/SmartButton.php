@@ -1361,7 +1361,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
-			'commit'           => 'false',
+			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
 		);
 
