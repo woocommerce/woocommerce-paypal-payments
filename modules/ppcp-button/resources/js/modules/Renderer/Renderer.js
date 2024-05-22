@@ -94,10 +94,7 @@ class Renderer {
             return {
                 style,
                 ...contextConfig,
-                onClick: (data, actions) => {
-                    venmoButtonClicked = data.fundingSource === 'venmo'
-                    this.onSmartButtonClick
-                },
+                onClick:  this.onSmartButtonClick,
                 onInit: (data, actions) => {
                     if (this.onSmartButtonsInit) {
                         this.onSmartButtonsInit(data, actions);
