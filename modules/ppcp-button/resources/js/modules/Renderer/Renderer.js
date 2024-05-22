@@ -91,20 +91,26 @@ class Renderer {
         let venmoButtonClicked = false;
 
         const buttonsOptions = () => {
-            return {
+            const options = {
                 style,
                 ...contextConfig,
-                onClick:  this.onSmartButtonClick,
+                onClick: this.onSmartButtonClick,
                 onInit: (data, actions) => {
                     if (this.onSmartButtonsInit) {
                         this.onSmartButtonsInit(data, actions);
                     }
                     this.handleOnButtonsInit(wrapper, data, actions);
                 },
-                onShippingOptionsChange: (data, actions) => this.shouldHandleShippingInPaypal(venmoButtonClicked) ? handleShippingOptionsChange(data, actions, this.defaultSettings) : null,
-                onShippingAddressChange: (data, actions) => this.shouldHandleShippingInPaypal(venmoButtonClicked) ? handleShippingAddressChange(data, actions, this.defaultSettings) : null,
+            };
+
+            // Check the condition and add the onShippingOptionsChange handler if needed
+            if (this.shouldHandleShippingInPaypal(venmoButtonClicked)) {
+                options.onShippingOptionsChange = (data, actions) => handleShippingOptionsChange(data, actions, this.defaultSettings);
+                options.onShippingAddressChange = (data, actions) => handleShippingAddressChange(data, actions, this.defaultSettings);
             }
-        }
+
+            return options;
+        };
 
         jQuery(document)
             .off(this.reloadEventName, wrapper)
