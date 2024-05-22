@@ -70,7 +70,6 @@ class Renderer {
 
     shouldHandleShippingInPaypal = (venmoButtonClicked) => {
         if (!this.defaultSettings.should_handle_shipping_in_paypal) {
-            console.log('no')
             return false;
         }
 
@@ -105,8 +104,8 @@ class Renderer {
 
             // Check the condition and add the onShippingOptionsChange handler if needed
             if (this.shouldHandleShippingInPaypal(venmoButtonClicked)) {
-                options.onShippingOptionsChange = (data, actions) => handleShippingOptionsChange(data, actions, this.defaultSettings);
-                options.onShippingAddressChange = (data, actions) => handleShippingAddressChange(data, actions, this.defaultSettings);
+                options.onShippingOptionsChange = (data, actions) => null;
+                options.onShippingAddressChange = (data, actions) => null;
             }
 
             return options;
