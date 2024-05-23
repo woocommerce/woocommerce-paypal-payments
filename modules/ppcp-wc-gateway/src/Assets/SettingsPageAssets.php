@@ -263,7 +263,7 @@ class SettingsPageAssets {
 					'reference_transaction_enabled'  => $this->billing_agreements_endpoint->reference_transaction_enabled(),
 					'vaulting_must_enable_advanced_wallet_message' => sprintf(
 						// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-						esc_html__( 'Your PayPal account must be enabled for the %1$sAdvanced PayPal Wallet%2$s to use PayPal Vaulting.', 'woocommerce-paypal-payments' ),
+						esc_html__( 'Your PayPal account must be eligible to %1$ssave PayPal and Venmo payment methods%2$s to enable PayPal Vaulting.', 'woocommerce-paypal-payments' ),
 						'<a href="/wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading">',
 						'</a>'
 					),

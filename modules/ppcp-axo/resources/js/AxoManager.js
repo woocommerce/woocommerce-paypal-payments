@@ -24,7 +24,8 @@ class AxoManager {
             active: false,
             validEmail: false,
             hasProfile: false,
-            useEmailWidget: this.useEmailWidget()
+            useEmailWidget: this.useEmailWidget(),
+            hasCard: false,
         };
 
         this.data = {
@@ -156,6 +157,7 @@ class AxoManager {
         this.el.showGatewaySelectionLink.on('click', async () => {
             this.hideGatewaySelection = false;
             this.$('.wc_payment_methods label').show();
+            this.$('.wc_payment_methods input').show();
             this.cardView.refresh();
         });
 
@@ -231,6 +233,7 @@ class AxoManager {
 
         if (scenario.defaultFormFields) {
             this.el.customerDetails.show();
+            this.toggleLoaderAndOverlay(this.el.customerDetails, 'loader', 'ppcp-axo-overlay');
         } else {
             this.el.customerDetails.hide();
         }
@@ -248,7 +251,6 @@ class AxoManager {
             this.$(this.el.fieldBillingEmail.selector).append(
                 this.$(this.el.watermarkContainer.selector)
             );
-
         } else {
             this.el.emailWidgetContainer.hide();
             if (!scenario.defaultEmailField) {
@@ -257,11 +259,12 @@ class AxoManager {
         }
 
         if (scenario.axoProfileViews) {
-            this.el.billingAddressContainer.hide();
 
             this.shippingView.activate();
-            this.billingView.activate();
-            this.cardView.activate();
+
+            if (this.status.hasCard) {
+                this.cardView.activate();
+            }
 
             // Move watermark to after shipping.
             this.$(this.el.shippingAddressContainer.selector).after(
@@ -496,6 +499,8 @@ class AxoManager {
         (await this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo
         })).render(this.el.watermarkContainer.selector);
+
+        this.toggleWatermarkLoading(this.el.watermarkContainer, 'ppcp-axo-watermark-loading', 'loader');
     }
 
     watchEmail() {
@@ -584,12 +589,20 @@ class AxoManager {
                 log(JSON.stringify(authResponse));
 
                 const shippingData = authResponse.profileData.shippingAddress;
-                if(shippingData) {
+                if (shippingData) {
                     this.setShipping(shippingData);
                 }
 
+                if (authResponse.profileData.card) {
+                    this.setStatus('hasCard', true);
+                } else {
+                    this.cardComponent = (await this.fastlane.FastlaneCardComponent(
+                        this.cardComponentData()
+                    )).render(this.el.paymentContainer.selector + '-form');
+                }
+
                 const cardBillingAddress = authResponse.profileData?.card?.paymentSource?.card?.billingAddress;
-                if(cardBillingAddress) {
+                if (cardBillingAddress) {
                     this.setCard(authResponse.profileData.card);
 
                     const billingData = {
@@ -608,6 +621,7 @@ class AxoManager {
 
                 this.hideGatewaySelection = true;
                 this.$('.wc_payment_methods label').hide();
+                this.$('.wc_payment_methods input').hide();
 
                 await this.renderWatermark(false);
 
@@ -838,6 +852,28 @@ class AxoManager {
             phone += number;
 
             data.billing_phone = phone;
+        }
+    }
+
+    toggleLoaderAndOverlay(element, loaderClass, overlayClass) {
+        const loader = document.querySelector(`${element.selector} .${loaderClass}`);
+        const overlay = document.querySelector(`${element.selector} .${overlayClass}`);
+        if (loader) {
+            loader.classList.toggle(loaderClass);
+        }
+        if (overlay) {
+            overlay.classList.toggle(overlayClass);
+        }
+    }
+
+    toggleWatermarkLoading(container, loadingClass, loaderClass) {
+        const watermarkLoading = document.querySelector(`${container.selector}.${loadingClass}`);
+        const watermarkLoader = document.querySelector(`${container.selector}.${loaderClass}`);
+        if (watermarkLoading) {
+            watermarkLoading.classList.toggle(loadingClass);
+        }
+        if (watermarkLoader) {
+            watermarkLoader.classList.toggle(loaderClass);
         }
     }
 }

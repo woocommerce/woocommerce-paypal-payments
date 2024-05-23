@@ -217,6 +217,8 @@ class AxoModule implements ModuleInterface {
 			1
 		);
 
+		// Add the markup necessary for displaying overlays and loaders for Axo on the checkout page.
+		$this->add_checkout_loader_markup( $c );
 	}
 
 	/**
@@ -291,5 +293,48 @@ class AxoModule implements ModuleInterface {
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
 			&& $is_axo_enabled;
+	}
+
+	/**
+	 * Adds the markup necessary for displaying overlays and loaders for Axo on the checkout page.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @return void
+	 */
+	private function add_checkout_loader_markup( ContainerInterface $c ): void {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		if ( $this->should_render_fastlane( $settings ) ) {
+			add_action(
+				'woocommerce_checkout_before_customer_details',
+				function () {
+					echo '<div class="ppcp-axo-loading">';
+				}
+			);
+
+			add_action(
+				'woocommerce_checkout_after_customer_details',
+				function () {
+					echo '</div>';
+				}
+			);
+
+			add_action(
+				'woocommerce_checkout_billing',
+				function () {
+					echo '<div class="loader"><div class="ppcp-axo-overlay"></div>';
+				},
+				8
+			);
+
+			add_action(
+				'woocommerce_checkout_billing',
+				function () {
+					echo '</div>';
+				},
+				12
+			);
+		}
 	}
 }
