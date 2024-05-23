@@ -34,8 +34,8 @@ class CardView {
                 const cardIcons = {
                     'VISA':        'visa-light.svg',
                     'MASTER_CARD': 'mastercard-light.svg',
-                    'AMEX':        'amex.svg',
-                    'DISCOVER':    'discover.svg',
+                    'AMEX':        'amex-light.svg',
+                    'DISCOVER':    'discover-light.svg',
                     'DINERS':      'dinersclub-light.svg',
                     'JCB':         'jcb-light.svg',
                     'UNIONPAY':    'unionpay-light.svg',
@@ -52,7 +52,7 @@ class CardView {
                                 <img
                                     class="ppcp-card-icon"
                                     title="${data.value('brand')}"
-                                    src="${window.wc_ppcp_axo.module_url}/assets/images/axo/${cardIcons[data.value('brand')]}"
+                                    src="${window.wc_ppcp_axo.icons_directory}${cardIcons[data.value('brand')]}"
                                     alt="${data.value('brand')}"
                                 >
                             </div>

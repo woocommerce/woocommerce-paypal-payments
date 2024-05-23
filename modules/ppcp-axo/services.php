@@ -61,7 +61,8 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.url' )
 		);
 	},
 
