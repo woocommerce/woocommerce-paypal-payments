@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
+use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -32,6 +33,12 @@ return array(
 		return new SaveConfig(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'paylater-configurator.endpoint.get-config'  => static function ( ContainerInterface $container ): GetConfig {
+		return new GetConfig(
+			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
