@@ -299,8 +299,9 @@ class AxoModule implements ModuleInterface {
 	 * Adds the markup necessary for displaying overlays and loaders for Axo on the checkout page.
 	 *
 	 * @param ContainerInterface $c The container.
+	 * @return void
 	 */
-	private function add_checkout_loader_markup( $c ) {
+	private function add_checkout_loader_markup( ContainerInterface $c ): void {
 		$settings = $c->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
