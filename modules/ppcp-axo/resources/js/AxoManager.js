@@ -231,6 +231,7 @@ class AxoManager {
 
         if (scenario.defaultFormFields) {
             this.el.customerDetails.show();
+            this.toggleLoaderAndOverlay(this.el.customerDetails, 'loader', 'ppcp-axo-overlay');
         } else {
             this.el.customerDetails.hide();
         }
@@ -248,7 +249,6 @@ class AxoManager {
             this.$(this.el.fieldBillingEmail.selector).append(
                 this.$(this.el.watermarkContainer.selector)
             );
-
         } else {
             this.el.emailWidgetContainer.hide();
             if (!scenario.defaultEmailField) {
@@ -496,6 +496,8 @@ class AxoManager {
         (await this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo
         })).render(this.el.watermarkContainer.selector);
+
+        this.toggleWatermarkLoading(this.el.watermarkContainer, 'ppcp-axo-watermark-loading', 'loader');
     }
 
     watchEmail() {
@@ -838,6 +840,28 @@ class AxoManager {
             phone += number;
 
             data.billing_phone = phone;
+        }
+    }
+
+    toggleLoaderAndOverlay(element, loaderClass, overlayClass) {
+        const loader = document.querySelector(`${element.selector} .${loaderClass}`);
+        const overlay = document.querySelector(`${element.selector} .${overlayClass}`);
+        if (loader) {
+            loader.classList.toggle(loaderClass);
+        }
+        if (overlay) {
+            overlay.classList.toggle(overlayClass);
+        }
+    }
+
+    toggleWatermarkLoading(container, loadingClass, loaderClass) {
+        const watermarkLoading = document.querySelector(`${container.selector}.${loadingClass}`);
+        const watermarkLoader = document.querySelector(`${container.selector}.${loaderClass}`);
+        if (watermarkLoading) {
+            watermarkLoading.classList.toggle(loadingClass);
+        }
+        if (watermarkLoader) {
+            watermarkLoader.classList.toggle(loaderClass);
         }
     }
 }
