@@ -13,7 +13,10 @@ use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 
@@ -186,6 +189,34 @@ return array(
 				),
 				esc_url( $checkout_page_link ),
 				esc_url( $block_checkout_docs_link )
+			);
+		} else {
+			return '';
+		}
+
+		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
+	},
+
+	'axo.smart-button-location-notice'      => static function ( ContainerInterface $container ) : string {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		if ( $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ) {
+			$fastlane_settings_url = admin_url(
+				sprintf(
+					'admin.php?page=wc-settings&tab=checkout&section=%1$s&ppcp-tab=%2$s#field-axo_heading',
+					PayPalGateway::ID,
+					CreditCardGateway::ID
+				)
+			);
+
+			$notice_content = sprintf(
+			/* translators: %1$s: URL to the Checkout edit page. */
+				__(
+					'<span class="highlight">Important:</span> The <code>Cart</code> & <code>Classic Cart</code> <strong>Smart Button Locations</strong> cannot be disabled while <a href="%1$s">Fastlane</a> is active.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $fastlane_settings_url )
 			);
 		} else {
 			return '';

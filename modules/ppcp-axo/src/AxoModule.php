@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 
 /**
  * Class AxoModule
@@ -105,6 +106,27 @@ class AxoModule implements ModuleInterface {
 				}
 
 				return $methods;
+			}
+		);
+
+		// Force 'cart-block' and 'cart' Smart Button locations in the settings.
+		add_action(
+			'admin_init',
+			static function () use ( $c ) {
+				$listener = $c->get( 'wcgateway.settings.listener' );
+				assert( $listener instanceof SettingsListener );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$listener->filter_settings(
+					$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ),
+					'smart_button_locations',
+					function( array $existing_setting_value ) {
+						$axo_forced_locations = array( 'cart-block', 'cart' );
+						return array_unique( array_merge( $existing_setting_value, $axo_forced_locations ) );
+					}
+				);
 			}
 		);
 
