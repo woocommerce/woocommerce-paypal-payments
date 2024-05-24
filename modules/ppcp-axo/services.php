@@ -225,4 +225,10 @@ return array(
 
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
+	'axo.endpoint.frontend-logger' => static function (ContainerInterface $container): FrontendLoggerEndpoint {
+		return new FrontendLoggerEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 );

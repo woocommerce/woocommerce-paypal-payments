@@ -239,6 +239,16 @@ class AxoModule implements ModuleInterface {
 			1
 		);
 
+		add_action(
+			'wc_ajax_' . FrontendLoggerEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'axo.endpoint.frontend-logger' );
+				assert( $endpoint instanceof FrontendLoggerEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
 		// Add the markup necessary for displaying overlays and loaders for Axo on the checkout page.
 		$this->add_checkout_loader_markup( $c );
 	}

@@ -88,6 +88,20 @@ class AxoManager {
         this.triggerGatewayChange();
     }
 
+    async log(message, level = 'info') {
+        await fetch(axoConfig.ajax.frontend_logger.endpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                nonce: axoConfig.ajax.frontend_logger.nonce,
+                log: {
+                    message,
+                    level,
+                }
+            })
+        });
+    }
+
     registerEventHandlers() {
 
         this.$(document).on('change', 'input[name=payment_method]', (ev) => {
@@ -697,6 +711,8 @@ class AxoManager {
 
             this.ensureBillingPhoneNumber(data);
 
+            this.log(`Ryan flow - submitted nonce: ${this.data.card.id}` )
+
             this.submit(this.data.card.id, data);
 
         } else { // Gary flow
@@ -706,6 +722,7 @@ class AxoManager {
                 this.cardComponent.getPaymentToken(
                     this.tokenizeData()
                 ).then((response) => {
+                    this.log(`Gary flow - submitted nonce: ${response.id}` )
                     this.submit(response.id);
                 });
             } catch (e) {
