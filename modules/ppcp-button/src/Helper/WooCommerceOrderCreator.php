@@ -14,6 +14,7 @@ use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
+use WC_Subscription;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WP_Error;
 
 /**
  * Class WooCommerceOrderCreator
@@ -227,7 +229,7 @@ class WooCommerceOrderCreator {
 			$items            = $wc_order->get_items();
 			$items_in_package = array();
 			foreach ( $items as $item ) {
-				$items_in_package[] = $item->get_name() . ' &times; ' . $item->get_quantity();
+				$items_in_package[] = $item->get_name() . ' &times; ' . (string) $item->get_quantity();
 			}
 
 			$shipping->add_meta_data( __( 'Items', 'woocommerce-paypal-payments' ), implode( ', ', $items_in_package ) );
@@ -297,10 +299,11 @@ class WooCommerceOrderCreator {
 	 *
 	 * @param WC_Order $wc_order The WC order.
 	 * @param int      $product_id The product ID.
-	 * @return WC_Order The subscription order
+	 * @return WC_Subscription The subscription order
+	 * @throws RuntimeException If problem creating.
 	 */
-	protected function create_subscription( WC_Order $wc_order, int $product_id ): WC_Order {
-		return wcs_create_subscription(
+	protected function create_subscription( WC_Order $wc_order, int $product_id ): WC_Subscription {
+		$subscription = wcs_create_subscription(
 			array(
 				'order_id'         => $wc_order->get_id(),
 				'status'           => 'pending',
@@ -309,5 +312,11 @@ class WooCommerceOrderCreator {
 				'customer_id'      => $wc_order->get_customer_id(),
 			)
 		);
+
+		if ( $subscription instanceof WP_Error ) {
+			throw new RuntimeException( $subscription->get_error_message() );
+		}
+
+		return $subscription;
 	}
 }
