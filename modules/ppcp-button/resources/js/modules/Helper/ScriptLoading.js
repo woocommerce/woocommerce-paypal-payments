@@ -63,9 +63,10 @@ export const loadPaypalScript = (config, onLoaded, onError = null) => {
 
     // Axo SDK options
     const sdkClientToken = config?.axo?.sdk_client_token;
+    const uuid = self.crypto.randomUUID();
     if(sdkClientToken) {
         scriptOptions['data-sdk-client-token'] = sdkClientToken;
-        scriptOptions['data-client-metadata-id'] = 'ppcp-cm-id';
+        scriptOptions['data-client-metadata-id'] = uuid;
     }
 
     // Load PayPal script for special case with data-client-token
