@@ -20,10 +20,6 @@ class CardView {
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px; text-align: center;">
-                            <div style="border:2px solid #cccccc; border-radius: 10px; padding: 26px 20px; margin-bottom: 20px; background-color:#f6f6f6">
-                                <div>Please fill in your card details.</div>
-                            </div>
-                            <h4><a href="javascript:void(0)" ${this.el.changeCardLink.attributes}>Add card details</a></h4>
                             ${selectOtherPaymentMethod()}
                         </div>
                     `;
