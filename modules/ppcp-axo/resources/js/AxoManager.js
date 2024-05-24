@@ -261,9 +261,10 @@ class AxoManager {
         if (scenario.axoProfileViews) {
 
             this.shippingView.activate();
+            this.cardView.activate();
 
             if (this.status.hasCard) {
-                this.cardView.activate();
+                this.billingView.activate();
             }
 
             // Move watermark to after shipping.
