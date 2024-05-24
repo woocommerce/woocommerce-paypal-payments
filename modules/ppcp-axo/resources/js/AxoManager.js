@@ -728,7 +728,7 @@ class AxoManager {
 
     tokenizeData() {
         return {
-            name: {
+            cardholderName: {
                 fullName: this.billingView.fullName()
             },
             billingAddress: {
