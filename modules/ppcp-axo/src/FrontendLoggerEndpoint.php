@@ -38,7 +38,7 @@ class FrontendLoggerEndpoint implements EndpointInterface {
 	/**
 	 * FrontendLoggerEndpoint constructor.
 	 *
-	 * @param RequestData $request_data The request data helper.
+	 * @param RequestData     $request_data The request data helper.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct( RequestData $request_data, LoggerInterface $logger ) {
@@ -62,7 +62,7 @@ class FrontendLoggerEndpoint implements EndpointInterface {
 	 * @throws Exception On Error.
 	 */
 	public function handle_request(): bool {
-		$data = $this->request_data->read_request( $this->nonce() );
+		$data  = $this->request_data->read_request( $this->nonce() );
 		$level = $data['log']['level'] ?? 'info';
 
 		switch ( $level ) {
