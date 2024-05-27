@@ -102,10 +102,10 @@ class Renderer {
                 },
             };
 
-            // Check the condition and add the onShippingOptionsChange handler if needed
+            // Check the condition and add the handler if needed
             if (this.shouldHandleShippingInPaypal(venmoButtonClicked)) {
-                options.onShippingOptionsChange = (data, actions) => null;
-                options.onShippingAddressChange = (data, actions) => null;
+                options.onShippingOptionsChange = (data, actions) => handleShippingOptionsChange(data, actions, this.defaultSettings);
+                options.onShippingAddressChange = (data, actions) => handleShippingAddressChange(data, actions, this.defaultSettings);
             }
 
             return options;
