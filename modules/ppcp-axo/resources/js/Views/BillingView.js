@@ -34,7 +34,7 @@ class BillingView {
                         </div>
                     `;
                 }
-                return ``;
+                return '';
             },
             fields: {
                 email: {
