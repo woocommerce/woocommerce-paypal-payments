@@ -188,6 +188,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Allow shipping callback and skipping confirmation page from any express button #2236
 * Fix - Pay Later messaging configurator sometimes displays old settings after saving #2249
 * Fix - Update the apple-developer-merchantid-domain-association validation strings for Apple Pay #2251
+* Fix - Enable the Shipping Callback handlers #2266
 * Enhancement - Use admin theme color #1602
 
 = 2.7.0 - 2024-04-30 =
