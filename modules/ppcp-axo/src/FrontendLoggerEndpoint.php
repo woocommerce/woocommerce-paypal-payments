@@ -14,6 +14,9 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 
+/**
+ * Class FrontendLoggerEndpoint
+ */
 class FrontendLoggerEndpoint implements EndpointInterface {
 
 	const ENDPOINT = 'ppc-frontend-logger';
@@ -32,9 +35,15 @@ class FrontendLoggerEndpoint implements EndpointInterface {
 	 */
 	private $logger;
 
-	public function __construct(RequestData $request_data, LoggerInterface $logger){
+	/**
+	 * FrontendLoggerEndpoint constructor.
+	 *
+	 * @param RequestData $request_data The request data helper.
+	 * @param LoggerInterface $logger The logger.
+	 */
+	public function __construct( RequestData $request_data, LoggerInterface $logger ) {
 		$this->request_data = $request_data;
-		$this->logger = $logger;
+		$this->logger       = $logger;
 	}
 
 	/**
@@ -54,8 +63,16 @@ class FrontendLoggerEndpoint implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		$data = $this->request_data->read_request( $this->nonce() );
+		$level = $data['log']['level'] ?? 'info';
 
-		$this->logger->info("[AXO] " . $data['log']['message']);
+		switch ( $level ) {
+			case 'error':
+				$this->logger->error( '[AXO] ' . esc_html( $data['log']['message'] ) );
+				break;
+			default:
+				$this->logger->info( '[AXO] ' . esc_html( $data['log']['message'] ) );
+				break;
+		}
 
 		wp_send_json_success();
 		return true;

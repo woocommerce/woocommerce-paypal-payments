@@ -88,20 +88,6 @@ class AxoManager {
         this.triggerGatewayChange();
     }
 
-    async log(message, level = 'info') {
-        await fetch(axoConfig.ajax.frontend_logger.endpoint, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                nonce: axoConfig.ajax.frontend_logger.nonce,
-                log: {
-                    message,
-                    level,
-                }
-            })
-        });
-    }
-
     registerEventHandlers() {
 
         this.$(document).on('change', 'input[name=payment_method]', (ev) => {
@@ -590,6 +576,8 @@ class AxoManager {
     async lookupCustomerByEmail() {
         const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
+        await this.log(`lookupCustomerByEmail: ${JSON.stringify(lookupResponse)}`);
+
         if (lookupResponse.customerContextId) {
             // Email is associated with a Connect profile or a PayPal member.
             // Authenticate the customer to get access to their profile.
@@ -598,6 +586,7 @@ class AxoManager {
             const authResponse = await this.fastlane.identity.triggerAuthenticationFlow(lookupResponse.customerContextId);
 
             log('AuthResponse', authResponse);
+            await this.log(`triggerAuthenticationFlow: ${JSON.stringify(authResponse)}`);
 
             if (authResponse.authenticationState === 'succeeded') {
                 log(JSON.stringify(authResponse));
@@ -728,6 +717,7 @@ class AxoManager {
             } catch (e) {
                 log('Error tokenizing.');
                 alert('Error tokenizing data.');
+                this.log(`Error tokenizing data. ${e.message}`, 'error');
             }
         }
     }
@@ -807,7 +797,10 @@ class AxoManager {
                                 scrollTop: $notices.offset().top
                             }, 500);
                         }
+
                         console.error('Failure:', responseData);
+                        this.log(`Error sending checkout form. ${responseData}`, 'error');
+
                         this.hideLoading();
                         return;
                     }
@@ -817,6 +810,8 @@ class AxoManager {
                 })
                 .catch(error => {
                     console.error('Error:', error);
+                    this.log(`Error sending checkout form. ${error.message}`, 'error');
+
                     this.hideLoading();
                 });
 
@@ -892,6 +887,25 @@ class AxoManager {
         if (watermarkLoader) {
             watermarkLoader.classList.toggle(loaderClass);
         }
+    }
+
+    async log(message, level = 'info') {
+        const endpoint = this.axoConfig?.ajax?.frontend_logger?.endpoint;
+        if(!endpoint) {
+            return;
+        }
+
+        await fetch(endpoint, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                nonce: this.axoConfig.ajax.frontend_logger.nonce,
+                log: {
+                    message,
+                    level,
+                }
+            })
+        });
     }
 }
 
