@@ -87,29 +87,35 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			12
 		);
 
-		add_filter( 'woocommerce_add_to_cart_validation', function
-		(
-			$passed_validation,
-			$product_id
-		) {
-			if ( WC()->cart->is_empty() ) {
+		add_filter(
+			'woocommerce_add_to_cart_validation',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $passed_validation, $product_id ) {
+				if ( WC()->cart->is_empty() ) {
+					return $passed_validation;
+				}
+
+				foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+					if ( get_post_meta( $cart_item['product_id'], 'ppcp_subscription_product', true ) ) {
+						wc_add_notice( __( 'You can only have one subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
+						return false;
+					}
+
+					if ( get_post_meta( $product_id, 'ppcp_subscription_product', true ) ) {
+						wc_add_notice( __( 'You cannot add a subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
+						return false;
+					}
+				}
+
 				return $passed_validation;
-			}
-
-			foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-				if ( get_post_meta( $cart_item['product_id'], 'ppcp_subscription_product', true ) ) {
-					wc_add_notice(__('You can only have one subscription product in your cart.', 'woocommerce-paypal-payments'), 'error');
-					return false;
-				}
-
-				if ( get_post_meta( $product_id, 'ppcp_subscription_product', true ) ) {
-					wc_add_notice(__('You cannot add a subscription product to a cart with other items.', 'woocommerce-paypal-payments'), 'error');
-					return false;
-				}
-			}
-
-			return $passed_validation;
-		}, 10, 2);
+			},
+			10,
+			2
+		);
 
 		add_action(
 			'woocommerce_save_product_variation',
