@@ -80,8 +80,6 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 					return;
 				}
 
-				$foo = $product;
-
 				$subscriptions_api_handler = $c->get( 'paypal-subscriptions.api-handler' );
 				assert( $subscriptions_api_handler instanceof SubscriptionsApiHandler );
 				$this->update_subscription_product_meta( $product, $subscriptions_api_handler );
