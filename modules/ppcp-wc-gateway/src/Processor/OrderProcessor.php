@@ -220,9 +220,14 @@ class OrderProcessor {
 				);
 
 				throw new PayPalOrderMissingException(
-					__(
-						'Could not retrieve order. Maybe it was already completed or this browser is not supported. Please check your email or try again with a different browser.',
-						'woocommerce-paypal-payments'
+					sprintf(
+						// translators: %s: Order history URL on My Account section.
+						esc_attr__(
+							'There was an error processing your order. Please check for any charges in your payment method and review your <a href="%s">order history</a> before placing the order again.',
+							// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Intentionally "woocommerce" to reflect the original message.
+							'woocommerce'
+						),
+						esc_url( wc_get_account_endpoint_url( 'orders' ) )
 					)
 				);
 			}
