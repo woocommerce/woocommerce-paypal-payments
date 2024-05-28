@@ -964,7 +964,7 @@ return array(
 			: $container->get( 'applepay.enable-url-sandbox' );
 
 		$button_url = $enabled
-			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway#field-alternative_payment_methods' )
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway#ppcp-applepay_button_enabled' )
 			: $enable_url;
 
 		return sprintf(
