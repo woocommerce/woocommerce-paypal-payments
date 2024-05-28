@@ -94,18 +94,21 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $passed_validation, $product_id ) {
+			static function ( $passed_validation, $product_id ) {
 				if ( WC()->cart->is_empty() ) {
 					return $passed_validation;
 				}
 
 				foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-					if ( get_post_meta( $cart_item['product_id'], 'ppcp_subscription_product', true ) ) {
+					$cart_product = wc_get_product( $cart_item['product_id'] );
+					if ( $cart_product && $cart_product->get_meta( 'ppcp_subscription_product', true ) ) {
 						wc_add_notice( __( 'You can only have one subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
 						return false;
 					}
 
-					if ( get_post_meta( $product_id, 'ppcp_subscription_product', true ) ) {
+					$product = wc_get_product( $product_id );
+
+					if ( $product && $product->get_meta( 'ppcp_subscription_product', true ) ) {
 						wc_add_notice( __( 'You cannot add a subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
 						return false;
 					}
