@@ -261,9 +261,10 @@ class AxoManager {
         if (scenario.axoProfileViews) {
 
             this.shippingView.activate();
+            this.cardView.activate();
 
             if (this.status.hasCard) {
-                this.cardView.activate();
+                this.billingView.activate();
             }
 
             // Move watermark to after shipping.
@@ -570,7 +571,9 @@ class AxoManager {
             page_type: 'checkout'
         });
 
+        this.disableGatewaySelection();
         await this.lookupCustomerByEmail();
+        this.enableGatewaySelection();
     }
 
     async lookupCustomerByEmail() {
@@ -659,6 +662,14 @@ class AxoManager {
                 this.cardComponentData()
             )).render(this.el.paymentContainer.selector + '-form');
         }
+    }
+
+    disableGatewaySelection() {
+        this.$('.wc_payment_methods input').prop('disabled', true);
+    }
+
+    enableGatewaySelection() {
+        this.$('.wc_payment_methods input').prop('disabled', false);
     }
 
     clearData() {
