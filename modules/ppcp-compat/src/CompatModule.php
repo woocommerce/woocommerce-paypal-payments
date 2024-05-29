@@ -342,20 +342,17 @@ class CompatModule implements ModuleInterface {
 			'wp',
 			function() {
 				$page_id = get_the_ID();
-				if ( $page_id ) {
-					if ( CartCheckoutDetector::has_elementor_checkout( $page_id ) ) {
-						add_filter(
-							'woocommerce_paypal_payments_context',
-							function ( $context ): string {
-								// Default context.
-								if ( 'mini-cart' === $context ) {
-									return 'checkout';
-								}
-								return $context;
-							}
-						);
-					}
+				if ( ! $page_id || ! CartCheckoutDetector::has_elementor_checkout( $page_id ) ) {
+					return;
 				}
+
+				add_filter(
+					'woocommerce_paypal_payments_context',
+					function ( $context ): string {
+						// Default context.
+						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
+					}
+				);
 			}
 		);
 	}
