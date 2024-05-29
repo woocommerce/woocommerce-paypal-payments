@@ -60,7 +60,6 @@ class AxoManager {
         }
 
         document.axoDebugObject = () => {
-            console.log(this);
             return this;
         }
 
@@ -166,9 +165,8 @@ class AxoManager {
         this.$('form.woocommerce-checkout input').on('keydown', async (ev) => {
             if(ev.key === 'Enter' && getCurrentPaymentMethod() === 'ppcp-axo-gateway' ) {
                 ev.preventDefault();
-                log('Enter key attempt');
-                log('emailInput', this.emailInput.value);
-                log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+                log(`Enter key attempt - emailInput: ${this.emailInput.value}`);
+                log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
                 if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
                     await this.onChangeEmail();
                 }
@@ -177,7 +175,7 @@ class AxoManager {
 
         // Clear last email checked identity when email field is focused.
         this.$('#billing_email_field input').on('focus', (ev) => {
-            log('Clear the last email checked:', this.lastEmailCheckedIdentity);
+            log(`Clear the last email checked: ${this.lastEmailCheckedIdentity}`);
             this.lastEmailCheckedIdentity = '';
         });
 
@@ -214,7 +212,7 @@ class AxoManager {
             this.status.hasProfile
         );
 
-        log('Scenario', scenario);
+        log(`Scenario: ${scenario}`);
 
         // Reset some elements to a default status.
         this.el.watermarkContainer.hide();
@@ -376,7 +374,7 @@ class AxoManager {
     setStatus(key, value) {
         this.status[key] = value;
 
-        log('Status updated', JSON.parse(JSON.stringify(this.status)));
+        log(`Status updated: ${JSON.parse(JSON.stringify(this.status))}`);
 
         document.dispatchEvent(new CustomEvent("axo_status_updated", {detail: this.status}));
 
@@ -388,9 +386,8 @@ class AxoManager {
         this.initFastlane();
         this.setStatus('active', true);
 
-        log('Attempt on activation');
-        log('emailInput', this.emailInput.value);
-        log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+        log(`Attempt on activation - emailInput: ${this.emailInput.value}`);
+        log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
         if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
             this.onChangeEmail();
         }
@@ -512,17 +509,15 @@ class AxoManager {
 
         } else {
             this.emailInput.addEventListener('change', async ()=> {
-                log('Change event attempt');
-                log('emailInput', this.emailInput.value);
-                log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+                log(`Change event attempt - emailInput: ${this.emailInput.value}`);
+                log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
                 if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
                     this.onChangeEmail();
                 }
             });
 
-            log('Last, this.emailInput.value attempt');
-            log('emailInput', this.emailInput.value);
-            log('this.lastEmailCheckedIdentity', this.lastEmailCheckedIdentity);
+            log(`Last, this.emailInput.value attempt - emailInput: ${this.emailInput.value}`);
+            log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
             if (this.emailInput.value) {
                 this.onChangeEmail();
             }
@@ -542,7 +537,7 @@ class AxoManager {
             return;
         }
 
-        log('Email changed: ' + (this.emailInput ? this.emailInput.value : '<empty>'));
+        log(`Email changed: ${this.emailInput ? this.emailInput.value : '<empty>'}`);
 
         this.$(this.el.paymentContainer.selector + '-detail').html('');
         this.$(this.el.paymentContainer.selector + '-form').html('');
@@ -579,7 +574,7 @@ class AxoManager {
     async lookupCustomerByEmail() {
         const lookupResponse = await this.fastlane.identity.lookupCustomerByEmail(this.emailInput.value);
 
-        await this.log(`lookupCustomerByEmail: ${JSON.stringify(lookupResponse)}`);
+        log(`lookupCustomerByEmail: ${JSON.stringify(lookupResponse)}`);
 
         if (lookupResponse.customerContextId) {
             // Email is associated with a Connect profile or a PayPal member.
@@ -588,12 +583,9 @@ class AxoManager {
 
             const authResponse = await this.fastlane.identity.triggerAuthenticationFlow(lookupResponse.customerContextId);
 
-            log('AuthResponse', authResponse);
-            await this.log(`triggerAuthenticationFlow: ${JSON.stringify(authResponse)}`);
+            log(`AuthResponse - triggerAuthenticationFlow: ${JSON.stringify(authResponse)}`);
 
             if (authResponse.authenticationState === 'succeeded') {
-                log(JSON.stringify(authResponse));
-
                 const shippingData = authResponse.profileData.shippingAddress;
                 if (shippingData) {
                     this.setShipping(shippingData);
@@ -700,7 +692,7 @@ class AxoManager {
         // TODO: validate data.
 
         if (this.data.card) { // Ryan flow
-            log('Ryan flow.');
+            log('Starting Ryan flow.');
 
             this.$('#ship-to-different-address-checkbox').prop('checked', 'checked');
 
@@ -711,24 +703,23 @@ class AxoManager {
 
             this.ensureBillingPhoneNumber(data);
 
-            this.log(`Ryan flow - submitted nonce: ${this.data.card.id}` )
+            log(`Ryan flow - submitted nonce: ${this.data.card.id}` )
 
             this.submit(this.data.card.id, data);
 
         } else { // Gary flow
-            log('Gary flow.');
+            log('Starting Gary flow.');
 
             try {
                 this.cardComponent.getPaymentToken(
                     this.tokenizeData()
                 ).then((response) => {
-                    this.log(`Gary flow - submitted nonce: ${response.id}` )
+                    log(`Gary flow - submitted nonce: ${response.id}` )
                     this.submit(response.id);
                 });
             } catch (e) {
-                log('Error tokenizing.');
                 alert('Error tokenizing data.');
-                this.log(`Error tokenizing data. ${e.message}`, 'error');
+                log(`Error tokenizing data. ${e.message}`, 'error');
             }
         }
     }
@@ -809,8 +800,7 @@ class AxoManager {
                             }, 500);
                         }
 
-                        console.error('Failure:', responseData);
-                        this.log(`Error sending checkout form. ${responseData}`, 'error');
+                        log(`Error sending checkout form. ${responseData}`, 'error');
 
                         this.hideLoading();
                         return;
@@ -820,8 +810,7 @@ class AxoManager {
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    this.log(`Error sending checkout form. ${error.message}`, 'error');
+                    log(`Error sending checkout form. ${error.message}`, 'error');
 
                     this.hideLoading();
                 });
@@ -898,25 +887,6 @@ class AxoManager {
         if (watermarkLoader) {
             watermarkLoader.classList.toggle(loaderClass);
         }
-    }
-
-    async log(message, level = 'info') {
-        const endpoint = this.axoConfig?.ajax?.frontend_logger?.endpoint;
-        if(!endpoint) {
-            return;
-        }
-
-        await fetch(endpoint, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                nonce: this.axoConfig.ajax.frontend_logger.nonce,
-                log: {
-                    message,
-                    level,
-                }
-            })
-        });
     }
 }
 
