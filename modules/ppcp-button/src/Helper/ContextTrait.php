@@ -95,47 +95,51 @@ trait ContextTrait {
 	 * @return string
 	 */
 	protected function context(): string {
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+		// Default context.
+		$context = 'mini-cart';
 
-			// Do this check here instead of reordering outside conditions.
-			// In order to have more control over the context.
-			if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
-				return 'checkout';
-			}
+		switch ( true ) {
+			case is_product() || wc_post_content_has_shortcode( 'product_page' ):
+				// Do this check here instead of reordering outside conditions.
+				// In order to have more control over the context.
+				if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
+					$context = 'checkout';
+				} else {
+					$context = 'product';
+				}
+				break;
 
-			return 'product';
+			// has_block may not work if called too early, such as during the block registration.
+			case has_block( 'woocommerce/cart' ):
+				$context = 'cart-block';
+				break;
+
+			case $this->is_cart():
+				$context = 'cart';
+				break;
+
+			case is_checkout_pay_page():
+				$context = 'pay-now';
+				break;
+
+			case has_block( 'woocommerce/checkout' ):
+				$context = 'checkout-block';
+				break;
+
+			case $this->is_checkout() && ! $this->is_paypal_continuation():
+				$context = 'checkout';
+				break;
+
+			case $this->is_add_payment_method_page():
+				$context = 'add-payment-method';
+				break;
+
+			case $this->is_block_editor():
+				$context = 'block-editor';
+				break;
 		}
 
-		// has_block may not work if called too early, such as during the block registration.
-		if ( has_block( 'woocommerce/cart' ) ) {
-			return 'cart-block';
-		}
-
-		if ( $this->is_cart() ) {
-			return 'cart';
-		}
-
-		if ( is_checkout_pay_page() ) {
-			return 'pay-now';
-		}
-
-		if ( has_block( 'woocommerce/checkout' ) ) {
-			return 'checkout-block';
-		}
-
-		if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
-			return 'checkout';
-		}
-
-		if ( $this->is_add_payment_method_page() ) {
-			return 'add-payment-method';
-		}
-
-		if ( $this->is_block_editor() ) {
-			return 'block-editor';
-		}
-
-		return 'mini-cart';
+		return apply_filters( 'woocommerce_paypal_payments_context', $context );
 	}
 
 	/**
