@@ -80,9 +80,7 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 					return;
 				}
 
-				if ( $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
-					update_metadata( 'post', $product_id, '_sold_individually', 'yes', 'no' );
-				}
+
 
 				$subscriptions_api_handler = $c->get( 'paypal-subscriptions.api-handler' );
 				assert( $subscriptions_api_handler instanceof SubscriptionsApiHandler );
@@ -697,6 +695,11 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 				$subscriptions_api_handler->update_product( $product );
 				$subscriptions_api_handler->update_plan( $product );
+
+				if ( $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
+					update_metadata( 'post', $product->get_id(), '_sold_individually', 'yes', 'no' );
+				}
+
 				return;
 			}
 
