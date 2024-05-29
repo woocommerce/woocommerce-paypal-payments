@@ -17,12 +17,14 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
 	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
 		/**
+		 * The return value must not contain a trailing slash.
+		 *
 		 * Cannot return false for this path.
 		 *
 		 * @psalm-suppress PossiblyFalseArgument
 		 */
 		return plugins_url(
-			'/modules/ppcp-paylater-configurator/',
+			'/modules/ppcp-paylater-configurator',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
