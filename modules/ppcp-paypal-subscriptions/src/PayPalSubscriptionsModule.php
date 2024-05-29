@@ -695,7 +695,7 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 				$subscriptions_api_handler->update_plan( $product );
 
 				if ( $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
-					update_metadata( 'post', $product->get_id(), '_sold_individually', 'yes', 'no' );
+					$product->set_sold_individually( true );
 				}
 
 				return;
