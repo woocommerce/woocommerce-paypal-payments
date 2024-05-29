@@ -348,7 +348,7 @@ class CompatModule implements ModuleInterface {
 
 				add_filter(
 					'woocommerce_paypal_payments_context',
-					function ( $context ): string {
+					function ( string $context ): string {
 						// Default context.
 						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
 					}
