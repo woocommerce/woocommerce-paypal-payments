@@ -84,6 +84,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
 			function( array $localized_script_data ) use ( $c ) {
+				if ( ! is_user_logged_in() ) {
+					return $localized_script_data;
+				}
+
 				$api = $c->get( 'api.user-id-token' );
 				assert( $api instanceof UserIdToken );
 
