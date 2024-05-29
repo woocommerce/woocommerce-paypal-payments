@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -209,6 +210,12 @@ class AxoManager {
 			),
 			'icons_directory' => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
 			'module_url'      => untrailingslashit( $this->module_url ),
+			'ajax'            => array(
+				'frontend_logger' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+				),
+			),
 		);
 	}
 
