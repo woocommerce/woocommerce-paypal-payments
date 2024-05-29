@@ -212,7 +212,7 @@ class AxoManager {
             this.status.hasProfile
         );
 
-        log(`Scenario: ${scenario}`);
+        log(`Scenario: ${JSON.stringify(scenario)}`);
 
         // Reset some elements to a default status.
         this.el.watermarkContainer.hide();
@@ -374,7 +374,7 @@ class AxoManager {
     setStatus(key, value) {
         this.status[key] = value;
 
-        log(`Status updated: ${JSON.parse(JSON.stringify(this.status))}`);
+        log(`Status updated: ${JSON.stringify(this.status)}`);
 
         document.dispatchEvent(new CustomEvent("axo_status_updated", {detail: this.status}));
 

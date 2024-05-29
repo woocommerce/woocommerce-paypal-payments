@@ -1,5 +1,5 @@
 export function log(message, level = 'info') {
-    const endpoint = this.axoConfig?.ajax?.frontend_logger?.endpoint;
+    const endpoint = window.wc_ppcp_axo?.ajax?.frontend_logger?.endpoint;
     if(!endpoint) {
         return;
     }
@@ -8,7 +8,7 @@ export function log(message, level = 'info') {
         method: 'POST',
         credentials: 'same-origin',
         body: JSON.stringify({
-            nonce: this.axoConfig.ajax.frontend_logger.nonce,
+            nonce: window.wc_ppcp_axo.ajax.frontend_logger.nonce,
             log: {
                 message,
                 level,
