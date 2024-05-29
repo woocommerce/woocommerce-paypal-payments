@@ -67,10 +67,10 @@ class FrontendLoggerEndpoint implements EndpointInterface {
 
 		switch ( $level ) {
 			case 'error':
-				$this->logger->error( '[AXO] ' . esc_html( $data['log']['message'] ) );
+				$this->logger->error( '[AXO] ' . $data['log']['message'] );
 				break;
 			default:
-				$this->logger->info( '[AXO] ' . esc_html( $data['log']['message'] ) );
+				$this->logger->info( '[AXO] ' . $data['log']['message'] );
 				break;
 		}
 
