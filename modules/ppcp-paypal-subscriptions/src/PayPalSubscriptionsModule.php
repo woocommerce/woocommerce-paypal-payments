@@ -99,17 +99,22 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 					return $passed_validation;
 				}
 
-				foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
-					$cart_product = wc_get_product( $cart_item['product_id'] );
-					if ( $cart_product && $cart_product->get_meta( 'ppcp_subscription_product', true ) ) {
-						wc_add_notice( __( 'You can only have one subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
-						return false;
+				$product = wc_get_product( $product_id );
+
+				if ( $product && $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
+					if ( ! $product->get_sold_individually() ) {
+						$product->set_sold_individually( true );
+						$product->save();
 					}
 
-					$product = wc_get_product( $product_id );
+					wc_add_notice( __( 'You cannot add a subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
+					return false;
+				}
 
-					if ( $product && $product->get_meta( 'ppcp_subscription_product', true ) ) {
-						wc_add_notice( __( 'You cannot add a subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
+				foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+					$cart_product = wc_get_product( $cart_item['product_id'] );
+					if ( $cart_product && $cart_product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
+						wc_add_notice( __( 'You can only have one subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
 						return false;
 					}
 				}
@@ -687,16 +692,17 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 		// phpcs:ignore WordPress.Security.NonceVerification
 		$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
 		$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
+
+		if ( ! $product->get_sold_individually() ) {
+			$product->set_sold_individually( true );
+		}
+
 		$product->save();
 
 		if ( ( $product->get_type() === 'subscription' || $product->get_type() === 'subscription_variation' ) && $enable_subscription_product === 'yes' ) {
 			if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 				$subscriptions_api_handler->update_product( $product );
 				$subscriptions_api_handler->update_plan( $product );
-
-				if ( $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
-					$product->set_sold_individually( true );
-				}
 
 				return;
 			}
