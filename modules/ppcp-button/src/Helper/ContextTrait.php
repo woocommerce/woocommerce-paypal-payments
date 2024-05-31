@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FundingSources;
 
 trait ContextTrait {
 	/**
@@ -183,7 +184,7 @@ trait ContextTrait {
 		}
 
 		$source = $order->payment_source();
-		if ( $source && $source->name() === 'card' ) {
+		if ( $source && ( $source->name() === 'card' || array_key_exists( $source->name(), FundingSources::all() ) ) ) {
 			return false; // Ignore for DCC.
 		}
 
