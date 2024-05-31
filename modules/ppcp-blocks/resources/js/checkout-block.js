@@ -568,7 +568,7 @@ if(cartHasSubscriptionProducts(config.scriptData)) {
     features.push('subscriptions');
 }
 
-if (block_enabled) {
+if (block_enabled && config.enabled) {
     if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
         let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
         if (config.placeOrderButtonDescription) {
