@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
@@ -34,6 +35,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
+use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
@@ -218,6 +220,13 @@ class SmartButton implements SmartButtonInterface {
 	private $logger;
 
 	/**
+	 * Whether the shipping should be handled in PayPal.
+	 *
+	 * @var bool
+	 */
+	private $should_handle_shipping_in_paypal;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
@@ -242,6 +251,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param PaymentTokensEndpoint  $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param LoggerInterface        $logger The logger.
+	 * @param bool                   $should_handle_shipping_in_paypal Whether the shipping should be handled in PayPal.
 	 */
 	public function __construct(
 		string $module_url,
@@ -265,7 +275,8 @@ class SmartButton implements SmartButtonInterface {
 		array $funding_sources_without_redirect,
 		bool $vault_v3_enabled,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		bool $should_handle_shipping_in_paypal
 	) {
 
 		$this->module_url                        = $module_url;
@@ -290,6 +301,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->vault_v3_enabled                  = $vault_v3_enabled;
 		$this->logger                            = $logger;
 		$this->payment_tokens_endpoint           = $payment_tokens_endpoint;
+		$this->should_handle_shipping_in_paypal  = $should_handle_shipping_in_paypal;
 	}
 
 	/**
@@ -439,7 +451,20 @@ class SmartButton implements SmartButtonInterface {
 			wp_is_block_theme()
 		);
 
-		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme ): ?array {
+		$has_paylater_block =
+			(
+				PayLaterBlockModule::is_block_enabled( $this->settings_status ) &&
+				has_block( 'woocommerce-paypal-payments/paylater-messages' )
+			) ||
+			(
+				PayLaterWCBlocksModule::is_block_enabled( $this->settings_status, $location ) &&
+				(
+					has_block( 'woocommerce-paypal-payments/checkout-paylater-messages' ) ||
+					has_block( 'woocommerce-paypal-payments/cart-paylater-messages' )
+				)
+			);
+
+		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme, $has_paylater_block ): ?array {
 			switch ( $location ) {
 				case 'checkout':
 					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
@@ -458,11 +483,14 @@ class SmartButton implements SmartButtonInterface {
 						? $this->messages_renderer_block( $location, 'core/navigation', 10 )
 						: $this->messages_renderer_hook( $location, 'loop_start', 20 );
 				default:
-					return null;
+					return $has_paylater_block
+						? $this->messages_renderer_hook( $location, 'ppcp_paylater_message_block', 10 )
+						: null;
 			}
 		};
 
 		$hook = $get_hook( $location );
+
 		if ( ! $hook ) {
 			return false;
 		}
@@ -493,7 +521,7 @@ class SmartButton implements SmartButtonInterface {
 				function () {
 					echo '
 <script>
-document.querySelector("#payment").before(document.querySelector("#ppcp-messages"))
+document.querySelector("#payment").before(document.querySelector(".ppcp-messages"))
 </script>';
 				}
 			);
@@ -610,10 +638,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
-		if ( in_array( $this->context(), array( 'checkout-block', 'cart-block' ), true ) ) {
-			return false;
-		}
-
 		return $this->should_load_buttons() || $this->should_load_messages() || $this->can_render_dcc();
 	}
 
@@ -664,7 +688,11 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 
-		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' ) && PayLaterBlockModule::is_block_enabled( $this->settings_status );
+		$has_paylater_block = PayLaterBlockModule::is_block_enabled( $this->settings_status ) && has_block( 'woocommerce-paypal-payments/paylater-messages' );
+
+		if ( 'cart-block' === $location || 'checkout-block' === $location ) {
+			return true;
+		}
 
 		switch ( $location ) {
 			case 'checkout':
@@ -676,9 +704,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				return $messaging_enabled_for_current_location;
 			case 'block-editor':
 				return true;
-			case 'checkout-block':
-			case 'cart-block':
-				return $has_paylater_block || $this->is_block_editor();
 			default:
 				return $has_paylater_block;
 		}
@@ -798,7 +823,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 */
 		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
 
-		$messages_placeholder = '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+		$messages_placeholder = '<div class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 
 		if ( is_array( $block_params ) && ( $block_params['blockName'] ?? false ) ) {
 			$this->render_after_block(
@@ -897,7 +922,20 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
 		$location             = $styling_per_location ? $location : 'general';
-		$setting_name_prefix  = "pay_later_{$location}_message";
+
+		// Map checkout-block and cart-block message options to checkout and cart options.
+		switch ( $location ) {
+			case 'checkout-block':
+				$location = 'checkout';
+				break;
+			case 'cart-block':
+				$location = 'cart';
+				break;
+			default:
+				break;
+		}
+
+		$setting_name_prefix = "pay_later_{$location}_message";
 
 		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
 		$logo_type     = $this->settings->has( "{$setting_name_prefix}_logo" ) ? $this->settings->get( "{$setting_name_prefix}_logo" ) : 'primary';
@@ -908,7 +946,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		$text_size     = $this->settings->has( "{$setting_name_prefix}_text_size" ) ? $this->settings->get( "{$setting_name_prefix}_text_size" ) : '12';
 
 		return array(
-			'wrapper'   => '#ppcp-messages',
+			'wrapper'   => '.ppcp-messages',
 			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
 			'block'     => array(
 				'enabled' => PayLaterBlockModule::is_block_enabled( $this->settings_status ),
@@ -1115,6 +1153,21 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentTokenForGuest::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreatePaymentTokenForGuest::nonce() ),
 				),
+				'update_shipping'                => array(
+					'endpoint' => \WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
+				),
+				'update_customer_shipping'       => array(
+					'shipping_options'       => array(
+						'endpoint' => '/wp-json/wc/store/cart/select-shipping-rate',
+					),
+					'shipping_address'       => array(
+						'cart_endpoint'            => '/wp-json/wc/store/cart/',
+						'update_customer_endpoint' => '/wp-json/wc/store/v1/cart/update-customer/',
+					),
+					'wp_rest_nonce'          => wp_create_nonce( 'wc_store_api' ),
+					'update_shipping_method' => \WC_AJAX::get_endpoint( 'update_shipping_method' ),
+				),
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
@@ -1256,6 +1309,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'user'                                    => array(
 				'is_logged' => is_user_logged_in(),
 			),
+			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
 		if ( 'pay-now' === $this->context() ) {
@@ -1460,9 +1515,45 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return array
 	 */
 	private function attributes(): array {
-		return array(
+		$attributes = array(
 			'data-partner-attribution-id' => $this->bn_code_for_context( $this->context() ),
 		);
+
+		$page_type_attribute = $this->page_type_attribute();
+		if ( $page_type_attribute ) {
+			$attributes['data-page-type'] = $page_type_attribute;
+		}
+
+		return $attributes;
+	}
+
+	/**
+	 * Retrieves the value for page type attribute(data-page-type) used for the JS SDK.
+	 *
+	 * @return string
+	 */
+	protected function page_type_attribute(): string {
+		if ( is_search() ) {
+			return 'search-results';
+		}
+
+		switch ( $this->location() ) {
+			case 'product':
+				return 'product-details';
+			case 'shop':
+				return 'product-listing';
+			case 'home':
+				return 'mini-cart';
+			case 'cart-block':
+			case 'cart':
+				return 'cart';
+			case 'checkout-block':
+			case 'checkout':
+			case 'pay-now':
+				return 'checkout';
+			default:
+				return '';
+		}
 	}
 
 	/**
@@ -1474,7 +1565,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	private function bn_code_for_context( string $context ): string {
 
 		$codes = $this->bn_codes();
-		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : '';
+		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : 'Woo_PPCP';
 	}
 
 	/**

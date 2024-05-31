@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
@@ -25,6 +24,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 
 /**
@@ -109,7 +109,7 @@ class RefundProcessor {
 	 */
 	public function process( WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
 		try {
-			if ( ! in_array( $wc_order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
+			if ( ! in_array( $wc_order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, PayUponInvoiceGateway::ID ), true ) ) {
 				return true;
 			}
 

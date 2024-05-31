@@ -198,6 +198,7 @@ return array(
 					CardButtonGateway::ID,
 					OXXOGateway::ID,
 					Settings::PAY_LATER_TAB_ID,
+					AxoGateway::ID,
 				),
 				StandardButtonGateway::ids()
 			),
@@ -351,6 +352,7 @@ return array(
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$logger
 		);
 	},
@@ -832,6 +834,15 @@ return array(
 					'jcb'             => _x( 'JCB', 'Name of credit card', 'woocommerce-paypal-payments' ),
 					'elo'             => _x( 'Elo', 'Name of credit card', 'woocommerce-paypal-payments' ),
 					'hiper'           => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
+				),
+				'options_axo'  => array(
+					'visa-light'       => _x( 'Visa (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'mastercard-light' => _x( 'Mastercard (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'amex-light'       => _x( 'Amex (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'discover-light'   => _x( 'Discover (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'dinersclub-light' => _x( 'Diners Club (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'jcb-light'        => _x( 'JCB (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'unionpay-light'   => _x( 'UnionPay (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
 					State::STATE_ONBOARDED,
@@ -1457,7 +1468,7 @@ return array(
 
 		$button_text = $enabled
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
-			: esc_html__( 'Enable Advanced PayPal Wallet', 'woocommerce-paypal-payments' );
+			: esc_html__( 'Enable saving PayPal & Venmo', 'woocommerce-paypal-payments' );
 
 		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
 			? $container->get( 'wcgateway.enable-reference-transactions-url-live' )

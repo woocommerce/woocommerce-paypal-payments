@@ -269,6 +269,31 @@ class SettingsRenderer {
 	}
 
 	/**
+	 * Renders the html field.
+	 *
+	 * @param string $field The current field HTML.
+	 * @param string $key   The current key.
+	 * @param array  $config The configuration array.
+	 * @param string $value The current value.
+	 *
+	 * @return string
+	 */
+	public function render_html( $field, $key, $config, $value ): string {
+
+		if ( 'ppcp-html' !== $config['type'] ) {
+			return $field;
+		}
+
+		$html = sprintf(
+			'<div class="wc-settings-html %s">%s</div>',
+			esc_attr( implode( ' ', $config['classes'] ) ),
+			$config['html']
+		);
+
+		return $html;
+	}
+
+	/**
 	 * Renders the table row.
 	 *
 	 * @param array  $data Values of the row cells.
@@ -366,6 +391,12 @@ $data_rows_html
 			if (
 				in_array( 'pui_ready', $config['requirements'], true )
 				&& $this->api_shop_country !== 'DE'
+			) {
+				continue;
+			}
+			if (
+				in_array( 'axo', $config['requirements'], true )
+				&& $this->api_shop_country !== 'US'
 			) {
 				continue;
 			}

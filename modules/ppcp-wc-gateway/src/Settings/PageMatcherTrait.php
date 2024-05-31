@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\StandardButtonGateway;
@@ -39,6 +40,7 @@ trait PageMatcherTrait {
 				Settings::PAY_LATER_TAB_ID  => Settings::PAY_LATER_TAB_ID,
 				CreditCardGateway::ID       => 'dcc', // TODO: consider using just the gateway ID for PayPal and DCC too.
 				CardButtonGateway::ID       => CardButtonGateway::ID,
+				AxoGateway::ID              => 'axo',
 			),
 			StandardButtonGateway::names()
 		);

@@ -1,5 +1,3 @@
-import {setVisible} from "../../../../ppcp-button/resources/js/modules/Helper/Hiding";
-
 class DomElement {
 
     constructor(config) {

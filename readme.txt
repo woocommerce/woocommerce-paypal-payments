@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.5
 Requires PHP: 7.2
-Stable tag: 2.6.1
+Stable tag: 2.7.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,33 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.7.1 - 2024-05-28 =
+* Fix - Ensure package tracking data is sent to original PayPal transaction #2180
+* Fix - Set the 'Woo_PPCP' as a default value for data-partner-attribution-id #2188
+* Fix - Allow PUI Gateway for refund processor #2192
+* Fix - Notice on newly created block cart checkout #2211
+* Fix - Apple Pay button in the editor #2177
+* Fix - Allow shipping callback and skipping confirmation page from any express button #2236
+* Fix - Pay Later messaging configurator sometimes displays old settings after saving #2249
+* Fix - Update the apple-developer-merchantid-domain-association validation strings for Apple Pay #2251
+* Fix - Enable the Shipping Callback handlers #2266
+* Enhancement - Use admin theme color #1602
+
+= 2.7.0 - 2024-04-30 =
+* Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
+* Fix - Incorrect Pricing Issue with Variable Subscriptions in PayPal Subscriptions Mode #2156
+* Fix - Wrong return_url in multisite setup when using subdomains #2157
+* Fix - Fix the fundingSource is not defined error on Block Checkout #2185
+* Enhancement - Add the data-page-type attribute for JS SDK #2161
+* Enhancement - Save Card Last Digits in order meta for Advanced Card Payments #2149
+* Enhancement - Refactor the Pay Later Messaging block and add dedicated Cart/Checkout blocks #2153
+* Enhancement - "Next Payment" status not updated when using PayPal Subscriptions #2091
+* Enhancement - Optimize default settings for new store configurations #2158
+* Enhancement - Improve tooltip information for tagline #2154
+* Enhancement - Improve error message on certain exceptions #1354
+* Enhancement - Cart Pay Later block: Change the default insert position #2179
+* Enhancement - Messages Bootstrap: Add a render retry functionality #2181
 
 = 2.6.1 - 2024-04-09 =
 * Fix - Payment tokens fixes and adjustments #2106

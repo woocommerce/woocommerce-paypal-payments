@@ -17,11 +17,15 @@ use Vendidero\Germanized\Shipments\Shipment;
 use Vendidero\Germanized\Shipments\ShipmentItem;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class GermanizedShipmentIntegration.
  */
 class GermanizedShipmentIntegration implements Integration {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The shipment factory.
@@ -79,8 +83,9 @@ class GermanizedShipmentIntegration implements Integration {
 					return;
 				}
 
+				$paypal_order    = ppcp_get_paypal_order( $wc_order );
+				$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
 				$wc_order_id     = $wc_order->get_id();
-				$transaction_id  = $wc_order->get_transaction_id();
 				$tracking_number = $shipment->get_tracking_id();
 				$carrier         = $shipment->get_shipping_provider();
 
@@ -91,14 +96,14 @@ class GermanizedShipmentIntegration implements Integration {
 					$shipment->get_items()
 				);
 
-				if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
+				if ( ! $tracking_number || ! $carrier || ! $capture_id ) {
 					return;
 				}
 
 				try {
 					$ppcp_shipment = $this->shipment_factory->create_shipment(
 						$wc_order_id,
-						$transaction_id,
+						$capture_id,
 						$tracking_number,
 						'SHIPPED',
 						'OTHER',

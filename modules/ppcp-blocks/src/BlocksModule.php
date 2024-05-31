@@ -110,6 +110,13 @@ class BlocksModule implements ModuleInterface {
 			}
 		);
 
+		add_filter(
+			'woocommerce_paypal_payments_sdk_components_hook',
+			function( array $components ) {
+				$components[] = 'buttons';
+				return $components;
+			}
+		);
 	}
 
 	/**

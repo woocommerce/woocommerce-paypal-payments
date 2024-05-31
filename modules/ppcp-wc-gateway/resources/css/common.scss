@@ -56,6 +56,25 @@ $background-ident-color: #fbfbfb;
 	}
 }
 
+.ppcp-notice {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left-width: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	margin: 5px 0px 2px;
+	padding: 0px 12px 4px 12px;
+}
+
+.ppcp-notice-warning {
+	border-left-color: #dba617;
+
+	.highlight {
+		background: transparent;
+		color: #dba617;
+		font-weight: 600;
+	}
+}
+
 // Box indented fields.
 @media screen and (min-width: 800px) {
 	.ppcp-settings-field {
@@ -77,6 +96,18 @@ $background-ident-color: #fbfbfb;
 
 			th, &.ppcp-settings-field-heading td  {
 				padding-left: 40px;
+				padding-right: 40px;
+			}
+
+			.ppcp-notice  {
+				margin-left: 40px;
+				margin-right: 10px;
+				padding: 1px 12px;
+
+				p {
+					margin: .5em 0;
+					padding: 2px;
+				}
 			}
 
 			th, td {
@@ -88,6 +119,12 @@ $background-ident-color: #fbfbfb;
 					border-top: 1px solid $background-ident-color;
 				}
 			}
+		}
+	}
+
+	.ppcp-settings-field-select {
+		p.description {
+			margin-bottom: 1em;
 		}
 	}
 }

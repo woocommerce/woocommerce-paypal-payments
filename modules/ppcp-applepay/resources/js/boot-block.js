@@ -2,9 +2,10 @@ import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod} from '@woocommerce/blocks-registry';
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 import {cartHasSubscriptionProducts} from '../../../ppcp-blocks/resources/js/Helper/Subscription'
-import ApplepayManager from "./ApplepayManager";
 import {loadCustomScript} from "@paypal/paypal-js";
 import CheckoutHandler from "./Context/CheckoutHandler";
+import ApplepayManager from "./ApplepayManager";
+import ApplepayManagerBlockEditor from "./ApplepayManagerBlockEditor";
 
 const ppcpData = wc.wcSettings.getSetting('ppcp-gateway_data');
 const ppcpConfig = ppcpData.scriptData;
@@ -16,13 +17,14 @@ if (typeof window.PayPalCommerceGateway === 'undefined') {
     window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const ApplePayComponent = () => {
+const ApplePayComponent = ( props ) => {
     const [bootstrapped, setBootstrapped] = useState(false);
     const [paypalLoaded, setPaypalLoaded] = useState(false);
     const [applePayLoaded, setApplePayLoaded] = useState(false);
 
     const bootstrap = function () {
-        const manager = new ApplepayManager(buttonConfig, ppcpConfig);
+        const ManagerClass = props.isEditing ? ApplepayManagerBlockEditor : ApplepayManager;
+        const manager = new ManagerClass(buttonConfig, ppcpConfig);
         manager.init();
     };
 
@@ -31,6 +33,8 @@ const ApplePayComponent = () => {
         loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
             setApplePayLoaded(true);
         });
+
+        ppcpConfig.url_params.components += ',applepay';
 
         // Load PayPal
         loadPaypalScript(ppcpConfig, () => {
@@ -46,7 +50,10 @@ const ApplePayComponent = () => {
     }, [paypalLoaded, applePayLoaded]);
 
     return (
-        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-apm ppcp-button-applepay"></div>
+        <div
+            id={buttonConfig.button.wrapper.replace('#', '')}
+            className="ppcp-button-apm ppcp-button-applepay">
+        </div>
     );
 }
 

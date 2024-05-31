@@ -32,11 +32,11 @@ class Shipment implements ShipmentInterface {
 	private $wc_order_id;
 
 	/**
-	 * The transaction ID.
+	 * The capture ID.
 	 *
 	 * @var string
 	 */
-	protected $transaction_id;
+	protected $capture_id;
 
 	/**
 	 * The tracking number.
@@ -76,7 +76,7 @@ class Shipment implements ShipmentInterface {
 	 * Shipment constructor.
 	 *
 	 * @param int    $wc_order_id The WC order ID.
-	 * @param string $transaction_id The transaction ID.
+	 * @param string $capture_id The capture ID.
 	 * @param string $tracking_number The tracking number.
 	 * @param string $status The shipment status.
 	 * @param string $carrier The shipment carrier.
@@ -85,7 +85,7 @@ class Shipment implements ShipmentInterface {
 	 */
 	public function __construct(
 		int $wc_order_id,
-		string $transaction_id,
+		string $capture_id,
 		string $tracking_number,
 		string $status,
 		string $carrier,
@@ -97,15 +97,15 @@ class Shipment implements ShipmentInterface {
 		$this->carrier            = $carrier;
 		$this->carrier_name_other = $carrier_name_other;
 		$this->line_items         = $line_items;
-		$this->transaction_id     = $transaction_id;
+		$this->capture_id         = $capture_id;
 		$this->wc_order_id        = $wc_order_id;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function transaction_id(): string {
-		return $this->transaction_id;
+	public function capture_id(): string {
+		return $this->capture_id;
 	}
 
 	/**
@@ -228,7 +228,7 @@ class Shipment implements ShipmentInterface {
 	 */
 	public function to_array(): array {
 		$shipment = array(
-			'transaction_id'  => $this->transaction_id(),
+			'capture_id'      => $this->capture_id(),
 			'tracking_number' => $this->tracking_number(),
 			'status'          => $this->status(),
 			'carrier'         => $this->carrier(),

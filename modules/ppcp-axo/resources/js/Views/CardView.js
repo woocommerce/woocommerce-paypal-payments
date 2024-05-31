@@ -32,21 +32,27 @@ class CardView {
                 const expiry = data.value('expiry').split('-');
 
                 const cardIcons = {
-                    'VISA':        'visa-dark.svg',
-                    'MASTER_CARD': 'mastercard-dark.svg',
+                    'VISA':        'visa-light.svg',
+                    'MASTER_CARD': 'mastercard-light.svg',
                     'AMEX':        'amex.svg',
                     'DISCOVER':    'discover.svg',
+                    'DINERS':      'dinersclub-light.svg',
+                    'JCB':         'jcb-light.svg',
+                    'UNIONPAY':    'unionpay-light.svg',
                 };
 
                 return `
                     <div style="margin-bottom: 20px;">
-                        <h3>Card Details <a href="javascript:void(0)" ${this.el.changeCardLink.attributes} style="margin-left: 20px;">Edit</a></h3>
+                        <div class="axo-checkout-header-section">
+                            <h3>Card Details</h3>
+                            <a href="javascript:void(0)" ${this.el.changeCardLink.attributes}>Edit</a>
+                        </div>
                         <div style="border:2px solid #cccccc; border-radius: 10px; padding: 16px 20px; background-color:#f6f6f6">
                             <div style="float: right;">
                                 <img
                                     class="ppcp-card-icon"
                                     title="${data.value('brand')}"
-                                    src="/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway/assets/images/${cardIcons[data.value('brand')]}"
+                                    src="${window.wc_ppcp_axo.module_url}/assets/images/axo/${cardIcons[data.value('brand')]}"
                                     alt="${data.value('brand')}"
                                 >
                             </div>

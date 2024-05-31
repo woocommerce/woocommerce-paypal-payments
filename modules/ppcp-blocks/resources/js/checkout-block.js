@@ -16,6 +16,7 @@ import {
 import {
     loadPaypalScriptPromise
 } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import {
     normalizeStyleForFundingSource
 } from '../../../ppcp-button/resources/js/modules/Helper/Style'
@@ -81,7 +82,7 @@ const PayPalComponent = ({
         window.ppcpContinuationFilled = true;
     }, [])
 
-    const createOrder = async () => {
+    const createOrder = async (data, actions) => {
         try {
             const res = await fetch(config.scriptData.ajax.create_order.endpoint, {
                 method: 'POST',
@@ -92,7 +93,8 @@ const PayPalComponent = ({
                     context: config.scriptData.context,
                     payment_method: 'ppcp-gateway',
                     funding_source: window.ppcpFundingSource ?? 'paypal',
-                    createaccount: false
+                    createaccount: false,
+                    payment_source: data.paymentSource
                 }),
             });
 
@@ -295,10 +297,15 @@ const PayPalComponent = ({
         onClick();
     };
 
+    const isVenmoAndVaultingEnabled = () => {
+        return window.ppcpFundingSource === 'venmo' && config.scriptData.vaultingEnabled;
+    }
+
     let handleShippingOptionsChange = null;
     let handleShippingAddressChange = null;
     let handleSubscriptionShippingOptionsChange = null;
     let handleSubscriptionShippingAddressChange = null;
+
     if (shippingData.needsShipping && !config.finalReviewEnabled) {
         handleShippingOptionsChange = async (data, actions) => {
             try {
@@ -507,6 +514,27 @@ const PayPalComponent = ({
     );
 }
 
+const BlockEditorPayPalComponent = () => {
+
+    const urlParams = {
+        clientId: 'test',
+        ...config.scriptData.url_params,
+        dataNamespace: 'ppcp-blocks-editor-paypal-buttons',
+        components: 'buttons',
+    }
+    return (
+        <PayPalScriptProvider
+            options={urlParams}
+       >
+            <PayPalButtons
+                onClick={(data, actions) => {
+                    return false;
+                }}
+            />
+        </PayPalScriptProvider>
+    )
+}
+
 const features = ['products'];
 let block_enabled = true;
 
@@ -571,7 +599,7 @@ if (block_enabled) {
             name: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
             content: <PayPalComponent isEditing={false}/>,
-            edit: <PayPalComponent isEditing={true}/>,
+            edit: <BlockEditorPayPalComponent />,
             ariaLabel: config.title,
             canMakePayment: () => {
                 return true;
@@ -587,7 +615,7 @@ if (block_enabled) {
                 paymentMethodId: config.id,
                 label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
                 content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-                edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+                edit: <BlockEditorPayPalComponent />,
                 ariaLabel: config.title,
                 canMakePayment: async () => {
                     if (!paypalScriptPromise) {
