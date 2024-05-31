@@ -44,7 +44,6 @@ class AxoModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
-		$module = $this;
 
 		add_filter(
 			'woocommerce_payment_gateways',
@@ -132,7 +131,8 @@ class AxoModule implements ModuleInterface {
 
 		add_action(
 			'init',
-			function () use ( $c, $module ) {
+			function () use ( $c ) {
+				$module = $this;
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
@@ -145,11 +145,15 @@ class AxoModule implements ModuleInterface {
 				// Enqueue frontend scripts.
 				add_action(
 					'wp_enqueue_scripts',
-					static function () use ( $c, $manager ) {
+					static function () use ( $c, $manager, $module ) {
+
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						if ( $smart_button->should_load_ppcp_script() ) {
+						if ( $module->should_render_fastlane( $settings ) && $smart_button->should_load_ppcp_script() ) {
 							$manager->enqueue();
 						}
 					}
