@@ -181,6 +181,8 @@ class WooCommerceOrderCreator {
 
 			$wc_order->add_item( $shipping );
 		}
+
+		$wc_order->calculate_totals();
 	}
 
 	/**
