@@ -56,13 +56,13 @@ class PayUponInvoiceHelper {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$billing_country = wc_clean( wp_unslash( $_POST['country'] ?? '' ) );
+		$billing_country = WC()->customer->get_billing_country();
 		if ( empty( $billing_country ) || 'DE' !== $billing_country ) {
 			return false;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$shipping_country = wc_clean( wp_unslash( $_POST['s_country'] ?? '' ) );
+		$shipping_country = WC()->customer->get_shipping_country();
 		if ( empty( $shipping_country ) || 'DE' !== $shipping_country ) {
 			return false;
 		}
