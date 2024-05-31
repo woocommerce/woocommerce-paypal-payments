@@ -75,42 +75,46 @@ class WcShippingTaxIntegration implements Integration {
 		add_filter(
 			'rest_post_dispatch',
 			function( WP_HTTP_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_HTTP_Response {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) ) {
+				try {
+					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) ) {
+						return $response;
+					}
+
+					$params   = $request->get_params();
+					$order_id = (int) ( $params['order_id'] ?? 0 );
+					$label_id = (int) ( $params['label_ids'] ?? 0 );
+
+					if ( ! $order_id || "/wc/v1/connect/label/{$order_id}/{$label_id}" !== $request->get_route() ) {
+						return $response;
+					}
+
+					$data   = $response->get_data() ?? array();
+					$labels = $data['labels'] ?? array();
+
+					foreach ( $labels as $label ) {
+						$tracking_number = $label['tracking'] ?? '';
+						if ( ! $tracking_number ) {
+							continue;
+						}
+
+						$wc_order = wc_get_order( $order_id );
+						if ( ! is_a( $wc_order, WC_Order::class ) ) {
+							continue;
+						}
+
+						$paypal_order = ppcp_get_paypal_order( $wc_order );
+						$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
+						$carrier      = $label['carrier_id'] ?? $label['service_name'] ?? '';
+						$items        = array_map( 'intval', $label['product_ids'] ?? array() );
+
+						if ( ! $carrier || ! $capture_id ) {
+							continue;
+						}
+
+						$this->sync_tracking( $order_id, $capture_id, $tracking_number, $carrier, $items );
+					}
+				} catch ( Exception $exception ) {
 					return $response;
-				}
-
-				$params   = $request->get_params();
-				$order_id = (int) ( $params['order_id'] ?? 0 );
-				$label_id = (int) ( $params['label_ids'] ?? 0 );
-
-				if ( ! $order_id || "/wc/v1/connect/label/{$order_id}/{$label_id}" !== $request->get_route() ) {
-					return $response;
-				}
-
-				$data   = $response->get_data() ?? array();
-				$labels = $data['labels'] ?? array();
-
-				foreach ( $labels as $label ) {
-					$tracking_number = $label['tracking'] ?? '';
-					if ( ! $tracking_number ) {
-						continue;
-					}
-
-					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
-						continue;
-					}
-
-					$paypal_order = ppcp_get_paypal_order( $wc_order );
-					$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order );
-					$carrier      = $label['carrier_id'] ?? $label['service_name'] ?? '';
-					$items        = array_map( 'intval', $label['product_ids'] ?? array() );
-
-					if ( ! $carrier || ! $capture_id ) {
-						continue;
-					}
-
-					$this->sync_tracking( $order_id, $capture_id, $tracking_number, $carrier, $items );
 				}
 
 				return $response;
