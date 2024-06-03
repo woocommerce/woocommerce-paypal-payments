@@ -22,24 +22,11 @@ export function CardFields({config, eventRegistration, emitResponse}) {
         localStorage.setItem('ppcp-save-card-payment', savePayment);
     }
 
-    const wait = (milliseconds) => {
-        return new Promise((resolve) => {
-            console.log('start...')
-            setTimeout(() => {
-                console.log('resolve')
-                resolve()
-            }, milliseconds)
-        })
-    };
-
     useEffect(
         () =>
             onPaymentSetup(() => {
                 async function handlePaymentProcessing() {
                     await cardFieldsForm.submit();
-
-                    // TODO temporary workaround to wait for onApprove to resolve
-                    await wait(3000)
 
                     return {
                         type: responseTypes.SUCCESS,

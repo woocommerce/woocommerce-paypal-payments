@@ -22,8 +22,8 @@ export async function createOrder() {
         });
 }
 
-export function onApprove(data) {
-    fetch(config.scriptData.ajax.approve_order.endpoint, {
+export async function onApprove(data) {
+    return fetch(config.scriptData.ajax.approve_order.endpoint, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
