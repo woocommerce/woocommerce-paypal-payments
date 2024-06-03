@@ -26,7 +26,12 @@ export function CardFields({config, eventRegistration, emitResponse}) {
         () =>
             onPaymentSetup(() => {
                 async function handlePaymentProcessing() {
-                    await cardFieldsForm.submit();
+                    await cardFieldsForm.submit()
+                        .catch((error) => {
+                            return {
+                                type: responseTypes.ERROR,
+                            }
+                        });
 
                     return {
                         type: responseTypes.SUCCESS,
