@@ -60,7 +60,6 @@ class SettingsListenerTest extends ModularTestCase
 			'',
 			'',
 			$billing_agreement_endpoint,
-			$subscription_helper,
 			$logger
 		);
 

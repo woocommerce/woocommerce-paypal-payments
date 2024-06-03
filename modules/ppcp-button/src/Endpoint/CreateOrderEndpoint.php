@@ -246,7 +246,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->parsed_request_data = $data;
 			$payment_method            = $data['payment_method'] ?? '';
 			$funding_source            = $data['funding_source'] ?? '';
-			$payment_source            = $data['payment_source'] ?? '';
 			$wc_order                  = null;
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
@@ -262,7 +261,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				}
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 			} else {
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $payment_source ) );
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $funding_source ) );
 
 				// Do not allow completion by webhooks when started via non-checkout buttons,
 				// it is needed only for some APMs in checkout.
@@ -615,16 +614,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 	/**
 	 * Checks if the shipping should be handled in PayPal popup.
 	 *
-	 * @param string $payment_source The payment source.
+	 * @param string $funding_source The funding source.
 	 * @return bool true if the shipping should be handled in PayPal popup, otherwise false.
 	 */
-	protected function should_handle_shipping_in_paypal( string $payment_source ): bool {
+	protected function should_handle_shipping_in_paypal( string $funding_source ): bool {
 		$is_vaulting_enabled = $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' );
 
 		if ( ! $this->handle_shipping_in_paypal ) {
 			return false;
 		}
 
-		return ! $is_vaulting_enabled || $payment_source !== 'venmo';
+		return ! $is_vaulting_enabled || $funding_source !== 'venmo';
 	}
 }
