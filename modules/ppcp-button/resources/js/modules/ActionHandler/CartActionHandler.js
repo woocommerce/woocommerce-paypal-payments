@@ -60,8 +60,7 @@ class CartActionHandler {
                     funding_source: window.ppcpFundingSource,
                     bn_code:bnCode,
                     payer,
-                    context:this.config.context,
-                    payment_source: data.paymentSource
+                    context:this.config.context
                 }),
             }).then(function(res) {
                 return res.json();
