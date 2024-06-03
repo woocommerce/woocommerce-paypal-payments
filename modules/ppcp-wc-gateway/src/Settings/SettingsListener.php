@@ -394,7 +394,18 @@ class SettingsListener {
 
 		if ( $reference_transaction_enabled !== true ) {
 			$this->settings->set( 'vault_enabled', false );
-			$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
+
+			/**
+			 * If Vaulting-API was previously enabled, then fall-back to the
+			 * PayPal subscription mode, to ensure subscriptions are still
+			 * possible on this shop.
+			 *
+			 * This can happen when switching to a different PayPal merchant account
+			 */
+			if ( 'vaulting_api' === $subscription_mode ) {
+				$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
+			}
+
 			$this->settings->persist();
 		}
 
