@@ -46,6 +46,16 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         }, 100);
     });
 
+    /**
+     * Decides, whether to display the Apple Pay preview button.
+     *
+     * @return {boolean}
+     */
+    const shouldDisplayPreviewButton = function () {
+        // TODO - original condition, which is wrong.
+        return jQuery('#ppcp-applepay_button_enabled').is(':checked');
+    }
+
     const applyConfigOptions = function (buttonConfig) {
         buttonConfig.button = buttonConfig.button || {};
         buttonConfig.button.type = jQuery('#ppcp-applepay_button_type').val();
@@ -56,7 +66,7 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
     const createButton = function (ppcpConfig) {
         const selector = ppcpConfig.button.wrapper + 'ApplePay';
 
-        if (!jQuery('#ppcp-applepay_button_enabled').is(':checked')) {
+        if (!shouldDisplayPreviewButton()) {
             jQuery(selector).remove();
             return;
         }
@@ -124,7 +134,7 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
             }
 
             // Load ApplePay SDK
-            loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
+            loadCustomScript({url: buttonConfig.sdk_url}).then(() => {
                 applePayLoaded = true;
                 tryToBoot();
             });

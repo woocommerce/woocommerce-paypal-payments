@@ -47,6 +47,16 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         }, 100);
     });
 
+    /**
+     * Decides, whether to display the Google Pay preview button.
+     *
+     * @return {boolean}
+     */
+    const shouldDisplayPreviewButton = function() {
+        // TODO - original condition, which is wrong.
+        return jQuery('#ppcp-googlepay_button_enabled').is(':checked');
+    }
+
     const applyConfigOptions = function (buttonConfig) {
         buttonConfig.button = buttonConfig.button || {};
         buttonConfig.button.style = buttonConfig.button.style || {};
@@ -58,7 +68,7 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
     const createButton = function (ppcpConfig) {
         const selector = ppcpConfig.button.wrapper + 'GooglePay';
 
-        if (!jQuery('#ppcp-googlepay_button_enabled').is(':checked')) {
+        if (!shouldDisplayPreviewButton()) {
             jQuery(selector).remove();
             return;
         }
