@@ -106,7 +106,6 @@ export const handleShippingAddressChange = async (data, actions, config) => {
                 })
             })
 
-        if (!config.data_client_id.has_subscriptions) {
             const res = await fetch(config.ajax.update_shipping.endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -121,7 +120,6 @@ export const handleShippingAddressChange = async (data, actions, config) => {
             if (!json.success) {
                 throw new Error(json.data.message);
             }
-        }
     } catch (e) {
         console.error(e);
 
