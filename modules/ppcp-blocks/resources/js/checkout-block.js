@@ -398,6 +398,21 @@ const PayPalComponent = ({
 
                 await shippingData.setShippingAddress(address);
 
+                const res = await fetch(config.ajax.update_shipping.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: config.ajax.update_shipping.nonce,
+                        order_id: data.orderID,
+                    })
+                });
+
+                const json = await res.json();
+
+                if (!json.success) {
+                    throw new Error(json.data.message);
+                }
+
             } catch (e) {
                 console.error(e);
 

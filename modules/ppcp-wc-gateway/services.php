@@ -347,7 +347,6 @@ return array(
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
-			$container->get( 'wc-subscriptions.helper' ),
 			$logger
 		);
 	},
