@@ -39,19 +39,21 @@ export const handleShippingOptionsChange = async (data, actions, config) => {
             })
         }
 
-        const res = await fetch(config.ajax.update_shipping.endpoint, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                nonce: config.ajax.update_shipping.nonce,
-                order_id: data.orderID,
-            })
-        });
+        if (!config.data_client_id.has_subscriptions) {
+            const res = await fetch(config.ajax.update_shipping.endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    nonce: config.ajax.update_shipping.nonce,
+                    order_id: data.orderID,
+                })
+            });
 
-        const json = await res.json();
+            const json = await res.json();
 
-        if (!json.success) {
-            throw new Error(json.data.message);
+            if (!json.success) {
+                throw new Error(json.data.message);
+            }
         }
     } catch (e) {
         console.error(e);
@@ -104,20 +106,20 @@ export const handleShippingAddressChange = async (data, actions, config) => {
                 })
             })
 
-        const res = await fetch(config.ajax.update_shipping.endpoint, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                nonce: config.ajax.update_shipping.nonce,
-                order_id: data.orderID,
-            })
-        });
+            const res = await fetch(config.ajax.update_shipping.endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    nonce: config.ajax.update_shipping.nonce,
+                    order_id: data.orderID,
+                })
+            });
 
-        const json = await res.json();
+            const json = await res.json();
 
-        if (!json.success) {
-            throw new Error(json.data.message);
-        }
+            if (!json.success) {
+                throw new Error(json.data.message);
+            }
     } catch (e) {
         console.error(e);
 

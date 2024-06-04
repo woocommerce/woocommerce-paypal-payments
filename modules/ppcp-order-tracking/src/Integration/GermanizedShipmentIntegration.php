@@ -73,34 +73,34 @@ class GermanizedShipmentIntegration implements Integration {
 		add_action(
 			'woocommerce_gzd_shipment_status_shipped',
 			function( int $shipment_id, Shipment $shipment ) {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
-					return;
-				}
-
-				$wc_order = $shipment->get_order();
-
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$paypal_order    = ppcp_get_paypal_order( $wc_order );
-				$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
-				$wc_order_id     = $wc_order->get_id();
-				$tracking_number = $shipment->get_tracking_id();
-				$carrier         = $shipment->get_shipping_provider();
-
-				$items = array_map(
-					function ( ShipmentItem $item ): int {
-						return $item->get_order_item_id();
-					},
-					$shipment->get_items()
-				);
-
-				if ( ! $tracking_number || ! $carrier || ! $capture_id ) {
-					return;
-				}
-
 				try {
+					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
+						return;
+					}
+
+					$wc_order = $shipment->get_order();
+
+					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+						return;
+					}
+
+					$paypal_order    = ppcp_get_paypal_order( $wc_order );
+					$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
+					$wc_order_id     = $wc_order->get_id();
+					$tracking_number = $shipment->get_tracking_id();
+					$carrier         = $shipment->get_shipping_provider();
+
+					$items = array_map(
+						function ( ShipmentItem $item ): int {
+							return $item->get_order_item_id();
+						},
+						$shipment->get_items()
+					);
+
+					if ( ! $tracking_number || ! $carrier || ! $capture_id ) {
+						return;
+					}
+
 					$ppcp_shipment = $this->shipment_factory->create_shipment(
 						$wc_order_id,
 						$capture_id,
@@ -118,7 +118,7 @@ class GermanizedShipmentIntegration implements Integration {
 						: $this->endpoint->add_tracking_information( $ppcp_shipment, $wc_order_id );
 
 				} catch ( Exception $exception ) {
-					$this->logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
+					return;
 				}
 			},
 			500,
