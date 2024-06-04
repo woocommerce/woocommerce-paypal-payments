@@ -9,9 +9,10 @@ import {
 import {CheckoutHandler} from "./checkout-handler";
 import {createOrder, onApprove} from "../card-fields-config";
 
-export function CardFields({config, eventRegistration, emitResponse}) {
+export function CardFields({config, eventRegistration, emitResponse, components}) {
     const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
+    const { PaymentMethodIcons } = components;
 
     const [cardFieldsForm, setCardFieldsForm] = useState();
     const getCardFieldsForm = (cardFieldsForm) => {
@@ -60,6 +61,7 @@ export function CardFields({config, eventRegistration, emitResponse}) {
                     }}
                 >
                     <PayPalCardFieldsForm/>
+                    <PaymentMethodIcons icons={config.card_icons} align="left" />
                     <CheckoutHandler
                         getCardFieldsForm={getCardFieldsForm}
                         getSavePayment={getSavePayment}

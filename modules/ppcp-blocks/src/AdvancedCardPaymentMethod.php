@@ -119,6 +119,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'supports'            => $this->gateway->supports,
 			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
 			'is_vaulting_enabled' => $this->settings->has( 'vault_enabled_dcc' ) && $this->settings->get( 'vault_enabled_dcc' ),
+			'card_icons'          => $this->settings->has( 'card_icons' ) ? (array) $this->settings->get( 'card_icons' ) : array(),
 		);
 	}
 
