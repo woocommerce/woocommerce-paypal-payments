@@ -20,10 +20,6 @@ class CardView {
                 if (data.isEmpty()) {
                     return `
                         <div style="margin-bottom: 20px; text-align: center;">
-                            <div style="border:2px solid #cccccc; border-radius: 10px; padding: 26px 20px; margin-bottom: 20px; background-color:#f6f6f6">
-                                <div>Please fill in your card details.</div>
-                            </div>
-                            <h4><a href="javascript:void(0)" ${this.el.changeCardLink.attributes}>Add card details</a></h4>
                             ${selectOtherPaymentMethod()}
                         </div>
                     `;
@@ -34,8 +30,8 @@ class CardView {
                 const cardIcons = {
                     'VISA':        'visa-light.svg',
                     'MASTER_CARD': 'mastercard-light.svg',
-                    'AMEX':        'amex.svg',
-                    'DISCOVER':    'discover.svg',
+                    'AMEX':        'amex-light.svg',
+                    'DISCOVER':    'discover-light.svg',
                     'DINERS':      'dinersclub-light.svg',
                     'JCB':         'jcb-light.svg',
                     'UNIONPAY':    'unionpay-light.svg',
@@ -52,7 +48,7 @@ class CardView {
                                 <img
                                     class="ppcp-card-icon"
                                     title="${data.value('brand')}"
-                                    src="${window.wc_ppcp_axo.module_url}/assets/images/axo/${cardIcons[data.value('brand')]}"
+                                    src="${window.wc_ppcp_axo.icons_directory}${cardIcons[data.value('brand')]}"
                                     alt="${data.value('brand')}"
                                 >
                             </div>

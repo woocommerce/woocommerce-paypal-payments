@@ -737,4 +737,28 @@ class SettingsListener {
 		}
 	}
 
+	/**
+	 * Filter settings based on a condition.
+	 *
+	 * @param bool     $condition       The condition.
+	 * @param string   $setting_slug    The setting slug.
+	 * @param callable $filter_function The filter function.
+	 * @param bool     $persist         Whether to persist the settings.
+	 */
+	public function filter_settings( bool $condition, string $setting_slug, callable $filter_function, bool $persist = true ): void {
+		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		$existing_setting_value = $this->settings->has( $setting_slug ) ? $this->settings->get( $setting_slug ) : null;
+
+		if ( $condition ) {
+			$new_setting_value = $filter_function( $existing_setting_value );
+			$this->settings->set( $setting_slug, $new_setting_value );
+
+			if ( $persist ) {
+				$this->settings->persist();
+			}
+		}
+	}
 }

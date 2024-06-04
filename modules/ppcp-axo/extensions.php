@@ -148,14 +148,8 @@ return array(
 				'axo_privacy'                        => array(
 					'title'        => __( 'Privacy', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
-					'label'        => __(
-						'This setting will control whether Fastlane branding is shown by email field.
-<p class="description">PayPal powers this accelerated checkout solution from Fastlane. Since you\'ll share consumers\' email addresses with PayPal, please consult your legal advisors on the apropriate privacy setting for your business.</p>',
-						'woocommerce-paypal-payments'
-					),
-					'desc_tip'     => true,
 					'description'  => __(
-						'This setting will control whether Fastlane branding is shown by email field.',
+						'PayPal powers this accelerated checkout solution from Fastlane. Since you\'ll share consumers\' email address with PayPal, please consult your legal advisors on the appropriate privacy setting for your business.',
 						'woocommerce-paypal-payments'
 					),
 					'classes'      => array( 'ppcp-field-indent' ),
@@ -168,12 +162,14 @@ return array(
 					'requirements' => array( 'axo' ),
 				),
 				'axo_name_on_card'                   => array(
-					'title'        => __( 'Display Name on Card', 'woocommerce-paypal-payments' ),
-					'type'         => 'checkbox',
+					'title'        => __( 'Cardholder Name', 'woocommerce-paypal-payments' ),
+					'type'         => 'select',
 					'default'      => 'yes',
+					'options'      => PropertiesDictionary::cardholder_name_options(),
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
-					'label'        => __( 'Enable this to display the "Name on Card" field for new Fastlane buyers.', 'woocommerce-paypal-payments' ),
+					'input_class'  => array( 'wc-enhanced-select' ),
+					'description'  => __( 'This setting will control whether or not the cardholder name is displayed in the card field\'s UI.', 'woocommerce-paypal-payments' ),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => array( 'dcc', 'axo' ),
 					'requirements' => array( 'axo' ),
@@ -196,7 +192,7 @@ return array(
 						sprintf(
 						// translators: %1$s and %2$s is a link tag.
 							__(
-								'Leave the default styling, or customize how Fastlane looks on your website. %1$sSee PayPal\'s developer docs%2$s for info',
+								'Leave the default styling, or customize how Fastlane looks on your website. Styles that don\'t meet accessibility guidelines will revert to the defaults. See %1$sPayPal\'s developer docs%2$s for info.',
 								'woocommerce-paypal-payments'
 							),
 							'<a href="https://www.paypal.com/us/fastlane" target="_blank">',
@@ -228,18 +224,6 @@ return array(
 					'title'        => __( 'Background Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'placeholder'  => '#ffffff',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'default'      => '',
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_style_root_primary_color'       => array(
-					'title'        => __( 'Primary Color', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'placeholder'  => '#0057F',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
 					'screens'      => array(
@@ -300,6 +284,18 @@ return array(
 					'title'        => __( 'Padding', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',
 					'placeholder'  => '4px',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'default'      => '',
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
+				'axo_style_root_primary_color'       => array(
+					'title'        => __( 'Primary Color', 'woocommerce-paypal-payments' ),
+					'type'         => 'text',
+					'placeholder'  => '#0057FF',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'default'      => '',
 					'screens'      => array(

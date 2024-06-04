@@ -20,7 +20,7 @@ class DomElementCollection {
         this.watermarkContainer = new DomElement({
             id: 'ppcp-axo-watermark-container',
             selector: '#ppcp-axo-watermark-container',
-            className: 'ppcp-axo-watermark-container'
+            className: 'ppcp-axo-watermark-container ppcp-axo-watermark-loading loader'
         });
 
         this.customerDetails = new DomElement({
