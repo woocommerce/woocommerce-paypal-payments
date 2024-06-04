@@ -51,17 +51,7 @@ return array(
 			);
 		}
 
-		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-
-		if ( $subscription_helper->plugin_is_active() ) {
-			$notice_content = __(
-				'<span class="highlight">Important:</span> Cannot be deactivated while the WooCommerce Subscriptions plugin is active.',
-				'woocommerce-paypal-payments'
-			);
-			$label .= '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
-		}
-
-		$should_disable_checkbox = $subscription_helper->plugin_is_active() || apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false );
+		$should_disable_checkbox = apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false );
 
 		return $insert_after(
 			$fields,
