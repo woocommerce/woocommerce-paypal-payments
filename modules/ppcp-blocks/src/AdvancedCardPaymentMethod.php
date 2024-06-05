@@ -109,7 +109,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_data() {
-		$script_data = $this->smart_button()->script_data();
+		$script_data = $this->smart_button_instance()->script_data();
 
 		return array(
 			'id'                  => $this->name,
@@ -128,7 +128,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 *
 	 * @return SmartButtonInterface
 	 */
-	private function smart_button(): SmartButtonInterface {
+	private function smart_button_instance(): SmartButtonInterface {
 		if ( $this->smart_button instanceof SmartButtonInterface ) {
 			return $this->smart_button;
 		}
