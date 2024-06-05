@@ -11,6 +11,7 @@
 * Enhancement - Enable shipping callback for WC subscriptions #2259
 * Enhancement - Disable the shipping callback for "venmo" when vaulting is active #2269
 * Enhancement - Improve "Could not retrieve order" error message #2271
+* Enhancement - Add block Checkout compatibility to Advanced Card Processing #2246
 
 = 2.7.1 - 2024-05-28 =
 * Fix - Ensure package tracking data is sent to original PayPal transaction #2180
