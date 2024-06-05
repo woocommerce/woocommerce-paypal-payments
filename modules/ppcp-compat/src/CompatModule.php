@@ -325,7 +325,7 @@ class CompatModule implements ModuleInterface {
 		// Siteground SG Optimize.
 		add_filter(
 			'sgo_js_minify_exclude',
-			function( $scripts ) use ( $ppcp_script_names ) {
+			function( array $scripts ) use ( $ppcp_script_names ) {
 				return array_merge( $scripts, $ppcp_script_names );
 			}
 		);
@@ -333,7 +333,7 @@ class CompatModule implements ModuleInterface {
 		// LiteSpeed Cache.
 		add_filter(
 			'litespeed_optimize_js_excludes',
-			function( $excluded_js ) use ( $ppcp_script_file_names ) {
+			function( array $excluded_js ) use ( $ppcp_script_file_names ) {
 				return array_merge( $excluded_js, $ppcp_script_file_names );
 			}
 		);
@@ -341,7 +341,7 @@ class CompatModule implements ModuleInterface {
 		// W3 Total Cache.
 		add_filter(
 			'w3tc_minify_js_do_tag_minification',
-			function( $do_tag_minification, $script_tag, $file ) {
+			function( bool $do_tag_minification, string $script_tag, string $file ) {
 				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
 					return false;
 				}
