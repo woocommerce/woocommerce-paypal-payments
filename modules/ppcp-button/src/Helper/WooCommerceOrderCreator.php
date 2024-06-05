@@ -14,12 +14,16 @@ use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
+use WC_Subscription;
+use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WP_Error;
 
 /**
  * Class WooCommerceOrderCreator
@@ -41,17 +45,27 @@ class WooCommerceOrderCreator {
 	protected $session_handler;
 
 	/**
+	 * The subscription helper
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
 	 * WooCommerceOrderCreator constructor.
 	 *
 	 * @param FundingSourceRenderer $funding_source_renderer The funding source renderer.
 	 * @param SessionHandler        $session_handler The session handler.
+	 * @param SubscriptionHelper    $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
-		SessionHandler $session_handler
+		SessionHandler $session_handler,
+		SubscriptionHelper $subscription_helper
 	) {
 		$this->funding_source_renderer = $funding_source_renderer;
 		$this->session_handler         = $session_handler;
+		$this->subscription_helper     = $subscription_helper;
 	}
 
 	/**
@@ -69,10 +83,13 @@ class WooCommerceOrderCreator {
 			throw new RuntimeException( 'Problem creating WC order.' );
 		}
 
-		$this->configure_line_items( $wc_order, $wc_cart );
-		$this->configure_shipping( $wc_order, $order->payer(), $order->purchase_units()[0]->shipping() );
+		$payer    = $order->payer();
+		$shipping = $order->purchase_units()[0]->shipping();
+
 		$this->configure_payment_source( $wc_order );
 		$this->configure_customer( $wc_order );
+		$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
+		$this->configure_shipping( $wc_order, $payer, $shipping );
 		$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
 
 		$wc_order->calculate_totals();
@@ -84,11 +101,13 @@ class WooCommerceOrderCreator {
 	/**
 	 * Configures the line items.
 	 *
-	 * @param WC_Order $wc_order The WC order.
-	 * @param WC_Cart  $wc_cart The Cart.
+	 * @param WC_Order      $wc_order The WC order.
+	 * @param WC_Cart       $wc_cart The Cart.
+	 * @param Payer|null    $payer The payer.
+	 * @param Shipping|null $shipping The shipping.
 	 * @return void
 	 */
-	protected function configure_line_items( WC_Order $wc_order, WC_Cart $wc_cart ): void {
+	protected function configure_line_items( WC_Order $wc_order, WC_Cart $wc_cart, ?Payer $payer, ?Shipping $shipping ): void {
 		$cart_contents = $wc_cart->get_cart();
 
 		foreach ( $cart_contents as $cart_item ) {
@@ -111,9 +130,37 @@ class WooCommerceOrderCreator {
 				return;
 			}
 
+			$total = $product->get_price() * $quantity;
+
 			$item->set_name( $product->get_name() );
-			$item->set_subtotal( $product->get_price() * $quantity );
-			$item->set_total( $product->get_price() * $quantity );
+			$item->set_subtotal( $total );
+			$item->set_total( $total );
+
+			$product_id = $product->get_id();
+
+			if ( $this->is_subscription( $product_id ) ) {
+				$subscription       = $this->create_subscription( $wc_order, $product_id );
+				$sign_up_fee        = WC_Subscriptions_Product::get_sign_up_fee( $product );
+				$subscription_total = $total + $sign_up_fee;
+
+				$item->set_subtotal( $subscription_total );
+				$item->set_total( $subscription_total );
+
+				$subscription->add_product( $product );
+				$this->configure_shipping( $subscription, $payer, $shipping );
+				$this->configure_payment_source( $subscription );
+				$this->configure_coupons( $subscription, $wc_cart->get_applied_coupons() );
+
+				$dates = array(
+					'trial_end'    => WC_Subscriptions_Product::get_trial_expiration_date( $product_id ),
+					'next_payment' => WC_Subscriptions_Product::get_first_renewal_payment_date( $product_id ),
+					'end'          => WC_Subscriptions_Product::get_expiration_date( $product_id ),
+				);
+
+				$subscription->update_dates( $dates );
+				$subscription->calculate_totals();
+				$subscription->payment_complete_for_order( $wc_order );
+			}
 
 			$wc_order->add_item( $item );
 		}
@@ -179,8 +226,18 @@ class WooCommerceOrderCreator {
 			$shipping->set_method_id( $shipping_options->id() );
 			$shipping->set_total( $shipping_options->amount()->value_str() );
 
+			$items            = $wc_order->get_items();
+			$items_in_package = array();
+			foreach ( $items as $item ) {
+				$items_in_package[] = $item->get_name() . ' &times; ' . (string) $item->get_quantity();
+			}
+
+			$shipping->add_meta_data( __( 'Items', 'woocommerce-paypal-payments' ), implode( ', ', $items_in_package ) );
+
 			$wc_order->add_item( $shipping );
 		}
+
+		$wc_order->calculate_totals();
 	}
 
 	/**
@@ -225,4 +282,43 @@ class WooCommerceOrderCreator {
 		}
 	}
 
+	/**
+	 * Checks if the product with given ID is WC subscription.
+	 *
+	 * @param int $product_id The product ID.
+	 * @return bool true if the product is subscription, otherwise false.
+	 */
+	protected function is_subscription( int $product_id ): bool {
+		if ( ! $this->subscription_helper->plugin_is_active() ) {
+			return false;
+		}
+
+		return WC_Subscriptions_Product::is_subscription( $product_id );
+	}
+
+	/**
+	 * Creates WC subscription from given order and product ID.
+	 *
+	 * @param WC_Order $wc_order The WC order.
+	 * @param int      $product_id The product ID.
+	 * @return WC_Subscription The subscription order
+	 * @throws RuntimeException If problem creating.
+	 */
+	protected function create_subscription( WC_Order $wc_order, int $product_id ): WC_Subscription {
+		$subscription = wcs_create_subscription(
+			array(
+				'order_id'         => $wc_order->get_id(),
+				'status'           => 'pending',
+				'billing_period'   => WC_Subscriptions_Product::get_period( $product_id ),
+				'billing_interval' => WC_Subscriptions_Product::get_interval( $product_id ),
+				'customer_id'      => $wc_order->get_customer_id(),
+			)
+		);
+
+		if ( $subscription instanceof WP_Error ) {
+			throw new RuntimeException( $subscription->get_error_message() );
+		}
+
+		return $subscription;
+	}
 }

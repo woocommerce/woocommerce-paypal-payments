@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -79,6 +80,13 @@ class AxoManager {
 	private $session_handler;
 
 	/**
+	 * The WcGateway module URL.
+	 *
+	 * @var string
+	 */
+	private $wcgateway_module_url;
+
+	/**
 	 * AxoManager constructor.
 	 *
 	 * @param string          $module_url The URL to the module.
@@ -89,6 +97,7 @@ class AxoManager {
 	 * @param SettingsStatus  $settings_status The Settings status helper.
 	 * @param string          $currency 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
+	 * @param string          $wcgateway_module_url The WcGateway module URL.
 	 */
 	public function __construct(
 		string $module_url,
@@ -98,17 +107,19 @@ class AxoManager {
 		Environment $environment,
 		SettingsStatus $settings_status,
 		string $currency,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		string $wcgateway_module_url
 	) {
 
-		$this->module_url      = $module_url;
-		$this->version         = $version;
-		$this->session_handler = $session_handler;
-		$this->settings        = $settings;
-		$this->environment     = $environment;
-		$this->settings_status = $settings_status;
-		$this->currency        = $currency;
-		$this->logger          = $logger;
+		$this->module_url           = $module_url;
+		$this->version              = $version;
+		$this->session_handler      = $session_handler;
+		$this->settings             = $settings;
+		$this->environment          = $environment;
+		$this->settings_status      = $settings_status;
+		$this->currency             = $currency;
+		$this->logger               = $logger;
+		$this->wcgateway_module_url = $wcgateway_module_url;
 	}
 
 	/**
@@ -151,13 +162,13 @@ class AxoManager {
 	 */
 	private function script_data() {
 		return array(
-			'environment'   => array(
+			'environment'     => array(
 				'is_sandbox' => $this->environment->current_environment() === 'sandbox',
 			),
-			'widgets'       => array(
+			'widgets'         => array(
 				'email' => 'render',
 			),
-			'insights'      => array(
+			'insights'        => array(
 				'enabled'    => true,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>
@@ -171,7 +182,7 @@ class AxoManager {
 					'value'         => WC()->cart->get_total( 'numeric' ),
 				),
 			),
-			'style_options' => array(
+			'style_options'   => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
 					'errorColor'      => $this->settings->has( 'axo_style_root_error_color' ) ? $this->settings->get( 'axo_style_root_error_color' ) : '',
@@ -190,14 +201,21 @@ class AxoManager {
 					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
 				),
 			),
-			'name_on_card'  => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
-			'woocommerce'   => array(
+			'name_on_card'    => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'woocommerce'     => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'module_url' => untrailingslashit( $this->module_url ),
+			'icons_directory' => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
+			'module_url'      => untrailingslashit( $this->module_url ),
+			'ajax'            => array(
+				'frontend_logger' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+				),
+			),
 		);
 	}
 
