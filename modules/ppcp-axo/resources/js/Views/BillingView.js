@@ -34,22 +34,7 @@ class BillingView {
                         </div>
                     `;
                 }
-                return `
-                    <div style="margin-bottom: 20px;">
-                        <div class="axo-checkout-header-section">
-                            <h3>Billing</h3>
-                            <a href="javascript:void(0)" ${this.el.changeBillingAddressLink.attributes}>Edit</a>
-                        </div>
-                        <div>${data.value('email')}</div>
-                        <div>${data.value('company')}</div>
-                        <div>${data.value('firstName')} ${data.value('lastName')}</div>
-                        <div>${data.value('street1')}</div>
-                        <div>${data.value('street2')}</div>
-                        <div>${data.value('postCode')} ${data.value('city')}</div>
-                        <div>${valueOfSelect('#billing_state', data.value('stateCode'))}</div>
-                        <div>${valueOfSelect('#billing_country', data.value('countryCode'))}</div>
-                    </div>
-                `;
+                return '';
             },
             fields: {
                 email: {

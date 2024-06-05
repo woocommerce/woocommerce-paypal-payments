@@ -114,7 +114,7 @@ class CartCheckoutDetector {
 	 */
 	public static function has_classic_checkout(): bool {
 		$checkout_page_id = wc_get_page_id( 'checkout' );
-		return $checkout_page_id && has_block( 'woocommerce/classic-shortcode', $checkout_page_id );
+		return $checkout_page_id && ( has_block( 'woocommerce/classic-shortcode', $checkout_page_id ) || self::has_classic_shortcode( $checkout_page_id, 'woocommerce_checkout' ) );
 	}
 
 	/**
@@ -124,6 +124,25 @@ class CartCheckoutDetector {
 	 */
 	public static function has_classic_cart(): bool {
 		$cart_page_id = wc_get_page_id( 'cart' );
-		return $cart_page_id && has_block( 'woocommerce/classic-shortcode', $cart_page_id );
+		return $cart_page_id && ( has_block( 'woocommerce/classic-shortcode', $cart_page_id ) || self::has_classic_shortcode( $cart_page_id, 'woocommerce_cart' ) );
+	}
+
+	/**
+	 * Check if a page has a specific shortcode.
+	 *
+	 * @param int    $page_id   The ID of the page.
+	 * @param string $shortcode The shortcode to check for.
+	 *
+	 * @return bool
+	 */
+	private static function has_classic_shortcode( int $page_id, string $shortcode ): bool {
+		if ( ! $page_id ) {
+			return false;
+		}
+
+		$page         = get_post( $page_id );
+		$page_content = is_object( $page ) ? $page->post_content : '';
+
+		return str_contains( $page_content, $shortcode );
 	}
 }
