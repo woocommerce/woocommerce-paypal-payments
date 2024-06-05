@@ -41,7 +41,6 @@ class CompatModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 
 		$this->initialize_ppec_compat_layer( $c );
-		$this->fix_site_ground_optimizer_compatibility( $c );
 		$this->initialize_tracking_compat_layer( $c );
 
 		$asset_loader = $c->get( 'compat.assets' );
@@ -54,6 +53,7 @@ class CompatModule implements ModuleInterface {
 		$this->migrate_smart_button_settings( $c );
 
 		$this->fix_page_builders();
+		$this->exclude_cache_plugins_js_minification( $c );
 	}
 
 	/**
@@ -86,24 +86,6 @@ class CompatModule implements ModuleInterface {
 				if ( is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
 					PPEC\DeactivateNote::init();
 				}
-			}
-		);
-
-	}
-
-	/**
-	 * Fixes the compatibility issue for <a href="https://wordpress.org/plugins/sg-cachepress/">SiteGround Optimizer plugin</a>.
-	 *
-	 * @link https://wordpress.org/plugins/sg-cachepress/
-	 *
-	 * @param ContainerInterface $c The Container.
-	 */
-	protected function fix_site_ground_optimizer_compatibility( ContainerInterface $c ): void {
-		$ppcp_script_names = $c->get( 'compat.plugin-script-names' );
-		add_filter(
-			'sgo_js_minify_exclude',
-			function ( array $scripts ) use ( $ppcp_script_names ) {
-				return array_merge( $scripts, $ppcp_script_names );
 			}
 		);
 	}
@@ -328,5 +310,45 @@ class CompatModule implements ModuleInterface {
 		$theme  = wp_get_theme();
 		$parent = $theme->parent();
 		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
+	}
+
+	/**
+	 * Excludes PayPal scripts from being minified by cache plugins.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function exclude_cache_plugins_js_minification( ContainerInterface $c ): void {
+		$ppcp_script_names      = $c->get( 'compat.plugin-script-names' );
+		$ppcp_script_file_names = $c->get( 'compat.plugin-script-file-names' );
+
+		// Siteground SG Optimize.
+		add_filter(
+			'sgo_js_minify_exclude',
+			function( $scripts ) use ( $ppcp_script_names ) {
+				return array_merge( $scripts, $ppcp_script_names );
+			}
+		);
+
+		// LiteSpeed Cache.
+		add_filter(
+			'litespeed_optimize_js_excludes',
+			function( $excluded_js ) use ( $ppcp_script_file_names ) {
+				return array_merge( $excluded_js, $ppcp_script_file_names );
+			}
+		);
+
+		// W3 Total Cache.
+		add_filter(
+			'w3tc_minify_js_do_tag_minification',
+			function( $do_tag_minification, $script_tag, $file ) {
+				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
+					return false;
+				}
+				return $do_tag_minification;
+			},
+			10,
+			3
+		);
 	}
 }
