@@ -123,7 +123,6 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
     }
 }
 
-alert('GPay Boot Admin')
 // Initialize the preview button manager.
 buttonManager()
 
