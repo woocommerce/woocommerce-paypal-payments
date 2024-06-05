@@ -245,6 +245,7 @@ class AxoManager {
             this.showAxoEmailField();
             this.el.watermarkContainer.show();
 
+
             // Move watermark to after email.
             this.$(this.el.fieldBillingEmail.selector).append(
                 this.$(this.el.watermarkContainer.selector)
@@ -280,6 +281,7 @@ class AxoManager {
 
         if (scenario.axoPaymentContainer) {
             this.el.paymentContainer.show();
+            this.el.gatewayDescription.hide();
         } else {
             this.el.paymentContainer.hide();
         }
@@ -472,7 +474,9 @@ class AxoManager {
         this.initialized = true;
 
         await this.connect();
-        this.renderWatermark();
+        await this.renderWatermark(true, () => {
+            this.renderEmailSubmit();
+        });
         this.watchEmail();
     }
 
@@ -493,13 +497,72 @@ class AxoManager {
         this.el.gatewayRadioButton.trigger('change');
     }
 
-    async renderWatermark(includeAdditionalInfo = true) {
+    async renderWatermark(includeAdditionalInfo = true, callback) {
         (await this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo
         })).render(this.el.watermarkContainer.selector);
 
         this.toggleWatermarkLoading(this.el.watermarkContainer, 'ppcp-axo-watermark-loading', 'loader');
+
+        // Call the callback if provided
+        if (callback) {
+            callback();
+        }
     }
+
+    async renderEmailSubmit() {
+        // Create the submit button element
+        const submitButton = document.createElement('button');
+        submitButton.type = 'button';
+        submitButton.innerText = this.axoConfig.billing_email_button_text;
+        submitButton.className = 'email-submit-button'; // Add a class for styling if needed
+
+        // Add an event listener to handle the button click
+        submitButton.addEventListener('click', async () => {
+            const emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
+            if (emailInput && emailInput.checkValidity()) {
+                if (this.lastEmailCheckedIdentity !== emailInput.value) {
+                    log(`Submit button clicked - emailInput: ${emailInput.value}`);
+                    await this.onChangeEmail();
+                }
+            } else {
+                emailInput.reportValidity(); // Trigger the HTML5 validation message
+                log('Invalid or empty email input.');
+            }
+        });
+
+        // Append the button inside the wrapper of the billing email input field
+        const emailFieldContainer = document.querySelector(this.el.fieldBillingEmail.selector);
+        if (emailFieldContainer) {
+            const inputWrapper = emailFieldContainer.querySelector('.woocommerce-input-wrapper');
+            if (inputWrapper) {
+                // Ensure the email input has the required attribute
+                const emailInput = inputWrapper.querySelector('input');
+                emailInput.setAttribute('required', 'required');
+                emailInput.style.flex = '1'; // Make the input take the remaining space
+                emailInput.style.marginRight = '10px'; // Ensure the spacing is consistent
+
+                // Remove any existing loader if present
+                const existingLoader = inputWrapper.querySelector('.loader');
+                if (existingLoader) {
+                    existingLoader.remove();
+                }
+
+                // Append the submit button to the input wrapper
+                inputWrapper.appendChild(submitButton);
+
+                // Force a reflow to apply the transition
+                submitButton.offsetHeight;
+
+                // Add the class to trigger the animation
+                inputWrapper.classList.add('show-button');
+            }
+        }
+    }
+
+
+
+
 
     watchEmail() {
 

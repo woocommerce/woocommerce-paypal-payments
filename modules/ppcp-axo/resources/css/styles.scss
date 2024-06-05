@@ -89,3 +89,31 @@
 		max-height: 25px;
 	}
 }
+
+#billing_email_field .woocommerce-input-wrapper {
+	display: flex;
+	align-items: center;
+}
+
+#billing_email_field .woocommerce-input-wrapper input {
+	flex: 1;
+	margin-right: 10px;
+}
+
+.email-submit-button {
+	padding: 5px 10px;
+	background-color: #007cba;
+	color: white;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+	flex-shrink: 0;
+	opacity: 0;
+	transition: opacity 0.3s ease; /* Add transition for opacity */
+}
+
+#billing_email_field .woocommerce-input-wrapper.show-button .email-submit-button {
+	opacity: 1; /* Show the button */
+}
+
+

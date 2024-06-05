@@ -7,6 +7,10 @@ class DomElementCollection {
             selector: '#payment_method_ppcp-axo-gateway',
         });
 
+        this.gatewayDescription = new DomElement({
+            selector: '.payment_box.payment_method_ppcp-axo-gateway',
+        });
+
         this.defaultSubmitButton = new DomElement({
             selector: '#place_order',
         });

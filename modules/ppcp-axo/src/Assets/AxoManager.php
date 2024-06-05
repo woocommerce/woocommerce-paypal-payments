@@ -216,6 +216,7 @@ class AxoManager {
 					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
 				),
 			),
+			'billing_email_button_text' => __( 'Continue', 'woocommerce-paypal-payments' ),
 		);
 	}
 
