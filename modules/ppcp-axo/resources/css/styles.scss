@@ -12,8 +12,11 @@
 	}
 }
 
-.email-submit-button {
+#ppcp-axo-billing-email-submit-button {
+	margin-top: 0;
 	position: relative;
+	transition: opacity 0.3s ease;
+
 	.loader:before {
 		display: inline;
 		height: 12px;
@@ -103,30 +106,35 @@
 	}
 }
 
+.ppcp-axo-billing-email-submit-button-hidden {
+	opacity: 0;
+}
+
+.ppcp-axo-billing-email-submit-button-loaded:not([disabled]) {
+	opacity: 1;
+}
+
 #billing_email_field .woocommerce-input-wrapper {
 	display: flex;
 	align-items: center;
+
+	input {
+		flex: 1;
+		margin-right: 10px;
+	}
 }
 
-#billing_email_field .woocommerce-input-wrapper input {
-	flex: 1;
-	margin-right: 10px;
-}
+@media screen and (max-width: 719px) {
+	#ppcp-axo-billing-email-submit-button {
+		width: 100%;
+		margin-top: 0.5rem;
+	}
+	#billing_email_field .woocommerce-input-wrapper {
+		display: block;
 
-.email-submit-button {
-	padding: 5px 20px;
-	background-color: #007cba;
-	color: white;
-	border: none;
-	border-radius: 3px;
-	cursor: pointer;
-	flex-shrink: 0;
-	opacity: 0;
-	transition: opacity 0.3s ease; /* Add transition for opacity */
+		input {
+			margin-right: 0;
+		}
+	}
 }
-
-#billing_email_field .woocommerce-input-wrapper.show-button .email-submit-button {
-	opacity: 1; /* Show the button */
-}
-
 

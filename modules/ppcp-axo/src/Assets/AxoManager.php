@@ -162,13 +162,13 @@ class AxoManager {
 	 */
 	private function script_data() {
 		return array(
-			'environment'     => array(
+			'environment'               => array(
 				'is_sandbox' => $this->environment->current_environment() === 'sandbox',
 			),
-			'widgets'         => array(
+			'widgets'                   => array(
 				'email' => 'render',
 			),
-			'insights'        => array(
+			'insights'                  => array(
 				'enabled'    => true,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>
@@ -182,7 +182,7 @@ class AxoManager {
 					'value'         => WC()->cart->get_total( 'numeric' ),
 				),
 			),
-			'style_options'   => array(
+			'style_options'             => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
 					'errorColor'      => $this->settings->has( 'axo_style_root_error_color' ) ? $this->settings->get( 'axo_style_root_error_color' ) : '',
@@ -201,16 +201,16 @@ class AxoManager {
 					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
 				),
 			),
-			'name_on_card'    => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
-			'woocommerce'     => array(
+			'name_on_card'              => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'woocommerce'               => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'icons_directory' => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
-			'module_url'      => untrailingslashit( $this->module_url ),
-			'ajax'            => array(
+			'icons_directory'           => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
+			'module_url'                => untrailingslashit( $this->module_url ),
+			'ajax'                      => array(
 				'frontend_logger' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),

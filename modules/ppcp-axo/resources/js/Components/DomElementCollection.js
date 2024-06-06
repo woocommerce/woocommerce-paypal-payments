@@ -61,11 +61,14 @@ class DomElementCollection {
         });
 
         this.billingEmailSubmitButton = new DomElement({
+            id: 'ppcp-axo-billing-email-submit-button',
             selector: '#ppcp-axo-billing-email-submit-button',
+            className: 'ppcp-axo-billing-email-submit-button-hidden button alt wp-element-button wc-block-components-button'
         });
 
         this.billingEmailSubmitButtonSpinner = new DomElement({
-            selector: '#ppcp-axo-billing-email-submit-spinner',
+            id: 'ppcp-axo-billing-email-submit-button-spinner',
+            selector: '#ppcp-axo-billing-email-submit-button-spinner',
             className: 'loader ppcp-axo-overlay'
         });
 

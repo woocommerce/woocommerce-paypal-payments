@@ -1,14 +1,15 @@
 import Fastlane from "./Connection/Fastlane";
-import { log } from "./Helper/Debug";
+import {log} from "./Helper/Debug";
 import DomElementCollection from "./Components/DomElementCollection";
 import ShippingView from "./Views/ShippingView";
 import BillingView from "./Views/BillingView";
 import CardView from "./Views/CardView";
 import PayPalInsights from "./Insights/PayPalInsights";
-import { disable, enable } from "../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler";
-import { getCurrentPaymentMethod } from "../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState";
+import {disable,enable} from "../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler";
+import {getCurrentPaymentMethod} from "../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState";
 
 class AxoManager {
+
     constructor(axoConfig, ppcpConfig) {
         this.axoConfig = axoConfig;
         this.ppcpConfig = ppcpConfig;
@@ -50,7 +51,7 @@ class AxoManager {
 
         this.registerEventHandlers();
 
-        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector, this.el, this.states);
+        this.shippingView = new ShippingView(this.el.shippingAddressContainer.selector, this.el, this.states );
         this.billingView = new BillingView(this.el.billingAddressContainer.selector, this.el);
         this.cardView = new CardView(this.el.paymentContainer.selector + '-details', this.el, this);
 
@@ -63,9 +64,9 @@ class AxoManager {
         }
 
         if (
-            this.axoConfig?.insights?.enabled &&
-            this.axoConfig?.insights?.client_id &&
-            this.axoConfig?.insights?.session_id
+            this.axoConfig?.insights?.enabled
+            && this.axoConfig?.insights?.client_id
+            && this.axoConfig?.insights?.session_id
         ) {
             PayPalInsights.config(this.axoConfig?.insights?.client_id, { debug: true });
             PayPalInsights.setSessionId(this.axoConfig?.insights?.session_id);
@@ -87,6 +88,7 @@ class AxoManager {
     }
 
     registerEventHandlers() {
+
         this.$(document).on('change', 'input[name=payment_method]', (ev) => {
             const map = {
                 'ppcp-axo-gateway': 'card',
@@ -98,6 +100,7 @@ class AxoManager {
                 page_type: 'checkout'
             });
         });
+
 
         // Listen to Gateway Radio button changes.
         this.el.gatewayRadioButton.on('change', (ev) => {
@@ -160,13 +163,19 @@ class AxoManager {
         // Prevents sending checkout form when pressing Enter key on input field
         // and triggers customer lookup
         this.$('form.woocommerce-checkout input').on('keydown', async (ev) => {
-            if (ev.key === 'Enter' && getCurrentPaymentMethod() === 'ppcp-axo-gateway') {
+            if(ev.key === 'Enter' && getCurrentPaymentMethod() === 'ppcp-axo-gateway' ) {
                 ev.preventDefault();
                 log(`Enter key attempt - emailInput: ${this.emailInput.value}`);
                 log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
                 if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
                     await this.onChangeEmail();
                 }
+            }
+        });
+
+        this.$('form.woocommerce-checkout input').on('click', async (ev) => {
+            if (document.querySelector(this.el.billingEmailSubmitButton.selector).hasAttribute('disabled')) {
+                document.querySelector(this.el.billingEmailSubmitButton.selector).removeAttribute('disabled');
             }
         });
 
@@ -179,7 +188,7 @@ class AxoManager {
         // Listening to status update event
         document.addEventListener('axo_status_updated', (ev) => {
             const termsField = document.querySelector("[name='terms-field']");
-            if (termsField) {
+            if(termsField) {
                 const status = ev.detail;
                 const shouldHide = status.active && status.validEmail === false && status.hasProfile === false;
 
@@ -246,9 +255,6 @@ class AxoManager {
             this.$(this.el.fieldBillingEmail.selector).append(
                 this.$(this.el.watermarkContainer.selector)
             );
-
-            // Add the submit button to the email field container.
-            this.renderEmailSubmitNew();
         } else {
             this.el.emailWidgetContainer.hide();
             if (!scenario.defaultEmailField) {
@@ -257,6 +263,7 @@ class AxoManager {
         }
 
         if (scenario.axoProfileViews) {
+
             this.shippingView.activate();
             this.cardView.activate();
 
@@ -270,6 +277,7 @@ class AxoManager {
             );
 
             this.el.watermarkContainer.show();
+
         } else {
             this.shippingView.deactivate();
             this.billingView.deactivate();
@@ -279,6 +287,7 @@ class AxoManager {
         if (scenario.axoPaymentContainer) {
             this.el.paymentContainer.show();
             this.el.gatewayDescription.hide();
+            document.querySelector(this.el.billingEmailSubmitButton.selector).setAttribute('disabled', 'disabled');
         } else {
             this.el.paymentContainer.hide();
         }
@@ -375,7 +384,7 @@ class AxoManager {
 
         log(`Status updated: ${JSON.stringify(this.status)}`);
 
-        document.dispatchEvent(new CustomEvent("axo_status_updated", { detail: this.status }));
+        document.dispatchEvent(new CustomEvent("axo_status_updated", {detail: this.status}));
 
         this.rerender();
     }
@@ -445,6 +454,7 @@ class AxoManager {
         }
 
         if (this.useEmailWidget()) {
+
             // Display email widget.
             const ec = this.el.emailWidgetContainer;
             if (!document.querySelector(ec.selector)) {
@@ -456,6 +466,7 @@ class AxoManager {
             }
 
         } else {
+
             // Move email to the AXO container.
             let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
             wrapperElement.prepend(emailRow);
@@ -469,9 +480,8 @@ class AxoManager {
         this.initialized = true;
 
         await this.connect();
-        await this.renderWatermark(true, () => {
-            this.renderEmailSubmit();
-        });
+        await this.renderWatermark();
+        this.renderEmailSubmitButton();
         this.watchEmail();
     }
 
@@ -492,176 +502,40 @@ class AxoManager {
         this.el.gatewayRadioButton.trigger('change');
     }
 
-    async renderWatermark(includeAdditionalInfo = true, callback) {
+    async renderWatermark(includeAdditionalInfo = true) {
         (await this.fastlane.FastlaneWatermarkComponent({
             includeAdditionalInfo
         })).render(this.el.watermarkContainer.selector);
 
         this.toggleWatermarkLoading(this.el.watermarkContainer, 'ppcp-axo-watermark-loading', 'loader');
-
-        // Call the callback if provided
-        if (callback) {
-            callback();
-        }
     }
 
-    async renderEmailSubmitNew() {
+    renderEmailSubmitButton() {
         const billingEmailSubmitButton = this.el.billingEmailSubmitButton;
+        const billingEmailSubmitButtonSpinner = this.el.billingEmailSubmitButtonSpinner;
+
         if (!document.querySelector(billingEmailSubmitButton.selector)) {
+            this.emailInput.insertAdjacentHTML('afterend', `
+                <button type="button" id="${billingEmailSubmitButton.id}" class="${billingEmailSubmitButton.className}">
+                    ${this.axoConfig.billing_email_button_text}
+                    <span id="${billingEmailSubmitButtonSpinner.id}"></span>
+                </button>
+            `);
 
-        }
-
-        const submitButton = this.el.billingEmailSubmitButton.selector;
-        // submitButton.innerText = this.axoConfig.billing_email_button_text;
-
-        const submitButtonSpinner = this.el.billingEmailSubmitButtonSpinner.selector;
-        console.log(submitButton);
+            document.querySelector(this.el.billingEmailSubmitButton.selector).offsetHeight;
+            document.querySelector(this.el.billingEmailSubmitButton.selector).classList.remove('ppcp-axo-billing-email-submit-button-hidden');
+            document.querySelector(this.el.billingEmailSubmitButton.selector).offsetHeight;
+            document.querySelector(this.el.billingEmailSubmitButton.selector).classList.add('ppcp-axo-billing-email-submit-button-loaded');        }
     }
-
-    async renderEmailSubmit() {
-        // Create the submit button element
-        const submitButton = document.createElement('button');
-        submitButton.type = 'button';
-        submitButton.innerText = this.axoConfig.billing_email_button_text;
-        submitButton.className = 'email-submit-button'; // Add a class for styling if needed
-
-        // Create the spinner element
-        const spinner = document.createElement('span');
-        spinner.className = 'loader ppcp-axo-overlay'; // Use the native loader class
-        spinner.style.display = 'none'; // Initially hidden
-
-        // Append the spinner to the button
-        submitButton.appendChild(spinner);
-
-        // Add an event listener to handle the button click
-        submitButton.addEventListener('click', async () => {
-            const emailInput = document.querySelector(this.el.fieldBillingEmail.selector + ' input');
-            if (emailInput && emailInput.checkValidity()) {
-                if (this.lastEmailCheckedIdentity !== emailInput.value) {
-                    log(`Submit button clicked - emailInput: ${emailInput.value}`);
-
-                    // Show the spinner, add the class to adjust padding and disable the button
-                    spinner.style.display = 'inline-block';
-                    submitButton.disabled = true;
-
-
-                    try {
-                        await this.onChangeEmail();
-                    } finally {
-                        // Hide the spinner and re-enable the button after the lookup is complete
-                        spinner.style.display = 'none';
-                        submitButton.disabled = false;
-                    }
-                }
-            } else {
-                emailInput.reportValidity(); // Trigger the HTML5 validation message
-                log('Invalid or empty email input.');
-            }
-        });
-
-        // Append the button inside the wrapper of the billing email input field
-        const emailFieldContainer = document.querySelector(this.el.fieldBillingEmail.selector);
-        if (emailFieldContainer) {
-            const inputWrapper = emailFieldContainer.querySelector('.woocommerce-input-wrapper');
-            if (inputWrapper) {
-                // Ensure the email input has the required attribute
-                const emailInput = inputWrapper.querySelector('input');
-                emailInput.setAttribute('required', 'required');
-                emailInput.style.flex = '1'; // Make the input take the remaining space
-                emailInput.style.marginRight = '10px'; // Ensure the spacing is consistent
-
-                // Remove any existing loader if present
-                const existingLoader = inputWrapper.querySelector('.loader');
-                if (existingLoader) {
-                    existingLoader.remove();
-                }
-
-                // Append the submit button to the input wrapper
-                inputWrapper.appendChild(submitButton);
-
-                // Force a reflow to apply the transition
-                submitButton.offsetHeight;
-
-                // Add the class to trigger the animation
-                inputWrapper.classList.add('show-button');
-            }
-        }
-    }
-
-    async onChangeEmail() {
-        this.clearData();
-
-        if (!this.status.active) {
-            log('Email checking skipped, AXO not active.');
-            return;
-        }
-
-        if (!this.emailInput) {
-            log('Email field not initialized.');
-            return;
-        }
-
-        log(`Email changed: ${this.emailInput ? this.emailInput.value : '<empty>'}`);
-
-        this.$(this.el.paymentContainer.selector + '-detail').html('');
-        this.$(this.el.paymentContainer.selector + '-form').html('');
-
-        this.setStatus('validEmail', false);
-        this.setStatus('hasProfile', false);
-
-        this.hideGatewaySelection = false;
-
-        this.lastEmailCheckedIdentity = this.emailInput.value;
-
-        if (!this.emailInput.value || !this.emailInput.checkValidity()) {
-            log('The email address is not valid.');
-            return;
-        }
-
-        this.data.email = this.emailInput.value;
-        this.billingView.setData(this.data);
-
-        if (!this.fastlane.identity) {
-            log('Not initialized.');
-            return;
-        }
-
-        PayPalInsights.trackSubmitCheckoutEmail({
-            page_type: 'checkout'
-        });
-
-        this.disableGatewaySelection();
-
-        const submitButton = document.querySelector('.email-submit-button');
-        const spinner = submitButton.querySelector('.loader');
-        if (submitButton && spinner) {
-            // Show the spinner and disable the button
-            spinner.style.display = 'inline-block';
-            submitButton.classList.add('show-spinner');
-            submitButton.disabled = true;
-        }
-
-        setTimeout(async () => {
-            console.log("Delayed for 1 milisecond.");
-            await this.lookupCustomerByEmail();
-
-            // Hide the spinner and re-enable the button after the lookup is complete
-            if (submitButton && spinner) {
-                spinner.style.display = 'none';
-                submitButton.classList.remove('show-spinner');
-                submitButton.disabled = false;
-            }
-
-            this.enableGatewaySelection();
-        }, 1);
-    }
-
 
     watchEmail() {
+
         if (this.useEmailWidget()) {
+
             // TODO
+
         } else {
-            this.emailInput.addEventListener('change', async () => {
+            this.emailInput.addEventListener('change', async ()=> {
                 log(`Change event attempt - emailInput: ${this.emailInput.value}`);
                 log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
                 if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
@@ -677,7 +551,7 @@ class AxoManager {
         }
     }
 
-    async onChangeEmail() {
+    async onChangeEmail () {
         this.clearData();
 
         if (!this.status.active) {
@@ -719,28 +593,12 @@ class AxoManager {
             page_type: 'checkout'
         });
 
+
         this.disableGatewaySelection();
-
-        const submitButton = document.querySelector('.email-submit-button');
-        const spinner = submitButton.querySelector('.loader');
-        if (submitButton && spinner) {
-            // Show the spinner and disable the button
-            spinner.style.display = 'inline-block';
-            submitButton.disabled = true;
-        }
-
-        setTimeout(async () => {
-            console.log("Delayed for 1 milisecond.");
-            await this.lookupCustomerByEmail();
-
-            // Hide the spinner and re-enable the button after the lookup is complete
-            if (submitButton && spinner) {
-                spinner.style.display = 'none';
-                submitButton.disabled = false;
-            }
-
-            this.enableGatewaySelection();
-        }, 1);
+        this.spinnerToggleLoaderAndOverlay(this.el.billingEmailSubmitButtonSpinner, 'loader', 'ppcp-axo-overlay');
+        await this.lookupCustomerByEmail();
+        this.spinnerToggleLoaderAndOverlay(this.el.billingEmailSubmitButtonSpinner, 'loader', 'ppcp-axo-overlay');
+        this.enableGatewaySelection();
     }
 
     async lookupCustomerByEmail() {
@@ -779,7 +637,7 @@ class AxoManager {
                         address: cardBillingAddress,
                     };
                     const phoneNumber = authResponse.profileData?.shippingAddress?.phoneNumber?.nationalNumber ?? '';
-                    if (phoneNumber) {
+                    if(phoneNumber) {
                         billingData.phoneNumber = phoneNumber
                     }
 
@@ -875,7 +733,7 @@ class AxoManager {
 
             this.ensureBillingPhoneNumber(data);
 
-            log(`Ryan flow - submitted nonce: ${this.data.card.id}`)
+            log(`Ryan flow - submitted nonce: ${this.data.card.id}` )
 
             this.submit(this.data.card.id, data);
 
@@ -886,7 +744,7 @@ class AxoManager {
                 this.cardComponent.getPaymentToken(
                     this.tokenizeData()
                 ).then((response) => {
-                    log(`Gary flow - submitted nonce: ${response.id}`)
+                    log(`Gary flow - submitted nonce: ${response.id}` )
                     this.submit(response.id);
                 });
             } catch (e) {
@@ -942,6 +800,7 @@ class AxoManager {
         });
 
         if (data) {
+
             // Ryan flow.
             const form = document.querySelector('form.woocommerce-checkout');
             const formData = new FormData(form);
@@ -1010,13 +869,13 @@ class AxoManager {
     }
 
     deleteKeysWithEmptyString = (obj) => {
-        for (let key of Object.keys(obj)) {
-            if (obj[key] === '') {
+        for(let key of Object.keys(obj)){
+            if (obj[key] === ''){
                 delete obj[key];
             }
-            else if (typeof obj[key] === 'object') {
+            else if (typeof obj[key] === 'object'){
                 obj[key] = this.deleteKeysWithEmptyString(obj[key]);
-                if (Object.keys(obj[key]).length === 0) delete obj[key];
+                if (Object.keys(obj[key]).length === 0 ) delete obj[key];
             }
         }
 
@@ -1046,6 +905,14 @@ class AxoManager {
         }
         if (overlay) {
             overlay.classList.toggle(overlayClass);
+        }
+    }
+
+    spinnerToggleLoaderAndOverlay(element, loaderClass, overlayClass) {
+        const spinner = document.querySelector(`${element.selector}`);
+        if (spinner) {
+            spinner.classList.toggle(loaderClass);
+            spinner.classList.toggle(overlayClass);
         }
     }
 
