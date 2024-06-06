@@ -60,6 +60,15 @@ class DomElementCollection {
             selector: '#billing_email_field'
         });
 
+        this.billingEmailSubmitButton = new DomElement({
+            selector: '#ppcp-axo-billing-email-submit-button',
+        });
+
+        this.billingEmailSubmitButtonSpinner = new DomElement({
+            selector: '#ppcp-axo-billing-email-submit-spinner',
+            className: 'loader ppcp-axo-overlay'
+        });
+
         this.submitButtonContainer = new DomElement({
             selector: '#ppcp-axo-submit-button-container',
         });
