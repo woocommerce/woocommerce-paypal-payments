@@ -50,6 +50,10 @@ class PreviewButton {
             this.buttonConfig.button.wrapper = this.selector
         }
 
+        if (this.ppcpConfig && this.buttonConfig) {
+            this.buttonConfig.button.style = this.ppcpConfig.button.style;
+        }
+
         return this;
     }
 
@@ -68,38 +72,29 @@ class PreviewButton {
      * Will always create a new button in the DOM.
      */
     render() {
-        this.remove();
+        if (!this.domWrapper) {
+            if (!this.buttonConfig?.button?.wrapper) {
+                console.error('Skip render, button is not configured yet');
+                return;
+            }
+            this.domWrapper = this.createNewWrapper();
 
-        if (!this.buttonConfig?.button?.wrapper) {
-            console.error('Skip render, button is not configured yet');
-            return;
+            this.domWrapper.insertAfter(this.ppcpConfig.button.wrapper)
+        } else {
+            this.domWrapper.empty().show();
         }
 
         this.isVisible = true;
 
-        const newDomWrapper = this.createNewWrapper();
-
-        if (this.domWrapper?.length) {
-            this.domWrapper.replaceWith(newDomWrapper);
-        } else {
-            jQuery(this.ppcpConfig.button.wrapper).after(newDomWrapper);
-        }
-        this.domWrapper = newDomWrapper;
-
-        this.payButton = this.createButton();
+        this.createButton()
     }
 
     remove() {
         this.isVisible = false;
 
-        // The current payButtons have no remove/cleanup function.
-        this.payButton = null;
-
-        if (this.domWrapper?.remove) {
-            this.domWrapper.remove();
+        if (this.domWrapper) {
+            this.domWrapper.hide().empty();
         }
-
-        this.domWrapper = null;
     }
 }
 

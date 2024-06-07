@@ -5,9 +5,23 @@ import merge from "deepmerge";
  * Manages all PreviewButton instances of a certain payment method on the page.
  */
 class PreviewButtonManager {
-    constructor({buttonConfig, widgetBuilder, defaultAttributes}) {
+    /**
+     * Resolves the promise.
+     * Used by `this.boostrap()` to process enqueued initialization logic.
+     */
+    #onInitResolver;
+
+    /**
+     * A deferred Promise that is resolved once the page is ready.
+     * Deferred init logic can be added by using `this.#onInit.then(...)`
+     *
+     * @param {Promise<void>|null}
+     */
+    #onInit;
+
+    constructor({methodName, buttonConfig, widgetBuilder, defaultAttributes}) {
         // Define the payment method name in the derived class.
-        this.methodName = 'UNDEFINED';
+        this.methodName = methodName;
 
         this.buttonConfig = buttonConfig;
         this.widgetBuilder = widgetBuilder;
@@ -17,11 +31,9 @@ class PreviewButtonManager {
         this.buttons = {};
         this.configResponse = null;
 
-        // Empty promise that resolves instantly when called.
-        this.bootstrapping = Promise.resolve();
-
-        // Add the bootstrap logic to the Promise chain. More `then`s are added by addButton().
-        this.bootstrapping = this.bootstrapping.then(() => this.bootstrap());
+        this.#onInit = new Promise(resolve => {
+            this.#onInitResolver = resolve;
+        });
 
         this.registerEventListeners();
     }
@@ -49,8 +61,13 @@ class PreviewButtonManager {
     }
 
     registerEventListeners() {
-        jQuery(document).on('ppcp_paypal_render_preview', (ev, ppcpConfig) => this.addButton(ppcpConfig));
-        jQuery(document).on('DOMContentLoaded', () => this.bootstrapping);
+        jQuery(document).on('DOMContentLoaded', this.bootstrap.bind(this));
+
+        // General event that all APM buttons react to.
+        jQuery(document).on('ppcp_paypal_render_preview', this.renderPreview.bind(this));
+
+        // Specific event to only (re)render the current APM button type.
+        jQuery(document).on(`ppcp_paypal_render_preview_${this.methodName}`, this.renderPreview.bind(this));
     }
 
     /**
@@ -88,20 +105,41 @@ class PreviewButtonManager {
         await Promise.all([customScriptPromise, paypalPromise]);
 
         this.configResponse = await this.fetchConfig();
+
+        await this.#onInitResolver()
+
+        this.#onInit = null;
+    }
+
+    /**
+     * Event handler, fires on `ppcp_paypal_render_preview`
+     *
+     * @param ev - Ignored
+     * @param ppcpConfig - The button settings for the preview.
+     */
+    renderPreview(ev, ppcpConfig) {
+        const id = ppcpConfig.button.wrapper
+
+        if (!id) {
+            this.error('Button did not provide a wrapper ID', ppcpConfig)
+            return;
+        }
+
+        if (!this.buttons[id]) {
+            this.addButton(id, ppcpConfig);
+        } else {
+            this.buttons[id].config({
+                buttonConfig: this.buttonConfig,
+                ppcpConfig
+            }).render()
+        }
     }
 
     /**
      * Creates a new preview button, that is rendered once the bootstrapping Promise resolves.
      */
-    addButton(ppcpConfig) {
-        if (!ppcpConfig.button.wrapper) {
-            this.error('Button did not provide a wrapper ID', ppcpConfig)
-            return;
-        }
-
+    addButton(id, ppcpConfig) {
         const createOrUpdateButton = () => {
-            const id = ppcpConfig.button.wrapper;
-
             if (!this.buttons[id]) {
                 this.buttons[id] = this.createButtonInst(id);
             }
@@ -112,29 +150,11 @@ class PreviewButtonManager {
             }).render()
         }
 
-        if (this.bootstrapping) {
-            this.bootstrapping.then(createOrUpdateButton);
+        if (this.#onInit) {
+            this.#onInit.then(createOrUpdateButton);
         } else {
             createOrUpdateButton();
         }
-    }
-
-    /**
-     * Changes the button configuration and re-renders all buttons.
-     *
-     * @return {this} Reference to self, for chaining.
-     */
-    updateConfig(newConfig) {
-        if (!newConfig || 'object' !== typeof newConfig) {
-            return this;
-        }
-
-        this.buttonConfig = merge(this.buttonConfig, newConfig)
-
-        Object.values(this.buttons).forEach(button => button.config({buttonConfig: this.buttonConfig}))
-        this.renderButtons();
-
-        return this;
     }
 
 
