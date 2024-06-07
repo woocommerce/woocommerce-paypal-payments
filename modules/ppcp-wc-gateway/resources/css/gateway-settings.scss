@@ -2,9 +2,19 @@
 	width: 350px;
 	padding: 15px;
 	border: 1px solid lightgray;
+	background: #eeeeef;
 	border-radius: 15px;
 	box-shadow: 0 2px 10px 1px #ddd;
 	margin-right: -28px;
+
+	&[data-ppcp-apm-preview] {
+		height: 82px;
+		margin-top: -149px;
+
+		@media (min-width: 601px) and (max-width: 1399px) {
+			margin-right: 10px;
+		}
+	}
 
 	h4 {
 		margin-top: 0;
