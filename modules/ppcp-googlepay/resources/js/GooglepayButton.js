@@ -139,6 +139,10 @@ class GooglepayButton {
     initEventHandlers() {
         const { wrapper, ppcpButtonWrapper } = this.contextConfig();
 
+        if (wrapper === ppcpButtonWrapper) {
+            throw new Error(`[GooglePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${wrapper}"`);
+        }
+
         const syncButtonVisibility = () => {
             const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
             setVisible(wrapper, $ppcpButtonWrapper.is(':visible'));
