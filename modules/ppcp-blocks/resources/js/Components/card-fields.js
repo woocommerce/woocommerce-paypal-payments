@@ -25,6 +25,14 @@ export function CardFields({config, eventRegistration, emitResponse, components}
     }
 
     const hasSubscriptionProducts = cartHasSubscriptionProducts(config.scriptData);
+    useEffect(() => {
+        localStorage.removeItem('ppcp-save-card-payment');
+
+        if(hasSubscriptionProducts) {
+            localStorage.setItem('ppcp-save-card-payment', 'true');
+        }
+
+    }, [hasSubscriptionProducts])
 
     useEffect(
         () =>
