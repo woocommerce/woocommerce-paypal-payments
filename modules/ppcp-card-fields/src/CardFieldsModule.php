@@ -105,9 +105,8 @@ class CardFieldsModule implements ModuleInterface {
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data ) use ( $c ): array {
+			function( array $data, string $payment_method ) use ( $c ): array {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
 				if ( $payment_method !== CreditCardGateway::ID ) {
 					return $data;
 				}
@@ -134,7 +133,9 @@ class CardFieldsModule implements ModuleInterface {
 				}
 
 				return $data;
-			}
+			},
+			10,
+			2
 		);
 	}
 }

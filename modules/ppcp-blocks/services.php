@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -43,6 +44,17 @@ return array(
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'wcgateway.place-order-button-description' ),
 			$container->get( 'wcgateway.all-funding-sources' )
+		);
+	},
+	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {
+		return new AdvancedCardPaymentMethod(
+			$container->get( 'blocks.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.credit-card-gateway' ),
+			function () use ( $container ): SmartButtonInterface {
+				return $container->get( 'button.smart-button' );
+			},
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {

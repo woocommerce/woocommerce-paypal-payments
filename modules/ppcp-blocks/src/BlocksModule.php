@@ -61,6 +61,7 @@ class BlocksModule implements ModuleInterface {
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
+				$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 			}
 		);
 
