@@ -105,7 +105,7 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 				$subscriptions_mode = $settings->get( 'subscriptions_mode' );
 
 				if ( 'subscriptions_api' !== $subscriptions_mode ) {
-					if ( $product->get_sold_individually() ) {
+					if ( $product && $product->get_sold_individually() ) {
 						$product->set_sold_individually( false );
 						$product->save();
 					}
