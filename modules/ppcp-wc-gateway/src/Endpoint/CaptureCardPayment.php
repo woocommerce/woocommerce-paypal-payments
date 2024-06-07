@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
@@ -131,15 +132,24 @@ class CaptureCardPayment {
 	/**
 	 * Creates PayPal order from the given card vault id.
 	 *
-	 * @param string $vault_id Vault id.
-	 * @param string $custom_id Custom id.
-	 * @param string $invoice_id Invoice id.
+	 * @param string   $vault_id Vault id.
+	 * @param string   $custom_id Custom id.
+	 * @param string   $invoice_id Invoice id.
+	 * @param WC_Order $wc_order The WC order.
 	 * @return stdClass
 	 * @throws RuntimeException When request fails.
 	 */
-	public function create_order( string $vault_id, string $custom_id, string $invoice_id ): stdClass {
+	public function create_order( string $vault_id, string $custom_id, string $invoice_id, WC_Order $wc_order ): stdClass {
 		$intent = $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$items  = array( $this->purchase_unit_factory->from_wc_cart() );
+
+		// phpcs:disable WordPress.Security.NonceVerification
+		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
+		$order_key     = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
+		// phpcs:enable
+		if ( $pay_for_order && $order_key === $wc_order->get_order_key() ) {
+			$items = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
+		}
 
 		$data = array(
 			'intent'         => $intent,
