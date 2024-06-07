@@ -1,7 +1,107 @@
-import {loadCustomScript} from "@paypal/paypal-js";
 import ApplepayButton from "./ApplepayButton";
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
+import PreviewButton from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButton";
+import PreviewButtonManager from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager";
 
+/**
+ * Accessor that creates and returns a single PreviewButtonManager instance.
+ */
+const buttonManager = () => {
+    if (!ApplePayPreviewButtonManager.instance) {
+        ApplePayPreviewButtonManager.instance = new ApplePayPreviewButtonManager();
+    }
+
+    return ApplePayPreviewButtonManager.instance;
+}
+
+
+/**
+ * Manages all Apple Pay preview buttons on this page.
+ */
+class ApplePayPreviewButtonManager extends PreviewButtonManager {
+    constructor() {
+        const defaultButton = {
+            type: 'pay',
+            color: 'black',
+            lang: 'en'
+        };
+
+        const args = {
+            methodName: 'ApplePay',
+            buttonConfig: window.wc_ppcp_applepay_admin,
+            widgetBuilder,
+            defaultAttributes: {button: defaultButton}
+        };
+
+        super(args);
+    }
+
+    /**
+     * Responsible for fetching and returning the PayPal configuration object for this payment
+     * method.
+     *
+     * @return {Promise<{}>}
+     */
+    async fetchConfig() {
+        const apiMethod = this.widgetBuilder?.paypal?.Applepay()?.config
+
+        if (!apiMethod) {
+            this.error('configuration object cannot be retrieved from PayPal');
+            return {};
+        }
+
+        return await apiMethod();
+    }
+
+    /**
+     * This method is responsible for creating a new PreviewButton instance and returning it.
+     *
+     * @param {string} wrapperId - CSS ID of the wrapper element.
+     * @return {ApplePayPreviewButton}
+     */
+    createButtonInst(wrapperId) {
+        return new ApplePayPreviewButton({
+            selector: wrapperId,
+            configResponse: this.configResponse,
+            defaultAttributes: this.defaultAttributes
+        });
+    }
+}
+
+
+/**
+ * A single Apple Pay preview button instance.
+ */
+class ApplePayPreviewButton extends PreviewButton {
+    constructor(args) {
+        super(args);
+
+        this.selector = `${args.selector}ApplePay`
+    }
+
+    createNewWrapper() {
+        const element = super.createNewWrapper();
+        element.addClass('ppcp-button-applepay');
+
+        return element;
+    }
+
+    createButton() {
+        const button = new ApplepayButton(
+            'preview',
+            null,
+            this.buttonConfig,
+            this.ppcpConfig,
+        );
+
+        button.init(this.configResponse);
+    }
+}
+
+// Initialize the preview button manager.
+buttonManager();
+
+/*
 (function ({
    buttonConfig,
    jQuery
@@ -46,11 +146,6 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         }, 100);
     });
 
-    /**
-     * Decides, whether to display the Apple Pay preview button.
-     *
-     * @return {boolean}
-     */
     const shouldDisplayPreviewButton = function () {
         // TODO - original condition, which is wrong.
         return jQuery('#ppcp-applepay_button_enabled').is(':checked');
@@ -156,3 +251,4 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
     buttonConfig: window.wc_ppcp_applepay_admin,
     jQuery: window.jQuery
 });
+*/
