@@ -4,72 +4,15 @@ import PreviewButton from "../../../ppcp-button/resources/js/modules/Renderer/Pr
 import PreviewButtonManager from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager";
 
 /**
- * Button manager instance; we usually only need a single instance of this object.
- *
- * @see buttonManager()
- */
-let managerInstance = null;
-
-/**
- * Default attributes for new buttons.
- */
-const defaultAttributes = {
-    button: {
-        style: {
-            type: 'pay',
-            color: 'black',
-            language: 'en'
-        }
-    }
-};
-
-/**
  * Accessor that creates and returns a single PreviewButtonManager instance.
  */
 const buttonManager = () => {
-    if (!managerInstance) {
-        managerInstance = new GooglePayPreviewButtonManager();
+    if (!GooglePayPreviewButtonManager.instance) {
+        GooglePayPreviewButtonManager.instance = new GooglePayPreviewButtonManager();
     }
 
-    return managerInstance;
+    return GooglePayPreviewButtonManager.instance;
 }
-
-
-// ----------------------------------------------------------------------------
-
-
-/**
- * A single GooglePay preview button instance.
- */
-class GooglePayPreviewButton extends PreviewButton {
-    constructor(args) {
-        super(args);
-
-        this.selector = `${args.selector}GooglePay`
-    }
-
-    createNewWrapper() {
-        const element = super.createNewWrapper();
-        element.addClass('ppcp-button-googlepay');
-        return element;
-    }
-
-    createButton() {
-        const button = new GooglepayButton(
-            'preview',
-            null,
-            this.buttonConfig,
-            this.ppcpConfig,
-        );
-
-        button.init(this.configResponse);
-
-        return button;
-    }
-}
-
-
-// ----------------------------------------------------------------------------
 
 
 /**
@@ -77,18 +20,22 @@ class GooglePayPreviewButton extends PreviewButton {
  */
 class GooglePayPreviewButtonManager extends PreviewButtonManager {
     constructor() {
+        const defaultButton = {
+            style: {
+                type: 'pay',
+                color: 'black',
+                language: 'en'
+            }
+        };
+
         const args = {
-            // WooCommerce configuration object.
+            methodName: 'GooglePay',
             buttonConfig: window.wc_ppcp_googlepay_admin,
-            // Internal widgetBuilder instance.
             widgetBuilder,
-            // Default button styles.
-            defaultAttributes
+            defaultAttributes: {button: defaultButton}
         };
 
         super(args);
-
-        this.methodName = 'GooglePay';
     }
 
     /**
@@ -123,8 +70,40 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
     }
 }
 
+
+/**
+ * A single GooglePay preview button instance.
+ */
+class GooglePayPreviewButton extends PreviewButton {
+    constructor(args) {
+        super(args);
+
+        this.selector = `${args.selector}GooglePay`
+    }
+
+    createNewWrapper() {
+        const element = super.createNewWrapper();
+        element.addClass('ppcp-button-googlepay');
+
+        return element;
+    }
+
+    createButton() {
+        const button = new GooglepayButton(
+            'preview',
+            null,
+            this.buttonConfig,
+            this.ppcpConfig,
+        );
+
+        button.init(this.configResponse);
+
+        return button;
+    }
+}
+
 // Initialize the preview button manager.
-buttonManager()
+buttonManager();
 
 // todo - Expose button manager for testing. Remove this!
 window.gpay = buttonManager()
