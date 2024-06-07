@@ -60,6 +60,11 @@ class DomElementCollection {
             selector: '#billing_email_field'
         });
 
+        this.billingEmailFieldWrapper = new DomElement({
+            id: 'ppcp-axo-billing-email-field-wrapper',
+            selector: '#ppcp-axo-billing-email-field-wrapper',
+        });
+
         this.billingEmailSubmitButton = new DomElement({
             id: 'ppcp-axo-billing-email-submit-button',
             selector: '#ppcp-axo-billing-email-submit-button',

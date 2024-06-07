@@ -225,8 +225,10 @@ class AxoManager {
 
         if (scenario.defaultSubmitButton) {
             this.el.defaultSubmitButton.show();
+            this.el.billingEmailSubmitButton.hide();
         } else {
             this.el.defaultSubmitButton.hide();
+            this.el.billingEmailSubmitButton.show();
         }
 
         if (scenario.defaultEmailField) {
@@ -252,8 +254,8 @@ class AxoManager {
             this.el.watermarkContainer.show();
 
             // Move watermark to after email.
-            this.$(this.el.fieldBillingEmail.selector).append(
-                this.$(this.el.watermarkContainer.selector)
+            document.querySelector('#billing_email_field .woocommerce-input-wrapper').append(
+                document.querySelector(this.el.watermarkContainer.selector)
             );
         } else {
             this.el.emailWidgetContainer.hide();
@@ -433,10 +435,18 @@ class AxoManager {
             `);
         }
 
+        // billingEmailFieldWrapper
+        const befw = this.el.billingEmailFieldWrapper;
+        if (!document.querySelector(befw.selector)) {
+            document.querySelector('#billing_email_field .woocommerce-input-wrapper').insertAdjacentHTML('afterend', `
+                <div id="${befw.id}"></div>
+            `);
+        }
+
         // Watermark container
         const wc = this.el.watermarkContainer;
         if (!document.querySelector(wc.selector)) {
-            this.emailInput.insertAdjacentHTML('afterend', `
+            document.querySelector(befw.selector).insertAdjacentHTML('beforeend', `
                 <div class="${wc.className}" id="${wc.id}"></div>
             `);
         }
@@ -466,10 +476,10 @@ class AxoManager {
             }
 
         } else {
-
             // Move email to the AXO container.
             let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
             wrapperElement.prepend(emailRow);
+            document.querySelector(this.el.billingEmailFieldWrapper.selector).prepend(document.querySelector('#billing_email_field .woocommerce-input-wrapper'))
         }
     }
 
@@ -515,7 +525,7 @@ class AxoManager {
         const billingEmailSubmitButtonSpinner = this.el.billingEmailSubmitButtonSpinner;
 
         if (!document.querySelector(billingEmailSubmitButton.selector)) {
-            this.emailInput.insertAdjacentHTML('afterend', `
+            document.querySelector(this.el.billingEmailFieldWrapper.selector).insertAdjacentHTML('beforeend', `
                 <button type="button" id="${billingEmailSubmitButton.id}" class="${billingEmailSubmitButton.className}">
                     ${this.axoConfig.billing_email_button_text}
                     <span id="${billingEmailSubmitButtonSpinner.id}"></span>

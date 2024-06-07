@@ -12,10 +12,17 @@
 	}
 }
 
+#ppcp-axo-billing-email-field-wrapper {
+	display: flex;
+	gap: 0.5rem;
+}
+
 #ppcp-axo-billing-email-submit-button {
 	margin-top: 0;
 	position: relative;
 	transition: opacity 0.3s ease;
+	flex: 0 1 auto;
+	align-self: flex-start;
 
 	.loader:before {
 		display: inline;
@@ -117,27 +124,20 @@
 }
 
 .ppcp-axo-customer-details #billing_email_field .woocommerce-input-wrapper {
-	display: flex;
-	align-items: center;
-
-	input {
-		flex: 1;
-		margin-right: 10px;
-	}
+	flex: 1 1 auto;
 }
 
 @media screen and (max-width: 719px) {
-	#ppcp-axo-billing-email-submit-button {
-		width: 100%;
-		margin-top: 0.5rem;
-	}
-	.ppcp-axo-customer-details #billing_email_field .woocommerce-input-wrapper {
-		display: block;
+	#ppcp-axo-billing-email {
+		&-field-wrapper {
+			flex-direction: column;
+		}
 
-		input {
-			margin-right: 0;
+		&-submit-button {
+			align-self: auto;
 		}
 	}
 }
+
 
 
