@@ -1,5 +1,4 @@
 import {loadCustomScript} from "@paypal/paypal-js";
-import merge from "deepmerge";
 
 /**
  * Manages all PreviewButton instances of a certain payment method on the page.
@@ -29,11 +28,14 @@ class PreviewButtonManager {
 
         this.isEnabled = true
         this.buttons = {};
-        this.configResponse = null;
+        this.apiConfig = null;
 
         this.#onInit = new Promise(resolve => {
             this.#onInitResolver = resolve;
         });
+
+        this.bootstrap = this.bootstrap.bind(this);
+        this.renderPreview = this.renderPreview.bind(this);
 
         this.registerEventListeners();
     }
@@ -61,13 +63,13 @@ class PreviewButtonManager {
     }
 
     registerEventListeners() {
-        jQuery(document).on('DOMContentLoaded', this.bootstrap.bind(this));
+        jQuery(document).one('DOMContentLoaded', this.bootstrap);
 
         // General event that all APM buttons react to.
-        jQuery(document).on('ppcp_paypal_render_preview', this.renderPreview.bind(this));
+        jQuery(document).on('ppcp_paypal_render_preview', this.renderPreview);
 
         // Specific event to only (re)render the current APM button type.
-        jQuery(document).on(`ppcp_paypal_render_preview_${this.methodName}`, this.renderPreview.bind(this));
+        jQuery(document).on(`ppcp_paypal_render_preview_${this.methodName}`, this.renderPreview);
     }
 
     /**
@@ -75,6 +77,15 @@ class PreviewButtonManager {
      */
     error(message, ...args) {
         console.error(`${this.methodName} ${message}`, ...args)
+    }
+
+    /**
+     * Whether this is a dynamic preview of the APM button.
+     * A dynamic preview adjusts to the current form settings, while a static preview uses the
+     * style settings that were provided from server-side.
+     */
+    isDynamic() {
+        return !!document.querySelector(`[data-ppcp-apm-name="${this.methodName}"]`)
     }
 
     /**
@@ -104,8 +115,7 @@ class PreviewButtonManager {
 
         await Promise.all([customScriptPromise, paypalPromise]);
 
-        this.configResponse = await this.fetchConfig();
-
+        this.apiConfig = await this.fetchConfig();
         await this.#onInitResolver()
 
         this.#onInit = null;
@@ -126,37 +136,40 @@ class PreviewButtonManager {
         }
 
         if (!this.buttons[id]) {
-            this.addButton(id, ppcpConfig);
+            this.#addButton(id, ppcpConfig);
         } else {
-            this.buttons[id].config({
-                buttonConfig: this.buttonConfig,
-                ppcpConfig
-            }).render()
+            this.#configureButton(id, ppcpConfig);
         }
+    }
+
+    /**
+     * Applies a new configuration to an existing preview button.
+     */
+    #configureButton(id, ppcpConfig) {
+        this.buttons[id]
+            .setDynamic(this.isDynamic())
+            .setPpcpConfig(ppcpConfig)
+            .render()
     }
 
     /**
      * Creates a new preview button, that is rendered once the bootstrapping Promise resolves.
      */
-    addButton(id, ppcpConfig) {
-        const createOrUpdateButton = () => {
+    #addButton(id, ppcpConfig) {
+        const createButton = () => {
             if (!this.buttons[id]) {
-                this.buttons[id] = this.createButtonInst(id);
+                this.buttons[id] = this.createButtonInst(id).setButtonConfig(this.buttonConfig);
             }
 
-            this.buttons[id].config({
-                buttonConfig: this.buttonConfig,
-                ppcpConfig
-            }).render()
+            this.#configureButton(id, ppcpConfig);
         }
 
         if (this.#onInit) {
-            this.#onInit.then(createOrUpdateButton);
+            this.#onInit.then(createButton);
         } else {
-            createOrUpdateButton();
+            createButton();
         }
     }
-
 
     /**
      * Refreshes all buttons using the latest buttonConfig.
