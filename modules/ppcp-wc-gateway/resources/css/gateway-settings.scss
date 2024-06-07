@@ -7,9 +7,13 @@
 	box-shadow: 0 2px 10px 1px #ddd;
 	margin-right: -28px;
 
+	// Preview box showing a single button.
 	&[data-ppcp-apm-preview] {
 		height: 82px;
-		margin-top: -149px;
+
+		@media (min-width: 1200px) {
+			margin-top: -149px;
+		}
 
 		@media (min-width: 601px) and (max-width: 1399px) {
 			margin-right: 10px;
