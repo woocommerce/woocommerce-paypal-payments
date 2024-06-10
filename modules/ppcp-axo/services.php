@@ -148,6 +148,11 @@ return array(
 			'woocommerce_paypal_payments_axo_supported_country_currency_matrix',
 			array(
 				'US' => array(
+					'AUD',
+					'CAD',
+					'EUR',
+					'GBP',
+					'JPY',
 					'USD',
 				),
 			)
