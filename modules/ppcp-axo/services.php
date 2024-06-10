@@ -153,7 +153,7 @@ return array(
 					'EUR',
 					'GBP',
 					'JPY',
-					'USD'
+					'USD',
 				),
 			)
 		);
