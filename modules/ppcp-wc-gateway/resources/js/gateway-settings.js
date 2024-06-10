@@ -4,7 +4,6 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
 import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
-import {wrap} from "../../../../.ddev/wordpress/wp-includes/js/dist/vendor/regenerator-runtime";
 
 document.addEventListener(
     'DOMContentLoaded',
