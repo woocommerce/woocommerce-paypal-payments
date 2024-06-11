@@ -1,5 +1,4 @@
 import GooglepayButton from "./GooglepayButton";
-import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 import PreviewButton from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButton";
 import PreviewButtonManager from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager";
 
@@ -22,8 +21,7 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
     constructor() {
         const args = {
             methodName: 'GooglePay',
-            buttonConfig: window.wc_ppcp_googlepay_admin,
-            widgetBuilder
+            buttonConfig: window.wc_ppcp_googlepay_admin
         };
 
         super(args);
@@ -33,10 +31,11 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
      * Responsible for fetching and returning the PayPal configuration object for this payment
      * method.
      *
+     * @param {{}} payPal - The PayPal SDK object provided by WidgetBuilder.
      * @return {Promise<{}>}
      */
-    async fetchConfig() {
-        const apiMethod = this.widgetBuilder?.paypal?.Googlepay()?.config
+    async fetchConfig(payPal) {
+        const apiMethod = payPal?.Googlepay()?.config
 
         if (!apiMethod) {
             this.error('configuration object cannot be retrieved from PayPal');

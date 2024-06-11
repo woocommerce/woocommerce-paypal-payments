@@ -1,5 +1,4 @@
 import ApplepayButton from "./ApplepayButton";
-import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 import PreviewButton from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButton";
 import PreviewButtonManager from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager";
 
@@ -22,8 +21,7 @@ class ApplePayPreviewButtonManager extends PreviewButtonManager {
     constructor() {
         const args = {
             methodName: 'ApplePay',
-            buttonConfig: window.wc_ppcp_applepay_admin,
-            widgetBuilder,
+            buttonConfig: window.wc_ppcp_applepay_admin
         };
 
         super(args);
@@ -33,10 +31,11 @@ class ApplePayPreviewButtonManager extends PreviewButtonManager {
      * Responsible for fetching and returning the PayPal configuration object for this payment
      * method.
      *
+     * @param {{}} payPal - The PayPal SDK object provided by WidgetBuilder.
      * @return {Promise<{}>}
      */
-    async fetchConfig() {
-        const apiMethod = this.widgetBuilder?.paypal?.Applepay()?.config
+    async fetchConfig(payPal) {
+        const apiMethod = payPal?.Applepay()?.config
 
         if (!apiMethod) {
             this.error('configuration object cannot be retrieved from PayPal');

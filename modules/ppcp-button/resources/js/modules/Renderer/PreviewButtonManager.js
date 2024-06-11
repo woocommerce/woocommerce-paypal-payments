@@ -1,4 +1,5 @@
 import {loadCustomScript} from "@paypal/paypal-js";
+import widgetBuilder from "./WidgetBuilder";
 
 /**
  * Manages all PreviewButton instances of a certain payment method on the page.
@@ -18,12 +19,11 @@ class PreviewButtonManager {
      */
     #onInit;
 
-    constructor({methodName, buttonConfig, widgetBuilder, defaultAttributes}) {
+    constructor({methodName, buttonConfig, defaultAttributes}) {
         // Define the payment method name in the derived class.
         this.methodName = methodName;
 
         this.buttonConfig = buttonConfig;
-        this.widgetBuilder = widgetBuilder;
         this.defaultAttributes = defaultAttributes;
 
         this.isEnabled = true
@@ -45,9 +45,10 @@ class PreviewButtonManager {
      * Responsible for fetching and returning the PayPal configuration object for this payment
      * method.
      *
+     * @param {{}} payPal - The PayPal SDK object provided by WidgetBuilder.
      * @return {Promise<{}>}
      */
-    async fetchConfig() {
+    async fetchConfig(payPal) {
         throw new Error('The "fetchConfig" method must be implemented by the derived class');
     }
 
@@ -96,34 +97,36 @@ class PreviewButtonManager {
      * @return {Promise<void>}
      */
     async bootstrap() {
-        if (!this.buttonConfig || !this.widgetBuilder) {
+        const MAX_WAIT_TIME = 10000; // Fail, if PayPal SDK is unavailable after 10 seconds.
+        const RESOLVE_INTERVAL = 200;
+
+        if (!this.buttonConfig || !widgetBuilder) {
             this.error('Button could not be configured.');
             return;
         }
 
+        // A helper function that clears the interval and resolves/rejects the promise.
+        const resolveOrReject = (resolve, reject, id, success = true) => {
+            clearInterval(id);
+            success ? resolve() : reject('Timeout while waiting for widgetBuilder.paypal');
+        };
+
+        // Wait for the PayPal SDK to be ready.
+        const paypalPromise = new Promise((resolve, reject) => {
+            let elapsedTime = 0;
+
+            const id = setInterval(() => {
+                if (widgetBuilder.paypal) {
+                    resolveOrReject(resolve, reject, id);
+                } else if (elapsedTime >= MAX_WAIT_TIME) {
+                    resolveOrReject(resolve, reject, id, false);
+                }
+                elapsedTime += RESOLVE_INTERVAL;
+            }, RESOLVE_INTERVAL);
+        });
+
         // Load the custom SDK script.
         const customScriptPromise = loadCustomScript({url: this.buttonConfig.sdk_url});
-
-        // Wait until PayPal is ready.
-        const paypalPromise = new Promise((resolve, reject) => {
-            const maxWaitTime = 3000; // 3 seconds before failing.
-
-            const resolveIfAvailable = () => {
-                if (this.widgetBuilder.paypal) {
-                    resolve();
-                }
-            }
-
-            // Resolve this promise instantly, if the PayPal object is available.
-            resolveIfAvailable();
-
-            // If the object is not available yet, wait for (a) the custom event, or (b) a custom timeout.
-            jQuery(document).on('ppcp-paypal-loaded', resolve);
-            setTimeout(() => {
-                resolveIfAvailable();
-                reject('Timeout while waiting for widgetBuilder.paypal')
-            }, maxWaitTime)
-        });
 
         // Wait for both promises to resolve before continuing.
         await Promise
@@ -137,7 +140,7 @@ class PreviewButtonManager {
         (a) the SDK custom-script
         (b) the `widgetBuilder.paypal` object
          */
-        this.apiConfig = await this.fetchConfig();
+        this.apiConfig = await this.fetchConfig(widgetBuilder.paypal);
         await this.#onInitResolver()
 
         this.#onInit = null;
