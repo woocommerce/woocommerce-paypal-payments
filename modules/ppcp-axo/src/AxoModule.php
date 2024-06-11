@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 
 /**
  * Class AxoModule
@@ -43,7 +44,6 @@ class AxoModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
-		$module = $this;
 
 		add_filter(
 			'woocommerce_payment_gateways',
@@ -108,9 +108,31 @@ class AxoModule implements ModuleInterface {
 			}
 		);
 
+		// Force 'cart-block' and 'cart' Smart Button locations in the settings.
+		add_action(
+			'admin_init',
+			static function () use ( $c ) {
+				$listener = $c->get( 'wcgateway.settings.listener' );
+				assert( $listener instanceof SettingsListener );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$listener->filter_settings(
+					$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ),
+					'smart_button_locations',
+					function( array $existing_setting_value ) {
+						$axo_forced_locations = array( 'cart-block', 'cart' );
+						return array_unique( array_merge( $existing_setting_value, $axo_forced_locations ) );
+					}
+				);
+			}
+		);
+
 		add_action(
 			'init',
-			function () use ( $c, $module ) {
+			function () use ( $c ) {
+				$module = $this;
 
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' ) ) {
@@ -123,11 +145,15 @@ class AxoModule implements ModuleInterface {
 				// Enqueue frontend scripts.
 				add_action(
 					'wp_enqueue_scripts',
-					static function () use ( $c, $manager ) {
+					static function () use ( $c, $manager, $module ) {
+
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						if ( $smart_button->should_load_ppcp_script() ) {
+						if ( $module->should_render_fastlane( $settings ) && $smart_button->should_load_ppcp_script() ) {
 							$manager->enqueue();
 						}
 					}
@@ -217,6 +243,18 @@ class AxoModule implements ModuleInterface {
 			1
 		);
 
+		add_action(
+			'wc_ajax_' . FrontendLoggerEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'axo.endpoint.frontend-logger' );
+				assert( $endpoint instanceof FrontendLoggerEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		// Add the markup necessary for displaying overlays and loaders for Axo on the checkout page.
+		$this->add_checkout_loader_markup( $c );
 	}
 
 	/**
@@ -291,5 +329,48 @@ class AxoModule implements ModuleInterface {
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
 			&& $is_axo_enabled;
+	}
+
+	/**
+	 * Adds the markup necessary for displaying overlays and loaders for Axo on the checkout page.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @return void
+	 */
+	private function add_checkout_loader_markup( ContainerInterface $c ): void {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		if ( $this->should_render_fastlane( $settings ) ) {
+			add_action(
+				'woocommerce_checkout_before_customer_details',
+				function () {
+					echo '<div class="ppcp-axo-loading">';
+				}
+			);
+
+			add_action(
+				'woocommerce_checkout_after_customer_details',
+				function () {
+					echo '</div>';
+				}
+			);
+
+			add_action(
+				'woocommerce_checkout_billing',
+				function () {
+					echo '<div class="loader"><div class="ppcp-axo-overlay"></div>';
+				},
+				8
+			);
+
+			add_action(
+				'woocommerce_checkout_billing',
+				function () {
+					echo '</div>';
+				},
+				12
+			);
+		}
 	}
 }

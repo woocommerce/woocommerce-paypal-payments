@@ -106,13 +106,6 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	protected $wc_order_creator;
 
 	/**
-	 * The Subscription Helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	protected $subscription_helper;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -132,7 +125,6 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @param bool                    $final_review_enabled Whether the final review is enabled.
 	 * @param PayPalGateway           $gateway The WC gateway.
 	 * @param WooCommerceOrderCreator $wc_order_creator The WooCommerce order creator.
-	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 * @param LoggerInterface         $logger The logger.
 	 */
 	public function __construct(
@@ -146,7 +138,6 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		bool $final_review_enabled,
 		PayPalGateway $gateway,
 		WooCommerceOrderCreator $wc_order_creator,
-		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger
 	) {
 
@@ -160,7 +151,6 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		$this->final_review_enabled = $final_review_enabled;
 		$this->gateway              = $gateway;
 		$this->wc_order_creator     = $wc_order_creator;
-		$this->subscription_helper  = $subscription_helper;
 		$this->logger               = $logger;
 	}
 
@@ -247,7 +237,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$this->session_handler->replace_order( $order );
 
-			if ( ! $this->subscription_helper->plugin_is_active() && apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false ) ) {
+			if ( apply_filters( 'woocommerce_paypal_payments_toggle_final_review_checkbox', false ) ) {
 				$this->toggle_final_review_enabled_setting();
 			}
 

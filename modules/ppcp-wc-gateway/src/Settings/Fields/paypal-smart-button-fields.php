@@ -36,6 +36,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 </div>';
 	};
 
+	$axo_smart_button_location_notice = $container->has( 'axo.smart-button-location-notice' ) ? $container->get( 'axo.smart-button-location-notice' ) : '';
+
 	$smart_button_fields = array(
 		'button_style_heading'                     => array(
 			'heading'      => __( 'PayPal Smart Buttons', 'woocommerce-paypal-payments' ),
@@ -65,7 +67,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'ppcp-multiselect',
 			'input_class'  => array( 'wc-enhanced-select' ),
 			'default'      => $container->get( 'wcgateway.button.default-locations' ),
-			'description'  => __( 'Select where the PayPal smart buttons should be displayed.', 'woocommerce-paypal-payments' ),
+			'description'  => __( 'Select where the PayPal smart buttons should be displayed.', 'woocommerce-paypal-payments' ) . $axo_smart_button_location_notice,
 			'options'      => $container->get( 'wcgateway.button.locations' ),
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),

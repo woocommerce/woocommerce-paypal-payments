@@ -73,6 +73,7 @@ class SdkClientToken {
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$domain = wp_unslash( $_SERVER['HTTP_HOST'] ?? '' );
+		$domain = preg_replace( '/^www\./', '', $domain );
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=' . $domain;
 

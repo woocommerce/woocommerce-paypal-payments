@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
@@ -23,9 +21,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
 /**
@@ -162,13 +158,6 @@ class SettingsListener {
 	private $billing_agreements_endpoint;
 
 	/**
-	 * The subscription helper
-	 *
-	 * @var SubscriptionHelper
-	 */
-	protected $subscription_helper;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -193,7 +182,6 @@ class SettingsListener {
 	 * @param string                    $partner_merchant_id_production Partner merchant ID production.
 	 * @param string                    $partner_merchant_id_sandbox Partner merchant ID sandbox.
 	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint Billing Agreements endpoint.
-	 * @param SubscriptionHelper        $subscription_helper The subscription helper.
 	 * @param ?LoggerInterface          $logger The logger.
 	 */
 	public function __construct(
@@ -212,7 +200,6 @@ class SettingsListener {
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
 		BillingAgreementsEndpoint $billing_agreements_endpoint,
-		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger = null
 	) {
 
@@ -231,7 +218,6 @@ class SettingsListener {
 		$this->partner_merchant_id_production = $partner_merchant_id_production;
 		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
 		$this->billing_agreements_endpoint    = $billing_agreements_endpoint;
-		$this->subscription_helper            = $subscription_helper;
 		$this->logger                         = $logger ?: new NullLogger();
 	}
 
@@ -394,17 +380,23 @@ class SettingsListener {
 
 		if ( $reference_transaction_enabled !== true ) {
 			$this->settings->set( 'vault_enabled', false );
-			$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
+
+			/**
+			 * If Vaulting-API was previously enabled, then fall-back to the
+			 * PayPal subscription mode, to ensure subscriptions are still
+			 * possible on this shop.
+			 *
+			 * This can happen when switching to a different PayPal merchant account
+			 */
+			if ( 'vaulting_api' === $subscription_mode ) {
+				$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
+			}
+
 			$this->settings->persist();
 		}
 
 		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled === true ) {
 			$this->settings->set( 'vault_enabled', true );
-			$this->settings->persist();
-		}
-
-		if ( $this->subscription_helper->plugin_is_active() ) {
-			$this->settings->set( 'blocks_final_review_enabled', true );
 			$this->settings->persist();
 		}
 
@@ -745,4 +737,28 @@ class SettingsListener {
 		}
 	}
 
+	/**
+	 * Filter settings based on a condition.
+	 *
+	 * @param bool     $condition       The condition.
+	 * @param string   $setting_slug    The setting slug.
+	 * @param callable $filter_function The filter function.
+	 * @param bool     $persist         Whether to persist the settings.
+	 */
+	public function filter_settings( bool $condition, string $setting_slug, callable $filter_function, bool $persist = true ): void {
+		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		$existing_setting_value = $this->settings->has( $setting_slug ) ? $this->settings->get( $setting_slug ) : null;
+
+		if ( $condition ) {
+			$new_setting_value = $filter_function( $existing_setting_value );
+			$this->settings->set( $setting_slug, $new_setting_value );
+
+			if ( $persist ) {
+				$this->settings->persist();
+			}
+		}
+	}
 }

@@ -23,6 +23,9 @@ import {
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 import BlockCheckoutMessagesBootstrap from "./Bootstrap/BlockCheckoutMessagesBootstrap";
 import {keysToCamelCase} from "../../../ppcp-button/resources/js/modules/Helper/Utils";
+import {
+    handleShippingOptionsChange
+} from "../../../ppcp-button/resources/js/modules/Helper/ShippingHandler";
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
 window.ppcpFundingSource = config.fundingSource;
@@ -146,7 +149,7 @@ const PayPalComponent = ({
                         shipping_address: addresses.shippingAddress,
                     }),
                 ];
-                if (!config.finalReviewEnabled) {
+                if (shouldHandleShippingInPayPal()) {
                     // set address in UI
                     promises.push(wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress));
                     if (shippingData.needsShipping) {
@@ -181,7 +184,7 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic)
             }
 
-            if (config.finalReviewEnabled) {
+            if (!shouldHandleShippingInPayPal()) {
                 location.href = getCheckoutRedirectUrl();
             } else {
                 setGotoContinuationOnError(true);
@@ -220,7 +223,7 @@ const PayPalComponent = ({
                         shipping_address: addresses.shippingAddress,
                     }),
                 ];
-                if (!config.finalReviewEnabled) {
+                if (shouldHandleShippingInPayPal()) {
                     // set address in UI
                     promises.push(wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress));
                     if (shippingData.needsShipping) {
@@ -255,7 +258,7 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic)
             }
 
-            if (config.finalReviewEnabled) {
+            if (!shouldHandleShippingInPayPal()) {
                 location.href = getCheckoutRedirectUrl();
             } else {
                 setGotoContinuationOnError(true);
@@ -297,8 +300,12 @@ const PayPalComponent = ({
         onClick();
     };
 
-    const isVenmoAndVaultingEnabled = () => {
-        return window.ppcpFundingSource === 'venmo' && config.scriptData.vaultingEnabled;
+    const shouldHandleShippingInPayPal = () => {
+        if (config.finalReviewEnabled) {
+            return false;
+        }
+
+        return window.ppcpFundingSource !== 'venmo' || !config.scriptData.vaultingEnabled;
     }
 
     let handleShippingOptionsChange = null;
@@ -306,7 +313,7 @@ const PayPalComponent = ({
     let handleSubscriptionShippingOptionsChange = null;
     let handleSubscriptionShippingAddressChange = null;
 
-    if (shippingData.needsShipping && !config.finalReviewEnabled) {
+    if (shippingData.needsShipping && shouldHandleShippingInPayPal()) {
         handleShippingOptionsChange = async (data, actions) => {
             try {
                 const shippingOptionId = data.selectedShippingOption?.id;
@@ -391,6 +398,21 @@ const PayPalComponent = ({
 
                 await shippingData.setShippingAddress(address);
 
+                const res = await fetch(config.ajax.update_shipping.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: config.ajax.update_shipping.nonce,
+                        order_id: data.orderID,
+                    })
+                });
+
+                const json = await res.json();
+
+                if (!json.success) {
+                    throw new Error(json.data.message);
+                }
+
             } catch (e) {
                 console.error(e);
 
@@ -447,7 +469,7 @@ const PayPalComponent = ({
             if (config.scriptData.continuation) {
                 return true;
             }
-            if (!config.finalReviewEnabled) {
+            if (shouldHandleShippingInPayPal()) {
                 location.href = getCheckoutRedirectUrl();
             }
             return true;
@@ -493,8 +515,16 @@ const PayPalComponent = ({
                 onError={onClose}
                 createSubscription={createSubscription}
                 onApprove={handleApproveSubscription}
-                onShippingOptionsChange={handleSubscriptionShippingOptionsChange}
-                onShippingAddressChange={handleSubscriptionShippingAddressChange}
+                onShippingOptionsChange={(data, actions) => {
+                    shouldHandleShippingInPayPal()
+                        ? handleSubscriptionShippingOptionsChange(data, actions)
+                        : null;
+                }}
+                onShippingAddressChange={(data, actions) => {
+                    shouldHandleShippingInPayPal()
+                        ? handleSubscriptionShippingAddressChange(data, actions)
+                        : null;
+                }}
             />
         );
     }
@@ -508,8 +538,16 @@ const PayPalComponent = ({
             onError={onClose}
             createOrder={createOrder}
             onApprove={handleApprove}
-            onShippingOptionsChange={handleShippingOptionsChange}
-            onShippingAddressChange={handleShippingAddressChange}
+            onShippingOptionsChange={(data, actions) => {
+                shouldHandleShippingInPayPal()
+                    ? handleShippingOptionsChange(data, actions)
+                    : null;
+            }}
+            onShippingAddressChange={(data, actions) => {
+                shouldHandleShippingInPayPal()
+                    ? handleShippingAddressChange(data, actions)
+                    : null;
+            }}
         />
     );
 }
@@ -568,7 +606,7 @@ if(cartHasSubscriptionProducts(config.scriptData)) {
     features.push('subscriptions');
 }
 
-if (block_enabled) {
+if (block_enabled && config.enabled) {
     if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
         let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
         if (config.placeOrderButtonDescription) {

@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.5
 Requires PHP: 7.2
-Stable tag: 2.7.1
+Stable tag: 2.8.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,20 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.8.0 - 2024-06-11 =
+* Fix - Calculate totals after adding shipping to include taxes #2296
+* Fix - Package tracking integration throws error in 2.7.1 #2289
+* Fix - Make PayPal Subscription products unique in cart #2265
+* Fix - PayPal declares subscription support when merchant not enabled for Reference Transactions #2282
+* Fix - Google Pay and Apple Pay Settings button from Connection tab have wrong links #2273
+* Fix - Smart Buttons in Block Checkout not respecting the location setting (2830) #2278
+* Fix - Disable Pay Upon Invoice if billing/shipping country not set #2281
+* Fix - Critical error on pay for order page when we try to pay with ACDC gateway #2321
+* Enhancement - Enable shipping callback for WC subscriptions #2259
+* Enhancement - Disable the shipping callback for "venmo" when vaulting is active #2269
+* Enhancement - Improve "Could not retrieve order" error message #2271
+* Enhancement - Add block Checkout compatibility to Advanced Card Processing #2246
 
 = 2.7.1 - 2024-05-28 =
 * Fix - Ensure package tracking data is sent to original PayPal transaction #2180

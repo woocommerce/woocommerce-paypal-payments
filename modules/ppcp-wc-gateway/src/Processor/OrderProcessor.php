@@ -220,8 +220,8 @@ class OrderProcessor {
 				);
 
 				throw new PayPalOrderMissingException(
-					__(
-						'Could not retrieve order. Maybe it was already completed or this browser is not supported. Please check your email or try again with a different browser.',
+					esc_attr__(
+						'There was an error processing your order. Please check for any charges in your payment method and review your order history before placing the order again.',
 						'woocommerce-paypal-payments'
 					)
 				);

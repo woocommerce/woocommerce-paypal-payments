@@ -76,25 +76,25 @@ class ShipStationIntegration implements Integration {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $wc_order, array $data ) {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ship_station_tracking', true ) ) {
-					return;
-				}
-
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$paypal_order    = ppcp_get_paypal_order( $wc_order );
-				$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
-				$order_id        = $wc_order->get_id();
-				$tracking_number = $data['tracking_number'] ?? '';
-				$carrier         = $data['carrier'] ?? '';
-
-				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $capture_id ) {
-					return;
-				}
-
 				try {
+					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ship_station_tracking', true ) ) {
+						return;
+					}
+
+					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+						return;
+					}
+
+					$paypal_order    = ppcp_get_paypal_order( $wc_order );
+					$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
+					$order_id        = $wc_order->get_id();
+					$tracking_number = $data['tracking_number'] ?? '';
+					$carrier         = $data['carrier'] ?? '';
+
+					if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $capture_id ) {
+						return;
+					}
+
 					$ppcp_shipment = $this->shipment_factory->create_shipment(
 						$order_id,
 						$capture_id,
@@ -112,7 +112,7 @@ class ShipStationIntegration implements Integration {
 						: $this->endpoint->add_tracking_information( $ppcp_shipment, $order_id );
 
 				} catch ( Exception $exception ) {
-					$this->logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
+					return;
 				}
 			},
 			500,
