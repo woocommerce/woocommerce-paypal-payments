@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -54,6 +55,7 @@ class CompatModule implements ModuleInterface {
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
+		$this->set_elementor_checkout_context();
 	}
 
 	/**
@@ -310,6 +312,31 @@ class CompatModule implements ModuleInterface {
 		$theme  = wp_get_theme();
 		$parent = $theme->parent();
 		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
+	}
+
+	/**
+	 * Sets the context for the Elementor checkout page.
+	 *
+	 * @return void
+	 */
+	protected function set_elementor_checkout_context(): void {
+		add_action(
+			'wp',
+			function() {
+				$page_id = get_the_ID();
+				if ( ! $page_id || ! CartCheckoutDetector::has_elementor_checkout( $page_id ) ) {
+					return;
+				}
+
+				add_filter(
+					'woocommerce_paypal_payments_context',
+					function ( string $context ): string {
+						// Default context.
+						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
+					}
+				);
+			}
+		);
 	}
 
 	/**
