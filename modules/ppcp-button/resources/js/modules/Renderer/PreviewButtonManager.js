@@ -105,16 +105,38 @@ class PreviewButtonManager {
         const customScriptPromise = loadCustomScript({url: this.buttonConfig.sdk_url});
 
         // Wait until PayPal is ready.
-        const paypalPromise = new Promise(resolve => {
-            if (this.widgetBuilder.paypal) {
-                resolve();
-            } else {
-                jQuery(document).on('ppcp-paypal-loaded', resolve);
+        const paypalPromise = new Promise((resolve, reject) => {
+            const maxWaitTime = 3000; // 3 seconds before failing.
+
+            const resolveIfAvailable = () => {
+                if (this.widgetBuilder.paypal) {
+                    resolve();
+                }
             }
+
+            // Resolve this promise instantly, if the PayPal object is available.
+            resolveIfAvailable();
+
+            // If the object is not available yet, wait for (a) the custom event, or (b) a custom timeout.
+            jQuery(document).on('ppcp-paypal-loaded', resolve);
+            setTimeout(() => {
+                resolveIfAvailable();
+                reject('Timeout while waiting for widgetBuilder.paypal')
+            }, maxWaitTime)
         });
 
-        await Promise.all([customScriptPromise, paypalPromise]);
+        // Wait for both promises to resolve before continuing.
+        await Promise
+            .all([customScriptPromise, paypalPromise])
+            .catch(err => {
+                console.log(`Failed to load ${this.methodName} dependencies:`, err)
+            })
 
+        /*
+        The fetchConfig method requires two objects to succeed:
+        (a) the SDK custom-script
+        (b) the `widgetBuilder.paypal` object
+         */
         this.apiConfig = await this.fetchConfig();
         await this.#onInitResolver()
 
