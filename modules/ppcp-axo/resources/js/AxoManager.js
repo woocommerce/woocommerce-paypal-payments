@@ -167,17 +167,14 @@ class AxoManager {
                 ev.preventDefault();
                 log(`Enter key attempt - emailInput: ${this.emailInput.value}`);
                 log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
+                this.validateEmail(this.el.fieldBillingEmail.selector);
                 if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
                     await this.onChangeEmail();
                 }
             }
         });
 
-        this.$('form.woocommerce-checkout input').on('click', async (ev) => {
-            if (document.querySelector(this.el.billingEmailSubmitButton.selector).hasAttribute('disabled')) {
-                document.querySelector(this.el.billingEmailSubmitButton.selector).removeAttribute('disabled');
-            }
-        });
+        this.reEnableEmailInput();
 
         // Clear last email checked identity when email field is focused.
         this.$('#billing_email_field input').on('focus', (ev) => {
@@ -479,7 +476,7 @@ class AxoManager {
             // Move email to the AXO container.
             let emailRow = document.querySelector(this.el.fieldBillingEmail.selector);
             wrapperElement.prepend(emailRow);
-            document.querySelector(this.el.billingEmailFieldWrapper.selector).prepend(document.querySelector('#billing_email_field .woocommerce-input-wrapper'))
+            document.querySelector(this.el.billingEmailFieldWrapper.selector).prepend(document.querySelector('#billing_email_field .woocommerce-input-wrapper'));
         }
     }
 
@@ -534,8 +531,8 @@ class AxoManager {
 
             document.querySelector(this.el.billingEmailSubmitButton.selector).offsetHeight;
             document.querySelector(this.el.billingEmailSubmitButton.selector).classList.remove('ppcp-axo-billing-email-submit-button-hidden');
-            document.querySelector(this.el.billingEmailSubmitButton.selector).offsetHeight;
-            document.querySelector(this.el.billingEmailSubmitButton.selector).classList.add('ppcp-axo-billing-email-submit-button-loaded');        }
+            document.querySelector(this.el.billingEmailSubmitButton.selector).classList.add('ppcp-axo-billing-email-submit-button-loaded');
+        }
     }
 
     watchEmail() {
@@ -549,6 +546,7 @@ class AxoManager {
                 log(`Change event attempt - emailInput: ${this.emailInput.value}`);
                 log(`this.lastEmailCheckedIdentity: ${this.lastEmailCheckedIdentity}`);
                 if (this.emailInput && this.lastEmailCheckedIdentity !== this.emailInput.value) {
+                    this.validateEmail(this.el.fieldBillingEmail.selector);
                     this.onChangeEmail();
                 }
             });
@@ -586,7 +584,7 @@ class AxoManager {
 
         this.lastEmailCheckedIdentity = this.emailInput.value;
 
-        if (!this.emailInput.value || !this.emailInput.checkValidity()) {
+        if (!this.emailInput.value || !this.emailInput.checkValidity() || !this.validateEmailFormat(this.emailInput.value)) {
             log('The email address is not valid.');
             return;
         }
@@ -935,6 +933,39 @@ class AxoManager {
         if (watermarkLoader) {
             watermarkLoader.classList.toggle(loaderClass);
         }
+    }
+
+    validateEmailFormat(value) {
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailPattern.test(value);
+    }
+
+    validateEmail(billingEmail) {
+        const billingEmailSelector = document.querySelector(billingEmail);
+        const value = document.querySelector(billingEmail + ' input').value;
+
+        if (this.validateEmailFormat(value)) {
+            billingEmailSelector.classList.remove('woocommerce-invalid');
+            billingEmailSelector.classList.add('woocommerce-validated');
+            this.setStatus('validEmail', true);
+        } else {
+            billingEmailSelector.classList.remove('woocommerce-validated');
+            billingEmailSelector.classList.add('woocommerce-invalid');
+            this.setStatus('validEmail', false);
+        }
+    }
+
+    reEnableEmailInput() {
+        const reEnableInput = (ev) => {
+            const submitButton = document.querySelector(this.el.billingEmailSubmitButton.selector);
+            if (submitButton.hasAttribute('disabled')) {
+                submitButton.removeAttribute('disabled');
+            }
+        };
+
+        this.$('#billing_email_field input').on('focus', reEnableInput);
+        this.$('#billing_email_field input').on('input', reEnableInput);
+        this.$('#billing_email_field input').on('click', reEnableInput);
     }
 }
 
