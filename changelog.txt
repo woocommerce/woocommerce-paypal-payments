@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.8.0 - xxxx-xx-xx =
+= 2.8.0 - 2024-06-11 =
 * Fix - Calculate totals after adding shipping to include taxes #2296
 * Fix - Package tracking integration throws error in 2.7.1 #2289
 * Fix - Make PayPal Subscription products unique in cart #2265

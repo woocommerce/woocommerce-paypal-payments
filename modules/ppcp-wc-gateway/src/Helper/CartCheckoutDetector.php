@@ -57,12 +57,19 @@ class CartCheckoutDetector {
 	/**
 	 * Check if the Checkout page is using Elementor.
 	 *
+	 * @param int $page_id The ID of the page.
+	 *
 	 * @return bool
 	 */
-	public static function has_elementor_checkout(): bool {
+	public static function has_elementor_checkout( int $page_id = 0 ): bool {
 		// Check if Elementor is installed and activated.
 		if ( did_action( 'elementor/loaded' ) ) {
-			$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'checkout' ) );
+			if ( $page_id ) {
+				$elementor_widgets = self::get_elementor_widgets( $page_id );
+			} else {
+				// Check the WooCommerce checkout page.
+				$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'checkout' ) );
+			}
 
 			if ( $elementor_widgets ) {
 				return in_array( 'woocommerce-checkout-page', $elementor_widgets, true );
