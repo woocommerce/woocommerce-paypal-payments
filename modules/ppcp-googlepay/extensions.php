@@ -136,7 +136,7 @@ return array(
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
-						'data-ppcp-display' => wp_json_encode(
+						'data-ppcp-display'    => wp_json_encode(
 							array(
 								$display_manager
 									->rule()
@@ -150,6 +150,8 @@ return array(
 									->to_array(),
 							)
 						),
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'is_enabled',
 					),
 					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 				),

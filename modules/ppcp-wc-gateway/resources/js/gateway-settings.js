@@ -1,5 +1,6 @@
 import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
+import { buttonRefreshTriggerFactory, buttonSettingsGetterFactory } from './helper/preview-button';
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
 import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
@@ -349,26 +350,9 @@ document.addEventListener(
                  * Example: See the ppcp-google-pay "extensions.php" file.
                  */
                 document.querySelectorAll('[data-ppcp-apm-preview]').forEach(item => {
-                    const buttonType = item.dataset.ppcpApmPreview;
-                    const fields = document.querySelectorAll(`[data-ppcp-apm-name="${buttonType}"]`)
-
-                    const getSettings = () => {
-                        const buttonConfig = {
-                            wrapper: `#ppcp${buttonType}ButtonPreview`,
-                            style: {},
-                        };
-
-                        fields.forEach(input => {
-                            const field = input.dataset.ppcpFieldName;
-                            buttonConfig.style[field] = input.value;
-                        });
-
-                        return { button: buttonConfig };
-                    };
-
-                    const renderButtonPreview = (settings) => {
-                        jQuery(document).trigger(`ppcp_paypal_render_preview_${buttonType}`, settings);
-                    };
+                    const apmName = item.dataset.ppcpApmPreview;
+                    const getSettings = buttonSettingsGetterFactory(apmName)
+                    const renderButtonPreview = buttonRefreshTriggerFactory(apmName);
 
                     renderPreview(getSettings, renderButtonPreview)
                 });
