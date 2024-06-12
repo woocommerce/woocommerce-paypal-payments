@@ -105,6 +105,12 @@ class PreviewButtonManager {
             return;
         }
 
+        // This is a localization object of "gateway-settings.js". If it's missing, the script was not loaded.
+        if (!window.PayPalCommerceGatewaySettings) {
+            this.error('PayPal settings are not fully loaded. Please clear the cache and reload the page.');
+            return;
+        }
+
         // A helper function that clears the interval and resolves/rejects the promise.
         const resolveOrReject = (resolve, reject, id, success = true) => {
             clearInterval(id);
