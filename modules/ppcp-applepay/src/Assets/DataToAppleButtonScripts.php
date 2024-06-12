@@ -250,11 +250,13 @@ class DataToAppleButtonScripts {
 		$lang               = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
 		$lang               = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
 		$checkout_data_mode = $this->settings->has( 'applepay_checkout_data_mode' ) ? $this->settings->get( 'applepay_checkout_data_mode' ) : PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
+		$is_enabled         = $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' );
 
 		return array(
 			'sdk_url'     => $this->sdk_url,
 			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'is_admin'    => true,
+			'is_enabled'  => $is_enabled,
 			'preferences' => array(
 				'checkout_data_mode' => $checkout_data_mode,
 			),

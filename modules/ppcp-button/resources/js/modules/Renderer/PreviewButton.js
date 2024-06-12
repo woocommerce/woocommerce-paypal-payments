@@ -94,6 +94,11 @@ class PreviewButton {
      * Will always create a new button in the DOM.
      */
     render() {
+        // The APM button is disabled and cannot be enabled on the current page: Do not render it.
+        if (!this.isDynamic && !this.buttonConfig.is_enabled) {
+            return;
+        }
+
         if (!this.domWrapper) {
             if (!this.wrapper) {
                 console.error('Skip render, button is not configured yet');
