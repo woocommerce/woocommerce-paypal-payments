@@ -1,6 +1,7 @@
 export function log(message, level = 'info') {
+    const wpDebug = window.wc_ppcp_axo?.wp_debug;
     const endpoint = window.wc_ppcp_axo?.ajax?.frontend_logger?.endpoint;
-    if(!endpoint) {
+    if(!wpDebug || !endpoint) {
         return;
     }
 

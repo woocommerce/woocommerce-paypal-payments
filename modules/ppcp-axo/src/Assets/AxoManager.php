@@ -216,6 +216,7 @@ class AxoManager {
 					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
 				),
 			),
+			'wp_debug'        => \WP_DEBUG,
 		);
 	}
 
