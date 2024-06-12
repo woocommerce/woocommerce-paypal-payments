@@ -51,7 +51,7 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
      * @param {string} wrapperId - CSS ID of the wrapper element.
      * @return {GooglePayPreviewButton}
      */
-    createButtonInst(wrapperId) {
+    createButtonInstance(wrapperId) {
         return new GooglePayPreviewButton({
             selector: wrapperId,
             apiConfig: this.apiConfig

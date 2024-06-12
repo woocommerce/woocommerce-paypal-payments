@@ -59,8 +59,8 @@ class PreviewButtonManager {
      * @param {string} wrapperId - CSS ID of the wrapper element.
      * @return {PreviewButton}
      */
-    createButtonInst(wrapperId) {
-        throw new Error('The "createButtonInst" method must be implemented by the derived class');
+    createButtonInstance(wrapperId) {
+        throw new Error('The "createButtonInstance" method must be implemented by the derived class');
     }
 
     registerEventListeners() {
@@ -183,7 +183,7 @@ class PreviewButtonManager {
     #addButton(id, ppcpConfig) {
         const createButton = () => {
             if (!this.buttons[id]) {
-                this.buttons[id] = this.createButtonInst(id).setButtonConfig(this.buttonConfig);
+                this.buttons[id] = this.createButtonInstance(id).setButtonConfig(this.buttonConfig);
             }
 
             this.#configureButton(id, ppcpConfig);

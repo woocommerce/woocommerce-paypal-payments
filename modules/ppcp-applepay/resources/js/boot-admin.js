@@ -51,7 +51,7 @@ class ApplePayPreviewButtonManager extends PreviewButtonManager {
      * @param {string} wrapperId - CSS ID of the wrapper element.
      * @return {ApplePayPreviewButton}
      */
-    createButtonInst(wrapperId) {
+    createButtonInstance(wrapperId) {
         return new ApplePayPreviewButton({
             selector: wrapperId,
             apiConfig: this.apiConfig

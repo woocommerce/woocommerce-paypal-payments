@@ -116,9 +116,9 @@ class PreviewButton {
         const buttonWrapper = previewButtonConfig.button.wrapper.replace(/^#/, '')
         const ppcpWrapper = this.ppcpConfig.button.wrapper.replace(/^#/, '')
 
-if (buttonWrapper === ppcpWrapper) {
-throw new Error(`[APM Preview Button] Infinite loop detected. Provide different selectors for the button/ppcp wrapper elements! Selector: "#${buttonWrapper}"`);
-}
+        if (buttonWrapper === ppcpWrapper) {
+            throw new Error(`[APM Preview Button] Infinite loop detected. Provide different selectors for the button/ppcp wrapper elements! Selector: "#${buttonWrapper}"`);
+        }
 
         this.createButton(previewButtonConfig)
     }
