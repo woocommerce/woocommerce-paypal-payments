@@ -1,6 +1,6 @@
-import GooglepayButton from "./GooglepayButton";
-import PreviewButton from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButton";
-import PreviewButtonManager from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager";
+import GooglepayButton from './GooglepayButton';
+import PreviewButton from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
+import PreviewButtonManager from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
 
 /**
  * Accessor that creates and returns a single PreviewButtonManager instance.
@@ -11,7 +11,7 @@ const buttonManager = () => {
     }
 
     return GooglePayPreviewButtonManager.instance;
-}
+};
 
 
 /**
@@ -21,7 +21,7 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
     constructor() {
         const args = {
             methodName: 'GooglePay',
-            buttonConfig: window.wc_ppcp_googlepay_admin
+            buttonConfig: window.wc_ppcp_googlepay_admin,
         };
 
         super(args);
@@ -35,7 +35,7 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
      * @return {Promise<{}>}
      */
     async fetchConfig(payPal) {
-        const apiMethod = payPal?.Googlepay()?.config
+        const apiMethod = payPal?.Googlepay()?.config;
 
         if (!apiMethod) {
             this.error('configuration object cannot be retrieved from PayPal');
@@ -54,7 +54,7 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
     createButtonInstance(wrapperId) {
         return new GooglePayPreviewButton({
             selector: wrapperId,
-            apiConfig: this.apiConfig
+            apiConfig: this.apiConfig,
         });
     }
 }
@@ -67,15 +67,15 @@ class GooglePayPreviewButton extends PreviewButton {
     constructor(args) {
         super(args);
 
-        this.selector = `${args.selector}GooglePay`
+        this.selector = `${args.selector}GooglePay`;
         this.defaultAttributes = {
             button: {
                 style: {
                     type: 'pay',
                     color: 'black',
-                    language: 'en'
-                }
-            }
+                    language: 'en',
+                },
+            },
         };
     }
 
@@ -87,12 +87,7 @@ class GooglePayPreviewButton extends PreviewButton {
     }
 
     createButton(buttonConfig) {
-        const button = new GooglepayButton(
-            'preview',
-            null,
-            buttonConfig,
-            this.ppcpConfig,
-        );
+        const button = new GooglepayButton('preview', null, buttonConfig, this.ppcpConfig);
 
         button.init(this.apiConfig);
     }

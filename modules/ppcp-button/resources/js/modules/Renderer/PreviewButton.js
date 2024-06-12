@@ -1,4 +1,4 @@
-import merge from "deepmerge";
+import merge from 'deepmerge';
 
 /**
  * Base class for APM button previews, used on the plugin's settings page.
@@ -9,7 +9,10 @@ class PreviewButton {
      * @param {object} apiConfig - PayPal configuration object; retrieved via a
      * widgetBuilder API method
      */
-    constructor({selector, apiConfig}) {
+    constructor({
+        selector,
+        apiConfig,
+    }) {
         this.apiConfig = apiConfig;
         this.defaultAttributes = {};
         this.buttonConfig = {};
@@ -29,10 +32,10 @@ class PreviewButton {
      * @return {jQuery} Always a single jQuery element with the new DOM node.
      */
     createNewWrapper() {
-        const previewId = this.selector.replace('#', '')
+        const previewId = this.selector.replace('#', '');
         const previewClass = 'ppcp-button-apm';
 
-        return jQuery(`<div id="${previewId}" class="${previewClass}">`)
+        return jQuery(`<div id='${previewId}' class='${previewClass}'>`);
     }
 
     /**
@@ -53,8 +56,8 @@ class PreviewButton {
      * @return {this} Reference to self, for chaining.
      */
     setButtonConfig(config) {
-        this.buttonConfig = merge(this.defaultAttributes, config)
-        this.buttonConfig.button.wrapper = this.selector
+        this.buttonConfig = merge(this.defaultAttributes, config);
+        this.buttonConfig.button.wrapper = this.selector;
 
         return this;
     }
@@ -97,7 +100,7 @@ class PreviewButton {
                 return;
             }
             this.domWrapper = this.createNewWrapper();
-            this.domWrapper.insertAfter(this.wrapper)
+            this.domWrapper.insertAfter(this.wrapper);
         } else {
             this.domWrapper.empty().show();
         }
@@ -113,14 +116,14 @@ class PreviewButton {
          * previewButtonConfig.button.wrapper must be different from this.ppcpConfig.button.wrapper!
          * If both selectors point to the same element, an infinite loop is triggered.
          */
-        const buttonWrapper = previewButtonConfig.button.wrapper.replace(/^#/, '')
-        const ppcpWrapper = this.ppcpConfig.button.wrapper.replace(/^#/, '')
+        const buttonWrapper = previewButtonConfig.button.wrapper.replace(/^#/, '');
+        const ppcpWrapper = this.ppcpConfig.button.wrapper.replace(/^#/, '');
 
         if (buttonWrapper === ppcpWrapper) {
             throw new Error(`[APM Preview Button] Infinite loop detected. Provide different selectors for the button/ppcp wrapper elements! Selector: "#${buttonWrapper}"`);
         }
 
-        this.createButton(previewButtonConfig)
+        this.createButton(previewButtonConfig);
     }
 
     remove() {

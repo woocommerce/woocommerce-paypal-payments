@@ -1,6 +1,6 @@
-import ApplepayButton from "./ApplepayButton";
-import PreviewButton from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButton";
-import PreviewButtonManager from "../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager";
+import ApplepayButton from './ApplepayButton';
+import PreviewButton from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
+import PreviewButtonManager from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
 
 /**
  * Accessor that creates and returns a single PreviewButtonManager instance.
@@ -11,7 +11,7 @@ const buttonManager = () => {
     }
 
     return ApplePayPreviewButtonManager.instance;
-}
+};
 
 
 /**
@@ -21,7 +21,7 @@ class ApplePayPreviewButtonManager extends PreviewButtonManager {
     constructor() {
         const args = {
             methodName: 'ApplePay',
-            buttonConfig: window.wc_ppcp_applepay_admin
+            buttonConfig: window.wc_ppcp_applepay_admin,
         };
 
         super(args);
@@ -35,7 +35,7 @@ class ApplePayPreviewButtonManager extends PreviewButtonManager {
      * @return {Promise<{}>}
      */
     async fetchConfig(payPal) {
-        const apiMethod = payPal?.Applepay()?.config
+        const apiMethod = payPal?.Applepay()?.config;
 
         if (!apiMethod) {
             this.error('configuration object cannot be retrieved from PayPal');
@@ -54,7 +54,7 @@ class ApplePayPreviewButtonManager extends PreviewButtonManager {
     createButtonInstance(wrapperId) {
         return new ApplePayPreviewButton({
             selector: wrapperId,
-            apiConfig: this.apiConfig
+            apiConfig: this.apiConfig,
         });
     }
 }
@@ -67,13 +67,13 @@ class ApplePayPreviewButton extends PreviewButton {
     constructor(args) {
         super(args);
 
-        this.selector = `${args.selector}ApplePay`
+        this.selector = `${args.selector}ApplePay`;
         this.defaultAttributes = {
             button: {
                 type: 'pay',
                 color: 'black',
-                lang: 'en'
-            }
+                lang: 'en',
+            },
         };
     }
 
@@ -85,12 +85,7 @@ class ApplePayPreviewButton extends PreviewButton {
     }
 
     createButton(buttonConfig) {
-        const button = new ApplepayButton(
-            'preview',
-            null,
-            buttonConfig,
-            this.ppcpConfig,
-        );
+        const button = new ApplepayButton('preview', null, buttonConfig, this.ppcpConfig);
 
         button.init(this.apiConfig);
     }
@@ -107,7 +102,8 @@ class ApplePayPreviewButton extends PreviewButton {
         if (ppcpConfig.button) {
             buttonConfig.button.type = ppcpConfig.button.style.type;
             buttonConfig.button.color = ppcpConfig.button.style.color;
-            buttonConfig.button.lang = ppcpConfig.button.style?.lang || ppcpConfig.button.style.language;
+            buttonConfig.button.lang =
+                ppcpConfig.button.style?.lang || ppcpConfig.button.style.language;
         }
     }
 }

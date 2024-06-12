@@ -1,5 +1,5 @@
-import {loadCustomScript} from "@paypal/paypal-js";
-import widgetBuilder from "./WidgetBuilder";
+import { loadCustomScript } from '@paypal/paypal-js';
+import widgetBuilder from './WidgetBuilder';
 
 /**
  * Manages all PreviewButton instances of a certain payment method on the page.
@@ -19,14 +19,18 @@ class PreviewButtonManager {
      */
     #onInit;
 
-    constructor({methodName, buttonConfig, defaultAttributes}) {
+    constructor({
+        methodName,
+        buttonConfig,
+        defaultAttributes,
+    }) {
         // Define the payment method name in the derived class.
         this.methodName = methodName;
 
         this.buttonConfig = buttonConfig;
         this.defaultAttributes = defaultAttributes;
 
-        this.isEnabled = true
+        this.isEnabled = true;
         this.buttons = {};
         this.apiConfig = null;
 
@@ -77,7 +81,7 @@ class PreviewButtonManager {
      * Output an error message to the console, with a module-specific prefix.
      */
     error(message, ...args) {
-        console.error(`${this.methodName} ${message}`, ...args)
+        console.error(`${this.methodName} ${message}`, ...args);
     }
 
     /**
@@ -86,7 +90,7 @@ class PreviewButtonManager {
      * style settings that were provided from server-side.
      */
     isDynamic() {
-        return !!document.querySelector(`[data-ppcp-apm-name="${this.methodName}"]`)
+        return !!document.querySelector(`[data-ppcp-apm-name="${this.methodName}"]`);
     }
 
     /**
@@ -105,9 +109,11 @@ class PreviewButtonManager {
             return;
         }
 
-        // This is a localization object of "gateway-settings.js". If it's missing, the script was not loaded.
+        // This is a localization object of "gateway-settings.js". If it's missing, the script was
+        // not loaded.
         if (!window.PayPalCommerceGatewaySettings) {
-            this.error('PayPal settings are not fully loaded. Please clear the cache and reload the page.');
+            this.error(
+                'PayPal settings are not fully loaded. Please clear the cache and reload the page.');
             return;
         }
 
@@ -132,22 +138,22 @@ class PreviewButtonManager {
         });
 
         // Load the custom SDK script.
-        const customScriptPromise = loadCustomScript({url: this.buttonConfig.sdk_url});
+        const customScriptPromise = loadCustomScript({ url: this.buttonConfig.sdk_url });
 
         // Wait for both promises to resolve before continuing.
         await Promise
             .all([customScriptPromise, paypalPromise])
             .catch(err => {
-                console.log(`Failed to load ${this.methodName} dependencies:`, err)
-            })
+                console.log(`Failed to load ${this.methodName} dependencies:`, err);
+            });
 
         /*
-        The fetchConfig method requires two objects to succeed:
-        (a) the SDK custom-script
-        (b) the `widgetBuilder.paypal` object
+         The fetchConfig method requires two objects to succeed:
+         (a) the SDK custom-script
+         (b) the `widgetBuilder.paypal` object
          */
         this.apiConfig = await this.fetchConfig(widgetBuilder.paypal);
-        await this.#onInitResolver()
+        await this.#onInitResolver();
 
         this.#onInit = null;
     }
@@ -159,10 +165,10 @@ class PreviewButtonManager {
      * @param ppcpConfig - The button settings for the preview.
      */
     renderPreview(ev, ppcpConfig) {
-        const id = ppcpConfig.button.wrapper
+        const id = ppcpConfig.button.wrapper;
 
         if (!id) {
-            this.error('Button did not provide a wrapper ID', ppcpConfig)
+            this.error('Button did not provide a wrapper ID', ppcpConfig);
             return;
         }
 
@@ -180,7 +186,7 @@ class PreviewButtonManager {
         this.buttons[id]
             .setDynamic(this.isDynamic())
             .setPpcpConfig(ppcpConfig)
-            .render()
+            .render();
     }
 
     /**
@@ -193,7 +199,7 @@ class PreviewButtonManager {
             }
 
             this.#configureButton(id, ppcpConfig);
-        }
+        };
 
         if (this.#onInit) {
             this.#onInit.then(createButton);
@@ -209,9 +215,9 @@ class PreviewButtonManager {
      */
     renderButtons() {
         if (this.isEnabled) {
-            Object.values(this.buttons).forEach(button => button.render())
+            Object.values(this.buttons).forEach(button => button.render());
         } else {
-            Object.values(this.buttons).forEach(button => button.remove())
+            Object.values(this.buttons).forEach(button => button.remove());
         }
 
         return this;
