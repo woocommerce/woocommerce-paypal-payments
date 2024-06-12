@@ -73,12 +73,12 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 
-	if ( PayLaterWCBlocksModule::is_module_loading_required() ) {
-		$modules[] = ( require "$modules_dir/ppcp-paylater-wc-blocks/module.php" )();
-	}
-
 	if ( PayLaterConfiguratorModule::is_enabled() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-configurator/module.php" )();
+
+		if ( PayLaterWCBlocksModule::is_module_loading_required() ) {
+			$modules[] = ( require "$modules_dir/ppcp-paylater-wc-blocks/module.php" )();
+		}
 	}
 
 	if ( apply_filters(
