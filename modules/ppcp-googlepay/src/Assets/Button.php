@@ -422,7 +422,7 @@ class Button implements ButtonInterface {
 
 		return array(
 			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'is_enabled'  => $is_enabled,
 			'sdk_url'     => $this->sdk_url,
 			'button'      => array(

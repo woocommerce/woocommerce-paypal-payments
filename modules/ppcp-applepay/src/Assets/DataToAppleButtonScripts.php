@@ -69,14 +69,13 @@ class DataToAppleButtonScripts {
 		);
 	}
 
-
 	/**
 	 * Returns the appropriate admin data to send to ApplePay script
 	 *
 	 * @return array
 	 * @throws NotFoundException When the setting is not found.
 	 */
-	public function apple_pay_script_data_for_admin(): array {
+	public function apple_pay_script_data_for_admin() : array {
 		$base_location     = wc_get_base_location();
 		$shop_country_code = $base_location['country'];
 		$currency_code     = get_woocommerce_currency();
@@ -254,7 +253,7 @@ class DataToAppleButtonScripts {
 
 		return array(
 			'sdk_url'     => $this->sdk_url,
-			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'is_admin'    => true,
 			'is_enabled'  => $is_enabled,
 			'preferences' => array(
