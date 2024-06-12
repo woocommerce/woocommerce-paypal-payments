@@ -169,7 +169,7 @@ class AxoManager {
 				'email' => 'render',
 			),
 			'insights'                  => array(
-				'enabled'    => true,
+				'enabled'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>
 					substr(
@@ -216,7 +216,7 @@ class AxoManager {
 					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
 				),
 			),
-			'wp_debug'        => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'wp_debug'                  => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'billing_email_button_text' => __( 'Continue', 'woocommerce-paypal-payments' ),
 		);
 	}
