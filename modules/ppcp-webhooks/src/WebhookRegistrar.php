@@ -121,7 +121,11 @@ class WebhookRegistrar {
 			$webhooks = $this->endpoint->list();
 			foreach ( $webhooks as $webhook ) {
 				try {
-					$this->endpoint->delete( $webhook );
+					if( $stored_webhook = get_option( self::KEY ) ) {
+						if( $stored_webhook['id'] === $webhook->id() ) {
+							$this->endpoint->delete( $webhook );
+						}
+					}
 				} catch ( RuntimeException $deletion_error ) {
 					$this->logger->error( "Failed to delete webhook {$webhook->id()}: {$deletion_error->getMessage()}" );
 				}
