@@ -74,6 +74,10 @@ class AxoModule implements ModuleInterface {
 					return $methods;
 				}
 
+				if ( $this->is_excluded_endpoint() ) {
+					return $methods;
+				}
+
 				$methods[] = $gateway;
 				return $methods;
 			},
@@ -328,7 +332,8 @@ class AxoModule implements ModuleInterface {
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
-			&& $is_axo_enabled;
+			&& $is_axo_enabled
+			&& ! $this->is_excluded_endpoint();
 	}
 
 	/**
@@ -372,5 +377,15 @@ class AxoModule implements ModuleInterface {
 				12
 			);
 		}
+	}
+
+	/**
+	 * Condition to evaluate if the current endpoint is excluded.
+	 *
+	 * @return bool
+	 */
+	private function is_excluded_endpoint(): bool {
+		// Exclude the Order Pay endpoint.
+		return is_wc_endpoint_url('order-pay');
 	}
 }
