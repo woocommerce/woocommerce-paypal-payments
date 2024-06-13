@@ -74,6 +74,19 @@ class AxoModule implements ModuleInterface {
 					return $methods;
 				}
 
+				if ( is_user_logged_in() ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+
+				if ( ! $is_dcc_enabled ) {
+					return $methods;
+				}
+
 				$methods[] = $gateway;
 				return $methods;
 			},
@@ -325,10 +338,12 @@ class AxoModule implements ModuleInterface {
 	 */
 	private function should_render_fastlane( Settings $settings ): bool {
 		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
+		$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
-			&& $is_axo_enabled;
+			&& $is_axo_enabled
+			&& $is_dcc_enabled;
 	}
 
 	/**
