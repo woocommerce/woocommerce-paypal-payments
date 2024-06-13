@@ -386,6 +386,6 @@ class AxoModule implements ModuleInterface {
 	 */
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
-		return is_wc_endpoint_url('order-pay');
+		return is_wc_endpoint_url( 'order-pay' );
 	}
 }
