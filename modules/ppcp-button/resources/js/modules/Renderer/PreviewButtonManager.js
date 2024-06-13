@@ -1,5 +1,6 @@
 import { loadCustomScript } from '@paypal/paypal-js';
 import widgetBuilder from './WidgetBuilder';
+import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
 
 /**
  * Manages all PreviewButton instances of a certain payment method on the page.
@@ -40,6 +41,17 @@ class PreviewButtonManager {
 
         this.bootstrap = this.bootstrap.bind(this);
         this.renderPreview = this.renderPreview.bind(this);
+
+        /**
+         * The "configureAllButtons" method applies ppcpConfig to all buttons that were created
+         * by this PreviewButtonManager instance. We debounce this method, as it should invoke
+         * only once, even if called multiple times in a row.
+         *
+         * This is required, as the `ppcp_paypal_render_preview` event does not fire for all
+         * buttons, but only a single time, passing in a random button's wrapper-ID; however,
+         * that event should always refresh all preview buttons, not only that single button.
+         */
+        this._configureAllButtons = debounce(this._configureAllButtons.bind(this), 100);
 
         this.registerEventListeners();
     }
@@ -175,7 +187,8 @@ class PreviewButtonManager {
         if (!this.buttons[id]) {
             this.#addButton(id, ppcpConfig);
         } else {
-            this.#configureButton(id, ppcpConfig);
+            // This is a debounced method, that fires after 100ms.
+            this._configureAllButtons(ppcpConfig);
         }
     }
 
@@ -187,6 +200,13 @@ class PreviewButtonManager {
             .setDynamic(this.isDynamic())
             .setPpcpConfig(ppcpConfig)
             .render();
+    }
+
+    /**
+     * Apples the provided configuration to all existing preview buttons.
+     */
+    _configureAllButtons(ppcpConfig) {
+        Object.keys(this.buttons).forEach(id => this.#configureButton(id, ppcpConfig));
     }
 
     /**
