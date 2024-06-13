@@ -33,7 +33,8 @@ class SettingsPagesAssetsTest extends TestCase
             array(),
 			true,
 			false,
-			$billingAgreementEndpoint
+			$billingAgreementEndpoint,
+			true
 		);
 
 		when('is_admin')

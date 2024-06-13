@@ -214,6 +214,7 @@ return array(
 			array(
 				PayPalGateway::ID,
 				CreditCardGateway::ID,
+				CardButtonGateway::ID,
 			),
 			true
 		);
