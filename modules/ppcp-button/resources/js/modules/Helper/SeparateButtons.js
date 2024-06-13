@@ -22,9 +22,6 @@ class SeparateButtons {
             } else {
                 $gatewayBox.hide();
             }
-
-            console.log(widgetBuilder.paypal.isFundingEligible(fundingSource), "Key:", fundingSource, "Value:", button);
-
         }
     }
 }

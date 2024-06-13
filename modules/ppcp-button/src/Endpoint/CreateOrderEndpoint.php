@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\StandardButtonGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -294,7 +295,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 			if ( $this->early_validation_enabled
 				&& $this->form
 				&& 'checkout' === $data['context']
-				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID ), true )
+				&& in_array(
+					$payment_method,
+					array_merge(
+						array( PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID ),
+						StandardButtonGateway::ids()
+					),
+					true
+				)
 			) {
 				$this->validate_form( $this->form );
 			}
