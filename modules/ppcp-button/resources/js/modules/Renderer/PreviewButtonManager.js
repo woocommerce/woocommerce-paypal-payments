@@ -185,7 +185,7 @@ class PreviewButtonManager {
         }
 
         if (!this.buttons[id]) {
-            this.#addButton(id, ppcpConfig);
+            this._addButton(id, ppcpConfig);
         } else {
             // This is a debounced method, that fires after 100ms.
             this._configureAllButtons(ppcpConfig);
@@ -195,7 +195,7 @@ class PreviewButtonManager {
     /**
      * Applies a new configuration to an existing preview button.
      */
-    #configureButton(id, ppcpConfig) {
+    _configureButton(id, ppcpConfig) {
         this.buttons[id]
             .setDynamic(this.isDynamic())
             .setPpcpConfig(ppcpConfig)
@@ -206,19 +206,19 @@ class PreviewButtonManager {
      * Apples the provided configuration to all existing preview buttons.
      */
     _configureAllButtons(ppcpConfig) {
-        Object.keys(this.buttons).forEach(id => this.#configureButton(id, ppcpConfig));
+        Object.keys(this.buttons).forEach(id => this._configureButton(id, ppcpConfig));
     }
 
     /**
      * Creates a new preview button, that is rendered once the bootstrapping Promise resolves.
      */
-    #addButton(id, ppcpConfig) {
+    _addButton(id, ppcpConfig) {
         const createButton = () => {
             if (!this.buttons[id]) {
                 this.buttons[id] = this.createButtonInstance(id).setButtonConfig(this.buttonConfig);
             }
 
-            this.#configureButton(id, ppcpConfig);
+            this._configureButton(id, ppcpConfig);
         };
 
         if (this.#onInit) {
