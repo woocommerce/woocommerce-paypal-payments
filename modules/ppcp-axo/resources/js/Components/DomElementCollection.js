@@ -7,6 +7,10 @@ class DomElementCollection {
             selector: '#payment_method_ppcp-axo-gateway',
         });
 
+        this.gatewayDescription = new DomElement({
+            selector: '.payment_box.payment_method_ppcp-axo-gateway',
+        });
+
         this.defaultSubmitButton = new DomElement({
             selector: '#place_order',
         });
@@ -20,7 +24,7 @@ class DomElementCollection {
         this.watermarkContainer = new DomElement({
             id: 'ppcp-axo-watermark-container',
             selector: '#ppcp-axo-watermark-container',
-            className: 'ppcp-axo-watermark-container'
+            className: 'ppcp-axo-watermark-container ppcp-axo-watermark-loading loader'
         });
 
         this.customerDetails = new DomElement({
@@ -54,6 +58,23 @@ class DomElementCollection {
 
         this.fieldBillingEmail = new DomElement({
             selector: '#billing_email_field'
+        });
+
+        this.billingEmailFieldWrapper = new DomElement({
+            id: 'ppcp-axo-billing-email-field-wrapper',
+            selector: '#ppcp-axo-billing-email-field-wrapper',
+        });
+
+        this.billingEmailSubmitButton = new DomElement({
+            id: 'ppcp-axo-billing-email-submit-button',
+            selector: '#ppcp-axo-billing-email-submit-button',
+            className: 'ppcp-axo-billing-email-submit-button-hidden button alt wp-element-button wc-block-components-button'
+        });
+
+        this.billingEmailSubmitButtonSpinner = new DomElement({
+            id: 'ppcp-axo-billing-email-submit-button-spinner',
+            selector: '#ppcp-axo-billing-email-submit-button-spinner',
+            className: 'loader ppcp-axo-overlay'
         });
 
         this.submitButtonContainer = new DomElement({

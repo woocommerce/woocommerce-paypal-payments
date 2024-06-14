@@ -239,7 +239,6 @@ return array(
 		$final_review_enabled = $container->get( 'blocks.settings.final_review_enabled' );
 		$wc_order_creator     = $container->get( 'button.helper.wc-order-creator' );
 		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
-		$subscription_helper              = $container->get( 'wc-subscriptions.helper' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ApproveOrderEndpoint(
 			$request_data,
@@ -252,7 +251,6 @@ return array(
 			$final_review_enabled,
 			$gateway,
 			$wc_order_creator,
-			$subscription_helper,
 			$logger
 		);
 	},
@@ -260,7 +258,10 @@ return array(
 		return new ApproveSubscriptionEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'session.handler' )
+			$container->get( 'session.handler' ),
+			$container->get( 'blocks.settings.final_review_enabled' ),
+			$container->get( 'button.helper.wc-order-creator' ),
+			$container->get( 'wcgateway.paypal-gateway' )
 		);
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
@@ -362,6 +363,10 @@ return array(
 	},
 
 	'button.helper.wc-order-creator'              => static function ( ContainerInterface $container ): WooCommerceOrderCreator {
-		return new WooCommerceOrderCreator( $container->get( 'wcgateway.funding-source.renderer' ), $container->get( 'session.handler' ) );
+		return new WooCommerceOrderCreator(
+			$container->get( 'wcgateway.funding-source.renderer' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wc-subscriptions.helper' )
+		);
 	},
 );

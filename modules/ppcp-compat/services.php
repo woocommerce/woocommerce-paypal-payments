@@ -54,6 +54,18 @@ return array(
 		);
 	},
 
+	'compat.plugin-script-file-names'                => static function( ContainerInterface $container ) : array {
+		return array(
+			'button.js',
+			'gateway-settings.js',
+			'status-page.js',
+			'order-edit-page.js',
+			'fraudnet.js',
+			'tracking-compat.js',
+			'ppcp-clear-db.js',
+		);
+	},
+
 	'compat.gzd.is_supported_plugin_version_active'  => function (): bool {
 		return function_exists( 'wc_gzd_get_shipments_by_order' ); // 3.0+
 	},

@@ -68,14 +68,6 @@ class Renderer {
         }
     }
 
-    shouldHandleShippingInPaypal = (venmoButtonClicked) => {
-        if (!this.defaultSettings.should_handle_shipping_in_paypal) {
-            return false;
-        }
-
-        return !venmoButtonClicked || !this.defaultSettings.vaultingEnabled;
-    }
-
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
         if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) ) {
             // Try to render registered buttons again in case they were removed from the DOM by an external source.
@@ -93,7 +85,16 @@ class Renderer {
             const options = {
                 style,
                 ...contextConfig,
-                onClick: this.onSmartButtonClick,
+                onClick: (data, actions) => {
+                    if (this.onSmartButtonClick) {
+                        this.onSmartButtonClick(data, actions);
+                    }
+
+                    venmoButtonClicked = false;
+                    if (data.fundingSource === 'venmo') {
+                        venmoButtonClicked = true;
+                    }
+                },
                 onInit: (data, actions) => {
                     if (this.onSmartButtonsInit) {
                         this.onSmartButtonsInit(data, actions);
@@ -103,9 +104,17 @@ class Renderer {
             };
 
             // Check the condition and add the handler if needed
-            if (this.shouldHandleShippingInPaypal(venmoButtonClicked)) {
-                options.onShippingOptionsChange = (data, actions) => handleShippingOptionsChange(data, actions, this.defaultSettings);
-                options.onShippingAddressChange = (data, actions) => handleShippingAddressChange(data, actions, this.defaultSettings);
+            if (this.defaultSettings.should_handle_shipping_in_paypal) {
+                options.onShippingOptionsChange = (data, actions) => {
+                    !this.isVenmoButtonClickedWhenVaultingIsEnabled(venmoButtonClicked)
+                        ? handleShippingOptionsChange(data, actions, this.defaultSettings)
+                        : null;
+                }
+                options.onShippingAddressChange = (data, actions) => {
+                    !this.isVenmoButtonClickedWhenVaultingIsEnabled(venmoButtonClicked)
+                        ? handleShippingAddressChange(data, actions, this.defaultSettings)
+                        : null;
+                }
             }
 
             return options;
@@ -137,6 +146,10 @@ class Renderer {
             widgetBuilder.registerButtons([wrapper, fundingSource], buttonsOptions());
             widgetBuilder.renderButtons([wrapper, fundingSource]);
         }
+    }
+
+    isVenmoButtonClickedWhenVaultingIsEnabled = (venmoButtonClicked) => {
+        return venmoButtonClicked && this.defaultSettings.vaultingEnabled;
     }
 
     isAlreadyRendered(wrapper, fundingSource) {

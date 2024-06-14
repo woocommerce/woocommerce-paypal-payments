@@ -18,8 +18,8 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/woocommerce-logging/module.php" )(),
 		( require "$modules_dir/ppcp-admin-notices/module.php" )(),
 		( require "$modules_dir/ppcp-api-client/module.php" )(),
-		( require "$modules_dir/ppcp-button/module.php" )(),
 		( require "$modules_dir/ppcp-compat/module.php" )(),
+		( require "$modules_dir/ppcp-button/module.php" )(),
 		( require "$modules_dir/ppcp-onboarding/module.php" )(),
 		( require "$modules_dir/ppcp-session/module.php" )(),
 		( require "$modules_dir/ppcp-status-report/module.php" )(),
@@ -73,12 +73,12 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 
-	if ( PayLaterWCBlocksModule::is_module_loading_required() ) {
-		$modules[] = ( require "$modules_dir/ppcp-paylater-wc-blocks/module.php" )();
-	}
-
 	if ( PayLaterConfiguratorModule::is_enabled() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-configurator/module.php" )();
+
+		if ( PayLaterWCBlocksModule::is_module_loading_required() ) {
+			$modules[] = ( require "$modules_dir/ppcp-paylater-wc-blocks/module.php" )();
+		}
 	}
 
 	if ( apply_filters(

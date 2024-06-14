@@ -38,6 +38,9 @@ document.addEventListener(
 
             const subscriptionTrial = document.querySelector('._subscription_trial_length_field');
             subscriptionTrial.style.display = 'none';
+
+            const soldIndividually = document.querySelector( '#_sold_individually' );
+            soldIndividually.setAttribute( 'disabled', 'disabled' );
         }
 
         const setupProducts = () => {

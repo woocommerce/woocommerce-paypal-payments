@@ -23,7 +23,8 @@ class CartActionHandler {
                     body: JSON.stringify({
                         nonce: this.config.ajax.approve_subscription.nonce,
                         order_id: data.orderID,
-                        subscription_id: data.subscriptionID
+                        subscription_id: data.subscriptionID,
+                        should_create_wc_order: !context.config.vaultingEnabled || data.paymentSource !== 'venmo'
                     })
                 }).then((res)=>{
                     return res.json();
@@ -33,7 +34,9 @@ class CartActionHandler {
                         throw Error(data.data.message);
                     }
 
-                    location.href = this.config.redirect;
+                    let orderReceivedUrl = data.data?.order_received_url
+
+                    location.href = orderReceivedUrl ? orderReceivedUrl : context.config.redirect;
                 });
             },
             onError: (err) => {
@@ -60,8 +63,7 @@ class CartActionHandler {
                     funding_source: window.ppcpFundingSource,
                     bn_code:bnCode,
                     payer,
-                    context:this.config.context,
-                    payment_source: data.paymentSource
+                    context:this.config.context
                 }),
             }).then(function(res) {
                 return res.json();

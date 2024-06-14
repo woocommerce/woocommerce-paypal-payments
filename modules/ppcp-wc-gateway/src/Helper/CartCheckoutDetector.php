@@ -57,12 +57,19 @@ class CartCheckoutDetector {
 	/**
 	 * Check if the Checkout page is using Elementor.
 	 *
+	 * @param int $page_id The ID of the page.
+	 *
 	 * @return bool
 	 */
-	public static function has_elementor_checkout(): bool {
+	public static function has_elementor_checkout( int $page_id = 0 ): bool {
 		// Check if Elementor is installed and activated.
 		if ( did_action( 'elementor/loaded' ) ) {
-			$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'checkout' ) );
+			if ( $page_id ) {
+				$elementor_widgets = self::get_elementor_widgets( $page_id );
+			} else {
+				// Check the WooCommerce checkout page.
+				$elementor_widgets = self::get_elementor_widgets( wc_get_page_id( 'checkout' ) );
+			}
 
 			if ( $elementor_widgets ) {
 				return in_array( 'woocommerce-checkout-page', $elementor_widgets, true );
@@ -114,7 +121,7 @@ class CartCheckoutDetector {
 	 */
 	public static function has_classic_checkout(): bool {
 		$checkout_page_id = wc_get_page_id( 'checkout' );
-		return $checkout_page_id && has_block( 'woocommerce/classic-shortcode', $checkout_page_id );
+		return $checkout_page_id && ( has_block( 'woocommerce/classic-shortcode', $checkout_page_id ) || self::has_classic_shortcode( $checkout_page_id, 'woocommerce_checkout' ) );
 	}
 
 	/**
@@ -124,6 +131,25 @@ class CartCheckoutDetector {
 	 */
 	public static function has_classic_cart(): bool {
 		$cart_page_id = wc_get_page_id( 'cart' );
-		return $cart_page_id && has_block( 'woocommerce/classic-shortcode', $cart_page_id );
+		return $cart_page_id && ( has_block( 'woocommerce/classic-shortcode', $cart_page_id ) || self::has_classic_shortcode( $cart_page_id, 'woocommerce_cart' ) );
+	}
+
+	/**
+	 * Check if a page has a specific shortcode.
+	 *
+	 * @param int    $page_id   The ID of the page.
+	 * @param string $shortcode The shortcode to check for.
+	 *
+	 * @return bool
+	 */
+	private static function has_classic_shortcode( int $page_id, string $shortcode ): bool {
+		if ( ! $page_id ) {
+			return false;
+		}
+
+		$page         = get_post( $page_id );
+		$page_content = is_object( $page ) ? $page->post_content : '';
+
+		return str_contains( $page_content, $shortcode );
 	}
 }
