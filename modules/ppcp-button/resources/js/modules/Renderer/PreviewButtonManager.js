@@ -206,7 +206,18 @@ class PreviewButtonManager {
      * Apples the provided configuration to all existing preview buttons.
      */
     _configureAllButtons(ppcpConfig) {
-        Object.keys(this.buttons).forEach(id => this._configureButton(id, ppcpConfig));
+        Object.entries(this.buttons).forEach(([id, button]) => {
+            this._configureButton(id, {
+                ...ppcpConfig,
+                button: {
+                    ...ppcpConfig.button,
+
+                    // The ppcpConfig object might refer to a different wrapper.
+                    // Fix the selector, to avoid unintentionally hidden preview buttons.
+                    wrapper: button.wrapper,
+                },
+            });
+        });
     }
 
     /**
