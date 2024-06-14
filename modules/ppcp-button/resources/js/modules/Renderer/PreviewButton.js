@@ -129,6 +129,17 @@ class PreviewButton {
         }
 
         this.createButton(previewButtonConfig);
+
+        /*
+         * Unfortunately, a hacky way that is required to guarantee that this preview button is
+         * actually visible after calling the `render()` method. On some sites, we've noticed that
+         * certain JS events (like `ppcp-hidden`) do not fire in the expected order. This causes
+         * problems with preview buttons not being displayed instantly.
+         *
+         * Using a timeout here will make the button visible again at the end of the current
+         * event queue.
+         */
+        setTimeout(() => this.domWrapper.show());
     }
 
     remove() {
