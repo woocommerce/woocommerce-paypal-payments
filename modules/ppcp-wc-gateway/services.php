@@ -726,26 +726,6 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'card_billing_data_mode'        => array(
-				'title'        => __( 'Send checkout billing data to card fields', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'desc_tip'     => true,
-				'description'  => __( 'Using the WC form data increases convenience for the customers, but can cause issues if card details do not match the billing data in the checkout form.', 'woocommerce-paypal-payments' ),
-				'default'      => $container->get( 'wcgateway.settings.card_billing_data_mode.default' ),
-				'options'      => array(
-					CardBillingMode::USE_WC        => __( 'Use WC checkout form data (do not show any address fields)', 'woocommerce-paypal-payments' ),
-					CardBillingMode::MINIMAL_INPUT => __( 'Request only name and postal code', 'woocommerce-paypal-payments' ),
-					CardBillingMode::NO_WC         => __( 'Do not use WC checkout form data (request all address fields)', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
-			),
 			'separate_card_button_gateways' => array(
 				'title'        => __( 'Separate gateways for selected Alternative Payment Methods', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
@@ -783,6 +763,26 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+			),
+			'card_billing_data_mode'        => array(
+				'title'        => __( 'Send checkout billing data to card fields', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'desc_tip'     => true,
+				'description'  => __( 'Using the WC form data increases convenience for the customers, but can cause issues if card details do not match the billing data in the checkout form.', 'woocommerce-paypal-payments' ),
+				'default'      => $container->get( 'wcgateway.settings.card_billing_data_mode.default' ),
+				'options'      => array(
+					CardBillingMode::USE_WC        => __( 'Use WC checkout form data (do not show any address fields)', 'woocommerce-paypal-payments' ),
+					CardBillingMode::MINIMAL_INPUT => __( 'Request only name and postal code', 'woocommerce-paypal-payments' ),
+					CardBillingMode::NO_WC         => __( 'Do not use WC checkout form data (request all address fields)', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
 			),
 			'disable_cards'                 => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
