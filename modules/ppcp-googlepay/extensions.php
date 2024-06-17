@@ -20,6 +20,9 @@ return array(
 
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
 
+		// Used in various places to mark fields for the preview button.
+		$apm_name = 'GooglePay';
+
 		// Eligibility check.
 		if ( ! $container->has( 'googlepay.eligible' ) || ! $container->get( 'googlepay.eligible' ) ) {
 			return $fields;
@@ -133,7 +136,7 @@ return array(
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
-						'data-ppcp-display' => wp_json_encode(
+						'data-ppcp-display'    => wp_json_encode(
 							array(
 								$display_manager
 									->rule()
@@ -142,64 +145,79 @@ return array(
 									->action_visible( 'googlepay_button_color' )
 									->action_visible( 'googlepay_button_language' )
 									->action_visible( 'googlepay_button_shipping_enabled' )
+									->action_visible( 'googlepay_button_preview' )
 									->action_class( 'googlepay_button_enabled', 'active' )
 									->to_array(),
 							)
 						),
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'is_enabled',
 					),
 					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 				),
 				'googlepay_button_type'             => array(
-					'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'desc_tip'     => true,
-					'description'  => __(
+					'title'             => __( 'Button Label', 'woocommerce-paypal-payments' ),
+					'type'              => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
 						'This controls the label of the Google Pay button.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'pay',
-					'options'      => PropertiesDictionary::button_types(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
-					'requirements' => array(),
+					'classes'           => array( 'ppcp-field-indent' ),
+					'class'             => array(),
+					'input_class'       => array( 'wc-enhanced-select' ),
+					'default'           => 'pay',
+					'options'           => PropertiesDictionary::button_types(),
+					'screens'           => array( State::STATE_ONBOARDED ),
+					'gateway'           => 'dcc',
+					'requirements'      => array(),
+					'custom_attributes' => array(
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'type',
+					),
 				),
 				'googlepay_button_color'            => array(
-					'title'        => __( 'Button Color', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'desc_tip'     => true,
-					'description'  => __(
+					'title'             => __( 'Button Color', 'woocommerce-paypal-payments' ),
+					'type'              => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
 						'Google Pay payment buttons exist in two styles: dark and light. To provide contrast, use dark buttons on light backgrounds and light buttons on dark or colorful backgrounds.',
 						'woocommerce-paypal-payments'
 					),
-					'label'        => '',
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'default'      => 'black',
-					'options'      => PropertiesDictionary::button_colors(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
-					'requirements' => array(),
+					'label'             => '',
+					'input_class'       => array( 'wc-enhanced-select' ),
+					'classes'           => array( 'ppcp-field-indent' ),
+					'class'             => array(),
+					'default'           => 'black',
+					'options'           => PropertiesDictionary::button_colors(),
+					'screens'           => array( State::STATE_ONBOARDED ),
+					'gateway'           => 'dcc',
+					'requirements'      => array(),
+					'custom_attributes' => array(
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'color',
+					),
 				),
 				'googlepay_button_language'         => array(
-					'title'        => __( 'Button Language', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'desc_tip'     => true,
-					'description'  => __(
+					'title'             => __( 'Button Language', 'woocommerce-paypal-payments' ),
+					'type'              => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
 						'The language and region used for the displayed Google Pay button. The default value is the current language and region setting in a browser.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'en',
-					'options'      => PropertiesDictionary::button_languages(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
-					'requirements' => array(),
+					'classes'           => array( 'ppcp-field-indent' ),
+					'class'             => array(),
+					'input_class'       => array( 'wc-enhanced-select' ),
+					'default'           => 'en',
+					'options'           => PropertiesDictionary::button_languages(),
+					'screens'           => array( State::STATE_ONBOARDED ),
+					'gateway'           => 'dcc',
+					'requirements'      => array(),
+					'custom_attributes' => array(
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'language',
+					),
 				),
 				'googlepay_button_shipping_enabled' => array(
 					'title'        => __( 'Shipping Callback', 'woocommerce-paypal-payments' ),
@@ -209,12 +227,28 @@ return array(
 						'Synchronizes your available shipping options with Google Pay. Enabling this may impact the buyer experience.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array( 'ppcp-field-indent' ),
+					'classes'      => array( 'ppcp-field-indent ppcp' ),
 					'label'        => __( 'Enable Google Pay shipping callback', 'woocommerce-paypal-payments' ),
 					'default'      => 'no',
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
+				),
+				'googlepay_button_preview'          => array(
+					'type'         => 'ppcp-text',
+					'text'         => sprintf(
+						'
+<div class="ppcp-preview ppcp-button-preview" data-ppcp-apm-preview="%1$s">
+	<h4>' . __( 'Button Styling Preview', 'woocommerce-paypal-payments' ) . '</h4>
+	<div id="ppcp%1$sButtonPreview" class="ppcp-button-preview-inner"></div>
+</div>',
+						$apm_name
+					),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array(),
+					'gateway'      => 'dcc',
 				),
 			)
 		);

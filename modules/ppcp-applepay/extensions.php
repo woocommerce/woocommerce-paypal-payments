@@ -20,6 +20,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
 
+		// Used in various places to mark fields for the preview button.
+		$apm_name = 'ApplePay';
+
 		// Eligibility check.
 		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
 			return $fields;
@@ -171,7 +174,7 @@ return array(
 					'gateway'           => 'dcc',
 					'requirements'      => array(),
 					'custom_attributes' => array(
-						'data-ppcp-display' => wp_json_encode(
+						'data-ppcp-display'    => wp_json_encode(
 							array(
 								$display_manager
 									->rule()
@@ -183,10 +186,13 @@ return array(
 									->action_visible( 'applepay_button_type' )
 									->action_visible( 'applepay_button_language' )
 									->action_visible( 'applepay_checkout_data_mode' )
+									->action_visible( 'applepay_button_preview' )
 									->action_class( 'applepay_button_enabled', 'active' )
 									->to_array(),
 							)
 						),
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'is_enabled',
 					),
 					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 				),
@@ -253,56 +259,68 @@ return array(
 					'requirements' => array(),
 				),
 				'applepay_button_type'                => array(
-					'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'desc_tip'     => true,
-					'description'  => __(
+					'title'             => __( 'Button Label', 'woocommerce-paypal-payments' ),
+					'type'              => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
 						'This controls the label of the Apple Pay button.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'pay',
-					'options'      => PropertiesDictionary::button_types(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
-					'requirements' => array(),
+					'classes'           => array( 'ppcp-field-indent' ),
+					'class'             => array(),
+					'input_class'       => array( 'wc-enhanced-select' ),
+					'default'           => 'pay',
+					'options'           => PropertiesDictionary::button_types(),
+					'screens'           => array( State::STATE_ONBOARDED ),
+					'gateway'           => 'dcc',
+					'requirements'      => array(),
+					'custom_attributes' => array(
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'type',
+					),
 				),
 				'applepay_button_color'               => array(
-					'title'        => __( 'Button Color', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'desc_tip'     => true,
-					'description'  => __(
+					'title'             => __( 'Button Color', 'woocommerce-paypal-payments' ),
+					'type'              => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
 						'The Apple Pay Button may appear as a black button with white lettering, white button with black lettering, or a white button with black lettering and a black outline.',
 						'woocommerce-paypal-payments'
 					),
-					'label'        => '',
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'default'      => 'black',
-					'options'      => PropertiesDictionary::button_colors(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
-					'requirements' => array(),
+					'label'             => '',
+					'input_class'       => array( 'wc-enhanced-select' ),
+					'classes'           => array( 'ppcp-field-indent' ),
+					'class'             => array(),
+					'default'           => 'black',
+					'options'           => PropertiesDictionary::button_colors(),
+					'screens'           => array( State::STATE_ONBOARDED ),
+					'gateway'           => 'dcc',
+					'requirements'      => array(),
+					'custom_attributes' => array(
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'color',
+					),
 				),
 				'applepay_button_language'            => array(
-					'title'        => __( 'Button Language', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'desc_tip'     => true,
-					'description'  => __(
+					'title'             => __( 'Button Language', 'woocommerce-paypal-payments' ),
+					'type'              => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
 						'The language and region used for the displayed Apple Pay button. The default value is the current language and region setting in a browser.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'en',
-					'options'      => PropertiesDictionary::button_languages(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'dcc',
-					'requirements' => array(),
+					'classes'           => array( 'ppcp-field-indent' ),
+					'class'             => array(),
+					'input_class'       => array( 'wc-enhanced-select' ),
+					'default'           => 'en',
+					'options'           => PropertiesDictionary::button_languages(),
+					'screens'           => array( State::STATE_ONBOARDED ),
+					'gateway'           => 'dcc',
+					'requirements'      => array(),
+					'custom_attributes' => array(
+						'data-ppcp-apm-name'   => $apm_name,
+						'data-ppcp-field-name' => 'language',
+					),
 				),
 				'applepay_checkout_data_mode'         => array(
 					'title'        => __( 'Send checkout billing and shipping data to Apple Pay', 'woocommerce-paypal-payments' ),
@@ -317,6 +335,22 @@ return array(
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'dcc',
 					'requirements' => array(),
+				),
+				'applepay_button_preview'             => array(
+					'type'         => 'ppcp-text',
+					'text'         => sprintf(
+						'
+<div class="ppcp-preview ppcp-button-preview" data-ppcp-apm-preview="%1$s">
+	<h4>' . __( 'Button Styling Preview', 'woocommerce-paypal-payments' ) . '</h4>
+	<div id="ppcp%1$sButtonPreview" class="ppcp-button-preview-inner"></div>
+</div>',
+						$apm_name
+					),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array(),
+					'gateway'      => 'dcc',
 				),
 			)
 		);

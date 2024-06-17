@@ -205,7 +205,7 @@ class ApplepayModule implements ModuleInterface {
 		add_action(
 			'admin_enqueue_scripts',
 			static function () use ( $c, $button ) {
-				if ( ! is_admin() || ! $c->get( 'wcgateway.is-ppcp-settings-standard-payments-page' ) ) {
+				if ( ! is_admin() || ! $c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' ) ) {
 					return;
 				}
 

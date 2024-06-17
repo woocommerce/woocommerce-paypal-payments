@@ -201,9 +201,23 @@ return array(
 		);
 	},
 
-	'wcgateway.is-ppcp-settings-standard-payments-page'    => static function ( ContainerInterface $container ): bool {
-		return $container->get( 'wcgateway.is-ppcp-settings-page' )
-			&& $container->get( 'wcgateway.current-ppcp-settings-page-id' ) === PayPalGateway::ID;
+	// Checks, if the current admin page contains settings for this plugin's payment methods.
+	'wcgateway.is-ppcp-settings-payment-methods-page'      => static function ( ContainerInterface $container ) : bool {
+		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
+			return false;
+		}
+
+		$active_tab = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+
+		return in_array(
+			$active_tab,
+			array(
+				PayPalGateway::ID,
+				CreditCardGateway::ID,
+				CardButtonGateway::ID,
+			),
+			true
+		);
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
