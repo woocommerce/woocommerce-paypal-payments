@@ -40,6 +40,7 @@ const PayPalComponent = ( {
 	shippingData,
 	isEditing,
 	fundingSource,
+	buttonAttributes,
 } ) => {
 	const { onPaymentSetup, onCheckoutFail, onCheckoutValidation } =
 		eventRegistration;
@@ -582,6 +583,12 @@ const PayPalComponent = ( {
 		fundingSource
 	);
 
+	if ( typeof buttonAttributes !== 'undefined' ) {
+		style.height = buttonAttributes?.height
+			? Number( buttonAttributes.height )
+			: style.height;
+	}
+
 	if ( ! paypalScriptLoaded ) {
 		return null;
 	}
@@ -606,11 +613,11 @@ const PayPalComponent = ( {
 		}
 
 		return ( data, actions ) => {
-            let shippingAddressChange = shouldHandleShippingInPayPal()
+			const shippingAddressChange = shouldHandleShippingInPayPal()
 				? handleShippingAddressChange( data, actions )
 				: null;
 
-            return shippingAddressChange;
+			return shippingAddressChange;
 		};
 	};
 
