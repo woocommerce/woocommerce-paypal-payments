@@ -45,7 +45,8 @@ const PayPalComponent = ({
                              shippingData,
                              isEditing,
                              fundingSource,
-}) => {
+                             buttonAttributes,
+                         }) => {
     const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
@@ -498,6 +499,10 @@ const PayPalComponent = ({
     }
 
     const style = normalizeStyleForFundingSource(config.scriptData.button.style, fundingSource);
+
+    if ( typeof buttonAttributes !== 'undefined' ) {
+        style.height = buttonAttributes?.height ? Number(buttonAttributes.height) : style.height;
+    }
 
     if (!paypalScriptLoaded) {
         return null;
