@@ -89,6 +89,15 @@ class OrderTrackingModule implements ModuleInterface {
 
 		add_action(
 			'add_meta_boxes',
+			/**
+			 * Adds the tracking metabox.
+			 *
+			 * @param string $post_type The post type.
+			 * @param WP_Post|WC_Order $post_or_order_object The post/order object.
+			 * @return void
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( string $post_type, $post_or_order_object ) use ( $meta_box_renderer, $bearer ) {
 				if ( ! $this->is_tracking_enabled( $bearer ) ) {
 					return;
