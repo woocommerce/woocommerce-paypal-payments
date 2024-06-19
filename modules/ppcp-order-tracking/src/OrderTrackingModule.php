@@ -89,7 +89,7 @@ class OrderTrackingModule implements ModuleInterface {
 
 		add_action(
 			'add_meta_boxes',
-			function(string $post_type, $post_or_order_object) use ( $meta_box_renderer, $bearer ) {
+			function( string $post_type, $post_or_order_object ) use ( $meta_box_renderer, $bearer ) {
 				if ( ! $this->is_tracking_enabled( $bearer ) ) {
 					return;
 				}
@@ -101,11 +101,11 @@ class OrderTrackingModule implements ModuleInterface {
 
 				try {
 					$paypal_order = ppcp_get_paypal_order( $wc_order );
-				} catch (Exception $exception) {
+				} catch ( Exception $exception ) {
 					return;
 				}
 
-				$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
+				$capture_id = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
 
 				if ( ! $capture_id ) {
 					return;
@@ -124,7 +124,7 @@ class OrderTrackingModule implements ModuleInterface {
 				add_meta_box(
 					'ppcp_order-tracking',
 					__( 'PayPal Package Tracking', 'woocommerce-paypal-payments' ),
-					static function () use( $meta_box_renderer , $wc_order, $capture_id ): void {
+					static function () use ( $meta_box_renderer, $wc_order, $capture_id ): void {
 						$meta_box_renderer->render( $wc_order, $capture_id );
 					},
 					$screen,

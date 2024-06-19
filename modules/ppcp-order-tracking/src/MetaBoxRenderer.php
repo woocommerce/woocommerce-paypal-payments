@@ -80,7 +80,7 @@ class MetaBoxRenderer {
 	 * Renders the order tracking MetaBox.
 	 *
 	 * @param WC_Order $wc_order The WC order.
-	 * @param string $capture_id The PayPal order capture ID.
+	 * @param string   $capture_id The PayPal order capture ID.
 	 */
 	public function render( WC_Order $wc_order, string $capture_id ): void {
 		$order_items      = $wc_order->get_items();
