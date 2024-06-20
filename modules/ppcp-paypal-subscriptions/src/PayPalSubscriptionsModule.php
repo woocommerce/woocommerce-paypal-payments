@@ -101,8 +101,8 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 
 				$product = wc_get_product( $product_id );
 
-				$settings           = $c->get( 'wcgateway.settings' );
-				assert($settings instanceof Settings);
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
 
 				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
 
