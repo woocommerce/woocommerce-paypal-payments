@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
-
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class AxoModule
  */
@@ -107,12 +107,9 @@ class AxoModule implements ModuleInterface {
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
 				if ( apply_filters(
 					'woocommerce_paypal_payments_axo_hide_credit_card_gateway',
-					$this->hide_credit_card_when_using_fastlane( $methods, $settings )
+					$this->hide_credit_card_when_using_fastlane( $methods, $c )
 				) ) {
 					unset( $methods[ CreditCardGateway::ID ] );
 				}
@@ -160,13 +157,10 @@ class AxoModule implements ModuleInterface {
 					'wp_enqueue_scripts',
 					static function () use ( $c, $manager, $module ) {
 
-						$settings = $c->get( 'wcgateway.settings' );
-						assert( $settings instanceof Settings );
-
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						if ( $module->should_render_fastlane( $settings ) && $smart_button->should_load_ppcp_script() ) {
+						if ( $module->should_render_fastlane( $c ) && $smart_button->should_load_ppcp_script() ) {
 							$manager->enqueue();
 						}
 					}
@@ -243,10 +237,8 @@ class AxoModule implements ModuleInterface {
 				add_action(
 					'template_redirect',
 					function () use ( $c ) {
-						$settings = $c->get( 'wcgateway.settings' );
-						assert( $settings instanceof Settings );
 
-						if ( $this->should_render_fastlane( $settings ) ) {
+						if ( $this->should_render_fastlane( $c ) ) {
 							WC()->session->set( 'chosen_payment_method', AxoGateway::ID );
 						}
 					}
@@ -320,12 +312,12 @@ class AxoModule implements ModuleInterface {
 	/**
 	 * Condition to evaluate if Credit Card gateway should be hidden.
 	 *
-	 * @param array    $methods WC payment methods.
-	 * @param Settings $settings The settings.
+	 * @param array              $methods WC payment methods.
+	 * @param ContainerInterface $c The container.
 	 * @return bool
 	 */
-	private function hide_credit_card_when_using_fastlane( array $methods, Settings $settings ): bool {
-		return $this->should_render_fastlane( $settings ) && isset( $methods[ CreditCardGateway::ID ] );
+	private function hide_credit_card_when_using_fastlane( array $methods, ContainerInterface $c ): bool {
+		return $this->should_render_fastlane( $c ) && isset( $methods[ CreditCardGateway::ID ] );
 	}
 
 	/**
@@ -333,18 +325,25 @@ class AxoModule implements ModuleInterface {
 	 *
 	 * Fastlane should only render on the classic checkout, when Fastlane is enabled in the settings and also only for guest customers.
 	 *
-	 * @param Settings $settings The settings.
+	 * @param ContainerInterface $c The container.
 	 * @return bool
 	 */
-	private function should_render_fastlane( Settings $settings ): bool {
+	private function should_render_fastlane( ContainerInterface $c ): bool {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
 		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
 		$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+
+		$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
 			&& $is_axo_enabled
 			&& $is_dcc_enabled
-			&& ! $this->is_excluded_endpoint();
+			&& ! $this->is_excluded_endpoint()
+			&& ! $subscription_helper->cart_contains_subscription();
 	}
 
 	/**
@@ -354,10 +353,8 @@ class AxoModule implements ModuleInterface {
 	 * @return void
 	 */
 	private function add_checkout_loader_markup( ContainerInterface $c ): void {
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
 
-		if ( $this->should_render_fastlane( $settings ) ) {
+		if ( $this->should_render_fastlane( $c ) ) {
 			add_action(
 				'woocommerce_checkout_before_customer_details',
 				function () {
