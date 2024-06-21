@@ -277,10 +277,13 @@ class AxoManager {
 
             this.el.watermarkContainer.show();
 
+            // Add class to customer details container.
+            this.$(this.el.axoCustomerDetails.selector).addClass('col-1');
         } else {
             this.shippingView.deactivate();
             this.billingView.deactivate();
             this.cardView.deactivate();
+            this.$(this.el.axoCustomerDetails.selector).removeClass('col-1');
         }
 
         if (scenario.axoPaymentContainer) {
