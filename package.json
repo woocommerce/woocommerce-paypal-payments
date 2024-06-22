@@ -80,7 +80,7 @@
     "pw-install": "yarn playwright install --with-deps",
     "pw-tests": "yarn playwright test",
     "pw-tests-headed": "yarn playwright test --headed",
-    "test:unit": "wp-scripts test-unit-js",
+    "test:unit": "wp-scripts test-unit-js --config ./tests/js/jest.config.json",
     "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
     "build": "composer install --no-dev && yarn install && yarn run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
@@ -99,11 +99,13 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
     "@wordpress/element": "^6.1.0",
     "@wordpress/scripts": "^28.0.0",
+    "babel-plugin-explicit-exports-references": "^1.0.2",
     "jquery": "^3.7.1",
     "react-dom": "^18.3.1"
   }
