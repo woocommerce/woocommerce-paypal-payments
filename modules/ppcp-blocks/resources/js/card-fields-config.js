@@ -1,6 +1,6 @@
-const config = wc.wcSettings.getSetting('ppcp-credit-card-gateway_data');
-
 export async function createOrder() {
+    const config = wc.wcSettings.getSetting('ppcp-credit-card-gateway_data');
+
     return fetch(config.scriptData.ajax.create_order.endpoint, {
         method: "POST",
         headers: {
@@ -23,6 +23,8 @@ export async function createOrder() {
 }
 
 export async function onApprove(data) {
+    const config = wc.wcSettings.getSetting('ppcp-credit-card-gateway_data');
+
     return fetch(config.scriptData.ajax.approve_order.endpoint, {
         method: "POST",
         headers: {
