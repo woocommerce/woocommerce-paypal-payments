@@ -97,12 +97,17 @@ class MetaBoxRenderer {
 		$order_items      = $wc_order->get_items();
 		$order_item_count = ! empty( $order_items ) ? count( $order_items ) : 0;
 
-		/**
-		 * The shipments
-		 *
-		 * @var ShipmentInterface[] $shipments
-		 */
-		$shipments = $this->order_tracking_endpoint->list_tracking_information( $wc_order->get_id() ) ?? array();
+		try {
+			/**
+			 * The shipments
+			 *
+			 * @var ShipmentInterface[] $shipments
+			 */
+			$shipments = $this->order_tracking_endpoint->list_tracking_information( $wc_order->get_id() ) ?? array();
+		} catch ( Exception $exception ) {
+			$this->logger->log( 'warning', $exception->getMessage() );
+			return;
+		}
 		?>
 		<div class="ppcp-tracking-columns-wrapper">
 			<div class="ppcp-tracking-column">
