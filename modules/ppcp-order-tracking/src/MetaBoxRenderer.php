@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
@@ -61,6 +62,13 @@ class MetaBoxRenderer {
 	protected $should_use_new_api;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * MetaBoxRenderer constructor.
 	 *
 	 * @param string[]              $allowed_statuses Allowed shipping statuses.
@@ -68,18 +76,21 @@ class MetaBoxRenderer {
 	 * @psalm-param Carriers        $carriers
 	 * @param OrderTrackingEndpoint $order_tracking_endpoint The order tracking endpoint.
 	 * @param bool                  $should_use_new_api Whether new API should be used.
+	 * @param LoggerInterface       $logger The logger.
 	 */
 	public function __construct(
 		array $allowed_statuses,
 		array $carriers,
 		OrderTrackingEndpoint $order_tracking_endpoint,
-		bool $should_use_new_api
+		bool $should_use_new_api,
+		LoggerInterface $logger
 	) {
 
 		$this->allowed_statuses        = $allowed_statuses;
 		$this->carriers                = $carriers;
 		$this->order_tracking_endpoint = $order_tracking_endpoint;
 		$this->should_use_new_api      = $should_use_new_api;
+		$this->logger                  = $logger;
 	}
 
 	/**
