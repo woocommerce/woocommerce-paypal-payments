@@ -1,7 +1,7 @@
 import {loadCustomScript} from "@paypal/paypal-js";
 import {loadPaypalScript} from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
 import ApplepayManager from "./ApplepayManager";
-import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
+import {setupButtonEvents} from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
 (function ({
                buttonConfig,
@@ -16,20 +16,11 @@ import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
         manager.init();
     };
 
-    const refresh = debounce(function() {
+    setupButtonEvents(function() {
         if (manager) {
             manager.reinit();
         }
-    }, 50);
-
-    jQuery(document).on('ppcp_refresh_payment_buttons', refresh);
-
-    jQuery(document.body).on('updated_cart_totals updated_checkout', refresh);
-
-    // Use set timeout as it's unnecessary to refresh upon Minicart initial render.
-    setTimeout(() => {
-        jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', refresh);
-    }, 1000);
+    });
 
     document.addEventListener(
         'DOMContentLoaded',

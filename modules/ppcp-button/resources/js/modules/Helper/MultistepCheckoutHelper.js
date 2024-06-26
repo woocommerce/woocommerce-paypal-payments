@@ -1,3 +1,5 @@
+import { refreshButtons } from './ButtonRefreshHelper';
+
 /**
  * The MultistepCheckoutHelper class ensures the initialization of payment buttons
  * on websites using a multistep checkout plugin. These plugins usually hide the
@@ -105,16 +107,9 @@ class MultistepCheckoutHelper {
      */
     checkElement() {
         if (this.isVisible) {
-            this.refreshButtons();
+            refreshButtons();
             this.stop();
         }
-    }
-
-    /**
-     * Initializes the payment buttons on the visibility of wrapper.
-     */
-    refreshButtons() {
-        document.dispatchEvent(new Event('ppcp_refresh_payment_buttons'));
     }
 }
 
