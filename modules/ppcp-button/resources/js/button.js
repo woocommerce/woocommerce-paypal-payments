@@ -17,6 +17,7 @@ import {
 import {setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
+import MultistepCheckoutHelper from "./modules/Helper/MultistepCheckoutHelper";
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
@@ -52,6 +53,8 @@ const bootstrap = () => {
     ) : null;
 
     const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, checkoutFormSelector, formSaver, formValidator, spinner, errorHandler);
+
+    new MultistepCheckoutHelper(checkoutFormSelector);
 
     jQuery('form.woocommerce-checkout input').on('keydown', e => {
         if (e.key === 'Enter' && [
