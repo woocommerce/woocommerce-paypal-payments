@@ -1,5 +1,7 @@
 import { refreshButtons } from './ButtonRefreshHelper';
 
+const DEFAULT_TRIGGER_ELEMENT_SELECTOR = '.woocommerce-checkout-payment';
+
 /**
  * The MultistepCheckoutHelper class ensures the initialization of payment buttons
  * on websites using a multistep checkout plugin. These plugins usually hide the
@@ -14,10 +16,10 @@ import { refreshButtons } from './ButtonRefreshHelper';
 class MultistepCheckoutHelper {
 
     /**
-     * Configuration that defines the HTML selector for the component we are waiting to be visible.
+     * Selector that defines the HTML element we are waiting to become visible.
      * @type {string}
      */
-    #triggerElementSelector = '.woocommerce-checkout-payment';
+    #triggerElementSelector;
 
     /**
      * Interval (in milliseconds) in which the visibility of the trigger element is checked.
@@ -39,9 +41,11 @@ class MultistepCheckoutHelper {
 
     /**
      * @param {string} formSelector - Selector of the checkout form
+     * @param {string} triggerElementSelector - Optional. Selector of the dependant element.
      */
-    constructor(formSelector) {
+    constructor(formSelector, triggerElementSelector = '') {
         this.#formSelector = formSelector;
+        this.#triggerElementSelector = triggerElementSelector || DEFAULT_TRIGGER_ELEMENT_SELECTOR;
         this.#intervalId = false;
 
         /*
