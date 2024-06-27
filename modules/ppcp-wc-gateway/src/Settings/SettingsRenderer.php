@@ -517,6 +517,12 @@ $data_rows_html
 			$classes[] = 'ppcp-preview-single';
 		}
 
+		// Preview boxes that display a specific button type are always displayed in the bottom
+		// edge of the relevant button's settings.
+		if ( $which && 'all' !== $which ) {
+			$classes[] = 'align-bottom';
+		}
+
 		printf(
 			'<div class="ppcp-preview %1$s" %5$s>
 				<h4>%2$s</h4>
