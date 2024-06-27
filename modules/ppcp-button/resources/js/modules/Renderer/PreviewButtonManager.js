@@ -184,12 +184,32 @@ class PreviewButtonManager {
             return;
         }
 
+        if (!this.shouldInsertPreviewButton(id)) {
+            return;
+        }
+
         if (!this.buttons[id]) {
             this._addButton(id, ppcpConfig);
         } else {
             // This is a debounced method, that fires after 100ms.
             this._configureAllButtons(ppcpConfig);
         }
+    }
+
+    /**
+     * Determines if the preview box supports the current button.
+     *
+     * When this function returns false, this manager instance does not create a new preview button.
+     *
+     * @param {string} previewId - ID of the inner preview box container.
+     * @return {boolean} True if the box is eligible for the preview button, false otherwise.
+     */
+    shouldInsertPreviewButton(previewId) {
+        const container = document.querySelector(previewId);
+        const box = container.closest('.ppcp-preview');
+        const limit = box.dataset.ppcpPreviewBlock ?? 'all';
+
+        return ('all' === limit) || (this.methodName === limit);
     }
 
     /**
