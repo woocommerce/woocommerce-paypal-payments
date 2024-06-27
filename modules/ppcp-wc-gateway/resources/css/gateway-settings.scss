@@ -8,7 +8,7 @@
 	margin-right: -28px;
 
 	// Preview box showing a single button.
-	&[data-ppcp-apm-preview] {
+	&.ppcp-preview-single {
 		height: 82px;
 
 		@media (min-width: 1200px) {

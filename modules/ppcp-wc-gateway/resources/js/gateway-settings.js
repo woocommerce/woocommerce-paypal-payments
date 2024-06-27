@@ -349,8 +349,8 @@ document.addEventListener(
                  *
                  * Example: See the ppcp-google-pay "extensions.php" file.
                  */
-                document.querySelectorAll('[data-ppcp-apm-preview]').forEach(item => {
-                    const apmName = item.dataset.ppcpApmPreview;
+                document.querySelectorAll('[data-ppcp-preview-block]').forEach(item => {
+                    const apmName = item.dataset.ppcpPreviewBlock;
                     const getSettings = buttonSettingsGetterFactory(apmName)
                     const renderButtonPreview = buttonRefreshTriggerFactory(apmName);
 
