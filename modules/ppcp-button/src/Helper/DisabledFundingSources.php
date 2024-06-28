@@ -53,7 +53,7 @@ class DisabledFundingSources {
 	 * @return array|int[]|mixed|string[]
 	 * @throws NotFoundException When the setting is not found.
 	 */
-	public function sources( $context ) {
+	public function sources( string $context ) {
 		$disable_funding = $this->settings->has( 'disable_funding' )
 			? $this->settings->get( 'disable_funding' )
 			: array();
