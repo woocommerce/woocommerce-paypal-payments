@@ -215,6 +215,7 @@ return array(
 				PayPalGateway::ID,
 				CreditCardGateway::ID,
 				CardButtonGateway::ID,
+				Settings::CONNECTION_TAB_ID,
 			),
 			true
 		);
