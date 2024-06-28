@@ -58,16 +58,28 @@ class DisabledFundingSources {
 			? $this->settings->get( 'disable_funding' )
 			: array();
 
-		if ( ! is_checkout() ) {
+		$is_dcc_enabled = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' );
+
+		if (
+			! is_checkout()
+			|| ( $is_dcc_enabled && in_array( $context, array( 'checkout-block', 'cart-block' ), true ) )
+		) {
 			$disable_funding[] = 'card';
 		}
-
-		$is_dcc_enabled = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' );
 
 		$available_gateways       = WC()->payment_gateways->get_available_payment_gateways();
 		$is_separate_card_enabled = isset( $available_gateways[ CardButtonGateway::ID ] );
 
-		if ( is_checkout() && ( $is_dcc_enabled || $is_separate_card_enabled ) ) {
+		if (
+			(
+				is_checkout()
+				&& ! in_array( $context, array( 'checkout-block', 'cart-block' ), true )
+			)
+			&& (
+				$is_dcc_enabled
+				|| $is_separate_card_enabled
+			)
+		) {
 			$key = array_search( 'card', $disable_funding, true );
 			if ( false !== $key ) {
 				unset( $disable_funding[ $key ] );

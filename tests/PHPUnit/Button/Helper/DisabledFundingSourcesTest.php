@@ -21,7 +21,11 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->settings = Mockery::mock(Settings::class);
 	}
 
-	public function test_is_checkout_true_does_not_add_card()
+	/**
+	 * Block checkout page configured in WC "Checkout page" setting,
+	 * `is_checkout` returns true when visiting the block checkout page.
+	 */
+	public function test_is_checkout_true_add_card_when_checkout_block_context()
 	{
 		$sut = new DisabledFundingSources($this->settings, []);
 
@@ -30,10 +34,14 @@ class DisabledFundingSourcesTest extends TestCase
 
 		when('is_checkout')->justReturn(true);
 
-		$this->assertEquals([], $sut->sources(''));
+		$this->assertEquals(['card'], $sut->sources('checkout-block'));
 	}
 
-	public function test_is_checkout_false_adds_card()
+	/**
+	 * Classic checkout page configured in WC "Checkout page" setting,
+	 * `is_checkout` returns false when visiting the block checkout page.
+	 */
+	public function test_is_checkout_false_add_card_when_checkout_context()
 	{
 		$sut = new DisabledFundingSources($this->settings, []);
 
@@ -42,10 +50,10 @@ class DisabledFundingSourcesTest extends TestCase
 
 		when('is_checkout')->justReturn(false);
 
-		$this->assertEquals(['card'], $sut->sources('checkout-block'));
+		$this->assertEquals(['card'], $sut->sources('checkout'));
 	}
 
-	public function test_checkout_block_context_adds_source()
+	public function test_is_checkout_true_add_allowed_sources_when_checkout_block_context()
 	{
 		$sut = new DisabledFundingSources($this->settings, [
 			'card' => 'Credit or debit cards',
@@ -58,7 +66,7 @@ class DisabledFundingSourcesTest extends TestCase
 
 		when('is_checkout')->justReturn(true);
 
-		$this->assertEquals(['foo'], $sut->sources('checkout-block'));
+		$this->assertEquals(['card', 'foo'], $sut->sources('checkout-block'));
 	}
 
 	private function setExpectations(
