@@ -23,6 +23,8 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 2. `$ ./vendor/bin/phpunit`
 3. `$ ./vendor/bin/phpcs`
 4. `$ ./vendor/bin/psalm`
+5. `$ wp-scripts lint-js`
+6. `$ yarn run test:unit` - Ensure node version is `18` or above
 
 ### Building a release package
 
@@ -64,7 +66,9 @@ You may also need `$ ddev restart` to apply the config changes.
 Tests and code style:
 - `$ yarn ddev:test`
 - `$ yarn ddev:lint`
-- `$ yarn ddev:fix-lint` - PHPCBF to fix basic code style issued
+- `$ yarn ddev:fix-lint`
+- `$ yarn ddev:lint-js`
+- `$ yarn ddev:test-js`
 
 See [package.json](/package.json) for other useful commands.
 
