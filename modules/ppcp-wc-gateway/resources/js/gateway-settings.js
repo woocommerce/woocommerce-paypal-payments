@@ -1,5 +1,6 @@
 import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
+import { buttonRefreshTriggerFactory, buttonSettingsGetterFactory } from './helper/preview-button';
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
 import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
@@ -312,6 +313,7 @@ document.addEventListener(
                 const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
                 const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'cart-block', 'checkout-block-express', 'general'];
 
+                // Default preview buttons; on "Standard Payments" tab.
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
                     const wrapperName = location.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
@@ -328,6 +330,31 @@ document.addEventListener(
                     }
 
                     createButtonPreview(() => getButtonSettings('#ppcp' + wrapperName + 'ButtonPreview', fields));
+                });
+
+                /**
+                 * Inspect DOM to find APM button previews; on tabs like "Advanced Card Payments".
+                 *
+                 * How it works:
+                 *
+                 * 1. Add a <div> to hold the preview button to the settings page:
+                 *    - `id="ppcp[NAME]ButtonPreview"`
+                 *    - `data-ppc-apm-preview="[NAME]"`
+                 * 2. Mark all fields that are relevant for the preview button:
+                 *    - custom_attribute: `data-ppcp-apm-name="[NAME]"`
+                 *    - custom_attribute: `data-ppcp-field-name="[FIELD]"`
+                 *
+                 * This block will find all marked input fields and trigger a re-render of the
+                 * preview button when one of those fields value changes.
+                 *
+                 * Example: See the ppcp-google-pay "extensions.php" file.
+                 */
+                document.querySelectorAll('[data-ppcp-apm-preview]').forEach(item => {
+                    const apmName = item.dataset.ppcpApmPreview;
+                    const getSettings = buttonSettingsGetterFactory(apmName)
+                    const renderButtonPreview = buttonRefreshTriggerFactory(apmName);
+
+                    renderPreview(getSettings, renderButtonPreview)
                 });
 
                 payLaterMessagingLocations.forEach((location) => {

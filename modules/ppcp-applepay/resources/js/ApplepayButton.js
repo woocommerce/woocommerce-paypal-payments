@@ -135,6 +135,10 @@ class ApplepayButton {
         const { wrapper, ppcpButtonWrapper } = this.contextConfig();
         const wrapper_id = '#' + wrapper;
 
+        if (wrapper_id === ppcpButtonWrapper) {
+            throw new Error(`[ApplePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${wrapper_id}"`);
+        }
+
         const syncButtonVisibility = () => {
             if (!this.isEligible) {
                 return;

@@ -1,6 +1,7 @@
 export function log(message, level = 'info') {
+    const wpDebug = window.wc_ppcp_axo?.wp_debug;
     const endpoint = window.wc_ppcp_axo?.ajax?.frontend_logger?.endpoint;
-    if(!endpoint) {
+    if (!endpoint) {
         return;
     }
 
@@ -15,12 +16,14 @@ export function log(message, level = 'info') {
             }
         })
     }).then(() => {
-        switch (level) {
-            case 'error':
-                console.error(`[AXO] ${message}`);
-                break;
-            default:
-                console.log(`[AXO] ${message}`);
+        if (wpDebug) {
+            switch (level) {
+                case 'error':
+                    console.error(`[AXO] ${message}`);
+                    break;
+                default:
+                    console.log(`[AXO] ${message}`);
+            }
         }
     });
 }

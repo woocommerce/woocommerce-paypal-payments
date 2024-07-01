@@ -13,10 +13,6 @@ use Exception;
 use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WP_Post;
-
-use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class MetaBoxRenderer
@@ -28,8 +24,6 @@ use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
  * @psalm-type Carriers = array<CarrierType, Carrier>
  */
 class MetaBoxRenderer {
-
-	use TransactionIdHandlingTrait;
 
 	/**
 	 * Allowed shipping statuses.
@@ -85,21 +79,10 @@ class MetaBoxRenderer {
 	/**
 	 * Renders the order tracking MetaBox.
 	 *
-	 * @param mixed $post_or_order_object Either WP_Post or WC_Order when COT is data source.
+	 * @param WC_Order $wc_order The WC order.
+	 * @param string   $capture_id The PayPal order capture ID.
 	 */
-	public function render( $post_or_order_object ): void {
-		$wc_order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
-		if ( ! $wc_order instanceof WC_Order ) {
-			return;
-		}
-
-		$paypal_order = ppcp_get_paypal_order( $wc_order );
-		$capture_id   = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
-
-		if ( ! $capture_id ) {
-			return;
-		}
-
+	public function render( WC_Order $wc_order, string $capture_id ): void {
 		$order_items      = $wc_order->get_items();
 		$order_item_count = ! empty( $order_items ) ? count( $order_items ) : 0;
 

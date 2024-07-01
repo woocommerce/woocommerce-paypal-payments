@@ -418,9 +418,12 @@ class Button implements ButtonInterface {
 			$shipping['countries'] = array_keys( $this->wc_countries()->get_shipping_countries() );
 		}
 
+		$is_enabled = $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
+
 		return array(
 			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'is_enabled'  => $is_enabled,
 			'sdk_url'     => $this->sdk_url,
 			'button'      => array(
 				'wrapper'           => '#ppc-button-googlepay-container',

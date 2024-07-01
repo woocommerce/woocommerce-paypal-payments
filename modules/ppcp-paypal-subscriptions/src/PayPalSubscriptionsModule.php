@@ -94,12 +94,26 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $passed_validation, $product_id ) {
+			static function ( $passed_validation, $product_id ) use ( $c ) {
 				if ( WC()->cart->is_empty() ) {
 					return $passed_validation;
 				}
 
 				$product = wc_get_product( $product_id );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+
+				if ( 'subscriptions_api' !== $subscriptions_mode ) {
+					if ( $product && $product->get_sold_individually() ) {
+						$product->set_sold_individually( false );
+						$product->save();
+					}
+
+					return $passed_validation;
+				}
 
 				if ( $product && $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
 					if ( ! $product->get_sold_individually() ) {

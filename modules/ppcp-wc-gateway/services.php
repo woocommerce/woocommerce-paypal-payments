@@ -201,9 +201,24 @@ return array(
 		);
 	},
 
-	'wcgateway.is-ppcp-settings-standard-payments-page'    => static function ( ContainerInterface $container ): bool {
-		return $container->get( 'wcgateway.is-ppcp-settings-page' )
-			&& $container->get( 'wcgateway.current-ppcp-settings-page-id' ) === PayPalGateway::ID;
+	// Checks, if the current admin page contains settings for this plugin's payment methods.
+	'wcgateway.is-ppcp-settings-payment-methods-page'      => static function ( ContainerInterface $container ) : bool {
+		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
+			return false;
+		}
+
+		$active_tab = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+
+		return in_array(
+			$active_tab,
+			array(
+				PayPalGateway::ID,
+				CreditCardGateway::ID,
+				CardButtonGateway::ID,
+				Settings::CONNECTION_TAB_ID,
+			),
+			true
+		);
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
@@ -1025,7 +1040,6 @@ return array(
 			'bancontact' => _x( 'Bancontact', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'blik'       => _x( 'BLIK', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'eps'        => _x( 'eps', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'giropay'    => _x( 'giropay', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'ideal'      => _x( 'iDEAL', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'mybank'     => _x( 'MyBank', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'p24'        => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),

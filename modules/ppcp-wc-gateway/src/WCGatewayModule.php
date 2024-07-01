@@ -183,7 +183,8 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'wcgateway.settings.funding-sources' ),
 				$c->get( 'wcgateway.is-ppcp-settings-page' ),
 				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ),
-				$c->get( 'api.endpoint.billing-agreements' )
+				$c->get( 'api.endpoint.billing-agreements' ),
+				$c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' )
 			);
 			$assets->register_assets();
 		}
