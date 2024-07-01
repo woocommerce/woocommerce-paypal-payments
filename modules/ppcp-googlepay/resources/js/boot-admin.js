@@ -42,7 +42,14 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
             return {};
         }
 
-        return await apiMethod();
+        try {
+            return await apiMethod();
+        } catch (error) {
+            if (error.message.includes('Not Eligible')) {
+                this.apiError = 'Not Eligible';
+            }
+            return null;
+        }
     }
 
     /**

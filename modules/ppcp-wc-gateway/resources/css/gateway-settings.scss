@@ -1,7 +1,8 @@
 .ppcp-settings-field-preview {
 	position: relative;
 
-	td {
+	> td {
+		position: relative;
 		padding-left: 0;
 		padding-right: 0;
 	}
