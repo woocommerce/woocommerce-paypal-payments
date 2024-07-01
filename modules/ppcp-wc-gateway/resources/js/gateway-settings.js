@@ -23,25 +23,7 @@ document.addEventListener(
 
         const payLaterButtonInput = document.querySelector('#ppcp-pay_later_button_enabled');
 
-        if (payLaterButtonInput) {
-            const payLaterButtonPreview = document.querySelector('.ppcp-button-preview.pay-later');
-
-            if (!payLaterButtonInput.checked) {
-                payLaterButtonPreview.classList.add('disabled')
-            }
-
-            if (payLaterButtonInput.classList.contains('ppcp-disabled-checkbox')) {
-                payLaterButtonPreview.style.display = 'none';
-            }
-
-            payLaterButtonInput.addEventListener('click', () => {
-                payLaterButtonPreview.classList.remove('disabled')
-
-                if (!payLaterButtonInput.checked) {
-                    payLaterButtonPreview.classList.add('disabled')
-                }
-            });
-        }
+        initializePayLaterPreview()
 
         const separateCardButtonCheckbox = document.querySelector('#ppcp-allow_card_button_gateway');
         if (separateCardButtonCheckbox) {
@@ -75,6 +57,35 @@ document.addEventListener(
                 }
             }
         });
+
+        function initializePayLaterPreview() {
+            if (!payLaterButtonInput) {
+                return;
+            }
+
+            const payLaterButtonPreview = document.querySelector(
+                '.ppcp-button-preview[data-ppcp-preview-block="paylater"]');
+
+            if (!payLaterButtonPreview) {
+                return;
+            }
+
+            if (!payLaterButtonInput.checked) {
+                payLaterButtonPreview.classList.add('disabled');
+            }
+
+            if (payLaterButtonInput.classList.contains('ppcp-disabled-checkbox')) {
+                payLaterButtonPreview.style.display = 'none';
+            }
+
+            payLaterButtonInput.addEventListener('click', () => {
+                payLaterButtonPreview.classList.remove('disabled');
+
+                if (!payLaterButtonInput.checked) {
+                    payLaterButtonPreview.classList.add('disabled');
+                }
+            });
+        }
 
         function createButtonPreview(settingsCallback) {
             const render = (settings) => {
