@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.8.1 - xxxx-xx-xx =
+= 2.8.1 - 2024-07-01 =
 * Fix - Don't render tracking metabox if PayPal order does not belong to connected merchant #2360
 * Fix - Fatal error when the ppcp-paylater-configurator module is disabled via code snippet #2327
 * Fix - Apple Pay & Google Pay buttons no longer visible in Standard Payments button previews after moving the configuration to Advanced Card Processing tab #2325
