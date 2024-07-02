@@ -95,11 +95,6 @@ class PayLaterWCBlocksRenderer {
 	) {
 		if ( PayLaterWCBlocksModule::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), $location ) ) {
 
-			/**
-			 * The BN code.
-			 *
-			 * @psalm-suppress UndefinedConstant -- PPCP_PAYPAL_BN_CODE
-			 */
 			$bn_code = PPCP_PAYPAL_BN_CODE;
 
 			$html = '<div id="' . esc_attr( $attributes['ppcpId'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="' . esc_attr( $bn_code ) . '"></div>';

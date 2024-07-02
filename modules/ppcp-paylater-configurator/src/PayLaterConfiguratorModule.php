@@ -113,11 +113,6 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
-				/**
-				 * The BN code.
-				 *
-				 * @psalm-suppress UndefinedConstant -- PPCP_PAYPAL_BN_CODE
-				 */
 				$bn_code = PPCP_PAYPAL_BN_CODE;
 
 				wp_localize_script(

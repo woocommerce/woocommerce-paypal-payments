@@ -818,11 +818,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		 */
 		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
 
-		/**
-		 * The BN code.
-		 *
-		 * @psalm-suppress UndefinedConstant -- PPCP_PAYPAL_BN_CODE
-		 */
 		$bn_code = PPCP_PAYPAL_BN_CODE;
 
 		$messages_placeholder = '<div class="ppcp-messages" data-partner-attribution-id="' . esc_attr( $bn_code ) . '"></div>';
@@ -1546,11 +1541,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$codes = $this->bn_codes();
 
-		/**
-		 * The BN code.
-		 *
-		 * @psalm-suppress UndefinedConstant -- PPCP_PAYPAL_BN_CODE
-		 */
 		$bn_code = PPCP_PAYPAL_BN_CODE;
 
 		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : $bn_code;
@@ -1562,11 +1552,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return array
 	 */
 	private function bn_codes() : array {
-		/**
-		 * The BN code.
-		 *
-		 * @psalm-suppress UndefinedConstant -- PPCP_PAYPAL_BN_CODE
-		 */
+
 		$bn_code = PPCP_PAYPAL_BN_CODE;
 
 		return array(
