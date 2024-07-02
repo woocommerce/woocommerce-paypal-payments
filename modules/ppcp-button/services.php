@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
@@ -149,7 +150,8 @@ return array(
 			$container->get( 'vaulting.vault-v3-enabled' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'button.handle-shipping-in-paypal' )
+			$container->get( 'button.handle-shipping-in-paypal' ),
+			$container->get( 'button.helper.disabled-funding-sources' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
@@ -306,12 +308,10 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
 		$data_store = \WC_Data_Store::load( 'product' );
 		return new CartProductsHelper( $data_store );
 	},
-
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
 		return new ThreeDSecure(
 			$container->get( 'api.factory.card-authentication-result-factory' ),
@@ -323,7 +323,12 @@ return array(
 			$container->get( 'api.shop.country' )
 		);
 	},
-
+	'button.helper.disabled-funding-sources'      => static function ( ContainerInterface $container ): DisabledFundingSources {
+		return new DisabledFundingSources(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.all-funding-sources' )
+		);
+	},
 	'button.is-logged-in'                         => static function ( ContainerInterface $container ): bool {
 		return is_user_logged_in();
 	},
