@@ -1,5 +1,11 @@
 .ppcp-button-googlepay {
 	min-height: 40px;
+
+	.gpay-card-info-container,
+	.gpay-button {
+		outline-offset: -1px;
+		border-radius: var(--apm-button-border-radius);
+	}
 }
 
 .wp-block-woocommerce-checkout, .wp-block-woocommerce-cart {
