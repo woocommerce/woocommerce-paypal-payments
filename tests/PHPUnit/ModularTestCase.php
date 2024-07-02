@@ -54,6 +54,7 @@ class ModularTestCase extends TestCase
 		!defined('CONNECT_WOO_SANDBOX_MERCHANT_ID') && define('CONNECT_WOO_SANDBOX_MERCHANT_ID', 'merchant-id2');
 		!defined('CONNECT_WOO_URL') && define('CONNECT_WOO_URL', 'https://connect.woocommerce.com/ppc');
 		!defined('CONNECT_WOO_SANDBOX_URL') && define('CONNECT_WOO_SANDBOX_URL', 'https://connect.woocommerce.com/ppcsandbox');
+		!defined('PPCP_PAYPAL_BN_CODE') && define('PPCP_PAYPAL_BN_CODE', apply_filters( 'woocommerce_paypal_payments_bn_code', 'Woo_PPCP'));
     }
 
     /**
