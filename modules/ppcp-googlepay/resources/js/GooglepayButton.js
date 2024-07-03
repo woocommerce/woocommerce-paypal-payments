@@ -279,7 +279,7 @@ class GooglepayButton {
             updatedData.total_str = transactionInfo.totalPrice;
 
             // Handle unserviceable address.
-            if(!updatedData.shipping_options || !updatedData.shipping_options.shippingOptions.length) {
+            if (!(updatedData.shipping_options?.shippingOptions?.length)) {
                 paymentDataRequestUpdate.error = this.unserviceableShippingAddressError();
                 resolve(paymentDataRequestUpdate);
                 return;
