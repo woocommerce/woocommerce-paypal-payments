@@ -12,10 +12,6 @@ class PayNowHandler extends BaseHandler {
         return true;
     }
 
-    shippingAllowed() {
-        return false;
-    }
-
     transactionInfo() {
         return new Promise(async (resolve, reject) => {
             const data = this.ppcpConfig['pay_now'];
