@@ -505,6 +505,30 @@ const PayPalComponent = ({
 
     const PayPalButton = paypal.Buttons.driver("react", { React, ReactDOM });
 
+    const getOnShippingOptionsChange = (fundingSource) => {
+        if(fundingSource === 'venmo') {
+            return null;
+        }
+
+        return (data, actions) => {
+            shouldHandleShippingInPayPal()
+                ? handleShippingOptionsChange(data, actions)
+                : null;
+        };
+    }
+
+    const getOnShippingAddressChange = (fundingSource) => {
+        if(fundingSource === 'venmo') {
+            return null;
+        }
+
+        return (data, actions) => {
+            shouldHandleShippingInPayPal()
+                ? handleShippingAddressChange(data, actions)
+                : null;
+        };
+    }
+
     if(isPayPalSubscription(config.scriptData)) {
         return (
             <PayPalButton
@@ -515,16 +539,8 @@ const PayPalComponent = ({
                 onError={onClose}
                 createSubscription={createSubscription}
                 onApprove={handleApproveSubscription}
-                onShippingOptionsChange={(data, actions) => {
-                    shouldHandleShippingInPayPal()
-                        ? handleSubscriptionShippingOptionsChange(data, actions)
-                        : null;
-                }}
-                onShippingAddressChange={(data, actions) => {
-                    shouldHandleShippingInPayPal()
-                        ? handleSubscriptionShippingAddressChange(data, actions)
-                        : null;
-                }}
+                onShippingOptionsChange={getOnShippingOptionsChange(fundingSource)}
+                onShippingAddressChange={getOnShippingAddressChange(fundingSource)}
             />
         );
     }
@@ -538,16 +554,8 @@ const PayPalComponent = ({
             onError={onClose}
             createOrder={createOrder}
             onApprove={handleApprove}
-            onShippingOptionsChange={(data, actions) => {
-                shouldHandleShippingInPayPal()
-                    ? handleShippingOptionsChange(data, actions)
-                    : null;
-            }}
-            onShippingAddressChange={(data, actions) => {
-                shouldHandleShippingInPayPal()
-                    ? handleShippingAddressChange(data, actions)
-                    : null;
-            }}
+            onShippingOptionsChange={getOnShippingOptionsChange(fundingSource)}
+            onShippingAddressChange={getOnShippingAddressChange(fundingSource)}
         />
     );
 }
