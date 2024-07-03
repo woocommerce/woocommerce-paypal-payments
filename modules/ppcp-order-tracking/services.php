@@ -57,7 +57,8 @@ return array(
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
 			$container->get( 'order-tracking.available-carriers' ),
 			$container->get( 'order-tracking.endpoint.controller' ),
-			$container->get( 'order-tracking.should-use-second-version-of-api' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'order-tracking.allowed-shipping-statuses'        => static function ( ContainerInterface $container ): array {

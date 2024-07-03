@@ -216,6 +216,7 @@ return array(
 				CreditCardGateway::ID,
 				CardButtonGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
+				Settings::CONNECTION_TAB_ID,
 			),
 			true
 		);
@@ -1040,7 +1041,6 @@ return array(
 			'bancontact' => _x( 'Bancontact', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'blik'       => _x( 'BLIK', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'eps'        => _x( 'eps', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'giropay'    => _x( 'giropay', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'ideal'      => _x( 'iDEAL', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'mybank'     => _x( 'MyBank', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'p24'        => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),

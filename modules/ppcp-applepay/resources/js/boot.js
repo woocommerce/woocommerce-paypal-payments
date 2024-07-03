@@ -1,6 +1,7 @@
 import {loadCustomScript} from "@paypal/paypal-js";
 import {loadPaypalScript} from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
 import ApplepayManager from "./ApplepayManager";
+import {setupButtonEvents} from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
 (function ({
                buttonConfig,
@@ -15,20 +16,11 @@ import ApplepayManager from "./ApplepayManager";
         manager.init();
     };
 
-    jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
+    setupButtonEvents(function() {
         if (manager) {
             manager.reinit();
         }
     });
-
-    // Use set timeout as it's unnecessary to refresh upon Minicart initial render.
-    setTimeout(() => {
-        jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
-            if (manager) {
-                manager.reinit();
-            }
-        });
-    }, 1000);
 
     document.addEventListener(
         'DOMContentLoaded',
