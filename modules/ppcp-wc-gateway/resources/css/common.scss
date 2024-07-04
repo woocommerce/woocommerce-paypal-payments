@@ -28,6 +28,13 @@ $background-ident-color: #fbfbfb;
 
 .ppcp-button-apm {
 	@include apm-button.button;
+
+	&.ppcp-button-dummy {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #0001;
+	}
 }
 
 .ppcp-status-text {

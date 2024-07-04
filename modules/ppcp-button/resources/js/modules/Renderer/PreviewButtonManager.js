@@ -34,6 +34,7 @@ class PreviewButtonManager {
         this.isEnabled = true;
         this.buttons = {};
         this.apiConfig = null;
+        this.apiError = '';
 
         this.#onInit = new Promise(resolve => {
             this.#onInitResolver = resolve;
@@ -79,6 +80,33 @@ class PreviewButtonManager {
         throw new Error('The "createButtonInstance" method must be implemented by the derived class');
     }
 
+    /**
+     * In case the button SDK could not be loaded from PayPal, we display this dummy button
+     * instead of keeping the preview box empty.
+     *
+     * This dummy is only visible on the admin side, and not rendered on the front-end.
+     *
+     * @todo Consider refactoring this into a new class that extends the PreviewButton class.
+     * @param wrapperId
+     * @return {any}
+     */
+    createDummy(wrapperId) {
+        const elButton = document.createElement('div');
+        elButton.classList.add('ppcp-button-apm', 'ppcp-button-dummy');
+        elButton.innerHTML = `<span>${this.apiError ?? 'Not Available'}</span>`;
+
+        document.querySelector(wrapperId).appendChild(elButton);
+
+        const instDummy = {
+            setDynamic: () => instDummy,
+            setPpcpConfig: () => instDummy,
+            render: () => {},
+            remove: () => {},
+        };
+
+        return instDummy;
+    }
+
     registerEventListeners() {
         jQuery(document).one('DOMContentLoaded', this.bootstrap);
 
@@ -116,7 +144,7 @@ class PreviewButtonManager {
         const MAX_WAIT_TIME = 10000; // Fail, if PayPal SDK is unavailable after 10 seconds.
         const RESOLVE_INTERVAL = 200;
 
-        if (!this.buttonConfig || !widgetBuilder) {
+        if (!this.buttonConfig?.sdk_url || !widgetBuilder) {
             this.error('Button could not be configured.');
             return;
         }
@@ -164,7 +192,13 @@ class PreviewButtonManager {
          (a) the SDK custom-script
          (b) the `widgetBuilder.paypal` object
          */
-        this.apiConfig = await this.fetchConfig(widgetBuilder.paypal);
+        try {
+            this.apiConfig = await this.fetchConfig(widgetBuilder.paypal);
+        } catch (error) {
+            this.apiConfig = null;
+        }
+
+        // Avoid errors when there was a problem with loading the SDK.
         await this.#onInitResolver();
 
         this.#onInit = null;
@@ -184,12 +218,32 @@ class PreviewButtonManager {
             return;
         }
 
+        if (!this.shouldInsertPreviewButton(id)) {
+            return;
+        }
+
         if (!this.buttons[id]) {
             this._addButton(id, ppcpConfig);
         } else {
             // This is a debounced method, that fires after 100ms.
             this._configureAllButtons(ppcpConfig);
         }
+    }
+
+    /**
+     * Determines if the preview box supports the current button.
+     *
+     * When this function returns false, this manager instance does not create a new preview button.
+     *
+     * @param {string} previewId - ID of the inner preview box container.
+     * @return {boolean} True if the box is eligible for the preview button, false otherwise.
+     */
+    shouldInsertPreviewButton(previewId) {
+        const container = document.querySelector(previewId);
+        const box = container.closest('.ppcp-preview');
+        const limit = box.dataset.ppcpPreviewBlock ?? 'all';
+
+        return ('all' === limit) || (this.methodName === limit);
     }
 
     /**
@@ -226,7 +280,14 @@ class PreviewButtonManager {
     _addButton(id, ppcpConfig) {
         const createButton = () => {
             if (!this.buttons[id]) {
-                this.buttons[id] = this.createButtonInstance(id).setButtonConfig(this.buttonConfig);
+                let newInst;
+                if (this.apiConfig && 'object' === typeof this.apiConfig) {
+                    newInst = this.createButtonInstance(id).setButtonConfig(this.buttonConfig);
+                } else {
+                    newInst = this.createDummy(id);
+                }
+
+                this.buttons[id] = newInst;
             }
 
             this._configureButton(id, ppcpConfig);
