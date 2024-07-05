@@ -388,6 +388,9 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscriptions_helper instanceof SubscriptionHelper );
 
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
 				if ( $subscriptions_helper->plugin_is_active() ) {
 					$supports = array(
 						'subscriptions',
@@ -401,6 +404,10 @@ class WcSubscriptionsModule implements ModuleInterface {
 						'subscription_payment_method_change_admin',
 						'multiple_subscriptions',
 					);
+
+					if ( $settings->has( 'subscriptions_mode' ) && $settings->get( 'subscriptions_mode' ) === 'subscriptions_api' ) {
+						$supports[] = 'gateway_scheduled_payments';
+					}
 				}
 
 				return $supports;
