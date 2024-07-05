@@ -64,6 +64,8 @@
     "ddev:install": "ddev composer install && yarn install",
     "ddev:build-js": "ddev yarn build:modules",
     "ddev:watch-js": "ddev yarn watch:modules",
+    "ddev:lint-js": "ddev yarn wp-scripts lint-js",
+    "test:unit-js": "wp-scripts test-unit-js --config ./tests/js/jest.config.json",
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
     "ddev:e2e-tests": "(cp -n .env.e2e.example .env.e2e || true) && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
@@ -96,5 +98,17 @@
     "playwright": "^1.43.0",
     "run-s": "^0.0.0",
     "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@testing-library/dom": "^10.1.0",
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@wordpress/element": "^6.1.0",
+    "@wordpress/scripts": "^28.0.0",
+    "babel-plugin-explicit-exports-references": "^1.0.2",
+    "jquery": "^3.7.1",
+    "react-dom": "^18.3.1"
   }
 }
