@@ -56,6 +56,7 @@ class CompatModule implements ModuleInterface {
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
 		$this->set_elementor_checkout_context();
+		$this->fix_third_party_checkout();
 	}
 
 	/**
@@ -376,6 +377,49 @@ class CompatModule implements ModuleInterface {
 			},
 			10,
 			3
+		);
+	}
+
+	/**
+	 * Addresses issues with third-party checkout plugins.
+	 *
+	 * @return void
+	 */
+	protected function fix_third_party_checkout() : void {
+		// CheckoutWC.
+		add_action(
+			'cfw_checkout_loaded_pre_head',
+			function () {
+				$this->fix_cfw_checkout_page();
+			}
+		);
+	}
+
+	/**
+	 * CheckoutWC.
+	 *
+	 * The plugin renders its own version of the checkout page, regardless of the actual content
+	 * of the page. That custom checkout page uses the logic of a "classic checkout page"; in case
+	 * this website uses the block-checkout, our plugin might return incorrect JS details.
+	 *
+	 * Compat code: Needed to ensure that our JS functions use the classic checkout workflow,
+	 * regardless of the presence of any block-checkout logic.
+	 *
+	 * @return void
+	 */
+	protected function fix_cfw_checkout_page() : void {
+		add_filter(
+			'woocommerce_paypal_payments_context',
+			function ( string $context ) : string {
+				if (
+					function_exists( 'cfw_is_checkout' )
+					&& apply_filters( 'cfw_load_checkout_template', cfw_is_checkout() )
+				) {
+					$context = 'checkout';
+				}
+
+				return $context;
+			}
 		);
 	}
 }
