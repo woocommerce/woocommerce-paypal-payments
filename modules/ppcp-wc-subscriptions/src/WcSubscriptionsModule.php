@@ -382,9 +382,6 @@ class WcSubscriptionsModule implements ModuleInterface {
 	 * @return void
 	 */
 	private function add_gateways_support( ContainerInterface $c ): void {
-		/**
-		 * Add WC Subscriptions plugin support for PayPal gateway.
-		 */
 		add_filter(
 			'woocommerce_paypal_payments_paypal_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
@@ -410,9 +407,6 @@ class WcSubscriptionsModule implements ModuleInterface {
 			}
 		);
 
-		/**
-		 * Add WC Subscriptions plugin support for Credit Card gateway.
-		 */
 		add_filter(
 			'woocommerce_paypal_payments_credit_card_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
@@ -438,9 +432,6 @@ class WcSubscriptionsModule implements ModuleInterface {
 			}
 		);
 
-		/**
-		 * Add WC Subscriptions plugin support for Card Button gateway.
-		 */
 		add_filter(
 			'woocommerce_paypal_payments_card_button_gateway_supports',
 			function ( array $supports ) use ( $c ): array {
