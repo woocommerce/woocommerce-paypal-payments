@@ -49,6 +49,8 @@ class WcSubscriptionsModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$this->add_gateways_support( $c );
+
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
 			/**
@@ -371,5 +373,97 @@ class WcSubscriptionsModule implements ModuleInterface {
 		}
 
 		return $default_fields;
+	}
+
+	/**
+	 * Groups all filters for adding WC Subscriptions gateway support.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @return void
+	 */
+	private function add_gateways_support( ContainerInterface $c ): void {
+		/**
+		 * Add WC Subscriptions plugin support for PayPal gateway.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_paypal_gateway_supports',
+			function ( array $supports ) use ( $c ): array {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				if ( $subscriptions_helper->plugin_is_active() ) {
+					$supports = array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					);
+				}
+
+				return $supports;
+			}
+		);
+
+		/**
+		 * Add WC Subscriptions plugin support for Credit Card gateway.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_credit_card_gateway_supports',
+			function ( array $supports ) use ( $c ): array {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				if ( $subscriptions_helper->plugin_is_active() ) {
+					$supports = array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					);
+				}
+
+				return $supports;
+			}
+		);
+
+		/**
+		 * Add WC Subscriptions plugin support for Card Button gateway.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_card_button_gateway_supports',
+			function ( array $supports ) use ( $c ): array {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				if ( $subscriptions_helper->plugin_is_active() ) {
+					$supports = array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					);
+				}
+
+				return $supports;
+			}
+		);
 	}
 }
