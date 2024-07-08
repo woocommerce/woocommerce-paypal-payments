@@ -980,7 +980,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 */
 	public function dcc_renderer() {
 
-		$id = 'ppcp-hosted-fields';
 		if ( ! $this->can_render_dcc() ) {
 			return;
 		}
@@ -993,12 +992,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
 
 		printf(
-			'<div id="%1$s" style="display:none;">
-						<button type="submit" class="button alt ppcp-dcc-order-button" style="display: none;">%2$s</button>
+			'<div id="ppcp-hosted-fields" style="display:none;">
+						<button id="place_order" type="submit" class="button alt ppcp-dcc-order-button wp-element-button" style="display: none;">%1$s</button>
 					</div>
                     <div id="payments-sdk__contingency-lightbox"></div>
                     <style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
-			esc_attr( $id ),
 			esc_html( $label )
 		);
 	}
