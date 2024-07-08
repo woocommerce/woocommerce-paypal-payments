@@ -87,18 +87,20 @@ const PayPalComponent = ({
 
     const createOrder = async (data, actions) => {
         try {
+            const requestBody = {
+                nonce: config.scriptData.ajax.create_order.nonce,
+                bn_code: '',
+                context: config.scriptData.context,
+                payment_method: 'ppcp-gateway',
+                funding_source: window.ppcpFundingSource ?? 'paypal',
+                createaccount: false,
+                ...(data?.paymentSource && { payment_source: data.paymentSource })
+            };
+
             const res = await fetch(config.scriptData.ajax.create_order.endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
-                body: JSON.stringify({
-                    nonce: config.scriptData.ajax.create_order.nonce,
-                    bn_code: '',
-                    context: config.scriptData.context,
-                    payment_method: 'ppcp-gateway',
-                    funding_source: window.ppcpFundingSource ?? 'paypal',
-                    createaccount: false,
-                    payment_source: data.paymentSource
-                }),
+                body: JSON.stringify(requestBody),
             });
 
             const json = await res.json();

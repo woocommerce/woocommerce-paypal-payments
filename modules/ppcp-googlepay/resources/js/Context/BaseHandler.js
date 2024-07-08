@@ -18,7 +18,8 @@ class BaseHandler {
     }
 
     shippingAllowed() {
-        return true;
+        // Status of the shipping settings in WooCommerce.
+        return this.buttonConfig.shipping.configured;
     }
 
     transactionInfo() {
