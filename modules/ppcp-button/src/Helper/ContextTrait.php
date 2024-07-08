@@ -137,6 +137,10 @@ trait ContextTrait {
 			case $this->is_block_editor():
 				$context = 'block-editor';
 				break;
+
+			case $this->is_paypal_continuation():
+				$context = 'continuation';
+				break;
 		}
 
 		return apply_filters( 'woocommerce_paypal_payments_context', $context );
