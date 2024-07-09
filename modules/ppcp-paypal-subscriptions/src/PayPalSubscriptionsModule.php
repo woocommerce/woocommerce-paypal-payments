@@ -58,6 +58,14 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $product_id ) use ( $c ) {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				$connect_subscription = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
+				if ( ! $subscriptions_helper->plugin_is_active() || $connect_subscription !== 'yes' ) {
+					return;
+				}
+
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
