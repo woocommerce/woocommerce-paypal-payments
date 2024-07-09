@@ -392,7 +392,7 @@ class CompatModule implements ModuleInterface {
 	protected function initialize_nyp_compat_layer(): void {
 		add_filter(
 			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
-			static function( $total, $cart_item ) {
+			static function( string $total, array $cart_item ): string {
 				if ( ! isset( $cart_item['nyp'] ) ) {
 					return $total;
 				}
