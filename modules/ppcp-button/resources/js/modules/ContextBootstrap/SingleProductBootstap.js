@@ -4,9 +4,8 @@ import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
 import {loadPaypalJsScript} from "../Helper/ScriptLoading";
 import {getPlanIdFromVariation} from "../Helper/Subscriptions"
-import SimulateCart from "../Helper/SimulateCart";
-import {strRemoveWord, strAddWord, throttle} from "../Helper/Utils";
-import merge from "deepmerge";
+import {throttle} from "../Helper/Utils";
+import CartSimulator from "../Helper/CartSimulator";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, errorHandler) {
@@ -217,71 +216,7 @@ class SingleProductBootstap {
     }
 
     simulateCart() {
-        if (!this.gateway.simulate_cart.enabled) {
-            return;
-        }
-
-        const actionHandler = new SingleProductActionHandler(
-            null,
-            null,
-            this.form(),
-            this.errorHandler,
-        );
-
-        const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
-            && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
-
-        const products = hasSubscriptions
-            ? actionHandler.getSubscriptionProducts()
-            : actionHandler.getProducts();
-
-        (new SimulateCart(
-            this.gateway.ajax.simulate_cart.endpoint,
-            this.gateway.ajax.simulate_cart.nonce,
-        )).simulate((data) => {
-
-            jQuery(document.body).trigger('ppcp_product_total_updated', [data.total]);
-
-            let newData = {};
-            if (typeof data.button.is_disabled === 'boolean') {
-                newData = merge(newData, {button: {is_disabled: data.button.is_disabled}});
-            }
-            if (typeof data.messages.is_hidden === 'boolean') {
-                newData = merge(newData, {messages: {is_hidden: data.messages.is_hidden}});
-            }
-            if (newData) {
-                BootstrapHelper.updateScriptData(this, newData);
-            }
-
-            if ( this.gateway.single_product_buttons_enabled !== '1' ) {
-                return;
-            }
-
-            let enableFunding = this.gateway.url_params['enable-funding'];
-            let disableFunding = this.gateway.url_params['disable-funding'];
-
-            for (const [fundingSource, funding] of Object.entries(data.funding)) {
-                if (funding.enabled === true) {
-                    enableFunding = strAddWord(enableFunding, fundingSource);
-                    disableFunding = strRemoveWord(disableFunding, fundingSource);
-                } else if (funding.enabled === false) {
-                    enableFunding = strRemoveWord(enableFunding, fundingSource);
-                    disableFunding = strAddWord(disableFunding, fundingSource);
-                }
-            }
-
-            if (
-                (enableFunding !== this.gateway.url_params['enable-funding']) ||
-                (disableFunding !== this.gateway.url_params['disable-funding'])
-            ) {
-                this.gateway.url_params['enable-funding'] = enableFunding;
-                this.gateway.url_params['disable-funding'] = disableFunding;
-                jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
-            }
-
-            this.handleButtonStatus(false);
-
-        }, products);
+        (new CartSimulator(this)).simulate();
     }
 }
 
