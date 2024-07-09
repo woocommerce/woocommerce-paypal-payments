@@ -148,7 +148,7 @@ class AxoModule implements ModuleInterface {
 				$module = $this;
 
 				// Check if the module is applicable, correct country, currency, ... etc.
-				if ( ! $c->get( 'axo.eligible' ) ) {
+				if ( ! $c->get( 'axo.eligible' ) || 'continuation' === $c->get( 'button.context' ) ) {
 					return;
 				}
 
@@ -252,6 +252,8 @@ class AxoModule implements ModuleInterface {
 					}
 				);
 
+				// Add the markup necessary for displaying overlays and loaders for Axo on the checkout page.
+				$this->add_checkout_loader_markup( $c );
 			},
 			1
 		);
@@ -265,9 +267,6 @@ class AxoModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
-
-		// Add the markup necessary for displaying overlays and loaders for Axo on the checkout page.
-		$this->add_checkout_loader_markup( $c );
 	}
 
 	/**
