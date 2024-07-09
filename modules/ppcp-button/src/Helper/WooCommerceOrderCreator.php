@@ -131,6 +131,7 @@ class WooCommerceOrderCreator {
 			}
 
 			$total = $product->get_price() * $quantity;
+			$total = apply_filters( 'woocommerce_paypal_payments_shipping_callback_cart_line_item_total', $total, $cart_item );
 
 			$item->set_name( $product->get_name() );
 			$item->set_subtotal( $total );
