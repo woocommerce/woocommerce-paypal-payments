@@ -24,7 +24,7 @@ class BaseHandler {
     }
 
     shippingAllowed() {
-        return true;
+        return this.buttonConfig.product.needsShipping;
     }
 
     transactionInfo() {
