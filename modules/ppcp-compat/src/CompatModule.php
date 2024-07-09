@@ -368,7 +368,7 @@ class CompatModule implements ModuleInterface {
 		// W3 Total Cache.
 		add_filter(
 			'w3tc_minify_js_do_tag_minification',
-			function( bool $do_tag_minification, string $script_tag, string $file ) {
+			function( bool $do_tag_minification, string $script_tag, $file ) {
 				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
 					return false;
 				}
