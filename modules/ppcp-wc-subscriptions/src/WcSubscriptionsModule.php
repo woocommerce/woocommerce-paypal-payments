@@ -230,6 +230,31 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		// Remove `gateway_scheduled_payments` feature support for non PayPal Subscriptions at subscription level.
+		add_filter(
+			'woocommerce_subscription_payment_gateway_supports',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $is_supported, $feature, $subscription ) {
+				if (
+				$subscription->get_payment_method() === PayPalGateway::ID
+				&& $feature === 'gateway_scheduled_payments'
+				) {
+					$subscription_connected = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+					if ( ! $subscription_connected ) {
+						$is_supported = false;
+					}
+				}
+
+				return $is_supported;
+			},
+			10,
+			3
+		);
 	}
 
 	/**
@@ -403,11 +428,8 @@ class WcSubscriptionsModule implements ModuleInterface {
 						'subscription_payment_method_change_customer',
 						'subscription_payment_method_change_admin',
 						'multiple_subscriptions',
+						'gateway_scheduled_payments',
 					);
-
-					if ( $settings->has( 'subscriptions_mode' ) && $settings->get( 'subscriptions_mode' ) === 'subscriptions_api' ) {
-						$supports[] = 'gateway_scheduled_payments';
-					}
 				}
 
 				return $supports;
