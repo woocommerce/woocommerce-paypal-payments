@@ -100,6 +100,9 @@ class GatewayWithoutPayPalAdminNotice {
 	public function message(): ?Message {
 		$notice_type = $this->check();
 
+		$url1 = '';
+		$url2 = '';
+
 		switch ( $notice_type ) {
 			case self::NOTICE_DISABLED_GATEWAY:
 				/* translators: %1$s the gateway name, %2$s URL. */
