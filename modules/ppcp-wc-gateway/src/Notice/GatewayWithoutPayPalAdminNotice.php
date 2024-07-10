@@ -19,9 +19,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
  * Creates the admin message about the gateway being enabled without the PayPal gateway.
  */
 class GatewayWithoutPayPalAdminNotice {
-	private const NOTICE_OK                = '';
-	private const NOTICE_DISABLED_GATEWAY  = 'disabled_gateway';
-	private const NOTICE_DISABLED_LOCATION = 'disabled_location';
+	private const NOTICE_OK                   = '';
+	private const NOTICE_DISABLED_GATEWAY     = 'disabled_gateway';
+	private const NOTICE_DISABLED_LOCATION    = 'disabled_location';
 	private const NOTICE_DISABLED_CARD_BUTTON = 'disabled_card';
 
 	/**
@@ -138,17 +138,17 @@ class GatewayWithoutPayPalAdminNotice {
 
 		$name = $gateway->get_method_title();
 
+		$message = sprintf(
+			$text,
+			$name,
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
+		);
+
 		if ( $notice_type === self::NOTICE_DISABLED_CARD_BUTTON ) {
 			$message = sprintf(
 				$text,
 				$url1,
 				$url2
-			);
-		} else {
-			$message = sprintf(
-				$text,
-				$name,
-				admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 			);
 		}
 
