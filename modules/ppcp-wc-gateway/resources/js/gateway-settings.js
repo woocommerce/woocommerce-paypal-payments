@@ -125,10 +125,6 @@ document.addEventListener(
         }
 
         function shouldDisableCardButton() {
-            if (currentTabId() === 'ppcp-card-button-gateway') {
-                return false;
-            }
-
             return PayPalCommerceGatewaySettings.is_acdc_enabled || jQuery('#ppcp-allow_card_button_gateway').is(':checked');
         }
 
@@ -157,6 +153,11 @@ document.addEventListener(
             }
 
             if (shouldDisableCardButton()) {
+                const standardCardButtonInput = document.querySelector('#woocommerce_ppcp-card-button-gateway_enabled');
+                if (standardCardButtonInput) {
+                    standardCardButtonInput.disabled = true;
+                }
+
                 disabledSources = disabledSources.concat('card');
             }
 
