@@ -1,5 +1,5 @@
 === WooCommerce PayPal Payments ===
-Contributors: woocommerce, automattic, inpsyde
+Contributors: woocommerce, automattic, syde
 Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
 Tested up to: 6.5
