@@ -96,21 +96,21 @@ class OnboardingAssets {
 	 */
 	public function register(): bool {
 
-		$url = untrailingslashit( $this->module_url ) . '/assets/css/onboarding.css';
 		wp_register_style(
 			'ppcp-onboarding',
-			$url,
+			$this->module_url . '/assets/css/onboarding.css',
 			array(),
 			$this->version
 		);
-		$url = untrailingslashit( $this->module_url ) . '/assets/js/settings.js';
+
 		wp_register_script(
 			'ppcp-settings',
-			$url,
+			$this->module_url . '/assets/js/settings.js',
 			array(),
 			$this->version,
 			true
 		);
+
 		wp_localize_script(
 			'ppcp-settings',
 			'PayPalCommerceSettings',
@@ -122,14 +122,14 @@ class OnboardingAssets {
 			)
 		);
 
-		$url = untrailingslashit( $this->module_url ) . '/assets/js/onboarding.js';
 		wp_register_script(
 			'ppcp-onboarding',
-			$url,
+			$this->module_url . '/assets/js/onboarding.js',
 			array( 'jquery' ),
 			$this->version,
 			true
 		);
+
 		wp_localize_script(
 			'ppcp-onboarding',
 			'PayPalCommerceGatewayOnboarding',
@@ -164,17 +164,22 @@ class OnboardingAssets {
 	/**
 	 * Enqueues the necessary scripts.
 	 *
-	 * @return bool
+	 * @return void
 	 */
-	public function enqueue(): bool {
-		wp_enqueue_style( 'ppcp-onboarding' );
-		wp_enqueue_script( 'ppcp-settings' );
-		if ( ! $this->should_render_onboarding_script() ) {
-			return false;
+	public function enqueue(): void {
+		// Do not enqueue anything when we are not on a PayPal Payments settings tab.
+		if ( ! $this->page_id ) {
+			return;
 		}
 
-		wp_enqueue_script( 'ppcp-onboarding' );
-		return true;
+		// Enqueue general assets for the plugin's settings page.
+		wp_enqueue_script( 'ppcp-settings' );
+		wp_enqueue_style( 'ppcp-onboarding' ); // File also contains general settings styles.
+
+		// Conditionally enqueue the onboarding script, when needed.
+		if ( $this->should_render_onboarding_script() ) {
+			wp_enqueue_script( 'ppcp-onboarding' );
+		}
 	}
 
 	/**
