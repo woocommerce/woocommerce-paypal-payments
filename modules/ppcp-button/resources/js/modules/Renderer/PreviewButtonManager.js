@@ -95,7 +95,7 @@ class PreviewButtonManager {
 	 */
 	createDummy( wrapperId ) {
 		const elButton = document.createElement( 'div' );
-		elButton.classList.add( 'ppcp-button-apm', 'ppcp-button-dummy' );
+		elButton.classList.add( 'ppcp-preview-button', 'ppcp-button-dummy' );
 		elButton.innerHTML = `<span>${
 			this.apiError ?? 'Not Available'
 		}</span>`;

@@ -30,7 +30,7 @@ class PreviewButton {
 	 */
 	createNewWrapper() {
 		const previewId = this.selector.replace( '#', '' );
-		const previewClass = 'ppcp-button-apm';
+		const previewClass = 'ppcp-preview-button';
 
 		return jQuery( `<div id='${ previewId }' class='${ previewClass }'>` );
 	}
