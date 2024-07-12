@@ -27,6 +27,7 @@ define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
 define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2024-06-25' );
+define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
 ! defined( 'CONNECT_WOO_SANDBOX_CLIENT_ID' ) && define( 'CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_' );
@@ -34,8 +35,6 @@ define( 'PAYPAL_INTEGRATION_DATE', '2024-06-25' );
 ! defined( 'CONNECT_WOO_SANDBOX_MERCHANT_ID' ) && define( 'CONNECT_WOO_SANDBOX_MERCHANT_ID', 'MPMFHQTVMBZ6G' );
 ! defined( 'CONNECT_WOO_URL' ) && define( 'CONNECT_WOO_URL', 'https://api.woocommerce.com/integrations/ppc' );
 ! defined( 'CONNECT_WOO_SANDBOX_URL' ) && define( 'CONNECT_WOO_SANDBOX_URL', 'https://api.woocommerce.com/integrations/ppcsandbox' );
-
-! defined( 'PPCP_PAYPAL_BN_CODE' ) && define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ( function () {
 	$autoload_filepath = __DIR__ . '/vendor/autoload.php';
