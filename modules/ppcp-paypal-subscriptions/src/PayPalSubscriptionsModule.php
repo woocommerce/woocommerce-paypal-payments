@@ -107,7 +107,13 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 					return $passed_validation;
 				}
 
-				$product  = wc_get_product( $product_id );
+				$product = wc_get_product( $product_id );
+
+				if ( ! ( is_a( $product, WC_Product::class ) ) ) {
+					wc_add_notice( __( 'Cannot add this product to cart (invalid product).', 'woocommerce-paypal-payments' ), 'error' );
+					return false;
+				}
+
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
