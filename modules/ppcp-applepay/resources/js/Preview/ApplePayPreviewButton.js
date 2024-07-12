@@ -1,5 +1,5 @@
 import ApplepayButton from '../ApplepayButton';
-import PreviewButton from '../../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
+import PreviewButton from '../../../../ppcp-button/resources/js/modules/Preview/PreviewButton';
 
 /**
  * A single Apple Pay preview button instance.
@@ -19,10 +19,10 @@ export default class ApplePayPreviewButton extends PreviewButton {
 	}
 
 	createNewWrapper() {
-		const element = super.createNewWrapper();
-		element.addClass( 'ppcp-button-apm ppcp-button-applepay' );
+		const wrapper = super.createNewWrapper();
+		wrapper.classList.add( 'ppcp-button-apm', 'ppcp-button-applepay' );
 
-		return element;
+		return wrapper;
 	}
 
 	createButton( buttonConfig ) {

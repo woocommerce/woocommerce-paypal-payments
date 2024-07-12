@@ -1,4 +1,4 @@
-import PreviewButtonManager from '../../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
+import PreviewButtonManager from '../../../../ppcp-button/resources/js/modules/Preview/PreviewButtonManager';
 import GooglePayPreviewButton from './GooglePayPreviewButton';
 
 /**

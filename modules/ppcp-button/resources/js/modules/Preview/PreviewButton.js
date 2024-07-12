@@ -26,13 +26,16 @@ class PreviewButton {
 	/**
 	 * Creates a new DOM node to contain the preview button.
 	 *
-	 * @return {jQuery} Always a single jQuery element with the new DOM node.
+	 * @return {HTMLElement} Always a single jQuery element with the new DOM node.
 	 */
 	createNewWrapper() {
+		const wrapper = document.createElement( 'div' );
 		const previewId = this.selector.replace( '#', '' );
 		const previewClass = 'ppcp-preview-button';
 
-		return jQuery( `<div id='${ previewId }' class='${ previewClass }'>` );
+		wrapper.setAttribute( 'id', previewId );
+		wrapper.setAttribute( 'class', previewClass );
+		return wrapper;
 	}
 
 	/**
@@ -109,10 +112,12 @@ class PreviewButton {
 				console.error( 'Skip render, button is not configured yet' );
 				return;
 			}
+
 			this.domWrapper = this.createNewWrapper();
-			this.domWrapper.insertAfter( this.wrapper );
+			this._insertWrapper();
 		} else {
-			this.domWrapper.empty().show();
+			this._emptyWrapper();
+			this._showWrapper();
 		}
 
 		this.isVisible = true;
@@ -151,15 +156,37 @@ class PreviewButton {
 		 * Using a timeout here will make the button visible again at the end of the current
 		 * event queue.
 		 */
-		setTimeout( () => this.domWrapper.show() );
+		setTimeout( () => this._showWrapper() );
 	}
 
 	remove() {
 		this.isVisible = false;
 
 		if ( this.domWrapper ) {
-			this.domWrapper.hide().empty();
+			this._hideWrapper();
+			this._emptyWrapper();
 		}
+	}
+
+	_showWrapper() {
+		this.domWrapper.style.display = '';
+	}
+
+	_hideWrapper() {
+		this.domWrapper.style.display = 'none';
+	}
+
+	_emptyWrapper() {
+		this.domWrapper.innerHTML = '';
+	}
+
+	_insertWrapper() {
+		const wrapperElement = document.querySelector( this.wrapper );
+
+		wrapperElement.parentNode.insertBefore(
+			this.domWrapper,
+			wrapperElement.nextSibling
+		);
 	}
 }
 

@@ -1,5 +1,5 @@
 import GooglepayButton from '../GooglepayButton';
-import PreviewButton from '../../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
+import PreviewButton from '../../../../ppcp-button/resources/js/modules/Preview/PreviewButton';
 
 /**
  * A single GooglePay preview button instance.
@@ -21,10 +21,10 @@ export default class GooglePayPreviewButton extends PreviewButton {
 	}
 
 	createNewWrapper() {
-		const element = super.createNewWrapper();
-		element.addClass( 'ppcp-button-apm ppcp-button-googlepay' );
+		const wrapper = super.createNewWrapper();
+		wrapper.classList.add( 'ppcp-button-apm', 'ppcp-button-googlepay' );
 
-		return element;
+		return wrapper;
 	}
 
 	createButton( buttonConfig ) {
