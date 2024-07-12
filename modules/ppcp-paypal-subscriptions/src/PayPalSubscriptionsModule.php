@@ -107,36 +107,32 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 					return $passed_validation;
 				}
 
-				$product = wc_get_product( $product_id );
-
+				$product  = wc_get_product( $product_id );
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$subscriptions_mode     = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$is_paypal_subscription = static function ( $product ) use ( $subscriptions_mode ): bool {
+					return $product &&
+						in_array( $product->get_type(), array( 'subscription', 'variable-subscription' ), true ) &&
+						'subscriptions_api' === $subscriptions_mode &&
+						$product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes';
+				};
 
-				if ( 'subscriptions_api' !== $subscriptions_mode ) {
-					if ( $product && $product->get_sold_individually() ) {
-						$product->set_sold_individually( false );
-						$product->save();
-					}
-
-					return $passed_validation;
-				}
-
-				if ( $product && $product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
+				if ( $is_paypal_subscription( $product ) ) {
 					if ( ! $product->get_sold_individually() ) {
 						$product->set_sold_individually( true );
 						$product->save();
 					}
 
-					wc_add_notice( __( 'You cannot add a subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
+					wc_add_notice( __( 'You cannot add a PayPal Subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
 					return false;
 				}
 
-				foreach ( WC()->cart->get_cart() as $cart_item_key => $cart_item ) {
+				foreach ( WC()->cart->get_cart() as $cart_item ) {
 					$cart_product = wc_get_product( $cart_item['product_id'] );
-					if ( $cart_product && $cart_product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes' ) {
-						wc_add_notice( __( 'You can only have one subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
+					if ( $is_paypal_subscription( $cart_product ) ) {
+						wc_add_notice( __( 'You can only have one PayPal Subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
 						return false;
 					}
 				}
