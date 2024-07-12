@@ -1,4 +1,3 @@
-import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
@@ -7,7 +6,7 @@ import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/A
 
 class GooglepayButton {
 
-    constructor(context, externalHandler, buttonConfig, ppcpConfig) {
+    constructor(context, externalHandler, buttonConfig, ppcpConfig, contextHandler) {
         apmButtonsInit(ppcpConfig);
 
         this.isInitialized = false;
@@ -16,24 +15,18 @@ class GooglepayButton {
         this.externalHandler = externalHandler;
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
+        this.contextHandler = contextHandler;
 
         this.paymentsClient = null;
 
-        this.contextHandler = ContextHandlerFactory.create(
-            this.context,
-            this.buttonConfig,
-            this.ppcpConfig,
-            this.externalHandler
-        );
-
         this.log = function() {
-            if ( this.buttonConfig.is_debug ) {
+            if (this.buttonConfig.is_debug) {
                 //console.log('[GooglePayButton]', ...arguments);
             }
         }
     }
 
-    init(config) {
+    init(config, transactionInfo) {
         if (this.isInitialized) {
             return;
         }
@@ -48,6 +41,7 @@ class GooglepayButton {
         }
 
         this.googlePayConfig = config;
+        this.transactionInfo = transactionInfo;
         this.allowedPaymentMethods = config.allowedPaymentMethods;
         this.baseCardPaymentMethod = this.allowedPaymentMethods[0];
 
@@ -73,16 +67,16 @@ class GooglepayButton {
         }
 
         this.isInitialized = false;
-        this.init(this.googlePayConfig);
+        this.init(this.googlePayConfig, this.transactionInfo);
     }
 
     validateConfig() {
-        if ( ['PRODUCTION', 'TEST'].indexOf(this.buttonConfig.environment) === -1) {
+        if (['PRODUCTION', 'TEST'].indexOf(this.buttonConfig.environment) === -1) {
             console.error('[GooglePayButton] Invalid environment.', this.buttonConfig.environment);
             return false;
         }
 
-        if ( !this.contextHandler ) {
+        if (!this.contextHandler) {
             console.error('[GooglePayButton] Invalid context handler.', this.contextHandler);
             return false;
         }
@@ -125,7 +119,7 @@ class GooglepayButton {
             onPaymentAuthorized: this.onPaymentAuthorized.bind(this)
         }
 
-        if ( this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed() ) {
+        if (this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed()) {
             callbacks['onPaymentDataChanged'] = this.onPaymentDataChanged.bind(this);
         }
 
@@ -218,7 +212,7 @@ class GooglepayButton {
     async onButtonClick() {
         this.log('onButtonClick', this.context);
 
-        const paymentDataRequest = await this.paymentDataRequest();
+        const paymentDataRequest = this.paymentDataRequest();
         this.log('onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
 
         window.ppcpFundingSource = 'googlepay'; // Do this on another place like on create order endpoint handler.
@@ -226,7 +220,7 @@ class GooglepayButton {
         this.paymentsClient.loadPaymentData(paymentDataRequest);
     }
 
-    async paymentDataRequest() {
+    paymentDataRequest() {
         let baseRequest = {
             apiVersion: 2,
             apiVersionMinor: 0
@@ -235,11 +229,11 @@ class GooglepayButton {
         const googlePayConfig = this.googlePayConfig;
         const paymentDataRequest = Object.assign({}, baseRequest);
         paymentDataRequest.allowedPaymentMethods = googlePayConfig.allowedPaymentMethods;
-        paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
+        paymentDataRequest.transactionInfo = this.transactionInfo;
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
 
-        if ( this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed() ) {
-            paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
+        if (this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed()) {
+            paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS", "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
             paymentDataRequest.shippingAddressRequired = true;
             paymentDataRequest.shippingAddressParameters = this.shippingAddressParameters();
             paymentDataRequest.shippingOptionRequired = true;
@@ -266,37 +260,42 @@ class GooglepayButton {
         this.log('paymentData', paymentData);
 
         return new Promise(async (resolve, reject) => {
-            let paymentDataRequestUpdate = {};
+            try {
+                let paymentDataRequestUpdate = {};
 
-            const updatedData = await (new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)).update(paymentData);
-            const transactionInfo = await this.contextHandler.transactionInfo();
+                const updatedData = await (new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)).update(paymentData);
+                const transactionInfo = this.transactionInfo;
 
-            this.log('onPaymentDataChanged:updatedData', updatedData);
-            this.log('onPaymentDataChanged:transactionInfo', transactionInfo);
+                this.log('onPaymentDataChanged:updatedData', updatedData);
+                this.log('onPaymentDataChanged:transactionInfo', transactionInfo);
 
-            updatedData.country_code = transactionInfo.countryCode;
-            updatedData.currency_code = transactionInfo.currencyCode;
-            updatedData.total_str = transactionInfo.totalPrice;
+                updatedData.country_code = transactionInfo.countryCode;
+                updatedData.currency_code = transactionInfo.currencyCode;
+                updatedData.total_str = transactionInfo.totalPrice;
 
-            // Handle unserviceable address.
-            if (!(updatedData.shipping_options?.shippingOptions?.length)) {
-                paymentDataRequestUpdate.error = this.unserviceableShippingAddressError();
+                // Handle unserviceable address.
+                if (!(updatedData.shipping_options?.shippingOptions?.length)) {
+                    paymentDataRequestUpdate.error = this.unserviceableShippingAddressError();
+                    resolve(paymentDataRequestUpdate);
+                    return;
+                }
+
+                switch (paymentData.callbackTrigger) {
+                    case 'INITIALIZE':
+                    case 'SHIPPING_ADDRESS':
+                        paymentDataRequestUpdate.newShippingOptionParameters = updatedData.shipping_options;
+                        paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
+                        break;
+                    case 'SHIPPING_OPTION':
+                        paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
+                        break;
+                }
+
                 resolve(paymentDataRequestUpdate);
-                return;
+            } catch(error) {
+                console.error('Error during onPaymentDataChanged:', error);
+                reject(error);
             }
-
-            switch (paymentData.callbackTrigger) {
-                case 'INITIALIZE':
-                case 'SHIPPING_ADDRESS':
-                    paymentDataRequestUpdate.newShippingOptionParameters = updatedData.shipping_options;
-                    paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
-                    break;
-                case 'SHIPPING_OPTION':
-                    paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
-                    break;
-            }
-
-            resolve(paymentDataRequestUpdate);
         });
     }
 
