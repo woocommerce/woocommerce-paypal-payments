@@ -1165,11 +1165,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				),
 				'update_customer_shipping'       => array(
 					'shipping_options'       => array(
-						'endpoint' => home_url( UpdateShippingEndpoint::WC_STORE_API_ENDPOINT . 'select-shipping-rate'),
+						'endpoint' => home_url( UpdateShippingEndpoint::WC_STORE_API_ENDPOINT . 'select-shipping-rate' ),
 					),
 					'shipping_address'       => array(
 						'cart_endpoint'            => home_url( UpdateShippingEndpoint::WC_STORE_API_ENDPOINT ),
-						'update_customer_endpoint' => home_url( UpdateShippingEndpoint::WC_STORE_API_ENDPOINT . 'update-customer'),
+						'update_customer_endpoint' => home_url( UpdateShippingEndpoint::WC_STORE_API_ENDPOINT . 'update-customer' ),
 					),
 					'wp_rest_nonce'          => wp_create_nonce( 'wc_store_api' ),
 					'update_shipping_method' => \WC_AJAX::get_endpoint( 'update_shipping_method' ),
