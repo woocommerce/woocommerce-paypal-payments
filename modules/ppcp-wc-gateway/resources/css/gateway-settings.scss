@@ -1,56 +1,78 @@
+.ppcp-settings-field-preview {
+	position: relative;
+
+	> td {
+		position: relative;
+		padding-left: 0;
+		padding-right: 0;
+	}
+}
+
 .ppcp-preview {
-	width: 350px;
+	width: var(--box-width, 100%);
 	padding: 15px;
 	border: 1px solid lightgray;
 	background: #eeeeef;
 	border-radius: 15px;
 	box-shadow: 0 2px 10px 1px #ddd;
-	margin-right: -28px;
-
-	// Preview box showing a single button.
-	&[data-ppcp-apm-preview] {
-		height: 82px;
-
-		@media (min-width: 1200px) {
-			margin-top: -149px;
-		}
-
-		@media (min-width: 601px) and (max-width: 1399px) {
-			margin-right: 10px;
-		}
-	}
+	margin-right: 0;
+	box-sizing: border-box;
 
 	h4 {
 		margin-top: 0;
 	}
 
+	@media (min-width: 601px) {
+		--box-width: 382px;
+	}
+
+	@media (max-width: 782px) {
+		margin-top: 16px;
+	}
+
 	@media (min-width: 1200px) {
 		float: right;
 		margin-top: -300px;
+		max-width: calc(100vw - 850px);
 	}
 
 	@media (min-width: 1400px) {
-		margin-right: 13%;
+		margin-right: 12%;
 	}
 
 	@media (min-width: 2000px) {
-		margin-right: 42%;
+		margin-right: 41%;
 	}
 
-	@media (max-width: 600px) {
-		width: auto;
-		margin-right: 0px;
-	}
-}
+	// Align the preview box to the bottom of the form row and expand it upwards.
+	// (The default layout above expands the box downwards)
+	&.align-bottom {
+		@media (min-width: 1200px) {
+			position: absolute;
+			margin: 0;
+			right: 0;
+			bottom: 30px;
+		}
 
-.ppcp-button-preview.pay-later {
-	@media (min-width: 1200px) {
-		margin-top: -250px;
-	}
-}
+		@media (min-width: 1400px) {
+			right: 13%;
+		}
 
-.ppcp-button-preview.pay-later.disabled {
-	@media (min-width: 1200px) {
-		margin-top: -152px;
+		@media (min-width: 2000px) {
+			right: 42%;
+		}
+	}
+
+	// Preview box showing a single button, that is displayed inside a "frame".
+	&.ppcp-preview-single {
+		@media (min-width: 1200px) {
+			margin-right: 20px;
+			bottom: 50px;
+			max-width: calc(100vw - 880px);
+		}
+
+		@media (min-width: 1400px) {
+			margin-right: -20px;
+		}
 	}
 }

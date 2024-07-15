@@ -185,29 +185,15 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->order_button_text           = $place_order_button_text;
 
-		$this->supports = array(
-			'refunds',
+		$default_support = array(
 			'products',
+			'refunds',
 		);
 
-		if (
-			( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) )
-			|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
-		) {
-			array_push(
-				$this->supports,
-				'subscriptions',
-				'subscription_cancellation',
-				'subscription_suspension',
-				'subscription_reactivation',
-				'subscription_amount_changes',
-				'subscription_date_changes',
-				'subscription_payment_method_change',
-				'subscription_payment_method_change_customer',
-				'subscription_payment_method_change_admin',
-				'multiple_subscriptions'
-			);
-		}
+		$this->supports = array_merge(
+			$default_support,
+			apply_filters( 'woocommerce_paypal_payments_card_button_gateway_supports', array() )
+		);
 
 		$this->method_title       = __( 'Standard Card Button', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'The separate payment gateway with the card button. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' );

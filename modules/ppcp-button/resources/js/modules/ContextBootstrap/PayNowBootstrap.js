@@ -1,18 +1,18 @@
-import CheckoutBootstap from './CheckoutBootstap'
-import {isChangePaymentPage} from "../Helper/Subscriptions";
+import CheckoutBootstap from './CheckoutBootstap';
+import { isChangePaymentPage } from '../Helper/Subscriptions';
 
 class PayNowBootstrap extends CheckoutBootstap {
-    constructor(gateway, renderer, spinner, errorHandler) {
-        super(gateway, renderer, spinner, errorHandler)
-    }
+	constructor( gateway, renderer, spinner, errorHandler ) {
+		super( gateway, renderer, spinner, errorHandler );
+	}
 
-    updateUi() {
-        if (isChangePaymentPage()) {
-            return
-        }
+	updateUi() {
+		if ( isChangePaymentPage() ) {
+			return;
+		}
 
-        super.updateUi();
-    }
+		super.updateUi();
+	}
 }
 
 export default PayNowBootstrap;

@@ -2,326 +2,414 @@ import MiniCartBootstap from './modules/ContextBootstrap/MiniCartBootstap';
 import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBootstap';
 import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
 import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
-import PayNowBootstrap from "./modules/ContextBootstrap/PayNowBootstrap";
+import PayNowBootstrap from './modules/ContextBootstrap/PayNowBootstrap';
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
-import HostedFieldsRenderer from "./modules/Renderer/HostedFieldsRenderer";
-import CardFieldsRenderer from "./modules/Renderer/CardFieldsRenderer";
-import MessageRenderer from "./modules/Renderer/MessageRenderer";
-import Spinner from "./modules/Helper/Spinner";
+import HostedFieldsRenderer from './modules/Renderer/HostedFieldsRenderer';
+import CardFieldsRenderer from './modules/Renderer/CardFieldsRenderer';
+import MessageRenderer from './modules/Renderer/MessageRenderer';
+import Spinner from './modules/Helper/Spinner';
 import {
-    getCurrentPaymentMethod,
-    ORDER_BUTTON_SELECTOR,
-    PaymentMethods
-} from "./modules/Helper/CheckoutMethodState";
-import {setVisibleByClass} from "./modules/Helper/Hiding";
-import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
-import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
+	getCurrentPaymentMethod,
+	ORDER_BUTTON_SELECTOR,
+	PaymentMethods,
+} from './modules/Helper/CheckoutMethodState';
+import { setVisibleByClass } from './modules/Helper/Hiding';
+import { isChangePaymentPage } from './modules/Helper/Subscriptions';
+import FreeTrialHandler from './modules/ActionHandler/FreeTrialHandler';
+import MultistepCheckoutHelper from './modules/Helper/MultistepCheckoutHelper';
 import FormSaver from './modules/Helper/FormSaver';
-import FormValidator from "./modules/Helper/FormValidator";
-import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
-import buttonModuleWatcher from "./modules/ButtonModuleWatcher";
-import MessagesBootstrap from "./modules/ContextBootstrap/MessagesBootstap";
-import {apmButtonsInit} from "./modules/Helper/ApmButtons";
+import FormValidator from './modules/Helper/FormValidator';
+import { loadPaypalScript } from './modules/Helper/ScriptLoading';
+import buttonModuleWatcher from './modules/ButtonModuleWatcher';
+import MessagesBootstrap from './modules/ContextBootstrap/MessagesBootstap';
+import { apmButtonsInit } from './modules/Helper/ApmButtons';
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
-const buttonsSpinner = new Spinner(document.querySelector('.ppc-button-wrapper'));
-const cardsSpinner = new Spinner('#ppcp-hosted-fields');
+const buttonsSpinner = new Spinner(
+	document.querySelector( '.ppc-button-wrapper' )
+);
+const cardsSpinner = new Spinner( '#ppcp-hosted-fields' );
 
 const bootstrap = () => {
-    const checkoutFormSelector = 'form.woocommerce-checkout';
+	const checkoutFormSelector = 'form.woocommerce-checkout';
 
-    const context = PayPalCommerceGateway.context;
+	const context = PayPalCommerceGateway.context;
 
-    const errorHandler = new ErrorHandler(
-        PayPalCommerceGateway.labels.error.generic,
-        document.querySelector(checkoutFormSelector) ?? document.querySelector('.woocommerce-notices-wrapper')
-    );
-    const spinner = new Spinner();
+	const errorHandler = new ErrorHandler(
+		PayPalCommerceGateway.labels.error.generic,
+		document.querySelector( checkoutFormSelector ) ??
+			document.querySelector( '.woocommerce-notices-wrapper' )
+	);
+	const spinner = new Spinner();
 
-    const formSaver = new FormSaver(
-        PayPalCommerceGateway.ajax.save_checkout_form.endpoint,
-        PayPalCommerceGateway.ajax.save_checkout_form.nonce,
-    );
+	const formSaver = new FormSaver(
+		PayPalCommerceGateway.ajax.save_checkout_form.endpoint,
+		PayPalCommerceGateway.ajax.save_checkout_form.nonce
+	);
 
-    const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
-        new FormValidator(
-            PayPalCommerceGateway.ajax.validate_checkout.endpoint,
-            PayPalCommerceGateway.ajax.validate_checkout.nonce,
-    ) : null;
+	const formValidator =
+		PayPalCommerceGateway.early_checkout_validation_enabled
+			? new FormValidator(
+					PayPalCommerceGateway.ajax.validate_checkout.endpoint,
+					PayPalCommerceGateway.ajax.validate_checkout.nonce
+			  )
+			: null;
 
-    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, checkoutFormSelector, formSaver, formValidator, spinner, errorHandler);
+	const freeTrialHandler = new FreeTrialHandler(
+		PayPalCommerceGateway,
+		checkoutFormSelector,
+		formSaver,
+		formValidator,
+		spinner,
+		errorHandler
+	);
 
-    jQuery('form.woocommerce-checkout input').on('keydown', e => {
-        if (e.key === 'Enter' && [
-            PaymentMethods.PAYPAL,
-            PaymentMethods.CARDS,
-            PaymentMethods.CARD_BUTTON,
-        ].includes(getCurrentPaymentMethod())) {
-            e.preventDefault();
-        }
-    });
+	new MultistepCheckoutHelper( checkoutFormSelector );
 
-    const hasMessages = () => {
-        return PayPalCommerceGateway.messages.is_hidden === false
-            && document.querySelector(PayPalCommerceGateway.messages.wrapper);
-    }
+	jQuery( 'form.woocommerce-checkout input' ).on( 'keydown', ( e ) => {
+		if (
+			e.key === 'Enter' &&
+			[
+				PaymentMethods.PAYPAL,
+				PaymentMethods.CARDS,
+				PaymentMethods.CARD_BUTTON,
+			].includes( getCurrentPaymentMethod() )
+		) {
+			e.preventDefault();
+		}
+	} );
 
-    const doBasicCheckoutValidation = () => {
-        if (PayPalCommerceGateway.basic_checkout_validation_enabled) {
-            // A quick fix to get the errors about empty form fields before attempting PayPal order,
-            // it should solve #513 for most of the users, but it is not a proper solution.
-            // Currently it is disabled by default because a better solution is now implemented
-            // (see woocommerce_paypal_payments_basic_checkout_validation_enabled,
-            // woocommerce_paypal_payments_early_wc_checkout_validation_enabled filters).
-            const invalidFields = Array.from(jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible'));
-            if (invalidFields.length) {
-                const billingFieldsContainer = document.querySelector('.woocommerce-billing-fields');
-                const shippingFieldsContainer = document.querySelector('.woocommerce-shipping-fields');
+	const hasMessages = () => {
+		return (
+			PayPalCommerceGateway.messages.is_hidden === false &&
+			document.querySelector( PayPalCommerceGateway.messages.wrapper )
+		);
+	};
 
-                const nameMessageMap = PayPalCommerceGateway.labels.error.required.elements;
-                const messages = invalidFields.map(el => {
-                    const name = el.querySelector('[name]')?.getAttribute('name');
-                    if (name && name in nameMessageMap) {
-                        return nameMessageMap[name];
-                    }
-                    let label = el.querySelector('label').textContent
-                        .replaceAll('*', '')
-                        .trim();
-                    if (billingFieldsContainer?.contains(el)) {
-                        label = PayPalCommerceGateway.labels.billing_field.replace('%s', label);
-                    }
-                    if (shippingFieldsContainer?.contains(el)) {
-                        label = PayPalCommerceGateway.labels.shipping_field.replace('%s', label);
-                    }
-                    return PayPalCommerceGateway.labels.error.required.field
-                        .replace('%s', `<strong>${label}</strong>`)
-                }).filter(s => s.length > 2);
+	const doBasicCheckoutValidation = () => {
+		if ( PayPalCommerceGateway.basic_checkout_validation_enabled ) {
+			// A quick fix to get the errors about empty form fields before attempting PayPal order,
+			// it should solve #513 for most of the users, but it is not a proper solution.
+			// Currently it is disabled by default because a better solution is now implemented
+			// (see woocommerce_paypal_payments_basic_checkout_validation_enabled,
+			// woocommerce_paypal_payments_early_wc_checkout_validation_enabled filters).
+			const invalidFields = Array.from(
+				jQuery(
+					'form.woocommerce-checkout .validate-required.woocommerce-invalid:visible'
+				)
+			);
+			if ( invalidFields.length ) {
+				const billingFieldsContainer = document.querySelector(
+					'.woocommerce-billing-fields'
+				);
+				const shippingFieldsContainer = document.querySelector(
+					'.woocommerce-shipping-fields'
+				);
 
-                errorHandler.clear();
-                if (messages.length) {
-                    errorHandler.messages(messages);
-                } else {
-                    errorHandler.message(PayPalCommerceGateway.labels.error.required.generic);
-                }
+				const nameMessageMap =
+					PayPalCommerceGateway.labels.error.required.elements;
+				const messages = invalidFields
+					.map( ( el ) => {
+						const name = el
+							.querySelector( '[name]' )
+							?.getAttribute( 'name' );
+						if ( name && name in nameMessageMap ) {
+							return nameMessageMap[ name ];
+						}
+						let label = el
+							.querySelector( 'label' )
+							.textContent.replaceAll( '*', '' )
+							.trim();
+						if ( billingFieldsContainer?.contains( el ) ) {
+							label =
+								PayPalCommerceGateway.labels.billing_field.replace(
+									'%s',
+									label
+								);
+						}
+						if ( shippingFieldsContainer?.contains( el ) ) {
+							label =
+								PayPalCommerceGateway.labels.shipping_field.replace(
+									'%s',
+									label
+								);
+						}
+						return PayPalCommerceGateway.labels.error.required.field.replace(
+							'%s',
+							`<strong>${ label }</strong>`
+						);
+					} )
+					.filter( ( s ) => s.length > 2 );
 
-                return false;
-            }
-        }
-        return true;
-    };
+				errorHandler.clear();
+				if ( messages.length ) {
+					errorHandler.messages( messages );
+				} else {
+					errorHandler.message(
+						PayPalCommerceGateway.labels.error.required.generic
+					);
+				}
 
-    const onCardFieldsBeforeSubmit = () => {
-        return doBasicCheckoutValidation();
-    };
+				return false;
+			}
+		}
+		return true;
+	};
 
-    const onSmartButtonClick = async (data, actions) => {
-        window.ppcpFundingSource = data.fundingSource;
-        const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
-        requiredFields.each((i, input) => {
-            jQuery(input).trigger('validate');
-        });
+	const onCardFieldsBeforeSubmit = () => {
+		return doBasicCheckoutValidation();
+	};
 
-        if (!doBasicCheckoutValidation()) {
-            return actions.reject();
-        }
+	const onSmartButtonClick = async ( data, actions ) => {
+		window.ppcpFundingSource = data.fundingSource;
+		const requiredFields = jQuery(
+			'form.woocommerce-checkout .validate-required:visible :input'
+		);
+		requiredFields.each( ( i, input ) => {
+			jQuery( input ).trigger( 'validate' );
+		} );
 
-        const form = document.querySelector(checkoutFormSelector);
-        if (form) {
-            jQuery('#ppcp-funding-source-form-input').remove();
-            form.insertAdjacentHTML(
-                'beforeend',
-                `<input type="hidden" name="ppcp-funding-source" value="${data.fundingSource}" id="ppcp-funding-source-form-input">`
-            )
-        }
+		if ( ! doBasicCheckoutValidation() ) {
+			return actions.reject();
+		}
 
-        const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
-        if (
-            isFreeTrial
-            && data.fundingSource !== 'card'
-            && ! PayPalCommerceGateway.subscription_plan_id
-            && ! PayPalCommerceGateway.vault_v3_enabled
-        ) {
-            freeTrialHandler.handle();
-            return actions.reject();
-        }
+		const form = document.querySelector( checkoutFormSelector );
+		if ( form ) {
+			jQuery( '#ppcp-funding-source-form-input' ).remove();
+			form.insertAdjacentHTML(
+				'beforeend',
+				`<input type="hidden" name="ppcp-funding-source" value="${ data.fundingSource }" id="ppcp-funding-source-form-input">`
+			);
+		}
 
-        if (context === 'checkout') {
-            try {
-                await formSaver.save(form);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-    };
+		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
+		if (
+			isFreeTrial &&
+			data.fundingSource !== 'card' &&
+			! PayPalCommerceGateway.subscription_plan_id &&
+			! PayPalCommerceGateway.vault_v3_enabled
+		) {
+			freeTrialHandler.handle();
+			return actions.reject();
+		}
 
-    const onSmartButtonsInit = () => {
-        jQuery(document).trigger('ppcp-smart-buttons-init', this);
-        buttonsSpinner.unblock();
-    };
+		if ( context === 'checkout' ) {
+			try {
+				await formSaver.save( form );
+			} catch ( error ) {
+				console.error( error );
+			}
+		}
+	};
 
-    let creditCardRenderer = new HostedFieldsRenderer(PayPalCommerceGateway, errorHandler, spinner);
-    if (typeof paypal.CardFields !== 'undefined') {
-        creditCardRenderer = new CardFieldsRenderer(PayPalCommerceGateway, errorHandler, spinner, onCardFieldsBeforeSubmit);
-    }
+	const onSmartButtonsInit = () => {
+		jQuery( document ).trigger( 'ppcp-smart-buttons-init', this );
+		buttonsSpinner.unblock();
+	};
 
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
-    const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
+	let creditCardRenderer = new HostedFieldsRenderer(
+		PayPalCommerceGateway,
+		errorHandler,
+		spinner
+	);
+	if ( typeof paypal.CardFields !== 'undefined' ) {
+		creditCardRenderer = new CardFieldsRenderer(
+			PayPalCommerceGateway,
+			errorHandler,
+			spinner,
+			onCardFieldsBeforeSubmit
+		);
+	}
 
-    if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
-        const miniCartBootstrap = new MiniCartBootstap(
-            PayPalCommerceGateway,
-            renderer,
-            errorHandler,
-        );
+	const renderer = new Renderer(
+		creditCardRenderer,
+		PayPalCommerceGateway,
+		onSmartButtonClick,
+		onSmartButtonsInit
+	);
+	const messageRenderer = new MessageRenderer(
+		PayPalCommerceGateway.messages
+	);
 
-        miniCartBootstrap.init();
-        buttonModuleWatcher.registerContextBootstrap('mini-cart', miniCartBootstrap);
-    }
+	if ( PayPalCommerceGateway.mini_cart_buttons_enabled === '1' ) {
+		const miniCartBootstrap = new MiniCartBootstap(
+			PayPalCommerceGateway,
+			renderer,
+			errorHandler
+		);
 
-    if (
-        context === 'product'
-        && (
-            PayPalCommerceGateway.single_product_buttons_enabled === '1'
-            || hasMessages()
-        )
-    ) {
-        const singleProductBootstrap = new SingleProductBootstap(
-            PayPalCommerceGateway,
-            renderer,
-            errorHandler,
-        );
+		miniCartBootstrap.init();
+		buttonModuleWatcher.registerContextBootstrap(
+			'mini-cart',
+			miniCartBootstrap
+		);
+	}
 
-        singleProductBootstrap.init();
-        buttonModuleWatcher.registerContextBootstrap('product', singleProductBootstrap);
-    }
+	if (
+		context === 'product' &&
+		( PayPalCommerceGateway.single_product_buttons_enabled === '1' ||
+			hasMessages() )
+	) {
+		const singleProductBootstrap = new SingleProductBootstap(
+			PayPalCommerceGateway,
+			renderer,
+			errorHandler
+		);
 
-    if (context === 'cart') {
-        const cartBootstrap = new CartBootstrap(
-            PayPalCommerceGateway,
-            renderer,
-            errorHandler,
-        );
+		singleProductBootstrap.init();
+		buttonModuleWatcher.registerContextBootstrap(
+			'product',
+			singleProductBootstrap
+		);
+	}
 
-        cartBootstrap.init();
-        buttonModuleWatcher.registerContextBootstrap('cart', cartBootstrap);
-    }
+	if ( context === 'cart' ) {
+		const cartBootstrap = new CartBootstrap(
+			PayPalCommerceGateway,
+			renderer,
+			errorHandler
+		);
 
-    if (context === 'checkout') {
-        const checkoutBootstap = new CheckoutBootstap(
-            PayPalCommerceGateway,
-            renderer,
-            spinner,
-            errorHandler,
-        );
+		cartBootstrap.init();
+		buttonModuleWatcher.registerContextBootstrap( 'cart', cartBootstrap );
+	}
 
-        checkoutBootstap.init();
-        buttonModuleWatcher.registerContextBootstrap('checkout', checkoutBootstap);
-    }
+	if ( context === 'checkout' ) {
+		const checkoutBootstap = new CheckoutBootstap(
+			PayPalCommerceGateway,
+			renderer,
+			spinner,
+			errorHandler
+		);
 
-    if (context === 'pay-now' ) {
-        const payNowBootstrap = new PayNowBootstrap(
-            PayPalCommerceGateway,
-            renderer,
-            spinner,
-            errorHandler,
-        );
-        payNowBootstrap.init();
-        buttonModuleWatcher.registerContextBootstrap('pay-now', payNowBootstrap);
-    }
+		checkoutBootstap.init();
+		buttonModuleWatcher.registerContextBootstrap(
+			'checkout',
+			checkoutBootstap
+		);
+	}
 
-    const messagesBootstrap = new MessagesBootstrap(
-        PayPalCommerceGateway,
-        messageRenderer,
-    );
-    messagesBootstrap.init();
+	if ( context === 'pay-now' ) {
+		const payNowBootstrap = new PayNowBootstrap(
+			PayPalCommerceGateway,
+			renderer,
+			spinner,
+			errorHandler
+		);
+		payNowBootstrap.init();
+		buttonModuleWatcher.registerContextBootstrap(
+			'pay-now',
+			payNowBootstrap
+		);
+	}
 
-    apmButtonsInit(PayPalCommerceGateway);
+	const messagesBootstrap = new MessagesBootstrap(
+		PayPalCommerceGateway,
+		messageRenderer
+	);
+	messagesBootstrap.init();
+
+	apmButtonsInit( PayPalCommerceGateway );
 };
 
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
-        if (!typeof (PayPalCommerceGateway)) {
-            console.error('PayPal button could not be configured.');
-            return;
-        }
+document.addEventListener( 'DOMContentLoaded', () => {
+	if ( ! typeof PayPalCommerceGateway ) {
+		console.error( 'PayPal button could not be configured.' );
+		return;
+	}
 
-        if (
-            PayPalCommerceGateway.context !== 'checkout'
-            && PayPalCommerceGateway.data_client_id.user === 0
-            && PayPalCommerceGateway.data_client_id.has_subscriptions
-        ) {
-            return;
-        }
+	if (
+		PayPalCommerceGateway.context !== 'checkout' &&
+		PayPalCommerceGateway.data_client_id.user === 0 &&
+		PayPalCommerceGateway.data_client_id.has_subscriptions
+	) {
+		return;
+	}
 
-        const paypalButtonGatewayIds = [
-            PaymentMethods.PAYPAL,
-            ...Object.entries(PayPalCommerceGateway.separate_buttons).map(([k, data]) => data.id),
-        ]
+	const paypalButtonGatewayIds = [
+		PaymentMethods.PAYPAL,
+		...Object.entries( PayPalCommerceGateway.separate_buttons ).map(
+			( [ k, data ] ) => data.id
+		),
+	];
 
-        // Sometimes PayPal script takes long time to load,
-        // so we additionally hide the standard order button here to avoid failed orders.
-        // Normally it is hidden later after the script load.
-        const hideOrderButtonIfPpcpGateway = () => {
-            // only in checkout and pay now page, otherwise it may break things (e.g. payment via product page),
-            // and also the loading spinner may look weird on other pages
-            if (
-                !['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)
-                || isChangePaymentPage()
-                || (PayPalCommerceGateway.is_free_trial_cart && PayPalCommerceGateway.vaulted_paypal_email !== '')
-            ) {
-                return;
-            }
+	// Sometimes PayPal script takes long time to load,
+	// so we additionally hide the standard order button here to avoid failed orders.
+	// Normally it is hidden later after the script load.
+	const hideOrderButtonIfPpcpGateway = () => {
+		// only in checkout and pay now page, otherwise it may break things (e.g. payment via product page),
+		// and also the loading spinner may look weird on other pages
+		if (
+			! [ 'checkout', 'pay-now' ].includes(
+				PayPalCommerceGateway.context
+			) ||
+			isChangePaymentPage() ||
+			( PayPalCommerceGateway.is_free_trial_cart &&
+				PayPalCommerceGateway.vaulted_paypal_email !== '' )
+		) {
+			return;
+		}
 
-            const currentPaymentMethod = getCurrentPaymentMethod();
-            const isPaypalButton = paypalButtonGatewayIds.includes(currentPaymentMethod);
-            const isCards = currentPaymentMethod === PaymentMethods.CARDS;
+		const currentPaymentMethod = getCurrentPaymentMethod();
+		const isPaypalButton =
+			paypalButtonGatewayIds.includes( currentPaymentMethod );
+		const isCards = currentPaymentMethod === PaymentMethods.CARDS;
 
-            setVisibleByClass(ORDER_BUTTON_SELECTOR, !isPaypalButton && !isCards, 'ppcp-hidden');
+		setVisibleByClass(
+			ORDER_BUTTON_SELECTOR,
+			! isPaypalButton && ! isCards,
+			'ppcp-hidden'
+		);
 
-            if (isPaypalButton) {
-                // stopped after the first rendering of the buttons, in onInit
-                buttonsSpinner.block();
-            } else {
-                buttonsSpinner.unblock();
-            }
+		if ( isPaypalButton ) {
+			// stopped after the first rendering of the buttons, in onInit
+			buttonsSpinner.block();
+		} else {
+			buttonsSpinner.unblock();
+		}
 
-            if (isCards) {
-                cardsSpinner.block();
-            } else {
-                cardsSpinner.unblock();
-            }
-        }
+		if ( isCards ) {
+			cardsSpinner.block();
+		} else {
+			cardsSpinner.unblock();
+		}
+	};
 
-        jQuery(document).on('hosted_fields_loaded', () => {
-            cardsSpinner.unblock();
-        });
+	jQuery( document ).on( 'hosted_fields_loaded', () => {
+		cardsSpinner.unblock();
+	} );
 
-        let bootstrapped = false;
-        let failed = false;
+	let bootstrapped = false;
+	let failed = false;
 
-        hideOrderButtonIfPpcpGateway();
+	hideOrderButtonIfPpcpGateway();
 
-        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
-            if (bootstrapped || failed) {
-                return;
-            }
+	jQuery( document.body ).on(
+		'updated_checkout payment_method_selected',
+		() => {
+			if ( bootstrapped || failed ) {
+				return;
+			}
 
-            hideOrderButtonIfPpcpGateway();
-        });
+			hideOrderButtonIfPpcpGateway();
+		}
+	);
 
-        loadPaypalScript(PayPalCommerceGateway, () => {
-            bootstrapped = true;
+	loadPaypalScript(
+		PayPalCommerceGateway,
+		() => {
+			bootstrapped = true;
 
-            bootstrap();
-        }, () => {
-            failed = true;
+			bootstrap();
+		},
+		() => {
+			failed = true;
 
-            setVisibleByClass(ORDER_BUTTON_SELECTOR, true, 'ppcp-hidden');
-            buttonsSpinner.unblock();
-            cardsSpinner.unblock();
-        });
-    },
-);
+			setVisibleByClass( ORDER_BUTTON_SELECTOR, true, 'ppcp-hidden' );
+			buttonsSpinner.unblock();
+			cardsSpinner.unblock();
+		}
+	);
+} );

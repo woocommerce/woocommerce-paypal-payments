@@ -235,14 +235,13 @@ return array(
 					'requirements' => array(),
 				),
 				'googlepay_button_preview'          => array(
-					'type'         => 'ppcp-text',
-					'text'         => sprintf(
-						'
-<div class="ppcp-preview ppcp-button-preview" data-ppcp-apm-preview="%1$s">
-	<h4>' . __( 'Button Styling Preview', 'woocommerce-paypal-payments' ) . '</h4>
-	<div id="ppcp%1$sButtonPreview" class="ppcp-button-preview-inner"></div>
-</div>',
-						$apm_name
+					'type'         => 'ppcp-preview',
+					'preview'      => array(
+						'id'      => 'ppcp' . $apm_name . 'ButtonPreview',
+						'type'    => 'button',
+						'message' => __( 'Button Styling Preview', 'woocommerce-paypal-payments' ),
+						'apm'     => $apm_name,
+						'single'  => true,
 					),
 					'screens'      => array(
 						State::STATE_ONBOARDED,
