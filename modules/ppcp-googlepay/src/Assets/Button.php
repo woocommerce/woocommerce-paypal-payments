@@ -412,6 +412,7 @@ class Button implements ButtonInterface {
 			'enabled' => $this->settings->has( 'googlepay_button_shipping_enabled' )
 				? boolval( $this->settings->get( 'googlepay_button_shipping_enabled' ) )
 				: false,
+			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
 		);
 
 		if ( $shipping['enabled'] ) {

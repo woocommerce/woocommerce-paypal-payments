@@ -237,8 +237,6 @@ class AxoManager {
 	 * Renders the HTML for the AXO submit button.
 	 */
 	public function render_checkout_button(): void {
-		$id = 'ppcp-axo-submit-button-container';
-
 		/**
 		 * The WC filter returning the WC order button text.
 		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
@@ -246,10 +244,9 @@ class AxoManager {
 		$label = apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) );
 
 		printf(
-			'<div id="%1$s" style="display: none;">
-				<button type="button" class="button alt ppcp-axo-order-button">%2$s</button>
+			'<div id="ppcp-axo-submit-button-container" style="display: none;">
+				<button id="place_order" type="button" class="button alt ppcp-axo-order-button wp-element-button">%1$s</button>
 			</div>',
-			esc_attr( $id ),
 			esc_html( $label )
 		);
 	}

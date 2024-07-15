@@ -240,38 +240,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->wc_payment_tokens           = $wc_payment_tokens;
 		$this->logger                      = $logger;
 
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
-			$this->supports = array( 'refunds' );
-		}
-		if ( $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' ) ) {
-			$this->supports = array(
-				'refunds',
-				'products',
-			);
+		$default_support = array(
+			'products',
+			'refunds',
+			'tokenization',
+			'add_payment_method',
+		);
 
-			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
-				$supports = apply_filters(
-					'woocommerce_paypal_payments_credit_card_gateway_vault_supports',
-					array(
-						'subscriptions',
-						'subscription_cancellation',
-						'subscription_suspension',
-						'subscription_reactivation',
-						'subscription_amount_changes',
-						'subscription_date_changes',
-						'subscription_payment_method_change',
-						'subscription_payment_method_change_customer',
-						'subscription_payment_method_change_admin',
-						'multiple_subscriptions',
-					)
-				);
-
-				$this->supports = array_merge(
-					$this->supports,
-					$supports
-				);
-			}
-		}
+		$this->supports = array_merge(
+			$default_support,
+			apply_filters( 'woocommerce_paypal_payments_credit_card_gateway_supports', array() )
+		);
 
 		$this->method_title       = __(
 			'Advanced Card Processing',

@@ -1,7 +1,5 @@
-import BaseHandler from "./BaseHandler";
+import BaseHandler from './BaseHandler';
 
-class MiniCartHandler extends BaseHandler {
-
-}
+class MiniCartHandler extends BaseHandler {}
 
 export default MiniCartHandler;

@@ -49,6 +49,8 @@ class WcSubscriptionsModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$this->add_gateways_support( $c );
+
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
 			/**
@@ -228,6 +230,31 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		// Remove `gateway_scheduled_payments` feature support for non PayPal Subscriptions at subscription level.
+		add_filter(
+			'woocommerce_subscription_payment_gateway_supports',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $is_supported, $feature, $subscription ) {
+				if (
+				$subscription->get_payment_method() === PayPalGateway::ID
+				&& $feature === 'gateway_scheduled_payments'
+				) {
+					$subscription_connected = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+					if ( ! $subscription_connected ) {
+						$is_supported = false;
+					}
+				}
+
+				return $is_supported;
+			},
+			10,
+			3
+		);
 	}
 
 	/**
@@ -371,5 +398,92 @@ class WcSubscriptionsModule implements ModuleInterface {
 		}
 
 		return $default_fields;
+	}
+
+	/**
+	 * Groups all filters for adding WC Subscriptions gateway support.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @return void
+	 */
+	private function add_gateways_support( ContainerInterface $c ): void {
+		add_filter(
+			'woocommerce_paypal_payments_paypal_gateway_supports',
+			function ( array $supports ) use ( $c ): array {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( $subscriptions_helper->plugin_is_active() ) {
+					$supports = array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+						'gateway_scheduled_payments',
+					);
+				}
+
+				return $supports;
+			}
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_credit_card_gateway_supports',
+			function ( array $supports ) use ( $c ): array {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				if ( $subscriptions_helper->plugin_is_active() ) {
+					$supports = array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					);
+				}
+
+				return $supports;
+			}
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_card_button_gateway_supports',
+			function ( array $supports ) use ( $c ): array {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				if ( $subscriptions_helper->plugin_is_active() ) {
+					$supports = array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					);
+				}
+
+				return $supports;
+			}
+		);
 	}
 }

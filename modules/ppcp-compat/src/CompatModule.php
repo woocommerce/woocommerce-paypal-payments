@@ -368,7 +368,16 @@ class CompatModule implements ModuleInterface {
 		// W3 Total Cache.
 		add_filter(
 			'w3tc_minify_js_do_tag_minification',
-			function( bool $do_tag_minification, string $script_tag, string $file ) {
+			/**
+			 * Filter callback for 'w3tc_minify_js_do_tag_minification'.
+			 *
+			 * @param bool $do_tag_minification Whether to do tag minification.
+			 * @param string $script_tag The script tag.
+			 * @param string|null $file The file path.
+			 * @return bool Whether to do tag minification.
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( bool $do_tag_minification, string $script_tag, $file ) {
 				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
 					return false;
 				}

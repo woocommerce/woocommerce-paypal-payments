@@ -28,7 +28,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 	$has_enabled_separate_button_gateways = $container->get( 'wcgateway.settings.has_enabled_separate_button_gateways' );
 
-	$preview_message = __( 'Standard Card Button Styling Preview', 'woocommerce-paypal-payments' );
+	$preview_message = __( 'Button Styling Preview', 'woocommerce-paypal-payments' );
 
 	$axo_smart_button_location_notice = $container->has( 'axo.smart-button-location-notice' ) ? $container->get( 'axo.smart-button-location-notice' ) : '';
 
