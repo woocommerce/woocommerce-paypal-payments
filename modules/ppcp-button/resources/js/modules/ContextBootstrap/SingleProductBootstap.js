@@ -7,6 +7,7 @@ import {getPlanIdFromVariation} from "../Helper/Subscriptions"
 import SimulateCart from "../Helper/SimulateCart";
 import {strRemoveWord, strAddWord, throttle} from "../Helper/Utils";
 import merge from "deepmerge";
+import {debounce} from "../../../../../ppcp-blocks/resources/js/Helper/debounce";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, errorHandler) {
@@ -17,7 +18,8 @@ class SingleProductBootstap {
         this.formSelector = 'form.cart';
 
         // Prevent simulate cart being called too many times in a burst.
-        this.simulateCartThrottled = throttle(this.simulateCart, this.gateway.simulate_cart.throttling || 5000);
+        this.simulateCartThrottled = throttle(this.simulateCart.bind(this), this.gateway.simulate_cart.throttling || 5000);
+        this.debouncedHandleChange = debounce(this.handleChange.bind(this), 100);
 
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleChange();
@@ -31,7 +33,7 @@ class SingleProductBootstap {
     }
 
     handleChange() {
-        this.subscriptionButtonsLoaded = false
+        this.subscriptionButtonsLoaded = false;
 
         if (!this.shouldRender()) {
             this.renderer.disableSmartButtons(this.gateway.button.wrapper);
@@ -65,8 +67,9 @@ class SingleProductBootstap {
         }
 
         jQuery(document).on('change', this.formSelector, () => {
-            this.handleChange();
+            this.debouncedHandleChange();
         });
+
         this.mutationObserver.observe(form, { childList: true, subtree: true });
 
         const addToCartButton = form.querySelector('.single_add_to_cart_button');
