@@ -606,9 +606,11 @@ const PayPalComponent = ( {
 		}
 
 		return ( data, actions ) => {
-			shouldHandleShippingInPayPal()
+            let shippingAddressChange = shouldHandleShippingInPayPal()
 				? handleShippingAddressChange( data, actions )
 				: null;
+
+            return shippingAddressChange;
 		};
 	};
 
