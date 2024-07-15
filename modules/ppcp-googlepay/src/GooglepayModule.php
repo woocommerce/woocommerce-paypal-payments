@@ -173,10 +173,15 @@ class GooglepayModule implements ModuleInterface {
 					return $methods;
 				}
 
-				$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
-				assert( $googlepay_gateway instanceof WC_Payment_Gateway );
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
 
-				$methods[] = $googlepay_gateway;
+				if ( $settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' ) ) {
+					$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
+					assert( $googlepay_gateway instanceof WC_Payment_Gateway );
+
+					$methods[] = $googlepay_gateway;
+				}
 
 				return $methods;
 			}
