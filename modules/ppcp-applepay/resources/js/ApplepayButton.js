@@ -216,6 +216,7 @@ class ApplepayButton {
 		}
 
 		const $wrapper = jQuery( '#' + wrapper );
+		$wrapper.removeClass( 'ppcp-button-rect ppcp-button-pill' );
 		$wrapper.addClass( 'ppcp-button-' + ppcpStyle.shape );
 
 		if ( ppcpStyle.height ) {

@@ -202,10 +202,13 @@ class GooglepayButton {
 		const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
 		this.waitForWrapper( wrapper, () => {
-			jQuery( wrapper ).addClass( 'ppcp-button-' + ppcpStyle.shape );
+			const $wrapper = jQuery( wrapper );
+
+			$wrapper.removeClass( 'ppcp-button-rect ppcp-button-pill' );
+			$wrapper.addClass( 'ppcp-button-' + ppcpStyle.shape );
 
 			if ( ppcpStyle.height ) {
-				jQuery( wrapper ).css( 'height', `${ ppcpStyle.height }px` );
+				$wrapper.css( 'height', `${ ppcpStyle.height }px` );
 			}
 
 			const button = this.paymentsClient.createButton( {
@@ -217,7 +220,7 @@ class GooglepayButton {
 				buttonSizeMode: 'fill',
 			} );
 
-			jQuery( wrapper ).append( button );
+			$wrapper.append( button );
 		} );
 	}
 
