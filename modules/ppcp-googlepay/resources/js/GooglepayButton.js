@@ -209,7 +209,7 @@ class GooglepayButton {
     /**
      * Show Google Pay payment sheet when Google Pay payment button is clicked
      */
-    async onButtonClick() {
+    onButtonClick() {
         this.log('onButtonClick', this.context);
 
         const paymentDataRequest = this.paymentDataRequest();
