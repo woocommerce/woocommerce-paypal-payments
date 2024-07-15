@@ -5,16 +5,21 @@ import merge from 'deepmerge';
  */
 class PreviewButton {
 	/**
-	 * @param {string} selector  - CSS ID of the wrapper, including the `#`
-	 * @param {Object} apiConfig - PayPal configuration object; retrieved via a
-	 *                           widgetBuilder API method
+	 * @param {string} selector   - CSS ID of the wrapper, including the `#`
+	 * @param {Object} apiConfig  - PayPal configuration object; retrieved via a
+	 *                            widgetBuilder API method
+	 * @param {string} methodName - Name of the payment method, e.g. "Google Pay"
 	 */
-	constructor( { selector, apiConfig } ) {
+	constructor( { selector, apiConfig, methodName = '' } ) {
 		this.apiConfig = apiConfig;
 		this.defaultAttributes = {};
 		this.buttonConfig = {};
 		this.ppcpConfig = {};
 		this.isDynamic = true;
+		this.methodName = methodName;
+		this.methodSlug = this.methodName
+			.toLowerCase()
+			.replace( /[^a-z]+/g, '' );
 
 		// The selector is usually overwritten in constructor of derived class.
 		this.selector = selector;
@@ -31,7 +36,7 @@ class PreviewButton {
 	createNewWrapper() {
 		const wrapper = document.createElement( 'div' );
 		const previewId = this.selector.replace( '#', '' );
-		const previewClass = 'ppcp-preview-button';
+		const previewClass = `ppcp-preview-button ppcp-button-apm ppcp-button-${ this.methodSlug }`;
 
 		wrapper.setAttribute( 'id', previewId );
 		wrapper.setAttribute( 'class', previewClass );

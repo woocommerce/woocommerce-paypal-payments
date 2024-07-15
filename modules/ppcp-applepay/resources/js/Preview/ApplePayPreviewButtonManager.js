@@ -44,6 +44,7 @@ export default class ApplePayPreviewButtonManager extends PreviewButtonManager {
 		return new ApplePayPreviewButton( {
 			selector: wrapperId,
 			apiConfig: this.apiConfig,
+			methodName: this.methodName,
 		} );
 	}
 }

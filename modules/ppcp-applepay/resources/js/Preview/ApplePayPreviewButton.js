@@ -18,13 +18,6 @@ export default class ApplePayPreviewButton extends PreviewButton {
 		};
 	}
 
-	createNewWrapper() {
-		const wrapper = super.createNewWrapper();
-		wrapper.classList.add( 'ppcp-button-apm', 'ppcp-button-applepay' );
-
-		return wrapper;
-	}
-
 	createButton( buttonConfig ) {
 		const button = new ApplepayButton(
 			'preview',

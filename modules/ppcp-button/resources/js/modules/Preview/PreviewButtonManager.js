@@ -21,6 +21,13 @@ class PreviewButtonManager {
 	 */
 	#onInit;
 
+	/**
+	 * Initialize the new PreviewButtonManager.
+	 *
+	 * @param {string} methodName        - Name of the payment method, e.g. "Google Pay"
+	 * @param {Object} buttonConfig
+	 * @param {Object} defaultAttributes
+	 */
 	constructor( { methodName, buttonConfig, defaultAttributes } ) {
 		// Define the payment method name in the derived class.
 		this.methodName = methodName;
@@ -97,6 +104,7 @@ class PreviewButtonManager {
 		return new DummyPreviewButton( {
 			selector: wrapperId,
 			label: this.apiError,
+			methodName: this.methodName,
 		} );
 	}
 

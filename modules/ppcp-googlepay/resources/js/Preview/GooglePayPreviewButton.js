@@ -20,13 +20,6 @@ export default class GooglePayPreviewButton extends PreviewButton {
 		};
 	}
 
-	createNewWrapper() {
-		const wrapper = super.createNewWrapper();
-		wrapper.classList.add( 'ppcp-button-apm', 'ppcp-button-googlepay' );
-
-		return wrapper;
-	}
-
 	createButton( buttonConfig ) {
 		const button = new GooglepayButton(
 			'preview',

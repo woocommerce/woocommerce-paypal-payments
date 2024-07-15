@@ -51,6 +51,7 @@ export default class GooglePayPreviewButtonManager extends PreviewButtonManager 
 		return new GooglePayPreviewButton( {
 			selector: wrapperId,
 			apiConfig: this.apiConfig,
+			methodName: this.methodName,
 		} );
 	}
 }
