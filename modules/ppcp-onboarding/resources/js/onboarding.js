@@ -3,413 +3,482 @@ const ppcp_onboarding = {
 	PAYPAL_JS_ID: 'ppcp-onboarding-paypal-js',
 	_timeout: false,
 
-    STATE_START: 'start',
-    STATE_ONBOARDED: 'onboarded',
+	STATE_START: 'start',
+	STATE_ONBOARDED: 'onboarded',
 
-	init: function() {
-		document.addEventListener('DOMContentLoaded', this.reload);
+	init() {
+		document.addEventListener( 'DOMContentLoaded', this.reload );
 	},
 
-	reload: function() {
-		const buttons = document.querySelectorAll(ppcp_onboarding.BUTTON_SELECTOR);
+	reload() {
+		const buttons = document.querySelectorAll(
+			ppcp_onboarding.BUTTON_SELECTOR
+		);
 
-		if (buttons.length > 0) {
-            // Add event listeners to buttons preventing link clicking if PayPal init failed.
-            buttons.forEach(
-                (element) => {
-                    if (element.hasAttribute('data-ppcp-button-initialized')) {
-                        return;
-                    }
+		if ( buttons.length > 0 ) {
+			// Add event listeners to buttons preventing link clicking if PayPal init failed.
+			buttons.forEach( ( element ) => {
+				if ( element.hasAttribute( 'data-ppcp-button-initialized' ) ) {
+					return;
+				}
 
-                    element.addEventListener(
-                        'click',
-                        (e) => {
-                            if (!element.hasAttribute('data-ppcp-button-initialized') || 'undefined' === typeof window.PAYPAL) {
-                                e.preventDefault();
-                            }
-                        }
-                    );
-                }
-            );
+				element.addEventListener( 'click', ( e ) => {
+					if (
+						! element.hasAttribute(
+							'data-ppcp-button-initialized'
+						) ||
+						'undefined' === typeof window.PAYPAL
+					) {
+						e.preventDefault();
+					}
+				} );
+			} );
 
-            // Clear any previous PayPal scripts.
-            [ppcp_onboarding.PAYPAL_JS_ID, 'signup-js', 'biz-js'].forEach(
-                (scriptID) => {
-                    const scriptTag = document.getElementById(scriptID);
+			// Clear any previous PayPal scripts.
+			[ ppcp_onboarding.PAYPAL_JS_ID, 'signup-js', 'biz-js' ].forEach(
+				( scriptID ) => {
+					const scriptTag = document.getElementById( scriptID );
 
-                    if (scriptTag) {
-                        scriptTag.parentNode.removeChild(scriptTag);
-                    }
+					if ( scriptTag ) {
+						scriptTag.parentNode.removeChild( scriptTag );
+					}
 
-                    if ('undefined' !== typeof window.PAYPAL) {
-                        delete window.PAYPAL;
-                    }
-                }
-            );
+					if ( 'undefined' !== typeof window.PAYPAL ) {
+						delete window.PAYPAL;
+					}
+				}
+			);
 
-            // Load PayPal scripts.
-            const paypalScriptTag = document.createElement('script');
-            paypalScriptTag.id = ppcp_onboarding.PAYPAL_JS_ID;
-            paypalScriptTag.src = PayPalCommerceGatewayOnboarding.paypal_js_url;
-            document.body.appendChild(paypalScriptTag);
+			// Load PayPal scripts.
+			const paypalScriptTag = document.createElement( 'script' );
+			paypalScriptTag.id = ppcp_onboarding.PAYPAL_JS_ID;
+			paypalScriptTag.src = PayPalCommerceGatewayOnboarding.paypal_js_url;
+			document.body.appendChild( paypalScriptTag );
 
-            if (ppcp_onboarding._timeout) {
-                clearTimeout(ppcp_onboarding._timeout);
-            }
+			if ( ppcp_onboarding._timeout ) {
+				clearTimeout( ppcp_onboarding._timeout );
+			}
 
-            ppcp_onboarding._timeout = setTimeout(
-                () => {
-                    buttons.forEach((element) => { element.setAttribute('data-ppcp-button-initialized', 'true'); });
+			ppcp_onboarding._timeout = setTimeout( () => {
+				buttons.forEach( ( element ) => {
+					element.setAttribute(
+						'data-ppcp-button-initialized',
+						'true'
+					);
+				} );
 
-                    if ('undefined' !== window.PAYPAL.apps.Signup) {
-                        window.PAYPAL.apps.Signup.render();
-                    }
-                },
-                1000
-            );
+				if ( 'undefined' !== window.PAYPAL.apps.Signup ) {
+					window.PAYPAL.apps.Signup.render();
+				}
+			}, 1000 );
 		}
 
-        const $onboarding_inputs = function () {
-            return jQuery('*[data-onboarding-option]');
-        };
-        const onboarding_options = function () {
-            let options = {};
-            $onboarding_inputs().each((index, el) => {
-                const opt = jQuery(el).data('onboardingOption');
-                options[opt] = el.checked;
-            });
-            return options;
-        }
-        const disable_onboarding_options = function () {
-            $onboarding_inputs().each((index, el) => {
-                el.setAttribute('disabled', 'disabled');
-            });
-        }
-        const enable_onboarding_options = function () {
-            $onboarding_inputs().each((index, el) => {
-                el.removeAttribute('disabled');
-            });
-        }
-        const update_onboarding_options = function () {
-            const spinner = '<span class="spinner is-active" style="float: none;"></span>';
+		const $onboarding_inputs = function () {
+			return jQuery( '*[data-onboarding-option]' );
+		};
+		const onboarding_options = function () {
+			const options = {};
+			$onboarding_inputs().each( ( index, el ) => {
+				const opt = jQuery( el ).data( 'onboardingOption' );
+				options[ opt ] = el.checked;
+			} );
+			return options;
+		};
+		const disable_onboarding_options = function () {
+			$onboarding_inputs().each( ( index, el ) => {
+				el.setAttribute( 'disabled', 'disabled' );
+			} );
+		};
+		const enable_onboarding_options = function () {
+			$onboarding_inputs().each( ( index, el ) => {
+				el.removeAttribute( 'disabled' );
+			} );
+		};
+		const update_onboarding_options = function () {
+			const spinner =
+				'<span class="spinner is-active" style="float: none;"></span>';
 
-            disable_onboarding_options();
-            buttons.forEach((element) => {
-                element.removeAttribute('href');
-                element.setAttribute('disabled', 'disabled');
-                jQuery(spinner).insertAfter(element);
-            });
+			disable_onboarding_options();
+			buttons.forEach( ( element ) => {
+				element.removeAttribute( 'href' );
+				element.setAttribute( 'disabled', 'disabled' );
+				jQuery( spinner ).insertAfter( element );
+			} );
 
-            fetch(PayPalCommerceGatewayOnboarding.update_signup_links_endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    nonce: PayPalCommerceGatewayOnboarding.update_signup_links_nonce,
-                    settings: onboarding_options()
-                })
-            }).then((res)=>{
-                return res.json();
-            }).then((data)=>{
-                if (!data.success) {
-                    alert('Could not update signup buttons: ' + JSON.stringify(data));
-                    return;
-                }
-                buttons.forEach((element) => {
-                    for (let [key, value] of Object.entries(data.data.signup_links)) {
-                        key = 'connect-to' + key.replace(/-/g, '');
-                        if(key === element.id) {
-                            element.setAttribute('href', value);
-                            element.removeAttribute('disabled')
-                            document.querySelector('.spinner').remove()
-                        }
-                    }
-                });
-                enable_onboarding_options();
-            });
-        }
-        $onboarding_inputs().on('click', (event) => {
-            event.preventDefault();
-            update_onboarding_options();
-        });
-	},
-
-	loginSeller: function(env, authCode, sharedId) {
-		fetch(
-			PayPalCommerceGatewayOnboarding.endpoint,
-			{
-				method: 'POST',
-				headers: {
-					'content-type': 'application/json'
-				},
-				body: JSON.stringify(
-					{
-						authCode: authCode,
-						sharedId: sharedId,
-						nonce: PayPalCommerceGatewayOnboarding.nonce,
-						env: env,
-                        acceptCards: document.querySelector('#ppcp-onboarding-accept-cards').checked,
+			fetch(
+				PayPalCommerceGatewayOnboarding.update_signup_links_endpoint,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					credentials: 'same-origin',
+					body: JSON.stringify( {
+						nonce: PayPalCommerceGatewayOnboarding.update_signup_links_nonce,
+						settings: onboarding_options(),
+					} ),
+				}
+			)
+				.then( ( res ) => {
+					return res.json();
+				} )
+				.then( ( data ) => {
+					if ( ! data.success ) {
+						alert(
+							'Could not update signup buttons: ' +
+								JSON.stringify( data )
+						);
+						return;
 					}
-				)
-			}
-		);
+					buttons.forEach( ( element ) => {
+						for ( let [ key, value ] of Object.entries(
+							data.data.signup_links
+						) ) {
+							key = 'connect-to' + key.replace( /-/g, '' );
+							if ( key === element.id ) {
+								element.setAttribute( 'href', value );
+								element.removeAttribute( 'disabled' );
+								document.querySelector( '.spinner' ).remove();
+							}
+						}
+					} );
+					enable_onboarding_options();
+				} );
+		};
+		$onboarding_inputs().on( 'click', ( event ) => {
+			event.preventDefault();
+			update_onboarding_options();
+		} );
+	},
+
+	loginSeller( env, authCode, sharedId ) {
+		fetch( PayPalCommerceGatewayOnboarding.endpoint, {
+			method: 'POST',
+			headers: {
+				'content-type': 'application/json',
+			},
+			body: JSON.stringify( {
+				authCode,
+				sharedId,
+				nonce: PayPalCommerceGatewayOnboarding.nonce,
+				env,
+				acceptCards: document.querySelector(
+					'#ppcp-onboarding-accept-cards'
+				).checked,
+			} ),
+		} );
 	},
 };
 
-
-window.ppcp_onboarding_sandboxCallback = function(...args) {
-    return ppcp_onboarding.loginSeller('sandbox', ...args);
+window.ppcp_onboarding_sandboxCallback = function ( ...args ) {
+	return ppcp_onboarding.loginSeller( 'sandbox', ...args );
 };
 
-window.ppcp_onboarding_productionCallback = function(...args) {
-    return ppcp_onboarding.loginSeller('production', ...args);
+window.ppcp_onboarding_productionCallback = function ( ...args ) {
+	return ppcp_onboarding.loginSeller( 'production', ...args );
 };
 
-(() => {
-    const productionCredentialElementsSelectors = [
-        '#field-merchant_email_production',
-        '#field-merchant_id_production',
-        '#field-client_id_production',
-        '#field-client_secret_production',
-    ];
-    const sandboxCredentialElementsSelectors = [
-        '#field-merchant_email_sandbox',
-        '#field-merchant_id_sandbox',
-        '#field-client_id_sandbox',
-        '#field-client_secret_sandbox',
-    ];
+( () => {
+	const productionCredentialElementsSelectors = [
+		'#field-merchant_email_production',
+		'#field-merchant_id_production',
+		'#field-client_id_production',
+		'#field-client_secret_production',
+	];
+	const sandboxCredentialElementsSelectors = [
+		'#field-merchant_email_sandbox',
+		'#field-merchant_id_sandbox',
+		'#field-client_id_sandbox',
+		'#field-client_secret_sandbox',
+	];
 
-    const updateOptionsState = () => {
-        const cardsChk = document.querySelector('#ppcp-onboarding-accept-cards');
-        if (!cardsChk) {
-            return;
-        }
+	const updateOptionsState = () => {
+		const cardsChk = document.querySelector(
+			'#ppcp-onboarding-accept-cards'
+		);
+		if ( ! cardsChk ) {
+			return;
+		}
 
-        document.querySelectorAll('#ppcp-onboarding-dcc-options input').forEach(input => {
-            input.disabled = !cardsChk.checked;
-        });
+		document
+			.querySelectorAll( '#ppcp-onboarding-dcc-options input' )
+			.forEach( ( input ) => {
+				input.disabled = ! cardsChk.checked;
+			} );
 
-        document.querySelector('.ppcp-onboarding-cards-options').style.display = !cardsChk.checked ? 'none' : '';
+		document.querySelector(
+			'.ppcp-onboarding-cards-options'
+		).style.display = ! cardsChk.checked ? 'none' : '';
 
-        const basicRb = document.querySelector('#ppcp-onboarding-dcc-basic');
+		const basicRb = document.querySelector( '#ppcp-onboarding-dcc-basic' );
 
-        const isExpress = !cardsChk.checked || basicRb.checked;
+		const isExpress = ! cardsChk.checked || basicRb.checked;
 
-        const expressButtonSelectors = [
-            '#field-ppcp_onboarding_production_express',
-            '#field-ppcp_onboarding_sandbox_express',
-        ];
-        const ppcpButtonSelectors = [
-            '#field-ppcp_onboarding_production_ppcp',
-            '#field-ppcp_onboarding_sandbox_ppcp',
-        ];
+		const expressButtonSelectors = [
+			'#field-ppcp_onboarding_production_express',
+			'#field-ppcp_onboarding_sandbox_express',
+		];
+		const ppcpButtonSelectors = [
+			'#field-ppcp_onboarding_production_ppcp',
+			'#field-ppcp_onboarding_sandbox_ppcp',
+		];
 
-        document.querySelectorAll(expressButtonSelectors.join()).forEach(
-            element => element.style.display = isExpress ? '' : 'none'
-        );
-        document.querySelectorAll(ppcpButtonSelectors.join()).forEach(
-            element => element.style.display = !isExpress ? '' : 'none'
-        );
+		document
+			.querySelectorAll( expressButtonSelectors.join() )
+			.forEach(
+				( element ) =>
+					( element.style.display = isExpress ? '' : 'none' )
+			);
+		document
+			.querySelectorAll( ppcpButtonSelectors.join() )
+			.forEach(
+				( element ) =>
+					( element.style.display = ! isExpress ? '' : 'none' )
+			);
 
-        const screemImg = document.querySelector('#ppcp-onboarding-cards-screen-img');
-        if (screemImg) {
-            const currentRb = Array.from(document.querySelectorAll('#ppcp-onboarding-dcc-options input[type="radio"]'))
-                .filter(rb => rb.checked)[0] ?? null;
+		const screemImg = document.querySelector(
+			'#ppcp-onboarding-cards-screen-img'
+		);
+		if ( screemImg ) {
+			const currentRb =
+				Array.from(
+					document.querySelectorAll(
+						'#ppcp-onboarding-dcc-options input[type="radio"]'
+					)
+				).filter( ( rb ) => rb.checked )[ 0 ] ?? null;
 
-            const imgUrl = currentRb.getAttribute('data-screen-url');
-            screemImg.src = imgUrl;
-        }
-    };
+			const imgUrl = currentRb.getAttribute( 'data-screen-url' );
+			screemImg.src = imgUrl;
+		}
+	};
 
-    const updateManualInputControls = (shown, isSandbox, isAnyEnvOnboarded) => {
-        const productionElementsSelectors = productionCredentialElementsSelectors;
-        const sandboxElementsSelectors = sandboxCredentialElementsSelectors;
-        const otherElementsSelectors = [
-            '.woocommerce-save-button',
-        ];
-        if (!isAnyEnvOnboarded) {
-            otherElementsSelectors.push('#field-sandbox_on');
-        }
+	const updateManualInputControls = (
+		shown,
+		isSandbox,
+		isAnyEnvOnboarded
+	) => {
+		const productionElementsSelectors =
+			productionCredentialElementsSelectors;
+		const sandboxElementsSelectors = sandboxCredentialElementsSelectors;
+		const otherElementsSelectors = [ '.woocommerce-save-button' ];
+		if ( ! isAnyEnvOnboarded ) {
+			otherElementsSelectors.push( '#field-sandbox_on' );
+		}
 
-        document.querySelectorAll(productionElementsSelectors.join()).forEach(
-            element => {
-                element.classList.remove('hide', 'show');
-                element.classList.add((shown && !isSandbox) ? 'show' : 'hide');
-            }
-        );
-        document.querySelectorAll(sandboxElementsSelectors.join()).forEach(
-            element => {
-                element.classList.remove('hide', 'show');
-                element.classList.add((shown && isSandbox) ? 'show' : 'hide');
-            }
-        );
-        document.querySelectorAll(otherElementsSelectors.join()).forEach(
-            element => element.style.display = shown ? '' : 'none'
-        );
-    };
+		document
+			.querySelectorAll( productionElementsSelectors.join() )
+			.forEach( ( element ) => {
+				element.classList.remove( 'hide', 'show' );
+				element.classList.add( shown && ! isSandbox ? 'show' : 'hide' );
+			} );
+		document
+			.querySelectorAll( sandboxElementsSelectors.join() )
+			.forEach( ( element ) => {
+				element.classList.remove( 'hide', 'show' );
+				element.classList.add( shown && isSandbox ? 'show' : 'hide' );
+			} );
+		document
+			.querySelectorAll( otherElementsSelectors.join() )
+			.forEach(
+				( element ) => ( element.style.display = shown ? '' : 'none' )
+			);
+	};
 
-    const updateEnvironmentControls = (isSandbox) => {
-        const productionElementsSelectors = [
-            '#field-ppcp_disconnect_production',
-            '#field-credentials_production_heading',
-        ];
-        const sandboxElementsSelectors = [
-            '#field-ppcp_disconnect_sandbox',
-            '#field-credentials_sandbox_heading',
-        ];
+	const updateEnvironmentControls = ( isSandbox ) => {
+		const productionElementsSelectors = [
+			'#field-ppcp_disconnect_production',
+			'#field-credentials_production_heading',
+		];
+		const sandboxElementsSelectors = [
+			'#field-ppcp_disconnect_sandbox',
+			'#field-credentials_sandbox_heading',
+		];
 
-        document.querySelectorAll(productionElementsSelectors.join()).forEach(
-            element => element.style.display = !isSandbox ? '' : 'none'
-        );
-        document.querySelectorAll(sandboxElementsSelectors.join()).forEach(
-            element => element.style.display = isSandbox ? '' : 'none'
-        );
-    };
+		document
+			.querySelectorAll( productionElementsSelectors.join() )
+			.forEach(
+				( element ) =>
+					( element.style.display = ! isSandbox ? '' : 'none' )
+			);
+		document
+			.querySelectorAll( sandboxElementsSelectors.join() )
+			.forEach(
+				( element ) =>
+					( element.style.display = isSandbox ? '' : 'none' )
+			);
+	};
 
-    let isDisconnecting = false;
+	let isDisconnecting = false;
 
-    const disconnect = (event) => {
-        event.preventDefault();
-        const fields = event.target.classList.contains('production') ? productionCredentialElementsSelectors : sandboxCredentialElementsSelectors;
+	const disconnect = ( event ) => {
+		event.preventDefault();
+		const fields = event.target.classList.contains( 'production' )
+			? productionCredentialElementsSelectors
+			: sandboxCredentialElementsSelectors;
 
-        document.querySelectorAll(fields.map(f => f + ' input').join()).forEach(
-            (element) => {
-                element.value = '';
-            }
-        );
+		document
+			.querySelectorAll( fields.map( ( f ) => f + ' input' ).join() )
+			.forEach( ( element ) => {
+				element.value = '';
+			} );
 
-        sandboxSwitchElement.checked = ! sandboxSwitchElement.checked;
+		sandboxSwitchElement.checked = ! sandboxSwitchElement.checked;
 
-        isDisconnecting = true;
+		isDisconnecting = true;
 
-        document.querySelector('.woocommerce-save-button').click();
-    };
+		document.querySelector( '.woocommerce-save-button' ).click();
+	};
 
-    // Prevent the message about unsaved checkbox/radiobutton when reloading the page.
-    // (WC listens for changes on all inputs and sets dirty flag until form submission)
-    const preventDirtyCheckboxPropagation = event => {
-        event.preventDefault();
-        event.stopPropagation();
+	// Prevent the message about unsaved checkbox/radiobutton when reloading the page.
+	// (WC listens for changes on all inputs and sets dirty flag until form submission)
+	const preventDirtyCheckboxPropagation = ( event ) => {
+		event.preventDefault();
+		event.stopPropagation();
 
-        const value = event.target.checked;
-        setTimeout( () => {
-                event.target.checked = value;
-            }, 1
-        );
-    };
+		const value = event.target.checked;
+		setTimeout( () => {
+			event.target.checked = value;
+		}, 1 );
+	};
 
-    const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
+	const sandboxSwitchElement = document.querySelector( '#ppcp-sandbox_on' );
 
-    const validate = () => {
-        const selectors = sandboxSwitchElement.checked ? sandboxCredentialElementsSelectors : productionCredentialElementsSelectors;
-        const values = selectors.map(s => document.querySelector(s + ' input')).map(el => el.value);
+	const validate = () => {
+		const selectors = sandboxSwitchElement.checked
+			? sandboxCredentialElementsSelectors
+			: productionCredentialElementsSelectors;
+		const values = selectors
+			.map( ( s ) => document.querySelector( s + ' input' ) )
+			.map( ( el ) => el.value );
 
-        const errors = [];
-        if (values.some(v => !v)) {
-            errors.push(PayPalCommerceGatewayOnboarding.error_messages.no_credentials);
-        }
-
-        return errors;
-    };
-
-    const isAnyEnvOnboarded = PayPalCommerceGatewayOnboarding.sandbox_state === ppcp_onboarding.STATE_ONBOARDED ||
-        PayPalCommerceGatewayOnboarding.production_state === ppcp_onboarding.STATE_ONBOARDED;
-
-	document.querySelectorAll('.ppcp-disconnect').forEach(
-		(button) => {
-			button.addEventListener(
-				'click',
-				disconnect
+		const errors = [];
+		if ( values.some( ( v ) => ! v ) ) {
+			errors.push(
+				PayPalCommerceGatewayOnboarding.error_messages.no_credentials
 			);
 		}
+
+		return errors;
+	};
+
+	const isAnyEnvOnboarded =
+		PayPalCommerceGatewayOnboarding.sandbox_state ===
+			ppcp_onboarding.STATE_ONBOARDED ||
+		PayPalCommerceGatewayOnboarding.production_state ===
+			ppcp_onboarding.STATE_ONBOARDED;
+
+	document.querySelectorAll( '.ppcp-disconnect' ).forEach( ( button ) => {
+		button.addEventListener( 'click', disconnect );
+	} );
+
+	document
+		.querySelectorAll( '.ppcp-onboarding-options input' )
+		.forEach( ( element ) => {
+			element.addEventListener( 'click', ( event ) => {
+				updateOptionsState();
+
+				preventDirtyCheckboxPropagation( event );
+			} );
+		} );
+
+	const isSandboxInBackend =
+		PayPalCommerceGatewayOnboarding.current_env === 'sandbox';
+	if ( sandboxSwitchElement.checked !== isSandboxInBackend ) {
+		sandboxSwitchElement.checked = isSandboxInBackend;
+	}
+
+	updateOptionsState();
+
+	const settingsContainer = document.querySelector( '#mainform .form-table' );
+
+	const markCurrentOnboardingState = ( isOnboarded ) => {
+		settingsContainer.classList.remove(
+			'ppcp-onboarded',
+			'ppcp-onboarding'
+		);
+		settingsContainer.classList.add(
+			isOnboarded ? 'ppcp-onboarded' : 'ppcp-onboarding'
+		);
+	};
+
+	markCurrentOnboardingState(
+		PayPalCommerceGatewayOnboarding.current_state ===
+			ppcp_onboarding.STATE_ONBOARDED
 	);
 
-    document.querySelectorAll('.ppcp-onboarding-options input').forEach(
-        (element) => {
-            element.addEventListener('click', event => {
-                updateOptionsState();
+	const manualInputToggleButton = document.querySelector(
+		'#field-toggle_manual_input button'
+	);
+	let isManualInputShown =
+		PayPalCommerceGatewayOnboarding.current_state ===
+		ppcp_onboarding.STATE_ONBOARDED;
 
-                preventDirtyCheckboxPropagation(event);
-            });
-        }
-    );
+	manualInputToggleButton.addEventListener( 'click', ( event ) => {
+		event.preventDefault();
 
-    const isSandboxInBackend = PayPalCommerceGatewayOnboarding.current_env === 'sandbox';
-    if (sandboxSwitchElement.checked !== isSandboxInBackend) {
-        sandboxSwitchElement.checked = isSandboxInBackend;
-    }
+		isManualInputShown = ! isManualInputShown;
 
-    updateOptionsState();
+		updateManualInputControls(
+			isManualInputShown,
+			sandboxSwitchElement.checked,
+			isAnyEnvOnboarded
+		);
+	} );
 
-    const settingsContainer = document.querySelector('#mainform .form-table');
+	sandboxSwitchElement.addEventListener( 'click', ( event ) => {
+		const isSandbox = sandboxSwitchElement.checked;
 
-    const markCurrentOnboardingState = (isOnboarded) => {
-        settingsContainer.classList.remove('ppcp-onboarded', 'ppcp-onboarding');
-        settingsContainer.classList.add(isOnboarded ? 'ppcp-onboarded' : 'ppcp-onboarding');
-    }
+		if ( isAnyEnvOnboarded ) {
+			const onboardingState = isSandbox
+				? PayPalCommerceGatewayOnboarding.sandbox_state
+				: PayPalCommerceGatewayOnboarding.production_state;
+			const isOnboarded =
+				onboardingState === ppcp_onboarding.STATE_ONBOARDED;
 
-    markCurrentOnboardingState(PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED);
+			markCurrentOnboardingState( isOnboarded );
+			isManualInputShown = isOnboarded;
+		}
 
-    const manualInputToggleButton = document.querySelector('#field-toggle_manual_input button');
-    let isManualInputShown = PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED;
+		updateManualInputControls(
+			isManualInputShown,
+			isSandbox,
+			isAnyEnvOnboarded
+		);
 
-    manualInputToggleButton.addEventListener(
-            'click',
-            (event) => {
-                event.preventDefault();
+		updateEnvironmentControls( isSandbox );
 
-                isManualInputShown = !isManualInputShown;
+		preventDirtyCheckboxPropagation( event );
+	} );
 
-                updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
-            }
-        );
+	updateManualInputControls(
+		isManualInputShown,
+		sandboxSwitchElement.checked,
+		isAnyEnvOnboarded
+	);
 
-    sandboxSwitchElement.addEventListener(
-        'click',
-        (event) => {
-            const isSandbox = sandboxSwitchElement.checked;
+	updateEnvironmentControls( sandboxSwitchElement.checked );
 
-            if (isAnyEnvOnboarded) {
-                const onboardingState = isSandbox ? PayPalCommerceGatewayOnboarding.sandbox_state : PayPalCommerceGatewayOnboarding.production_state;
-                const isOnboarded = onboardingState === ppcp_onboarding.STATE_ONBOARDED;
+	document.querySelector( '#mainform' ).addEventListener( 'submit', ( e ) => {
+		if ( isDisconnecting ) {
+			return;
+		}
 
-                markCurrentOnboardingState(isOnboarded);
-                isManualInputShown = isOnboarded;
-            }
+		const errors = validate();
+		if ( errors.length ) {
+			e.preventDefault();
 
-            updateManualInputControls(isManualInputShown, isSandbox, isAnyEnvOnboarded);
+			const errorLabel = document.querySelector(
+				'#ppcp-form-errors-label'
+			);
+			errorLabel.parentElement.parentElement.classList.remove( 'hide' );
 
-            updateEnvironmentControls(isSandbox);
+			errorLabel.innerHTML = errors.join( '<br/>' );
 
-            preventDirtyCheckboxPropagation(event);
-        }
-    );
-
-    updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
-
-    updateEnvironmentControls(sandboxSwitchElement.checked);
-
-    document.querySelector('#mainform').addEventListener('submit', e => {
-        if (isDisconnecting) {
-            return;
-        }
-
-        const errors = validate();
-        if (errors.length) {
-            e.preventDefault();
-
-            const errorLabel = document.querySelector('#ppcp-form-errors-label');
-            errorLabel.parentElement.parentElement.classList.remove('hide');
-
-            errorLabel.innerHTML = errors.join('<br/>');
-
-            errorLabel.scrollIntoView();
-            window.scrollBy(0, -120); // WP + WC floating header
-        }
-    });
+			errorLabel.scrollIntoView();
+			window.scrollBy( 0, -120 ); // WP + WC floating header
+		}
+	} );
 
 	// Onboarding buttons.
 	ppcp_onboarding.init();
-})();
+} )();

@@ -247,6 +247,7 @@ class GooglepayButton {
 		this.log( 'onButtonClick', this.context );
 
 		const paymentDataRequest = this.paymentDataRequest();
+
 		this.log(
 			'onButtonClick: paymentDataRequest',
 			paymentDataRequest,

@@ -102,6 +102,7 @@ class GooglePayPreviewButton extends PreviewButton {
 			this.ppcpConfig,
 			null
 		);
+
 		const button = new GooglepayButton(
 			'preview',
 			null,

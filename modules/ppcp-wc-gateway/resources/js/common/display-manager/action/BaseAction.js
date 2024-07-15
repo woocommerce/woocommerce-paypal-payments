@@ -1,21 +1,19 @@
-
 class BaseAction {
+	constructor( config ) {
+		this.config = config;
+	}
 
-    constructor(config) {
-        this.config = config;
-    }
+	get key() {
+		return this.config.key;
+	}
 
-    get key() {
-        return this.config.key;
-    }
+	register() {
+		// To override.
+	}
 
-    register() {
-        // To override.
-    }
-
-    run(status) {
-        // To override.
-    }
+	run( status ) {
+		// To override.
+	}
 }
 
 export default BaseAction;
