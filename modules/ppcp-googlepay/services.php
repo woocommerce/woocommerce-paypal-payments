@@ -938,5 +938,7 @@ return array(
 			esc_html( $button_text )
 		);
 	},
-
+	'googlepay.wc-gateway'   => static function ( ContainerInterface $container ): GooglePayGateway {
+		return new GooglePayGateway();
+	},
 );
