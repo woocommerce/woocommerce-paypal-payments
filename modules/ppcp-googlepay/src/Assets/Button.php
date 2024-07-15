@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -24,6 +25,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class Button
  */
 class Button implements ButtonInterface {
+
+	use ContextTrait;
 
 	/**
 	 * The URL to the module.
@@ -235,7 +238,7 @@ class Button implements ButtonInterface {
 
 		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = true;
+		$button_enabled_checkout = ! ( $this->context() === 'checkout' && $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' ) );
 		$button_enabled_payorder = true;
 		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
@@ -409,7 +412,7 @@ class Button implements ButtonInterface {
 	 */
 	public function script_data(): array {
 		$shipping = array(
-			'enabled' => $this->settings->has( 'googlepay_button_shipping_enabled' )
+			'enabled'    => $this->settings->has( 'googlepay_button_shipping_enabled' )
 				? boolval( $this->settings->get( 'googlepay_button_shipping_enabled' ) )
 				: false,
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
