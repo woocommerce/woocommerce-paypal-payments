@@ -42,7 +42,7 @@ trait RequestTrait {
 		 */
 		$args = apply_filters( 'ppcp_request_args', $args, $url );
 		if ( ! isset( $args['headers']['PayPal-Partner-Attribution-Id'] ) ) {
-			$args['headers']['PayPal-Partner-Attribution-Id'] = 'Woo_PPCP';
+			$args['headers']['PayPal-Partner-Attribution-Id'] = PPCP_PAYPAL_BN_CODE;
 		}
 
 		$response = wp_remote_get( $url, $args );

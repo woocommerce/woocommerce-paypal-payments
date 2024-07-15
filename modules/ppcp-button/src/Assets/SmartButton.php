@@ -829,7 +829,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		 */
 		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
 
-		$messages_placeholder = '<div class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+		$bn_code = PPCP_PAYPAL_BN_CODE;
+
+		$messages_placeholder = '<div class="ppcp-messages" data-partner-attribution-id="' . esc_attr( $bn_code ) . '"></div>';
 
 		if ( is_array( $block_params ) && ( $block_params['blockName'] ?? false ) ) {
 			$this->render_after_block(
@@ -1511,7 +1513,10 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	private function bn_code_for_context( string $context ): string {
 
 		$codes = $this->bn_codes();
-		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : 'Woo_PPCP';
+
+		$bn_code = PPCP_PAYPAL_BN_CODE;
+
+		return ( isset( $codes[ $context ] ) ) ? $codes[ $context ] : $bn_code;
 	}
 
 	/**
@@ -1519,13 +1524,15 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 *
 	 * @return array
 	 */
-	private function bn_codes(): array {
+	private function bn_codes() : array {
+
+		$bn_code = PPCP_PAYPAL_BN_CODE;
 
 		return array(
-			'checkout'  => 'Woo_PPCP',
-			'cart'      => 'Woo_PPCP',
-			'mini-cart' => 'Woo_PPCP',
-			'product'   => 'Woo_PPCP',
+			'checkout'  => $bn_code,
+			'cart'      => $bn_code,
+			'mini-cart' => $bn_code,
+			'product'   => $bn_code,
 		);
 	}
 
