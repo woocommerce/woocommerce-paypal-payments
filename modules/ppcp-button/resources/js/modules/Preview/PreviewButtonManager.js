@@ -283,6 +283,17 @@ class PreviewButtonManager {
 	 */
 	_configureAllButtons( ppcpConfig ) {
 		Object.entries( this.buttons ).forEach( ( [ id, button ] ) => {
+			const limitWrapper = ppcpConfig.button?.wrapper;
+
+			/**
+			 * When the ppcpConfig object specifies a button wrapper, then ensure to limit preview
+			 * changes to this individual wrapper. If no button wrapper is defined, the
+			 * configuration is relevant for all buttons on the page.
+			 */
+			if ( limitWrapper && button.wrapper !== limitWrapper ) {
+				return;
+			}
+
 			this._configureButton( id, {
 				...ppcpConfig,
 				button: {
