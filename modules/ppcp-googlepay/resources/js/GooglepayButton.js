@@ -62,6 +62,30 @@ class GooglepayButton {
 			)
 			.then( ( response ) => {
 				if ( response.result ) {
+					if ( this.context === 'checkout' ) {
+						const wrapper = document.getElementById(
+							'ppc-button-ppcp-googlepay'
+						);
+
+						if ( wrapper ) {
+							const { ppcpStyle, buttonStyle } =
+								this.contextConfig();
+							wrapper.className = `ppcp-button-${ ppcpStyle.shape }`;
+
+							if ( ppcpStyle.height ) {
+								wrapper.style.height = `${ ppcpStyle.height }px`;
+							}
+
+							this.addButtonCheckout(
+								this.baseCardPaymentMethod,
+								wrapper,
+								buttonStyle
+							);
+
+							return;
+						}
+					}
+
 					this.addButton( this.baseCardPaymentMethod );
 				}
 			} )
@@ -219,6 +243,19 @@ class GooglepayButton {
 
 			jQuery( wrapper ).append( button );
 		} );
+	}
+
+	addButtonCheckout( baseCardPaymentMethod, wrapper, buttonStyle ) {
+		const button = this.paymentsClient.createButton( {
+			onClick: this.onButtonClick.bind( this ),
+			allowedPaymentMethods: [ baseCardPaymentMethod ],
+			buttonColor: buttonStyle.color || 'black',
+			buttonType: buttonStyle.type || 'pay',
+			buttonLocale: buttonStyle.language || 'en',
+			buttonSizeMode: 'fill',
+		} );
+
+		wrapper.appendChild( button );
 	}
 
 	waitForWrapper( selector, callback, delay = 100, timeout = 2000 ) {
