@@ -140,12 +140,17 @@ class AxoModule implements ModuleInterface {
 		);
 
 		add_action(
-			'init',
+			'wp_loaded',
 			function () use ( $c ) {
 				$module = $this;
 
+				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscription_helper instanceof SubscriptionHelper );
+
 				// Check if the module is applicable, correct country, currency, ... etc.
-				if ( ! $c->get( 'axo.eligible' ) || 'continuation' === $c->get( 'button.context' ) ) {
+				if ( ! $c->get( 'axo.eligible' )
+					|| 'continuation' === $c->get( 'button.context' )
+					|| $subscription_helper->cart_contains_subscription() ) {
 					return;
 				}
 
@@ -334,15 +339,11 @@ class AxoModule implements ModuleInterface {
 		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
 		$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
 
-		$subscription_helper = $c->get( 'wc-subscriptions.helper' );
-		assert( $subscription_helper instanceof SubscriptionHelper );
-
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
 			&& $is_axo_enabled
 			&& $is_dcc_enabled
-			&& ! $this->is_excluded_endpoint()
-			&& ! $subscription_helper->cart_contains_subscription();
+			&& ! $this->is_excluded_endpoint();
 	}
 
 	/**
