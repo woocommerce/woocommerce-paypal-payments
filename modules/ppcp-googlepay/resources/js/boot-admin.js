@@ -111,7 +111,7 @@ class GooglePayPreviewButton extends PreviewButton {
 			contextHandler
 		);
 
-		button.init( this.apiConfig, contextHandler.transactionInfo() );
+		button.init( this.apiConfig, null );
 	}
 
 	/**
