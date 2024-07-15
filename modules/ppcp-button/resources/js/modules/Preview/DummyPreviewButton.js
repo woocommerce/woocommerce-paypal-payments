@@ -26,7 +26,7 @@ export default class DummyPreviewButton extends PreviewButton {
 		this.#innerEl = document.createElement( 'div' );
 		this.#innerEl.innerHTML = `<div class="reason">${ this.label }</div>`;
 
-		this._applyShape( this.ppcpConfig?.button?.style?.shape );
+		this._applyStyles( this.ppcpConfig?.button?.style );
 
 		this.domWrapper.appendChild( this.#innerEl );
 	}
@@ -34,15 +34,19 @@ export default class DummyPreviewButton extends PreviewButton {
 	/**
 	 * Applies the button shape (rect/pill) to the dummy button
 	 *
-	 * @param {string|null} shape
+	 * @param {{shape: string, height: number|null}} style
 	 * @private
 	 */
-	_applyShape( shape = 'rect' ) {
+	_applyStyles( style ) {
 		this.domWrapper.classList.remove(
 			'ppcp-button-pill',
 			'ppcp-button-rect'
 		);
 
-		this.domWrapper.classList.add( `ppcp-button-${ shape }` );
+		this.domWrapper.classList.add( `ppcp-button-${ style.shape }` );
+
+		if ( style.height ) {
+			this.domWrapper.style.height = `${ style.height }px`;
+		}
 	}
 }
