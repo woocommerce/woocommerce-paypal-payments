@@ -25,6 +25,10 @@ if (!defined('ABSPATH')) {
 	define('ABSPATH', '');
 }
 
+if (!defined('PPCP_PAYPAL_BN_CODE')) {
+	define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
+}
+
 /**
  * Cancel the next occurrence of a scheduled action.
  *

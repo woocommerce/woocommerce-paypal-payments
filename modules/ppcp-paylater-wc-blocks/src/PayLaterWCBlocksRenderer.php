@@ -95,14 +95,16 @@ class PayLaterWCBlocksRenderer {
 	) {
 		if ( PayLaterWCBlocksModule::is_placement_enabled( $c->get( 'wcgateway.settings.status' ), $location ) ) {
 
-			$html = '<div id="' . esc_attr( $attributes['ppcpId'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+			$bn_code = PPCP_PAYPAL_BN_CODE;
+
+			$html = '<div id="' . esc_attr( $attributes['ppcpId'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="' . esc_attr( $bn_code ) . '"></div>';
 
 			$processor = new \WP_HTML_Tag_Processor( $html );
 
 			if ( $processor->next_tag( 'div' ) ) {
 				$processor->set_attribute( 'data-block-name', esc_attr( $attributes['blockId'] ?? '' ) );
 				$processor->set_attribute( 'class', 'ppcp-messages' );
-				$processor->set_attribute( 'data-partner-attribution-id', 'Woo_PPCP' );
+				$processor->set_attribute( 'data-partner-attribution-id', $bn_code );
 
 				if ( $this->layout === 'flex' ) {
 					$processor->set_attribute( 'data-pp-style-layout', 'flex' );
