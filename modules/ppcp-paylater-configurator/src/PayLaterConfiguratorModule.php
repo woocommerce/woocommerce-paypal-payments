@@ -113,6 +113,8 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
+				$bn_code = PPCP_PAYPAL_BN_CODE;
+
 				wp_localize_script(
 					'ppcp-paylater-configurator',
 					'PcpPayLaterConfigurator',
@@ -130,6 +132,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 						'config'                 => $config_factory->from_settings( $settings ),
 						'merchantClientId'       => $settings->get( 'client_id' ),
 						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
+						'bnCode'                 => $bn_code,
 						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
 						'headerClassName'        => 'ppcp-paylater-configurator-header',
 						'subheaderClassName'     => 'ppcp-paylater-configurator-subheader',

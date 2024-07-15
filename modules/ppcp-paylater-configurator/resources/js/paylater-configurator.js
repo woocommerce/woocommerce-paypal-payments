@@ -57,7 +57,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 					merchantClientId: PcpPayLaterConfigurator.merchantClientId,
 					partnerClientId: PcpPayLaterConfigurator.partnerClientId,
 					partnerName: 'WooCommerce',
-					bnCode: 'Woo_PPCP',
+					bnCode: PcpPayLaterConfigurator.bnCode,
 					placements: [
 						'cart',
 						'checkout',
