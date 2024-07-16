@@ -295,15 +295,15 @@ return array(
 		},
 	'wcgateway.notice.checkout-blocks'                     =>
 		static function ( ContainerInterface $container ): string {
-			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
-			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
-
 			$settings = $container->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
 
 			if ( $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ) {
 				return '';
 			}
+
+			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
+			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
 
 			if ( ! CartCheckoutDetector::has_block_checkout() ) {
 				$notice_content = sprintf(
