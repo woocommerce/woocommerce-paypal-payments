@@ -944,7 +944,8 @@ return array(
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'session.handler' )
 		);
 	},
 );

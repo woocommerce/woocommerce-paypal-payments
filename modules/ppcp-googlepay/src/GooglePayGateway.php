@@ -13,6 +13,7 @@ use Exception;
 use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages;
@@ -66,20 +67,29 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
+	 * The Session Handler.
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
 	 * GooglePayGateway constructor.
 	 *
-	 * @param OrderProcessor $order_processor The Order Processor.
-	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @param OrderProcessor          $order_processor The Order Processor.
+	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
-	 * @param RefundProcessor $refund_processor The Refund Processor.
-	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param RefundProcessor         $refund_processor The Refund Processor.
+	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param SessionHandler          $session_handler The Session Handler.
 	 */
 	public function __construct(
 		OrderProcessor $order_processor,
 		SubscriptionHelper $subscription_helper,
 		callable $paypal_checkout_url_factory,
 		RefundProcessor $refund_processor,
-		TransactionUrlProvider $transaction_url_provider
+		TransactionUrlProvider $transaction_url_provider,
+		SessionHandler $session_handler
 	) {
 		$this->id = self::ID;
 
@@ -91,11 +101,12 @@ class GooglePayGateway extends WC_Payment_Gateway {
 
 		$this->init_form_fields();
 		$this->init_settings();
-		$this->order_processor = $order_processor;
-		$this->subscription_helper = $subscription_helper;
+		$this->order_processor             = $order_processor;
+		$this->subscription_helper         = $subscription_helper;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
-		$this->refund_processor = $refund_processor;
-		$this->transaction_url_provider = $transaction_url_provider;
+		$this->refund_processor            = $refund_processor;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->session_handler             = $session_handler;
 	}
 
 	/**
