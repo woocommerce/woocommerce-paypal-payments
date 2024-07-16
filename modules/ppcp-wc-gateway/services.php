@@ -295,14 +295,16 @@ return array(
 		},
 	'wcgateway.notice.checkout-blocks'                     =>
 		static function ( ContainerInterface $container ): string {
+			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
 			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
-			if ( ! CartCheckoutDetector::has_block_checkout() ) {
+			if ( CartCheckoutDetector::has_block_checkout() ) {
 				$notice_content = sprintf(
 					/* translators: %1$s: URL to the instructions page. */
 					__(
-						'Your store\'s checkout page currently uses a classic checkout layout or a custom checkout widget. Advanced Card Processing now also supports the new & improved <code>Checkout</code> block. See <a href="%1$s">this page</a> for instructions on upgrading to the new Checkout layout.',
+						'<span class="highlight">Info:</span> The <a href="%1$s">Checkout page</a> of your store currently uses a classic checkout layout or a custom checkout widget. Advanced Card Processing supports the new <code>Checkout</code> block which improves conversion rates. See <a href="%2$s">this page</a> for instructions on how to upgrade to the new Checkout layout.',
 						'woocommerce-paypal-payments'
 					),
+					esc_url( $checkout_page_link ),
 					esc_url( $instructions_link )
 				);
 			} else {
