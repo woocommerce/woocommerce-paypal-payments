@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -16,6 +17,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
@@ -26,6 +28,8 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
  * Class WebhookModule
  */
 class WebhookModule implements ModuleInterface {
+
+	use ProcessPaymentTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -158,6 +162,15 @@ class WebhookModule implements ModuleInterface {
 				);
 			}
 		);
+
+		// If the WC_Order is paid through the approved webhook.
+		add_action( 'woocommerce_paypal_payments_before_process_order', function(WC_Order $wc_order) {
+			//phpcs:disable WordPress.Security.NonceVerification.Recommended
+			if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
+				return $this->handle_payment_success( $wc_order );
+			}
+			//phpcs:enable
+		});
 	}
 
 	/**

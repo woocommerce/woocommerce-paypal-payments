@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
@@ -33,7 +34,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class WcSubscriptionsModule implements ModuleInterface {
 
-	use TransactionIdHandlingTrait;
+	use TransactionIdHandlingTrait, ProcessPaymentTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -255,6 +256,23 @@ class WcSubscriptionsModule implements ModuleInterface {
 			10,
 			3
 		);
+
+		add_action( 'woocommerce_paypal_payments_before_process_order', function(WC_Order $wc_order) use ( $c ) {
+			$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+			assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+			// If the customer has chosen to change the subscription payment.
+			if ( $subscriptions_helper->has_subscription( $wc_order->get_id() ) && $subscriptions_helper->is_subscription_change_payment() ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
+				if ( $saved_paypal_payment ) {
+					$wc_order->update_meta_data( 'payment_token_id', $saved_paypal_payment );
+					$wc_order->save();
+
+					return $this->handle_payment_success( $wc_order );
+				}
+			}
+		});
 	}
 
 	/**

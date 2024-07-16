@@ -21,7 +21,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class GooglePayGateway
@@ -37,13 +36,6 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	 * @var OrderProcessor
 	 */
 	protected $order_processor;
-
-	/**
-	 * The subscription helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	protected $subscription_helper;
 
 	/**
 	 * The function return the PayPal checkout URL for the given order ID.
@@ -77,7 +69,6 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	 * GooglePayGateway constructor.
 	 *
 	 * @param OrderProcessor          $order_processor The Order Processor.
-	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 * @param RefundProcessor         $refund_processor The Refund Processor.
 	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
@@ -85,7 +76,6 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	 */
 	public function __construct(
 		OrderProcessor $order_processor,
-		SubscriptionHelper $subscription_helper,
 		callable $paypal_checkout_url_factory,
 		RefundProcessor $refund_processor,
 		TransactionUrlProvider $transaction_url_provider,
@@ -102,7 +92,6 @@ class GooglePayGateway extends WC_Payment_Gateway {
 		$this->init_form_fields();
 		$this->init_settings();
 		$this->order_processor             = $order_processor;
-		$this->subscription_helper         = $subscription_helper;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;
@@ -155,28 +144,7 @@ class GooglePayGateway extends WC_Payment_Gateway {
 			);
 		}
 
-		/**
-		 * If customer has chosen change Subscription payment.
-		 */
-		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
-			if ( $saved_paypal_payment ) {
-				$wc_order->update_meta_data( 'payment_token_id', $saved_paypal_payment );
-				$wc_order->save();
-
-				return $this->handle_payment_success( $wc_order );
-			}
-		}
-
-		/**
-		 * If the WC_Order is paid through the approved webhook.
-		 */
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
-			return $this->handle_payment_success( $wc_order );
-		}
-		//phpcs:enable WordPress.Security.NonceVerification.Recommended
+		do_action( 'woocommerce_paypal_payments_before_process_order', $wc_order );
 
 		try {
 			try {
