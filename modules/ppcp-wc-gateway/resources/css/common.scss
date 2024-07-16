@@ -82,6 +82,14 @@ $background-ident-color: #fbfbfb;
 	}
 }
 
+.ppcp-notice-success {
+	border-left-color: #00a32a;
+
+	.highlight {
+		color: #00a32a;
+	}
+}
+
 .ppcp-notice-warning {
 	border-left-color: #dba617;
 
