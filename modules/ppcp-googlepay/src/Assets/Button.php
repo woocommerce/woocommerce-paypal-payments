@@ -239,6 +239,7 @@ class Button implements ButtonInterface {
 		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
 		$button_enabled_checkout = ! ( $this->context() === 'checkout' && $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' ) );
+		$button_enabled_checkout = true;
 		$button_enabled_payorder = true;
 		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 

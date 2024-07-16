@@ -939,6 +939,12 @@ return array(
 		);
 	},
 	'googlepay.wc-gateway'   => static function ( ContainerInterface $container ): GooglePayGateway {
-		return new GooglePayGateway();
+		return new GooglePayGateway(
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' )
+		);
 	},
 );
