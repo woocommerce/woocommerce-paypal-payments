@@ -232,6 +232,8 @@ class CheckoutBootstap {
 			}
 		}
 
+		setVisible( '#ppc-button-ppcp-googlepay', isGooglePayMethod );
+
 		jQuery( document.body ).trigger( 'ppcp_checkout_rendered' );
 	}
 

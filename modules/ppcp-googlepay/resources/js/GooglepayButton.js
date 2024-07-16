@@ -27,7 +27,7 @@ class GooglepayButton {
 
 		this.log = function () {
 			if ( this.buttonConfig.is_debug ) {
-				console.log( '[GooglePayButton]', ...arguments );
+				//console.log('[GooglePayButton]', ...arguments);
 			}
 		};
 	}
@@ -70,6 +70,7 @@ class GooglepayButton {
 						if ( wrapper ) {
 							const { ppcpStyle, buttonStyle } =
 								this.contextConfig();
+
 							wrapper.className = `ppcp-button-${ ppcpStyle.shape }`;
 
 							if ( ppcpStyle.height ) {
