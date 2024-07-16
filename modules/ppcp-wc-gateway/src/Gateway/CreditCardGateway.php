@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderMetaManager;
 
 /**
  * Class CreditCardGateway
@@ -472,6 +473,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 					$create_order = $this->capture_card_payment->create_order( $token->get_token(), $custom_id, $invoice_id, $wc_order );
 
 					$order = $this->order_endpoint->order( $create_order->id );
+					$meta  = new OrderMetaManager( $wc_order, $order );
+					$meta->update_status();
 					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
 					if ( $order->intent() === 'AUTHORIZE' ) {

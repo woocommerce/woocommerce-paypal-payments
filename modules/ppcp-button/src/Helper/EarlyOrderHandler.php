@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderMetaManager;
 
 /**
  * Class EarlyOrderHandler
@@ -157,6 +158,9 @@ class EarlyOrderHandler {
 		WC()->session->set( 'order_awaiting_payment', $order_id );
 
 		$wc_order = wc_get_order( $order_id );
+		$meta     = new OrderMetaManager( $wc_order, $order );
+		$meta->update_status();
+
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
