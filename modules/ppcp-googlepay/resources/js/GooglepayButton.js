@@ -63,8 +63,9 @@ class GooglepayButton {
 			.then( ( response ) => {
 				if ( response.result ) {
 					if (
-						this.context === 'checkout' ||
-						this.context === 'pay-now'
+						( this.context === 'checkout' ||
+							this.context === 'pay-now' ) &&
+						this.buttonConfig.is_wc_gateway_enabled === '1'
 					) {
 						const wrapper = document.getElementById(
 							'ppc-button-ppcp-googlepay'

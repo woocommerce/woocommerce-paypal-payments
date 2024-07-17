@@ -96,6 +96,14 @@ class GooglePayGateway extends WC_Payment_Gateway {
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;
 		$this->session_handler             = $session_handler;
+
+		add_action(
+			'woocommerce_update_options_payment_gateways_' . $this->id,
+			array(
+				$this,
+				'process_admin_options',
+			)
+		);
 	}
 
 	/**
