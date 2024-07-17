@@ -210,7 +210,6 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	public function get_payment_method_data() {
 		$script_data = $this->smart_button()->script_data();
-		$cart = WC()->cart;
 
 		if ( isset( $script_data['continuation'] ) ) {
 			$url = add_query_arg( array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ), wc_get_checkout_url() );
@@ -255,7 +254,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 				),
 			),
 			'scriptData'                  => $script_data,
-			'needShipping' 	              => $cart && $cart->needs_shipping(),
+			'needShipping'                => WC()->cart->needs_shipping(),
 		);
 	}
 
