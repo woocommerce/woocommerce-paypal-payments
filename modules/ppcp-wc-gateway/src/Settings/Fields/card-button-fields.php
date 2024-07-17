@@ -32,7 +32,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-checkout" target="_blank">',
 				'</a>',
-				'</ br>'
+				'<br />'
 			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
