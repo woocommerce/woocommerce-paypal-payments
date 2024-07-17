@@ -187,9 +187,19 @@ class GooglepayModule implements ModuleInterface {
 			}
 		);
 
-		add_action('woocommerce_review_order_after_submit', function () {
-			echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
-		});
+		add_action(
+			'woocommerce_review_order_after_submit',
+			function () {
+				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+			}
+		);
+
+		add_action(
+			'woocommerce_pay_order_after_submit',
+			function () {
+				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+			}
+		);
 	}
 
 	/**
