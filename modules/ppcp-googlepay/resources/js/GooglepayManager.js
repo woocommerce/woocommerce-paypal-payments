@@ -1,49 +1,46 @@
-import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
-import GooglepayButton from "./GooglepayButton";
+import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
+import GooglepayButton from './GooglepayButton';
 
 class GooglepayManager {
+	constructor( buttonConfig, ppcpConfig ) {
+		this.buttonConfig = buttonConfig;
+		this.ppcpConfig = ppcpConfig;
+		this.googlePayConfig = null;
 
-    constructor(buttonConfig, ppcpConfig) {
+		this.buttons = [];
 
-        this.buttonConfig = buttonConfig;
-        this.ppcpConfig = ppcpConfig;
-        this.googlePayConfig = null;
+		buttonModuleWatcher.watchContextBootstrap( ( bootstrap ) => {
+			const button = new GooglepayButton(
+				bootstrap.context,
+				bootstrap.handler,
+				buttonConfig,
+				ppcpConfig
+			);
 
-        this.buttons = [];
+			this.buttons.push( button );
 
-        buttonModuleWatcher.watchContextBootstrap((bootstrap) => {
-            const button = new GooglepayButton(
-                bootstrap.context,
-                bootstrap.handler,
-                buttonConfig,
-                ppcpConfig,
-            );
+			if ( this.googlePayConfig ) {
+				button.init( this.googlePayConfig );
+			}
+		} );
+	}
 
-            this.buttons.push(button);
+	init() {
+		( async () => {
+			// Gets GooglePay configuration of the PayPal merchant.
+			this.googlePayConfig = await paypal.Googlepay().config();
 
-            if (this.googlePayConfig) {
-                button.init(this.googlePayConfig);
-            }
-        });
-    }
+			for ( const button of this.buttons ) {
+				button.init( this.googlePayConfig );
+			}
+		} )();
+	}
 
-    init() {
-        (async () => {
-            // Gets GooglePay configuration of the PayPal merchant.
-            this.googlePayConfig = await paypal.Googlepay().config();
-
-            for (const button of this.buttons) {
-                button.init(this.googlePayConfig);
-            }
-        })();
-    }
-
-    reinit() {
-        for (const button of this.buttons) {
-            button.reinit();
-        }
-    }
-
+	reinit() {
+		for ( const button of this.buttons ) {
+			button.reinit();
+		}
+	}
 }
 
 export default GooglepayManager;

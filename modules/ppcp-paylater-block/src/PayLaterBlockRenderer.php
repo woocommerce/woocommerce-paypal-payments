@@ -28,7 +28,9 @@ class PayLaterBlockRenderer {
 	public function render( array $attributes, ContainerInterface $c ): string {
 		if ( PayLaterBlockModule::is_block_enabled( $c->get( 'wcgateway.settings.status' ) ) ) {
 
-			$html = '<div id="' . esc_attr( $attributes['id'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+			$bn_code = PPCP_PAYPAL_BN_CODE;
+
+			$html = '<div id="' . esc_attr( $attributes['id'] ?? '' ) . '" class="ppcp-messages" data-partner-attribution-id="' . esc_attr( $bn_code ) . '"></div>';
 
 			$processor = new \WP_HTML_Tag_Processor( $html );
 
