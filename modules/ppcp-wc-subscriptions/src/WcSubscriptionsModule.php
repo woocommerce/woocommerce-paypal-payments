@@ -416,7 +416,7 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : null;
+				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
 
 				if ( 'disable_paypal_subscriptions' !== $subscriptions_mode && $subscriptions_helper->plugin_is_active() ) {
 					$supports = array(
@@ -472,7 +472,7 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : null;
+				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
 
 				if ( 'disable_paypal_subscriptions' !== $subscriptions_mode && $subscriptions_helper->plugin_is_active() ) {
 					$supports = array(
