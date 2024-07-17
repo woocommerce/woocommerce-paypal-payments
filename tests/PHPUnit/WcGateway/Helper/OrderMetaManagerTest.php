@@ -33,15 +33,15 @@ class OrderMetaManagerTest extends TestCase {
         $orderStatus->shouldReceive('name')->andReturn('COMPLETED');
         $this->pp_order->shouldReceive('status')->andReturn($orderStatus);
 
-        $this->wc_order->shouldReceive('get_meta')->with(OrderMetaManagerInterface::STATUS_META_KEY)->andReturn('PENDING')->once();
-        $this->wc_order->shouldReceive('update_meta_data')->with(OrderMetaManagerInterface::STATUS_META_KEY, 'COMPLETED')->once();
+        $this->wc_order->shouldReceive('get_meta')->with(OrderMetaManager::STATUS_META_KEY)->andReturn('PENDING')->once();
+        $this->wc_order->shouldReceive('update_meta_data')->with(OrderMetaManager::STATUS_META_KEY, 'COMPLETED')->once();
 
         Actions\expectDone('woocommerce_paypal_payments_order_status_changed')->once();
 
-        $result = $this->manager->update_status();
+        $result = $this->manager->set_status();
         $this->assertSame($this->manager, $result);
 
-        $this->wc_order->shouldReceive('get_meta')->with(OrderMetaManagerInterface::STATUS_META_KEY)->andReturn('COMPLETED')->once();
+        $this->wc_order->shouldReceive('get_meta')->with(OrderMetaManager::STATUS_META_KEY)->andReturn('COMPLETED')->once();
         $this->assertEquals('COMPLETED', $this->manager->get_status());
     }
 
@@ -54,12 +54,12 @@ class OrderMetaManagerTest extends TestCase {
         $orderStatus->shouldReceive('name')->andReturn('COMPLETED');
         $this->pp_order->shouldReceive('status')->andReturn($orderStatus);
 
-        $this->wc_order->shouldReceive('get_meta')->with(OrderMetaManagerInterface::STATUS_META_KEY)->andReturn('COMPLETED')->once();
+        $this->wc_order->shouldReceive('get_meta')->with(OrderMetaManager::STATUS_META_KEY)->andReturn('COMPLETED')->once();
         $this->wc_order->shouldNotReceive('update_meta_data');
 
         Actions\expectDone('woocommerce_paypal_payments_order_status_changed')->never();
 
-        $result = $this->manager->update_status();
+        $result = $this->manager->set_status();
         $this->assertSame($this->manager, $result);
     }
 
