@@ -159,7 +159,7 @@ class EarlyOrderHandler {
 
 		$wc_order = wc_get_order( $order_id );
 		$meta     = new OrderMetaManager( $wc_order, $order );
-		$meta->update_status();
+		$meta->set_status();
 
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );

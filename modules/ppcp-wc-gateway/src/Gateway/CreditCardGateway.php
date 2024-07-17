@@ -474,7 +474,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 					$order = $this->order_endpoint->order( $create_order->id );
 					$meta  = new OrderMetaManager( $wc_order, $order );
-					$meta->update_status();
+					$meta->set_status();
 					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
 					if ( $order->intent() === 'AUTHORIZE' ) {

@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WC_Abstract_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class OrderMetaManager
@@ -19,7 +18,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Manages metadata for PayPal orders, focusing on a single WooCommerce order
  * and its associated PayPal order.
  */
-class OrderMetaManager implements OrderMetaManagerInterface {
+class OrderMetaManager {
+
+	public const STATUS_META_KEY = '_ppcp_paypal_status';
+
 	/**
 	 * The WooCommerce order.
 	 *
@@ -35,7 +37,11 @@ class OrderMetaManager implements OrderMetaManagerInterface {
 	private $pp_order;
 
 	/**
-	 * {@inheritDoc}
+	 * Creates a new instance of the OrderMetaManager, connecting the provided objects -
+	 * a WC_Order and PayPal Order (transaction).
+	 *
+	 * @param WC_Abstract_Order $wc_order The WooCommerce order to manage metadata for.
+	 * @param PayPalOrder       $pp_order The associated PayPal order.
 	 */
 	public function __construct( WC_Abstract_Order $wc_order, PayPalOrder $pp_order ) {
 		$this->wc_order = $wc_order;
@@ -43,9 +49,13 @@ class OrderMetaManager implements OrderMetaManagerInterface {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Updates the status metadata for the WooCommerce order based on the PayPal order.
+	 *
+	 * To guarantee that the change is saved to the database, call `::persist()`.
+	 *
+	 * @return self
 	 */
-	public function update_status() : OrderMetaManagerInterface {
+	public function set_status() : OrderMetaManager {
 		$new_status = $this->pp_order->status()->name();
 		$old_status = $this->get_status();
 
@@ -73,16 +83,20 @@ class OrderMetaManager implements OrderMetaManagerInterface {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Retrieves the PayPal order status from the WooCommerce order's metadata.
+	 *
+	 * @return string The PayPal order status.
 	 */
 	public function get_status() : string {
 		return (string) $this->wc_order->get_meta( self::STATUS_META_KEY );
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Persists any pending metadata changes to the database.
+	 *
+	 * @return self
 	 */
-	public function persist() : OrderMetaManagerInterface {
+	public function persist() : OrderMetaManager {
 		$this->wc_order->save_meta_data();
 
 		return $this;
