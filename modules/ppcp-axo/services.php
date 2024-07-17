@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Axo;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
+use WooCommerce\PayPalCommerce\Axo\Helper\SettingsNoticeGenerator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -34,6 +35,10 @@ return array(
 			$container->get( 'api.shop.currency' ),
 			$container->get( 'api.shop.country' )
 		);
+	},
+
+	'axo.helpers.settings-notice-generator' => static function ( ContainerInterface $container ) : SettingsNoticeGenerator {
+		return new SettingsNoticeGenerator();
 	},
 
 	// If AXO is configured and onboarded.
@@ -160,48 +165,19 @@ return array(
 	},
 
 	'axo.checkout-config-notice'            => static function ( ContainerInterface $container ) : string {
-		$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
-		$block_checkout_docs_link = __(
-			'https://woocommerce.com/document/cart-checkout-blocks-status/#reverting-to-the-cart-and-checkout-shortcodes',
-			'woocommerce-paypal-payments'
-		);
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
 
-		if ( CartCheckoutDetector::has_elementor_checkout() ) {
-			$notice_content = sprintf(
-				/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store currently uses the <code>Elementor Checkout widget</code>. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $checkout_page_link ),
-				esc_url( $block_checkout_docs_link )
-			);
-		} elseif ( CartCheckoutDetector::has_block_checkout() ) {
-			$notice_content = sprintf(
-				/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store currently uses the WooCommerce <code>Checkout</code> block. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $checkout_page_link ),
-				esc_url( $block_checkout_docs_link )
-			);
-		} elseif ( ! CartCheckoutDetector::has_classic_checkout() ) {
-			$notice_content = sprintf(
-			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store does not seem to be properly configured or uses an incompatible <code>third-party Checkout</code> solution. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $checkout_page_link ),
-				esc_url( $block_checkout_docs_link )
-			);
-		} else {
-			return '';
-		}
-
-		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
+		return $settings_notice_generator->generate_checkout_notice();
 	},
+
+	'axo.shipping-config-notice'            => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+
+		return $settings_notice_generator->generate_shipping_notice();
+	},
+
 	'axo.smart-button-location-notice'      => static function ( ContainerInterface $container ) : string {
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
@@ -229,24 +205,7 @@ return array(
 
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
-	'axo.shipping-config-notice'            => static function ( ContainerInterface $container ) : string {
-		$shipping_settings_link = admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' );
 
-		if ( wc_shipping_enabled() && wc_ship_to_billing_address_only() ) {
-			$notice_content = sprintf(
-			/* translators: %1$s: URL to the Shipping destination settings page. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Shipping destination</a> of your store is currently configured to <code>Force shipping to the customer billing address</code>. To enable Fastlane and accelerate payments, the shipping destination must be configured either to <code>Default to customer shipping address</code> or <code>Default to customer billing address</code> so buyers can set separate billing and shipping details.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $shipping_settings_link )
-			);
-		} else {
-			return '';
-		}
-
-		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
-	},
 	'axo.endpoint.frontend-logger'          => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
 		return new FrontendLoggerEndpoint(
 			$container->get( 'button.request-data' ),
