@@ -13,14 +13,12 @@ class GooglepayManager {
 		this.buttons = [];
 
 		buttonModuleWatcher.watchContextBootstrap( async ( bootstrap ) => {
-			if ( ! this.contextHandler ) {
-				this.contextHandler = ContextHandlerFactory.create(
-					bootstrap.context,
-					buttonConfig,
-					ppcpConfig,
-					bootstrap.handler
-				);
-			}
+			this.contextHandler = ContextHandlerFactory.create(
+				bootstrap.context,
+				buttonConfig,
+				ppcpConfig,
+				bootstrap.handler
+			);
 
 			const button = new GooglepayButton(
 				bootstrap.context,
