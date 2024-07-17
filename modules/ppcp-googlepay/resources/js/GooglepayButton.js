@@ -74,7 +74,11 @@ class GooglepayButton {
 							const { ppcpStyle, buttonStyle } =
 								this.contextConfig();
 
-							wrapper.className = `ppcp-button-${ ppcpStyle.shape }`;
+							wrapper.classList.add(
+								`ppcp-button-${ ppcpStyle.shape }`,
+								'ppcp-button-apm',
+								'ppcp-button-googlepay'
+							);
 
 							if ( ppcpStyle.height ) {
 								wrapper.style.height = `${ ppcpStyle.height }px`;
