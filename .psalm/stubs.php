@@ -1,6 +1,4 @@
 <?php
-namespace Automattic\WooCommerce\Internal\DataStores\Orders;
-
 if (!defined('PAYPAL_INTEGRATION_DATE')) {
 	define('PAYPAL_INTEGRATION_DATE', '2023-06-02');
 }
@@ -65,13 +63,17 @@ function as_schedule_single_action( $timestamp, $hook, $args = array(), $group =
 /**
  * HTML API: WP_HTML_Tag_Processor class
  */
-class WP_HTML_Tag_Processor {
-	public function __construct( $html ) {}
-	public function next_tag( $query = null ) {}
-	public function set_attribute( $name, $value ) {}
-	public function get_updated_html() {}
+namespace {
+	class WP_HTML_Tag_Processor {
+		public function __construct( $html ) {}
+		public function next_tag( $query = null ) {}
+		public function set_attribute( $name, $value ) {}
+		public function get_updated_html() {}
+	}
 }
 
-class OrdersTableDataStore {
-	public static function get_orders_table_name() {}
+namespace Automattic\WooCommerce\Internal\DataStores\Orders {
+	class OrdersTableDataStore {
+		public static function get_orders_table_name() {}
+	}
 }
