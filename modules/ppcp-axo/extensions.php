@@ -126,6 +126,18 @@ return array(
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
+				'axo_shipping_config_notice'         => array(
+					'heading'      => '',
+					'html'         => $container->get( 'axo.shipping-config-notice' ),
+					'type'         => 'ppcp-html',
+					'classes'      => array( 'ppcp-field-indent' ),
+					'class'        => array(),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array( 'dcc', 'axo' ),
+					'gateway'      => array( 'dcc', 'axo' ),
+				),
 				'axo_gateway_title'                  => array(
 					'title'        => __( 'Gateway Title', 'woocommerce-paypal-payments' ),
 					'type'         => 'text',

@@ -25,7 +25,7 @@ return array(
 		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country_currency() && $apm_applies->for_settings();
+		return $apm_applies->for_country_currency();
 	},
 
 	'axo.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
@@ -202,7 +202,6 @@ return array(
 
 		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
 	},
-
 	'axo.smart-button-location-notice'      => static function ( ContainerInterface $container ) : string {
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
@@ -229,6 +228,24 @@ return array(
 		}
 
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
+	},
+	'axo.shipping-config-notice'            => static function ( ContainerInterface $container ) : string {
+		$shipping_settings_link = admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' );
+
+		if ( wc_shipping_enabled() && wc_ship_to_billing_address_only() ) {
+			$notice_content = sprintf(
+			/* translators: %1$s: URL to the Shipping destination settings page. */
+				__(
+					'<span class="highlight">Warning:</span> The <a href="%1$s">Shipping destination</a> of your store is currently configured to <code>Force shipping to the customer billing address</code>. To enable Fastlane and accelerate payments, the shipping destination must be configured either to <code>Default to customer shipping address</code> or <code>Default to customer billing address</code> so buyers can set separate billing and shipping details.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $shipping_settings_link )
+			);
+		} else {
+			return '';
+		}
+
+		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
 	},
 	'axo.endpoint.frontend-logger'          => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
 		return new FrontendLoggerEndpoint(
