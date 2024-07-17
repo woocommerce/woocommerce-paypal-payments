@@ -1295,7 +1295,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'is_logged' => is_user_logged_in(),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
-			'needShipping' 							  => WC()->cart->needs_shipping(),
+			'needShipping'                            => WC()->cart->needs_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
