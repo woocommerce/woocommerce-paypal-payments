@@ -86,6 +86,7 @@ use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
+use WooCommerce\PayPalCommerce\WcGateway\Factory\OrderMetaManagerFactory;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -2155,5 +2156,8 @@ return array(
 		}
 
 		return $prefix . '-';
+	},
+	'wcgateway.factory.metadata'                           => static function ( ContainerInterface $container ): OrderMetaManagerFactory {
+		return new OrderMetaManagerFactory();
 	},
 );
