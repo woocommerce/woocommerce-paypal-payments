@@ -298,12 +298,10 @@ return array(
 			$settings = $container->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
 
-			if (
-				$container->has( 'axo.available' ) &&
-				$container->get( 'axo.available' ) &&
-				$settings->has( 'axo_enabled' ) &&
-				$settings->get( 'axo_enabled' )
-			) {
+			$axo_available = $container->has( 'axo.available' ) && $container->get( 'axo.available' );
+			$axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' );
+
+			if ( $axo_available && $axo_enabled ) {
 				return '';
 			}
 
