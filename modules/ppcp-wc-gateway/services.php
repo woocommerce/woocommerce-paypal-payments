@@ -298,16 +298,21 @@ return array(
 			$settings = $container->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
 
-			if ( $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ) {
+			if (
+				$container->has( 'axo.available' ) &&
+				$container->get( 'axo.available' ) &&
+				$settings->has( 'axo_enabled' ) &&
+				$settings->get( 'axo_enabled' )
+			) {
+				return '';
+			}
+
+			if ( CartCheckoutDetector::has_block_checkout() ) {
 				return '';
 			}
 
 			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
 			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
-
-			if ( CartCheckoutDetector::has_block_checkout() ) {
-				return '';
-			}
 
 			$notice_content = sprintf(
 			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the WooCommerce Checkout instructions. */
