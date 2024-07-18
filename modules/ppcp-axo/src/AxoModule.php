@@ -77,9 +77,10 @@ class AxoModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
+				$is_paypal_enabled = $settings->has( 'paypal_enabled' ) && $settings->get( 'paypal_enabled' ) ?? false;
 				$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
 
-				if ( ! $is_dcc_enabled ) {
+				if ( ! $is_paypal_enabled || ! $is_dcc_enabled ) {
 					return $methods;
 				}
 
@@ -144,11 +145,17 @@ class AxoModule implements ModuleInterface {
 			function () use ( $c ) {
 				$module = $this;
 
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$is_paypal_enabled = $settings->has( 'paypal_enabled' ) && $settings->get( 'paypal_enabled' ) ?? false;
+
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
 				// Check if the module is applicable, correct country, currency, ... etc.
-				if ( ! $c->get( 'axo.eligible' )
+				if ( ! $is_paypal_enabled
+					|| ! $c->get( 'axo.eligible' )
 					|| 'continuation' === $c->get( 'button.context' )
 					|| $subscription_helper->cart_contains_subscription() ) {
 					return;
