@@ -154,7 +154,7 @@ class WooCommerceOrderCreator {
 				$item->set_total( $subscription_total );
 
 				$subscription->add_product( $product );
-				$this->configure_shipping( $subscription, $payer, $shipping );
+				$this->configure_shipping( $subscription, $payer, $shipping, $wc_cart );
 				$this->configure_payment_source( $subscription );
 				$this->configure_coupons( $subscription, $wc_cart->get_applied_coupons() );
 
