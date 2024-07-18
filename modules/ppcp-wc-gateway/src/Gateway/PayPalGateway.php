@@ -271,39 +271,17 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->vault_v3_enabled            = $vault_v3_enabled;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
 
-		if ( $this->onboarded ) {
-			$this->supports = array( 'refunds', 'tokenization' );
-		}
-		if ( $this->config->has( 'enabled' ) && $this->config->get( 'enabled' ) ) {
-			$this->supports = array(
-				'refunds',
-				'products',
-			);
+		$default_support = array(
+			'products',
+			'refunds',
+			'tokenization',
+			'add_payment_method',
+		);
 
-			if (
-				( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) )
-				|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
-			) {
-				array_push(
-					$this->supports,
-					'tokenization',
-					'subscriptions',
-					'subscription_cancellation',
-					'subscription_suspension',
-					'subscription_reactivation',
-					'subscription_amount_changes',
-					'subscription_date_changes',
-					'subscription_payment_method_change',
-					'subscription_payment_method_change_customer',
-					'subscription_payment_method_change_admin',
-					'multiple_subscriptions'
-				);
-			} elseif ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' ) {
-				$this->supports[] = 'gateway_scheduled_payments';
-			} elseif ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
-				$this->supports[] = 'tokenization';
-			}
-		}
+		$this->supports = array_merge(
+			$default_support,
+			apply_filters( 'woocommerce_paypal_payments_paypal_gateway_supports', array() )
+		);
 
 		$this->method_title       = $this->define_method_title();
 		$this->method_description = $this->define_method_description();

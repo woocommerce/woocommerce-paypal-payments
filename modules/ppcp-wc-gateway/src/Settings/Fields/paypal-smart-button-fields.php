@@ -28,13 +28,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 	$has_enabled_separate_button_gateways = $container->get( 'wcgateway.settings.has_enabled_separate_button_gateways' );
 
-	$render_preview_element = function ( string $id ): string {
-		return '
-<div class="ppcp-preview ppcp-button-preview">
-	<h4>' . __( 'Button Styling Preview', 'woocommerce-paypal-payments' ) . '</h4>
-	<div id="' . $id . '" class="ppcp-button-preview-inner"></div>
-</div>';
-	};
+	$preview_message = __( 'Button Styling Preview', 'woocommerce-paypal-payments' );
 
 	$axo_smart_button_location_notice = $container->has( 'axo.smart-button-location-notice' ) ? $container->get( 'axo.smart-button-location-notice' ) : '';
 
@@ -213,8 +207,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => 'paypal',
 		),
 		'button_general_preview'                   => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpGeneralButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpGeneralButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -359,8 +357,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => 'paypal',
 		),
 		'button_preview'                           => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCheckoutButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpCheckoutButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -499,8 +501,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => 'paypal',
 		),
 		'button_product_preview'                   => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpProductButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpProductButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -639,8 +645,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => 'paypal',
 		),
 		'button_cart_preview'                      => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCartButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpCartButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -796,8 +806,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'           => 'paypal',
 		),
 		'button_mini-cart_preview'                 => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpMiniCartButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpMiniCartButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -914,8 +928,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'           => 'paypal',
 		),
 		'button_checkout-block-express_preview'    => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCheckoutBlockExpressButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpCheckoutBlockExpressButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -1032,8 +1050,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'           => 'paypal',
 		),
 		'button_cart-block_preview'                => array(
-			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCartBlockButtonPreview' ),
+			'type'         => 'ppcp-preview',
+			'preview'      => array(
+				'id'      => 'ppcpCartBlockButtonPreview',
+				'type'    => 'button',
+				'message' => $preview_message,
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
