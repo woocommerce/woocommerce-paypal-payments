@@ -1,3 +1,5 @@
+/* global google */
+
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
@@ -194,7 +196,8 @@ class GooglepayButton {
 
 	/**
 	 * Add a Google Pay purchase button
-	 * @param baseCardPaymentMethod
+	 *
+	 * @param {Object} baseCardPaymentMethod
 	 */
 	addButton( baseCardPaymentMethod ) {
 		this.log( 'addButton', this.context );
