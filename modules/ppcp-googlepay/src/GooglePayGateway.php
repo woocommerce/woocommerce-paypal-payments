@@ -66,6 +66,13 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	protected $session_handler;
 
 	/**
+	 * The URL to the module.
+	 *
+	 * @var string
+	 */
+	private $module_url;
+
+	/**
 	 * GooglePayGateway constructor.
 	 *
 	 * @param OrderProcessor          $order_processor The Order Processor.
@@ -73,21 +80,26 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	 * @param RefundProcessor         $refund_processor The Refund Processor.
 	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SessionHandler          $session_handler The Session Handler.
+	 * @param string                  $module_url The URL to the module.
 	 */
 	public function __construct(
 		OrderProcessor $order_processor,
 		callable $paypal_checkout_url_factory,
 		RefundProcessor $refund_processor,
 		TransactionUrlProvider $transaction_url_provider,
-		SessionHandler $session_handler
+		SessionHandler $session_handler,
+		string $module_url
 	) {
 		$this->id = self::ID;
 
-		$this->method_title       = __( 'Google Pay', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Google Pay', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Google Pay (via PayPal) ', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'The separate payment gateway with the Google Pay button. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title', $this->method_title );
-		$this->description = $this->get_option( 'description', $this->method_description );
+		$this->title       = $this->get_option( 'title', __( 'Google Pay', 'woocommerce-paypal-payments' ) );
+		$this->description = $this->get_option( 'description', '' );
+
+		$this->module_url = $module_url;
+		$this->icon       = esc_url( $this->module_url ) . 'assets/images/googlepay.png';
 
 		$this->init_form_fields();
 		$this->init_settings();
