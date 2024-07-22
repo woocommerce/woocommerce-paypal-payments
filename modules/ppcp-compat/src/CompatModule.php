@@ -9,6 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use Exception;
+use Psr\Log\LoggerInterface;
+use WC_Cart;
+use WC_Order;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -56,6 +60,13 @@ class CompatModule implements ModuleInterface {
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
 		$this->set_elementor_checkout_context();
+
+		$logger = $c->get( 'woocommerce.logger.woocommerce' );
+
+		$is_wc_bookings_active = $c->get( 'compat.wc_bookings.is_supported_plugin_version_active' );
+		if ( $is_wc_bookings_active ) {
+			$this->initialize_wc_bookings_compat_layer( $logger );
+		}
 	}
 
 	/**
@@ -385,6 +396,53 @@ class CompatModule implements ModuleInterface {
 			},
 			10,
 			3
+		);
+	}
+
+	/**
+	 * Sets up the compatibility layer for WooCommerce Bookings plugin.
+	 *
+	 * @param LoggerInterface $logger The logger.
+	 * @return void
+	 */
+	protected function initialize_wc_bookings_compat_layer( LoggerInterface $logger ): void {
+		add_action(
+			'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created',
+			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $logger ): void {
+				try {
+					$cart_contents = $wc_cart->get_cart();
+					foreach ( $cart_contents as $cart_item ) {
+						if ( empty( $cart_item['booking'] ) ) {
+							continue;
+						}
+
+						foreach ( $wc_order->get_items() as $wc_order_item ) {
+							$booking_data = array(
+								'cost'           => $cart_item['booking']['_cost'] ?? 0,
+								'start_date'     => $cart_item['booking']['_start_date'] ?? 0,
+								'end_date'       => $cart_item['booking']['_end_date'] ?? 0,
+								'all_day'        => $cart_item['booking']['_all_day'] ?? 0,
+								'local_timezone' => $cart_item['booking']['_local_timezone'] ?? 0,
+								'order_item_id'  => $wc_order_item->get_id(),
+							);
+
+							if ( isset( $cart_item['booking']['_resource_id'] ) ) {
+								$booking_data['resource_id'] = $cart_item['booking']['_resource_id'];
+							}
+
+							if ( isset( $cart_item['booking']['_persons'] ) ) {
+								$booking_data['persons'] = $cart_item['booking']['_persons'];
+							}
+
+							create_wc_booking( $cart_item['product_id'], $booking_data, $wc_order->get_status() );
+						}
+					}
+				} catch ( Exception $exception ) {
+					$logger->warning( 'Failed to create booking for WooCommerce Bookings plugin: ' . $exception->getMessage() );
+				}
+			},
+			10,
+			2
 		);
 	}
 }
