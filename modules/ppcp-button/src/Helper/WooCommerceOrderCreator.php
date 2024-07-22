@@ -95,6 +95,8 @@ class WooCommerceOrderCreator {
 		$wc_order->calculate_totals();
 		$wc_order->save();
 
+		do_action( 'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created', $wc_order, $wc_cart );
+
 		return $wc_order;
 	}
 
