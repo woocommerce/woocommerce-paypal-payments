@@ -21,14 +21,13 @@ return array(
 	},
 	'card-fields.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ) : CardFieldsApplies {
 		return new CardFieldsApplies(
-			$container->get( 'card-fields.supported-country-currency-matrix' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'card-fields.supported-country-matrix' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
-	'card-fields.supported-country-currency-matrix'    => static function ( ContainerInterface $container ) : array {
+	'card-fields.supported-country-matrix'             => static function ( ContainerInterface $container ) : array {
 		return apply_filters(
-			'woocommerce_paypal_payments_card_fields_supported_country_currency_matrix',
+			'woocommerce_paypal_payments_card_fields_supported_country_matrix',
 			array(
 				'AU',
 				'AT',
