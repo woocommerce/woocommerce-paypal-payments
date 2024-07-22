@@ -83,6 +83,9 @@ return array(
 	'compat.wc_shipping_tax.is_supported_plugin_version_active' => function (): bool {
 		return class_exists( 'WC_Connect_Loader' );
 	},
+	'compat.wc_bookings.is_supported_plugin_version_active' => function (): bool {
+		return class_exists( 'WC_Bookings' );
+	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
 		/**
