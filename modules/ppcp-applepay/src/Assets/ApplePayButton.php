@@ -20,12 +20,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 
 /**
  * Class ApplePayButton
  */
 class ApplePayButton implements ButtonInterface {
-	use RequestHandlerTrait;
+	use RequestHandlerTrait, ContextTrait;
 
 	/**
 	 * The settings.
@@ -973,7 +974,7 @@ class ApplePayButton implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					echo '<span id="applepay-container-minicart" class="ppcp-button-apm ppcp-button-applepay ppcp-button-minicart"></span>';
+					echo '<span id="ppc-button-applepay-container-minicart" class="ppcp-button-apm ppcp-button-applepay ppcp-button-minicart"></span>';
 				},
 				21
 			);
@@ -986,7 +987,7 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	protected function applepay_button(): void {
 		?>
-		<div id="applepay-container" class="ppcp-button-apm ppcp-button-applepay">
+		<div id="ppc-button-applepay-container" class="ppcp-button-apm ppcp-button-applepay">
 			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
 		<?php

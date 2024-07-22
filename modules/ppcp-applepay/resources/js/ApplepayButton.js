@@ -1,3 +1,6 @@
+/* global ApplePaySession */
+/* global PayPalCommerceGateway */
+
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 import { createAppleErrors } from './Helper/applePayError';
 import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
@@ -7,11 +10,30 @@ import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
 
-class ApplepayButton {
+/**
+ * A payment button for Apple Pay.
+ *
+ * On a single page, multiple Apple Pay buttons can be displayed, which also means multiple
+ * ApplePayButton instances exist. A typical case is on the product page, where one Apple Pay button
+ * is located inside the minicart-popup, and another pay-now button is in the product context.
+ */
+class ApplePayButton {
+	/**
+	 * Whether the payment button is initialized.
+	 *
+	 * @type {boolean}
+	 */
+	isInitialized = false;
+
+	/**
+	 * Context describes the button's location on the website and what details it submits.
+	 *
+	 * @type {''|'product'|'cart'|'checkout'|'pay-now'|'mini-cart'|'cart-block'|'checkout-block'|'preview'}
+	 */
+	context = '';
+
 	constructor( context, externalHandler, buttonConfig, ppcpConfig ) {
 		apmButtonsInit( ppcpConfig );
-
-		this.isInitialized = false;
 
 		this.context = context;
 		this.externalHandler = externalHandler;
@@ -65,40 +87,43 @@ class ApplepayButton {
 
 		this.log( 'Init', this.context );
 		this.initEventHandlers();
+
 		this.isInitialized = true;
 		this.applePayConfig = config;
 		this.isEligible =
 			( this.applePayConfig.isEligible && window.ApplePaySession ) ||
 			this.buttonConfig.is_admin;
 
-		if ( this.isEligible ) {
-			this.fetchTransactionInfo().then( () => {
-				this.addButton();
-				const id_minicart =
-					'#apple-' + this.buttonConfig.button.mini_cart_wrapper;
-				const id = '#apple-' + this.buttonConfig.button.wrapper;
+		const idMinicart = this.buttonConfig.button.mini_cart_wrapper;
+		const idButton = this.buttonConfig.button.wrapper;
 
-				if ( this.context === 'mini-cart' ) {
-					document
-						.querySelector( id_minicart )
-						?.addEventListener( 'click', ( evt ) => {
-							evt.preventDefault();
-							this.onButtonClick();
-						} );
-				} else {
-					document
-						.querySelector( id )
-						?.addEventListener( 'click', ( evt ) => {
-							evt.preventDefault();
-							this.onButtonClick();
-						} );
-				}
-			} );
-		} else {
-			jQuery( '#' + this.buttonConfig.button.wrapper ).hide();
-			jQuery( '#' + this.buttonConfig.button.mini_cart_wrapper ).hide();
+		if ( ! this.isEligible ) {
+			jQuery( '#' + idButton ).hide();
+			jQuery( '#' + idMinicart ).hide();
 			jQuery( '#express-payment-method-ppcp-applepay' ).hide();
+
+			return;
 		}
+
+		// Add click-handler to the button.
+		const setupButtonEvents = ( id ) => {
+			document
+				.getElementById( id )
+				?.addEventListener( 'click', ( evt ) => {
+					evt.preventDefault();
+					this.onButtonClick();
+				} );
+		};
+
+		this.fetchTransactionInfo().then( () => {
+			this.addButton();
+
+			if ( this.context === 'mini-cart' ) {
+				setupButtonEvents( idMinicart );
+			} else {
+				setupButtonEvents( idButton );
+			}
+		} );
 	}
 
 	reinit() {
@@ -144,11 +169,11 @@ class ApplepayButton {
 
 	initEventHandlers() {
 		const { wrapper, ppcpButtonWrapper } = this.contextConfig();
-		const wrapper_id = '#' + wrapper;
+		const wrapperId = '#' + wrapper;
 
-		if ( wrapper_id === ppcpButtonWrapper ) {
+		if ( wrapperId === ppcpButtonWrapper ) {
 			throw new Error(
-				`[ApplePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapper_id }"`
+				`[ApplePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapperId }"`
 			);
 		}
 
@@ -158,9 +183,9 @@ class ApplepayButton {
 			}
 
 			const $ppcpButtonWrapper = jQuery( ppcpButtonWrapper );
-			setVisible( wrapper_id, $ppcpButtonWrapper.is( ':visible' ) );
+			setVisible( wrapperId, $ppcpButtonWrapper.is( ':visible' ) );
 			setEnabled(
-				wrapper_id,
+				wrapperId,
 				! $ppcpButtonWrapper.hasClass( 'ppcp-disabled' )
 			);
 		};
@@ -192,6 +217,7 @@ class ApplepayButton {
 			session.onshippingcontactselected =
 				this.onShippingContactSelected( session );
 		}
+
 		session.onvalidatemerchant = this.onValidateMerchant( session );
 		session.onpaymentauthorized = this.onPaymentAuthorized( session );
 		return session;
@@ -211,19 +237,19 @@ class ApplepayButton {
 		const color = this.buttonConfig.button.color;
 		const id = 'apple-' + wrapper;
 
-		if ( appleContainer ) {
-			appleContainer.innerHTML = `<apple-pay-button id="${ id }" buttonstyle="${ color }" type="${ type }" locale="${ language }">`;
+		if ( ! appleContainer ) {
+			return;
 		}
 
-		const $wrapper = jQuery( '#' + wrapper );
-		$wrapper.addClass( 'ppcp-button-' + ppcpStyle.shape );
+		appleContainer.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ color }' type='${ type }' locale='${ language }'>`;
+		appleContainer.classList.add( 'ppcp-button-' + ppcpStyle.shape );
 
 		if ( ppcpStyle.height ) {
-			$wrapper.css(
+			appleContainer.style.setProperty(
 				'--apple-pay-button-height',
 				`${ ppcpStyle.height }px`
 			);
-			$wrapper.css( 'height', `${ ppcpStyle.height }px` );
+			appleContainer.style.height = `${ ppcpStyle.height }px`;
 		}
 	}
 
@@ -239,7 +265,8 @@ class ApplepayButton {
 
 		const paymentRequest = this.paymentRequest();
 
-		window.ppcpFundingSource = 'apple_pay'; // Do this on another place like on create order endpoint handler.
+		// Do this on another place like on create order endpoint handler.
+		window.ppcpFundingSource = 'apple_pay';
 
 		// Trigger woocommerce validation if we are in the checkout page.
 		if ( this.context === 'checkout' ) {
@@ -323,8 +350,8 @@ class ApplepayButton {
 	}
 
 	/**
-	 * Indicates how payment completion should be handled if with the context handler default actions.
-	 * Or with ApplePay module specific completion.
+	 * Indicates how payment completion should be handled if with the context handler default
+	 * actions. Or with Apple Pay module specific completion.
 	 *
 	 * @return {boolean}
 	 */
@@ -333,18 +360,17 @@ class ApplepayButton {
 		if ( ! this.contextHandler.shippingAllowed() ) {
 			return true;
 		}
+
 		// Use WC form data mode in Checkout.
-		if (
+		return (
 			this.context === 'checkout' &&
 			! this.shouldUpdateButtonWithFormData()
-		) {
-			return true;
-		}
-		return false;
+		);
 	}
 
 	/**
-	 * Updates ApplePay paymentRequest with form data.
+	 * Updates Apple Pay paymentRequest with form data.
+	 *
 	 * @param paymentRequest
 	 */
 	updateRequestDataWithForm( paymentRequest ) {
@@ -358,8 +384,9 @@ class ApplepayButton {
 		);
 
 		// Add custom data.
-		// "applicationData" is originating a "PayPalApplePayError: An internal server error has occurred" on paypal.Applepay().confirmOrder().
-		// paymentRequest.applicationData = this.fillApplicationData(this.formData);
+		// "applicationData" is originating a "PayPalApplePayError: An internal server error has
+		// occurred" on paypal.Applepay().confirmOrder(). paymentRequest.applicationData =
+		// this.fillApplicationData(this.formData);
 
 		if ( ! this.shouldRequireShippingInButton() ) {
 			return;
@@ -425,7 +452,8 @@ class ApplepayButton {
 				'email',
 				'phone',
 			],
-			requiredBillingContactFields: [ 'postalAddress' ], // ApplePay does not implement billing email and phone fields.
+			requiredBillingContactFields: [ 'postalAddress' ], // ApplePay does not implement billing
+			// email and phone fields.
 		};
 
 		if ( ! this.shouldRequireShippingInButton() ) {
@@ -453,14 +481,11 @@ class ApplepayButton {
 	}
 
 	refreshContextData() {
-		switch ( this.context ) {
-			case 'product':
+		if ( 'product' === this.context ) {
 				// Refresh product data that makes the price change.
-				this.productQuantity =
-					document.querySelector( 'input.qty' )?.value;
+			this.productQuantity = document.querySelector( 'input.qty' )?.value;
 				this.products = this.contextHandler.products();
 				this.log( 'Products updated', this.products );
-				break;
 		}
 	}
 
@@ -468,8 +493,35 @@ class ApplepayButton {
 	// Payment process
 	//------------------------
 
+	/**
+	 * Make ajax call to change the verification-status of the current domain.
+	 *
+	 * @param {boolean} isValid
+	 */
+	adminValidation( isValid ) {
+		// eslint-disable-next-line no-unused-vars
+		const ignored = fetch( this.buttonConfig.ajax_url, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/x-www-form-urlencoded',
+			},
+			body: new URLSearchParams( {
+				action: 'ppcp_validate',
+				'woocommerce-process-checkout-nonce': this.nonce,
+				validation: isValid,
+			} ).toString(),
+		} );
+	}
+
+	/**
+	 * Returns an event handler that Apple Pay calls when displaying the payment sheet.
+	 *
+	 * @see https://developer.apple.com/documentation/apple_pay_on_the_web/applepaysession/1778021-onvalidatemerchant
+	 *
+	 * @param  session
+	 * @return {(function(*): void)|*}
+	 */
 	onValidateMerchant( session ) {
-		this.log( 'onvalidatemerchant', this.buttonConfig.ajax_url );
 		return ( applePayValidateMerchantEvent ) => {
 			this.log( 'onvalidatemerchant call' );
 
@@ -479,34 +531,15 @@ class ApplepayButton {
 					validationUrl: applePayValidateMerchantEvent.validationURL,
 				} )
 				.then( ( validateResult ) => {
-					this.log( 'onvalidatemerchant ok' );
 					session.completeMerchantValidation(
 						validateResult.merchantSession
 					);
-					//call backend to update validation to true
-					jQuery.ajax( {
-						url: this.buttonConfig.ajax_url,
-						type: 'POST',
-						data: {
-							action: 'ppcp_validate',
-							validation: true,
-							'woocommerce-process-checkout-nonce': this.nonce,
-						},
-					} );
+
+					this.adminValidation( true );
 				} )
 				.catch( ( validateError ) => {
-					this.log( 'onvalidatemerchant error', validateError );
 					console.error( validateError );
-					//call backend to update validation to false
-					jQuery.ajax( {
-						url: this.buttonConfig.ajax_url,
-						type: 'POST',
-						data: {
-							action: 'ppcp_validate',
-							validation: false,
-							'woocommerce-process-checkout-nonce': this.nonce,
-						},
-					} );
+					this.adminValidation( false );
 					this.log( 'onvalidatemerchant session abort' );
 					session.abort();
 				} );
@@ -537,7 +570,8 @@ class ApplepayButton {
 					}
 					this.selectedShippingMethod = event.shippingMethod;
 
-					// Sort the response shipping methods, so that the selected shipping method is the first one.
+					// Sort the response shipping methods, so that the selected shipping method is
+					// the first one.
 					response.newShippingMethods =
 						response.newShippingMethods.sort( ( a, b ) => {
 							if (
@@ -680,6 +714,7 @@ class ApplepayButton {
 			function form() {
 				return document.querySelector( 'form.cart' );
 			}
+
 			const processInWooAndCapture = async ( data ) => {
 				return new Promise( ( resolve, reject ) => {
 					try {
@@ -781,7 +816,8 @@ class ApplepayButton {
 							if (
 								this.shouldCompletePaymentWithContextHandler()
 							) {
-								// No shipping, expect immediate capture, ex: PayNow, Checkout with form data.
+								// No shipping, expect immediate capture, ex: PayNow, Checkout with
+								// form data.
 
 								let approveFailed = false;
 								await this.contextHandler.approveOrder(
@@ -950,4 +986,4 @@ class ApplepayButton {
 	}
 }
 
-export default ApplepayButton;
+export default ApplePayButton;

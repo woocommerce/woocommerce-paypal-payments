@@ -1,3 +1,5 @@
+/* global PayPalCommerceGateway */
+
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 import { setVisible, setVisibleByClass } from '../Helper/Hiding';
 import {
@@ -181,9 +183,14 @@ class CheckoutBootstap {
 		const isSeparateButtonGateway = [ PaymentMethods.CARD_BUTTON ].includes(
 			currentPaymentMethod
 		);
+		const isApplePayMethod =
+			currentPaymentMethod === PaymentMethods.APPLEPAY;
 		const isSavedCard = isCard && isSavedCardSelected();
 		const isNotOurGateway =
-			! isPaypal && ! isCard && ! isSeparateButtonGateway;
+			! isPaypal &&
+			! isCard &&
+			! isSeparateButtonGateway &&
+			! isApplePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
 			PayPalCommerceGateway.vaulted_paypal_email !== '';
@@ -226,6 +233,8 @@ class CheckoutBootstap {
 				this.enableCreditCardFields();
 			}
 		}
+
+		setVisible( '#ppc-button-ppcp-applepay', isApplePayMethod );
 
 		jQuery( document.body ).trigger( 'ppcp_checkout_rendered' );
 	}

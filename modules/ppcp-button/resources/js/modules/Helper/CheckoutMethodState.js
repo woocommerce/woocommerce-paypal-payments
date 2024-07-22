@@ -3,6 +3,7 @@ export const PaymentMethods = {
 	CARDS: 'ppcp-credit-card-gateway',
 	OXXO: 'ppcp-oxxo-gateway',
 	CARD_BUTTON: 'ppcp-card-button-gateway',
+	APPLEPAY: 'ppcp-applepay',
 };
 
 export const ORDER_BUTTON_SELECTOR = '#place_order';

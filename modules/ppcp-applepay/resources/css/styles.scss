@@ -52,3 +52,8 @@
 		}
 	}
 }
+
+// Initially hide the APM button until it's explicitly activated.
+#ppc-button-ppcp-applepay {
+	display: none;
+}

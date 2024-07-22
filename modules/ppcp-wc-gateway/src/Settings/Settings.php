@@ -117,11 +117,9 @@ class Settings implements ContainerInterface {
 	/**
 	 * Stores the settings to the database.
 	 */
-	public function persist() {
-
+	public function persist() : bool {
 		return update_option( self::KEY, $this->settings );
 	}
-
 
 	/**
 	 * Loads the settings.
@@ -129,7 +127,6 @@ class Settings implements ContainerInterface {
 	 * @return bool
 	 */
 	private function load(): bool {
-
 		if ( $this->settings ) {
 			return false;
 		}
