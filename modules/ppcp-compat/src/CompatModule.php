@@ -417,6 +417,12 @@ class CompatModule implements ModuleInterface {
 						}
 
 						foreach ( $wc_order->get_items() as $wc_order_item ) {
+							$product = wc_get_product( $wc_order_item->get_product_id() );
+
+							if ( ! is_wc_booking_product( $product ) ) {
+								continue;
+							}
+
 							$booking_data = array(
 								'cost'           => $cart_item['booking']['_cost'] ?? 0,
 								'start_date'     => $cart_item['booking']['_start_date'] ?? 0,
@@ -434,7 +440,7 @@ class CompatModule implements ModuleInterface {
 								$booking_data['persons'] = $cart_item['booking']['_persons'];
 							}
 
-							create_wc_booking( $cart_item['product_id'], $booking_data, 'unpaid' );
+							create_wc_booking( $cart_item['product_id'], $booking_data, 'pending-confirmation' );
 						}
 					}
 				} catch ( Exception $exception ) {
