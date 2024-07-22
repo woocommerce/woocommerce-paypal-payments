@@ -8,6 +8,8 @@ import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
 
 class GooglepayButton {
+	#button;
+
 	constructor( context, externalHandler, buttonConfig, ppcpConfig ) {
 		apmButtonsInit( ppcpConfig );
 
@@ -205,13 +207,16 @@ class GooglepayButton {
 		const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
 		this.waitForWrapper( wrapper, () => {
+			// Prevent duplicate GooglePay buttons.
+			this.removeButton();
+
 			jQuery( wrapper ).addClass( 'ppcp-button-' + ppcpStyle.shape );
 
 			if ( ppcpStyle.height ) {
 				jQuery( wrapper ).css( 'height', `${ ppcpStyle.height }px` );
 			}
 
-			const button = this.paymentsClient.createButton( {
+			this.#button = this.paymentsClient.createButton( {
 				onClick: this.onButtonClick.bind( this ),
 				allowedPaymentMethods: [ baseCardPaymentMethod ],
 				buttonColor: buttonStyle.color || 'black',
@@ -220,8 +225,20 @@ class GooglepayButton {
 				buttonSizeMode: 'fill',
 			} );
 
-			jQuery( wrapper ).append( button );
+			jQuery( wrapper ).append( this.#button );
 		} );
+	}
+
+	/**
+	 * Removes the payment button that was injected via addButton()
+	 */
+	removeButton() {
+		if ( ! this.#button ) {
+			return;
+		}
+
+		this.#button.remove();
+		this.#button = null;
 	}
 
 	waitForWrapper( selector, callback, delay = 100, timeout = 2000 ) {

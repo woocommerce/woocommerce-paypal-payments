@@ -1,3 +1,5 @@
+/* global ApplePaySession */
+
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 import { createAppleErrors } from './Helper/applePayError';
 import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
@@ -179,7 +181,8 @@ class ApplepayButton {
 
 	/**
 	 * Starts an ApplePay session.
-	 * @param paymentRequest
+	 *
+	 * @param {Object} paymentRequest
 	 */
 	applePaySession( paymentRequest ) {
 		this.log( 'applePaySession', paymentRequest );
@@ -296,7 +299,7 @@ class ApplepayButton {
 	/**
 	 * If the button should show the shipping fields.
 	 *
-	 * @return {false|*}
+	 * @return {boolean}
 	 */
 	shouldRequireShippingInButton() {
 		return (
@@ -345,7 +348,8 @@ class ApplepayButton {
 
 	/**
 	 * Updates ApplePay paymentRequest with form data.
-	 * @param paymentRequest
+	 *
+	 * @param {Object} paymentRequest
 	 */
 	updateRequestDataWithForm( paymentRequest ) {
 		if ( ! this.shouldUpdateButtonWithFormData() ) {
