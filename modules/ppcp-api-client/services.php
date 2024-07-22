@@ -1544,7 +1544,7 @@ return array(
 				),
 				'HK' => array(
 					'mastercard' => array(),
-					'visa'       => array()
+					'visa'       => array(),
 				),
 				'HU' => array(
 					'mastercard' => array(),
@@ -1645,7 +1645,7 @@ return array(
 				),
 				'SG' => array(
 					'mastercard' => array(),
-					'visa'       => array()
+					'visa'       => array(),
 				),
 				'JP' => array(
 					'mastercard' => array(),
