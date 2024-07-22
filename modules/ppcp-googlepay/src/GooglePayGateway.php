@@ -164,6 +164,15 @@ class GooglePayGateway extends WC_Payment_Gateway {
 			);
 		}
 
+		/**
+		 * If the WC_Order is paid through the approved webhook.
+		 */
+		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
+			return $this->handle_payment_success( $wc_order );
+		}
+		//phpcs:enable WordPress.Security.NonceVerification.Recommended
+
 		do_action( 'woocommerce_paypal_payments_before_process_order', $wc_order );
 
 		try {

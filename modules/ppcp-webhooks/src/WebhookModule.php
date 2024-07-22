@@ -162,15 +162,6 @@ class WebhookModule implements ModuleInterface {
 				);
 			}
 		);
-
-		// If the WC_Order is paid through the approved webhook.
-		add_action( 'woocommerce_paypal_payments_before_process_order', function(WC_Order $wc_order) {
-			//phpcs:disable WordPress.Security.NonceVerification.Recommended
-			if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
-				return $this->handle_payment_success( $wc_order );
-			}
-			//phpcs:enable
-		});
 	}
 
 	/**
