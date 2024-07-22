@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.8.2 - xxxx-xx-xx =
+= 2.8.2 - 2024-07-22 =
 * Fix - Sold individually checkbox automatically disabled after adding product to the cart more than once #2415
 * Fix - All products "Sold individually" when PayPal Subscriptions selected as Subscriptions Mode #2400
 * Fix - W3 Total Cache: Remove type from file parameter as sometimes null gets passed causing errors #2403
