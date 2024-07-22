@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
+use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -417,7 +418,12 @@ class CompatModule implements ModuleInterface {
 						}
 
 						foreach ( $wc_order->get_items() as $wc_order_item ) {
-							$product = wc_get_product( $wc_order_item->get_product_id() );
+							if ( ! is_a( $wc_order_item, WC_Order_Item_Product::class ) ) {
+								continue;
+							}
+
+							$product_id = $wc_order_item->get_variation_id() ?: $wc_order_item->get_product_id();
+							$product    = wc_get_product( $product_id );
 
 							if ( ! is_wc_booking_product( $product ) ) {
 								continue;
