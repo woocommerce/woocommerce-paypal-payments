@@ -434,7 +434,7 @@ class CompatModule implements ModuleInterface {
 								$booking_data['persons'] = $cart_item['booking']['_persons'];
 							}
 
-							create_wc_booking( $cart_item['product_id'], $booking_data, $wc_order->get_status() );
+							create_wc_booking( $cart_item['product_id'], $booking_data, 'unpaid' );
 						}
 					}
 				} catch ( Exception $exception ) {
