@@ -17,7 +17,6 @@ use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
@@ -28,8 +27,6 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
  * Class WebhookModule
  */
 class WebhookModule implements ModuleInterface {
-
-	use ProcessPaymentTrait;
 
 	/**
 	 * {@inheritDoc}
