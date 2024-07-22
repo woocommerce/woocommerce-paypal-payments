@@ -40,6 +40,7 @@ const PayPalComponent = ( {
 	shippingData,
 	isEditing,
 	fundingSource,
+	buttonAttributes,
 } ) => {
 	const { onPaymentSetup, onCheckoutFail, onCheckoutValidation } =
 		eventRegistration;
@@ -98,24 +99,20 @@ const PayPalComponent = ( {
 
 	const createOrder = async ( data, actions ) => {
 		try {
-			const requestBody = {
-				nonce: config.scriptData.ajax.create_order.nonce,
-				bn_code: '',
-				context: config.scriptData.context,
-				payment_method: 'ppcp-gateway',
-				funding_source: window.ppcpFundingSource ?? 'paypal',
-				createaccount: false,
-				...( data?.paymentSource && {
-					payment_source: data.paymentSource,
-				} ),
-			};
-
 			const res = await fetch(
 				config.scriptData.ajax.create_order.endpoint,
 				{
 					method: 'POST',
 					credentials: 'same-origin',
-					body: JSON.stringify( requestBody ),
+					body: JSON.stringify( {
+						nonce: config.scriptData.ajax.create_order.nonce,
+						bn_code: '',
+						context: config.scriptData.context,
+						payment_method: 'ppcp-gateway',
+						funding_source: window.ppcpFundingSource ?? 'paypal',
+						createaccount: false,
+						payment_source: data.paymentSource,
+					} ),
 				}
 			);
 
@@ -582,37 +579,17 @@ const PayPalComponent = ( {
 		fundingSource
 	);
 
+	if ( typeof buttonAttributes !== 'undefined' ) {
+		style.height = buttonAttributes?.height
+			? Number( buttonAttributes.height )
+			: style.height;
+	}
+
 	if ( ! paypalScriptLoaded ) {
 		return null;
 	}
 
 	const PayPalButton = paypal.Buttons.driver( 'react', { React, ReactDOM } );
-
-	const getOnShippingOptionsChange = ( fundingSource ) => {
-		if ( fundingSource === 'venmo' ) {
-			return null;
-		}
-
-		return ( data, actions ) => {
-			shouldHandleShippingInPayPal()
-				? handleShippingOptionsChange( data, actions )
-				: null;
-		};
-	};
-
-	const getOnShippingAddressChange = ( fundingSource ) => {
-		if ( fundingSource === 'venmo' ) {
-			return null;
-		}
-
-		return ( data, actions ) => {
-            let shippingAddressChange = shouldHandleShippingInPayPal()
-				? handleShippingAddressChange( data, actions )
-				: null;
-
-            return shippingAddressChange;
-		};
-	};
 
 	if ( isPayPalSubscription( config.scriptData ) ) {
 		return (
@@ -624,12 +601,22 @@ const PayPalComponent = ( {
 				onError={ onClose }
 				createSubscription={ createSubscription }
 				onApprove={ handleApproveSubscription }
-				onShippingOptionsChange={ getOnShippingOptionsChange(
-					fundingSource
-				) }
-				onShippingAddressChange={ getOnShippingAddressChange(
-					fundingSource
-				) }
+				onShippingOptionsChange={ ( data, actions ) => {
+					shouldHandleShippingInPayPal()
+						? handleSubscriptionShippingOptionsChange(
+								data,
+								actions
+						  )
+						: null;
+				} }
+				onShippingAddressChange={ ( data, actions ) => {
+					shouldHandleShippingInPayPal()
+						? handleSubscriptionShippingAddressChange(
+								data,
+								actions
+						  )
+						: null;
+				} }
 			/>
 		);
 	}
@@ -643,12 +630,16 @@ const PayPalComponent = ( {
 			onError={ onClose }
 			createOrder={ createOrder }
 			onApprove={ handleApprove }
-			onShippingOptionsChange={ getOnShippingOptionsChange(
-				fundingSource
-			) }
-			onShippingAddressChange={ getOnShippingAddressChange(
-				fundingSource
-			) }
+			onShippingOptionsChange={ ( data, actions ) => {
+				shouldHandleShippingInPayPal()
+					? handleShippingOptionsChange( data, actions )
+					: null;
+			} }
+			onShippingAddressChange={ ( data, actions ) => {
+				shouldHandleShippingInPayPal()
+					? handleShippingAddressChange( data, actions )
+					: null;
+			} }
 		/>
 	);
 };
