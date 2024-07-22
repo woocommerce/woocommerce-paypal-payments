@@ -12,3 +12,9 @@
  * @return   mixed  WC_Booking object on success or false on fail
  */
 function create_wc_booking( $product_id, $new_booking_data = array(), $status = 'confirmed', $exact = false ) {}
+
+/**
+ * Returns true if the product is a booking product, false if not
+ * @return bool
+ */
+function is_wc_booking_product( $product ) {}
