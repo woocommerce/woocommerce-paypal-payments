@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -1551,6 +1552,24 @@ return array(
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 		unset( $button_locations['mini-cart'] );
 		return array_keys( $button_locations );
+	},
+	'wcgateway.button.recommended-styling-notice'          => static function ( ContainerInterface $container ) : string {
+		if ( CartCheckoutDetector::has_block_checkout() ) {
+			$block_checkout_page_string_html = '<a href="' . esc_url( wc_get_page_permalink( 'checkout' ) ) . '">' . __( 'Checkout block', 'woocommerce-paypal-payments' ) . '</a>';
+		} else {
+			$block_checkout_page_string_html = __( 'Checkout block', 'woocommerce-paypal-payments' );
+		}
+
+		$notice_content = sprintf(
+		/* translators: %1$s: URL to the Checkout edit page. */
+			__(
+				'<span class="highlight">Important:</span> The <code>Cart</code> & <code>Express Checkout</code> <strong>Smart Button Stylings</strong> may be controlled by the %1$s configuration.',
+				'woocommerce-paypal-payments'
+			),
+			$block_checkout_page_string_html
+		);
+
+		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
 	'wcgateway.settings.pay-later.messaging-locations'     => static function( ContainerInterface $container ): array {
 		$button_locations = $container->get( 'wcgateway.button.locations' );
