@@ -134,6 +134,7 @@ class WooCommerceOrderCreator {
 			}
 
 			$subtotal = wc_get_price_excluding_tax( $product, array( 'qty' => $quantity ) );
+			$subtotal = apply_filters( 'woocommerce_paypal_payments_shipping_callback_cart_line_item_total', $subtotal, $cart_item );
 
 			$item->set_name( $product->get_name() );
 			$item->set_subtotal( $subtotal );
