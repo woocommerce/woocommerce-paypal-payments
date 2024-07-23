@@ -13,7 +13,9 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -24,6 +26,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class Button
  */
 class Button implements ButtonInterface {
+
+	use ContextTrait;
 
 	/**
 	 * The URL to the module.
@@ -409,7 +413,7 @@ class Button implements ButtonInterface {
 	 */
 	public function script_data(): array {
 		$shipping = array(
-			'enabled' => $this->settings->has( 'googlepay_button_shipping_enabled' )
+			'enabled'    => $this->settings->has( 'googlepay_button_shipping_enabled' )
 				? boolval( $this->settings->get( 'googlepay_button_shipping_enabled' ) )
 				: false,
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
@@ -421,19 +425,23 @@ class Button implements ButtonInterface {
 
 		$is_enabled = $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
 
+		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
+		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
+
 		return array(
-			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'is_enabled'  => $is_enabled,
-			'sdk_url'     => $this->sdk_url,
-			'button'      => array(
+			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'is_enabled'            => $is_enabled,
+			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
+			'sdk_url'               => $this->sdk_url,
+			'button'                => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
 				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
-			'shipping'    => $shipping,
-			'ajax'        => array(
+			'shipping'              => $shipping,
+			'ajax'                  => array(
 				'update_payment_data' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdatePaymentDataEndpoint::nonce() ),

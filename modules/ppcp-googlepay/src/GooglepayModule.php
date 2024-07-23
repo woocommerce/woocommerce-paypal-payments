@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
@@ -158,6 +159,46 @@ class GooglepayModule implements ModuleInterface {
 
 			},
 			1
+		);
+
+		add_filter(
+			'woocommerce_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $methods ) use ( $c ): array {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( $settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' ) ) {
+					$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
+					assert( $googlepay_gateway instanceof WC_Payment_Gateway );
+
+					$methods[] = $googlepay_gateway;
+				}
+
+				return $methods;
+			}
+		);
+
+		add_action(
+			'woocommerce_review_order_after_submit',
+			function () {
+				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+			}
+		);
+
+		add_action(
+			'woocommerce_pay_order_after_submit',
+			function () {
+				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
+			}
 		);
 	}
 
