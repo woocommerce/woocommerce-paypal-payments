@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
-Tested up to: 6.5
+Tested up to: 6.6
 Requires PHP: 7.2
-Stable tag: 2.8.1
+Stable tag: 2.8.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,24 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.8.2 - 2024-07-22 =
+* Fix - Sold individually checkbox automatically disabled after adding product to the cart more than once #2415
+* Fix - All products "Sold individually" when PayPal Subscriptions selected as Subscriptions Mode #2400
+* Fix - W3 Total Cache: Remove type from file parameter as sometimes null gets passed causing errors #2403
+* Fix - Shipping methods during callback not updated correctly #2421
+* Fix - Preserve subscription renewal processing when switching Subscriptions Mode or disabling gateway #2394
+* Fix - Remove shipping callback for Venmo express button #2374
+* Fix - Google Pay: Fix issuse with data.paymentSource being undefined #2390
+* Fix - Loading of non-Order as a WC_Order causes warnings and potential data corruption #2343
+* Fix - Apple Pay and Google Pay buttons don't appear in PayPal Button stack on multi-step Checkout #2372
+* Fix - Apple Pay: Fix when shipping is disabled #2391
+* Fix - Wrong string in smart button preview on Standard Payments tab #2409
+* Fix - Don't break orders screen when there is an exception for package tracking #2369
+* Fix - Pay Later button preview is missing #2371
+* Fix - Apple Pay button layout #2367
+* Enhancement - Remove BCDC button from block Express Checkout area #2381
+* Enhancement - Extend Advanced Card Processing country eligibility for China #2397
 
 = 2.8.1 - 2024-07-01 =
 * Fix - Don't render tracking metabox if PayPal order does not belong to connected merchant #2360
