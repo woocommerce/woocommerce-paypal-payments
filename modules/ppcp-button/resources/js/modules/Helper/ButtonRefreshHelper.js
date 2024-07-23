@@ -9,7 +9,7 @@ const REFRESH_BUTTON_EVENT = 'ppcp_refresh_payment_buttons';
  * Use this function on the front-end to update payment buttons after the checkout form was updated.
  */
 export function refreshButtons() {
-    document.dispatchEvent(new Event(REFRESH_BUTTON_EVENT));
+	document.dispatchEvent( new Event( REFRESH_BUTTON_EVENT ) );
 }
 
 /**
@@ -18,20 +18,26 @@ export function refreshButtons() {
  *
  * @param {Function} refresh - Callback responsible to re-render the payment button.
  */
-export function setupButtonEvents(refresh) {
-    const miniCartInitDelay = 1000;
-    const debouncedRefresh = debounce(refresh, 50);
+export function setupButtonEvents( refresh ) {
+	const miniCartInitDelay = 1000;
+	const debouncedRefresh = debounce( refresh, 50 );
 
-    // Listen for our custom refresh event.
-    document.addEventListener(REFRESH_BUTTON_EVENT, debouncedRefresh);
+	// Listen for our custom refresh event.
+	document.addEventListener( REFRESH_BUTTON_EVENT, debouncedRefresh );
 
-    // Listen for cart and checkout update events.
-    document.body.addEventListener('updated_cart_totals', debouncedRefresh);
-    document.body.addEventListener('updated_checkout', debouncedRefresh);
+	// Listen for cart and checkout update events.
+	document.body.addEventListener( 'updated_cart_totals', debouncedRefresh );
+	document.body.addEventListener( 'updated_checkout', debouncedRefresh );
 
-    // Use setTimeout for fragment events to avoid unnecessary refresh on initial render.
-    setTimeout(() => {
-        document.body.addEventListener('wc_fragments_loaded', debouncedRefresh);
-        document.body.addEventListener('wc_fragments_refreshed', debouncedRefresh);
-    }, miniCartInitDelay);
+	// Use setTimeout for fragment events to avoid unnecessary refresh on initial render.
+	setTimeout( () => {
+		document.body.addEventListener(
+			'wc_fragments_loaded',
+			debouncedRefresh
+		);
+		document.body.addEventListener(
+			'wc_fragments_refreshed',
+			debouncedRefresh
+		);
+	}, miniCartInitDelay );
 }
