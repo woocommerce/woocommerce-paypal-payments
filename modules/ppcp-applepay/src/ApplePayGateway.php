@@ -96,7 +96,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 		$this->id = self::ID;
 
 		$this->method_title       = __( 'Apple Pay (via PayPal) ', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'The separate payment gateway with the Apple Pay button. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'Display Apple Pay as a standalone payment option instead of bundling it with PayPal.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Apple Pay', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
