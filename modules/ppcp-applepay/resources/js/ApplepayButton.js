@@ -1,4 +1,6 @@
+/* eslint-env browser */
 /* global jQuery */
+
 /* global ApplePaySession */
 /* global PayPalCommerceGateway */
 
@@ -10,6 +12,25 @@ import FormValidator from '../../../ppcp-button/resources/js/modules/Helper/Form
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
+
+/**
+ * Plugin-specific styling.
+ *
+ * Note that most properties of this object do not apply to the Apple Pay button.
+ *
+ * @typedef {Object} PPCPStyle
+ * @property {string}  shape  - Outline shape.
+ * @property {?number} height - Button height in pixel.
+ */
+
+/**
+ * Style options that are defined by the Apple Pay SDK and are required to render the button.
+ *
+ * @typedef {Object} ApplePayStyle
+ * @property {string} type  - Defines the button label.
+ * @property {string} color - Button color
+ * @property {string} lang  - The locale; an empty string will apply the user-agent's language.
+ */
 
 /**
  * List of valid context values that the button can have.
@@ -42,6 +63,9 @@ class ApplePayButton {
 	 * @type {boolean}
 	 */
 	#isInitialized = false;
+
+	#wrapperId = '';
+	#ppcpButtonWrapperId = '';
 
 	/**
 	 * Context describes the button's location on the website and what details it submits.
@@ -92,9 +116,9 @@ class ApplePayButton {
 		};
 
 		if ( this.buttonConfig.is_debug ) {
-		jQuery( document ).on( 'ppcp-applepay-debug', () => {
+			jQuery( document ).on( 'ppcp-applepay-debug', () => {
 				this.log( this );
-		} );
+			} );
 		}
 	}
 
@@ -131,6 +155,127 @@ class ApplePayButton {
 		return !! ( this.applePayConfig.isEligible && window.ApplePaySession );
 	}
 
+	/**
+	 * Returns the wrapper ID for the current button context.
+	 * The ID varies for the MiniCart context.
+	 *
+	 * @return {string} The wrapper-element's ID (without the `#` prefix).
+	 */
+	get wrapperId() {
+		if ( ! this.#wrapperId ) {
+			let id;
+
+			if ( CONTEXT.MiniCart === this.context ) {
+				id = this.buttonConfig.button.mini_cart_wrapper;
+			} else {
+				id = this.buttonConfig.button.wrapper;
+			}
+
+			this.#wrapperId = id.replace( /^#/, '' );
+		}
+
+		return this.#wrapperId;
+	}
+
+	/**
+	 * Returns the wrapper ID for the ppcpButton
+	 *
+	 * @return {string} The wrapper-element's ID (without the `#` prefix).
+	 */
+	get ppcpButtonWrapperId() {
+		if ( ! this.#ppcpButtonWrapperId ) {
+			let id;
+
+			if ( CONTEXT.MiniCart === this.context ) {
+				id = this.ppcpConfig.button.mini_cart_wrapper;
+			} else if ( CONTEXT.Blocks.includes( this.context ) ) {
+				id = '#express-payment-method-ppcp-gateway-paypal';
+			} else {
+				id = this.ppcpConfig.button.wrapper;
+			}
+
+			this.#ppcpButtonWrapperId = id.replace( /^#/, '' );
+		}
+
+		return this.#ppcpButtonWrapperId;
+	}
+
+	/**
+	 * Returns the context-relevant PPCP style object.
+	 * The style for the MiniCart context can be different.
+	 *
+	 * The PPCP style are custom style options, that are provided by this plugin.
+	 *
+	 * @return {PPCPStyle} The style object.
+	 */
+	get ppcpStyle() {
+		if ( CONTEXT.MiniCart === this.context ) {
+			return this.ppcpConfig.button.mini_cart_style;
+		}
+
+		return this.ppcpConfig.button.style;
+	}
+
+	/**
+	 * Returns default style options that are propagated to and rendered by the Apple Pay button.
+	 *
+	 * These styles are the official style options provided by the Apple Pay SDK.
+	 *
+	 * @return {ApplePayStyle} The style object.
+	 */
+	get buttonStyle() {
+		return {
+			type: this.buttonConfig.button.type,
+			lang: this.buttonConfig.button.lang,
+			color: this.buttonConfig.button.color,
+		};
+	}
+
+	/**
+	 * Returns the HTML element that wraps the current button
+	 *
+	 * @return {HTMLElement|null} The wrapper element, or null.
+	 */
+	get wrapperElement() {
+		return document.getElementById( this.wrapperId );
+	}
+
+	/**
+	 * Returns an array of HTMLElements that belong to the payment button.
+	 *
+	 * @return {HTMLElement[]} List of payment button wrapper elements.
+	 */
+	get allElements() {
+		const selectors = [];
+
+		// Payment button (Pay now, smart button block)
+		selectors.push( `#${ this.wrapperId }` );
+
+		// Block Checkout: Express checkout button.
+		if ( CONTEXT.Blocks.includes( this.context ) ) {
+			selectors.push( '#express-payment-method-ppcp-applepay' );
+		}
+
+		// Classic Checkout: Apple Pay gateway.
+		if ( CONTEXT.Checkout === this.context ) {
+			selectors.push( '.wc_payment_method.payment_method_ppcp-applepay' );
+		}
+
+		this.log( 'Wrapper Elements:', selectors );
+		return /** @type {HTMLElement[]} */ selectors.flatMap( ( selector ) =>
+			Array.from( document.querySelectorAll( selector ) )
+		);
+	}
+
+	/**
+	 * Checks whether the main button-wrapper is present in the current DOM.
+	 *
+	 * @return {boolean} True, if the button context (wrapper element) is found.
+	 */
+	get isPresent() {
+		return this.wrapperElement instanceof HTMLElement;
+	}
+
 	init( config ) {
 		if ( this.#isInitialized ) {
 			return;
@@ -146,54 +291,24 @@ class ApplePayButton {
 		this.#isInitialized = true;
 		this.applePayConfig = config;
 
-		const idMinicart = this.buttonConfig.button.mini_cart_wrapper;
-		const idButton = this.buttonConfig.button.wrapper;
-
 		if ( ! this.isEligible ) {
-			const hideContainers = [
-				// Payment button (Pay now, smart button block)
-				`#${ idButton }`,
-				// Mini Cart button
-				`#${ idMinicart }`,
-				// Block Checkout: Express checkout button.
-				'#express-payment-method-ppcp-applepay',
-			];
+			this.hide();
+		} else {
+			this.show();
 
-			hideContainers.forEach( ( selector ) => {
-				const elements = document.querySelectorAll( selector );
+			this.fetchTransactionInfo().then( () => {
+				const button = this.addButton();
 
-				elements.forEach( ( element ) => {
-					element.style.display = 'none';
-				} );
-			} );
+				if ( ! button ) {
+					return;
+				}
 
-			return;
-		}
-
-		// Classic Checkout: Make the Apple Pay gateway visible.
-		document
-			.querySelectorAll( 'style#ppcp-hide-apple-pay' )
-			.forEach( ( el ) => el.remove() );
-
-		// Add click-handler to the button.
-		const setupButtonEvents = ( id ) => {
-			document
-				.getElementById( id )
-				?.addEventListener( 'click', ( evt ) => {
+				button.addEventListener( 'click', ( evt ) => {
 					evt.preventDefault();
 					this.onButtonClick();
 				} );
-		};
-
-		this.fetchTransactionInfo().then( () => {
-			this.addButton();
-
-			if ( CONTEXT.MiniCart === this.context ) {
-				setupButtonEvents( idMinicart );
-			} else {
-				setupButtonEvents( idButton );
-			}
-		} );
+			} );
+		}
 	}
 
 	reinit() {
@@ -205,40 +320,43 @@ class ApplePayButton {
 		this.init( this.applePayConfig );
 	}
 
+	/**
+	 * Hides all wrappers that belong to this ApplePayButton instance.
+	 */
+	hide() {
+		this.allElements.forEach( ( element ) => {
+			element.style.display = 'none';
+		} );
+	}
+
+	/**
+	 * Ensures all wrapper elements of this ApplePayButton instance are visible.
+	 */
+	show() {
+		if ( ! this.isPresent ) {
+			this.log( 'Cannot show button, wrapper is not present' );
+			return;
+		}
+
+		// Classic Checkout: Make the Apple Pay gateway visible after page load.
+		if ( CONTEXT.Checkout === this.context ) {
+			document
+				.querySelectorAll( 'style#ppcp-hide-apple-pay' )
+				.forEach( ( el ) => el.remove() );
+		}
+
+		this.allElements.forEach( ( element ) => {
+			element.style.display = '';
+		} );
+	}
+
 	async fetchTransactionInfo() {
 		this.transactionInfo = await this.contextHandler.transactionInfo();
 	}
 
-	/**
-	 * Returns configurations relative to this button context.
-	 */
-	contextConfig() {
-		const config = {};
-
-		if ( CONTEXT.MiniCart === this.context ) {
-			config.wrapper = this.buttonConfig.button.mini_cart_wrapper;
-			config.ppcpStyle = this.ppcpConfig.button.mini_cart_style;
-			config.buttonStyle = this.buttonConfig.button.mini_cart_style;
-			config.ppcpButtonWrapper = this.ppcpConfig.button.mini_cart_wrapper;
-		} else {
-			config.wrapper = this.buttonConfig.button.wrapper;
-			config.ppcpStyle = this.ppcpConfig.button.style;
-			config.buttonStyle = this.buttonConfig.button.style;
-			config.ppcpButtonWrapper = this.ppcpConfig.button.wrapper;
-		}
-
-		// Block editor configuration.
-		if ( CONTEXT.Blocks.includes( this.context ) ) {
-			config.ppcpButtonWrapper =
-				'#express-payment-method-ppcp-gateway-paypal';
-		}
-
-		return config;
-	}
-
 	initEventHandlers() {
-		const { wrapper, ppcpButtonWrapper } = this.contextConfig();
-		const wrapperId = '#' + wrapper;
+		const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
+		const wrapperId = `#${ this.wrapperId }`;
 
 		if ( wrapperId === ppcpButtonWrapper ) {
 			throw new Error(
@@ -295,23 +413,23 @@ class ApplePayButton {
 
 	/**
 	 * Adds an Apple Pay purchase button.
+	 *
+	 * @return {HTMLElement|null} The newly created `<apple-pay-button>` element. Null on failure.
 	 */
 	addButton() {
 		this.log( 'addButton' );
 
-		const { wrapper, ppcpStyle } = this.contextConfig();
-
-		const appleContainer = document.getElementById( wrapper );
-		const type = this.buttonConfig.button.type;
-		const language = this.buttonConfig.button.lang;
-		const color = this.buttonConfig.button.color;
-		const id = 'apple-' + wrapper;
+		const appleContainer = document.getElementById( this.wrapperId );
+		const style = this.buttonStyle;
+		const id = 'apple-' + this.wrapperId;
 
 		if ( ! appleContainer ) {
-			return;
+			return null;
 		}
 
-		appleContainer.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ color }' type='${ type }' locale='${ language }'>`;
+		const ppcpStyle = this.ppcpStyle;
+
+		appleContainer.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ style.color }' type='${ style.type }' locale='${ style.lang }' />`;
 		appleContainer.classList.add( 'ppcp-button-' + ppcpStyle.shape );
 
 		if ( ppcpStyle.height ) {
@@ -321,6 +439,8 @@ class ApplePayButton {
 			);
 			appleContainer.style.height = `${ ppcpStyle.height }px`;
 		}
+
+		return appleContainer.querySelector( 'apple-pay-button' );
 	}
 
 	//------------------------
@@ -345,6 +465,7 @@ class ApplePayButton {
 				PayPalCommerceGateway.labels.error.generic,
 				document.querySelector( '.woocommerce-notices-wrapper' )
 			);
+
 			try {
 				const formData = new FormData(
 					document.querySelector( checkoutFormSelector )
@@ -366,6 +487,7 @@ class ApplePayButton {
 							PayPalCommerceGateway.ajax.validate_checkout.nonce
 					  )
 					: null;
+
 			if ( formValidator ) {
 				try {
 					const errors = await formValidator.validate(
@@ -898,15 +1020,15 @@ class ApplePayButton {
 										restart: () =>
 											new Promise(
 												( resolve, reject ) => {
-												approveFailed = true;
-												resolve();
+													approveFailed = true;
+													resolve();
 												}
 											),
 										order: {
 											get: () =>
 												new Promise(
 													( resolve, reject ) => {
-													resolve( null );
+														resolve( null );
 													}
 												),
 										},
