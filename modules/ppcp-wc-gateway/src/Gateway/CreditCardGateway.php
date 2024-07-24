@@ -426,10 +426,24 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			WC()->session->set( 'ppcp_card_payment_token_for_free_trial', null );
+
 			return $this->handle_payment_failure(
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
 			);
+		}
+
+		$card_payment_token_for_free_trial = WC()->session->get( 'ppcp_card_payment_token_for_free_trial') ?? null;
+		WC()->session->set( 'ppcp_card_payment_token_for_free_trial', null );
+		if($card_payment_token_for_free_trial) {
+			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
+			foreach ( $tokens as $token ) {
+				if ( $token->get_id() === (int) $card_payment_token_for_free_trial ) {
+					$wc_order->payment_complete();
+					return $this->handle_payment_success( $wc_order );
+				}
+			}
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing

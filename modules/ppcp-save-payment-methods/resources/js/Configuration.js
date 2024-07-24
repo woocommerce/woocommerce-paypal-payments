@@ -108,6 +108,8 @@ class Configuration {
 				);
 			},
 			onApprove: async ( { vaultSetupToken } ) => {
+				const isFreeTrialCart =
+					this.ppcp_add_payment_method?.is_free_trial_cart ?? false;
 				const response = await fetch(
 					this.ppcp_add_payment_method.ajax.create_payment_token
 						.endpoint,
@@ -122,12 +124,19 @@ class Configuration {
 								.create_payment_token.nonce,
 							vault_setup_token: vaultSetupToken,
 							payment_method: PaymentMethods.CARDS,
+							is_free_trial_cart: isFreeTrialCart,
 						} ),
 					}
 				);
 
 				const result = await response.json();
 				if ( result.success === true ) {
+					const context = this.ppcp_add_payment_method?.context ?? '';
+					if ( context === 'checkout' ) {
+						document.querySelector( '#place_order' ).click();
+						return;
+					}
+
 					if (
 						this.ppcp_add_payment_method
 							.is_subscription_change_payment_page

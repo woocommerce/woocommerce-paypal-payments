@@ -7,6 +7,7 @@ import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
 import HostedFieldsRenderer from './modules/Renderer/HostedFieldsRenderer';
 import CardFieldsRenderer from './modules/Renderer/CardFieldsRenderer';
+import CardFieldsFreeTrialRenderer from './modules/Renderer/CardFieldsFreeTrialRenderer';
 import MessageRenderer from './modules/Renderer/MessageRenderer';
 import Spinner from './modules/Helper/Spinner';
 import {
@@ -215,12 +216,20 @@ const bootstrap = () => {
 		spinner
 	);
 	if ( typeof paypal.CardFields !== 'undefined' ) {
-		creditCardRenderer = new CardFieldsRenderer(
-			PayPalCommerceGateway,
-			errorHandler,
-			spinner,
-			onCardFieldsBeforeSubmit
-		);
+		if ( PayPalCommerceGateway.is_free_trial_cart ) {
+			creditCardRenderer = new CardFieldsFreeTrialRenderer(
+				PayPalCommerceGateway,
+				errorHandler,
+				spinner
+			);
+		} else {
+			creditCardRenderer = new CardFieldsRenderer(
+				PayPalCommerceGateway,
+				errorHandler,
+				spinner,
+				onCardFieldsBeforeSubmit
+			);
+		}
 	}
 
 	const renderer = new Renderer(
