@@ -275,7 +275,7 @@ class ApplePayButton {
 		}
 
 		// Classic Checkout: Apple Pay gateway.
-		if ( CONTEXT.Checkout === this.context ) {
+		if ( CONTEXT.Gateways.includes( this.context ) ) {
 			selectors.push( '.wc_payment_method.payment_method_ppcp-applepay' );
 		}
 
@@ -364,12 +364,10 @@ class ApplePayButton {
 			return;
 		}
 
-		// Classic Checkout: Make the Apple Pay gateway visible after page load.
-		if ( CONTEXT.Checkout === this.context ) {
-			document
-				.querySelectorAll( 'style#ppcp-hide-apple-pay' )
-				.forEach( ( el ) => el.remove() );
-		}
+		// Classic Checkout/PayNow: Make the Apple Pay gateway visible after page load.
+		document
+			.querySelectorAll( 'style#ppcp-hide-apple-pay' )
+			.forEach( ( el ) => el.remove() );
 
 		this.allElements.forEach( ( element ) => {
 			element.style.display = '';

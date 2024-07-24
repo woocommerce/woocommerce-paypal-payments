@@ -966,6 +966,7 @@ class ApplePayButton implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->applepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
