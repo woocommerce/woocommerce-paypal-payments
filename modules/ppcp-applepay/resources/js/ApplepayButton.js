@@ -1,6 +1,3 @@
-/* eslint-env browser */
-/* global jQuery */
-
 /* global ApplePaySession */
 /* global PayPalCommerceGateway */
 
