@@ -9,17 +9,17 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
+use Exception;
+use WC_Order;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WC_Order;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
-use Exception;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages;
 
 /**
@@ -114,10 +114,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 
 		add_action(
 			'woocommerce_update_options_payment_gateways_' . $this->id,
-			array(
-				$this,
-				'process_admin_options',
-			)
+			array( $this, 'process_admin_options' )
 		);
 	}
 
