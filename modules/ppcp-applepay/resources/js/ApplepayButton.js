@@ -150,12 +150,30 @@ class ApplePayButton {
 		const idButton = this.buttonConfig.button.wrapper;
 
 		if ( ! this.isEligible ) {
-			jQuery( '#' + idButton ).hide();
-			jQuery( '#' + idMinicart ).hide();
-			jQuery( '#express-payment-method-ppcp-applepay' ).hide();
+			const hideContainers = [
+				// Payment button (Pay now, smart button block)
+				`#${ idButton }`,
+				// Mini Cart button
+				`#${ idMinicart }`,
+				// Block Checkout: Express checkout button.
+				'#express-payment-method-ppcp-applepay',
+			];
+
+			hideContainers.forEach( ( selector ) => {
+				const elements = document.querySelectorAll( selector );
+
+				elements.forEach( ( element ) => {
+					element.style.display = 'none';
+				} );
+			} );
 
 			return;
 		}
+
+		// Classic Checkout: Make the Apple Pay gateway visible.
+		document
+			.querySelectorAll( 'style#ppcp-hide-apple-pay' )
+			.forEach( ( el ) => el.remove() );
 
 		// Add click-handler to the button.
 		const setupButtonEvents = ( id ) => {

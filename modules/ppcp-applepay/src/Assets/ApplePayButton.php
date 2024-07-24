@@ -443,15 +443,15 @@ class ApplePayButton implements ButtonInterface {
 					)
 				);
 			} else {
-			add_filter(
-				'woocommerce_payment_successful_result',
-				function ( array $result ) use ( $cart, $cart_item_key ) : array {
-					$this->clear_current_cart( $cart, $cart_item_key );
-					$this->reload_cart( $cart );
-					return $result;
-				}
-			);
-		}
+				add_filter(
+					'woocommerce_payment_successful_result',
+					function ( array $result ) use ( $cart, $cart_item_key ) : array {
+						$this->clear_current_cart( $cart, $cart_item_key );
+						$this->reload_cart( $cart );
+						return $result;
+					}
+				);
+			}
 		}
 
 		WC()->checkout()->process_checkout();
@@ -953,6 +953,7 @@ class ApplePayButton implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->applepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -994,6 +995,19 @@ class ApplePayButton implements ButtonInterface {
 		<div id="ppc-button-applepay-container" class="ppcp-button-apm ppcp-button-applepay">
 			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Outputs an inline CSS style that hides the Apple Pay gateway (on Classic Checkout).
+	 * The style is removed by `ApplepayButton.js` once the eligibility of the payment method
+	 * is confirmed.
+	 *
+	 * @return void
+	 */
+	protected function hide_gateway_until_eligible(): void {
+		?>
+		<style id="ppcp-hide-apple-pay">.wc_payment_method.payment_method_ppcp-applepay{display:none}</style>
 		<?php
 	}
 
