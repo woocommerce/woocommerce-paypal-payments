@@ -1,39 +1,76 @@
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import GooglepayButton from './GooglepayButton';
+import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class GooglepayManager {
 	constructor( buttonConfig, ppcpConfig ) {
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.googlePayConfig = null;
+		this.transactionInfo = null;
+		this.contextHandler = null;
 
 		this.buttons = [];
 
-		buttonModuleWatcher.watchContextBootstrap( ( bootstrap ) => {
+		buttonModuleWatcher.watchContextBootstrap( async ( bootstrap ) => {
+			this.contextHandler = ContextHandlerFactory.create(
+				bootstrap.context,
+				buttonConfig,
+				ppcpConfig,
+				bootstrap.handler
+			);
+
 			const button = new GooglepayButton(
 				bootstrap.context,
 				bootstrap.handler,
 				buttonConfig,
-				ppcpConfig
+				ppcpConfig,
+				this.contextHandler
 			);
 
 			this.buttons.push( button );
 
-			if ( this.googlePayConfig ) {
-				button.init( this.googlePayConfig );
+			// Initialize button only if googlePayConfig and transactionInfo are already fetched.
+			if ( this.googlePayConfig && this.transactionInfo ) {
+				button.init( this.googlePayConfig, this.transactionInfo );
+			} else {
+				await this.init();
+				if ( this.googlePayConfig && this.transactionInfo ) {
+					button.init( this.googlePayConfig, this.transactionInfo );
+				}
 			}
 		} );
 	}
 
-	init() {
-		( async () => {
-			// Gets GooglePay configuration of the PayPal merchant.
-			this.googlePayConfig = await paypal.Googlepay().config();
+	async init() {
+		try {
+			if ( ! this.googlePayConfig ) {
+				// Gets GooglePay configuration of the PayPal merchant.
+				this.googlePayConfig = await paypal.Googlepay().config();
+			}
+
+			if ( ! this.transactionInfo ) {
+				this.transactionInfo = await this.fetchTransactionInfo();
+			}
 
 			for ( const button of this.buttons ) {
-				button.init( this.googlePayConfig );
+				button.init( this.googlePayConfig, this.transactionInfo );
 			}
-		} )();
+		} catch ( error ) {
+			console.error( 'Error during initialization:', error );
+		}
+	}
+
+	async fetchTransactionInfo() {
+		try {
+			if ( ! this.contextHandler ) {
+				throw new Error( 'ContextHandler is not initialized' );
+			}
+			return await this.contextHandler.transactionInfo();
+		} catch ( error ) {
+			console.error( 'Error fetching transaction info:', error );
+			throw error;
+		}
 	}
 
 	reinit() {

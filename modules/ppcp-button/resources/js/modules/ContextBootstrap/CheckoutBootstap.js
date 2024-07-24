@@ -183,6 +183,8 @@ class CheckoutBootstap {
 		const isSeparateButtonGateway = [ PaymentMethods.CARD_BUTTON ].includes(
 			currentPaymentMethod
 		);
+		const isGooglePayMethod =
+			currentPaymentMethod === PaymentMethods.GOOGLEPAY;
 		const isApplePayMethod =
 			currentPaymentMethod === PaymentMethods.APPLEPAY;
 		const isSavedCard = isCard && isSavedCardSelected();
@@ -190,6 +192,7 @@ class CheckoutBootstap {
 			! isPaypal &&
 			! isCard &&
 			! isSeparateButtonGateway &&
+			! isGooglePayMethod &&
 			! isApplePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
@@ -234,6 +237,7 @@ class CheckoutBootstap {
 			}
 		}
 
+		setVisible( '#ppc-button-ppcp-googlepay', isGooglePayMethod );
 		setVisible( '#ppc-button-ppcp-applepay', isApplePayMethod );
 
 		jQuery( document.body ).trigger( 'ppcp_checkout_rendered' );

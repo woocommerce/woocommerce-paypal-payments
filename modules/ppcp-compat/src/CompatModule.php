@@ -56,6 +56,11 @@ class CompatModule implements ModuleInterface {
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
 		$this->set_elementor_checkout_context();
+
+		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
+		if ( $is_nyp_active ) {
+			$this->initialize_nyp_compat_layer();
+		}
 	}
 
 	/**
@@ -385,6 +390,26 @@ class CompatModule implements ModuleInterface {
 			},
 			10,
 			3
+		);
+	}
+
+	/**
+	 * Sets up the compatibility layer for PayPal Shipping callback & WooCommerce Name Your Price plugin.
+	 *
+	 * @return void
+	 */
+	protected function initialize_nyp_compat_layer(): void {
+		add_filter(
+			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
+			static function( string $total, array $cart_item ) {
+				if ( ! isset( $cart_item['nyp'] ) ) {
+					return $total;
+				}
+
+				return $cart_item['nyp'];
+			},
+			10,
+			2
 		);
 	}
 }
