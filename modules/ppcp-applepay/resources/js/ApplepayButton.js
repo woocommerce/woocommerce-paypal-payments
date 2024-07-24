@@ -104,18 +104,20 @@ class ApplePayButton {
 
 		this.refreshContextData();
 
+		this.log = () => {};
+
 		// Debug helpers
-		document.ppcpApplepayButtons = document.ppcpApplepayButtons || {};
-		document.ppcpApplepayButtons[ this.context ] = this;
-
-		this.log = function () {
-			if ( ! this.buttonConfig.is_debug ) {
-				return;
-			}
-			console.log( `[ApplePayButton | ${ this.context }]`, ...arguments );
-		};
-
 		if ( this.buttonConfig.is_debug ) {
+			document.ppcpApplepayButtons = document.ppcpApplepayButtons || {};
+			document.ppcpApplepayButtons[ this.context ] = this;
+
+			this.log = function () {
+				console.log(
+					`[ApplePayButton | ${ this.context }]`,
+					...arguments
+				);
+			};
+
 			jQuery( document ).on( 'ppcp-applepay-debug', () => {
 				this.log( this );
 			} );
