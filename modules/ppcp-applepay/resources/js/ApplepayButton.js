@@ -437,28 +437,32 @@ class ApplePayButton {
 	addButton() {
 		this.log( 'addButton' );
 
-		const appleContainer = document.getElementById( this.wrapperId );
+		const wrapper = this.wrapperElement;
 		const style = this.buttonStyle;
 		const id = 'apple-' + this.wrapperId;
 
-		if ( ! appleContainer ) {
+		if ( ! wrapper ) {
 			return null;
 		}
 
 		const ppcpStyle = this.ppcpStyle;
 
-		appleContainer.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ style.color }' type='${ style.type }' locale='${ style.lang }' />`;
-		appleContainer.classList.add( 'ppcp-button-' + ppcpStyle.shape );
+		wrapper.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ style.color }' type='${ style.type }' locale='${ style.lang }' />`;
+		wrapper.classList.add(
+			`ppcp-button-${ ppcpStyle.shape }`,
+			'ppcp-button-apm',
+			'ppcp-button-applepay'
+		);
 
 		if ( ppcpStyle.height ) {
-			appleContainer.style.setProperty(
+			wrapper.style.setProperty(
 				'--apple-pay-button-height',
 				`${ ppcpStyle.height }px`
 			);
-			appleContainer.style.height = `${ ppcpStyle.height }px`;
+			wrapper.style.height = `${ ppcpStyle.height }px`;
 		}
 
-		return appleContainer.querySelector( 'apple-pay-button' );
+		return wrapper.querySelector( 'apple-pay-button' );
 	}
 
 	//------------------------
