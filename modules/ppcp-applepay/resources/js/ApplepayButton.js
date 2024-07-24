@@ -40,7 +40,7 @@ class ApplePayButton {
 	 *
 	 * @type {boolean}
 	 */
-	isInitialized = false;
+	#isInitialized = false;
 
 	/**
 	 * Context describes the button's location on the website and what details it submits.
@@ -115,7 +115,7 @@ class ApplePayButton {
 	 * @return {boolean} True, if the button can be displayed.
 	 */
 	get isEligible() {
-		if ( ! this.isInitialized ) {
+		if ( ! this.#isInitialized ) {
 			return true;
 		}
 
@@ -127,7 +127,7 @@ class ApplePayButton {
 	}
 
 	init( config ) {
-		if ( this.isInitialized ) {
+		if ( this.#isInitialized ) {
 			return;
 		}
 
@@ -138,7 +138,7 @@ class ApplePayButton {
 		this.log( 'Init', this.context );
 		this.initEventHandlers();
 
-		this.isInitialized = true;
+		this.#isInitialized = true;
 		this.applePayConfig = config;
 
 		const idMinicart = this.buttonConfig.button.mini_cart_wrapper;
@@ -178,7 +178,7 @@ class ApplePayButton {
 			return;
 		}
 
-		this.isInitialized = false;
+		this.#isInitialized = false;
 		this.init( this.applePayConfig );
 	}
 
