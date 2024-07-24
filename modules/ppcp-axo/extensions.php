@@ -114,9 +114,9 @@ return array(
 					),
 					'classes'           => array( 'ppcp-valign-label-middle', 'ppcp-align-label-center' ),
 				),
-				'axo_checkout_config_notice'         => array(
+				'axo_main_notice'                    => array(
 					'heading'      => '',
-					'html'         => $container->get( 'axo.checkout-config-notice' ),
+					'html'         => $container->get( 'axo.shipping-config-notice' ) . $container->get( 'axo.checkout-config-notice' ),
 					'type'         => 'ppcp-html',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
