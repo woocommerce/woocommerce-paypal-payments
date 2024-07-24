@@ -77,20 +77,24 @@ class ApplePayButton {
 			this.ppcpConfig
 		);
 
-		this.log = function () {
-			if ( this.buttonConfig.is_debug ) {
-				//console.log('[ApplePayButton]', ...arguments);
-			}
-		};
-
 		this.refreshContextData();
 
 		// Debug helpers
-		jQuery( document ).on( 'ppcp-applepay-debug', () => {
-			console.log( 'ApplePayButton', this.context, this );
-		} );
 		document.ppcpApplepayButtons = document.ppcpApplepayButtons || {};
 		document.ppcpApplepayButtons[ this.context ] = this;
+
+		this.log = function () {
+			if ( ! this.buttonConfig.is_debug ) {
+				return;
+			}
+			console.log( `[ApplePayButton | ${ this.context }]`, ...arguments );
+		};
+
+		if ( this.buttonConfig.is_debug ) {
+		jQuery( document ).on( 'ppcp-applepay-debug', () => {
+				this.log( this );
+		} );
+		}
 	}
 
 	/**
@@ -135,7 +139,7 @@ class ApplePayButton {
 			return;
 		}
 
-		this.log( 'Init', this.context );
+		this.log( 'Init' );
 		this.initEventHandlers();
 
 		this.#isInitialized = true;
@@ -274,7 +278,7 @@ class ApplePayButton {
 	 * Adds an Apple Pay purchase button.
 	 */
 	addButton() {
-		this.log( 'addButton', this.context );
+		this.log( 'addButton' );
 
 		const { wrapper, ppcpStyle } = this.contextConfig();
 
@@ -308,7 +312,7 @@ class ApplePayButton {
 	 * Show Apple Pay payment sheet when Apple Pay payment button is clicked
 	 */
 	async onButtonClick() {
-		this.log( 'onButtonClick', this.context );
+		this.log( 'onButtonClick' );
 
 		const paymentRequest = this.paymentRequest();
 
