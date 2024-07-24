@@ -223,6 +223,22 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		}
 	);
 
+	add_action(
+		'in_plugin_update_message-woocommerce-paypal-payments/woocommerce-paypal-payments.php',
+		static function( array $plugin_data, \stdClass $new_data ) {
+			if ( version_compare( $plugin_data['Version'], '3.0.0', '<' ) &&
+				version_compare( $new_data->new_version, '3.0.0', '>=' ) ) {
+				printf(
+					'<br /><strong>%s</strong>: %s',
+					esc_html__( 'Warning', 'woocommerce-paypal-payments' ),
+					esc_html__( 'WooCommerce PayPal Payments version 3.0.0 contains significant changes that may impact your website. We strongly recommend reviewing the changes and testing the update on a staging site before updating it on your production environment.', 'woocommerce-paypal-payments' )
+				);
+			}
+		},
+		10,
+		2
+	);
+
 	/**
 	 * Check if WooCommerce is active.
 	 *
