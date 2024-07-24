@@ -312,6 +312,12 @@ class ApplePayButton {
 		if ( ! this.isEligible ) {
 			this.hide();
 		} else {
+			// Bail if the button wrapper is not present; handles mini-cart logic on checkout page.
+			if ( ! this.isPresent ) {
+				this.log( 'Abort init (no wrapper found)' );
+				return;
+			}
+
 			this.show();
 
 			this.fetchTransactionInfo().then( () => {
@@ -342,6 +348,7 @@ class ApplePayButton {
 	 * Hides all wrappers that belong to this ApplePayButton instance.
 	 */
 	hide() {
+		this.log( 'Hide button' );
 		this.allElements.forEach( ( element ) => {
 			element.style.display = 'none';
 		} );
@@ -351,8 +358,9 @@ class ApplePayButton {
 	 * Ensures all wrapper elements of this ApplePayButton instance are visible.
 	 */
 	show() {
+		this.log( 'Show button' );
 		if ( ! this.isPresent ) {
-			this.log( 'Cannot show button, wrapper is not present' );
+			this.log( '!! Cannot show button, wrapper is not present' );
 			return;
 		}
 
