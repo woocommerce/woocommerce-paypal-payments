@@ -43,7 +43,10 @@ const CONTEXT = {
 	BlockCart: 'cart-block',
 	BlockCheckout: 'checkout-block',
 	Preview: 'preview',
+	// Block editor contexts.
 	Blocks: [ 'cart-block', 'checkout-block' ],
+	// Custom gateway contexts.
+	Gateways: [ 'checkout', 'pay-now' ],
 };
 
 /**
@@ -153,6 +156,22 @@ class ApplePayButton {
 	}
 
 	/**
+	 * Determines if the current payment button should be rendered as a stand-alone gateway.
+	 * The return value `false` usually means, that the payment button is bundled with all available
+	 * payment buttons.
+	 *
+	 * The decision depends on the button context (placement) and the plugin settings.
+	 *
+	 * @return {boolean} True, if the current button represents a stand-alone gateway.
+	 */
+	get isSeparateGateway() {
+		return (
+			this.buttonConfig.is_wc_gateway_enabled &&
+			CONTEXT.Gateways.includes( this.context )
+		);
+	}
+
+	/**
 	 * Returns the wrapper ID for the current button context.
 	 * The ID varies for the MiniCart context.
 	 *
@@ -164,6 +183,8 @@ class ApplePayButton {
 
 			if ( CONTEXT.MiniCart === this.context ) {
 				id = this.buttonConfig.button.mini_cart_wrapper;
+			} else if ( this.isSeparateGateway ) {
+				id = 'ppc-button-ppcp-applepay';
 			} else {
 				id = this.buttonConfig.button.wrapper;
 			}
