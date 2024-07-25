@@ -73,7 +73,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	private function get_apple_pay_data( array $product = [] ) : array {
+	private function get_apple_pay_data( array $product = array() ) : array {
 		// true: Use Apple Pay as distinct gateway.
 		// false: integrate it with the smart buttons.
 		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
@@ -128,6 +128,8 @@ class DataToAppleButtonScripts {
 	/**
 	 * Check if the product needs shipping
 	 *
+	 * @param WC_Product $product Product to check.
+	 *
 	 * @return bool
 	 */
 	protected function check_if_need_shipping( WC_Product $product ) : bool {
@@ -167,13 +169,15 @@ class DataToAppleButtonScripts {
 		$product_price         = $product->get_price();
 		$product_stock         = $product->get_stock_status();
 
-		return $this->get_apple_pay_data( array(
-			'needShipping' => $product_need_shipping,
-			'id'           => $product_id,
-			'price'        => $product_price,
-			'isVariation'  => $is_variation,
-			'stock'        => $product_stock,
-		) );
+		return $this->get_apple_pay_data(
+			array(
+				'needShipping' => $product_need_shipping,
+				'id'           => $product_id,
+				'price'        => $product_price,
+				'isVariation'  => $is_variation,
+				'stock'        => $product_stock,
+			)
+		);
 	}
 
 	/**
@@ -187,10 +191,12 @@ class DataToAppleButtonScripts {
 			return array();
 		}
 
-		return $this->get_apple_pay_data( array(
-			'needShipping' => $cart->needs_shipping(),
-			'subtotal'     => $cart->get_subtotal(),
-		) );
+		return $this->get_apple_pay_data(
+			array(
+				'needShipping' => $cart->needs_shipping(),
+				'subtotal'     => $cart->get_subtotal(),
+			)
+		);
 	}
 
 	/**
@@ -201,10 +207,12 @@ class DataToAppleButtonScripts {
 	 * @return array
 	 */
 	protected function data_for_admin_page() : array {
-		$data = $this->get_apple_pay_data( array(
-			'needShipping' => false,
-			'subtotal'     => 0,
-		) );
+		$data = $this->get_apple_pay_data(
+			array(
+				'needShipping' => false,
+				'subtotal'     => 0,
+			)
+		);
 
 		$data['is_admin'] = true;
 
