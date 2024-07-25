@@ -48,9 +48,14 @@ class CardFieldsFreeTrialRenderer {
 			errorHandler
 		);
 
-		const cardFields = paypal.CardFields(
-			configuration.cardFieldsConfiguration()
+		let cardFields = paypal.CardFields(
+			configuration.addPaymentMethodConfiguration()
 		);
+		if ( this.defaultConfig.user.is_logged ) {
+			cardFields = paypal.CardFields(
+				configuration.cardFieldsConfiguration()
+			);
+		}
 
 		if ( cardFields.isEligible() ) {
 			const renderCardFields = new RenderCardFields( cardFields );

@@ -194,6 +194,65 @@ class Configuration {
 			},
 		};
 	}
+
+	addPaymentMethodConfiguration() {
+		return {
+			createVaultSetupToken: async () => {
+				const response = await fetch(
+					this.ppcp_add_payment_method.ajax.create_setup_token
+						.endpoint,
+					{
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify( {
+							nonce: this.ppcp_add_payment_method.ajax
+								.create_setup_token.nonce,
+							payment_method: getCurrentPaymentMethod(),
+						} ),
+					}
+				);
+
+				const result = await response.json();
+				if ( result.data.id ) {
+					return result.data.id;
+				}
+
+				console.error( result );
+			},
+			onApprove: async ( { vaultSetupToken } ) => {
+				const response = await fetch(
+					this.ppcp_add_payment_method.ajax
+						.create_payment_token_for_guest.endpoint,
+					{
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify( {
+							nonce: this.ppcp_add_payment_method.ajax
+								.create_payment_token_for_guest.nonce,
+							vault_setup_token: vaultSetupToken,
+						} ),
+					}
+				);
+
+				const result = await response.json();
+				if ( result.success === true ) {
+					document.querySelector( '#place_order' ).click();
+					return;
+				}
+
+				console.error( result );
+			},
+			onError: ( error ) => {
+				console.error( error );
+			},
+		};
+	}
 }
 
 export default Configuration;

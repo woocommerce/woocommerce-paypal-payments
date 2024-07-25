@@ -434,6 +434,22 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			);
 		}
 
+		$guest_card_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial' ) ?? null;
+		WC()->session->get( 'ppcp_guest_payment_for_free_trial', null );
+		if($guest_card_payment_for_free_trial) {
+			$customer_id = $guest_card_payment_for_free_trial->customer->id ?? '';
+			if ( $customer_id ) {
+				update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
+			}
+
+			if ( isset( $guest_card_payment_for_free_trial->payment_source->card ) ) {
+				$this->wc_payment_tokens->create_payment_token_card( $wc_order->get_customer_id(), $guest_card_payment_for_free_trial );
+
+				$wc_order->payment_complete();
+				return $this->handle_payment_success( $wc_order );
+			}
+		}
+
 		$card_payment_token_for_free_trial = WC()->session->get( 'ppcp_card_payment_token_for_free_trial') ?? null;
 		WC()->session->set( 'ppcp_card_payment_token_for_free_trial', null );
 		if($card_payment_token_for_free_trial) {
