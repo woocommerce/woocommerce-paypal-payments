@@ -1,6 +1,7 @@
 import GooglepayButton from './GooglepayButton';
 import PreviewButton from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
 import PreviewButtonManager from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
+import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 /**
  * Accessor that creates and returns a single PreviewButtonManager instance.
@@ -95,14 +96,22 @@ class GooglePayPreviewButton extends PreviewButton {
 	}
 
 	createButton( buttonConfig ) {
+		const contextHandler = ContextHandlerFactory.create(
+			'preview',
+			buttonConfig,
+			this.ppcpConfig,
+			null
+		);
+
 		const button = new GooglepayButton(
 			'preview',
 			null,
 			buttonConfig,
-			this.ppcpConfig
+			this.ppcpConfig,
+			contextHandler
 		);
 
-		button.init( this.apiConfig );
+		button.init( this.apiConfig, null );
 	}
 
 	/**
