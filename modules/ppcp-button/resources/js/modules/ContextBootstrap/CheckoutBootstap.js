@@ -7,6 +7,7 @@ import {
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import BootstrapHelper from '../Helper/BootstrapHelper';
+import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
 
 class CheckoutBootstap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
@@ -160,7 +161,7 @@ class CheckoutBootstap {
 			PayPalCommerceGateway.vault_v3_enabled
 		) {
 			this.renderer.render(
-				actionHandler.addPaymentMethodConfiguration(),
+				addPaymentMethodConfiguration( PayPalCommerceGateway ),
 				{},
 				actionHandler.configuration()
 			);

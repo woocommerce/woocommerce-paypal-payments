@@ -5,9 +5,8 @@ import {
 } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import { loadScript } from '@paypal/paypal-js';
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
-
-import Configuration from './Configuration';
-import RenderCardFields from './RenderCardFields';
+import { buttonConfiguration, cardFieldsConfiguration } from './Configuration';
+import { renderFields } from '../../../ppcp-card-fields/resources/js/Render';
 import {
 	setVisible,
 	setVisibleByClass,
@@ -55,30 +54,32 @@ import {
 				);
 				errorHandler.clear();
 
-				const configuration = new Configuration(
-					ppcp_add_payment_method,
-					errorHandler
-				);
-
 				const paypalButtonContainer = document.querySelector(
 					`#ppc-button-${ PaymentMethods.PAYPAL }-save-payment-method`
 				);
 
 				if ( paypalButtonContainer ) {
 					paypal
-						.Buttons( configuration.buttonConfiguration() )
+						.Buttons(
+							buttonConfiguration(
+								ppcp_add_payment_method,
+								errorHandler
+							)
+						)
 						.render(
 							`#ppc-button-${ PaymentMethods.PAYPAL }-save-payment-method`
 						);
 				}
 
 				const cardFields = paypal.CardFields(
-					configuration.cardFieldsConfiguration()
+					cardFieldsConfiguration(
+						ppcp_add_payment_method,
+						errorHandler
+					)
 				);
 
 				if ( cardFields.isEligible() ) {
-					const renderCardFields = new RenderCardFields( cardFields );
-					renderCardFields.render();
+					renderFields( cardFields );
 				}
 
 				document

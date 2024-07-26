@@ -1,7 +1,9 @@
 import { show } from '../Helper/Hiding';
-import ErrorHandler from '../ErrorHandler';
-import RenderCardFields from '../../../../../ppcp-save-payment-methods/resources/js/RenderCardFields';
-import Configuration from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
+import { renderFields } from '../../../../../ppcp-card-fields/resources/js/Render';
+import {
+	addPaymentMethodConfiguration,
+	cardFieldsConfiguration,
+} from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
 
 class CardFieldsFreeTrialRenderer {
 	constructor( defaultConfig, errorHandler, spinner ) {
@@ -37,29 +39,19 @@ class CardFieldsFreeTrialRenderer {
 			hideDccGateway.parentNode.removeChild( hideDccGateway );
 		}
 
-		const errorHandler = new ErrorHandler(
-			this.defaultConfig.labels.error.generic,
-			document.querySelector( '.woocommerce-notices-wrapper' )
-		);
-		errorHandler.clear();
-
-		const configuration = new Configuration(
-			this.defaultConfig,
-			errorHandler
-		);
+		this.errorHandler.clear();
 
 		let cardFields = paypal.CardFields(
-			configuration.addPaymentMethodConfiguration()
+			addPaymentMethodConfiguration( this.defaultConfig )
 		);
 		if ( this.defaultConfig.user.is_logged ) {
 			cardFields = paypal.CardFields(
-				configuration.cardFieldsConfiguration()
+				cardFieldsConfiguration( this.defaultConfig, this.errorHandler )
 			);
 		}
 
 		if ( cardFields.isEligible() ) {
-			const renderCardFields = new RenderCardFields( cardFields );
-			renderCardFields.render();
+			renderFields( cardFields );
 		}
 
 		gateWayBox.style.display = oldDisplayStyle;
