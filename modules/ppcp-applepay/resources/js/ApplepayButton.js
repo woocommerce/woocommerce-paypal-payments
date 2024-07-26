@@ -163,11 +163,26 @@ class ApplePayButton {
 			return true;
 		}
 
-		if ( this.buttonConfig.is_admin ) {
+		if ( CONTEXT.Preview === this.context ) {
 			return true;
 		}
 
-		return !! ( this.applePayConfig.isEligible && window.ApplePaySession );
+		/**
+		 * Ensure the ApplePaySession is available and accepts payments
+		 * This check is required when using Apple Pay SDK v1; canMakePayments() returns false
+		 * if the current device is not liked to iCloud or the Apple Wallet is not available
+		 * for a different reason.
+		 */
+		try {
+			if ( ! window.ApplePaySession?.canMakePayments() ) {
+				return false;
+			}
+		} catch ( error ) {
+			console.warn( error );
+			return false;
+		}
+
+		return !! this.applePayConfig.isEligible;
 	}
 
 	/**
