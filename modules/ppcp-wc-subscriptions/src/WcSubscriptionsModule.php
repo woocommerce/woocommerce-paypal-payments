@@ -416,7 +416,9 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				if ( $subscriptions_helper->plugin_is_active() ) {
+				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+
+				if ( 'disable_paypal_subscriptions' !== $subscriptions_mode && $subscriptions_helper->plugin_is_active() ) {
 					$supports = array(
 						'subscriptions',
 						'subscription_cancellation',
@@ -442,7 +444,12 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscriptions_helper instanceof SubscriptionHelper );
 
-				if ( $subscriptions_helper->plugin_is_active() ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$vaulting_enabled = $settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' );
+
+				if ( $vaulting_enabled && $subscriptions_helper->plugin_is_active() ) {
 					$supports = array(
 						'subscriptions',
 						'subscription_cancellation',
@@ -467,7 +474,12 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscriptions_helper instanceof SubscriptionHelper );
 
-				if ( $subscriptions_helper->plugin_is_active() ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+
+				if ( 'disable_paypal_subscriptions' !== $subscriptions_mode && $subscriptions_helper->plugin_is_active() ) {
 					$supports = array(
 						'subscriptions',
 						'subscription_cancellation',

@@ -181,9 +181,14 @@ class CheckoutBootstap {
 		const isSeparateButtonGateway = [ PaymentMethods.CARD_BUTTON ].includes(
 			currentPaymentMethod
 		);
+		const isGooglePayMethod =
+			currentPaymentMethod === PaymentMethods.GOOGLEPAY;
 		const isSavedCard = isCard && isSavedCardSelected();
 		const isNotOurGateway =
-			! isPaypal && ! isCard && ! isSeparateButtonGateway;
+			! isPaypal &&
+			! isCard &&
+			! isSeparateButtonGateway &&
+			! isGooglePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
 			PayPalCommerceGateway.vaulted_paypal_email !== '';
@@ -226,6 +231,8 @@ class CheckoutBootstap {
 				this.enableCreditCardFields();
 			}
 		}
+
+		setVisible( '#ppc-button-ppcp-googlepay', isGooglePayMethod );
 
 		jQuery( document.body ).trigger( 'ppcp_checkout_rendered' );
 	}
