@@ -6,24 +6,29 @@ import {
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { loadCustomScript } from '@paypal/paypal-js';
+import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
 
 const buttonData = wc.wcSettings.getSetting( 'ppcp-googlepay_data' );
 const buttonConfig = buttonData.scriptData;
+const dataNamespace = 'ppcpBlocksEditorPaypalGooglepay';
 
 if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const GooglePayComponent = () => {
+const GooglePayComponent = ( props ) => {
 	const [ bootstrapped, setBootstrapped ] = useState( false );
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
 
 	const bootstrap = function () {
-		const manager = new GooglepayManager( buttonConfig, ppcpConfig );
+		const ManagerClass = props.isEditing
+			? GooglepayManagerBlockEditor
+			: GooglepayManager;
+		const manager = new ManagerClass( buttonConfig, ppcpConfig );
 		manager.init();
 	};
 
@@ -32,6 +37,12 @@ const GooglePayComponent = () => {
 		loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
 			setGooglePayLoaded( true );
 		} );
+
+		ppcpConfig.url_params.components += ',googlepay';
+
+		if ( props.isEditing ) {
+			ppcpConfig.data_namespace = dataNamespace;
+		}
 
 		// Load PayPal
 		loadPaypalScript( ppcpConfig, () => {
