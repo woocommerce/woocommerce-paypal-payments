@@ -15,6 +15,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	);
 	const wcShipmentTaxBuyLabelButtonSelector =
 		'.components-modal__screen-overlay .label-purchase-modal__sidebar .purchase-section button.components-button';
+	const dhlGenerateLabelButton =
+		document.getElementById( 'dhl-label-button' );
 
 	const toggleLoaderVisibility = function () {
 		const loader = document.querySelector( '.ppcp-tracking-loader' );
@@ -33,6 +35,20 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	const waitForTrackingUpdate = function ( elementToCheck ) {
 		if ( elementToCheck.css( 'display' ) !== 'none' ) {
 			setTimeout( () => waitForTrackingUpdate( elementToCheck ), 100 );
+		} else {
+			jQuery( orderTrackingContainerSelector ).load(
+				loadLocation,
+				'',
+				function () {
+					toggleLoaderVisibility();
+				}
+			);
+		}
+	};
+
+	const waitForButtonRemoval = function ( button ) {
+		if ( document.body.contains( button ) ) {
+			setTimeout( () => waitForButtonRemoval( button ), 100 );
 		} else {
 			jQuery( orderTrackingContainerSelector ).load(
 				loadLocation,
@@ -67,9 +83,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	}
 
 	if (
+		typeof dhlGenerateLabelButton !== 'undefined' &&
+		dhlGenerateLabelButton != null
+	) {
+		dhlGenerateLabelButton.addEventListener( 'click', function ( event ) {
+			toggleLoaderVisibility();
+			waitForButtonRemoval( dhlGenerateLabelButton );
+		} );
+	}
+
+	if (
 		wcShippingTaxSyncEnabled &&
-		typeof wcShippingTaxSyncEnabled !== 'undefined' &&
-		wcShippingTaxSyncEnabled != null
+		typeof wcShippingTaxSyncEnabled !== 'undefined'
 	) {
 		document.addEventListener( 'click', function ( event ) {
 			const wcShipmentTaxBuyLabelButton = event.target.closest(
