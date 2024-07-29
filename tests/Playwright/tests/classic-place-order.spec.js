@@ -12,7 +12,6 @@ const {
 
 const {
 	CREDIT_CARD_NUMBER,
-	CREDIT_CARD_EXPIRATION,
 	CREDIT_CARD_CVV,
 	PRODUCT_URL,
 	CHECKOUT_URL,
@@ -73,16 +72,16 @@ test( 'Advanced Credit and Debit Card place order from Checkout page', async ( {
 
 	await page.click( 'text=Credit Cards' );
 
-	const creditCardNumber = await page
-		.frameLocator( '[title="paypal_card_number_field"]' )
-		.locator( '.card-field-number' );
-	await creditCardNumber.fill( CREDIT_CARD_NUMBER );
-
 	const expirationDate = await page
 		.frameLocator( 'iframe[title="paypal_card_expiry_field"]' )
 		.locator( 'input.card-field-expiry' );
 	await expirationDate.click();
 	await page.keyboard.type( '01/42' );
+
+	const creditCardNumber = await page
+		.frameLocator( '[title="paypal_card_number_field"]' )
+		.locator( '.card-field-number' );
+	await creditCardNumber.fill( CREDIT_CARD_NUMBER );
 
 	const cvv = await page
 		.frameLocator( '[title="paypal_card_cvv_field"]' )
