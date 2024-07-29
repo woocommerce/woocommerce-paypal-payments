@@ -1,16 +1,61 @@
+/* global google */
+/* global jQuery */
+
 import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
 
+/**
+ * Plugin-specific styling.
+ *
+ * Note that most properties of this object do not apply to the Google Pay button.
+ *
+ * @typedef {Object} PPCPStyle
+ * @property {string}  shape  - Outline shape.
+ * @property {?number} height - Button height in pixel.
+ */
+
+/**
+ * Style options that are defined by the Google Pay SDK and are required to render the button.
+ *
+ * @typedef {Object} GooglePayStyle
+ * @property {string} type     - Defines the button label.
+ * @property {string} color    - Button color
+ * @property {string} language - The locale; an empty string will apply the user-agent's language.
+ */
+
+/**
+ * List of valid context values that the button can have.
+ *
+ * @type {Object}
+ */
+const CONTEXT = {
+	Product: 'product',
+	Cart: 'cart',
+	Checkout: 'checkout',
+	PayNow: 'pay-now',
+	MiniCart: 'mini-cart',
+	BlockCart: 'cart-block',
+	BlockCheckout: 'checkout-block',
+	Preview: 'preview',
+	// Block editor contexts.
+	Blocks: [ 'cart-block', 'checkout-block' ],
+	// Custom gateway contexts.
+	Gateways: [ 'checkout', 'pay-now' ],
+};
+
 class GooglepayButton {
+	#wrapperId = '';
+	#ppcpButtonWrapperId = '';
+
 	/**
-	 * Reference to the payment button created by this instance.
+	 * Whether the payment button is initialized.
 	 *
-	 * @type {HTMLElement}
+	 * @type {boolean}
 	 */
-	#button;
+	#isInitialized = false;
 
 	/**
 	 * Client reference, provided by the Google Pay JS SDK.
@@ -28,8 +73,6 @@ class GooglepayButton {
 		this._initDebug( !! buttonConfig?.is_debug, context );
 
 		apmButtonsInit( ppcpConfig );
-
-		this.isInitialized = false;
 
 		this.context = context;
 		this.externalHandler = externalHandler;
@@ -54,7 +97,7 @@ class GooglepayButton {
 	 * @private
 	 */
 	_initDebug( enableDebugging, context ) {
-		if ( ! enableDebugging ) {
+		if ( ! enableDebugging || this.#isInitialized ) {
 			return;
 		}
 
@@ -70,11 +113,164 @@ class GooglepayButton {
 		} );
 	}
 
+	/**
+	 * Determines if the current payment button should be rendered as a stand-alone gateway.
+	 * The return value `false` usually means, that the payment button is bundled with all available
+	 * payment buttons.
+	 *
+	 * The decision depends on the button context (placement) and the plugin settings.
+	 *
+	 * @return {boolean} True, if the current button represents a stand-alone gateway.
+	 */
+	get isSeparateGateway() {
+		return (
+			this.buttonConfig.is_wc_gateway_enabled &&
+			CONTEXT.Gateways.includes( this.context )
+		);
+	}
+
+	/**
+	 * Returns the wrapper ID for the current button context.
+	 * The ID varies for the MiniCart context.
+	 *
+	 * @return {string} The wrapper-element's ID (without the `#` prefix).
+	 */
+	get wrapperId() {
+		if ( ! this.#wrapperId ) {
+			let id;
+
+			if ( CONTEXT.MiniCart === this.context ) {
+				id = this.buttonConfig.button.mini_cart_wrapper;
+			} else if ( this.isSeparateGateway ) {
+				id = 'ppc-button-ppcp-googlepay';
+			} else {
+				id = this.buttonConfig.button.wrapper;
+			}
+
+			this.#wrapperId = id.replace( /^#/, '' );
+		}
+
+		return this.#wrapperId;
+	}
+
+	/**
+	 * Returns the wrapper ID for the ppcpButton
+	 *
+	 * @return {string} The wrapper-element's ID (without the `#` prefix).
+	 */
+	get ppcpButtonWrapperId() {
+		if ( ! this.#ppcpButtonWrapperId ) {
+			let id;
+
+			if ( CONTEXT.MiniCart === this.context ) {
+				id = this.ppcpConfig.button.mini_cart_wrapper;
+			} else if ( CONTEXT.Blocks.includes( this.context ) ) {
+				id = 'express-payment-method-ppcp-gateway-paypal';
+			} else {
+				id = this.ppcpConfig.button.wrapper;
+			}
+
+			this.#ppcpButtonWrapperId = id.replace( /^#/, '' );
+		}
+
+		return this.#ppcpButtonWrapperId;
+	}
+
+	/**
+	 * Returns the context-relevant PPCP style object.
+	 * The style for the MiniCart context can be different.
+	 *
+	 * The PPCP style are custom style options, that are provided by this plugin.
+	 *
+	 * @return {PPCPStyle} The style object.
+	 */
+	get ppcpStyle() {
+		if ( CONTEXT.MiniCart === this.context ) {
+			return this.ppcpConfig.button.mini_cart_style;
+		}
+
+		return this.ppcpConfig.button.style;
+	}
+
+	/**
+	 * Returns default style options that are propagated to and rendered by the Google Pay button.
+	 *
+	 * These styles are the official style options provided by the Google Pay SDK.
+	 *
+	 * @return {GooglePayStyle} The style object.
+	 */
+	get buttonStyle() {
+		let style;
+
+		if ( CONTEXT.MiniCart === this.context ) {
+			style = this.buttonConfig.button.mini_cart_style;
+
+			// Handle incompatible types.
+			if ( style.type === 'buy' ) {
+				style.type = 'pay';
+			}
+		} else {
+			style = this.buttonConfig.button.style;
+		}
+
+		return {
+			type: style.type,
+			language: style.language,
+			color: style.color,
+		};
+	}
+
+	/**
+	 * Returns the HTML element that wraps the current button
+	 *
+	 * @return {HTMLElement|null} The wrapper element, or null.
+	 */
+	get wrapperElement() {
+		return document.getElementById( this.wrapperId );
+	}
+
+	/**
+	 * Returns an array of HTMLElements that belong to the payment button.
+	 *
+	 * @return {HTMLElement[]} List of payment button wrapper elements.
+	 */
+	get allElements() {
+		const selectors = [];
+
+		// Payment button (Pay now, smart button block)
+		selectors.push( `#${ this.wrapperId }` );
+
+		// Block Checkout: Express checkout button.
+		if ( CONTEXT.Blocks.includes( this.context ) ) {
+			selectors.push( '#express-payment-method-ppcp-googlepay' );
+		}
+
+		// Classic Checkout: Google Pay gateway.
+		if ( CONTEXT.Gateways === this.context ) {
+			selectors.push(
+				'.wc_payment_method.payment_method_ppcp-googlepay'
+			);
+		}
+
+		this.log( 'Wrapper Elements:', selectors );
+		return /** @type {HTMLElement[]} */ selectors.flatMap( ( selector ) =>
+			Array.from( document.querySelectorAll( selector ) )
+		);
+	}
+
+	/**
+	 * Checks whether the main button-wrapper is present in the current DOM.
+	 *
+	 * @return {boolean} True, if the button context (wrapper element) is found.
+	 */
+	get isPresent() {
+		return this.wrapperElement instanceof HTMLElement;
+	}
+
 	init( config, transactionInfo ) {
-		if ( this.isInitialized ) {
+		if ( this.#isInitialized ) {
 			return;
 		}
-		this.isInitialized = true;
 
 		if ( ! this.validateConfig() ) {
 			return;
@@ -85,6 +281,7 @@ class GooglepayButton {
 		}
 
 		this.log( 'Init' );
+		this.#isInitialized = true;
 
 		this.googlePayConfig = config;
 		this.transactionInfo = transactionInfo;
@@ -103,40 +300,7 @@ class GooglepayButton {
 			)
 			.then( ( response ) => {
 				if ( response.result ) {
-					if (
-						( this.context === 'checkout' ||
-							this.context === 'pay-now' ) &&
-						this.buttonConfig.is_wc_gateway_enabled === '1'
-					) {
-						const wrapper = document.getElementById(
-							'ppc-button-ppcp-googlepay'
-						);
-
-						if ( wrapper ) {
-							const { ppcpStyle, buttonStyle } =
-								this.contextConfig();
-
-							wrapper.classList.add(
-								`ppcp-button-${ ppcpStyle.shape }`,
-								'ppcp-button-apm',
-								'ppcp-button-googlepay'
-							);
-
-							if ( ppcpStyle.height ) {
-								wrapper.style.height = `${ ppcpStyle.height }px`;
-							}
-
-							this.addButtonCheckout(
-								this.baseCardPaymentMethod,
-								wrapper,
-								buttonStyle
-							);
-
-							return;
-						}
-					}
-
-					this.addButton( this.baseCardPaymentMethod );
+					this.addButton();
 				}
 			} )
 			.catch( function ( err ) {
@@ -149,7 +313,7 @@ class GooglepayButton {
 			return;
 		}
 
-		this.isInitialized = false;
+		this.#isInitialized = false;
 		this.init( this.googlePayConfig, this.transactionInfo );
 	}
 
@@ -177,39 +341,6 @@ class GooglepayButton {
 		return true;
 	}
 
-	/**
-	 * Returns configurations relative to this button context.
-	 */
-	contextConfig() {
-		const config = {
-			wrapper: this.buttonConfig.button.wrapper,
-			ppcpStyle: this.ppcpConfig.button.style,
-			buttonStyle: this.buttonConfig.button.style,
-			ppcpButtonWrapper: this.ppcpConfig.button.wrapper,
-		};
-
-		if ( this.context === 'mini-cart' ) {
-			config.wrapper = this.buttonConfig.button.mini_cart_wrapper;
-			config.ppcpStyle = this.ppcpConfig.button.mini_cart_style;
-			config.buttonStyle = this.buttonConfig.button.mini_cart_style;
-			config.ppcpButtonWrapper = this.ppcpConfig.button.mini_cart_wrapper;
-
-			// Handle incompatible types.
-			if ( config.buttonStyle.type === 'buy' ) {
-				config.buttonStyle.type = 'pay';
-			}
-		}
-
-		if (
-			[ 'cart-block', 'checkout-block' ].indexOf( this.context ) !== -1
-		) {
-			config.ppcpButtonWrapper =
-				'#express-payment-method-ppcp-gateway-paypal';
-		}
-
-		return config;
-	}
-
 	initClient() {
 		const callbacks = {
 			onPaymentAuthorized: this.onPaymentAuthorized.bind( this ),
@@ -235,7 +366,8 @@ class GooglepayButton {
 	}
 
 	initEventHandlers() {
-		const { wrapper, ppcpButtonWrapper } = this.contextConfig();
+		const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
+		const wrapper = `#${ this.wrapperId }`;
 
 		if ( wrapper === ppcpButtonWrapper ) {
 			throw new Error(
@@ -272,77 +404,104 @@ class GooglepayButton {
 
 	/**
 	 * Add a Google Pay purchase button
-	 * @param baseCardPaymentMethod
 	 */
-	addButton( baseCardPaymentMethod ) {
+	addButton() {
 		this.log( 'addButton' );
 
-		const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
+		const insertButton = () => {
+			const wrapper = this.wrapperElement;
+			const baseCardPaymentMethod = this.baseCardPaymentMethod;
+			const { color, type, language } = this.buttonStyle;
+			const { shape, height } = this.ppcpStyle;
 
-		this.waitForWrapper( wrapper, () => {
-			// Prevent duplicate payment buttons.
-			this.removeButton();
+			wrapper.classList.add(
+				`ppcp-button-${ shape }`,
+				'ppcp-button-apm',
+				'ppcp-button-googlepay'
+			);
 
-			jQuery( wrapper ).addClass( 'ppcp-button-' + ppcpStyle.shape );
-
-			if ( ppcpStyle.height ) {
-				jQuery( wrapper ).css( 'height', `${ ppcpStyle.height }px` );
+			if ( height ) {
+				wrapper.style.height = `${ height }px`;
 			}
 
 			/**
 			 * @see https://developers.google.com/pay/api/web/reference/client#createButton
 			 */
-			this.#button = this.paymentsClient.createButton( {
+			const button = this.paymentsClient.createButton( {
 				onClick: this.onButtonClick.bind( this ),
 				allowedPaymentMethods: [ baseCardPaymentMethod ],
-				buttonColor: buttonStyle.color || 'black',
-				buttonType: buttonStyle.type || 'pay',
-				buttonLocale: buttonStyle.language || 'en',
+				buttonColor: color || 'black',
+				buttonType: type || 'pay',
+				buttonLocale: language || 'en',
 				buttonSizeMode: 'fill',
 			} );
 
-			jQuery( wrapper ).append( this.#button );
+			this.log( 'Insert Button', { wrapper, button } );
+
+			wrapper.replaceChildren( button );
+			this.show();
+		};
+
+		this.waitForWrapper( insertButton );
+	}
+
+	waitForWrapper( callback, delay = 100, timeout = 2000 ) {
+		let interval = 0;
+		const startTime = Date.now();
+
+		const stop = () => {
+			if ( interval ) {
+				clearInterval( interval );
+			}
+			interval = 0;
+		};
+
+		const checkElement = () => {
+			if ( this.isPresent ) {
+				stop();
+				callback();
+				return;
+			}
+
+			const timeElapsed = Date.now() - startTime;
+
+			if ( timeElapsed > timeout ) {
+				stop();
+				this.log( '!! Wrapper not found:', this.wrapperId );
+			}
+		};
+
+		interval = setInterval( checkElement, delay );
+	}
+
+	/**
+	 * Hides all wrappers that belong to this GooglePayButton instance.
+	 */
+	hide() {
+		this.log( 'Hide' );
+		this.allElements.forEach( ( element ) => {
+			element.style.display = 'none';
 		} );
 	}
 
 	/**
-	 * Removes the payment button that was injected via addButton()
+	 * Ensures all wrapper elements of this GooglePayButton instance are visible.
 	 */
-	removeButton() {
-		if ( ! this.#button ) {
+	show() {
+		if ( ! this.isPresent ) {
+			this.log( 'Cannot show button, wrapper is not present' );
 			return;
 		}
+		this.log( 'Show' );
 
-		this.#button.remove();
-		this.#button = null;
-	}
+		// Classic Checkout: Make the Google Pay gateway visible.
+		document
+			.querySelectorAll( 'style#ppcp-hide-google-pay' )
+			.forEach( ( el ) => el.remove() );
 
-	addButtonCheckout( baseCardPaymentMethod, wrapper, buttonStyle ) {
-		const button = this.paymentsClient.createButton( {
-			onClick: this.onButtonClick.bind( this ),
-			allowedPaymentMethods: [ baseCardPaymentMethod ],
-			buttonColor: buttonStyle.color || 'black',
-			buttonType: buttonStyle.type || 'pay',
-			buttonLocale: buttonStyle.language || 'en',
-			buttonSizeMode: 'fill',
+		this.allElements.forEach( ( element ) => {
+			element.style.display = 'block';
 		} );
-
-		wrapper.appendChild( button );
-	}
-
-	waitForWrapper( selector, callback, delay = 100, timeout = 2000 ) {
-		const startTime = Date.now();
-		const interval = setInterval( () => {
-			const el = document.querySelector( selector );
-			const timeElapsed = Date.now() - startTime;
-
-			if ( el ) {
-				clearInterval( interval );
-				callback( el );
-			} else if ( timeElapsed > timeout ) {
-				clearInterval( interval );
-			}
-		}, delay );
 	}
 
 	//------------------------
