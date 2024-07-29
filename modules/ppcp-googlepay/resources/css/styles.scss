@@ -1,6 +1,10 @@
 .ppcp-button-googlepay {
 	min-height: 40px;
 
+	&:empty {
+		display: none;
+	}
+
 	.gpay-card-info-container,
 	.gpay-button {
 		outline-offset: -1px;
