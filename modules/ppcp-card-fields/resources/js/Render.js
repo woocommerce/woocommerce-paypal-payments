@@ -1,6 +1,13 @@
 import { cardFieldStyles } from './CardFieldsHelper';
 
+let fieldsRendered = false;
+
 export function renderFields( cardFields ) {
+	if ( fieldsRendered === true ) {
+		return;
+	}
+	fieldsRendered = true;
+
 	const nameField = document.getElementById(
 		'ppcp-credit-card-gateway-card-name'
 	);

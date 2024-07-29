@@ -93,19 +93,20 @@ test.describe( 'Classic checkout', () => {
 
 		await page.click( 'text=Credit Cards' );
 
-		const creditCardNumber = page
-			.frameLocator( '#braintree-hosted-field-number' )
-			.locator( '#credit-card-number' );
+		const creditCardNumber = await page
+			.frameLocator( '[title="paypal_card_number_field"]' )
+			.locator( '.card-field-number' );
 		await creditCardNumber.fill( CREDIT_CARD_NUMBER );
 
-		const expirationDate = page
-			.frameLocator( '#braintree-hosted-field-expirationDate' )
-			.locator( '#expiration' );
-		await expirationDate.fill( CREDIT_CARD_EXPIRATION );
+		const expirationDate = await page
+			.frameLocator( 'iframe[title="paypal_card_expiry_field"]' )
+			.locator( 'input.card-field-expiry' );
+		await expirationDate.click();
+		await page.keyboard.type( CREDIT_CARD_EXPIRATION );
 
-		const cvv = page
-			.frameLocator( '#braintree-hosted-field-cvv' )
-			.locator( '#cvv' );
+		const cvv = await page
+			.frameLocator( '[title="paypal_card_cvv_field"]' )
+			.locator( '.card-field-cvv' );
 		await cvv.fill( CREDIT_CARD_CVV );
 
 		await Promise.all( [
