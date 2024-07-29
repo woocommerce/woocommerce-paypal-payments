@@ -25,14 +25,14 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
 
 	// If GooglePay can be configured.
-	'googlepay.eligible'                          => static function ( ContainerInterface $container ): bool {
+	'googlepay.eligible'                        => static function ( ContainerInterface $container ): bool {
 		$apm_applies = $container->get( 'googlepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
 		return $apm_applies->for_country() && $apm_applies->for_currency();
 	},
 
-	'googlepay.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
+	'googlepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
 			$container->get( 'googlepay.supported-countries' ),
 			$container->get( 'googlepay.supported-currencies' ),
@@ -42,7 +42,7 @@ return array(
 	},
 
 	// If GooglePay is configured and onboarded.
-	'googlepay.available'                         => static function ( ContainerInterface $container ): bool {
+	'googlepay.available'                       => static function ( ContainerInterface $container ): bool {
 		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
 			$status = $container->get( 'googlepay.helpers.apm-product-status' );
 			assert( $status instanceof ApmProductStatus );
@@ -55,14 +55,14 @@ return array(
 	},
 
 	// We assume it's a referral if we can check product status without API request failures.
-	'googlepay.is_referral'                       => static function ( ContainerInterface $container ): bool {
+	'googlepay.is_referral'                     => static function ( ContainerInterface $container ): bool {
 		$status = $container->get( 'googlepay.helpers.apm-product-status' );
 		assert( $status instanceof ApmProductStatus );
 
 		return ! $status->has_request_failure();
 	},
 
-	'googlepay.availability_notice'               => static function ( ContainerInterface $container ): AvailabilityNotice {
+	'googlepay.availability_notice'             => static function ( ContainerInterface $container ): AvailabilityNotice {
 		return new AvailabilityNotice(
 			$container->get( 'googlepay.helpers.apm-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
@@ -70,7 +70,7 @@ return array(
 		);
 	},
 
-	'googlepay.helpers.apm-product-status'        => SingletonDecorator::make(
+	'googlepay.helpers.apm-product-status'      => SingletonDecorator::make(
 		static function( ContainerInterface $container ): ApmProductStatus {
 			return new ApmProductStatus(
 				$container->get( 'wcgateway.settings' ),
@@ -84,7 +84,7 @@ return array(
 	/**
 	 * The list of which countries can be used for GooglePay.
 	 */
-	'googlepay.supported-countries'               => static function ( ContainerInterface $container) : array {
+	'googlepay.supported-countries'             => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which countries can be used for GooglePay.
 		 */
@@ -123,7 +123,7 @@ return array(
 				'ES', // Spain
 				'SE', // Sweden
 				'US', // United States
-				'GB'  // United Kingdom
+				'GB', // United Kingdom
 			)
 		);
 	},
@@ -131,7 +131,7 @@ return array(
 	/**
 	 * The list of which currencies can be used for GooglePay.
 	 */
-	'googlepay.supported-currencies'              => static function ( ContainerInterface $container ) : array {
+	'googlepay.supported-currencies'            => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which currencies can be used for GooglePay.
 		 */
@@ -159,12 +159,12 @@ return array(
 				'SGD', // Singapore Dollar
 				'THB', // Thai Baht
 				'TWD', // New Taiwan Dollar
-				'USD'  // United States Dollar
+				'USD',  // United States Dollar
 			)
 		);
 	},
 
-	'googlepay.button'                            => static function ( ContainerInterface $container ): ButtonInterface {
+	'googlepay.button'                          => static function ( ContainerInterface $container ): ButtonInterface {
 		return new Button(
 			$container->get( 'googlepay.url' ),
 			$container->get( 'googlepay.sdk_url' ),
@@ -178,7 +178,7 @@ return array(
 		);
 	},
 
-	'googlepay.blocks-payment-method'             => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
+	'googlepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(
 			'ppcp-googlepay',
 			$container->get( 'googlepay.url' ),
@@ -188,7 +188,7 @@ return array(
 		);
 	},
 
-	'googlepay.url'                               => static function ( ContainerInterface $container ): string {
+	'googlepay.url'                             => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -199,26 +199,26 @@ return array(
 		);
 	},
 
-	'googlepay.sdk_url'                           => static function ( ContainerInterface $container ): string {
+	'googlepay.sdk_url'                         => static function ( ContainerInterface $container ): string {
 		return 'https://pay.google.com/gp/p/js/pay.js';
 	},
 
-	'googlepay.endpoint.update-payment-data'      => static function ( ContainerInterface $container ): UpdatePaymentDataEndpoint {
+	'googlepay.endpoint.update-payment-data'    => static function ( ContainerInterface $container ): UpdatePaymentDataEndpoint {
 		return new UpdatePaymentDataEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
-	'googlepay.enable-url-sandbox'                => static function ( ContainerInterface $container ): string {
+	'googlepay.enable-url-sandbox'              => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
 	},
 
-	'googlepay.enable-url-live'                   => static function ( ContainerInterface $container ): string {
+	'googlepay.enable-url-live'                 => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
 	},
 
-	'googlepay.settings.connection.status-text'   => static function ( ContainerInterface $container ): string {
+	'googlepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return '';
@@ -256,7 +256,7 @@ return array(
 			esc_html( $button_text )
 		);
 	},
-	'googlepay.wc-gateway'                        => static function ( ContainerInterface $container ): GooglePayGateway {
+	'googlepay.wc-gateway'                      => static function ( ContainerInterface $container ): GooglePayGateway {
 		return new GooglePayGateway(
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
