@@ -90,6 +90,7 @@ return array(
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_googlepay_supported_countries',
+			// phpcs:disable Squiz.Commenting.InlineComment
 			array(
 				'AU', // Australia
 				'AT', // Austria
@@ -125,6 +126,7 @@ return array(
 				'US', // United States
 				'GB', // United Kingdom
 			)
+			// phpcs:enable Squiz.Commenting.InlineComment
 		);
 	},
 
@@ -137,6 +139,7 @@ return array(
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_googlepay_supported_currencies',
+			// phpcs:disable Squiz.Commenting.InlineComment
 			array(
 				'AUD', // Australian Dollar
 				'BRL', // Brazilian Real
@@ -161,6 +164,7 @@ return array(
 				'TWD', // New Taiwan Dollar
 				'USD',  // United States Dollar
 			)
+			// phpcs:enable Squiz.Commenting.InlineComment
 		);
 	},
 
