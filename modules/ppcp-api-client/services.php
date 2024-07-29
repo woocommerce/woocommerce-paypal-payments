@@ -1443,6 +1443,7 @@ return array(
 				'CN' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
+					'amex'       => array(),
 				),
 				'CY' => array(
 					'mastercard' => array(),
