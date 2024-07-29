@@ -36,6 +36,8 @@ class GooglepayButton {
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.contextHandler = contextHandler;
+
+		this.log( 'Create instance' );
 	}
 
 	/**
@@ -47,7 +49,8 @@ class GooglepayButton {
 	 * Enables debugging tools, when the button's is_debug flag is set.
 	 *
 	 * @param {boolean} enableDebugging If debugging features should be enabled for this instance.
-	 * @param {string}  context         Used to make the instance accessible via the global debug object.
+	 * @param {string}  context         Used to make the instance accessible via the global debug
+	 *                                  object.
 	 * @private
 	 */
 	_initDebug( enableDebugging, context ) {
@@ -80,6 +83,8 @@ class GooglepayButton {
 		if ( ! this.contextHandler.validateContext() ) {
 			return;
 		}
+
+		this.log( 'Init' );
 
 		this.googlePayConfig = config;
 		this.transactionInfo = transactionInfo;
@@ -218,9 +223,13 @@ class GooglepayButton {
 				this.onPaymentDataChanged.bind( this );
 		}
 
+		/**
+		 * Consider providing merchant info here:
+		 *
+		 * @see https://developers.google.com/pay/api/web/reference/request-objects#PaymentOptions
+		 */
 		this.paymentsClient = new google.payments.api.PaymentsClient( {
 			environment: this.buttonConfig.environment,
-			// add merchant info maybe
 			paymentDataCallbacks: callbacks,
 		} );
 	}
@@ -266,7 +275,7 @@ class GooglepayButton {
 	 * @param baseCardPaymentMethod
 	 */
 	addButton( baseCardPaymentMethod ) {
-		this.log( 'addButton', this.context );
+		this.log( 'addButton' );
 
 		const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
@@ -344,17 +353,14 @@ class GooglepayButton {
 	 * Show Google Pay payment sheet when Google Pay payment button is clicked
 	 */
 	onButtonClick() {
-		this.log( 'onButtonClick', this.context );
+		this.log( 'onButtonClick' );
 
 		const paymentDataRequest = this.paymentDataRequest();
 
-		this.log(
-			'onButtonClick: paymentDataRequest',
-			paymentDataRequest,
-			this.context
-		);
+		this.log( 'onButtonClick: paymentDataRequest', paymentDataRequest );
 
-		window.ppcpFundingSource = 'googlepay'; // Do this on another place like on create order endpoint handler.
+		// Do this on another place like on create order endpoint handler.
+		window.ppcpFundingSource = 'googlepay';
 
 		this.paymentsClient.loadPaymentData( paymentDataRequest );
 	}
@@ -404,8 +410,7 @@ class GooglepayButton {
 	}
 
 	onPaymentDataChanged( paymentData ) {
-		this.log( 'onPaymentDataChanged', this.context );
-		this.log( 'paymentData', paymentData );
+		this.log( 'onPaymentDataChanged', paymentData );
 
 		return new Promise( async ( resolve, reject ) => {
 			try {
@@ -478,18 +483,18 @@ class GooglepayButton {
 	//------------------------
 
 	onPaymentAuthorized( paymentData ) {
-		this.log( 'onPaymentAuthorized', this.context );
+		this.log( 'onPaymentAuthorized' );
 		return this.processPayment( paymentData );
 	}
 
 	async processPayment( paymentData ) {
-		this.log( 'processPayment', this.context );
+		this.log( 'processPayment' );
 
 		return new Promise( async ( resolve, reject ) => {
 			try {
 				const id = await this.contextHandler.createOrder();
 
-				this.log( 'processPayment: createOrder', id, this.context );
+				this.log( 'processPayment: createOrder', id );
 
 				const confirmOrderResponse = await widgetBuilder.paypal
 					.Googlepay()
@@ -500,8 +505,7 @@ class GooglepayButton {
 
 				this.log(
 					'processPayment: confirmOrder',
-					confirmOrderResponse,
-					this.context
+					confirmOrderResponse
 				);
 
 				/** Capture the Order on the Server */
@@ -571,7 +575,7 @@ class GooglepayButton {
 			};
 		}
 
-		this.log( 'processPaymentResponse', response, this.context );
+		this.log( 'processPaymentResponse', response );
 
 		return response;
 	}
