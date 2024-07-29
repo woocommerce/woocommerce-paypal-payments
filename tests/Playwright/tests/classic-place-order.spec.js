@@ -82,7 +82,7 @@ test( 'Advanced Credit and Debit Card place order from Checkout page', async ( {
 		.frameLocator( 'iframe[title="paypal_card_expiry_field"]' )
 		.locator( 'input.card-field-expiry' );
 	await expirationDate.click();
-	await page.keyboard.type( CREDIT_CARD_EXPIRATION );
+	await page.keyboard.type( '01/42' );
 
 	const cvv = await page
 		.frameLocator( '[title="paypal_card_cvv_field"]' )

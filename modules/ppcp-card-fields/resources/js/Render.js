@@ -1,17 +1,10 @@
 import { cardFieldStyles } from './CardFieldsHelper';
 
-let fieldsRendered = false;
-
 export function renderFields( cardFields ) {
-	if ( fieldsRendered === true ) {
-		return;
-	}
-	fieldsRendered = true;
-
 	const nameField = document.getElementById(
 		'ppcp-credit-card-gateway-card-name'
 	);
-	if ( nameField ) {
+	if ( nameField && nameField.hidden !== true ) {
 		const styles = cardFieldStyles( nameField );
 		cardFields
 			.NameField( { style: { input: styles } } )
@@ -22,7 +15,7 @@ export function renderFields( cardFields ) {
 	const numberField = document.getElementById(
 		'ppcp-credit-card-gateway-card-number'
 	);
-	if ( numberField ) {
+	if ( numberField && numberField.hidden !== true ) {
 		const styles = cardFieldStyles( numberField );
 		cardFields
 			.NumberField( { style: { input: styles } } )
@@ -33,7 +26,7 @@ export function renderFields( cardFields ) {
 	const expiryField = document.getElementById(
 		'ppcp-credit-card-gateway-card-expiry'
 	);
-	if ( expiryField ) {
+	if ( expiryField && expiryField.hidden !== true ) {
 		const styles = cardFieldStyles( expiryField );
 		cardFields
 			.ExpiryField( { style: { input: styles } } )
@@ -44,7 +37,7 @@ export function renderFields( cardFields ) {
 	const cvvField = document.getElementById(
 		'ppcp-credit-card-gateway-card-cvc'
 	);
-	if ( cvvField ) {
+	if ( cvvField && cvvField.hidden !== true ) {
 		const styles = cardFieldStyles( cvvField );
 		cardFields
 			.CVVField( { style: { input: styles } } )
