@@ -92,6 +92,17 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		} );
 	}
 
+	jQuery( document ).on(
+		'mouseover mouseout',
+		'#dhl_delete_label',
+		function ( event ) {
+			jQuery( '#ppcp-shipment-status' )
+				.val( 'CANCELLED' )
+				.trigger( 'change' );
+			document.querySelector( '.update_shipment' ).click();
+		}
+	);
+
 	if (
 		wcShippingTaxSyncEnabled &&
 		typeof wcShippingTaxSyncEnabled !== 'undefined'

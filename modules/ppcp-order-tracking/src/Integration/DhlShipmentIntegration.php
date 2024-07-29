@@ -76,8 +76,6 @@ class DhlShipmentIntegration implements Integration {
 						return;
 					}
 
-					$foo = $tracking_details;
-
 					$paypal_order    = ppcp_get_paypal_order( $wc_order );
 					$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
 					$tracking_number = $tracking_details['tracking_number'];
