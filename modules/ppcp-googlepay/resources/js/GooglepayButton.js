@@ -25,6 +25,8 @@ class GooglepayButton {
 		ppcpConfig,
 		contextHandler
 	) {
+		this._initDebug( !! buttonConfig?.is_debug, context );
+
 		apmButtonsInit( ppcpConfig );
 
 		this.isInitialized = false;
@@ -34,12 +36,35 @@ class GooglepayButton {
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.contextHandler = contextHandler;
+	}
 
-		this.log = function () {
-			if ( this.buttonConfig.is_debug ) {
-				//console.log('[GooglePayButton]', ...arguments);
-			}
+	/**
+	 * NOOP log function to avoid errors when debugging is disabled.
+	 */
+	log() {}
+
+	/**
+	 * Enables debugging tools, when the button's is_debug flag is set.
+	 *
+	 * @param {boolean} enableDebugging If debugging features should be enabled for this instance.
+	 * @param {string}  context         Used to make the instance accessible via the global debug object.
+	 * @private
+	 */
+	_initDebug( enableDebugging, context ) {
+		if ( ! enableDebugging ) {
+			return;
+		}
+
+		document.ppcpGooglepayButtons = document.ppcpGooglepayButtons || {};
+		document.ppcpGooglepayButtons[ context ] = this;
+
+		this.log = ( ...args ) => {
+			console.log( `[GooglePayButton | ${ context }]`, ...args );
 		};
+
+		document.addEventListener( 'ppcp-googlepay-debug', () => {
+			this.log( this );
+		} );
 	}
 
 	init( config, transactionInfo ) {
