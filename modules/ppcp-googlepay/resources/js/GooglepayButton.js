@@ -292,7 +292,7 @@ class GooglepayButton {
 	onButtonClick() {
 		this.log( 'onButtonClick', this.context );
 
-		this.contextHandler.formValidator().then(
+		this.contextHandler.validateForm().then(
 			() => {
 				window.ppcpFundingSource = 'googlepay';
 
