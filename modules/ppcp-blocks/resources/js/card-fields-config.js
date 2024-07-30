@@ -44,3 +44,51 @@ export async function onApprove( data ) {
 			console.error( err );
 		} );
 }
+
+export async function createVaultSetupToken() {
+	const config = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
+
+	return fetch( config.scriptData.ajax.create_setup_token.endpoint, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify( {
+			nonce: config.scriptData.ajax.create_setup_token.nonce,
+			payment_method: 'ppcp-credit-card-gateway',
+		} ),
+	} )
+		.then( ( response ) => response.json() )
+		.then( ( result ) => {
+			console.log( result );
+			return result.data.id;
+		} )
+		.catch( ( err ) => {
+			console.error( err );
+		} );
+}
+
+export async function onApproveSavePayment( { vaultSetupToken } ) {
+	const config = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
+
+	const response = await fetch(
+		config.scriptData.ajax.create_payment_token.endpoint,
+		{
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify( {
+				nonce: config.scriptData.ajax.create_payment_token.nonce,
+				vault_setup_token: vaultSetupToken,
+				is_free_trial_cart: config.scriptData.is_free_trial_cart,
+			} ),
+		}
+	);
+
+	const result = await response.json();
+	if ( result.success !== true ) {
+		console.error( result );
+	}
+}
