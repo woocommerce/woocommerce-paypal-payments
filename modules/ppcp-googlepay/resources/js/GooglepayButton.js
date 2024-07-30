@@ -292,17 +292,24 @@ class GooglepayButton {
 	onButtonClick() {
 		this.log( 'onButtonClick', this.context );
 
-		const paymentDataRequest = this.paymentDataRequest();
+		this.contextHandler.formValidator().then(
+			() => {
+				window.ppcpFundingSource = 'googlepay';
 
-		this.log(
-			'onButtonClick: paymentDataRequest',
-			paymentDataRequest,
-			this.context
+				const paymentDataRequest = this.paymentDataRequest();
+
+				this.log(
+					'onButtonClick: paymentDataRequest',
+					paymentDataRequest,
+					this.context
+				);
+
+				this.paymentsClient.loadPaymentData( paymentDataRequest );
+			},
+			() => {
+				console.error( '[GooglePayButton] Form validation failed.' );
+			}
 		);
-
-		window.ppcpFundingSource = 'googlepay'; // Do this on another place like on create order endpoint handler.
-
-		this.paymentsClient.loadPaymentData( paymentDataRequest );
 	}
 
 	paymentDataRequest() {
