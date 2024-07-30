@@ -6,7 +6,10 @@ import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/But
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
-import { PaymentContext as CONTEXT } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import {
+	PaymentMethods,
+	PaymentContext as CONTEXT,
+} from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
 /**
  * Plugin-specific styling.
@@ -68,6 +71,10 @@ class GooglepayButton {
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.contextHandler = contextHandler;
+
+		this.hide = this.hide.bind( this );
+		this.show = this.show.bind( this );
+		this.refresh = this.refresh.bind( this );
 
 		this.log( 'Create instance' );
 	}
@@ -388,34 +395,50 @@ class GooglepayButton {
 	}
 
 	initEventHandlers() {
-		const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
-		const wrapper = `#${ this.wrapperId }`;
-
-		if ( wrapper === ppcpButtonWrapper ) {
-			throw new Error(
-				`[GooglePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapper }"`
+		if ( CONTEXT.Gateways.includes( this.context ) ) {
+			document.body.addEventListener(
+				'ppcp_invalidate_methods',
+				this.hide
 			);
-		}
 
-		const syncButtonVisibility = () => {
-			const $ppcpButtonWrapper = jQuery( ppcpButtonWrapper );
-			setVisible( wrapper, $ppcpButtonWrapper.is( ':visible' ) );
-			setEnabled(
-				wrapper,
-				! $ppcpButtonWrapper.hasClass( 'ppcp-disabled' )
+			document.body.addEventListener(
+				`ppcp_render_method-${ PaymentMethods.GOOGLEPAY }`,
+				this.refresh
 			);
-		};
+		} else {
+			/**
+			 * Review: The following logic appears to be unnecessary. Is it still required?
+			 */
 
-		jQuery( document ).on(
-			'ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled',
-			( ev, data ) => {
-				if ( jQuery( data.selector ).is( ppcpButtonWrapper ) ) {
-					syncButtonVisibility();
-				}
+			const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
+			const wrapper = `#${ this.wrapperId }`;
+
+			if ( wrapper === ppcpButtonWrapper ) {
+				throw new Error(
+					`[GooglePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapper }"`
+				);
 			}
-		);
 
-		syncButtonVisibility();
+			const syncButtonVisibility = () => {
+				const $ppcpButtonWrapper = jQuery( ppcpButtonWrapper );
+				setVisible( wrapper, $ppcpButtonWrapper.is( ':visible' ) );
+				setEnabled(
+					wrapper,
+					! $ppcpButtonWrapper.hasClass( 'ppcp-disabled' )
+				);
+			};
+
+			jQuery( document ).on(
+				'ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled',
+				( ev, data ) => {
+					if ( jQuery( data.selector ).is( ppcpButtonWrapper ) ) {
+						syncButtonVisibility();
+					}
+				}
+			);
+
+			syncButtonVisibility();
+		}
 	}
 
 	buildReadyToPayRequest( allowedPaymentMethods, baseRequest ) {
