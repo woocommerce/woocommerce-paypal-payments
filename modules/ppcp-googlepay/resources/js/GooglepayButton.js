@@ -6,6 +6,7 @@ import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/But
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
+import { PaymentContext as CONTEXT } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
 /**
  * Plugin-specific styling.
@@ -25,24 +26,6 @@ import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper
  * @property {string} color    - Button color
  * @property {string} language - The locale; an empty string will apply the user-agent's language.
  */
-
-/**
- * List of valid context values that the button can have.
- *
- * @type {Object}
- */
-const CONTEXT = {
-	Product: 'product',
-	Cart: 'cart',
-	Checkout: 'checkout',
-	PayNow: 'pay-now',
-	MiniCart: 'mini-cart',
-	BlockCart: 'cart-block',
-	BlockCheckout: 'checkout-block',
-	Preview: 'preview', // Block editor contexts.
-	Blocks: [ 'cart-block', 'checkout-block' ], // Custom gateway contexts.
-	Gateways: [ 'checkout', 'pay-now' ],
-};
 
 class GooglepayButton {
 	#wrapperId = '';
