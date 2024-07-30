@@ -39,10 +39,8 @@ const CONTEXT = {
 	MiniCart: 'mini-cart',
 	BlockCart: 'cart-block',
 	BlockCheckout: 'checkout-block',
-	Preview: 'preview',
-	// Block editor contexts.
-	Blocks: [ 'cart-block', 'checkout-block' ],
-	// Custom gateway contexts.
+	Preview: 'preview', // Block editor contexts.
+	Blocks: [ 'cart-block', 'checkout-block' ], // Custom gateway contexts.
 	Gateways: [ 'checkout', 'pay-now' ],
 };
 
@@ -56,6 +54,14 @@ class GooglepayButton {
 	 * @type {boolean}
 	 */
 	#isInitialized = false;
+
+	/**
+	 * Whether the current client support the payment button.
+	 * This state is mainly dependent on the response of `PaymentClient.isReadyToPay()`
+	 *
+	 * @type {boolean}
+	 */
+	#isEligible = false;
 
 	/**
 	 * Client reference, provided by the Google Pay JS SDK.
@@ -267,6 +273,29 @@ class GooglepayButton {
 		return this.wrapperElement instanceof HTMLElement;
 	}
 
+	/**
+	 * Whether the browser can accept Google Pay payments.
+	 *
+	 * @return {boolean} True, if payments are technically possible.
+	 */
+	get isEligible() {
+		return this.#isEligible;
+	}
+
+	/**
+	 * Changes the eligibility state of this button component.
+	 *
+	 * @param {boolean} newState Whether the browser can accept payments.
+	 */
+	set isEligible( newState ) {
+		if ( newState === this.#isEligible ) {
+			return;
+		}
+
+		this.#isEligible = newState;
+		this.refresh();
+	}
+
 	init( config, transactionInfo ) {
 		if ( this.#isInitialized ) {
 			return;
@@ -299,12 +328,22 @@ class GooglepayButton {
 				)
 			)
 			.then( ( response ) => {
-				if ( response.result ) {
-					this.addButton();
-				}
+				this.log( 'PaymentsClient.isReadyToPay response:', response );
+
+				/**
+				 * In case the button wrapper element is not present in the DOM yet, wait for it
+				 * to appear. Only proceed, if a button wrapper is found on this page.
+				 *
+				 * Not sure if this is needed, or if we can directly test for `this.isPresent`
+				 * without any delay.
+				 */
+				this.waitForWrapper( () => {
+					this.isEligible = !! response.result;
+				} );
 			} )
-			.catch( function ( err ) {
+			.catch( ( err ) => {
 				console.error( err );
+				this.isEligible = false;
 			} );
 	}
 
@@ -397,6 +436,8 @@ class GooglepayButton {
 	}
 
 	buildReadyToPayRequest( allowedPaymentMethods, baseRequest ) {
+		this.log( 'Ready To Pay request', baseRequest, allowedPaymentMethods );
+
 		return Object.assign( {}, baseRequest, {
 			allowedPaymentMethods,
 		} );
@@ -408,43 +449,47 @@ class GooglepayButton {
 	addButton() {
 		this.log( 'addButton' );
 
-		const insertButton = () => {
-			const wrapper = this.wrapperElement;
-			const baseCardPaymentMethod = this.baseCardPaymentMethod;
-			const { color, type, language } = this.buttonStyle;
-			const { shape, height } = this.ppcpStyle;
+		const wrapper = this.wrapperElement;
+		const baseCardPaymentMethod = this.baseCardPaymentMethod;
+		const { color, type, language } = this.buttonStyle;
+		const { shape, height } = this.ppcpStyle;
 
-			wrapper.classList.add(
-				`ppcp-button-${ shape }`,
-				'ppcp-button-apm',
-				'ppcp-button-googlepay'
-			);
+		wrapper.classList.add(
+			`ppcp-button-${ shape }`,
+			'ppcp-button-apm',
+			'ppcp-button-googlepay'
+		);
 
-			if ( height ) {
-				wrapper.style.height = `${ height }px`;
-			}
+		if ( height ) {
+			wrapper.style.height = `${ height }px`;
+		}
 
-			/**
-			 * @see https://developers.google.com/pay/api/web/reference/client#createButton
-			 */
-			const button = this.paymentsClient.createButton( {
-				onClick: this.onButtonClick.bind( this ),
-				allowedPaymentMethods: [ baseCardPaymentMethod ],
-				buttonColor: color || 'black',
-				buttonType: type || 'pay',
-				buttonLocale: language || 'en',
-				buttonSizeMode: 'fill',
-			} );
+		/**
+		 * @see https://developers.google.com/pay/api/web/reference/client#createButton
+		 */
+		const button = this.paymentsClient.createButton( {
+			onClick: this.onButtonClick.bind( this ),
+			allowedPaymentMethods: [ baseCardPaymentMethod ],
+			buttonColor: color || 'black',
+			buttonType: type || 'pay',
+			buttonLocale: language || 'en',
+			buttonSizeMode: 'fill',
+		} );
 
-			this.log( 'Insert Button', { wrapper, button } );
+		this.log( 'Insert Button', { wrapper, button } );
 
-			wrapper.replaceChildren( button );
-			this.show();
-		};
-
-		this.waitForWrapper( insertButton );
+		wrapper.replaceChildren( button );
 	}
 
+	/**
+	 * Waits for the current button's wrapper element to become available in the DOM.
+	 *
+	 * Not sure if still needed, or if a simple `this.isPresent` check is sufficient.
+	 *
+	 * @param {Function} callback Function to call when the wrapper element was detected. Only called on success.
+	 * @param {number}   delay    Optional. Polling interval to inspect the DOM. Default to 0.1 sec
+	 * @param {number}   timeout  Optional. Max timeout in ms. Defaults to 2 sec
+	 */
 	waitForWrapper( callback, delay = 100, timeout = 2000 ) {
 		let interval = 0;
 		const startTime = Date.now();
@@ -472,6 +517,18 @@ class GooglepayButton {
 		};
 
 		interval = setInterval( checkElement, delay );
+	}
+
+	/**
+	 * Refreshes the payment button on the page.
+	 */
+	refresh() {
+		if ( this.isEligible && this.isPresent ) {
+			this.show();
+			this.addButton();
+		} else {
+			this.hide();
+		}
 	}
 
 	/**
