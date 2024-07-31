@@ -194,9 +194,18 @@ class AxoModule implements ModuleInterface {
 
 				add_action(
 					'wp_head',
-					function () {
+					function () use ( $c ) {
 						// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
+
+						// Add meta tag to allow feature-detection of the site's AXO payment state.
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+
+						printf(
+							'<meta name="ppcp.axo" content="%s" />',
+							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ? 'enabled' : 'disabled'
+						);
 					}
 				);
 
