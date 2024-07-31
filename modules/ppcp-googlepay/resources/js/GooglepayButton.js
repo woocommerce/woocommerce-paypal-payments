@@ -1,8 +1,5 @@
 /* global google */
-/* global jQuery */
 
-import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
-import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
@@ -50,6 +47,13 @@ class GooglepayButton {
 	#isEligible = false;
 
 	/**
+	 * Whether this button is visible. Modified by `show()` and `hide()`
+	 *
+	 * @type {boolean}
+	 */
+	#isVisible = false;
+
+	/**
 	 * Client reference, provided by the Google Pay JS SDK.
 	 * @see https://developers.google.com/pay/api/web/reference/client
 	 */
@@ -72,8 +76,6 @@ class GooglepayButton {
 		this.ppcpConfig = ppcpConfig;
 		this.contextHandler = contextHandler;
 
-		this.hide = this.hide.bind( this );
-		this.show = this.show.bind( this );
 		this.refresh = this.refresh.bind( this );
 
 		this.log( 'Create instance' );
@@ -264,6 +266,34 @@ class GooglepayButton {
 	}
 
 	/**
+	 * The visibility state of the button.
+	 * This flag does not reflect actual visibility on the page, but rather, if the button
+	 * is intended/allowed to be displayed, in case all other checks pass.
+	 *
+	 * @return {boolean} True indicates, that the button can be displayed
+	 */
+	get isVisible() {
+		return this.#isVisible;
+	}
+
+	/**
+	 * Change the visibility of the button.
+	 *
+	 * A visible button does not always force the button to render on the page. It only means, that
+	 * the button is allowed or not allowed to render, if certain other conditions are met.
+	 *
+	 * @param {boolean} newState Whether rendering the button is allowed.
+	 */
+	set isVisible( newState ) {
+		if ( this.#isVisible === newState ) {
+			return;
+		}
+
+		this.#isVisible = newState;
+		this.refresh();
+	}
+
+	/**
 	 * Whether the browser can accept Google Pay payments.
 	 *
 	 * @return {boolean} True, if payments are technically possible.
@@ -396,48 +426,46 @@ class GooglepayButton {
 
 	initEventHandlers() {
 		if ( CONTEXT.Gateways.includes( this.context ) ) {
-			document.body.addEventListener(
-				'ppcp_invalidate_methods',
-				this.hide
-			);
+			document.body.addEventListener( 'ppcp_invalidate_methods', () => {
+				this.isVisible = false;
+			} );
 
 			document.body.addEventListener(
 				`ppcp_render_method-${ PaymentMethods.GOOGLEPAY }`,
-				this.refresh
+				() => {
+					this.isVisible = true;
+				}
 			);
 		} else {
 			/**
 			 * Review: The following logic appears to be unnecessary. Is it still required?
+			 * /
+			  const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
+			  const wrapper = `#${ this.wrapperId }`;
+			  if ( wrapper === ppcpButtonWrapper ) {
+			  throw new Error(
+			  `[GooglePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapper }"`
+			  );
+			  }
+			  const syncButtonVisibility = () => {
+			  const $ppcpButtonWrapper = jQuery( ppcpButtonWrapper );
+			  setVisible( wrapper, $ppcpButtonWrapper.is( ':visible' ) );
+			  setEnabled(
+			  wrapper,
+			  ! $ppcpButtonWrapper.hasClass( 'ppcp-disabled' )
+			  );
+			  };
+			  jQuery( document ).on(
+			  'ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled',
+			  ( ev, data ) => {
+			  if ( jQuery( data.selector ).is( ppcpButtonWrapper ) ) {
+			  syncButtonVisibility();
+			  }
+			  }
+			  );
+			  syncButtonVisibility();
+			  //
 			 */
-
-			const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
-			const wrapper = `#${ this.wrapperId }`;
-
-			if ( wrapper === ppcpButtonWrapper ) {
-				throw new Error(
-					`[GooglePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapper }"`
-				);
-			}
-
-			const syncButtonVisibility = () => {
-				const $ppcpButtonWrapper = jQuery( ppcpButtonWrapper );
-				setVisible( wrapper, $ppcpButtonWrapper.is( ':visible' ) );
-				setEnabled(
-					wrapper,
-					! $ppcpButtonWrapper.hasClass( 'ppcp-disabled' )
-				);
-			};
-
-			jQuery( document ).on(
-				'ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled',
-				( ev, data ) => {
-					if ( jQuery( data.selector ).is( ppcpButtonWrapper ) ) {
-						syncButtonVisibility();
-					}
-				}
-			);
-
-			syncButtonVisibility();
 		}
 	}
 
@@ -482,7 +510,10 @@ class GooglepayButton {
 			buttonSizeMode: 'fill',
 		} );
 
-		this.log( 'Insert Button', { wrapper, button } );
+		this.log( 'Insert Button', {
+			wrapper,
+			button,
+		} );
 
 		wrapper.replaceChildren( button );
 	}
@@ -492,7 +523,8 @@ class GooglepayButton {
 	 *
 	 * Not sure if still needed, or if a simple `this.isPresent` check is sufficient.
 	 *
-	 * @param {Function} callback Function to call when the wrapper element was detected. Only called on success.
+	 * @param {Function} callback Function to call when the wrapper element was detected. Only
+	 *                            called on success.
 	 * @param {number}   delay    Optional. Polling interval to inspect the DOM. Default to 0.1 sec
 	 * @param {number}   timeout  Optional. Max timeout in ms. Defaults to 2 sec
 	 */
@@ -529,42 +561,33 @@ class GooglepayButton {
 	 * Refreshes the payment button on the page.
 	 */
 	refresh() {
-		if ( this.isEligible && this.isPresent ) {
-			this.show();
+		const showButtonWrapper = () => {
+			this.log( 'Show' );
+
+			// Classic Checkout: Make the Google Pay gateway visible.
+			document
+				.querySelectorAll( 'style#ppcp-hide-google-pay' )
+				.forEach( ( el ) => el.remove() );
+
+			this.allElements.forEach( ( element ) => {
+				element.style.display = 'block';
+			} );
+		};
+
+		const hideButtonWrapper = () => {
+			this.log( 'Hide' );
+
+			this.allElements.forEach( ( element ) => {
+				element.style.display = 'none';
+			} );
+		};
+
+		if ( this.isVisible && this.isEligible && this.isPresent ) {
+			showButtonWrapper();
 			this.addButton();
 		} else {
-			this.hide();
+			hideButtonWrapper();
 		}
-	}
-
-	/**
-	 * Hides all wrappers that belong to this GooglePayButton instance.
-	 */
-	hide() {
-		this.log( 'Hide' );
-		this.allElements.forEach( ( element ) => {
-			element.style.display = 'none';
-		} );
-	}
-
-	/**
-	 * Ensures all wrapper elements of this GooglePayButton instance are visible.
-	 */
-	show() {
-		if ( ! this.isPresent ) {
-			this.log( 'Cannot show button, wrapper is not present' );
-			return;
-		}
-		this.log( 'Show' );
-
-		// Classic Checkout: Make the Google Pay gateway visible.
-		document
-			.querySelectorAll( 'style#ppcp-hide-google-pay' )
-			.forEach( ( el ) => el.remove() );
-
-		this.allElements.forEach( ( element ) => {
-			element.style.display = 'block';
-		} );
 	}
 
 	//------------------------
