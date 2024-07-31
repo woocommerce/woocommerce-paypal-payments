@@ -52,7 +52,7 @@ const dataClientIdAttributeHandler = (
 			}
 			storeToken( data );
 
-			scriptOptions[ 'data-client-token' ] = data.token;
+			scriptOptions[ 'data-sdk-client-token' ] = data.token;
 
 			loadScript( scriptOptions )
 				.then( ( paypal ) => {
