@@ -66,7 +66,7 @@ class AxoModule implements ModuleInterface {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					$methods[] = $gateway;
+					// $methods[] = $gateway; - Temporarily remove Fastlane from the payment gateway list in admin area.
 					return $methods;
 				}
 
