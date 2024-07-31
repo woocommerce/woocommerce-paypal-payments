@@ -202,9 +202,8 @@ class AxoModule implements ModuleInterface {
 						$settings = $c->get( 'wcgateway.settings' );
 						assert( $settings instanceof Settings );
 
-						printf(
-							'<meta name="ppcp.axo" content="%s" />',
-							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ? 'enabled' : 'disabled'
+						$this->add_feature_detection_tag(
+							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
 						);
 					}
 				);
@@ -404,5 +403,24 @@ class AxoModule implements ModuleInterface {
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
 		return is_wc_endpoint_url( 'order-pay' );
+	}
+
+	/**
+	 * Outputs a meta tag to allow feature detection on certain pages.
+	 *
+	 * @param bool $axo_enabled Whether the gateway is enabled.
+	 * @return void
+	 */
+	private function add_feature_detection_tag( bool $axo_enabled ) {
+		$show_tag = is_checkout() || is_cart() || is_shop();
+
+		if ( ! $show_tag ) {
+			return;
+		}
+
+		printf(
+			'<meta name="ppcp.axo" content="%s" />',
+			$axo_enabled ? 'enabled' : 'disabled'
+		);
 	}
 }
