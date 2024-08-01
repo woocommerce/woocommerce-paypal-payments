@@ -11,11 +11,32 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Helper;
 
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class SettingsNoticeGenerator
  */
 class SettingsNoticeGenerator {
+	/**
+	 * Generates the full HTML of the notification.
+	 *
+	 * @param string $message  HTML of the inner message contents.
+	 * @param bool   $is_error Whether the provided message is an error. Affects the notice color.
+	 *
+	 * @return string The full HTML code of the notification, or an empty string.
+	 */
+	private function render_notice( string $message, bool $is_error = false ) : string {
+		if ( ! $message ) {
+			return '';
+		}
+
+		return sprintf(
+			'<div class="ppcp-notice %1$s"><p>%2$s</p></div>',
+			$is_error ? 'ppcp-notice-error' : '',
+			$message
+		);
+	}
 
 	/**
 	 * Generates the checkout notice.
@@ -126,5 +147,33 @@ class SettingsNoticeGenerator {
 		);
 
 		return '<div class="ppcp-notice"><p>' . $notice_content . '</p></div>';
+	}
+
+	/**
+	 * Generates a warning notice with instructions on conflicting plugin-internal settings.
+	 *
+	 * @param Settings $settings The plugin settings container, which is checked for conflicting
+	 *                           values.
+	 * @return string
+	 */
+	public function generate_settings_conflict_notice( Settings $settings ) : string {
+		$notice_content = '';
+		$is_dcc_enabled = false;
+
+		try {
+			$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' );
+			// phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch
+		} catch ( NotFoundException $ignored ) {
+			// Never happens.
+		}
+
+		if ( ! $is_dcc_enabled ) {
+			$notice_content = __(
+				'<span class="highlight">Warning:</span> To enable Fastlane and accelerate payments, the <strong>Advanced Card Processing</strong> payment method must also be enabled.',
+				'woocommerce-paypal-payments'
+			);
+		}
+
+		return $this->render_notice( $notice_content, true );
 	}
 }

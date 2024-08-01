@@ -83,7 +83,7 @@ return array(
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_gateway_title' )
-									->action_visible( 'axo_checkout_config_notice' )
+									->action_visible( 'axo_main_notice' )
 									->action_visible( 'axo_privacy' )
 									->action_visible( 'axo_name_on_card' )
 									->action_visible( 'axo_style_heading' )
@@ -119,6 +119,7 @@ return array(
 					'html'         => implode(
 						'',
 						array(
+							$container->get( 'axo.settings-conflict-notice' ),
 							$container->get( 'axo.shipping-config-notice' ),
 							$container->get( 'axo.checkout-config-notice' ),
 							$container->get( 'axo.incompatible-plugins-notice' ),

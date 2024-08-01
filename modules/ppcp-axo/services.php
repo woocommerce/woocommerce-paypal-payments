@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\Axo\Helper\SettingsNoticeGenerator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
@@ -162,6 +161,16 @@ return array(
 				),
 			)
 		);
+	},
+
+	'axo.settings-conflict-notice'          => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		return $settings_notice_generator->generate_settings_conflict_notice( $settings );
 	},
 
 	'axo.checkout-config-notice'            => static function ( ContainerInterface $container ) : string {
