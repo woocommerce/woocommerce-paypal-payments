@@ -409,6 +409,6 @@ class AxoModule implements ModuleInterface {
 	 * @return bool
 	 */
 	private function is_compatible_shipping_config(): bool {
-		return ! wc_shipping_enabled() || ( wc_shipping_enabled() && ! wc_ship_to_billing_address_only() );
+		return ! wc_shipping_enabled() || ! wc_ship_to_billing_address_only();
 	}
 }
