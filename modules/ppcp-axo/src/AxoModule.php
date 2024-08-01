@@ -87,6 +87,10 @@ class AxoModule implements ModuleInterface {
 					return $methods;
 				}
 
+				if ( ! $this->is_compatible_shipping_config() ) {
+					return $methods;
+				}
+
 				$methods[] = $gateway;
 				return $methods;
 			},
@@ -150,7 +154,8 @@ class AxoModule implements ModuleInterface {
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' )
 					|| 'continuation' === $c->get( 'button.context' )
-					|| $subscription_helper->cart_contains_subscription() ) {
+					|| $subscription_helper->cart_contains_subscription()
+					|| ! $this->is_compatible_shipping_config() ) {
 					return;
 				}
 
@@ -349,6 +354,7 @@ class AxoModule implements ModuleInterface {
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
+			&& $this->is_compatible_shipping_config()
 			&& $is_axo_enabled
 			&& $is_dcc_enabled
 			&& ! $this->is_excluded_endpoint();
@@ -403,6 +409,15 @@ class AxoModule implements ModuleInterface {
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
 		return is_wc_endpoint_url( 'order-pay' );
+	}
+
+	/**
+	 * Condition to evaluate if the shipping configuration is compatible.
+	 *
+	 * @return bool
+	 */
+	private function is_compatible_shipping_config(): bool {
+		return ! wc_shipping_enabled() || ( wc_shipping_enabled() && ! wc_ship_to_billing_address_only() );
 	}
 
 	/**
