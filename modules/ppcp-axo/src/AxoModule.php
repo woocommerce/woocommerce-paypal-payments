@@ -87,6 +87,10 @@ class AxoModule implements ModuleInterface {
 					return $methods;
 				}
 
+				if ( ! $this->is_compatible_shipping_config() ) {
+					return $methods;
+				}
+
 				$methods[] = $gateway;
 				return $methods;
 			},
@@ -150,7 +154,8 @@ class AxoModule implements ModuleInterface {
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $c->get( 'axo.eligible' )
 					|| 'continuation' === $c->get( 'button.context' )
-					|| $subscription_helper->cart_contains_subscription() ) {
+					|| $subscription_helper->cart_contains_subscription()
+					|| ! $this->is_compatible_shipping_config() ) {
 					return;
 				}
 
