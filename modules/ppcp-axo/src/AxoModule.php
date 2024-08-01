@@ -66,7 +66,7 @@ class AxoModule implements ModuleInterface {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					$methods[] = $gateway;
+					// $methods[] = $gateway; - Temporarily remove Fastlane from the payment gateway list in admin area.
 					return $methods;
 				}
 
@@ -199,9 +199,17 @@ class AxoModule implements ModuleInterface {
 
 				add_action(
 					'wp_head',
-					function () {
+					function () use ( $c ) {
 						// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
+
+						// Add meta tag to allow feature-detection of the site's AXO payment state.
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+
+						$this->add_feature_detection_tag(
+							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
+						);
 					}
 				);
 
@@ -409,6 +417,25 @@ class AxoModule implements ModuleInterface {
 	 * @return bool
 	 */
 	private function is_compatible_shipping_config(): bool {
-		return ! wc_shipping_enabled() || ! wc_ship_to_billing_address_only();
+		return ! wc_shipping_enabled() || ( wc_shipping_enabled() && ! wc_ship_to_billing_address_only() );
+	}
+
+	/**
+	 * Outputs a meta tag to allow feature detection on certain pages.
+	 *
+	 * @param bool $axo_enabled Whether the gateway is enabled.
+	 * @return void
+	 */
+	private function add_feature_detection_tag( bool $axo_enabled ) {
+		$show_tag = is_checkout() || is_cart() || is_shop();
+
+		if ( ! $show_tag ) {
+			return;
+		}
+
+		printf(
+			'<meta name="ppcp.axo" content="%s" />',
+			$axo_enabled ? 'enabled' : 'disabled'
+		);
 	}
 }

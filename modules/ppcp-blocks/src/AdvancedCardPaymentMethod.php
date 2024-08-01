@@ -52,7 +52,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 *
 	 * @var Settings
 	 */
-	protected $settings;
+	protected $plugin_settings;
 
 	/**
 	 * AdvancedCardPaymentMethod constructor.
@@ -70,12 +70,12 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		$smart_button,
 		Settings $settings
 	) {
-		$this->name         = CreditCardGateway::ID;
-		$this->module_url   = $module_url;
-		$this->version      = $version;
-		$this->gateway      = $gateway;
-		$this->smart_button = $smart_button;
-		$this->settings     = $settings;
+		$this->name            = CreditCardGateway::ID;
+		$this->module_url      = $module_url;
+		$this->version         = $version;
+		$this->gateway         = $gateway;
+		$this->smart_button    = $smart_button;
+		$this->plugin_settings = $settings;
 	}
 
 	/**
@@ -118,8 +118,8 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'scriptData'          => $script_data,
 			'supports'            => $this->gateway->supports,
 			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
-			'is_vaulting_enabled' => $this->settings->has( 'vault_enabled_dcc' ) && $this->settings->get( 'vault_enabled_dcc' ),
-			'card_icons'          => $this->settings->has( 'card_icons' ) ? (array) $this->settings->get( 'card_icons' ) : array(),
+			'is_vaulting_enabled' => $this->plugin_settings->has( 'vault_enabled_dcc' ) && $this->plugin_settings->get( 'vault_enabled_dcc' ),
+			'card_icons'          => $this->plugin_settings->has( 'card_icons' ) ? (array) $this->plugin_settings->get( 'card_icons' ) : array(),
 		);
 	}
 
