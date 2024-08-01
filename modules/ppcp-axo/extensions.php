@@ -116,7 +116,14 @@ return array(
 				),
 				'axo_main_notice'                    => array(
 					'heading'      => '',
-					'html'         => $container->get( 'axo.shipping-config-notice' ) . $container->get( 'axo.checkout-config-notice' ),
+					'html'         => implode(
+						'',
+						array(
+							$container->get( 'axo.shipping-config-notice' ),
+							$container->get( 'axo.checkout-config-notice' ),
+							$container->get( 'axo.incompatible-plugins-notice' ),
+						)
+					),
 					'type'         => 'ppcp-html',
 					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),

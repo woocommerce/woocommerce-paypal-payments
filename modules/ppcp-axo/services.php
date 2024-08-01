@@ -178,6 +178,13 @@ return array(
 		return $settings_notice_generator->generate_shipping_notice();
 	},
 
+	'axo.incompatible-plugins-notice'       => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+
+		return $settings_notice_generator->generate_incompatible_plugins_notice();
+	},
+
 	'axo.smart-button-location-notice'      => static function ( ContainerInterface $container ) : string {
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );

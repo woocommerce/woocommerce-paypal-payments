@@ -89,4 +89,42 @@ class SettingsNoticeGenerator {
 
 		return $notice_content ? '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>' : '';
 	}
+
+	/**
+	 * Generates the incompatible plugins notice.
+	 *
+	 * @return string
+	 */
+	public function generate_incompatible_plugins_notice(): string {
+		$incompatible_plugins = array(
+			'Elementor'  => did_action( 'elementor/loaded' ),
+			'CheckoutWC' => defined( 'CFW_NAME' ),
+		);
+
+		$active_plugins_list = array_filter( $incompatible_plugins );
+
+		if ( empty( $active_plugins_list ) ) {
+			return '';
+		}
+
+		$incompatible_plugin_items = array_map(
+			function ( $plugin ) {
+				return "<li>{$plugin}</li>";
+			},
+			array_keys( $active_plugins_list )
+		);
+
+		$plugins_settings_link = esc_url( admin_url( 'plugins.php' ) );
+		$notice_content        = sprintf(
+		/* translators: %1$s: URL to the plugins settings page. %2$s: List of incompatible plugins. */
+			__(
+				'<span class="highlight">Note:</span> The accelerated guest buyer experience provided by Fastlane may not be fully compatible with some of the following <a href="%1$s">active plugins</a>: <ul class="ppcp-notice-list">%2$s</ul>',
+				'woocommerce-paypal-payments'
+			),
+			$plugins_settings_link,
+			implode( '', $incompatible_plugin_items )
+		);
+
+		return '<div class="ppcp-notice"><p>' . $notice_content . '</p></div>';
+	}
 }
