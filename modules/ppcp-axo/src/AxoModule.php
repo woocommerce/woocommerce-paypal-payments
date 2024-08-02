@@ -77,7 +77,7 @@ class AxoModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$is_paypal_enabled = $settings->has( 'paypal_enabled' ) && $settings->get( 'paypal_enabled' ) ?? false;
+				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
 				$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
 
 				if ( ! $is_paypal_enabled || ! $is_dcc_enabled ) {
@@ -152,7 +152,7 @@ class AxoModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$is_paypal_enabled = $settings->has( 'paypal_enabled' ) && $settings->get( 'paypal_enabled' ) ?? false;
+				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
 
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
