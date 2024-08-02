@@ -1,9 +1,8 @@
 /* global google */
 
-import ConsoleLogger from '../../../ppcp-button/resources/js/modules/Helper/ConsoleLogger';
+import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
-import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
 import {
 	PaymentMethods,
 	PaymentContext as CONTEXT,
@@ -28,21 +27,9 @@ import {
  * @property {string} language - The locale; an empty string will apply the user-agent's language.
  */
 
-class GooglepayButton {
-	/**
-	 * @type {ConsoleLogger}
-	 */
-	#logger;
-
+class GooglepayButton extends PaymentButton {
 	#wrapperId = '';
 	#ppcpButtonWrapperId = '';
-
-	/**
-	 * Whether the payment button is initialized.
-	 *
-	 * @type {boolean}
-	 */
-	#isInitialized = false;
 
 	/**
 	 * Whether the current client support the payment button.
@@ -72,12 +59,8 @@ class GooglepayButton {
 		ppcpConfig,
 		contextHandler
 	) {
-		this.#logger = new ConsoleLogger( 'GooglePayButton', context );
-		this.#logger.enabled = !! buttonConfig?.is_debug;
+		super( 'GooglePayButton', context, buttonConfig, ppcpConfig );
 
-		apmButtonsInit( ppcpConfig );
-
-		this.context = context;
 		this.externalHandler = externalHandler;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
@@ -86,14 +69,6 @@ class GooglepayButton {
 		this.refresh = this.refresh.bind( this );
 
 		this.log( 'Create instance' );
-	}
-
-	log( ...args ) {
-		this.#logger.log( ...args );
-	}
-
-	error( ...args ) {
-		this.#logger.error( ...args );
 	}
 
 	/**
@@ -301,8 +276,21 @@ class GooglepayButton {
 		this.refresh();
 	}
 
-	init( config, transactionInfo ) {
-		if ( this.#isInitialized ) {
+	init( config = null, transactionInfo = null ) {
+		if ( this.isInitialized ) {
+			return;
+		}
+		if ( config ) {
+			this.googlePayConfig = config;
+		}
+		if ( transactionInfo ) {
+			this.transactionInfo = transactionInfo;
+		}
+
+		if ( ! this.googlePayConfig || ! this.transactionInfo ) {
+			this.error(
+				'Init called without providing config or transactionInfo'
+			);
 			return;
 		}
 
@@ -314,11 +302,8 @@ class GooglepayButton {
 			return;
 		}
 
-		this.log( 'Init' );
-		this.#isInitialized = true;
+		super.init();
 
-		this.googlePayConfig = config;
-		this.transactionInfo = transactionInfo;
 		this.allowedPaymentMethods = config.allowedPaymentMethods;
 		this.baseCardPaymentMethod = this.allowedPaymentMethods[ 0 ];
 
@@ -353,12 +338,12 @@ class GooglepayButton {
 	}
 
 	reinit() {
-		if ( ! this.googlePayConfig ) {
+		if ( ! this.isInitialized ) {
 			return;
 		}
 
-		this.#isInitialized = false;
-		this.init( this.googlePayConfig, this.transactionInfo );
+		super.reinit();
+		this.init();
 	}
 
 	validateConfig() {
