@@ -1293,8 +1293,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'early_checkout_validation_enabled'       => $this->early_validation_enabled,
 			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
 			'user'                                    => array(
-				'is_logged' => is_user_logged_in(),
-				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens(get_current_user_id()),
+				'is_logged'                  => is_user_logged_in(),
+				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
@@ -2138,12 +2138,12 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	/**
 	 * Whether the given user has WC card payment tokens.
 	 *
-	 * @param int $user_id
+	 * @param int $user_id The user ID.
 	 * @return bool
 	 */
-	private function user_has_wc_card_payment_tokens(int $user_id): bool {
+	private function user_has_wc_card_payment_tokens( int $user_id ): bool {
 		$tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
-		if($tokens) {
+		if ( $tokens ) {
 			return true;
 		}
 
