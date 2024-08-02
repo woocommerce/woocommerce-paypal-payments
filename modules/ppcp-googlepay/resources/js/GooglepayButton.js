@@ -1,5 +1,6 @@
 /* global google */
 
+import ConsoleLogger from '../../../ppcp-button/resources/js/modules/Helper/ConsoleLogger';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
@@ -28,6 +29,11 @@ import {
  */
 
 class GooglepayButton {
+	/**
+	 * @type {ConsoleLogger}
+	 */
+	#logger;
+
 	#wrapperId = '';
 	#ppcpButtonWrapperId = '';
 
@@ -66,7 +72,8 @@ class GooglepayButton {
 		ppcpConfig,
 		contextHandler
 	) {
-		this._initDebug( !! buttonConfig?.is_debug, context );
+		this.#logger = new ConsoleLogger( 'GooglePayButton', context );
+		this.#logger.enabled = !! buttonConfig?.is_debug;
 
 		apmButtonsInit( ppcpConfig );
 
@@ -81,34 +88,12 @@ class GooglepayButton {
 		this.log( 'Create instance' );
 	}
 
-	/**
-	 * NOOP log function to avoid errors when debugging is disabled.
-	 */
-	log() {}
+	log( ...args ) {
+		this.#logger.log( ...args );
+	}
 
-	/**
-	 * Enables debugging tools, when the button's is_debug flag is set.
-	 *
-	 * @param {boolean} enableDebugging If debugging features should be enabled for this instance.
-	 * @param {string}  context         Used to make the instance accessible via the global debug
-	 *                                  object.
-	 * @private
-	 */
-	_initDebug( enableDebugging, context ) {
-		if ( ! enableDebugging || this.#isInitialized ) {
-			return;
-		}
-
-		document.ppcpGooglepayButtons = document.ppcpGooglepayButtons || {};
-		document.ppcpGooglepayButtons[ context ] = this;
-
-		this.log = ( ...args ) => {
-			console.log( `[GooglePayButton | ${ context }]`, ...args );
-		};
-
-		document.addEventListener( 'ppcp-googlepay-debug', () => {
-			this.log( this );
-		} );
+	error( ...args ) {
+		this.#logger.error( ...args );
 	}
 
 	/**
@@ -550,7 +535,7 @@ class GooglepayButton {
 
 			if ( timeElapsed > timeout ) {
 				stop();
-				this.log( '!! Wrapper not found:', this.wrapperId );
+				this.error( 'Wrapper not found:', this.wrapperId );
 			}
 		};
 
