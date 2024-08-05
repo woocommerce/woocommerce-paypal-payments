@@ -1,5 +1,5 @@
 /**
- * Logs debug details to the console.
+ * Helper component to log debug details to the browser console.
  *
  * A utility class that is used by payment buttons on the front-end, like the GooglePayButton.
  */
@@ -30,6 +30,7 @@ export default class ConsoleLogger {
 
 	log( ...args ) {
 		if ( this.#enabled ) {
+			// eslint-disable-next-line
 			console.log( this.#prefix, ...args );
 		}
 	}

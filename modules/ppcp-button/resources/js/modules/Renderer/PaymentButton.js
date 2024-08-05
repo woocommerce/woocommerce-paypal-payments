@@ -1,4 +1,4 @@
-import ConsoleLogger from '../Helper/ConsoleLogger';
+import ConsoleLogger from '../../../../../ppcp-wc-gateway/resources/js/helper/ConsoleLogger';
 import { apmButtonsInit } from '../Helper/ApmButtons';
 
 /**

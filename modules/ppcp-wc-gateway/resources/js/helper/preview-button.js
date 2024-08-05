@@ -1,9 +1,11 @@
+/* global jQuery */
+
 /**
  * Returns a Map with all input fields that are relevant to render the preview of the
  * given payment button.
  *
  * @param {string} apmName - Value of the custom attribute `data-ppcp-apm-name`.
- * @return {Map<string, {val:Function, el:HTMLInputElement}>}
+ * @return {Map<string, {val:Function, el:HTMLInputElement}>} List of input elements found on the current admin page.
  */
 export function getButtonFormFields( apmName ) {
 	const inputFields = document.querySelectorAll(
@@ -28,9 +30,9 @@ export function getButtonFormFields( apmName ) {
 
 /**
  * Returns a function that triggers an update of the specified preview button, when invoked.
- 
+ *
  * @param {string} apmName
- * @return {((object) => void)}
+ * @return {((object) => void)} Trigger-function; updates preview buttons when invoked.
  */
 export function buttonRefreshTriggerFactory( apmName ) {
 	const eventName = `ppcp_paypal_render_preview_${ apmName }`;
@@ -44,7 +46,7 @@ export function buttonRefreshTriggerFactory( apmName ) {
  * Returns a function that gets the current form values of the specified preview button.
  *
  * @param {string} apmName
- * @return {() => {button: {wrapper:string, is_enabled:boolean, style:{}}}}
+ * @return {() => {button: {wrapper:string, is_enabled:boolean, style:{}}}} Getter-function; returns preview config details when invoked.
  */
 export function buttonSettingsGetterFactory( apmName ) {
 	const fields = getButtonFormFields( apmName );
