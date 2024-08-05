@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
@@ -237,6 +238,12 @@ return array(
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
 			$container->get( 'wcgateway.fraudnet' ),
 			$bn_code
+		);
+	},
+	'api.endpoint.orders' => static function (ContainerInterface $container): Orders {
+		return new Orders(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' )
 		);
 	},
 	'api.endpoint.billing-agreements'                => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
