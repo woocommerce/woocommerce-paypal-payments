@@ -345,9 +345,12 @@ class Button implements ButtonInterface {
 	 * @return void
 	 */
 	protected function hide_gateway_until_eligible() : void {
+
 		?>
-		<style id="ppcp-hide-google-pay">
-			.wc_payment_method.payment_method_ppcp-googlepay { : none}
+		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
+			.wc_payment_method.payment_method_ppcp-googlepay {
+				display: none;
+			}
 		</style>
 		<?php
 	}

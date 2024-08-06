@@ -16,6 +16,54 @@ export const ButtonEvents = Object.freeze( {
 } );
 
 /**
+ *
+ * @param {string} defaultId     - Default wrapper ID.
+ * @param {string} miniCartId    - Wrapper inside the mini-cart.
+ * @param {string} smartButtonId - ID of the smart button wrapper.
+ * @param {string} blockId       - Block wrapper ID (express checkout, block cart).
+ * @param {string} gatewayId     - Gateway wrapper ID (classic checkout).
+ * @return {{MiniCart, Gateway, Block, SmartButton, Default}} List of all wrapper IDs, by context.
+ */
+export function combineWrapperIds(
+	defaultId = '',
+	miniCartId = '',
+	smartButtonId = '',
+	blockId = '',
+	gatewayId = ''
+) {
+	const sanitize = ( id ) => id.replace( /^#/, '' );
+
+	return {
+		Default: sanitize( defaultId ),
+		SmartButton: sanitize( smartButtonId ),
+		Block: sanitize( blockId ),
+		Gateway: sanitize( gatewayId ),
+		MiniCart: sanitize( miniCartId ),
+	};
+}
+
+/**
+ * Returns full payment button styles by combining the global ppcpConfig with
+ * payment-method-specific styling provided via buttonConfig.
+ *
+ * @param {Object} ppcpConfig   - Global plugin configuration.
+ * @param {Object} buttonConfig - Payment method specific configuration.
+ * @return {{MiniCart: (*), Default: (*)}} Combined styles, separated by context.
+ */
+export function combineStyles( ppcpConfig, buttonConfig ) {
+	return {
+		Default: {
+			...ppcpConfig.style,
+			...buttonConfig.style,
+		},
+		MiniCart: {
+			...ppcpConfig.mini_cart_style,
+			...buttonConfig.mini_cart_style,
+		},
+	};
+}
+
+/**
  * Verifies if the given event name is a valid Payment Button event.
  *
  * @param {string} event - The event name to verify.
@@ -45,4 +93,25 @@ export function dispatchButtonEvent( { event, paymentMethod = '' } ) {
 		: event;
 
 	document.body.dispatchEvent( new Event( fullEventName ) );
+}
+
+/**
+ * Adds an event listener for the provided button event.
+ *
+ * @param {Object}   options                 - The options for the event listener.
+ * @param {string}   options.event           - Event to observe.
+ * @param {string}   [options.paymentMethod] - The payment method name (optional).
+ * @param {Function} options.callback        - The callback function to execute when the event is triggered.
+ * @throws {Error} Throws an error if the event is invalid.
+ */
+export function observeButtonEvent( { event, paymentMethod = '', callback } ) {
+	if ( ! isValidButtonEvent( event ) ) {
+		throw new Error( `Invalid event: ${ event }` );
+	}
+
+	const fullEventName = paymentMethod
+		? `${ event }-${ paymentMethod }`
+		: event;
+
+	document.body.addEventListener( fullEventName, callback );
 }
