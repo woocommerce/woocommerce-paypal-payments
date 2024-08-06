@@ -1,6 +1,5 @@
 import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
 import CartActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler';
-import { isPayPalSubscription } from '../../../../ppcp-blocks/resources/js/Helper/Subscription';
 
 class BaseHandler {
 	constructor( buttonConfig, ppcpConfig ) {
@@ -24,7 +23,7 @@ class BaseHandler {
 	}
 
 	shippingAllowed() {
-		return this.buttonConfig.product.needsShipping;
+		return this.buttonConfig.product.needShipping;
 	}
 
 	transactionInfo() {
@@ -68,13 +67,6 @@ class BaseHandler {
 
 	actionHandler() {
 		return new CartActionHandler( this.ppcpConfig, this.errorHandler() );
-	}
-
-	errorHandler() {
-		return new ErrorHandler(
-			this.ppcpConfig.labels.error.generic,
-			document.querySelector( '.woocommerce-notices-wrapper' )
-		);
 	}
 
 	errorHandler() {
