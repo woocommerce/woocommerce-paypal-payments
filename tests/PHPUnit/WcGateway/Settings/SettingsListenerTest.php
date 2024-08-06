@@ -96,6 +96,9 @@ class SettingsListenerTest extends ModularTestCase
             ->andReturn(false);
         $dcc_status_cache->shouldReceive('has')
             ->andReturn(false);
+		$client_credentials_cache->shouldReceive('has')->andReturn(true);
+		$client_credentials_cache->shouldReceive('delete');
+
 
 		$testee->listen();
 	}
