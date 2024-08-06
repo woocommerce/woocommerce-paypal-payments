@@ -28,13 +28,6 @@ class SdkClientToken {
 	private $host;
 
 	/**
-	 * The bearer.
-	 *
-	 * @var Bearer
-	 */
-	private $bearer;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -42,20 +35,27 @@ class SdkClientToken {
 	private $logger;
 
 	/**
+	 * The client credentials.
+	 *
+	 * @var ClientCredentials
+	 */
+	private $client_credentials;
+
+	/**
 	 * SdkClientToken constructor.
 	 *
 	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
 	 * @param LoggerInterface $logger The logger.
+	 * @param ClientCredentials $client_credentials The client credentials.
 	 */
 	public function __construct(
 		string $host,
-		Bearer $bearer,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		ClientCredentials $client_credentials
 	) {
 		$this->host   = $host;
-		$this->bearer = $bearer;
 		$this->logger = $logger;
+		$this->client_credentials = $client_credentials;
 	}
 
 	/**
@@ -69,8 +69,6 @@ class SdkClientToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token( string $target_customer_id = '' ): string {
-		$bearer = $this->bearer->bearer();
-
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$domain = wp_unslash( $_SERVER['HTTP_HOST'] ?? '' );
 		$domain = preg_replace( '/^www\./', '', $domain );
@@ -89,7 +87,7 @@ class SdkClientToken {
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Authorization' => $this->client_credentials->credentials(),
 				'Content-Type'  => 'application/x-www-form-urlencoded',
 			),
 		);
