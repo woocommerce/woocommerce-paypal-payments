@@ -82,13 +82,8 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
-		if ( $this->cache->has( self::CACHE_KEY ) ) {
-			$user_id  = $this->cache->get( self::CACHE_KEY )['user_id'] ?? 0;
-			$id_token = $this->cache->get( self::CACHE_KEY )['id_token'] ?? '';
-
-			if ( $user_id === get_current_user_id() && $id_token ) {
-				return $id_token;
-			}
+		if ( $this->cache->has( self::CACHE_KEY . '-' . (string) get_current_user_id() ) ) {
+			return $this->cache->get( self::CACHE_KEY . '-' . (string) get_current_user_id() );
 		}
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
@@ -122,12 +117,7 @@ class UserIdToken {
 
 		$id_token = $json->id_token;
 
-		$data = array(
-			'id_token' => $id_token,
-			'user_id'  => get_current_user_id(),
-		);
-
-		$this->cache->set( self::CACHE_KEY, $data );
+		$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token );
 
 		return $id_token;
 	}

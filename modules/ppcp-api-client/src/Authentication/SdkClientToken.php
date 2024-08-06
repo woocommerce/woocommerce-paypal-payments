@@ -72,23 +72,16 @@ class SdkClientToken {
 	}
 
 	/**
-	 * Returns `sdk_client_token` which uniquely identifies the payer.
-	 *
-	 * @param string $target_customer_id Vaulted customer id.
+	 * Returns the client token for SDK `data-sdk-client-token`.
 	 *
 	 * @return string
 	 *
 	 * @throws PayPalApiException If the request fails.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
-	public function sdk_client_token( string $target_customer_id = '' ): string {
+	public function sdk_client_token(): string {
 		if ( $this->cache->has( self::CACHE_KEY ) ) {
-			$user_id      = $this->cache->get( self::CACHE_KEY )['user_id'] ?? 0;
-			$access_token = $this->cache->get( self::CACHE_KEY )['access_token'] ?? '';
-
-			if ( $user_id === get_current_user_id() && $access_token ) {
-				return $access_token;
-			}
+			$this->cache->get( self::CACHE_KEY );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -96,15 +89,6 @@ class SdkClientToken {
 		$domain = preg_replace( '/^www\./', '', $domain );
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=client_token&intent=sdk_init&domains[]=' . $domain;
-
-		if ( $target_customer_id ) {
-			$url = add_query_arg(
-				array(
-					'target_customer_id' => $target_customer_id,
-				),
-				$url
-			);
-		}
 
 		$args = array(
 			'method'  => 'POST',
@@ -126,13 +110,7 @@ class SdkClientToken {
 		}
 
 		$access_token = $json->access_token;
-
-		$data = array(
-			'access_token' => $access_token,
-			'user_id'      => get_current_user_id(),
-		);
-
-		$this->cache->set( self::CACHE_KEY, $data );
+		$this->cache->set( self::CACHE_KEY, $access_token );
 
 		return $access_token;
 	}

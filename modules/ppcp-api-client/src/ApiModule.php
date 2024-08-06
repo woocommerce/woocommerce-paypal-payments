@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
@@ -100,15 +99,12 @@ class ApiModule implements ModuleInterface {
 
 		add_action(
 			'wp_logout',
-			function() use ( $c ) {
+			function( int $user_id ) use ( $c ) {
 				$client_credentials_cache = $c->get( 'api.client-credentials-cache' );
 				assert( $client_credentials_cache instanceof Cache );
 
-				if ( $client_credentials_cache->has( UserIdToken::CACHE_KEY ) ) {
-					$client_credentials_cache->delete( UserIdToken::CACHE_KEY );
-				}
-				if ( $client_credentials_cache->has( SdkClientToken::CACHE_KEY ) ) {
-					$client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
+				if ( $client_credentials_cache->has( UserIdToken::CACHE_KEY . '-' . (string) $user_id ) ) {
+					$client_credentials_cache->delete( UserIdToken::CACHE_KEY . '-' . (string) $user_id );
 				}
 			}
 		);

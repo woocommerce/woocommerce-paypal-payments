@@ -502,9 +502,6 @@ class SettingsListener {
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
-		if ( $this->client_credentials_cache->has( UserIdToken::CACHE_KEY ) ) {
-			$this->client_credentials_cache->delete( UserIdToken::CACHE_KEY );
-		}
 		if ( $this->client_credentials_cache->has( SdkClientToken::CACHE_KEY ) ) {
 			$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
 		}
