@@ -83,7 +83,12 @@ class SdkClientToken {
 	 */
 	public function sdk_client_token( string $target_customer_id = '' ): string {
 		if ( $this->cache->has( self::CACHE_KEY ) ) {
-			return $this->cache->get( self::CACHE_KEY );
+			$user_id      = $this->cache->get( self::CACHE_KEY )['user_id'] ?? 0;
+			$access_token = $this->cache->get( self::CACHE_KEY )['access_token'] ?? '';
+
+			if ( $user_id === get_current_user_id() && $access_token ) {
+				return $access_token;
+			}
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -121,7 +126,13 @@ class SdkClientToken {
 		}
 
 		$access_token = $json->access_token;
-		$this->cache->set( self::CACHE_KEY, $access_token );
+
+		$data = array(
+			'access_token' => $access_token,
+			'user_id'      => get_current_user_id(),
+		);
+
+		$this->cache->set( self::CACHE_KEY, $data );
 
 		return $access_token;
 	}
