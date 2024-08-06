@@ -1657,7 +1657,7 @@ return array(
 			return new PurchaseUnitSanitizer( $behavior, $line_name );
 		}
 	),
-	'api.client-credentials' => static function(ContainerInterface $container): ClientCredentials {
+	'api.client-credentials'                         => static function( ContainerInterface $container ): ClientCredentials {
 		return new ClientCredentials(
 			$container->get( 'wcgateway.settings' )
 		);
@@ -1666,14 +1666,16 @@ return array(
 		return new UserIdToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.client-credentials' )
+			$container->get( 'api.client-credentials' ),
+			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
 	'api.sdk-client-token'                           => static function( ContainerInterface $container ): SdkClientToken {
 		return new SdkClientToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.client-credentials' )
+			$container->get( 'api.client-credentials' ),
+			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
 );

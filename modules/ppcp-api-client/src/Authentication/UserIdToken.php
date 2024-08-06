@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WP_Error;
 
 /**
@@ -19,6 +20,8 @@ use WP_Error;
 class UserIdToken {
 
 	use RequestTrait;
+
+	const CACHE_KEY = 'user-id-token-key';
 
 	/**
 	 * The host.
@@ -42,20 +45,30 @@ class UserIdToken {
 	private $client_credentials;
 
 	/**
+	 * The cache.
+	 *
+	 * @var Cache
+	 */
+	private $cache;
+
+	/**
 	 * UserIdToken constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string            $host The host.
+	 * @param LoggerInterface   $logger The logger.
 	 * @param ClientCredentials $client_credentials The client credentials.
+	 * @param Cache             $cache The cache.
 	 */
 	public function __construct(
 		string $host,
 		LoggerInterface $logger,
-		ClientCredentials $client_credentials
+		ClientCredentials $client_credentials,
+		Cache $cache
 	) {
-		$this->host   = $host;
-		$this->logger = $logger;
+		$this->host               = $host;
+		$this->logger             = $logger;
 		$this->client_credentials = $client_credentials;
+		$this->cache              = $cache;
 	}
 
 	/**
@@ -69,6 +82,10 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
+		if ( $this->cache->has( self::CACHE_KEY ) ) {
+			return $this->cache->get( self::CACHE_KEY );
+		}
+
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
 		if ( $target_customer_id ) {
 			$url = add_query_arg(
@@ -98,6 +115,9 @@ class UserIdToken {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		return $json->id_token;
+		$id_token = $json->id_token;
+		$this->cache->set( self::CACHE_KEY, $id_token );
+
+		return $id_token;
 	}
 }

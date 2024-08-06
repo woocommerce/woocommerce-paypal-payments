@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WP_Error;
 
 /**
@@ -19,6 +20,8 @@ use WP_Error;
 class SdkClientToken {
 
 	use RequestTrait;
+
+	const CACHE_KEY = 'sdk-client-token-key';
 
 	/**
 	 * The host.
@@ -42,20 +45,30 @@ class SdkClientToken {
 	private $client_credentials;
 
 	/**
+	 * The cache.
+	 *
+	 * @var Cache
+	 */
+	private $cache;
+
+	/**
 	 * SdkClientToken constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string            $host The host.
+	 * @param LoggerInterface   $logger The logger.
 	 * @param ClientCredentials $client_credentials The client credentials.
+	 * @param Cache             $cache The cache.
 	 */
 	public function __construct(
 		string $host,
 		LoggerInterface $logger,
-		ClientCredentials $client_credentials
+		ClientCredentials $client_credentials,
+		Cache $cache
 	) {
-		$this->host   = $host;
-		$this->logger = $logger;
+		$this->host               = $host;
+		$this->logger             = $logger;
 		$this->client_credentials = $client_credentials;
+		$this->cache              = $cache;
 	}
 
 	/**
@@ -69,6 +82,10 @@ class SdkClientToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token( string $target_customer_id = '' ): string {
+		if ( $this->cache->has( self::CACHE_KEY ) ) {
+			return $this->cache->get( self::CACHE_KEY );
+		}
+
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$domain = wp_unslash( $_SERVER['HTTP_HOST'] ?? '' );
 		$domain = preg_replace( '/^www\./', '', $domain );
@@ -103,6 +120,9 @@ class SdkClientToken {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		return $json->access_token;
+		$access_token = $json->access_token;
+		$this->cache->set( self::CACHE_KEY, $access_token );
+
+		return $access_token;
 	}
 }
