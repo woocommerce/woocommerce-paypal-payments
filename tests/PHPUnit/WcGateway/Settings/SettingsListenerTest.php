@@ -43,6 +43,7 @@ class SettingsListenerTest extends ModularTestCase
 		$billing_agreement_endpoint = Mockery::mock(BillingAgreementsEndpoint::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$logger = Mockery::mock(LoggerInterface::class);
+		$client_credentials_cache = Mockery::mock(Cache::class);
 
 		$testee = new SettingsListener(
 			$settings,
@@ -60,7 +61,8 @@ class SettingsListenerTest extends ModularTestCase
 			'',
 			'',
 			$billing_agreement_endpoint,
-			$logger
+			$logger,
+			$client_credentials_cache
 		);
 
 		$_GET['section'] = PayPalGateway::ID;
