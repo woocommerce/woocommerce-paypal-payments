@@ -1662,12 +1662,15 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
+	'api.client-credentials-cache'                   => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-client-credentials-cache' );
+	},
 	'api.user-id-token'                              => static function( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.client-credentials' ),
-			new Cache( 'ppcp-client-credentials-cache' )
+			$container->get( 'api.client-credentials-cache' )
 		);
 	},
 	'api.sdk-client-token'                           => static function( ContainerInterface $container ): SdkClientToken {
@@ -1675,7 +1678,7 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.client-credentials' ),
-			new Cache( 'ppcp-client-credentials-cache' )
+			$container->get( 'api.client-credentials-cache' )
 		);
 	},
 );
