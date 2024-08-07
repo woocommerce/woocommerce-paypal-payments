@@ -27,20 +27,51 @@ import {
  */
 
 /**
+ * Adds the provided PaymentButton instance to a global payment-button collection.
+ *
+ * This is debugging logic that should not be used on a production site.
+ *
+ * @param {string}        methodName - Used to group the buttons.
+ * @param {PaymentButton} button     - Appended to the button collection.
+ */
+const addToDebuggingCollection = ( methodName, button ) => {
+	window.ppcpPaymentButtonList = window.ppcpPaymentButtonList || {};
+
+	const collection = window.ppcpPaymentButtonList;
+
+	collection[ methodName ] = collection[ methodName ] || [];
+	collection[ methodName ].push( button );
+};
+
+/**
  * Base class for APM payment buttons, like GooglePay and ApplePay.
  *
  * This class is not intended for the PayPal button.
  */
 export default class PaymentButton {
 	/**
+	 * Defines the implemented payment method.
+	 *
+	 * Used to identify and address the button internally.
+	 * Overwrite this in the derived class.
+	 *
+	 * @type {string}
+	 */
+	static methodId = 'generic';
+
+	/**
+	 * CSS class that is added to the payment button wrapper.
+	 *
+	 * Overwrite this in the derived class.
+	 *
+	 * @type {string}
+	 */
+	static cssClass = '';
+
+	/**
 	 * @type {ConsoleLogger}
 	 */
 	#logger;
-
-	/**
-	 * @type {string}
-	 */
-	#methodId;
 
 	/**
 	 * Whether the payment button is initialized.
@@ -70,7 +101,7 @@ export default class PaymentButton {
 	#styles;
 
 	/**
-	 * APM relevant configuration; e.g., configuration of the GooglePay button
+	 * APM relevant configuration; e.g., configuration of the GooglePay button.
 	 */
 	#buttonConfig;
 
@@ -102,37 +133,71 @@ export default class PaymentButton {
 	#button = null;
 
 	/**
+	 * Returns a list with all wrapper IDs for the implemented payment method, categorized by context.
+	 *
+	 * @abstract
+	 * @param {Object} buttonConfig - Payment method specific configuration.
+	 * @param {Object} ppcpConfig   - Global plugin configuration.
+	 * @return {{MiniCart, Gateway, Block, SmartButton, Default}} The wrapper ID collection.
+	 */
+	// eslint-disable-next-line no-unused-vars
+	static getWrappers( buttonConfig, ppcpConfig ) {
+		throw new Error( 'Must be implemented in the child class' );
+	}
+
+	/**
+	 * Returns a list of all button styles for the implemented payment method, categorized by context.
+	 *
+	 * @abstract
+	 * @param {Object} buttonConfig - Payment method specific configuration.
+	 * @param {Object} ppcpConfig   - Global plugin configuration.
+	 * @return {{MiniCart: (*), Default: (*)}} Combined styles, separated by context.
+	 */
+	// eslint-disable-next-line no-unused-vars
+	static getStyles( buttonConfig, ppcpConfig ) {
+		throw new Error( 'Must be implemented in the child class' );
+	}
+
+	/**
 	 * Initialize the payment button instance.
 	 *
-	 * @param {string}            methodId     - Payment method ID (slug, e.g., "ppcp-googlepay").
-	 * @param {string}            context      - Button context name.
-	 * @param {WrapperCollection} wrappers     - Button wrapper IDs, by context.
-	 * @param {StylesCollection}  styles       - Button styles, by context.
-	 * @param {Object}            buttonConfig - Payment button specific configuration.
-	 * @param {Object}            ppcpConfig   - Plugin wide configuration object.
+	 * Do not create new button instances directly; use the `createButton` method instead
+	 * to avoid multiple button instances handling the same context.
+	 *
+	 * @private
+	 * @param {string} context      - Button context name.
+	 * @param {Object} buttonConfig - Payment button specific configuration.
+	 * @param {Object} ppcpConfig   - Plugin wide configuration object.
 	 */
-	constructor(
-		methodId,
-		context,
-		wrappers,
-		styles,
-		buttonConfig,
-		ppcpConfig
-	) {
-		const methodName = methodId.replace( /^ppcp?-/, '' );
+	constructor( context, buttonConfig, ppcpConfig ) {
+		if ( this.methodId === PaymentButton.methodId ) {
+			throw new Error( 'Cannot initialize the PaymentButton base class' );
+		}
 
-		this.#methodId = methodId;
-
-		this.#logger = new ConsoleLogger( methodName, context );
-		this.#logger.enabled = !! buttonConfig?.is_debug;
+		const isDebugging = !! buttonConfig?.is_debug;
+		const methodName = this.methodId.replace( /^ppcp?-/, '' );
 
 		this.#context = context;
-		this.#wrappers = wrappers;
-		this.#styles = styles;
 		this.#buttonConfig = buttonConfig;
 		this.#ppcpConfig = ppcpConfig;
 
-		apmButtonsInit( ppcpConfig );
+		this.#wrappers = this.constructor.getWrappers(
+			this.#buttonConfig,
+			this.#ppcpConfig
+		);
+		this.#styles = this.constructor.getStyles(
+			this.#buttonConfig,
+			this.#ppcpConfig
+		);
+
+		this.#logger = new ConsoleLogger( methodName, context );
+
+		if ( isDebugging ) {
+			this.#logger.enabled = true;
+			addToDebuggingCollection( methodName, this );
+		}
+
+		apmButtonsInit( this.#ppcpConfig );
 		this.initEventListeners();
 	}
 
@@ -140,10 +205,20 @@ export default class PaymentButton {
 	 * Internal ID of the payment gateway.
 	 *
 	 * @readonly
-	 * @return {string} The internal gateway ID.
+	 * @return {string} The internal gateway ID, defined in the derived class.
 	 */
 	get methodId() {
-		return this.#methodId;
+		return this.constructor.methodId;
+	}
+
+	/**
+	 * CSS class that is added to the button wrapper.
+	 *
+	 * @readonly
+	 * @return {string} CSS class, defined in the derived class.
+	 */
+	get cssClass() {
+		return this.constructor.cssClass;
 	}
 
 	/**
@@ -166,6 +241,24 @@ export default class PaymentButton {
 	 */
 	get context() {
 		return this.#context;
+	}
+
+	/**
+	 * Configuration, specific for the implemented payment button.
+	 *
+	 * @return {Object} Configuration object.
+	 */
+	get buttonConfig() {
+		return this.#buttonConfig;
+	}
+
+	/**
+	 * Plugin-wide configuration; i.e., PayPal client ID, shop currency, etc.
+	 *
+	 * @return {Object} Configuration object.
+	 */
+	get ppcpConfig() {
+		return this.#ppcpConfig;
 	}
 
 	/**
@@ -380,6 +473,10 @@ export default class PaymentButton {
 	}
 
 	triggerRedraw() {
+		if ( this.isEligible && this.isSeparateGateway ) {
+			this.showPaymentGateway();
+		}
+
 		dispatchButtonEvent( {
 			event: ButtonEvents.REDRAW,
 			paymentMethod: this.methodId,
@@ -418,45 +515,74 @@ export default class PaymentButton {
 	 * Refreshes the payment button on the page.
 	 */
 	refresh() {
-		const showButtonWrapper = () => {
-			this.log( 'Show' );
-
-			const styleSelectors = `style[data-hide-gateway="${ this.methodId }"]`;
-
-			document
-				.querySelectorAll( styleSelectors )
-				.forEach( ( el ) => el.remove() );
-
-			this.allElements.forEach( ( element ) => {
-				element.style.display = 'block';
-			} );
-		};
-
-		const hideButtonWrapper = () => {
-			this.log( 'Hide' );
-
-			this.allElements.forEach( ( element ) => {
-				element.style.display = 'none';
-			} );
-		};
-
-		// Refresh or hide the actual payment button.
-		if ( this.isVisible ) {
-			this.addButton();
-		} else {
-			this.removeButton();
+		if ( ! this.isPresent ) {
+			return;
 		}
 
-		// Show the wrapper or gateway entry, i.e. add space for the button.
-		if ( this.isEligible && this.isPresent ) {
-			showButtonWrapper();
+		this.applyWrapperStyles();
+
+		// Refresh or hide the actual payment button.
+		if ( this.isEligible && this.isPresent && this.isVisible ) {
+			this.addButton();
 		} else {
-			hideButtonWrapper();
+			// this.removeButton();
 		}
 	}
 
 	/**
+	 * Makes the custom payment gateway visible by removing initial inline styles from the DOM.
+	 *
+	 * Only relevant on the checkout page, i.e., when `this.isSeparateGateway` is `true`
+	 */
+	showPaymentGateway() {
+		const styleSelectors = `style[data-hide-gateway="${ this.methodId }"]`;
+
+		const styles = document.querySelectorAll( styleSelectors );
+
+		if ( ! styles.length ) {
+			return;
+		}
+		this.log( 'Show gateway' );
+
+		styles.forEach( ( el ) => el.remove() );
+	}
+
+	/**
+	 * Applies CSS classes and inline styling to the payment button wrapper.
+	 */
+	applyWrapperStyles() {
+		const wrapper = this.wrapperElement;
+		const { shape, height } = this.style;
+
+		wrapper.classList.add(
+			`ppcp-button-${ shape }`,
+			'ppcp-button-apm',
+			this.cssClass
+		);
+
+		if ( height ) {
+			wrapper.style.height = `${ height }px`;
+		}
+
+		// Apply the wrapper visibility.
+		wrapper.style.display = this.isVisible ? 'block' : 'none';
+	}
+
+	/**
+	 * Creates a new payment button (HTMLElement) and must call `this.insertButton()` to display
+	 * that button in the correct wrapper.
+	 *
+	 * @abstract
+	 */
+	addButton() {
+		throw new Error( 'Must be implemented by the child class' );
+	}
+
+	/**
 	 * Prepares the button wrapper element and inserts the provided payment button into the DOM.
+	 *
+	 * If a payment button was previously inserted to the wrapper, calling this method again will
+	 * first remove the previous button.
 	 *
 	 * @param {HTMLElement} button - The button element to inject.
 	 */
@@ -465,28 +591,16 @@ export default class PaymentButton {
 			return;
 		}
 
+		this.log( 'addButton', button );
+		const wrapper = this.wrapperElement;
+
 		if ( this.#button ) {
-			this.#button.remove();
+			this.log( 'addButton.removePrevious', this.#button );
+			wrapper.removeChild( this.#button );
 		}
 
 		this.#button = button;
-		this.log( 'addButton', button );
-
-		const wrapper = this.wrapperElement;
-		const { shape, height } = this.style;
-		const methodSlug = this.methodId.replace( /^ppcp?-/, '' );
-
-		wrapper.classList.add(
-			`ppcp-button-${ shape }`,
-			'ppcp-button-apm',
-			`ppcp-button-${ methodSlug }`
-		);
-
-		if ( height ) {
-			wrapper.style.height = `${ height }px`;
-		}
-
-		wrapper.appendChild( button );
+		wrapper.appendChild( this.#button );
 	}
 
 	/**
@@ -500,8 +614,10 @@ export default class PaymentButton {
 		this.log( 'removeButton' );
 
 		if ( this.#button ) {
-			this.#button.remove();
+			const wrapper = this.wrapperElement;
+			wrapper.removeChild( this.#button );
+
+			this.#button = null;
 		}
-		this.#button = null;
 	}
 }

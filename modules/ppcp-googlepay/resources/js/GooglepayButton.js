@@ -1,5 +1,3 @@
-/* global google */
-
 import {
 	combineStyles,
 	combineWrapperIds,
@@ -50,9 +48,45 @@ import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper
 
 class GooglepayButton extends PaymentButton {
 	/**
+	 * @inheritDoc
+	 */
+	static methodId = PaymentMethods.GOOGLEPAY;
+
+	/**
+	 * @inheritDoc
+	 */
+	static cssClass = 'google-pay';
+
+	/**
 	 * Client reference, provided by the Google Pay JS SDK.
 	 */
 	#paymentsClient = null;
+
+	/**
+	 * @inheritDoc
+	 */
+	static getWrappers( buttonConfig, ppcpConfig ) {
+		return combineWrapperIds(
+			buttonConfig.button.wrapper,
+			buttonConfig.button.mini_cart_wrapper,
+			ppcpConfig.button.wrapper,
+			'express-payment-method-ppcp-googlepay',
+			'ppc-button-ppcp-googlepay'
+		);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	static getStyles( buttonConfig, ppcpConfig ) {
+		const styles = combineStyles( ppcpConfig.button, buttonConfig.button );
+
+		if ( 'buy' === styles.MiniCart.type ) {
+			styles.MiniCart.type = 'pay';
+		}
+
+		return styles;
+	}
 
 	constructor(
 		context,
@@ -61,30 +95,8 @@ class GooglepayButton extends PaymentButton {
 		ppcpConfig,
 		contextHandler
 	) {
-		const wrappers = combineWrapperIds(
-			buttonConfig.button.wrapper,
-			buttonConfig.button.mini_cart_wrapper,
-			ppcpConfig.button.wrapper,
-			'express-payment-method-ppcp-googlepay',
-			'ppc-button-ppcp-googlepay'
-		);
+		super( context, buttonConfig, ppcpConfig );
 
-		const styles = combineStyles( ppcpConfig.button, buttonConfig.button );
-
-		if ( 'buy' === styles.MiniCart.type ) {
-			styles.MiniCart.type = 'pay';
-		}
-
-		super(
-			PaymentMethods.GOOGLEPAY,
-			context,
-			wrappers,
-			styles,
-			buttonConfig,
-			ppcpConfig
-		);
-
-		this.buttonConfig = buttonConfig;
 		this.contextHandler = contextHandler;
 
 		this.log( 'Create instance' );
@@ -226,10 +238,11 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	/**
-	 * Add a Google Pay purchase button.
+	 * Creates the payment button and calls `this.insertButton()` to make the button visible in the
+	 * correct wrapper.
 	 */
 	addButton() {
-		if ( ! this.isInitialized ) {
+		if ( ! this.isInitialized || ! this.paymentsClient ) {
 			return;
 		}
 
