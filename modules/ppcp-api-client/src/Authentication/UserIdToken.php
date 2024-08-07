@@ -115,9 +115,10 @@ class UserIdToken {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		$id_token = $json->id_token;
+		$id_token   = $json->id_token;
+		$expires_in = (int) $json->expires_in;
 
-		$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token );
+		$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token, $expires_in );
 
 		return $id_token;
 	}

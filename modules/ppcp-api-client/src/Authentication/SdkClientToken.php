@@ -110,7 +110,9 @@ class SdkClientToken {
 		}
 
 		$access_token = $json->access_token;
-		$this->cache->set( self::CACHE_KEY, $access_token );
+		$expires_in   = (int) $json->expires_in;
+
+		$this->cache->set( self::CACHE_KEY, $access_token, $expires_in );
 
 		return $access_token;
 	}
