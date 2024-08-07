@@ -24,10 +24,20 @@ export default class ConsoleLogger {
 		}
 	}
 
+	/**
+	 * Enable or disable logging. Only impacts `log()` output.
+	 *
+	 * @param {boolean} state True to enable log output.
+	 */
 	set enabled( state ) {
 		this.#enabled = state;
 	}
 
+	/**
+	 * Output log-level details to the browser console, if logging is enabled.
+	 *
+	 * @param {...any} args - All provided values are output to the browser console.
+	 */
 	log( ...args ) {
 		if ( this.#enabled ) {
 			// eslint-disable-next-line
@@ -35,9 +45,14 @@ export default class ConsoleLogger {
 		}
 	}
 
+	/**
+	 * Generate an error message in the browser's console.
+	 *
+	 * Error messages are always output, even when logging is disabled.
+	 *
+	 * @param {...any} args - All provided values are output to the browser console.
+	 */
 	error( ...args ) {
-		if ( this.#enabled ) {
-			console.error( this.#prefix, ...args );
-		}
+		console.error( this.#prefix, ...args );
 	}
 }

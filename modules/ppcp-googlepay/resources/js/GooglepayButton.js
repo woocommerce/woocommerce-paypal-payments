@@ -227,8 +227,8 @@ class GooglepayButton extends PaymentButton {
 
 				this.paymentsClient.loadPaymentData( paymentDataRequest );
 			},
-			() => {
-				console.error( '[GooglePayButton] Form validation failed.' );
+			( reason ) => {
+				this.error( 'Form validation failed.', reason );
 			}
 		);
 	}
