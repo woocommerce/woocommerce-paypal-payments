@@ -81,7 +81,7 @@ class SdkClientToken {
 	 */
 	public function sdk_client_token(): string {
 		if ( $this->cache->has( self::CACHE_KEY ) ) {
-			$this->cache->get( self::CACHE_KEY );
+			return $this->cache->get( self::CACHE_KEY );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
