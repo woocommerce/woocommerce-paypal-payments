@@ -50,8 +50,6 @@ class GooglepayButton extends PaymentButton {
 			'ppc-button-ppcp-googlepay'
 		);
 
-		console.log( ppcpConfig.button, buttonConfig.button );
-
 		const styles = combineStyles( ppcpConfig.button, buttonConfig.button );
 
 		if ( 'buy' === styles.MiniCart.type ) {

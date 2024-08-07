@@ -339,13 +339,12 @@ class Button implements ButtonInterface {
 
 	/**
 	 * Outputs an inline CSS style that hides the Google Pay gateway (on Classic Checkout).
-	 * The style is removed by `GooglepayButton.js` once the eligibility of the payment method
+	 * The style is removed by `PaymentButton.js` once the eligibility of the payment method
 	 * is confirmed.
 	 *
 	 * @return void
 	 */
 	protected function hide_gateway_until_eligible() : void {
-
 		?>
 		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
 			.wc_payment_method.payment_method_ppcp-googlepay {

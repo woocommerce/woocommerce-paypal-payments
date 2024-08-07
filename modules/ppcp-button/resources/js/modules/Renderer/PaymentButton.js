@@ -503,9 +503,5 @@ export default class PaymentButton {
 			this.#button.remove();
 		}
 		this.#button = null;
-
-		const wrapper = this.wrapperElement;
-
-		wrapper.innerHTML = '';
 	}
 }
