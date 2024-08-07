@@ -211,24 +211,31 @@ class GooglepayButton extends PaymentButton {
 	onButtonClick() {
 		this.log( 'onButtonClick' );
 
-		this.contextHandler.validateForm().then(
-			() => {
-				window.ppcpFundingSource = 'googlepay';
+		const initiatePaymentRequest = () => {
+			window.ppcpFundingSource = 'googlepay';
 
-				const paymentDataRequest = this.paymentDataRequest();
+			const paymentDataRequest = this.paymentDataRequest();
 
-				this.log(
-					'onButtonClick: paymentDataRequest',
-					paymentDataRequest,
-					this.context
-				);
+			this.log(
+				'onButtonClick: paymentDataRequest',
+				paymentDataRequest,
+				this.context
+			);
 
-				this.paymentsClient.loadPaymentData( paymentDataRequest );
-			},
-			( reason ) => {
-				this.error( 'Form validation failed.', reason );
-			}
-		);
+			this.paymentsClient.loadPaymentData( paymentDataRequest );
+		};
+
+		if ( 'function' === typeof this.contextHandler.validateForm ) {
+			// During regular checkout, validate the checkout form before initiating the payment.
+			this.contextHandler
+				.validateForm()
+				.then( initiatePaymentRequest, ( reason ) => {
+					this.error( 'Form validation failed.', reason );
+				} );
+		} else {
+			// This is the flow on product page, cart, and other non-checkout pages.
+			initiatePaymentRequest();
+		}
 	}
 
 	paymentDataRequest() {
