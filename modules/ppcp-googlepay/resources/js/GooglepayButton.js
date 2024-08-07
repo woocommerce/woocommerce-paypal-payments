@@ -90,9 +90,9 @@ class GooglepayButton extends PaymentButton {
 
 	constructor(
 		context,
-		externalHandler,
 		buttonConfig,
 		ppcpConfig,
+		externalHandler,
 		contextHandler
 	) {
 		super( context, buttonConfig, ppcpConfig );

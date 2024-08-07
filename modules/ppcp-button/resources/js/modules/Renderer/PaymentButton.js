@@ -44,6 +44,35 @@ const addToDebuggingCollection = ( methodName, button ) => {
 };
 
 /**
+ * Provides a context-independent instance Map for `PaymentButton` components.
+ *
+ * This function addresses a potential issue in multi-context environments, such as pages using
+ * Block-components. In these scenarios, multiple React execution contexts can lead to duplicate
+ * `PaymentButton` instances. To prevent this, we store instances in a `Map` that is bound to the
+ * document's `body` (the rendering context) rather than to individual React components
+ * (execution contexts).
+ *
+ * The `Map` is created as a non-enumerable, non-writable, and non-configurable property of
+ * `document.body` to ensure its integrity and prevent accidental modifications.
+ *
+ * @return {Map<any, any>} A Map containing all `PaymentButton` instances for the current page.
+ */
+const getInstances = () => {
+	const collectionKey = '__ppcpPBInstances';
+
+	if ( ! document.body[ collectionKey ] ) {
+		Object.defineProperty( document.body, collectionKey, {
+			value: new Map(),
+			enumerable: false,
+			writable: false,
+			configurable: false,
+		} );
+	}
+
+	return document.body[ collectionKey ];
+};
+
+/**
  * Base class for APM payment buttons, like GooglePay and ApplePay.
  *
  * This class is not intended for the PayPal button.
@@ -131,6 +160,41 @@ export default class PaymentButton {
 	 * @type {HTMLElement|null}
 	 */
 	#button = null;
+
+	/**
+	 * Factory method to create a new PaymentButton while limiting a single instance per context.
+	 *
+	 * @param {string}  context         - Button context name.
+	 * @param {unknown} externalHandler - Handler object.
+	 * @param {Object}  buttonConfig    - Payment button specific configuration.
+	 * @param {Object}  ppcpConfig      - Plugin wide configuration object.
+	 * @param {unknown} contextHandler  - Handler object.
+	 * @return {PaymentButton} The button instance.
+	 */
+	static createButton(
+		context,
+		externalHandler,
+		buttonConfig,
+		ppcpConfig,
+		contextHandler
+	) {
+		const buttonInstances = getInstances();
+		const instanceKey = `${ this.methodId }.${ context }`;
+
+		if ( ! buttonInstances.has( instanceKey ) ) {
+			const button = new this(
+				context,
+				buttonConfig,
+				ppcpConfig,
+				externalHandler,
+				contextHandler
+			);
+
+			buttonInstances.set( instanceKey, button );
+		}
+
+		return buttonInstances.get( instanceKey );
+	}
 
 	/**
 	 * Returns a list with all wrapper IDs for the implemented payment method, categorized by context.

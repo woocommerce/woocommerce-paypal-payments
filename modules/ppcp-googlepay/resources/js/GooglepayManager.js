@@ -20,7 +20,7 @@ class GooglepayManager {
 				bootstrap.handler
 			);
 
-			const button = new GooglepayButton(
+			const button = GooglepayButton.createButton(
 				bootstrap.context,
 				bootstrap.handler,
 				buttonConfig,
