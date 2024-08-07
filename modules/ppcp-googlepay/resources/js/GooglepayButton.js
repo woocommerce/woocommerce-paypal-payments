@@ -70,7 +70,7 @@ class GooglepayButton extends PaymentButton {
 			buttonConfig.button.wrapper,
 			buttonConfig.button.mini_cart_wrapper,
 			ppcpConfig.button.wrapper,
-			'express-payment-method-ppcp-googlepay',
+			'ppc-button-googlepay-container',
 			'ppc-button-ppcp-googlepay'
 		);
 	}

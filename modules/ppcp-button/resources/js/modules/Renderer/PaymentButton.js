@@ -659,8 +659,7 @@ export default class PaymentButton {
 		const wrapper = this.wrapperElement;
 
 		if ( this.#button ) {
-			this.log( 'addButton.removePrevious', this.#button );
-			wrapper.removeChild( this.#button );
+			this.removeButton();
 		}
 
 		this.#button = button;
@@ -671,17 +670,18 @@ export default class PaymentButton {
 	 * Removes the payment button from the DOM.
 	 */
 	removeButton() {
-		if ( ! this.isPresent ) {
+		if ( ! this.isPresent || ! this.#button ) {
 			return;
 		}
 
 		this.log( 'removeButton' );
 
-		if ( this.#button ) {
-			const wrapper = this.wrapperElement;
-			wrapper.removeChild( this.#button );
-
-			this.#button = null;
+		try {
+			this.wrapperElement.removeChild( this.#button );
+		} catch ( Exception ) {
+			// Ignore this.
 		}
+
+		this.#button = null;
 	}
 }
