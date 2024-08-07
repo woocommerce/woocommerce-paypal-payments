@@ -366,7 +366,8 @@ return array(
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
-			$logger
+			$logger,
+			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {

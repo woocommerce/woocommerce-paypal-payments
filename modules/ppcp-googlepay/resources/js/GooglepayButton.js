@@ -213,14 +213,24 @@ class GooglepayButton extends PaymentButton {
 	onButtonClick() {
 		this.log( 'onButtonClick' );
 
-		const paymentDataRequest = this.paymentDataRequest();
+		this.contextHandler.validateForm().then(
+			() => {
+				window.ppcpFundingSource = 'googlepay';
 
-		this.log( 'onButtonClick: paymentDataRequest', paymentDataRequest );
+				const paymentDataRequest = this.paymentDataRequest();
 
-		// Do this on another place like on create order endpoint handler.
-		window.ppcpFundingSource = 'googlepay';
+				this.log(
+					'onButtonClick: paymentDataRequest',
+					paymentDataRequest,
+					this.context
+				);
 
-		this.paymentsClient.loadPaymentData( paymentDataRequest );
+				this.paymentsClient.loadPaymentData( paymentDataRequest );
+			},
+			() => {
+				console.error( '[GooglePayButton] Form validation failed.' );
+			}
+		);
 	}
 
 	paymentDataRequest() {
