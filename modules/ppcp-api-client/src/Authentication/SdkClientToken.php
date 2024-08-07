@@ -80,10 +80,6 @@ class SdkClientToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function sdk_client_token(): string {
-		if ( $this->cache->has( self::CACHE_KEY ) ) {
-			return $this->cache->get( self::CACHE_KEY );
-		}
-
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$domain = wp_unslash( $_SERVER['HTTP_HOST'] ?? '' );
 		$domain = preg_replace( '/^www\./', '', $domain );
