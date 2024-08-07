@@ -280,15 +280,7 @@ class AxoModule implements ModuleInterface {
 		array $localized_script_data
 	): array {
 		try {
-			$target_customer_id = '';
-			if ( is_user_logged_in() ) {
-				$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-				if ( ! $target_customer_id ) {
-					$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
-				}
-			}
-
-			$sdk_client_token             = $api->sdk_client_token( $target_customer_id );
+			$sdk_client_token             = $api->sdk_client_token();
 			$localized_script_data['axo'] = array(
 				'sdk_client_token' => $sdk_client_token,
 			);
