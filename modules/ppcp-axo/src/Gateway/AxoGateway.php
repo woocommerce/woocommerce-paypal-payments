@@ -168,7 +168,7 @@ class AxoGateway extends WC_Payment_Gateway {
 			? $this->ppcp_settings->get( 'axo_gateway_title' )
 			: $this->get_option( 'title', $this->method_title );
 
-		$this->description = __( 'Enter your email address to continue.', 'woocommerce-paypal-payments' );
+		$this->description = __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' );
 
 		$this->init_form_fields();
 		$this->init_settings();
