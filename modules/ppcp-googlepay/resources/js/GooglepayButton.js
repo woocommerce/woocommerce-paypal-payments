@@ -292,24 +292,33 @@ class GooglepayButton {
 	onButtonClick() {
 		this.log( 'onButtonClick', this.context );
 
-		this.contextHandler.validateForm().then(
-			() => {
-				window.ppcpFundingSource = 'googlepay';
+		const initiatePaymentRequest = () => {
+			window.ppcpFundingSource = 'googlepay';
 
-				const paymentDataRequest = this.paymentDataRequest();
+			const paymentDataRequest = this.paymentDataRequest();
 
-				this.log(
-					'onButtonClick: paymentDataRequest',
-					paymentDataRequest,
-					this.context
-				);
+			this.log(
+				'onButtonClick: paymentDataRequest',
+				paymentDataRequest,
+				this.context
+			);
 
-				this.paymentsClient.loadPaymentData( paymentDataRequest );
-			},
-			() => {
-				console.error( '[GooglePayButton] Form validation failed.' );
-			}
-		);
+			this.paymentsClient.loadPaymentData( paymentDataRequest );
+		};
+
+		if ( 'function' === typeof this.contextHandler.validateForm ) {
+			// During regular checkout, validate the checkout form before initiating the payment.
+			this.contextHandler
+				.validateForm()
+				.then( initiatePaymentRequest, () => {
+					console.error(
+						'[GooglePayButton] Form validation failed.'
+					);
+				} );
+		} else {
+			// This is the flow on product page, cart, and other non-checkout pages.
+			initiatePaymentRequest();
+		}
 	}
 
 	paymentDataRequest() {
