@@ -46,6 +46,21 @@ import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper
  * @property {Function} onPaymentDataChanged - This method handles payment data changes in the payment sheet such as shipping address and shipping options.
  */
 
+/**
+ * This object describes the transaction details.
+ *
+ * @see https://developers.google.com/pay/api/web/reference/request-objects#TransactionInfo
+ * @typedef {Object} TransactionInfo
+ * @property {string} currencyCode     - Required. The ISO 4217 alphabetic currency code.
+ * @property {string} countryCode      - Optional. required for EEA countries,
+ * @property {string} transactionId    - Optional. A unique ID that identifies a facilitation attempt. Highly encouraged for troubleshooting.
+ * @property {string} totalPriceStatus - Required. [ESTIMATED|FINAL] The status of the total price used:
+ * @property {string} totalPrice       - Required. Total monetary value of the transaction with an optional decimal precision of two decimal places.
+ * @property {Array}  displayItems     - Optional. A list of cart items shown in the payment sheet (e.g. subtotals, sales taxes, shipping charges, discounts etc.).
+ * @property {string} totalPriceLabel  - Optional. Custom label for the total price within the display items.
+ * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the Google Pay payment sheet.
+ */
+
 class GooglepayButton extends PaymentButton {
 	/**
 	 * @inheritDoc
@@ -61,6 +76,13 @@ class GooglepayButton extends PaymentButton {
 	 * Client reference, provided by the Google Pay JS SDK.
 	 */
 	#paymentsClient = null;
+
+	/**
+	 * Details about the processed transaction.
+	 *
+	 * @type {?TransactionInfo}
+	 */
+	#transactionInfo = null;
 
 	/**
 	 * @inheritDoc
@@ -174,6 +196,18 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	/**
+	 * Details about the processed transaction.
+	 *
+	 * This object defines the price that is charged, and text that is displayed inside the
+	 * payment sheet.
+	 *
+	 * @return {?TransactionInfo} The TransactionInfo object.
+	 */
+	get transactionInfo() {
+		return this.#transactionInfo;
+	}
+
+	/**
 	 * Configures the button instance. Must be called before the initial `init()`.
 	 *
 	 * @param {Object} apiConfig       - API configuration.
@@ -181,11 +215,11 @@ class GooglepayButton extends PaymentButton {
 	 */
 	configure( apiConfig, transactionInfo ) {
 		this.googlePayConfig = apiConfig;
-			this.transactionInfo = transactionInfo;
+		this.#transactionInfo = transactionInfo;
 
 		this.allowedPaymentMethods = this.googlePayConfig.allowedPaymentMethods;
 		this.baseCardPaymentMethod = this.allowedPaymentMethods[ 0 ];
-		}
+	}
 
 	init() {
 		// Stop, if the button is already initialized.
