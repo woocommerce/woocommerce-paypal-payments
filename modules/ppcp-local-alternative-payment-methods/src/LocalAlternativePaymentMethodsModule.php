@@ -30,6 +30,10 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 	}
 
 	public function run(ContainerInterface $c): void {
+		add_filter('woocommerce_payment_gateways', function ($methods) use ($c) {
+			$methods[] = $c->get('ppcp-local-apms.bancontact.wc-gateway');
 
+			return $methods;
+		});
 	}
 }
