@@ -589,6 +589,34 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Checks, if the payment button is still attached to the DOM.
+	 *
+	 * WooCommerce performs some partial reloads in many cases, which can lead to our payment
+	 * button
+	 * to move into the browser's memory. In that case, we need to recreate the button in the
+	 * updated DOM.
+	 *
+	 * @return {boolean} True means, the button is still present (and typically visible) on the
+	 *     page.
+	 */
+	get isButtonAttached() {
+		if ( ! this.#button ) {
+			return false;
+		}
+
+		let parent = this.#button.parentElement;
+		while ( parent?.parentElement ) {
+			if ( 'BODY' === parent.tagName ) {
+				return true;
+			}
+
+			parent = parent.parentElement;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Log a debug detail to the browser console.
 	 *
 	 * @param {any} args
@@ -680,11 +708,11 @@ export default class PaymentButton {
 
 		this.applyWrapperStyles();
 
-		// Refresh or hide the actual payment button.
 		if ( this.isEligible && this.isPresent && this.isVisible ) {
+			if ( ! this.isButtonAttached ) {
+				this.log( 'refresh.addButton' );
 			this.addButton();
-		} else {
-			// this.removeButton();
+			}
 		}
 	}
 
