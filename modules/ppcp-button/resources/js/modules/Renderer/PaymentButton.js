@@ -140,6 +140,11 @@ export default class PaymentButton {
 	#ppcpConfig;
 
 	/**
+	 * A variation of a context bootstrap handler.
+	 */
+	#externalHandler;
+
+	/**
 	 * A variation of a context handler object, like CheckoutHandler.
 	 * This handler provides a standardized interface for certain standardized checks and actions.
 	 */
@@ -190,9 +195,9 @@ export default class PaymentButton {
 		if ( ! buttonInstances.has( instanceKey ) ) {
 			const button = new this(
 				context,
+				externalHandler,
 				buttonConfig,
 				ppcpConfig,
-				externalHandler,
 				contextHandler
 			);
 
@@ -238,11 +243,18 @@ export default class PaymentButton {
 	 *
 	 * @private
 	 * @param {string} context        - Button context name.
+	 * @param {Object} externalHandler - Handler object.
 	 * @param {Object} buttonConfig   - Payment button specific configuration.
 	 * @param {Object} ppcpConfig     - Plugin wide configuration object.
 	 * @param {Object} contextHandler - Handler object.
 	 */
-	constructor( context, buttonConfig, ppcpConfig, contextHandler ) {
+	constructor(
+		context,
+		externalHandler = null,
+		buttonConfig = {},
+		ppcpConfig = {},
+		contextHandler = null
+	) {
 		if ( this.methodId === PaymentButton.methodId ) {
 			throw new Error( 'Cannot initialize the PaymentButton base class' );
 		}
@@ -257,6 +269,7 @@ export default class PaymentButton {
 		this.#context = context;
 		this.#buttonConfig = buttonConfig;
 		this.#ppcpConfig = ppcpConfig;
+		this.#externalHandler = externalHandler;
 		this.#contextHandler = contextHandler;
 
 		this.#wrappers = this.constructor.getWrappers(
@@ -337,6 +350,13 @@ export default class PaymentButton {
 	 */
 	get ppcpConfig() {
 		return this.#ppcpConfig;
+	}
+
+	/**
+	 * @return {Object} The bootstrap handler instance, or an empty object.
+	 */
+	get externalHandler() {
+		return this.#externalHandler || {};
 	}
 
 	/**
@@ -708,12 +728,13 @@ export default class PaymentButton {
 			return;
 		}
 
-		this.log( 'addButton', button );
 		const wrapper = this.wrapperElement;
 
 		if ( this.#button ) {
 			this.removeButton();
 		}
+
+		this.log( 'addButton', button );
 
 		this.#button = button;
 		wrapper.appendChild( this.#button );

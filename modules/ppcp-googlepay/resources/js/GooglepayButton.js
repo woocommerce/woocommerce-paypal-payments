@@ -93,12 +93,18 @@ class GooglepayButton extends PaymentButton {
 
 	constructor(
 		context,
+		externalHandler,
 		buttonConfig,
 		ppcpConfig,
-		externalHandler,
 		contextHandler
 	) {
-		super( context, buttonConfig, ppcpConfig, contextHandler );
+		super(
+			context,
+			externalHandler,
+			buttonConfig,
+			ppcpConfig,
+			contextHandler
+		);
 
 		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
 		this.onPaymentDataChanged = this.onPaymentDataChanged.bind( this );
