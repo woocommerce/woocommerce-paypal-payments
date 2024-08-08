@@ -128,6 +128,7 @@ class GooglepayButton extends PaymentButton {
 			contextHandler
 		);
 
+		this.init = this.init.bind( this );
 		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
 		this.onPaymentDataChanged = this.onPaymentDataChanged.bind( this );
 		this.onButtonClick = this.onButtonClick.bind( this );
@@ -208,6 +209,17 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	/**
+	 * Assign the new transaction details to the payment button.
+	 *
+	 * @param {TransactionInfo} newTransactionInfo - Transaction details.
+	 */
+	set transactionInfo( newTransactionInfo ) {
+		this.#transactionInfo = newTransactionInfo;
+
+		this.refresh();
+	}
+
+	/**
 	 * Configures the button instance. Must be called before the initial `init()`.
 	 *
 	 * @param {Object} apiConfig       - API configuration.
@@ -257,14 +269,23 @@ class GooglepayButton extends PaymentButton {
 				this.isEligible = !! response.result;
 			} )
 			.catch( ( err ) => {
-				console.error( err );
+				this.error( err );
 				this.isEligible = false;
 			} );
 	}
 
 	reinit() {
 		super.reinit();
-		this.init();
+
+		if ( this.contextHandler?.transactionInfo ) {
+			// If possible, fetch the current transaction details from the checkout form.
+			this.contextHandler.transactionInfo().then( ( transactionInfo ) => {
+				this.transactionInfo = transactionInfo;
+				this.init();
+			} );
+		} else {
+			this.init();
+		}
 	}
 
 	/**
@@ -320,7 +341,7 @@ class GooglepayButton extends PaymentButton {
 	 * correct wrapper.
 	 */
 	addButton() {
-		if ( ! this.isInitialized || ! this.paymentsClient ) {
+		if ( ! this.paymentsClient ) {
 			return;
 		}
 
@@ -466,7 +487,7 @@ class GooglepayButton extends PaymentButton {
 
 				resolve( paymentDataRequestUpdate );
 			} catch ( error ) {
-				console.error( 'Error during onPaymentDataChanged:', error );
+				this.error( 'Error during onPaymentDataChanged:', error );
 				reject( error );
 			}
 		} );
