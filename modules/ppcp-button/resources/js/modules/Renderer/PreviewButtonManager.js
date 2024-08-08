@@ -273,19 +273,14 @@ class PreviewButtonManager {
 		if ( ! this.buttons[ id ] ) {
 			this._addButton( id, ppcpConfig );
 		} else {
-			// This is a debounced method, that fires after 100ms.
-			this._configureAllButtons( ppcpConfig );
+			this._configureButton( id, ppcpConfig );
 		}
 	}
 
 	/**
 	 * Determines if the preview box supports the current button.
 	 *
-	 * A preview-box contains the preview of one or more payment buttons. Typical configurations are
-	 * either the "Smart Button" preview box, that contains all payment buttons of the PayPal
-	 * gateway, or a single payment method specific preview, like the Google Pay button preview.
-	 *
-	 * When this function returns false, this manager instance does not create a new preview button.
+	 * E.g. "Should the current preview-box display Google Pay buttons?"
 	 *
 	 * @param {string} previewId - ID of the inner preview box container.
 	 * @return {boolean} True if the box is eligible for the preview button, false otherwise.
