@@ -6,6 +6,13 @@ import GooglepayButton from './GooglepayButton';
  * A single GooglePay preview button instance.
  */
 export default class GooglePayPreviewButton extends PreviewButton {
+	/**
+	 * Instance of the preview button.
+	 *
+	 * @type {?PaymentButton}
+	 */
+	#button = null;
+
 	constructor( args ) {
 		super( args );
 
@@ -36,20 +43,23 @@ export default class GooglePayPreviewButton extends PreviewButton {
 			null
 		);
 
-		/* Intentionally using `new` keyword, instead of the `.createButton()` factory,
-		 * as the factory is designed to only create a single button per context, while a single
-		 * page can contain multiple instances of a preview button.
-		 */
-		const button = new GooglepayButton(
-			'preview',
-			null,
-			buttonConfig,
-			this.ppcpConfig,
-			contextHandler
-		);
+		if ( ! this.#button ) {
+			/* Intentionally using `new` keyword, instead of the `.createButton()` factory,
+			 * as the factory is designed to only create a single button per context, while a single
+			 * page can contain multiple instances of a preview button.
+			 */
+			this.#button = new GooglepayButton(
+				'preview',
+				null,
+				buttonConfig,
+				this.ppcpConfig,
+				contextHandler
+			);
+		}
 
-		button.configure( this.apiConfig, null );
-		button.init();
+		this.#button.configure( this.apiConfig, null );
+		this.#button.applyButtonStyles( buttonConfig, this.ppcpConfig );
+		this.#button.reinit();
 	}
 
 	/**

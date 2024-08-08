@@ -38,7 +38,7 @@ class PreviewButtonManager {
 		this.apiConfig = null;
 		this.apiError = '';
 
-		this.#logger = new ConsoleLogger( this.methodName, 'preview' );
+		this.#logger = new ConsoleLogger( this.methodName, 'preview-manager' );
 		this.#logger.enabled = true; // Manually set this to true for development.
 
 		this.#onInit = new Promise( ( resolve ) => {

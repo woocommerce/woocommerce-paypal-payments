@@ -133,6 +133,15 @@ export default class PaymentButton {
 	#styles;
 
 	/**
+	 * Keeps track of CSS classes that were added to the wrapper element.
+	 * We use this list to remove CSS classes that we've added, e.g. to change shape from
+	 * pill to rect in the preview.
+	 *
+	 * @type {string[]}
+	 */
+	#appliedClasses = [];
+
+	/**
 	 * APM relevant configuration; e.g., configuration of the GooglePay button.
 	 */
 	#buttonConfig;
@@ -245,11 +254,11 @@ export default class PaymentButton {
 	 * to avoid multiple button instances handling the same context.
 	 *
 	 * @private
-	 * @param {string} context        - Button context name.
+	 * @param {string} context         - Button context name.
 	 * @param {Object} externalHandler - Handler object.
-	 * @param {Object} buttonConfig   - Payment button specific configuration.
-	 * @param {Object} ppcpConfig     - Plugin wide configuration object.
-	 * @param {Object} contextHandler - Handler object.
+	 * @param {Object} buttonConfig    - Payment button specific configuration.
+	 * @param {Object} ppcpConfig      - Plugin wide configuration object.
+	 * @param {Object} contextHandler  - Handler object.
 	 */
 	constructor(
 		context,
@@ -275,21 +284,18 @@ export default class PaymentButton {
 		this.#externalHandler = externalHandler;
 		this.#contextHandler = contextHandler;
 
-		this.#wrappers = this.constructor.getWrappers(
-			this.#buttonConfig,
-			this.#ppcpConfig
-		);
-		this.#styles = this.constructor.getStyles(
-			this.#buttonConfig,
-			this.#ppcpConfig
-		);
-
 		this.#logger = new ConsoleLogger( methodName, context );
 
 		if ( isDebugging ) {
 			this.#logger.enabled = true;
 			addToDebuggingCollection( methodName, this );
 		}
+
+		this.#wrappers = this.constructor.getWrappers(
+			this.#buttonConfig,
+			this.#ppcpConfig
+		);
+		this.applyButtonStyles( this.#buttonConfig );
 
 		apmButtonsInit( this.#ppcpConfig );
 		this.initEventListeners();
@@ -634,6 +640,18 @@ export default class PaymentButton {
 		this.#logger.error( ...args );
 	}
 
+	applyButtonStyles( buttonConfig, ppcpConfig = null ) {
+		if ( ! ppcpConfig ) {
+			ppcpConfig = this.ppcpConfig;
+		}
+
+		this.#styles = this.constructor.getStyles( buttonConfig, ppcpConfig );
+
+		if ( this.isInitialized ) {
+			this.triggerRedraw();
+		}
+	}
+
 	/**
 	 * Configures the button instance. Must be called before the initial `init()`.
 	 *
@@ -662,7 +680,7 @@ export default class PaymentButton {
 	}
 
 	triggerRedraw() {
-			this.showPaymentGateway();
+		this.showPaymentGateway();
 
 		dispatchButtonEvent( {
 			event: ButtonEvents.REDRAW,
@@ -711,7 +729,7 @@ export default class PaymentButton {
 		if ( this.isEligible && this.isPresent && this.isVisible ) {
 			if ( ! this.isButtonAttached ) {
 				this.log( 'refresh.addButton' );
-			this.addButton();
+				this.addButton();
 			}
 		}
 	}
@@ -748,11 +766,20 @@ export default class PaymentButton {
 		const wrapper = this.wrapperElement;
 		const { shape, height } = this.style;
 
-		wrapper.classList.add(
+		for ( const classItem of this.#appliedClasses ) {
+			wrapper.classList.remove( classItem );
+		}
+
+		this.#appliedClasses = [];
+
+		const newClasses = [
 			`ppcp-button-${ shape }`,
 			'ppcp-button-apm',
-			this.cssClass
-		);
+			this.cssClass,
+		];
+
+		wrapper.classList.add( ...newClasses );
+		this.#appliedClasses.push( ...newClasses );
 
 		if ( height ) {
 			wrapper.style.height = `${ height }px`;

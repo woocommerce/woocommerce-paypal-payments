@@ -185,8 +185,6 @@ class GooglepayButton extends PaymentButton {
 
 		this.allowedPaymentMethods = this.googlePayConfig.allowedPaymentMethods;
 		this.baseCardPaymentMethod = this.allowedPaymentMethods[ 0 ];
-
-		this.log( 'CONFIG', transactionInfo );
 		}
 
 	init() {
@@ -231,10 +229,6 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	reinit() {
-		if ( ! this.isInitialized ) {
-			return;
-		}
-
 		super.reinit();
 		this.init();
 	}
