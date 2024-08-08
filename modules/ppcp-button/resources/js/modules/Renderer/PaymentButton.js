@@ -1,6 +1,9 @@
 import ConsoleLogger from '../../../../../ppcp-wc-gateway/resources/js/helper/ConsoleLogger';
 import { apmButtonsInit } from '../Helper/ApmButtons';
-import { PaymentContext } from '../Helper/CheckoutMethodState';
+import {
+	getCurrentPaymentMethod,
+	PaymentContext,
+} from '../Helper/CheckoutMethodState';
 import {
 	ButtonEvents,
 	dispatchButtonEvent,
@@ -361,7 +364,8 @@ export default class PaymentButton {
 
 	/**
 	 * Access the button's context handler.
-	 * When no context handler was provided (like for a preview button), an empty object is returned.
+	 * When no context handler was provided (like for a preview button), an empty object is
+	 * returned.
 	 *
 	 * @return {Object} The context handler instance, or an empty object.
 	 */
@@ -440,6 +444,26 @@ export default class PaymentButton {
 			this.#buttonConfig.is_wc_gateway_enabled &&
 			PaymentContext.Gateways.includes( this.context )
 		);
+	}
+
+	/**
+	 * Whether the currently selected payment gateway is set to the payment method.
+	 *
+	 * Only relevant on checkout pages, when `this.isSeparateGateway` is true.
+	 *
+	 * @return {boolean} True means that this payment method is selected as current gateway.
+	 */
+	get isCurrentGateway() {
+		if ( ! this.isSeparateGateway ) {
+			return false;
+		}
+
+		/*
+		 * We need to rely on `getCurrentPaymentMethod()` here, as the `CheckoutBootstrap.js`
+		 * module fires the "ButtonEvents.RENDER" event before any PaymentButton instances are
+		 * created. I.e. we cannot observe the initial gateway selection event.
+		 */
+		return this.methodId === getCurrentPaymentMethod();
 	}
 
 	/**
@@ -610,9 +634,7 @@ export default class PaymentButton {
 	}
 
 	triggerRedraw() {
-		if ( this.isEligible && this.isSeparateGateway ) {
 			this.showPaymentGateway();
-		}
 
 		dispatchButtonEvent( {
 			event: ButtonEvents.REDRAW,
@@ -672,6 +694,10 @@ export default class PaymentButton {
 	 * Only relevant on the checkout page, i.e., when `this.isSeparateGateway` is `true`
 	 */
 	showPaymentGateway() {
+		if ( ! this.isSeparateGateway || ! this.isEligible ) {
+			return;
+		}
+
 		const styleSelectors = `style[data-hide-gateway="${ this.methodId }"]`;
 
 		const styles = document.querySelectorAll( styleSelectors );
@@ -682,6 +708,9 @@ export default class PaymentButton {
 		this.log( 'Show gateway' );
 
 		styles.forEach( ( el ) => el.remove() );
+
+		// This code runs only once, during button initialization, and fixes the initial visibility.
+		this.isVisible = this.isCurrentGateway;
 	}
 
 	/**
