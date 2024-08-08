@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WP_Error;
 
 /**
@@ -20,19 +21,14 @@ class UserIdToken {
 
 	use RequestTrait;
 
+	const CACHE_KEY = 'user-id-token-key';
+
 	/**
 	 * The host.
 	 *
 	 * @var string
 	 */
 	private $host;
-
-	/**
-	 * The bearer.
-	 *
-	 * @var Bearer
-	 */
-	private $bearer;
 
 	/**
 	 * The logger.
@@ -42,20 +38,37 @@ class UserIdToken {
 	private $logger;
 
 	/**
+	 * The client credentials.
+	 *
+	 * @var ClientCredentials
+	 */
+	private $client_credentials;
+
+	/**
+	 * The cache.
+	 *
+	 * @var Cache
+	 */
+	private $cache;
+
+	/**
 	 * UserIdToken constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string            $host The host.
+	 * @param LoggerInterface   $logger The logger.
+	 * @param ClientCredentials $client_credentials The client credentials.
+	 * @param Cache             $cache The cache.
 	 */
 	public function __construct(
 		string $host,
-		Bearer $bearer,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		ClientCredentials $client_credentials,
+		Cache $cache
 	) {
-		$this->host   = $host;
-		$this->bearer = $bearer;
-		$this->logger = $logger;
+		$this->host               = $host;
+		$this->logger             = $logger;
+		$this->client_credentials = $client_credentials;
+		$this->cache              = $cache;
 	}
 
 	/**
@@ -69,7 +82,9 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
-		$bearer = $this->bearer->bearer();
+		if ( $this->cache->has( self::CACHE_KEY . '-' . (string) get_current_user_id() ) ) {
+			return $this->cache->get( self::CACHE_KEY . '-' . (string) get_current_user_id() );
+		}
 
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
 		if ( $target_customer_id ) {
@@ -84,7 +99,7 @@ class UserIdToken {
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Authorization' => $this->client_credentials->credentials(),
 				'Content-Type'  => 'application/x-www-form-urlencoded',
 			),
 		);
@@ -100,6 +115,11 @@ class UserIdToken {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		return $json->id_token;
+		$id_token   = $json->id_token;
+		$expires_in = (int) $json->expires_in;
+
+		$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token, $expires_in );
+
+		return $id_token;
 	}
 }
