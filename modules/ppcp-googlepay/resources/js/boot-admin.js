@@ -103,7 +103,7 @@ class GooglePayPreviewButton extends PreviewButton {
 			null
 		);
 
-		const button = new GooglepayButton(
+		const button = GooglepayButton.createButton(
 			'preview',
 			null,
 			buttonConfig,
@@ -111,7 +111,8 @@ class GooglePayPreviewButton extends PreviewButton {
 			contextHandler
 		);
 
-		button.init( this.apiConfig, null );
+		button.configure( this.apiConfig, null );
+		button.init();
 	}
 
 	/**

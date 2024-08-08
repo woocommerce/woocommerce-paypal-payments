@@ -140,6 +140,12 @@ export default class PaymentButton {
 	#ppcpConfig;
 
 	/**
+	 * A variation of a context handler object, like CheckoutHandler.
+	 * This handler provides a standardized interface for certain standardized checks and actions.
+	 */
+	#contextHandler;
+
+	/**
 	 * Whether the current browser/website support the payment method.
 	 *
 	 * @type {boolean}
@@ -197,7 +203,8 @@ export default class PaymentButton {
 	}
 
 	/**
-	 * Returns a list with all wrapper IDs for the implemented payment method, categorized by context.
+	 * Returns a list with all wrapper IDs for the implemented payment method, categorized by
+	 * context.
 	 *
 	 * @abstract
 	 * @param {Object} buttonConfig - Payment method specific configuration.
@@ -210,7 +217,8 @@ export default class PaymentButton {
 	}
 
 	/**
-	 * Returns a list of all button styles for the implemented payment method, categorized by context.
+	 * Returns a list of all button styles for the implemented payment method, categorized by
+	 * context.
 	 *
 	 * @abstract
 	 * @param {Object} buttonConfig - Payment method specific configuration.
@@ -229,13 +237,18 @@ export default class PaymentButton {
 	 * to avoid multiple button instances handling the same context.
 	 *
 	 * @private
-	 * @param {string} context      - Button context name.
-	 * @param {Object} buttonConfig - Payment button specific configuration.
-	 * @param {Object} ppcpConfig   - Plugin wide configuration object.
+	 * @param {string} context        - Button context name.
+	 * @param {Object} buttonConfig   - Payment button specific configuration.
+	 * @param {Object} ppcpConfig     - Plugin wide configuration object.
+	 * @param {Object} contextHandler - Handler object.
 	 */
-	constructor( context, buttonConfig, ppcpConfig ) {
+	constructor( context, buttonConfig, ppcpConfig, contextHandler ) {
 		if ( this.methodId === PaymentButton.methodId ) {
 			throw new Error( 'Cannot initialize the PaymentButton base class' );
+		}
+
+		if ( ! buttonConfig ) {
+			buttonConfig = {};
 		}
 
 		const isDebugging = !! buttonConfig?.is_debug;
@@ -244,6 +257,7 @@ export default class PaymentButton {
 		this.#context = context;
 		this.#buttonConfig = buttonConfig;
 		this.#ppcpConfig = ppcpConfig;
+		this.#contextHandler = contextHandler;
 
 		this.#wrappers = this.constructor.getWrappers(
 			this.#buttonConfig,
@@ -326,6 +340,31 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Access the button's context handler.
+	 * When no context handler was provided (like for a preview button), an empty object is returned.
+	 *
+	 * @return {Object} The context handler instance, or an empty object.
+	 */
+	get contextHandler() {
+		return this.#contextHandler || {};
+	}
+
+	/**
+	 * Whether customers need to provide shipping details during payment.
+	 *
+	 * Can be extended by child classes to take method specific configuration into account.
+	 *
+	 * @return {boolean} True means, shipping fields are displayed and must be filled.
+	 */
+	get requiresShipping() {
+		// Default check: Is shipping enabled in WooCommerce?
+		return (
+			'function' === typeof this.contextHandler.shippingAllowed &&
+			this.contextHandler.shippingAllowed()
+		);
+	}
+
+	/**
 	 * Button wrapper details.
 	 *
 	 * @readonly
@@ -393,6 +432,15 @@ export default class PaymentButton {
 	 */
 	get isConfigValid() {
 		return true;
+	}
+
+	/**
+	 * Flags a preview button without actual payment logic.
+	 *
+	 * @return {boolean} True indicates a preview instance that has no payment logic.
+	 */
+	get isPreview() {
+		return PaymentContext.Preview === this.context;
 	}
 
 	/**
@@ -515,11 +563,18 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Configures the button instance. Must be called before the initial `init()`.
+	 *
+	 * Parameters are defined by the derived class.
+	 *
+	 * @abstract
+	 */
+	configure() {}
+
+	/**
 	 * Must be named `init()` to simulate "protected" visibility:
 	 * Since the derived class also implements a method with the same name, this method can only
 	 * be called by the derived class, but not from any other code.
-	 *
-	 * @protected
 	 */
 	init() {
 		this.#isInitialized = true;
@@ -529,8 +584,6 @@ export default class PaymentButton {
 	 * Must be named `reinit()` to simulate "protected" visibility:
 	 * Since the derived class also implements a method with the same name, this method can only
 	 * be called by the derived class, but not from any other code.
-	 *
-	 * @protected
 	 */
 	reinit() {
 		this.#isInitialized = false;

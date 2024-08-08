@@ -67,9 +67,9 @@ class GooglepayButton extends PaymentButton {
 	 */
 	static getWrappers( buttonConfig, ppcpConfig ) {
 		return combineWrapperIds(
-			buttonConfig.button.wrapper,
-			buttonConfig.button.mini_cart_wrapper,
-			ppcpConfig.button.wrapper,
+			buttonConfig?.button?.wrapper || '',
+			buttonConfig?.button?.mini_cart_wrapper || '',
+			ppcpConfig?.button?.wrapper || '',
 			'ppc-button-googlepay-container',
 			'ppc-button-ppcp-googlepay'
 		);
@@ -79,7 +79,10 @@ class GooglepayButton extends PaymentButton {
 	 * @inheritDoc
 	 */
 	static getStyles( buttonConfig, ppcpConfig ) {
-		const styles = combineStyles( ppcpConfig.button, buttonConfig.button );
+		const styles = combineStyles(
+			ppcpConfig?.button || {},
+			buttonConfig?.button || {}
+		);
 
 		if ( 'buy' === styles.MiniCart.type ) {
 			styles.MiniCart.type = 'pay';
@@ -95,9 +98,11 @@ class GooglepayButton extends PaymentButton {
 		externalHandler,
 		contextHandler
 	) {
-		super( context, buttonConfig, ppcpConfig );
+		super( context, buttonConfig, ppcpConfig, contextHandler );
 
-		this.contextHandler = contextHandler;
+		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
+		this.onPaymentDataChanged = this.onPaymentDataChanged.bind( this );
+		this.onButtonClick = this.onButtonClick.bind( this );
 
 		this.log( 'Create instance' );
 	}
@@ -113,12 +118,34 @@ class GooglepayButton extends PaymentButton {
 			return false;
 		}
 
+		// Preview buttons only need a valid environment.
+		if ( this.isPreview ) {
+			return true;
+		}
+
+		if ( ! this.googlePayConfig ) {
+			this.error( 'No API configuration - missing configure() call?' );
+			return false;
+		}
+
+		if ( ! this.transactionInfo ) {
+			this.error( 'No transactionInfo - missing configure() call?' );
+			return false;
+		}
+
 		if ( ! typeof this.contextHandler?.validateContext() ) {
 			this.error( 'Invalid context handler.', this.contextHandler );
 			return false;
 		}
 
 		return true;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	get requiresShipping() {
+		return super.requiresShipping && this.buttonConfig.shipping?.enabled;
 	}
 
 	/**
@@ -140,28 +167,32 @@ class GooglepayButton extends PaymentButton {
 		return this.#paymentsClient;
 	}
 
-	init( config = null, transactionInfo = null ) {
+	/**
+	 * Configures the button instance. Must be called before the initial `init()`.
+	 *
+	 * @param {Object} apiConfig       - API configuration.
+	 * @param {Object} transactionInfo - Transaction details; required before "init" call.
+	 */
+	configure( apiConfig, transactionInfo ) {
+		this.googlePayConfig = apiConfig;
+			this.transactionInfo = transactionInfo;
+
+		this.allowedPaymentMethods = this.googlePayConfig.allowedPaymentMethods;
+		this.baseCardPaymentMethod = this.allowedPaymentMethods[ 0 ];
+
+		this.log( 'CONFIG', transactionInfo );
+		}
+
+	init() {
+		// Stop, if the button is already initialized.
 		if ( this.isInitialized ) {
 			return;
 		}
-		if ( config ) {
-			this.googlePayConfig = config;
-		}
-		if ( transactionInfo ) {
-			this.transactionInfo = transactionInfo;
-		}
 
-		if ( ! this.googlePayConfig || ! this.transactionInfo ) {
-			this.error( 'Missing config or transactionInfo during init.' );
-			return;
-		}
-
+		// Stop, if configuration is invalid.
 		if ( ! this.isConfigValid ) {
 			return;
 		}
-
-		this.allowedPaymentMethods = config.allowedPaymentMethods;
-		this.baseCardPaymentMethod = this.allowedPaymentMethods[ 0 ];
 
 		super.init();
 		this.#paymentsClient = this.createPaymentsClient();
@@ -170,6 +201,7 @@ class GooglepayButton extends PaymentButton {
 			this.log( 'Payment wrapper not found', this.wrapperId );
 			return;
 		}
+
 		if ( ! this.paymentsClient ) {
 			this.log( 'Could not initialize the payments client' );
 			return;
@@ -179,7 +211,7 @@ class GooglepayButton extends PaymentButton {
 			.isReadyToPay(
 				this.buildReadyToPayRequest(
 					this.allowedPaymentMethods,
-					config
+					this.googlePayConfig
 				)
 			)
 			.then( ( response ) => {
@@ -201,22 +233,34 @@ class GooglepayButton extends PaymentButton {
 		this.init();
 	}
 
+	/**
+	 * Provides an object with relevant paymentDataCallbacks for the current button instance.
+	 *
+	 * @return {Object} An object containing callbacks for the current scope & configuration.
+	 */
+	preparePaymentDataCallbacks() {
+		const callbacks = {};
+
+		// We do not attach any callbacks to preview buttons.
+		if ( this.isPreview ) {
+			return callbacks;
+		}
+
+		callbacks.onPaymentAuthorized = this.onPaymentAuthorized;
+
+		if ( this.requiresShipping ) {
+			callbacks.onPaymentDataChanged = this.onPaymentDataChanged;
+		}
+
+		return callbacks;
+	}
+
 	createPaymentsClient() {
 		if ( ! this.googlePayApi ) {
 			return null;
 		}
 
-		const callbacks = {
-			onPaymentAuthorized: this.onPaymentAuthorized.bind( this ),
-		};
-
-		if (
-			this.buttonConfig.shipping.enabled &&
-			this.contextHandler.shippingAllowed()
-		) {
-			callbacks.onPaymentDataChanged =
-				this.onPaymentDataChanged.bind( this );
-		}
+		const callbacks = this.preparePaymentDataCallbacks();
 
 		/**
 		 * Consider providing merchant info here:
@@ -253,7 +297,7 @@ class GooglepayButton extends PaymentButton {
 		 * @see https://developers.google.com/pay/api/web/reference/client#createButton
 		 */
 		const button = this.paymentsClient.createButton( {
-			onClick: this.onButtonClick.bind( this ),
+			onClick: this.onButtonClick,
 			allowedPaymentMethods: [ baseCardPaymentMethod ],
 			buttonColor: color || 'black',
 			buttonType: type || 'pay',
@@ -314,10 +358,7 @@ class GooglepayButton extends PaymentButton {
 		paymentDataRequest.transactionInfo = this.transactionInfo;
 		paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
 
-		if (
-			this.buttonConfig.shipping.enabled &&
-			this.contextHandler.shippingAllowed()
-		) {
+		if ( this.requiresShipping ) {
 			paymentDataRequest.callbackIntents = [
 				'SHIPPING_ADDRESS',
 				'SHIPPING_OPTION',

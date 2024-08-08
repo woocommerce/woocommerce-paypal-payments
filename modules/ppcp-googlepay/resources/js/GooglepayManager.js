@@ -30,13 +30,19 @@ class GooglepayManager {
 
 			this.buttons.push( button );
 
+			const initButton = () => {
+				button.configure( this.googlePayConfig, this.transactionInfo );
+				button.init();
+			};
+
 			// Initialize button only if googlePayConfig and transactionInfo are already fetched.
 			if ( this.googlePayConfig && this.transactionInfo ) {
-				button.init( this.googlePayConfig, this.transactionInfo );
+				initButton();
 			} else {
 				await this.init();
+
 				if ( this.googlePayConfig && this.transactionInfo ) {
-					button.init( this.googlePayConfig, this.transactionInfo );
+					initButton();
 				}
 			}
 		} );
@@ -54,7 +60,8 @@ class GooglepayManager {
 			}
 
 			for ( const button of this.buttons ) {
-				button.init( this.googlePayConfig, this.transactionInfo );
+				button.configure( this.googlePayConfig, this.transactionInfo );
+				button.init();
 			}
 		} catch ( error ) {
 			console.error( 'Error during initialization:', error );
