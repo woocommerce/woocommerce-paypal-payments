@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WP_Error;
@@ -18,6 +19,8 @@ use WP_Error;
  * Class Orders
  */
 class Orders {
+
+	use RequestTrait;
 
 	/**
 	 * The host.
@@ -34,28 +37,46 @@ class Orders {
 	private $bearer;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * Orders constructor.
 	 *
-	 * @param string $host
-	 * @param Bearer $bearer
+	 * @param string          $host The host.
+	 * @param Bearer          $bearer The bearer.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		string $host,
-		Bearer $bearer
+		Bearer $bearer,
+		LoggerInterface $logger
 	) {
-		$this->host = $host;
+		$this->host   = $host;
 		$this->bearer = $bearer;
+		$this->logger = $logger;
 	}
 
-	public function create(array $request_body, array $headers = array()): array {
+	/**
+	 * Creates a PayPal order.
+	 *
+	 * @param array $request_body The request body.
+	 * @param array $headers The request headers.
+	 * @return array
+	 * @throws RuntimeException If something is wrong with the request.
+	 */
+	public function create( array $request_body, array $headers = array() ): array {
 		$bearer = $this->bearer->bearer();
-		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders';
 
 		$default_headers = array(
 			'Authorization' => 'Bearer ' . $bearer->token(),
-			'Content-Type' => 'application/json',
+			'Content-Type'  => 'application/json',
 		);
-		$headers = array_merge(
+		$headers         = array_merge(
 			$default_headers,
 			$headers
 		);
@@ -66,7 +87,7 @@ class Orders {
 			'body'    => wp_json_encode( $request_body ),
 		);
 
-		$response = wp_remote_get( $url, $args );
+		$response = $this->request( $url, $args );
 		if ( $response instanceof WP_Error ) {
 			throw new RuntimeException( $response->get_error_message() );
 		}

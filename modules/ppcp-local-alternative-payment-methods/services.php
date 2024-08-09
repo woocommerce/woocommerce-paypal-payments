@@ -12,7 +12,10 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'ppcp-local-apms.bancontact.wc-gateway' =>  static function ( ContainerInterface $container ): BancontactGateway {
-		return new BancontactGateway();
+	'ppcp-local-apms.bancontact.wc-gateway' => static function ( ContainerInterface $container ): BancontactGateway {
+		return new BancontactGateway(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' )
+		);
 	},
 );

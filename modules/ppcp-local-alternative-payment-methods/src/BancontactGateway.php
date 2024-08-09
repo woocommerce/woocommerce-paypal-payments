@@ -10,12 +10,40 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
+/**
+ * Class BancontactGateway
+ */
 class BancontactGateway extends WC_Payment_Gateway {
 
 	const ID = 'ppcp-bancontact';
 
-	public function __construct() {
+	/**
+	 * PayPal Orders endpoint.
+	 *
+	 * @var Orders
+	 */
+	private $orders_endpoint;
+
+	/**
+	 * Purchase unit factory.
+	 *
+	 * @var PurchaseUnitFactory
+	 */
+	private $purchase_unit_factory;
+
+	/**
+	 * BancontactGateway constructor.
+	 *
+	 * @param Orders              $orders_endpoint PayPal Orders endpoint.
+	 * @param PurchaseUnitFactory $purchase_unit_factory Purchase unit factory.
+	 */
+	public function __construct(
+		Orders $orders_endpoint,
+		PurchaseUnitFactory $purchase_unit_factory
+	) {
 		$this->id = self::ID;
 
 		$this->method_title       = __( 'Bancontact', 'woocommerce-paypal-payments' );
@@ -30,8 +58,14 @@ class BancontactGateway extends WC_Payment_Gateway {
 		$this->init_settings();
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+
+		$this->orders_endpoint       = $orders_endpoint;
+		$this->purchase_unit_factory = $purchase_unit_factory;
 	}
 
+	/**
+	 * Initialize the form fields.
+	 */
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled'     => array(
@@ -59,14 +93,63 @@ class BancontactGateway extends WC_Payment_Gateway {
 		);
 	}
 
+	/**
+	 * Processes the order.
+	 *
+	 * @param int $order_id The WC order ID.
+	 * @return array
+	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
+		$wc_order->update_status( 'on-hold', __( 'Awaiting Bancontact to confirm the payment.', 'woocommerce-paypal-payments' ) );
 
+		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$amount        = $purchase_unit->amount()->to_array();
 
+		$request_body = array(
+			'intent'                 => 'CAPTURE',
+			'payment_source'         => array(
+				'bancontact' => array(
+					'country_code' => 'BE',
+					'name'         => 'John Doe',
+				),
+			),
+			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
+			'purchase_units'         => array(
+				array(
+					'reference_id' => $purchase_unit->reference_id(),
+					'amount'       => array(
+						'currency_code' => $amount['currency_code'],
+						'value'         => $amount['value'],
+					),
+					'custom_id'    => $purchase_unit->custom_id(),
+					'invoice_id'   => $purchase_unit->invoice_id(),
+				),
+			),
+			'application_context'    => array(
+				'locale'     => 'en-BE',
+				'return_url' => $this->get_return_url( $wc_order ),
+				'cancel_url' => $this->get_return_url( $wc_order ),
+			),
+		);
+
+		$headers = array(
+			'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
+		);
+
+		$response = $this->orders_endpoint->create( $request_body, $headers );
+		$body     = json_decode( $response['body'] );
+
+		$payer_action = '';
+		foreach ( $body->links as $link ) {
+			if ( $link->rel === 'payer-action' ) {
+				$payer_action = $link->href;
+			}
+		}
 
 		return array(
 			'result'   => 'success',
-			'redirect' => $this->get_return_url( $wc_order ),
+			'redirect' => esc_url( $payer_action ),
 		);
 	}
 }

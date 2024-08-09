@@ -241,10 +241,11 @@ return array(
 			$bn_code
 		);
 	},
-	'api.endpoint.orders' => static function (ContainerInterface $container): Orders {
+	'api.endpoint.orders'                            => static function ( ContainerInterface $container ): Orders {
 		return new Orders(
 			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' )
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.endpoint.billing-agreements'                => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
