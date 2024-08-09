@@ -96,18 +96,6 @@ class ApiModule implements ModuleInterface {
 			10,
 			2
 		);
-
-		add_action(
-			'wp_logout',
-			function( int $user_id ) use ( $c ) {
-				$client_credentials_cache = $c->get( 'api.client-credentials-cache' );
-				assert( $client_credentials_cache instanceof Cache );
-
-				if ( $client_credentials_cache->has( UserIdToken::CACHE_KEY . '-' . (string) $user_id ) ) {
-					$client_credentials_cache->delete( UserIdToken::CACHE_KEY . '-' . (string) $user_id );
-				}
-			}
-		);
 	}
 
 	/**

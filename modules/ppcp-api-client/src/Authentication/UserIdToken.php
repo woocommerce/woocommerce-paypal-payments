@@ -11,7 +11,6 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WP_Error;
 
 /**
@@ -20,8 +19,6 @@ use WP_Error;
 class UserIdToken {
 
 	use RequestTrait;
-
-	const CACHE_KEY = 'user-id-token-key';
 
 	/**
 	 * The host.
@@ -45,30 +42,20 @@ class UserIdToken {
 	private $client_credentials;
 
 	/**
-	 * The cache.
-	 *
-	 * @var Cache
-	 */
-	private $cache;
-
-	/**
 	 * UserIdToken constructor.
 	 *
 	 * @param string            $host The host.
 	 * @param LoggerInterface   $logger The logger.
 	 * @param ClientCredentials $client_credentials The client credentials.
-	 * @param Cache             $cache The cache.
 	 */
 	public function __construct(
 		string $host,
 		LoggerInterface $logger,
-		ClientCredentials $client_credentials,
-		Cache $cache
+		ClientCredentials $client_credentials
 	) {
 		$this->host               = $host;
 		$this->logger             = $logger;
 		$this->client_credentials = $client_credentials;
-		$this->cache              = $cache;
 	}
 
 	/**
