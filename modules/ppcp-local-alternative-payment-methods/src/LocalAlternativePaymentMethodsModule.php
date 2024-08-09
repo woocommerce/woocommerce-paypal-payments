@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -35,5 +36,12 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 
 			return $methods;
 		});
+
+		add_action(
+			'woocommerce_blocks_payment_method_type_registration',
+			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+				$payment_method_registry->register( $c->get( 'ppcp-local-apms.bancontact.payment-method' ) );
+			}
+		);
 	}
 }
