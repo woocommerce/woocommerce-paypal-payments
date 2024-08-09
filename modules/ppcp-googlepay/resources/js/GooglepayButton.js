@@ -277,15 +277,7 @@ class GooglepayButton extends PaymentButton {
 	reinit() {
 		super.reinit();
 
-		if ( this.contextHandler?.transactionInfo ) {
-			// If possible, fetch the current transaction details from the checkout form.
-			this.contextHandler.transactionInfo().then( ( transactionInfo ) => {
-				this.transactionInfo = transactionInfo;
-				this.init();
-			} );
-		} else {
-			this.init();
-		}
+		this.init();
 	}
 
 	/**
@@ -375,29 +367,45 @@ class GooglepayButton extends PaymentButton {
 
 		const initiatePaymentRequest = () => {
 			window.ppcpFundingSource = 'googlepay';
-
 			const paymentDataRequest = this.paymentDataRequest();
-
 			this.log(
 				'onButtonClick: paymentDataRequest',
 				paymentDataRequest,
 				this.context
 			);
-
 			this.paymentsClient.loadPaymentData( paymentDataRequest );
 		};
 
-		if ( 'function' === typeof this.contextHandler.validateForm ) {
-			// During regular checkout, validate the checkout form before initiating the payment.
-			this.contextHandler
-				.validateForm()
-				.then( initiatePaymentRequest, ( reason ) => {
-					this.error( 'Form validation failed.', reason );
+		const validateForm = () => {
+			if ( 'function' !== typeof this.contextHandler.validateForm ) {
+				return Promise.resolve();
+			}
+
+			return this.contextHandler.validateForm().catch( ( error ) => {
+				this.error( 'Form validation failed:', error );
+				throw error;
+			} );
+		};
+
+		const getTransactionInfo = () => {
+			if ( 'function' !== typeof this.contextHandler.transactionInfo ) {
+				return Promise.resolve();
+			}
+
+			return this.contextHandler
+				.transactionInfo()
+				.then( ( transactionInfo ) => {
+					this.transactionInfo = transactionInfo;
+				} )
+				.catch( ( error ) => {
+					this.error( 'Failed to get transaction info:', error );
+					throw error;
 				} );
-		} else {
-			// This is the flow on product page, cart, and other non-checkout pages.
-			initiatePaymentRequest();
-		}
+		};
+
+		validateForm()
+			.then( getTransactionInfo )
+			.then( initiatePaymentRequest );
 	}
 
 	paymentDataRequest() {
