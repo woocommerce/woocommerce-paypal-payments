@@ -82,7 +82,7 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
-		if ( $this->cache->has( self::CACHE_KEY . '-' . (string) get_current_user_id() ) ) {
+		if ( get_current_user_id() !== 0 && $this->cache->has( self::CACHE_KEY . '-' . (string) get_current_user_id() ) ) {
 			return $this->cache->get( self::CACHE_KEY . '-' . (string) get_current_user_id() );
 		}
 
@@ -118,7 +118,9 @@ class UserIdToken {
 		$id_token   = $json->id_token;
 		$expires_in = (int) $json->expires_in;
 
-		$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token, $expires_in );
+		if ( get_current_user_id() !== 0 ) {
+			$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token, $expires_in );
+		}
 
 		return $id_token;
 	}
