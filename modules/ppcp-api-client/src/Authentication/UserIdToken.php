@@ -82,10 +82,6 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
-		if ( $this->cache->has( self::CACHE_KEY . '-' . (string) get_current_user_id() ) ) {
-			return $this->cache->get( self::CACHE_KEY . '-' . (string) get_current_user_id() );
-		}
-
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
 		if ( $target_customer_id ) {
 			$url = add_query_arg(
@@ -115,11 +111,6 @@ class UserIdToken {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		$id_token   = $json->id_token;
-		$expires_in = (int) $json->expires_in;
-
-		$this->cache->set( self::CACHE_KEY . '-' . (string) get_current_user_id(), $id_token, $expires_in );
-
-		return $id_token;
+		return $json->id_token;
 	}
 }
