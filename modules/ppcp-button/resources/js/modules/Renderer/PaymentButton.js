@@ -677,6 +677,7 @@ export default class PaymentButton {
 	 */
 	reinit() {
 		this.#isInitialized = false;
+		this.#isEligible = false;
 	}
 
 	triggerRedraw() {
