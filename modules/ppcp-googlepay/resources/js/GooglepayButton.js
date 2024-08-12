@@ -84,6 +84,8 @@ class GooglepayButton extends PaymentButton {
 	 */
 	#transactionInfo = null;
 
+	googlePayConfig = null;
+
 	/**
 	 * @inheritDoc
 	 */
@@ -120,6 +122,9 @@ class GooglepayButton extends PaymentButton {
 		ppcpConfig,
 		contextHandler
 	) {
+		// Disable debug output in the browser console:
+		// buttonConfig.is_debug = false;
+
 		super(
 			context,
 			externalHandler,
@@ -244,7 +249,7 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	init() {
-		// Stop, if the button is already initialized.
+		// Use `reinit()` to force a full refresh of an initialized button.
 		if ( this.isInitialized ) {
 			return;
 		}
