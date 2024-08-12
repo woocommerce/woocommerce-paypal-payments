@@ -1677,8 +1677,7 @@ return array(
 		return new UserIdToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.client-credentials' ),
-			$container->get( 'api.client-credentials-cache' )
+			$container->get( 'api.client-credentials' )
 		);
 	},
 	'api.sdk-client-token'                           => static function( ContainerInterface $container ): SdkClientToken {
