@@ -473,18 +473,6 @@ export default class PaymentButton {
 	}
 
 	/**
-	 * Determines if the current button instance has valid and complete configuration details.
-	 * Used during initialization to decide if the button can be initialized or should be skipped.
-	 *
-	 * Can be implemented by the derived class.
-	 *
-	 * @return {boolean} True indicates the config is valid and initialization can continue.
-	 */
-	get isConfigValid() {
-		return true;
-	}
-
-	/**
 	 * Flags a preview button without actual payment logic.
 	 *
 	 * @return {boolean} True indicates a preview instance that has no payment logic.
@@ -638,6 +626,19 @@ export default class PaymentButton {
 	 */
 	error( ...args ) {
 		this.#logger.error( ...args );
+	}
+
+	/**
+	 * Determines if the current button instance has valid and complete configuration details.
+	 * Used during initialization to decide if the button can be initialized or should be skipped.
+	 *
+	 * Can be implemented by the derived class.
+	 *
+	 * @param {boolean} [silent=false] - Set to true to suppress console errors.
+	 * @return {boolean} True indicates the config is valid and initialization can continue.
+	 */
+	validateConfiguration( silent = false ) {
+		return true;
 	}
 
 	applyButtonStyles( buttonConfig, ppcpConfig = null ) {

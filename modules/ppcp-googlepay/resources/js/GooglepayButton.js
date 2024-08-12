@@ -139,40 +139,6 @@ class GooglepayButton extends PaymentButton {
 	/**
 	 * @inheritDoc
 	 */
-	get isConfigValid() {
-		const validEnvs = [ 'PRODUCTION', 'TEST' ];
-
-		if ( ! validEnvs.includes( this.buttonConfig.environment ) ) {
-			this.error( 'Invalid environment.', this.buttonConfig.environment );
-			return false;
-		}
-
-		// Preview buttons only need a valid environment.
-		if ( this.isPreview ) {
-			return true;
-		}
-
-		if ( ! this.googlePayConfig ) {
-			this.error( 'No API configuration - missing configure() call?' );
-			return false;
-		}
-
-		if ( ! this.transactionInfo ) {
-			this.error( 'No transactionInfo - missing configure() call?' );
-			return false;
-		}
-
-		if ( ! typeof this.contextHandler?.validateContext() ) {
-			this.error( 'Invalid context handler.', this.contextHandler );
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
 	get requiresShipping() {
 		return super.requiresShipping && this.buttonConfig.shipping?.enabled;
 	}
@@ -220,6 +186,50 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	/**
+	 * @inheritDoc
+	 */
+	validateConfiguration( silent = false ) {
+		const validEnvs = [ 'PRODUCTION', 'TEST' ];
+
+		const isInvalid = ( ...args ) => {
+			if ( ! silent ) {
+				this.error( ...args );
+			}
+			return false;
+		};
+
+		if ( ! validEnvs.includes( this.buttonConfig.environment ) ) {
+			return isInvalid(
+				'Invalid environment:',
+				this.buttonConfig.environment
+			);
+		}
+
+		// Preview buttons only need a valid environment.
+		if ( this.isPreview ) {
+			return true;
+		}
+
+		if ( ! this.googlePayConfig ) {
+			return isInvalid(
+				'No API configuration - missing configure() call?'
+			);
+		}
+
+		if ( ! this.transactionInfo ) {
+			return isInvalid(
+				'No transactionInfo - missing configure() call?'
+			);
+		}
+
+		if ( ! typeof this.contextHandler?.validateContext() ) {
+			return isInvalid( 'Invalid context handler.', this.contextHandler );
+		}
+
+		return true;
+	}
+
+	/**
 	 * Configures the button instance. Must be called before the initial `init()`.
 	 *
 	 * @param {Object} apiConfig       - API configuration.
@@ -240,7 +250,7 @@ class GooglepayButton extends PaymentButton {
 		}
 
 		// Stop, if configuration is invalid.
-		if ( ! this.isConfigValid ) {
+		if ( ! this.validateConfiguration() ) {
 			return;
 		}
 
@@ -275,6 +285,11 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	reinit() {
+		// Missing (invalid) configuration indicates, that the first `init()` call did not happen yet.
+		if ( ! this.validateConfiguration( true ) ) {
+			return;
+		}
+
 		super.reinit();
 
 		this.init();
