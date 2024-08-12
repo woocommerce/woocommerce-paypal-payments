@@ -73,8 +73,9 @@ class Orders {
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders';
 
 		$default_headers = array(
-			'Authorization' => 'Bearer ' . $bearer->token(),
-			'Content-Type'  => 'application/json',
+			'Authorization'     => 'Bearer ' . $bearer->token(),
+			'Content-Type'      => 'application/json',
+			'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
 		);
 		$headers         = array_merge(
 			$default_headers,

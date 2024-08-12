@@ -53,5 +53,16 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				$payment_method_registry->register( $c->get( 'ppcp-local-apms.bancontact.payment-method' ) );
 			}
 		);
+
+		add_filter(
+			'woocommerce_paypal_payments_localized_script_data',
+			function ( array $data ) {
+				$default_disable_funding               = $data['url_params']['disable-funding'] ?? '';
+				$disable_funding                       = array_merge( array( 'bancontact' ), array_filter( explode( ',', $default_disable_funding ) ) );
+				$data['url_params']['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
+
+				return $data;
+			}
+		);
 	}
 }

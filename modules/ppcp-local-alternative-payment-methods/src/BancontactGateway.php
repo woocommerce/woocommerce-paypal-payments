@@ -129,15 +129,11 @@ class BancontactGateway extends WC_Payment_Gateway {
 			'application_context'    => array(
 				'locale'     => 'en-BE',
 				'return_url' => $this->get_return_url( $wc_order ),
-				'cancel_url' => $this->get_return_url( $wc_order ),
+				'cancel_url' => wc_get_checkout_url(),
 			),
 		);
 
-		$headers = array(
-			'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
-		);
-
-		$response = $this->orders_endpoint->create( $request_body, $headers );
+		$response = $this->orders_endpoint->create( $request_body );
 		$body     = json_decode( $response['body'] );
 
 		$payer_action = '';
