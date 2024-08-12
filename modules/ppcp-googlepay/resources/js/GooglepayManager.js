@@ -59,9 +59,18 @@ class GooglepayManager {
 				this.transactionInfo = await this.fetchTransactionInfo();
 			}
 
-			for ( const button of this.buttons ) {
-				button.configure( this.googlePayConfig, this.transactionInfo );
-				button.init();
+			if ( ! this.googlePayConfig ) {
+				console.error( 'No GooglePayConfig received during init' );
+			} else if ( ! this.transactionInfo ) {
+				console.error( 'No transactionInfo found during init' );
+			} else {
+				for ( const button of this.buttons ) {
+					button.configure(
+						this.googlePayConfig,
+						this.transactionInfo
+					);
+					button.init();
+				}
 			}
 		} catch ( error ) {
 			console.error( 'Error during initialization:', error );
