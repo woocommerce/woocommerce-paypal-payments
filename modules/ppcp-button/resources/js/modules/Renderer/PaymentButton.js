@@ -553,36 +553,6 @@ export default class PaymentButton {
 	}
 
 	/**
-	 * Returns an array of HTMLElements that belong to the payment button.
-	 *
-	 * @readonly
-	 * @return {HTMLElement[]} List of payment button wrapper elements.
-	 */
-	get allElements() {
-		const selectors = [];
-
-		// Payment button (Pay now, smart button block)
-		selectors.push( `#${ this.wrapperId }` );
-
-		// Block Checkout: Express checkout button.
-		if ( PaymentContext.Blocks.includes( this.context ) ) {
-			selectors.push( `#${ this.wrappers.Block }` );
-		}
-
-		// Classic Checkout: Separate gateway.
-		if ( this.isSeparateGateway ) {
-			selectors.push(
-				`.wc_payment_method.payment_method_${ this.methodId }`
-			);
-		}
-
-		this.log( 'Wrapper Elements:', selectors );
-		return /** @type {HTMLElement[]} */ selectors.flatMap( ( selector ) =>
-			Array.from( document.querySelectorAll( selector ) )
-		);
-	}
-
-	/**
 	 * Checks, if the payment button is still attached to the DOM.
 	 *
 	 * WooCommerce performs some partial reloads in many cases, which can lead to our payment
