@@ -419,7 +419,7 @@ class AxoModule implements ModuleInterface {
 		}
 
 		printf(
-			'<meta name="ppcp.axo" content="%s" />',
+			'<meta name="ppcp.axo" content="ppcp.axo.%s" />',
 			$axo_enabled ? 'enabled' : 'disabled'
 		);
 	}
