@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 /**
  * Class Settings
  */
-class Settings implements ContainerInterface {
+class Settings implements SettingsGetterInterface, ContainerInterface {
 
 	const KEY               = 'woocommerce-ppcp-settings';
 	const CONNECTION_TAB_ID = 'ppcp-connection';
@@ -101,6 +101,19 @@ class Settings implements ContainerInterface {
 	public function has( $id ) {
 		$this->load();
 		return array_key_exists( $id, $this->settings );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * Replaces `$settings->has() ? $settings->get() : $default` chains.
+	 */
+	public function get_value( string $key, $default = null ) {
+		try {
+			return $this->get( $key );
+		} catch ( NotFoundException $e ) {
+			return $default;
+		}
 	}
 
 	/**
