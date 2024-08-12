@@ -9,8 +9,8 @@ module.exports = {
 	target: 'web',
 	plugins: [ new DependencyExtractionWebpackPlugin() ],
 	entry: {
-		'bancontact-checkout-block': path.resolve(
-			'./resources/js/bancontact-checkout-block.js'
+		'bancontact-payment-method': path.resolve(
+			'./resources/js/bancontact-payment-method.js'
 		),
 	},
 	output: {

@@ -1,12 +1,12 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
+import { Bancontact } from './bancontact-block';
 
 const config = wc.wcSettings.getSetting( 'ppcp-bancontact_data' );
-console.log( config );
 
 registerPaymentMethod( {
 	name: config.id,
 	label: <div dangerouslySetInnerHTML={ { __html: config.title } } />,
-	content: <div>Hi there!</div>,
+	content: <Bancontact config={ config } />,
 	edit: <div></div>,
 	ariaLabel: config.title,
 	canMakePayment: () => {

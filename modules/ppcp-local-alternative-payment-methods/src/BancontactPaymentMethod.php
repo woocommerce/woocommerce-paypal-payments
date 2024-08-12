@@ -63,14 +63,14 @@ class BancontactPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	public function get_payment_method_script_handles() {
 		wp_register_script(
-			'ppcp-bancontact-checkout-block',
-			trailingslashit( $this->module_url ) . 'assets/js/bancontact-checkout-block.js',
+			'ppcp-bancontact-payment-method',
+			trailingslashit( $this->module_url ) . 'assets/js/bancontact-payment-method.js',
 			array(),
 			$this->version,
 			true
 		);
 
-		return array( 'ppcp-bancontact-checkout-block' );
+		return array( 'ppcp-bancontact-payment-method' );
 	}
 
 	/**
@@ -81,6 +81,7 @@ class BancontactPaymentMethod extends AbstractPaymentMethodType {
 			'id'                  => $this->name,
 			'title'               => $this->gateway->title,
 			'description'         => $this->gateway->description,
+			'icon' => esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_bancontact_color.svg' ),
 		);
 	}
 }
