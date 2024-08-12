@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.8.3 - xxxx-xx-xx =
+= 2.8.3 - 2024-08-12 =
 * Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474
 * Fix - Do not add tax info into order meta during order creation #2471
 * Fix - PayPal declares subscription support when for Subscription mode is set Disable PayPal for subscription #2425
