@@ -146,6 +146,7 @@ class UpdatePaymentDataEndpoint {
 						wc_price( (float) $rate->get_cost(), array( 'currency' => get_woocommerce_currency() ) )
 					)
 				),
+				'cost'        => $rate->get_cost(),
 			);
 		}
 
