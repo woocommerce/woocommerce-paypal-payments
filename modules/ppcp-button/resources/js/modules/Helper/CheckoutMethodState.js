@@ -14,19 +14,19 @@ export const PaymentMethods = {
  * @type {Object}
  */
 export const PaymentContext = {
-	Product: 'product',
-	Cart: 'cart',
-	Checkout: 'checkout',
-	PayNow: 'pay-now',
-	MiniCart: 'mini-cart',
-	BlockCart: 'cart-block',
-	BlockCheckout: 'checkout-block',
-	Preview: 'preview',
+	Cart: 'cart', // Classic cart.
+	Checkout: 'checkout', // Classic checkout.
+	BlockCart: 'cart-block', // Block cart.
+	BlockCheckout: 'checkout-block', // Block checkout.
+	Product: 'product', // Single product page.
+	MiniCart: 'mini-cart', // Mini cart available on all pages except checkout & cart.
+	PayNow: 'pay-now', // Pay for order, via admin generated link.
+	Preview: 'preview', // Layout preview on settings page.
 
-	// Block editor contexts.
+	// Contexts that use blocks to render payment methods.
 	Blocks: [ 'cart-block', 'checkout-block' ],
 
-	// Custom gateway contexts.
+	// Contexts that display "classic" payment gateways.
 	Gateways: [ 'checkout', 'pay-now' ],
 };
 
