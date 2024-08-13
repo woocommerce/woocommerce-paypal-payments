@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
  * Class BancontactGateway
@@ -111,7 +112,7 @@ class BancontactGateway extends WC_Payment_Gateway {
 			'payment_source'         => array(
 				'bancontact' => array(
 					'country_code' => 'BE',
-					'name'         => 'John Doe',
+					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
 				),
 			),
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -129,12 +130,25 @@ class BancontactGateway extends WC_Payment_Gateway {
 			'application_context'    => array(
 				'locale'     => 'en-BE',
 				'return_url' => $this->get_return_url( $wc_order ),
-				'cancel_url' => wc_get_checkout_url(),
+				'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
 			),
 		);
 
-		$response = $this->orders_endpoint->create( $request_body );
-		$body     = json_decode( $response['body'] );
+		try {
+			$response = $this->orders_endpoint->create( $request_body );
+		} catch ( RuntimeException $exception ) {
+			$wc_order->update_status(
+				'failed',
+				$exception->getMessage()
+			);
+
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
+
+		$body = json_decode( $response['body'] );
 
 		$payer_action = '';
 		foreach ( $body->links as $link ) {
@@ -142,6 +156,8 @@ class BancontactGateway extends WC_Payment_Gateway {
 				$payer_action = $link->href;
 			}
 		}
+
+		WC()->cart->empty_cart();
 
 		return array(
 			'result'   => 'success',

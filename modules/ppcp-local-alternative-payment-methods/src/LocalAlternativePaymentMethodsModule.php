@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WC_Order;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -37,10 +38,14 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			function ( $methods ) use ( $c ) {
+				if ( is_admin() ) {
+					return $methods;
+				}
+
 				$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 				$site_currency    = get_woocommerce_currency();
 				if ( $customer_country === 'BE' && $site_currency === 'EUR' ) {
-					$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+					$methods[ BancontactGateway::ID ] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
 				}
 
 				return $methods;
@@ -62,6 +67,37 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				$data['url_params']['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
 				return $data;
+			}
+		);
+
+		add_action(
+			'woocommerce_before_thankyou',
+			function( $order_id ) {
+				$order = wc_get_order( $order_id );
+				if ( ! $order instanceof WC_Order ) {
+					return;
+				}
+
+				// phpcs:disable WordPress.Security.NonceVerification.Recommended
+				$cancelled = wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) );
+				$order_key = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
+				// phpcs:enable
+
+				if (
+				$order->get_payment_method() !== BancontactGateway::ID
+				|| ! $cancelled
+				|| $order->get_order_key() !== $order_key
+				) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$error_code = wc_clean( wp_unslash( $_GET['errorcode'] ?? '' ) );
+				if ( $error_code === 'processing_error' || $error_code === 'payment_error' ) {
+					$order->update_status( 'failed', __( "The payment can't be processed because of an error.", 'woocommerce-paypal-payments' ) );
+
+					add_filter( 'woocommerce_order_has_status', '__return_true' );
+				}
 			}
 		);
 	}
