@@ -45,6 +45,7 @@ class SingleProductHandler extends BaseHandler {
 			).simulate( ( data ) => {
 				const transaction = new TransactionInfo(
 					data.total,
+					data.shipping_fee,
 					data.currency_code,
 					data.country_code,
 					true

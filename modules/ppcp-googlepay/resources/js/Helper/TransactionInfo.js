@@ -3,17 +3,33 @@ export default class TransactionInfo {
 	#currency = '';
 	#isFinal = false;
 	#amount = 0;
+	#shippingFee = 0;
 
-	constructor( amount, currency, country, isFinal ) {
+	constructor( total, shippingFee, currency, country, isFinal ) {
 		this.#country = country;
 		this.#currency = currency;
 		this.#isFinal = isFinal;
 
-		this.amount = amount;
+		this.shippingFee = shippingFee;
+		this.amount = total - shippingFee;
 	}
 
 	set amount( newAmount ) {
 		this.#amount = Number( newAmount ) || 0;
+	}
+
+	set shippingFee( newCost ) {
+		this.#shippingFee = Number( newCost ) || 0;
+	}
+
+	set total( newTotal ) {
+		newTotal = Number( newTotal ) || 0;
+
+		if ( ! newTotal ) {
+			return;
+		}
+
+		this.#amount = newTotal - this.#shippingFee;
 	}
 
 	get currencyCode() {
@@ -29,7 +45,9 @@ export default class TransactionInfo {
 	}
 
 	get totalPrice() {
-		return this.#amount.toFixed( 2 );
+		const total = this.#amount + this.#shippingFee;
+
+		return total.toFixed( 2 );
 	}
 
 	get dataObject() {

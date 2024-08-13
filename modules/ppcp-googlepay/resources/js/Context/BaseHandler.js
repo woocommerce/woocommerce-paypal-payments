@@ -37,6 +37,7 @@ class BaseHandler {
 					const data = result.data;
 					const transaction = new TransactionInfo(
 						data.total,
+						data.shipping_fee,
 						data.currency_code,
 						data.country_code,
 						true
