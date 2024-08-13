@@ -1,5 +1,6 @@
 import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
 import CartActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler';
+import TransactionInfo from '../Helper/TransactionInfo';
 
 class BaseHandler {
 	constructor( buttonConfig, ppcpConfig, externalHandler ) {
@@ -35,12 +36,14 @@ class BaseHandler {
 					// handle script reload
 					const data = result.data;
 
-					resolve( {
-						countryCode: data.country_code,
-						currencyCode: data.currency_code,
-						totalPriceStatus: 'FINAL',
-						totalPrice: data.total_str,
-					} );
+					resolve(
+						new TransactionInfo(
+							data.total,
+							data.currency_code,
+							data.country_code,
+							true
+						)
+					);
 				} );
 		} );
 	}

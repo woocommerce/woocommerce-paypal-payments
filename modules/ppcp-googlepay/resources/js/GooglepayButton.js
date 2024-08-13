@@ -331,7 +331,7 @@ class GooglepayButton {
 		const paymentDataRequest = Object.assign( {}, baseRequest );
 		paymentDataRequest.allowedPaymentMethods =
 			googlePayConfig.allowedPaymentMethods;
-		paymentDataRequest.transactionInfo = this.transactionInfo;
+		paymentDataRequest.transactionInfo = this.transactionInfo.dataObject;
 		paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
 
 		if (
@@ -376,7 +376,7 @@ class GooglepayButton {
 				const updatedData = await new UpdatePaymentData(
 					this.buttonConfig.ajax.update_payment_data
 				).update( paymentData );
-				const transactionInfo = this.transactionInfo;
+				const transactionInfo = this.transactionInfo.dataObject;
 
 				this.log( 'onPaymentDataChanged:updatedData', updatedData );
 				this.log(
