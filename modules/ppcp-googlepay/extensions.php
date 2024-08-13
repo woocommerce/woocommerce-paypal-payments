@@ -72,7 +72,7 @@ return array(
 					'googlepay_button_enabled' => array(
 						'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 						'title_html'        => sprintf(
-							'<img src="%sassets/images/googlepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+							'<img src="%sassets/images/googlepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
 							$module_url,
 							__( 'Google Pay', 'woocommerce-paypal-payments' )
 						),
@@ -117,7 +117,7 @@ return array(
 				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/googlepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						'<img src="%sassets/images/googlepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
 						$module_url,
 						__( 'Google Pay', 'woocommerce-paypal-payments' )
 					),
