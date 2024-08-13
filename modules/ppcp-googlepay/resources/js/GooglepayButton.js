@@ -3,6 +3,7 @@ import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/But
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
+import TransactionInfo from './Helper/TransactionInfo';
 
 class GooglepayButton {
 	constructor(
@@ -376,7 +377,7 @@ class GooglepayButton {
 				const updatedData = await new UpdatePaymentData(
 					this.buttonConfig.ajax.update_payment_data
 				).update( paymentData );
-				const transactionInfo = this.transactionInfo.dataObject;
+				const transactionInfo = this.transactionInfo;
 
 				this.log( 'onPaymentDataChanged:updatedData', updatedData );
 				this.log(
@@ -404,11 +405,13 @@ class GooglepayButton {
 						updatedData.shipping_options;
 				}
 
-				paymentDataRequestUpdate.newTransactionInfo =
-					this.calculateNewTransactionInfo(
-						updatedData,
-						paymentData?.shippingOptionData?.id
+				transactionInfo.shippingFee = this.getShippingCosts(
+					paymentData?.shippingOptionData?.id,
+					updatedData.shipping_options
 					);
+
+				paymentDataRequestUpdate.newTransactionInfo =
+					this.calculateNewTransactionInfo( transactionInfo );
 
 				resolve( paymentDataRequestUpdate );
 			} catch ( error ) {
@@ -457,7 +460,7 @@ class GooglepayButton {
 
 		const currentOption = findOptionById( getValidShippingId() );
 
-		return currentOption?.cost ? this.toAmount( currentOption.cost ) : 0;
+		return Number( currentOption?.cost ) || 0;
 	}
 
 	unserviceableShippingAddressError() {
@@ -468,20 +471,14 @@ class GooglepayButton {
 		};
 	}
 
-	calculateNewTransactionInfo( updatedData, shippingId ) {
-		const shippingCost = this.getShippingCosts(
-			shippingId,
-			updatedData.shipping_options
-		);
-		const subTotal = this.toAmount( updatedData.total_str );
-		const totalPrice = shippingCost + subTotal;
-
-		return {
-			countryCode: updatedData.country_code,
-			currencyCode: updatedData.currency_code,
-			totalPriceStatus: 'FINAL',
-			totalPrice: totalPrice.toFixed( 2 ),
-		};
+	/**
+	 * Recalculates and returns the plain transaction info object.
+	 *
+	 * @param {TransactionInfo} transactionInfo - Internal transactionInfo instance.
+	 * @return {{totalPrice: string, countryCode: string, totalPriceStatus: string, currencyCode: string}} Updated details.
+	 */
+	calculateNewTransactionInfo( transactionInfo ) {
+		return transactionInfo.dataObject;
 	}
 
 	//------------------------
