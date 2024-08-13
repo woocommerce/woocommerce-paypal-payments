@@ -396,19 +396,20 @@ class GooglepayButton {
 					return;
 				}
 
-				switch ( paymentData.callbackTrigger ) {
-					case 'INITIALIZE':
-					case 'SHIPPING_ADDRESS':
-						paymentDataRequestUpdate.newShippingOptionParameters =
-							updatedData.shipping_options;
-						paymentDataRequestUpdate.newTransactionInfo =
-							this.calculateNewTransactionInfo( updatedData );
-						break;
-					case 'SHIPPING_OPTION':
-						paymentDataRequestUpdate.newTransactionInfo =
-							this.calculateNewTransactionInfo( updatedData );
-						break;
+				if (
+					[ 'INITIALIZE', 'SHIPPING_ADDRESS' ].includes(
+						paymentData.callbackTrigger
+					)
+				) {
+					paymentDataRequestUpdate.newShippingOptionParameters =
+						updatedData.shipping_options;
 				}
+
+				paymentDataRequestUpdate.newTransactionInfo =
+					this.calculateNewTransactionInfo(
+						updatedData,
+						paymentData?.shippingOptionData?.id
+					);
 
 				resolve( paymentDataRequestUpdate );
 			} catch ( error ) {
@@ -416,6 +417,68 @@ class GooglepayButton {
 				reject( error );
 			}
 		} );
+	}
+
+	/**
+	 * Returns the shipping costs as numeric value.
+	 *
+	 * TODO - Move this to the PaymentButton base class
+	 *
+	 * @param {string} shippingId                           - The shipping method ID.
+	 * @param {Object} shippingData                         - The PaymentDataRequest object that contains shipping options.
+	 * @param {Array}  shippingData.shippingOptions
+	 * @param {string} shippingData.defaultSelectedOptionId
+	 *
+	 * @return {number} The shipping costs.
+	 */
+	getShippingCosts(
+		shippingId,
+		{ shippingOptions = [], defaultSelectedOptionId = '' } = {}
+	) {
+		if ( ! shippingOptions?.length ) {
+			this.log( 'Cannot calculate shipping cost: No Shipping Options' );
+			return 0;
+		}
+
+		const findOptionById = ( id ) =>
+			shippingOptions.find( ( option ) => option.id === id );
+
+		const getValidShippingId = () => {
+			if (
+				'shipping_option_unselected' === shippingId ||
+				! findOptionById( shippingId )
+			) {
+				// Entered on initial call, and when changing the shipping country.
+				return defaultSelectedOptionId;
+			}
+
+			return shippingId;
+		};
+
+		const currentOption = findOptionById( getValidShippingId() );
+
+		return currentOption?.cost ? this.toAmount( currentOption.cost ) : 0;
+	}
+
+	/**
+	 * Converts the provided value to a number with configurable precision.
+	 *
+	 * TODO - Move this to the PaymentButton base class
+	 *
+	 * @param {any}    value         - The value to convert.
+	 * @param {number} [precision=2] - The number of decimal places.
+	 * @return {number} Always a numeric value with the specified precision.
+	 */
+	toAmount( value, precision = 2 ) {
+		const number = Number( value );
+
+		if ( isNaN( number ) ) {
+			return 0;
+		}
+
+		const multiplier = Math.pow( 10, precision );
+
+		return Math.round( number * multiplier ) / multiplier;
 	}
 
 	unserviceableShippingAddressError() {
@@ -426,12 +489,19 @@ class GooglepayButton {
 		};
 	}
 
-	calculateNewTransactionInfo( updatedData ) {
+	calculateNewTransactionInfo( updatedData, shippingId ) {
+		const shippingCost = this.getShippingCosts(
+			shippingId,
+			updatedData.shipping_options
+		);
+		const subTotal = this.toAmount( updatedData.total_str );
+		const totalPrice = shippingCost + subTotal;
+
 		return {
 			countryCode: updatedData.country_code,
 			currencyCode: updatedData.currency_code,
 			totalPriceStatus: 'FINAL',
-			totalPrice: updatedData.total_str,
+			totalPrice: totalPrice.toFixed( 2 ),
 		};
 	}
 
