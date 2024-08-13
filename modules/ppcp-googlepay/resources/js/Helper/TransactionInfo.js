@@ -15,21 +15,19 @@ export default class TransactionInfo {
 	}
 
 	set amount( newAmount ) {
-		this.#amount = Number( newAmount ) || 0;
+		this.#amount = this.toAmount( newAmount );
+	}
+
+	get amount() {
+		return this.#amount;
 	}
 
 	set shippingFee( newCost ) {
-		this.#shippingFee = Number( newCost ) || 0;
+		this.#shippingFee = this.toAmount( newCost );
 	}
 
-	set total( newTotal ) {
-		newTotal = Number( newTotal ) || 0;
-
-		if ( ! newTotal ) {
-			return;
-		}
-
-		this.#amount = newTotal - this.#shippingFee;
+	get shippingFee() {
+		return this.#shippingFee;
 	}
 
 	get currencyCode() {
@@ -57,5 +55,34 @@ export default class TransactionInfo {
 			totalPriceStatus: this.totalPriceStatus,
 			totalPrice: this.totalPrice,
 		};
+	}
+
+	/**
+	 * Converts the value to a number and rounds to a precision of 2 digits.
+	 *
+	 * @param {any} value - The value to sanitize.
+	 * @return {number} Numeric value.
+	 */
+	toAmount( value ) {
+		value = Number( value ) || 0;
+		return Math.round( value * 100 ) / 100;
+	}
+
+	setTotal( totalPrice, shippingFee ) {
+		totalPrice = this.toAmount( totalPrice );
+
+		if ( totalPrice ) {
+			this.shippingFee = shippingFee;
+			this.amount = totalPrice - this.shippingFee;
+
+			console.log(
+				'New Total Price:',
+				totalPrice,
+				'=',
+				this.amount,
+				'+',
+				this.shippingFee
+			);
+		}
 	}
 }

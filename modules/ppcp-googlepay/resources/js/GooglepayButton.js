@@ -6,6 +6,11 @@ import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper
 import TransactionInfo from './Helper/TransactionInfo';
 
 class GooglepayButton {
+	/**
+	 * @type {TransactionInfo}
+	 */
+	transactionInfo;
+
 	constructor(
 		context,
 		externalHandler,
@@ -379,6 +384,16 @@ class GooglepayButton {
 				).update( paymentData );
 				const transactionInfo = this.transactionInfo;
 
+				// Check, if the current context uses the WC cart.
+				const hasRealCart = [
+					'checkout-block',
+					'checkout',
+					'cart-block',
+					'cart',
+					'mini-cart',
+					'pay-now',
+				].includes( this.context );
+
 				this.log( 'onPaymentDataChanged:updatedData', updatedData );
 				this.log(
 					'onPaymentDataChanged:transactionInfo',
@@ -405,10 +420,17 @@ class GooglepayButton {
 						updatedData.shipping_options;
 				}
 
-				transactionInfo.shippingFee = this.getShippingCosts(
-					paymentData?.shippingOptionData?.id,
-					updatedData.shipping_options
+				if ( updatedData.total && hasRealCart ) {
+					transactionInfo.setTotal(
+						updatedData.total,
+						updatedData.shipping_fee
 					);
+				} else {
+					transactionInfo.shippingFee = this.getShippingCosts(
+						paymentData?.shippingOptionData?.id,
+						updatedData.shipping_options
+					);
+				}
 
 				paymentDataRequestUpdate.newTransactionInfo =
 					this.calculateNewTransactionInfo( transactionInfo );
