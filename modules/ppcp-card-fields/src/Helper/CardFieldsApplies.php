@@ -48,6 +48,6 @@ class CardFieldsApplies {
 	 * @return bool
 	 */
 	public function for_country(): bool {
-		return ! in_array( $this->country, $this->allowed_country_matrix, true );
+		return in_array( $this->country, $this->allowed_country_matrix, true );
 	}
 }
