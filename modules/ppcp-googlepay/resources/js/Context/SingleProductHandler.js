@@ -43,14 +43,14 @@ class SingleProductHandler extends BaseHandler {
 				this.ppcpConfig.ajax.simulate_cart.endpoint,
 				this.ppcpConfig.ajax.simulate_cart.nonce
 			).simulate( ( data ) => {
-				resolve(
-					new TransactionInfo(
-						data.total,
-						data.currency_code,
-						data.country_code,
-						true
-					)
+				const transaction = new TransactionInfo(
+					data.total,
+					data.currency_code,
+					data.country_code,
+					true
 				);
+
+				resolve( transaction );
 			}, products );
 		} );
 	}

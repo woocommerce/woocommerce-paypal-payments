@@ -15,14 +15,14 @@ class PayNowHandler extends BaseHandler {
 		return new Promise( async ( resolve, reject ) => {
 			const data = this.ppcpConfig.pay_now;
 
-			resolve(
-				new TransactionInfo(
-					data.total,
-					data.currency_code,
-					data.country_code,
-					true
-				)
+			const transaction = new TransactionInfo(
+				data.total,
+				data.currency_code,
+				data.country_code,
+				true
 			);
+
+			resolve( transaction );
 		} );
 	}
 

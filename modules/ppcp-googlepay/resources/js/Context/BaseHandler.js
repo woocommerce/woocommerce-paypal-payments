@@ -35,15 +35,14 @@ class BaseHandler {
 
 					// handle script reload
 					const data = result.data;
-
-					resolve(
-						new TransactionInfo(
-							data.total,
-							data.currency_code,
-							data.country_code,
-							true
-						)
+					const transaction = new TransactionInfo(
+						data.total,
+						data.currency_code,
+						data.country_code,
+						true
 					);
+
+					resolve( transaction );
 				} );
 		} );
 	}
