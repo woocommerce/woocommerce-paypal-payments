@@ -3,6 +3,7 @@ import { apmButtonsInit } from '../Helper/ApmButtons';
 import {
 	getCurrentPaymentMethod,
 	PaymentContext,
+	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import {
 	ButtonEvents,
@@ -673,6 +674,10 @@ export default class PaymentButton {
 
 		// Events relevant for buttons inside a payment gateway.
 		if ( PaymentContext.Gateways.includes( this.context ) ) {
+			const parentMethod = this.isSeparateGateway
+				? this.methodId
+				: PaymentMethods.PAYPAL;
+
 			// Hide the button right after the user selected _any_ gateway.
 			observeButtonEvent( {
 				event: ButtonEvents.INVALIDATE,
@@ -682,7 +687,7 @@ export default class PaymentButton {
 			// Show the button (again) when the user selected the current gateway.
 			observeButtonEvent( {
 				event: ButtonEvents.RENDER,
-				paymentMethod: this.methodId,
+				paymentMethod: parentMethod,
 				callback: () => ( this.isVisible = true ),
 			} );
 		}
