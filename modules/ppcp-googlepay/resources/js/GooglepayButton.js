@@ -337,7 +337,7 @@ class GooglepayButton {
 		const paymentDataRequest = Object.assign( {}, baseRequest );
 		paymentDataRequest.allowedPaymentMethods =
 			googlePayConfig.allowedPaymentMethods;
-		paymentDataRequest.transactionInfo = this.transactionInfo.dataObject;
+		paymentDataRequest.transactionInfo = this.transactionInfo.finalObject;
 		paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
 
 		if (
@@ -500,7 +500,7 @@ class GooglepayButton {
 	 * @return {{totalPrice: string, countryCode: string, totalPriceStatus: string, currencyCode: string}} Updated details.
 	 */
 	calculateNewTransactionInfo( transactionInfo ) {
-		return transactionInfo.dataObject;
+		return transactionInfo.finalObject;
 	}
 
 	//------------------------

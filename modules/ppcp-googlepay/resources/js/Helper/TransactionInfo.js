@@ -1,14 +1,12 @@
 export default class TransactionInfo {
 	#country = '';
 	#currency = '';
-	#isFinal = false;
 	#amount = 0;
 	#shippingFee = 0;
 
-	constructor( total, shippingFee, currency, country, isFinal ) {
+	constructor( total, shippingFee, currency, country ) {
 		this.#country = country;
 		this.#currency = currency;
-		this.#isFinal = isFinal;
 
 		this.shippingFee = shippingFee;
 		this.amount = total - shippingFee;
@@ -38,21 +36,17 @@ export default class TransactionInfo {
 		return this.#country;
 	}
 
-	get totalPriceStatus() {
-		return this.#isFinal ? 'FINAL' : 'DRAFT';
-	}
-
 	get totalPrice() {
 		const total = this.#amount + this.#shippingFee;
 
 		return total.toFixed( 2 );
 	}
 
-	get dataObject() {
+	get finalObject() {
 		return {
 			countryCode: this.countryCode,
 			currencyCode: this.currencyCode,
-			totalPriceStatus: this.totalPriceStatus,
+			totalPriceStatus: 'FINAL',
 			totalPrice: this.totalPrice,
 		};
 	}
@@ -74,15 +68,6 @@ export default class TransactionInfo {
 		if ( totalPrice ) {
 			this.shippingFee = shippingFee;
 			this.amount = totalPrice - this.shippingFee;
-
-			console.log(
-				'New Total Price:',
-				totalPrice,
-				'=',
-				this.amount,
-				'+',
-				this.shippingFee
-			);
 		}
 	}
 }

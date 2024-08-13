@@ -39,8 +39,7 @@ class BaseHandler {
 						data.total,
 						data.shipping_fee,
 						data.currency_code,
-						data.country_code,
-						true
+						data.country_code
 					);
 
 					resolve( transaction );
