@@ -386,7 +386,6 @@ class GooglepayButton {
 
 				updatedData.country_code = transactionInfo.countryCode;
 				updatedData.currency_code = transactionInfo.currencyCode;
-				updatedData.total_str = transactionInfo.totalPrice;
 
 				// Handle unserviceable address.
 				if ( ! updatedData.shipping_options?.shippingOptions?.length ) {
@@ -425,7 +424,8 @@ class GooglepayButton {
 	 * TODO - Move this to the PaymentButton base class
 	 *
 	 * @param {string} shippingId                           - The shipping method ID.
-	 * @param {Object} shippingData                         - The PaymentDataRequest object that contains shipping options.
+	 * @param {Object} shippingData                         - The PaymentDataRequest object that
+	 *                                                      contains shipping options.
 	 * @param {Array}  shippingData.shippingOptions
 	 * @param {string} shippingData.defaultSelectedOptionId
 	 *
@@ -458,27 +458,6 @@ class GooglepayButton {
 		const currentOption = findOptionById( getValidShippingId() );
 
 		return currentOption?.cost ? this.toAmount( currentOption.cost ) : 0;
-	}
-
-	/**
-	 * Converts the provided value to a number with configurable precision.
-	 *
-	 * TODO - Move this to the PaymentButton base class
-	 *
-	 * @param {any}    value         - The value to convert.
-	 * @param {number} [precision=2] - The number of decimal places.
-	 * @return {number} Always a numeric value with the specified precision.
-	 */
-	toAmount( value, precision = 2 ) {
-		const number = Number( value );
-
-		if ( isNaN( number ) ) {
-			return 0;
-		}
-
-		const multiplier = Math.pow( 10, precision );
-
-		return Math.round( number * multiplier ) / multiplier;
 	}
 
 	unserviceableShippingAddressError() {
