@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
@@ -1443,6 +1444,7 @@ return array(
 				'CN' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
+					'amex'       => array(),
 				),
 				'CY' => array(
 					'mastercard' => array(),
@@ -1655,18 +1657,27 @@ return array(
 			return new PurchaseUnitSanitizer( $behavior, $line_name );
 		}
 	),
+	'api.client-credentials'                         => static function( ContainerInterface $container ): ClientCredentials {
+		return new ClientCredentials(
+			$container->get( 'wcgateway.settings' )
+		);
+	},
+	'api.client-credentials-cache'                   => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-client-credentials-cache' );
+	},
 	'api.user-id-token'                              => static function( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(
 			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.client-credentials' )
 		);
 	},
 	'api.sdk-client-token'                           => static function( ContainerInterface $container ): SdkClientToken {
 		return new SdkClientToken(
 			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.client-credentials' ),
+			$container->get( 'api.client-credentials-cache' )
 		);
 	},
 );
