@@ -6,6 +6,7 @@ import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/Pa
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/PayerData';
 
 /**
  * Plugin-specific styling.
@@ -39,11 +40,17 @@ import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper
  *
  * @see https://developers.google.com/pay/api/web/reference/client
  * @typedef {Object} PaymentsClient
- * @property {Function} createButton         - The convenience method is used to generate a Google Pay payment button styled with the latest Google Pay branding for insertion into a webpage.
- * @property {Function} isReadyToPay         - Use the isReadyToPay(isReadyToPayRequest) method to determine a user's ability to return a form of payment from the Google Pay API.
- * @property {Function} loadPaymentData      - This method presents a Google Pay payment sheet that allows selection of a payment method and optionally configured parameters
- * @property {Function} onPaymentAuthorized  - This method is called when a payment is authorized in the payment sheet.
- * @property {Function} onPaymentDataChanged - This method handles payment data changes in the payment sheet such as shipping address and shipping options.
+ * @property {Function}            createButton         - The convenience method is used to
+ *                                                      generate a Google Pay payment button styled with the latest Google Pay branding for
+ *                                                      insertion into a webpage.
+ * @property {Function}            isReadyToPay         - Use the isReadyToPay(isReadyToPayRequest)
+ *                                                      method to determine a user's ability to return a form of payment from the Google Pay API.
+ * @property {(Object) => Promise} loadPaymentData      - This method presents a Google Pay payment
+ *                                                      sheet that allows selection of a payment method and optionally configured parameters
+ * @property {Function}            onPaymentAuthorized  - This method is called when a payment is
+ *                                                      authorized in the payment sheet.
+ * @property {Function}            onPaymentDataChanged - This method handles payment data changes
+ *                                                      in the payment sheet such as shipping address and shipping options.
  */
 
 /**
@@ -53,12 +60,18 @@ import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper
  * @typedef {Object} TransactionInfo
  * @property {string} currencyCode     - Required. The ISO 4217 alphabetic currency code.
  * @property {string} countryCode      - Optional. required for EEA countries,
- * @property {string} transactionId    - Optional. A unique ID that identifies a facilitation attempt. Highly encouraged for troubleshooting.
- * @property {string} totalPriceStatus - Required. [ESTIMATED|FINAL] The status of the total price used:
- * @property {string} totalPrice       - Required. Total monetary value of the transaction with an optional decimal precision of two decimal places.
- * @property {Array}  displayItems     - Optional. A list of cart items shown in the payment sheet (e.g. subtotals, sales taxes, shipping charges, discounts etc.).
- * @property {string} totalPriceLabel  - Optional. Custom label for the total price within the display items.
- * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the Google Pay payment sheet.
+ * @property {string} transactionId    - Optional. A unique ID that identifies a facilitation
+ *                                     attempt. Highly encouraged for troubleshooting.
+ * @property {string} totalPriceStatus - Required. [ESTIMATED|FINAL] The status of the total price
+ *                                     used:
+ * @property {string} totalPrice       - Required. Total monetary value of the transaction with an
+ *                                     optional decimal precision of two decimal places.
+ * @property {Array}  displayItems     - Optional. A list of cart items shown in the payment sheet
+ *                                     (e.g. subtotals, sales taxes, shipping charges, discounts etc.).
+ * @property {string} totalPriceLabel  - Optional. Custom label for the total price within the
+ *                                     display items.
+ * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the
+ *                                     Google Pay payment sheet.
  */
 
 class GooglepayButton extends PaymentButton {
@@ -78,7 +91,7 @@ class GooglepayButton extends PaymentButton {
 	#paymentsClient = null;
 
 	/**
-	 * Details about the processed transaction.
+	 * Details about the processed transaction, provided to the Google SDK.
 	 *
 	 * @type {?TransactionInfo}
 	 */
@@ -388,12 +401,14 @@ class GooglepayButton extends PaymentButton {
 		const initiatePaymentRequest = () => {
 			window.ppcpFundingSource = 'googlepay';
 			const paymentDataRequest = this.paymentDataRequest();
+
 			this.log(
 				'onButtonClick: paymentDataRequest',
 				paymentDataRequest,
 				this.context
 			);
-			this.paymentsClient.loadPaymentData( paymentDataRequest );
+
+			return this.paymentsClient.loadPaymentData( paymentDataRequest );
 		};
 
 		const validateForm = () => {
@@ -434,28 +449,24 @@ class GooglepayButton extends PaymentButton {
 			apiVersionMinor: 0,
 		};
 
-		const googlePayConfig = this.googlePayConfig;
-		const paymentDataRequest = Object.assign( {}, baseRequest );
-		paymentDataRequest.allowedPaymentMethods =
-			googlePayConfig.allowedPaymentMethods;
-		paymentDataRequest.transactionInfo = this.transactionInfo;
-		paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
+		const useShippingCallback = this.requiresShipping;
+		const callbackIntents = [ 'PAYMENT_AUTHORIZATION' ];
 
-		if ( this.requiresShipping ) {
-			paymentDataRequest.callbackIntents = [
-				'SHIPPING_ADDRESS',
-				'SHIPPING_OPTION',
-				'PAYMENT_AUTHORIZATION',
-			];
-			paymentDataRequest.shippingAddressRequired = true;
-			paymentDataRequest.shippingAddressParameters =
-				this.shippingAddressParameters();
-			paymentDataRequest.shippingOptionRequired = true;
-		} else {
-			paymentDataRequest.callbackIntents = [ 'PAYMENT_AUTHORIZATION' ];
+		if ( useShippingCallback ) {
+			callbackIntents.push( 'SHIPPING_ADDRESS', 'SHIPPING_OPTION' );
 		}
 
-		return paymentDataRequest;
+		return {
+			...baseRequest,
+			allowedPaymentMethods: this.googlePayConfig.allowedPaymentMethods,
+			transactionInfo: this.transactionInfo,
+			merchantInfo: this.googlePayConfig.merchantInfo,
+			callbackIntents,
+			emailRequired: true,
+			shippingAddressRequired: useShippingCallback,
+			shippingOptionRequired: useShippingCallback,
+			shippingAddressParameters: this.shippingAddressParameters(),
+		};
 	}
 
 	//------------------------
@@ -543,82 +554,111 @@ class GooglepayButton extends PaymentButton {
 	//------------------------
 
 	onPaymentAuthorized( paymentData ) {
-		this.log( 'onPaymentAuthorized' );
+		this.log( 'onPaymentAuthorized', paymentData );
+
 		return this.processPayment( paymentData );
 	}
 
 	async processPayment( paymentData ) {
 		this.log( 'processPayment' );
 
-		return new Promise( async ( resolve, reject ) => {
-			try {
-				const id = await this.contextHandler.createOrder();
+		const paymentError = ( reason ) => {
+			this.error( reason );
 
-				this.log( 'processPayment: createOrder', id );
+			return this.processPaymentResponse(
+				'ERROR',
+				'PAYMENT_AUTHORIZATION',
+				reason
+			);
+		};
 
-				const confirmOrderResponse = await widgetBuilder.paypal
-					.Googlepay()
-					.confirmOrder( {
-						orderId: id,
-						paymentMethodData: paymentData.paymentMethodData,
-					} );
+		const checkPayPalApproval = async ( orderId ) => {
+			const confirmOrderResponse = await widgetBuilder.paypal
+				.Googlepay()
+				.confirmOrder( {
+					orderId,
+					paymentMethodData: paymentData.paymentMethodData,
+				} );
 
-				this.log(
-					'processPayment: confirmOrder',
-					confirmOrderResponse
-				);
+			this.log( 'confirmOrder', confirmOrderResponse );
 
-				/** Capture the Order on the Server */
-				if ( confirmOrderResponse.status === 'APPROVED' ) {
-					let approveFailed = false;
-					await this.contextHandler.approveOrder(
-						{
-							orderID: id,
-						},
-						{
-							// actions mock object.
-							restart: () =>
-								new Promise( ( resolve, reject ) => {
-									approveFailed = true;
-									resolve();
-								} ),
-							order: {
-								get: () =>
-									new Promise( ( resolve, reject ) => {
-										resolve( null );
-									} ),
-							},
-						}
-					);
+			return 'APPROVE' === confirmOrderResponse?.status;
+		};
 
-					if ( ! approveFailed ) {
-						resolve( this.processPaymentResponse( 'SUCCESS' ) );
-					} else {
-						resolve(
-							this.processPaymentResponse(
-								'ERROR',
-								'PAYMENT_AUTHORIZATION',
-								'FAILED TO APPROVE'
-							)
-						);
-					}
-				} else {
-					resolve(
-						this.processPaymentResponse(
-							'ERROR',
-							'PAYMENT_AUTHORIZATION',
-							'TRANSACTION FAILED'
-						)
-					);
+		const approveOrderServerSide = async ( orderID ) => {
+			let isApproved = true;
+
+			this.log( 'approveOrder', orderID );
+
+			await this.contextHandler.approveOrder(
+				{ orderID },
+				{
+					restart: () =>
+						new Promise( ( resolve ) => {
+							isApproved = false;
+							resolve();
+						} ),
+					order: {
+						get: () =>
+							new Promise( ( resolve ) => {
+								resolve( null );
+							} ),
+					},
 				}
+			);
+
+			return isApproved;
+		};
+
+		const processPaymentPromise = async ( resolve ) => {
+			const id = await this.contextHandler.createOrder();
+
+			this.log( 'createOrder', id );
+
+			const isApprovedByPayPal = await checkPayPalApproval( id );
+
+			if ( ! isApprovedByPayPal ) {
+				resolve( paymentError( 'TRANSACTION FAILED' ) );
+
+				return;
+			}
+
+				const success = await approveOrderServerSide( id );
+
+				if ( success ) {
+					resolve( this.processPaymentResponse( 'SUCCESS' ) );
+				} else {
+					resolve( paymentError( 'FAILED TO APPROVE' ) );
+				}
+		};
+
+		const propagatePayerDataToForm = () => {
+			const raw = paymentData?.paymentMethodData?.info?.billingAddress;
+
+			const payer = {
+				name: {
+					given_name: raw.name.split( ' ' )[ 0 ], // Assuming first name is the first part
+					surname: raw.name.split( ' ' ).slice( 1 ).join( ' ' ), // Assuming last name is the rest
+				},
+				address: {
+					country_code: raw.countryCode,
+					address_line_1: raw.address1,
+					address_line_2: raw.address2,
+					admin_area_1: raw.administrativeArea,
+					admin_area_2: raw.locality,
+					postal_code: raw.postalCode,
+				},
+			};
+
+			setPayerData( payer );
+		};
+
+		return new Promise( async ( resolve ) => {
+			try {
+				propagatePayerDataToForm();
+				await processPaymentPromise( resolve );
 			} catch ( err ) {
-				resolve(
-					this.processPaymentResponse(
-						'ERROR',
-						'PAYMENT_AUTHORIZATION',
-						err.message
-					)
-				);
+				resolve( paymentError( err.message ) );
 			}
 		} );
 	}
