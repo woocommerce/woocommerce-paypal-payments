@@ -109,9 +109,13 @@ export const payerData = () => {
 /**
  * Updates the DOM with specific payer details.
  *
- * @param {PayerDetails} newData - New payer details.
+ * @param {PayerDetails} newData                   - New payer details.
+ * @param {boolean}      [overwriteExisting=false] - If set to true, all provided values will replace existing details. If false, or omitted, only undefined fields are updated.
  */
-export const setPayerData = ( newData ) => {
+export const setPayerData = ( newData, overwriteExisting = false ) => {
+	// TODO: Check if we can add some kind of "filter" to allow customization of the data.
+	//       Or add JS flags like "onlyUpdateMissing".
+
 	const setValue = ( path, field, value ) => {
 		if ( null === value || undefined === value || ! field ) {
 			return;
@@ -121,7 +125,7 @@ export const setPayerData = ( newData ) => {
 			value = value.phone_number?.national_number;
 		}
 
-		if ( field.value !== value ) {
+		if ( overwriteExisting || ! field.value ) {
 			field.value = value;
 		}
 	};

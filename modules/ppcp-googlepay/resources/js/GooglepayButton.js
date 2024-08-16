@@ -634,8 +634,8 @@ class GooglepayButton extends PaymentButton {
 
 		const propagatePayerDataToForm = () => {
 			const raw = paymentData?.paymentMethodData?.info?.billingAddress;
-
 			const payer = {
+				email_address: paymentData?.email,
 				name: {
 					given_name: raw.name.split( ' ' )[ 0 ], // Assuming first name is the first part
 					surname: raw.name.split( ' ' ).slice( 1 ).join( ' ' ), // Assuming last name is the rest
