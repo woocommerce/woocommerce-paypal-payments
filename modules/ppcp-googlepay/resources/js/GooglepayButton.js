@@ -560,7 +560,7 @@ class GooglepayButton extends PaymentButton {
 	}
 
 	async processPayment( paymentData ) {
-		this.log( 'processPayment' );
+		this.logGroup( 'processPayment' );
 
 		const paymentError = ( reason ) => {
 			this.error( reason );
@@ -623,13 +623,13 @@ class GooglepayButton extends PaymentButton {
 				return;
 			}
 
-				const success = await approveOrderServerSide( id );
+			const success = await approveOrderServerSide( id );
 
-				if ( success ) {
-					resolve( this.processPaymentResponse( 'SUCCESS' ) );
-				} else {
-					resolve( paymentError( 'FAILED TO APPROVE' ) );
-				}
+			if ( success ) {
+				resolve( this.processPaymentResponse( 'SUCCESS' ) );
+			} else {
+				resolve( paymentError( 'FAILED TO APPROVE' ) );
+			}
 		};
 
 		const propagatePayerDataToForm = () => {
@@ -660,6 +660,8 @@ class GooglepayButton extends PaymentButton {
 			} catch ( err ) {
 				resolve( paymentError( err.message ) );
 			}
+
+			this.logGroup();
 		} );
 	}
 
