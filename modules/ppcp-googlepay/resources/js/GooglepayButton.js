@@ -573,16 +573,18 @@ class GooglepayButton extends PaymentButton {
 		};
 
 		const checkPayPalApproval = async ( orderId ) => {
+			const confirmationData = {
+				orderId,
+				paymentMethodData: paymentData.paymentMethodData,
+			};
+
 			const confirmOrderResponse = await widgetBuilder.paypal
 				.Googlepay()
-				.confirmOrder( {
-					orderId,
-					paymentMethodData: paymentData.paymentMethodData,
-				} );
+				.confirmOrder( confirmationData );
 
 			this.log( 'confirmOrder', confirmOrderResponse );
 
-			return 'APPROVE' === confirmOrderResponse?.status;
+			return 'APPROVED' === confirmOrderResponse?.status;
 		};
 
 		const approveOrderServerSide = async ( orderID ) => {
