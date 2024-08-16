@@ -26,8 +26,11 @@ export function setupButtonEvents( refresh ) {
 	document.addEventListener( REFRESH_BUTTON_EVENT, debouncedRefresh );
 
 	// Listen for cart and checkout update events.
-	document.body.addEventListener( 'updated_cart_totals', debouncedRefresh );
-	document.body.addEventListener( 'updated_checkout', debouncedRefresh );
+	// Note: we need jQuery here, because WooCommerce uses jQuery.trigger() to dispatch the events.
+	window
+		.jQuery( 'body' )
+		.on( 'updated_cart_totals', debouncedRefresh )
+		.on( 'updated_checkout', debouncedRefresh );
 
 	// Use setTimeout for fragment events to avoid unnecessary refresh on initial render.
 	setTimeout( () => {
