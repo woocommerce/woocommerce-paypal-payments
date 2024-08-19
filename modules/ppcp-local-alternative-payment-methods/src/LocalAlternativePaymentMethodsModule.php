@@ -36,16 +36,27 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 	 */
 	public function run( ContainerInterface $c ): void {
 		add_filter(
-			'woocommerce_available_payment_gateways',
+			'woocommerce_payment_gateways',
 			function ( $methods ) use ( $c ) {
 				if ( is_admin() ) {
+					$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
 					return $methods;
 				}
 
-				$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
-				$site_currency    = get_woocommerce_currency();
-				if ( $customer_country === 'BE' && $site_currency === 'EUR' ) {
-					$methods[ BancontactGateway::ID ] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+				return $methods;
+			}
+		);
+
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			function ( $methods ) use ( $c ) {
+				if ( ! is_admin() ) {
+					$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
+					$site_currency    = get_woocommerce_currency();
+					if ( $customer_country === 'BE' && $site_currency === 'EUR' ) {
+						$methods[ BancontactGateway::ID ] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+						return $methods;
+					}
 				}
 
 				return $methods;
