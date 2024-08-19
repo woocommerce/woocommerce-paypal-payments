@@ -133,6 +133,11 @@ $background-ident-color: #fbfbfb;
 				}
 			}
 
+			.ppcp-notice-list {
+				list-style-type: disc;
+				padding-left: 20px;
+			}
+
 			th, td {
 				border-top: 1px solid $border-color;
 			}
