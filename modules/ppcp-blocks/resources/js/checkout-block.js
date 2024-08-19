@@ -807,7 +807,6 @@ if ( block_enabled && config.enabled ) {
 			'paypal',
 			...config.enabledFundingSources,
 		] ) {
-			console.log( 'earlier fundingSource', fundingSource );
 			registerExpressPaymentMethod( {
 				name: `${ config.id }-${ fundingSource }`,
 				paymentMethodId: config.id,
