@@ -145,4 +145,28 @@ export function setPayerData( newData, overwriteExisting = false ) {
 
 		setValue( path, element, value );
 	} );
+
+	/*
+	 * Persist the payer details to the global JS object, to make it available in other modules
+	 * via tha `payerData()` accessor.
+	 */
+	window.PayPalCommerceGateway.payer =
+		window.PayPalCommerceGateway.payer || {};
+	const currentPayerData = payerData();
+
+	if ( currentPayerData ) {
+		Object.entries( newData ).forEach( ( [ key, value ] ) => {
+			if (
+				overwriteExisting ||
+				null !== currentPayerData[ key ] ||
+				undefined !== currentPayerData[ key ]
+			) {
+				currentPayerData[ key ] = value;
+			}
+		} );
+
+		window.PayPalCommerceGateway.payer = currentPayerData;
+	} else {
+		window.PayPalCommerceGateway.payer = newData;
+	}
 }

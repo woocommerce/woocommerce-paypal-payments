@@ -583,6 +583,8 @@ class GooglepayButton extends PaymentButton {
 	async processPayment( paymentData ) {
 		this.logGroup( 'processPayment' );
 
+		const payer = payerDataFromPaymentResponse( paymentData );
+
 		const paymentError = ( reason ) => {
 			this.error( reason );
 
@@ -622,7 +624,7 @@ class GooglepayButton extends PaymentButton {
 			this.log( 'approveOrder', orderID );
 
 			await this.contextHandler.approveOrder(
-				{ orderID },
+				{ orderID, payer },
 				{
 					restart: () =>
 						new Promise( ( resolve ) => {
@@ -665,8 +667,6 @@ class GooglepayButton extends PaymentButton {
 		};
 
 		const addBillingDataToSession = () => {
-			const payer = payerDataFromPaymentResponse( paymentData );
-
 			moduleStorage.setPayer( payer );
 			setPayerData( payer );
 		};

@@ -1,19 +1,26 @@
 const onApprove = ( context, errorHandler ) => {
 	return ( data, actions ) => {
+		const canCreateOrder =
+			! context.config.vaultingEnabled || data.paymentSource !== 'venmo';
+
+		const payload = {
+			nonce: context.config.ajax.approve_order.nonce,
+			order_id: data.orderID,
+			funding_source: window.ppcpFundingSource,
+			should_create_wc_order: canCreateOrder,
+		};
+
+		if ( canCreateOrder && data.payer ) {
+			payload.payer = data.payer;
+		}
+
 		return fetch( context.config.ajax.approve_order.endpoint, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
 			credentials: 'same-origin',
-			body: JSON.stringify( {
-				nonce: context.config.ajax.approve_order.nonce,
-				order_id: data.orderID,
-				funding_source: window.ppcpFundingSource,
-				should_create_wc_order:
-					! context.config.vaultingEnabled ||
-					data.paymentSource !== 'venmo',
-			} ),
+			body: JSON.stringify( payload ),
 		} )
 			.then( ( res ) => {
 				return res.json();
