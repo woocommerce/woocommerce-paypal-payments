@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WP_Error;
 
 /**
@@ -66,7 +67,8 @@ class Orders {
 	 * @param array $request_body The request body.
 	 * @param array $headers The request headers.
 	 * @return array
-	 * @throws RuntimeException If something is wrong with the request.
+	 * @throws RuntimeException If something went wrong with the request.
+	 * @throws PayPalApiException If something went wrong with the PayPal API request.
 	 */
 	public function create( array $request_body, array $headers = array() ): array {
 		$bearer = $this->bearer->bearer();
@@ -91,6 +93,14 @@ class Orders {
 		$response = $this->request( $url, $args );
 		if ( $response instanceof WP_Error ) {
 			throw new RuntimeException( $response->get_error_message() );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( $status_code !== 200 ) {
+			throw new PayPalApiException(
+				json_decode( $response['body'] ),
+				$status_code
+			);
 		}
 
 		return $response;
