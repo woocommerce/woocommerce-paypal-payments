@@ -40,6 +40,7 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 			function ( $methods ) use ( $c ) {
 				if ( is_admin() ) {
 					$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+					$methods[] = $c->get( 'ppcp-local-apms.blik.wc-gateway' );
 				}
 
 				return $methods;
@@ -54,16 +55,15 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $methods ) use ( $c ) {
-				if ( ! is_array( $methods ) ) {
-					return $methods;
-				}
-
 				if ( ! is_admin() ) {
 					$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 					$site_currency    = get_woocommerce_currency();
+
 					if ( $customer_country === 'BE' && $site_currency === 'EUR' ) {
 						$methods[ BancontactGateway::ID ] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
-						return $methods;
+					}
+					if ( $customer_country === 'PL' && $site_currency === 'PLN' ) {
+						$methods[ BlikGateway::ID ] = $c->get( 'ppcp-local-apms.blik.wc-gateway' );
 					}
 				}
 
@@ -82,7 +82,7 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 			'woocommerce_paypal_payments_localized_script_data',
 			function ( array $data ) {
 				$default_disable_funding               = $data['url_params']['disable-funding'] ?? '';
-				$disable_funding                       = array_merge( array( 'bancontact' ), array_filter( explode( ',', $default_disable_funding ) ) );
+				$disable_funding                       = array_merge( array( 'bancontact', 'blik' ), array_filter( explode( ',', $default_disable_funding ) ) );
 				$data['url_params']['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
 				return $data;
