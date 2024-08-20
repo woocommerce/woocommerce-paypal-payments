@@ -38,7 +38,9 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_payment_gateways',
 			function ( $methods ) use ( $c ) {
-				$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+				if ( is_admin() ) {
+					$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+				}
 
 				return $methods;
 			}
