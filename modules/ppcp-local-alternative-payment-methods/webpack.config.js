@@ -15,6 +15,9 @@ module.exports = {
 		'blik-payment-method': path.resolve(
 			'./resources/js/blik-payment-method.js'
 		),
+		'eps-payment-method': path.resolve(
+			'./resources/js/eps-payment-method.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),
