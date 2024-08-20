@@ -11,7 +11,11 @@ class OrdersTest extends TestCase
 		$host = 'https://api-m.sandbox.paypal.com';
 		$container = $this->getContainer();
 
-		$orders = new Orders($host, $container->get('api.bearer'));
+		$orders = new Orders(
+			$host,
+			$container->get('api.bearer'),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 
 		$requestBody = [
 			"intent" => "CAPTURE",
@@ -38,11 +42,7 @@ class OrdersTest extends TestCase
 			]
 		];
 
-		$headers = array(
-			'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
-		);
-
-		$result = $orders->create($requestBody, $headers);
+		$result = $orders->create($requestBody);
 
 		$this->assertEquals(200, $result['response']['code']);
 	}

@@ -13,6 +13,8 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
  * Class BancontactGateway
@@ -36,16 +38,39 @@ class BancontactGateway extends WC_Payment_Gateway {
 	private $purchase_unit_factory;
 
 	/**
+	 * The Refund Processor.
+	 *
+	 * @var RefundProcessor
+	 */
+	private $refund_processor;
+
+	/**
+	 * Service able to provide transaction url for an order.
+	 *
+	 * @var TransactionUrlProvider
+	 */
+	protected $transaction_url_provider;
+
+	/**
 	 * BancontactGateway constructor.
 	 *
-	 * @param Orders              $orders_endpoint PayPal Orders endpoint.
-	 * @param PurchaseUnitFactory $purchase_unit_factory Purchase unit factory.
+	 * @param Orders                 $orders_endpoint PayPal Orders endpoint.
+	 * @param PurchaseUnitFactory    $purchase_unit_factory Purchase unit factory.
+	 * @param RefundProcessor        $refund_processor The Refund Processor.
+	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
 	 */
 	public function __construct(
 		Orders $orders_endpoint,
-		PurchaseUnitFactory $purchase_unit_factory
+		PurchaseUnitFactory $purchase_unit_factory,
+		RefundProcessor $refund_processor,
+		TransactionUrlProvider $transaction_url_provider
 	) {
 		$this->id = self::ID;
+
+		$this->supports = array(
+			'refunds',
+			'products',
+		);
 
 		$this->method_title       = __( 'Bancontact', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Bancontact', 'woocommerce-paypal-payments' );
@@ -60,8 +85,10 @@ class BancontactGateway extends WC_Payment_Gateway {
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
-		$this->orders_endpoint       = $orders_endpoint;
-		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->orders_endpoint          = $orders_endpoint;
+		$this->purchase_unit_factory    = $purchase_unit_factory;
+		$this->refund_processor         = $refund_processor;
+		$this->transaction_url_provider = $transaction_url_provider;
 	}
 
 	/**
@@ -163,5 +190,37 @@ class BancontactGateway extends WC_Payment_Gateway {
 			'result'   => 'success',
 			'redirect' => esc_url( $payer_action ),
 		);
+	}
+
+	/**
+	 * Process refund.
+	 *
+	 * If the gateway declares 'refunds' support, this will allow it to refund.
+	 * a passed in amount.
+	 *
+	 * @param  int    $order_id Order ID.
+	 * @param  float  $amount Refund amount.
+	 * @param  string $reason Refund reason.
+	 * @return boolean True or false based on success, or a WP_Error object.
+	 */
+	public function process_refund( $order_id, $amount = null, $reason = '' ) {
+		$order = wc_get_order( $order_id );
+		if ( ! is_a( $order, \WC_Order::class ) ) {
+			return false;
+		}
+		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
+	}
+
+	/**
+	 * Return transaction url for this gateway and given order.
+	 *
+	 * @param \WC_Order $order WC order to get transaction url by.
+	 *
+	 * @return string
+	 */
+	public function get_transaction_url( $order ): string {
+		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
+
+		return parent::get_transaction_url( $order );
 	}
 }
