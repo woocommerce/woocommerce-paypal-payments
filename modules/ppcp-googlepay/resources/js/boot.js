@@ -2,13 +2,23 @@ import { loadCustomScript } from '@paypal/paypal-js';
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
+import { CheckoutBootstrap } from './ContextBootstrap/CheckoutBootstrap';
+import moduleStorage from './Helper/GooglePayStorage';
 
-( function ( { buttonConfig, ppcpConfig, jQuery } ) {
+( function ( { buttonConfig, ppcpConfig } ) {
+	const context = ppcpConfig.context;
+
 	let manager;
 
 	const bootstrap = function () {
 		manager = new GooglepayManager( buttonConfig, ppcpConfig );
 		manager.init();
+
+		if ( 'continuation' === context || 'checkout' === context ) {
+			const checkoutBootstap = new CheckoutBootstrap( moduleStorage );
+
+			checkoutBootstap.init();
+		}
 	};
 
 	setupButtonEvents( function () {
@@ -18,10 +28,7 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 	} );
 
 	document.addEventListener( 'DOMContentLoaded', () => {
-		if (
-			typeof buttonConfig === 'undefined' ||
-			typeof ppcpConfig === 'undefined'
-		) {
+		if ( ! buttonConfig || ! ppcpConfig ) {
 			// No PayPal buttons present on this page.
 			return;
 		}
@@ -52,5 +59,4 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 } )( {
 	buttonConfig: window.wc_ppcp_googlepay,
 	ppcpConfig: window.PayPalCommerceGateway,
-	jQuery: window.jQuery,
 } );

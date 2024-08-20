@@ -7,6 +7,7 @@ import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/Wi
 import UpdatePaymentData from './Helper/UpdatePaymentData';
 import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/PayerData';
+import moduleStorage from './Helper/GooglePayStorage';
 
 /**
  * Plugin-specific styling.
@@ -73,6 +74,26 @@ import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/P
  * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the
  *                                     Google Pay payment sheet.
  */
+
+function payerDataFromPaymentResponse( response ) {
+	const raw = response?.paymentMethodData?.info?.billingAddress;
+
+	return {
+		email_address: response?.email,
+		name: {
+			given_name: raw.name.split( ' ' )[ 0 ], // Assuming first name is the first part
+			surname: raw.name.split( ' ' ).slice( 1 ).join( ' ' ), // Assuming last name is the rest
+		},
+		address: {
+			country_code: raw.countryCode,
+			address_line_1: raw.address1,
+			address_line_2: raw.address2,
+			admin_area_1: raw.administrativeArea,
+			admin_area_2: raw.locality,
+			postal_code: raw.postalCode,
+		},
+	};
+}
 
 class GooglepayButton extends PaymentButton {
 	/**
@@ -643,30 +664,16 @@ class GooglepayButton extends PaymentButton {
 			}
 		};
 
-		const propagatePayerDataToForm = () => {
-			const raw = paymentData?.paymentMethodData?.info?.billingAddress;
-			const payer = {
-				email_address: paymentData?.email,
-				name: {
-					given_name: raw.name.split( ' ' )[ 0 ], // Assuming first name is the first part
-					surname: raw.name.split( ' ' ).slice( 1 ).join( ' ' ), // Assuming last name is the rest
-				},
-				address: {
-					country_code: raw.countryCode,
-					address_line_1: raw.address1,
-					address_line_2: raw.address2,
-					admin_area_1: raw.administrativeArea,
-					admin_area_2: raw.locality,
-					postal_code: raw.postalCode,
-				},
-			};
+		const addBillingDataToSession = () => {
+			const payer = payerDataFromPaymentResponse( paymentData );
 
+			moduleStorage.setPayer( payer );
 			setPayerData( payer );
 		};
 
 		return new Promise( async ( resolve ) => {
 			try {
-				propagatePayerDataToForm();
+				addBillingDataToSession();
 				await processPaymentPromise( resolve );
 			} catch ( err ) {
 				resolve( paymentError( err.message ) );
