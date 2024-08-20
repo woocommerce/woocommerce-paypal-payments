@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -196,6 +197,7 @@ return array(
 				OXXOGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
 				AxoGateway::ID,
+				GooglePayGateway::ID,
 			),
 			true
 		);
@@ -217,6 +219,7 @@ return array(
 				CardButtonGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
 				Settings::CONNECTION_TAB_ID,
+				GooglePayGateway::ID,
 			),
 			true
 		);
@@ -363,7 +366,8 @@ return array(
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
-			$logger
+			$logger,
+			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {

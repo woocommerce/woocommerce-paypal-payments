@@ -64,19 +64,4 @@ class ApmApplies {
 		}
 		return in_array( $this->currency, $this->allowed_country_currency_matrix[ $this->country ], true );
 	}
-
-	/**
-	 * Returns whether the settings are compatible with AXO.
-	 *
-	 * @return bool
-	 */
-	public function for_settings(): bool {
-		if ( get_option( 'woocommerce_ship_to_destination' ) === 'billing_only' ) { // Force shipping to the customer billing address.
-			return false;
-		}
-		return true;
-	}
-
-
-
 }

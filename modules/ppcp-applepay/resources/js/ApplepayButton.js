@@ -644,10 +644,12 @@ class ApplepayButton {
 				return {
 					action: 'ppcp_update_shipping_method',
 					shipping_method: event.shippingMethod,
-					simplified_contact:
-						this.updatedContactInfo ||
-						this.initialPaymentRequest.shippingContact ||
-						this.initialPaymentRequest.billingContact,
+					simplified_contact: this.hasValidContactInfo(
+						this.updatedContactInfo
+					)
+						? this.updatedContactInfo
+						: this.initialPaymentRequest?.shippingContact ??
+						  this.initialPaymentRequest?.billingContact,
 					product_id,
 					products: JSON.stringify( this.products ),
 					caller_page: 'productDetail',
@@ -662,10 +664,12 @@ class ApplepayButton {
 				return {
 					action: 'ppcp_update_shipping_method',
 					shipping_method: event.shippingMethod,
-					simplified_contact:
-						this.updatedContactInfo ||
-						this.initialPaymentRequest.shippingContact ||
-						this.initialPaymentRequest.billingContact,
+					simplified_contact: this.hasValidContactInfo(
+						this.updatedContactInfo
+					)
+						? this.updatedContactInfo
+						: this.initialPaymentRequest?.shippingContact ??
+						  this.initialPaymentRequest?.billingContact,
 					caller_page: 'cart',
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
@@ -947,6 +951,12 @@ class ApplepayButton {
 		);
 
 		return btoa( utf8Str );
+	}
+
+	hasValidContactInfo( value ) {
+		return Array.isArray( value )
+			? value.length > 0
+			: Object.keys( value || {} ).length > 0;
 	}
 }
 

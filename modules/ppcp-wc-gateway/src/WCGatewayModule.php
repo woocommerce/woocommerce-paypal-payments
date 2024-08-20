@@ -528,6 +528,14 @@ class WCGatewayModule implements ModuleInterface {
 					return $methods;
 				}
 
+				$is_dcc_enabled       = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+				$standard_card_button = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
+
+				if ( $is_dcc_enabled && isset( $standard_card_button['enabled'] ) ) {
+					$standard_card_button['enabled'] = 'no';
+					update_option( 'woocommerce_ppcp-card-button-gateway_settings', $standard_card_button );
+				}
+
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 				assert( $dcc_applies instanceof DccApplies );
 

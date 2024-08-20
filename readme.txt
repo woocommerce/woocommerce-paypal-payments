@@ -1,10 +1,10 @@
 === WooCommerce PayPal Payments ===
-Contributors: woocommerce, automattic, inpsyde
+Contributors: woocommerce, automattic, syde
 Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
 Tested up to: 6.6
 Requires PHP: 7.2
-Stable tag: 2.8.2
+Stable tag: 2.8.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,7 +179,24 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.8.2 - xxxx-xx-xx =
+= 2.8.3 - 2024-08-12 =
+* Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474
+* Fix - Do not add tax info into order meta during order creation #2471
+* Fix - PayPal declares subscription support when for Subscription mode is set Disable PayPal for subscription #2425
+* Fix - PayPal js files loaded on non PayPal pages #2411
+* Fix - Google Pay: Fix the incorrect popup triggering #2414
+* Fix - Add tax configurator when programmatically creating WC orders #2431
+* Fix - Shipping callback compatibility with WC Name Your Price plugin #2402
+* Fix - Uncaught Error: Cannot use object of type ...\Settings as array in .../AbstractPaymentMethodType.php (3253) #2334
+* Fix - Prevent displaying smart button multiple times on variable product page #2420
+* Fix - Prevent enabling Standard Card Button when ACDC is enabled #2404
+* Fix - Use client credentials for user tokens #2491
+* Fix - Apple Pay: Fix the shipping callback #2492
+* Enhancement - Separate Google Pay button for Classic Checkout #2430
+* Enhancement - Add Apple Pay and Google Pay support for China, simplify country-currency matrix #2468
+* Enhancement - Add AMEX support for Advanced Card Processing in China #2469
+
+= 2.8.2 - 2024-07-22 =
 * Fix - Sold individually checkbox automatically disabled after adding product to the cart more than once #2415
 * Fix - All products "Sold individually" when PayPal Subscriptions selected as Subscriptions Mode #2400
 * Fix - W3 Total Cache: Remove type from file parameter as sometimes null gets passed causing errors #2403
