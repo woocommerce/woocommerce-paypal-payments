@@ -587,6 +587,14 @@ class GooglepayButton extends PaymentButton {
 			return 'APPROVED' === confirmOrderResponse?.status;
 		};
 
+		/**
+		 * This approval mainly confirms that the orderID is valid.
+		 *
+		 * It's still needed because this handler redirects to the checkout page if the server-side
+		 * approval was successful.
+		 *
+		 * @param {string} orderID
+		 */
 		const approveOrderServerSide = async ( orderID ) => {
 			let isApproved = true;
 
@@ -625,6 +633,7 @@ class GooglepayButton extends PaymentButton {
 				return;
 			}
 
+			// This must be the last step in the process, as it initiates a redirect.
 			const success = await approveOrderServerSide( id );
 
 			if ( success ) {

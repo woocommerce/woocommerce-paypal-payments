@@ -18,17 +18,25 @@ const onApprove = ( context, errorHandler ) => {
 			.then( ( res ) => {
 				return res.json();
 			} )
-			.then( ( data ) => {
-				if ( ! data.success ) {
+			.then( ( approveData ) => {
+				if ( ! approveData.success ) {
 					errorHandler.genericError();
 					return actions.restart().catch( ( err ) => {
 						errorHandler.genericError();
 					} );
 				}
 
-				const orderReceivedUrl = data.data?.order_received_url;
+				const orderReceivedUrl = approveData.data?.order_received_url;
 
-				location.href = orderReceivedUrl
+				/**
+				 * Notice how this step initiates a redirect to a new page using a plain
+				 * URL as new location. This process does not send any details about the
+				 * approved order or billed customer.
+				 * Also, due to the redirect starting _instantly_ there should be no other
+				 * logic scheduled after calling `await onApprove()`;
+				 */
+
+				window.location.href = orderReceivedUrl
 					? orderReceivedUrl
 					: context.config.redirect;
 			} );
