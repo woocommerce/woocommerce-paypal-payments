@@ -10,30 +10,30 @@
  * Postal address details.
  *
  * @typedef {Object} AddressDetails
- * @property {?string} country_code   - Country code (2-letter).
- * @property {?string} address_line_1 - Address details, line 1 (street, house number).
- * @property {?string} address_line_2 - Address details, line 2.
- * @property {?string} admin_area_1   - State or region.
- * @property {?string} admin_area_2   - State or region.
- * @property {?string} postal_code    - Zip code.
+ * @property {undefined|string} country_code   - Country code (2-letter).
+ * @property {undefined|string} address_line_1 - Address details, line 1 (street, house number).
+ * @property {undefined|string} address_line_2 - Address details, line 2.
+ * @property {undefined|string} admin_area_1   - State or region.
+ * @property {undefined|string} admin_area_2   - State or region.
+ * @property {undefined|string} postal_code    - Zip code.
  */
 
 /**
  * Phone details.
  *
  * @typedef {Object} PhoneDetails
- * @property {?string}                    phone_type   - Type, usually 'HOME'
- * @property {?{national_number: string}} phone_number - Phone number details.
+ * @property {undefined|string}                    phone_type   - Type, usually 'HOME'
+ * @property {undefined|{national_number: string}} phone_number - Phone number details.
  */
 
 /**
  * Payer details.
  *
  * @typedef {Object} PayerDetails
- * @property {?string}         email_address - Email address for billing communication.
- * @property {?PhoneDetails}   phone         - Phone number for billing communication.
- * @property {?NameDetails}    name          - Payer's name.
- * @property {?AddressDetails} address       - Postal billing address.
+ * @property {undefined|string}         email_address - Email address for billing communication.
+ * @property {undefined|PhoneDetails}   phone         - Phone number for billing communication.
+ * @property {undefined|NameDetails}    name          - Payer's name.
+ * @property {undefined|AddressDetails} address       - Postal billing address.
  */
 
 // Map checkout fields to PayerData object properties.
@@ -55,7 +55,14 @@ const FIELD_MAP = {
  *
  * @return {?PayerDetails} Full billing details, or null on failure.
  */
-export const payerData = () => {
+export function payerData() {
+	/**
+	 * PayPalCommerceGateway.payer can be set from server-side or via JS:
+	 * - Server-side: Set by PHP when a WC customer is known.
+	 * - Dynamic JS: When a payment method provided billing data.
+	 *
+	 * @see {setPayerData}
+	 */
 	const payer = window.PayPalCommerceGateway?.payer;
 	if ( ! payer ) {
 		return null;
@@ -104,18 +111,20 @@ export const payerData = () => {
 	}
 
 	return data;
-};
+}
 
 /**
  * Updates the DOM with specific payer details.
  *
+ * Used by payment method callbacks that provide dedicated billing details, like Google Pay.
+ * Note: This code only works on classic checkout
+ *
  * @param {PayerDetails} newData                   - New payer details.
- * @param {boolean}      [overwriteExisting=false] - If set to true, all provided values will replace existing details. If false, or omitted, only undefined fields are updated.
+ * @param {boolean}      [overwriteExisting=false] - If set to true, all provided values will
+ *                                                 replace existing details. If false, or omitted,
+ *                                                 only undefined fields are updated.
  */
-export const setPayerData = ( newData, overwriteExisting = false ) => {
-	// TODO: Check if we can add some kind of "filter" to allow customization of the data.
-	//       Or add JS flags like "onlyUpdateMissing".
-
+export function setPayerData( newData, overwriteExisting = false ) {
 	const setValue = ( path, field, value ) => {
 		if ( null === value || undefined === value || ! field ) {
 			return;
@@ -136,4 +145,4 @@ export const setPayerData = ( newData, overwriteExisting = false ) => {
 
 		setValue( path, element, value );
 	} );
-};
+}
