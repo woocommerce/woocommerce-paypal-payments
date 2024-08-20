@@ -38,10 +38,7 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_payment_gateways',
 			function ( $methods ) use ( $c ) {
-				if ( is_admin() ) {
-					$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
-					return $methods;
-				}
+				$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
 
 				return $methods;
 			}
@@ -49,7 +46,16 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $methods ) use ( $c ) {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
 				if ( ! is_admin() ) {
 					$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 					$site_currency    = get_woocommerce_currency();
