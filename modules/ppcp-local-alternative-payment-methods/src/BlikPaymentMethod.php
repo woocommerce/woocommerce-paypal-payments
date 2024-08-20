@@ -1,6 +1,6 @@
 <?php
 /**
- * Bancontact payment method.
+ * Blik payment method.
  *
  * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods
  */
@@ -12,9 +12,9 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
 /**
- * Class BancontactPaymentMethod
+ * Class BlikPaymentMethod
  */
-class BancontactPaymentMethod extends AbstractPaymentMethodType {
+class BlikPaymentMethod extends AbstractPaymentMethodType {
 
 	/**
 	 * The URL of this module.
@@ -31,29 +31,29 @@ class BancontactPaymentMethod extends AbstractPaymentMethodType {
 	private $version;
 
 	/**
-	 * Bancontact WC gateway.
+	 * Blik WC gateway.
 	 *
-	 * @var BancontactGateway
+	 * @var BlikGateway
 	 */
 	private $gateway;
 
 	/**
-	 * BancontactPaymentMethod constructor.
+	 * BlikPaymentMethod constructor.
 	 *
-	 * @param string            $module_url The URL of this module.
-	 * @param string            $version The assets version.
-	 * @param BancontactGateway $gateway Bancontact WC gateway.
+	 * @param string      $module_url The URL of this module.
+	 * @param string      $version The assets version.
+	 * @param BlikGateway $gateway Blik WC gateway.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
-		BancontactGateway $gateway
+		BlikGateway $gateway
 	) {
 		$this->module_url = $module_url;
 		$this->version    = $version;
 		$this->gateway    = $gateway;
 
-		$this->name = BancontactGateway::ID;
+		$this->name = BlikGateway::ID;
 	}
 
 	/**
@@ -73,14 +73,14 @@ class BancontactPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	public function get_payment_method_script_handles() {
 		wp_register_script(
-			'ppcp-bancontact-payment-method',
-			trailingslashit( $this->module_url ) . 'assets/js/bancontact-payment-method.js',
+			'ppcp-blick-payment-method',
+			trailingslashit( $this->module_url ) . 'assets/js/blik-payment-method.js',
 			array(),
 			$this->version,
 			true
 		);
 
-		return array( 'ppcp-bancontact-payment-method' );
+		return array( 'ppcp-blick-payment-method' );
 	}
 
 	/**
@@ -91,7 +91,7 @@ class BancontactPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_bancontact_color.svg' ),
+			'icon'        => esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_blik_color.svg' ),
 		);
 	}
 }

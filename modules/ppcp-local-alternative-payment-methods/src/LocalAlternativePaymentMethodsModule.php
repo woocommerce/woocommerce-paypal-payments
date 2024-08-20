@@ -37,11 +37,18 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 		add_filter(
 			'woocommerce_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $methods ) use ( $c ) {
-				if ( is_admin() ) {
-					$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
-					$methods[] = $c->get( 'ppcp-local-apms.blik.wc-gateway' );
+				if ( ! is_array( $methods ) ) {
+					return $methods;
 				}
+
+				$methods[] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+				$methods[] = $c->get( 'ppcp-local-apms.blik.wc-gateway' );
 
 				return $methods;
 			}
@@ -55,15 +62,19 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $methods ) use ( $c ) {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
 				if ( ! is_admin() ) {
 					$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 					$site_currency    = get_woocommerce_currency();
 
-					if ( $customer_country === 'BE' && $site_currency === 'EUR' ) {
-						$methods[ BancontactGateway::ID ] = $c->get( 'ppcp-local-apms.bancontact.wc-gateway' );
+					if ( $customer_country !== 'BE' || $site_currency !== 'EUR' ) {
+						unset( $methods[ BancontactGateway::ID ] );
 					}
-					if ( $customer_country === 'PL' && $site_currency === 'PLN' ) {
-						$methods[ BlikGateway::ID ] = $c->get( 'ppcp-local-apms.blik.wc-gateway' );
+					if ( $customer_country !== 'PL' || $site_currency !== 'PLN' ) {
+						unset( $methods[ BlikGateway::ID ] );
 					}
 				}
 
@@ -75,6 +86,7 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'ppcp-local-apms.bancontact.payment-method' ) );
+				$payment_method_registry->register( $c->get( 'ppcp-local-apms.blik.payment-method' ) );
 			}
 		);
 

@@ -46,4 +46,11 @@ return array(
 			$container->get( 'ppcp-local-apms.bancontact.wc-gateway' )
 		);
 	},
+	'ppcp-local-apms.blik.payment-method'       => static function( ContainerInterface $container ): BlikPaymentMethod {
+		return new BlikPaymentMethod(
+			$container->get( 'ppcp-local-apms.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.blik.wc-gateway' )
+		);
+	},
 );

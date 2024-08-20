@@ -12,6 +12,9 @@ module.exports = {
 		'bancontact-payment-method': path.resolve(
 			'./resources/js/bancontact-payment-method.js'
 		),
+		'blik-payment-method': path.resolve(
+			'./resources/js/blik-payment-method.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),
