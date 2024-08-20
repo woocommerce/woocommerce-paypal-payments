@@ -706,7 +706,6 @@ return array(
 				'CN' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
-					'amex'       => array(),
 				),
 				'CY' => $mastercard_visa_amex,
 				'CZ' => $mastercard_visa_amex,
