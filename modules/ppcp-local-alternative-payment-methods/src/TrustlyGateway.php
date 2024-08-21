@@ -1,6 +1,6 @@
 <?php
 /**
- * The iDeal payment gateway.
+ * The Trustly payment gateway.
  *
  * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods
  */
@@ -17,11 +17,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
- * Class IDealGateway
+ * Class TrustlyGateway
  */
-class IDealGateway extends WC_Payment_Gateway {
+class TrustlyGateway extends WC_Payment_Gateway {
 
-	const ID = 'ppcp-ideal';
+	const ID = 'ppcp-trustly';
 
 	/**
 	 * PayPal Orders endpoint.
@@ -52,7 +52,7 @@ class IDealGateway extends WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
-	 * IDealGateway constructor.
+	 * TrustlyGateway constructor.
 	 *
 	 * @param Orders                 $orders_endpoint PayPal Orders endpoint.
 	 * @param PurchaseUnitFactory    $purchase_unit_factory Purchase unit factory.
@@ -72,13 +72,13 @@ class IDealGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'iDeal', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'iDeal', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Trustly', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'Trustly', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title', __( 'iDeal', 'woocommerce-paypal-payments' ) );
+		$this->title       = $this->get_option( 'title', __( 'Trustly', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
 
-		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_ideal_color.svg' );
+		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_trustly_color.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -99,10 +99,10 @@ class IDealGateway extends WC_Payment_Gateway {
 			'enabled'     => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'iDeal', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Trustly', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
-				'description' => __( 'Enable/Disable iDeal payment gateway.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable/Disable Trustly payment gateway.', 'woocommerce-paypal-payments' ),
 			),
 			'title'       => array(
 				'title'       => __( 'Title', 'woocommerce-paypal-payments' ),
@@ -129,22 +129,18 @@ class IDealGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		$wc_order->update_status( 'on-hold', __( 'Awaiting iDeal to confirm the payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'on-hold', __( 'Awaiting Trustly to confirm the payment.', 'woocommerce-paypal-payments' ) );
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$amount        = $purchase_unit->amount()->to_array();
 
-		$payment_source = array(
-			'country_code' => $wc_order->get_billing_country(),
-			'name' => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-		);
-		// TODO get "bic" from gateway settings.
-
-
 		$request_body = array(
 			'intent'                 => 'CAPTURE',
 			'payment_source'         => array(
-				'ideal' => $payment_source,
+				'trustly' => array(
+					'country_code' => $wc_order->get_billing_country(),
+					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+				),
 			),
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
 			'purchase_units'         => array(
@@ -159,6 +155,7 @@ class IDealGateway extends WC_Payment_Gateway {
 				),
 			),
 			'application_context'    => array(
+				'locale'     => $this->valid_bcp47_code(),
 				'return_url' => $this->get_return_url( $wc_order ),
 				'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
 			),
@@ -225,5 +222,28 @@ class IDealGateway extends WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	/**
+	 * Returns a PayPal-supported BCP-47 code, for example de-DE-formal becomes de-DE.
+	 *
+	 * @return string
+	 */
+	private function valid_bcp47_code() {
+		$locale = str_replace( '_', '-', get_user_locale() );
+
+		if ( preg_match( '/^[a-z]{2}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}))?$/', $locale ) ) {
+			return $locale;
+		}
+
+		$parts = explode( '-', $locale );
+		if ( count( $parts ) === 3 ) {
+			$ret = substr( $locale, 0, strrpos( $locale, '-' ) );
+			if ( false !== $ret ) {
+				return $ret;
+			}
+		}
+
+		return 'en';
 	}
 }

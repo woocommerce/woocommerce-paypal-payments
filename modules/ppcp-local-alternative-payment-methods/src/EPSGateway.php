@@ -138,7 +138,7 @@ class EPSGateway extends WC_Payment_Gateway {
 			'intent'                 => 'CAPTURE',
 			'payment_source'         => array(
 				'eps' => array(
-					'country_code' => 'AT',
+					'country_code' => $wc_order->get_billing_country(),
 					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
 				),
 			),

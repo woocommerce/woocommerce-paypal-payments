@@ -27,6 +27,9 @@ module.exports = {
 		'p24-payment-method': path.resolve(
 			'./resources/js/p24-payment-method.js'
 		),
+		'trustly-payment-method': path.resolve(
+			'./resources/js/trustly-payment-method.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),

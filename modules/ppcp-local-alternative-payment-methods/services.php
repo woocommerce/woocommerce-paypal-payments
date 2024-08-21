@@ -27,33 +27,38 @@ return array(
 		return array(
 			'bancontact' => array(
 				'id' => BancontactGateway::ID,
-				'countries' => array('BE'),
-				'currencies' => array('EUR'),
+				'countries' => array('BE',),
+				'currencies' => array('EUR',),
 			),
 			'blik' => array(
 				'id' => BlikGateway::ID,
-				'countries' => array('PL'),
-				'currencies' => array('PLN'),
+				'countries' => array('PL',),
+				'currencies' => array('PLN',),
 			),
 			'eps' => array(
 				'id' => EPSGateway::ID,
-				'countries' => array('AT'),
-				'currencies' => array('EUR'),
+				'countries' => array('AT',),
+				'currencies' => array('EUR',),
 			),
 			'ideal' => array(
 				'id' => IDealGateway::ID,
-				'countries' => array('NL'),
-				'currencies' => array('EUR'),
+				'countries' => array('NL',),
+				'currencies' => array('EUR',),
 			),
 			'mybank' => array(
 				'id' => MyBankGateway::ID,
-				'countries' => array('IT'),
-				'currencies' => array('EUR'),
+				'countries' => array('IT',),
+				'currencies' => array('EUR',),
 			),
 			'p24' => array(
 				'id' => P24Gateway::ID,
-				'countries' => array('PL'),
-				'currencies' => array('EUR', 'PLN'),
+				'countries' => array('PL',),
+				'currencies' => array('EUR', 'PLN',),
+			),
+			'trustly' => array(
+				'id' => TrustlyGateway::ID,
+				'countries' => array('AT', 'DE', 'DK', 'EE', 'ES', 'FI', 'GB', 'LT', 'LV', 'NL', 'NO', 'SE',),
+				'currencies' => array('EUR', 'DKK', 'SEK', 'GBP', 'NOK',),
 			),
 		);
 	},
@@ -105,6 +110,14 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
+	'ppcp-local-apms.trustly.wc-gateway'            => static function ( ContainerInterface $container ): TrustlyGateway {
+		return new TrustlyGateway(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' )
+		);
+	},
 	'ppcp-local-apms.bancontact.payment-method' => static function( ContainerInterface $container ): BancontactPaymentMethod {
 		return new BancontactPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
@@ -145,6 +158,13 @@ return array(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.p24.wc-gateway' )
+		);
+	},
+	'ppcp-local-apms.trustly.payment-method'        => static function( ContainerInterface $container ): TrustlyPaymentMethod {
+		return new TrustlyPaymentMethod(
+			$container->get( 'ppcp-local-apms.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.trustly.wc-gateway' )
 		);
 	},
 );

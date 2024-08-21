@@ -138,7 +138,7 @@ class BancontactGateway extends WC_Payment_Gateway {
 			'intent'                 => 'CAPTURE',
 			'payment_source'         => array(
 				'bancontact' => array(
-					'country_code' => 'BE',
+					'country_code' => $wc_order->get_billing_country(),
 					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
 				),
 			),
