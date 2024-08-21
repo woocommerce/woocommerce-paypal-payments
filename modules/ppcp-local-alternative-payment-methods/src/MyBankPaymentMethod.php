@@ -40,8 +40,8 @@ class MyBankPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * MyBankPaymentMethod constructor.
 	 *
-	 * @param string     $module_url The URL of this module.
-	 * @param string     $version The assets version.
+	 * @param string        $module_url The URL of this module.
+	 * @param string        $version The assets version.
 	 * @param MyBankGateway $gateway MyBank WC gateway.
 	 */
 	public function __construct(

@@ -23,42 +23,42 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'ppcp-local-apms.payment-methods' => static function( ContainerInterface $container): array {
+	'ppcp-local-apms.payment-methods'           => static function( ContainerInterface $container ): array {
 		return array(
 			'bancontact' => array(
-				'id' => BancontactGateway::ID,
-				'countries' => array('BE',),
-				'currencies' => array('EUR',),
+				'id'         => BancontactGateway::ID,
+				'countries'  => array( 'BE' ),
+				'currencies' => array( 'EUR' ),
 			),
-			'blik' => array(
-				'id' => BlikGateway::ID,
-				'countries' => array('PL',),
-				'currencies' => array('PLN',),
+			'blik'       => array(
+				'id'         => BlikGateway::ID,
+				'countries'  => array( 'PL' ),
+				'currencies' => array( 'PLN' ),
 			),
-			'eps' => array(
-				'id' => EPSGateway::ID,
-				'countries' => array('AT',),
-				'currencies' => array('EUR',),
+			'eps'        => array(
+				'id'         => EPSGateway::ID,
+				'countries'  => array( 'AT' ),
+				'currencies' => array( 'EUR' ),
 			),
-			'ideal' => array(
-				'id' => IDealGateway::ID,
-				'countries' => array('NL',),
-				'currencies' => array('EUR',),
+			'ideal'      => array(
+				'id'         => IDealGateway::ID,
+				'countries'  => array( 'NL' ),
+				'currencies' => array( 'EUR' ),
 			),
-			'mybank' => array(
-				'id' => MyBankGateway::ID,
-				'countries' => array('IT',),
-				'currencies' => array('EUR',),
+			'mybank'     => array(
+				'id'         => MyBankGateway::ID,
+				'countries'  => array( 'IT' ),
+				'currencies' => array( 'EUR' ),
 			),
-			'p24' => array(
-				'id' => P24Gateway::ID,
-				'countries' => array('PL',),
-				'currencies' => array('EUR', 'PLN',),
+			'p24'        => array(
+				'id'         => P24Gateway::ID,
+				'countries'  => array( 'PL' ),
+				'currencies' => array( 'EUR', 'PLN' ),
 			),
-			'trustly' => array(
-				'id' => TrustlyGateway::ID,
-				'countries' => array('AT', 'DE', 'DK', 'EE', 'ES', 'FI', 'GB', 'LT', 'LV', 'NL', 'NO', 'SE',),
-				'currencies' => array('EUR', 'DKK', 'SEK', 'GBP', 'NOK',),
+			'trustly'    => array(
+				'id'         => TrustlyGateway::ID,
+				'countries'  => array( 'AT', 'DE', 'DK', 'EE', 'ES', 'FI', 'GB', 'LT', 'LV', 'NL', 'NO', 'SE' ),
+				'currencies' => array( 'EUR', 'DKK', 'SEK', 'GBP', 'NOK' ),
 			),
 		);
 	},
@@ -86,7 +86,7 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
-	'ppcp-local-apms.ideal.wc-gateway'            => static function ( ContainerInterface $container ): IDealGateway {
+	'ppcp-local-apms.ideal.wc-gateway'          => static function ( ContainerInterface $container ): IDealGateway {
 		return new IDealGateway(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
@@ -94,7 +94,7 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
-	'ppcp-local-apms.mybank.wc-gateway'            => static function ( ContainerInterface $container ): MyBankGateway {
+	'ppcp-local-apms.mybank.wc-gateway'         => static function ( ContainerInterface $container ): MyBankGateway {
 		return new MyBankGateway(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
@@ -110,7 +110,7 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
-	'ppcp-local-apms.trustly.wc-gateway'            => static function ( ContainerInterface $container ): TrustlyGateway {
+	'ppcp-local-apms.trustly.wc-gateway'        => static function ( ContainerInterface $container ): TrustlyGateway {
 		return new TrustlyGateway(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
@@ -139,14 +139,14 @@ return array(
 			$container->get( 'ppcp-local-apms.eps.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.ideal.payment-method'        => static function( ContainerInterface $container ): IDealPaymentMethod {
+	'ppcp-local-apms.ideal.payment-method'      => static function( ContainerInterface $container ): IDealPaymentMethod {
 		return new IDealPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.ideal.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.mybank.payment-method'        => static function( ContainerInterface $container ): MyBankPaymentMethod {
+	'ppcp-local-apms.mybank.payment-method'     => static function( ContainerInterface $container ): MyBankPaymentMethod {
 		return new MyBankPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -160,7 +160,7 @@ return array(
 			$container->get( 'ppcp-local-apms.p24.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.trustly.payment-method'        => static function( ContainerInterface $container ): TrustlyPaymentMethod {
+	'ppcp-local-apms.trustly.payment-method'    => static function( ContainerInterface $container ): TrustlyPaymentMethod {
 		return new TrustlyPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),

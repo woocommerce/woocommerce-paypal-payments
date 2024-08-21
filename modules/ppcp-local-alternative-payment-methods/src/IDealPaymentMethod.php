@@ -1,6 +1,6 @@
 <?php
 /**
- * iDeal payment method.
+ * IDeal payment method.
  *
  * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods
  */
@@ -31,7 +31,7 @@ class IDealPaymentMethod extends AbstractPaymentMethodType {
 	private $version;
 
 	/**
-	 * iDeal WC gateway.
+	 * IDeal WC gateway.
 	 *
 	 * @var IDealGateway
 	 */
@@ -40,8 +40,8 @@ class IDealPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * IDealPaymentMethod constructor.
 	 *
-	 * @param string     $module_url The URL of this module.
-	 * @param string     $version The assets version.
+	 * @param string       $module_url The URL of this module.
+	 * @param string       $version The assets version.
 	 * @param IDealGateway $gateway IDeal WC gateway.
 	 */
 	public function __construct(

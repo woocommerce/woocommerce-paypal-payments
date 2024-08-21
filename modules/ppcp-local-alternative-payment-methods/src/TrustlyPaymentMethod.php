@@ -40,8 +40,8 @@ class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * TrustlyPaymentMethod constructor.
 	 *
-	 * @param string     $module_url The URL of this module.
-	 * @param string     $version The assets version.
+	 * @param string         $module_url The URL of this module.
+	 * @param string         $version The assets version.
 	 * @param TrustlyGateway $gateway Trustly WC gateway.
 	 */
 	public function __construct(

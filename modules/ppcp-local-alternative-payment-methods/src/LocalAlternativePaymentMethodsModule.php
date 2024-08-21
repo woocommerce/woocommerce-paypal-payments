@@ -47,9 +47,9 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 					return $methods;
 				}
 
-				$payment_methods = $c->get('ppcp-local-apms.payment-methods');
-				foreach ($payment_methods as $key => $value) {
-					$methods[] = $c->get( 'ppcp-local-apms.' .  $key . '.wc-gateway' );
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				foreach ( $payment_methods as $key => $value ) {
+					$methods[] = $c->get( 'ppcp-local-apms.' . $key . '.wc-gateway' );
 				}
 
 				return $methods;
@@ -72,11 +72,11 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 					$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 					$site_currency    = get_woocommerce_currency();
 
-					$payment_methods = $c->get('ppcp-local-apms.payment-methods');
-					foreach ($payment_methods as $payment_method) {
+					$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+					foreach ( $payment_methods as $payment_method ) {
 						if (
-							! in_array($customer_country, $payment_method['countries'], true)
-							|| ! in_array($site_currency, $payment_method['currencies'], true)
+							! in_array( $customer_country, $payment_method['countries'], true )
+							|| ! in_array( $site_currency, $payment_method['currencies'], true )
 						) {
 							unset( $methods[ $payment_method['id'] ] );
 						}
@@ -90,8 +90,8 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
-				$payment_methods = $c->get('ppcp-local-apms.payment-methods');
-				foreach ($payment_methods as $key => $value) {
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				foreach ( $payment_methods as $key => $value ) {
 					$payment_method_registry->register( $c->get( 'ppcp-local-apms.' . $key . '.payment-method' ) );
 				}
 			}
@@ -99,8 +99,8 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
-			function ( array $data ) use ($c) {
-				$payment_methods = $c->get('ppcp-local-apms.payment-methods');
+			function ( array $data ) use ( $c ) {
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 
 				$default_disable_funding               = $data['url_params']['disable-funding'] ?? '';
 				$disable_funding                       = array_merge( array_keys( $payment_methods ), array_filter( explode( ',', $default_disable_funding ) ) );
@@ -117,7 +117,7 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $order_id ) use($c) {
+			function( $order_id ) use ( $c ) {
 				$order = wc_get_order( $order_id );
 				if ( ! $order instanceof WC_Order ) {
 					return;
@@ -128,9 +128,9 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				$order_key = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
 				// phpcs:enable
 
-				$payment_methods = $c->get('ppcp-local-apms.payment-methods');
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 				if (
-					! $this->is_local_apm($order->get_payment_method(), $payment_methods)
+					! $this->is_local_apm( $order->get_payment_method(), $payment_methods )
 					|| ! $cancelled
 					|| $order->get_order_key() !== $order_key
 				) {
@@ -152,12 +152,12 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 	 * Check if given payment method is a local APM.
 	 *
 	 * @param string $selected_payment_method Selected payment method.
-	 * @param array $payment_methods Available local APMs.
+	 * @param array  $payment_methods Available local APMs.
 	 * @return bool
 	 */
-	private function is_local_apm(string $selected_payment_method, array $payment_methods): bool {
-		foreach ($payment_methods as $payment_method) {
-			if($payment_method['id'] === $selected_payment_method) {
+	private function is_local_apm( string $selected_payment_method, array $payment_methods ): bool {
+		foreach ( $payment_methods as $payment_method ) {
+			if ( $payment_method['id'] === $selected_payment_method ) {
 				return true;
 			}
 		}

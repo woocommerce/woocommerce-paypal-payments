@@ -136,10 +136,9 @@ class IDealGateway extends WC_Payment_Gateway {
 
 		$payment_source = array(
 			'country_code' => $wc_order->get_billing_country(),
-			'name' => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+			'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
 		);
 		// TODO get "bic" from gateway settings.
-
 
 		$request_body = array(
 			'intent'                 => 'CAPTURE',
