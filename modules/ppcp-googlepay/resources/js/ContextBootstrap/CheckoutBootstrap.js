@@ -1,5 +1,8 @@
 import { GooglePayStorage } from '../Helper/GooglePayStorage';
-import { setPayerData } from '../../../../ppcp-button/resources/js/modules/Helper/PayerData';
+import {
+	getWooCommerceCustomerDetails,
+	setPayerData,
+} from '../../../../ppcp-button/resources/js/modules/Helper/PayerData';
 
 const CHECKOUT_FORM_SELECTOR = 'form.woocommerce-checkout';
 
@@ -49,16 +52,29 @@ export class CheckoutBootstrap {
 			return;
 		}
 
+		this.#populateCheckoutFields();
+	}
+
+	#populateCheckoutFields() {
+		const loggedInData = getWooCommerceCustomerDetails();
+
+		// If customer is logged in, we use the details from the customer profile.
+		if ( loggedInData ) {
+			return;
+		}
+
 		const billingData = this.#storage.getPayer();
 
 		if ( billingData ) {
 			setPayerData( billingData );
 
-			this.checkoutForm.addEventListener( 'submit', this.onFormSubmit );
+			this.checkoutForm.addEventListener( 'submit', () =>
+				this.#onFormSubmit()
+			);
 		}
 	}
 
-	onFormSubmit() {
+	#onFormSubmit() {
 		this.#storage.clearPayer();
 	}
 }
