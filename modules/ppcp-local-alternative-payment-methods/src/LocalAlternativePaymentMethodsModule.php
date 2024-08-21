@@ -108,6 +108,11 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_before_thankyou',
+			/**
+			 * Activate is_checkout() on woocommerce/classic-shortcode checkout blocks.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $order_id ) {
 				$order = wc_get_order( $order_id );
 				if ( ! $order instanceof WC_Order ) {
