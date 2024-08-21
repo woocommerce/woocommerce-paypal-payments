@@ -1,7 +1,7 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { APM } from './apm-block';
 
-const config = wc.wcSettings.getSetting( 'ppcp-mybank_data' );
+const config = wc.wcSettings.getSetting( 'ppcp-p24_data' );
 
 registerPaymentMethod( {
 	name: config.id,

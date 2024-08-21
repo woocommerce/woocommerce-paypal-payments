@@ -24,7 +24,7 @@ return array(
 		);
 	},
 	'ppcp-local-apms.payment-methods' => static function( ContainerInterface $container): array {
-		return [
+		return array(
 			'bancontact' => array(
 				'id' => BancontactGateway::ID,
 				'country' => 'BE',
@@ -50,7 +50,12 @@ return array(
 				'country' => 'IT',
 				'currency' => 'EUR',
 			),
-		];
+			'p24' => array(
+				'id' => P24Gateway::ID,
+				'country' => 'PL',
+				'currency' => 'EUR',
+			),
+		);
 	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
 		return new BancontactGateway(
@@ -92,6 +97,14 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
+	'ppcp-local-apms.p24.wc-gateway'            => static function ( ContainerInterface $container ): P24Gateway {
+		return new P24Gateway(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' )
+		);
+	},
 	'ppcp-local-apms.bancontact.payment-method' => static function( ContainerInterface $container ): BancontactPaymentMethod {
 		return new BancontactPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
@@ -125,6 +138,13 @@ return array(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.mybank.wc-gateway' )
+		);
+	},
+	'ppcp-local-apms.p24.payment-method'        => static function( ContainerInterface $container ): P24PaymentMethod {
+		return new P24PaymentMethod(
+			$container->get( 'ppcp-local-apms.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.p24.wc-gateway' )
 		);
 	},
 );

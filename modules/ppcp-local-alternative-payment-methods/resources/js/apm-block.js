@@ -1,4 +1,4 @@
-export function EPS( { config, components } ) {
+export function APM( { config, components } ) {
 	const { PaymentMethodIcons } = components;
 
 	return (
