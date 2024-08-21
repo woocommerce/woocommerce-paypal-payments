@@ -2,38 +2,38 @@
  * Name details.
  *
  * @typedef {Object} NameDetails
- * @property {?string} given_name - First name, e.g. "John".
- * @property {?string} surname    - Last name, e.g. "Doe".
+ * @property {string} [given_name] - First name, e.g. "John".
+ * @property {string} [surname]    - Last name, e.g. "Doe".
  */
 
 /**
  * Postal address details.
  *
  * @typedef {Object} AddressDetails
- * @property {undefined|string} country_code   - Country code (2-letter).
- * @property {undefined|string} address_line_1 - Address details, line 1 (street, house number).
- * @property {undefined|string} address_line_2 - Address details, line 2.
- * @property {undefined|string} admin_area_1   - State or region.
- * @property {undefined|string} admin_area_2   - State or region.
- * @property {undefined|string} postal_code    - Zip code.
+ * @property {string} [country_code]   - Country code (2-letter).
+ * @property {string} [address_line_1] - Address details, line 1 (street, house number).
+ * @property {string} [address_line_2] - Address details, line 2.
+ * @property {string} [admin_area_1]   - State or region.
+ * @property {string} [admin_area_2]   - State or region.
+ * @property {string} [postal_code]    - Zip code.
  */
 
 /**
  * Phone details.
  *
  * @typedef {Object} PhoneDetails
- * @property {undefined|string}                    phone_type   - Type, usually 'HOME'
- * @property {undefined|{national_number: string}} phone_number - Phone number details.
+ * @property {string}                    [phone_type]   - Type, usually 'HOME'
+ * @property {{national_number: string}} [phone_number] - Phone number details.
  */
 
 /**
  * Payer details.
  *
  * @typedef {Object} PayerDetails
- * @property {undefined|string}         email_address - Email address for billing communication.
- * @property {undefined|PhoneDetails}   phone         - Phone number for billing communication.
- * @property {undefined|NameDetails}    name          - Payer's name.
- * @property {undefined|AddressDetails} address       - Postal billing address.
+ * @property {string}         [email_address] - Email address for billing communication.
+ * @property {PhoneDetails}   [phone]         - Phone number for billing communication.
+ * @property {NameDetails}    [name]          - Payer's name.
+ * @property {AddressDetails} [address]       - Postal billing address.
  */
 
 // Map checkout fields to PayerData object properties.
@@ -50,123 +50,147 @@ const FIELD_MAP = {
 	'#billing_phone': [ 'phone' ],
 };
 
-/**
- * Returns billing details from the checkout form or global JS object.
- *
- * @return {?PayerDetails} Full billing details, or null on failure.
- */
-export function payerData() {
-	/**
-	 * PayPalCommerceGateway.payer can be set from server-side or via JS:
-	 * - Server-side: Set by PHP when a WC customer is known.
-	 * - Dynamic JS: When a payment method provided billing data.
-	 *
-	 * @see {setPayerData}
-	 */
-	const payer = window.PayPalCommerceGateway?.payer;
-	if ( ! payer ) {
-		return null;
-	}
+function normalizePayerDetails( details ) {
+	return {
+		email_address: details.email_address,
+		phone: details.phone,
+		name: {
+			surname: details.name?.surname,
+			given_name: details.name?.given_name,
+		},
+		address: {
+			country_code: details.address?.country_code,
+			address_line_1: details.address?.address_line_1,
+			address_line_2: details.address?.address_line_2,
+			admin_area_1: details.address?.admin_area_1,
+			admin_area_2: details.address?.admin_area_2,
+			postal_code: details.address?.postal_code,
+		},
+	};
+}
 
+function mergePayerDetails( firstPayer, secondPayer ) {
+	const mergeNestedObjects = ( target, source ) => {
+		for ( const [ key, value ] of Object.entries( source ) ) {
+			if ( null !== value && undefined !== value ) {
+				if ( 'object' === typeof value ) {
+					target[ key ] = mergeNestedObjects(
+						target[ key ] || {},
+						value
+					);
+				} else {
+					target[ key ] = value;
+				}
+			}
+		}
+		return target;
+	};
+
+	return mergeNestedObjects(
+		normalizePayerDetails( firstPayer ),
+		normalizePayerDetails( secondPayer )
+	);
+}
+
+function getCheckoutBillingDetails() {
 	const getElementValue = ( selector ) =>
 		document.querySelector( selector )?.value;
 
-	// Initialize data with existing payer values.
-	const data = {
-		email_address: payer.email_address,
-		phone: payer.phone,
-		name: {
-			surname: payer.name?.surname,
-			given_name: payer.name?.given_name,
-		},
-		address: {
-			country_code: payer.address?.country_code,
-			address_line_1: payer.address?.address_line_1,
-			address_line_2: payer.address?.address_line_2,
-			admin_area_1: payer.address?.admin_area_1,
-			admin_area_2: payer.address?.admin_area_2,
-			postal_code: payer.address?.postal_code,
-		},
+	const setNestedValue = ( obj, path, value ) => {
+		let current = obj;
+		for ( let i = 0; i < path.length - 1; i++ ) {
+			current = current[ path[ i ] ] = current[ path[ i ] ] || {};
+		}
+		current[ path[ path.length - 1 ] ] = value;
 	};
 
-	// Update data with DOM values where they exist.
+	const data = {};
+
 	Object.entries( FIELD_MAP ).forEach( ( [ selector, path ] ) => {
 		const value = getElementValue( selector );
 		if ( value ) {
-			let current = data;
-			path.slice( 0, -1 ).forEach( ( key ) => {
-				current = current[ key ] = current[ key ] || {};
-			} );
-			current[ path[ path.length - 1 ] ] = value;
+			setNestedValue( data, path, value );
 		}
 	} );
 
-	// Handle phone separately due to its nested structure.
-	const phoneNumber = data.phone;
-	if ( phoneNumber && typeof phoneNumber === 'string' ) {
+	if ( data.phone && 'string' === typeof data.phone ) {
 		data.phone = {
 			phone_type: 'HOME',
-			phone_number: { national_number: phoneNumber },
+			phone_number: { national_number: data.phone },
 		};
 	}
 
 	return data;
 }
 
-/**
- * Updates the DOM with specific payer details.
- *
- * Used by payment method callbacks that provide dedicated billing details, like Google Pay.
- * Note: This code only works on classic checkout
- *
- * @param {PayerDetails} newData                   - New payer details.
- * @param {boolean}      [overwriteExisting=false] - If set to true, all provided values will
- *                                                 replace existing details. If false, or omitted,
- *                                                 only undefined fields are updated.
- */
-export function setPayerData( newData, overwriteExisting = false ) {
+function setCheckoutBillingDetails( payer ) {
 	const setValue = ( path, field, value ) => {
 		if ( null === value || undefined === value || ! field ) {
 			return;
 		}
 
-		if ( path[ 0 ] === 'phone' && typeof value === 'object' ) {
+		if ( 'phone' === path[ 0 ] && 'object' === typeof value ) {
 			value = value.phone_number?.national_number;
 		}
 
-		if ( overwriteExisting || ! field.value ) {
-			field.value = value;
-		}
+		field.value = value;
 	};
 
+	const getNestedValue = ( obj, path ) =>
+		path.reduce( ( current, key ) => current?.[ key ], obj );
+
 	Object.entries( FIELD_MAP ).forEach( ( [ selector, path ] ) => {
-		const value = path.reduce( ( obj, key ) => obj?.[ key ], newData );
+		const value = getNestedValue( payer, path );
 		const element = document.querySelector( selector );
 
 		setValue( path, element, value );
 	} );
+}
 
-	/*
-	 * Persist the payer details to the global JS object, to make it available in other modules
-	 * via tha `payerData()` accessor.
-	 */
-	window.PayPalCommerceGateway.payer =
-		window.PayPalCommerceGateway.payer || {};
-	const currentPayerData = payerData();
+export function getWooCommerceCustomerDetails() {
+	// Populated on server-side with details about the current WooCommerce customer.
+	return window.PayPalCommerceGateway?.payer ?? null;
+}
 
-	if ( currentPayerData ) {
-		Object.entries( newData ).forEach( ( [ key, value ] ) => {
-			if (
-				overwriteExisting ||
-				null !== currentPayerData[ key ] ||
-				undefined !== currentPayerData[ key ]
-			) {
-				currentPayerData[ key ] = value;
-			}
-		} );
+export function getSessionCustomerDetails() {
+	// Populated by JS via `setSessionCustomerDetails()`
+	return window.PayPalCommerceGateway?.sessionPayer ?? null;
+}
 
-		window.PayPalCommerceGateway.payer = currentPayerData;
-	} else {
-		window.PayPalCommerceGateway.payer = newData;
+/**
+ * Stores customer details in the current JS context for use in the same request.
+ * Details that are set are not persisted during navigation.
+ *
+ * @param {unknown} details - New payer details
+ */
+export function setSessionCustomerDetails( details ) {
+	if ( details && 'object' === typeof details ) {
+		window.PayPalCommerceGateway.sessionPayer =
+			normalizePayerDetails( details );
+	}
+}
+
+export function payerData() {
+	const payer =
+		getWooCommerceCustomerDetails() ?? getSessionCustomerDetails();
+
+	if ( ! payer ) {
+		return null;
+	}
+
+	const formData = getCheckoutBillingDetails();
+
+	if ( formData ) {
+		return mergePayerDetails( payer, formData );
+	}
+
+	return normalizePayerDetails( payer );
+}
+
+export function setPayerData( newData, updateCheckout = false ) {
+	setSessionCustomerDetails( newData );
+
+	if ( updateCheckout ) {
+		setCheckoutBillingDetails( newData );
 	}
 }
