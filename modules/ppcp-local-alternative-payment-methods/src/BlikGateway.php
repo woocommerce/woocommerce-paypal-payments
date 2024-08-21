@@ -73,7 +73,7 @@ class BlikGateway extends WC_Payment_Gateway {
 		);
 
 		$this->method_title       = __( 'Blik', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Blik', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'A widely used mobile payment method in Poland, allowing Polish customers to pay directly via their banking apps. Transactions are processed in PLN.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Blik', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );

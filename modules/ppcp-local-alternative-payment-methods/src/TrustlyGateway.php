@@ -73,7 +73,7 @@ class TrustlyGateway extends WC_Payment_Gateway {
 		);
 
 		$this->method_title       = __( 'Trustly', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Trustly', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Trustly', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );

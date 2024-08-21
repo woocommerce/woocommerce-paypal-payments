@@ -73,7 +73,7 @@ class BancontactGateway extends WC_Payment_Gateway {
 		);
 
 		$this->method_title       = __( 'Bancontact', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Bancontact', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'A popular and trusted electronic payment method in Belgium, used by Belgian customers with Bancontact cards issued by local banks. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Bancontact', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
