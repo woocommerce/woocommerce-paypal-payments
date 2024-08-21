@@ -1,7 +1,7 @@
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { IDeal } from './ideal-block';
 
-const config = wc.wcSettings.getSetting( 'ppcp-eps_data' );
+const config = wc.wcSettings.getSetting( 'ppcp-ideal_data' );
 
 registerPaymentMethod( {
 	name: config.id,

@@ -91,6 +91,7 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				foreach ($payment_methods as $key => $value) {
 					$payment_method_registry->register( $c->get( 'ppcp-local-apms.' . $key . '.payment-method' ) );
 				}
+				$a = 1;
 			}
 		);
 
