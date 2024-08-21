@@ -27,33 +27,33 @@ return array(
 		return array(
 			'bancontact' => array(
 				'id' => BancontactGateway::ID,
-				'country' => 'BE',
-				'currency' => 'EUR',
+				'countries' => array('BE'),
+				'currencies' => array('EUR'),
 			),
 			'blik' => array(
 				'id' => BlikGateway::ID,
-				'country' => 'PL',
-				'currency' => 'PLN',
+				'countries' => array('PL'),
+				'currencies' => array('PLN'),
 			),
 			'eps' => array(
 				'id' => EPSGateway::ID,
-				'country' => 'AT',
-				'currency' => 'EUR',
+				'countries' => array('AT'),
+				'currencies' => array('EUR'),
 			),
 			'ideal' => array(
 				'id' => IDealGateway::ID,
-				'country' => 'NL',
-				'currency' => 'EUR',
+				'countries' => array('NL'),
+				'currencies' => array('EUR'),
 			),
 			'mybank' => array(
 				'id' => MyBankGateway::ID,
-				'country' => 'IT',
-				'currency' => 'EUR',
+				'countries' => array('IT'),
+				'currencies' => array('EUR'),
 			),
 			'p24' => array(
 				'id' => P24Gateway::ID,
-				'country' => 'PL',
-				'currency' => 'EUR',
+				'countries' => array('PL'),
+				'currencies' => array('EUR', 'PLN'),
 			),
 		);
 	},

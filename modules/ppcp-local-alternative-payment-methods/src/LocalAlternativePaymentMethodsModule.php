@@ -74,7 +74,10 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 
 					$payment_methods = $c->get('ppcp-local-apms.payment-methods');
 					foreach ($payment_methods as $payment_method) {
-						if ( $customer_country !== $payment_method['country'] || $site_currency !== $payment_method['currency'] ) {
+						if (
+							! in_array($customer_country, $payment_method['countries'], true)
+							|| ! in_array($site_currency, $payment_method['currencies'], true)
+						) {
 							unset( $methods[ $payment_method['id'] ] );
 						}
 					}
@@ -91,7 +94,6 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				foreach ($payment_methods as $key => $value) {
 					$payment_method_registry->register( $c->get( 'ppcp-local-apms.' . $key . '.payment-method' ) );
 				}
-				$a = 1;
 			}
 		);
 
