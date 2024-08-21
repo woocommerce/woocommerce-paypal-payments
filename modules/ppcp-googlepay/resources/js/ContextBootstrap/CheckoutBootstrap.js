@@ -19,8 +19,6 @@ export class CheckoutBootstrap {
 
 	constructor( storage ) {
 		this.#storage = storage;
-
-		this.onFormSubmit = this.onFormSubmit.bind( this );
 	}
 
 	/**
@@ -44,7 +42,7 @@ export class CheckoutBootstrap {
 	 * @return {boolean} True, if a checkout form is present.
 	 */
 	get isPageWithCheckoutForm() {
-		return this.checkoutForm instanceof HTMLElement;
+		return null !== this.checkoutForm;
 	}
 
 	init() {
@@ -65,13 +63,14 @@ export class CheckoutBootstrap {
 
 		const billingData = this.#storage.getPayer();
 
-		if ( billingData ) {
-			setPayerData( billingData );
-
-			this.checkoutForm.addEventListener( 'submit', () =>
-				this.#onFormSubmit()
-			);
+		if ( ! billingData ) {
+			return;
 		}
+
+		setPayerData( billingData, true );
+		this.checkoutForm.addEventListener( 'submit', () =>
+			this.#onFormSubmit()
+		);
 	}
 
 	#onFormSubmit() {

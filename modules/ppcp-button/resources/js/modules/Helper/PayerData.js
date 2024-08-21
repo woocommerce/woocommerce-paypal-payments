@@ -149,12 +149,12 @@ function setCheckoutBillingDetails( payer ) {
 
 export function getWooCommerceCustomerDetails() {
 	// Populated on server-side with details about the current WooCommerce customer.
-	return window.PayPalCommerceGateway?.payer ?? null;
+	return window.PayPalCommerceGateway?.payer;
 }
 
-export function getSessionCustomerDetails() {
-	// Populated by JS via `setSessionCustomerDetails()`
-	return window.PayPalCommerceGateway?.sessionPayer ?? null;
+export function getSessionBillingDetails() {
+	// Populated by JS via `setSessionBillingDetails()`
+	return window.PayPalCommerceGateway?.tempPayer;
 }
 
 /**
@@ -163,16 +163,16 @@ export function getSessionCustomerDetails() {
  *
  * @param {unknown} details - New payer details
  */
-export function setSessionCustomerDetails( details ) {
-	if ( details && 'object' === typeof details ) {
-		window.PayPalCommerceGateway.sessionPayer =
-			normalizePayerDetails( details );
+export function setSessionBillingDetails( details ) {
+	if ( ! details || 'object' !== typeof details ) {
+		return;
 	}
+
+	window.PayPalCommerceGateway.tempPayer = normalizePayerDetails( details );
 }
 
 export function payerData() {
-	const payer =
-		getWooCommerceCustomerDetails() ?? getSessionCustomerDetails();
+	const payer = getWooCommerceCustomerDetails() ?? getSessionBillingDetails();
 
 	if ( ! payer ) {
 		return null;
@@ -187,10 +187,10 @@ export function payerData() {
 	return normalizePayerDetails( payer );
 }
 
-export function setPayerData( newData, updateCheckout = false ) {
-	setSessionCustomerDetails( newData );
+export function setPayerData( payerDetails, updateCheckoutForm = false ) {
+	setSessionBillingDetails( payerDetails );
 
-	if ( updateCheckout ) {
-		setCheckoutBillingDetails( newData );
+	if ( updateCheckoutForm ) {
+		setCheckoutBillingDetails( payerDetails );
 	}
 }
