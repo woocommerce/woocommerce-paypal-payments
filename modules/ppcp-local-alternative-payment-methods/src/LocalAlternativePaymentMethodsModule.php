@@ -120,9 +120,9 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				// phpcs:enable
 
 				if (
-				$order->get_payment_method() !== BancontactGateway::ID
-				|| ! $cancelled
-				|| $order->get_order_key() !== $order_key
+					! in_array( $order->get_payment_method(), array( BancontactGateway::ID, BlikGateway::ID, EPSGateway::ID ), true )
+					|| ! $cancelled
+					|| $order->get_order_key() !== $order_key
 				) {
 					return;
 				}
