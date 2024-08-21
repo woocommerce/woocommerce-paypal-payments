@@ -45,6 +45,11 @@ return array(
 				'country' => 'NL',
 				'currency' => 'EUR',
 			),
+			'mybank' => array(
+				'id' => MyBankGateway::ID,
+				'country' => 'IT',
+				'currency' => 'EUR',
+			),
 		];
 	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
@@ -79,6 +84,14 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
+	'ppcp-local-apms.mybank.wc-gateway'            => static function ( ContainerInterface $container ): MyBankGateway {
+		return new MyBankGateway(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' )
+		);
+	},
 	'ppcp-local-apms.bancontact.payment-method' => static function( ContainerInterface $container ): BancontactPaymentMethod {
 		return new BancontactPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
@@ -105,6 +118,13 @@ return array(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.ideal.wc-gateway' )
+		);
+	},
+	'ppcp-local-apms.mybank.payment-method'        => static function( ContainerInterface $container ): MyBankPaymentMethod {
+		return new MyBankPaymentMethod(
+			$container->get( 'ppcp-local-apms.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.mybank.wc-gateway' )
 		);
 	},
 );

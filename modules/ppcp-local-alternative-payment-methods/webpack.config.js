@@ -21,6 +21,9 @@ module.exports = {
 		'ideal-payment-method': path.resolve(
 			'./resources/js/ideal-payment-method.js'
 		),
+		'mybank-payment-method': path.resolve(
+			'./resources/js/mybank-payment-method.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),
