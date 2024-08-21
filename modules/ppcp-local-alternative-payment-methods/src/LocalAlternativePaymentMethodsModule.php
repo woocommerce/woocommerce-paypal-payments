@@ -69,6 +69,10 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				}
 
 				if ( ! is_admin() ) {
+					if ( ! isset( WC()->customer ) ) {
+						return $methods;
+					}
+
 					$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 					$site_currency    = get_woocommerce_currency();
 
