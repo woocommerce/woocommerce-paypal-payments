@@ -23,6 +23,25 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
+	'ppcp-local-apms.payment-methods' => static function( ContainerInterface $container): array {
+		return [
+			'bancontact' => array(
+				'id' => BancontactGateway::ID,
+				'country' => 'BE',
+				'currency' => 'EUR',
+			),
+			'blik' => array(
+				'id' => BlikGateway::ID,
+				'country' => 'PL',
+				'currency' => 'PLN',
+			),
+			'eps' => array(
+				'id' => EPSGateway::ID,
+				'country' => 'AT',
+				'currency' => 'EUR',
+			),
+		];
+	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
 		return new BancontactGateway(
 			$container->get( 'api.endpoint.orders' ),
