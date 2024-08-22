@@ -185,7 +185,26 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $notices ): array {
+			static function ( $notices ) : array {
+				$settings_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' );
+
+				$message = sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag directing to the Pay-Later settings page.
+					__(
+						'<strong>NEW</strong>: Check out the recently revamped %1$sPayPal Pay Later messaging experience here%2$s. Get paid in full at checkout while giving your customers the flexibility to pay in installments over time. Pay Later messaging can be placed anywhere on your site to inform buyers about available installment offers. ',
+						'woocommerce-paypal-payments'
+					),
+					'<a href="' . esc_url( $settings_url ) . '">',
+					'</a>'
+				);
+
+				$notices[] = new Message(
+					$message,
+					'info',
+					true,
+					'ppcp-notice-wrapper'
+				);
+
 				return $notices;
 			}
 		);
