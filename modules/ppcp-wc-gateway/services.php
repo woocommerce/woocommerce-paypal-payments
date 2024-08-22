@@ -776,6 +776,20 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'allow_local_apm_gateways'    => array(
+				'title'        => __( 'Create gateway for alternative payment methods', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Moves the alternative payment methods from the PayPal gateway into their own dedicated gateways.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
+				'default'      => true,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'disable_cards'               => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',

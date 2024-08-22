@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class LocalAlternativePaymentMethodsModule
@@ -35,6 +36,13 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		if ( ! $settings->has( 'allow_local_apm_gateways' ) || $settings->get( 'allow_local_apm_gateways' ) !== true ) {
+			return;
+		}
+
 		add_filter(
 			'woocommerce_payment_gateways',
 			/**
