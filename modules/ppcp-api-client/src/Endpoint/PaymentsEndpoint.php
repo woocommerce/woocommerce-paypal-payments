@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundCapture;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
@@ -194,15 +194,62 @@ class PaymentsEndpoint {
 	}
 
 	/**
+	 * Reauthorizes an order.
+	 *
+	 * @param string     $authorization_id The id.
+	 * @param Money|null $amount The amount to capture. If not specified, the whole authorized amount is captured.
+	 *
+	 * @return string
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function reauthorize( string $authorization_id, ?Money $amount = null ) : string {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization_id . '/reauthorize';
+
+		$data = array();
+		if ( $amount ) {
+			$data['amount'] = $amount->to_array();
+		}
+
+		$args = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
+			),
+			'body'    => wp_json_encode( $data, JSON_FORCE_OBJECT ),
+		);
+
+		$response = $this->request( $url, $args );
+		$json     = json_decode( $response['body'] );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( 'Could not reauthorize authorized payment.' );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 201 !== $status_code || ! is_object( $json ) ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $json->id;
+	}
+
+	/**
 	 * Refunds a payment.
 	 *
-	 * @param Refund $refund The refund to be processed.
+	 * @param RefundCapture $refund The refund to be processed.
 	 *
 	 * @return string Refund ID.
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function refund( Refund $refund ) : string {
+	public function refund( RefundCapture $refund ) : string {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/captures/' . $refund->for_capture()->id() . '/refund';
 		$args   = array(

@@ -11,26 +11,17 @@ namespace WooCommerce\PayPalCommerce\Compat;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use Vendidero\Germanized\Shipments\Shipment;
-use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
-use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WP_Theme;
 
 /**
  * Class CompatModule
  */
 class CompatModule implements ModuleInterface {
-
-	use AdminContextTrait;
-
 	/**
 	 * Setup the compatibility module.
 	 *
@@ -49,15 +40,27 @@ class CompatModule implements ModuleInterface {
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
-		$this->initialize_ppec_compat_layer( $c );
-		$this->fix_site_ground_optimizer_compatibility( $c );
 
-		$this->initialize_gzd_compat_layer( $c );
+		$this->initialize_ppec_compat_layer( $c );
+		$this->initialize_tracking_compat_layer( $c );
+
+		$asset_loader = $c->get( 'compat.assets' );
+		assert( $asset_loader instanceof CompatAssets );
+
+		add_action( 'init', array( $asset_loader, 'register' ) );
+		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 
 		$this->fix_page_builders();
+		$this->exclude_cache_plugins_js_minification( $c );
+		$this->set_elementor_checkout_context();
+
+		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
+		if ( $is_nyp_active ) {
+			$this->initialize_nyp_compat_layer();
+		}
 	}
 
 	/**
@@ -92,114 +95,21 @@ class CompatModule implements ModuleInterface {
 				}
 			}
 		);
-
 	}
 
 	/**
-	 * Fixes the compatibility issue for <a href="https://wordpress.org/plugins/sg-cachepress/">SiteGround Optimizer plugin</a>.
-	 *
-	 * @link https://wordpress.org/plugins/sg-cachepress/
-	 *
-	 * @param ContainerInterface $c The Container.
-	 */
-	protected function fix_site_ground_optimizer_compatibility( ContainerInterface $c ): void {
-		$ppcp_script_names = $c->get( 'compat.plugin-script-names' );
-		add_filter(
-			'sgo_js_minify_exclude',
-			function ( array $scripts ) use ( $ppcp_script_names ) {
-				return array_merge( $scripts, $ppcp_script_names );
-			}
-		);
-	}
-
-	/**
-	 * Sets up the <a href="https://wordpress.org/plugins/woocommerce-germanized/">Germanized for WooCommerce</a>
-	 * plugin compatibility layer.
-	 *
-	 * @link https://wordpress.org/plugins/woocommerce-germanized/
+	 * Sets up the 3rd party plugins compatibility layer for PayPal tracking.
 	 *
 	 * @param ContainerInterface $c The Container.
 	 * @return void
 	 */
-	protected function initialize_gzd_compat_layer( ContainerInterface $c ): void {
-		if ( ! $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
-			return;
+	protected function initialize_tracking_compat_layer( ContainerInterface $c ): void {
+		$order_tracking_integrations = $c->get( 'order-tracking.integrations' );
+
+		foreach ( $order_tracking_integrations as $integration ) {
+			assert( $integration instanceof Integration );
+			$integration->integrate();
 		}
-
-		add_action(
-			'admin_enqueue_scripts',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function( $hook ) use ( $c ): void {
-				if ( $hook !== 'post.php' || ! $this->is_paypal_order_edit_page() ) {
-					return;
-				}
-
-				$asset_loader = $c->get( 'compat.assets' );
-				assert( $asset_loader instanceof CompatAssets );
-
-				$asset_loader->register();
-				$asset_loader->enqueue();
-			}
-		);
-
-		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
-		assert( $endpoint instanceof OrderTrackingEndpoint );
-
-		$logger = $c->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
-		add_action(
-			'woocommerce_gzd_shipment_status_shipped',
-			static function( int $shipment_id, Shipment $shipment ) use ( $endpoint, $logger ) {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
-					return;
-				}
-
-				$wc_order = $shipment->get_order();
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$transaction_id = $wc_order->get_transaction_id();
-				if ( empty( $transaction_id ) ) {
-					return;
-				}
-
-				$tracking_data = array(
-					'transaction_id' => $transaction_id,
-					'status'         => 'SHIPPED',
-				);
-
-				$provider = $shipment->get_shipping_provider();
-				if ( ! empty( $provider ) && $provider !== 'none' ) {
-					/**
-					 * The filter allowing to change the default Germanized carrier for order tracking,
-					 * such as DHL_DEUTSCHE_POST, DPD_DE, ...
-					 */
-					$tracking_data['carrier'] = (string) apply_filters( 'woocommerce_paypal_payments_default_gzd_carrier', 'DHL_DEUTSCHE_POST', $provider );
-				}
-
-				try {
-					$tracking_information = $endpoint->get_tracking_information( $wc_order->get_id() );
-
-					$tracking_data['tracking_number'] = $tracking_information['tracking_number'] ?? '';
-
-					if ( $shipment->get_tracking_id() ) {
-						$tracking_data['tracking_number'] = $shipment->get_tracking_id();
-					}
-
-					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-				}
-			},
-			500,
-			2
-		);
 	}
 
 	/**
@@ -352,7 +262,12 @@ class CompatModule implements ModuleInterface {
 		add_action(
 			'init',
 			function() {
-				if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
+				if (
+					$this->is_block_theme_active()
+					|| $this->is_elementor_pro_active()
+					|| $this->is_divi_theme_active()
+					|| $this->is_divi_child_theme_active()
+				) {
 					add_filter(
 						'woocommerce_paypal_payments_single_product_renderer_hook',
 						function(): string {
@@ -363,6 +278,15 @@ class CompatModule implements ModuleInterface {
 				}
 			}
 		);
+	}
+
+	/**
+	 * Checks whether the current theme is a blocks theme.
+	 *
+	 * @return bool
+	 */
+	protected function is_block_theme_active(): bool {
+		return function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
 	}
 
 	/**
@@ -382,5 +306,110 @@ class CompatModule implements ModuleInterface {
 	protected function is_divi_theme_active(): bool {
 		$theme = wp_get_theme();
 		return $theme->get( 'Name' ) === 'Divi';
+	}
+
+	/**
+	 * Checks whether a Divi child theme is currently used.
+	 *
+	 * @return bool
+	 */
+	protected function is_divi_child_theme_active(): bool {
+		$theme  = wp_get_theme();
+		$parent = $theme->parent();
+		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
+	}
+
+	/**
+	 * Sets the context for the Elementor checkout page.
+	 *
+	 * @return void
+	 */
+	protected function set_elementor_checkout_context(): void {
+		add_action(
+			'wp',
+			function() {
+				$page_id = get_the_ID();
+				if ( ! $page_id || ! CartCheckoutDetector::has_elementor_checkout( $page_id ) ) {
+					return;
+				}
+
+				add_filter(
+					'woocommerce_paypal_payments_context',
+					function ( string $context ): string {
+						// Default context.
+						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
+					}
+				);
+			}
+		);
+	}
+
+	/**
+	 * Excludes PayPal scripts from being minified by cache plugins.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function exclude_cache_plugins_js_minification( ContainerInterface $c ): void {
+		$ppcp_script_names      = $c->get( 'compat.plugin-script-names' );
+		$ppcp_script_file_names = $c->get( 'compat.plugin-script-file-names' );
+
+		// Siteground SG Optimize.
+		add_filter(
+			'sgo_js_minify_exclude',
+			function( array $scripts ) use ( $ppcp_script_names ) {
+				return array_merge( $scripts, $ppcp_script_names );
+			}
+		);
+
+		// LiteSpeed Cache.
+		add_filter(
+			'litespeed_optimize_js_excludes',
+			function( array $excluded_js ) use ( $ppcp_script_file_names ) {
+				return array_merge( $excluded_js, $ppcp_script_file_names );
+			}
+		);
+
+		// W3 Total Cache.
+		add_filter(
+			'w3tc_minify_js_do_tag_minification',
+			/**
+			 * Filter callback for 'w3tc_minify_js_do_tag_minification'.
+			 *
+			 * @param bool $do_tag_minification Whether to do tag minification.
+			 * @param string $script_tag The script tag.
+			 * @param string|null $file The file path.
+			 * @return bool Whether to do tag minification.
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( bool $do_tag_minification, string $script_tag, $file ) {
+				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
+					return false;
+				}
+				return $do_tag_minification;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Sets up the compatibility layer for PayPal Shipping callback & WooCommerce Name Your Price plugin.
+	 *
+	 * @return void
+	 */
+	protected function initialize_nyp_compat_layer(): void {
+		add_filter(
+			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
+			static function( string $total, array $cart_item ) {
+				if ( ! isset( $cart_item['nyp'] ) ) {
+					return $total;
+				}
+
+				return $cart_item['nyp'];
+			},
+			10,
+			2
+		);
 	}
 }

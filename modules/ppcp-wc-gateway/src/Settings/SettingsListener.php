@@ -10,10 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
@@ -23,7 +24,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
 /**
@@ -125,13 +125,6 @@ class SettingsListener {
 	protected $redirector;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
 	 * Max onboarding URL retries.
 	 *
 	 * @var int
@@ -146,21 +139,60 @@ class SettingsListener {
 	private $onboarding_retry_delay = 2;
 
 	/**
+	 * Partner merchant ID production.
+	 *
+	 * @var string
+	 */
+	private $partner_merchant_id_production;
+
+	/**
+	 * Partner merchant ID sandbox.
+	 *
+	 * @var string
+	 */
+	private $partner_merchant_id_sandbox;
+
+	/**
+	 * Billing Agreements endpoint.
+	 *
+	 * @var BillingAgreementsEndpoint
+	 */
+	private $billing_agreements_endpoint;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * The client credentials cache.
+	 *
+	 * @var Cache
+	 */
+	private $client_credentials_cache;
+
+	/**
 	 * SettingsListener constructor.
 	 *
-	 * @param Settings            $settings The settings.
-	 * @param array               $setting_fields The setting fields.
-	 * @param WebhookRegistrar    $webhook_registrar The Webhook Registrar.
-	 * @param Cache               $cache The Cache.
-	 * @param State               $state The state.
-	 * @param Bearer              $bearer The bearer.
-	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Cache               $signup_link_cache The signup link cache.
-	 * @param array               $signup_link_ids Signup link ids.
-	 * @param Cache               $pui_status_cache The PUI status cache.
-	 * @param Cache               $dcc_status_cache The DCC status cache.
-	 * @param RedirectorInterface $redirector The HTTP redirector.
-	 * @param ?LoggerInterface    $logger The logger.
+	 * @param Settings                  $settings The settings.
+	 * @param array                     $setting_fields The setting fields.
+	 * @param WebhookRegistrar          $webhook_registrar The Webhook Registrar.
+	 * @param Cache                     $cache The Cache.
+	 * @param State                     $state The state.
+	 * @param Bearer                    $bearer The bearer.
+	 * @param string                    $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Cache                     $signup_link_cache The signup link cache.
+	 * @param array                     $signup_link_ids Signup link ids.
+	 * @param Cache                     $pui_status_cache The PUI status cache.
+	 * @param Cache                     $dcc_status_cache The DCC status cache.
+	 * @param RedirectorInterface       $redirector The HTTP redirector.
+	 * @param string                    $partner_merchant_id_production Partner merchant ID production.
+	 * @param string                    $partner_merchant_id_sandbox Partner merchant ID sandbox.
+	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint Billing Agreements endpoint.
+	 * @param ?LoggerInterface          $logger The logger.
+	 * @param Cache                     $client_credentials_cache The client credentials cache.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -175,22 +207,30 @@ class SettingsListener {
 		Cache $pui_status_cache,
 		Cache $dcc_status_cache,
 		RedirectorInterface $redirector,
-		LoggerInterface $logger = null
+		string $partner_merchant_id_production,
+		string $partner_merchant_id_sandbox,
+		BillingAgreementsEndpoint $billing_agreements_endpoint,
+		LoggerInterface $logger = null,
+		Cache $client_credentials_cache
 	) {
 
-		$this->settings          = $settings;
-		$this->setting_fields    = $setting_fields;
-		$this->webhook_registrar = $webhook_registrar;
-		$this->cache             = $cache;
-		$this->state             = $state;
-		$this->bearer            = $bearer;
-		$this->page_id           = $page_id;
-		$this->signup_link_cache = $signup_link_cache;
-		$this->signup_link_ids   = $signup_link_ids;
-		$this->pui_status_cache  = $pui_status_cache;
-		$this->dcc_status_cache  = $dcc_status_cache;
-		$this->redirector        = $redirector;
-		$this->logger            = $logger ?: new NullLogger();
+		$this->settings                       = $settings;
+		$this->setting_fields                 = $setting_fields;
+		$this->webhook_registrar              = $webhook_registrar;
+		$this->cache                          = $cache;
+		$this->state                          = $state;
+		$this->bearer                         = $bearer;
+		$this->page_id                        = $page_id;
+		$this->signup_link_cache              = $signup_link_cache;
+		$this->signup_link_ids                = $signup_link_ids;
+		$this->pui_status_cache               = $pui_status_cache;
+		$this->dcc_status_cache               = $dcc_status_cache;
+		$this->redirector                     = $redirector;
+		$this->partner_merchant_id_production = $partner_merchant_id_production;
+		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
+		$this->billing_agreements_endpoint    = $billing_agreements_endpoint;
+		$this->logger                         = $logger ?: new NullLogger();
+		$this->client_credentials_cache       = $client_credentials_cache;
 	}
 
 	/**
@@ -210,8 +250,12 @@ class SettingsListener {
 			return;
 		}
 
-		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		$merchant_id = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
+		if ( $merchant_id === $this->partner_merchant_id_production || $merchant_id === $this->partner_merchant_id_sandbox ) {
+			return;
+		}
+
+		$merchant_email   = $this->sanitize_onboarding_email( sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -279,6 +323,16 @@ class SettingsListener {
 	}
 
 	/**
+	 * Sanitizes the onboarding email.
+	 *
+	 * @param string $email The onboarding email.
+	 * @return string
+	 */
+	private function sanitize_onboarding_email( string $email ): string {
+		return str_replace( ' ', '+', $email );
+	}
+
+	/**
 	 * Redirect to the onboarding URL.
 	 *
 	 * @param bool $success Should redirect to the success or error URL.
@@ -301,9 +355,10 @@ class SettingsListener {
 	/**
 	 * Prevent enabling both Pay Later messaging and PayPal vaulting
 	 *
+	 * @return void
 	 * @throws RuntimeException When API request fails.
 	 */
-	public function listen_for_vaulting_enabled() {
+	public function listen_for_vaulting_enabled(): void {
 		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
 			return;
 		}
@@ -330,7 +385,39 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) ) {
+		$vault_enabled     = wc_clean( wp_unslash( $_POST['ppcp']['vault_enabled'] ?? '' ) );
+		$subscription_mode = wc_clean( wp_unslash( $_POST['ppcp']['subscriptions_mode'] ?? '' ) );
+
+		$reference_transaction_enabled = $this->billing_agreements_endpoint->reference_transaction_enabled();
+
+		if ( $reference_transaction_enabled !== true ) {
+			$this->settings->set( 'vault_enabled', false );
+
+			/**
+			 * If Vaulting-API was previously enabled, then fall-back to the
+			 * PayPal subscription mode, to ensure subscriptions are still
+			 * possible on this shop.
+			 *
+			 * This can happen when switching to a different PayPal merchant account
+			 */
+			if ( 'vaulting_api' === $subscription_mode ) {
+				$this->settings->set( 'subscriptions_mode', 'subscriptions_api' );
+			}
+
+			$this->settings->persist();
+		}
+
+		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled === true ) {
+			$this->settings->set( 'vault_enabled', true );
+			$this->settings->persist();
+		}
+
+		if ( $subscription_mode === 'disable_paypal_subscriptions' && $vault_enabled === '1' ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->persist();
+		}
+
+		if ( $vault_enabled !== '1' ) {
 			return;
 		}
 
@@ -391,6 +478,7 @@ class SettingsListener {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
 				$this->settings->set( 'products_pui_enabled', null );
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 			}
 
 			if ( in_array(
@@ -401,9 +489,7 @@ class SettingsListener {
 				$this->webhook_registrar->unregister();
 
 				foreach ( $this->signup_link_ids as $key ) {
-					if ( $this->signup_link_cache->has( $key ) ) {
-						$this->signup_link_cache->delete( $key );
-					}
+					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 				}
 			}
 		}
@@ -416,6 +502,9 @@ class SettingsListener {
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
+		if ( $this->client_credentials_cache->has( SdkClientToken::CACHE_KEY ) ) {
+			$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
+		}
 
 		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY ) ) {
 			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
@@ -424,6 +513,11 @@ class SettingsListener {
 		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
+
+		/**
+		 * The hook fired during listening the request so a module can remove also the cache or other logic.
+		 */
+		do_action( 'woocommerce_paypal_payments_on_listening_request' );
 
 		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
 		if ( $ppcp_reference_transaction_enabled ) {
@@ -471,10 +565,18 @@ class SettingsListener {
 		if ( ! isset( $settings['client_id_sandbox'] ) && ! isset( $settings['client_id_production'] ) ) {
 			return $settings;
 		}
-		$is_sandbox                 = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
-		$settings['client_id']      = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
-		$settings['client_secret']  = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
-		$settings['merchant_id']    = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
+		$is_sandbox                = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
+		$settings['client_id']     = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
+		$settings['client_secret'] = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
+
+		if ( $settings['merchant_id_sandbox'] === $this->partner_merchant_id_sandbox || $settings['merchant_id_sandbox'] === $this->partner_merchant_id_production ) {
+			$settings['merchant_id_sandbox'] = '';
+		}
+		if ( $settings['merchant_id_production'] === $this->partner_merchant_id_sandbox || $settings['merchant_id_sandbox'] === $this->partner_merchant_id_production ) {
+			$settings['merchant_id_production'] = '';
+		}
+		$settings['merchant_id'] = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
+
 		$settings['merchant_email'] = $is_sandbox ? $settings['merchant_email_sandbox'] : $settings['merchant_email_production'];
 		return $settings;
 	}
@@ -541,6 +643,7 @@ class SettingsListener {
 					break;
 				case 'text':
 				case 'number':
+				case 'email':
 					$settings[ $key ] = isset( $raw_data[ $key ] ) ? wp_kses_post( $raw_data[ $key ] ) : '';
 					break;
 				case 'ppcp-password':
@@ -636,6 +739,41 @@ class SettingsListener {
 			$this->settings->persist();
 
 			throw $exception;
+		}
+	}
+
+	/**
+	 * Handles onboarding URLs deletion
+	 */
+	public function listen_for_uninstall(): void {
+		// Clear onboarding links from cache.
+		foreach ( $this->signup_link_ids as $key ) {
+			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
+		}
+	}
+
+	/**
+	 * Filter settings based on a condition.
+	 *
+	 * @param bool     $condition       The condition.
+	 * @param string   $setting_slug    The setting slug.
+	 * @param callable $filter_function The filter function.
+	 * @param bool     $persist         Whether to persist the settings.
+	 */
+	public function filter_settings( bool $condition, string $setting_slug, callable $filter_function, bool $persist = true ): void {
+		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		$existing_setting_value = $this->settings->has( $setting_slug ) ? $this->settings->get( $setting_slug ) : null;
+
+		if ( $condition ) {
+			$new_setting_value = $filter_function( $existing_setting_value );
+			$this->settings->set( $setting_slug, $new_setting_value );
+
+			if ( $persist ) {
+				$this->settings->persist();
+			}
 		}
 	}
 }

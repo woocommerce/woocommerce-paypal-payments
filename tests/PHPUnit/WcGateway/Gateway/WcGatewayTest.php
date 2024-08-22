@@ -3,14 +3,17 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
@@ -43,6 +46,9 @@ class WcGatewayTest extends TestCase
 	private $logger;
 	private $apiShopCountry;
 	private $orderEndpoint;
+	private $paymentTokensEndpoint;
+	private $vaultV3Enabled;
+	private $wcPaymentTokens;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -87,6 +93,10 @@ class WcGatewayTest extends TestCase
 
 		$this->logger->shouldReceive('info');
 		$this->logger->shouldReceive('error');
+
+		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
+		$this->vaultV3Enabled = true;
+		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 	}
 
 	private function createGateway()
@@ -106,7 +116,14 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint
+			$this->orderEndpoint,
+			function ($id) {
+				return 'checkoutnow=' . $id;
+			},
+			'Pay via PayPal',
+			$this->paymentTokensEndpoint,
+			$this->vaultV3Enabled,
+			$this->wcPaymentTokens
 		);
 	}
 
@@ -147,9 +164,11 @@ class WcGatewayTest extends TestCase
 		when('WC')->justReturn($woocommerce);
 		$woocommerce->cart = $cart;
 		$cart->shouldReceive('empty_cart');
+
 		$session = Mockery::mock(\WC_Session::class);
 		$woocommerce->session = $session;
 		$session->shouldReceive('get');
+		$session->shouldReceive('set');
 
         $result = $testee->process_payment($orderId);
 
@@ -163,6 +182,12 @@ class WcGatewayTest extends TestCase
         $orderId = 1;
 
 	    $testee = $this->createGateway();
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->session = $session;
+		$session->shouldReceive('set')->andReturn([]);
 
         expect('wc_get_order')
             ->with($orderId)
@@ -196,13 +221,10 @@ class WcGatewayTest extends TestCase
     public function testProcessPaymentFails() {
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $lastError = 'some-error';
+        $error = 'some-error';
 		$this->orderProcessor
             ->expects('process')
-            ->andReturnFalse();
-		$this->orderProcessor
-            ->expects('last_error')
-            ->andReturn($lastError);
+            ->andThrow(new Exception($error));
 		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
 		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         $wcOrder->shouldReceive('update_status')->andReturn(true);
@@ -215,7 +237,7 @@ class WcGatewayTest extends TestCase
 		$this->sessionHandler
 			->shouldReceive('destroy_session_data');
         expect('wc_add_notice')
-            ->with($lastError, 'error');
+            ->with($error, 'error');
 
 		$redirectUrl = 'http://example.com/checkout';
 
@@ -227,6 +249,7 @@ class WcGatewayTest extends TestCase
 		$session = Mockery::mock(\WC_Session::class);
 		$woocommerce->session = $session;
 		$session->shouldReceive('get');
+		$session->shouldReceive('set');
 
 		$result = $testee->process_payment($orderId);
 

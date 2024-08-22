@@ -1,55 +1,146 @@
 === WooCommerce PayPal Payments ===
-Contributors: woocommerce, automattic, inpsyde
-Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
+Contributors: woocommerce, automattic, syde
+Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
-Tested up to: 6.3
+Tested up to: 6.6
 Requires PHP: 7.2
-Stable tag: 2.2.1
+Stable tag: 2.8.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-PayPal's latest payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets and bank accounts.
+PayPal's latest payment processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets and bank accounts.
 
 == Description ==
 
-PayPal's latest, most complete payment processing solution. Accept PayPal exclusives, credit/debit cards and local payment methods. Turn on only PayPal options or process a full suite of payment methods. Enable global transactions with extensive currency and country coverage.
-Built and supported by [WooCommerce](https://woocommerce.com) and [PayPal](https://paypal.com).
+One checkout solution. Many ways to pay. PayPal’s all-in-one solution allows you to offer PayPal, Venmo (US), Pay Later at no additional cost, credit and debit cards, and country-specific payment options.
+= The all-in-one checkout solution* =
+**WooCommerce PayPal Payments** lets you offer PayPal, Venmo (US only), Pay Later options, credit cards and more — all designed to help you maximize conversion.
 
-= Give your customers their preferred ways to pay with one checkout solution =
+= PayPal =
+Help increase conversion by automatically offering PayPal buttons on product pages and at checkout. **Consumers are nearly three times more likely to purchase when you offer PayPal.¹**
 
-Streamline your business with one simple, powerful solution.
+= PayPal Pay Later =
+Let customers pay over time while you get paid up front — at no additional cost. **PayPal Pay Later options are boosting merchant conversion rates and increasing cart sizes by 39%.²**
 
-With the latest PayPal extension, your customers can pay with PayPal, Pay Later options, credit & debit cards, and country-specific, local payment methods on any device — all with one seamless checkout experience.
+= Help increase conversions with Pay Later messaging =
+PayPal Pay Later allows customers to pay over time while you get paid up front — at no additional cost to your business. And since 81% of younger consumers who use buy now, pay later decide which payment method to use before they get to checkout⁴, showing Pay Later messaging on your site lets customers know they have flexible options to pay over time while they are browsing — helping convert your browsers into buyers.
 
-= Reach more customers in 200+ markets worldwide =
+[Pay Later features are available in these countries.](https://developer.paypal.com/docs/checkout/pay-later/us/) Customers automatically see the most relevant Pay Later offering.
 
-Expand your business by connecting with over 370+ million active PayPal accounts around the globe. With PayPal, you can:
+= Venmo (US only) =
+Reach Venmo shoppers while allowing customers to share purchases with friends. **Venmo users spend 2.2 times more annually on online purchases compared to other online buyers.³**
 
-- Sell in 200+ markets and accept 100+ currencies
-- Identify customer locations and offer country-specific, local payment methods
+= Country-specific payment methods =
+Offer locally recognized payment methods to help build trust and reach international customers, including Payment Upon Invoice (PUI), a local payment option available only for purchases completed in Germany.
 
-= Offer subscription payments to help drive repeat business =
+= Add credit and debit card processing capabilities =
+**PayPal Payments** provides two different card processing options:
+
+- **Standard Card Processing**: Card transactions are managed by PayPal in a prebuilt user experience, which simplifies your compliance requirements. Suitable for all business and personal seller accounts.
+
+- **Advanced Card Processing**: Get everything that comes with PayPal’s standard integration, along with the ability to customize the look, feel, and placement of your debit and credit card payment fields. You can also use fraud protection tools to set up your own risk tolerance filters.
+
+= Offer Subscription payments to help drive repeat business =
 
 Create stable, predictable income by offering subscription plans.
+WooCommerce PayPal Payments is compatible with [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/).
 
-With the vaulting feature on PayPal, you can offer flexible plans with fixed or quantity pricing, set billing cycles for the time period you want, and offer subscriptions with discounted trial periods.
+[PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments) allow business and casual sellers to accept reliable recurring payments on a fixed billing schedule (buyers may require a PayPal account).
 
-It’s easy for shoppers, simple for you, and great for your business–with no monthly or setup fees.
+With the [Vaulting](https://www.paypal.com/us/brc/article/securely-store-payments) feature ([business account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)), you can offer flexible plans with fixed or quantity pricing, set billing cycles for the time period you want, and offer all kinds of subscriptions with prorated payments or discounted trial periods.
 
-PayPal is also compatible with [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/).
+It’s easy for shoppers, simple for you, and great for your business – with no monthly or setup fees.
+
+= Activate PayPal =
+Are you new to PayPal? [Learn how to add it to your store.](https://woocommerce.com/document/woocommerce-paypal-payments/)
+Need to update your existing PayPal integration? [Learn how to upgrade your integration.](https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-upgrade-guide/)
+
+[Watch the video on how to activate PayPal for your WooCommerce store](https://woocommerce.com/document/woocommerce-paypal-payments/#complete-setup-video)
+
+= More reasons it pays to PayPal =
+- **Instant access to funds**: Access card payments, send money or make a payment from your bank account. You’re credited immediately while the payment is processing. Funds settle instantly into your PayPal business account.
+
+- **Fraud Detection**: Save time and money by letting PayPal help you handle the risk of fraudulent transactions with our fraud, chargeback, and Seller Protection capabilities (on eligible transactions†). Our AI technology works hard to monitor all of your transactions — so you can focus on what matters most. †Available on eligible purchases. Limits apply.
+
+- **Global compliance**: PayPal payment solutions help you meet your global compliance standards, such as PCI and PSD2, bringing international markets within reach for your business. Our platform has built-in compliance with two-factor authentication provided by cards (3D Secure). We include automatic updates as security protocols change.
+
+---
+
+**Legal Disclosures:**
+
+\*For Australian users, the PayPal service is provided by PayPal Australia Pty Limited AFSL 304962. Any information provided is general only and does not take into account your objectives, financial situation or needs. Please read and consider the CFSGPDS (paypal.com.au) before acquiring or using the service. See website for TMD.
+
+1. An online study commissioned by PayPal and conducted by Netfluential in November 2020, involving 1,000 US online shoppers ages 18-39.
+2. PayPal Q2 Earnings-2021.
+3. Edison Trends commissioned by PayPal, April 2020 to March 2021. Edison Trends conducted a behavioural panel of email receipts from 306,939 US consumers and 3.4+ M purchases at a vertical level between Pay with Venmo and Non-Venmo users during a 12-month period.
+4. TRC online survey commissioned by PayPal in April 2021 involving 5,000 consumers ages 18+ across US, UK, DE, FR, AU (among Millennial & Gen Z BNPL users (ages 18-40), US (n=222), UK (n=269), DE (n=275), AU (n=344), FR (n=150).
+5. Morning Consult – The 15 Most Trusted Brands Globally. March 2021. Morning Consult surveyed over 330,000 consumers across 10 international markets to provide a global view on the current state of consumer trust across brands.
+
+== Frequently Asked Questions ==
+
+= Where can I find the WooCommerce PayPal Payments documentation and setup guide? =
+
+For help setting up and configuring WooCommerce PayPal Payments, please refer to the documentation. [Learn how to add PayPal to your store.](https://woocommerce.com/document/woocommerce-paypal-payments/)
+Need to update your existing PayPal integration? [Learn how to upgrade your integration.](https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-upgrade-guide/)
+
+= Where can I get help for WooCommerce PayPal Payments? =
+
+For questions regarding the plugin setup, we recommend reviewing our [documentation](https://woocommerce.com/document/woocommerce-paypal-payments/) and the [troubleshooting guide](https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting) if you encounter any issues.
+If the question or problem persists after reviewing the documentation, kindly create a new thread in the [support forums](https://wordpress.org/support/plugin/woocommerce-paypal-payments/#new-topic-0) or open a support ticket via [our helpdesk](https://woocommerce.com/document/woocommerce-paypal-payments/#get-help).
+
+= WooCommerce PayPal Payments suddenly no longer works – what do I do? =
+
+Start by diagnosing the issue using our helpful [troubleshooting guide](https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting).
+If you notice an error or any other issue after updating a plugin or the theme, there could be a potential compatibility issue between it and WooCommerce PayPal Payments.
+In such cases, we recommend running a [conflict test](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting) using [Health Check](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting#test-on-staging) (which allows you to disable themes and plugins without affecting your visitors) or troubleshooting the issue using a [staging site](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting#test-on-staging).
+
+If you can't solve the problem yourself, don't worry! Please open a support ticket via [our helpdesk](https://woocommerce.com/document/woocommerce-paypal-payments/#get-help).
+
+= Where can I report bugs? =
+
+Please report confirmed bugs on the [WooCommerce PayPal Payments GitHub repository](https://github.com/woocommerce/woocommerce-paypal-payments/issues). You can also notify us via our [support forum](https://wordpress.org/support/plugin/woocommerce-paypal-payments/) if you are not sure if the problem you encounter is the result of a bug in the plugin. When reporting a bug as a [GitHub issue](https://github.com/woocommerce/woocommerce-paypal-payments/issues) directly, be sure to search the repository to confirm that the bug has not already been reported.
+
+= Where can I request new features or compatibility with other extensions? =
+
+Request new and vote on existing suggestions  for features and extensions on our official [feature request board](https://woocommerce.com/feature-requests/woocommerce-paypal-payments/). Our product teams regularly review requests and consider them valuable for product planning. Our support team is also always interested in learning about your ideas to improve the extension.
+
+= Does WooCommerce PayPal Payments support subscriptions? =
+
+Yes, WooCommerce PayPal Payments can be used with the official [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) plugin.
+Accept recurring payments on a fixed billing schedule with [PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments) or save your buyers' payment methods for future payments using the Vaulting feature ([business account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)).
+View the [Subscriptions FAQ](https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq) for more details.
+
+= Does WooCommerce PayPal Payments support WooCommerce Blocks? =
+
+Yes, WooCommerce PayPal Payments offers experimental support for the new WooCommerce Cart & Checkout Blocks. The team continues to work on providing a seamless integration with the new WooCommerce Blocks.
+View the [Blocks FAQ](https://woocommerce.com/document/woocommerce-paypal-payments/#faq-does-paypal-payments-support-blocks) for more details.
+
+= Are there any other new features in development? =
+
+Yes, the WooCommerce PayPal Payments development team is constantly expanding the functionality of the WooCommerce PayPal Payments plugin with the latest features that PayPal offers.
+View the [Testing features previews FAQ](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Testing-features-previews) for more details.
+
+= WooCommerce PayPal Payments is awesome! Can I contribute? =
+
+Yes, you can! Contributions are always appreciated. Join in on our [GitHub repository](https://github.com/woocommerce/woocommerce-paypal-payments/issues) to stay up-to-date with the latest developments.
+If you like the plugin, please also consider leaving a review [here](https://wordpress.org/support/plugin/woocommerce-paypal-payments/reviews/#new-post) or [here](https://woocommerce.com/de-de/products/woocommerce-paypal-payments/#reviews) to share your valuable feedback with other users as it is much appreciated.
+
+= My question is not listed here. Where can I find more answers? =
+
+Check out the [Frequently Asked Questions](https://woocommerce.com/document/woocommerce-paypal-payments/#faqs) for more or contact the support team.
 
 == Installation ==
 
 = Requirements =
 
-To install WooCommerce PayPal Payments, you need:
+To install and configure WooCommerce PayPal Payments, you will need:
 
 * WordPress Version 5.3 or newer (installed)
 * WooCommerce Version 3.9 or newer (installed and activated)
 * PHP Version 7.2 or newer
-* PayPal business account
+* PayPal business **or** personal account
 
-= Instructions =
+= Installation instructions =
 
 1. Log in to WordPress admin.
 2. Go to **Plugins > Add New**.
@@ -63,12 +154,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 1. After you have activated the WooCommerce PayPal Payments plugin, go to **WooCommerce  > Settings**.
 2. Click the **Payments** tab.
-3. The Payment methods list will include two PayPal options. Click on **PayPal** (not PayPal Standard).
-4. Click the **PayPal Checkout** tab.
-5. Click on the **Connect to PayPal** button.
-6. Sign in to your PayPal account. If you do not have a PayPal account yet, sign up for a new PayPal business account.
-7. After you have successfully connected your PayPal account, click on the **Enable the PayPal Gateway** checkbox to enable PayPal.
-8. Click **Save changes**.
+3. The Payment methods list may include two PayPal options. Click on **PayPal** (not PayPal Standard).
+4. Click on the **Activate PayPal** button.
+5. Sign in to your PayPal account. If you do not have a PayPal account yet, sign up for a new PayPal business or personal account.
+6. After you have successfully connected your PayPal account, click on the **Standard Payments** tab and check the **Enable Paypal features for your store** checkbox to enable PayPal.
+7. Click **Save changes**.
+
+Complete onboarding instructions can be found in the [documentation here](https://woocommerce.com/document/woocommerce-paypal-payments/#connect-paypal-account).
+
+= Updating =
+
+Automatic updates should work generally smoothly, but we still recommend you back up your site.
+
+If you encounter issues with the PayPal buttons not appearing after an update, purge your website cache. [Caching](https://woocommerce.com/document/configuring-caching-plugins/) or [JavaScript minification](https://woocommerce.com/document/configuring-caching-plugins/#w3-total-cache-minify-settings) can impact PayPal Payments and should be [disabled for the PayPal scripts](https://woocommerce.com/document/woocommerce-paypal-payments/#faq-paypal-smart-buttons-not-loading) or payment-related pages.
 
 == Screenshots ==
 
@@ -80,6 +178,313 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.8.3 - 2024-08-12 =
+* Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474
+* Fix - Do not add tax info into order meta during order creation #2471
+* Fix - PayPal declares subscription support when for Subscription mode is set Disable PayPal for subscription #2425
+* Fix - PayPal js files loaded on non PayPal pages #2411
+* Fix - Google Pay: Fix the incorrect popup triggering #2414
+* Fix - Add tax configurator when programmatically creating WC orders #2431
+* Fix - Shipping callback compatibility with WC Name Your Price plugin #2402
+* Fix - Uncaught Error: Cannot use object of type ...\Settings as array in .../AbstractPaymentMethodType.php (3253) #2334
+* Fix - Prevent displaying smart button multiple times on variable product page #2420
+* Fix - Prevent enabling Standard Card Button when ACDC is enabled #2404
+* Fix - Use client credentials for user tokens #2491
+* Fix - Apple Pay: Fix the shipping callback #2492
+* Enhancement - Separate Google Pay button for Classic Checkout #2430
+* Enhancement - Add Apple Pay and Google Pay support for China, simplify country-currency matrix #2468
+* Enhancement - Add AMEX support for Advanced Card Processing in China #2469
+
+= 2.8.2 - 2024-07-22 =
+* Fix - Sold individually checkbox automatically disabled after adding product to the cart more than once #2415
+* Fix - All products "Sold individually" when PayPal Subscriptions selected as Subscriptions Mode #2400
+* Fix - W3 Total Cache: Remove type from file parameter as sometimes null gets passed causing errors #2403
+* Fix - Shipping methods during callback not updated correctly #2421
+* Fix - Preserve subscription renewal processing when switching Subscriptions Mode or disabling gateway #2394
+* Fix - Remove shipping callback for Venmo express button #2374
+* Fix - Google Pay: Fix issuse with data.paymentSource being undefined #2390
+* Fix - Loading of non-Order as a WC_Order causes warnings and potential data corruption #2343
+* Fix - Apple Pay and Google Pay buttons don't appear in PayPal Button stack on multi-step Checkout #2372
+* Fix - Apple Pay: Fix when shipping is disabled #2391
+* Fix - Wrong string in smart button preview on Standard Payments tab #2409
+* Fix - Don't break orders screen when there is an exception for package tracking #2369
+* Fix - Pay Later button preview is missing #2371
+* Fix - Apple Pay button layout #2367
+* Enhancement - Remove BCDC button from block Express Checkout area #2381
+* Enhancement - Extend Advanced Card Processing country eligibility for China #2397
+
+= 2.8.1 - 2024-07-01 =
+* Fix - Don't render tracking metabox if PayPal order does not belong to connected merchant #2360
+* Fix - Fatal error when the ppcp-paylater-configurator module is disabled via code snippet #2327
+* Fix - Apple Pay & Google Pay buttons no longer visible in Standard Payments button previews after moving the configuration to Advanced Card Processing tab #2325
+* Fix - Fix Smart Buttons on Elementor checkout widget #2284
+* Fix - Pay by link - Capturing order from guest user causing fatal error when Vaulting is enabled #2382
+* Fix - Enable the gateway settings JS file on connection tab #2377
+* Enhancement - Add filter for certain settings to allow gateway translation e.g. via WPML #2308
+* Enhancement - Filter for adding more contexts in can_render_dcc checker #2346
+* Enhancement - Do not request id_token for guest users #2283
+* Enhancement - Prevent multiple PayPal Subscription products in the cart if PayPal Subscription API is active #2320
+* Enhancement - Prevent script caching & minification from Litespeed Cache and W3 Total Cache plugins #2316
+* Enhancement - Remove Giropay references due to deprecation #2379
+
+= 2.8.0 - 2024-06-11 =
+* Fix - Calculate totals after adding shipping to include taxes #2296
+* Fix - Package tracking integration throws error in 2.7.1 #2289
+* Fix - Make PayPal Subscription products unique in cart #2265
+* Fix - PayPal declares subscription support when merchant not enabled for Reference Transactions #2282
+* Fix - Google Pay and Apple Pay Settings button from Connection tab have wrong links #2273
+* Fix - Smart Buttons in Block Checkout not respecting the location setting (2830) #2278
+* Fix - Disable Pay Upon Invoice if billing/shipping country not set #2281
+* Fix - Critical error on pay for order page when we try to pay with ACDC gateway #2321
+* Enhancement - Enable shipping callback for WC subscriptions #2259
+* Enhancement - Disable the shipping callback for "venmo" when vaulting is active #2269
+* Enhancement - Improve "Could not retrieve order" error message #2271
+* Enhancement - Add block Checkout compatibility to Advanced Card Processing #2246
+
+= 2.7.1 - 2024-05-28 =
+* Fix - Ensure package tracking data is sent to original PayPal transaction #2180
+* Fix - Set the 'Woo_PPCP' as a default value for data-partner-attribution-id #2188
+* Fix - Allow PUI Gateway for refund processor #2192
+* Fix - Notice on newly created block cart checkout #2211
+* Fix - Apple Pay button in the editor #2177
+* Fix - Allow shipping callback and skipping confirmation page from any express button #2236
+* Fix - Pay Later messaging configurator sometimes displays old settings after saving #2249
+* Fix - Update the apple-developer-merchantid-domain-association validation strings for Apple Pay #2251
+* Fix - Enable the Shipping Callback handlers #2266
+* Enhancement - Use admin theme color #1602
+
+= 2.7.0 - 2024-04-30 =
+* Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
+* Fix - Incorrect Pricing Issue with Variable Subscriptions in PayPal Subscriptions Mode #2156
+* Fix - Wrong return_url in multisite setup when using subdomains #2157
+* Fix - Fix the fundingSource is not defined error on Block Checkout #2185
+* Enhancement - Add the data-page-type attribute for JS SDK #2161
+* Enhancement - Save Card Last Digits in order meta for Advanced Card Payments #2149
+* Enhancement - Refactor the Pay Later Messaging block and add dedicated Cart/Checkout blocks #2153
+* Enhancement - "Next Payment" status not updated when using PayPal Subscriptions #2091
+* Enhancement - Optimize default settings for new store configurations #2158
+* Enhancement - Improve tooltip information for tagline #2154
+* Enhancement - Improve error message on certain exceptions #1354
+* Enhancement - Cart Pay Later block: Change the default insert position #2179
+* Enhancement - Messages Bootstrap: Add a render retry functionality #2181
+
+= 2.6.1 - 2024-04-09 =
+* Fix - Payment tokens fixes and adjustments #2106
+* Fix - Pay upon Invoice: Add input validation to Experience Context fields #2092
+* Fix - Disable markup in get_plugin_data() returns to fix an issue with wptexturize() #2094
+* Fix - Problem changing the shipping option in block pages #2142
+* Fix - Saved payment token deleted after payment with another saved payment token #2146
+* Enhancement - Pay later messaging configurator improvements #2107
+* Enhancement - Replace the middleware URL from connect.woocommerce.com to api.woocommerce.com/integrations #2130
+* Enhancement - Remove all Sofort references as it has been deprecated #2124
+* Enhancement - Improve funding source names #2118
+* Enhancement - More fraud prevention capabilities by storing additional data in the order #2125
+* Enhancement - Update ACDC currency eligibility for AMEX #2129
+* Enhancement - Sync shipping options with Venmo when skipping final confirmation on Checkout #2108
+* Enhancement - Card Fields: Add a filter for the CVC field and update the placeholder to match the label #2089
+* Enhancement - Product Title: Sanitize before sending to PayPal #2090
+* Enhancement - Add filter for disabling permit_multiple_payment_tokens vault attribute #2136
+* Enhancement - Filter to hide PayPal email address not working on order detail #2137
+
+= 2.6.0 - 2024-03-20 =
+* Fix - invoice_id not included in API call when creating payment with saved card #2086
+* Fix - Typo in SCA indicators for ACDC Vault transactions #2083
+* Fix - Payments with saved card tokens use Capture intent when Authorize is configured #2069
+* Fix - WooPayments multi-currency causing currency mismatch error on Block Cart & Checkout pages #2054
+* Fix - "Must pass createSubscription with intent=subscription" error with PayPal Subscriptions mode #2058
+* Fix - "Proceed to PayPal" button displayed for Free trial PayPal Subscription products when payment token is saved #2041
+* Fix - ACDC payments with new credit card may fail when debugging is enabled (JSON malformed by warning) #2051
+* Enhancement - Add Pay Later Messaging block #1897
+* Enhancement - Submit the form instead of refreshing the page to show the save notice #2081
+* Enhancement - Integrate pay later messaging block with the messaging configurator #2080
+* Enhancement - Reauthorize authorized payments #2062
+* Enhancement - Do not handle VAULT.PAYMENT-TOKEN.CREATED webhook for Vault v3 #2079
+* Enhancement - Improve the messaging configurator styles #2053
+* Enhancement - Ensure PayPal Vaulting is not selected as Subscriptions Mode when Reference Transactions are disabled #2057
+* Enhancement - Pay later messaging configurator & messaging block adjustments #2096
+
+= 2.5.4 - 2024-02-27 =
+* Fix - Cannot enable Apple Pay when API credentials were manually created #2015
+* Fix - Cart simulation type error #1943
+* Enhancement - Apple Pay recurring payments #1986
+* Enhancement - Real Time Account Updater (RTAU) integration #2027
+* Enhancement - Prepare the SKU for sending to PayPal #2033
+* Enhancement - Store the Card Brand in Address Verification Result instead of 3DS authentication result #2026
+* Enhancement - Update country eligibility for AdvancedCard Processing, Apple Pay, Google Pay #2019
+* Enhancement - Disable PayPal Vaulting setting instead of hiding it when Reference Transactions not available #2029
+* Enhancement - Store three d secure enrollment status and authentication status responses in wc order #1980
+* Enhancement - Add more checks to prevent "PayPal order ID not found" errors #2038
+* Enhancement - Disable messaging configurator when vault is enabled #2042
+* Feature preview - Pay Later Messaging configurator #1924
+
+= 2.5.3 - 2024-02-06 =
+* Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
+* Fix - Pay by link - Germany - PayPal buttons are not visible on Pay for order page #2014
+* Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
+* Enhancement - Enable card fields for ACDC and Vault v3 supported countries/currencies #2007
+* Enhancement - Update ACDC supported currencies list #1991
+* Enhancement - Check if the $wpdb->wc_orders exists before query #1996
+* Enhancement - Remove MercadoPago from disable funding sources #2003
+* Enhancement - Improve onboarding notice text #2002
+
+= 2.5.2 - 2024-02-01 =
+* Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE error for merchants without reference transactions #1984
+* Fix - Fatal error in WooCommerce PayPal Payments plugin after 2.5.0 update #1985
+* Fix - Can not refund order purchased with Vault v3 Card payment #1997
+* Fix - PayPal Vaulting Subscriptions mode setting visible when merchant not enabled for Reference Transactions #1999
+* Fix - card-fields parameter included in button script despite Advanced Card Processing disabled #2005
+* Enhancement - Add setup URL for reference transactions #1964
+* Enhancement - Improve PUI performance for variable products #1950
+
+= 2.5.1 - 2024-01-24 =
+* Temporary revert Vaulting integration changes introduced in 2.5.0
+
+= 2.5.0 - 2024-01-22 =
+* Fix - WC Subscriptions change subscription payment #1953
+* Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
+* Enhancement - Enable Vault v3 and Card Fields by default for US merchants #1967
+* Enhancement - Vault v3 WC Subscriptions integration #1920
+* Enhancement - Implement early WC validation for Hosted Card Fields #1925
+* Enhancement - Rename button locations #1946
+* Enhancement - Improve Apple Pay validation notice text #1938
+* Enhancement - Improve feature availability check UX #1941
+* Enhancement - Make all hosted card fields strings translatable #1926
+* Enhancement - PHP 8.2 deprecations #1939
+* Enhancement - Subscription support on Block Cart & Block Express Checkout #1956
+* Enhancement - Venmo Vaulting integration #1958
+* Enhancement - Add package tracking support for UK #1970
+
+= 2.4.3 - 2024-01-04 =
+* Fix - PayPal Subscription initiated without a WooCommerce order #1907
+* Fix - Block Checkout reloads when submitting order with empty fields #1904
+* Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
+* Fix - "Order does not contain intent" error for ACDC renewals when triggering 3D Secure #1888
+* Fix - PayPal Subscriptions button greyed out (inactive) on Checkout page for variable subscription products #1914
+* Enhancement - Add button to reload feature eligibility status from Connection tab #1902
+* Enhancement - Apple Pay validation message improvements #1901
+* Enhancement - Improve support for Classic Cart & Classic Checkout blocks #1894
+* Enhancement - Ensure uniform button appearance for PayPal, Google Pay, and Apple Pay buttons #1900
+* Enhancement - remove string translations for package tracking carriers from repository #1885
+* Enhancement - Incorrect margins when PayPal buttons are rendered as separate gateways. #1908
+* Enhancement - Improved button spacing when Apple Pay is enabled but current buyer is not eligible #1922
+* Feature preview - Save payment methods (Vault v3) integration  #1779
+
+= 2.4.2 - 2023-12-04 =
+* Fix - Action callback arguments count in ShipStation tracking integration #1841
+* Fix - Google Pay scripts loading on unrelated admin pages #1834
+* Fix - Do not ignore disabled APMs list in blocks #1865
+* Fix - Display Package Tracking metabox below Order actions when HPOS is active #1850
+* Fix - ApplePay use checkout form data to update shipping and billing #1832
+* Fix - Fix Apple Pay CSS #1872
+* Enhancement - Allow redirect to PayPal with "Place order" button if smart buttons failed to load #1840 #1870
+* Enhancement - Extend list of supported countries for Package Tracking v2 integration #1848
+* Enhancement - Improve Block Theme support for Pay Later messaging #1855
+* Enhancement - Render block buttons separately and add block style settings #1858
+* Enhancement - Enable Block Cart and Block Express Checkout button locations by default #1852
+* Enhancement - Improve single product page button placement with Block themes #1847
+* Enhancement - Remove the Home location from default enabled Pay Later messaging locations #1856
+* Enhancement - Chrome browser detected as eligible for Apple Pay on settings page #1828
+* Enhancement - Hide Apple Pay & Google Pay for subscription type products #1835
+* Enhancement - Add Standard Card Button gateway styling settings & preview #1827
+* Feature preview - Upgrade to new Hosted Card Fields for Advanced Card Processing #1843
+
+= 2.4.1 - 2023-11-14 =
+* Fix - Error "PayPal order ID not found in meta" prevents automations from triggering when buying subscription via third-party payment gateway #1822
+* Fix - Card button subscription support declaration #1796
+* Fix - Pay Later messaging disappears when updating shipping option on cart page #1807
+* Fix - Apple Pay payment from single product may fail after changing shipping options in Apple Pay payment sheet #1810
+* Enhancement - Extend list of supported countries for Advanced Card Processing #1808
+* Enhancement - Extend Apple Pay/Google Pay country eligibility to Italy #1811
+* Enhancement - Override language used to display PayPal buttons #600
+* Enhancement - Apple Pay button preview #1824
+* Enhancement - Add Apple Pay & Google Pay logos on the onboarding page #1823
+* Enhancement - Improve Apple Pay compatibility with variable products on single product page #1803
+* Enhancement - Apple Pay domain registration & browser eligibility check #1821
+* Enhancement - Package Tracking compatibility with WooCommerce Shipping & ShipStation for WooCommerce #1813
+* Enhancement - Fill form when continuation in block #1794
+* Enhancement - Display Shop location Pay Later messaging on product category pages #1809
+* Enhancement - Present apple-developer-merchantid-domain-association file only when Apple Pay is enabled #1818
+* Enhancement - Improve Apple Pay compatibility on Pay for Order page #1815
+* Enhancement - Display Pay Later messages before the payment methods on the Pay for Order page #1814
+* Enhancement - Handle undefined array key warnings on PHP 8.1 #1804
+
+= 2.4.0 - 2023-10-31 =
+* Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
+* Fix - ACDC disappearing after plugin updates #1751
+* Fix - Subscription module hooks #1748
+* Fix - Ensure PayPal Subscriptions API products description is 1-127 characters #1738
+* Fix - Add validation on the Plan Name field to not accept a blank value #1754
+* Enhancement - Improve Pay Later messages and add Shop, Home locations #1770
+* Enhancement - Use api-m PayPal API URLs #1740
+* Enhancement - Google Pay Settings improvements #1719
+* Enhancement - Apple Pay transaction improvements #1767
+* Enhancement - Change default ACDC title #1750
+* Enhancement - Cart simulation improvements #1753
+* Enhancement - Billing schedule fields not greyed out when PayPal Subscriptions product is connected #1755
+* Enhancement - Check validation errors when submitting in block #1528
+* Enhancement - Improve handling of server error when submitting block #1785
+* Enhancement - Extend Apple Pay country eligibility #1781
+* Enhancement - Apple Pay validation notice improvements #1783
+* Enhancement - Apple Pay payment process issues #1789
+* Enhancement - Disable the tracking if payment is not captured #1780
+* Enhancement - Place order button remains - Could not retrieve order #1786
+* Enhancement - Google Pay for variable product greyed out but clickable #1788
+* Enhancement - Merchant credential validation & remove PAYEE object #1795
+
+= 2.3.1 - 2023-09-26 =
+* Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
+* Fix - Validate tracking data only for add/update Package Tracking #1729
+* Fix - Disable Package Tracking for order if transaction ID doesn't exist #1727
+
+= 2.3.0 - 2023-09-26 =
+* Fix - Plus sign in PayPal account email address gets converted to space #771
+* Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
+* Fix - WooCommerce Bookings products don't remain in Cart as a guest when PayPal button active on single product #1645
+* Fix - Since version > 2.2.0 the PayPal Checkout button on single product pages does not redirect anymore #1664
+* Fix - PayPal fee and PayPal Payout do not change on order if we do partial refund #1578
+* Fix - Order does not contain intent error when using ACDC payment token while buyer is not present #1506
+* Fix - Error when product description linked with a PayPal subscription exceeds 127 characters #1700
+* Fix - $_POST uses the wrong key to hold the shipping method #1652
+* Fix - WC Payment Token created multiple times when webhook is received #1663
+* Fix - Subtotal mismatch line name shows on Account settings page when merchant is disconnected #1702
+* Fix - Warning prevents payments on Pay for Order page when debugging is enabled #1703
+* Fix - paypal-overlay-uid_ blocks page after closing PayPal popup on Pay for Order page | Terms checkbox validation fails on Pay for Order page #1704
+* Enhancement - Add support for HPOS for tracking module #1676
+* Enhancement - Billing agreements endpoint called too frequently for Reference Transactions check #1646
+* Enhancement - Do not declare subscription support for PayPal when only ACDC vaulting #1669
+* Enhancement - Apply Capture On Status Change only when order contains PayPal payment method #1595
+* Enhancement - Do not use transient expiration longer than one month to support memcached #1448
+* Enhancement - By disconnecting or disabling the plugin the connection should clear the Onboarding links from cache #1668
+* Enhancement - Upgrade tracking integration #1562
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Add compat layer for Yith tracking #1656
+* Enhancement - Improve invalid currency backend notice (1926) #1588
+* Enhancement - Hide ACDC footer frame via CSS to avoid empty space #1613
+* Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
+* Enhancement - Remove "no shipment" message after adding tracking #1674
+* Enhancement - Improve error & success validation messages #1675
+* Enhancement - Compatibility with third-party "Product Add-Ons" plugins #1601
+* Enhancement - PayPal logo flashes when switching between tabs #1345
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Include item_url & image_url to tracking call #1712
+* Enhancement - Update strings for tracking metabox #1714
+* Enhancement - Validate email address API credentials field #1691
+* Enhancement - Set payment method title for order edit page only if our gateway #1661
+* Enhancement - Fix missing Pay Later messages in cart + refactoring #1683
+* Enhancement - Product page PP button keep loading popup - "wc_add_to_cart_params is not defined" error in WooCommerce #1655
+* Enhancement - Remove PayPal Subscriptions API feature flag #1690
+* Enhancement - Don't send image_url when it is empty #1678
+* Enhancement - Subscription support depending on Vaulting setting instead of subscription mode setting #1697
+* Enhancement - Wrong PayPal subscription id on vaulted subscriptions #1699
+* Enhancement - Remove payment vaulted checker functionality (2030) #1711
+* Feature preview - Apple Pay integration #1514
+* Feature preview - Google Pay integration #1654
+
+= 2.2.2 - 2023-08-29 =
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529
+* Enhancement - HPOS compatibility issues #1594
+* Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
 
 = 2.2.1 - 2023-08-24 =
 * Fix - One-page checkout causes mini cart not showing the PP button on certain pages #1536

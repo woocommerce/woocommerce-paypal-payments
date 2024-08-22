@@ -64,7 +64,7 @@ class OnboardingUrl {
 	 *
 	 * @var int
 	 */
-	private $cache_ttl = 3 * MONTH_IN_SECONDS;
+	private $cache_ttl = MONTH_IN_SECONDS;
 
 	/**
 	 * The TTL for the previous token cache.

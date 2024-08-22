@@ -34,9 +34,6 @@ class OrderTest extends TestCase
             ->expects('to_array')
             ->andReturn(['applicationContext']);
         $paymentSource = Mockery::mock(PaymentSource::class);
-        $paymentSource
-            ->expects('to_array')
-            ->andReturn(['paymentSource']);
 
         $testee = new Order(
             $id,
@@ -68,8 +65,7 @@ class OrderTest extends TestCase
             'create_time' => $createTime->format($this->dateFormat),
             'update_time' => $updateTime->format($this->dateFormat),
             'payer' => ['payer'],
-            'application_context' => ['applicationContext'],
-            'payment_source' => ['paymentSource']
+            'application_context' => ['applicationContext']
         ];
         $this->assertEquals($expected, $testee->to_array());
     }

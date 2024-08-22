@@ -1,0 +1,44 @@
+
+@mixin button {
+	--apm-button-border-radius: 4px;
+
+	overflow: hidden;
+	min-width: 0;
+	max-width: 750px;
+	line-height: 0;
+	border-radius: var(--apm-button-border-radius);
+
+	// Defaults
+	height: 45px;
+	margin-top: 14px;
+
+	&.ppcp-button-pill {
+		--apm-button-border-radius: 50px;
+	}
+
+	&.ppcp-button-minicart {
+		display: block;
+	}
+
+	.ppcp-width-min & {
+		height: 35px;
+	}
+
+	.ppcp-width-300 & {
+		height: 45px;
+	}
+
+	.ppcp-width-500 & {
+		height: 55px;
+	}
+
+	// No margin on block layout.
+	.wp-block-woocommerce-checkout &, .wp-block-woocommerce-cart & {
+		margin: 0;
+		min-width: 0;
+	}
+
+	.wp-admin & {
+		pointer-events: none;
+	}
+}

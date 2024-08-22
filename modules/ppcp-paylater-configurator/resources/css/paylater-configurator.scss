@@ -1,0 +1,94 @@
+#messaging-configurator {
+	& > div {
+		justify-content: left;
+		margin: 0;
+
+		& > div {
+			padding: 0;
+		}
+	}
+	.ppcp-paylater-configurator-publishButton {
+		display:none;
+	}
+	.ppcp-paylater-configurator-header {
+		font-size: 1.3em;
+		color: #1d2327;
+		margin: 1em 0;
+		font-weight: 600;
+		font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+		line-height: 1.3;
+	}
+	#configurator-eligibleContainer div:has(.ppcp-paylater-configurator-header#configurator-headerText) {
+		display: none;
+	}
+	.ppcp-paylater-configurator-subheader {
+		font-size: 14px;
+		line-height: 1.5;
+		color: #3c434a;
+		font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif;
+
+		a {
+			font-size: 14px;
+		}
+	}
+
+	.css-dpyjrq-text_body, .css-dpyjrq-text_body a {
+		font-size: 14px;
+	}
+
+	button.css-104jwuk {
+		background: none;
+	}
+
+	.css-1yo2lxy-text_body_strong, span.css-16jt5za-text_body, span.css-1yo2lxy-text_body_strong, span {
+		font-size: 14px;
+	}
+
+	hr {
+		margin-right: 16px;
+		border-top-color: #B1B7BD;
+	}
+
+	.css-168cq4n-checkbox_input:checked + label > span > span:first-of-type {
+		background-color: var(--wp-admin-theme-color);
+		border-color: var(--wp-admin-theme-color);
+	}
+
+	.css-168cq4n-checkbox_input:focus + label > span > span:first-of-type {
+		outline: var(--wp-admin-theme-color);
+	}
+
+	span[class*="-svg-size_sm-SelectedMain-selected_icon"],
+	span[class*="-svg-size_xs-selected_icon"] {
+		color: var(--wp-admin-theme-color);
+	}
+
+	button[class*="-dropdown_menu_button-text_field_value_sm-active-active"] {
+		outline: var(--wp-admin-theme-color) solid 0.125rem;
+	}
+
+	button[class*="-dropdown_menu_button-text_field_value_sm-active"] {
+		&:focus {
+			outline: var(--wp-admin-theme-color) solid 0.125rem;
+		}
+	}
+
+	.css-gzgyp8-control:checked ~ label {
+		background-color: var(--wp-admin-theme-color);
+		border: var(--wp-admin-theme-color);
+		outline: var(--wp-admin-theme-color) solid 0.125rem;
+	}
+
+	.css-gzgyp8-control:focus ~ label {
+		outline: var(--wp-admin-theme-color) solid 0.125rem;
+	}
+
+	.css-gzgyp8-control:checked ~ span {
+		border: 0.0625rem solid var(--wp-admin-theme-color);
+	}
+	
+}
+
+#field-pay_later_messaging_heading h3{
+	margin-bottom: 0px;
+}

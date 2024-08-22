@@ -17,8 +17,9 @@ class AuthorizationFactoryTest extends TestCase
             'id' => 'foo',
             'status' => 'CAPTURED',
         ];
+		$fraudProcessorResponseFactory = \Mockery::mock(FraudProcessorResponseFactory::class);
 
-        $testee = new AuthorizationFactory();
+        $testee = new AuthorizationFactory($fraudProcessorResponseFactory);
         $result = $testee->from_paypal_response($response);
 
         $this->assertInstanceOf(Authorization::class, $result);
@@ -36,7 +37,9 @@ class AuthorizationFactoryTest extends TestCase
             'status' => 'CAPTURED',
         ];
 
-        $testee = new AuthorizationFactory();
+		$fraudProcessorResponseFactory = \Mockery::mock(FraudProcessorResponseFactory::class);
+
+        $testee = new AuthorizationFactory($fraudProcessorResponseFactory);
         $testee->from_paypal_response($response);
     }
 
@@ -47,7 +50,9 @@ class AuthorizationFactoryTest extends TestCase
             'id' => 'foo',
         ];
 
-        $testee = new AuthorizationFactory();
+		$fraudProcessorResponseFactory = \Mockery::mock(FraudProcessorResponseFactory::class);
+
+        $testee = new AuthorizationFactory($fraudProcessorResponseFactory);
         $testee->from_paypal_response($response);
     }
 }

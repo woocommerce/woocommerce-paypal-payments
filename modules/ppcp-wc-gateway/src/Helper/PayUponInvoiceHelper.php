@@ -56,14 +56,14 @@ class PayUponInvoiceHelper {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$billing_country = wc_clean( wp_unslash( $_POST['country'] ?? '' ) );
-		if ( $billing_country && 'DE' !== $billing_country ) {
+		$billing_country = WC()->customer->get_billing_country();
+		if ( empty( $billing_country ) || 'DE' !== $billing_country ) {
 			return false;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$shipping_country = wc_clean( wp_unslash( $_POST['s_country'] ?? '' ) );
-		if ( $shipping_country && 'DE' !== $shipping_country ) {
+		$shipping_country = WC()->customer->get_shipping_country();
+		if ( empty( $shipping_country ) || 'DE' !== $shipping_country ) {
 			return false;
 		}
 
@@ -98,7 +98,11 @@ class PayUponInvoiceHelper {
 		if ( $cart && ! is_checkout_pay_page() ) {
 			$items = $cart->get_cart_contents();
 			foreach ( $items as $item ) {
-				$product = wc_get_product( $item['product_id'] );
+				$product_id = $item['product_id'];
+				if ( isset( $item['variation_id'] ) && $item['variation_id'] ) {
+					$product_id = $item['variation_id'];
+				}
+				$product = wc_get_product( $product_id );
 				if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
 					return false;
 				}

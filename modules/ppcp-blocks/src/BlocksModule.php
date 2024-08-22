@@ -61,6 +61,7 @@ class BlocksModule implements ModuleInterface {
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
+				$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 			}
 		);
 
@@ -86,6 +87,35 @@ class BlocksModule implements ModuleInterface {
 				assert( $endpoint instanceof UpdateShippingEndpoint );
 
 				$endpoint->handle_request();
+			}
+		);
+
+		// Enqueue frontend scripts.
+		add_action(
+			'wp_enqueue_scripts',
+			static function () use ( $c ) {
+				if ( ! has_block( 'woocommerce/checkout' ) && ! has_block( 'woocommerce/cart' ) ) {
+					return;
+				}
+
+				$module_url    = $c->get( 'blocks.url' );
+				$asset_version = $c->get( 'ppcp.asset-version' );
+
+				wp_register_style(
+					'wc-ppcp-blocks',
+					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					array(),
+					$asset_version
+				);
+				wp_enqueue_style( 'wc-ppcp-blocks' );
+			}
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_sdk_components_hook',
+			function( array $components ) {
+				$components[] = 'buttons';
+				return $components;
 			}
 		);
 	}

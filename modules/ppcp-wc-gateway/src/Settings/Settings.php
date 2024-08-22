@@ -36,12 +36,44 @@ class Settings implements ContainerInterface {
 	protected $default_button_locations;
 
 	/**
+	 * The list of selected default pay later button locations.
+	 *
+	 * @var string[]
+	 */
+	protected $default_pay_later_button_locations;
+
+	/**
+	 * The list of selected default pay later messaging locations.
+	 *
+	 * @var string[]
+	 */
+	protected $default_pay_later_messaging_locations;
+
+	/**
+	 * The default ACDC gateway title.
+	 *
+	 * @var string
+	 */
+	protected $default_dcc_gateway_title;
+
+	/**
 	 * Settings constructor.
 	 *
 	 * @param string[] $default_button_locations The list of selected default button locations.
+	 * @param string   $default_dcc_gateway_title The default ACDC gateway title.
+	 * @param string[] $default_pay_later_button_locations The list of selected default pay later button locations.
+	 * @param string[] $default_pay_later_messaging_locations The list of selected default pay later messaging locations.
 	 */
-	public function __construct( array $default_button_locations ) {
-		$this->default_button_locations = $default_button_locations;
+	public function __construct(
+		array $default_button_locations,
+		string $default_dcc_gateway_title,
+		array $default_pay_later_button_locations,
+		array $default_pay_later_messaging_locations
+	) {
+		$this->default_button_locations              = $default_button_locations;
+		$this->default_dcc_gateway_title             = $default_dcc_gateway_title;
+		$this->default_pay_later_button_locations    = $default_pay_later_button_locations;
+		$this->default_pay_later_messaging_locations = $default_pay_later_messaging_locations;
 	}
 
 	/**
@@ -110,20 +142,22 @@ class Settings implements ContainerInterface {
 				'woocommerce-paypal-payments'
 			),
 			'smart_button_locations'                   => $this->default_button_locations,
-			'smart_button_enable_styling_per_location' => true,
+			'smart_button_enable_styling_per_location' => false,
 			'pay_later_messaging_enabled'              => true,
 			'pay_later_button_enabled'                 => true,
-			'pay_later_button_locations'               => $this->default_button_locations,
-			'pay_later_messaging_locations'            => $this->default_button_locations,
+			'pay_later_button_locations'               => $this->default_pay_later_button_locations,
+			'pay_later_messaging_locations'            => $this->default_pay_later_messaging_locations,
 			'brand_name'                               => get_bloginfo( 'name' ),
-			'dcc_gateway_title'                        => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+			'dcc_gateway_title'                        => $this->default_dcc_gateway_title,
 			'dcc_gateway_description'                  => __(
 				'Pay with your credit card.',
 				'woocommerce-paypal-payments'
 			),
 		);
+
 		foreach ( $defaults as $key => $value ) {
 			if ( isset( $this->settings[ $key ] ) ) {
+				$this->settings[ $key ] = apply_filters( 'woocommerce_paypal_payments_settings_value', $this->settings[ $key ], $key );
 				continue;
 			}
 			$this->settings[ $key ] = $value;

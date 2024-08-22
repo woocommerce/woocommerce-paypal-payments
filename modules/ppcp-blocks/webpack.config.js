@@ -9,7 +9,9 @@ module.exports = {
     target: 'web',
     plugins: [ new DependencyExtractionWebpackPlugin() ],
     entry: {
-        'checkout-block': path.resolve('./resources/js/checkout-block.js')
+        'checkout-block': path.resolve('./resources/js/checkout-block.js'),
+        'advanced-card-checkout-block': path.resolve('./resources/js/advanced-card-checkout-block.js'),
+        "gateway": path.resolve('./resources/css/gateway.scss')
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

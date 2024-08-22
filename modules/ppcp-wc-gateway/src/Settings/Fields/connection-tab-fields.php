@@ -11,11 +11,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
@@ -38,6 +40,9 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 	$module_url = $container->get( 'wcgateway.url' );
 
+	$display_manager = $container->get( 'wcgateway.display-manager' );
+	assert( $display_manager instanceof DisplayManager );
+
 	$connection_fields = array(
 		'ppcp_onboarading_header'                       => array(
 			'type'         => 'ppcp-text',
@@ -50,17 +55,21 @@ return function ( ContainerInterface $container, array $fields ): array {
 	</div>
 	<div class="ppcp-onboarding-header-right">
 		<div class="ppcp-onboarding-header-paypal-logos">
-			<img alt="PayPal" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.svg"/>
-			<img alt="Venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo.svg"/>
-			<img alt="Pay Later" src="' . esc_url( $module_url ) . 'assets/images/paylater.svg"/>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#standard-paypal-payments" target="_blank"><img alt="PayPal" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#pay-with-venmo" target="_blank"><img alt="Venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#pay-later" target="_blank"><img alt="Pay Later" src="' . esc_url( $module_url ) . 'assets/images/paylater.svg"/></a>
 		</div>
 		<div class="ppcp-onboarding-header-cards">
-			<img alt="Visa" src="' . esc_url( $module_url ) . 'assets/images/visa-dark.svg"/>
-			<img alt="Mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard-dark.svg"/>
-			<img alt="American Express" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/>
-			<img alt="Discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/>
-			<img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal-dark.svg"/>
-			<img alt="Sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="Visa" src="' . esc_url( $module_url ) . 'assets/images/visa-dark.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="Mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard-dark.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="American Express" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#paypal-card-processing-acdc" target="_blank"><img alt="Discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal-dark.svg"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank"><img alt="BLIK" src="' . esc_url( $module_url ) . 'assets/images/blik.svg"/></a>
+		</div>
+		<div class="ppcp-onboarding-header-apm-logos">
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#apple-pay" target="_blank"><img alt="Apple Pay" src="' . esc_url( $module_url ) . 'assets/images/button-Apple-Pay.png"/></a>
+			<a href="https://woo.com/document/woocommerce-paypal-payments/#google-pay" target="_blank"><img alt="Google Pay" src="' . esc_url( $module_url ) . 'assets/images/button-Google-Pay.png"/></a>
 		</div>
 	</div>
 </div>',
@@ -237,7 +246,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_production'                     => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -303,7 +312,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_sandbox'                        => array(
 			'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -381,10 +390,30 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 		),
+		'refresh_feature_status'                        => array(
+			'title'        => __( 'Refresh feature availability status', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => '<button type="button" class="button ppcp-refresh-feature-status">' . esc_html__( 'Check available features', 'woocommerce-paypal-payments' ) . '</button><div class="ppcp-status-text"></div>',
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
 		'ppcp_dcc_status'                               => array(
 			'title'        => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => $container->get( 'wcgateway.settings.connection.dcc-status-text' ),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array( 'dcc' ),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'ppcp_reference_transactions_status'            => array(
+			'title'        => __( 'Save PayPal & Venmo payment methods', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => $container->get( 'wcgateway.settings.connection.reference-transactions-status-text' ),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -401,27 +430,13 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array( 'pui_ready' ),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'tracking_enabled'                              => array(
-			'title'        => __( 'Shipment Tracking', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'desc_tip'     => true,
-			'label'        => $container->get( 'wcgateway.settings.tracking-label' ),
-			'description'  => __( 'Allows to send shipment tracking numbers to PayPal for PayPal transactions.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
-				State::STATE_ONBOARDED,
-			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
-			'input_class'  => $container->get( 'wcgateway.settings.should-disable-tracking-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
-		),
 		'fraudnet_enabled'                              => array(
 			'title'        => __( 'FraudNet', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'desc_tip'     => true,
 			'label'        => $container->get( 'wcgateway.settings.fraudnet-label' ),
 			'description'  => __( 'FraudNet is a JavaScript library developed by PayPal and embedded into a merchant’s web page to collect browser-based data to help reduce fraud.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
+			'default'      => true,
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -465,7 +480,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'description'       => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please use only English letters and "-", "_" characters.', 'woocommerce-paypal-payments' ),
 			'maxlength'         => 15,
 			'custom_attributes' => array(
-				'pattern' => '[a-zA-Z_-]+',
+				'pattern' => '[a-zA-Z_\\-]+',
 			),
 			'default'           => ( static function (): string {
 				$site_url = get_site_url( get_current_blog_id() );
@@ -494,6 +509,55 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'subtotal_mismatch_behavior'                    => array(
+			'title'             => __( 'Subtotal mismatch behavior', 'woocommerce-paypal-payments' ),
+			'type'              => 'select',
+			'input_class'       => array( 'wc-enhanced-select' ),
+			'default'           => 'vertical',
+			'desc_tip'          => true,
+			'description'       => __(
+				'Differences between WooCommerce and PayPal roundings may cause mismatch in order items subtotal calculations. If not handled, these mismatches will cause the PayPal transaction to fail.',
+				'woocommerce-paypal-payments'
+			),
+			'options'           => array(
+				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
+				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
+			),
+			'screens'           => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
+			'custom_attributes' => array(
+				'data-ppcp-display' => wp_json_encode(
+					array(
+						$display_manager
+							->rule()
+							->condition_element( 'subtotal_mismatch_behavior', PurchaseUnitSanitizer::MODE_EXTRA_LINE )
+							->action_visible( 'subtotal_mismatch_line_name' )
+							->action_class( 'subtotal_mismatch_behavior', 'active' )
+							->to_array(),
+					)
+				),
+			),
+		),
+		'subtotal_mismatch_line_name'                   => array(
+			'title'        => __( 'Subtotal mismatch line name', 'woocommerce-paypal-payments' ),
+			'type'         => 'text',
+			'desc_tip'     => true,
+			'description'  => __( 'The name of the extra line that will be sent to PayPal to correct the subtotal mismatch.', 'woocommerce-paypal-payments' ),
+			'classes'      => array( 'ppcp-field-indent' ),
+			'maxlength'    => 22,
+			'default'      => '',
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'placeholder'  => PurchaseUnitSanitizer::EXTRA_LINE_NAME,
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 	);

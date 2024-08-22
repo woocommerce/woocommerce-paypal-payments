@@ -45,6 +45,12 @@ return array(
 		);
 	},
 
+	'uninstall.ppcp-all-action-names'           => function( ContainerInterface $container ) : array {
+		return array(
+			'woocommerce_paypal_payments_uninstall',
+		);
+	},
+
 	'uninstall.clear-db-endpoint'               => function( ContainerInterface $container ) : string {
 		return 'ppcp-clear-db';
 	},

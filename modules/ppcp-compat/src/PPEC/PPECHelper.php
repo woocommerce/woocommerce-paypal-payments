@@ -75,7 +75,7 @@ class PPECHelper {
 		}
 
 		global $wpdb;
-		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() && isset( $wpdb->wc_orders ) ) {
 			$result = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT 1 FROM {$wpdb->wc_orders} WHERE payment_method = %s",
@@ -98,7 +98,7 @@ class PPECHelper {
 		set_transient(
 			'ppcp_has_ppec_subscriptions',
 			! empty( $result ) ? 'true' : 'false',
-			3 * MONTH_IN_SECONDS
+			MONTH_IN_SECONDS
 		);
 
 		return ! empty( $result );

@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use Mockery;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use function Brain\Monkey\Functions\expect;
@@ -1149,6 +1149,7 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
+        $logger->shouldReceive('warning');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
             ->expects('to_array')

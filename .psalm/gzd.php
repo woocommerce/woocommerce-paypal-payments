@@ -50,6 +50,27 @@ namespace Vendidero\Germanized\Shipments {
 
         public function add_note( $note, $added_by_user = false ) {
         }
+
+		/**
+		 * Return an array of items within this shipment.
+		 *
+		 * @return ShipmentItem[]
+		 */
+		public function get_items() {
+		}
+	}
+
+	class ShipmentItem extends WC_Data {
+
+		/**
+		 * Get order ID this meta belongs to.
+		 *
+		 * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
+		 * @return int
+		 */
+		public function get_order_item_id( $context = 'view' ) {
+		}
+
 	}
 }
 

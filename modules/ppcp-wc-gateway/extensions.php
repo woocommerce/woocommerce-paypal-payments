@@ -60,19 +60,28 @@ return array(
 			$source
 		);
 	},
-
 	'wcgateway.settings.fields'      => function ( ContainerInterface $container, array $fields ): array {
-		$path_to_settings_fields = __DIR__ . '/src/Settings/Fields';
+		$files = array(
+			'paypal-smart-button-fields.php',
+			'connection-tab-fields.php',
+			'pay-later-tab-fields.php',
+			'card-button-fields.php',
+		);
 
-		$get_paypal_button_fields = require $path_to_settings_fields . '/paypal-smart-button-fields.php';
-		$paypal_button_fields = $get_paypal_button_fields( $container, $fields ) ?? array();
-
-		$get_connection_tab_fields = require $path_to_settings_fields . '/connection-tab-fields.php';
-		$connection_tab_fields = $get_connection_tab_fields( $container, $fields ) ?? array();
-
-		$get_pay_later_tab_fields = require $path_to_settings_fields . '/pay-later-tab-fields.php';
-		$pay_later_tab_fields = $get_pay_later_tab_fields( $container, $fields ) ?? array();
-
-		return array_merge( $paypal_button_fields, $connection_tab_fields, $pay_later_tab_fields );
+		return array_merge(
+			...array_map(
+				function ( string $file ) use ( $container, $fields ): array {
+					$path_to_settings_fields = __DIR__ . '/src/Settings/Fields/';
+					/**
+					 * Skip path check.
+					 *
+					 * @psalm-suppress UnresolvableInclude
+					 */
+					$get_fields = require $path_to_settings_fields . $file;
+					return $get_fields( $container, $fields ) ?? array();
+				},
+				$files
+			)
+		);
 	},
 );

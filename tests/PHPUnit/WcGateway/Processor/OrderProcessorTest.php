@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
-
+use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Dictionary;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -20,7 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -57,6 +60,7 @@ class OrderProcessorTest extends TestCase
             ->andReturn($payments);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->expects('get_items')->andReturn([]);
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
         $wcOrder->shouldReceive('get_id')->andReturn(1);
@@ -89,6 +93,7 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -142,7 +147,10 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			Mockery::mock(PurchaseUnitFactory::class),
+			Mockery::mock(PayerFactory::class),
+			Mockery::mock(ShippingPreferenceFactory::class)
         );
 
         $wcOrder
@@ -172,7 +180,9 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
-        $this->assertTrue($testee->process($wcOrder));
+        $testee->process($wcOrder);
+
+		$this->expectNotToPerformAssertions();
     }
 
     public function testCapture() {
@@ -193,7 +203,8 @@ class OrderProcessorTest extends TestCase
             ->andReturn($payments);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $orderStatus = Mockery::mock(OrderStatus::class);
+		$wcOrder->expects('get_items')->andReturn([]);
+		$orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
             ->shouldReceive('is')
             ->with(OrderStatus::APPROVED)
@@ -220,6 +231,7 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -266,7 +278,10 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			Mockery::mock(PurchaseUnitFactory::class),
+			Mockery::mock(PayerFactory::class),
+			Mockery::mock(ShippingPreferenceFactory::class)
         );
 
         $wcOrder
@@ -291,7 +306,9 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
-        $this->assertTrue($testee->process($wcOrder));
+        $testee->process($wcOrder);
+
+		$this->expectNotToPerformAssertions();
     }
 
     public function testError() {
@@ -342,6 +359,7 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
+		$currentOrder->shouldReceive('payer');
 
         $wcOrder
             ->shouldReceive('get_meta')
@@ -373,7 +391,10 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			Mockery::mock(PurchaseUnitFactory::class),
+			Mockery::mock(PayerFactory::class),
+			Mockery::mock(ShippingPreferenceFactory::class)
         );
 
         $wcOrder
@@ -392,8 +413,8 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
-        $this->assertFalse($testee->process($wcOrder));
-        $this->assertNotEmpty($testee->last_error());
+		$this->expectException(Exception::class);
+        $testee->process($wcOrder);
     }
 
 

@@ -43,10 +43,19 @@ class PaymentsTest extends TestCase
 			    'status' => 'CREATED',
 		    ]
 	    );
-	    $captures = [$capture];
-        $authorizations = [$authorization];
+		$refund = \Mockery::mock(Refund::class);
+		$refund->shouldReceive('to_array')->andReturn(
+			[
+				'id' => 'refund',
+				'status' => 'CREATED',
+			]
+		);
 
-        $testee = new Payments($authorizations, $captures);
+        $authorizations = [$authorization];
+		$captures = [$capture];
+		$refunds = [$refund];
+
+        $testee = new Payments($authorizations, $captures, $refunds);
 
         $this->assertEquals(
             [
@@ -62,6 +71,12 @@ class PaymentsTest extends TestCase
 			            'status' => 'CREATED',
 		            ],
 	            ],
+				'refunds' => [
+					[
+						'id' => 'refund',
+						'status' => 'CREATED',
+					],
+				],
             ],
             $testee->to_array()
         );

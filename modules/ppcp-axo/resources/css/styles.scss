@@ -1,0 +1,143 @@
+.ppcp-axo-watermark-container {
+	max-width: 200px;
+	margin-top: 10px;
+	position: relative;
+
+	&.loader:before {
+		height: 12px;
+		width: 12px;
+		margin-left: -6px;
+		margin-top: -6px;
+		left: 12px;
+	}
+}
+
+#ppcp-axo-billing-email-field-wrapper {
+	display: flex;
+	gap: 0.5rem;
+}
+
+#ppcp-axo-billing-email-submit-button {
+	margin-top: 0;
+	position: relative;
+	transition: opacity 0.3s ease;
+	flex: 0 1 auto;
+	align-self: flex-start;
+
+	.loader:before {
+		display: inline;
+		height: 12px;
+		width: 12px;
+		margin-left: -6px;
+		margin-top: -6px;
+		left: auto;
+		right: auto;
+	}
+}
+
+.ppcp-axo-billing-email-submit-button {
+	&-hidden {
+		opacity: 0;
+	}
+
+	&-loaded:not([disabled]) {
+		opacity: 1;
+	}
+}
+
+.ppcp-axo-payment-container {
+	padding: 1rem 0;
+	background-color: #ffffff;
+
+	&.axo-hidden {
+		display: none;
+	}
+}
+
+.ppcp-axo-email-widget {
+	border: 1px solid #cccccc;
+	background-color: #eeeeee;
+	padding: 0.5rem 1rem;
+	margin-bottom: 1rem;
+	text-align: center;
+	font-weight: bold;
+	color: #000000;
+}
+
+.ppcp-axo-field-hidden {
+	display: none;
+}
+
+.ppcp-axo-customer-details {
+	margin-bottom: 40px;
+	position: relative;
+}
+
+.axo-checkout-header-section {
+	display: flex;
+	align-items: baseline;
+	gap: 1em;
+}
+
+.ppcp-axo-order-button {
+		float: none;
+		width: 100%;
+		box-sizing: border-box;
+		margin: var(--global-md-spacing) 0 1em;
+		padding: 0.6em 1em;
+}
+
+.ppcp-axo-watermark-loading {
+	min-height: 12px;
+}
+
+.ppcp-axo-overlay,
+.ppcp-axo-watermark-loading:after {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255, 255, 255, 0.5);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	z-index: 999;
+	content: '';
+}
+
+.ppcp-axo-loading .col-1 {
+	position: relative;
+	opacity: 0.9;
+	transition: opacity 0.5s ease;
+}
+
+#payment .payment_methods li label[for="payment_method_ppcp-axo-gateway"] {
+	img {
+		float: none;
+		vertical-align: middle;
+	}
+
+	.ppcp-card-icon {
+		max-height: 25px;
+	}
+}
+
+.ppcp-axo-customer-details #billing_email_field .woocommerce-input-wrapper {
+	flex: 1 1 auto;
+}
+
+@media screen and (max-width: 719px) {
+	#ppcp-axo-billing-email {
+		&-field-wrapper {
+			flex-direction: column;
+		}
+
+		&-submit-button {
+			align-self: auto;
+		}
+	}
+}
+
+
+

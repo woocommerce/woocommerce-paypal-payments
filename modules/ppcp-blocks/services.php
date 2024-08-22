@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 
 return array(
 	'blocks.url'                           => static function ( ContainerInterface $container ): string {
@@ -28,13 +30,31 @@ return array(
 		return new PayPalPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'button.smart-button' ),
+			function () use ( $container ): SmartButtonInterface {
+				return $container->get( 'button.smart-button' );
+			},
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'wcgateway.paypal-gateway' ),
 			$container->get( 'blocks.settings.final_review_enabled' ),
 			$container->get( 'session.cancellation.view' ),
-			$container->get( 'session.handler' )
+			$container->get( 'session.handler' ),
+			$container->get( 'blocks.add-place-order-method' ),
+			$container->get( 'wcgateway.use-place-order-button' ),
+			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'wcgateway.place-order-button-description' ),
+			$container->get( 'wcgateway.all-funding-sources' )
+		);
+	},
+	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {
+		return new AdvancedCardPaymentMethod(
+			$container->get( 'blocks.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.credit-card-gateway' ),
+			function () use ( $container ): SmartButtonInterface {
+				return $container->get( 'button.smart-button' );
+			},
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
@@ -52,6 +72,16 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'blocks.add-place-order-method'        => function ( ContainerInterface $container ) : bool {
+		/**
+		 * Whether to create a non-express method with the standard "Place order" button redirecting to PayPal.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_blocks_add_place_order_method',
+			true
 		);
 	},
 );

@@ -4,18 +4,23 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
+use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\when;
 
 class CreditCardGatewayTest extends TestCase
@@ -29,9 +34,15 @@ class CreditCardGatewayTest extends TestCase
 	private $state;
 	private $transactionUrlProvider;
 	private $subscriptionHelper;
+	private $captureCardPayment;
+	private $prefix;
+	private $paymentTokensEndpoint;
+	private $wcPaymentTokens;
 	private $logger;
 	private $paymentsEndpoint;
 	private $vaultedCreditCardHandler;
+	private $environment;
+	private $orderEndpoint;
 	private $testee;
 
 	public function setUp(): void
@@ -47,9 +58,15 @@ class CreditCardGatewayTest extends TestCase
 		$this->state = Mockery::mock(State::class);
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
+		$this->captureCardPayment = Mockery::mock(CaptureCardPayment::class);
+		$this->prefix = 'some-prefix';
+		$this->paymentTokensEndpoint = Mockery::mock(PaymentTokensEndpoint::class);
+		$this->wcPaymentTokens = Mockery::mock(WooCommercePaymentTokens::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 		$this->vaultedCreditCardHandler = Mockery::mock(VaultedCreditCardHandler::class);
+		$this->environment = Mockery::mock(Environment::class);
+		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 
 		$this->state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 		$this->config->shouldReceive('has')->andReturn(true);
@@ -67,9 +84,15 @@ class CreditCardGatewayTest extends TestCase
 			$this->state,
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
-			$this->logger,
 			$this->paymentsEndpoint,
-			$this->vaultedCreditCardHandler
+			$this->vaultedCreditCardHandler,
+			$this->environment,
+			$this->orderEndpoint,
+			$this->captureCardPayment,
+			$this->prefix,
+			$this->paymentTokensEndpoint,
+			$this->wcPaymentTokens,
+			$this->logger
 		);
 	}
 
@@ -77,6 +100,13 @@ class CreditCardGatewayTest extends TestCase
 	{
 		$wc_order = Mockery::mock(WC_Order::class);
 		when('wc_get_order')->justReturn($wc_order);
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->session = $session;
+		$session->shouldReceive('set')->andReturn([]);
+		$session->shouldReceive('get')->andReturn('');
 
 		$this->orderProcessor->shouldReceive('process')
 			->with($wc_order)
@@ -94,6 +124,15 @@ class CreditCardGatewayTest extends TestCase
 		$wc_order = Mockery::mock(WC_Order::class);
 		$wc_order->shouldReceive('get_customer_id')->andReturn(1);
 		when('wc_get_order')->justReturn($wc_order);
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->session = $session;
+		$session->shouldReceive('set')->andReturn([]);
+		$session->shouldReceive('get')->andReturn('');
+
+		when('is_checkout')->justReturn(true);
 
 		$savedCreditCard = 'abc123';
 		$_POST['saved_credit_card'] = $savedCreditCard;

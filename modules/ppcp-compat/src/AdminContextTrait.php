@@ -30,7 +30,7 @@ trait AdminContextTrait {
 			return false;
 		}
 
-		if ( ! $order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ) {
+		if ( ! $order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) || empty( $order->get_transaction_id() ) ) {
 			return false;
 		}
 

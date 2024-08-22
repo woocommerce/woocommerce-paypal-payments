@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
 use Automattic\WooCommerce\Utilities\OrderUtil;
 use stdClass;
-use WooCommerce\PayPalCommerce\Subscription\RenewalHandler;
+use WooCommerce\PayPalCommerce\WcSubscriptions\RenewalHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 
 /**

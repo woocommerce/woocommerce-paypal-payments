@@ -1,5 +1,312 @@
 *** Changelog ***
 
+= 2.8.3 - 2024-08-12 =
+* Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474
+* Fix - Do not add tax info into order meta during order creation #2471
+* Fix - PayPal declares subscription support when for Subscription mode is set Disable PayPal for subscription #2425
+* Fix - PayPal js files loaded on non PayPal pages #2411
+* Fix - Google Pay: Fix the incorrect popup triggering #2414
+* Fix - Add tax configurator when programmatically creating WC orders #2431
+* Fix - Shipping callback compatibility with WC Name Your Price plugin #2402
+* Fix - Uncaught Error: Cannot use object of type ...\Settings as array in .../AbstractPaymentMethodType.php (3253) #2334
+* Fix - Prevent displaying smart button multiple times on variable product page #2420
+* Fix - Prevent enabling Standard Card Button when ACDC is enabled #2404
+* Fix - Use client credentials for user tokens #2491
+* Fix - Apple Pay: Fix the shipping callback #2492
+* Enhancement - Separate Google Pay button for Classic Checkout #2430
+* Enhancement - Add Apple Pay and Google Pay support for China, simplify country-currency matrix #2468
+* Enhancement - Add AMEX support for Advanced Card Processing in China #2469
+
+= 2.8.2 - 2024-07-22 =
+* Fix - Sold individually checkbox automatically disabled after adding product to the cart more than once #2415
+* Fix - All products "Sold individually" when PayPal Subscriptions selected as Subscriptions Mode #2400
+* Fix - W3 Total Cache: Remove type from file parameter as sometimes null gets passed causing errors #2403
+* Fix - Shipping methods during callback not updated correctly #2421
+* Fix - Preserve subscription renewal processing when switching Subscriptions Mode or disabling gateway #2394
+* Fix - Remove shipping callback for Venmo express button #2374
+* Fix - Google Pay: Fix issuse with data.paymentSource being undefined #2390
+* Fix - Loading of non-Order as a WC_Order causes warnings and potential data corruption #2343
+* Fix - Apple Pay and Google Pay buttons don't appear in PayPal Button stack on multi-step Checkout #2372
+* Fix - Apple Pay: Fix when shipping is disabled #2391
+* Fix - Wrong string in smart button preview on Standard Payments tab #2409
+* Fix - Don't break orders screen when there is an exception for package tracking #2369
+* Fix - Pay Later button preview is missing #2371
+* Fix - Apple Pay button layout #2367
+* Enhancement - Remove BCDC button from block Express Checkout area #2381
+* Enhancement - Extend Advanced Card Processing country eligibility for China #2397
+
+= 2.8.1 - 2024-07-01 =
+* Fix - Don't render tracking metabox if PayPal order does not belong to connected merchant #2360
+* Fix - Fatal error when the ppcp-paylater-configurator module is disabled via code snippet #2327
+* Fix - Apple Pay & Google Pay buttons no longer visible in Standard Payments button previews after moving the configuration to Advanced Card Processing tab #2325
+* Fix - Fix Smart Buttons on Elementor checkout widget #2284
+* Fix - Pay by link - Capturing order from guest user causing fatal error when Vaulting is enabled #2382
+* Fix - Enable the gateway settings JS file on connection tab #2377
+* Enhancement - Add filter for certain settings to allow gateway translation e.g. via WPML #2308
+* Enhancement - Filter for adding more contexts in can_render_dcc checker #2346
+* Enhancement - Do not request id_token for guest users #2283
+* Enhancement - Prevent multiple PayPal Subscription products in the cart if PayPal Subscription API is active #2320
+* Enhancement - Prevent script caching & minification from Litespeed Cache and W3 Total Cache plugins #2316
+* Enhancement - Remove Giropay references due to deprecation #2379
+
+= 2.8.0 - 2024-06-11 =
+* Fix - Calculate totals after adding shipping to include taxes #2296
+* Fix - Package tracking integration throws error in 2.7.1 #2289
+* Fix - Make PayPal Subscription products unique in cart #2265
+* Fix - PayPal declares subscription support when merchant not enabled for Reference Transactions #2282
+* Fix - Google Pay and Apple Pay Settings button from Connection tab have wrong links #2273
+* Fix - Smart Buttons in Block Checkout not respecting the location setting (2830) #2278
+* Fix - Disable Pay Upon Invoice if billing/shipping country not set #2281
+* Fix - Critical error on pay for order page when we try to pay with ACDC gateway #2321
+* Enhancement - Enable shipping callback for WC subscriptions #2259
+* Enhancement - Disable the shipping callback for "venmo" when vaulting is active #2269
+* Enhancement - Improve "Could not retrieve order" error message #2271
+* Enhancement - Add block Checkout compatibility to Advanced Card Processing #2246
+
+= 2.7.1 - 2024-05-28 =
+* Fix - Ensure package tracking data is sent to original PayPal transaction #2180
+* Fix - Set the 'Woo_PPCP' as a default value for data-partner-attribution-id #2188
+* Fix - Allow PUI Gateway for refund processor #2192
+* Fix - Notice on newly created block cart checkout #2211
+* Fix - Apple Pay button in the editor #2177
+* Fix - Allow shipping callback and skipping confirmation page from any express button #2236
+* Fix - Pay Later messaging configurator sometimes displays old settings after saving #2249
+* Fix - Update the apple-developer-merchantid-domain-association validation strings for Apple Pay #2251
+* Fix - Enable the Shipping Callback handlers #2266
+* Enhancement - Use admin theme color #1602
+
+= 2.7.0 - 2024-04-30 =
+* Fix - Zero sum subscriptions cause CANNOT_BE_ZERO_OR_NEGATIVE when using Vault v3 #2152
+* Fix - Incorrect Pricing Issue with Variable Subscriptions in PayPal Subscriptions Mode #2156
+* Fix - Wrong return_url in multisite setup when using subdomains #2157
+* Fix - Fix the fundingSource is not defined error on Block Checkout #2185
+* Enhancement - Add the data-page-type attribute for JS SDK #2161
+* Enhancement - Save Card Last Digits in order meta for Advanced Card Payments #2149
+* Enhancement - Refactor the Pay Later Messaging block and add dedicated Cart/Checkout blocks #2153
+* Enhancement - "Next Payment" status not updated when using PayPal Subscriptions #2091
+* Enhancement - Optimize default settings for new store configurations #2158
+* Enhancement - Improve tooltip information for tagline #2154
+* Enhancement - Improve error message on certain exceptions #1354
+* Enhancement - Cart Pay Later block: Change the default insert position #2179
+* Enhancement - Messages Bootstrap: Add a render retry functionality #2181
+
+= 2.6.1 - 2024-04-09 =
+* Fix - Payment tokens fixes and adjustments #2106
+* Fix - Pay upon Invoice: Add input validation to Experience Context fields #2092
+* Fix - Disable markup in get_plugin_data() returns to fix an issue with wptexturize() #2094
+* Fix - Problem changing the shipping option in block pages #2142
+* Fix - Saved payment token deleted after payment with another saved payment token #2146
+* Enhancement - Pay later messaging configurator improvements #2107
+* Enhancement - Replace the middleware URL from connect.woocommerce.com to api.woocommerce.com/integrations #2130
+* Enhancement - Remove all Sofort references as it has been deprecated #2124
+* Enhancement - Improve funding source names #2118
+* Enhancement - More fraud prevention capabilities by storing additional data in the order #2125
+* Enhancement - Update ACDC currency eligibility for AMEX #2129
+* Enhancement - Sync shipping options with Venmo when skipping final confirmation on Checkout #2108
+* Enhancement - Card Fields: Add a filter for the CVC field and update the placeholder to match the label #2089
+* Enhancement - Product Title: Sanitize before sending to PayPal #2090
+* Enhancement - Add filter for disabling permit_multiple_payment_tokens vault attribute #2136
+* Enhancement - Filter to hide PayPal email address not working on order detail #2137
+
+= 2.6.0 - 2024-03-20 =
+* Fix - invoice_id not included in API call when creating payment with saved card #2086
+* Fix - Typo in SCA indicators for ACDC Vault transactions #2083
+* Fix - Payments with saved card tokens use Capture intent when Authorize is configured #2069
+* Fix - WooPayments multi-currency causing currency mismatch error on Block Cart & Checkout pages #2054
+* Fix - "Must pass createSubscription with intent=subscription" error with PayPal Subscriptions mode #2058
+* Fix - "Proceed to PayPal" button displayed for Free trial PayPal Subscription products when payment token is saved #2041
+* Fix - ACDC payments with new credit card may fail when debugging is enabled (JSON malformed by warning) #2051
+* Enhancement - Add Pay Later Messaging block #1897
+* Enhancement - Submit the form instead of refreshing the page to show the save notice #2081
+* Enhancement - Integrate pay later messaging block with the messaging configurator #2080
+* Enhancement - Reauthorize authorized payments #2062
+* Enhancement - Do not handle VAULT.PAYMENT-TOKEN.CREATED webhook for Vault v3 #2079
+* Enhancement - Improve the messaging configurator styles #2053
+* Enhancement - Ensure PayPal Vaulting is not selected as Subscriptions Mode when Reference Transactions are disabled #2057
+* Enhancement - Pay later messaging configurator & messaging block adjustments #2096
+
+= 2.5.4 - 2024-02-27 =
+* Fix - Cannot enable Apple Pay when API credentials were manually created #2015
+* Fix - Cart simulation type error #1943
+* Enhancement - Apple Pay recurring payments #1986
+* Enhancement - Real Time Account Updater (RTAU) integration #2027
+* Enhancement - Prepare the SKU for sending to PayPal #2033
+* Enhancement - Store the Card Brand in Address Verification Result instead of 3DS authentication result #2026
+* Enhancement - Update country eligibility for AdvancedCard Processing, Apple Pay, Google Pay #2019
+* Enhancement - Disable PayPal Vaulting setting instead of hiding it when Reference Transactions not available #2029
+* Enhancement - Store three d secure enrollment status and authentication status responses in wc order #1980
+* Enhancement - Add more checks to prevent "PayPal order ID not found" errors #2038
+* Enhancement - Disable messaging configurator when vault is enabled #2042
+* Feature preview - Pay Later Messaging configurator #1924
+
+= 2.5.3 - 2024-02-06 =
+* Fix - Free trial subscription products using PayPal Vaulting when PayPal Subscriptions configured as Subscriptions Mode #1979
+* Fix - Pay by link - Germany - PayPal buttons are not visible on Pay for order page #2014
+* Enhancement - Extend Apple Pay, Google Pay, Vault v3 (& RTAU) country availability #1992
+* Enhancement - Enable card fields for ACDC and Vault v3 supported countries/currencies #2007
+* Enhancement - Update ACDC supported currencies list #1991
+* Enhancement - Check if the $wpdb->wc_orders exists before query #1996
+* Enhancement - Remove MercadoPago from disable funding sources #2003
+* Enhancement - Improve onboarding notice text #2002
+
+= 2.5.2 - 2024-02-01 =
+* Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE error for merchants without reference transactions #1984
+* Fix - Fatal error in WooCommerce PayPal Payments plugin after 2.5.0 update #1985
+* Fix - Can not refund order purchased with Vault v3 Card payment #1997
+* Fix - PayPal Vaulting Subscriptions mode setting visible when merchant not enabled for Reference Transactions #1999
+* Fix - card-fields parameter included in button script despite Advanced Card Processing disabled #2005
+* Enhancement - Add setup URL for reference transactions #1964
+* Enhancement - Improve PUI performance for variable products #1950
+
+= 2.5.1 - 2024-01-24 =
+* Temporary revert Vaulting integration changes introduced in 2.5.0
+
+= 2.5.0 - 2024-01-22 =
+* Fix - WC Subscriptions change subscription payment #1953
+* Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
+* Enhancement - Enable Vault v3 and Card Fields by default for US merchants #1967
+* Enhancement - Vault v3 WC Subscriptions integration #1920
+* Enhancement - Implement early WC validation for Hosted Card Fields #1925
+* Enhancement - Rename button locations #1946
+* Enhancement - Improve Apple Pay validation notice text #1938
+* Enhancement - Improve feature availability check UX #1941
+* Enhancement - Make all hosted card fields strings translatable #1926
+* Enhancement - PHP 8.2 deprecations #1939
+* Enhancement - Subscription support on Block Cart & Block Express Checkout #1956
+* Enhancement - Venmo Vaulting integration #1958
+* Enhancement - Add package tracking support for UK #1970
+
+= 2.4.3 - 2024-01-04 =
+* Fix - PayPal Subscription initiated without a WooCommerce order #1907
+* Fix - Block Checkout reloads when submitting order with empty fields #1904
+* Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
+* Fix - "Order does not contain intent" error for ACDC renewals when triggering 3D Secure #1888
+* Fix - PayPal Subscriptions button greyed out (inactive) on Checkout page for variable subscription products #1914
+* Enhancement - Add button to reload feature eligibility status from Connection tab #1902
+* Enhancement - Apple Pay validation message improvements #1901
+* Enhancement - Improve support for Classic Cart & Classic Checkout blocks #1894
+* Enhancement - Ensure uniform button appearance for PayPal, Google Pay, and Apple Pay buttons #1900
+* Enhancement - remove string translations for package tracking carriers from repository #1885
+* Enhancement - Incorrect margins when PayPal buttons are rendered as separate gateways. #1908
+* Enhancement - Improved button spacing when Apple Pay is enabled but current buyer is not eligible #1922
+* Feature preview - Save payment methods (Vault v3) integration  #1779
+
+= 2.4.2 - 2023-12-04 =
+* Fix - Action callback arguments count in ShipStation tracking integration #1841
+* Fix - Google Pay scripts loading on unrelated admin pages #1834
+* Fix - Do not ignore disabled APMs list in blocks #1865
+* Fix - Display Package Tracking metabox below Order actions when HPOS is active #1850
+* Fix - ApplePay use checkout form data to update shipping and billing #1832
+* Fix - Fix Apple Pay CSS #1872
+* Enhancement - Allow redirect to PayPal with "Place order" button if smart buttons failed to load #1840 #1870
+* Enhancement - Extend list of supported countries for Package Tracking v2 integration #1848
+* Enhancement - Improve Block Theme support for Pay Later messaging #1855
+* Enhancement - Render block buttons separately and add block style settings #1858
+* Enhancement - Enable Block Cart and Block Express Checkout button locations by default #1852
+* Enhancement - Improve single product page button placement with Block themes #1847
+* Enhancement - Remove the Home location from default enabled Pay Later messaging locations #1856
+* Enhancement - Chrome browser detected as eligible for Apple Pay on settings page #1828
+* Enhancement - Hide Apple Pay & Google Pay for subscription type products #1835
+* Enhancement - Add Standard Card Button gateway styling settings & preview #1827
+* Feature preview - Upgrade to new Hosted Card Fields for Advanced Card Processing #1843
+
+= 2.4.1 - 2023-11-14 =
+* Fix - Error "PayPal order ID not found in meta" prevents automations from triggering when buying subscription via third-party payment gateway #1822
+* Fix - Card button subscription support declaration #1796
+* Fix - Pay Later messaging disappears when updating shipping option on cart page #1807
+* Fix - Apple Pay payment from single product may fail after changing shipping options in Apple Pay payment sheet #1810
+* Enhancement - Extend list of supported countries for Advanced Card Processing #1808
+* Enhancement - Extend Apple Pay/Google Pay country eligibility to Italy #1811
+* Enhancement - Override language used to display PayPal buttons #600
+* Enhancement - Apple Pay button preview #1824
+* Enhancement - Add Apple Pay & Google Pay logos on the onboarding page #1823
+* Enhancement - Improve Apple Pay compatibility with variable products on single product page #1803
+* Enhancement - Apple Pay domain registration & browser eligibility check #1821
+* Enhancement - Package Tracking compatibility with WooCommerce Shipping & ShipStation for WooCommerce #1813
+* Enhancement - Fill form when continuation in block #1794
+* Enhancement - Display Shop location Pay Later messaging on product category pages #1809
+* Enhancement - Present apple-developer-merchantid-domain-association file only when Apple Pay is enabled #1818
+* Enhancement - Improve Apple Pay compatibility on Pay for Order page #1815
+* Enhancement - Display Pay Later messages before the payment methods on the Pay for Order page #1814
+* Enhancement - Handle undefined array key warnings on PHP 8.1 #1804
+
+= 2.4.0 - 2023-10-31 =
+* Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
+* Fix - ACDC disappearing after plugin updates #1751
+* Fix - Subscription module hooks #1748
+* Fix - Ensure PayPal Subscriptions API products description is 1-127 characters #1738
+* Fix - Add validation on the Plan Name field to not accept a blank value #1754
+* Enhancement - Improve Pay Later messages and add Shop, Home locations #1770
+* Enhancement - Use api-m PayPal API URLs #1740
+* Enhancement - Google Pay Settings improvements #1719
+* Enhancement - Apple Pay transaction improvements #1767
+* Enhancement - Change default ACDC title #1750
+* Enhancement - Cart simulation improvements #1753
+* Enhancement - Billing schedule fields not greyed out when PayPal Subscriptions product is connected #1755
+* Enhancement - Check validation errors when submitting in block #1528
+* Enhancement - Improve handling of server error when submitting block #1785
+* Enhancement - Extend Apple Pay country eligibility #1781
+* Enhancement - Apple Pay validation notice improvements #1783
+* Enhancement - Apple Pay payment process issues #1789
+* Enhancement - Disable the tracking if payment is not captured #1780
+* Enhancement - Place order button remains - Could not retrieve order #1786
+* Enhancement - Google Pay for variable product greyed out but clickable #1788
+* Enhancement - Merchant credential validation & remove PAYEE object #1795
+
+= 2.3.1 - 2023-09-26 =
+* Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
+* Fix - Validate tracking data only for add/update Package Tracking #1729
+* Fix - Disable Package Tracking for order if transaction ID doesn't exist #1727
+
+= 2.3.0 - 2023-09-26 =
+* Fix - Plus sign in PayPal account email address gets converted to space #771
+* Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
+* Fix - WooCommerce Bookings products don't remain in Cart as a guest when PayPal button active on single product #1645
+* Fix - Since version > 2.2.0 the PayPal Checkout button on single product pages does not redirect anymore #1664
+* Fix - PayPal fee and PayPal Payout do not change on order if we do partial refund #1578
+* Fix - Order does not contain intent error when using ACDC payment token while buyer is not present #1506
+* Fix - Error when product description linked with a PayPal subscription exceeds 127 characters #1700
+* Fix - $_POST uses the wrong key to hold the shipping method #1652
+* Fix - WC Payment Token created multiple times when webhook is received #1663
+* Fix - Subtotal mismatch line name shows on Account settings page when merchant is disconnected #1702
+* Fix - Warning prevents payments on Pay for Order page when debugging is enabled #1703
+* Fix - paypal-overlay-uid_ blocks page after closing PayPal popup on Pay for Order page | Terms checkbox validation fails on Pay for Order page #1704
+* Enhancement - Add support for HPOS for tracking module #1676
+* Enhancement - Billing agreements endpoint called too frequently for Reference Transactions check #1646
+* Enhancement - Do not declare subscription support for PayPal when only ACDC vaulting #1669
+* Enhancement - Apply Capture On Status Change only when order contains PayPal payment method #1595
+* Enhancement - Do not use transient expiration longer than one month to support memcached #1448
+* Enhancement - By disconnecting or disabling the plugin the connection should clear the Onboarding links from cache #1668
+* Enhancement - Upgrade tracking integration #1562
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Add compat layer for Yith tracking #1656
+* Enhancement - Improve invalid currency backend notice (1926) #1588
+* Enhancement - Hide ACDC footer frame via CSS to avoid empty space #1613
+* Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
+* Enhancement - Remove "no shipment" message after adding tracking #1674
+* Enhancement - Improve error & success validation messages #1675
+* Enhancement - Compatibility with third-party "Product Add-Ons" plugins #1601
+* Enhancement - PayPal logo flashes when switching between tabs #1345
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Include item_url & image_url to tracking call #1712
+* Enhancement - Update strings for tracking metabox #1714
+* Enhancement - Validate email address API credentials field #1691
+* Enhancement - Set payment method title for order edit page only if our gateway #1661
+* Enhancement - Fix missing Pay Later messages in cart + refactoring #1683
+* Enhancement - Product page PP button keep loading popup - "wc_add_to_cart_params is not defined" error in WooCommerce #1655
+* Enhancement - Remove PayPal Subscriptions API feature flag #1690
+* Enhancement - Don't send image_url when it is empty #1678
+* Enhancement - Subscription support depending on Vaulting setting instead of subscription mode setting #1697
+* Enhancement - Wrong PayPal subscription id on vaulted subscriptions #1699
+* Enhancement - Remove payment vaulted checker functionality (2030) #1711
+* Feature preview - Apple Pay integration #1514
+* Feature preview - Google Pay integration #1654
+
+= 2.2.2 - 2023-08-29 =
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529
+* Enhancement - HPOS compatibility issues #1594
+* Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
+
 = 2.2.1 - 2023-08-24 =
 * Fix - One-page checkout causes mini cart not showing the PP button on certain pages #1536
 * Fix - When onboarding loading the return_url too fast may cause the onboarding to fail #1565

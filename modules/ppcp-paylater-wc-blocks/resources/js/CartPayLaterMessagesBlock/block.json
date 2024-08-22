@@ -1,0 +1,33 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "woocommerce-paypal-payments/cart-paylater-messages",
+	"title": "Cart - PayPal Pay Later messaging",
+	"category": "woocommerce-paypal-payments",
+	"description": "PayPal Pay Later messaging will be displayed for eligible customers. Customers automatically see the most relevant Pay Later offering.",
+	"example": {},
+	"parent": [ "woocommerce/cart-totals-block" ],
+	"attributes": {
+        "blockId": {
+            "type": "string",
+            "default": "woocommerce-paypal-payments/cart-paylater-messages"
+        },
+		"ppcpId": {
+			"type": "string"
+		},
+		"lock": {
+			"type": "object",
+			"default": {
+				"remove": true,
+				"move": false
+			}
+		}
+	},
+	"supports": {
+		"html": false,
+		"inserter": false,
+		"multiple": false
+	},
+	"textdomain": "woocommerce-paypal-payments",
+	"editorScript": "ppcp-cart-paylater-block"
+}

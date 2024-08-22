@@ -1,65 +1,77 @@
 class CartHelper {
+	constructor( cartItemKeys = [] ) {
+		this.cartItemKeys = cartItemKeys;
+	}
 
-    constructor(cartItemKeys = [])
-    {
-        this.endpoint = wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'remove_from_cart');
-        this.cartItemKeys = cartItemKeys;
-    }
+	getEndpoint() {
+		let ajaxUrl = '/?wc-ajax=%%endpoint%%';
 
-    addFromPurchaseUnits(purchaseUnits) {
-        for (const purchaseUnit of purchaseUnits || []) {
-            for (const item of purchaseUnit.items || []) {
-                if (!item.cart_item_key) {
-                    continue;
-                }
-                this.cartItemKeys.push(item.cart_item_key);
-            }
-        }
+		if (
+			typeof wc_cart_fragments_params !== 'undefined' &&
+			wc_cart_fragments_params.wc_ajax_url
+		) {
+			ajaxUrl = wc_cart_fragments_params.wc_ajax_url;
+		}
 
-        return this;
-    }
+		return ajaxUrl.toString().replace( '%%endpoint%%', 'remove_from_cart' );
+	}
 
-    removeFromCart()
-    {
-        return new Promise((resolve, reject) => {
-            if (!this.cartItemKeys || !this.cartItemKeys.length) {
-                resolve();
-                return;
-            }
+	addFromPurchaseUnits( purchaseUnits ) {
+		for ( const purchaseUnit of purchaseUnits || [] ) {
+			for ( const item of purchaseUnit.items || [] ) {
+				if ( ! item.cart_item_key ) {
+					continue;
+				}
+				this.cartItemKeys.push( item.cart_item_key );
+			}
+		}
 
-            const numRequests = this.cartItemKeys.length;
-            let numResponses = 0;
+		return this;
+	}
 
-            const tryToResolve = () => {
-                numResponses++;
-                if (numResponses >= numRequests) {
-                    resolve();
-                }
-            }
+	removeFromCart() {
+		return new Promise( ( resolve, reject ) => {
+			if ( ! this.cartItemKeys || ! this.cartItemKeys.length ) {
+				resolve();
+				return;
+			}
 
-            for (const cartItemKey of this.cartItemKeys) {
-                const params = new URLSearchParams();
-                params.append('cart_item_key', cartItemKey);
+			const numRequests = this.cartItemKeys.length;
+			let numResponses = 0;
 
-                if (!cartItemKey) {
-                    tryToResolve();
-                    continue;
-                }
+			const tryToResolve = () => {
+				numResponses++;
+				if ( numResponses >= numRequests ) {
+					resolve();
+				}
+			};
 
-                fetch(this.endpoint, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    body: params
-                }).then(function (res) {
-                    return res.json();
-                }).then(() => {
-                    tryToResolve();
-                }).catch(() => {
-                    tryToResolve();
-                });
-            }
-        });
-    }
+			for ( const cartItemKey of this.cartItemKeys ) {
+				const params = new URLSearchParams();
+				params.append( 'cart_item_key', cartItemKey );
+
+				if ( ! cartItemKey ) {
+					tryToResolve();
+					continue;
+				}
+
+				fetch( this.getEndpoint(), {
+					method: 'POST',
+					credentials: 'same-origin',
+					body: params,
+				} )
+					.then( function ( res ) {
+						return res.json();
+					} )
+					.then( () => {
+						tryToResolve();
+					} )
+					.catch( () => {
+						tryToResolve();
+					} );
+			}
+		} );
+	}
 }
 
 export default CartHelper;

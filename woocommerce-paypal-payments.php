@@ -3,13 +3,14 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     2.2.1
+ * Version:     2.8.3
  * Author:      WooCommerce
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
  * Requires PHP: 7.2
+ * Requires Plugins: woocommerce
  * WC requires at least: 3.9
- * WC tested up to: 8.0
+ * WC tested up to: 9.1
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -21,16 +22,19 @@ namespace WooCommerce\PayPalCommerce;
 
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
-define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
-define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2023-08-11' );
+define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
+define( 'PAYPAL_URL', 'https://www.paypal.com' );
+define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
+define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
+define( 'PAYPAL_INTEGRATION_DATE', '2024-08-07' );
+define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
 ! defined( 'CONNECT_WOO_SANDBOX_CLIENT_ID' ) && define( 'CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_' );
 ! defined( 'CONNECT_WOO_MERCHANT_ID' ) && define( 'CONNECT_WOO_MERCHANT_ID', 'K8SKZ36LQBWXJ' );
 ! defined( 'CONNECT_WOO_SANDBOX_MERCHANT_ID' ) && define( 'CONNECT_WOO_SANDBOX_MERCHANT_ID', 'MPMFHQTVMBZ6G' );
-! defined( 'CONNECT_WOO_URL' ) && define( 'CONNECT_WOO_URL', 'https://connect.woocommerce.com/ppc' );
-! defined( 'CONNECT_WOO_SANDBOX_URL' ) && define( 'CONNECT_WOO_SANDBOX_URL', 'https://connect.woocommerce.com/ppcsandbox' );
+! defined( 'CONNECT_WOO_URL' ) && define( 'CONNECT_WOO_URL', 'https://api.woocommerce.com/integrations/ppc' );
+! defined( 'CONNECT_WOO_SANDBOX_URL' ) && define( 'CONNECT_WOO_SANDBOX_URL', 'https://api.woocommerce.com/integrations/ppcsandbox' );
 
 ( function () {
 	$autoload_filepath = __DIR__ . '/vendor/autoload.php';
@@ -42,8 +46,6 @@ define( 'PAYPAL_INTEGRATION_DATE', '2023-08-11' );
 	 * Initialize the plugin and its modules.
 	 */
 	function init(): void {
-		define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_api', getenv( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) === '1' ) );
-
 		$root_dir = __DIR__;
 
 		if ( ! is_woocommerce_activated() ) {
@@ -97,7 +99,7 @@ define( 'PAYPAL_INTEGRATION_DATE', '2023-08-11' );
 				 */
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
-			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
+			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php', false );
 			$plugin_version           = $plugin_data['Version'] ?? null;
 			$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 			if ( $installed_plugin_version !== $plugin_version ) {
@@ -219,6 +221,22 @@ define( 'PAYPAL_INTEGRATION_DATE', '2023-08-11' );
 				\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
 			}
 		}
+	);
+
+	add_action(
+		'in_plugin_update_message-woocommerce-paypal-payments/woocommerce-paypal-payments.php',
+		static function( array $plugin_data, \stdClass $new_data ) {
+			if ( version_compare( $plugin_data['Version'], '3.0.0', '<' ) &&
+				version_compare( $new_data->new_version, '3.0.0', '>=' ) ) {
+				printf(
+					'<br /><strong>%s</strong>: %s',
+					esc_html__( 'Warning', 'woocommerce-paypal-payments' ),
+					esc_html__( 'WooCommerce PayPal Payments version 3.0.0 contains significant changes that may impact your website. We strongly recommend reviewing the changes and testing the update on a staging site before updating it on your production environment.', 'woocommerce-paypal-payments' )
+				);
+			}
+		},
+		10,
+		2
 	);
 
 	/**

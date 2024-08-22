@@ -1,0 +1,53 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "woocommerce-paypal-payments/paylater-messages",
+	"title": "PayPal Pay Later messaging",
+	"category": "woocommerce",
+	"description": "PayPal Pay Later messaging will be displayed for eligible customers. Customers automatically see the most relevant Pay Later offering.",
+	"example": {},
+	"attributes": {
+		"id": {
+			"type": "string"
+		},
+		"layout": {
+			"type": "string",
+			"default": "flex"
+		},
+		"logo": {
+			"type": "string",
+			"default": "inline"
+		},
+		"position": {
+			"type": "string",
+			"default": "left"
+		},
+		"color": {
+			"type": "string",
+			"default": "black"
+		},
+		"size": {
+			"type": "string",
+			"default": "14"
+		},
+		"flexColor": {
+			"type": "string",
+			"default": "white"
+		},
+		"flexRatio": {
+			"type": "string",
+			"default": "8x1"
+		},
+		"placement": {
+			"type": "string",
+			"default": "auto"
+		}
+	},
+	"supports": {
+		"html": false,
+		"multiple": false
+	},
+	"textdomain": "woocommerce-paypal-payments",
+	"editorScript": "ppcp-paylater-block",
+	"editorStyle": "file:./assets/css/edit.css"
+}

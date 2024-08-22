@@ -1,0 +1,54 @@
+.ppcp-button-applepay {
+	// Should replicate apm-button.scss sizes.
+	--apple-pay-button-height: 45px;
+	--apple-pay-button-min-height: 35px;
+	--apple-pay-button-width: 100%;
+	--apple-pay-button-max-width: 750px;
+	--apple-pay-button-border-radius: var(--apm-button-border-radius);
+	--apple-pay-button-overflow: hidden;
+	--apple-pay-button-box-sizing: border-box;
+
+	.ppcp-width-min & {
+		--apple-pay-button-height: 35px;
+	}
+
+	.ppcp-width-300 & {
+		--apple-pay-button-height: 45px;
+	}
+
+	.ppcp-width-500 & {
+		--apple-pay-button-height: 55px;
+	}
+
+	&.ppcp-button-minicart {
+		--apple-pay-button-display: block;
+	}
+}
+
+.wp-block-woocommerce-checkout, .wp-block-woocommerce-cart {
+	.ppcp-button-applepay {
+		--apple-pay-button-margin: 0;
+
+		apple-pay-button {
+			min-width: 0;
+			width: 100%;
+			--apple-pay-button-width-default: 100%;
+		}
+	}
+}
+
+.wp-admin {
+	&.ppcp-non-ios-device {
+		.ppcp-button-applepay {
+			apple-pay-button {
+				display: block;
+			}
+		}
+	}
+
+	.ppcp-button-applepay {
+		apple-pay-button {
+			display: block;
+		}
+	}
+}

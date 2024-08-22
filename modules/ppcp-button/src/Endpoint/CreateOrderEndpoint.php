@@ -29,7 +29,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -261,7 +261,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				}
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 			} else {
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->handle_shipping_in_paypal );
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->should_handle_shipping_in_paypal( $funding_source ) );
 
 				// Do not allow completion by webhooks when started via non-checkout buttons,
 				// it is needed only for some APMs in checkout.
@@ -294,7 +294,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			if ( $this->early_validation_enabled
 				&& $this->form
 				&& 'checkout' === $data['context']
-				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID ), true )
+				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID, CreditCardGateway::ID ), true )
 			) {
 				$this->validate_form( $this->form );
 			}
@@ -304,7 +304,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			try {
-				$order = $this->create_paypal_order( $wc_order );
+				$order = $this->create_paypal_order( $wc_order, $payment_method, $data );
 			} catch ( Exception $exception ) {
 				$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
 				throw $exception;
@@ -329,7 +329,24 @@ class CreateOrderEndpoint implements EndpointInterface {
 			if ( 'pay-now' === $data['context'] && is_a( $wc_order, \WC_Order::class ) ) {
 				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 				$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+
+				$payment_source      = $order->payment_source();
+				$payment_source_name = $payment_source ? $payment_source->name() : null;
+				$payer               = $order->payer();
+				if (
+					$payer
+					&& $payment_source_name
+					&& in_array( $payment_source_name, PayPalGateway::PAYMENT_SOURCES_WITH_PAYER_EMAIL, true )
+				) {
+					$payer_email = $payer->email_address();
+					if ( $payer_email ) {
+						$wc_order->update_meta_data( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY, $payer_email );
+					}
+				}
+
 				$wc_order->save_meta_data();
+
+				do_action( 'woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order );
 			}
 
 			wp_send_json_success( $this->make_response( $order ) );
@@ -413,14 +430,17 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Creates the order in the PayPal, uses data from WC order if provided.
 	 *
 	 * @param \WC_Order|null $wc_order WC order to get data from.
+	 * @param string         $payment_method WC payment method.
+	 * @param array          $data Request data.
 	 *
 	 * @return Order Created PayPal order.
 	 *
 	 * @throws RuntimeException If create order request fails.
 	 * @throws PayPalApiException If create order request fails.
+	 *
 	 * phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 	 */
-	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
+	private function create_paypal_order( \WC_Order $wc_order = null, string $payment_method = '', array $data = array() ): Order {
 		assert( $this->purchase_unit instanceof PurchaseUnit );
 
 		$funding_source = $this->parsed_request_data['funding_source'] ?? '';
@@ -462,7 +482,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$payer,
 				null,
 				'',
-				$action
+				$action,
+				$payment_method,
+				$data
 			);
 		} catch ( PayPalApiException $exception ) {
 			// Looks like currently there is no proper way to validate the shipping address for PayPal,
@@ -587,5 +609,21 @@ class CreateOrderEndpoint implements EndpointInterface {
 			'id'        => $order->id(),
 			'custom_id' => $order->purchase_units()[0]->custom_id(),
 		);
+	}
+
+	/**
+	 * Checks if the shipping should be handled in PayPal popup.
+	 *
+	 * @param string $funding_source The funding source.
+	 * @return bool true if the shipping should be handled in PayPal popup, otherwise false.
+	 */
+	protected function should_handle_shipping_in_paypal( string $funding_source ): bool {
+		$is_vaulting_enabled = $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' );
+
+		if ( ! $this->handle_shipping_in_paypal ) {
+			return false;
+		}
+
+		return ! $is_vaulting_enabled || $funding_source !== 'venmo';
 	}
 }

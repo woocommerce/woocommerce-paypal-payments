@@ -11,7 +11,7 @@ class AuthorizationTest extends TestCase
     public function testIdAndStatus()
     {
         $authorizationStatus = \Mockery::mock(AuthorizationStatus::class);
-        $testee = new Authorization('foo', $authorizationStatus);
+        $testee = new Authorization('foo', $authorizationStatus, null);
 
         $this->assertEquals('foo', $testee->id());
         $this->assertEquals($authorizationStatus, $testee->status());
@@ -22,7 +22,7 @@ class AuthorizationTest extends TestCase
         $authorizationStatus = \Mockery::mock(AuthorizationStatus::class);
         $authorizationStatus->expects('name')->andReturn('CAPTURED');
 
-        $testee = new Authorization('foo', $authorizationStatus);
+        $testee = new Authorization('foo', $authorizationStatus, null);
 
         $expected = [
             'id' => 'foo',

@@ -11,6 +11,16 @@ const {
     CART_URL,
 } = process.env;
 
+const longText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ultricies integer quis auctor elit sed vulputate mi. Aliquam sem et tortor consequat id porta nibh venenatis cras. Massa enim nec dui nunc. Nulla porttitor massa id neque aliquam vestibulum morbi blandit cursus. Eu lobortis elementum nibh tellus molestie nunc. Euismod nisi porta lorem mollis aliquam ut porttitor. Ultrices tincidunt arcu non sodales neque sodales ut etiam. Urna cursus eget nunc scelerisque. Pulvinar sapien et ligula ullamcorper malesuada proin libero. Convallis a cras semper auctor neque vitae tempus quam pellentesque. Phasellus egestas tellus rutrum tellus pellentesque eu tincidunt tortor aliquam. Cras tincidunt lobortis feugiat vivamus. Nec ultrices dui sapien eget mi proin sed libero enim. Neque gravida in fermentum et sollicitudin ac orci phasellus egestas. Aliquam faucibus purus in massa. Viverra accumsan in nisl nisi scelerisque eu ultrices vitae. At augue eget arcu dictum varius duis. Commodo ullamcorper a lacus vestibulum sed arcu non odio.\n' +
+    '\n' +
+    'Id cursus metus aliquam eleifend mi in nulla. A diam sollicitudin tempor id eu nisl. Faucibus purus in massa tempor. Lacus luctus accumsan tortor posuere ac ut consequat. Mauris augue neque gravida in fermentum et sollicitudin ac. Venenatis tellus in metus vulputate. Consectetur libero id faucibus nisl tincidunt eget. Pellentesque eu tincidunt tortor aliquam nulla facilisi cras fermentum odio. Dolor sed viverra ipsum nunc aliquet bibendum. Turpis in eu mi bibendum neque. Ac tincidunt vitae semper quis lectus nulla at volutpat. Felis imperdiet proin fermentum leo vel orci porta. Sed sed risus pretium quam vulputate dignissim.\n' +
+    '\n' +
+    'Urna et pharetra pharetra massa massa ultricies mi quis. Egestas purus viverra accumsan in nisl nisi. Elit sed vulputate mi sit amet mauris commodo. Cras fermentum odio eu feugiat pretium nibh ipsum consequat. Justo laoreet sit amet cursus sit amet dictum. Nunc id cursus metus aliquam. Tortor at auctor urna nunc id. Quis lectus nulla at volutpat diam ut. Lorem ipsum dolor sit amet consectetur adipiscing elit pellentesque. Tincidunt lobortis feugiat vivamus at augue eget arcu dictum varius.\n' +
+    '\n' +
+    'Mattis nunc sed blandit libero. Vitae ultricies leo integer malesuada nunc vel risus. Dapibus ultrices in iaculis nunc. Interdum varius sit amet mattis. Tortor vitae purus faucibus ornare. Netus et malesuada fames ac turpis. Elit duis tristique sollicitudin nibh sit amet. Lacus suspendisse faucibus interdum posuere lorem. In pellentesque massa placerat duis. Fusce ut placerat orci nulla pellentesque dignissim. Dictum fusce ut placerat orci nulla pellentesque dignissim enim. Nibh sit amet commodo nulla facilisi. Maecenas sed enim ut sem. Non consectetur a erat nam at lectus urna duis convallis. Diam phasellus vestibulum lorem sed risus ultricies tristique nulla. Nunc congue nisi vitae suscipit. Tortor condimentum lacinia quis vel eros donec ac. Eleifend mi in nulla posuere.\n' +
+    '\n' +
+    'Vestibulum lectus mauris ultrices eros. Massa sed elementum tempus egestas sed sed risus. Ut placerat orci nulla pellentesque dignissim enim sit. Duis ut diam quam nulla porttitor. Morbi tincidunt ornare massa eget egestas purus. Commodo sed egestas egestas fringilla phasellus faucibus scelerisque eleifend donec. Arcu odio ut sem nulla pharetra diam sit. Risus sed vulputate odio ut enim. Faucibus et molestie ac feugiat. A scelerisque purus semper eget. Odio facilisis mauris sit amet massa vitae tortor. Condimentum vitae sapien pellentesque habitant morbi tristique senectus. Nec feugiat in fermentum posuere urna. Volutpat est velit egestas dui id ornare arcu odio ut. Ullamcorper malesuada proin libero nunc consequat interdum. Suspendisse in est ante in nibh mauris cursus mattis molestie. Vel eros donec ac odio tempor orci dapibus. Et tortor at risus viverra adipiscing at in tellus. Metus aliquam eleifend mi in.'
+
 async function purchaseSubscriptionFromCart(page) {
     await loginAsCustomer(page);
     await page.goto(SUBSCRIPTION_URL);
@@ -57,7 +67,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         const message = await page.locator('.notice-success');
         await expect(message).toContainText('Product published.');
 
-        const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+        const products = await request.get('https://api-m.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -73,7 +83,7 @@ test.describe.serial('Subscriptions Merchant', () => {
 
         product_id = product.id;
 
-        const plans = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans?product_id=${product_id}&page_size=10&page=1&total_required=true`, {
+        const plans = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans?product_id=${product_id}&page_size=10&page=1&total_required=true`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -98,6 +108,7 @@ test.describe.serial('Subscriptions Merchant', () => {
 
         await page.fill('#title', `Updated ${productTitle}`);
         await page.fill('#_subscription_price', '20');
+        await page.fill('#content', longText)
 
         await Promise.all([
             page.waitForNavigation(),
@@ -107,7 +118,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         const message = await page.locator('.notice-success');
         await expect(message).toContainText('Product updated.');
 
-        const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+        const products = await request.get('https://api-m.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -121,7 +132,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         });
         await expect(product.id).toBeTruthy;
 
-        const plan = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans/${plan_id}`, {
+        const plan = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans/${plan_id}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -156,7 +167,7 @@ test('Create new free trial subscription product', async ({page, request}) => {
     const message = await page.locator('.notice-success');
     await expect(message).toContainText('Product published.');
 
-    const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+    const products = await request.get('https://api-m.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
         headers: {
             'Authorization': AUTHORIZATION,
             'Content-Type': 'application/json'
@@ -170,7 +181,7 @@ test('Create new free trial subscription product', async ({page, request}) => {
     });
     await expect(product.id).toBeTruthy;
 
-    const plans = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans?product_id=${product.id}&page_size=10&page=1&total_required=true`, {
+    const plans = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans?product_id=${product.id}&page_size=10&page=1&total_required=true`, {
         headers: {
             'Authorization': AUTHORIZATION,
             'Content-Type': 'application/json'
@@ -184,7 +195,7 @@ test('Create new free trial subscription product', async ({page, request}) => {
     });
     await expect(plan.id).toBeTruthy;
 
-    const planDetail = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans/${plan.id}`, {
+    const planDetail = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans/${plan.id}`, {
         headers: {
             'Authorization': AUTHORIZATION,
             'Content-Type': 'application/json'
@@ -253,7 +264,7 @@ test.describe('Subscriber my account actions', () => {
         await page.locator('text=View').first().click();
 
         const subscriptionId = await page.locator('#ppcp-subscription-id').textContent();
-        let subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        let subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -267,7 +278,7 @@ test.describe('Subscriber my account actions', () => {
         const title = page.locator('.woocommerce-message');
         await expect(title).toHaveText('Your subscription has been cancelled.');
 
-        subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -285,7 +296,7 @@ test.describe('Subscriber my account actions', () => {
         await page.locator('text=View').first().click();
 
         const subscriptionId = await page.locator('#ppcp-subscription-id').textContent();
-        let subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        let subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -299,7 +310,7 @@ test.describe('Subscriber my account actions', () => {
         const title = page.locator('.woocommerce-message');
         await expect(title).toHaveText('Your subscription has been cancelled.');
 
-        subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'

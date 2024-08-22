@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 
 /**
@@ -33,18 +34,28 @@ class PaymentsFactory {
 	private $capture_factory;
 
 	/**
+	 * The Refund factory.
+	 *
+	 * @var RefundFactory
+	 */
+	private $refund_factory;
+
+	/**
 	 * PaymentsFactory constructor.
 	 *
 	 * @param AuthorizationFactory $authorization_factory The Authorization factory.
 	 * @param CaptureFactory       $capture_factory The Capture factory.
+	 * @param RefundFactory        $refund_factory The Refund factory.
 	 */
 	public function __construct(
 		AuthorizationFactory $authorization_factory,
-		CaptureFactory $capture_factory
+		CaptureFactory $capture_factory,
+		RefundFactory $refund_factory
 	) {
 
 		$this->authorization_factory = $authorization_factory;
 		$this->capture_factory       = $capture_factory;
+		$this->refund_factory        = $refund_factory;
 	}
 
 	/**
@@ -62,12 +73,18 @@ class PaymentsFactory {
 			isset( $data->authorizations ) ? $data->authorizations : array()
 		);
 		$captures       = array_map(
-			function ( \stdClass $authorization ): Capture {
-				return $this->capture_factory->from_paypal_response( $authorization );
+			function ( \stdClass $capture ): Capture {
+				return $this->capture_factory->from_paypal_response( $capture );
 			},
 			isset( $data->captures ) ? $data->captures : array()
 		);
-		$payments       = new Payments( $authorizations, $captures );
+		$refunds        = array_map(
+			function ( \stdClass $refund ): Refund {
+				return $this->refund_factory->from_paypal_response( $refund );
+			},
+			isset( $data->refunds ) ? $data->refunds : array()
+		);
+		$payments       = new Payments( $authorizations, $captures, $refunds );
 		return $payments;
 	}
 }

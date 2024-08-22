@@ -33,4 +33,16 @@ class MoneyFormatter {
 			? (string) round( $value, 0 )
 			: number_format( $value, 2, '.', '' );
 	}
+
+	/**
+	 * Returns the minimum amount a currency can be incremented or decremented.
+	 *
+	 * @param string $currency The 3-letter currency code.
+	 * @return float
+	 */
+	public function minimum_increment( string $currency ): float {
+		return (float) in_array( $currency, $this->currencies_without_decimals, true )
+			? 1.00
+			: 0.01;
+	}
 }

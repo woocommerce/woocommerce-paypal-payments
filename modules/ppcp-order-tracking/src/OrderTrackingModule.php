@@ -10,26 +10,28 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
-use WooCommerce\PayPalCommerce\Compat\AdminContextTrait;
+use Exception;
+use WC_Order;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WP_Post;
+use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class OrderTrackingModule
  */
 class OrderTrackingModule implements ModuleInterface {
 
-	use AdminContextTrait;
+	use TrackingAvailabilityTrait, TransactionIdHandlingTrait;
+
+	public const PPCP_TRACKING_INFO_META_NAME = '_ppcp_paypal_tracking_info_meta_name';
 
 	/**
 	 * {@inheritDoc}
@@ -48,61 +50,76 @@ class OrderTrackingModule implements ModuleInterface {
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		$pui_helper = $c->get( 'wcgateway.pay-upon-invoice-helper' );
-		assert( $pui_helper instanceof PayUponInvoiceHelper );
-
-		if ( $pui_helper->is_pui_gateway_enabled() ) {
-			$settings->set( 'tracking_enabled', true );
-			$settings->persist();
-		}
-
-		$tracking_enabled = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
-		if ( ! $tracking_enabled ) {
-			return;
-		}
-
 		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
 		assert( $endpoint instanceof OrderTrackingEndpoint );
+
+		add_action( 'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT, array( $endpoint, 'handle_request' ) );
+
+		$asset_loader = $c->get( 'order-tracking.assets' );
+		assert( $asset_loader instanceof OrderEditPageAssets );
 
 		$logger = $c->get( 'woocommerce.logger.woocommerce' );
 		assert( $logger instanceof LoggerInterface );
 
+		$bearer = $c->get( 'api.bearer' );
+
 		add_action(
-			'admin_enqueue_scripts',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function ( $hook ) use ( $c ): void {
-				if ( $hook !== 'post.php' || ! $this->is_paypal_order_edit_page() ) {
+			'init',
+			function() use ( $asset_loader, $bearer ) {
+				if ( ! $this->is_tracking_enabled( $bearer ) ) {
 					return;
 				}
 
-				$asset_loader = $c->get( 'order-tracking.assets' );
-				assert( $asset_loader instanceof OrderEditPageAssets );
-
 				$asset_loader->register();
+			}
+		);
+		add_action(
+			'init',
+			function() use ( $asset_loader, $bearer ) {
+				if ( ! $this->is_tracking_enabled( $bearer ) ) {
+					return;
+				}
+
 				$asset_loader->enqueue();
 			}
 		);
 
-		add_action(
-			'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT,
-			array( $endpoint, 'handle_request' )
-		);
+		$meta_box_renderer = $c->get( 'order-tracking.meta-box.renderer' );
+		assert( $meta_box_renderer instanceof MetaBoxRenderer );
 
 		add_action(
 			'add_meta_boxes',
 			/**
-			 * Param types removed to avoid third-party issues.
+			 * Adds the tracking metabox.
+			 *
+			 * @param string $post_type The post type.
+			 * @param WP_Post|WC_Order $post_or_order_object The post/order object.
+			 * @return void
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $post_type ) use ( $c ) {
+			function( string $post_type, $post_or_order_object ) use ( $meta_box_renderer, $bearer ) {
+				if ( ! $this->is_tracking_enabled( $bearer ) ) {
+					return;
+				}
+
+				$wc_order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+
+				try {
+					$paypal_order = ppcp_get_paypal_order( $wc_order );
+				} catch ( Exception $exception ) {
+					return;
+				}
+
+				$capture_id = $this->get_paypal_order_transaction_id( $paypal_order ) ?? '';
+
+				if ( ! $capture_id ) {
+					return;
+				}
+
 				/**
 				 * Class and function exist in WooCommerce.
 				 *
@@ -112,54 +129,20 @@ class OrderTrackingModule implements ModuleInterface {
 				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
 					? wc_get_page_screen_id( 'shop-order' )
 					: 'shop_order';
-				if ( $post_type !== $screen || ! $this->is_paypal_order_edit_page() ) {
-					return;
-				}
 
-				$meta_box_renderer = $c->get( 'order-tracking.meta-box.renderer' );
 				add_meta_box(
 					'ppcp_order-tracking',
-					__( 'Tracking Information', 'woocommerce-paypal-payments' ),
-					array( $meta_box_renderer, 'render' ),
+					__( 'PayPal Package Tracking', 'woocommerce-paypal-payments' ),
+					static function () use ( $meta_box_renderer, $wc_order, $capture_id ): void {
+						$meta_box_renderer->render( $wc_order, $capture_id );
+					},
 					$screen,
-					'side'
+					'side',
+					'high'
 				);
 			},
 			10,
-			1
-		);
-
-		add_action(
-			'woocommerce_order_status_completed',
-			static function( int $order_id ) use ( $endpoint, $logger ) {
-				$tracking_information = $endpoint->get_tracking_information( $order_id );
-
-				if ( $tracking_information ) {
-					return;
-				}
-
-				$wc_order = wc_get_order( $order_id );
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$transaction_id = $wc_order->get_transaction_id();
-				if ( empty( $transaction_id ) ) {
-					return;
-				}
-
-				$tracking_data = array(
-					'transaction_id' => $transaction_id,
-					'status'         => 'SHIPPED',
-				);
-
-				try {
-					$endpoint->add_tracking_information( $tracking_data, $order_id );
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't create tracking information: " . $exception->getMessage() );
-					throw $exception;
-				}
-			}
+			2
 		);
 	}
 }
