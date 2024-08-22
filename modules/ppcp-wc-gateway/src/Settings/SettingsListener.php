@@ -12,6 +12,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -165,6 +167,13 @@ class SettingsListener {
 	private $logger;
 
 	/**
+	 * The client credentials cache.
+	 *
+	 * @var Cache
+	 */
+	private $client_credentials_cache;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings                  $settings The settings.
@@ -183,6 +192,7 @@ class SettingsListener {
 	 * @param string                    $partner_merchant_id_sandbox Partner merchant ID sandbox.
 	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint Billing Agreements endpoint.
 	 * @param ?LoggerInterface          $logger The logger.
+	 * @param Cache                     $client_credentials_cache The client credentials cache.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -200,7 +210,8 @@ class SettingsListener {
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
 		BillingAgreementsEndpoint $billing_agreements_endpoint,
-		LoggerInterface $logger = null
+		LoggerInterface $logger = null,
+		Cache $client_credentials_cache
 	) {
 
 		$this->settings                       = $settings;
@@ -219,6 +230,7 @@ class SettingsListener {
 		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
 		$this->billing_agreements_endpoint    = $billing_agreements_endpoint;
 		$this->logger                         = $logger ?: new NullLogger();
+		$this->client_credentials_cache       = $client_credentials_cache;
 	}
 
 	/**
@@ -489,6 +501,9 @@ class SettingsListener {
 
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
+		}
+		if ( $this->client_credentials_cache->has( SdkClientToken::CACHE_KEY ) ) {
+			$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
 		}
 
 		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY ) ) {

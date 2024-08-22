@@ -23,7 +23,7 @@ class BaseHandler {
 	}
 
 	shippingAllowed() {
-		return this.buttonConfig.product.needsShipping;
+		return this.buttonConfig.product.needShipping;
 	}
 
 	transactionInfo() {

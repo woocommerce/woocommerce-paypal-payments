@@ -254,6 +254,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 				),
 			),
 			'scriptData'                  => $script_data,
+			'needShipping'                => WC()->cart->needs_shipping(),
 		);
 	}
 

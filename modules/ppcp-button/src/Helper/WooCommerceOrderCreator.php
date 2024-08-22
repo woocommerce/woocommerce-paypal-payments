@@ -303,13 +303,6 @@ class WooCommerceOrderCreator {
 
 		$item->set_tax_class( $product->get_tax_class() );
 		$item->set_total_tax( (float) array_sum( $taxes ) );
-
-		foreach ( $taxes as $tax_rate_id => $tax_amount ) {
-			if ( $tax_amount > 0 ) {
-				$item->add_meta_data( 'tax_rate_id', $tax_rate_id, true );
-				$item->add_meta_data( 'tax_amount', $tax_amount, true );
-			}
-		}
 	}
 
 	/**
