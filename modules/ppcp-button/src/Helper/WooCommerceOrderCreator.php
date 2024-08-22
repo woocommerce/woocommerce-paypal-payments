@@ -104,6 +104,8 @@ class WooCommerceOrderCreator {
 			throw new RuntimeException( 'Failed to create WooCommerce order: ' . $exception->getMessage() );
 		}
 
+		do_action( 'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created', $wc_order, $wc_cart );
+
 		return $wc_order;
 	}
 
