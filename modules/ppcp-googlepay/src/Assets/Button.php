@@ -290,6 +290,7 @@ class Button implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->googlepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -303,6 +304,7 @@ class Button implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->googlepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -332,6 +334,23 @@ class Button implements ButtonInterface {
 		<div id="ppc-button-googlepay-container" class="ppcp-button-apm ppcp-button-googlepay">
 			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Outputs an inline CSS style that hides the Google Pay gateway (on Classic Checkout).
+	 * The style is removed by `PaymentButton.js` once the eligibility of the payment method
+	 * is confirmed.
+	 *
+	 * @return void
+	 */
+	protected function hide_gateway_until_eligible() : void {
+		?>
+		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
+			.wc_payment_method.payment_method_ppcp-googlepay {
+				display: none;
+			}
+		</style>
 		<?php
 	}
 

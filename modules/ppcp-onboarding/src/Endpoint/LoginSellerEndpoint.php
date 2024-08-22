@@ -12,6 +12,8 @@ namespace WooCommerce\PayPalCommerce\Onboarding\Endpoint;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -77,6 +79,13 @@ class LoginSellerEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
+	 * The client credentials cache.
+	 *
+	 * @var Cache
+	 */
+	private $client_credentials_cache;
+
+	/**
 	 * LoginSellerEndpoint constructor.
 	 *
 	 * @param RequestData          $request_data The Request Data.
@@ -86,6 +95,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 	 * @param Settings             $settings The Settings.
 	 * @param Cache                $cache The Cache.
 	 * @param LoggerInterface      $logger The logger.
+	 * @param Cache                $client_credentials_cache The client credentials cache.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -94,16 +104,18 @@ class LoginSellerEndpoint implements EndpointInterface {
 		PartnerReferralsData $partner_referrals_data,
 		Settings $settings,
 		Cache $cache,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		Cache $client_credentials_cache
 	) {
 
-		$this->request_data            = $request_data;
-		$this->login_seller_production = $login_seller_production;
-		$this->login_seller_sandbox    = $login_seller_sandbox;
-		$this->partner_referrals_data  = $partner_referrals_data;
-		$this->settings                = $settings;
-		$this->cache                   = $cache;
-		$this->logger                  = $logger;
+		$this->request_data             = $request_data;
+		$this->login_seller_production  = $login_seller_production;
+		$this->login_seller_sandbox     = $login_seller_sandbox;
+		$this->partner_referrals_data   = $partner_referrals_data;
+		$this->settings                 = $settings;
+		$this->cache                    = $cache;
+		$this->logger                   = $logger;
+		$this->client_credentials_cache = $client_credentials_cache;
 	}
 
 	/**
@@ -174,6 +186,9 @@ class LoginSellerEndpoint implements EndpointInterface {
 
 			if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 				$this->cache->delete( PayPalBearer::CACHE_KEY );
+			}
+			if ( $this->client_credentials_cache->has( SdkClientToken::CACHE_KEY ) ) {
+				$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
 			}
 
 			wp_schedule_single_event(
