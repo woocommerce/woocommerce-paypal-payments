@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use Exception;
 use RuntimeException;
 use WC_Cart;
+use WC_Data_Exception;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
@@ -85,17 +87,24 @@ class WooCommerceOrderCreator {
 			throw new RuntimeException( 'Problem creating WC order.' );
 		}
 
-		$payer    = $order->payer();
-		$shipping = $order->purchase_units()[0]->shipping();
+		try {
+			$payer    = $order->payer();
+			$shipping = $order->purchase_units()[0]->shipping();
 
-		$this->configure_payment_source( $wc_order );
-		$this->configure_customer( $wc_order );
-		$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
-		$this->configure_shipping( $wc_order, $payer, $shipping );
-		$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
+			$this->configure_payment_source( $wc_order );
+			$this->configure_customer( $wc_order );
+			$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
+			$this->configure_shipping( $wc_order, $payer, $shipping, $wc_cart );
+			$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
 
-		$wc_order->calculate_totals();
-		$wc_order->save();
+			$wc_order->calculate_totals();
+			$wc_order->save();
+		} catch ( Exception $exception ) {
+			$wc_order->delete( true );
+			throw new RuntimeException( 'Failed to create WooCommerce order: ' . $exception->getMessage() );
+		}
+
+		do_action( 'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created', $wc_order, $wc_cart );
 
 		return $wc_order;
 	}
@@ -153,7 +162,7 @@ class WooCommerceOrderCreator {
 				$item->set_total( $subscription_total );
 
 				$subscription->add_product( $product );
-				$this->configure_shipping( $subscription, $payer, $shipping );
+				$this->configure_shipping( $subscription, $payer, $shipping, $wc_cart );
 				$this->configure_payment_source( $subscription );
 				$this->configure_coupons( $subscription, $wc_cart->get_applied_coupons() );
 
@@ -178,9 +187,11 @@ class WooCommerceOrderCreator {
 	 * @param WC_Order      $wc_order The WC order.
 	 * @param Payer|null    $payer The payer.
 	 * @param Shipping|null $shipping The shipping.
+	 * @param WC_Cart       $wc_cart The Cart.
 	 * @return void
+	 * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
 	 */
-	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping ): void {
+	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, WC_Cart $wc_cart ): void {
 		$shipping_address = null;
 		$billing_address  = null;
 		$shipping_options = null;
@@ -216,6 +227,10 @@ class WooCommerceOrderCreator {
 			);
 
 			$shipping_options = $shipping->options()[0] ?? '';
+		}
+
+		if ( $wc_cart->needs_shipping() && empty( $shipping_options ) ) {
+			throw new RuntimeException( 'No shipping method has been selected.' );
 		}
 
 		if ( $shipping_address ) {
