@@ -60,6 +60,11 @@ return array(
 				'countries'  => array( 'AT', 'DE', 'DK', 'EE', 'ES', 'FI', 'GB', 'LT', 'LV', 'NL', 'NO', 'SE' ),
 				'currencies' => array( 'EUR', 'DKK', 'SEK', 'GBP', 'NOK' ),
 			),
+			'multibanco' => array(
+				'id'         => MultibancoGateway::ID,
+				'countries'  => array( 'PT' ),
+				'currencies' => array( 'EUR' ),
+			),
 		);
 	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
@@ -118,6 +123,14 @@ return array(
 			$container->get( 'wcgateway.transaction-url-provider' )
 		);
 	},
+	'ppcp-local-apms.multibanco.wc-gateway'     => static function ( ContainerInterface $container ): MultibancoGateway {
+		return new MultibancoGateway(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' )
+		);
+	},
 	'ppcp-local-apms.bancontact.payment-method' => static function( ContainerInterface $container ): BancontactPaymentMethod {
 		return new BancontactPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
@@ -165,6 +178,13 @@ return array(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.trustly.wc-gateway' )
+		);
+	},
+	'ppcp-local-apms.multibanco.payment-method'    => static function( ContainerInterface $container ): MultibancoPaymentMethod {
+		return new MultibancoPaymentMethod(
+			$container->get( 'ppcp-local-apms.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.multibanco.wc-gateway' )
 		);
 	},
 );
