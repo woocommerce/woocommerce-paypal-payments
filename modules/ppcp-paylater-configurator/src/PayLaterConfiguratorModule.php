@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 
 /**
  * Class PayLaterConfiguratorModule
@@ -47,18 +49,21 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
-		$messages_apply = $c->get( 'button.helper.messages-apply' );
-		assert( $messages_apply instanceof MessagesApply );
+	public function run( ContainerInterface $c ) : void {
+		$is_available = $c->get( 'paylater-configurator.is-available' );
+
+		if ( ! $is_available ) {
+			return;
+		}
+
+		$current_page_id     = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
+		$is_wc_settings_page = $c->get( 'wcgateway.is-wc-settings-page' );
+		$messaging_locations = $c->get( 'paylater-configurator.messaging-locations' );
+
+		$this->add_paylater_update_notice( $messaging_locations, $is_wc_settings_page, $current_page_id );
 
 		$settings = $c->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
-
-		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
-
-		if ( $vault_enabled || ! $messages_apply->for_country() ) {
-			return;
-		}
 
 		add_action(
 			'wc_ajax_' . SaveConfig::ENDPOINT,
@@ -77,8 +82,6 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
-
-		$current_page_id = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
 
 		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
 			return;
@@ -148,5 +151,43 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 	 * @return string|void
 	 */
 	public function getKey() {
+	}
+
+	/**
+	 * Conditionally registers a new admin notice to highlight the new Pay-Later UI.
+	 *
+	 * The notice appears on any PayPal-Settings page, except for the Pay-Later settings page,
+	 * when no Pay-Later messaging is used yet.
+	 *
+	 * @param array  $message_locations PayLater messaging locations.
+	 * @param bool   $is_settings_page  Whether the current page is a WC settings page.
+	 * @param string $current_page_id   ID of current settings page tab.
+	 *
+	 * @return void
+	 */
+	private function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
+		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
+			return;
+		}
+
+		// Don't display the notice when Pay-Later messaging is already used.
+		if ( count( $message_locations ) ) {
+			return;
+		}
+
+		add_filter(
+			Repository::NOTICES_FILTER,
+			/**
+			 * Notify the user about the new Pay-Later UI.
+			 *
+			 * @param array $notices The notices.
+			 * @return array
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $notices ): array {
+				return $notices;
+			}
+		);
 	}
 }

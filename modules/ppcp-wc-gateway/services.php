@@ -171,6 +171,10 @@ return array(
 		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
+	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		return is_admin() && 'wc-settings' === $page;
+	},
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
