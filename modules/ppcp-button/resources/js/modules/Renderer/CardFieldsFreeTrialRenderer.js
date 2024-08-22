@@ -1,21 +1,15 @@
 import { show } from '../Helper/Hiding';
 import { renderFields } from '../../../../../ppcp-card-fields/resources/js/Render';
+import {
+	addPaymentMethodConfiguration,
+	cardFieldsConfiguration,
+} from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
 
-class CardFieldsRenderer {
-	constructor(
-		defaultConfig,
-		errorHandler,
-		spinner,
-		onCardFieldsBeforeSubmit
-	) {
+class CardFieldsFreeTrialRenderer {
+	constructor( defaultConfig, errorHandler, spinner ) {
 		this.defaultConfig = defaultConfig;
 		this.errorHandler = errorHandler;
 		this.spinner = spinner;
-		this.cardValid = false;
-		this.formValid = false;
-		this.emptyFields = new Set( [ 'number', 'cvv', 'expirationDate' ] );
-		this.currentHostedFieldsInstance = null;
-		this.onCardFieldsBeforeSubmit = onCardFieldsBeforeSubmit;
 	}
 
 	render( wrapper, contextConfig ) {
@@ -45,20 +39,19 @@ class CardFieldsRenderer {
 			hideDccGateway.parentNode.removeChild( hideDccGateway );
 		}
 
-		const cardFields = paypal.CardFields( {
-			createOrder: contextConfig.createOrder,
-			onApprove( data ) {
-				return contextConfig.onApprove( data );
-			},
-			onError( error ) {
-				console.error( error );
-				this.spinner.unblock();
-			},
-		} );
+		this.errorHandler.clear();
+
+		let cardFields = paypal.CardFields(
+			addPaymentMethodConfiguration( this.defaultConfig )
+		);
+		if ( this.defaultConfig.user.is_logged ) {
+			cardFields = paypal.CardFields(
+				cardFieldsConfiguration( this.defaultConfig, this.errorHandler )
+			);
+		}
 
 		if ( cardFields.isEligible() ) {
 			renderFields( cardFields );
-			document.dispatchEvent( new CustomEvent( 'hosted_fields_loaded' ) );
 		}
 
 		gateWayBox.style.display = oldDisplayStyle;
@@ -77,33 +70,13 @@ class CardFieldsRenderer {
 
 		document
 			.querySelector( buttonSelector )
-			.addEventListener( 'click', ( event ) => {
+			?.addEventListener( 'click', ( event ) => {
 				event.preventDefault();
 				this.spinner.block();
 				this.errorHandler.clear();
 
-				const paymentToken = document.querySelector(
-					'input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked'
-				)?.value;
-				if ( paymentToken && paymentToken !== 'new' ) {
-					document.querySelector( '#place_order' ).click();
-					return;
-				}
-
-				if (
-					typeof this.onCardFieldsBeforeSubmit === 'function' &&
-					! this.onCardFieldsBeforeSubmit()
-				) {
-					this.spinner.unblock();
-					return;
-				}
-
 				cardFields.submit().catch( ( error ) => {
-					this.spinner.unblock();
 					console.error( error );
-					this.errorHandler.message(
-						this.defaultConfig.hosted_fields.labels.fields_not_valid
-					);
 				} );
 			} );
 	}
@@ -112,4 +85,4 @@ class CardFieldsRenderer {
 	enableFields() {}
 }
 
-export default CardFieldsRenderer;
+export default CardFieldsFreeTrialRenderer;
