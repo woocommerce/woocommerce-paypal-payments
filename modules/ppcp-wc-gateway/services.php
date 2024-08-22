@@ -173,12 +173,12 @@ return array(
 
 	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
-		return is_admin() && 'wc-settings' === $page;
+		return 'wc-settings' === $page;
 	},
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
-		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		$is_wc_settings_page = $container->get( 'wcgateway.is-wc-settings-page' );
 		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
-		return 'wc-settings' === $page && 'checkout' === $tab;
+		return $is_wc_settings_page && 'checkout' === $tab;
 	},
 	'wcgateway.is-wc-gateways-list-page'                   => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'wcgateway.is-wc-payments-page' ) && ! isset( $_GET['section'] );
