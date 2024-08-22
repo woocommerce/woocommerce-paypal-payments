@@ -139,7 +139,7 @@ class Renderer {
 			};
 
 			// Check the condition and add the handler if needed
-			if ( this.defaultSettings.should_handle_shipping_in_paypal ) {
+			if ( this.defaultSettings.should_handle_shipping_in_paypal && this.defaultSettings.needShipping ) {
 				options.onShippingOptionsChange = ( data, actions ) => {
                     let shippingOptionsChange =
 					! this.isVenmoButtonClickedWhenVaultingIsEnabled(

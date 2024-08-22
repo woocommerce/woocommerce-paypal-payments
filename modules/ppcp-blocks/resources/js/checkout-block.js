@@ -227,7 +227,7 @@ const PayPalComponent = ( {
 				throw new Error( config.scriptData.labels.error.generic );
 			}
 
-			if ( ! shouldHandleShippingInPayPal() ) {
+			if ( ! shouldskipFinalConfirmation() ) {
 				location.href = getCheckoutRedirectUrl();
 			} else {
 				setGotoContinuationOnError( true );
@@ -318,7 +318,7 @@ const PayPalComponent = ( {
 				throw new Error( config.scriptData.labels.error.generic );
 			}
 
-			if ( ! shouldHandleShippingInPayPal() ) {
+			if ( ! shouldskipFinalConfirmation() ) {
 				location.href = getCheckoutRedirectUrl();
 			} else {
 				setGotoContinuationOnError( true );
@@ -364,15 +364,19 @@ const PayPalComponent = ( {
 	};
 
 	const shouldHandleShippingInPayPal = () => {
-		if ( config.finalReviewEnabled ) {
-			return false;
-		}
-
-		return (
-			window.ppcpFundingSource !== 'venmo' ||
-			! config.scriptData.vaultingEnabled
-		);
+		return shouldskipFinalConfirmation() && config.needShipping
 	};
+
+    const shouldskipFinalConfirmation = () => {
+        if ( config.finalReviewEnabled ) {
+            return false;
+        }
+
+        return (
+            window.ppcpFundingSource !== 'venmo' ||
+            ! config.scriptData.vaultingEnabled
+        );
+    };
 
 	let handleShippingOptionsChange = null;
 	let handleShippingAddressChange = null;
@@ -544,7 +548,7 @@ const PayPalComponent = ( {
 			if ( config.scriptData.continuation ) {
 				return true;
 			}
-			if ( shouldHandleShippingInPayPal() ) {
+			if ( shouldskipFinalConfirmation() ) {
 				location.href = getCheckoutRedirectUrl();
 			}
 			return true;

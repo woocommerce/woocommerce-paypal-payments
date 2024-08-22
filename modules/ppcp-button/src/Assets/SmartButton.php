@@ -1297,6 +1297,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'needShipping'                            => WC()->cart->needs_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
