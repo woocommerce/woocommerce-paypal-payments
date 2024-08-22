@@ -7,6 +7,10 @@ import {
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import BootstrapHelper from '../Helper/BootstrapHelper';
+import {
+	ButtonEvents,
+	dispatchButtonEvent,
+} from '../Helper/PaymentButtonHelpers';
 
 class CheckoutBootstap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
@@ -68,6 +72,7 @@ class CheckoutBootstap {
 		jQuery( document.body ).on(
 			'updated_checkout payment_method_selected',
 			() => {
+				this.invalidatePaymentMethods();
 				this.updateUi();
 			}
 		);
@@ -174,6 +179,14 @@ class CheckoutBootstap {
 		);
 	}
 
+	invalidatePaymentMethods() {
+		/**
+		 * Custom JS event to notify other modules that the payment button on the checkout page
+		 * has become irrelevant or invalid.
+		 */
+		dispatchButtonEvent( { event: ButtonEvents.INVALIDATE } );
+	}
+
 	updateUi() {
 		const currentPaymentMethod = getCurrentPaymentMethod();
 		const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
@@ -232,9 +245,18 @@ class CheckoutBootstap {
 			}
 		}
 
-		setVisible( '#ppc-button-ppcp-googlepay', isGooglePayMethod );
+		/**
+		 * Custom JS event that is observed by the relevant payment gateway.
+		 *
+		 * Dynamic part of the event name is the payment method ID, for example
+		 * "ppcp-credit-card-gateway" or "ppcp-googlepay"
+		 */
+		dispatchButtonEvent( {
+			event: ButtonEvents.RENDER,
+			paymentMethod: currentPaymentMethod,
+		} );
 
-		jQuery( document.body ).trigger( 'ppcp_checkout_rendered' );
+		document.body.dispatchEvent( new Event( 'ppcp_checkout_rendered' ) );
 	}
 
 	shouldShowMessages() {

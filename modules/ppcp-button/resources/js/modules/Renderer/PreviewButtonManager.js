@@ -1,11 +1,17 @@
 import { loadCustomScript } from '@paypal/paypal-js';
 import widgetBuilder from './WidgetBuilder';
 import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
+import ConsoleLogger from '../../../../../ppcp-wc-gateway/resources/js/helper/ConsoleLogger';
 
 /**
  * Manages all PreviewButton instances of a certain payment method on the page.
  */
 class PreviewButtonManager {
+	/**
+	 * @type {ConsoleLogger}
+	 */
+	#logger;
+
 	/**
 	 * Resolves the promise.
 	 * Used by `this.boostrap()` to process enqueued initialization logic.
@@ -31,6 +37,9 @@ class PreviewButtonManager {
 		this.buttons = {};
 		this.apiConfig = null;
 		this.apiError = '';
+
+		this.#logger = new ConsoleLogger( this.methodName, 'preview-manager' );
+		this.#logger.enabled = true; // Manually set this to true for development.
 
 		this.#onInit = new Promise( ( resolve ) => {
 			this.#onInitResolver = resolve;
@@ -61,9 +70,11 @@ class PreviewButtonManager {
 	 * Responsible for fetching and returning the PayPal configuration object for this payment
 	 * method.
 	 *
+	 * @abstract
 	 * @param {{}} payPal - The PayPal SDK object provided by WidgetBuilder.
 	 * @return {Promise<{}>}
 	 */
+	// eslint-disable-next-line no-unused-vars
 	async fetchConfig( payPal ) {
 		throw new Error(
 			'The "fetchConfig" method must be implemented by the derived class'
@@ -74,9 +85,11 @@ class PreviewButtonManager {
 	 * Protected method that needs to be implemented by the derived class.
 	 * This method is responsible for creating a new PreviewButton instance and returning it.
 	 *
+	 * @abstract
 	 * @param {string} wrapperId - CSS ID of the wrapper element.
 	 * @return {PreviewButton}
 	 */
+	// eslint-disable-next-line no-unused-vars
 	createButtonInstance( wrapperId ) {
 		throw new Error(
 			'The "createButtonInstance" method must be implemented by the derived class'
@@ -90,7 +103,7 @@ class PreviewButtonManager {
 	 * This dummy is only visible on the admin side, and not rendered on the front-end.
 	 *
 	 * @todo Consider refactoring this into a new class that extends the PreviewButton class.
-	 * @param  wrapperId
+	 * @param {string} wrapperId
 	 * @return {any}
 	 */
 	createDummy( wrapperId ) {
@@ -129,12 +142,23 @@ class PreviewButtonManager {
 	}
 
 	/**
+	 * Output a debug message to the console, with a module-specific prefix.
+	 *
+	 * @param {string} message - Log message.
+	 * @param {...any} args    - Optional. Additional args to output.
+	 */
+	log( message, ...args ) {
+		this.#logger.log( message, ...args );
+	}
+
+	/**
 	 * Output an error message to the console, with a module-specific prefix.
-	 * @param          message
-	 * @param {...any} args
+	 *
+	 * @param {string} message - Log message.
+	 * @param {...any} args    - Optional. Additional args to output.
 	 */
 	error( message, ...args ) {
-		console.error( `${ this.methodName } ${ message }`, ...args );
+		this.#logger.error( message, ...args );
 	}
 
 	/**
@@ -242,21 +266,21 @@ class PreviewButtonManager {
 		}
 
 		if ( ! this.shouldInsertPreviewButton( id ) ) {
+			this.log( 'Skip preview rendering for this preview-box', id );
 			return;
 		}
 
 		if ( ! this.buttons[ id ] ) {
 			this._addButton( id, ppcpConfig );
 		} else {
-			// This is a debounced method, that fires after 100ms.
-			this._configureAllButtons( ppcpConfig );
+			this._configureButton( id, ppcpConfig );
 		}
 	}
 
 	/**
 	 * Determines if the preview box supports the current button.
 	 *
-	 * When this function returns false, this manager instance does not create a new preview button.
+	 * E.g. "Should the current preview-box display Google Pay buttons?"
 	 *
 	 * @param {string} previewId - ID of the inner preview box container.
 	 * @return {boolean} True if the box is eligible for the preview button, false otherwise.
@@ -271,10 +295,14 @@ class PreviewButtonManager {
 
 	/**
 	 * Applies a new configuration to an existing preview button.
+	 *
+	 * @private
 	 * @param id
 	 * @param ppcpConfig
 	 */
 	_configureButton( id, ppcpConfig ) {
+		this.log( 'configureButton', id, ppcpConfig );
+
 		this.buttons[ id ]
 			.setDynamic( this.isDynamic() )
 			.setPpcpConfig( ppcpConfig )
@@ -283,9 +311,13 @@ class PreviewButtonManager {
 
 	/**
 	 * Apples the provided configuration to all existing preview buttons.
-	 * @param ppcpConfig
+	 *
+	 * @private
+	 * @param ppcpConfig - The new styling to use for the preview buttons.
 	 */
 	_configureAllButtons( ppcpConfig ) {
+		this.log( 'configureAllButtons', ppcpConfig );
+
 		Object.entries( this.buttons ).forEach( ( [ id, button ] ) => {
 			this._configureButton( id, {
 				...ppcpConfig,
@@ -302,13 +334,20 @@ class PreviewButtonManager {
 
 	/**
 	 * Creates a new preview button, that is rendered once the bootstrapping Promise resolves.
-	 * @param id
-	 * @param ppcpConfig
+	 *
+	 * @private
+	 * @param id         - The button to add.
+	 * @param ppcpConfig - The styling to apply to the preview button.
 	 */
 	_addButton( id, ppcpConfig ) {
+		this.log( 'addButton', id, ppcpConfig );
+
 		const createButton = () => {
 			if ( ! this.buttons[ id ] ) {
+				this.log( 'createButton.new', id );
+
 				let newInst;
+
 				if ( this.apiConfig && 'object' === typeof this.apiConfig ) {
 					newInst = this.createButtonInstance( id ).setButtonConfig(
 						this.buttonConfig

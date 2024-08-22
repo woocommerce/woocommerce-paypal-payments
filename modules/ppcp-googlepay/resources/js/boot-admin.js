@@ -1,7 +1,5 @@
-import GooglepayButton from './GooglepayButton';
-import PreviewButton from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
 import PreviewButtonManager from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
-import ContextHandlerFactory from './Context/ContextHandlerFactory';
+import GooglePayPreviewButton from './GooglepayPreviewButton';
 
 /**
  * Accessor that creates and returns a single PreviewButtonManager instance.
@@ -33,7 +31,7 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
 	 * method.
 	 *
 	 * @param {{}} payPal - The PayPal SDK object provided by WidgetBuilder.
-	 * @return {Promise<{}>}
+	 * @return {Promise<{}>} Promise that resolves when API configuration is available.
 	 */
 	async fetchConfig( payPal ) {
 		const apiMethod = payPal?.Googlepay()?.config;
@@ -59,72 +57,13 @@ class GooglePayPreviewButtonManager extends PreviewButtonManager {
 	 * This method is responsible for creating a new PreviewButton instance and returning it.
 	 *
 	 * @param {string} wrapperId - CSS ID of the wrapper element.
-	 * @return {GooglePayPreviewButton}
+	 * @return {GooglePayPreviewButton} The new preview button instance.
 	 */
 	createButtonInstance( wrapperId ) {
 		return new GooglePayPreviewButton( {
 			selector: wrapperId,
 			apiConfig: this.apiConfig,
 		} );
-	}
-}
-
-/**
- * A single GooglePay preview button instance.
- */
-class GooglePayPreviewButton extends PreviewButton {
-	constructor( args ) {
-		super( args );
-
-		this.selector = `${ args.selector }GooglePay`;
-		this.defaultAttributes = {
-			button: {
-				style: {
-					type: 'pay',
-					color: 'black',
-					language: 'en',
-				},
-			},
-		};
-	}
-
-	createNewWrapper() {
-		const element = super.createNewWrapper();
-		element.addClass( 'ppcp-button-googlepay' );
-
-		return element;
-	}
-
-	createButton( buttonConfig ) {
-		const contextHandler = ContextHandlerFactory.create(
-			'preview',
-			buttonConfig,
-			this.ppcpConfig,
-			null
-		);
-
-		const button = new GooglepayButton(
-			'preview',
-			null,
-			buttonConfig,
-			this.ppcpConfig,
-			contextHandler
-		);
-
-		button.init( this.apiConfig, null );
-	}
-
-	/**
-	 * Merge form details into the config object for preview.
-	 * Mutates the previewConfig object; no return value.
-	 * @param buttonConfig
-	 * @param ppcpConfig
-	 */
-	dynamicPreviewConfig( buttonConfig, ppcpConfig ) {
-		// Merge the current form-values into the preview-button configuration.
-		if ( ppcpConfig.button && buttonConfig.button ) {
-			Object.assign( buttonConfig.button.style, ppcpConfig.button.style );
-		}
 	}
 }
 
