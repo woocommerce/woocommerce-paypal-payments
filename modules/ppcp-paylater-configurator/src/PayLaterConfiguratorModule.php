@@ -191,7 +191,7 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 				$message = sprintf(
 				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag directing to the Pay-Later settings page.
 					__(
-						'<strong>NEW</strong>: Check out the recently revamped %1$sPayPal Pay Later messaging experience here%2$s. Get paid in full at checkout while giving your customers the flexibility to pay in installments over time. Pay Later messaging can be placed anywhere on your site to inform buyers about available installment offers.',
+						'<strong>NEW</strong>: Check out the recently revamped %1$sPayPal Pay Later messaging experience here%2$s. Get paid in full at checkout while giving your customers the flexibility to pay in installments over time.',
 						'woocommerce-paypal-payments'
 					),
 					'<a href="' . esc_url( $settings_url ) . '">',
