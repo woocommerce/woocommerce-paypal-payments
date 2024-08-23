@@ -1,4 +1,4 @@
-export const buttonID = 'applepay-container';
+export const buttonID = 'ppc-button-applepay-container';
 export const endpoints = {
 	validation: '_apple_pay_validation',
 	createOrderCart: '_apple_pay_create_order_cart',

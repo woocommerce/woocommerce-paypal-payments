@@ -20,10 +20,7 @@ const onApprove = ( context, errorHandler ) => {
 			} )
 			.then( ( data ) => {
 				if ( ! data.success ) {
-					errorHandler.genericError();
-					return actions.restart().catch( ( err ) => {
-						errorHandler.genericError();
-					} );
+                    location.href = context.config.redirect;
 				}
 
 				const orderReceivedUrl = data.data?.order_received_url;

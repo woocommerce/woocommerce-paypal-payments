@@ -1,10 +1,6 @@
 import BaseHandler from './BaseHandler';
 
 class PreviewHandler extends BaseHandler {
-	constructor( buttonConfig, ppcpConfig, externalHandler ) {
-		super( buttonConfig, ppcpConfig, externalHandler );
-	}
-
 	transactionInfo() {
 		// We need to return something as ApplePay button initialization expects valid data.
 		return {
@@ -19,7 +15,7 @@ class PreviewHandler extends BaseHandler {
 		throw new Error( 'Create order fail. This is just a preview.' );
 	}
 
-	approveOrder( data, actions ) {
+	approveOrder() {
 		throw new Error( 'Approve order fail. This is just a preview.' );
 	}
 

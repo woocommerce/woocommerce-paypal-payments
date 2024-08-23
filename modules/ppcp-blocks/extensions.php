@@ -61,7 +61,7 @@ return array(
 					'title'        => __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
 					'label'        => $label,
-					'default'      => false,
+					'default'      => true,
 					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 					'requirements' => array(),
 					'gateway'      => 'paypal',

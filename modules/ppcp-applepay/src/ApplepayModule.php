@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
+use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
@@ -17,10 +18,9 @@ use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
+use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -123,6 +123,48 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 			},
 			100,
 			2
+		);
+
+		add_filter(
+			'woocommerce_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $methods ) use ( $c ): array {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( $settings->has( 'applepay_button_enabled' ) && $settings->get( 'applepay_button_enabled' ) ) {
+					$applepay_gateway = $c->get( 'applepay.wc-gateway' );
+					assert( $applepay_gateway instanceof WC_Payment_Gateway );
+
+					$methods[] = $applepay_gateway;
+				}
+
+				return $methods;
+			}
+		);
+
+		add_action(
+			'woocommerce_review_order_after_submit',
+			function () {
+				// Wrapper ID: #ppc-button-ppcp-applepay.
+				echo '<div id="ppc-button-' . esc_attr( ApplePayGateway::ID ) . '"></div>';
+			}
+		);
+
+		add_action(
+			'woocommerce_pay_order_after_submit',
+			function () {
+				// Wrapper ID: #ppc-button-ppcp-applepay.
+				echo '<div id="ppc-button-' . esc_attr( ApplePayGateway::ID ) . '"></div>';
+			}
 		);
 
 		return true;
@@ -307,7 +349,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 	 * @param bool $is_sandbox The environment for this merchant.
 	 * @return string
 	 */
-	public function validation_string( bool $is_sandbox ) {
+	public function validation_string( bool $is_sandbox ) : string {
 		$sandbox_string = $this->sandbox_validation_string();
 		$live_string    = $this->live_validation_string();
 		return $is_sandbox ? $sandbox_string : $live_string;
