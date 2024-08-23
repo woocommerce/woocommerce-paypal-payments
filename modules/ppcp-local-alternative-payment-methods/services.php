@@ -180,7 +180,7 @@ return array(
 			$container->get( 'ppcp-local-apms.trustly.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.multibanco.payment-method'    => static function( ContainerInterface $container ): MultibancoPaymentMethod {
+	'ppcp-local-apms.multibanco.payment-method' => static function( ContainerInterface $container ): MultibancoPaymentMethod {
 		return new MultibancoPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),

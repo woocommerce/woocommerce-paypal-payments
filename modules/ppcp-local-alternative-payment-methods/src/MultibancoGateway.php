@@ -129,14 +129,14 @@ class MultibancoGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Multibanco to confirm the payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'pending', __( 'Awaiting for the buyer to complete the payment.', 'woocommerce-paypal-payments' ) );
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$amount        = $purchase_unit->amount()->to_array();
 
 		$request_body = array(
-			'intent'                 => 'CAPTURE',
-			'purchase_units'         => array(
+			'intent'         => 'CAPTURE',
+			'purchase_units' => array(
 				array(
 					'reference_id' => $purchase_unit->reference_id(),
 					'amount'       => array(
@@ -151,7 +151,7 @@ class MultibancoGateway extends WC_Payment_Gateway {
 
 		try {
 			$response = $this->orders_endpoint->create( $request_body );
-			$body = json_decode( $response['body'] );
+			$body     = json_decode( $response['body'] );
 
 			$request_body = array(
 				'payment_source'         => array(
@@ -168,8 +168,8 @@ class MultibancoGateway extends WC_Payment_Gateway {
 				),
 			);
 
-			$response = $this->orders_endpoint->confirm_payment_source($request_body,$body->id);
-			$body = json_decode( $response['body'] );
+			$response = $this->orders_endpoint->confirm_payment_source( $request_body, $body->id );
+			$body     = json_decode( $response['body'] );
 
 			$payer_action = '';
 			foreach ( $body->links as $link ) {
@@ -182,8 +182,7 @@ class MultibancoGateway extends WC_Payment_Gateway {
 
 			return array(
 				'result'   => 'success',
-				'redirect' => $this->get_return_url( $wc_order ),
-				'payer_action' => $payer_action,
+				'redirect' => esc_url( $payer_action ),
 			);
 
 		} catch ( RuntimeException $exception ) {
