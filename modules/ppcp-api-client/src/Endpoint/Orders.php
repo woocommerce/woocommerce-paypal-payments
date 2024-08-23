@@ -97,8 +97,15 @@ class Orders {
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
+			$body = json_decode( $response['body'] );
+
+			$message = $body->details[0]->description ?? '';
+			if ( $message ) {
+				throw new RuntimeException( $message );
+			}
+
 			throw new PayPalApiException(
-				json_decode( $response['body'] ),
+				$body,
 				$status_code
 			);
 		}
@@ -111,15 +118,15 @@ class Orders {
 	 *
 	 * @link https://developer.paypal.com/docs/api/orders/v2/#orders_confirm
 	 *
-	 * @param array $request_body The request body.
+	 * @param array  $request_body The request body.
 	 * @param string $id PayPal order ID.
 	 * @return array
 	 * @throws RuntimeException If something went wrong with the request.
 	 * @throws PayPalApiException If something went wrong with the PayPal API request.
 	 */
-	public function confirm_payment_source(array $request_body, string $id): array {
+	public function confirm_payment_source( array $request_body, string $id ): array {
 		$bearer = $this->bearer->bearer();
-		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id .'/confirm-payment-source';
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id . '/confirm-payment-source';
 
 		$args = array(
 			'method'  => 'POST',
