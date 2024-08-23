@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AdminNotices\Repository;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\MutableMessage;
 
 /**
  * Class Repository
@@ -23,7 +24,7 @@ class Repository implements RepositoryInterface {
 	 * Returns an unfiltered list of all Message instances that were registered
 	 * in the current request.
 	 *
-	 * @return array
+	 * @return Message[]
 	 */
 	protected function get_all_messages() : array {
 		return array_filter(
@@ -49,7 +50,11 @@ class Repository implements RepositoryInterface {
 		return array_filter(
 			$this->get_all_messages(),
 			function ( Message $element ) : bool {
-				return ! $element->is_muted();
+				if ( $element instanceof MutableMessage ) {
+					return ! $element->is_muted();
+				}
+
+				return true;
 			}
 		);
 	}
@@ -63,7 +68,7 @@ class Repository implements RepositoryInterface {
 	 *
 	 * @param string $nag_id Defines the message to retrieve.
 	 *
-	 * @return Message[]
+	 * @return MutableMessage[]
 	 */
 	public function get_by_nag_id( string $nag_id ) : array {
 		$nag_id = sanitize_title( $nag_id );
@@ -74,7 +79,7 @@ class Repository implements RepositoryInterface {
 		return array_filter(
 			$this->get_all_messages(),
 			function ( Message $element ) use ( $nag_id ) : bool {
-				return $nag_id === $element->nag_id();
+				return $element instanceof MutableMessage && $nag_id === $element->nag_id();
 			}
 		);
 	}
