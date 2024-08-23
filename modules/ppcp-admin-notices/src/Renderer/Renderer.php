@@ -76,7 +76,7 @@ class Renderer implements RendererInterface {
 			printf(
 				'<div class="notice notice-%s %s" %s%s><p>%s</p></div>',
 				$message->type(),
-				( $message->is_dismissable() ) ? 'is-dismissible' : '',
+				( $message->is_dismissible() ) ? 'is-dismissible' : '',
 				( $message->wrapper() ? sprintf( 'data-ppcp-wrapper="%s"', esc_attr( $message->wrapper() ) ) : '' ),
 				( $message->is_mutable() ? sprintf( 'data-ppcp-msg-id="%s"', esc_attr( $message->nag_id() ) ) : '' ),
 				wp_kses_post( $message->message() )
