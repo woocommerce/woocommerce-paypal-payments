@@ -145,8 +145,15 @@ class Orders {
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( $status_code !== 200 ) {
+			$body = json_decode( $response['body'] );
+
+			$message = $body->details[0]->description ?? '';
+			if ( $message ) {
+				throw new RuntimeException( $message );
+			}
+
 			throw new PayPalApiException(
-				json_decode( $response['body'] ),
+				$body,
 				$status_code
 			);
 		}

@@ -13,6 +13,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -176,6 +177,9 @@ class BancontactGateway extends WC_Payment_Gateway {
 		}
 
 		$body = json_decode( $response['body'] );
+
+		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+		$wc_order->save_meta_data();
 
 		$payer_action = '';
 		foreach ( $body->links as $link ) {

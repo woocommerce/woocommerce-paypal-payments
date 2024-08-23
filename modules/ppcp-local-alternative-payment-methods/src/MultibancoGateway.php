@@ -13,6 +13,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -179,6 +180,9 @@ class MultibancoGateway extends WC_Payment_Gateway {
 			}
 
 			WC()->cart->empty_cart();
+
+			$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+			$wc_order->save_meta_data();
 
 			return array(
 				'result'   => 'success',
