@@ -85,6 +85,9 @@
         }
     },
     "config": {
+        "platform": {
+            "php": "7.2"
+        },
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "wikimedia/composer-merge-plugin": true
