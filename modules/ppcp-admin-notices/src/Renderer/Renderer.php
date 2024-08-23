@@ -67,12 +67,18 @@ class Renderer implements RendererInterface {
 	 */
 	public function render(): bool {
 		$messages = $this->repository->current_message();
+
 		foreach ( $messages as $message ) {
+			if ( $message->is_mutable() ) {
+				$this->can_mute_message = true;
+			}
+
 			printf(
-				'<div class="notice notice-%s %s" %s><p>%s</p></div>',
+				'<div class="notice notice-%s %s" %s%s><p>%s</p></div>',
 				$message->type(),
 				( $message->is_dismissable() ) ? 'is-dismissible' : '',
 				( $message->wrapper() ? sprintf( 'data-ppcp-wrapper="%s"', esc_attr( $message->wrapper() ) ) : '' ),
+				( $message->is_mutable() ? sprintf( 'data-ppcp-msg-id="%s"', esc_attr( $message->nag_id() ) ) : '' ),
 				wp_kses_post( $message->message() )
 			);
 		}

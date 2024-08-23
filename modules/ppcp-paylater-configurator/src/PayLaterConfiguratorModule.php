@@ -202,7 +202,8 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 					$message,
 					'info',
 					true,
-					'ppcp-notice-wrapper'
+					'ppcp-notice-wrapper',
+					'pay-later-messaging'
 				);
 
 				return $notices;

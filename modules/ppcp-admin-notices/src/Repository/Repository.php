@@ -20,11 +20,12 @@ class Repository implements RepositoryInterface {
 	const PERSISTED_NOTICES_OPTION = 'woocommerce_ppcp-admin-notices';
 
 	/**
-	 * Returns the current messages.
+	 * Returns an unfiltered list of all Message instances that were registered
+	 * in the current request.
 	 *
-	 * @return Message[]
+	 * @return array
 	 */
-	public function current_message(): array {
+	protected function get_all_messages() : array {
 		return array_filter(
 			/**
 			 * Returns the list of admin messages.
@@ -33,8 +34,44 @@ class Repository implements RepositoryInterface {
 				self::NOTICES_FILTER,
 				array()
 			),
-			function( $element ) : bool {
+			function ( $element ) : bool {
 				return is_a( $element, Message::class );
+			}
+		);
+	}
+
+	/**
+	 * Returns current messages to display, which excludes muted messages.
+	 *
+	 * @return Message[]
+	 */
+	public function current_message() : array {
+		return array_filter(
+			$this->get_all_messages(),
+			function ( Message $element ) : bool {
+				return ! $element->is_muted();
+			}
+		);
+	}
+
+	/**
+	 * Finds messages with a given nag_id. As the nag_id should be unique, this
+	 * method should return an array containing 0 or 1 Message instance.
+	 *
+	 * @param string $nag_id Defines the message to retrieve.
+	 *
+	 * @return Message[]
+	 */
+	public function get_by_nag_id( string $nag_id ) : array {
+		$nag_id = sanitize_title( $nag_id );
+		if ( ! $nag_id ) {
+			return array();
+		}
+
+		return array_filter(
+			$this->get_all_messages(),
+			function ( Message $element ) use ( $nag_id ) : bool {
+				return $nag_id === $element->nag_id();
 			}
 		);
 	}
@@ -63,15 +100,13 @@ class Repository implements RepositoryInterface {
 
 		$persisted_data = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();
 		foreach ( $persisted_data as $notice_data ) {
-			$notices[] = new Message(
-				(string) ( $notice_data['message'] ?? '' ),
-				(string) ( $notice_data['type'] ?? '' ),
-				(bool) ( $notice_data['dismissable'] ?? true ),
-				(string) ( $notice_data['wrapper'] ?? '' )
-			);
+			if ( is_array( $notice_data ) ) {
+				$notices[] = Message::from_array( $notice_data );
+			}
 		}
 
 		update_option( self::PERSISTED_NOTICES_OPTION, array(), true );
+
 		return $notices;
 	}
 }
