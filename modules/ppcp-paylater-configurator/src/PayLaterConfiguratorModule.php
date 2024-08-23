@@ -166,7 +166,13 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 	 * @return void
 	 */
 	private function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
-		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
+		/*
+		 * The message must be registered on any WC-Settings page (except the Pay Later page),
+		 * and also in Ajax requests, so the "MuteMessage" endpoint can access the message
+		 */
+		$is_relevant_request = ( $is_settings_page && Settings::PAY_LATER_TAB_ID !== $current_page_id ) || wp_doing_ajax();
+
+		if ( ! $is_relevant_request ) {
 			return;
 		}
 

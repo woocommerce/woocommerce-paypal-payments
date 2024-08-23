@@ -58,6 +58,9 @@ class Repository implements RepositoryInterface {
 	 * Finds messages with a given nag_id. As the nag_id should be unique, this
 	 * method should return an array containing 0 or 1 Message instance.
 	 *
+	 * All messages that can be muted must be registered in `wp_doing_ajax()`
+	 * requests, otherwise the Ajax endpoint cannot mute them!
+	 *
 	 * @param string $nag_id Defines the message to retrieve.
 	 *
 	 * @return Message[]
