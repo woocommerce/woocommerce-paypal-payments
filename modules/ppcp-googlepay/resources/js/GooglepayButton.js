@@ -515,7 +515,9 @@ class GooglepayButton extends PaymentButton {
 					)
 				) {
 					paymentDataRequestUpdate.newShippingOptionParameters =
-						updatedData.shipping_options;
+						this.sanitizeShippingOptions(
+							updatedData.shipping_options
+						);
 				}
 
 				if ( updatedData.total && hasRealCart ) {
@@ -539,6 +541,30 @@ class GooglepayButton extends PaymentButton {
 				reject( error );
 			}
 		} );
+	}
+
+	/**
+	 * Google Pay throws an error, when the shippingOptions entries contain
+	 * custom properties. This function strips unsupported properties from the
+	 * provided ajax response.
+	 *
+	 * @param {Object} responseData Data returned from the ajax endpoint.
+	 * @return {Object} Sanitized object.
+	 */
+	sanitizeShippingOptions( responseData ) {
+		const cleanOptions = [];
+
+		responseData.shippingOptions.forEach( ( item ) => {
+			cleanOptions.push( {
+				id: item.id,
+				label: item.label,
+				description: item.description,
+			} );
+		} );
+
+		responseData.shippingOptions = cleanOptions;
+
+		return { ...responseData, shippingOptions: cleanOptions };
 	}
 
 	/**
