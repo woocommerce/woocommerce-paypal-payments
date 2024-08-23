@@ -1,7 +1,5 @@
-import BaseHandler from "./BaseHandler";
+import BaseHandler from './BaseHandler';
 
-class CheckoutBlockHandler extends BaseHandler{
-
-}
+class CheckoutBlockHandler extends BaseHandler {}
 
 export default CheckoutBlockHandler;

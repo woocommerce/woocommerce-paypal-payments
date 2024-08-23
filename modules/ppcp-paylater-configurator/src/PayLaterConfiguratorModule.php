@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -30,7 +31,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 	 */
 	public static function is_enabled(): bool {
 		return apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_configurator_enabled',
 			getenv( 'PCP_PAYLATER_CONFIGURATOR' ) !== '0'
 		);
@@ -75,6 +76,15 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 			}
 		);
 
+		add_action(
+			'wc_ajax_' . GetConfig::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'paylater-configurator.endpoint.get-config' );
+				assert( $endpoint instanceof GetConfig );
+				$endpoint->handle_request();
+			}
+		);
+
 		$current_page_id = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
 
 		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
@@ -110,6 +120,8 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
+				$bn_code = PPCP_PAYPAL_BN_CODE;
+
 				wp_localize_script(
 					'ppcp-paylater-configurator',
 					'PcpPayLaterConfigurator',
@@ -119,10 +131,15 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 								'endpoint' => \WC_AJAX::get_endpoint( SaveConfig::ENDPOINT ),
 								'nonce'    => wp_create_nonce( SaveConfig::nonce() ),
 							),
+							'get_config'  => array(
+								'endpoint' => \WC_AJAX::get_endpoint( GetConfig::ENDPOINT ),
+								'nonce'    => wp_create_nonce( GetConfig::nonce() ),
+							),
 						),
 						'config'                 => $config_factory->from_settings( $settings ),
 						'merchantClientId'       => $settings->get( 'client_id' ),
 						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
+						'bnCode'                 => $bn_code,
 						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
 						'headerClassName'        => 'ppcp-paylater-configurator-header',
 						'subheaderClassName'     => 'ppcp-paylater-configurator-subheader',

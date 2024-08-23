@@ -240,38 +240,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->wc_payment_tokens           = $wc_payment_tokens;
 		$this->logger                      = $logger;
 
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
-			$this->supports = array( 'refunds' );
-		}
-		if ( $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' ) ) {
-			$this->supports = array(
-				'refunds',
-				'products',
-			);
+		$default_support = array(
+			'products',
+			'refunds',
+			'tokenization',
+			'add_payment_method',
+		);
 
-			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
-				$supports = apply_filters(
-					'woocommerce_paypal_payments_credit_card_gateway_vault_supports',
-					array(
-						'subscriptions',
-						'subscription_cancellation',
-						'subscription_suspension',
-						'subscription_reactivation',
-						'subscription_amount_changes',
-						'subscription_date_changes',
-						'subscription_payment_method_change',
-						'subscription_payment_method_change_customer',
-						'subscription_payment_method_change_admin',
-						'multiple_subscriptions',
-					)
-				);
-
-				$this->supports = array_merge(
-					$this->supports,
-					$supports
-				);
-			}
-		}
+		$this->supports = array_merge(
+			$default_support,
+			apply_filters( 'woocommerce_paypal_payments_credit_card_gateway_supports', array() )
+		);
 
 		$this->method_title       = __(
 			'Advanced Card Processing',
@@ -490,7 +469,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 					$custom_id    = $wc_order->get_order_number();
 					$invoice_id   = $this->prefix . $wc_order->get_order_number();
-					$create_order = $this->capture_card_payment->create_order( $token->get_token(), $custom_id, $invoice_id );
+					$create_order = $this->capture_card_payment->create_order( $token->get_token(), $custom_id, $invoice_id, $wc_order );
 
 					$order = $this->order_endpoint->order( $create_order->id );
 					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );

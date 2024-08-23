@@ -106,6 +106,12 @@ class DisableGateways {
 			return $methods;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
+		if ( $payment_method && is_string( $payment_method ) ) {
+			return array( $payment_method => $methods[ $payment_method ] );
+		}
+
 		return array( PayPalGateway::ID => $methods[ PayPalGateway::ID ] );
 	}
 

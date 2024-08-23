@@ -154,8 +154,10 @@ class Settings implements ContainerInterface {
 				'woocommerce-paypal-payments'
 			),
 		);
+
 		foreach ( $defaults as $key => $value ) {
 			if ( isset( $this->settings[ $key ] ) ) {
+				$this->settings[ $key ] = apply_filters( 'woocommerce_paypal_payments_settings_value', $this->settings[ $key ], $key );
 				continue;
 			}
 			$this->settings[ $key ] = $value;

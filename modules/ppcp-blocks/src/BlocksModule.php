@@ -68,6 +68,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
+				$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 			}
 		);
 
@@ -117,6 +118,22 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
+		add_filter(
+			'woocommerce_paypal_payments_sdk_components_hook',
+			function( array $components ) {
+				$components[] = 'buttons';
+				return $components;
+			}
+		);
 		return true;
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
+
 	}
 }

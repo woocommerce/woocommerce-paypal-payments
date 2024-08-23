@@ -190,7 +190,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$c->get( 'wcgateway.settings.funding-sources' ),
 				$c->get( 'wcgateway.is-ppcp-settings-page' ),
 				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ),
-				$c->get( 'api.endpoint.billing-agreements' )
+				$c->get( 'api.endpoint.billing-agreements' ),
+				$c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' )
 			);
 			$assets->register_assets();
 		}
@@ -536,6 +537,14 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $methods;
 				}
 
+				$is_dcc_enabled       = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+				$standard_card_button = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
+
+				if ( $is_dcc_enabled && isset( $standard_card_button['enabled'] ) ) {
+					$standard_card_button['enabled'] = 'no';
+					update_option( 'woocommerce_ppcp-card-button-gateway_settings', $standard_card_button );
+				}
+
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 				assert( $dcc_applies instanceof DccApplies );
 
@@ -636,6 +645,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$field = $renderer->render_password( $field, $key, $args, $value );
 				$field = $renderer->render_heading( $field, $key, $args, $value );
 				$field = $renderer->render_table( $field, $key, $args, $value );
+				$field = $renderer->render_html( $field, $key, $args, $value );
 				return $field;
 			},
 			10,

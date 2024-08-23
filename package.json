@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "2.6.1",
+  "version": "2.8.3",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -10,6 +10,7 @@
     "install:modules:ppcp-applepay": "cd modules/ppcp-applepay && yarn install",
     "install:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn install",
     "install:modules:ppcp-paylater-block": "cd modules/ppcp-paylater-block && yarn install",
+    "install:modules:ppcp-paylater-wc-blocks": "cd modules/ppcp-paylater-wc-blocks && yarn install",
     "install:modules:ppcp-paylater-configurator": "cd modules/ppcp-paylater-configurator && yarn install",
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
     "install:modules:ppcp-googlepay": "cd modules/ppcp-googlepay && yarn install",
@@ -25,6 +26,7 @@
     "build:modules:ppcp-applepay": "cd modules/ppcp-applepay && yarn run build",
     "build:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn run build",
     "build:modules:ppcp-paylater-block": "cd modules/ppcp-paylater-block && yarn run build",
+    "build:modules:ppcp-paylater-wc-blocks": "cd modules/ppcp-paylater-wc-blocks && yarn run build",
     "build:modules:ppcp-paylater-configurator": "cd modules/ppcp-paylater-configurator && yarn run build",
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
     "build:modules:ppcp-googlepay": "cd modules/ppcp-googlepay && yarn run build",
@@ -41,6 +43,7 @@
     "watch:modules:ppcp-applepay": "cd modules/ppcp-applepay && yarn run watch",
     "watch:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn run watch",
     "watch:modules:ppcp-paylater-block": "cd modules/ppcp-paylater-block && yarn run watch",
+    "watch:modules:ppcp-paylater-wc-blocks": "cd modules/ppcp-paylater-wc-blocks && yarn run watch",
     "watch:modules:ppcp-paylater-configurator": "cd modules/ppcp-paylater-configurator && yarn run watch",
     "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
     "watch:modules:ppcp-googlepay": "cd modules/ppcp-googlepay && yarn run watch",
@@ -61,6 +64,8 @@
     "ddev:install": "ddev composer install && yarn install",
     "ddev:build-js": "ddev yarn build:modules",
     "ddev:watch-js": "ddev yarn watch:modules",
+    "ddev:lint-js": "ddev yarn wp-scripts lint-js",
+    "test:unit-js": "wp-scripts test-unit-js --config ./tests/js/jest.config.json",
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
     "ddev:e2e-tests": "(cp -n .env.e2e.example .env.e2e || true) && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
@@ -82,13 +87,28 @@
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* playwright.config.js wp-cli.yml \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml\\"
+    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig .eslintrc babel.config.json tests/\\* \\*test/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* playwright.config.js wp-cli.yml \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml\\"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
   },
   "dependencies": {
     "dotenv": "^16.0.3",
-    "npm-run-all": "^4.1.5"
+    "npm-run-all": "^4.1.5",
+    "playwright": "^1.43.0",
+    "run-s": "^0.0.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-class-properties": "^7.18.6",
+    "@testing-library/dom": "^10.1.0",
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@wordpress/element": "^6.1.0",
+    "@wordpress/scripts": "^28.0.0",
+    "babel-plugin-explicit-exports-references": "^1.0.2",
+    "jquery": "^3.7.1",
+    "react-dom": "^18.3.1"
   }
 }

@@ -50,9 +50,7 @@ class ShippingOptionFactory {
 		$cart->calculate_shipping();
 
 		$chosen_shipping_methods = WC()->session->get( 'chosen_shipping_methods', array() );
-		if ( ! is_array( $chosen_shipping_methods ) ) {
-			$chosen_shipping_methods = array();
-		}
+		$chosen_shipping_method  = $chosen_shipping_methods[0] ?? false;
 
 		$packages = WC()->shipping()->get_packages();
 		$options  = array();
@@ -62,11 +60,10 @@ class ShippingOptionFactory {
 				if ( ! $rate instanceof \WC_Shipping_Rate ) {
 					continue;
 				}
-
 				$options[] = new ShippingOption(
 					$rate->get_id(),
 					$rate->get_label(),
-					in_array( $rate->get_id(), $chosen_shipping_methods, true ),
+					$rate->get_id() === $chosen_shipping_method,
 					new Money(
 						(float) $rate->get_cost(),
 						get_woocommerce_currency()

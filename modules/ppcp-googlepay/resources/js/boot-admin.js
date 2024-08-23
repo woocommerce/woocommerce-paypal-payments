@@ -1,146 +1,132 @@
-import {loadCustomScript} from "@paypal/paypal-js";
-import GooglepayButton from "./GooglepayButton";
-import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
+import GooglepayButton from './GooglepayButton';
+import PreviewButton from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
+import PreviewButtonManager from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
+import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
-(function ({
-   buttonConfig,
-   jQuery
-}) {
+/**
+ * Accessor that creates and returns a single PreviewButtonManager instance.
+ */
+const buttonManager = () => {
+	if ( ! GooglePayPreviewButtonManager.instance ) {
+		GooglePayPreviewButtonManager.instance =
+			new GooglePayPreviewButtonManager();
+	}
 
-    let googlePayConfig;
-    let buttonQueue = [];
-    let activeButtons = {};
-    let bootstrapped = false;
+	return GooglePayPreviewButtonManager.instance;
+};
 
-    // React to PayPal config changes.
-    jQuery(document).on('ppcp_paypal_render_preview', (ev, ppcpConfig) => {
-        if (bootstrapped) {
-            createButton(ppcpConfig);
-        } else {
-            buttonQueue.push({
-                ppcpConfig: JSON.parse(JSON.stringify(ppcpConfig))
-            });
-        }
-    });
+/**
+ * Manages all GooglePay preview buttons on this page.
+ */
+class GooglePayPreviewButtonManager extends PreviewButtonManager {
+	constructor() {
+		const args = {
+			methodName: 'GooglePay',
+			buttonConfig: window.wc_ppcp_googlepay_admin,
+		};
 
-    // React to GooglePay config changes.
-    jQuery([
-        '#ppcp-googlepay_button_enabled',
-        '#ppcp-googlepay_button_type',
-        '#ppcp-googlepay_button_color',
-        '#ppcp-googlepay_button_language',
-        '#ppcp-googlepay_button_shipping_enabled'
-    ].join(',')).on('change', () => {
-        for (const [selector, ppcpConfig] of Object.entries(activeButtons)) {
-            createButton(ppcpConfig);
-        }
-    });
+		super( args );
+	}
 
-    // Maybe we can find a more elegant reload method when transitioning from styling modes.
-    jQuery([
-        '#ppcp-smart_button_enable_styling_per_location'
-    ].join(',')).on('change', () => {
-        setTimeout(() => {
-            for (const [selector, ppcpConfig] of Object.entries(activeButtons)) {
-                createButton(ppcpConfig);
-            }
-        }, 100);
-    });
+	/**
+	 * Responsible for fetching and returning the PayPal configuration object for this payment
+	 * method.
+	 *
+	 * @param {{}} payPal - The PayPal SDK object provided by WidgetBuilder.
+	 * @return {Promise<{}>}
+	 */
+	async fetchConfig( payPal ) {
+		const apiMethod = payPal?.Googlepay()?.config;
 
-    const applyConfigOptions = function (buttonConfig) {
-        buttonConfig.button = buttonConfig.button || {};
-        buttonConfig.button.style = buttonConfig.button.style || {};
-        buttonConfig.button.style.type = jQuery('#ppcp-googlepay_button_type').val();
-        buttonConfig.button.style.color = jQuery('#ppcp-googlepay_button_color').val();
-        buttonConfig.button.style.language = jQuery('#ppcp-googlepay_button_language').val();
-    }
+		if ( ! apiMethod ) {
+			this.error(
+				'configuration object cannot be retrieved from PayPal'
+			);
+			return {};
+		}
 
-    const createButton = function (ppcpConfig) {
-        const selector = ppcpConfig.button.wrapper + 'GooglePay';
+		try {
+			return await apiMethod();
+		} catch ( error ) {
+			if ( error.message.includes( 'Not Eligible' ) ) {
+				this.apiError = 'Not Eligible';
+			}
+			return null;
+		}
+	}
 
-        if (!jQuery('#ppcp-googlepay_button_enabled').is(':checked')) {
-            jQuery(selector).remove();
-            return;
-        }
+	/**
+	 * This method is responsible for creating a new PreviewButton instance and returning it.
+	 *
+	 * @param {string} wrapperId - CSS ID of the wrapper element.
+	 * @return {GooglePayPreviewButton}
+	 */
+	createButtonInstance( wrapperId ) {
+		return new GooglePayPreviewButton( {
+			selector: wrapperId,
+			apiConfig: this.apiConfig,
+		} );
+	}
+}
 
-        buttonConfig = JSON.parse(JSON.stringify(buttonConfig));
-        buttonConfig.button.wrapper = selector;
-        applyConfigOptions(buttonConfig);
+/**
+ * A single GooglePay preview button instance.
+ */
+class GooglePayPreviewButton extends PreviewButton {
+	constructor( args ) {
+		super( args );
 
-        const wrapperElement = `<div id="${selector.replace('#', '')}" class="ppcp-button-apm ppcp-button-googlepay"></div>`;
+		this.selector = `${ args.selector }GooglePay`;
+		this.defaultAttributes = {
+			button: {
+				style: {
+					type: 'pay',
+					color: 'black',
+					language: 'en',
+				},
+			},
+		};
+	}
 
-        if (!jQuery(selector).length) {
-            jQuery(ppcpConfig.button.wrapper).after(wrapperElement);
-        } else {
-            jQuery(selector).replaceWith(wrapperElement);
-        }
+	createNewWrapper() {
+		const element = super.createNewWrapper();
+		element.addClass( 'ppcp-button-googlepay' );
 
-        const button = new GooglepayButton(
-            'preview',
-            null,
-            buttonConfig,
-            ppcpConfig,
-        );
+		return element;
+	}
 
-        button.init(googlePayConfig);
+	createButton( buttonConfig ) {
+		const contextHandler = ContextHandlerFactory.create(
+			'preview',
+			buttonConfig,
+			this.ppcpConfig,
+			null
+		);
 
-        activeButtons[selector] = ppcpConfig;
-    }
+		const button = new GooglepayButton(
+			'preview',
+			null,
+			buttonConfig,
+			this.ppcpConfig,
+			contextHandler
+		);
 
-    const bootstrap = async function () {
-        if (!widgetBuilder.paypal) {
-            return;
-        }
+		button.init( this.apiConfig, null );
+	}
 
-        googlePayConfig = await widgetBuilder.paypal.Googlepay().config();
+	/**
+	 * Merge form details into the config object for preview.
+	 * Mutates the previewConfig object; no return value.
+	 * @param buttonConfig
+	 * @param ppcpConfig
+	 */
+	dynamicPreviewConfig( buttonConfig, ppcpConfig ) {
+		// Merge the current form-values into the preview-button configuration.
+		if ( ppcpConfig.button && buttonConfig.button ) {
+			Object.assign( buttonConfig.button.style, ppcpConfig.button.style );
+		}
+	}
+}
 
-        // We need to set bootstrapped here otherwise googlePayConfig may not be set.
-        bootstrapped = true;
-
-        let options;
-        while (options = buttonQueue.pop()) {
-            createButton(options.ppcpConfig);
-        }
-    };
-
-    document.addEventListener(
-        'DOMContentLoaded',
-        () => {
-
-            if (typeof (buttonConfig) === 'undefined') {
-                console.error('PayPal button could not be configured.');
-                return;
-            }
-
-            let paypalLoaded = false;
-            let googlePayLoaded = false;
-
-            const tryToBoot = () => {
-                if (!bootstrapped && paypalLoaded && googlePayLoaded) {
-                    bootstrap();
-                }
-            }
-
-            // Load GooglePay SDK
-            loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
-                googlePayLoaded = true;
-                tryToBoot();
-            });
-
-            // Wait for PayPal to be loaded externally
-            if (typeof widgetBuilder.paypal !== 'undefined') {
-                paypalLoaded = true;
-                tryToBoot();
-            }
-
-            jQuery(document).on('ppcp-paypal-loaded', () => {
-                paypalLoaded = true;
-                tryToBoot();
-            });
-        },
-    );
-
-})({
-    buttonConfig: window.wc_ppcp_googlepay_admin,
-    jQuery: window.jQuery
-});
+// Initialize the preview button manager.
+buttonManager();

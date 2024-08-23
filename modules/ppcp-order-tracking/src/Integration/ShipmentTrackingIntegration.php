@@ -15,13 +15,17 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Integration;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_REST_Request;
 use WP_REST_Response;
+use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
 
 /**
  * Class ShipmentTrackingIntegration.
  */
 class ShipmentTrackingIntegration implements Integration {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The shipment factory.
@@ -69,29 +73,35 @@ class ShipmentTrackingIntegration implements Integration {
 		add_action(
 			'wp_ajax_wc_shipment_tracking_save_form',
 			function() {
-				check_ajax_referer( 'create-tracking-item', 'security', true );
+				try {
+					check_ajax_referer( 'create-tracking-item', 'security', true );
 
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+						return;
+					}
+
+					$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? '' ) );
+					$wc_order = wc_get_order( $order_id );
+					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+						return;
+					}
+
+					$paypal_order    = ppcp_get_paypal_order( $wc_order );
+					$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
+					$tracking_number = wc_clean( wp_unslash( $_POST['tracking_number'] ?? '' ) );
+					$carrier         = wc_clean( wp_unslash( $_POST['tracking_provider'] ?? '' ) );
+					$carrier_other   = wc_clean( wp_unslash( $_POST['custom_tracking_provider'] ?? '' ) );
+					$carrier         = $carrier ?: $carrier_other ?: '';
+
+					if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $capture_id ) {
+						return;
+					}
+
+					$this->sync_tracking( $order_id, $capture_id, $tracking_number, $carrier );
+
+				} catch ( Exception $exception ) {
 					return;
 				}
-
-				$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? '' ) );
-				$wc_order = wc_get_order( $order_id );
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$transaction_id  = $wc_order->get_transaction_id();
-				$tracking_number = wc_clean( wp_unslash( $_POST['tracking_number'] ?? '' ) );
-				$carrier         = wc_clean( wp_unslash( $_POST['tracking_provider'] ?? '' ) );
-				$carrier_other   = wc_clean( wp_unslash( $_POST['custom_tracking_provider'] ?? '' ) );
-				$carrier         = $carrier ?: $carrier_other ?: '';
-
-				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
-					return;
-				}
-
-				$this->sync_tracking( $order_id, $transaction_id, $tracking_number, $carrier );
 			}
 		);
 
@@ -101,32 +111,38 @@ class ShipmentTrackingIntegration implements Integration {
 		add_filter(
 			'woocommerce_rest_prepare_order_shipment_tracking',
 			function( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ): WP_REST_Response {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+				try {
+					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+						return $response;
+					}
+
+					$callback = $request->get_attributes()['callback']['1'] ?? '';
+					if ( $callback !== 'create_item' ) {
+						return $response;
+					}
+
+					$order_id = $tracking_item['order_id'] ?? 0;
+					$wc_order = wc_get_order( $order_id );
+					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+						return $response;
+					}
+
+					$paypal_order    = ppcp_get_paypal_order( $wc_order );
+					$capture_id      = $this->get_paypal_order_transaction_id( $paypal_order );
+					$tracking_number = $tracking_item['tracking_number'] ?? '';
+					$carrier         = $tracking_item['tracking_provider'] ?? '';
+					$carrier_other   = $tracking_item['custom_tracking_provider'] ?? '';
+					$carrier         = $carrier ?: $carrier_other ?: '';
+
+					if ( ! $tracking_number || ! $carrier || ! $capture_id ) {
+						return $response;
+					}
+
+					$this->sync_tracking( $order_id, $capture_id, $tracking_number, $carrier );
+
+				} catch ( Exception $exception ) {
 					return $response;
 				}
-
-				$callback = $request->get_attributes()['callback']['1'] ?? '';
-				if ( $callback !== 'create_item' ) {
-					return $response;
-				}
-
-				$order_id = $tracking_item['order_id'] ?? 0;
-				$wc_order = wc_get_order( $order_id );
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return $response;
-				}
-
-				$transaction_id  = $wc_order->get_transaction_id();
-				$tracking_number = $tracking_item['tracking_number'] ?? '';
-				$carrier         = $tracking_item['tracking_provider'] ?? '';
-				$carrier_other   = $tracking_item['custom_tracking_provider'] ?? '';
-				$carrier         = $carrier ?: $carrier_other ?: '';
-
-				if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
-					return $response;
-				}
-
-				$this->sync_tracking( $order_id, $transaction_id, $tracking_number, $carrier );
 
 				return $response;
 			},
@@ -139,21 +155,21 @@ class ShipmentTrackingIntegration implements Integration {
 	 * Syncs (add | update) the PayPal tracking with given info.
 	 *
 	 * @param int    $wc_order_id The WC order ID.
-	 * @param string $transaction_id The transaction ID.
+	 * @param string $capture_id The capture ID.
 	 * @param string $tracking_number The tracking number.
 	 * @param string $carrier The shipment carrier.
 	 * @return void
 	 */
 	protected function sync_tracking(
 		int $wc_order_id,
-		string $transaction_id,
+		string $capture_id,
 		string $tracking_number,
 		string $carrier
 	) {
 		try {
 			$ppcp_shipment = $this->shipment_factory->create_shipment(
 				$wc_order_id,
-				$transaction_id,
+				$capture_id,
 				$tracking_number,
 				'SHIPPED',
 				'OTHER',

@@ -103,12 +103,18 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_data() {
 		$paypal_data = $this->paypal_payment_method->get_payment_method_data();
 
+		if ( is_admin() ) {
+			$script_data = $this->button->script_data_for_admin();
+		} else {
+			$script_data = $this->button->script_data();
+		}
+
 		return array(
 			'id'          => $this->name,
 			'title'       => $paypal_data['title'], // TODO : see if we should use another.
 			'description' => $paypal_data['description'], // TODO : see if we should use another.
 			'enabled'     => $paypal_data['enabled'], // This button is enabled when PayPal buttons are.
-			'scriptData'  => $this->button->script_data(),
+			'scriptData'  => $script_data,
 		);
 	}
 }

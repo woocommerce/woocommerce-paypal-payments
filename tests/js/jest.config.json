@@ -1,0 +1,17 @@
+{
+    "preset": "@wordpress/jest-preset-default",
+    "rootDir": "../../",
+    "moduleDirectories": [ "node_modules" ],
+    "moduleNameMapper": {
+        "^react$": "<rootDir>/node_modules/react",
+        "^react-dom$": "<rootDir>/node_modules/react-dom"
+    },
+    "testPathIgnorePatterns": [
+        "<rootDir>/tests/",
+        "<rootDir>/node_modules/",
+        "<rootDir>/vendor/"
+    ],
+    "transform": {
+        "^.+\\.(js|ts|tsx)$": "<rootDir>/tests/js/jestPreprocess.js"
+    }
+}

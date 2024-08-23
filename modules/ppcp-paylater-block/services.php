@@ -9,10 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'paylater-block.url' => static function ( ContainerInterface $container ): string {
+	'paylater-block.url'      => static function ( ContainerInterface $container ): string {
 		/**
 		 * Cannot return false for this path.
 		 *
@@ -22,5 +23,8 @@ return array(
 			'/modules/ppcp-paylater-block/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
+	},
+	'paylater-block.renderer' => static function (): PayLaterBlockRenderer {
+		return new PayLaterBlockRenderer();
 	},
 );

@@ -28,13 +28,18 @@ class DeactivateNote {
 	/**
 	 * Note initialization.
 	 */
-	public static function init() {
+	public static function init(): void {
 		if ( ! PPECHelper::is_plugin_active() ) {
 			self::maybe_mark_note_as_actioned();
 			return;
 		}
 
 		try {
+			/**
+			 * The method exists in the NoteTraits trait.
+			 *
+			 * @psalm-suppress UndefinedMethod
+			 */
 			self::possibly_add_note();
 		} catch ( \Exception $e ) {
 			return;
@@ -44,7 +49,7 @@ class DeactivateNote {
 	/**
 	 * Get the note.
 	 *
-	 * @return Automatic\WooCommerce\Admin\Notes\Note
+	 * @return Note
 	 */
 	public static function get_note() {
 		if ( PPECHelper::site_has_ppec_subscriptions() ) {
@@ -87,7 +92,7 @@ class DeactivateNote {
 	/**
 	 * Marks the inbox note as actioned so that it doesn't re-appear.
 	 */
-	private static function maybe_mark_note_as_actioned() {
+	private static function maybe_mark_note_as_actioned(): void {
 		try {
 			$data_store = \WC_Data_Store::load( 'admin-note' );
 		} catch ( \Exception $e ) {
@@ -106,7 +111,7 @@ class DeactivateNote {
 
 		$note = Notes::get_note( $note_ids[0] );
 
-		if ( Note::E_WC_ADMIN_NOTE_ACTIONED !== $note->get_status() ) {
+		if ( $note instanceof Note && Note::E_WC_ADMIN_NOTE_ACTIONED !== $note->get_status() ) {
 			$note->set_status( Note::E_WC_ADMIN_NOTE_ACTIONED );
 			$note->save();
 		}

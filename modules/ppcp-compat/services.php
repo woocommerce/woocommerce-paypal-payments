@@ -54,6 +54,18 @@ return array(
 		);
 	},
 
+	'compat.plugin-script-file-names'                => static function( ContainerInterface $container ) : array {
+		return array(
+			'button.js',
+			'gateway-settings.js',
+			'status-page.js',
+			'order-edit-page.js',
+			'fraudnet.js',
+			'tracking-compat.js',
+			'ppcp-clear-db.js',
+		);
+	},
+
 	'compat.gzd.is_supported_plugin_version_active'  => function (): bool {
 		return function_exists( 'wc_gzd_get_shipments_by_order' ); // 3.0+
 	},
@@ -70,6 +82,9 @@ return array(
 	},
 	'compat.wc_shipping_tax.is_supported_plugin_version_active' => function (): bool {
 		return class_exists( 'WC_Connect_Loader' );
+	},
+	'compat.nyp.is_supported_plugin_version_active'  => function (): bool {
+		return function_exists( 'wc_nyp_init' );
 	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {

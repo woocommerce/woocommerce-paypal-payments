@@ -9,10 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use Exception;
+use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
-use WP_Post;
 
 /**
  * Class MetaBoxRenderer
@@ -55,6 +56,13 @@ class MetaBoxRenderer {
 	protected $should_use_new_api;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * MetaBoxRenderer constructor.
 	 *
 	 * @param string[]              $allowed_statuses Allowed shipping statuses.
@@ -62,48 +70,51 @@ class MetaBoxRenderer {
 	 * @psalm-param Carriers        $carriers
 	 * @param OrderTrackingEndpoint $order_tracking_endpoint The order tracking endpoint.
 	 * @param bool                  $should_use_new_api Whether new API should be used.
+	 * @param LoggerInterface       $logger The logger.
 	 */
 	public function __construct(
 		array $allowed_statuses,
 		array $carriers,
 		OrderTrackingEndpoint $order_tracking_endpoint,
-		bool $should_use_new_api
+		bool $should_use_new_api,
+		LoggerInterface $logger
 	) {
 
 		$this->allowed_statuses        = $allowed_statuses;
 		$this->carriers                = $carriers;
 		$this->order_tracking_endpoint = $order_tracking_endpoint;
 		$this->should_use_new_api      = $should_use_new_api;
+		$this->logger                  = $logger;
 	}
 
 	/**
 	 * Renders the order tracking MetaBox.
 	 *
-	 * @param mixed $post_or_order_object Either WP_Post or WC_Order when COT is data source.
+	 * @param WC_Order $wc_order The WC order.
+	 * @param string   $capture_id The PayPal order capture ID.
 	 */
-	public function render( $post_or_order_object ): void {
-		$wc_order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
-		if ( ! $wc_order instanceof WC_Order ) {
-			return;
-		}
-
-		$transaction_id   = $wc_order->get_transaction_id() ?: '';
+	public function render( WC_Order $wc_order, string $capture_id ): void {
 		$order_items      = $wc_order->get_items();
 		$order_item_count = ! empty( $order_items ) ? count( $order_items ) : 0;
 
-		/**
-		 * The shipments
-		 *
-		 * @var ShipmentInterface[] $shipments
-		 */
-		$shipments = $this->order_tracking_endpoint->list_tracking_information( $wc_order->get_id() ) ?? array();
+		try {
+			/**
+			 * The shipments
+			 *
+			 * @var ShipmentInterface[] $shipments
+			 */
+			$shipments = $this->order_tracking_endpoint->list_tracking_information( $wc_order->get_id() ) ?? array();
+		} catch ( Exception $exception ) {
+			$this->logger->log( 'warning', $exception->getMessage() );
+			return;
+		}
 		?>
 		<div class="ppcp-tracking-columns-wrapper">
 			<div class="ppcp-tracking-column">
 				<h3><?php echo esc_html__( 'Share Package Tracking Data with PayPal', 'woocommerce-paypal-payments' ); ?></h3>
 				<p>
-					<label for="ppcp-tracking-transaction_id"><?php echo esc_html__( 'Transaction ID', 'woocommerce-paypal-payments' ); ?></label>
-					<input type="text" disabled class="ppcp-tracking-transaction_id disabled" id="ppcp-tracking-transaction_id" name="ppcp-tracking[transaction_id]" value="<?php echo esc_attr( $transaction_id ); ?>" />
+					<label for="ppcp-tracking-capture_id"><?php echo esc_html__( 'Capture ID', 'woocommerce-paypal-payments' ); ?></label>
+					<input type="text" disabled class="ppcp-tracking-capture_id disabled" id="ppcp-tracking-capture_id" name="ppcp-tracking[capture_id]" value="<?php echo esc_attr( $capture_id ); ?>" />
 				</p>
 				<?php if ( $order_item_count > 1 && $this->should_use_new_api ) : ?>
 					<p>

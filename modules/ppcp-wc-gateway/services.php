@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -195,14 +196,33 @@ return array(
 				CardButtonGateway::ID,
 				OXXOGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
+				AxoGateway::ID,
+				GooglePayGateway::ID,
 			),
 			true
 		);
 	},
 
-	'wcgateway.is-ppcp-settings-standard-payments-page'    => static function ( ContainerInterface $container ): bool {
-		return $container->get( 'wcgateway.is-ppcp-settings-page' )
-			&& $container->get( 'wcgateway.current-ppcp-settings-page-id' ) === PayPalGateway::ID;
+	// Checks, if the current admin page contains settings for this plugin's payment methods.
+	'wcgateway.is-ppcp-settings-payment-methods-page'      => static function ( ContainerInterface $container ) : bool {
+		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
+			return false;
+		}
+
+		$active_tab = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+
+		return in_array(
+			$active_tab,
+			array(
+				PayPalGateway::ID,
+				CreditCardGateway::ID,
+				CardButtonGateway::ID,
+				Settings::PAY_LATER_TAB_ID,
+				Settings::CONNECTION_TAB_ID,
+				GooglePayGateway::ID,
+			),
+			true
+		);
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
@@ -346,7 +366,8 @@ return array(
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
-			$logger
+			$logger,
+			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
@@ -802,6 +823,15 @@ return array(
 					'elo'             => _x( 'Elo', 'Name of credit card', 'woocommerce-paypal-payments' ),
 					'hiper'           => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
 				),
+				'options_axo'  => array(
+					'visa-light'       => _x( 'Visa (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'mastercard-light' => _x( 'Mastercard (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'amex-light'       => _x( 'Amex (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'discover-light'   => _x( 'Discover (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'dinersclub-light' => _x( 'Diners Club (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'jcb-light'        => _x( 'JCB (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'unionpay-light'   => _x( 'UnionPay (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+				),
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
@@ -1015,7 +1045,6 @@ return array(
 			'bancontact' => _x( 'Bancontact', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'blik'       => _x( 'BLIK', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'eps'        => _x( 'eps', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'giropay'    => _x( 'giropay', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'ideal'      => _x( 'iDEAL', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'mybank'     => _x( 'MyBank', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'p24'        => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),
@@ -1451,7 +1480,7 @@ return array(
 
 		$button_text = $enabled
 			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
-			: esc_html__( 'Enable Advanced PayPal Wallet', 'woocommerce-paypal-payments' );
+			: esc_html__( 'Enable saving PayPal & Venmo', 'woocommerce-paypal-payments' );
 
 		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
 			? $container->get( 'wcgateway.enable-reference-transactions-url-live' )

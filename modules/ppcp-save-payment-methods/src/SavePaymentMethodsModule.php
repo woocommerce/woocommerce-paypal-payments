@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class SavePaymentMethodsModule
@@ -89,6 +90,12 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
 			function( array $localized_script_data ) use ( $c ) {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+				if ( ! is_user_logged_in() && ! $subscriptions_helper->cart_contains_subscription() ) {
+					return $localized_script_data;
+				}
+
 				$api = $c->get( 'api.user-id-token' );
 				assert( $api instanceof UserIdToken );
 

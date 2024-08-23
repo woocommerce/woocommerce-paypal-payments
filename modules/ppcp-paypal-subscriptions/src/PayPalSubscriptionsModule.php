@@ -64,6 +64,14 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $product_id ) use ( $c ) {
+				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
+
+				$connect_subscription = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
+				if ( ! $subscriptions_helper->plugin_is_active() || $connect_subscription !== 'yes' ) {
+					return;
+				}
+
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
@@ -91,6 +99,60 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				$this->update_subscription_product_meta( $product, $subscriptions_api_handler );
 			},
 			12
+		);
+
+		add_filter(
+			'woocommerce_add_to_cart_validation',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $passed_validation, $product_id ) use ( $c ) {
+				if ( WC()->cart->is_empty() ) {
+					return $passed_validation;
+				}
+
+				$product = wc_get_product( $product_id );
+
+				if ( ! ( is_a( $product, WC_Product::class ) ) ) {
+					wc_add_notice( __( 'Cannot add this product to cart (invalid product).', 'woocommerce-paypal-payments' ), 'error' );
+					return false;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$subscriptions_mode     = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				$is_paypal_subscription = static function ( $product ) use ( $subscriptions_mode ): bool {
+					return $product &&
+						in_array( $product->get_type(), array( 'subscription', 'variable-subscription' ), true ) &&
+						'subscriptions_api' === $subscriptions_mode &&
+						$product->get_meta( '_ppcp_enable_subscription_product', true ) === 'yes';
+				};
+
+				if ( $is_paypal_subscription( $product ) ) {
+					if ( ! $product->get_sold_individually() ) {
+						$product->set_sold_individually( true );
+						$product->save();
+					}
+
+					wc_add_notice( __( 'You cannot add a PayPal Subscription product to a cart with other items.', 'woocommerce-paypal-payments' ), 'error' );
+					return false;
+				}
+
+				foreach ( WC()->cart->get_cart() as $cart_item ) {
+					$cart_product = wc_get_product( $cart_item['product_id'] );
+					if ( $is_paypal_subscription( $cart_product ) ) {
+						wc_add_notice( __( 'You can only have one PayPal Subscription product in your cart.', 'woocommerce-paypal-payments' ), 'error' );
+						return false;
+					}
+				}
+
+				return $passed_validation;
+			},
+			10,
+			2
 		);
 
 		add_action(
@@ -662,12 +724,18 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		// phpcs:ignore WordPress.Security.NonceVerification
 		$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
 		$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
+
+		if ( ! $product->get_sold_individually() ) {
+			$product->set_sold_individually( true );
+		}
+
 		$product->save();
 
 		if ( ( $product->get_type() === 'subscription' || $product->get_type() === 'subscription_variation' ) && $enable_subscription_product === 'yes' ) {
 			if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 				$subscriptions_api_handler->update_product( $product );
 				$subscriptions_api_handler->update_plan( $product );
+
 				return;
 			}
 

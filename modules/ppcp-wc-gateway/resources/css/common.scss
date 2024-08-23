@@ -28,6 +28,13 @@ $background-ident-color: #fbfbfb;
 
 .ppcp-button-apm {
 	@include apm-button.button;
+
+	&.ppcp-button-dummy {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #0001;
+	}
 }
 
 .ppcp-status-text {
@@ -56,6 +63,41 @@ $background-ident-color: #fbfbfb;
 	}
 }
 
+.ppcp-notice {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-left-width: 4px;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	margin: 5px 15px 2px 0;
+	padding: 1px 12px;
+
+	p, .form-table td & p {
+		margin-top: 4px;
+		margin-bottom: 4px;
+	}
+
+	.highlight {
+		background: transparent;
+		font-weight: 600;
+	}
+}
+
+.ppcp-notice-warning {
+	border-left-color: #dba617;
+
+	.highlight {
+		color: #dba617;
+	}
+}
+
+.ppcp-notice-error {
+	border-left-color: #d63638;
+
+	.highlight {
+		color: #d63638;
+	}
+}
+
 // Box indented fields.
 @media screen and (min-width: 800px) {
 	.ppcp-settings-field {
@@ -77,6 +119,23 @@ $background-ident-color: #fbfbfb;
 
 			th, &.ppcp-settings-field-heading td  {
 				padding-left: 40px;
+				padding-right: 40px;
+			}
+
+			.ppcp-notice  {
+				margin-left: 40px;
+				margin-right: 10px;
+				padding: 1px 12px;
+
+				p {
+					margin: .5em 0;
+					padding: 2px;
+				}
+			}
+
+			.ppcp-notice-list {
+				list-style-type: disc;
+				padding-left: 20px;
 			}
 
 			th, td {
@@ -88,6 +147,12 @@ $background-ident-color: #fbfbfb;
 					border-top: 1px solid $background-ident-color;
 				}
 			}
+		}
+	}
+
+	.ppcp-settings-field-select {
+		p.description {
+			margin-bottom: 1em;
 		}
 	}
 }

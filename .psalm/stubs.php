@@ -25,6 +25,10 @@ if (!defined('ABSPATH')) {
 	define('ABSPATH', '');
 }
 
+if (!defined('PPCP_PAYPAL_BN_CODE')) {
+	define('PPCP_PAYPAL_BN_CODE', 'Woo_PPCP');
+}
+
 /**
  * Cancel the next occurrence of a scheduled action.
  *
@@ -55,3 +59,13 @@ function as_unschedule_action($hook, $args = array(), $group = '') {}
  * @return int The action ID.
  */
 function as_schedule_single_action( $timestamp, $hook, $args = array(), $group = '', $unique = false ) {}
+
+/**
+ * HTML API: WP_HTML_Tag_Processor class
+ */
+class WP_HTML_Tag_Processor {
+	public function __construct( $html ) {}
+	public function next_tag( $query = null ) {}
+	public function set_attribute( $name, $value ) {}
+	public function get_updated_html() {}
+}

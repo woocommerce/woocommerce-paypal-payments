@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -46,7 +47,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	public function run( ContainerInterface $c ): bool {
 
 		$this->initialize_ppec_compat_layer( $c );
-		$this->fix_site_ground_optimizer_compatibility( $c );
 		$this->initialize_tracking_compat_layer( $c );
 
 		$asset_loader = $c->get( 'compat.assets' );
@@ -59,7 +59,13 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		$this->migrate_smart_button_settings( $c );
 
 		$this->fix_page_builders();
+		$this->exclude_cache_plugins_js_minification( $c );
+		$this->set_elementor_checkout_context();
 
+		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
+		if ( $is_nyp_active ) {
+			$this->initialize_nyp_compat_layer();
+		}
 		return true;
 	}
 
@@ -85,24 +91,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				if ( is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
 					PPEC\DeactivateNote::init();
 				}
-			}
-		);
-
-	}
-
-	/**
-	 * Fixes the compatibility issue for <a href="https://wordpress.org/plugins/sg-cachepress/">SiteGround Optimizer plugin</a>.
-	 *
-	 * @link https://wordpress.org/plugins/sg-cachepress/
-	 *
-	 * @param ContainerInterface $c The Container.
-	 */
-	protected function fix_site_ground_optimizer_compatibility( ContainerInterface $c ): void {
-		$ppcp_script_names = $c->get( 'compat.plugin-script-names' );
-		add_filter(
-			'sgo_js_minify_exclude',
-			function ( array $scripts ) use ( $ppcp_script_names ) {
-				return array_merge( $scripts, $ppcp_script_names );
 			}
 		);
 	}
@@ -327,5 +315,99 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		$theme  = wp_get_theme();
 		$parent = $theme->parent();
 		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
+	}
+
+	/**
+	 * Sets the context for the Elementor checkout page.
+	 *
+	 * @return void
+	 */
+	protected function set_elementor_checkout_context(): void {
+		add_action(
+			'wp',
+			function() {
+				$page_id = get_the_ID();
+				if ( ! $page_id || ! CartCheckoutDetector::has_elementor_checkout( $page_id ) ) {
+					return;
+				}
+
+				add_filter(
+					'woocommerce_paypal_payments_context',
+					function ( string $context ): string {
+						// Default context.
+						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
+					}
+				);
+			}
+		);
+	}
+
+	/**
+	 * Excludes PayPal scripts from being minified by cache plugins.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function exclude_cache_plugins_js_minification( ContainerInterface $c ): void {
+		$ppcp_script_names      = $c->get( 'compat.plugin-script-names' );
+		$ppcp_script_file_names = $c->get( 'compat.plugin-script-file-names' );
+
+		// Siteground SG Optimize.
+		add_filter(
+			'sgo_js_minify_exclude',
+			function( array $scripts ) use ( $ppcp_script_names ) {
+				return array_merge( $scripts, $ppcp_script_names );
+			}
+		);
+
+		// LiteSpeed Cache.
+		add_filter(
+			'litespeed_optimize_js_excludes',
+			function( array $excluded_js ) use ( $ppcp_script_file_names ) {
+				return array_merge( $excluded_js, $ppcp_script_file_names );
+			}
+		);
+
+		// W3 Total Cache.
+		add_filter(
+			'w3tc_minify_js_do_tag_minification',
+			/**
+			 * Filter callback for 'w3tc_minify_js_do_tag_minification'.
+			 *
+			 * @param bool $do_tag_minification Whether to do tag minification.
+			 * @param string $script_tag The script tag.
+			 * @param string|null $file The file path.
+			 * @return bool Whether to do tag minification.
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( bool $do_tag_minification, string $script_tag, $file ) {
+				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
+					return false;
+				}
+				return $do_tag_minification;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Sets up the compatibility layer for PayPal Shipping callback & WooCommerce Name Your Price plugin.
+	 *
+	 * @return void
+	 */
+	protected function initialize_nyp_compat_layer(): void {
+		add_filter(
+			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
+			static function( string $total, array $cart_item ) {
+				if ( ! isset( $cart_item['nyp'] ) ) {
+					return $total;
+				}
+
+				return $cart_item['nyp'];
+			},
+			10,
+			2
+		);
 	}
 }

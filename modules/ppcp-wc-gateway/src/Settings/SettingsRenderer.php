@@ -269,6 +269,31 @@ class SettingsRenderer {
 	}
 
 	/**
+	 * Renders the html field.
+	 *
+	 * @param string $field The current field HTML.
+	 * @param string $key   The current key.
+	 * @param array  $config The configuration array.
+	 * @param string $value The current value.
+	 *
+	 * @return string
+	 */
+	public function render_html( $field, $key, $config, $value ): string {
+
+		if ( 'ppcp-html' !== $config['type'] ) {
+			return $field;
+		}
+
+		$html = sprintf(
+			'<div class="wc-settings-html %s">%s</div>',
+			esc_attr( implode( ' ', $config['classes'] ) ),
+			$config['html']
+		);
+
+		return $html;
+	}
+
+	/**
 	 * Renders the table row.
 	 *
 	 * @param array  $data Values of the row cells.
@@ -369,6 +394,12 @@ $data_rows_html
 			) {
 				continue;
 			}
+			if (
+				in_array( 'axo', $config['requirements'], true )
+				&& $this->api_shop_country !== 'US'
+			) {
+				continue;
+			}
 			$value        = $this->settings->has( $field ) ? $this->settings->get( $field ) : ( isset( $config['value'] ) ? $config['value']() : null );
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
@@ -406,11 +437,18 @@ $data_rows_html
 			</th>
 			<?php endif; ?>
 			<td colspan="<?php echo (int) $colspan; ?>">
-					<?php
-					'ppcp-text' === $config['type'] ?
-					$this->render_text( $config )
-					: woocommerce_form_field( $key, $config, $value );
-					?>
+				<?php
+				switch ( $config['type'] ) {
+					case 'ppcp-text':
+						$this->render_text( $config );
+						break;
+					case 'ppcp-preview':
+						$this->render_preview_block( $config );
+						break;
+					default:
+						woocommerce_form_field( $key, $config, $value );
+				}
+				?>
 
 				<?php if ( $description ) : ?>
 				<p class="<?php echo 'ppcp-heading' === $config['type'] ? '' : 'description'; ?>"><?php echo wp_kses_post( $description ); ?></p>
@@ -460,6 +498,43 @@ $data_rows_html
                     value = "' . esc_attr( $value ) . '"
                     > ';
 		}
+	}
+
+	/**
+	 * Renders a preview block to render the (live) preview of a payment button.
+	 *
+	 * @param array $config The configuration array.
+	 */
+	private function render_preview_block( array $config ) : void {
+		$id      = $config['preview']['id'] ?? '';
+		$type    = $config['preview']['type'] ?? 'button';
+		$message = $config['preview']['message'] ?? __( 'Button Styling Preview', 'woocommerce-paypal-payments' );
+		$classes = array( "ppcp-$type-preview" );
+		$which   = $config['preview']['apm'] ?? '';
+
+		// Layout class that limits the height and modifies the bottom-position of the box.
+		if ( ! empty( $config['preview']['single'] ) ) {
+			$classes[] = 'ppcp-preview-single';
+		}
+
+		// Preview boxes that display a specific button type are always displayed in the bottom
+		// edge of the relevant button's settings.
+		if ( $which && 'all' !== $which ) {
+			$classes[] = 'align-bottom';
+		}
+
+		printf(
+			'<div class="ppcp-preview %1$s" %5$s>
+				<h4>%2$s</h4>
+				<div id="%3$s" class="ppcp-%4$s-preview-inner"></div>
+			</div>',
+			esc_attr( implode( ' ', $classes ) ), // 1
+			esc_html( $message ), // 2
+			esc_attr( $id ), // 3
+			esc_attr( $type ), // 4
+			// Used by JS to determine which preview buttons are displayed in the box:
+			$which ? 'data-ppcp-preview-block="' . esc_attr( $which ) . '"' : '' // 5
+		);
 	}
 
 	/**

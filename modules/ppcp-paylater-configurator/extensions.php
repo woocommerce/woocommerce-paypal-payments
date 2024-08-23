@@ -78,6 +78,11 @@ return array(
 			unset( $fields[ $old_field ] );
 		}
 
+		// If vaulting is enabled, remove the button preview box from PayLater.
+		if ( $vault_enabled ) {
+			unset( $fields['pay_later_button_preview'] );
+		}
+
 		return $fields;
 	},
 );

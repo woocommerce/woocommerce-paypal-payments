@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -79,6 +80,13 @@ class AxoManager {
 	private $session_handler;
 
 	/**
+	 * The WcGateway module URL.
+	 *
+	 * @var string
+	 */
+	private $wcgateway_module_url;
+
+	/**
 	 * AxoManager constructor.
 	 *
 	 * @param string          $module_url The URL to the module.
@@ -89,6 +97,7 @@ class AxoManager {
 	 * @param SettingsStatus  $settings_status The Settings status helper.
 	 * @param string          $currency 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
+	 * @param string          $wcgateway_module_url The WcGateway module URL.
 	 */
 	public function __construct(
 		string $module_url,
@@ -98,17 +107,19 @@ class AxoManager {
 		Environment $environment,
 		SettingsStatus $settings_status,
 		string $currency,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		string $wcgateway_module_url
 	) {
 
-		$this->module_url      = $module_url;
-		$this->version         = $version;
-		$this->session_handler = $session_handler;
-		$this->settings        = $settings;
-		$this->environment     = $environment;
-		$this->settings_status = $settings_status;
-		$this->currency        = $currency;
-		$this->logger          = $logger;
+		$this->module_url           = $module_url;
+		$this->version              = $version;
+		$this->session_handler      = $session_handler;
+		$this->settings             = $settings;
+		$this->environment          = $environment;
+		$this->settings_status      = $settings_status;
+		$this->currency             = $currency;
+		$this->logger               = $logger;
+		$this->wcgateway_module_url = $wcgateway_module_url;
 	}
 
 	/**
@@ -151,14 +162,14 @@ class AxoManager {
 	 */
 	private function script_data() {
 		return array(
-			'environment' => array(
+			'environment'               => array(
 				'is_sandbox' => $this->environment->current_environment() === 'sandbox',
 			),
-			'widgets'     => array(
+			'widgets'                   => array(
 				'email' => 'render',
 			),
-			'insights'    => array(
-				'enabled'    => true,
+			'insights'                  => array(
+				'enabled'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>
 					substr(
@@ -171,6 +182,43 @@ class AxoManager {
 					'value'         => WC()->cart->get_total( 'numeric' ),
 				),
 			),
+			'style_options'             => array(
+				'root'  => array(
+					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
+					'errorColor'      => $this->settings->has( 'axo_style_root_error_color' ) ? $this->settings->get( 'axo_style_root_error_color' ) : '',
+					'fontFamily'      => $this->settings->has( 'axo_style_root_font_family' ) ? $this->settings->get( 'axo_style_root_font_family' ) : '',
+					'textColorBase'   => $this->settings->has( 'axo_style_root_text_color_base' ) ? $this->settings->get( 'axo_style_root_text_color_base' ) : '',
+					'fontSizeBase'    => $this->settings->has( 'axo_style_root_font_size_base' ) ? $this->settings->get( 'axo_style_root_font_size_base' ) : '',
+					'padding'         => $this->settings->has( 'axo_style_root_padding' ) ? $this->settings->get( 'axo_style_root_padding' ) : '',
+					'primaryColor'    => $this->settings->has( 'axo_style_root_primary_color' ) ? $this->settings->get( 'axo_style_root_primary_color' ) : '',
+				),
+				'input' => array(
+					'backgroundColor'  => $this->settings->has( 'axo_style_input_bg_color' ) ? $this->settings->get( 'axo_style_input_bg_color' ) : '',
+					'borderRadius'     => $this->settings->has( 'axo_style_input_border_radius' ) ? $this->settings->get( 'axo_style_input_border_radius' ) : '',
+					'borderColor'      => $this->settings->has( 'axo_style_input_border_color' ) ? $this->settings->get( 'axo_style_input_border_color' ) : '',
+					'borderWidth'      => $this->settings->has( 'axo_style_input_border_width' ) ? $this->settings->get( 'axo_style_input_border_width' ) : '',
+					'textColorBase'    => $this->settings->has( 'axo_style_input_text_color_base' ) ? $this->settings->get( 'axo_style_input_text_color_base' ) : '',
+					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
+				),
+			),
+			'name_on_card'              => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'woocommerce'               => array(
+				'states' => array(
+					'US' => WC()->countries->get_states( 'US' ),
+					'CA' => WC()->countries->get_states( 'CA' ),
+				),
+			),
+			'icons_directory'           => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
+			'module_url'                => untrailingslashit( $this->module_url ),
+			'ajax'                      => array(
+				'frontend_logger' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+				),
+			),
+			'logging_enabled'           => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
+			'wp_debug'                  => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'billing_email_button_text' => __( 'Continue', 'woocommerce-paypal-payments' ),
 		);
 	}
 
@@ -190,8 +238,6 @@ class AxoManager {
 	 * Renders the HTML for the AXO submit button.
 	 */
 	public function render_checkout_button(): void {
-		$id = 'ppcp-axo-submit-button-container';
-
 		/**
 		 * The WC filter returning the WC order button text.
 		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
@@ -199,10 +245,9 @@ class AxoManager {
 		$label = apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) );
 
 		printf(
-			'<div id="%1$s" style="display: none;">
-				<button type="button" class="button alt ppcp-axo-order-button">%2$s</button>
+			'<div id="ppcp-axo-submit-button-container" style="display: none;">
+				<button id="place_order" type="button" class="button alt ppcp-axo-order-button wp-element-button">%1$s</button>
 			</div>',
-			esc_attr( $id ),
 			esc_html( $label )
 		);
 	}
