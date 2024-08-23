@@ -326,14 +326,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	}
 
 	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
-	}
-
-	/**
 	 * Condition to evaluate if Credit Card gateway should be hidden.
 	 *
 	 * @param array              $methods WC payment methods.

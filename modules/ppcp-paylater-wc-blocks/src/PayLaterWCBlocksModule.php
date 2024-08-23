@@ -282,12 +282,4 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 			);
 		}
 	}
-
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return void
-	 */
-	public function getKey() {
-	}
 }

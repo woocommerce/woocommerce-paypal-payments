@@ -150,12 +150,4 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 
 		return true;
 	}
-
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
-	}
 }

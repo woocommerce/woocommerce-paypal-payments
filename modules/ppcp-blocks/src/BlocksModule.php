@@ -127,13 +127,4 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 		return true;
 	}
-
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
-
-	}
 }
