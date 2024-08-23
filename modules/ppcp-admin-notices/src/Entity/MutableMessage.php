@@ -117,4 +117,20 @@ class MutableMessage extends Message {
 			update_user_meta( $user_id, $this->nag_id( true ), time() );
 		}
 	}
+
+	/**
+	 * Removes all user-meta flags for muted messages.
+	 *
+	 * @return void
+	 */
+	public static function clear_all() : void {
+		global $wpdb;
+
+		$wpdb->query(
+			$wpdb->prepare(
+				"DELETE FROM $wpdb->usermeta WHERE meta_key LIKE %s",
+				$wpdb->esc_like( self::USER_META_PREFIX ) . '%'
+			)
+		);
+	}
 }

@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
 use WooCommerce\PayPalCommerce\AdminNotices\Renderer\RendererInterface;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\MutableMessage;
 
 /**
  * Class AdminNotices
@@ -94,6 +95,13 @@ class AdminNotices implements ModuleInterface {
 				assert( $endpoint instanceof MuteMessageEndpoint );
 
 				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_uninstall',
+			static function () {
+				MutableMessage::clear_all();
 			}
 		);
 	}
