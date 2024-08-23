@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AdminNotices\Entity
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AdminNotices\Entity;
 
@@ -41,11 +41,11 @@ class Message {
 	private $type;
 
 	/**
-	 * Whether the message is dismissable.
+	 * Whether the message is dismissible.
 	 *
 	 * @var bool
 	 */
-	private $dismissable;
+	private $dismissible;
 
 	/**
 	 * The wrapper selector that will contain the notice.
@@ -59,14 +59,14 @@ class Message {
 	 *
 	 * @param string $message     The message text.
 	 * @param string $type        The message type.
-	 * @param bool   $dismissable Whether the message is dismissable.
+	 * @param bool   $dismissible Whether the message is dismissible.
 	 * @param string $wrapper     The wrapper selector that will contain the notice.
 	 * @param string $nag_id      ID of a nag message that can be permanently muted by the user.
 	 */
-	public function __construct( string $message, string $type, bool $dismissable = true, string $wrapper = '', string $nag_id = '' ) {
+	public function __construct( string $message, string $type, bool $dismissible = true, string $wrapper = '', string $nag_id = '' ) {
 		$this->type        = $type;
 		$this->message     = $message;
-		$this->dismissable = $dismissable;
+		$this->dismissible = $dismissible;
 		$this->wrapper     = $wrapper;
 		$this->nag_id      = sanitize_key( $nag_id );
 	}
@@ -76,7 +76,7 @@ class Message {
 	 *
 	 * @return string
 	 */
-	public function message(): string {
+	public function message() : string {
 		return $this->message;
 	}
 
@@ -85,17 +85,17 @@ class Message {
 	 *
 	 * @return string
 	 */
-	public function type(): string {
+	public function type() : string {
 		return $this->type;
 	}
 
 	/**
-	 * Returns whether the message is dismissable.
+	 * Returns whether the message is dismissible.
 	 *
 	 * @return bool
 	 */
-	public function is_dismissable(): bool {
-		return $this->dismissable;
+	public function is_dismissible() : bool {
+		return $this->dismissible;
 	}
 
 	/**
@@ -104,7 +104,7 @@ class Message {
 	 * @return bool
 	 */
 	public function is_mutable() : bool {
-		return $this->dismissable && $this->nag_id;
+		return $this->dismissible && $this->nag_id;
 	}
 
 	/**
@@ -112,7 +112,7 @@ class Message {
 	 *
 	 * @return string
 	 */
-	public function wrapper(): string {
+	public function wrapper() : string {
 		return $this->wrapper;
 	}
 
@@ -136,11 +136,11 @@ class Message {
 	 *
 	 * @return array
 	 */
-	public function to_array(): array {
+	public function to_array() : array {
 		return array(
 			'type'        => $this->type,
 			'message'     => $this->message,
-			'dismissable' => $this->dismissable,
+			'dismissible' => $this->dismissible,
 			'wrapper'     => $this->wrapper,
 			'nag_id'      => $this->nag_id,
 		);
@@ -157,7 +157,7 @@ class Message {
 		return new Message(
 			(string) ( $data['message'] ?? '' ),
 			(string) ( $data['type'] ?? '' ),
-			(bool) ( $data['dismissable'] ?? true ),
+			(bool) ( $data['dismissible'] ?? true ),
 			(string) ( $data['wrapper'] ?? '' ),
 			(string) ( $data['nag_id'] ?? '' )
 		);

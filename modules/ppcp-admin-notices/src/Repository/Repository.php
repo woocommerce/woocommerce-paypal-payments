@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AdminNotices\Repository
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AdminNotices\Repository;
 
@@ -80,9 +80,10 @@ class Repository implements RepositoryInterface {
 	 * Adds a message to persist between page reloads.
 	 *
 	 * @param Message $message The message.
+	 *
 	 * @return void
 	 */
-	public function persist( Message $message ): void {
+	public function persist( Message $message ) : void {
 		$persisted_notices = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();
 
 		$persisted_notices[] = $message->to_array();
@@ -95,7 +96,7 @@ class Repository implements RepositoryInterface {
 	 *
 	 * @return array|Message[]
 	 */
-	public function get_persisted_and_clear(): array {
+	public function get_persisted_and_clear() : array {
 		$notices = array();
 
 		$persisted_data = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();
