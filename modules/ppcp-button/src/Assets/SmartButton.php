@@ -51,6 +51,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WC_Shipping_Method;
+use WC_Cart;
 
 /**
  * Class SmartButton
@@ -1086,6 +1088,22 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
+	 * Whether the current cart contains a product that requires physical shipping.
+	 *
+	 * @return bool True, if any cart item requires shipping.
+	 */
+	private function need_shipping() : bool {
+		/**
+		 * Cart instance; might be null, esp. in customizer or in Block Editor.
+		 *
+		 * @var null|WC_Cart $cart
+		 */
+		$cart = WC()->cart;
+
+		return $cart && $cart->needs_shipping();
+	}
+
+	/**
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
@@ -1297,7 +1315,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
-			'needShipping'                            => WC()->cart->needs_shipping(),
+			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
