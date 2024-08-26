@@ -1183,7 +1183,8 @@ return array(
 	'wcgateway.helper.fees-updater'                        => static function ( ContainerInterface $container ): FeesUpdater {
 		return new FeesUpdater(
 			$container->get( 'api.endpoint.orders' ),
-			$container->get( 'api.factory.capture' )
+			$container->get( 'api.factory.capture' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
