@@ -1,24 +1,21 @@
 import DismissibleMessage from './DismissibleMessage';
 
 class AdminMessageHandler {
-	#notices = new Map();
-
 	#config = {};
 
 	constructor( config ) {
 		this.#config = config;
-		this.setupMessages();
+		this.setupDismissibleMessages();
 	}
 
 	/**
 	 * Finds all mutable admin messages in the DOM and initializes them.
 	 */
-	setupMessages() {
+	setupDismissibleMessages() {
 		const muteConfig = this.#config?.ajax?.mute_message;
 
 		const addDismissibleMessage = ( element ) => {
-			const message = new DismissibleMessage( element, muteConfig );
-			this.#notices.set( message.id, message );
+			new DismissibleMessage( element, muteConfig );
 		};
 
 		document
