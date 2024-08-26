@@ -26,7 +26,7 @@ export default class DismissibleMessage {
 			);
 		}
 
-		this.#onDismissClickProxy = this.#onDismissClickProxy.bind( this );
+		this.onDismissClickProxy = this.onDismissClickProxy.bind( this );
 		this.enableCloseButtons = this.enableCloseButtons.bind( this );
 		this.disableCloseButtons = this.disableCloseButtons.bind( this );
 		this.dismiss = this.dismiss.bind( this );
@@ -51,7 +51,7 @@ export default class DismissibleMessage {
 	addEventListeners() {
 		this.#notice.addEventListener(
 			'click',
-			this.#onDismissClickProxy,
+			this.onDismissClickProxy,
 			true
 		);
 	}
@@ -59,12 +59,12 @@ export default class DismissibleMessage {
 	removeEventListeners() {
 		this.#notice.removeEventListener(
 			'click',
-			this.#onDismissClickProxy,
+			this.onDismissClickProxy,
 			true
 		);
 	}
 
-	#onDismissClickProxy( event ) {
+	onDismissClickProxy( event ) {
 		if ( ! event.target?.matches( 'button.notice-dismiss' ) ) {
 			return;
 		}

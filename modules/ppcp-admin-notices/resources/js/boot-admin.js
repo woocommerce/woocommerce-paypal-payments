@@ -15,13 +15,10 @@ class AdminMessageHandler {
 	 */
 	setupMessages() {
 		const muteConfig = this.#config?.ajax?.mute_message;
+
 		const addDismissibleMessage = ( element ) => {
-			try {
-				const message = new DismissibleMessage( element, muteConfig );
-				this.#notices.set( message.id, message );
-			} catch ( ex ) {
-				// Skip invalid elements, continue with next notice.
-			}
+			const message = new DismissibleMessage( element, muteConfig );
+			this.#notices.set( message.id, message );
 		};
 
 		document
