@@ -93,6 +93,12 @@ class GooglepayModule implements ModuleInterface {
 					static function () use ( $c, $button ) {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
+
+						/*
+						 * TODO: When PayLater is disabled and we're in "continuation" context, then no JS is enqueued.
+						 *       Find a solution to enqueue the CheckoutBootstrap module in that situation.
+						 */
+
 						if ( $smart_button->should_load_ppcp_script() ) {
 							$button->enqueue();
 							return;
