@@ -75,20 +75,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 
 return array(
-	'wcgateway.plugin-version'                             => static function( ContainerInterface $container ): string {
-		if ( ! function_exists( 'get_plugin_data' ) ) {
-			/**
-			 * Skip check for WP files.
-			 *
-			 * @psalm-suppress MissingFile
-			 */
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
-
-		$plugin_data              = get_plugin_data( dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php', false );
-
-		return $plugin_data['Version'] ?? '';
-	},
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
@@ -797,7 +783,7 @@ return array(
 				'desc_tip'     => true,
 				'label'        => __( 'Moves the alternative payment methods from the PayPal gateway into their own dedicated gateways.', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
-				'default'      => $container->get( 'wcgateway.plugin-version' ) > '2.8.3',
+				'default'      => true,
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
