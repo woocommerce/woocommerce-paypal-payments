@@ -21,12 +21,11 @@ class Repository implements RepositoryInterface {
 	const PERSISTED_NOTICES_OPTION = 'woocommerce_ppcp-admin-notices';
 
 	/**
-	 * Returns an unfiltered list of all Message instances that were registered
-	 * in the current request.
+	 * Returns current messages to display, which excludes muted messages.
 	 *
 	 * @return Message[]
 	 */
-	protected function get_all_messages() : array {
+	public function current_message() : array {
 		return array_filter(
 			/**
 			 * Returns the list of admin messages.
@@ -36,50 +35,11 @@ class Repository implements RepositoryInterface {
 				array()
 			),
 			function ( $element ) : bool {
-				return is_a( $element, Message::class );
-			}
-		);
-	}
-
-	/**
-	 * Returns current messages to display, which excludes muted messages.
-	 *
-	 * @return Message[]
-	 */
-	public function current_message() : array {
-		return array_filter(
-			$this->get_all_messages(),
-			function ( Message $element ) : bool {
 				if ( $element instanceof PersistentMessage ) {
 					return ! $element->is_muted();
 				}
 
-				return true;
-			}
-		);
-	}
-
-	/**
-	 * Finds messages with a given message_id. As the message_id should be unique, this
-	 * method should return an array containing 0 or 1 Message instance.
-	 *
-	 * All messages that can be muted must be registered in `wp_doing_ajax()`
-	 * requests, otherwise the Ajax endpoint cannot mute them!
-	 *
-	 * @param string $message_id Defines the message to retrieve.
-	 *
-	 * @return PersistentMessage[]
-	 */
-	public function get_by_id( string $message_id ) : array {
-		$message_id = sanitize_title( $message_id );
-		if ( ! $message_id ) {
-			return array();
-		}
-
-		return array_filter(
-			$this->get_all_messages(),
-			function ( Message $element ) use ( $message_id ) : bool {
-				return $element instanceof PersistentMessage && $message_id === $element->id();
+				return is_a( $element, Message::class );
 			}
 		);
 	}
