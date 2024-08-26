@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\AdminNotices;
 
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -17,7 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
 use WooCommerce\PayPalCommerce\AdminNotices\Renderer\RendererInterface;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\MutableMessage;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class AdminNotices
@@ -101,7 +100,7 @@ class AdminNotices implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_uninstall',
 			static function () {
-				MutableMessage::clear_all();
+				PersistentMessage::clear_all();
 			}
 		);
 	}

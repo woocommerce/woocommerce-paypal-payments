@@ -1,4 +1,4 @@
-export default class AdminMessage {
+export default class DismissibleMessage {
 	#notice = null;
 
 	#muteConfig = {};
@@ -10,9 +10,23 @@ export default class AdminMessage {
 	constructor( noticeElement, muteConfig ) {
 		this.#notice = noticeElement;
 		this.#muteConfig = muteConfig;
-		this.#msgId = noticeElement.dataset.ppcpMsgId;
+		this.#msgId = this.#notice.dataset.ppcpMsgId;
 
-		this.onDismissClickProxy = this.onDismissClickProxy.bind( this );
+		// Quick sanitation.
+		if ( ! this.#muteConfig?.endpoint || ! this.#muteConfig?.nonce ) {
+			console.error( 'Ajax config (Mute):', this.#muteConfig );
+			throw new Error(
+				'Invalid ajax configuration for DismissibleMessage. Nonce/Endpoint missing'
+			);
+		}
+		if ( ! this.#msgId ) {
+			console.error( 'Notice Element:', this.#notice );
+			throw new Error(
+				'Invalid notice element passed to DismissibleMessage. No MsgId defined'
+			);
+		}
+
+		this.#onDismissClickProxy = this.#onDismissClickProxy.bind( this );
 		this.enableCloseButtons = this.enableCloseButtons.bind( this );
 		this.disableCloseButtons = this.disableCloseButtons.bind( this );
 		this.dismiss = this.dismiss.bind( this );
@@ -37,7 +51,7 @@ export default class AdminMessage {
 	addEventListeners() {
 		this.#notice.addEventListener(
 			'click',
-			this.onDismissClickProxy,
+			this.#onDismissClickProxy,
 			true
 		);
 	}
@@ -45,12 +59,12 @@ export default class AdminMessage {
 	removeEventListeners() {
 		this.#notice.removeEventListener(
 			'click',
-			this.onDismissClickProxy,
+			this.#onDismissClickProxy,
 			true
 		);
 	}
 
-	onDismissClickProxy( event ) {
+	#onDismissClickProxy( event ) {
 		if ( ! event.target?.matches( 'button.notice-dismiss' ) ) {
 			return;
 		}
@@ -82,11 +96,19 @@ export default class AdminMessage {
 		this.#notice.appendChild( spinner );
 	}
 
+	/**
+	 * Mute the message (on server side) and dismiss it (in browser).
+	 */
 	muteMessage() {
-		this.ajaxMuteMessage().then( this.dismiss );
+		this.#ajaxMuteMessage().then( this.dismiss );
 	}
 
-	ajaxMuteMessage() {
+	/**
+	 * Start an ajax request that marks the message as "muted" on server side.
+	 *
+	 * @return {Promise<any>} Resolves after the ajax request is completed.
+	 */
+	#ajaxMuteMessage() {
 		this.showSpinner();
 
 		const ajaxData = {
@@ -103,6 +125,9 @@ export default class AdminMessage {
 		} ).then( ( response ) => response.json() );
 	}
 
+	/**
+	 * Proxy to the original dismiss logic provided by WP core JS.
+	 */
 	dismiss() {
 		this.removeEventListeners();
 		this.enableCloseButtons();

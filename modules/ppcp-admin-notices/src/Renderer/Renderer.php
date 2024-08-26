@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\AdminNotices\Renderer;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\RepositoryInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class Renderer
@@ -69,8 +70,12 @@ class Renderer implements RendererInterface {
 		$messages = $this->repository->current_message();
 
 		foreach ( $messages as $message ) {
-			if ( $message->is_mutable() ) {
+			$mute_message_id = '';
+
+			if ( $message instanceof PersistentMessage ) {
 				$this->can_mute_message = true;
+
+				$mute_message_id = $message->id();
 			}
 
 			printf(
@@ -78,7 +83,8 @@ class Renderer implements RendererInterface {
 				$message->type(),
 				( $message->is_dismissible() ) ? 'is-dismissible' : '',
 				( $message->wrapper() ? sprintf( 'data-ppcp-wrapper="%s"', esc_attr( $message->wrapper() ) ) : '' ),
-				( $message->is_mutable() ? sprintf( 'data-ppcp-msg-id="%s"', esc_attr( $message->nag_id() ) ) : '' ),
+				// Use `empty()` in condition, to avoid false phpcs warning.
+				( empty( $mute_message_id ) ? '' : sprintf( 'data-ppcp-msg-id="%s"', esc_attr( $mute_message_id ) ) ),
 				wp_kses_post( $message->message() )
 			);
 		}

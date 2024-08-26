@@ -68,12 +68,12 @@ class MuteMessageEndpoint {
 			wp_send_json_error();
 		}
 
-		$nag_id = $data['id'] ?? '';
-		if ( ! $nag_id || ! is_string( $nag_id ) ) {
+		$id = $data['id'] ?? '';
+		if ( ! $id || ! is_string( $id ) ) {
 			wp_send_json_error();
 		}
 
-		$messages = $this->message_repository->get_by_nag_id( $nag_id );
+		$messages = $this->message_repository->get_by_id( $id );
 
 		foreach ( $messages as $message ) {
 			$message->mute();

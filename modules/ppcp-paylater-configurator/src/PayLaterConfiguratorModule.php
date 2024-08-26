@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\MutableMessage;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class PayLaterConfiguratorModule
@@ -203,12 +203,11 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 					'</a>'
 				);
 
-				$notices[] = new MutableMessage(
+				$notices[] = new PersistentMessage(
+					'pay-later-messaging',
 					$message,
 					'info',
-					true,
-					'ppcp-notice-wrapper',
-					'pay-later-messaging'
+					'ppcp-notice-wrapper'
 				);
 
 				return $notices;

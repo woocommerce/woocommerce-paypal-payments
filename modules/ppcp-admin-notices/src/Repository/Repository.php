@@ -10,7 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AdminNotices\Repository;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\MutableMessage;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class Repository
@@ -50,7 +50,7 @@ class Repository implements RepositoryInterface {
 		return array_filter(
 			$this->get_all_messages(),
 			function ( Message $element ) : bool {
-				if ( $element instanceof MutableMessage ) {
+				if ( $element instanceof PersistentMessage ) {
 					return ! $element->is_muted();
 				}
 
@@ -60,26 +60,26 @@ class Repository implements RepositoryInterface {
 	}
 
 	/**
-	 * Finds messages with a given nag_id. As the nag_id should be unique, this
+	 * Finds messages with a given message_id. As the message_id should be unique, this
 	 * method should return an array containing 0 or 1 Message instance.
 	 *
 	 * All messages that can be muted must be registered in `wp_doing_ajax()`
 	 * requests, otherwise the Ajax endpoint cannot mute them!
 	 *
-	 * @param string $nag_id Defines the message to retrieve.
+	 * @param string $message_id Defines the message to retrieve.
 	 *
-	 * @return MutableMessage[]
+	 * @return PersistentMessage[]
 	 */
-	public function get_by_nag_id( string $nag_id ) : array {
-		$nag_id = sanitize_title( $nag_id );
-		if ( ! $nag_id ) {
+	public function get_by_id( string $message_id ) : array {
+		$message_id = sanitize_title( $message_id );
+		if ( ! $message_id ) {
 			return array();
 		}
 
 		return array_filter(
 			$this->get_all_messages(),
-			function ( Message $element ) use ( $nag_id ) : bool {
-				return $element instanceof MutableMessage && $nag_id === $element->nag_id();
+			function ( Message $element ) use ( $message_id ) : bool {
+				return $element instanceof PersistentMessage && $message_id === $element->id();
 			}
 		);
 	}
