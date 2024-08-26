@@ -25,7 +25,7 @@ jobs:
 
   create_archive:
     needs: check_version
-    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@feature/prefixed-archives
+    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@feature/PROD-171-rector-archive
     with:
       PHP_VERSION: 7.2
       PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
