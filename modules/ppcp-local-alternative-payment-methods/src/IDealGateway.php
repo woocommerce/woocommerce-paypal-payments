@@ -119,6 +119,13 @@ class IDealGateway extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 				'description' => __( 'This controls the description which the user sees during checkout.', 'woocommerce-paypal-payments' ),
 			),
+			'bic'         => array(
+				'title'       => __( 'BIC', 'woocommerce-paypal-payments' ),
+				'type'        => 'text',
+				'default'     => '',
+				'desc_tip'    => true,
+				'description' => __( 'Business identification number (BIC) to identify the specific bank.', 'woocommerce-paypal-payments' ),
+			),
 		);
 	}
 
@@ -139,7 +146,10 @@ class IDealGateway extends WC_Payment_Gateway {
 			'country_code' => $wc_order->get_billing_country(),
 			'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
 		);
-		// TODO get "bic" from gateway settings.
+		$bic            = $this->get_option( 'bic' ) ?? '';
+		if ( $bic ) {
+			$payment_source['bic'] = $bic;
+		}
 
 		$request_body = array(
 			'intent'                 => 'CAPTURE',
