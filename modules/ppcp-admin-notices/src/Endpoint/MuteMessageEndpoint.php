@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\AdminNotices\Endpoint;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class MuteMessageEndpoint
@@ -73,11 +74,15 @@ class MuteMessageEndpoint {
 			wp_send_json_error();
 		}
 
-		$messages = $this->message_repository->get_by_id( $id );
-
-		foreach ( $messages as $message ) {
-			$message->mute();
-		}
+		/**
+		 * Create a dummy message with the provided ID and mark it as muted.
+		 *
+		 * This helps to keep code cleaner and make the mute-endpoint more reliable,
+		 * as other modules do not need to register the PersistentMessage on every
+		 * ajax request.
+		 */
+		$message = new PersistentMessage( $id, '', '', '' );
+		$message->mute();
 
 		wp_send_json_success();
 	}
