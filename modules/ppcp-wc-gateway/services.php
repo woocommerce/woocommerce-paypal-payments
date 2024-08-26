@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -1178,6 +1179,12 @@ return array(
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$logger            = $container->get( 'woocommerce.logger.woocommerce' );
 		return new RefundFeesUpdater( $order_endpoint, $logger );
+	},
+	'wcgateway.helper.fees-updater'                        => static function ( ContainerInterface $container ): FeesUpdater {
+		return new FeesUpdater(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.capture' )
+		);
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {

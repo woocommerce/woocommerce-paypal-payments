@@ -11,10 +11,14 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -157,6 +161,25 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 					add_filter( 'woocommerce_order_has_status', '__return_true' );
 				}
 			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
+			function( WC_Order $wc_order, string $order_id ) use ( $c ) {
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				if (
+				! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods )
+				) {
+					return;
+				}
+
+				$fees_updater = $c->get( 'wcgateway.helper.fees-updater' );
+				assert( $fees_updater instanceof FeesUpdater );
+
+				$fees_updater->update( $order_id, $wc_order );
+			},
+			10,
+			2
 		);
 	}
 

@@ -160,4 +160,47 @@ class Orders {
 
 		return $response;
 	}
+
+	/**
+	 * Get PayPal order by id.
+	 *
+	 * @param string $id PayPal order ID.
+	 * @return array
+	 * @throws RuntimeException If something went wrong with the request.
+	 * @throws PayPalApiException If something went wrong with the PayPal API request.
+	 */
+	public function order( string $id ): array {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id;
+
+		$args = array(
+			'headers' => array(
+				'Authorization'     => 'Bearer ' . $bearer->token(),
+				'Content-Type'      => 'application/json',
+				'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( $response instanceof WP_Error ) {
+			throw new RuntimeException( $response->get_error_message() );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( $status_code !== 200 ) {
+			$body = json_decode( $response['body'] );
+
+			$message = $body->details[0]->description ?? '';
+			if ( $message ) {
+				throw new RuntimeException( $message );
+			}
+
+			throw new PayPalApiException(
+				$body,
+				$status_code
+			);
+		}
+
+		return $response;
+	}
 }
