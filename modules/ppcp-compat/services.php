@@ -77,6 +77,9 @@ return array(
 	'compat.ywot.is_supported_plugin_version_active' => function (): bool {
 		return function_exists( 'yith_ywot_init' );
 	},
+	'compat.dhl.is_supported_plugin_version_active'  => function (): bool {
+		return function_exists( 'PR_DHL' );
+	},
 	'compat.shipstation.is_supported_plugin_version_active' => function (): bool {
 		return function_exists( 'woocommerce_shipstation_init' );
 	},
@@ -85,6 +88,9 @@ return array(
 	},
 	'compat.nyp.is_supported_plugin_version_active'  => function (): bool {
 		return function_exists( 'wc_nyp_init' );
+	},
+	'compat.wc_bookings.is_supported_plugin_version_active' => function (): bool {
+		return class_exists( 'WC_Bookings' );
 	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {

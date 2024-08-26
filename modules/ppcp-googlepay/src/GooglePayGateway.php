@@ -92,6 +92,11 @@ class GooglePayGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
+		$this->supports = array(
+			'refunds',
+			'products',
+		);
+
 		$this->method_title       = __( 'Google Pay (via PayPal) ', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'The separate payment gateway with the Google Pay button. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' );
 
