@@ -525,6 +525,11 @@ class GooglepayButton extends PaymentButton {
 						updatedData.total,
 						updatedData.shipping_fee
 					);
+
+					// This page contains a real cart and potentially a form for shipping options.
+					this.syncShippingOptionWithForm(
+						paymentData?.shippingOptionData?.id
+					);
 				} else {
 					transactionInfo.shippingFee = this.getShippingCosts(
 						paymentData?.shippingOptionData?.id,
@@ -727,6 +732,55 @@ class GooglepayButton extends PaymentButton {
 		this.log( 'processPaymentResponse', response );
 
 		return response;
+	}
+
+	/**
+	 * Updates the shipping option in the checkout form, if a form with shipping options is
+	 * detected.
+	 *
+	 * @param {string} shippingOption - The shipping option ID, e.g. "flat_rate:4".
+	 * @return {boolean} - True if a shipping option was found and selected, false otherwise.
+	 */
+	syncShippingOptionWithForm( shippingOption ) {
+		const wrappers = [
+			// Classic checkout, Classic cart.
+			'.woocommerce-shipping-methods',
+			// Block checkout.
+			'.wc-block-components-shipping-rates-control',
+			// Block cart.
+			'.wc-block-components-totals-shipping',
+		];
+
+		const sanitizedShippingOption = shippingOption.replace( /"/g, '' );
+
+		// Check for radio buttons with shipping options.
+		for ( const wrapper of wrappers ) {
+			const selector = `${ wrapper } input[type="radio"][value="${ sanitizedShippingOption }"]`;
+			const radioInput = document.querySelector( selector );
+
+			if ( radioInput ) {
+				radioInput.click();
+				return true;
+			}
+		}
+
+		// Check for select list with shipping options.
+		for ( const wrapper of wrappers ) {
+			const selector = `${ wrapper } select option[value="${ sanitizedShippingOption }"]`;
+			const selectOption = document.querySelector( selector );
+
+			if ( selectOption ) {
+				const selectElement = selectOption.closest( 'select' );
+
+				if ( selectElement ) {
+					selectElement.value = sanitizedShippingOption;
+					selectElement.dispatchEvent( new Event( 'change' ) );
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }
 
