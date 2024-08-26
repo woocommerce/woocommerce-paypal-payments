@@ -1,3 +1,5 @@
+/* global PayPalCommerceGateway */
+
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 import { setVisible, setVisibleByClass } from '../Helper/Hiding';
 import {
@@ -7,6 +9,7 @@ import {
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import BootstrapHelper from '../Helper/BootstrapHelper';
+import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
 import {
 	ButtonEvents,
 	dispatchButtonEvent,
@@ -165,7 +168,7 @@ class CheckoutBootstap {
 			PayPalCommerceGateway.vault_v3_enabled
 		) {
 			this.renderer.render(
-				actionHandler.addPaymentMethodConfiguration(),
+				addPaymentMethodConfiguration( PayPalCommerceGateway ),
 				{},
 				actionHandler.configuration()
 			);
@@ -196,12 +199,15 @@ class CheckoutBootstap {
 		);
 		const isGooglePayMethod =
 			currentPaymentMethod === PaymentMethods.GOOGLEPAY;
+		const isApplePayMethod =
+			currentPaymentMethod === PaymentMethods.APPLEPAY;
 		const isSavedCard = isCard && isSavedCardSelected();
 		const isNotOurGateway =
 			! isPaypal &&
 			! isCard &&
 			! isSeparateButtonGateway &&
-			! isGooglePayMethod;
+			! isGooglePayMethod &&
+			! isApplePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
 			PayPalCommerceGateway.vaulted_paypal_email !== '';
@@ -255,6 +261,8 @@ class CheckoutBootstap {
 			event: ButtonEvents.RENDER,
 			paymentMethod: currentPaymentMethod,
 		} );
+
+		setVisible( '#ppc-button-ppcp-applepay', isApplePayMethod );
 
 		document.body.dispatchEvent( new Event( 'ppcp_checkout_rendered' ) );
 	}

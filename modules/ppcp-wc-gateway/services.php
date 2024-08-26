@@ -71,6 +71,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -198,6 +199,7 @@ return array(
 				Settings::PAY_LATER_TAB_ID,
 				AxoGateway::ID,
 				GooglePayGateway::ID,
+				ApplePayGateway::ID,
 			),
 			true
 		);
@@ -220,6 +222,7 @@ return array(
 				Settings::PAY_LATER_TAB_ID,
 				Settings::CONNECTION_TAB_ID,
 				GooglePayGateway::ID,
+				ApplePayGateway::ID,
 			),
 			true
 		);
@@ -1411,10 +1414,10 @@ return array(
 		return $label;
 	},
 	'wcgateway.enable-dcc-url-sandbox'                     => static function ( ContainerInterface $container ): string {
-		return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
+		return 'https://www.sandbox.paypal.com/bizsignup/entry?product=ppcp';
 	},
 	'wcgateway.enable-dcc-url-live'                        => static function ( ContainerInterface $container ): string {
-		return 'https://www.paypal.com/bizsignup/entry/product/ppcp';
+		return 'https://www.paypal.com/bizsignup/entry?product=ppcp';
 	},
 	'wcgateway.enable-pui-url-sandbox'                     => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
