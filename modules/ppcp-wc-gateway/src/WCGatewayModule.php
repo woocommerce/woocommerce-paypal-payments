@@ -504,7 +504,7 @@ class WCGatewayModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
-				if ( ! $installed_plugin_version && $settings->has( 'allow_local_apm_gateways' ) ) {
+				if ( ! $installed_plugin_version ) {
 					$settings->set( 'allow_local_apm_gateways', true );
 					$settings->persist();
 				}
