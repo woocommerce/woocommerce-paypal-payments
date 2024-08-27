@@ -52,7 +52,8 @@ import moduleStorage from './Helper/GooglePayStorage';
 		if ( ! buttonConfig || ! ppcpConfig ) {
 			/*
 			 * No PayPal buttons present on this page, but maybe a bootstrap module needs to be
-			 * initialized. Run bootstrap without trying to load an SDK or payment configuration.
+			 * initialized. Skip loading the SDK or gateway configuration, and directly initialize
+			 * the module.
 			 */
 			bootstrap();
 
