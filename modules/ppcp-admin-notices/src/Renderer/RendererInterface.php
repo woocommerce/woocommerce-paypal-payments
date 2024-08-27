@@ -20,4 +20,11 @@ interface RendererInterface {
 	 * @return bool
 	 */
 	public function render(): bool;
+
+	/**
+	 * Enqueues common assets required for the admin notice behavior.
+	 *
+	 * @return void
+	 */
+	public function enqueue_admin() : void;
 }
