@@ -497,6 +497,18 @@ class WCGatewayModule implements ModuleInterface {
 				return $fields;
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			function( string $installed_plugin_version ) use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
+
+				if ( ! $installed_plugin_version && $settings->has( 'allow_local_apm_gateways' ) ) {
+					$settings->set( 'allow_local_apm_gateways', true );
+				}
+			}
+		);
 	}
 
 	/**

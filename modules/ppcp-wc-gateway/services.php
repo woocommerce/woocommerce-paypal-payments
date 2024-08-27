@@ -783,7 +783,7 @@ return array(
 				'desc_tip'     => true,
 				'label'        => __( 'Moves the alternative payment methods from the PayPal gateway into their own dedicated gateways.', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,

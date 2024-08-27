@@ -106,7 +106,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				/**
 				 * The hook fired when the plugin is installed or updated.
 				 */
-				do_action( 'woocommerce_paypal_payments_gateway_migrate' );
+				do_action( 'woocommerce_paypal_payments_gateway_migrate', $installed_plugin_version );
 
 				if ( $installed_plugin_version ) {
 					/**
