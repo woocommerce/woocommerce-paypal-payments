@@ -20,12 +20,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 
 /**
  * Class ApplePayButton
  */
 class ApplePayButton implements ButtonInterface {
-	use RequestHandlerTrait;
+	use RequestHandlerTrait, ContextTrait;
 
 	/**
 	 * The settings.
@@ -340,7 +341,7 @@ class ApplePayButton implements ButtonInterface {
 			}
 			$response = $this->response_templates->apple_formatted_response( $payment_details );
 			$this->response_templates->response_success( $response );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			$this->response_templates->response_with_data_errors(
 				array(
 					array(
@@ -382,7 +383,7 @@ class ApplePayButton implements ButtonInterface {
 			}
 			$response = $this->response_templates->apple_formatted_response( $payment_details );
 			$this->response_templates->response_success( $response );
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			$this->response_templates->response_with_data_errors(
 				array(
 					array(
@@ -399,7 +400,7 @@ class ApplePayButton implements ButtonInterface {
 	 * On error returns an array of errors to be handled by the script
 	 * On success returns the new order data
 	 *
-	 * @throws \Exception When validation fails.
+	 * @throws Exception When validation fails.
 	 */
 	public function create_wc_order(): void {
 		$applepay_request_data_object = $this->applepay_data_object_http();
@@ -420,15 +421,18 @@ class ApplePayButton implements ButtonInterface {
 		$applepay_request_data_object->order_data( $context );
 
 		$this->update_posted_data( $applepay_request_data_object );
+
 		if ( $context === 'product' ) {
 			$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
 			$cart          = WC()->cart;
 			$address       = $applepay_request_data_object->shipping_address();
+
 			$this->calculate_totals_single_product(
 				$cart,
 				$address,
 				$applepay_request_data_object->shipping_method()
 			);
+
 			if ( ! $cart_item_key ) {
 				$this->response_templates->response_with_data_errors(
 					array(
@@ -438,19 +442,16 @@ class ApplePayButton implements ButtonInterface {
 						),
 					)
 				);
-				return;
-			}
-			add_filter(
-				'woocommerce_payment_successful_result',
-				function ( array $result ) use ( $cart, $cart_item_key ) : array {
-					if ( ! is_string( $cart_item_key ) ) {
+			} else {
+				add_filter(
+					'woocommerce_payment_successful_result',
+					function ( array $result ) use ( $cart, $cart_item_key ) : array {
+						$this->clear_current_cart( $cart, $cart_item_key );
+						$this->reload_cart( $cart );
 						return $result;
 					}
-					$this->clear_current_cart( $cart, $cart_item_key );
-					$this->reload_cart( $cart );
-					return $result;
-				}
-			);
+				);
+			}
 		}
 
 		WC()->checkout()->process_checkout();
@@ -460,17 +461,20 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Checks if the nonce in the data object is valid
 	 *
-	 * @return bool|int
+	 * @return bool
 	 */
 	protected function is_nonce_valid(): bool {
 		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $nonce ) {
 			return false;
 		}
-		return wp_verify_nonce(
+
+		// Return value 1 indicates "valid nonce, generated in past 12 hours".
+		// Return value 2 also indicated valid nonce, but older than 12 hours.
+		return 1 === wp_verify_nonce(
 			$nonce,
 			'woocommerce-process_checkout'
-		) === 1;
+		);
 	}
 
 	/**
@@ -511,7 +515,7 @@ class ApplePayButton implements ButtonInterface {
 				$address,
 				$applepay_request_data_object->shipping_method()
 			);
-			if ( is_string( $cart_item_key ) ) {
+			if ( $cart_item_key ) {
 				$this->clear_current_cart( $cart, $cart_item_key );
 				$this->reload_cart( $cart );
 			}
@@ -819,9 +823,9 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Removes the old cart, saves it, and creates a new one
 	 *
+	 * @throws Exception If it cannot be added to cart.
 	 * @param ApplePayDataObjectHttp $applepay_request_data_object The request data object.
-	 * @return bool | string The cart item key after adding to the new cart.
-	 * @throws \Exception If it cannot be added to cart.
+	 * @return string The cart item key after adding to the new cart.
 	 */
 	public function prepare_cart( ApplePayDataObjectHttp $applepay_request_data_object ): string {
 		$this->save_old_cart();
@@ -838,7 +842,7 @@ class ApplePayButton implements ButtonInterface {
 		);
 
 		$this->cart_products->add_products( array( $product ) );
-		return $this->cart_products->cart_item_keys()[0];
+		return $this->cart_products->cart_item_keys()[0] ?? '';
 	}
 
 	/**
@@ -949,6 +953,7 @@ class ApplePayButton implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->applepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -961,6 +966,7 @@ class ApplePayButton implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->applepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -973,7 +979,7 @@ class ApplePayButton implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					echo '<span id="applepay-container-minicart" class="ppcp-button-apm ppcp-button-applepay ppcp-button-minicart"></span>';
+					echo '<span id="ppc-button-applepay-container-minicart" class="ppcp-button-apm ppcp-button-applepay ppcp-button-minicart"></span>';
 				},
 				21
 			);
@@ -981,24 +987,29 @@ class ApplePayButton implements ButtonInterface {
 
 		return true;
 	}
+
 	/**
 	 * ApplePay button markup
 	 */
 	protected function applepay_button(): void {
 		?>
-		<div id="applepay-container" class="ppcp-button-apm ppcp-button-applepay">
+		<div id="ppc-button-applepay-container" class="ppcp-button-apm ppcp-button-applepay">
 			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
 		<?php
 	}
 
 	/**
-	 * Checks if the module should load the script.
+	 * Outputs an inline CSS style that hides the Apple Pay gateway (on Classic Checkout).
+	 * The style is removed by `ApplepayButton.js` once the eligibility of the payment method
+	 * is confirmed.
 	 *
-	 * @return bool
+	 * @return void
 	 */
-	public function should_load_script(): bool {
-		return true;
+	protected function hide_gateway_until_eligible(): void {
+		?>
+		<style id="ppcp-hide-apple-pay">.wc_payment_method.payment_method_ppcp-applepay{display:none}</style>
+		<?php
 	}
 
 	/**

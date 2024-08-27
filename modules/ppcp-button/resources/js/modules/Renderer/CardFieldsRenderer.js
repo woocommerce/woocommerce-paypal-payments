@@ -1,5 +1,5 @@
 import { show } from '../Helper/Hiding';
-import { cardFieldStyles } from '../Helper/CardFieldsHelper';
+import { cardFieldStyles } from '../../../../../ppcp-card-fields/resources/js/CardFieldsHelper';
 
 /**
  * @typedef {'NameField'|'NumberField'|'ExpiryField'|'CVVField'} FieldName
@@ -118,10 +118,10 @@ class CardFieldsRenderer {
 			hideDccGateway.parentNode.removeChild( hideDccGateway );
 		}
 
-		const cardField = this.createInstance( contextConfig );
+		const cardFields = this.createInstance( contextConfig );
 
-		if ( cardField.isEligible() ) {
-			this.insertAllFields( cardField );
+		if ( cardFields.isEligible() ) {
+			this.insertAllFields( cardFields );
 		}
 
 		gateWayBox.style.display = oldDisplayStyle;
@@ -161,8 +161,9 @@ class CardFieldsRenderer {
 					return;
 				}
 
-				cardField.submit().catch( ( error ) => {
+				cardFields.submit().catch( ( error ) => {
 					this.spinner.unblock();
+
 					console.error( error );
 					this.errorHandler.message(
 						this.defaultConfig.hosted_fields.labels.fields_not_valid
@@ -201,11 +202,13 @@ class CardFieldsRenderer {
 	 * Note: If another CardField instance was inserted into the DOM before, that previous instance
 	 * will be removed/unlinked in this process.
 	 *
-	 * @param {CardFields} cardField
+	 * @param {CardFields} cardFields
 	 */
-	insertAllFields( cardField ) {
+	insertAllFields( cardFields ) {
+		// TODO - due to delayed merge we now have similar logic in renderFields (Render.js) - review and unify logic if possible.
+
 		this.fieldInfos.forEach( ( field ) => {
-			this.insertField( cardField, field );
+			this.insertField( cardFields, field );
 		} );
 
 		document.dispatchEvent( new CustomEvent( 'hosted_fields_loaded' ) );

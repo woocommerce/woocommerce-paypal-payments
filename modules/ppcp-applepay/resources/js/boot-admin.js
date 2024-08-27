@@ -1,4 +1,4 @@
-import ApplepayButton from './ApplepayButton';
+import ApplePayButton from './ApplepayButton';
 import PreviewButton from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButton';
 import PreviewButtonManager from '../../../ppcp-button/resources/js/modules/Renderer/PreviewButtonManager';
 
@@ -86,7 +86,7 @@ class ApplePayPreviewButton extends PreviewButton {
 	}
 
 	createButton( buttonConfig ) {
-		const button = new ApplepayButton(
+		const button = new ApplePayButton(
 			'preview',
 			null,
 			buttonConfig,

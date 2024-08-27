@@ -25,23 +25,24 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
 
 	// If GooglePay can be configured.
-	'googlepay.eligible'                          => static function ( ContainerInterface $container ): bool {
+	'googlepay.eligible'                        => static function ( ContainerInterface $container ): bool {
 		$apm_applies = $container->get( 'googlepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country_currency();
+		return $apm_applies->for_country() && $apm_applies->for_currency();
 	},
 
-	'googlepay.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
+	'googlepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
-			$container->get( 'googlepay.supported-country-currency-matrix' ),
+			$container->get( 'googlepay.supported-countries' ),
+			$container->get( 'googlepay.supported-currencies' ),
 			$container->get( 'api.shop.currency' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
 
 	// If GooglePay is configured and onboarded.
-	'googlepay.available'                         => static function ( ContainerInterface $container ): bool {
+	'googlepay.available'                       => static function ( ContainerInterface $container ): bool {
 		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
 			$status = $container->get( 'googlepay.helpers.apm-product-status' );
 			assert( $status instanceof ApmProductStatus );
@@ -54,14 +55,14 @@ return array(
 	},
 
 	// We assume it's a referral if we can check product status without API request failures.
-	'googlepay.is_referral'                       => static function ( ContainerInterface $container ): bool {
+	'googlepay.is_referral'                     => static function ( ContainerInterface $container ): bool {
 		$status = $container->get( 'googlepay.helpers.apm-product-status' );
 		assert( $status instanceof ApmProductStatus );
 
 		return ! $status->has_request_failure();
 	},
 
-	'googlepay.availability_notice'               => static function ( ContainerInterface $container ): AvailabilityNotice {
+	'googlepay.availability_notice'             => static function ( ContainerInterface $container ): AvailabilityNotice {
 		return new AvailabilityNotice(
 			$container->get( 'googlepay.helpers.apm-product-status' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
@@ -69,7 +70,7 @@ return array(
 		);
 	},
 
-	'googlepay.helpers.apm-product-status'        => SingletonDecorator::make(
+	'googlepay.helpers.apm-product-status'      => SingletonDecorator::make(
 		static function( ContainerInterface $container ): ApmProductStatus {
 			return new ApmProductStatus(
 				$container->get( 'wcgateway.settings' ),
@@ -81,772 +82,93 @@ return array(
 	),
 
 	/**
-	 * The matrix which countries and currency combinations can be used for GooglePay.
+	 * The list of which countries can be used for GooglePay.
 	 */
-	'googlepay.supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+	'googlepay.supported-countries'             => static function ( ContainerInterface $container ) : array {
 		/**
-		 * Returns which countries and currency combinations can be used for GooglePay.
+		 * Returns which countries can be used for GooglePay.
 		 */
 		return apply_filters(
-			'woocommerce_paypal_payments_googlepay_supported_country_currency_matrix',
+			'woocommerce_paypal_payments_googlepay_supported_countries',
+			// phpcs:disable Squiz.Commenting.InlineComment
 			array(
-				'AU' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'AT' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'BE' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'BG' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'CA' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'CY' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'CZ' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'DK' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'EE' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'FI' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'FR' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'DE' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'GR' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'HU' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'IE' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'IT' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'LV' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'LI' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'LT' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'LU' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'MT' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'NO' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'NL' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'PL' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'PT' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'RO' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'SK' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'SI' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'ES' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'SE' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'GB' => array(
-					'AUD',
-					'BRL',
-					'CAD',
-					'CHF',
-					'CZK',
-					'DKK',
-					'EUR',
-					'GBP',
-					'HKD',
-					'HUF',
-					'ILS',
-					'JPY',
-					'MXN',
-					'NOK',
-					'NZD',
-					'PHP',
-					'PLN',
-					'SEK',
-					'SGD',
-					'THB',
-					'TWD',
-					'USD',
-				),
-				'US' => array(
-					'AUD',
-					'CAD',
-					'EUR',
-					'GBP',
-					'JPY',
-					'USD',
-				),
+				'AU', // Australia
+				'AT', // Austria
+				'BE', // Belgium
+				'BG', // Bulgaria
+				'CA', // Canada
+				'CN', // China
+				'CY', // Cyprus
+				'CZ', // Czech Republic
+				'DK', // Denmark
+				'EE', // Estonia
+				'FI', // Finland
+				'FR', // France
+				'DE', // Germany
+				'GR', // Greece
+				'HU', // Hungary
+				'IE', // Ireland
+				'IT', // Italy
+				'LV', // Latvia
+				'LI', // Liechtenstein
+				'LT', // Lithuania
+				'LU', // Luxembourg
+				'MT', // Malta
+				'NL', // Netherlands
+				'NO', // Norway
+				'PL', // Poland
+				'PT', // Portugal
+				'RO', // Romania
+				'SK', // Slovakia
+				'SI', // Slovenia
+				'ES', // Spain
+				'SE', // Sweden
+				'US', // United States
+				'GB', // United Kingdom
 			)
+			// phpcs:enable Squiz.Commenting.InlineComment
 		);
 	},
 
-	'googlepay.button'                            => static function ( ContainerInterface $container ): ButtonInterface {
+	/**
+	 * The list of which currencies can be used for GooglePay.
+	 */
+	'googlepay.supported-currencies'            => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which currencies can be used for GooglePay.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_googlepay_supported_currencies',
+			// phpcs:disable Squiz.Commenting.InlineComment
+			array(
+				'AUD', // Australian Dollar
+				'BRL', // Brazilian Real
+				'CAD', // Canadian Dollar
+				'CHF', // Swiss Franc
+				'CZK', // Czech Koruna
+				'DKK', // Danish Krone
+				'EUR', // Euro
+				'GBP', // British Pound Sterling
+				'HKD', // Hong Kong Dollar
+				'HUF', // Hungarian Forint
+				'ILS', // Israeli New Shekel
+				'JPY', // Japanese Yen
+				'MXN', // Mexican Peso
+				'NOK', // Norwegian Krone
+				'NZD', // New Zealand Dollar
+				'PHP', // Philippine Peso
+				'PLN', // Polish Zloty
+				'SEK', // Swedish Krona
+				'SGD', // Singapore Dollar
+				'THB', // Thai Baht
+				'TWD', // New Taiwan Dollar
+				'USD',  // United States Dollar
+			)
+			// phpcs:enable Squiz.Commenting.InlineComment
+		);
+	},
+
+	'googlepay.button'                          => static function ( ContainerInterface $container ): ButtonInterface {
 		return new Button(
 			$container->get( 'googlepay.url' ),
 			$container->get( 'googlepay.sdk_url' ),
@@ -860,7 +182,7 @@ return array(
 		);
 	},
 
-	'googlepay.blocks-payment-method'             => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
+	'googlepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(
 			'ppcp-googlepay',
 			$container->get( 'googlepay.url' ),
@@ -870,7 +192,7 @@ return array(
 		);
 	},
 
-	'googlepay.url'                               => static function ( ContainerInterface $container ): string {
+	'googlepay.url'                             => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -881,26 +203,26 @@ return array(
 		);
 	},
 
-	'googlepay.sdk_url'                           => static function ( ContainerInterface $container ): string {
+	'googlepay.sdk_url'                         => static function ( ContainerInterface $container ): string {
 		return 'https://pay.google.com/gp/p/js/pay.js';
 	},
 
-	'googlepay.endpoint.update-payment-data'      => static function ( ContainerInterface $container ): UpdatePaymentDataEndpoint {
+	'googlepay.endpoint.update-payment-data'    => static function ( ContainerInterface $container ): UpdatePaymentDataEndpoint {
 		return new UpdatePaymentDataEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
-	'googlepay.enable-url-sandbox'                => static function ( ContainerInterface $container ): string {
+	'googlepay.enable-url-sandbox'              => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
 	},
 
-	'googlepay.enable-url-live'                   => static function ( ContainerInterface $container ): string {
+	'googlepay.enable-url-live'                 => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
 	},
 
-	'googlepay.settings.connection.status-text'   => static function ( ContainerInterface $container ): string {
+	'googlepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return '';
@@ -938,5 +260,14 @@ return array(
 			esc_html( $button_text )
 		);
 	},
-
+	'googlepay.wc-gateway'                      => static function ( ContainerInterface $container ): GooglePayGateway {
+		return new GooglePayGateway(
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'googlepay.url' )
+		);
+	},
 );

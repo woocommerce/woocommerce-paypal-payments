@@ -1,6 +1,6 @@
 <?php
 /**
- * Service for checking whether Card Fields can be used in the current country and the current currency.
+ * Service for checking whether Card Fields can be used in the current country.
  *
  * @package WooCommerce\PayPalCommerce\CardFields\Helper
  */
@@ -15,18 +15,11 @@ namespace WooCommerce\PayPalCommerce\CardFields\Helper;
 class CardFieldsApplies {
 
 	/**
-	 * The matrix which countries and currency combinations can be used.
+	 * The matrix which countries can be used.
 	 *
 	 * @var array
 	 */
-	private $allowed_country_currency_matrix;
-
-	/**
-	 * 3-letter currency code of the shop.
-	 *
-	 * @var string
-	 */
-	private $currency;
+	private $allowed_country_matrix;
 
 	/**
 	 * 2-letter country code of the shop.
@@ -38,29 +31,23 @@ class CardFieldsApplies {
 	/**
 	 * CardFieldsApplies constructor.
 	 *
-	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used.
-	 * @param string $currency 3-letter currency code of the shop.
+	 * @param array  $allowed_country_matrix The matrix which countries can be used.
 	 * @param string $country 2-letter country code of the shop.
 	 */
 	public function __construct(
-		array $allowed_country_currency_matrix,
-		string $currency,
+		array $allowed_country_matrix,
 		string $country
 	) {
-		$this->allowed_country_currency_matrix = $allowed_country_currency_matrix;
-		$this->currency                        = $currency;
-		$this->country                         = $country;
+		$this->allowed_country_matrix = $allowed_country_matrix;
+		$this->country                = $country;
 	}
 
 	/**
-	 * Returns whether Card Fields can be used in the current country and the current currency.
+	 * Returns whether Card Fields can be used in the current country.
 	 *
 	 * @return bool
 	 */
-	public function for_country_currency(): bool {
-		if ( ! in_array( $this->country, array_keys( $this->allowed_country_currency_matrix ), true ) ) {
-			return false;
-		}
-		return in_array( $this->currency, $this->allowed_country_currency_matrix[ $this->country ], true );
+	public function for_country(): bool {
+		return in_array( $this->country, $this->allowed_country_matrix, true );
 	}
 }

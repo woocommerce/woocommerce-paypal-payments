@@ -709,6 +709,8 @@ class AxoManager {
 			}`
 		);
 
+		this.emailInput.value = this.stripSpaces( this.emailInput.value );
+
 		this.$( this.el.paymentContainer.selector + '-detail' ).html( '' );
 		this.$( this.el.paymentContainer.selector + '-form' ).html( '' );
 
@@ -1132,6 +1134,10 @@ class AxoManager {
 	validateEmailFormat( value ) {
 		const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 		return emailPattern.test( value );
+	}
+
+	stripSpaces( str ) {
+		return str.replace( /\s+/g, '' );
 	}
 
 	validateEmail( billingEmail ) {
