@@ -94,14 +94,18 @@ class GooglepayModule implements ModuleInterface {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						/*
-						 * TODO: When PayLater is disabled and we're in "continuation" context, then no JS is enqueued.
-						 *       Find a solution to enqueue the CheckoutBootstrap module in that situation.
-						 */
-
 						if ( $smart_button->should_load_ppcp_script() ) {
 							$button->enqueue();
 							return;
+						}
+
+						/*
+						 * Checkout page, but no PPCP scripts were loaded. Most likely in continuation mode.
+						 * Need to enqueue some Google Pay scripts to populate the billing form with details
+						 * provided by Google Pay.
+						 */
+						if ( is_checkout() ) {
+							$button->enqueue();
 						}
 
 						if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
