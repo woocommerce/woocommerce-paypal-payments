@@ -13,12 +13,34 @@ export class CheckoutBootstrap {
 	#storage;
 
 	/**
-	 * @type {null|HTMLFormElement}
+	 * @type {HTMLFormElement|null}
 	 */
-	#checkoutForm = null;
+	#checkoutForm;
 
+	/**
+	 * @param {GooglePayStorage} storage
+	 */
 	constructor( storage ) {
 		this.#storage = storage;
+		this.#checkoutForm = CheckoutBootstrap.getCheckoutForm();
+	}
+
+	/**
+	 * Indicates if the current page contains a checkout form.
+	 *
+	 * @return {boolean} True if a checkout form is present.
+	 */
+	static isPageWithCheckoutForm() {
+		return null !== CheckoutBootstrap.getCheckoutForm();
+	}
+
+	/**
+	 * Retrieves the WooCommerce checkout form element.
+	 *
+	 * @return {HTMLFormElement|null} The form, or null if not a checkout page.
+	 */
+	static getCheckoutForm() {
+		return document.querySelector( CHECKOUT_FORM_SELECTOR );
 	}
 
 	/**
@@ -27,37 +49,32 @@ export class CheckoutBootstrap {
 	 * @return {HTMLFormElement|null} The form, or null if not a checkout page.
 	 */
 	get checkoutForm() {
-		if ( null === this.#checkoutForm ) {
-			this.#checkoutForm = document.querySelector(
-				CHECKOUT_FORM_SELECTOR
-			);
-		}
-
 		return this.#checkoutForm;
 	}
 
 	/**
-	 * Indicates, if the current page contains a checkout form.
+	 * Initializes the checkout process.
 	 *
-	 * @return {boolean} True, if a checkout form is present.
+	 * @throws {Error} If called on a page without a checkout form.
 	 */
-	get isPageWithCheckoutForm() {
-		return null !== this.checkoutForm;
-	}
-
 	init() {
-		if ( ! this.isPageWithCheckoutForm ) {
-			return;
+		if ( ! this.#checkoutForm ) {
+			throw new Error(
+				'Checkout form not found. Cannot initialize CheckoutBootstrap.'
+			);
 		}
 
 		this.#populateCheckoutFields();
 	}
 
+	/**
+	 * Populates checkout fields with stored or customer data.
+	 */
 	#populateCheckoutFields() {
 		const loggedInData = getWooCommerceCustomerDetails();
 
-		// If customer is logged in, we use the details from the customer profile.
 		if ( loggedInData ) {
+			// If customer is logged in, we use the details from the customer profile.
 			return;
 		}
 
@@ -68,11 +85,17 @@ export class CheckoutBootstrap {
 		}
 
 		setPayerData( billingData, true );
-		this.checkoutForm.addEventListener( 'submit', () =>
-			this.#onFormSubmit()
+		this.checkoutForm.addEventListener(
+			'submit',
+			this.#onFormSubmit.bind( this )
 		);
 	}
 
+	/**
+	 * Clean-up when checkout form is submitted.
+	 *
+	 * Immediately removes the payer details from the localStorage.
+	 */
 	#onFormSubmit() {
 		this.#storage.clearPayer();
 	}

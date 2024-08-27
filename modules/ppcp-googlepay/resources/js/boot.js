@@ -1,3 +1,12 @@
+/**
+ * Initialize the GooglePay module in the front end.
+ * In some cases, this module is loaded when the `window.PayPalCommerceGateway` object is not
+ * present. In that case, the page does not contain a Google Pay button, but some other logic
+ * that is related to Google Pay (e.g., the CheckoutBootstrap module)
+ *
+ * @file
+ */
+
 import { loadCustomScript } from '@paypal/paypal-js';
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
 import GooglepayManager from './GooglepayManager';
@@ -5,31 +14,48 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 import { CheckoutBootstrap } from './ContextBootstrap/CheckoutBootstrap';
 import moduleStorage from './Helper/GooglePayStorage';
 
-( function ( { buttonConfig, ppcpConfig } ) {
+( function ( { buttonConfig, ppcpConfig = {} } ) {
 	const context = ppcpConfig.context;
 
-	let manager;
+	function bootstrapPayButton() {
+		if ( ! buttonConfig || ! ppcpConfig ) {
+			return;
+		}
 
-	const bootstrap = function () {
-		manager = new GooglepayManager( buttonConfig, ppcpConfig );
+		const manager = new GooglepayManager( buttonConfig, ppcpConfig );
 		manager.init();
 
-		if ( 'continuation' === context || 'checkout' === context ) {
-			const checkoutBootstap = new CheckoutBootstrap( moduleStorage );
-
-			checkoutBootstap.init();
-		}
-	};
-
-	setupButtonEvents( function () {
-		if ( manager ) {
+		setupButtonEvents( function () {
 			manager.reinit();
+		} );
+	}
+
+	function bootstrapCheckout() {
+		if ( context && ! [ 'continuation', 'checkout' ].includes( context ) ) {
+			// Context must be missing/empty, or "continuation"/"checkout" to proceed.
+			return;
 		}
-	} );
+		if ( ! CheckoutBootstrap.isPageWithCheckoutForm() ) {
+			return;
+		}
+
+		const checkoutBootstrap = new CheckoutBootstrap( moduleStorage );
+		checkoutBootstrap.init();
+	}
+
+	function bootstrap() {
+		bootstrapPayButton();
+		bootstrapCheckout();
+	}
 
 	document.addEventListener( 'DOMContentLoaded', () => {
 		if ( ! buttonConfig || ! ppcpConfig ) {
-			// No PayPal buttons present on this page.
+			/*
+			 * No PayPal buttons present on this page, but maybe a bootstrap module needs to be
+			 * initialized. Run bootstrap without trying to load an SDK or payment configuration.
+			 */
+			bootstrap();
+
 			return;
 		}
 
