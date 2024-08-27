@@ -9,11 +9,8 @@
 *.env*
 .psalm*
 tests
-phpcs.xml*
-psalm*.xml*
-phpunit.xml*
+*.xml.*
 .phpunit.result.cache
-resources
 node_modules
 *.lock
 webpack.config.js
