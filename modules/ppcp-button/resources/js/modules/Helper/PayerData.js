@@ -149,12 +149,12 @@ function setCheckoutBillingDetails( payer ) {
 
 export function getWooCommerceCustomerDetails() {
 	// Populated on server-side with details about the current WooCommerce customer.
-	return window.PayPalCommerceGateway?.payer;
+	return window?.PayPalCommerceGateway?.payer;
 }
 
 export function getSessionBillingDetails() {
 	// Populated by JS via `setSessionBillingDetails()`
-	return window.PayPalCommerceGateway?.tempPayer;
+	return window._PpcpPayerSessionDetails;
 }
 
 /**
@@ -168,7 +168,7 @@ export function setSessionBillingDetails( details ) {
 		return;
 	}
 
-	window.PayPalCommerceGateway.tempPayer = normalizePayerDetails( details );
+	window._PpcpPayerSessionDetails = normalizePayerDetails( details );
 }
 
 export function payerData() {
