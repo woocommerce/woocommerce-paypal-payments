@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -776,6 +777,20 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'allow_local_apm_gateways'    => array(
+				'title'        => __( 'Create gateway for alternative payment methods', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Moves the alternative payment methods from the PayPal gateway into their own dedicated gateways.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'disable_cards'               => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
@@ -1164,6 +1179,13 @@ return array(
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$logger            = $container->get( 'woocommerce.logger.woocommerce' );
 		return new RefundFeesUpdater( $order_endpoint, $logger );
+	},
+	'wcgateway.helper.fees-updater'                        => static function ( ContainerInterface $container ): FeesUpdater {
+		return new FeesUpdater(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.capture' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {

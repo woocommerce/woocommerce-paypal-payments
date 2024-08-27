@@ -1,6 +1,6 @@
 <?php
 /**
- * The P24 payment gateway.
+ * The Multibanco payment gateway.
  *
  * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods
  */
@@ -18,11 +18,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
- * Class P24Gateway
+ * Class BancontactGateway
  */
-class P24Gateway extends WC_Payment_Gateway {
+class MultibancoGateway extends WC_Payment_Gateway {
 
-	const ID = 'ppcp-p24';
+	const ID = 'ppcp-multibanco';
 
 	/**
 	 * PayPal Orders endpoint.
@@ -53,7 +53,7 @@ class P24Gateway extends WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
-	 * P24Gateway constructor.
+	 * MultibancoGateway constructor.
 	 *
 	 * @param Orders                 $orders_endpoint PayPal Orders endpoint.
 	 * @param PurchaseUnitFactory    $purchase_unit_factory Purchase unit factory.
@@ -73,13 +73,13 @@ class P24Gateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Przelewy24', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Multibanco', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'A popular and trusted electronic payment method in Belgium, used by Belgian customers with Multibanco cards issued by local banks. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title', __( 'Przelewy24', 'woocommerce-paypal-payments' ) );
+		$this->title       = $this->get_option( 'title', __( 'Multibanco', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
 
-		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_przelewy24_color.svg' );
+		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_bancontact_color.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -100,10 +100,10 @@ class P24Gateway extends WC_Payment_Gateway {
 			'enabled'     => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Przelewy24', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Multibanco', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
-				'description' => __( 'Enable/Disable Przelewy24 payment gateway.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable/Disable Multibanco payment gateway.', 'woocommerce-paypal-payments' ),
 			),
 			'title'       => array(
 				'title'       => __( 'Title', 'woocommerce-paypal-payments' ),
@@ -130,22 +130,14 @@ class P24Gateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Przelewy24 to confirm the payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'pending', __( 'Awaiting for the buyer to complete the payment.', 'woocommerce-paypal-payments' ) );
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$amount        = $purchase_unit->amount()->to_array();
 
 		$request_body = array(
-			'intent'                 => 'CAPTURE',
-			'payment_source'         => array(
-				'p24' => array(
-					'country_code' => $wc_order->get_billing_country(),
-					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-					'email'        => $wc_order->get_billing_email(),
-				),
-			),
-			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
-			'purchase_units'         => array(
+			'intent'         => 'CAPTURE',
+			'purchase_units' => array(
 				array(
 					'reference_id' => $purchase_unit->reference_id(),
 					'amount'       => array(
@@ -156,15 +148,47 @@ class P24Gateway extends WC_Payment_Gateway {
 					'invoice_id'   => $purchase_unit->invoice_id(),
 				),
 			),
-			'application_context'    => array(
-				'locale'     => 'en-PL',
-				'return_url' => $this->get_return_url( $wc_order ),
-				'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
-			),
 		);
 
 		try {
 			$response = $this->orders_endpoint->create( $request_body );
+			$body     = json_decode( $response['body'] );
+
+			$request_body = array(
+				'payment_source'         => array(
+					'multibanco' => array(
+						'country_code' => $wc_order->get_billing_country(),
+						'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+					),
+				),
+				'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
+				'application_context'    => array(
+					'locale'     => 'en-PT',
+					'return_url' => $this->get_return_url( $wc_order ),
+					'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
+				),
+			);
+
+			$response = $this->orders_endpoint->confirm_payment_source( $request_body, $body->id );
+			$body     = json_decode( $response['body'] );
+
+			$payer_action = '';
+			foreach ( $body->links as $link ) {
+				if ( $link->rel === 'payer-action' ) {
+					$payer_action = $link->href;
+				}
+			}
+
+			WC()->cart->empty_cart();
+
+			$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+			$wc_order->save_meta_data();
+
+			return array(
+				'result'   => 'success',
+				'redirect' => esc_url( $payer_action ),
+			);
+
 		} catch ( RuntimeException $exception ) {
 			$wc_order->update_status(
 				'failed',
@@ -176,25 +200,6 @@ class P24Gateway extends WC_Payment_Gateway {
 				'redirect' => wc_get_checkout_url(),
 			);
 		}
-
-		$body = json_decode( $response['body'] );
-
-		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
-		$wc_order->save_meta_data();
-
-		$payer_action = '';
-		foreach ( $body->links as $link ) {
-			if ( $link->rel === 'payer-action' ) {
-				$payer_action = $link->href;
-			}
-		}
-
-		WC()->cart->empty_cart();
-
-		return array(
-			'result'   => 'success',
-			'redirect' => esc_url( $payer_action ),
-		);
 	}
 
 	/**
