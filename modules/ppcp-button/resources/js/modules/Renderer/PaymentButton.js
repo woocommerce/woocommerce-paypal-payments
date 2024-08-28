@@ -732,12 +732,11 @@ export default class PaymentButton {
 	 * Only relevant on the checkout page, i.e., when `this.isSeparateGateway` is `true`
 	 */
 	showPaymentGateway() {
-		if ( this.#gatewayInitialized ) {
-			return;
-		}
-		this.#gatewayInitialized = true;
-
-		if ( ! this.isSeparateGateway || ! this.isEligible ) {
+		if (
+			this.#gatewayInitialized ||
+			! this.isSeparateGateway ||
+			! this.isEligible
+		) {
 			return;
 		}
 
@@ -753,6 +752,7 @@ export default class PaymentButton {
 			.forEach( ( el ) => el.remove() );
 
 		this.log( 'Show gateway' );
+		this.#gatewayInitialized = true;
 
 		// This code runs only once, during button initialization, and fixes the initial visibility.
 		this.isVisible = this.isCurrentGateway;
