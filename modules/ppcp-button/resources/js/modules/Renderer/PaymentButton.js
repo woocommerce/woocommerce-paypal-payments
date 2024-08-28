@@ -445,6 +445,17 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Whether the button is placed inside a classic gateway context.
+	 *
+	 * Classic gateway contexts are: Classic checkout, Pay for Order page.
+	 *
+	 * @return {boolean} True indicates, the button is located inside a classic gateway.
+	 */
+	get isInsideClassicGateway() {
+		return PaymentContext.Gateways.includes( this.context );
+	}
+
+	/**
 	 * Determines if the current payment button should be rendered as a stand-alone gateway.
 	 * The return value `false` usually means, that the payment button is bundled with all available
 	 * payment buttons.
@@ -456,19 +467,20 @@ export default class PaymentButton {
 	get isSeparateGateway() {
 		return (
 			this.#buttonConfig.is_wc_gateway_enabled &&
-			PaymentContext.Gateways.includes( this.context )
+			this.isInsideClassicGateway
 		);
 	}
 
 	/**
 	 * Whether the currently selected payment gateway is set to the payment method.
 	 *
-	 * Only relevant on checkout pages, when `this.isSeparateGateway` is true.
+	 * Only relevant on checkout pages where "classic" payment gateways are rendered.
 	 *
 	 * @return {boolean} True means that this payment method is selected as current gateway.
 	 */
 	get isCurrentGateway() {
-		if ( ! PaymentContext.Gateways.includes( this.context ) ) {
+		if ( ! this.isInsideClassicGateway ) {
+			// This means, the button's visibility is managed by another script.
 			return true;
 		}
 
@@ -687,7 +699,7 @@ export default class PaymentButton {
 		} );
 
 		// Events relevant for buttons inside a payment gateway.
-		if ( PaymentContext.Gateways.includes( this.context ) ) {
+		if ( this.isInsideClassicGateway ) {
 			const parentMethod = this.isSeparateGateway
 				? this.methodId
 				: PaymentMethods.PAYPAL;
