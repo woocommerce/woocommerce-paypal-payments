@@ -114,6 +114,13 @@ export default class PaymentButton {
 	#isInitialized = false;
 
 	/**
+	 * Whether the one-time initialization of the payment gateway is complete.
+	 *
+	 * @type {boolean}
+	 */
+	#gatewayInitialized = false;
+
+	/**
 	 * The button's context.
 	 *
 	 * @type {string}
@@ -461,16 +468,19 @@ export default class PaymentButton {
 	 * @return {boolean} True means that this payment method is selected as current gateway.
 	 */
 	get isCurrentGateway() {
-		if ( ! this.isSeparateGateway ) {
-			return false;
-		}
-
 		/*
 		 * We need to rely on `getCurrentPaymentMethod()` here, as the `CheckoutBootstrap.js`
 		 * module fires the "ButtonEvents.RENDER" event before any PaymentButton instances are
 		 * created. I.e. we cannot observe the initial gateway selection event.
 		 */
-		return this.methodId === getCurrentPaymentMethod();
+		const currentMethod = getCurrentPaymentMethod();
+
+		if ( this.isSeparateGateway ) {
+			return this.methodId === currentMethod;
+		}
+
+		// Button is rendered inside the Smart Buttons block.
+		return PaymentMethods.PAYPAL === currentMethod;
 	}
 
 	/**
@@ -703,7 +713,7 @@ export default class PaymentButton {
 
 		this.applyWrapperStyles();
 
-		if ( this.isEligible && this.isPresent && this.isVisible ) {
+		if ( this.isEligible && this.isCurrentGateway && this.isVisible ) {
 			if ( ! this.isButtonAttached ) {
 				this.log( 'refresh.addButton' );
 				this.addButton();
@@ -712,25 +722,33 @@ export default class PaymentButton {
 	}
 
 	/**
-	 * Makes the custom payment gateway visible by removing initial inline styles from the DOM.
+	 * Makes the payment gateway visible by removing initial inline styles from the DOM.
+	 * Also, removes the button-placeholder container from the smart button block.
 	 *
 	 * Only relevant on the checkout page, i.e., when `this.isSeparateGateway` is `true`
 	 */
 	showPaymentGateway() {
+		if ( this.#gatewayInitialized ) {
+			return;
+		}
+		this.#gatewayInitialized = true;
+
 		if ( ! this.isSeparateGateway || ! this.isEligible ) {
 			return;
 		}
 
-		const styleSelectors = `style[data-hide-gateway="${ this.methodId }"]`;
+		const styleSelector = `style[data-hide-gateway="${ this.methodId }"]`;
+		const wrapperSelector = `#${ this.wrappers.Default }`;
 
-		const styles = document.querySelectorAll( styleSelectors );
+		document
+			.querySelectorAll( styleSelector )
+			.forEach( ( el ) => el.remove() );
 
-		if ( ! styles.length ) {
-			return;
-		}
+		document
+			.querySelectorAll( wrapperSelector )
+			.forEach( ( el ) => el.remove() );
+
 		this.log( 'Show gateway' );
-
-		styles.forEach( ( el ) => el.remove() );
 
 		// This code runs only once, during button initialization, and fixes the initial visibility.
 		this.isVisible = this.isCurrentGateway;
