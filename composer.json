@@ -71,7 +71,7 @@
             ]
         },
         "composer-asset-compiler": {
-            "auto-discover": true,
+            "auto-run": false,
             "packages": {
                 "inpsyde/*": {
                     "dependencies": "install",
