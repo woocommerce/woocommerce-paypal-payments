@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
- * Class BancontactGateway
+ * Class MultibancoGateway
  */
 class MultibancoGateway extends WC_Payment_Gateway {
 
@@ -73,13 +73,13 @@ class MultibancoGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Multibanco', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'A popular and trusted electronic payment method in Belgium, used by Belgian customers with Multibanco cards issued by local banks. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Multibanco (via PayPal)', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Multibanco', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
 
-		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_bancontact_color.svg' );
+		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_multibanco_color.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();

@@ -73,7 +73,7 @@ class P24Gateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Przelewy24', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Przelewy24 (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Przelewy24', 'woocommerce-paypal-payments' ) );

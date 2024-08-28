@@ -73,7 +73,7 @@ class IDealGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'iDeal', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'iDeal (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'The most common payment method in the Netherlands, allowing Dutch buyers to pay directly through their preferred bank. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'iDeal', 'woocommerce-paypal-payments' ) );
