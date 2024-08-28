@@ -468,6 +468,10 @@ export default class PaymentButton {
 	 * @return {boolean} True means that this payment method is selected as current gateway.
 	 */
 	get isCurrentGateway() {
+		if ( ! PaymentContext.Gateways.includes( this.context ) ) {
+			return true;
+		}
+
 		/*
 		 * We need to rely on `getCurrentPaymentMethod()` here, as the `CheckoutBootstrap.js`
 		 * module fires the "ButtonEvents.RENDER" event before any PaymentButton instances are
