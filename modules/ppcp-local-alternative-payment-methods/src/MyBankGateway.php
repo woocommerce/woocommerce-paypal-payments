@@ -73,7 +73,7 @@ class MyBankGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'MyBank', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'MyBank (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'A European online banking payment solution primarily used in Italy, enabling customers to make secure bank transfers during checkout. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'MyBank', 'woocommerce-paypal-payments' ) );
