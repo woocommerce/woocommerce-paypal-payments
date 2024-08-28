@@ -461,16 +461,19 @@ export default class PaymentButton {
 	 * @return {boolean} True means that this payment method is selected as current gateway.
 	 */
 	get isCurrentGateway() {
-		if ( ! this.isSeparateGateway ) {
-			return false;
-		}
-
 		/*
 		 * We need to rely on `getCurrentPaymentMethod()` here, as the `CheckoutBootstrap.js`
 		 * module fires the "ButtonEvents.RENDER" event before any PaymentButton instances are
 		 * created. I.e. we cannot observe the initial gateway selection event.
 		 */
-		return this.methodId === getCurrentPaymentMethod();
+		const currentMethod = getCurrentPaymentMethod();
+
+		if ( this.isSeparateGateway ) {
+			return this.methodId === currentMethod;
+		}
+
+		// Button is rendered inside the Smart Buttons block.
+		return PaymentMethods.PAYPAL === currentMethod;
 	}
 
 	/**
@@ -703,7 +706,7 @@ export default class PaymentButton {
 
 		this.applyWrapperStyles();
 
-		if ( this.isEligible && this.isPresent && this.isVisible ) {
+		if ( this.isEligible && this.isCurrentGateway && this.isVisible ) {
 			if ( ! this.isButtonAttached ) {
 				this.log( 'refresh.addButton' );
 				this.addButton();
