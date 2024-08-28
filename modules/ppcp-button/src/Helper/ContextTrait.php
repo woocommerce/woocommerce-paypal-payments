@@ -243,4 +243,20 @@ trait ContextTrait {
 		$screen = get_current_screen();
 		return $screen && $screen->is_block_editor();
 	}
+
+	/**
+	 * Checks if is WooCommerce Settings Payments tab screen (/wp-admin/admin.php?page=wc-settings&tab=checkout).
+	 *
+	 * @return bool
+	 */
+	protected function is_wc_settings_payments_tab(): bool {
+		if ( ! is_admin() || isset( $_GET['section'] ) ) {
+			return false;
+		}
+
+		$page = $_GET['page'] ?? '';
+		$tab  = $_GET['tab'] ?? '';
+
+		return $page === 'wc-settings' && $tab === 'checkout';
+	}
 }

@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -30,6 +31,9 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  * Class AxoModule
  */
 class AxoModule implements ModuleInterface {
+
+	use ContextTrait;
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -66,7 +70,9 @@ class AxoModule implements ModuleInterface {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					// $methods[] = $gateway; - Temporarily remove Fastlane from the payment gateway list in admin area.
+					if ( ! $this->is_wc_settings_payments_tab() ) {
+						$methods[] = $gateway;
+					}
 					return $methods;
 				}
 
