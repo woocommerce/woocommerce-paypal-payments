@@ -2,6 +2,7 @@
 .editorconfig
 .gitattributes
 .gitignore
+.eslintrc
 .ddev
 .git*
 .phpstorm*
@@ -9,9 +10,11 @@
 *.env*
 .psalm*
 tests
-*.xml.*
+*.xml*
 .phpunit.result.cache
+babel.config.json
 node_modules
+resources
 *.lock
 webpack.config.js
 wp-cli.yml
