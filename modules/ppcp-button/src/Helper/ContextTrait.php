@@ -250,12 +250,12 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	protected function is_wc_settings_payments_tab(): bool {
-		if ( ! is_admin() || isset( $_GET['section'] ) ) {
+		if ( ! is_admin() || isset( $_GET['section'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
 			return false;
 		}
 
-		$page = $_GET['page'] ?? '';
-		$tab  = $_GET['tab'] ?? '';
+		$page = wc_clean( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$tab  = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
 
 		return $page === 'wc-settings' && $tab === 'checkout';
 	}
