@@ -73,7 +73,7 @@ class EPSGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'EPS', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'EPS (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'An online payment method in Austria, enabling Austrian buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'EPS', 'woocommerce-paypal-payments' ) );

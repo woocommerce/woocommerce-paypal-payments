@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
 /**
- * Class BancontactPaymentMethod
+ * Class MultibancoPaymentMethod
  */
 class MultibancoPaymentMethod extends AbstractPaymentMethodType {
 
@@ -33,7 +33,7 @@ class MultibancoPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * Multibanco WC gateway.
 	 *
-	 * @var BancontactGateway
+	 * @var MultibancoGateway
 	 */
 	private $gateway;
 
@@ -91,7 +91,7 @@ class MultibancoPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_bancontact_color.svg' ),
+			'icon'        => 'multibanco',
 		);
 	}
 }

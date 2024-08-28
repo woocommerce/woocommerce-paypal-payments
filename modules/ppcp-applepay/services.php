@@ -299,7 +299,7 @@ return array(
 			esc_html( $button_text )
 		);
 	},
-	'applepay.wc-gateway'                        => static function ( ContainerInterface $container ): ApplePayGateway {
+	'applepay.wc-gateway'                      => static function ( ContainerInterface $container ): ApplePayGateway {
 		return new ApplePayGateway(
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
