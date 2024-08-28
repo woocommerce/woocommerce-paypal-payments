@@ -32,4 +32,5 @@ jobs:
       PHP_VERSION: 7.2
       PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
       PLUGIN_VERSION: ${{ needs.check_version.outputs.version }}
+      ARCHIVE_NAME: woocommerce-paypal-payments-${{ needs.check_version.outputs.version }}
       COMPILE_ASSETS_ARGS: '-vv --env=root'
