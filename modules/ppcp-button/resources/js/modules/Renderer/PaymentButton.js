@@ -445,6 +445,17 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Whether the button is placed inside a classic gateway context.
+	 *
+	 * Classic gateway contexts are: Classic checkout, Pay for Order page.
+	 *
+	 * @return {boolean} True indicates, the button is located inside a classic gateway.
+	 */
+	get isInsideClassicGateway() {
+		return PaymentContext.Gateways.includes( this.context );
+	}
+
+	/**
 	 * Determines if the current payment button should be rendered as a stand-alone gateway.
 	 * The return value `false` usually means, that the payment button is bundled with all available
 	 * payment buttons.
@@ -456,18 +467,23 @@ export default class PaymentButton {
 	get isSeparateGateway() {
 		return (
 			this.#buttonConfig.is_wc_gateway_enabled &&
-			PaymentContext.Gateways.includes( this.context )
+			this.isInsideClassicGateway
 		);
 	}
 
 	/**
 	 * Whether the currently selected payment gateway is set to the payment method.
 	 *
-	 * Only relevant on checkout pages, when `this.isSeparateGateway` is true.
+	 * Only relevant on checkout pages where "classic" payment gateways are rendered.
 	 *
 	 * @return {boolean} True means that this payment method is selected as current gateway.
 	 */
 	get isCurrentGateway() {
+		if ( ! this.isInsideClassicGateway ) {
+			// This means, the button's visibility is managed by another script.
+			return true;
+		}
+
 		/*
 		 * We need to rely on `getCurrentPaymentMethod()` here, as the `CheckoutBootstrap.js`
 		 * module fires the "ButtonEvents.RENDER" event before any PaymentButton instances are
@@ -683,7 +699,7 @@ export default class PaymentButton {
 		} );
 
 		// Events relevant for buttons inside a payment gateway.
-		if ( PaymentContext.Gateways.includes( this.context ) ) {
+		if ( this.isInsideClassicGateway ) {
 			const parentMethod = this.isSeparateGateway
 				? this.methodId
 				: PaymentMethods.PAYPAL;
@@ -728,12 +744,11 @@ export default class PaymentButton {
 	 * Only relevant on the checkout page, i.e., when `this.isSeparateGateway` is `true`
 	 */
 	showPaymentGateway() {
-		if ( this.#gatewayInitialized ) {
-			return;
-		}
-		this.#gatewayInitialized = true;
-
-		if ( ! this.isSeparateGateway || ! this.isEligible ) {
+		if (
+			this.#gatewayInitialized ||
+			! this.isSeparateGateway ||
+			! this.isEligible
+		) {
 			return;
 		}
 
@@ -749,6 +764,7 @@ export default class PaymentButton {
 			.forEach( ( el ) => el.remove() );
 
 		this.log( 'Show gateway' );
+		this.#gatewayInitialized = true;
 
 		// This code runs only once, during button initialization, and fixes the initial visibility.
 		this.isVisible = this.isCurrentGateway;
