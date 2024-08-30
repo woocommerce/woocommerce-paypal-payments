@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -496,6 +497,19 @@ class WCGatewayModule implements ModuleInterface {
 				return $fields;
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			function( string $installed_plugin_version ) use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( ! $installed_plugin_version ) {
+					$settings->set( 'allow_local_apm_gateways', true );
+					$settings->persist();
+				}
+			}
+		);
 	}
 
 	/**
@@ -526,6 +540,14 @@ class WCGatewayModule implements ModuleInterface {
 
 				if ( $onboarding_state->current_state() !== State::STATE_ONBOARDED ) {
 					return $methods;
+				}
+
+				$is_dcc_enabled       = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+				$standard_card_button = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
+
+				if ( $is_dcc_enabled && isset( $standard_card_button['enabled'] ) ) {
+					$standard_card_button['enabled'] = 'no';
+					update_option( 'woocommerce_ppcp-card-button-gateway_settings', $standard_card_button );
 				}
 
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );

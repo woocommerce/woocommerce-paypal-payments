@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Payment_Tokens;
 use WC_Product;
 use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
@@ -50,6 +51,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WC_Shipping_Method;
+use WC_Cart;
 
 /**
  * Class SmartButton
@@ -1085,6 +1088,22 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
+	 * Whether the current cart contains a product that requires physical shipping.
+	 *
+	 * @return bool True, if any cart item requires shipping.
+	 */
+	private function need_shipping() : bool {
+		/**
+		 * Cart instance; might be null, esp. in customizer or in Block Editor.
+		 *
+		 * @var null|WC_Cart $cart
+		 */
+		$cart = WC()->cart;
+
+		return $cart && $cart->needs_shipping();
+	}
+
+	/**
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
@@ -1292,9 +1311,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'early_checkout_validation_enabled'       => $this->early_validation_enabled,
 			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
 			'user'                                    => array(
-				'is_logged' => is_user_logged_in(),
+				'is_logged'                  => is_user_logged_in(),
+				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
@@ -2131,5 +2152,20 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			default:
 				return $location;
 		}
+	}
+
+	/**
+	 * Whether the given user has WC card payment tokens.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return bool
+	 */
+	private function user_has_wc_card_payment_tokens( int $user_id ): bool {
+		$tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
+		if ( $tokens ) {
+			return true;
+		}
+
+		return false;
 	}
 }

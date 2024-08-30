@@ -35,9 +35,25 @@ trait PaymentsStatusHandlingTrait {
 		WC_Order $wc_order
 	): void {
 		if ( $order->intent() === 'CAPTURE' ) {
-			$this->handle_capture_status( $order->purchase_units()[0]->payments()->captures()[0], $wc_order );
+			$purchase_units = $order->purchase_units();
+
+			if ( ! empty( $purchase_units ) && isset( $purchase_units[0] ) ) {
+				$payments = $purchase_units[0]->payments();
+
+				if ( $payments && ! empty( $payments->captures() ) ) {
+					$this->handle_capture_status( $payments->captures()[0], $wc_order );
+				}
+			}
 		} elseif ( $order->intent() === 'AUTHORIZE' ) {
-			$this->handle_authorization_status( $order->purchase_units()[0]->payments()->authorizations()[0], $wc_order );
+			$purchase_units = $order->purchase_units();
+
+			if ( ! empty( $purchase_units ) && isset( $purchase_units[0] ) ) {
+				$payments = $purchase_units[0]->payments();
+
+				if ( $payments && ! empty( $payments->authorizations() ) ) {
+					$this->handle_authorization_status( $payments->authorizations()[0], $wc_order );
+				}
+			}
 		}
 	}
 

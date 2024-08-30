@@ -28,13 +28,6 @@ class UserIdToken {
 	private $host;
 
 	/**
-	 * The bearer.
-	 *
-	 * @var Bearer
-	 */
-	private $bearer;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -42,20 +35,27 @@ class UserIdToken {
 	private $logger;
 
 	/**
+	 * The client credentials.
+	 *
+	 * @var ClientCredentials
+	 */
+	private $client_credentials;
+
+	/**
 	 * UserIdToken constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string            $host The host.
+	 * @param LoggerInterface   $logger The logger.
+	 * @param ClientCredentials $client_credentials The client credentials.
 	 */
 	public function __construct(
 		string $host,
-		Bearer $bearer,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		ClientCredentials $client_credentials
 	) {
-		$this->host   = $host;
-		$this->bearer = $bearer;
-		$this->logger = $logger;
+		$this->host               = $host;
+		$this->logger             = $logger;
+		$this->client_credentials = $client_credentials;
 	}
 
 	/**
@@ -69,8 +69,6 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
-		$bearer = $this->bearer->bearer();
-
 		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
 		if ( $target_customer_id ) {
 			$url = add_query_arg(
@@ -84,7 +82,7 @@ class UserIdToken {
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Authorization' => $this->client_credentials->credentials(),
 				'Content-Type'  => 'application/x-www-form-urlencoded',
 			),
 		);

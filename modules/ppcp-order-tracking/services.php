@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\DhlShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipStationIntegration;
@@ -118,6 +119,7 @@ return array(
 		$is_gzd_active             = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
 		$is_wc_shipment_active     = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
 		$is_yith_ywot_active       = $container->get( 'compat.ywot.is_supported_plugin_version_active' );
+		$is_dhl_de_active          = $container->get( 'compat.dhl.is_supported_plugin_version_active' );
 		$is_ship_station_active    = $container->get( 'compat.shipstation.is_supported_plugin_version_active' );
 		$is_wc_shipping_tax_active = $container->get( 'compat.wc_shipping_tax.is_supported_plugin_version_active' );
 
@@ -133,6 +135,10 @@ return array(
 
 		if ( $is_yith_ywot_active ) {
 			$integrations[] = new YithShipmentIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		if ( $is_dhl_de_active ) {
+			$integrations[] = new DhlShipmentIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
 		if ( $is_ship_station_active ) {

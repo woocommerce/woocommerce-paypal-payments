@@ -5,11 +5,12 @@
  * @package WooCommerce\PayPalCommerce\AdminNotices\Repository
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AdminNotices\Repository;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class Repository
@@ -20,11 +21,11 @@ class Repository implements RepositoryInterface {
 	const PERSISTED_NOTICES_OPTION = 'woocommerce_ppcp-admin-notices';
 
 	/**
-	 * Returns the current messages.
+	 * Returns current messages to display, which excludes muted messages.
 	 *
 	 * @return Message[]
 	 */
-	public function current_message(): array {
+	public function current_message() : array {
 		return array_filter(
 			/**
 			 * Returns the list of admin messages.
@@ -33,7 +34,11 @@ class Repository implements RepositoryInterface {
 				self::NOTICES_FILTER,
 				array()
 			),
-			function( $element ) : bool {
+			function ( $element ) : bool {
+				if ( $element instanceof PersistentMessage ) {
+					return ! $element->is_muted();
+				}
+
 				return is_a( $element, Message::class );
 			}
 		);
@@ -43,9 +48,10 @@ class Repository implements RepositoryInterface {
 	 * Adds a message to persist between page reloads.
 	 *
 	 * @param Message $message The message.
+	 *
 	 * @return void
 	 */
-	public function persist( Message $message ): void {
+	public function persist( Message $message ) : void {
 		$persisted_notices = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();
 
 		$persisted_notices[] = $message->to_array();
@@ -58,20 +64,18 @@ class Repository implements RepositoryInterface {
 	 *
 	 * @return array|Message[]
 	 */
-	public function get_persisted_and_clear(): array {
+	public function get_persisted_and_clear() : array {
 		$notices = array();
 
 		$persisted_data = get_option( self::PERSISTED_NOTICES_OPTION ) ?: array();
 		foreach ( $persisted_data as $notice_data ) {
-			$notices[] = new Message(
-				(string) ( $notice_data['message'] ?? '' ),
-				(string) ( $notice_data['type'] ?? '' ),
-				(bool) ( $notice_data['dismissable'] ?? true ),
-				(string) ( $notice_data['wrapper'] ?? '' )
-			);
+			if ( is_array( $notice_data ) ) {
+				$notices[] = Message::from_array( $notice_data );
+			}
 		}
 
 		update_option( self::PERSISTED_NOTICES_OPTION, array(), true );
+
 		return $notices;
 	}
 }
