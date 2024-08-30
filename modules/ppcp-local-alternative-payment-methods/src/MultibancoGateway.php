@@ -1,6 +1,6 @@
 <?php
 /**
- * The Trustly payment gateway.
+ * The Multibanco payment gateway.
  *
  * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods
  */
@@ -18,11 +18,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
- * Class TrustlyGateway
+ * Class MultibancoGateway
  */
-class TrustlyGateway extends WC_Payment_Gateway {
+class MultibancoGateway extends WC_Payment_Gateway {
 
-	const ID = 'ppcp-trustly';
+	const ID = 'ppcp-multibanco';
 
 	/**
 	 * PayPal Orders endpoint.
@@ -53,7 +53,7 @@ class TrustlyGateway extends WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
-	 * TrustlyGateway constructor.
+	 * MultibancoGateway constructor.
 	 *
 	 * @param Orders                 $orders_endpoint PayPal Orders endpoint.
 	 * @param PurchaseUnitFactory    $purchase_unit_factory Purchase unit factory.
@@ -73,13 +73,13 @@ class TrustlyGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Trustly (via PayPal)', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Multibanco (via PayPal)', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title', __( 'Trustly', 'woocommerce-paypal-payments' ) );
+		$this->title       = $this->get_option( 'title', __( 'Multibanco', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
 
-		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_trustly_color.svg' );
+		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_multibanco_color.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -100,10 +100,10 @@ class TrustlyGateway extends WC_Payment_Gateway {
 			'enabled'     => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Trustly', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Multibanco', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
-				'description' => __( 'Enable/Disable Trustly payment gateway.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable/Disable Multibanco payment gateway.', 'woocommerce-paypal-payments' ),
 			),
 			'title'       => array(
 				'title'       => __( 'Title', 'woocommerce-paypal-payments' ),
@@ -130,21 +130,14 @@ class TrustlyGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Trustly to confirm the payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'pending', __( 'Awaiting for the buyer to complete the payment.', 'woocommerce-paypal-payments' ) );
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$amount        = $purchase_unit->amount()->to_array();
 
 		$request_body = array(
-			'intent'                 => 'CAPTURE',
-			'payment_source'         => array(
-				'trustly' => array(
-					'country_code' => $wc_order->get_billing_country(),
-					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-				),
-			),
-			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
-			'purchase_units'         => array(
+			'intent'         => 'CAPTURE',
+			'purchase_units' => array(
 				array(
 					'reference_id' => $purchase_unit->reference_id(),
 					'amount'       => array(
@@ -155,15 +148,47 @@ class TrustlyGateway extends WC_Payment_Gateway {
 					'invoice_id'   => $purchase_unit->invoice_id(),
 				),
 			),
-			'application_context'    => array(
-				'locale'     => $this->valid_bcp47_code(),
-				'return_url' => $this->get_return_url( $wc_order ),
-				'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
-			),
 		);
 
 		try {
 			$response = $this->orders_endpoint->create( $request_body );
+			$body     = json_decode( $response['body'] );
+
+			$request_body = array(
+				'payment_source'         => array(
+					'multibanco' => array(
+						'country_code' => $wc_order->get_billing_country(),
+						'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+					),
+				),
+				'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
+				'application_context'    => array(
+					'locale'     => 'en-PT',
+					'return_url' => $this->get_return_url( $wc_order ),
+					'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
+				),
+			);
+
+			$response = $this->orders_endpoint->confirm_payment_source( $request_body, $body->id );
+			$body     = json_decode( $response['body'] );
+
+			$payer_action = '';
+			foreach ( $body->links as $link ) {
+				if ( $link->rel === 'payer-action' ) {
+					$payer_action = $link->href;
+				}
+			}
+
+			WC()->cart->empty_cart();
+
+			$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+			$wc_order->save_meta_data();
+
+			return array(
+				'result'   => 'success',
+				'redirect' => esc_url( $payer_action ),
+			);
+
 		} catch ( RuntimeException $exception ) {
 			$wc_order->update_status(
 				'failed',
@@ -175,25 +200,6 @@ class TrustlyGateway extends WC_Payment_Gateway {
 				'redirect' => wc_get_checkout_url(),
 			);
 		}
-
-		$body = json_decode( $response['body'] );
-
-		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
-		$wc_order->save_meta_data();
-
-		$payer_action = '';
-		foreach ( $body->links as $link ) {
-			if ( $link->rel === 'payer-action' ) {
-				$payer_action = $link->href;
-			}
-		}
-
-		WC()->cart->empty_cart();
-
-		return array(
-			'result'   => 'success',
-			'redirect' => esc_url( $payer_action ),
-		);
 	}
 
 	/**
@@ -226,28 +232,5 @@ class TrustlyGateway extends WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
-	}
-
-	/**
-	 * Returns a PayPal-supported BCP-47 code, for example de-DE-formal becomes de-DE.
-	 *
-	 * @return string
-	 */
-	private function valid_bcp47_code() {
-		$locale = str_replace( '_', '-', get_user_locale() );
-
-		if ( preg_match( '/^[a-z]{2}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}))?$/', $locale ) ) {
-			return $locale;
-		}
-
-		$parts = explode( '-', $locale );
-		if ( count( $parts ) === 3 ) {
-			$ret = substr( $locale, 0, strrpos( $locale, '-' ) );
-			if ( false !== $ret ) {
-				return $ret;
-			}
-		}
-
-		return 'en';
 	}
 }

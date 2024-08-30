@@ -505,6 +505,19 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			}
 		);
 
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			function( string $installed_plugin_version ) use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if ( ! $installed_plugin_version ) {
+					$settings->set( 'allow_local_apm_gateways', true );
+					$settings->persist();
+				}
+			}
+		);
+
 		return true;
 	}
 

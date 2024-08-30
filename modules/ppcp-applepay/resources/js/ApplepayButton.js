@@ -339,6 +339,12 @@ class ApplePayButton {
 		this.#isInitialized = true;
 		this.applePayConfig = config;
 
+		if ( this.isSeparateGateway ) {
+			document
+				.querySelectorAll( '#ppc-button-applepay-container' )
+				.forEach( ( el ) => el.remove() );
+		}
+
 		if ( ! this.isEligible ) {
 			this.hide();
 		} else {

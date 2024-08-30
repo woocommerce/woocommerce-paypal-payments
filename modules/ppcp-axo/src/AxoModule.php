@@ -85,7 +85,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				assert( $settings instanceof Settings );
 
 				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
-				$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+				$is_dcc_enabled    = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
 
 				if ( ! $is_paypal_enabled || ! $is_dcc_enabled ) {
 					return $methods;

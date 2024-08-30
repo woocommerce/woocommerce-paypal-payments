@@ -13,6 +13,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -72,7 +73,7 @@ class P24Gateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Przelewy24', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Przelewy24 (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Przelewy24', 'woocommerce-paypal-payments' ) );
@@ -177,6 +178,9 @@ class P24Gateway extends WC_Payment_Gateway {
 		}
 
 		$body = json_decode( $response['body'] );
+
+		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+		$wc_order->save_meta_data();
 
 		$payer_action = '';
 		foreach ( $body->links as $link ) {

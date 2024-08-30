@@ -1,6 +1,6 @@
 <?php
 /**
- * IDeal payment method.
+ * Multibanco payment method.
  *
  * @package WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods
  */
@@ -12,9 +12,9 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 
 /**
- * Class IDealPaymentMethod
+ * Class MultibancoPaymentMethod
  */
-class IDealPaymentMethod extends AbstractPaymentMethodType {
+class MultibancoPaymentMethod extends AbstractPaymentMethodType {
 
 	/**
 	 * The URL of this module.
@@ -31,29 +31,29 @@ class IDealPaymentMethod extends AbstractPaymentMethodType {
 	private $version;
 
 	/**
-	 * IDeal WC gateway.
+	 * Multibanco WC gateway.
 	 *
-	 * @var IDealGateway
+	 * @var MultibancoGateway
 	 */
 	private $gateway;
 
 	/**
-	 * IDealPaymentMethod constructor.
+	 * MultibancoPaymentMethod constructor.
 	 *
-	 * @param string       $module_url The URL of this module.
-	 * @param string       $version The assets version.
-	 * @param IDealGateway $gateway IDeal WC gateway.
+	 * @param string            $module_url The URL of this module.
+	 * @param string            $version The assets version.
+	 * @param MultibancoGateway $gateway Multibanco WC gateway.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
-		IDealGateway $gateway
+		MultibancoGateway $gateway
 	) {
 		$this->module_url = $module_url;
 		$this->version    = $version;
 		$this->gateway    = $gateway;
 
-		$this->name = IDealGateway::ID;
+		$this->name = MultibancoGateway::ID;
 	}
 
 	/**
@@ -73,14 +73,14 @@ class IDealPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	public function get_payment_method_script_handles() {
 		wp_register_script(
-			'ppcp-ideal-payment-method',
-			trailingslashit( $this->module_url ) . 'assets/js/ideal-payment-method.js',
+			'ppcp-multibanco-payment-method',
+			trailingslashit( $this->module_url ) . 'assets/js/multibanco-payment-method.js',
 			array(),
 			$this->version,
 			true
 		);
 
-		return array( 'ppcp-ideal-payment-method' );
+		return array( 'ppcp-multibanco-payment-method' );
 	}
 
 	/**
@@ -91,7 +91,7 @@ class IDealPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'ideal',
+			'icon'        => 'multibanco',
 		);
 	}
 }
