@@ -23,20 +23,35 @@ import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modul
  */
 
 class AxoManager {
+	axoConfig = null;
+	ppcpConfig = null;
+	$ = null;
+
+	initialized = false;
+	hideGatewaySelection = false;
+	fastlane = null;
+	phoneNumber = null;
+
 	/**
 	 * @type {CustomerDetails}
 	 */
 	data = {};
+	status = {};
+	styles = {};
+	locale = 'en_us';
+
+	el = null;
+	emailInput = null;
+	shippingView = null;
+	billingView = null;
+	cardView = null;
 
 	constructor( axoConfig, ppcpConfig ) {
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
 
-		this.initialized = false;
 		this.fastlane = new Fastlane();
 		this.$ = jQuery;
-
-		this.hideGatewaySelection = false;
 
 		this.status = {
 			active: false,
@@ -48,6 +63,7 @@ class AxoManager {
 
 		this.clearData();
 
+		// TODO - Do we need a public `states` property for this?
 		this.states = this.axoConfig.woocommerce.states;
 
 		this.el = new DomElementCollection();
@@ -61,8 +77,6 @@ class AxoManager {
 				backgroundColorPrimary: '#ffffff',
 			},
 		};
-
-		this.locale = 'en_us';
 
 		this.registerEventHandlers();
 
@@ -814,11 +828,7 @@ class AxoManager {
 				if ( authResponse.profileData.card ) {
 					this.setStatus( 'hasCard', true );
 				} else {
-					this.cardComponent = (
-						await this.fastlane.FastlaneCardComponent(
-							this.cardComponentData()
-						)
-					).render( this.el.paymentContainer.selector + '-form' );
+					this.cardComponent = await this.refreshFastlaneComponent();
 				}
 
 				const cardBillingAddress =
@@ -860,11 +870,7 @@ class AxoManager {
 
 				await this.renderWatermark( true );
 
-				this.cardComponent = (
-					await this.fastlane.FastlaneCardComponent(
-						this.cardComponentData()
-					)
-				).render( this.el.paymentContainer.selector + '-form' );
+				this.cardComponent = await this.refreshFastlaneComponent();
 			}
 		} else {
 			// No profile found with this email address.
@@ -876,11 +882,7 @@ class AxoManager {
 
 			await this.renderWatermark( true );
 
-			this.cardComponent = (
-				await this.fastlane.FastlaneCardComponent(
-					this.cardComponentData()
-				)
-			).render( this.el.paymentContainer.selector + '-form' );
+			this.cardComponent = await this.refreshFastlaneComponent();
 		}
 
 		this.syncPhoneFromWooToFastlane();
@@ -922,7 +924,7 @@ class AxoManager {
 	onClickSubmitButton() {
 		// TODO: validate data.
 
-		if ( this.data.card ) {
+		if ( this.isRyanFlow ) {
 			// Ryan flow
 			log( 'Starting Ryan flow.' );
 
@@ -1128,8 +1130,8 @@ class AxoManager {
 	ensureBillingPhoneNumber( data ) {
 		if ( data.billing_phone === '' ) {
 			let phone = '';
-			const cc = this.data?.shipping?.phoneNumber?.countryCode;
-			const number = this.data?.shipping?.phoneNumber?.nationalNumber;
+			const cc = this.data.shipping?.phoneNumber?.countryCode;
+			const number = this.data.shipping?.phoneNumber?.nationalNumber;
 
 			if ( cc ) {
 				phone = `+${ cc } `;
