@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.9.0 - xxxx-xx-xx =
+= 2.9.0 - 2024-09-02 =
 * Fix - Fatal error in Block Editor when using WooCommerce blocks #2534
 * Fix - Can't pay from block pages when the shipping callback is enabled and no shipping methods defined #2429
 * Fix - Various Google Pay button fixes #2496
