@@ -975,7 +975,6 @@ class AxoManager {
 
 		if ( this.data.phone ) {
 			config.fields.phoneNumber = {
-				placeholder: this.data.phone,
 				prefill: this.data.phone,
 			};
 		}
@@ -1231,9 +1230,22 @@ class AxoManager {
 			return;
 		}
 
-		const onWooPhoneChanged = async ( ev ) => {
-			this.data.phone = ev.target.value;
+		const sanitizePhoneNumber = ( number ) => {
+			const localNumber = number.replace( /^\+1/, '' );
+			const cleanNumber = localNumber.replace( /\D/g, '' );
 
+			// All valid US mobile numbers have exactly 10 digits.
+			return cleanNumber.length === 10 ? cleanNumber : null;
+		};
+
+		const onWooPhoneChanged = async ( ev ) => {
+			const cleanPhoneNumber = sanitizePhoneNumber( ev.target.value );
+
+			if ( ! cleanPhoneNumber ) {
+				return;
+			}
+
+			this.data.phone = cleanPhoneNumber;
 			await this.refreshFastlaneComponent();
 		};
 
