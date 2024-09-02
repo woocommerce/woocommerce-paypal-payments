@@ -117,9 +117,24 @@ class SettingsNoticeGenerator {
 	 * @return string
 	 */
 	public function generate_incompatible_plugins_notice(): string {
-		$incompatible_plugins = array(
-			'Elementor'  => did_action( 'elementor/loaded' ),
-			'CheckoutWC' => defined( 'CFW_NAME' ),
+		/**
+		 * Filters the list of Fastlane incompatible plugins.
+		 */
+		$incompatible_plugins = apply_filters(
+			'woocommerce_paypal_payments_fastlane_incompatible_plugins',
+			array(
+				'Elementor'                     => did_action( 'elementor/loaded' ),
+				'CheckoutWC'                    => defined( 'CFW_NAME' ),
+				'WCDirectCheckout'              => defined( 'QLWCDC_PLUGIN_NAME' ),
+				'WPMultiStepCheckout'           => class_exists( 'WPMultiStepCheckout' ),
+				'FluidCheckout'                 => class_exists( 'FluidCheckout' ),
+				'THWMSCF_Multistep_Checkout'    => class_exists( 'THWMSCF_Multistep_Checkout' ),
+				'WC_Subscriptions'              => class_exists( 'WC_Subscriptions' ),
+				'Cartflows'                     => class_exists( 'Cartflows_Loader' ),
+				'FunnelKitFunnelBuilder'        => class_exists( 'WFFN_Core' ),
+				'WCAllProductsForSubscriptions' => class_exists( 'WCS_ATT' ),
+				'WCOnePageCheckout'             => class_exists( 'PP_One_Page_Checkout' ),
+			)
 		);
 
 		$active_plugins_list = array_filter( $incompatible_plugins );
