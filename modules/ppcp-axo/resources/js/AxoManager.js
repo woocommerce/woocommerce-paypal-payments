@@ -11,7 +11,23 @@ import {
 } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
+/**
+ * Internal customer details.
+ *
+ * @typedef {Object} CustomerDetails
+ * @property {null|string} email    - Customer email.
+ * @property {null|string} phone    - Fastlane phone number.
+ * @property {null|Object} billing  - Billing details object.
+ * @property {null|Object} shipping - Shipping details object.
+ * @property {null|Object} card     - Payment details object.
+ */
+
 class AxoManager {
+	/**
+	 * @type {CustomerDetails}
+	 */
+	data = {};
+
 	constructor( axoConfig, ppcpConfig ) {
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
@@ -30,12 +46,7 @@ class AxoManager {
 			hasCard: false,
 		};
 
-		this.data = {
-			email: null,
-			billing: null,
-			shipping: null,
-			card: null,
-		};
+		this.clearData();
 
 		this.states = this.axoConfig.woocommerce.states;
 
@@ -102,6 +113,17 @@ class AxoManager {
 		}
 
 		this.triggerGatewayChange();
+	}
+
+	/**
+	 * Checks if the current flow is the "Ryan flow": Ryan is a known customer who created a
+	 * Fastlane profile before. Ryan can leverage all benefits of the accelerated 1-click checkout.
+	 *
+	 * @return {boolean} True means, the Fastlane could link the customer's email to an existing
+	 * account.
+	 */
+	get isRyanFlow() {
+		return !! this.data.card;
 	}
 
 	registerEventHandlers() {
@@ -860,6 +882,8 @@ class AxoManager {
 				)
 			).render( this.el.paymentContainer.selector + '-form' );
 		}
+
+		this.syncPhoneFromWooToFastlane();
 	}
 
 	disableGatewaySelection() {
@@ -873,6 +897,7 @@ class AxoManager {
 	clearData() {
 		this.data = {
 			email: null,
+			phone: null,
 			billing: null,
 			shipping: null,
 			card: null,
@@ -935,7 +960,7 @@ class AxoManager {
 	}
 
 	cardComponentData() {
-		return {
+		const config = {
 			fields: {
 				cardholderName: {
 					enabled: this.axoConfig.name_on_card === '1',
@@ -945,6 +970,28 @@ class AxoManager {
 				this.axoConfig.style_options
 			),
 		};
+
+		if ( this.data.phone ) {
+			config.fields.phoneNumber = {
+				placeholder: this.data.phone,
+				prefill: this.data.phone,
+			};
+		}
+
+		return config;
+	}
+
+	/**
+	 * Refreshes the Fastlane UI component, using configuration provided by the `cardComponentData()` method.
+	 *
+	 * @return {Promise<*>} Resolves when the component was refreshed.
+	 */
+	async refreshFastlaneComponent() {
+		const elem = this.el.paymentContainer.selector + '-form';
+		const config = this.cardComponentData();
+
+		const component = await this.fastlane.FastlaneCardComponent( config );
+		return component.render( elem );
 	}
 
 	tokenizeData() {
@@ -1168,6 +1215,27 @@ class AxoManager {
 		this.$( '#billing_email_field input' ).on( 'focus', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'input', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'click', reEnableInput );
+	}
+
+	syncPhoneFromWooToFastlane() {
+		// Ryan is a known customer, we do not need his phone number.
+		if ( this.isRyanFlow ) {
+			return;
+		}
+
+		const phoneEl = document.querySelector( '#billing_phone' );
+
+		if ( ! phoneEl ) {
+			return;
+		}
+
+		const onWooPhoneChanged = async ( ev ) => {
+			this.data.phone = ev.target.value;
+
+			await this.refreshFastlaneComponent();
+		};
+
+		phoneEl.addEventListener( 'change', onWooPhoneChanged );
 	}
 }
 
