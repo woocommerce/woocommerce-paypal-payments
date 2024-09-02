@@ -175,6 +175,38 @@ class StatusReportModule implements ModuleInterface {
 							$subscriptions_mode_settings
 						),
 					),
+					array(
+						'label'          => esc_html__( 'PayPal Shipping Callback', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'PayPal Shipping Callback',
+						'description'    => esc_html__( 'Whether the "Require final confirmation on checkout" setting is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'blocks_final_review_enabled' ) && $settings->get( 'blocks_final_review_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'Apple Pay', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Apple Pay',
+						'description'    => esc_html__( 'Whether Apple Pay is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'applepay_button_enabled' ) && $settings->get( 'applepay_button_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'Google Pay', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Google Pay',
+						'description'    => esc_html__( 'Whether Google Pay is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'Fastlane', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Fastlane',
+						'description'    => esc_html__( 'Whether Fastlane is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
+						),
+					),
 				);
 
 				echo wp_kses_post(
