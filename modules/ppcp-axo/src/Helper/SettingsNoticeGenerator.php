@@ -111,7 +111,7 @@ class SettingsNoticeGenerator {
 	public function generate_shipping_notice(): string {
 		$shipping_settings_link = admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' );
 
-		$notice_content = 'asd';
+		$notice_content = '';
 
 		if ( wc_shipping_enabled() && wc_ship_to_billing_address_only() ) {
 			$notice_content = sprintf(

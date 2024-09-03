@@ -232,7 +232,7 @@ return array(
 	/**
 	 * The list of Fastlane incompatible plugins.
 	 *
-	 * @returns array<array{name: string, isActive: bool}>
+	 * @returns array<array{name: string, is_active: bool}>
 	 */
 	'axo.fastlane-incompatible-plugins'      => static function () : array {
 		/**
@@ -242,48 +242,48 @@ return array(
 			'woocommerce_paypal_payments_fastlane_incompatible_plugins',
 			array(
 				array(
-					'name'     => 'Elementor',
-					'isActive' => did_action( 'elementor/loaded' ),
+					'name'      => 'Elementor',
+					'is_active' => did_action( 'elementor/loaded' ),
 				),
 				array(
-					'name'     => 'CheckoutWC',
-					'isActive' => defined( 'CFW_NAME' ),
+					'name'      => 'CheckoutWC',
+					'is_active' => defined( 'CFW_NAME' ),
 				),
 				array(
-					'name'     => 'Direct Checkout for WooCommerce',
-					'isActive' => defined( 'QLWCDC_PLUGIN_NAME' ),
+					'name'      => 'Direct Checkout for WooCommerce',
+					'is_active' => defined( 'QLWCDC_PLUGIN_NAME' ),
 				),
 				array(
-					'name'     => 'Multi-Step Checkout for WooCommerce',
-					'isActive' => class_exists( 'WPMultiStepCheckout' ),
+					'name'      => 'Multi-Step Checkout for WooCommerce',
+					'is_active' => class_exists( 'WPMultiStepCheckout' ),
 				),
 				array(
-					'name'     => 'Fluid Checkout for WooCommerce',
-					'isActive' => class_exists( 'FluidCheckout' ),
+					'name'      => 'Fluid Checkout for WooCommerce',
+					'is_active' => class_exists( 'FluidCheckout' ),
 				),
 				array(
-					'name'     => 'MultiStep Checkout for WooCommerce',
-					'isActive' => class_exists( 'THWMSCF_Multistep_Checkout' ),
+					'name'      => 'MultiStep Checkout for WooCommerce',
+					'is_active' => class_exists( 'THWMSCF_Multistep_Checkout' ),
 				),
 				array(
-					'name'     => 'WooCommerce Subscriptions',
-					'isActive' => class_exists( 'WC_Subscriptions' ),
+					'name'      => 'WooCommerce Subscriptions',
+					'is_active' => class_exists( 'WC_Subscriptions' ),
 				),
 				array(
-					'name'     => 'CartFlows',
-					'isActive' => class_exists( 'Cartflows_Loader' ),
+					'name'      => 'CartFlows',
+					'is_active' => class_exists( 'Cartflows_Loader' ),
 				),
 				array(
-					'name'     => 'FunnelKit Funnel Builder',
-					'isActive' => class_exists( 'WFFN_Core' ),
+					'name'      => 'FunnelKit Funnel Builder',
+					'is_active' => class_exists( 'WFFN_Core' ),
 				),
 				array(
-					'name'     => 'WooCommerce One Page Checkout',
-					'isActive' => class_exists( 'PP_One_Page_Checkout' ),
+					'name'      => 'WooCommerce One Page Checkout',
+					'is_active' => class_exists( 'PP_One_Page_Checkout' ),
 				),
 				array(
-					'name'     => 'All Products for Woo Subscriptions',
-					'isActive' => class_exists( 'WCS_ATT' ),
+					'name'      => 'All Products for Woo Subscriptions',
+					'is_active' => class_exists( 'WCS_ATT' ),
 				),
 			)
 		);
@@ -295,7 +295,7 @@ return array(
 		$active_plugins_list = array_filter(
 			$incompatible_plugins,
 			function( array $plugin ): bool {
-				return (bool) $plugin['isActive'];
+				return (bool) $plugin['is_active'];
 			}
 		);
 
