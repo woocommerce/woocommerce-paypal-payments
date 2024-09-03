@@ -300,7 +300,7 @@ return array(
 		);
 
 		if ( empty( $active_plugins_list ) ) {
-			return [];
+			return array();
 		}
 
 		return array_map(
