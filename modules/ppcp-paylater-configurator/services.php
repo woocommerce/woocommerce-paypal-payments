@@ -13,6 +13,8 @@ use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
@@ -43,5 +45,35 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+	'paylater-configurator.is-available'         => static function ( ContainerInterface $container ) : bool {
+		// Test, if Pay-Later is available; depends on the shop country and Vaulting status.
+		$messages_apply = $container->get( 'button.helper.messages-apply' );
+		assert( $messages_apply instanceof MessagesApply );
+
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
+
+		return ! $vault_enabled && $messages_apply->for_country();
+	},
+	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ) : array {
+		// Get an array of locations that display the Pay-Later message.
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$is_enabled = $settings->has( 'pay_later_messaging_enabled' ) && $settings->get( 'pay_later_messaging_enabled' );
+
+		if ( ! $is_enabled ) {
+			return array();
+		}
+
+		$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
+		if ( is_array( $selected_locations ) ) {
+			return $selected_locations;
+		}
+
+		return array();
 	},
 );

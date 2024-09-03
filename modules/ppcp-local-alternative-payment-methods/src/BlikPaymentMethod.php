@@ -91,7 +91,7 @@ class BlikPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_blik_color.svg' ),
+			'icon'        => 'blik',
 		);
 	}
 }

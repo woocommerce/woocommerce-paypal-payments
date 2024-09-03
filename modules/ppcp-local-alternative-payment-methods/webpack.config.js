@@ -30,6 +30,9 @@ module.exports = {
 		'trustly-payment-method': path.resolve(
 			'./resources/js/trustly-payment-method.js'
 		),
+		'multibanco-payment-method': path.resolve(
+			'./resources/js/multibanco-payment-method.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),

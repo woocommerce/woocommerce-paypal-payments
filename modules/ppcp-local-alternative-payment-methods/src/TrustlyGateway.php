@@ -13,6 +13,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -72,7 +73,7 @@ class TrustlyGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Trustly', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Trustly (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'Trustly', 'woocommerce-paypal-payments' ) );
@@ -176,6 +177,9 @@ class TrustlyGateway extends WC_Payment_Gateway {
 		}
 
 		$body = json_decode( $response['body'] );
+
+		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+		$wc_order->save_meta_data();
 
 		$payer_action = '';
 		foreach ( $body->links as $link ) {

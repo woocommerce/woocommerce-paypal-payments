@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.6
 Requires PHP: 7.2
-Stable tag: 2.8.3
+Stable tag: 2.9.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,26 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.9.0 - 2024-09-02 =
+* Fix - Fatal error in Block Editor when using WooCommerce blocks #2534
+* Fix - Can't pay from block pages when the shipping callback is enabled and no shipping methods defined #2429
+* Fix - Various Google Pay button fixes #2496
+* Fix - Buying a free trial subscription with ACDC results in a $1 charge in the API call #2465
+* Fix - Problem with Google Pay and Apple Pay button placement on Pay for Order page #2542
+* Fix - When there isn't any shipping option for the address the order is still created from classic cart #2437
+* Fix - Patch the order with no shipping methods, instead of throwing an error #2435
+* Enhancement - Separate Apple Pay button for Classic Checkout #2457
+* Enhancement - Remove AMEX support for ACDC when store location is set to China #2526
+* Enhancement - Inform users of Pay Later messaging configuration when Pay Later wasn't recently enabled #2529
+* Enhancement - Update ACDC signup URLs #2475
+* Enhancement - Implement country based APMs via Orders API #2511
+* Enhancement - Update PaymentsStatusHandlingTrait.php (author @callmeahmedr) #2523
+* Enhancement - Disable PayPal Shipping callback by default #2527
+* Enhancement - Change Apple Pay and Google Pay default button labels to plain #2476
+* Enhancement - Add Package Tracking compatibility with DHL Shipping plugin #2463
+* Enhancement - Add support for WC Bookings when skipping checkout confirmation #2452
+* Enhancement - Remove currencies from country-currency matrix in card fields module #2441
 
 = 2.8.3 - 2024-08-12 =
 * Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474

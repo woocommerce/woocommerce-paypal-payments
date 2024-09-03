@@ -15,6 +15,8 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class LocalAlternativePaymentMethodsModule
@@ -35,6 +37,13 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		if ( ! $settings->has( 'allow_local_apm_gateways' ) || $settings->get( 'allow_local_apm_gateways' ) !== true ) {
+			return;
+		}
+
 		add_filter(
 			'woocommerce_payment_gateways',
 			/**
@@ -148,6 +157,37 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 
 					add_filter( 'woocommerce_order_has_status', '__return_true' );
 				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
+			function( WC_Order $wc_order, string $order_id ) use ( $c ) {
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				if (
+				! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods )
+				) {
+					return;
+				}
+
+				$fees_updater = $c->get( 'wcgateway.helper.fees-updater' );
+				assert( $fees_updater instanceof FeesUpdater );
+
+				$fees_updater->update( $order_id, $wc_order );
+			},
+			10,
+			2
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_allowed_refund_payment_methods',
+			function( array $payment_methods ) use ( $c ): array {
+				$local_payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				foreach ( $local_payment_methods as $payment_method ) {
+					$payment_methods[] = $payment_method['id'];
+				}
+
+				return $payment_methods;
 			}
 		);
 	}

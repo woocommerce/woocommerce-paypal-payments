@@ -109,7 +109,11 @@ class RefundProcessor {
 	 */
 	public function process( WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
 		try {
-			if ( ! in_array( $wc_order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, PayUponInvoiceGateway::ID ), true ) ) {
+			$allowed_refund_payment_methods = apply_filters(
+				'woocommerce_paypal_payments_allowed_refund_payment_methods',
+				array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, PayUponInvoiceGateway::ID )
+			);
+			if ( ! in_array( $wc_order->get_payment_method(), $allowed_refund_payment_methods, true ) ) {
 				return true;
 			}
 
