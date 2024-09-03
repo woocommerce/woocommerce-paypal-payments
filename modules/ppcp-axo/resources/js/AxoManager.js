@@ -137,8 +137,7 @@ class AxoManager {
 	 * Checks if the current flow is the "Ryan flow": Ryan is a known customer who created a
 	 * Fastlane profile before. Ryan can leverage all benefits of the accelerated 1-click checkout.
 	 *
-	 * @return {boolean} True means, the Fastlane could link the customer's email to an existing
-	 * account.
+	 * @return {boolean} True means, Fastlane could link the customer's email to an existing account.
 	 */
 	get isRyanFlow() {
 		return !! this.data.card;
@@ -764,13 +763,13 @@ class AxoManager {
 		}
 
 		const phoneNumber = this.phoneInput.value;
-		const cleanPhoneNumber = this.sanitizePhoneNumber( phoneNumber );
+		const validPhoneNumber = this.sanitizePhoneNumber( phoneNumber );
 
-		if ( ! cleanPhoneNumber ) {
+		if ( ! validPhoneNumber ) {
 			return;
 		}
 
-		this.data.phone = cleanPhoneNumber;
+		this.data.phone = validPhoneNumber;
 	}
 
 	async onChangeEmail() {
