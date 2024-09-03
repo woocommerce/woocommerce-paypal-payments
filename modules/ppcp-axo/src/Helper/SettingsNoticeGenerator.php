@@ -19,6 +19,22 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
  */
 class SettingsNoticeGenerator {
 	/**
+	 * The list of Fastlane incompatible plugin names.
+	 *
+	 * @var string[]
+	 */
+	protected $incompatible_plugin_names;
+
+	/**
+	 * SettingsNoticeGenerator constructor.
+	 *
+	 * @param string[] $incompatible_plugin_names The list of Fastlane incompatible plugin names.
+	 */
+	public function __construct( array $incompatible_plugin_names ) {
+		$this->incompatible_plugin_names = $incompatible_plugin_names;
+	}
+
+	/**
 	 * Generates the full HTML of the notification.
 	 *
 	 * @param string $message  HTML of the inner message contents.
@@ -95,7 +111,7 @@ class SettingsNoticeGenerator {
 	public function generate_shipping_notice(): string {
 		$shipping_settings_link = admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' );
 
-		$notice_content = '';
+		$notice_content = 'asd';
 
 		if ( wc_shipping_enabled() && wc_ship_to_billing_address_only() ) {
 			$notice_content = sprintf(
@@ -117,38 +133,9 @@ class SettingsNoticeGenerator {
 	 * @return string
 	 */
 	public function generate_incompatible_plugins_notice(): string {
-		/**
-		 * Filters the list of Fastlane incompatible plugins.
-		 */
-		$incompatible_plugins = apply_filters(
-			'woocommerce_paypal_payments_fastlane_incompatible_plugins',
-			array(
-				'Elementor'                     => did_action( 'elementor/loaded' ),
-				'CheckoutWC'                    => defined( 'CFW_NAME' ),
-				'WCDirectCheckout'              => defined( 'QLWCDC_PLUGIN_NAME' ),
-				'WPMultiStepCheckout'           => class_exists( 'WPMultiStepCheckout' ),
-				'FluidCheckout'                 => class_exists( 'FluidCheckout' ),
-				'THWMSCF_Multistep_Checkout'    => class_exists( 'THWMSCF_Multistep_Checkout' ),
-				'WC_Subscriptions'              => class_exists( 'WC_Subscriptions' ),
-				'Cartflows'                     => class_exists( 'Cartflows_Loader' ),
-				'FunnelKitFunnelBuilder'        => class_exists( 'WFFN_Core' ),
-				'WCAllProductsForSubscriptions' => class_exists( 'WCS_ATT' ),
-				'WCOnePageCheckout'             => class_exists( 'PP_One_Page_Checkout' ),
-			)
-		);
-
-		$active_plugins_list = array_filter( $incompatible_plugins );
-
-		if ( empty( $active_plugins_list ) ) {
+		if ( empty( $this->incompatible_plugin_names ) ) {
 			return '';
 		}
-
-		$incompatible_plugin_items = array_map(
-			function ( $plugin ) {
-				return "<li>{$plugin}</li>";
-			},
-			array_keys( $active_plugins_list )
-		);
 
 		$plugins_settings_link = esc_url( admin_url( 'plugins.php' ) );
 		$notice_content        = sprintf(
@@ -158,7 +145,7 @@ class SettingsNoticeGenerator {
 				'woocommerce-paypal-payments'
 			),
 			$plugins_settings_link,
-			implode( '', $incompatible_plugin_items )
+			implode( '', $this->incompatible_plugin_names )
 		);
 
 		return '<div class="ppcp-notice"><p>' . $notice_content . '</p></div>';
