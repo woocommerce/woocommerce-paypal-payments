@@ -756,20 +756,23 @@ class AxoManager {
 	/**
 	 * Reads the phone number from the WooCommerce checkout form, sanitizes it, and (if valid)
 	 * stores it in the internal customer details object.
+	 *
+	 * @return {boolean} True, if the internal phone number was updated.
 	 */
 	setPhoneFromWoo() {
 		if ( ! this.phoneInput ) {
-			return;
+			return false;
 		}
 
 		const phoneNumber = this.phoneInput.value;
 		const validPhoneNumber = this.sanitizePhoneNumber( phoneNumber );
 
 		if ( ! validPhoneNumber ) {
-			return;
+			return false;
 		}
 
 		this.data.phone = validPhoneNumber;
+		return true;
 	}
 
 	async onChangeEmail() {
@@ -848,9 +851,9 @@ class AxoManager {
 	 * @return {Promise<void>}
 	 */
 	async onChangePhone() {
-		this.setPhoneFromWoo();
+		const hasChanged = this.setPhoneFromWoo();
 
-		if ( this.status.active ) {
+		if ( hasChanged && this.status.active ) {
 			await this.refreshFastlaneComponent();
 		}
 
