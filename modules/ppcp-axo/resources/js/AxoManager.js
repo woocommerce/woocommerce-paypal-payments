@@ -42,6 +42,7 @@ class AxoManager {
 
 	el = null;
 	emailInput = null;
+	phoneInput = null;
 	shippingView = null;
 	billingView = null;
 	cardView = null;
@@ -125,6 +126,9 @@ class AxoManager {
 				} );
 			}
 		}
+
+		this.onChangePhone = this.onChangePhone.bind( this );
+		this.initPhoneSyncWooToFastlane();
 
 		this.triggerGatewayChange();
 	}
@@ -494,6 +498,7 @@ class AxoManager {
 		this.initPlacements();
 		this.initFastlane();
 		this.setStatus( 'active', true );
+		this.setPhoneFromWoo();
 
 		log( `Attempt on activation - emailInput: ${ this.emailInput.value }` );
 		log(
@@ -726,6 +731,48 @@ class AxoManager {
 		}
 	}
 
+	/**
+	 * Locates the WooCommerce checkout "billing phone" field and adds event listeners to it.
+	 */
+	initPhoneSyncWooToFastlane() {
+		this.phoneInput = document.querySelector( '#billing_phone' );
+		this.phoneInput?.addEventListener( 'change', this.onChangePhone );
+	}
+
+	/**
+	 * Strips the country prefix and non-numeric characters from the phone number. If the remaining
+	 * phone number is valid, it's returned. Otherwise, the function returns null.
+	 *
+	 * @param {string} number - Phone number to sanitize.
+	 * @return {string|null} A valid US phone number, or null if the number is invalid.
+	 */
+	sanitizePhoneNumber( number ) {
+		const localNumber = number.replace( /^\+1/, '' );
+		const cleanNumber = localNumber.replace( /\D/g, '' );
+
+		// All valid US mobile numbers have exactly 10 digits.
+		return cleanNumber.length === 10 ? cleanNumber : null;
+	}
+
+	/**
+	 * Reads the phone number from the WooCommerce checkout form, sanitizes it, and (if valid)
+	 * stores it in the internal customer details object.
+	 */
+	setPhoneFromWoo() {
+		if ( ! this.phoneInput ) {
+			return;
+		}
+
+		const phoneNumber = this.phoneInput.value;
+		const cleanPhoneNumber = this.sanitizePhoneNumber( phoneNumber );
+
+		if ( ! cleanPhoneNumber ) {
+			return;
+		}
+
+		this.data.phone = cleanPhoneNumber;
+	}
+
 	async onChangeEmail() {
 		this.clearData();
 
@@ -769,6 +816,8 @@ class AxoManager {
 		this.data.email = this.emailInput.value;
 		this.billingView.setData( this.data );
 
+		this.setPhoneFromWoo();
+
 		if ( ! this.fastlane.identity ) {
 			log( 'Not initialized.' );
 			return;
@@ -791,6 +840,22 @@ class AxoManager {
 			'ppcp-axo-overlay'
 		);
 		this.enableGatewaySelection();
+	}
+
+	/**
+	 * Event handler that fires when the customer changed the phone number in the WooCommerce
+	 * checkout form. If Fastlane is active, the component is refreshed.
+	 *
+	 * @return {Promise<void>}
+	 */
+	async onChangePhone() {
+		this.setPhoneFromWoo();
+
+		if ( this.status.active ) {
+			await this.refreshFastlaneComponent();
+		}
+
+		return Promise.resolve();
 	}
 
 	async lookupCustomerByEmail() {
@@ -884,8 +949,6 @@ class AxoManager {
 
 			this.cardComponent = await this.refreshFastlaneComponent();
 		}
-
-		this.syncPhoneFromWooToFastlane();
 	}
 
 	disableGatewaySelection() {
@@ -973,7 +1036,8 @@ class AxoManager {
 			),
 		};
 
-		if ( this.data.phone ) {
+		// Ryan is a known customer, we do not need his phone number.
+		if ( this.data.phone && ! this.isRyanFlow ) {
 			config.fields.phoneNumber = {
 				prefill: this.data.phone,
 			};
@@ -988,6 +1052,10 @@ class AxoManager {
 	 * @return {Promise<*>} Resolves when the component was refreshed.
 	 */
 	async refreshFastlaneComponent() {
+		if ( ! this.status.active ) {
+			return Promise.resolve();
+		}
+
 		const elem = this.el.paymentContainer.selector + '-form';
 		const config = this.cardComponentData();
 
@@ -1216,40 +1284,6 @@ class AxoManager {
 		this.$( '#billing_email_field input' ).on( 'focus', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'input', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'click', reEnableInput );
-	}
-
-	syncPhoneFromWooToFastlane() {
-		// Ryan is a known customer, we do not need his phone number.
-		if ( this.isRyanFlow ) {
-			return;
-		}
-
-		const phoneEl = document.querySelector( '#billing_phone' );
-
-		if ( ! phoneEl ) {
-			return;
-		}
-
-		const sanitizePhoneNumber = ( number ) => {
-			const localNumber = number.replace( /^\+1/, '' );
-			const cleanNumber = localNumber.replace( /\D/g, '' );
-
-			// All valid US mobile numbers have exactly 10 digits.
-			return cleanNumber.length === 10 ? cleanNumber : null;
-		};
-
-		const onWooPhoneChanged = async ( ev ) => {
-			const cleanPhoneNumber = sanitizePhoneNumber( ev.target.value );
-
-			if ( ! cleanPhoneNumber ) {
-				return;
-			}
-
-			this.data.phone = cleanPhoneNumber;
-			await this.refreshFastlaneComponent();
-		};
-
-		phoneEl.addEventListener( 'change', onWooPhoneChanged );
 	}
 }
 
