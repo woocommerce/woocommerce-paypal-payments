@@ -294,8 +294,8 @@ return array(
 
 		$active_plugins_list = array_filter(
 			$incompatible_plugins,
-			function( $plugin ) {
-				return $plugin['isActive'];
+			function( array $plugin ): bool {
+				return (bool) $plugin['isActive'];
 			}
 		);
 
