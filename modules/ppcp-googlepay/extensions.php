@@ -166,7 +166,7 @@ return array(
 					'classes'           => array( 'ppcp-field-indent' ),
 					'class'             => array(),
 					'input_class'       => array( 'wc-enhanced-select' ),
-					'default'           => 'pay',
+					'default'           => 'plain',
 					'options'           => PropertiesDictionary::button_types(),
 					'screens'           => array( State::STATE_ONBOARDED ),
 					'gateway'           => 'dcc',

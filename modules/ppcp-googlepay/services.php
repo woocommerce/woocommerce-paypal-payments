@@ -267,7 +267,8 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'googlepay.url' )
+			$container->get( 'googlepay.url' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

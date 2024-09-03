@@ -1,3 +1,5 @@
+/* global PayPalCommerceGateway */
+
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 import { setVisible, setVisibleByClass } from '../Helper/Hiding';
 import {
@@ -7,6 +9,11 @@ import {
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import BootstrapHelper from '../Helper/BootstrapHelper';
+import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
+import {
+	ButtonEvents,
+	dispatchButtonEvent,
+} from '../Helper/PaymentButtonHelpers';
 
 class CheckoutBootstap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
@@ -68,6 +75,7 @@ class CheckoutBootstap {
 		jQuery( document.body ).on(
 			'updated_checkout payment_method_selected',
 			() => {
+				this.invalidatePaymentMethods();
 				this.updateUi();
 			}
 		);
@@ -160,7 +168,7 @@ class CheckoutBootstap {
 			PayPalCommerceGateway.vault_v3_enabled
 		) {
 			this.renderer.render(
-				actionHandler.addPaymentMethodConfiguration(),
+				addPaymentMethodConfiguration( PayPalCommerceGateway ),
 				{},
 				actionHandler.configuration()
 			);
@@ -174,6 +182,14 @@ class CheckoutBootstap {
 		);
 	}
 
+	invalidatePaymentMethods() {
+		/**
+		 * Custom JS event to notify other modules that the payment button on the checkout page
+		 * has become irrelevant or invalid.
+		 */
+		dispatchButtonEvent( { event: ButtonEvents.INVALIDATE } );
+	}
+
 	updateUi() {
 		const currentPaymentMethod = getCurrentPaymentMethod();
 		const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
@@ -183,12 +199,15 @@ class CheckoutBootstap {
 		);
 		const isGooglePayMethod =
 			currentPaymentMethod === PaymentMethods.GOOGLEPAY;
+		const isApplePayMethod =
+			currentPaymentMethod === PaymentMethods.APPLEPAY;
 		const isSavedCard = isCard && isSavedCardSelected();
 		const isNotOurGateway =
 			! isPaypal &&
 			! isCard &&
 			! isSeparateButtonGateway &&
-			! isGooglePayMethod;
+			! isGooglePayMethod &&
+			! isApplePayMethod;
 		const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
 		const hasVaultedPaypal =
 			PayPalCommerceGateway.vaulted_paypal_email !== '';
@@ -232,9 +251,20 @@ class CheckoutBootstap {
 			}
 		}
 
-		setVisible( '#ppc-button-ppcp-googlepay', isGooglePayMethod );
+		/**
+		 * Custom JS event that is observed by the relevant payment gateway.
+		 *
+		 * Dynamic part of the event name is the payment method ID, for example
+		 * "ppcp-credit-card-gateway" or "ppcp-googlepay"
+		 */
+		dispatchButtonEvent( {
+			event: ButtonEvents.RENDER,
+			paymentMethod: currentPaymentMethod,
+		} );
 
-		jQuery( document.body ).trigger( 'ppcp_checkout_rendered' );
+		setVisible( '#ppc-button-ppcp-applepay', isApplePayMethod );
+
+		document.body.dispatchEvent( new Event( 'ppcp_checkout_rendered' ) );
 	}
 
 	shouldShowMessages() {

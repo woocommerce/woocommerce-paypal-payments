@@ -115,6 +115,11 @@ class CreatePaymentToken implements EndpointInterface {
 
 				if ( isset( $result->payment_source->card ) ) {
 					$wc_token_id = $this->wc_payment_tokens->create_payment_token_card( $current_user_id, $result );
+
+					$is_free_trial_cart = $data['is_free_trial_cart'] ?? '';
+					if ( $is_free_trial_cart === '1' ) {
+						WC()->session->set( 'ppcp_card_payment_token_for_free_trial', $wc_token_id );
+					}
 				}
 			}
 

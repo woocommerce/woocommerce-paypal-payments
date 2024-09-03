@@ -66,7 +66,7 @@ class AxoModule implements ModuleInterface {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					$methods[] = $gateway;
+					// $methods[] = $gateway; - Temporarily remove Fastlane from the payment gateway list in admin area.
 					return $methods;
 				}
 
@@ -77,13 +77,18 @@ class AxoModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
+				$is_dcc_enabled    = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
 
-				if ( ! $is_dcc_enabled ) {
+				if ( ! $is_paypal_enabled || ! $is_dcc_enabled ) {
 					return $methods;
 				}
 
 				if ( $this->is_excluded_endpoint() ) {
+					return $methods;
+				}
+
+				if ( ! $this->is_compatible_shipping_config() ) {
 					return $methods;
 				}
 
@@ -144,13 +149,20 @@ class AxoModule implements ModuleInterface {
 			function () use ( $c ) {
 				$module = $this;
 
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
+
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
 				// Check if the module is applicable, correct country, currency, ... etc.
-				if ( ! $c->get( 'axo.eligible' )
+				if ( ! $is_paypal_enabled
+					|| ! $c->get( 'axo.eligible' )
 					|| 'continuation' === $c->get( 'button.context' )
-					|| $subscription_helper->cart_contains_subscription() ) {
+					|| $subscription_helper->cart_contains_subscription()
+					|| ! $this->is_compatible_shipping_config() ) {
 					return;
 				}
 
@@ -194,9 +206,17 @@ class AxoModule implements ModuleInterface {
 
 				add_action(
 					'wp_head',
-					function () {
+					function () use ( $c ) {
 						// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
+
+						// Add meta tag to allow feature-detection of the site's AXO payment state.
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+
+						$this->add_feature_detection_tag(
+							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
+						);
 					}
 				);
 
@@ -333,6 +353,7 @@ class AxoModule implements ModuleInterface {
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
+			&& $this->is_compatible_shipping_config()
 			&& $is_axo_enabled
 			&& $is_dcc_enabled
 			&& ! $this->is_excluded_endpoint();
@@ -387,5 +408,33 @@ class AxoModule implements ModuleInterface {
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
 		return is_wc_endpoint_url( 'order-pay' );
+	}
+
+	/**
+	 * Condition to evaluate if the shipping configuration is compatible.
+	 *
+	 * @return bool
+	 */
+	private function is_compatible_shipping_config(): bool {
+		return ! wc_shipping_enabled() || ( wc_shipping_enabled() && ! wc_ship_to_billing_address_only() );
+	}
+
+	/**
+	 * Outputs a meta tag to allow feature detection on certain pages.
+	 *
+	 * @param bool $axo_enabled Whether the gateway is enabled.
+	 * @return void
+	 */
+	private function add_feature_detection_tag( bool $axo_enabled ) {
+		$show_tag = is_checkout() || is_cart() || is_shop();
+
+		if ( ! $show_tag ) {
+			return;
+		}
+
+		printf(
+			'<meta name="ppcp.axo" content="ppcp.axo.%s" />',
+			$axo_enabled ? 'enabled' : 'disabled'
+		);
 	}
 }

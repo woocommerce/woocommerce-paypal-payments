@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -71,6 +72,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -171,10 +173,14 @@ return array(
 		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
-	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
+	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		return 'wc-settings' === $page;
+	},
+	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
+		$is_wc_settings_page = $container->get( 'wcgateway.is-wc-settings-page' );
 		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
-		return 'wc-settings' === $page && 'checkout' === $tab;
+		return $is_wc_settings_page && 'checkout' === $tab;
 	},
 	'wcgateway.is-wc-gateways-list-page'                   => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'wcgateway.is-wc-payments-page' ) && ! isset( $_GET['section'] );
@@ -198,6 +204,7 @@ return array(
 				Settings::PAY_LATER_TAB_ID,
 				AxoGateway::ID,
 				GooglePayGateway::ID,
+				ApplePayGateway::ID,
 			),
 			true
 		);
@@ -220,6 +227,7 @@ return array(
 				Settings::PAY_LATER_TAB_ID,
 				Settings::CONNECTION_TAB_ID,
 				GooglePayGateway::ID,
+				ApplePayGateway::ID,
 			),
 			true
 		);
@@ -773,6 +781,20 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'allow_local_apm_gateways'    => array(
+				'title'        => __( 'Create gateway for alternative payment methods', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Moves the alternative payment methods from the PayPal gateway into their own dedicated gateways.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'disable_cards'               => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
@@ -1162,6 +1184,13 @@ return array(
 		$logger            = $container->get( 'woocommerce.logger.woocommerce' );
 		return new RefundFeesUpdater( $order_endpoint, $logger );
 	},
+	'wcgateway.helper.fees-updater'                        => static function ( ContainerInterface $container ): FeesUpdater {
+		return new FeesUpdater(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.capture' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {
 		return new MessagesDisclaimers(
@@ -1411,10 +1440,10 @@ return array(
 		return $label;
 	},
 	'wcgateway.enable-dcc-url-sandbox'                     => static function ( ContainerInterface $container ): string {
-		return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
+		return 'https://www.sandbox.paypal.com/bizsignup/entry?product=ppcp';
 	},
 	'wcgateway.enable-dcc-url-live'                        => static function ( ContainerInterface $container ): string {
-		return 'https://www.paypal.com/bizsignup/entry/product/ppcp';
+		return 'https://www.paypal.com/bizsignup/entry?product=ppcp';
 	},
 	'wcgateway.enable-pui-url-sandbox'                     => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';

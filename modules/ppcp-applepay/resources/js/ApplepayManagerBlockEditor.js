@@ -1,6 +1,8 @@
-import ApplepayButton from './ApplepayButton';
+/* global paypal */
 
-class ApplepayManagerBlockEditor {
+import ApplePayButton from './ApplepayButton';
+
+class ApplePayManagerBlockEditor {
 	constructor( buttonConfig, ppcpConfig ) {
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
@@ -17,7 +19,7 @@ class ApplepayManagerBlockEditor {
 		try {
 			this.applePayConfig = await paypal.Applepay().config();
 
-			const button = new ApplepayButton(
+			const button = new ApplePayButton(
 				this.ppcpConfig.context,
 				null,
 				this.buttonConfig,
@@ -31,4 +33,4 @@ class ApplepayManagerBlockEditor {
 	}
 }
 
-export default ApplepayManagerBlockEditor;
+export default ApplePayManagerBlockEditor;

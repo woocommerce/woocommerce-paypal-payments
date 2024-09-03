@@ -299,5 +299,16 @@ return array(
 			esc_html( $button_text )
 		);
 	},
+	'applepay.wc-gateway'                      => static function ( ContainerInterface $container ): ApplePayGateway {
+		return new ApplePayGateway(
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'applepay.url' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 
 );

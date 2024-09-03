@@ -1005,19 +1005,19 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@paypal/paypal-js@^8.0.5":
-  version "8.0.5"
-  resolved "https://registry.yarnpkg.com/@paypal/paypal-js/-/paypal-js-8.0.5.tgz#77bc461b4d1e5a2c6f081269e3ef0b2e3331a68c"
-  integrity sha512-yQNV7rOILeaVCNU4aVDRPqEnbIlzfxgQfFsxzsBuZW1ouqRD/4kYBWJDzczCiscSr2xOeA/Pkm7e3a9fRfnuMQ==
+"@paypal/paypal-js@^8.1.0":
+  version "8.1.0"
+  resolved "https://registry.yarnpkg.com/@paypal/paypal-js/-/paypal-js-8.1.0.tgz#4e7d10e0a0b4164985029cfdac748e5694d117e9"
+  integrity sha512-f64bom5xYwmxyeKPJUFS/XpM0tXojQEgjRIADPqe1R9WmK+PFqL4SEkT85cGU0ZXLVx4EGbjwREHhqEOR+OstA==
   dependencies:
     promise-polyfill "^8.3.0"
 
-"@paypal/react-paypal-js@^8.3.0":
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/@paypal/react-paypal-js/-/react-paypal-js-8.3.0.tgz#a103080b752766b8ff59b8620887abf802e1a01b"
-  integrity sha512-SX17d2h1CMNFGI+wtjb329AEDaBR8Ziy2LCV076eDcY1Q0MFKRkfQ/v0HOAvZtk3sJoydRmYez2pq47BRblwqQ==
+"@paypal/react-paypal-js@^8.5.0":
+  version "8.5.0"
+  resolved "https://registry.yarnpkg.com/@paypal/react-paypal-js/-/react-paypal-js-8.5.0.tgz#cf17483202c8fa7a33dae86798d50a102705f182"
+  integrity sha512-YIAyLw4OiUoHHoUgXvibrBDdluzqnqVMGsJXyBcoOzlWHQIe5zhh8dgYezNNRXjXwy6t22YmPljjw7lr+eD9cw==
   dependencies:
-    "@paypal/paypal-js" "^8.0.5"
+    "@paypal/paypal-js" "^8.1.0"
     "@paypal/sdk-constants" "^1.0.122"
 
 "@paypal/sdk-constants@^1.0.122":
