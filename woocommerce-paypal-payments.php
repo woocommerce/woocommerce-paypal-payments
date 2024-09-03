@@ -7,7 +7,7 @@
  * Author:      WooCommerce
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
- * Requires PHP: 7.2
+ * Requires PHP: 7.4
  * Requires Plugins: woocommerce
  * WC requires at least: 3.9
  * WC tested up to: 9.2
@@ -59,11 +59,11 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 			return;
 		}
-		if ( version_compare( PHP_VERSION, '7.2', '<' ) ) {
+		if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 			add_action(
 				'admin_notices',
 				function() {
-					echo '<div class="error"><p>' . esc_html__( 'WooCommerce PayPal Payments requires PHP 7.1 or above.', 'woocommerce-paypal-payments' ), '</p></div>';
+					echo '<div class="error"><p>' . esc_html__( 'WooCommerce PayPal Payments requires PHP 7.4 or above.', 'woocommerce-paypal-payments' ), '</p></div>';
 				}
 			);
 
