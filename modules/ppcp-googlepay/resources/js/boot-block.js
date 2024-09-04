@@ -3,7 +3,7 @@ import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
-import __ from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { loadCustomScript } from '@paypal/paypal-js';
