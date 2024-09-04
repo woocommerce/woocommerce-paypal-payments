@@ -4,7 +4,7 @@
     "description": "PayPal Commerce Platform for WooCommerce",
     "license": "GPL-2.0",
     "require": {
-        "php": "^7.2 | ^8.0",
+        "php": "^7.4 | ^8.0",
         "ext-json": "*",
         "psr/log": "^1.1",
         "ralouphie/getallheaders": "^3.0",

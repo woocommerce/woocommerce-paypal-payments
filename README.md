@@ -4,9 +4,9 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 
 ## Dependencies
 
-* PHP >= 7.2
-* WordPress >=5.3
-* WooCommerce >=4.5
+* PHP >= 7.4
+* WordPress >= 6.3
+* WooCommerce >= 6.9
 
 ## Development
 

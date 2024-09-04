@@ -29,7 +29,7 @@ jobs:
     needs: check_version
     uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@feature/prefixed-archives
     with:
-      PHP_VERSION: 7.2
+      PHP_VERSION: 7.4
       PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
       PLUGIN_VERSION: ${{ needs.check_version.outputs.version }}
       ARCHIVE_NAME: woocommerce-paypal-payments-${{ needs.check_version.outputs.version }}
