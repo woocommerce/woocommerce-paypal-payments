@@ -27,9 +27,10 @@ class AxoManager {
 	ppcpConfig = null;
 	$ = null;
 
+	fastlane = null;
+
 	initialized = false;
 	hideGatewaySelection = false;
-	fastlane = null;
 	phoneNumber = null;
 
 	/**
@@ -497,7 +498,7 @@ class AxoManager {
 		this.initPlacements();
 		this.initFastlane();
 		this.setStatus( 'active', true );
-		this.setPhoneFromWoo();
+		this.readPhoneFromWoo();
 
 		log( `Attempt on activation - emailInput: ${ this.emailInput.value }` );
 		log(
@@ -759,7 +760,7 @@ class AxoManager {
 	 *
 	 * @return {boolean} True, if the internal phone number was updated.
 	 */
-	setPhoneFromWoo() {
+	readPhoneFromWoo() {
 		if ( ! this.phoneInput ) {
 			return false;
 		}
@@ -818,7 +819,7 @@ class AxoManager {
 		this.data.email = this.emailInput.value;
 		this.billingView.setData( this.data );
 
-		this.setPhoneFromWoo();
+		this.readPhoneFromWoo();
 
 		if ( ! this.fastlane.identity ) {
 			log( 'Not initialized.' );
@@ -851,7 +852,7 @@ class AxoManager {
 	 * @return {Promise<void>}
 	 */
 	async onChangePhone() {
-		const hasChanged = this.setPhoneFromWoo();
+		const hasChanged = this.readPhoneFromWoo();
 
 		if ( hasChanged && this.status.active ) {
 			await this.refreshFastlaneComponent();
