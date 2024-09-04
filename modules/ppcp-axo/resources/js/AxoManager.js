@@ -28,6 +28,10 @@ class AxoManager {
 	$ = null;
 
 	fastlane = null;
+	/**
+	 * @type {FastlaneCardComponent}
+	 */
+	cardComponent = null;
 
 	initialized = false;
 	hideGatewaySelection = false;
@@ -855,7 +859,7 @@ class AxoManager {
 		const hasChanged = this.readPhoneFromWoo();
 
 		if ( hasChanged && this.status.active ) {
-			await this.refreshFastlaneComponent();
+			await this.initializeFastlaneComponent();
 		}
 
 		return Promise.resolve();
@@ -896,7 +900,7 @@ class AxoManager {
 				if ( authResponse.profileData.card ) {
 					this.setStatus( 'hasCard', true );
 				} else {
-					this.cardComponent = await this.refreshFastlaneComponent();
+					await this.initializeFastlaneComponent();
 				}
 
 				const cardBillingAddress =
@@ -937,8 +941,7 @@ class AxoManager {
 				this.setStatus( 'hasProfile', false );
 
 				await this.renderWatermark( true );
-
-				this.cardComponent = await this.refreshFastlaneComponent();
+				await this.initializeFastlaneComponent();
 			}
 		} else {
 			// No profile found with this email address.
@@ -949,8 +952,7 @@ class AxoManager {
 			this.setStatus( 'hasProfile', false );
 
 			await this.renderWatermark( true );
-
-			this.cardComponent = await this.refreshFastlaneComponent();
+			await this.initializeFastlaneComponent();
 		}
 	}
 
@@ -1050,11 +1052,12 @@ class AxoManager {
 	}
 
 	/**
-	 * Refreshes the Fastlane UI component, using configuration provided by the `cardComponentData()` method.
+	 * Initializes the Fastlane UI component, using configuration provided by the
+	 * `cardComponentData()` method. If the UI component was already initialized, nothing happens.
 	 *
-	 * @return {Promise<*>} Resolves when the component was refreshed.
+	 * @return {Promise<*>} Resolves when the component was rendered.
 	 */
-	async refreshFastlaneComponent() {
+	async initializeFastlaneComponent() {
 		if ( ! this.status.active ) {
 			return Promise.resolve();
 		}
@@ -1062,8 +1065,10 @@ class AxoManager {
 		const elem = this.el.paymentContainer.selector + '-form';
 		const config = this.cardComponentData();
 
-		const component = await this.fastlane.FastlaneCardComponent( config );
-		return component.render( elem );
+		this.cardComponent =
+			await this.fastlane.FastlaneCardComponent( config );
+
+		return this.cardComponent.render( elem );
 	}
 
 	tokenizeData() {
