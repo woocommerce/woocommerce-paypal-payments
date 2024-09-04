@@ -513,6 +513,8 @@ class AxoManager {
 			this.lastEmailCheckedIdentity !== this.emailInput.value
 		) {
 			this.onChangeEmail();
+		} else {
+			this.refreshFastlanePrefills();
 		}
 	}
 
@@ -859,7 +861,7 @@ class AxoManager {
 		const hasChanged = this.readPhoneFromWoo();
 
 		if ( hasChanged && this.status.active ) {
-			await this.initializeFastlaneComponent();
+			await this.refreshFastlanePrefills();
 		}
 
 		return Promise.resolve();
@@ -1058,7 +1060,7 @@ class AxoManager {
 	 * @return {Promise<*>} Resolves when the component was rendered.
 	 */
 	async initializeFastlaneComponent() {
-		if ( ! this.status.active ) {
+		if ( ! this.status.active || this.cardComponent ) {
 			return Promise.resolve();
 		}
 
@@ -1069,6 +1071,27 @@ class AxoManager {
 			await this.fastlane.FastlaneCardComponent( config );
 
 		return this.cardComponent.render( elem );
+	}
+
+	/**
+	 * Updates the prefill-values in the UI component. This method only updates empty fields.
+	 *
+	 * @return {Promise<*>} Resolves when the component was refreshed.
+	 */
+	async refreshFastlanePrefills() {
+		if ( ! this.cardComponent ) {
+			return Promise.resolve();
+		}
+
+		const { fields } = this.cardComponentData();
+		const prefills = Object.keys( fields ).reduce( ( result, key ) => {
+			if ( fields[ key ].hasOwnProperty( 'prefill' ) ) {
+				result[ key ] = fields[ key ].prefill;
+			}
+			return result;
+		}, {} );
+
+		return this.cardComponent.updatePrefills( prefills );
 	}
 
 	tokenizeData() {
