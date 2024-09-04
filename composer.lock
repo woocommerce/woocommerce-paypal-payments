@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "dc32884a51201e6beee788e0c860d088",
+    "content-hash": "4ada1f9416971ef72b0587ca34b32cc1",
     "packages": [
         {
             "name": "container-interop/service-provider",
@@ -1705,6 +1705,71 @@
                 "source": "https://github.com/hamcrest/hamcrest-php/tree/v2.0.1"
             },
             "time": "2020-07-09T08:09:16+00:00"
+        },
+        {
+            "name": "inpsyde/composer-assets-compiler",
+            "version": "2.5.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inpsyde/composer-asset-compiler.git",
+                "reference": "3db3bea66088421377b725d110bd16ee23716c05"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inpsyde/composer-asset-compiler/zipball/3db3bea66088421377b725d110bd16ee23716c05",
+                "reference": "3db3bea66088421377b725d110bd16ee23716c05",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^1 || ^2",
+                "ext-json": "*",
+                "php": ">= 7.2"
+            },
+            "require-dev": {
+                "composer/composer": "^2.1.9",
+                "inpsyde/php-coding-standards": "^1@dev",
+                "mikey179/vfsstream": "^1.6.10",
+                "mockery/mockery": "^1.3.5",
+                "phpunit/phpunit": "^8.5.21",
+                "vimeo/psalm": "^4.16.1"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": "Inpsyde\\AssetsCompiler\\Composer\\Plugin",
+                "branch-alias": {
+                    "dev-master": "2.x-dev",
+                    "dev-v1.x": "1.x-dev",
+                    "dev-v2.x": "2.x-dev",
+                    "dev-v3.x": "3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Inpsyde\\AssetsCompiler\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Inpsyde GmbH",
+                    "email": "hello@inpsyde.com",
+                    "homepage": "https://inpsyde.com/",
+                    "role": "Company"
+                },
+                {
+                    "name": "Giuseppe Mazzapica",
+                    "email": "g.mazzapica@inpsyde.com"
+                }
+            ],
+            "description": "Composer plugin that installs and compile frontend dependencies for installed Composer packages based on configuration.",
+            "support": {
+                "issues": "https://github.com/inpsyde/composer-asset-compiler/issues",
+                "source": "https://github.com/inpsyde/composer-asset-compiler/tree/2.5.3"
+            },
+            "time": "2024-03-07T12:11:10+00:00"
         },
         {
             "name": "inpsyde/modularity",
