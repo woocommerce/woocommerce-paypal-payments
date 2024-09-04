@@ -557,19 +557,23 @@ class GooglepayButton extends PaymentButton {
 	 * @return {Object} Sanitized object.
 	 */
 	sanitizeShippingOptions( responseData ) {
-		const cleanOptions = [];
+		// Sanitize the shipping options.
+		const cleanOptions = responseData.shippingOptions.map( ( item ) => ( {
+			id: item.id,
+			label: item.label,
+			description: item.description,
+		} ) );
 
-		responseData.shippingOptions.forEach( ( item ) => {
-			cleanOptions.push( {
-				id: item.id,
-				label: item.label,
-				description: item.description,
-			} );
-		} );
+		// Ensure that the default option is valid.
+		let defaultOptionId = responseData.defaultSelectedOptionId;
+		if ( ! cleanOptions.some( ( item ) => item.id === defaultOptionId ) ) {
+			defaultOptionId = cleanOptions[ 0 ].id;
+		}
 
-		responseData.shippingOptions = cleanOptions;
-
-		return { ...responseData, shippingOptions: cleanOptions };
+		return {
+			defaultSelectedOptionId: defaultOptionId,
+			shippingOptions: cleanOptions,
+		};
 	}
 
 	/**
