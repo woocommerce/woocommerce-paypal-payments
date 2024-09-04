@@ -60,7 +60,10 @@ const features = [ 'products' ];
 registerExpressPaymentMethod( {
 	name: buttonData.id,
 	title: `PayPal - ${ buttonData.title }`,
-	description: __( 'Eligible users will see the PayPal button.' ),
+	description: __(
+		'Eligible users will see the PayPal button.',
+		'woocommerce-paypal-payments'
+	),
 	gatewayId: 'ppcp-gateway',
 	label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
 	content: <GooglePayComponent isEditing={ false } />,

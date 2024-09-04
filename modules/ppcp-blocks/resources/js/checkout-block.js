@@ -776,7 +776,10 @@ if ( block_enabled && config.enabled ) {
 			registerExpressPaymentMethod( {
 				name: `${ config.id }-${ fundingSource }`,
 				title: 'PayPal',
-				description: __( 'Eligible users will see the PayPal button.' ),
+				description: __(
+					'Eligible users will see the PayPal button.',
+					'woocommerce-paypal-payments'
+				),
 				gatewayId: 'ppcp-gateway',
 				paymentMethodId: config.id,
 				label: (
