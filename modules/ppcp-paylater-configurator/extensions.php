@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 		$old_fields = array(
 			'pay_later_messaging_locations',
 			'pay_later_enable_styling_per_messaging_location',
