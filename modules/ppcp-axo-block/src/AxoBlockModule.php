@@ -65,8 +65,6 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 					);
 				}
 			);
-
-			return;
 		}
 
 		add_action(
