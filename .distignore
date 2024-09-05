@@ -14,7 +14,7 @@ tests
 .phpunit.result.cache
 babel.config.json
 node_modules
-resources
+modules/*/resources
 *.lock
 webpack.config.js
 wp-cli.yml
