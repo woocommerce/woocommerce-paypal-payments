@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 
-	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
 		// Used in various places to mark fields for the preview button.
 		$apm_name = 'GooglePay';
