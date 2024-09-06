@@ -11,9 +11,10 @@ import { useCustomerData } from './hooks/useCustomerData';
 import { Payment } from './components/Payment';
 
 // Helpers
-import { removeShippingChangeButton } from './helpers/buttonHelpers';
 import { snapshotFields, restoreOriginalFields } from './helpers/fieldHelpers';
-import { setupWatermark, cleanupWatermark } from './helpers/watermarkHelpers';
+import { setupWatermark, removeWatermark } from './helpers/watermarkHelpers';
+import { removeCardChangeButton } from './helpers/cardChangeButtonManager';
+import { removeShippingChangeButton } from './helpers/shippingChangeButtonManager';
 
 // Event handlers
 import { onEmailSubmit } from './events/fastlaneEmailManager';
@@ -43,11 +44,12 @@ const Axo = () => {
 		setBillingAddress: updateWooBillingAddress,
 	} = useCustomerData();
 
-	// Inject and cleanup logic for Change button
+	// Cleanup logic for Change buttons
 	useEffect( () => {
 		return () => {
-			// Remove the shipping Change button on unmount
 			removeShippingChangeButton();
+			removeCardChangeButton();
+			removeWatermark();
 
 			// Restore WooCommerce fields
 			restoreOriginalFields(
@@ -73,56 +75,35 @@ const Axo = () => {
 	}, [ paypalLoaded, ppcpConfig ] );
 
 	useEffect( () => {
-		let watermarkHandlers = {};
-		const radioLabelElement = document.getElementById(
-			'ppcp-axo-block-radio-label'
-		);
-
 		if ( paypalLoaded && fastlaneSdk ) {
 			console.log( 'Fastlane SDK and PayPal loaded' );
-
-			watermarkHandlers = setupWatermark(
+			setupWatermark(
 				fastlaneSdk,
-				shouldIncludeAdditionalInfo
+				shouldIncludeAdditionalInfo,
+				async ( email ) => {
+					await onEmailSubmit(
+						email,
+						fastlaneSdk,
+						setIsGuest,
+						isGuest,
+						setShippingAddress,
+						setCard,
+						snapshotFields,
+						wooShippingAddress,
+						wooBillingAddress,
+						setWooShippingAddress,
+						setWooBillingAddress,
+						onChangeShippingAddressClick,
+						onChangeButtonClick,
+						shouldIncludeAdditionalInfo,
+						setShouldIncludeAdditionalInfo
+					);
+				}
 			);
-			const { emailInput } = watermarkHandlers;
-
-			if ( emailInput ) {
-				emailInput.addEventListener( 'keyup', async ( event ) => {
-					const email = event.target.value;
-					if ( email ) {
-						await onEmailSubmit(
-							email,
-							fastlaneSdk,
-							setIsGuest,
-							isGuest,
-							setShippingAddress,
-							setCard,
-							snapshotFields,
-							wooShippingAddress,
-							wooBillingAddress,
-							setWooShippingAddress,
-							setWooBillingAddress,
-							onChangeShippingAddressClick,
-							onChangeButtonClick,
-							shouldIncludeAdditionalInfo,
-							setShouldIncludeAdditionalInfo
-						);
-					}
-				} );
-			}
 		}
 
 		return () => {
-			cleanupWatermark( watermarkHandlers );
-			if ( radioLabelElement ) {
-				const changeButton = radioLabelElement.querySelector(
-					'.wc-block-checkout-axo-block-card__edit'
-				);
-				if ( changeButton ) {
-					changeButton.remove();
-				}
-			}
+			removeWatermark();
 		};
 	}, [ paypalLoaded, fastlaneSdk, shouldIncludeAdditionalInfo ] );
 

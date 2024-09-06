@@ -1,6 +1,6 @@
 import { useEffect, useState } from '@wordpress/element';
 import { useCustomerData } from './useCustomerData';
-import { ShippingChangeButton } from './ShippingChangeButton';
+import { ShippingChangeButton } from './shippingChangeButtonManager';
 import { loadPaypalScript } from '../utils/ScriptLoading';
 import Payment from './Payment';
 import useAxoBlockManager from './useAxoBlockManager';

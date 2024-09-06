@@ -1,6 +1,6 @@
-import { injectShippingChangeButton } from '../helpers/buttonHelpers';
 import { populateWooFields } from '../helpers/fieldHelpers';
-import { injectCardChangeButton } from '../helpers/gatewayRadioHelpers';
+import { injectShippingChangeButton } from '../helpers/shippingChangeButtonManager';
+import { injectCardChangeButton } from '../helpers/cardChangeButtonManager';
 
 export const onEmailSubmit = async (
 	email,
@@ -44,7 +44,6 @@ export const onEmailSubmit = async (
 
 			setIsGuest( false );
 			setShippingAddress( profileData.shippingAddress );
-			injectShippingChangeButton( onChangeShippingAddressClick );
 			setCard( profileData.card );
 			setShouldIncludeAdditionalInfo( false );
 
@@ -56,6 +55,7 @@ export const onEmailSubmit = async (
 				setWooBillingAddress
 			);
 
+			injectShippingChangeButton( onChangeShippingAddressClick );
 			injectCardChangeButton( onChangeButtonClick );
 		} else {
 			console.warn( 'Authentication failed or did not succeed' );

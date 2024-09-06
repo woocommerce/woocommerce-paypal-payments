@@ -55,4 +55,13 @@ export const injectCardChangeButton = ( onChangeButtonClick ) => {
 	);
 };
 
+export const removeCardChangeButton = () => {
+	const button = document.querySelector(
+		'.wc-block-checkout-axo-block-card__edit'
+	);
+	if ( button && button.parentNode ) {
+		button.parentNode.remove();
+	}
+};
+
 export default CardChangeButtonManager;
