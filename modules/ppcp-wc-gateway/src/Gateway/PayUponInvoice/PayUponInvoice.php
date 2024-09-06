@@ -195,7 +195,7 @@ class PayUponInvoice {
 		);
 
 		add_action(
-			'ppcp_payment_capture_completed_webhook_handler',
+			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
 				try {
 					if ( $wc_order->get_payment_method() !== PayUponInvoiceGateway::ID ) {

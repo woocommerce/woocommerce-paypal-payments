@@ -22,7 +22,8 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
  * Class UpdateShippingEndpoint
  */
 class UpdateShippingEndpoint implements EndpointInterface {
-	const ENDPOINT = 'ppc-update-shipping';
+	const ENDPOINT              = 'ppc-update-shipping';
+	const WC_STORE_API_ENDPOINT = '/wp-json/wc/store/cart/';
 
 	/**
 	 * The Request Data Helper.
@@ -95,15 +96,6 @@ class UpdateShippingEndpoint implements EndpointInterface {
 
 			$pu      = $this->purchase_unit_factory->from_wc_cart( null, true );
 			$pu_data = $pu->to_array();
-
-			if ( ! isset( $pu_data['shipping']['options'] ) ) {
-				wp_send_json_error(
-					array(
-						'message' => 'No shipping methods.',
-					)
-				);
-				return false;
-			}
 
 			// TODO: maybe should patch only if methods changed.
 			// But it seems a bit difficult to detect,

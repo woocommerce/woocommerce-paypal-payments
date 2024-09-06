@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\WooCommerce\Logging;
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-
-return function (): ModuleInterface {
+return function (): WooCommerceLoggingModule {
 	return new WooCommerceLoggingModule();
 };

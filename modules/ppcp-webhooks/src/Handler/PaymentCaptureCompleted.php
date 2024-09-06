@@ -105,7 +105,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 		/**
 		 * Allow access to the webhook logic before updating the WC order.
 		 */
-		do_action( 'ppcp_payment_capture_completed_webhook_handler', $wc_order, $order_id );
+		do_action( 'woocommerce_paypal_payments_payment_capture_completed_webhook_handler', $wc_order, $order_id );
 
 		if ( $wc_order->get_status() !== 'on-hold' ) {
 			return $this->success_response();

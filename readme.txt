@@ -1,10 +1,10 @@
 === WooCommerce PayPal Payments ===
-Contributors: woocommerce, automattic, inpsyde
-Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
-Requires at least: 5.3
-Tested up to: 6.5
-Requires PHP: 7.2
-Stable tag: 2.8.1
+Contributors: woocommerce, automattic, syde
+Tags: woocommerce, paypal, payments, ecommerce, credit card
+Requires at least: 6.3
+Tested up to: 6.6
+Requires PHP: 7.4
+Stable tag: 2.9.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,9 +135,9 @@ Check out the [Frequently Asked Questions](https://woocommerce.com/document/woo
 
 To install and configure WooCommerce PayPal Payments, you will need:
 
-* WordPress Version 5.3 or newer (installed)
-* WooCommerce Version 3.9 or newer (installed and activated)
-* PHP Version 7.2 or newer
+* WordPress Version 6.3 or newer (installed)
+* WooCommerce Version 6.9 or newer (installed and activated)
+* PHP Version 7.4 or newer
 * PayPal business **or** personal account
 
 = Installation instructions =
@@ -178,6 +178,61 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.9.0 - 2024-09-02 =
+* Fix - Fatal error in Block Editor when using WooCommerce blocks #2534
+* Fix - Can't pay from block pages when the shipping callback is enabled and no shipping methods defined #2429
+* Fix - Various Google Pay button fixes #2496
+* Fix - Buying a free trial subscription with ACDC results in a $1 charge in the API call #2465
+* Fix - Problem with Google Pay and Apple Pay button placement on Pay for Order page #2542
+* Fix - When there isn't any shipping option for the address the order is still created from classic cart #2437
+* Fix - Patch the order with no shipping methods, instead of throwing an error #2435
+* Enhancement - Separate Apple Pay button for Classic Checkout #2457
+* Enhancement - Remove AMEX support for ACDC when store location is set to China #2526
+* Enhancement - Inform users of Pay Later messaging configuration when Pay Later wasn't recently enabled #2529
+* Enhancement - Update ACDC signup URLs #2475
+* Enhancement - Implement country based APMs via Orders API #2511
+* Enhancement - Update PaymentsStatusHandlingTrait.php (author @callmeahmedr) #2523
+* Enhancement - Disable PayPal Shipping callback by default #2527
+* Enhancement - Change Apple Pay and Google Pay default button labels to plain #2476
+* Enhancement - Add Package Tracking compatibility with DHL Shipping plugin #2463
+* Enhancement - Add support for WC Bookings when skipping checkout confirmation #2452
+* Enhancement - Remove currencies from country-currency matrix in card fields module #2441
+
+= 2.8.3 - 2024-08-12 =
+* Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474
+* Fix - Do not add tax info into order meta during order creation #2471
+* Fix - PayPal declares subscription support when for Subscription mode is set Disable PayPal for subscription #2425
+* Fix - PayPal js files loaded on non PayPal pages #2411
+* Fix - Google Pay: Fix the incorrect popup triggering #2414
+* Fix - Add tax configurator when programmatically creating WC orders #2431
+* Fix - Shipping callback compatibility with WC Name Your Price plugin #2402
+* Fix - Uncaught Error: Cannot use object of type ...\Settings as array in .../AbstractPaymentMethodType.php (3253) #2334
+* Fix - Prevent displaying smart button multiple times on variable product page #2420
+* Fix - Prevent enabling Standard Card Button when ACDC is enabled #2404
+* Fix - Use client credentials for user tokens #2491
+* Fix - Apple Pay: Fix the shipping callback #2492
+* Enhancement - Separate Google Pay button for Classic Checkout #2430
+* Enhancement - Add Apple Pay and Google Pay support for China, simplify country-currency matrix #2468
+* Enhancement - Add AMEX support for Advanced Card Processing in China #2469
+
+= 2.8.2 - 2024-07-22 =
+* Fix - Sold individually checkbox automatically disabled after adding product to the cart more than once #2415
+* Fix - All products "Sold individually" when PayPal Subscriptions selected as Subscriptions Mode #2400
+* Fix - W3 Total Cache: Remove type from file parameter as sometimes null gets passed causing errors #2403
+* Fix - Shipping methods during callback not updated correctly #2421
+* Fix - Preserve subscription renewal processing when switching Subscriptions Mode or disabling gateway #2394
+* Fix - Remove shipping callback for Venmo express button #2374
+* Fix - Google Pay: Fix issuse with data.paymentSource being undefined #2390
+* Fix - Loading of non-Order as a WC_Order causes warnings and potential data corruption #2343
+* Fix - Apple Pay and Google Pay buttons don't appear in PayPal Button stack on multi-step Checkout #2372
+* Fix - Apple Pay: Fix when shipping is disabled #2391
+* Fix - Wrong string in smart button preview on Standard Payments tab #2409
+* Fix - Don't break orders screen when there is an exception for package tracking #2369
+* Fix - Pay Later button preview is missing #2371
+* Fix - Apple Pay button layout #2367
+* Enhancement - Remove BCDC button from block Express Checkout area #2381
+* Enhancement - Extend Advanced Card Processing country eligibility for China #2397
 
 = 2.8.1 - 2024-07-01 =
 * Fix - Don't render tracking metabox if PayPal order does not belong to connected merchant #2360

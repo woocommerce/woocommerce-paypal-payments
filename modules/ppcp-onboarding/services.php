@@ -189,9 +189,8 @@ return array(
 		$login_seller_sandbox    = $container->get( 'api.endpoint.login-seller-sandbox' );
 		$partner_referrals_data  = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                = $container->get( 'wcgateway.settings' );
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-
 		$cache = new Cache( 'ppcp-paypal-bearer' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new LoginSellerEndpoint(
 			$request_data,
 			$login_seller_production,
@@ -199,7 +198,8 @@ return array(
 			$partner_referrals_data,
 			$settings,
 			$cache,
-			$logger
+			$logger,
+			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
 	'onboarding.endpoint.pui'                   => static function( ContainerInterface $container ) : UpdateSignupLinksEndpoint {

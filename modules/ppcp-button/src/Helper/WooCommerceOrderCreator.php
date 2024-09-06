@@ -9,13 +9,17 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use Exception;
 use RuntimeException;
 use WC_Cart;
+use WC_Data_Exception;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
+use WC_Product;
 use WC_Subscription;
 use WC_Subscriptions_Product;
+use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -83,17 +87,24 @@ class WooCommerceOrderCreator {
 			throw new RuntimeException( 'Problem creating WC order.' );
 		}
 
-		$payer    = $order->payer();
-		$shipping = $order->purchase_units()[0]->shipping();
+		try {
+			$payer    = $order->payer();
+			$shipping = $order->purchase_units()[0]->shipping();
 
-		$this->configure_payment_source( $wc_order );
-		$this->configure_customer( $wc_order );
-		$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
-		$this->configure_shipping( $wc_order, $payer, $shipping );
-		$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
+			$this->configure_payment_source( $wc_order );
+			$this->configure_customer( $wc_order );
+			$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
+			$this->configure_shipping( $wc_order, $payer, $shipping, $wc_cart );
+			$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
 
-		$wc_order->calculate_totals();
-		$wc_order->save();
+			$wc_order->calculate_totals();
+			$wc_order->save();
+		} catch ( Exception $exception ) {
+			$wc_order->delete( true );
+			throw new RuntimeException( 'Failed to create WooCommerce order: ' . $exception->getMessage() );
+		}
+
+		do_action( 'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created', $wc_order, $wc_cart );
 
 		return $wc_order;
 	}
@@ -106,6 +117,7 @@ class WooCommerceOrderCreator {
 	 * @param Payer|null    $payer The payer.
 	 * @param Shipping|null $shipping The shipping.
 	 * @return void
+	 * @psalm-suppress InvalidScalarArgument
 	 */
 	protected function configure_line_items( WC_Order $wc_order, WC_Cart $wc_cart, ?Payer $payer, ?Shipping $shipping ): void {
 		$cart_contents = $wc_cart->get_cart();
@@ -130,24 +142,27 @@ class WooCommerceOrderCreator {
 				return;
 			}
 
-			$total = $product->get_price() * $quantity;
+			$subtotal = wc_get_price_excluding_tax( $product, array( 'qty' => $quantity ) );
+			$subtotal = apply_filters( 'woocommerce_paypal_payments_shipping_callback_cart_line_item_total', $subtotal, $cart_item );
 
 			$item->set_name( $product->get_name() );
-			$item->set_subtotal( $total );
-			$item->set_total( $total );
+			$item->set_subtotal( $subtotal );
+			$item->set_total( $subtotal );
+
+			$this->configure_taxes( $product, $item, $subtotal );
 
 			$product_id = $product->get_id();
 
 			if ( $this->is_subscription( $product_id ) ) {
 				$subscription       = $this->create_subscription( $wc_order, $product_id );
 				$sign_up_fee        = WC_Subscriptions_Product::get_sign_up_fee( $product );
-				$subscription_total = $total + $sign_up_fee;
+				$subscription_total = (float) $subtotal + (float) $sign_up_fee;
 
 				$item->set_subtotal( $subscription_total );
 				$item->set_total( $subscription_total );
 
 				$subscription->add_product( $product );
-				$this->configure_shipping( $subscription, $payer, $shipping );
+				$this->configure_shipping( $subscription, $payer, $shipping, $wc_cart );
 				$this->configure_payment_source( $subscription );
 				$this->configure_coupons( $subscription, $wc_cart->get_applied_coupons() );
 
@@ -172,9 +187,11 @@ class WooCommerceOrderCreator {
 	 * @param WC_Order      $wc_order The WC order.
 	 * @param Payer|null    $payer The payer.
 	 * @param Shipping|null $shipping The shipping.
+	 * @param WC_Cart       $wc_cart The Cart.
 	 * @return void
+	 * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
 	 */
-	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping ): void {
+	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, WC_Cart $wc_cart ): void {
 		$shipping_address = null;
 		$billing_address  = null;
 		$shipping_options = null;
@@ -210,6 +227,10 @@ class WooCommerceOrderCreator {
 			);
 
 			$shipping_options = $shipping->options()[0] ?? '';
+		}
+
+		if ( $wc_cart->needs_shipping() && empty( $shipping_options ) ) {
+			throw new RuntimeException( 'No shipping method has been selected.' );
 		}
 
 		if ( $shipping_address ) {
@@ -280,6 +301,23 @@ class WooCommerceOrderCreator {
 		foreach ( $coupons as $coupon_code ) {
 			$wc_order->apply_coupon( $coupon_code );
 		}
+	}
+
+	/**
+	 * Configures the taxes.
+	 *
+	 * @param WC_Product            $product The Product.
+	 * @param WC_Order_Item_Product $item The line item.
+	 * @param float|string          $subtotal The subtotal.
+	 * @return void
+	 * @psalm-suppress InvalidScalarArgument
+	 */
+	protected function configure_taxes( WC_Product $product, WC_Order_Item_Product $item, $subtotal ): void {
+		$tax_rates = WC_Tax::get_rates( $product->get_tax_class() );
+		$taxes     = WC_Tax::calc_tax( $subtotal, $tax_rates, true );
+
+		$item->set_tax_class( $product->get_tax_class() );
+		$item->set_total_tax( (float) array_sum( $taxes ) );
 	}
 
 	/**

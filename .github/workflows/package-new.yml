@@ -1,0 +1,37 @@
+name: Build package (New)
+
+on:
+  workflow_dispatch:
+    inputs:
+      packageVersion:
+        description: 'Package version'
+        required: false
+        type: string
+
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+    env:
+      PACKAGE_VERSION: ${{ github.event.inputs.packageVersion }}
+    outputs:
+      version: ${{ env.PACKAGE_VERSION }}
+    name: Check version
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix plugin version input # Add the version number if only suffix entered
+        run: echo "PACKAGE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)-$PACKAGE_VERSION" >> $GITHUB_ENV
+        if: env.PACKAGE_VERSION && !contains(env.PACKAGE_VERSION, '.')
+      - name: Fill plugin version # If the version number was not set, retrieve it from the file
+        run: echo "PACKAGE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)" >> $GITHUB_ENV
+        if: "!env.PACKAGE_VERSION"
+
+  create_archive:
+    needs: check_version
+    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@main
+    with:
+      PHP_VERSION: 7.4
+      PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
+      PLUGIN_VERSION: ${{ needs.check_version.outputs.version }}
+      PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
+      ARCHIVE_NAME: woocommerce-paypal-payments-${{ needs.check_version.outputs.version }}
+      COMPILE_ASSETS_ARGS: '-vv --env=root'

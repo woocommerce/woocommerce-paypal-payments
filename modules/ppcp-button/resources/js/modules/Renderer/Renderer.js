@@ -139,8 +139,9 @@ class Renderer {
 			};
 
 			// Check the condition and add the handler if needed
-			if ( this.defaultSettings.should_handle_shipping_in_paypal ) {
+			if ( this.shouldEnableShippingCallback() ) {
 				options.onShippingOptionsChange = ( data, actions ) => {
+                    let shippingOptionsChange =
 					! this.isVenmoButtonClickedWhenVaultingIsEnabled(
 						venmoButtonClicked
 					)
@@ -150,8 +151,11 @@ class Renderer {
 								this.defaultSettings
 						  )
 						: null;
+
+                    return shippingOptionsChange
 				};
 				options.onShippingAddressChange = ( data, actions ) => {
+                    let shippingAddressChange =
 					! this.isVenmoButtonClickedWhenVaultingIsEnabled(
 						venmoButtonClicked
 					)
@@ -161,6 +165,8 @@ class Renderer {
 								this.defaultSettings
 						  )
 						: null;
+
+                    return shippingAddressChange
 				};
 			}
 
@@ -220,6 +226,12 @@ class Renderer {
 	isVenmoButtonClickedWhenVaultingIsEnabled = ( venmoButtonClicked ) => {
 		return venmoButtonClicked && this.defaultSettings.vaultingEnabled;
 	};
+
+    shouldEnableShippingCallback = () => {
+        console.log(this.defaultSettings.context, this.defaultSettings)
+        let needShipping = this.defaultSettings.needShipping || this.defaultSettings.context === 'product'
+        return this.defaultSettings.should_handle_shipping_in_paypal && needShipping
+    };
 
 	isAlreadyRendered( wrapper, fundingSource ) {
 		return this.renderedSources.has( wrapper + ( fundingSource ?? '' ) );
