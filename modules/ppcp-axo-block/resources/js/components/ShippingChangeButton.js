@@ -29,26 +29,10 @@ const injectShippingChangeButton = ( onChangeShippingAddressClick ) => {
 	}
 };
 
-// Cleanup function to remove the "Change" button when the payment gateway switches
-const removeShippingChangeButton = () => {
-	const existingButton = document.querySelector(
-		'#shipping-fields .wc-block-checkout-axo-block-card__edit'
-	);
-	if ( existingButton ) {
-		existingButton.remove();
-	}
-};
-
-// ShippingChangeButton component that will handle injection and cleanup
+// ShippingChangeButton component for injecting the button
 const ShippingChangeButton = ( { onChangeShippingAddressClick } ) => {
 	useEffect( () => {
-		// Inject the button when the component mounts
 		injectShippingChangeButton( onChangeShippingAddressClick );
-
-		// Cleanup the button when the component unmounts or the payment gateway switches
-		return () => {
-			removeShippingChangeButton();
-		};
 	}, [ onChangeShippingAddressClick ] );
 
 	return null;

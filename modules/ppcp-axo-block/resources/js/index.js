@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useState } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
@@ -11,10 +11,7 @@ import { useCustomerData } from './hooks/useCustomerData';
 import { Payment } from './components/Payment';
 
 // Helpers
-import {
-	injectShippingChangeButton,
-	removeShippingChangeButton,
-} from './helpers/buttonHelpers';
+import { removeShippingChangeButton } from './helpers/buttonHelpers';
 import { snapshotFields, restoreOriginalFields } from './helpers/fieldHelpers';
 import { setupWatermark, cleanupWatermark } from './helpers/watermarkHelpers';
 
@@ -29,13 +26,6 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 
 const axoConfig = window.wc_ppcp_axo;
 
-// Call this function when the payment gateway is loaded or switched
-const handlePaymentGatewaySwitch = ( onChangeShippingAddressClick ) => {
-	removeShippingChangeButton();
-	injectShippingChangeButton( onChangeShippingAddressClick );
-};
-
-// Axo Component
 const Axo = () => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ isGuest, setIsGuest ] = useState( true );
@@ -53,16 +43,19 @@ const Axo = () => {
 		setBillingAddress: updateWooBillingAddress,
 	} = useCustomerData();
 
-	// Cleanup function to handle component unmounting
+	// Inject and cleanup logic for Change button
 	useEffect( () => {
 		return () => {
-			console.log( 'Axo component unmounted, restoring original fields' );
+			// Remove the shipping Change button on unmount
+			removeShippingChangeButton();
+
+			// Restore WooCommerce fields
 			restoreOriginalFields(
 				updateWooShippingAddress,
 				updateWooBillingAddress
-			); // Pass the correct arguments
+			);
 		};
-	}, [ updateWooShippingAddress, updateWooBillingAddress ] ); // Add the dependencies
+	}, [ updateWooShippingAddress, updateWooBillingAddress ] );
 
 	const {
 		setShippingAddress: setWooShippingAddress,
@@ -71,14 +64,19 @@ const Axo = () => {
 
 	useEffect( () => {
 		console.log( 'ppcpConfig', ppcpConfig );
-		loadPaypalScript( ppcpConfig, () => {
-			console.log( 'PayPal script loaded' );
-			setPaypalLoaded( true );
-		} );
-	}, [] );
+		if ( ! paypalLoaded ) {
+			loadPaypalScript( ppcpConfig, () => {
+				console.log( 'PayPal script loaded' );
+				setPaypalLoaded( true );
+			} );
+		}
+	}, [ paypalLoaded, ppcpConfig ] );
 
 	useEffect( () => {
 		let watermarkHandlers = {};
+		const radioLabelElement = document.getElementById(
+			'ppcp-axo-block-radio-label'
+		);
 
 		if ( paypalLoaded && fastlaneSdk ) {
 			console.log( 'Fastlane SDK and PayPal loaded' );
@@ -89,11 +87,6 @@ const Axo = () => {
 			);
 			const { emailInput } = watermarkHandlers;
 
-			console.log(
-				'shouldIncludeAdditionalInfo',
-				shouldIncludeAdditionalInfo
-			);
-
 			if ( emailInput ) {
 				emailInput.addEventListener( 'keyup', async ( event ) => {
 					const email = event.target.value;
@@ -102,6 +95,7 @@ const Axo = () => {
 							email,
 							fastlaneSdk,
 							setIsGuest,
+							isGuest,
 							setShippingAddress,
 							setCard,
 							snapshotFields,
@@ -109,11 +103,10 @@ const Axo = () => {
 							wooBillingAddress,
 							setWooShippingAddress,
 							setWooBillingAddress,
-							handlePaymentGatewaySwitch,
 							onChangeShippingAddressClick,
 							onChangeButtonClick,
 							shouldIncludeAdditionalInfo,
-                            setShouldIncludeAdditionalInfo
+							setShouldIncludeAdditionalInfo
 						);
 					}
 				} );
@@ -122,10 +115,19 @@ const Axo = () => {
 
 		return () => {
 			cleanupWatermark( watermarkHandlers );
+			if ( radioLabelElement ) {
+				const changeButton = radioLabelElement.querySelector(
+					'.wc-block-checkout-axo-block-card__edit'
+				);
+				if ( changeButton ) {
+					changeButton.remove();
+				}
+			}
 		};
 	}, [ paypalLoaded, fastlaneSdk, shouldIncludeAdditionalInfo ] );
 
-	const onChangeShippingAddressClick = async () => {
+	const onChangeShippingAddressClick = useCallback( async () => {
+		// Updated
 		if ( fastlaneSdk ) {
 			const { selectionChanged, selectedAddress } =
 				await fastlaneSdk.profile.showShippingAddressSelector();
@@ -151,19 +153,22 @@ const Axo = () => {
 				} );
 			}
 		}
-	};
+	}, [ fastlaneSdk, setWooShippingAddress ] );
 
-	const onChangeButtonClick = async () => {
+	const onChangeButtonClick = useCallback( async () => {
 		const { selectionChanged, selectedCard } =
 			await fastlaneSdk.profile.showCardSelector();
 		if ( selectionChanged ) {
 			setCard( selectedCard );
 		}
-	};
+	}, [ fastlaneSdk ] );
 
-	const handlePaymentLoad = ( paymentComponent ) => {
-		console.log( 'Payment component loaded', paymentComponent );
-	};
+	const handlePaymentLoad = useCallback(
+		( paymentComponent ) => {
+			console.log( 'Payment component loaded', paymentComponent );
+		},
+		[] // Empty dependency array to avoid re-creating the function on every render
+	);
 
 	const handleChange = ( selectedCard ) => {
 		console.log( 'Selected card changed', selectedCard );
@@ -176,7 +181,7 @@ const Axo = () => {
 			card={ card }
 			shippingAddress={ shippingAddress }
 			onChange={ handleChange }
-			isGuestFlow={ isGuest }
+			isGuest={ isGuest }
 			onPaymentLoad={ handlePaymentLoad }
 			onChangeButtonClick={ onChangeButtonClick }
 		/>

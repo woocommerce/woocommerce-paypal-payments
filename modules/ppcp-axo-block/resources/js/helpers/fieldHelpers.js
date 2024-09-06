@@ -7,7 +7,7 @@ export const snapshotFields = ( shippingAddress, billingAddress ) => {
 	}
 
 	const originalData = { shippingAddress, billingAddress };
-	console.log( 'Snapshot data:', originalData ); // Debug data
+	console.log( 'Snapshot data:', originalData );
 	localStorage.setItem(
 		'originalCheckoutFields',
 		JSON.stringify( originalData )
@@ -36,4 +36,39 @@ export const restoreOriginalFields = (
 			'No data found in localStorage under originalCheckoutFields'
 		);
 	}
+};
+
+export const populateWooFields = (
+	profileData,
+	setWooShippingAddress,
+	setWooBillingAddress
+) => {
+	// Save shipping address
+	const { address, name, phoneNumber } = profileData.shippingAddress;
+
+	setWooShippingAddress( {
+		first_name: name.firstName,
+		last_name: name.lastName,
+		address_1: address.addressLine1,
+		address_2: address.addressLine2 || '',
+		city: address.adminArea2,
+		state: address.adminArea1,
+		postcode: address.postalCode,
+		country: address.countryCode,
+		phone: phoneNumber.nationalNumber,
+	} );
+
+	// Save billing address
+	const billingData = profileData.card.paymentSource.card.billingAddress;
+
+	setWooBillingAddress( {
+		first_name: profileData.name.firstName,
+		last_name: profileData.name.lastName,
+		address_1: billingData.addressLine1,
+		address_2: billingData.addressLine2 || '',
+		city: billingData.adminArea2,
+		state: billingData.adminArea1,
+		postcode: billingData.postalCode,
+		country: billingData.countryCode,
+	} );
 };
