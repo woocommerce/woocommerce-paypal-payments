@@ -5,6 +5,7 @@ import {
 import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
+import TransactionInfo from './Helper/TransactionInfo';
 import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/PayerData';
 import moduleStorage from './Helper/GooglePayStorage';
@@ -480,7 +481,7 @@ class GooglepayButton extends PaymentButton {
 		return {
 			...baseRequest,
 			allowedPaymentMethods: this.googlePayConfig.allowedPaymentMethods,
-			transactionInfo: this.transactionInfo,
+			transactionInfo: this.transactionInfo.finalObject,
 			merchantInfo: this.googlePayConfig.merchantInfo,
 			callbackIntents,
 			emailRequired: true,
@@ -513,6 +514,16 @@ class GooglepayButton extends PaymentButton {
 				).update( paymentData );
 				const transactionInfo = this.transactionInfo;
 
+				// Check, if the current context uses the WC cart.
+				const hasRealCart = [
+					'checkout-block',
+					'checkout',
+					'cart-block',
+					'cart',
+					'mini-cart',
+					'pay-now',
+				].includes( this.context );
+
 				this.log( 'onPaymentDataChanged:updatedData', updatedData );
 				this.log(
 					'onPaymentDataChanged:transactionInfo',
@@ -521,7 +532,6 @@ class GooglepayButton extends PaymentButton {
 
 				updatedData.country_code = transactionInfo.countryCode;
 				updatedData.currency_code = transactionInfo.currencyCode;
-				updatedData.total_str = transactionInfo.totalPrice;
 
 				// Handle unserviceable address.
 				if ( ! updatedData.shipping_options?.shippingOptions?.length ) {
@@ -531,19 +541,36 @@ class GooglepayButton extends PaymentButton {
 					return;
 				}
 
-				switch ( paymentData.callbackTrigger ) {
-					case 'INITIALIZE':
-					case 'SHIPPING_ADDRESS':
-						paymentDataRequestUpdate.newShippingOptionParameters =
-							updatedData.shipping_options;
-						paymentDataRequestUpdate.newTransactionInfo =
-							this.calculateNewTransactionInfo( updatedData );
-						break;
-					case 'SHIPPING_OPTION':
-						paymentDataRequestUpdate.newTransactionInfo =
-							this.calculateNewTransactionInfo( updatedData );
-						break;
+				if (
+					[ 'INITIALIZE', 'SHIPPING_ADDRESS' ].includes(
+						paymentData.callbackTrigger
+					)
+				) {
+					paymentDataRequestUpdate.newShippingOptionParameters =
+						this.sanitizeShippingOptions(
+							updatedData.shipping_options
+						);
 				}
+
+				if ( updatedData.total && hasRealCart ) {
+					transactionInfo.setTotal(
+						updatedData.total,
+						updatedData.shipping_fee
+					);
+
+					// This page contains a real cart and potentially a form for shipping options.
+					this.syncShippingOptionWithForm(
+						paymentData?.shippingOptionData?.id
+					);
+				} else {
+					transactionInfo.shippingFee = this.getShippingCosts(
+						paymentData?.shippingOptionData?.id,
+						updatedData.shipping_options
+					);
+				}
+
+				paymentDataRequestUpdate.newTransactionInfo =
+					this.calculateNewTransactionInfo( transactionInfo );
 
 				resolve( paymentDataRequestUpdate );
 			} catch ( error ) {
@@ -551,6 +578,76 @@ class GooglepayButton extends PaymentButton {
 				reject( error );
 			}
 		} );
+	}
+
+	/**
+	 * Google Pay throws an error, when the shippingOptions entries contain
+	 * custom properties. This function strips unsupported properties from the
+	 * provided ajax response.
+	 *
+	 * @param {Object} responseData Data returned from the ajax endpoint.
+	 * @return {Object} Sanitized object.
+	 */
+	sanitizeShippingOptions( responseData ) {
+		// Sanitize the shipping options.
+		const cleanOptions = responseData.shippingOptions.map( ( item ) => ( {
+			id: item.id,
+			label: item.label,
+			description: item.description,
+		} ) );
+
+		// Ensure that the default option is valid.
+		let defaultOptionId = responseData.defaultSelectedOptionId;
+		if ( ! cleanOptions.some( ( item ) => item.id === defaultOptionId ) ) {
+			defaultOptionId = cleanOptions[ 0 ].id;
+		}
+
+		return {
+			defaultSelectedOptionId: defaultOptionId,
+			shippingOptions: cleanOptions,
+		};
+	}
+
+	/**
+	 * Returns the shipping costs as numeric value.
+	 *
+	 * TODO - Move this to the PaymentButton base class
+	 *
+	 * @param {string} shippingId                           - The shipping method ID.
+	 * @param {Object} shippingData                         - The PaymentDataRequest object that
+	 *                                                      contains shipping options.
+	 * @param {Array}  shippingData.shippingOptions
+	 * @param {string} shippingData.defaultSelectedOptionId
+	 *
+	 * @return {number} The shipping costs.
+	 */
+	getShippingCosts(
+		shippingId,
+		{ shippingOptions = [], defaultSelectedOptionId = '' } = {}
+	) {
+		if ( ! shippingOptions?.length ) {
+			this.log( 'Cannot calculate shipping cost: No Shipping Options' );
+			return 0;
+		}
+
+		const findOptionById = ( id ) =>
+			shippingOptions.find( ( option ) => option.id === id );
+
+		const getValidShippingId = () => {
+			if (
+				'shipping_option_unselected' === shippingId ||
+				! findOptionById( shippingId )
+			) {
+				// Entered on initial call, and when changing the shipping country.
+				return defaultSelectedOptionId;
+			}
+
+			return shippingId;
+		};
+
+		const currentOption = findOptionById( getValidShippingId() );
+
+		return Number( currentOption?.cost ) || 0;
 	}
 
 	unserviceableShippingAddressError() {
@@ -561,13 +658,14 @@ class GooglepayButton extends PaymentButton {
 		};
 	}
 
-	calculateNewTransactionInfo( updatedData ) {
-		return {
-			countryCode: updatedData.country_code,
-			currencyCode: updatedData.currency_code,
-			totalPriceStatus: 'FINAL',
-			totalPrice: updatedData.total_str,
-		};
+	/**
+	 * Recalculates and returns the plain transaction info object.
+	 *
+	 * @param {TransactionInfo} transactionInfo - Internal transactionInfo instance.
+	 * @return {{totalPrice: string, countryCode: string, totalPriceStatus: string, currencyCode: string}} Updated details.
+	 */
+	calculateNewTransactionInfo( transactionInfo ) {
+		return transactionInfo.finalObject;
 	}
 
 	//------------------------
@@ -698,6 +796,55 @@ class GooglepayButton extends PaymentButton {
 		this.log( 'processPaymentResponse', response );
 
 		return response;
+	}
+
+	/**
+	 * Updates the shipping option in the checkout form, if a form with shipping options is
+	 * detected.
+	 *
+	 * @param {string} shippingOption - The shipping option ID, e.g. "flat_rate:4".
+	 * @return {boolean} - True if a shipping option was found and selected, false otherwise.
+	 */
+	syncShippingOptionWithForm( shippingOption ) {
+		const wrappers = [
+			// Classic checkout, Classic cart.
+			'.woocommerce-shipping-methods',
+			// Block checkout.
+			'.wc-block-components-shipping-rates-control',
+			// Block cart.
+			'.wc-block-components-totals-shipping',
+		];
+
+		const sanitizedShippingOption = shippingOption.replace( /"/g, '' );
+
+		// Check for radio buttons with shipping options.
+		for ( const wrapper of wrappers ) {
+			const selector = `${ wrapper } input[type="radio"][value="${ sanitizedShippingOption }"]`;
+			const radioInput = document.querySelector( selector );
+
+			if ( radioInput ) {
+				radioInput.click();
+				return true;
+			}
+		}
+
+		// Check for select list with shipping options.
+		for ( const wrapper of wrappers ) {
+			const selector = `${ wrapper } select option[value="${ sanitizedShippingOption }"]`;
+			const selectOption = document.querySelector( selector );
+
+			if ( selectOption ) {
+				const selectElement = selectOption.closest( 'select' );
+
+				if ( selectElement ) {
+					selectElement.value = sanitizedShippingOption;
+					selectElement.dispatchEvent( new Event( 'change' ) );
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }
 
