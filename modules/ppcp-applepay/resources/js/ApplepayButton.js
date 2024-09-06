@@ -57,6 +57,8 @@ const CONTEXT = {
  * On a single page, multiple Apple Pay buttons can be displayed, which also means multiple
  * ApplePayButton instances exist. A typical case is on the product page, where one Apple Pay button
  * is located inside the minicart-popup, and another pay-now button is in the product context.
+ *
+ * TODO - extend from PaymentButton (same as we do in GooglepayButton.js)
  */
 class ApplePayButton {
 	/**
