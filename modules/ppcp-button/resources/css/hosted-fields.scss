@@ -1,11 +1,10 @@
-#payment ul.payment_methods li img.ppcp-card-icon {
-  padding: 0 0 3px 3px;
-  max-height: 25px;
-  display: inline-block;
+#payment ul.payment_methods [class*="payment_method_ppcp-"] label img {
+	max-height: 25px;
+	display: inline-block;
 }
 
 .payments-sdk-contingency-handler {
-  z-index: 1000 !important;
+	z-index: 1000 !important;
 }
 
 .ppcp-credit-card-gateway-form-field-disabled {
