@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -73,6 +74,13 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	private $module_url;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * ApplePayGateway constructor.
 	 *
 	 * @param OrderProcessor          $order_processor             The Order Processor.
@@ -84,6 +92,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *                                                             view URL based on order.
 	 * @param SessionHandler          $session_handler             The Session Handler.
 	 * @param string                  $module_url                  The URL to the module.
+	 * @param LoggerInterface         $logger The logger.
 	 */
 	public function __construct(
 		OrderProcessor $order_processor,
@@ -91,7 +100,8 @@ class ApplePayGateway extends WC_Payment_Gateway {
 		RefundProcessor $refund_processor,
 		TransactionUrlProvider $transaction_url_provider,
 		SessionHandler $session_handler,
-		string $module_url
+		string $module_url,
+		LoggerInterface $logger
 	) {
 		$this->id = self::ID;
 
@@ -102,7 +112,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 		$this->description = $this->get_option( 'description', '' );
 
 		$this->module_url = $module_url;
-		$this->icon       = esc_url( $this->module_url ) . 'assets/images/applepay.png';
+		$this->icon       = esc_url( $this->module_url ) . 'assets/images/applepay.svg';
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -111,6 +121,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;
 		$this->session_handler             = $session_handler;
+		$this->logger                      = $logger;
 
 		add_action(
 			'woocommerce_update_options_payment_gateways_' . $this->id,

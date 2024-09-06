@@ -1,9 +1,9 @@
 === WooCommerce PayPal Payments ===
 Contributors: woocommerce, automattic, syde
-Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
-Requires at least: 5.3
+Tags: woocommerce, paypal, payments, ecommerce, credit card
+Requires at least: 6.3
 Tested up to: 6.6
-Requires PHP: 7.2
+Requires PHP: 7.4
 Stable tag: 2.9.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -135,9 +135,9 @@ Check out the [Frequently Asked Questions](https://woocommerce.com/document/woo
 
 To install and configure WooCommerce PayPal Payments, you will need:
 
-* WordPress Version 5.3 or newer (installed)
-* WooCommerce Version 3.9 or newer (installed and activated)
-* PHP Version 7.2 or newer
+* WordPress Version 6.3 or newer (installed)
+* WooCommerce Version 6.9 or newer (installed and activated)
+* PHP Version 7.4 or newer
 * PayPal business **or** personal account
 
 = Installation instructions =
@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.9.0 - xxxx-xx-xx =
+= 2.9.0 - 2024-09-02 =
 * Fix - Fatal error in Block Editor when using WooCommerce blocks #2534
 * Fix - Can't pay from block pages when the shipping callback is enabled and no shipping methods defined #2429
 * Fix - Various Google Pay button fixes #2496

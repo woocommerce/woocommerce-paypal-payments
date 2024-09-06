@@ -306,7 +306,8 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'applepay.url' )
+			$container->get( 'applepay.url' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
