@@ -100,9 +100,19 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					static function () use ( $c, $button ) {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
+
 						if ( $smart_button->should_load_ppcp_script() ) {
 							$button->enqueue();
 							return;
+						}
+
+						/*
+						 * Checkout page, but no PPCP scripts were loaded. Most likely in continuation mode.
+						 * Need to enqueue some Google Pay scripts to populate the billing form with details
+						 * provided by Google Pay.
+						 */
+						if ( is_checkout() ) {
+							$button->enqueue();
 						}
 
 						if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {

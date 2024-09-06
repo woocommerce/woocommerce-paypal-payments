@@ -626,6 +626,15 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Open or close a log-group
+	 *
+	 * @param {?string} [label=null] Group label.
+	 */
+	logGroup( label = null ) {
+		this.#logger.group( label );
+	}
+
+	/**
 	 * Determines if the current button instance has valid and complete configuration details.
 	 * Used during initialization to decide if the button can be initialized or should be skipped.
 	 *
