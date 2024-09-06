@@ -216,6 +216,7 @@ class AxoManager {
 					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
 				),
 			),
+			'logging_enabled'           => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
 			'wp_debug'                  => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'billing_email_button_text' => __( 'Continue', 'woocommerce-paypal-payments' ),
 		);

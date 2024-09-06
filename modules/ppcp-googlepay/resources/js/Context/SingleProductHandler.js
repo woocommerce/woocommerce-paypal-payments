@@ -3,6 +3,7 @@ import SimulateCart from '../../../../ppcp-button/resources/js/modules/Helper/Si
 import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
 import UpdateCart from '../../../../ppcp-button/resources/js/modules/Helper/UpdateCart';
 import BaseHandler from './BaseHandler';
+import TransactionInfo from '../Helper/TransactionInfo';
 
 class SingleProductHandler extends BaseHandler {
 	validateContext() {
@@ -42,12 +43,14 @@ class SingleProductHandler extends BaseHandler {
 				this.ppcpConfig.ajax.simulate_cart.endpoint,
 				this.ppcpConfig.ajax.simulate_cart.nonce
 			).simulate( ( data ) => {
-				resolve( {
-					countryCode: data.country_code,
-					currencyCode: data.currency_code,
-					totalPriceStatus: 'FINAL',
-					totalPrice: data.total_str,
-				} );
+				const transaction = new TransactionInfo(
+					data.total,
+					data.shipping_fee,
+					data.currency_code,
+					data.country_code
+				);
+
+				resolve( transaction );
 			}, products );
 		} );
 	}

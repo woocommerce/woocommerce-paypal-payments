@@ -1,13 +1,13 @@
 import { loadCustomScript } from '@paypal/paypal-js';
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
-import ApplepayManager from './ApplepayManager';
+import ApplePayManager from './ApplepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
 ( function ( { buttonConfig, ppcpConfig, jQuery } ) {
 	let manager;
 
 	const bootstrap = function () {
-		manager = new ApplepayManager( buttonConfig, ppcpConfig );
+		manager = new ApplePayManager( buttonConfig, ppcpConfig );
 		manager.init();
 	};
 

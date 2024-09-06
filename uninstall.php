@@ -8,7 +8,7 @@
 declare(strict_types=1);
 
 use WooCommerce\PayPalCommerce\Uninstall\ClearDatabaseInterface;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CachingContainer;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
@@ -35,7 +35,7 @@ require $main_plugin_file;
 		$bootstrap = require "{$root_dir}/bootstrap.php";
 
 		$app_container = $bootstrap( $root_dir );
-		assert( $app_container instanceof CachingContainer );
+		assert( $app_container instanceof ContainerInterface );
 
 		$settings = $app_container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );

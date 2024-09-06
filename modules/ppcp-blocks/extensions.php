@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'wcgateway.button.locations'                       => function ( ContainerInterface $container, array $locations ): array {
+	'wcgateway.button.locations'                       => function ( array $locations, ContainerInterface $container ): array {
 		return array_merge(
 			$locations,
 			array(
@@ -22,13 +22,13 @@ return array(
 			)
 		);
 	},
-	'wcgateway.settings.pay-later.messaging-locations' => function ( ContainerInterface $container, array $locations ): array {
+	'wcgateway.settings.pay-later.messaging-locations' => function ( array $locations, ContainerInterface $container ): array {
 		unset( $locations['checkout-block-express'] );
 		unset( $locations['cart-block'] );
 		return $locations;
 	},
 
-	'wcgateway.settings.fields'                        => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields'                        => function ( array $fields, ContainerInterface $container ): array {
 		$insert_after = function( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -61,7 +61,7 @@ return array(
 					'title'        => __( 'Require final confirmation on checkout', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
 					'label'        => $label,
-					'default'      => false,
+					'default'      => true,
 					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 					'requirements' => array(),
 					'gateway'      => 'paypal',
@@ -72,7 +72,7 @@ return array(
 		);
 	},
 
-	'button.pay-now-contexts'                          => function ( ContainerInterface $container, array $contexts ): array {
+	'button.pay-now-contexts'                          => function ( array $contexts, ContainerInterface $container ): array {
 		if ( ! $container->get( 'blocks.settings.final_review_enabled' ) ) {
 			$contexts[] = 'checkout-block';
 			$contexts[] = 'cart-block';
@@ -81,7 +81,7 @@ return array(
 		return $contexts;
 	},
 
-	'button.handle-shipping-in-paypal'                 => function ( ContainerInterface $container ): bool {
+	'button.handle-shipping-in-paypal'                 => function ( bool $previous, ContainerInterface $container ): bool {
 		return ! $container->get( 'blocks.settings.final_review_enabled' );
 	},
 );

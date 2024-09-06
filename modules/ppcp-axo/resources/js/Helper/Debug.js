@@ -1,7 +1,19 @@
 export function log( message, level = 'info' ) {
 	const wpDebug = window.wc_ppcp_axo?.wp_debug;
 	const endpoint = window.wc_ppcp_axo?.ajax?.frontend_logger?.endpoint;
-	if ( ! endpoint ) {
+	const loggingEnabled = window.wc_ppcp_axo?.logging_enabled;
+
+	if ( wpDebug ) {
+		switch ( level ) {
+			case 'error':
+				console.error( `[AXO] ${ message }` );
+				break;
+			default:
+				console.log( `[AXO] ${ message }` );
+		}
+	}
+
+	if ( ! endpoint || ! loggingEnabled ) {
 		return;
 	}
 
@@ -15,15 +27,5 @@ export function log( message, level = 'info' ) {
 				level,
 			},
 		} ),
-	} ).then( () => {
-		if ( wpDebug ) {
-			switch ( level ) {
-				case 'error':
-					console.error( `[AXO] ${ message }` );
-					break;
-				default:
-					console.log( `[AXO] ${ message }` );
-			}
-		}
 	} );
 }

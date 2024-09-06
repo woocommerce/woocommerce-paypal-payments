@@ -4,8 +4,8 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 import { cartHasSubscriptionProducts } from '../../../ppcp-blocks/resources/js/Helper/Subscription';
 import { loadCustomScript } from '@paypal/paypal-js';
 import CheckoutHandler from './Context/CheckoutHandler';
-import ApplepayManager from './ApplepayManager';
-import ApplepayManagerBlockEditor from './ApplepayManagerBlockEditor';
+import ApplePayManager from './ApplepayManager';
+import ApplePayManagerBlockEditor from './ApplepayManagerBlockEditor';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
@@ -24,8 +24,8 @@ const ApplePayComponent = ( props ) => {
 
 	const bootstrap = function () {
 		const ManagerClass = props.isEditing
-			? ApplepayManagerBlockEditor
-			: ApplepayManager;
+			? ApplePayManagerBlockEditor
+			: ApplePayManager;
 		const manager = new ManagerClass( buttonConfig, ppcpConfig );
 		manager.init();
 	};

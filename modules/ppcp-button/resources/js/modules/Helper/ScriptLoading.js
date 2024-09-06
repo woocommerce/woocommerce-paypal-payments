@@ -71,7 +71,10 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 	}
 
 	// Load PayPal script for special case with data-client-token
-	if ( config.data_client_id?.set_attribute ) {
+	if (
+		config.data_client_id?.set_attribute &&
+		config.vault_v3_enabled !== '1'
+	) {
 		dataClientIdAttributeHandler(
 			scriptOptions,
 			config.data_client_id,

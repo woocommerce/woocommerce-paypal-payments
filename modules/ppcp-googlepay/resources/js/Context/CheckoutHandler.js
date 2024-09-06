@@ -4,7 +4,7 @@ import CheckoutActionHandler from '../../../../ppcp-button/resources/js/modules/
 import FormValidator from '../../../../ppcp-button/resources/js/modules/Helper/FormValidator';
 
 class CheckoutHandler extends BaseHandler {
-	transactionInfo() {
+	validateForm() {
 		return new Promise( async ( resolve, reject ) => {
 			try {
 				const spinner = new Spinner();
@@ -23,7 +23,7 @@ class CheckoutHandler extends BaseHandler {
 					: null;
 
 				if ( ! formValidator ) {
-					resolve( super.transactionInfo() );
+					resolve();
 					return;
 				}
 
@@ -42,7 +42,7 @@ class CheckoutHandler extends BaseHandler {
 
 							reject();
 						} else {
-							resolve( super.transactionInfo() );
+							resolve();
 						}
 					} );
 			} catch ( error ) {

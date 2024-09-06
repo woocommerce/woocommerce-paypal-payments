@@ -97,15 +97,6 @@ class UpdateShippingEndpoint implements EndpointInterface {
 			$pu      = $this->purchase_unit_factory->from_wc_cart( null, true );
 			$pu_data = $pu->to_array();
 
-			if ( ! isset( $pu_data['shipping']['options'] ) ) {
-				wp_send_json_error(
-					array(
-						'message' => 'No shipping methods.',
-					)
-				);
-				return false;
-			}
-
 			// TODO: maybe should patch only if methods changed.
 			// But it seems a bit difficult to detect,
 			// e.g. ->order($id) may not have Shipping because we drop it when address or name are missing.
