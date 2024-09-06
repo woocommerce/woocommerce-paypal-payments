@@ -7,9 +7,9 @@
  * Author:      WooCommerce
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
- * Requires PHP: 7.2
+ * Requires PHP: 7.4
  * Requires Plugins: woocommerce
- * WC requires at least: 3.9
+ * WC requires at least: 6.9
  * WC tested up to: 9.2
  * Text Domain: woocommerce-paypal-payments
  *
@@ -59,11 +59,11 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 			return;
 		}
-		if ( version_compare( PHP_VERSION, '7.2', '<' ) ) {
+		if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
 			add_action(
 				'admin_notices',
 				function() {
-					echo '<div class="error"><p>' . esc_html__( 'WooCommerce PayPal Payments requires PHP 7.1 or above.', 'woocommerce-paypal-payments' ), '</p></div>';
+					echo '<div class="error"><p>' . esc_html__( 'WooCommerce PayPal Payments requires PHP 7.4 or above.', 'woocommerce-paypal-payments' ), '</p></div>';
 				}
 			);
 
@@ -221,22 +221,6 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 				\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
 			}
 		}
-	);
-
-	add_action(
-		'in_plugin_update_message-woocommerce-paypal-payments/woocommerce-paypal-payments.php',
-		static function( array $plugin_data, \stdClass $new_data ) {
-			if ( version_compare( $plugin_data['Version'], '3.0.0', '<' ) &&
-				version_compare( $new_data->new_version, '3.0.0', '>=' ) ) {
-				printf(
-					'<br /><strong>%s</strong>: %s',
-					esc_html__( 'Warning', 'woocommerce-paypal-payments' ),
-					esc_html__( 'WooCommerce PayPal Payments version 3.0.0 contains significant changes that may impact your website. We strongly recommend reviewing the changes and testing the update on a staging site before updating it on your production environment.', 'woocommerce-paypal-payments' )
-				);
-			}
-		},
-		10,
-		2
 	);
 
 	/**

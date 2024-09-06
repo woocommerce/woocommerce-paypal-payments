@@ -82,8 +82,8 @@ class FilePathPluginFactory implements FilePathPluginFactoryInterface {
 				'Title'       => '',
 				'Description' => '',
 				'TextDomain'  => '',
-				'RequiresWP'  => '5.0',
-				'RequiresPHP' => '7.2',
+				'RequiresWP'  => '6.3',
+				'RequiresPHP' => '7.4',
 			),
 			$plugin_data
 		);

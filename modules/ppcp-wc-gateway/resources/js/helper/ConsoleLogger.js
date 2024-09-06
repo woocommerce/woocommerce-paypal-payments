@@ -18,6 +18,13 @@ export default class ConsoleLogger {
 	 */
 	#enabled = false;
 
+	/**
+	 * Tracks the current log-group that was started using `this.group()`
+	 *
+	 * @type {?string}
+	 */
+	#openGroup = null;
+
 	constructor( ...prefixes ) {
 		if ( prefixes.length ) {
 			this.#prefix = `[${ prefixes.join( ' | ' ) }]`;
@@ -54,5 +61,29 @@ export default class ConsoleLogger {
 	 */
 	error( ...args ) {
 		console.error( this.#prefix, ...args );
+	}
+
+	/**
+	 * Starts or ends a group in the browser console.
+	 *
+	 * @param {string} [label=null] - The group label. Omit to end the current group.
+	 */
+	group( label = null ) {
+		if ( ! this.#enabled ) {
+			return;
+		}
+
+		if ( ! label || this.#openGroup ) {
+			// eslint-disable-next-line
+            console.groupEnd();
+			this.#openGroup = null;
+		}
+
+		if ( label ) {
+			// eslint-disable-next-line
+            console.group( label );
+
+			this.#openGroup = label;
+		}
 	}
 }
