@@ -14,7 +14,48 @@
 .wc-block-checkout-axo-block-card {
 	display: flex;
 	justify-content: center;
+	align-items: center;
+	width: 100%;
+	margin-bottom: 10px;
+}
+
+.wc-block-checkout-axo-block-card__inner {
+	display: flex;
 	flex-direction: column;
+	align-items: center;
+	max-width: 300px;
+	width: 100%;
+}
+
+.wc-block-checkout-axo-block-card__content {
+	box-sizing: border-box;
+	aspect-ratio: 1.586;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	border: 1px solid hsla(0,0%,7%,.11);
+	font-size: .875em;
+	font-family: monospace;
+	padding: 1em;
+	margin-bottom: 1em;
+	margin-top: 1em;
+	border-radius: 4px;
+	width: 100%;
+}
+
+.wc-block-checkout-axo-block-card__meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+}
+
+.wc-block-checkout-axo-block-card__meta-digits {
+	letter-spacing: 2px;
+}
+
+.wc-block-checkout-axo-block-card__watermark {
+	align-self: flex-end;
 }
 
 .wc-block-checkout-axo-block-card__edit {
@@ -31,33 +72,6 @@
 	&:hover {
 		text-decoration: underline;
 	}
-}
-
-.wc-block-checkout-axo-block-card__meta-container {
-	width: 100%;
-	max-width: 300px;  /* Max width for responsiveness */
-	aspect-ratio: 1.586; /* Enforce the credit card aspect ratio */
-	display: flex;
-	flex-direction: column;
-	align-self: center;
-	justify-content: space-between;
-	border: 1px solid hsla(0,0%,7%,.11);
-	font-size: 1em;
-	font-family: monospace;
-	padding: 1em;
-	margin: 1em;
-	border-radius: 4px;
-}
-
-.wc-block-axo-block-card__meta {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-}
-
-.wc-block-axo-block-card__meta__digits {
-	letter-spacing: 2px;
 }
 
 .wc-block-axo-block-card__meta:last-child {

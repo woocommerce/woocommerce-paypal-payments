@@ -9,7 +9,7 @@ export const snapshotFields = ( shippingAddress, billingAddress ) => {
 	const originalData = { shippingAddress, billingAddress };
 	console.log( 'Snapshot data:', originalData );
 	localStorage.setItem(
-		'originalCheckoutFields',
+		'axoOriginalCheckoutFields',
 		JSON.stringify( originalData )
 	);
 	console.log( 'Original fields saved to localStorage', originalData );
@@ -19,7 +19,7 @@ export const restoreOriginalFields = (
 	updateShippingAddress,
 	updateBillingAddress
 ) => {
-	const savedData = localStorage.getItem( 'originalCheckoutFields' );
+	const savedData = localStorage.getItem( 'axoOriginalCheckoutFields' );
 	console.log( 'Data retrieved from localStorage:', savedData );
 
 	if ( savedData ) {
@@ -33,7 +33,7 @@ export const restoreOriginalFields = (
 		console.log( 'Original fields restored from localStorage', parsedData );
 	} else {
 		console.warn(
-			'No data found in localStorage under originalCheckoutFields'
+			'No data found in localStorage under axoOriginalCheckoutFields'
 		);
 	}
 };
