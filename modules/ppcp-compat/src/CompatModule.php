@@ -9,9 +9,15 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use Exception;
+use Psr\Log\LoggerInterface;
+use WC_Cart;
+use WC_Order;
+use WC_Order_Item_Product;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -21,17 +27,21 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 /**
  * Class CompatModule
  */
-class CompatModule implements ModuleInterface {
+class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+
 	/**
-	 * Setup the compatibility module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -39,7 +49,7 @@ class CompatModule implements ModuleInterface {
 	 *
 	 * @throws NotFoundException
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function run( ContainerInterface $c ): bool {
 
 		$this->initialize_ppec_compat_layer( $c );
 		$this->initialize_tracking_compat_layer( $c );
@@ -61,14 +71,15 @@ class CompatModule implements ModuleInterface {
 		if ( $is_nyp_active ) {
 			$this->initialize_nyp_compat_layer();
 		}
-	}
 
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
+		$logger = $c->get( 'woocommerce.logger.woocommerce' );
+
+		$is_wc_bookings_active = $c->get( 'compat.wc_bookings.is_supported_plugin_version_active' );
+		if ( $is_wc_bookings_active ) {
+			$this->initialize_wc_bookings_compat_layer( $logger );
+		}
+
+		return true;
 	}
 
 	/**
@@ -407,6 +418,64 @@ class CompatModule implements ModuleInterface {
 				}
 
 				return $cart_item['nyp'];
+			},
+			10,
+			2
+		);
+	}
+
+	/**
+	 * Sets up the compatibility layer for WooCommerce Bookings plugin.
+	 *
+	 * @param LoggerInterface $logger The logger.
+	 * @return void
+	 */
+	protected function initialize_wc_bookings_compat_layer( LoggerInterface $logger ): void {
+		add_action(
+			'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created',
+			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $logger ): void {
+				try {
+					$cart_contents = $wc_cart->get_cart();
+					foreach ( $cart_contents as $cart_item ) {
+						if ( empty( $cart_item['booking'] ) ) {
+							continue;
+						}
+
+						foreach ( $wc_order->get_items() as $wc_order_item ) {
+							if ( ! is_a( $wc_order_item, WC_Order_Item_Product::class ) ) {
+								continue;
+							}
+
+							$product_id = $wc_order_item->get_variation_id() ?: $wc_order_item->get_product_id();
+							$product    = wc_get_product( $product_id );
+
+							if ( ! is_wc_booking_product( $product ) ) {
+								continue;
+							}
+
+							$booking_data = array(
+								'cost'           => $cart_item['booking']['_cost'] ?? 0,
+								'start_date'     => $cart_item['booking']['_start_date'] ?? 0,
+								'end_date'       => $cart_item['booking']['_end_date'] ?? 0,
+								'all_day'        => $cart_item['booking']['_all_day'] ?? 0,
+								'local_timezone' => $cart_item['booking']['_local_timezone'] ?? 0,
+								'order_item_id'  => $wc_order_item->get_id(),
+							);
+
+							if ( isset( $cart_item['booking']['_resource_id'] ) ) {
+								$booking_data['resource_id'] = $cart_item['booking']['_resource_id'];
+							}
+
+							if ( isset( $cart_item['booking']['_persons'] ) ) {
+								$booking_data['persons'] = $cart_item['booking']['_persons'];
+							}
+
+							create_wc_booking( $cart_item['product_id'], $booking_data, 'unpaid' );
+						}
+					}
+				} catch ( Exception $exception ) {
+					$logger->warning( 'Failed to create booking for WooCommerce Bookings plugin: ' . $exception->getMessage() );
+				}
 			},
 			10,
 			2

@@ -31,6 +31,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 		( require "$modules_dir/ppcp-paypal-subscriptions/module.php" )(),
+		( require "$modules_dir/ppcp-local-alternative-payment-methods/module.php" )(),
 	);
 	// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 

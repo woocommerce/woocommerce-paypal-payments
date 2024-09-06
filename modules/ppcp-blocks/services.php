@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WC_Cart;
 
 return array(
 	'blocks.url'                           => static function ( ContainerInterface $container ): string {
@@ -27,6 +28,13 @@ return array(
 		);
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
+		/**
+		 * Cart instance; might be null, esp. in customizer or in Block Editor.
+		 *
+		 * @var null|WC_Cart $cart
+		 */
+		$cart = WC()->cart;
+
 		return new PayPalPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -43,7 +51,8 @@ return array(
 			$container->get( 'wcgateway.use-place-order-button' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'wcgateway.place-order-button-description' ),
-			$container->get( 'wcgateway.all-funding-sources' )
+			$container->get( 'wcgateway.all-funding-sources' ),
+			$cart && $cart->needs_shipping()
 		);
 	},
 	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {

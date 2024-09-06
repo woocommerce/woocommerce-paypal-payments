@@ -14,16 +14,19 @@ use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * Class SessionModule
  */
-class SessionModule implements ModuleInterface {
+class SessionModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+
 	/**
 	 * A flag to avoid multiple requests to reload order.
 	 *
@@ -34,17 +37,21 @@ class SessionModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 		add_action(
 			'woocommerce_init',
 			function () use ( $c ) {
@@ -96,13 +103,7 @@ class SessionModule implements ModuleInterface {
 			10,
 			2
 		);
-	}
 
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
+		return true;
 	}
 }

@@ -7,7 +7,12 @@ import {
 } from '@paypal/react-paypal-js';
 
 import { CheckoutHandler } from './checkout-handler';
-import { createOrder, onApprove } from '../card-fields-config';
+import {
+	createOrder,
+	onApprove,
+	createVaultSetupToken,
+	onApproveSavePayment,
+} from '../card-fields-config';
 import { cartHasSubscriptionProducts } from '../Helper/Subscription';
 
 export function CardFields( {
@@ -70,8 +75,21 @@ export function CardFields( {
 				} }
 			>
 				<PayPalCardFieldsProvider
-					createOrder={ createOrder }
-					onApprove={ onApprove }
+					createVaultSetupToken={
+						config.scriptData.is_free_trial_cart
+							? createVaultSetupToken
+							: undefined
+					}
+					createOrder={
+						config.scriptData.is_free_trial_cart
+							? undefined
+							: createOrder
+					}
+					onApprove={
+						config.scriptData.is_free_trial_cart
+							? onApproveSavePayment
+							: onApprove
+					}
 					onError={ ( err ) => {
 						console.error( err );
 					} }

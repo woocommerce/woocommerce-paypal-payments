@@ -15,9 +15,10 @@ use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -31,26 +32,29 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class SubscriptionModule
  */
-class WcSubscriptionsModule implements ModuleInterface {
-
+class WcSubscriptionsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 	use TransactionIdHandlingTrait;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
-		$this->add_gateways_support( $c );
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
+		$this->add_gateways_support( $c );
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
 			/**
@@ -255,14 +259,8 @@ class WcSubscriptionsModule implements ModuleInterface {
 			10,
 			3
 		);
-	}
 
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
+		return true;
 	}
 
 	/**

@@ -11,19 +11,35 @@ namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksUtils;
 
 /**
  * Class PayLaterWCBlocksModule
  */
-class PayLaterWCBlocksModule implements ModuleInterface {
+class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
 	/**
 	 * Returns whether the block module should be loaded.
 	 *
@@ -75,22 +91,12 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function run( ContainerInterface $c ): void {
+	public function run( ContainerInterface $c ): bool {
 		$messages_apply = $c->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
 
 		if ( ! $messages_apply->for_country() ) {
-			return;
+			return true;
 		}
 
 		$settings = $c->get( 'wcgateway.settings' );
@@ -281,13 +287,6 @@ class PayLaterWCBlocksModule implements ModuleInterface {
 				}
 			);
 		}
-	}
-
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return void
-	 */
-	public function getKey() {
+		return true;
 	}
 }
