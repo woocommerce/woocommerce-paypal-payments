@@ -114,7 +114,7 @@ class GooglePayGateway extends WC_Payment_Gateway {
 		$this->description = $this->get_option( 'description', '' );
 
 		$this->module_url = $module_url;
-		$this->icon       = esc_url( $this->module_url ) . 'assets/images/googlepay.png';
+		$this->icon       = esc_url( $this->module_url ) . 'assets/images/googlepay.svg';
 
 		$this->init_form_fields();
 		$this->init_settings();

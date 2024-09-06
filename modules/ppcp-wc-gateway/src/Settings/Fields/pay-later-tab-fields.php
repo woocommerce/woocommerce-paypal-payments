@@ -847,7 +847,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				__( 'When enabled, a %1$sPay Later button%2$s is displayed for eligible customers.%3$sPayPal buttons must be enabled to display the Pay Later button.', 'woocommerce-paypal-payments' ),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-buttons" target="_blank">',
 				'</a>',
-				'</ br>'
+				'<br />'
 			),
 		),
 		'pay_later_button_enabled'                        => array(

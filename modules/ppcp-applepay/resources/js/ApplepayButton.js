@@ -57,6 +57,8 @@ const CONTEXT = {
  * On a single page, multiple Apple Pay buttons can be displayed, which also means multiple
  * ApplePayButton instances exist. A typical case is on the product page, where one Apple Pay button
  * is located inside the minicart-popup, and another pay-now button is in the product context.
+ *
+ * TODO - extend from PaymentButton (same as we do in GooglepayButton.js)
  */
 class ApplePayButton {
 	/**
@@ -490,6 +492,7 @@ class ApplePayButton {
 		const ppcpStyle = this.ppcpStyle;
 
 		wrapper.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ style.color }' type='${ style.type }' locale='${ style.lang }' />`;
+		wrapper.classList.remove( 'ppcp-button-rect', 'ppcp-button-pill' );
 		wrapper.classList.add(
 			`ppcp-button-${ ppcpStyle.shape }`,
 			'ppcp-button-apm',

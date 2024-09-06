@@ -16,30 +16,37 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class GooglepayModule
  */
-class GooglepayModule implements ModuleInterface {
+class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 
 		// Clears product status when appropriate.
 		add_action(
@@ -93,9 +100,19 @@ class GooglepayModule implements ModuleInterface {
 					static function () use ( $c, $button ) {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
+
 						if ( $smart_button->should_load_ppcp_script() ) {
 							$button->enqueue();
 							return;
+						}
+
+						/*
+						 * Checkout page, but no PPCP scripts were loaded. Most likely in continuation mode.
+						 * Need to enqueue some Google Pay scripts to populate the billing form with details
+						 * provided by Google Pay.
+						 */
+						if ( is_checkout() ) {
+							$button->enqueue();
 						}
 
 						if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
@@ -200,13 +217,7 @@ class GooglepayModule implements ModuleInterface {
 				echo '<div id="ppc-button-' . esc_attr( GooglePayGateway::ID ) . '"></div>';
 			}
 		);
-	}
 
-	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
+		return true;
 	}
 }
