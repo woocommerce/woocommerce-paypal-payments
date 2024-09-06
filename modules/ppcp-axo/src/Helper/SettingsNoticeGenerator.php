@@ -19,6 +19,22 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
  */
 class SettingsNoticeGenerator {
 	/**
+	 * The list of Fastlane incompatible plugin names.
+	 *
+	 * @var string[]
+	 */
+	protected $incompatible_plugin_names;
+
+	/**
+	 * SettingsNoticeGenerator constructor.
+	 *
+	 * @param string[] $incompatible_plugin_names The list of Fastlane incompatible plugin names.
+	 */
+	public function __construct( array $incompatible_plugin_names ) {
+		$this->incompatible_plugin_names = $incompatible_plugin_names;
+	}
+
+	/**
 	 * Generates the full HTML of the notification.
 	 *
 	 * @param string $message  HTML of the inner message contents.
@@ -117,23 +133,9 @@ class SettingsNoticeGenerator {
 	 * @return string
 	 */
 	public function generate_incompatible_plugins_notice(): string {
-		$incompatible_plugins = array(
-			'Elementor'  => did_action( 'elementor/loaded' ),
-			'CheckoutWC' => defined( 'CFW_NAME' ),
-		);
-
-		$active_plugins_list = array_filter( $incompatible_plugins );
-
-		if ( empty( $active_plugins_list ) ) {
+		if ( empty( $this->incompatible_plugin_names ) ) {
 			return '';
 		}
-
-		$incompatible_plugin_items = array_map(
-			function ( $plugin ) {
-				return "<li>{$plugin}</li>";
-			},
-			array_keys( $active_plugins_list )
-		);
 
 		$plugins_settings_link = esc_url( admin_url( 'plugins.php' ) );
 		$notice_content        = sprintf(
@@ -143,7 +145,7 @@ class SettingsNoticeGenerator {
 				'woocommerce-paypal-payments'
 			),
 			$plugins_settings_link,
-			implode( '', $incompatible_plugin_items )
+			implode( '', $this->incompatible_plugin_names )
 		);
 
 		return '<div class="ppcp-notice"><p>' . $notice_content . '</p></div>';
