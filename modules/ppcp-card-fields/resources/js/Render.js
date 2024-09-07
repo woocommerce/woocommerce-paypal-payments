@@ -1,4 +1,5 @@
 import { cardFieldStyles } from './CardFieldsHelper';
+import { hide } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 
 export function renderFields( cardFields ) {
 	const nameField = document.getElementById(
@@ -9,7 +10,7 @@ export function renderFields( cardFields ) {
 		cardFields
 			.NameField( { style: { input: styles } } )
 			.render( nameField.parentNode );
-		nameField.hidden = true;
+        hide( nameField, true );
 	}
 
 	const numberField = document.getElementById(
@@ -20,7 +21,7 @@ export function renderFields( cardFields ) {
 		cardFields
 			.NumberField( { style: { input: styles } } )
 			.render( numberField.parentNode );
-		numberField.hidden = true;
+        hide( numberField, true );
 	}
 
 	const expiryField = document.getElementById(
@@ -31,7 +32,7 @@ export function renderFields( cardFields ) {
 		cardFields
 			.ExpiryField( { style: { input: styles } } )
 			.render( expiryField.parentNode );
-		expiryField.hidden = true;
+        hide( expiryField, true );
 	}
 
 	const cvvField = document.getElementById(
@@ -42,6 +43,6 @@ export function renderFields( cardFields ) {
 		cardFields
 			.CVVField( { style: { input: styles } } )
 			.render( cvvField.parentNode );
-		cvvField.hidden = true;
+        hide( cvvField, true );
 	}
 }
