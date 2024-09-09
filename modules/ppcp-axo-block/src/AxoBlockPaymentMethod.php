@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
+use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -38,7 +39,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * Credit card gateway.
 	 *
-	 * @var CreditCardGateway
+	 * @var WC_Payment_Gateway
 	 */
 	private $gateway;
 
@@ -75,7 +76,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 *
 	 * @param string                        $module_url           The URL of this module.
 	 * @param string                        $version              The assets version.
-	 * @param CreditCardGateway             $gateway              Credit card gateway.
+	 * @param WC_Payment_Gateway            $gateway              Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button         The smart button script loading
 	 *                                                            handler.
 	 * @param Settings                      $settings             The settings.
@@ -85,7 +86,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	public function __construct(
 		string $module_url,
 		string $version,
-		CreditCardGateway $gateway,
+		WC_Payment_Gateway $gateway,
 		$smart_button,
 		Settings $settings,
 		Environment $environment,
