@@ -10,7 +10,8 @@ export function renderFields( cardFields ) {
 		cardFields
 			.NameField( { style: { input: styles } } )
 			.render( nameField.parentNode );
-        hide( nameField, true );
+		hide( nameField, true );
+		nameField.hidden = true;
 	}
 
 	const numberField = document.getElementById(
@@ -21,7 +22,8 @@ export function renderFields( cardFields ) {
 		cardFields
 			.NumberField( { style: { input: styles } } )
 			.render( numberField.parentNode );
-        hide( numberField, true );
+		hide( numberField, true );
+		numberField.hidden = true;
 	}
 
 	const expiryField = document.getElementById(
@@ -32,7 +34,8 @@ export function renderFields( cardFields ) {
 		cardFields
 			.ExpiryField( { style: { input: styles } } )
 			.render( expiryField.parentNode );
-        hide( expiryField, true );
+		hide( expiryField, true );
+		expiryField.hidden = true;
 	}
 
 	const cvvField = document.getElementById(
@@ -43,6 +46,7 @@ export function renderFields( cardFields ) {
 		cardFields
 			.CVVField( { style: { input: styles } } )
 			.render( cvvField.parentNode );
-        hide( cvvField, true );
+		hide( cvvField, true );
+		cvvField.hidden = true;
 	}
 }
