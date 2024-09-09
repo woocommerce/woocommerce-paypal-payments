@@ -113,7 +113,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function is_active() : bool {
-		return true;
+		return $this->gateway->is_available();
 	}
 
 	/**
