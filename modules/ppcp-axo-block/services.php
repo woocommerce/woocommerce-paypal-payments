@@ -32,7 +32,7 @@ return array(
 		return new AxoBlockPaymentMethod(
 			$container->get( 'axoblock.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'wcgateway.credit-card-gateway' ),
+			$container->get( 'axo.gateway' ),
 			fn() : SmartButtonInterface => $container->get( 'button.smart-button' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),

@@ -14,7 +14,7 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -92,7 +92,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		Environment $environment,
 		string $wcgateway_module_url
 	) {
-		$this->name                 = CreditCardGateway::ID;
+		$this->name                 = AxoGateway::ID;
 		$this->module_url           = $module_url;
 		$this->version              = $version;
 		$this->gateway              = $gateway;
