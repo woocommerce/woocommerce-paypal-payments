@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Axo
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
@@ -14,10 +14,10 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	// If AXO Block is configured and onboarded.
-	'axoblock.available'                         => static function ( ContainerInterface $container ): bool {
+	'axoblock.available' => static function ( ContainerInterface $container ) : bool {
 		return true;
 	},
-	'axoblock.url'                           => static function ( ContainerInterface $container ): string {
+	'axoblock.url'       => static function ( ContainerInterface $container ) : string {
 		/**
 		 * The path cannot be false.
 		 *
@@ -28,14 +28,12 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'axoblock.method'          => static function( ContainerInterface $container ): AxoBlockPaymentMethod {
+	'axoblock.method'    => static function ( ContainerInterface $container ) : AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(
 			$container->get( 'axoblock.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.credit-card-gateway' ),
-			function () use ( $container ): SmartButtonInterface {
-				return $container->get( 'button.smart-button' );
-			},
+			fn() : SmartButtonInterface => $container->get( 'button.smart-button' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.url' )
