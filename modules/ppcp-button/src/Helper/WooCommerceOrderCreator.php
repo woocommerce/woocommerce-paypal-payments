@@ -95,7 +95,7 @@ class WooCommerceOrderCreator {
 			$this->configure_payment_source( $wc_order );
 			$this->configure_customer( $wc_order );
 			$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
-			$this->configure_shipping( $wc_order, $payer, $shipping, $wc_cart );
+			$this->configure_addresses( $wc_order, $payer, $shipping, $wc_cart );
 			$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
 
 			$wc_order->calculate_totals();
@@ -163,7 +163,7 @@ class WooCommerceOrderCreator {
 				$item->set_total( $subscription_total );
 
 				$subscription->add_product( $product );
-				$this->configure_shipping( $subscription, $payer, $shipping, $wc_cart );
+				$this->configure_addresses( $subscription, $payer, $shipping, $wc_cart );
 				$this->configure_payment_source( $subscription );
 				$this->configure_coupons( $subscription, $wc_cart->get_applied_coupons() );
 
@@ -193,7 +193,7 @@ class WooCommerceOrderCreator {
 	 * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
 	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
-	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, WC_Cart $wc_cart ): void {
+	protected function configure_addresses( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, WC_Cart $wc_cart ): void {
 		$shipping_address = null;
 		$billing_address  = null;
 		$shipping_options = null;
