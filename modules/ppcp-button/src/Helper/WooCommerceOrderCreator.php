@@ -211,7 +211,7 @@ class WooCommerceOrderCreator {
 			$email = $wc_email ?: $payer->email_address();
 
 			$billing_address = array(
-				'email'      => $email ? $email : '',
+				'email'      => $email ?: '',
 				'first_name' => $payer_name ? $payer_name->given_name() : '',
 				'last_name'  => $payer_name ? $payer_name->surname() : '',
 				'address_1'  => $address ? $address->address_line_1() : '',
