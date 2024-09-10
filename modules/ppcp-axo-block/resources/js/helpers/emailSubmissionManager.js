@@ -11,6 +11,7 @@ let submitButtonReference = {
 	unsubscribe: null,
 };
 let isLoading = false;
+let keydownHandler = null;
 
 const getEmailInput = () => {
 	if ( ! emailInput ) {
@@ -88,8 +89,9 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 		}
 	};
 
-	const keydownHandler = ( event ) => {
-		if ( event.key === 'Enter' ) {
+	keydownHandler = ( event ) => {
+		const isAxoActive = wp.data.select( STORE_NAME ).getIsAxoActive();
+		if ( event.key === 'Enter' && isAxoActive ) {
 			event.preventDefault();
 			handleEmailSubmit();
 		}
@@ -137,8 +139,8 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 
 export const removeEmailFunctionality = () => {
 	const input = getEmailInput();
-	if ( input ) {
-		input.removeEventListener( 'keydown', input.onkeydown );
+	if ( input && keydownHandler ) {
+		input.removeEventListener( 'keydown', keydownHandler );
 	}
 
 	if ( submitButtonReference.root ) {
@@ -156,6 +158,7 @@ export const removeEmailFunctionality = () => {
 		);
 	}
 	submitButtonReference = { container: null, root: null, unsubscribe: null };
+	keydownHandler = null;
 };
 
 export const isEmailFunctionalitySetup = () => {
