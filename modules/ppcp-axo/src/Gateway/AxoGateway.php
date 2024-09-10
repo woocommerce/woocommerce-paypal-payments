@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Axo\Gateway;
 
@@ -16,8 +16,6 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -134,19 +132,19 @@ class AxoGateway extends WC_Payment_Gateway {
 	/**
 	 * AXOGateway constructor.
 	 *
-	 * @param SettingsRenderer          $settings_renderer The settings renderer.
-	 * @param ContainerInterface        $ppcp_settings The settings.
-	 * @param string                    $wcgateway_module_url The WcGateway module URL.
-	 * @param SessionHandler            $session_handler The session handler.
-	 * @param OrderProcessor            $order_processor The Order processor.
-	 * @param array                     $card_icons The card icons.
-	 * @param array                     $card_icons_axo The card icons.
-	 * @param OrderEndpoint             $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
-	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
-	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
-	 * @param Environment               $environment The environment.
-	 * @param LoggerInterface           $logger The logger.
+	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
+	 * @param ContainerInterface        $ppcp_settings               The settings.
+	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
+	 * @param SessionHandler            $session_handler             The session handler.
+	 * @param OrderProcessor            $order_processor             The Order processor.
+	 * @param array                     $card_icons                  The card icons.
+	 * @param array                     $card_icons_axo              The card icons.
+	 * @param OrderEndpoint             $order_endpoint              The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory       The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory Shipping preference factory.
+	 * @param TransactionUrlProvider    $transaction_url_provider    The transaction url provider.
+	 * @param Environment               $environment                 The environment.
+	 * @param LoggerInterface           $logger                      The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -228,6 +226,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * Processes the order.
 	 *
 	 * @param int $order_id The WC order ID.
+	 *
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
@@ -263,7 +262,7 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		WC()->cart->empty_cart();
 
-		$result = array(
+		return array(
 			'result'   => 'success',
 			'redirect' => $this->get_return_url( $wc_order ),
 		);
@@ -349,7 +348,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_transaction_url( $order ): string {
+	public function get_transaction_url( $order ) : string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
@@ -383,7 +382,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return SettingsRenderer
 	 */
-	protected function settings_renderer(): SettingsRenderer {
+	protected function settings_renderer() : SettingsRenderer {
 		return $this->settings_renderer;
 	}
 }
