@@ -6,11 +6,6 @@
 	padding-right: 1em;
 }
 
-.ppcp-axo-block-watermark-container {
-	float: right;
-	margin-top: 10px;
-}
-
 .wc-block-checkout-axo-block-card {
 	display: flex;
 	justify-content: center;
@@ -80,4 +75,98 @@
 
 .wc-block-axo-block-card__meta-icon {
 	max-height: 25px;
+}
+
+.wp-block-woocommerce-checkout-express-payment-block {
+	transition: opacity .2s ease-in,
+	scale .2s ease-in,
+	display .4s ease-in;
+	/* key to transitioning out */
+	transition-behavior: allow-discrete;
+
+	/* stage enter */
+	/* key to transitioning in */
+	@starting-style {
+		opacity: 0;
+		scale: 1.1;
+	}
+
+	&.wc-block-axo-is-authenticated {
+		opacity: 0;
+		scale: .9;
+
+		/* hidden sets display: none, but loses easily */
+		display: none !important;
+
+		/* faster leaving the stage then entering */
+		transition-duration: .2s;
+		transition-timing-function: var(--ease-out-5);
+	}
+}
+
+.wc-block-axo-is-loaded .wc-block-components-text-input {
+	display: flex;
+}
+
+.wc-block-axo-is-loaded .wc-block-components-text-input {
+	margin-bottom: 0.5em;
+}
+
+.wc-block-checkout-axo-block-watermark-container {
+	margin-left: 5px;
+}
+
+.wc-block-axo-is-loaded {
+	.wc-block-components-text-input {
+		display: grid;
+		grid-template-areas:
+        "input button"
+        "watermark watermark"
+        "error error";
+		grid-template-columns: 1fr auto;
+		gap: 6px 8px;
+		align-items: start;
+	}
+
+	&.wc-block-axo-is-authenticated .wc-block-components-text-input {
+		gap: 14px 0;
+	}
+
+	.wc-block-components-text-input input[type="email"] {
+		grid-area: input;
+		width: 100%;
+	}
+
+	.wc-block-axo-email-submit-button-container {
+		grid-area: button;
+		align-self: start;
+	}
+
+	.wc-block-checkout-axo-block-watermark-container {
+		grid-area: watermark;
+		width: 100%;
+	}
+
+	.wc-block-components-validation-error {
+		grid-area: error;
+		width: 100%;
+		margin-top: 4px;
+	}
+
+	/* Ensure the button doesn't stretch */
+	.wc-block-axo-email-submit-button-container .wc-block-components-button {
+		white-space: nowrap;
+	}
+
+	/* Responsive adjustments */
+	@media (max-width: 768px) {
+		.wc-block-components-text-input {
+			grid-template-areas:
+            "input"
+            "button"
+            "watermark"
+            "error";
+			grid-template-columns: 1fr;
+		}
+	}
 }

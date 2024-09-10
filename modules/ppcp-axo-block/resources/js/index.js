@@ -21,6 +21,7 @@ import { snapshotFields, restoreOriginalFields } from './helpers/fieldHelpers';
 import { removeWatermark, setupWatermark } from './helpers/watermarkHelpers';
 import { removeCardChangeButton } from './helpers/cardChangeButtonManager';
 import { removeShippingChangeButton } from './helpers/shippingChangeButtonManager';
+import { initializeClassToggles } from './helpers/classnamesManager';
 
 // Stores
 import { STORE_NAME } from './stores/axoStore';
@@ -32,6 +33,7 @@ import {
 	removeEmailEvent,
 	isEmailEventSetup,
 } from './helpers/emailHelpers';
+import { setupEmailSubmitButton } from './components/EmailSubmitButton';
 
 const ppcpConfig = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
 
@@ -65,6 +67,10 @@ const Axo = () => {
 	useEffect( () => {
 		console.log( 'isAxoActive updated:', isAxoActive );
 	}, [ isAxoActive ] );
+
+	useEffect( () => {
+		initializeClassToggles();
+	}, [] );
 
 	useEffect( () => {
 		return () => {
@@ -141,6 +147,9 @@ const Axo = () => {
 			console.log( 'Enabling Axo' );
 			setIsAxoActive( true );
 			setupWatermark( fastlaneSdk );
+			setupEmailSubmitButton( async ( email ) => {
+				await onEmailSubmit( email );
+			} );
 			setupEmailEvent( handleEmailInputRef.current );
 		}
 	}, [ paypalLoaded, fastlaneSdk, setIsAxoActive ] );

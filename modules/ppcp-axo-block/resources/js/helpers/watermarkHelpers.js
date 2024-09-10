@@ -17,50 +17,53 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 	);
 
 	useEffect( () => {
-		const emailInput = document.getElementById( 'email' );
+		const textInputContainer = document.querySelector(
+			'.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input'
+		);
 
-		if ( emailInput ) {
-			if ( ! watermarkReference.container ) {
-				watermarkReference.container = document.createElement( 'div' );
-				watermarkReference.container.setAttribute(
-					'class',
-					'ppcp-axo-block-watermark-container'
-				);
+		if ( textInputContainer ) {
+			const emailInput = textInputContainer.querySelector(
+				'input[type="email"]'
+			);
 
-				const emailLabel =
-					emailInput.parentNode.querySelector( 'label[for="email"]' );
-				if ( emailLabel ) {
-					emailLabel.parentNode.insertBefore(
-						watermarkReference.container,
-						emailLabel.nextSibling
+			if ( emailInput ) {
+				if ( ! watermarkReference.container ) {
+					watermarkReference.container =
+						document.createElement( 'div' );
+					watermarkReference.container.setAttribute(
+						'class',
+						'wc-block-checkout-axo-block-watermark-container'
 					);
-				} else {
+
+					// Insert the watermark container after the email input
 					emailInput.parentNode.insertBefore(
 						watermarkReference.container,
 						emailInput.nextSibling
 					);
+
+					watermarkReference.root = createRoot(
+						watermarkReference.container
+					);
 				}
 
-				watermarkReference.root = createRoot(
-					watermarkReference.container
-				);
-			}
-
-			if ( watermarkReference.root && isAxoActive ) {
-				watermarkReference.root.render(
-					createElement( FastlaneWatermark, {
-						fastlaneSdk,
-						name: 'fastlane-watermark-email',
-						includeAdditionalInfo: isGuest,
-					} )
-				);
+				if ( watermarkReference.root && isAxoActive ) {
+					watermarkReference.root.render(
+						createElement( FastlaneWatermark, {
+							fastlaneSdk,
+							name: 'fastlane-watermark-email',
+							includeAdditionalInfo: isGuest,
+						} )
+					);
+				} else if ( ! isAxoActive && watermarkReference.root ) {
+					watermarkReference.root.render( null );
+				}
 			} else {
-				console.warn( 'Watermark root not found' );
+				console.warn( 'Email input not found' );
 			}
 		} else {
-			console.warn( 'Email input not found' );
+			console.warn( 'Text input container not found' );
 		}
-	}, [ fastlaneSdk, isGuest ] );
+	}, [ fastlaneSdk, isGuest, isAxoActive ] );
 
 	return null;
 };
