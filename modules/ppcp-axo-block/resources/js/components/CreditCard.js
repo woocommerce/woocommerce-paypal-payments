@@ -11,7 +11,12 @@ const cardIcons = {
 	UNIONPAY: 'unionpay-light.svg',
 };
 
-export const CreditCard = ( { card, shippingAddress, fastlaneSdk } ) => {
+export const CreditCard = ( {
+	card,
+	shippingAddress,
+	fastlaneSdk,
+	showWatermark = true,
+} ) => {
 	const { brand, lastDigits, expiry } = card?.paymentSource?.card ?? {};
 	const { fullName } = shippingAddress?.name ?? {};
 
@@ -48,11 +53,13 @@ export const CreditCard = ( { card, shippingAddress, fastlaneSdk } ) => {
 					</div>
 				</div>
 				<div className="wc-block-checkout-axo-block-card__watermark">
-					<FastlaneWatermark
-						fastlaneSdk={ fastlaneSdk }
-						name="wc-block-checkout-axo-card-watermark"
-						includeAdditionalInfo={ false }
-					/>
+					{ showWatermark && (
+						<FastlaneWatermark
+							fastlaneSdk={ fastlaneSdk }
+							name="wc-block-checkout-axo-card-watermark"
+							includeAdditionalInfo={ false }
+						/>
+					) }
 				</div>
 			</div>
 		</div>

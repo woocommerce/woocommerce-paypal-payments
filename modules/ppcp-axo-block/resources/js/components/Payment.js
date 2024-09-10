@@ -1,13 +1,18 @@
 import { useEffect, useCallback } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import { CreditCard } from './CreditCard';
+import { STORE_NAME } from '../stores/axoStore';
 
 export const Payment = ( {
 	fastlaneSdk,
 	card,
 	shippingAddress,
-	isGuest,
 	onPaymentLoad,
 } ) => {
+	const isGuest = useSelect( ( select ) =>
+		select( STORE_NAME ).getIsGuest()
+	);
+
 	// Memoized Fastlane card rendering
 	const loadPaymentComponent = useCallback( async () => {
 		if ( isGuest ) {
@@ -31,6 +36,7 @@ export const Payment = ( {
 			card={ card }
 			shippingAddress={ shippingAddress }
 			fastlaneSdk={ fastlaneSdk }
+			showWatermark={ ! isGuest }
 		/>
 	);
 };

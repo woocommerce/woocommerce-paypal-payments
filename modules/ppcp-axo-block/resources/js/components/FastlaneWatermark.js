@@ -1,21 +1,46 @@
-import { useEffect } from '@wordpress/element';
+import { useEffect, useRef } from '@wordpress/element';
 
 export const FastlaneWatermark = ( {
 	fastlaneSdk,
 	name = 'fastlane-watermark-container',
 	includeAdditionalInfo = true,
 } ) => {
-	// This web component can be instantiated inside of a useEffect.
-	useEffect( () => {
-		( async () => {
-			const watermark = await fastlaneSdk.FastlaneWatermarkComponent( {
-				includeAdditionalInfo,
-			} );
-			// The ID can be a react element
-			watermark.render( `#${ name }` );
-		} )();
-	}, [] );
+	const containerRef = useRef( null );
+	const watermarkRef = useRef( null );
 
-	// Give the react element the ID that you will render the watermark component into.
-	return <div id={ name } />;
+	useEffect( () => {
+		const renderWatermark = async () => {
+			if ( ! containerRef.current ) {
+				return;
+			}
+
+			// Clear the container
+			containerRef.current.innerHTML = '';
+
+			try {
+				const watermark = await fastlaneSdk.FastlaneWatermarkComponent(
+					{
+						includeAdditionalInfo,
+					}
+				);
+
+				watermarkRef.current = watermark;
+				watermark.render( `#${ name }` );
+
+				console.log( 'Watermark rendered successfully' );
+			} catch ( error ) {
+				console.error( 'Error rendering watermark:', error );
+			}
+		};
+
+		renderWatermark();
+
+		return () => {
+			if ( containerRef.current ) {
+				containerRef.current.innerHTML = '';
+			}
+		};
+	}, [ fastlaneSdk, name, includeAdditionalInfo ] );
+
+	return <div id={ name } ref={ containerRef } />;
 };

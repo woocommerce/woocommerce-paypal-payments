@@ -1,12 +1,12 @@
 import { populateWooFields } from '../helpers/fieldHelpers';
 import { injectShippingChangeButton } from '../helpers/shippingChangeButtonManager';
 import { injectCardChangeButton } from '../helpers/cardChangeButtonManager';
+import { setIsGuest } from '../stores/axoStore';
 
+// Handle the logic for email submission and customer data retrieval
 export const onEmailSubmit = async (
 	email,
 	fastlaneSdk,
-	setIsGuest,
-	isGuest,
 	setShippingAddress,
 	setCard,
 	snapshotFields,
@@ -15,9 +15,7 @@ export const onEmailSubmit = async (
 	setWooShippingAddress,
 	setWooBillingAddress,
 	onChangeShippingAddressClick,
-	onChangeButtonClick,
-	shouldIncludeAdditionalInfo,
-	setShouldIncludeAdditionalInfo
+	onChangeButtonClick
 ) => {
 	try {
 		console.log( 'Email value being looked up:', email );
@@ -42,10 +40,11 @@ export const onEmailSubmit = async (
 			// Capture the existing WooCommerce data before updating it
 			snapshotFields( wooShippingAddress, wooBillingAddress );
 
+			console.log( 'Setting isGuest to false' );
 			setIsGuest( false );
+
 			setShippingAddress( profileData.shippingAddress );
 			setCard( profileData.card );
-			setShouldIncludeAdditionalInfo( false );
 
 			console.log( 'Profile Data:', profileData );
 

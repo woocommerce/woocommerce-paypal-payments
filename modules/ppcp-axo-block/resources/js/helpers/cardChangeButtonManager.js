@@ -56,6 +56,7 @@ export const injectCardChangeButton = ( onChangeButtonClick ) => {
 };
 
 export const removeCardChangeButton = () => {
+    console.log('removeCardChangeButton running');
 	const button = document.querySelector(
 		'.wc-block-checkout-axo-block-card__edit'
 	);

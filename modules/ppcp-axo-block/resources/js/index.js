@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect, useState, useRef } from '@wordpress/element';
+import { useSelect, useDispatch } from '@wordpress/data';
+
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
@@ -6,18 +8,30 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 // Hooks
 import useAxoBlockManager from './hooks/useAxoBlockManager';
 import { useCustomerData } from './hooks/useCustomerData';
+import {
+	useShippingAddressChange,
+	useCardChange,
+} from './hooks/useUserInfoChange';
 
 // Components
 import { Payment } from './components/Payment';
 
 // Helpers
 import { snapshotFields, restoreOriginalFields } from './helpers/fieldHelpers';
-import { setupWatermark, removeWatermark } from './helpers/watermarkHelpers';
+import { removeWatermark, setupWatermark } from './helpers/watermarkHelpers';
 import { removeCardChangeButton } from './helpers/cardChangeButtonManager';
 import { removeShippingChangeButton } from './helpers/shippingChangeButtonManager';
 
+// Stores
+import { STORE_NAME } from './stores/axoStore';
+
 // Event handlers
-import { onEmailSubmit } from './events/fastlaneEmailManager';
+import { onEmailSubmit } from './events/emailLookupManager';
+import {
+	setupEmailEvent,
+	removeEmailEvent,
+	isEmailEventSetup,
+} from './helpers/emailHelpers';
 
 const ppcpConfig = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
 
@@ -29,12 +43,16 @@ const axoConfig = window.wc_ppcp_axo;
 
 const Axo = () => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
-	const [ isGuest, setIsGuest ] = useState( true );
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
-	const [ shouldIncludeAdditionalInfo, setShouldIncludeAdditionalInfo ] =
-		useState( true );
 	const fastlaneSdk = useAxoBlockManager( axoConfig, ppcpConfig );
+
+	const isAxoActive = useSelect( ( select ) =>
+		select( STORE_NAME ).getIsAxoActive()
+	);
+	const { setIsAxoActive, setIsGuest } = useDispatch( STORE_NAME );
+
+	const handleEmailInputRef = useRef( null );
 
 	// Access WooCommerce customer data
 	const {
@@ -44,13 +62,12 @@ const Axo = () => {
 		setBillingAddress: updateWooBillingAddress,
 	} = useCustomerData();
 
-	// Cleanup logic for Change buttons
+	useEffect( () => {
+		console.log( 'isAxoActive updated:', isAxoActive );
+	}, [ isAxoActive ] );
+
 	useEffect( () => {
 		return () => {
-			removeShippingChangeButton();
-			removeCardChangeButton();
-			removeWatermark();
-
 			// Restore WooCommerce fields
 			restoreOriginalFields(
 				updateWooShippingAddress,
@@ -74,75 +91,111 @@ const Axo = () => {
 		}
 	}, [ paypalLoaded, ppcpConfig ] );
 
+	const onChangeShippingAddressClick = useShippingAddressChange(
+		fastlaneSdk,
+		setShippingAddress,
+		updateWooShippingAddress
+	);
+
+	const onChangeCardButtonClick = useCardChange( fastlaneSdk, setCard );
+
+	const handleEmailInput = useCallback(
+		async ( email ) => {
+			if ( fastlaneSdk ) {
+				await onEmailSubmit(
+					email,
+					fastlaneSdk,
+					setShippingAddress,
+					setCard,
+					snapshotFields,
+					wooShippingAddress,
+					wooBillingAddress,
+					setWooShippingAddress,
+					setWooBillingAddress,
+					onChangeShippingAddressClick,
+					onChangeCardButtonClick
+				);
+			} else {
+				console.warn( 'FastLane SDK is not available' );
+			}
+		},
+		[
+			fastlaneSdk,
+			setShippingAddress,
+			setCard,
+			wooShippingAddress,
+			wooBillingAddress,
+			setWooShippingAddress,
+			setWooBillingAddress,
+			onChangeShippingAddressClick,
+			onChangeCardButtonClick,
+		]
+	);
+
+	useEffect( () => {
+		handleEmailInputRef.current = handleEmailInput;
+	}, [ handleEmailInput ] );
+
 	useEffect( () => {
 		if ( paypalLoaded && fastlaneSdk ) {
-			console.log( 'Fastlane SDK and PayPal loaded' );
-			setupWatermark(
-				fastlaneSdk,
-				shouldIncludeAdditionalInfo,
-				async ( email ) => {
-					await onEmailSubmit(
-						email,
-						fastlaneSdk,
-						setIsGuest,
-						isGuest,
-						setShippingAddress,
-						setCard,
-						snapshotFields,
-						wooShippingAddress,
-						wooBillingAddress,
-						setWooShippingAddress,
-						setWooBillingAddress,
-						onChangeShippingAddressClick,
-						onChangeButtonClick,
-						shouldIncludeAdditionalInfo,
-						setShouldIncludeAdditionalInfo
-					);
-				}
-			);
+			console.log( 'Enabling Axo' );
+			setIsAxoActive( true );
+			setupWatermark( fastlaneSdk );
+			setupEmailEvent( handleEmailInputRef.current );
 		}
+	}, [ paypalLoaded, fastlaneSdk, setIsAxoActive ] );
 
+	useEffect( () => {
 		return () => {
+			console.log( 'Disabling Axo' );
+			console.log( 'Axo component unmounting' );
+			setIsAxoActive( false );
+			setIsGuest( true );
+
+			console.log( 'isAxoActive', isAxoActive );
+
+			console.log( 'isEmailEventSetup', isEmailEventSetup() );
+
+			removeShippingChangeButton();
+			removeCardChangeButton();
 			removeWatermark();
-		};
-	}, [ paypalLoaded, fastlaneSdk, shouldIncludeAdditionalInfo ] );
 
-	const onChangeShippingAddressClick = useCallback( async () => {
-		// Updated
-		if ( fastlaneSdk ) {
-			const { selectionChanged, selectedAddress } =
-				await fastlaneSdk.profile.showShippingAddressSelector();
-			if ( selectionChanged ) {
-				setShippingAddress( selectedAddress );
+			if ( isEmailEventSetup() ) {
 				console.log(
-					'Selected shipping address changed:',
-					selectedAddress
+					'Axo became inactive, removing email event listener'
 				);
-
-				const { address, name, phoneNumber } = selectedAddress;
-
-				setWooShippingAddress( {
-					first_name: name.firstName,
-					last_name: name.lastName,
-					address_1: address.addressLine1,
-					address_2: address.addressLine2 || '',
-					city: address.adminArea2,
-					state: address.adminArea1,
-					postcode: address.postalCode,
-					country: address.countryCode,
-					phone: phoneNumber.nationalNumber,
-				} );
+				removeEmailEvent( handleEmailInputRef.current );
 			}
-		}
-	}, [ fastlaneSdk, setWooShippingAddress ] );
+		};
+	}, [
+		setIsAxoActive,
+		setIsGuest,
+		updateWooShippingAddress,
+		updateWooBillingAddress,
+	] );
 
-	const onChangeButtonClick = useCallback( async () => {
-		const { selectionChanged, selectedCard } =
-			await fastlaneSdk.profile.showCardSelector();
-		if ( selectionChanged ) {
-			setCard( selectedCard );
-		}
-	}, [ fastlaneSdk ] );
+	useEffect( () => {
+		return () => {
+			console.log( 'Disabling Axo' );
+			setIsAxoActive( false );
+			setIsGuest( true );
+
+			console.log( 'isAxoActive', isAxoActive );
+
+			console.log( 'isEmailEventSetup', isEmailEventSetup() );
+
+			removeShippingChangeButton();
+			removeCardChangeButton();
+			removeWatermark();
+
+			if ( isEmailEventSetup() ) {
+				console.log(
+					'Axo became inactive, removing email event listener'
+				);
+				removeEmailEvent( handleEmailInputRef.current );
+			}
+		};
+	}, [] );
 
 	const handlePaymentLoad = useCallback(
 		( paymentComponent ) => {
@@ -162,9 +215,8 @@ const Axo = () => {
 			card={ card }
 			shippingAddress={ shippingAddress }
 			onChange={ handleChange }
-			isGuest={ isGuest }
 			onPaymentLoad={ handlePaymentLoad }
-			onChangeButtonClick={ onChangeButtonClick }
+			onChangeButtonClick={ onChangeCardButtonClick }
 		/>
 	) : (
 		<div>Loading Fastlane...</div>
