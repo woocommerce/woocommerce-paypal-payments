@@ -75,6 +75,7 @@ return array(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.url' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'axo.card_icons' ),
 			$container->get( 'axo.card_icons.axo' ),

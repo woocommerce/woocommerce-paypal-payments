@@ -26,12 +26,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class AXOGateway.
  */
 class AxoGateway extends WC_Payment_Gateway {
-	use OrderMetaTrait, GatewaySettingsRendererTrait;
+	use OrderMetaTrait, GatewaySettingsRendererTrait, ProcessPaymentTrait;
 
 	const ID = 'ppcp-axo-gateway';
 
@@ -120,11 +122,19 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $logger;
 
 	/**
+	 * The Session Handler.
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
 	 * AXOGateway constructor.
 	 *
 	 * @param SettingsRenderer          $settings_renderer The settings renderer.
 	 * @param ContainerInterface        $ppcp_settings The settings.
 	 * @param string                    $wcgateway_module_url The WcGateway module URL.
+	 * @param SessionHandler            $session_handler The session handler.
 	 * @param OrderProcessor            $order_processor The Order processor.
 	 * @param array                     $card_icons The card icons.
 	 * @param array                     $card_icons_axo The card icons.
@@ -139,6 +149,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
 		string $wcgateway_module_url,
+		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
 		array $card_icons,
 		array $card_icons_axo,
@@ -154,6 +165,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->settings_renderer    = $settings_renderer;
 		$this->ppcp_settings        = $ppcp_settings;
 		$this->wcgateway_module_url = $wcgateway_module_url;
+		$this->session_handler      = $session_handler;
 		$this->order_processor      = $order_processor;
 		$this->card_icons           = $card_icons;
 		$this->card_icons_axo       = $card_icons_axo;
@@ -245,6 +257,7 @@ class AxoGateway extends WC_Payment_Gateway {
 				$payment_source_properties
 			);
 
+			// TODO - this request fails in block checkout. Need to investigate.
 			$order = $this->order_endpoint->create(
 				array( $purchase_unit ),
 				$shipping_preference,
