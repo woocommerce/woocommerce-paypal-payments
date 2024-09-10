@@ -3,9 +3,7 @@ import { injectShippingChangeButton } from '../helpers/shippingChangeButtonManag
 import { injectCardChangeButton } from '../helpers/cardChangeButtonManager';
 import { setIsGuest } from '../stores/axoStore';
 
-// Handle the logic for email submission and customer data retrieval
-export const onEmailSubmit = async (
-	email,
+export const createEmailLookupHandler = (
 	fastlaneSdk,
 	setShippingAddress,
 	setCard,
@@ -15,51 +13,74 @@ export const onEmailSubmit = async (
 	setWooShippingAddress,
 	setWooBillingAddress,
 	onChangeShippingAddressClick,
-	onChangeButtonClick
+	onChangeCardButtonClick
 ) => {
-	try {
-		console.log( 'Email value being looked up:', email );
-		const lookup =
-			await fastlaneSdk.identity.lookupCustomerByEmail( email );
+	return async ( email ) => {
+		try {
+			console.log( 'Email value being looked up:', email );
 
-		console.log( 'Lookup response:', lookup );
+			if ( ! fastlaneSdk ) {
+				throw new Error( 'FastlaneSDK is not initialized' );
+			}
 
-		if ( ! lookup.customerContextId ) {
-			console.warn( 'No customerContextId found in the response' );
-			return;
-		}
+			if ( ! fastlaneSdk.identity ) {
+				throw new Error(
+					'FastlaneSDK identity object is not available'
+				);
+			}
 
-		const { authenticationState, profileData } =
-			await fastlaneSdk.identity.triggerAuthenticationFlow(
-				lookup.customerContextId
+			const lookup =
+				await fastlaneSdk.identity.lookupCustomerByEmail( email );
+
+			console.log( 'Lookup response:', lookup );
+
+			if ( ! lookup || ! lookup.customerContextId ) {
+				console.warn( 'No customerContextId found in the response' );
+				return;
+			}
+
+			const authResponse =
+				await fastlaneSdk.identity.triggerAuthenticationFlow(
+					lookup.customerContextId
+				);
+
+			if ( ! authResponse || ! authResponse.authenticationState ) {
+				throw new Error( 'Invalid authentication response' );
+			}
+
+			const { authenticationState, profileData } = authResponse;
+
+			if ( authenticationState === 'succeeded' ) {
+				snapshotFields( wooShippingAddress, wooBillingAddress );
+
+				setIsGuest( false );
+
+				if ( profileData && profileData.shippingAddress ) {
+					setShippingAddress( profileData.shippingAddress );
+				}
+				if ( profileData && profileData.card ) {
+					setCard( profileData.card );
+				}
+
+				console.log( 'Profile Data:', profileData );
+
+				populateWooFields(
+					profileData,
+					setWooShippingAddress,
+					setWooBillingAddress
+				);
+
+				injectShippingChangeButton( onChangeShippingAddressClick );
+				injectCardChangeButton( onChangeCardButtonClick );
+			} else {
+				console.warn( 'Authentication failed or did not succeed' );
+			}
+		} catch ( error ) {
+			console.error(
+				'Error during email lookup or authentication:',
+				error
 			);
-
-		console.log( 'authenticationState', authenticationState );
-
-		if ( authenticationState === 'succeeded' ) {
-			// Capture the existing WooCommerce data before updating it
-			snapshotFields( wooShippingAddress, wooBillingAddress );
-
-			console.log( 'Setting isGuest to false' );
-			setIsGuest( false );
-
-			setShippingAddress( profileData.shippingAddress );
-			setCard( profileData.card );
-
-			console.log( 'Profile Data:', profileData );
-
-			populateWooFields(
-				profileData,
-				setWooShippingAddress,
-				setWooBillingAddress
-			);
-
-			injectShippingChangeButton( onChangeShippingAddressClick );
-			injectCardChangeButton( onChangeButtonClick );
-		} else {
-			console.warn( 'Authentication failed or did not succeed' );
+			throw error;
 		}
-	} catch ( error ) {
-		console.error( 'Error during email lookup or authentication:', error );
-	}
+	};
 };

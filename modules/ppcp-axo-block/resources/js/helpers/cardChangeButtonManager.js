@@ -2,14 +2,17 @@ import { createElement, useEffect, createRoot } from '@wordpress/element';
 
 const CardChangeButton = ( { onChangeButtonClick } ) =>
 	createElement(
-		'button',
+		'a',
 		{
-			className: 'wc-block-checkout-axo-block-card__edit',
-			'aria-label': 'Change billing details',
-			type: 'button',
-			onClick: onChangeButtonClick,
+			className:
+				'wc-block-checkout-axo-block-card__edit wc-block-axo-change-link',
+			role: 'button',
+			onClick: ( event ) => {
+				event.preventDefault();
+				onChangeButtonClick();
+			},
 		},
-		'Change'
+		'Choose a different card'
 	);
 
 const CardChangeButtonManager = ( { onChangeButtonClick } ) => {
@@ -56,7 +59,6 @@ export const injectCardChangeButton = ( onChangeButtonClick ) => {
 };
 
 export const removeCardChangeButton = () => {
-    console.log('removeCardChangeButton running');
 	const button = document.querySelector(
 		'.wc-block-checkout-axo-block-card__edit'
 	);

@@ -2,17 +2,17 @@ import { createElement, useEffect, createRoot } from '@wordpress/element';
 
 const ShippingChangeButton = ( { onChangeShippingAddressClick } ) =>
 	createElement(
-		'button',
+		'a',
 		{
-			className: 'wc-block-checkout-axo-block-card__edit',
-			'aria-label': 'Change shipping details',
-			type: 'button',
+			className:
+				'wc-block-checkout-axo-block-card__edit wc-block-axo-change-link',
+			role: 'button',
 			onClick: ( event ) => {
 				event.preventDefault();
 				onChangeShippingAddressClick();
 			},
 		},
-		'Change'
+		'Choose a different shipping address'
 	);
 
 const ShippingChangeButtonManager = ( { onChangeShippingAddressClick } ) => {

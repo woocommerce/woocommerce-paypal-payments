@@ -26,8 +26,6 @@ export const FastlaneWatermark = ( {
 
 				watermarkRef.current = watermark;
 				watermark.render( `#${ name }` );
-
-				console.log( 'Watermark rendered successfully' );
 			} catch ( error ) {
 				console.error( 'Error rendering watermark:', error );
 			}

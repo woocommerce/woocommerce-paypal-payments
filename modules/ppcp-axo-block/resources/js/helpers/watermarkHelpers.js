@@ -8,26 +8,29 @@ let watermarkReference = {
 	root: null,
 };
 
-const WatermarkManager = ( { fastlaneSdk } ) => {
+const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
 	const isGuest = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsGuest()
 	);
 	const isAxoActive = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsAxoActive()
 	);
+	const isAxoScriptLoaded = useSelect( ( select ) =>
+		select( STORE_NAME ).isAxoScriptLoaded()
+	);
 
 	useEffect( () => {
-		const textInputContainer = document.querySelector(
-			'.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input'
-		);
-
-		if ( textInputContainer ) {
-			const emailInput = textInputContainer.querySelector(
-				'input[type="email"]'
+		const createWatermark = () => {
+			const textInputContainer = document.querySelector(
+				'.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input'
 			);
 
-			if ( emailInput ) {
-				if ( ! watermarkReference.container ) {
+			if ( textInputContainer && ! watermarkReference.container ) {
+				const emailInput = textInputContainer.querySelector(
+					'input[type="email"]'
+				);
+
+				if ( emailInput ) {
 					watermarkReference.container =
 						document.createElement( 'div' );
 					watermarkReference.container.setAttribute(
@@ -35,7 +38,6 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 						'wc-block-checkout-axo-block-watermark-container'
 					);
 
-					// Insert the watermark container after the email input
 					emailInput.parentNode.insertBefore(
 						watermarkReference.container,
 						emailInput.nextSibling
@@ -45,8 +47,17 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 						watermarkReference.container
 					);
 				}
+			}
 
-				if ( watermarkReference.root && isAxoActive ) {
+			if ( watermarkReference.root ) {
+				if ( ! isAxoActive && ! isAxoScriptLoaded ) {
+					watermarkReference.root.render(
+						createElement( 'span', {
+							className: 'wc-block-components-spinner',
+							'aria-hidden': 'true',
+						} )
+					);
+				} else if ( isAxoActive ) {
 					watermarkReference.root.render(
 						createElement( FastlaneWatermark, {
 							fastlaneSdk,
@@ -54,16 +65,41 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 							includeAdditionalInfo: isGuest,
 						} )
 					);
-				} else if ( ! isAxoActive && watermarkReference.root ) {
+				} else {
 					watermarkReference.root.render( null );
 				}
-			} else {
-				console.warn( 'Email input not found' );
 			}
+		};
+
+		const removeWatermark = () => {
+			if ( watermarkReference.root ) {
+				watermarkReference.root.unmount();
+			}
+			if ( watermarkReference.container ) {
+				if ( watermarkReference.container.parentNode ) {
+					watermarkReference.container.parentNode.removeChild(
+						watermarkReference.container
+					);
+				} else {
+					const detachedContainer = document.querySelector(
+						'.wc-block-checkout-axo-block-watermark-container'
+					);
+					if ( detachedContainer ) {
+						detachedContainer.remove();
+					}
+				}
+			}
+			watermarkReference = { container: null, root: null };
+		};
+
+		if ( isAxoActive || ( ! isAxoActive && ! isAxoScriptLoaded ) ) {
+			createWatermark();
 		} else {
-			console.warn( 'Text input container not found' );
+			removeWatermark();
 		}
-	}, [ fastlaneSdk, isGuest, isAxoActive ] );
+
+		return removeWatermark;
+	}, [ fastlaneSdk, isGuest, isAxoActive, isLoaded, isAxoScriptLoaded ] );
 
 	return null;
 };
@@ -71,22 +107,34 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 export const setupWatermark = ( fastlaneSdk ) => {
 	const container = document.createElement( 'div' );
 	document.body.appendChild( container );
-	createRoot( container ).render(
-		createElement( WatermarkManager, { fastlaneSdk } )
-	);
+	const root = createRoot( container );
+	root.render( createElement( WatermarkManager, { fastlaneSdk } ) );
+
+	return () => {
+		root.unmount();
+		if ( container && container.parentNode ) {
+			container.parentNode.removeChild( container );
+		}
+	};
 };
 
 export const removeWatermark = () => {
 	if ( watermarkReference.root ) {
 		watermarkReference.root.unmount();
 	}
-	if (
-		watermarkReference.container &&
-		watermarkReference.container.parentNode
-	) {
-		watermarkReference.container.parentNode.removeChild(
-			watermarkReference.container
-		);
+	if ( watermarkReference.container ) {
+		if ( watermarkReference.container.parentNode ) {
+			watermarkReference.container.parentNode.removeChild(
+				watermarkReference.container
+			);
+		} else {
+			const detachedContainer = document.querySelector(
+				'.wc-block-checkout-axo-block-watermark-container'
+			);
+			if ( detachedContainer ) {
+				detachedContainer.remove();
+			}
+		}
 	}
 	watermarkReference = { container: null, root: null };
 };

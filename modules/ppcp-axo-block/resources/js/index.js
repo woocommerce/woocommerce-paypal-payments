@@ -27,13 +27,12 @@ import { initializeClassToggles } from './helpers/classnamesManager';
 import { STORE_NAME } from './stores/axoStore';
 
 // Event handlers
-import { onEmailSubmit } from './events/emailLookupManager';
+import { createEmailLookupHandler } from './events/emailLookupManager';
 import {
-	setupEmailEvent,
-	removeEmailEvent,
-	isEmailEventSetup,
-} from './helpers/emailHelpers';
-import { setupEmailSubmitButton } from './components/EmailSubmitButton';
+	setupEmailFunctionality,
+	removeEmailFunctionality,
+	isEmailFunctionalitySetup,
+} from './helpers/emailSubmissionManager';
 
 const ppcpConfig = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
 
@@ -49,12 +48,8 @@ const Axo = () => {
 	const [ card, setCard ] = useState( null );
 	const fastlaneSdk = useAxoBlockManager( axoConfig, ppcpConfig );
 
-	const isAxoActive = useSelect( ( select ) =>
-		select( STORE_NAME ).getIsAxoActive()
-	);
-	const { setIsAxoActive, setIsGuest } = useDispatch( STORE_NAME );
-
-	const handleEmailInputRef = useRef( null );
+	const { setIsAxoActive, setIsGuest, setIsAxoScriptLoaded } =
+		useDispatch( STORE_NAME );
 
 	// Access WooCommerce customer data
 	const {
@@ -63,10 +58,6 @@ const Axo = () => {
 		setShippingAddress: updateWooShippingAddress,
 		setBillingAddress: updateWooBillingAddress,
 	} = useCustomerData();
-
-	useEffect( () => {
-		console.log( 'isAxoActive updated:', isAxoActive );
-	}, [ isAxoActive ] );
 
 	useEffect( () => {
 		initializeClassToggles();
@@ -88,10 +79,8 @@ const Axo = () => {
 	} = useCustomerData();
 
 	useEffect( () => {
-		console.log( 'ppcpConfig', ppcpConfig );
 		if ( ! paypalLoaded ) {
 			loadPaypalScript( ppcpConfig, () => {
-				console.log( 'PayPal script loaded' );
 				setPaypalLoaded( true );
 			} );
 		}
@@ -105,76 +94,46 @@ const Axo = () => {
 
 	const onChangeCardButtonClick = useCardChange( fastlaneSdk, setCard );
 
-	const handleEmailInput = useCallback(
-		async ( email ) => {
-			if ( fastlaneSdk ) {
-				await onEmailSubmit(
-					email,
-					fastlaneSdk,
-					setShippingAddress,
-					setCard,
-					snapshotFields,
-					wooShippingAddress,
-					wooBillingAddress,
-					setWooShippingAddress,
-					setWooBillingAddress,
-					onChangeShippingAddressClick,
-					onChangeCardButtonClick
-				);
-			} else {
-				console.warn( 'FastLane SDK is not available' );
-			}
-		},
-		[
-			fastlaneSdk,
-			setShippingAddress,
-			setCard,
-			wooShippingAddress,
-			wooBillingAddress,
-			setWooShippingAddress,
-			setWooBillingAddress,
-			onChangeShippingAddressClick,
-			onChangeCardButtonClick,
-		]
-	);
-
 	useEffect( () => {
-		handleEmailInputRef.current = handleEmailInput;
-	}, [ handleEmailInput ] );
-
-	useEffect( () => {
+		setupWatermark( fastlaneSdk );
 		if ( paypalLoaded && fastlaneSdk ) {
-			console.log( 'Enabling Axo' );
+			setIsAxoScriptLoaded( true );
 			setIsAxoActive( true );
-			setupWatermark( fastlaneSdk );
-			setupEmailSubmitButton( async ( email ) => {
-				await onEmailSubmit( email );
-			} );
-			setupEmailEvent( handleEmailInputRef.current );
+			const emailLookupHandler = createEmailLookupHandler(
+				fastlaneSdk,
+				setShippingAddress,
+				setCard,
+				snapshotFields,
+				wooShippingAddress,
+				wooBillingAddress,
+				setWooShippingAddress,
+				setWooBillingAddress,
+				onChangeShippingAddressClick,
+				onChangeCardButtonClick
+			);
+			setupEmailFunctionality( emailLookupHandler );
 		}
-	}, [ paypalLoaded, fastlaneSdk, setIsAxoActive ] );
+	}, [
+		paypalLoaded,
+		fastlaneSdk,
+		setIsAxoActive,
+		setIsAxoScriptLoaded,
+		wooShippingAddress,
+		wooBillingAddress,
+		setWooShippingAddress,
+		setWooBillingAddress,
+		onChangeShippingAddressClick,
+		onChangeCardButtonClick,
+	] );
 
 	useEffect( () => {
 		return () => {
-			console.log( 'Disabling Axo' );
-			console.log( 'Axo component unmounting' );
 			setIsAxoActive( false );
 			setIsGuest( true );
-
-			console.log( 'isAxoActive', isAxoActive );
-
-			console.log( 'isEmailEventSetup', isEmailEventSetup() );
 
 			removeShippingChangeButton();
 			removeCardChangeButton();
 			removeWatermark();
-
-			if ( isEmailEventSetup() ) {
-				console.log(
-					'Axo became inactive, removing email event listener'
-				);
-				removeEmailEvent( handleEmailInputRef.current );
-			}
 		};
 	}, [
 		setIsAxoActive,
@@ -185,23 +144,15 @@ const Axo = () => {
 
 	useEffect( () => {
 		return () => {
-			console.log( 'Disabling Axo' );
 			setIsAxoActive( false );
 			setIsGuest( true );
-
-			console.log( 'isAxoActive', isAxoActive );
-
-			console.log( 'isEmailEventSetup', isEmailEventSetup() );
 
 			removeShippingChangeButton();
 			removeCardChangeButton();
 			removeWatermark();
 
-			if ( isEmailEventSetup() ) {
-				console.log(
-					'Axo became inactive, removing email event listener'
-				);
-				removeEmailEvent( handleEmailInputRef.current );
+			if ( isEmailFunctionalitySetup() ) {
+				removeEmailFunctionality();
 			}
 		};
 	}, [] );
@@ -214,7 +165,6 @@ const Axo = () => {
 	);
 
 	const handleChange = ( selectedCard ) => {
-		console.log( 'Selected card changed', selectedCard );
 		setCard( selectedCard );
 	};
 

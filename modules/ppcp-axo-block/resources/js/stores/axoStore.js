@@ -8,6 +8,7 @@ export const STORE_NAME = 'woocommerce-paypal-payments/axo-block';
 const DEFAULT_STATE = {
 	isGuest: true,
 	isAxoActive: false,
+	isAxoScriptLoaded: false,
 };
 
 // Actions
@@ -20,6 +21,10 @@ const actions = {
 		type: 'SET_IS_AXO_ACTIVE',
 		payload: isAxoActive,
 	} ),
+	setIsAxoScriptLoaded: ( isAxoScriptLoaded ) => ( {
+		type: 'SET_IS_AXO_SCRIPT_LOADED',
+		payload: isAxoScriptLoaded,
+	} ),
 };
 
 // Reducer
@@ -29,6 +34,8 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 			return { ...state, isGuest: action.payload };
 		case 'SET_IS_AXO_ACTIVE':
 			return { ...state, isAxoActive: action.payload };
+		case 'SET_IS_AXO_SCRIPT_LOADED':
+			return { ...state, isAxoScriptLoaded: action.payload };
 		default:
 			return state;
 	}
@@ -38,6 +45,7 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 const selectors = {
 	getIsGuest: ( state ) => state.isGuest,
 	getIsAxoActive: ( state ) => state.isAxoActive,
+	isAxoScriptLoaded: ( state ) => state.isAxoScriptLoaded,
 };
 
 // Create and register the store

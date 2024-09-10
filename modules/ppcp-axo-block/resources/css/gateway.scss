@@ -78,9 +78,9 @@
 }
 
 .wp-block-woocommerce-checkout-express-payment-block {
-	transition: opacity .2s ease-in,
-	scale .2s ease-in,
-	display .4s ease-in;
+	transition: opacity .3s ease-in,
+	scale .3s ease-in,
+	display .3s ease-in;
 	/* key to transitioning out */
 	transition-behavior: allow-discrete;
 
@@ -99,7 +99,7 @@
 		display: none !important;
 
 		/* faster leaving the stage then entering */
-		transition-duration: .2s;
+		transition-duration: .5s;
 		transition-timing-function: var(--ease-out-5);
 	}
 }
@@ -153,20 +153,72 @@
 		margin-top: 4px;
 	}
 
-	/* Ensure the button doesn't stretch */
 	.wc-block-axo-email-submit-button-container .wc-block-components-button {
 		white-space: nowrap;
 	}
+}
 
-	/* Responsive adjustments */
-	@media (max-width: 768px) {
-		.wc-block-components-text-input {
-			grid-template-areas:
-            "input"
-            "button"
-            "watermark"
-            "error";
-			grid-template-columns: 1fr;
-		}
+a.wc-block-axo-change-link {
+	& {
+		color: var(--wp--preset--color--secondary);
+		text-decoration: underline;
+	}
+
+	&:hover {
+		text-decoration: none;
+	}
+
+	&:focus {
+		text-decoration: underline dashed;
+	}
+
+	&:active {
+		color: var(--wp--preset--color--secondary);
+		text-decoration: none;
 	}
 }
+
+.wc-block-checkout-axo-block-watermark-container {
+	height: 25px;
+}
+
+.wp-block-woocommerce-checkout-contact-information-block:not( .wc-block-axo-is-loaded ) .wc-block-checkout-axo-block-watermark-container {
+	display: flex;
+	justify-content: left;
+	margin-left: 10px;
+	align-items: center;
+	position: relative;
+
+	.wc-block-components-spinner {
+		box-sizing: content-box;
+		color: inherit;
+		font-size: 1em;
+		height: auto;
+		width: auto;
+		position: relative;
+		margin-top: 12px;
+	}
+}
+
+.wp-block-woocommerce-checkout-contact-information-block.wc-block-axo-is-loaded {
+	.wc-block-checkout-axo-block-watermark-container .wc-block-components-spinner {
+		display: none;
+		visibility: hidden;
+		opacity: 0;
+	}
+}
+
+.wc-block-axo-email-submit-button-container,
+.wc-block-checkout-axo-block-watermark-container #fastlane-watermark-email,
+a.wc-block-axo-change-link{
+	transition: opacity 0.5s ease-in-out;
+
+	/* stage enter */
+	/* key to transitioning in */
+	@starting-style {
+		opacity: 0;
+		scale: 1.1;
+	}
+}
+
+
