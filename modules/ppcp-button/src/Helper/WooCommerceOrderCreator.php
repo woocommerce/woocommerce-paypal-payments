@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use Exception;
 use RuntimeException;
 use WC_Cart;
+use WC_Customer;
 use WC_Data_Exception;
 use WC_Order;
 use WC_Order_Item_Product;
@@ -190,6 +191,7 @@ class WooCommerceOrderCreator {
 	 * @param WC_Cart       $wc_cart The Cart.
 	 * @return void
 	 * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
+	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
 	protected function configure_shipping( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, WC_Cart $wc_cart ): void {
 		$shipping_address = null;
@@ -200,7 +202,16 @@ class WooCommerceOrderCreator {
 			$address    = $payer->address();
 			$payer_name = $payer->name();
 
+			$wc_email    = null;
+			$wc_customer = WC()->customer;
+			if ( $wc_customer instanceof WC_Customer ) {
+				$wc_email = $wc_customer->get_email();
+			}
+
+			$email = $wc_email ?: $payer->email_address();
+
 			$billing_address = array(
+				'email'      => $email ? $email : '',
 				'first_name' => $payer_name ? $payer_name->given_name() : '',
 				'last_name'  => $payer_name ? $payer_name->surname() : '',
 				'address_1'  => $address ? $address->address_line_1() : '',
