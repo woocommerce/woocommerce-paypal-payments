@@ -239,20 +239,20 @@ class AxoGateway extends WC_Payment_Gateway {
 			);
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$fastlane_member = wc_clean( wp_unslash( $_POST['fastlane_member'] ?? '' ) );
-		if ( $fastlane_member ) {
-			$payment_method_title = __( 'Debit & Credit Cards (via Fastlane by PayPal)', 'woocommerce-paypal-payments' );
-			$wc_order->set_payment_method_title( $payment_method_title );
-			$wc_order->save();
-		}
+		try {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$fastlane_member = wc_clean( wp_unslash( $_POST['fastlane_member'] ?? '' ) );
+			if ( $fastlane_member ) {
+				$payment_method_title = __( 'Debit & Credit Cards (via Fastlane by PayPal)', 'woocommerce-paypal-payments' );
+				$wc_order->set_payment_method_title( $payment_method_title );
+				$wc_order->save();
+			}
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$nonce = wc_clean( wp_unslash( $_POST['axo_nonce'] ?? '' ) );
 
-		try {
 			$shipping_preference = $this->shipping_preference_factory->from_state(
 				$purchase_unit,
 				'checkout'
