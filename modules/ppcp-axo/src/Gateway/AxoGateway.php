@@ -257,25 +257,8 @@ class AxoGateway extends WC_Payment_Gateway {
 			$order = $this->create_paypal_order( $wc_order, $token );
 
 			$this->order_processor->process_captured_and_authorized( $wc_order, $order );
-
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
-				$error = $exception->get_details( $error );
-			}
-
-			$this->logger->error( $error );
-			wc_add_notice( $error, 'error' );
-
-			$wc_order->update_status(
-				'failed',
-				$error
-			);
-
-			return array(
-				'result'   => 'failure',
-				'redirect' => wc_get_checkout_url(),
-			);
+		} catch ( Exception $exception ) {
+			return $this->handle_payment_failure( $wc_order, $exception );
 		}
 
 		WC()->cart->empty_cart();
