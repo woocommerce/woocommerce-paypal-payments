@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Gateway;
 
 use Psr\Log\LoggerInterface;
+use Exception;
 use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -27,6 +28,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
@@ -229,6 +231,13 @@ class AxoGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
+
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			return $this->handle_payment_failure(
+				null,
+				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
+			);
+		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$fastlane_member = wc_clean( wp_unslash( $_POST['fastlane_member'] ?? '' ) );
