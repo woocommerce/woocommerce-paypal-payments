@@ -83,7 +83,20 @@ const Axo = ( props ) => {
 
 	const handlePaymentSetup = useCallback( async () => {
 		const isRyanFlow = !! card?.id;
-		const cardToken = card?.id;
+		let cardToken = card?.id;
+
+		if ( ! cardToken && paymentComponent ) {
+			cardToken = await paymentComponent
+				.getPaymentToken( tokenizedCustomerData )
+				.then( ( response ) => response.id );
+		}
+
+		if ( ! cardToken ) {
+			return {
+				type: emitResponse.responseTypes.ERROR,
+				message: 'Could not process the payment (tokenization error)',
+			};
+		}
 
 		return {
 			type: emitResponse.responseTypes.SUCCESS,
@@ -98,6 +111,8 @@ const Axo = ( props ) => {
 		emitResponse.responseTypes.ERROR,
 		emitResponse.responseTypes.SUCCESS,
 		card,
+		paymentComponent,
+		tokenizedCustomerData,
 	] );
 
 	const { setIsAxoActive, setIsGuest, setIsAxoScriptLoaded } =
