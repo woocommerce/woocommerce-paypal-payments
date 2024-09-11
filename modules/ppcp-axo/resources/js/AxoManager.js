@@ -803,8 +803,8 @@ class AxoManager {
 
 		this.emailInput.value = this.stripSpaces( this.emailInput.value );
 
-		this.$( this.el.paymentContainer.selector + '-detail' ).html( '' );
-		this.$( this.el.paymentContainer.selector + '-form' ).html( '' );
+		this.$( this.el.paymentContainer.selector + '-details' ).html( '' );
+		this.removeFastlaneComponent();
 
 		this.setStatus( 'validEmail', false );
 		this.setStatus( 'hasProfile', false );
@@ -1071,6 +1071,20 @@ class AxoManager {
 			await this.fastlane.FastlaneCardComponent( config );
 
 		return this.cardComponent.render( elem );
+	}
+
+	/**
+	 * Reverts the changes made by `initializeFastlaneComponent()`.
+	 *
+	 * Calling this method will lose any input that the user made inside the
+	 * Fastlane Card Component.
+	 */
+	removeFastlaneComponent() {
+		document.querySelector(
+			this.el.paymentContainer.selector + '-form'
+		).innerHTML = '';
+
+		this.cardComponent = null;
 	}
 
 	/**
