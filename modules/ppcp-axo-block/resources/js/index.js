@@ -76,6 +76,32 @@ const Axo = ( props ) => {
 		card,
 	] );
 
+	useEffect( () => {
+		const unsubscribe = onPaymentSetup( async () => {
+			// Validate payment options and emit response.
+
+			// Note: This response supports the Ryan flow (payment via saved card-token)
+			return {
+				type: emitResponse.responseTypes.SUCCESS,
+				meta: {
+					paymentMethodData: {
+						axo_nonce: card?.id,
+					},
+				},
+			};
+		} );
+
+		// Unsubscribes when this component is unmounted.
+		return () => {
+			unsubscribe();
+		};
+	}, [
+		emitResponse.responseTypes.ERROR,
+		emitResponse.responseTypes.SUCCESS,
+		onPaymentSetup,
+		card,
+	] );
+
 	const { setIsAxoActive, setIsGuest, setIsAxoScriptLoaded } =
 		useDispatch( STORE_NAME );
 
