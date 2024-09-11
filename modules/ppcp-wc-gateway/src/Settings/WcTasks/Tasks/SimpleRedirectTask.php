@@ -45,20 +45,30 @@ class SimpleRedirectTask extends Task {
 	protected string $redirect_url;
 
 	/**
+	 * Whether the task is enabled.
+	 *
+	 * @var bool
+	 */
+	protected bool $is_enabled;
+
+
+	/**
 	 * SimpleRedirectTask constructor.
 	 *
 	 * @param string $id The task ID.
 	 * @param string $title The task title.
 	 * @param string $description The task description.
 	 * @param string $redirect_url The redirection URL.
+	 * @param bool   $is_enabled Whether the task is enabled.
 	 */
-	public function __construct( string $id, string $title, string $description, string $redirect_url ) {
+	public function __construct( string $id, string $title, string $description, string $redirect_url, bool $is_enabled ) {
 		parent::__construct();
 
 		$this->id           = $id;
 		$this->title        = $title;
 		$this->description  = $description;
 		$this->redirect_url = $redirect_url;
+		$this->is_enabled = $is_enabled;
 	}
 
 	/**
@@ -104,6 +114,15 @@ class SimpleRedirectTask extends Task {
 	 */
 	public function get_action_url(): string {
 		return $this->redirect_url;
+	}
+
+	/**
+	 * Whether the task is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
+		return $this->is_enabled;
 	}
 
 	/**

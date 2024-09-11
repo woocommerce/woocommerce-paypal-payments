@@ -20,7 +20,8 @@ interface SimpleRedirectTaskFactoryInterface {
 	 * @param string $title The task title.
 	 * @param string $description The task description.
 	 * @param string $redirect_url The redirection URL.
+	 * @param bool   $is_enabled Whether the task is enabled.
 	 * @return SimpleRedirectTask The task.
 	 */
-	public function create_task( string $id, string $title, string $description, string $redirect_url ): SimpleRedirectTask;
+	public function create_task( string $id, string $title, string $description, string $redirect_url, bool $is_enabled ): SimpleRedirectTask;
 }
