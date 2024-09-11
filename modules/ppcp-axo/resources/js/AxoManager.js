@@ -148,6 +148,15 @@ class AxoManager {
 		return !! this.data.card;
 	}
 
+	/**
+	 * CSS selector to target the Fastlane Card Component wrapper.
+	 *
+	 * @return {string} CSS selector.
+	 */
+	get cardFormSelector() {
+		return this.el.paymentContainer.selector + '-form';
+	}
+
 	registerEventHandlers() {
 		this.$( document ).on(
 			'change',
@@ -1064,7 +1073,7 @@ class AxoManager {
 			return Promise.resolve();
 		}
 
-		const elem = this.el.paymentContainer.selector + '-form';
+		const elem = this.cardFormSelector;
 		const config = this.cardComponentData();
 
 		this.cardComponent =
@@ -1080,9 +1089,7 @@ class AxoManager {
 	 * Fastlane Card Component.
 	 */
 	removeFastlaneComponent() {
-		document.querySelector(
-			this.el.paymentContainer.selector + '-form'
-		).innerHTML = '';
+		document.querySelector( this.cardFormSelector ).innerHTML = '';
 
 		this.cardComponent = null;
 	}
