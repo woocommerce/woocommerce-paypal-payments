@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
@@ -55,6 +56,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 
 /**
  * Class WcGatewayModule
@@ -86,6 +88,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_order_functionality( $c );
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
+		$this->register_wc_tasks( $c );
 
 		add_action(
 			'woocommerce_sections_checkout',
@@ -829,6 +832,32 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			},
 			10,
 			2
+		);
+	}
+
+	/**
+	 * Registers the tasks inside "Things to do next" WC section.
+	 *
+	 * @param ContainerInterface $container The container.
+	 * @return void
+	 */
+	protected function register_wc_tasks( ContainerInterface $container ): void {
+		$simple_redirect_tasks = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks' );
+		$task_registrar        = $container->get( 'wcgateway.settings.wc-tasks.task-registrar' );
+		assert( $task_registrar instanceof TaskRegistrarInterface );
+
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
+
+		add_action(
+			'init',
+			static function () use ( $simple_redirect_tasks, $task_registrar, $logger ): void {
+				try {
+					$task_registrar->register( $simple_redirect_tasks );
+				} catch ( Exception $exception ) {
+					$logger->error( "Failed to create a task in the 'Things to do next' section of WC. " . $exception->getMessage() );
+				}
+			},
 		);
 	}
 }
