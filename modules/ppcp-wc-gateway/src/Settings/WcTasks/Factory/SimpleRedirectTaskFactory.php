@@ -17,7 +17,7 @@ class SimpleRedirectTaskFactory implements SimpleRedirectTaskFactoryInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function create_task( string $id, string $title, string $description, string $redirect_url, bool $is_enabled ): SimpleRedirectTask {
-		return new SimpleRedirectTask( $id, $title, $description, $redirect_url, $is_enabled );
+	public function create_task( string $id, string $title, string $description, string $redirect_url ): SimpleRedirectTask {
+		return new SimpleRedirectTask( $id, $title, $description, $redirect_url );
 	}
 }

@@ -1790,15 +1790,18 @@ return array(
 		$section_id       = PayPalGateway::ID;
 		$pay_later_tab_id = Settings::PAY_LATER_TAB_ID;
 
-		return array(
-			array(
+		$list_of_config = array();
+
+		if ( $container->get('paylater-configurator.is-available') ) {
+			$list_of_config[] = array(
 				'id'           => 'pay-later-messaging-task',
 				'title'        => __( 'Configure PayPal Pay Later messaging', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'Decide where you want dynamic Pay Later messaging to show up and how you want it to look on your site.', 'woocommerce-paypal-payments' ),
 				'redirect_url' => admin_url("admin.php?page=wc-settings&tab=checkout&section={$section_id}&ppcp-tab={$pay_later_tab_id}"),
-				'is_enabled'   => $container->get('paylater-configurator.is-available'),
-			),
-		);
+			);
+		}
+
+		return $list_of_config;
 	},
 
 	/**
@@ -1818,8 +1821,7 @@ return array(
 			$title = $config['title'] ?? '';
 			$description = $config['description'] ?? '';
 			$redirect_url = $config['redirect_url'] ?? '';
-			$is_enabled = $config['is_enabled'] ?? false;
-			$simple_redirect_tasks[] = $simple_redirect_task_factory->create_task( $id, $title, $description, $redirect_url, $is_enabled );
+			$simple_redirect_tasks[] = $simple_redirect_task_factory->create_task( $id, $title, $description, $redirect_url );
 		}
 
 		return $simple_redirect_tasks;
