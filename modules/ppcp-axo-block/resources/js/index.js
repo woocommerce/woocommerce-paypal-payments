@@ -7,7 +7,10 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 
 // Hooks
 import useFastlaneSdk from './hooks/useFastlaneSdk';
-import { useCustomerData } from './hooks/useCustomerData';
+import {
+	useCustomerData,
+	useTokenizeCustomerData,
+} from './hooks/useCustomerData';
 import { useShippingAddressChange } from './hooks/useShippingAddressChange';
 import { useCardChange } from './hooks/useCardChange';
 
@@ -46,6 +49,8 @@ const Axo = ( props ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
+	const [ paymentComponent, setPaymentComponent ] = useState( null );
+	const tokenizedCustomerData = useTokenizeCustomerData();
 	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
 
 	console.log( 'Axo component rendering' );
@@ -206,8 +211,8 @@ const Axo = ( props ) => {
 		};
 	}, [] );
 
-	const handlePaymentLoad = useCallback( ( paymentComponent ) => {
-		console.log( 'Payment component loaded', paymentComponent );
+	const handlePaymentLoad = useCallback( ( component ) => {
+		setPaymentComponent( component );
 	}, [] );
 
 	const handleChange = ( selectedCard ) => {
