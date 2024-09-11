@@ -243,4 +243,20 @@ trait ContextTrait {
 		$screen = get_current_screen();
 		return $screen && $screen->is_block_editor();
 	}
+
+	/**
+	 * Checks if is WooCommerce Settings Payments tab screen (/wp-admin/admin.php?page=wc-settings&tab=checkout).
+	 *
+	 * @return bool
+	 */
+	protected function is_wc_settings_payments_tab(): bool {
+		if ( ! is_admin() || isset( $_GET['section'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return false;
+		}
+
+		$page = wc_clean( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$tab  = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+
+		return $page === 'wc-settings' && $tab === 'checkout';
+	}
 }

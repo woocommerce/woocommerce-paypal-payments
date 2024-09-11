@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -32,6 +33,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
+	use ContextTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -73,7 +75,9 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					// $methods[] = $gateway; - Temporarily remove Fastlane from the payment gateway list in admin area.
+					if ( ! $this->is_wc_settings_payments_tab() ) {
+						$methods[] = $gateway;
+					}
 					return $methods;
 				}
 
@@ -92,10 +96,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				}
 
 				if ( $this->is_excluded_endpoint() ) {
-					return $methods;
-				}
-
-				if ( ! $this->is_compatible_shipping_config() ) {
 					return $methods;
 				}
 
@@ -169,7 +169,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					|| ! $c->get( 'axo.eligible' )
 					|| 'continuation' === $c->get( 'button.context' )
 					|| $subscription_helper->cart_contains_subscription()
-					|| ! $this->is_compatible_shipping_config() ) {
+				) {
 					return;
 				}
 
@@ -353,7 +353,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
-			&& $this->is_compatible_shipping_config()
 			&& $is_axo_enabled
 			&& $is_dcc_enabled
 			&& ! $this->is_excluded_endpoint();
@@ -408,15 +407,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
 		return is_wc_endpoint_url( 'order-pay' );
-	}
-
-	/**
-	 * Condition to evaluate if the shipping configuration is compatible.
-	 *
-	 * @return bool
-	 */
-	private function is_compatible_shipping_config(): bool {
-		return ! wc_shipping_enabled() || ( wc_shipping_enabled() && ! wc_ship_to_billing_address_only() );
 	}
 
 	/**

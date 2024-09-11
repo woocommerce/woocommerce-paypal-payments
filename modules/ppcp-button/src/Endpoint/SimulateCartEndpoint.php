@@ -85,7 +85,8 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		$this->add_products( $products );
 
 		$this->cart->calculate_totals();
-		$total = (float) $this->cart->get_total( 'numeric' );
+		$total        = (float) $this->cart->get_total( 'numeric' );
+		$shipping_fee = (float) $this->cart->get_shipping_total();
 
 		$this->restore_real_cart();
 
@@ -113,7 +114,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		wp_send_json_success(
 			array(
 				'total'         => $total,
-				'total_str'     => ( new Money( $total, $currency_code ) )->value_str(),
+				'shipping_fee'  => $shipping_fee,
 				'currency_code' => $currency_code,
 				'country_code'  => $shop_country_code,
 				'funding'       => array(

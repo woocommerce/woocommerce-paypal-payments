@@ -90,7 +90,8 @@ class UpdatePaymentDataEndpoint {
 			WC()->cart->calculate_fees();
 			WC()->cart->calculate_totals();
 
-			$total = (float) WC()->cart->get_total( 'numeric' );
+			$total        = (float) WC()->cart->get_total( 'numeric' );
+			$shipping_fee = (float) WC()->cart->get_shipping_total();
 
 			// Shop settings.
 			$base_location     = wc_get_base_location();
@@ -100,7 +101,7 @@ class UpdatePaymentDataEndpoint {
 			wp_send_json_success(
 				array(
 					'total'            => $total,
-					'total_str'        => ( new Money( $total, $currency_code ) )->value_str(),
+					'shipping_fee'     => $shipping_fee,
 					'currency_code'    => $currency_code,
 					'country_code'     => $shop_country_code,
 					'shipping_options' => $this->get_shipping_options(),
@@ -146,6 +147,7 @@ class UpdatePaymentDataEndpoint {
 						wc_price( (float) $rate->get_cost(), array( 'currency' => get_woocommerce_currency() ) )
 					)
 				),
+				'cost'        => $rate->get_cost(),
 			);
 		}
 

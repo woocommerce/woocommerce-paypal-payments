@@ -1,6 +1,7 @@
 import Spinner from '../../../../ppcp-button/resources/js/modules/Helper/Spinner';
 import BaseHandler from './BaseHandler';
 import CheckoutActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler';
+import TransactionInfo from '../Helper/TransactionInfo';
 
 class PayNowHandler extends BaseHandler {
 	validateContext() {
@@ -14,12 +15,14 @@ class PayNowHandler extends BaseHandler {
 		return new Promise( async ( resolve, reject ) => {
 			const data = this.ppcpConfig.pay_now;
 
-			resolve( {
-				countryCode: data.country_code,
-				currencyCode: data.currency_code,
-				totalPriceStatus: 'FINAL',
-				totalPrice: data.total_str,
-			} );
+			const transaction = new TransactionInfo(
+				data.total,
+				data.shipping_fee,
+				data.currency_code,
+				data.country_code
+			);
+
+			resolve( transaction );
 		} );
 	}
 

@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -303,6 +304,37 @@ return array(
 		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
+	'wcgateway.notice.checkout-blocks'                     =>
+		static function ( ContainerInterface $container ): string {
+			$settings = $container->get( 'wcgateway.settings' );
+			assert( $settings instanceof Settings );
+
+			$axo_available = $container->has( 'axo.available' ) && $container->get( 'axo.available' );
+			$axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' );
+
+			if ( $axo_available && $axo_enabled ) {
+				return '';
+			}
+
+			if ( CartCheckoutDetector::has_block_checkout() ) {
+				return '';
+			}
+
+			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
+			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
+
+			$notice_content = sprintf(
+			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the WooCommerce Checkout instructions. */
+				__(
+					'<span class="highlight">Info:</span> The <a href="%1$s">Checkout page</a> of your store currently uses a classic checkout layout or a custom checkout widget. Advanced Card Processing supports the new <code>Checkout</code> block which improves conversion rates. See <a href="%2$s">this page</a> for instructions on how to upgrade to the new Checkout layout.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $checkout_page_link ),
+				esc_url( $instructions_link )
+			);
+
+			return '<div class="ppcp-notice ppcp-notice-success"><p>' . $notice_content . '</p></div>';
+		},
 	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
@@ -544,6 +576,17 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+			),
+			'dcc_block_checkout_notice'   => array(
+				'heading'      => '',
+				'html'         => $container->get( 'wcgateway.notice.checkout-blocks' ),
+				'type'         => 'ppcp-html',
+				'classes'      => array(),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array( 'dcc' ),
+				'gateway'      => 'dcc',
 			),
 			'dcc_enabled'                 => array(
 				'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
