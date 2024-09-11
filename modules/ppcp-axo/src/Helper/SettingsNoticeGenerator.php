@@ -104,30 +104,6 @@ class SettingsNoticeGenerator {
 	}
 
 	/**
-	 * Generates the shipping notice.
-	 *
-	 * @return string
-	 */
-	public function generate_shipping_notice(): string {
-		$shipping_settings_link = admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' );
-
-		$notice_content = '';
-
-		if ( wc_shipping_enabled() && wc_ship_to_billing_address_only() ) {
-			$notice_content = sprintf(
-			/* translators: %1$s: URL to the Shipping destination settings page. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Shipping destination</a> of your store is currently configured to <code>Force shipping to the customer billing address</code>. To enable Fastlane and accelerate payments, the shipping destination must be configured either to <code>Default to customer shipping address</code> or <code>Default to customer billing address</code> so buyers can set separate billing and shipping details.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $shipping_settings_link )
-			);
-		}
-
-		return $notice_content ? '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>' : '';
-	}
-
-	/**
 	 * Generates the incompatible plugins notice.
 	 *
 	 * @return string
