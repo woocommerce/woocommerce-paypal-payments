@@ -1782,8 +1782,7 @@ return array(
 	 *     id: string,
 	 *     title: string,
 	 *     description: string,
-	 *     redirect_url: string,
-	 *     is_enabled: bool
+	 *     redirect_url: string
 	 * }>
 	 */
 	'wcgateway.settings.wc-tasks.simple-redirect-tasks-config' => static function( ContainerInterface $container ): array {
