@@ -184,9 +184,9 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 					array(
 						'label'          => esc_html__( 'PayPal Shipping Callback', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'PayPal Shipping Callback',
-						'description'    => esc_html__( 'Whether the "Require final confirmation on checkout" setting is enabled.', 'woocommerce-paypal-payments' ),
+						'description'    => esc_html__( 'Whether the "Require final confirmation on checkout" setting is disabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$settings->has( 'blocks_final_review_enabled' ) && $settings->get( 'blocks_final_review_enabled' )
+							$settings->has( 'blocks_final_review_enabled' ) && ! $settings->get( 'blocks_final_review_enabled' )
 						),
 					),
 					array(
