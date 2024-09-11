@@ -81,29 +81,22 @@ const Axo = ( props ) => {
 		card,
 	] );
 
-	useEffect( () => {
-		const unsubscribe = onPaymentSetup( async () => {
-			// Validate payment options and emit response.
+	const handlePaymentSetup = useCallback( async () => {
+		const isRyanFlow = !! card?.id;
+		const cardToken = card?.id;
 
-			// Note: This response supports the Ryan flow (payment via saved card-token)
-			return {
-				type: emitResponse.responseTypes.SUCCESS,
-				meta: {
-					paymentMethodData: {
-						axo_nonce: card?.id,
-					},
+		return {
+			type: emitResponse.responseTypes.SUCCESS,
+			meta: {
+				paymentMethodData: {
+					fastlane_member: isRyanFlow,
+					axo_nonce: cardToken,
 				},
-			};
-		} );
-
-		// Unsubscribes when this component is unmounted.
-		return () => {
-			unsubscribe();
+			},
 		};
 	}, [
 		emitResponse.responseTypes.ERROR,
 		emitResponse.responseTypes.SUCCESS,
-		onPaymentSetup,
 		card,
 	] );
 
@@ -116,6 +109,18 @@ const Axo = ( props ) => {
 		setShippingAddress: updateWooShippingAddress,
 		setBillingAddress: updateWooBillingAddress,
 	} = useCustomerData();
+
+	/**
+	 * `onPaymentSetup()` fires when we enter the "PROCESSING" state in the checkout flow.
+	 * It pre-processes the payment details and returns data for server-side processing.
+	 */
+	useEffect( () => {
+		const unsubscribe = onPaymentSetup( handlePaymentSetup );
+
+		return () => {
+			unsubscribe();
+		};
+	}, [ onPaymentSetup, handlePaymentSetup ] );
 
 	useEffect( () => {
 		console.log( 'Initializing class toggles' );
