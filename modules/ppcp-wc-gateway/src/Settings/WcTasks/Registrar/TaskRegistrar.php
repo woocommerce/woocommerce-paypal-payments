@@ -9,7 +9,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar;
 
 use Automattic\WooCommerce\Admin\Features\OnboardingTasks\TaskLists;
 use RuntimeException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Tasks\SimpleRedirectTask;
 use WP_Error;
 
 /**
@@ -24,10 +23,6 @@ class TaskRegistrar implements TaskRegistrarInterface {
 	 */
 	public function register( array $tasks ): void {
 		foreach ( $tasks as $task ) {
-			if ( $task instanceof SimpleRedirectTask && ! $task->is_enabled() ) {
-				continue;
-			}
-
 			$added_task = TaskLists::add_task( 'extended', $task );
 			if ( $added_task instanceof WP_Error ) {
 				throw new RuntimeException( $added_task->get_error_message() );
