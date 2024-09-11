@@ -11,14 +11,8 @@ const cardIcons = {
 	UNIONPAY: 'unionpay-light.svg',
 };
 
-export const CreditCard = ( {
-	card,
-	shippingAddress,
-	fastlaneSdk,
-	showWatermark = true,
-} ) => {
-	const { brand, lastDigits, expiry } = card?.paymentSource?.card ?? {};
-	const { fullName } = shippingAddress?.name ?? {};
+export const CreditCard = ( { card, fastlaneSdk, showWatermark = true } ) => {
+	const { brand, lastDigits, expiry, name } = card?.paymentSource?.card ?? {};
 
 	const cardLogo = useMemo( () => {
 		return cardIcons[ brand ] ? (
@@ -48,7 +42,7 @@ export const CreditCard = ( {
 						{ cardLogo }
 					</div>
 					<div className="wc-block-checkout-axo-block-card__meta">
-						<span>{ fullName }</span>
+						<span>{ name }</span>
 						<span>{ formattedExpiry }</span>{ ' ' }
 					</div>
 				</div>

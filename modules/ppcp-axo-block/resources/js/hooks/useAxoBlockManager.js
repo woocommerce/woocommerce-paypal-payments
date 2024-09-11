@@ -1,39 +1,49 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import Fastlane from '../../../../ppcp-axo/resources/js/Connection/Fastlane';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 
 const useAxoBlockManager = ( axoConfig, ppcpConfig ) => {
 	const [ fastlaneSdk, setFastlaneSdk ] = useState( null );
-	const [ initialized, setInitialized ] = useState( false );
+	const initializingRef = useRef( false );
+	const configRef = useRef( { axoConfig, ppcpConfig } );
 
 	useEffect( () => {
 		const initFastlane = async () => {
-			log( 'Init Fastlane' );
-
-			if ( initialized ) {
+			if ( initializingRef.current || fastlaneSdk ) {
 				return;
 			}
 
-			setInitialized( true );
+			initializingRef.current = true;
+			log( 'Init Fastlane' );
 
-			const fastlane = new Fastlane();
+			try {
+				const fastlane = new Fastlane();
 
-			if ( axoConfig.environment.is_sandbox ) {
-				window.localStorage.setItem( 'axoEnv', 'sandbox' );
+				if ( configRef.current.axoConfig.environment.is_sandbox ) {
+					window.localStorage.setItem( 'axoEnv', 'sandbox' );
+				}
+
+				await fastlane.connect( {
+					locale: configRef.current.ppcpConfig.locale,
+					styles: configRef.current.ppcpConfig.styles,
+				} );
+
+				fastlane.setLocale( 'en_us' );
+
+				setFastlaneSdk( fastlane );
+			} catch ( error ) {
+				console.error( 'Failed to initialize Fastlane:', error );
+			} finally {
+				initializingRef.current = false;
 			}
-
-			await fastlane.connect( {
-				locale: ppcpConfig.locale,
-				styles: ppcpConfig.styles,
-			} );
-
-			fastlane.setLocale( 'en_us' );
-
-			setFastlaneSdk( fastlane );
 		};
 
 		initFastlane();
-	}, [ axoConfig, ppcpConfig, initialized ] );
+	}, [] );
+
+	useEffect( () => {
+		configRef.current = { axoConfig, ppcpConfig };
+	}, [ axoConfig, ppcpConfig ] );
 
 	return fastlaneSdk;
 };

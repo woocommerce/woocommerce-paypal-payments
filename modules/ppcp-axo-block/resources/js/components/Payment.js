@@ -6,7 +6,6 @@ import { STORE_NAME } from '../stores/axoStore';
 export const Payment = ( {
 	fastlaneSdk,
 	card,
-	shippingAddress,
 	onPaymentLoad,
 } ) => {
 	const isGuest = useSelect( ( select ) =>
@@ -32,9 +31,7 @@ export const Payment = ( {
 		<div id="fastlane-card" key="fastlane-card" />
 	) : (
 		<CreditCard
-			key="custom-card"
 			card={ card }
-			shippingAddress={ shippingAddress }
 			fastlaneSdk={ fastlaneSdk }
 			showWatermark={ ! isGuest }
 		/>

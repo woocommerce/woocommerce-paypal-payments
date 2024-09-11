@@ -128,6 +128,10 @@
 		align-items: start;
 	}
 
+	#email {
+		align-self: center;
+	}
+
 	&.wc-block-axo-is-authenticated .wc-block-components-text-input {
 		gap: 14px 0;
 	}
@@ -139,7 +143,7 @@
 
 	.wc-block-axo-email-submit-button-container {
 		grid-area: button;
-		align-self: start;
+		align-self: center;
 	}
 
 	.wc-block-checkout-axo-block-watermark-container {
@@ -221,4 +225,6 @@ a.wc-block-axo-change-link{
 	}
 }
 
-
+#shipping-fields .wc-block-components-checkout-step__heading {
+	display: flex;
+}

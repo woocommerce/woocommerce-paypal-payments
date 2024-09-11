@@ -1,4 +1,5 @@
 export const snapshotFields = ( shippingAddress, billingAddress ) => {
+	console.log( 'Attempting to snapshot fields' );
 	if ( ! shippingAddress || ! billingAddress ) {
 		console.warn( 'Shipping or billing address is missing:', {
 			shippingAddress,
@@ -8,29 +9,59 @@ export const snapshotFields = ( shippingAddress, billingAddress ) => {
 
 	const originalData = { shippingAddress, billingAddress };
 	console.log( 'Snapshot data:', originalData );
-	localStorage.setItem(
-		'axoOriginalCheckoutFields',
-		JSON.stringify( originalData )
-	);
-	console.log( 'Original fields saved to localStorage', originalData );
+	try {
+		localStorage.setItem(
+			'axoOriginalCheckoutFields',
+			JSON.stringify( originalData )
+		);
+		console.log( 'Original fields saved to localStorage', originalData );
+	} catch ( error ) {
+		console.error( 'Error saving to localStorage:', error );
+	}
 };
 
 export const restoreOriginalFields = (
 	updateShippingAddress,
 	updateBillingAddress
 ) => {
-	const savedData = localStorage.getItem( 'axoOriginalCheckoutFields' );
-	console.log( 'Data retrieved from localStorage:', savedData );
+	console.log( 'Attempting to restore original fields' );
+	let savedData;
+	try {
+		savedData = localStorage.getItem( 'axoOriginalCheckoutFields' );
+		console.log( 'Data retrieved from localStorage:', savedData );
+	} catch ( error ) {
+		console.error( 'Error retrieving from localStorage:', error );
+	}
 
 	if ( savedData ) {
-		const parsedData = JSON.parse( savedData );
-		if ( parsedData.shippingAddress ) {
-			updateShippingAddress( parsedData.shippingAddress );
+		try {
+			const parsedData = JSON.parse( savedData );
+			console.log( 'Parsed data:', parsedData );
+			if ( parsedData.shippingAddress ) {
+				console.log(
+					'Restoring shipping address:',
+					parsedData.shippingAddress
+				);
+				updateShippingAddress( parsedData.shippingAddress );
+			} else {
+				console.warn( 'No shipping address found in saved data' );
+			}
+			if ( parsedData.billingAddress ) {
+				console.log(
+					'Restoring billing address:',
+					parsedData.billingAddress
+				);
+				updateBillingAddress( parsedData.billingAddress );
+			} else {
+				console.warn( 'No billing address found in saved data' );
+			}
+			console.log(
+				'Original fields restored from localStorage',
+				parsedData
+			);
+		} catch ( error ) {
+			console.error( 'Error parsing saved data:', error );
 		}
-		if ( parsedData.billingAddress ) {
-			updateBillingAddress( parsedData.billingAddress );
-		}
-		console.log( 'Original fields restored from localStorage', parsedData );
 	} else {
 		console.warn(
 			'No data found in localStorage under axoOriginalCheckoutFields'
@@ -43,10 +74,15 @@ export const populateWooFields = (
 	setWooShippingAddress,
 	setWooBillingAddress
 ) => {
+	console.log(
+		'Populating WooCommerce fields with profile data:',
+		profileData
+	);
+
 	// Save shipping address
 	const { address, name, phoneNumber } = profileData.shippingAddress;
 
-	setWooShippingAddress( {
+	const shippingAddress = {
 		first_name: name.firstName,
 		last_name: name.lastName,
 		address_1: address.addressLine1,
@@ -56,12 +92,15 @@ export const populateWooFields = (
 		postcode: address.postalCode,
 		country: address.countryCode,
 		phone: phoneNumber.nationalNumber,
-	} );
+	};
+
+	console.log( 'Setting WooCommerce shipping address:', shippingAddress );
+	setWooShippingAddress( shippingAddress );
 
 	// Save billing address
 	const billingData = profileData.card.paymentSource.card.billingAddress;
 
-	setWooBillingAddress( {
+	const billingAddress = {
 		first_name: profileData.name.firstName,
 		last_name: profileData.name.lastName,
 		address_1: billingData.addressLine1,
@@ -70,5 +109,8 @@ export const populateWooFields = (
 		state: billingData.adminArea1,
 		postcode: billingData.postalCode,
 		country: billingData.countryCode,
-	} );
+	};
+
+	console.log( 'Setting WooCommerce billing address:', billingAddress );
+	setWooBillingAddress( billingAddress );
 };

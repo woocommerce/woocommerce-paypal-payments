@@ -1,62 +1,54 @@
-import { createElement, useEffect, createRoot } from '@wordpress/element';
+import { useEffect, createRoot } from '@wordpress/element';
 
-const ShippingChangeButton = ( { onChangeShippingAddressClick } ) =>
-	createElement(
-		'a',
-		{
-			className:
-				'wc-block-checkout-axo-block-card__edit wc-block-axo-change-link',
-			role: 'button',
-			onClick: ( event ) => {
-				event.preventDefault();
-				onChangeShippingAddressClick();
-			},
-		},
-		'Choose a different shipping address'
-	);
+const ShippingChangeButton = ( { onChangeShippingAddressClick } ) => (
+	<a
+		className="wc-block-axo-change-link"
+		role="button"
+		onClick={ ( event ) => {
+			event.preventDefault();
+			onChangeShippingAddressClick();
+		} }
+	>
+		Choose a different shipping address
+	</a>
+);
 
 const ShippingChangeButtonManager = ( { onChangeShippingAddressClick } ) => {
 	useEffect( () => {
-		const shippingTitle = document.querySelector(
-			'#shipping-fields h2.wc-block-components-title'
+		const shippingHeading = document.querySelector(
+			'#shipping-fields .wc-block-components-checkout-step__heading'
 		);
 
-		if ( shippingTitle ) {
-			if (
-				! shippingTitle.nextElementSibling?.classList?.contains(
-					'wc-block-checkout-axo-block-card__edit'
-				)
-			) {
-				const buttonContainer = document.createElement( 'span' );
-				shippingTitle.parentNode.insertBefore(
-					buttonContainer,
-					shippingTitle.nextSibling
-				);
+		if (
+			shippingHeading &&
+			! shippingHeading.querySelector(
+				'.wc-block-checkout-axo-block-card__edit'
+			)
+		) {
+			const spanElement = document.createElement( 'span' );
+			spanElement.className = 'wc-block-checkout-axo-block-card__edit';
+			shippingHeading.appendChild( spanElement );
 
-				const root = createRoot( buttonContainer );
-				root.render(
-					createElement( ShippingChangeButton, {
-						onChangeShippingAddressClick,
-					} )
-				);
-			}
-		}
-
-		return () => {
-			const button = document.querySelector(
-				'#shipping-fields .wc-block-checkout-axo-block-card__edit'
+			const root = createRoot( spanElement );
+			root.render(
+				<ShippingChangeButton
+					onChangeShippingAddressClick={
+						onChangeShippingAddressClick
+					}
+				/>
 			);
-			if ( button && button.parentNode ) {
-				button.parentNode.remove();
-			}
-		};
+
+			return () => {
+				root.unmount();
+				spanElement.remove();
+			};
+		}
 	}, [ onChangeShippingAddressClick ] );
 
 	return null;
 };
 
 export const injectShippingChangeButton = ( onChangeShippingAddressClick ) => {
-	// Check if the button already exists
 	const existingButton = document.querySelector(
 		'#shipping-fields .wc-block-checkout-axo-block-card__edit'
 	);
@@ -65,9 +57,9 @@ export const injectShippingChangeButton = ( onChangeShippingAddressClick ) => {
 		const container = document.createElement( 'div' );
 		document.body.appendChild( container );
 		createRoot( container ).render(
-			createElement( ShippingChangeButtonManager, {
-				onChangeShippingAddressClick,
-			} )
+			<ShippingChangeButtonManager
+				onChangeShippingAddressClick={ onChangeShippingAddressClick }
+			/>
 		);
 	} else {
 		console.log(
@@ -77,11 +69,12 @@ export const injectShippingChangeButton = ( onChangeShippingAddressClick ) => {
 };
 
 export const removeShippingChangeButton = () => {
-	const button = document.querySelector(
+	const span = document.querySelector(
 		'#shipping-fields .wc-block-checkout-axo-block-card__edit'
 	);
-	if ( button && button.parentNode ) {
-		button.parentNode.remove();
+	if ( span ) {
+		createRoot( span ).unmount();
+		span.remove();
 	}
 };
 

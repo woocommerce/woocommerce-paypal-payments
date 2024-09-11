@@ -8,7 +8,11 @@ let watermarkReference = {
 	root: null,
 };
 
-const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
+console.log( 'WatermarkManager module loaded' );
+
+const WatermarkManager = ( { fastlaneSdk } ) => {
+	console.log( 'WatermarkManager rendering', { fastlaneSdk } );
+
 	const isGuest = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsGuest()
 	);
@@ -19,18 +23,30 @@ const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
 		select( STORE_NAME ).isAxoScriptLoaded()
 	);
 
+	console.log( 'WatermarkManager state', {
+		isGuest,
+		isAxoActive,
+		isAxoScriptLoaded,
+	} );
+
 	useEffect( () => {
+		console.log( 'WatermarkManager useEffect triggered' );
+
 		const createWatermark = () => {
+			console.log( 'Creating watermark' );
 			const textInputContainer = document.querySelector(
 				'.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input'
 			);
 
 			if ( textInputContainer && ! watermarkReference.container ) {
-				const emailInput = textInputContainer.querySelector(
-					'input[type="email"]'
+				console.log(
+					'Text input container found, creating watermark container'
 				);
+				const emailInput =
+					textInputContainer.querySelector( 'input[id="email"]' );
 
 				if ( emailInput ) {
+					console.log( 'Email input found, setting up watermark' );
 					watermarkReference.container =
 						document.createElement( 'div' );
 					watermarkReference.container.setAttribute(
@@ -50,7 +66,9 @@ const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
 			}
 
 			if ( watermarkReference.root ) {
+				console.log( 'Rendering watermark content' );
 				if ( ! isAxoActive && ! isAxoScriptLoaded ) {
+					console.log( 'Rendering spinner' );
 					watermarkReference.root.render(
 						createElement( 'span', {
 							className: 'wc-block-components-spinner',
@@ -58,6 +76,7 @@ const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
 						} )
 					);
 				} else if ( isAxoActive ) {
+					console.log( 'Rendering FastlaneWatermark' );
 					watermarkReference.root.render(
 						createElement( FastlaneWatermark, {
 							fastlaneSdk,
@@ -66,12 +85,14 @@ const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
 						} )
 					);
 				} else {
+					console.log( 'Rendering null content' );
 					watermarkReference.root.render( null );
 				}
 			}
 		};
 
 		const removeWatermark = () => {
+			console.log( 'Removing watermark' );
 			if ( watermarkReference.root ) {
 				watermarkReference.root.unmount();
 			}
@@ -90,27 +111,32 @@ const WatermarkManager = ( { fastlaneSdk, isLoaded } ) => {
 				}
 			}
 			watermarkReference = { container: null, root: null };
+			console.log( 'Watermark removed' );
 		};
 
 		if ( isAxoActive || ( ! isAxoActive && ! isAxoScriptLoaded ) ) {
+			console.log( 'Conditions met, creating watermark' );
 			createWatermark();
 		} else {
+			console.log( 'Conditions not met, removing watermark' );
 			removeWatermark();
 		}
 
 		return removeWatermark;
-	}, [ fastlaneSdk, isGuest, isAxoActive, isLoaded, isAxoScriptLoaded ] );
+	}, [ fastlaneSdk, isGuest, isAxoActive, isAxoScriptLoaded ] );
 
 	return null;
 };
 
 export const setupWatermark = ( fastlaneSdk ) => {
+	console.log( 'Setting up watermark', { fastlaneSdk } );
 	const container = document.createElement( 'div' );
 	document.body.appendChild( container );
 	const root = createRoot( container );
 	root.render( createElement( WatermarkManager, { fastlaneSdk } ) );
 
 	return () => {
+		console.log( 'Cleaning up watermark setup' );
 		root.unmount();
 		if ( container && container.parentNode ) {
 			container.parentNode.removeChild( container );
@@ -119,6 +145,7 @@ export const setupWatermark = ( fastlaneSdk ) => {
 };
 
 export const removeWatermark = () => {
+	console.log( 'Removing watermark (external call)' );
 	if ( watermarkReference.root ) {
 		watermarkReference.root.unmount();
 	}
@@ -137,6 +164,7 @@ export const removeWatermark = () => {
 		}
 	}
 	watermarkReference = { container: null, root: null };
+	console.log( 'Watermark removed (external call)' );
 };
 
 export default WatermarkManager;

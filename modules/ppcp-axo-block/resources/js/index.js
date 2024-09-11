@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, useRef } from '@wordpress/element';
-import { useSelect, useDispatch } from '@wordpress/data';
+import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useDispatch } from '@wordpress/data';
 
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
@@ -43,6 +43,7 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 const axoConfig = window.wc_ppcp_axo;
 
 const Axo = () => {
+	console.log( 'Axo component rendering' );
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
@@ -51,7 +52,6 @@ const Axo = () => {
 	const { setIsAxoActive, setIsGuest, setIsAxoScriptLoaded } =
 		useDispatch( STORE_NAME );
 
-	// Access WooCommerce customer data
 	const {
 		shippingAddress: wooShippingAddress,
 		billingAddress: wooBillingAddress,
@@ -60,12 +60,14 @@ const Axo = () => {
 	} = useCustomerData();
 
 	useEffect( () => {
+		console.log( 'Initializing class toggles' );
 		initializeClassToggles();
 	}, [] );
 
 	useEffect( () => {
+		console.log( 'Setting up cleanup for WooCommerce fields' );
 		return () => {
-			// Restore WooCommerce fields
+			console.log( 'Cleaning up: Restoring WooCommerce fields' );
 			restoreOriginalFields(
 				updateWooShippingAddress,
 				updateWooBillingAddress
@@ -73,30 +75,39 @@ const Axo = () => {
 		};
 	}, [ updateWooShippingAddress, updateWooBillingAddress ] );
 
-	const {
-		setShippingAddress: setWooShippingAddress,
-		setBillingAddress: setWooBillingAddress,
-	} = useCustomerData();
-
 	useEffect( () => {
 		if ( ! paypalLoaded ) {
+			console.log( 'Loading PayPal script' );
 			loadPaypalScript( ppcpConfig, () => {
+				console.log( 'PayPal script loaded' );
 				setPaypalLoaded( true );
 			} );
 		}
 	}, [ paypalLoaded, ppcpConfig ] );
+
+	const {
+		setShippingAddress: setWooShippingAddress,
+		setBillingAddress: setWooBillingAddress,
+	} = useCustomerData();
 
 	const onChangeShippingAddressClick = useShippingAddressChange(
 		fastlaneSdk,
 		setShippingAddress,
 		updateWooShippingAddress
 	);
-
-	const onChangeCardButtonClick = useCardChange( fastlaneSdk, setCard );
+	const onChangeCardButtonClick = useCardChange(
+		fastlaneSdk,
+		setCard,
+		updateWooBillingAddress
+	);
 
 	useEffect( () => {
+		console.log( 'Setting up Axo functionality' );
 		setupWatermark( fastlaneSdk );
 		if ( paypalLoaded && fastlaneSdk ) {
+			console.log(
+				'PayPal loaded and FastlaneSDK available, setting up email functionality'
+			);
 			setIsAxoScriptLoaded( true );
 			setIsAxoActive( true );
 			const emailLookupHandler = createEmailLookupHandler(
@@ -127,52 +138,40 @@ const Axo = () => {
 	] );
 
 	useEffect( () => {
+		console.log( 'Setting up cleanup for Axo component' );
 		return () => {
+			console.log( 'Cleaning up Axo component' );
 			setIsAxoActive( false );
 			setIsGuest( true );
-
 			removeShippingChangeButton();
 			removeCardChangeButton();
 			removeWatermark();
-		};
-	}, [
-		setIsAxoActive,
-		setIsGuest,
-		updateWooShippingAddress,
-		updateWooBillingAddress,
-	] );
-
-	useEffect( () => {
-		return () => {
-			setIsAxoActive( false );
-			setIsGuest( true );
-
-			removeShippingChangeButton();
-			removeCardChangeButton();
-			removeWatermark();
-
 			if ( isEmailFunctionalitySetup() ) {
+				console.log( 'Removing email functionality' );
 				removeEmailFunctionality();
 			}
 		};
 	}, [] );
 
-	const handlePaymentLoad = useCallback(
-		( paymentComponent ) => {
-			console.log( 'Payment component loaded', paymentComponent );
-		},
-		[] // Empty dependency array to avoid re-creating the function on every render
-	);
+	const handlePaymentLoad = useCallback( ( paymentComponent ) => {
+		console.log( 'Payment component loaded', paymentComponent );
+	}, [] );
 
 	const handleChange = ( selectedCard ) => {
+		console.log( 'Card selection changed', selectedCard );
 		setCard( selectedCard );
 	};
+
+	console.log( 'Rendering Axo component', {
+		fastlaneSdk,
+		card,
+		shippingAddress,
+	} );
 
 	return fastlaneSdk ? (
 		<Payment
 			fastlaneSdk={ fastlaneSdk }
 			card={ card }
-			shippingAddress={ shippingAddress }
 			onChange={ handleChange }
 			onPaymentLoad={ handlePaymentLoad }
 			onChangeButtonClick={ onChangeCardButtonClick }
@@ -194,11 +193,16 @@ registerPaymentMethod( {
 	content: <Axo />,
 	edit: <h1>This is Axo Blocks in the editor</h1>,
 	ariaLabel: ppcpConfig.title,
-	canMakePayment: () => true,
+	canMakePayment: () => {
+		console.log( 'Checking if payment can be made' );
+		return true;
+	},
 	supports: {
 		showSavedCards: true,
 		features: ppcpConfig.supports,
 	},
 } );
+
+console.log( 'Axo module loaded' );
 
 export default Axo;
