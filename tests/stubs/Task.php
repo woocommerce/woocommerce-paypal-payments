@@ -1,9 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace stubs;
-
-class Task
+abstract class Task
 {
 
 	/**
