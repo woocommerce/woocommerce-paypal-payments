@@ -1,8 +1,6 @@
-// EmailSubmissionManager.js
-
 import { createElement, createRoot } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
 import { STORE_NAME } from '../stores/axoStore';
+import { EmailSubmitButton } from '../components/EmailSubmitButton';
 
 let emailInput = null;
 let submitButtonReference = {
@@ -10,7 +8,6 @@ let submitButtonReference = {
 	root: null,
 	unsubscribe: null,
 };
-let isLoading = false;
 let keydownHandler = null;
 
 const getEmailInput = () => {
@@ -18,47 +15,6 @@ const getEmailInput = () => {
 		emailInput = document.getElementById( 'email' );
 	}
 	return emailInput;
-};
-
-const EmailSubmitButton = ( { handleSubmit } ) => {
-	const { isGuest, isAxoActive } = useSelect( ( select ) => ( {
-		isGuest: select( STORE_NAME ).getIsGuest(),
-		isAxoActive: select( STORE_NAME ).getIsAxoActive(),
-	} ) );
-
-	if ( ! isGuest || ! isAxoActive ) {
-		return null;
-	}
-
-	return (
-		<button
-			type="button"
-			onClick={ handleSubmit }
-			className={ `wc-block-components-button wp-element-button ${
-				isLoading ? 'is-loading' : ''
-			}` }
-			disabled={ isLoading }
-		>
-			<span
-				className="wc-block-components-button__text"
-				style={ { visibility: isLoading ? 'hidden' : 'visible' } }
-			>
-				Submit
-			</span>
-			{ isLoading && (
-				<span
-					className="wc-block-components-spinner"
-					aria-hidden="true"
-					style={ {
-						position: 'absolute',
-						top: '50%',
-						left: '50%',
-						transform: 'translate(-50%, -50%)',
-					} }
-				/>
-			) }
-		</button>
-	);
 };
 
 export const setupEmailFunctionality = ( onEmailSubmit ) => {
@@ -71,12 +27,16 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	}
 
 	const handleEmailSubmit = async () => {
-		if ( isLoading || ! input.value ) {
+		const isEmailSubmitted = wp.data
+			.select( STORE_NAME )
+			.isEmailSubmitted();
+
+		if ( isEmailSubmitted || ! input.value ) {
 			return;
 		}
 
-		isLoading = true;
-		renderButton(); // Re-render button to show loading state
+		wp.data.dispatch( STORE_NAME ).setIsEmailSubmitted( true );
+		renderButton();
 
 		try {
 			await onEmailSubmit( input.value );
@@ -84,7 +44,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 			console.error( 'Error during email submission:', error );
 			// Here you might want to show an error message to the user
 		} finally {
-			isLoading = false;
+			wp.data.dispatch( STORE_NAME ).setIsEmailSubmitted( false );
 			renderButton(); // Re-render button to remove loading state
 		}
 	};

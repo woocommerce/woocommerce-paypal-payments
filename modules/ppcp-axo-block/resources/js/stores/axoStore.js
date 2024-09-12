@@ -9,6 +9,7 @@ const DEFAULT_STATE = {
 	isGuest: true,
 	isAxoActive: false,
 	isAxoScriptLoaded: false,
+	isEmailSubmitted: false,
 };
 
 // Actions
@@ -25,6 +26,10 @@ const actions = {
 		type: 'SET_IS_AXO_SCRIPT_LOADED',
 		payload: isAxoScriptLoaded,
 	} ),
+	setIsEmailSubmitted: ( isEmailSubmitted ) => ( {
+		type: 'SET_IS_EMAIL_SUBMITTED',
+		payload: isEmailSubmitted,
+	} ),
 };
 
 // Reducer
@@ -36,6 +41,8 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 			return { ...state, isAxoActive: action.payload };
 		case 'SET_IS_AXO_SCRIPT_LOADED':
 			return { ...state, isAxoScriptLoaded: action.payload };
+		case 'SET_IS_EMAIL_SUBMITTED':
+			return { ...state, isEmailSubmitted: action.payload };
 		default:
 			return state;
 	}
@@ -46,6 +53,7 @@ const selectors = {
 	getIsGuest: ( state ) => state.isGuest,
 	getIsAxoActive: ( state ) => state.isAxoActive,
 	isAxoScriptLoaded: ( state ) => state.isAxoScriptLoaded,
+	isEmailSubmitted: ( state ) => state.isEmailSubmitted,
 };
 
 // Create and register the store
