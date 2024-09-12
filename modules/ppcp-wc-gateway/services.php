@@ -1791,12 +1791,12 @@ return array(
 
 		$list_of_config = array();
 
-		if ( $container->get('paylater-configurator.is-available') ) {
+		if ( $container->get( 'paylater-configurator.is-available' ) ) {
 			$list_of_config[] = array(
 				'id'           => 'pay-later-messaging-task',
 				'title'        => __( 'Configure PayPal Pay Later messaging', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'Decide where you want dynamic Pay Later messaging to show up and how you want it to look on your site.', 'woocommerce-paypal-payments' ),
-				'redirect_url' => admin_url("admin.php?page=wc-settings&tab=checkout&section={$section_id}&ppcp-tab={$pay_later_tab_id}"),
+				'redirect_url' => admin_url( "admin.php?page=wc-settings&tab=checkout&section={$section_id}&ppcp-tab={$pay_later_tab_id}" ),
 			);
 		}
 
