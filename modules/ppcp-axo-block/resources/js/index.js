@@ -8,10 +8,8 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 // Hooks
 import useAxoBlockManager from './hooks/useAxoBlockManager';
 import { useCustomerData } from './hooks/useCustomerData';
-import {
-	useShippingAddressChange,
-	useCardChange,
-} from './hooks/useUserInfoChange';
+import { useShippingAddressChange } from './hooks/useShippingAddressChange';
+import { useCardChange } from './hooks/useCardChange';
 
 // Components
 import { Payment } from './components/Payment';
