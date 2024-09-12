@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useMemo } from '@wordpress/element';
 
 export const useCustomerData = () => {
 	const customerData = useSelect( ( select ) =>
