@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from '@wordpress/element';
 import Fastlane from '../../../../ppcp-axo/resources/js/Connection/Fastlane';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 
-const useAxoBlockManager = ( axoConfig, ppcpConfig ) => {
+const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 	const [ fastlaneSdk, setFastlaneSdk ] = useState( null );
 	const initializingRef = useRef( false );
 	const configRef = useRef( { axoConfig, ppcpConfig } );
@@ -48,4 +48,4 @@ const useAxoBlockManager = ( axoConfig, ppcpConfig ) => {
 	return fastlaneSdk;
 };
 
-export default useAxoBlockManager;
+export default useFastlaneSdk;

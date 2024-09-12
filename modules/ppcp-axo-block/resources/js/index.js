@@ -6,7 +6,7 @@ import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
 
 // Hooks
-import useAxoBlockManager from './hooks/useAxoBlockManager';
+import useFastlaneSdk from './hooks/useFastlaneSdk';
 import { useCustomerData } from './hooks/useCustomerData';
 import { useShippingAddressChange } from './hooks/useShippingAddressChange';
 import { useCardChange } from './hooks/useCardChange';
@@ -46,7 +46,7 @@ const Axo = ( props ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
-	const fastlaneSdk = useAxoBlockManager( axoConfig, ppcpConfig );
+	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
 
 	console.log( 'Axo component rendering' );
 
