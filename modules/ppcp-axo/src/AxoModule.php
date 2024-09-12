@@ -136,6 +136,9 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action(
 			'wc_payment_gateways_initialized',
 			function ( WC_Payment_Gateways $gateways ) {
+				if ( is_admin() ) {
+					return;
+				}
 				foreach ( $gateways->payment_gateways as $key => $gateway ) {
 					if ( $gateway->id === AxoGateway::ID ) {
 						unset( $gateways->payment_gateways[ $key ] );
