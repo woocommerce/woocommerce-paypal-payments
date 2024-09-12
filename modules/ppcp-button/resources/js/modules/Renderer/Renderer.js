@@ -228,7 +228,6 @@ class Renderer {
 	};
 
     shouldEnableShippingCallback = () => {
-        console.log(this.defaultSettings.context, this.defaultSettings)
         let needShipping = this.defaultSettings.needShipping || this.defaultSettings.context === 'product'
         return this.defaultSettings.should_handle_shipping_in_paypal && needShipping
     };
