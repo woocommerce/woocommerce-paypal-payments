@@ -28,6 +28,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WC_Payment_Gateways;
+
 /**
  * Class AxoModule
  */
@@ -127,6 +129,20 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				}
 
 				return $methods;
+			}
+		);
+
+		// Enforce Fastlane to always be the first payment method in the list.
+		add_action(
+			'wc_payment_gateways_initialized',
+			function ( WC_Payment_Gateways $gateways ) {
+				foreach ( $gateways->payment_gateways as $key => $gateway ) {
+					if ( $gateway->id === AxoGateway::ID ) {
+						unset( $gateways->payment_gateways[ $key ] );
+						array_unshift( $gateways->payment_gateways, $gateway );
+						break;
+					}
+				}
 			}
 		);
 
