@@ -77,7 +77,6 @@ return array(
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'axo.card_icons' ),
-			$container->get( 'axo.card_icons.axo' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
@@ -104,39 +103,6 @@ return array(
 			array(
 				'title' => 'Discover',
 				'file'  => 'discover.svg',
-			),
-		);
-	},
-
-	'axo.card_icons.axo'                     => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-light.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-light.svg',
-			),
-			array(
-				'title' => 'Amex',
-				'file'  => 'amex-light.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover-light.svg',
-			),
-			array(
-				'title' => 'Diners Club',
-				'file'  => 'dinersclub-light.svg',
-			),
-			array(
-				'title' => 'JCB',
-				'file'  => 'jcb-light.svg',
-			),
-			array(
-				'title' => 'UnionPay',
-				'file'  => 'unionpay-light.svg',
 			),
 		);
 	},
