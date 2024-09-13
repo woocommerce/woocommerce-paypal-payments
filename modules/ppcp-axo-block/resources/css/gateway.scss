@@ -113,16 +113,18 @@
 }
 
 .wc-block-checkout-axo-block-watermark-container {
+	margin-top: 10px;
 	margin-left: 5px;
 }
 
-//.wc-block-axo-is-loaded:not(.wc-block-axo-is-authenticated) {
-//	#shipping-fields,
-//	#shipping-option,
-//	#order-notes {
-//		display: none;
-//	}
-//}
+.wc-block-axo-is-loaded:not(.wc-block-axo-email-lookup-completed) {
+	#shipping-fields,
+	#billing-fields,
+	#shipping-option,
+	#order-notes {
+		display: none;
+	}
+}
 
 .wc-block-axo-is-loaded {
 	&.wc-block-axo-is-authenticated .wc-block-components-text-input {

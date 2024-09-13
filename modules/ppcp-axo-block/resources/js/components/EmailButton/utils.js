@@ -29,7 +29,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const handleEmailSubmit = async () => {
 		const isEmailSubmitted = wp.data
 			.select( STORE_NAME )
-			.isEmailSubmitted();
+			.getIsEmailSubmitted();
 
 		if ( isEmailSubmitted || ! input.value ) {
 			return;

@@ -6,7 +6,7 @@ const EmailButton = ( { handleSubmit } ) => {
 		( select ) => ( {
 			isGuest: select( STORE_NAME ).getIsGuest(),
 			isAxoActive: select( STORE_NAME ).getIsAxoActive(),
-			isEmailSubmitted: select( STORE_NAME ).isEmailSubmitted(),
+			isEmailSubmitted: select( STORE_NAME ).getIsEmailSubmitted(),
 		} )
 	);
 

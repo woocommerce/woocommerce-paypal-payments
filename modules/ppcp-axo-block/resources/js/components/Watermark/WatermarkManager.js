@@ -19,7 +19,7 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 		select( STORE_NAME ).getIsAxoActive()
 	);
 	const isAxoScriptLoaded = useSelect( ( select ) =>
-		select( STORE_NAME ).isAxoScriptLoaded()
+		select( STORE_NAME ).getIsAxoScriptLoaded()
 	);
 
 	console.log( 'WatermarkManager state', {
