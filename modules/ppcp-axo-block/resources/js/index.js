@@ -11,7 +11,13 @@ import useAxoCleanup from './hooks/useAxoCleanup';
 // Components
 import { Payment } from './components/Payment/Payment';
 
-const ppcpConfig = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
+const gatewayHandle = 'ppcp-axo-gateway';
+const ppcpConfig = wc.wcSettings.getSetting( `${ gatewayHandle }_data` );
+
+if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
+	window.PayPalCommerceGateway = ppcpConfig;
+}
+
 const axoConfig = window.wc_ppcp_axo;
 
 const Axo = ( props ) => {

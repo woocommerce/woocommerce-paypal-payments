@@ -5,15 +5,16 @@
  * @package WooCommerce\PayPalCommerce\AxoBlock
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
+use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -38,7 +39,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * Credit card gateway.
 	 *
-	 * @var CreditCardGateway
+	 * @var WC_Payment_Gateway
 	 */
 	private $gateway;
 
@@ -73,29 +74,30 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * AdvancedCardPaymentMethod constructor.
 	 *
-	 * @param string                        $module_url The URL of this module.
-	 * @param string                        $version The assets version.
-	 * @param CreditCardGateway             $gateway Credit card gateway.
-	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
-	 * @param Settings                      $settings The settings.
-	 * @param Environment                   $environment The environment object.
-	 * @param string          $wcgateway_module_url The WcGateway module URL.
+	 * @param string                        $module_url           The URL of this module.
+	 * @param string                        $version              The assets version.
+	 * @param WC_Payment_Gateway            $gateway              Credit card gateway.
+	 * @param SmartButtonInterface|callable $smart_button         The smart button script loading
+	 *                                                            handler.
+	 * @param Settings                      $settings             The settings.
+	 * @param Environment                   $environment          The environment object.
+	 * @param string                        $wcgateway_module_url The WcGateway module URL.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
-		CreditCardGateway $gateway,
+		WC_Payment_Gateway $gateway,
 		$smart_button,
 		Settings $settings,
 		Environment $environment,
 		string $wcgateway_module_url
 	) {
-		$this->name            = CreditCardGateway::ID;
-		$this->module_url      = $module_url;
-		$this->version         = $version;
-		$this->gateway         = $gateway;
-		$this->smart_button    = $smart_button;
-		$this->settings = $settings;
+		$this->name                 = AxoGateway::ID;
+		$this->module_url           = $module_url;
+		$this->version              = $version;
+		$this->gateway              = $gateway;
+		$this->smart_button         = $smart_button;
+		$this->settings             = $settings;
 		$this->environment          = $environment;
 		$this->wcgateway_module_url = $wcgateway_module_url;
 
@@ -110,29 +112,29 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function is_active() {
-		return true;
+	public function is_active() : bool {
+		return $this->gateway->is_available();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_payment_method_script_handles() {
+	public function get_payment_method_script_handles() : array {
 		$script_path       = 'assets/js/index.js';
 		$script_asset_path = trailingslashit( $this->module_url ) . 'assets/js/index.asset.php';
 		$script_asset      = file_exists( $script_asset_path )
-			? require( $script_asset_path )
+			? require $script_asset_path
 			: array(
 				'dependencies' => array(),
-				'version'      => '1.0.0'
+				'version'      => '1.0.0',
 			);
 		$script_url        = trailingslashit( $this->module_url ) . $script_path;
 
 		wp_register_script(
 			'ppcp-axo-block',
 			$script_url,
-			$script_asset[ 'dependencies' ],
-			$script_asset[ 'version' ],
+			$script_asset['dependencies'],
+			$script_asset['version'],
 			true
 		);
 
@@ -142,19 +144,25 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			$this->script_data()
 		);
 
-		return [ 'ppcp-axo-block' ];
+		return array( 'ppcp-axo-block' );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_data() {
-		return [
-			'id' => $this->name,
+		return array(
+			'id'          => $this->name,
 			'title'       => 'Debit & Credit Cards',
 			'description' => 'Axo Description',
-			'supports'    =>  array_filter( $this->gateway->supports, [ $this->gateway, 'supports' ] ),
-		];
+			'supports'    => array_filter(
+				$this->gateway->supports,
+				array(
+					$this->gateway,
+					'supports',
+				)
+			),
+		);
 	}
 
 	/**
@@ -162,8 +170,11 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 *
 	 * @return array
 	 */
-	private function script_data(): array
-	{	if(is_admin()) { return array(); }
+	private function script_data() : array {
+		if ( is_admin() ) {
+			return array();
+		}
+
 		return array(
 			'environment'               => array(
 				'is_sandbox' => $this->environment->current_environment() === 'sandbox',
@@ -175,14 +186,14 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 				'enabled'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>
-					(WC()->session && method_exists(WC()->session, 'get_customer_unique_id'))
-						? substr(md5(WC()->session->get_customer_unique_id()), 0, 16)
+					( WC()->session && method_exists( WC()->session, 'get_customer_unique_id' ) )
+						? substr( md5( WC()->session->get_customer_unique_id() ), 0, 16 )
 						: '',
-				'amount' => array(
+				'amount'     => array(
 					'currency_code' => get_woocommerce_currency(),
-					'value'         => (WC()->cart && method_exists(WC()->cart, 'get_total'))
-						? WC()->cart->get_total('numeric')
-						: null, // Set to null if WC()->cart is null or get_total doesn't exist
+					'value'         => ( WC()->cart && method_exists( WC()->cart, 'get_total' ) )
+						? WC()->cart->get_total( 'numeric' )
+						: null, // Set to null if WC()->cart is null or get_total doesn't exist.
 				),
 			),
 			'style_options'             => array(
@@ -224,5 +235,4 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			'billing_email_button_text' => __( 'Continue', 'woocommerce-paypal-payments' ),
 		);
 	}
-
 }
