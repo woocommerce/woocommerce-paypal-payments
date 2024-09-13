@@ -26,6 +26,7 @@ import { STORE_NAME } from './stores/axoStore';
 
 // Event handlers
 import { createEmailLookupHandler } from './events/emailLookupManager';
+import { usePhoneSyncHandler } from './events/phoneSyncManager';
 import {
 	setupEmailFunctionality,
 	removeEmailFunctionality,
@@ -46,6 +47,7 @@ const Axo = ( props ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
+	const [ wooPhone, setWooPhone ] = useState( '' );
 	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
 
 	console.log( 'Axo component rendering' );
@@ -127,6 +129,8 @@ const Axo = ( props ) => {
 		setCard,
 		updateWooBillingAddress
 	);
+
+	usePhoneSyncHandler( setWooPhone );
 
 	useEffect( () => {
 		console.log( 'Setting up Axo functionality' );
