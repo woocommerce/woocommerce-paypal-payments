@@ -1,4 +1,5 @@
 import { useCallback } from '@wordpress/element';
+import useFastlaneSdk from "./useFastlaneSdk";
 
 export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
 	return useCallback( async () => {
@@ -33,3 +34,5 @@ export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
 		}
 	}, [ fastlaneSdk, setCard ] );
 };
+
+export default useCardChange;

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
+import useFastlaneSdk from "./useFastlaneSdk";
 
 export const useCustomerData = () => {
 	const customerData = useSelect( ( select ) =>
@@ -40,3 +41,5 @@ export const useCustomerData = () => {
 		]
 	);
 };
+
+export default useCustomerData;

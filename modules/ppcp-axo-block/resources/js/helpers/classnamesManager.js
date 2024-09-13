@@ -34,7 +34,6 @@ export const setupAuthenticationClassToggle = () => {
 		updateAuthenticationClass();
 	} );
 
-	// Return the unsubscribe function for cleanup
 	return unsubscribe;
 };
 
@@ -79,7 +78,6 @@ export const setupContactInfoClassToggles = () => {
 		updateContactInfoClasses();
 	} );
 
-	// Return the unsubscribe function for cleanup
 	return unsubscribe;
 };
 

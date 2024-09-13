@@ -33,3 +33,5 @@ export const useShippingAddressChange = (
 		}
 	}, [ fastlaneSdk, setShippingAddress, setWooShippingAddress ] );
 };
+
+export default useShippingAddressChange;

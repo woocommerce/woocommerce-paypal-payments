@@ -7,18 +7,18 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 
 // Hooks
 import useFastlaneSdk from './hooks/useFastlaneSdk';
-import { useCustomerData } from './hooks/useCustomerData';
-import { useShippingAddressChange } from './hooks/useShippingAddressChange';
-import { useCardChange } from './hooks/useCardChange';
+import useCustomerData from './hooks/useCustomerData';
+import useShippingAddressChange from './hooks/useShippingAddressChange';
+import useCardChange from './hooks/useCardChange';
 
 // Components
 import { Payment } from './components/Payment';
 
 // Helpers
 import { snapshotFields, restoreOriginalFields } from './helpers/fieldHelpers';
-import { removeWatermark, setupWatermark } from './helpers/watermarkHelpers';
+import { removeWatermark, setupWatermark } from './components/watermark';
 import { removeCardChangeButton } from './helpers/cardChangeButtonManager';
-import { removeShippingChangeButton } from './helpers/shippingChangeButtonManager';
+import { removeShippingChangeButton } from './components/shipping';
 import { initializeClassToggles } from './helpers/classnamesManager';
 
 // Stores
@@ -30,7 +30,7 @@ import {
 	setupEmailFunctionality,
 	removeEmailFunctionality,
 	isEmailFunctionalitySetup,
-} from './helpers/emailSubmissionManager';
+} from './components/email-button';
 
 const ppcpConfig = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
 
@@ -221,7 +221,6 @@ registerPaymentMethod( {
 	edit: <h1>This is Axo Blocks in the editor</h1>,
 	ariaLabel: ppcpConfig.title,
 	canMakePayment: () => {
-		console.log( 'Checking if payment can be made' );
 		return true;
 	},
 	supports: {

@@ -1,5 +1,5 @@
 import { populateWooFields } from '../helpers/fieldHelpers';
-import { injectShippingChangeButton } from '../helpers/shippingChangeButtonManager';
+import { injectShippingChangeButton } from '../components/shipping';
 import { injectCardChangeButton } from '../helpers/cardChangeButtonManager';
 import { setIsGuest } from '../stores/axoStore';
 
