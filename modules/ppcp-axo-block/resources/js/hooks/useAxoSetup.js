@@ -7,21 +7,30 @@ import { setupEmailFunctionality } from '../components/EmailButton';
 import { createEmailLookupHandler } from '../events/emailLookupManager';
 import { initializeClassToggles } from '../helpers/classnamesManager';
 import { snapshotFields } from '../helpers/fieldHelpers';
+import useCustomerData from './useCustomerData';
+import useShippingAddressChange from './useShippingAddressChange';
 
 const useAxoSetup = (
 	ppcpConfig,
 	fastlaneSdk,
-	wooShippingAddress,
-	wooBillingAddress,
-	setWooShippingAddress,
-	setWooBillingAddress,
-	onChangeShippingAddressClick,
 	onChangeCardButtonClick,
 	setShippingAddress,
 	setCard
 ) => {
 	const { setIsAxoActive, setIsAxoScriptLoaded } = useDispatch( STORE_NAME );
 	const paypalLoaded = usePayPalScript( ppcpConfig );
+
+	const onChangeShippingAddressClick = useShippingAddressChange(
+		fastlaneSdk,
+		setShippingAddress
+	);
+
+	const {
+		shippingAddress: wooShippingAddress,
+		billingAddress: wooBillingAddress,
+		setShippingAddress: setWooShippingAddress,
+		setBillingAddress: setWooBillingAddress,
+	} = useCustomerData();
 
 	useEffect( () => {
 		console.log( 'Initializing class toggles' );

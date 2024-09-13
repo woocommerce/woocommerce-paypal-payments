@@ -9,9 +9,14 @@ import {
 	isEmailFunctionalitySetup,
 } from '../components/EmailButton';
 import { restoreOriginalFields } from '../helpers/fieldHelpers';
+import useCustomerData from './useCustomerData';
 
-const useAxoCleanup = ( updateWooShippingAddress, updateWooBillingAddress ) => {
+const useAxoCleanup = () => {
 	const { setIsAxoActive, setIsGuest } = useDispatch( STORE_NAME );
+	const {
+		setShippingAddress: updateWooShippingAddress,
+		setBillingAddress: updateWooBillingAddress,
+	} = useCustomerData();
 
 	useEffect( () => {
 		console.log( 'Setting up cleanup for WooCommerce fields' );

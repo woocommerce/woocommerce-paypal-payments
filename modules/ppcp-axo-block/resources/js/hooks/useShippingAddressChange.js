@@ -1,12 +1,10 @@
 import { useCallback } from '@wordpress/element';
 import { useAddressEditing } from './useAddressEditing';
+import useCustomerData from './useCustomerData';
 
-export const useShippingAddressChange = (
-	fastlaneSdk,
-	setShippingAddress,
-	setWooShippingAddress
-) => {
+export const useShippingAddressChange = ( fastlaneSdk, setShippingAddress ) => {
 	const { setShippingAddressEditing } = useAddressEditing();
+	const { setShippingAddress: setWooShippingAddress } = useCustomerData();
 
 	return useCallback( async () => {
 		if ( fastlaneSdk ) {
@@ -14,10 +12,6 @@ export const useShippingAddressChange = (
 				await fastlaneSdk.profile.showShippingAddressSelector();
 			if ( selectionChanged ) {
 				setShippingAddress( selectedAddress );
-				console.log(
-					'Selected shipping address changed:',
-					selectedAddress
-				);
 
 				const { address, name, phoneNumber } = selectedAddress;
 

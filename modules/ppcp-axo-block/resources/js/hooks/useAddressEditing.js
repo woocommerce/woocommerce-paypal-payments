@@ -27,7 +27,6 @@ export const useAddressEditing = () => {
 
 	const setBillingAddressEditing = useCallback(
 		( isEditing ) => {
-			console.log( 'Setting billing address editing to:', isEditing );
 			setEditingBillingAddress( isEditing );
 		},
 		[ setEditingBillingAddress ]

@@ -3,8 +3,6 @@ import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
 // Hooks
 import useFastlaneSdk from './hooks/useFastlaneSdk';
-import useCustomerData from './hooks/useCustomerData';
-import useShippingAddressChange from './hooks/useShippingAddressChange';
 import useCardChange from './hooks/useCardChange';
 import useAxoSetup from './hooks/useAxoSetup';
 import usePaymentSetup from './hooks/usePaymentSetup';
@@ -22,39 +20,17 @@ const Axo = ( props ) => {
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
 	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
-
-	const {
-		shippingAddress: wooShippingAddress,
-		billingAddress: wooBillingAddress,
-		setShippingAddress: updateWooShippingAddress,
-		setBillingAddress: updateWooBillingAddress,
-	} = useCustomerData();
-
-	const onChangeShippingAddressClick = useShippingAddressChange(
-		fastlaneSdk,
-		setShippingAddress,
-		updateWooShippingAddress
-	);
-	const onChangeCardButtonClick = useCardChange(
-		fastlaneSdk,
-		setCard,
-		updateWooBillingAddress
-	);
+	const onChangeCardButtonClick = useCardChange( fastlaneSdk, setCard );
 
 	useAxoSetup(
 		ppcpConfig,
 		fastlaneSdk,
-		wooShippingAddress,
-		wooBillingAddress,
-		updateWooShippingAddress,
-		updateWooBillingAddress,
-		onChangeShippingAddressClick,
 		onChangeCardButtonClick,
 		setShippingAddress,
 		setCard
 	);
 	usePaymentSetup( onPaymentSetup, emitResponse, card );
-	useAxoCleanup( updateWooShippingAddress, updateWooBillingAddress );
+	useAxoCleanup();
 
 	const handlePaymentLoad = useCallback( ( paymentComponent ) => {
 		console.log( 'Payment component loaded', paymentComponent );

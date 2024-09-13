@@ -1,8 +1,10 @@
 import { useCallback } from '@wordpress/element';
 import { useAddressEditing } from './useAddressEditing';
+import useCustomerData from './useCustomerData';
 
-export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
+export const useCardChange = ( fastlaneSdk, setCard ) => {
 	const { setBillingAddressEditing } = useAddressEditing();
+	const { setBillingAddress: setWooBillingAddress } = useCustomerData();
 
 	return useCallback( async () => {
 		if ( fastlaneSdk ) {
