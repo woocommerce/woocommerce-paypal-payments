@@ -1,5 +1,4 @@
 import { useCallback } from '@wordpress/element';
-import useFastlaneSdk from "./useFastlaneSdk";
 
 export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
 	return useCallback( async () => {

@@ -1,7 +1,7 @@
 import { STORE_NAME } from '../../stores/axoStore';
 import { useSelect } from '@wordpress/data';
 
-export const EmailButton = ( { handleSubmit } ) => {
+const EmailButton = ( { handleSubmit } ) => {
 	const { isGuest, isAxoActive, isEmailSubmitted } = useSelect(
 		( select ) => ( {
 			isGuest: select( STORE_NAME ).getIsGuest(),
@@ -46,3 +46,5 @@ export const EmailButton = ( { handleSubmit } ) => {
 		</button>
 	);
 };
+
+export default EmailButton;

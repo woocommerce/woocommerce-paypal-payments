@@ -42,8 +42,7 @@ export const setupAuthenticationClassToggle = () => {
  * @return {Function} Unsubscribe function for cleanup.
  */
 export const setupContactInfoClassToggles = () => {
-	const targetSelector =
-		'.wp-block-woocommerce-checkout-contact-information-block';
+	const targetSelector = '.wp-block-woocommerce-checkout-fields-block';
 	const axoLoadedClass = 'wc-block-axo-is-loaded';
 	const authClass = 'wc-block-axo-is-authenticated';
 

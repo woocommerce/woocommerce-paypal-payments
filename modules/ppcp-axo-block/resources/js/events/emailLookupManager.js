@@ -1,6 +1,6 @@
 import { populateWooFields } from '../helpers/fieldHelpers';
-import { injectShippingChangeButton } from '../components/shipping';
-import { injectCardChangeButton } from '../helpers/cardChangeButtonManager';
+import { injectShippingChangeButton } from '../components/Shipping';
+import { injectCardChangeButton } from '../components/Card';
 import { setIsGuest } from '../stores/axoStore';
 
 export const createEmailLookupHandler = (

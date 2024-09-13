@@ -1,5 +1,5 @@
 import { useMemo } from '@wordpress/element';
-import { Watermark } from '../watermark';
+import { Watermark } from '../Watermark';
 
 const cardIcons = {
 	VISA: 'visa-light.svg',
@@ -11,7 +11,7 @@ const cardIcons = {
 	UNIONPAY: 'unionpay-light.svg',
 };
 
-export const Card = ( { card, fastlaneSdk, showWatermark = true } ) => {
+const Card = ( { card, fastlaneSdk, showWatermark = true } ) => {
 	const { brand, lastDigits, expiry, name } = card?.paymentSource?.card ?? {};
 
 	const cardLogo = useMemo( () => {
@@ -59,3 +59,5 @@ export const Card = ( { card, fastlaneSdk, showWatermark = true } ) => {
 		</div>
 	);
 };
+
+export default Card;

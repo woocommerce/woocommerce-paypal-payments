@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import { Card } from './card/Card';
-import { STORE_NAME } from '../stores/axoStore';
+import { Card } from '../Card';
+import { STORE_NAME } from '../../stores/axoStore';
 
 export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
 	const isGuest = useSelect( ( select ) =>

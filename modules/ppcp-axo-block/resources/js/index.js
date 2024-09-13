@@ -12,13 +12,13 @@ import useShippingAddressChange from './hooks/useShippingAddressChange';
 import useCardChange from './hooks/useCardChange';
 
 // Components
-import { Payment } from './components/Payment';
+import { Payment } from './components/Payment/Payment';
 
 // Helpers
 import { snapshotFields, restoreOriginalFields } from './helpers/fieldHelpers';
-import { removeWatermark, setupWatermark } from './components/watermark';
-import { removeCardChangeButton } from './helpers/cardChangeButtonManager';
-import { removeShippingChangeButton } from './components/shipping';
+import { removeWatermark, setupWatermark } from './components/Watermark';
+import { removeCardChangeButton } from './components/Card';
+import { removeShippingChangeButton } from './components/Shipping';
 import { initializeClassToggles } from './helpers/classnamesManager';
 
 // Stores
@@ -30,7 +30,7 @@ import {
 	setupEmailFunctionality,
 	removeEmailFunctionality,
 	isEmailFunctionalitySetup,
-} from './components/email-button';
+} from './components/EmailButton';
 
 const ppcpConfig = wc.wcSettings.getSetting( 'ppcp-credit-card-gateway_data' );
 
