@@ -153,6 +153,68 @@ return array(
 			$logger
 		);
 	},
+	'wcgateway.credit-card-labels'                         => static function ( ContainerInterface $container ) : array {
+		return array(
+			'visa'       => _x(
+				'Visa',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'mastercard' => _x(
+				'Mastercard',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'amex'       => _x(
+				'American Express',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'discover'   => _x(
+				'Discover',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'jcb'        => _x(
+				'JCB',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'elo'        => _x(
+				'Elo',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'hiper'      => _x(
+				'Hiper',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+		);
+	},
+	'wcgateway.credit-card-icons'                          => static function ( ContainerInterface $container ) : array {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$icons  = $settings->has( 'card_icons' ) ? (array) $settings->get( 'card_icons' ) : array();
+		$labels = $container->get( 'wcgateway.credit-card-labels' );
+
+		$module_url = $container->get( 'wcgateway.url' );
+		$url_root   = esc_url( $module_url ) . 'assets/images/';
+
+		$icons_with_label = array();
+		foreach ( $icons as $icon ) {
+			$type = str_replace( '-dark', '', $icon );
+
+			$icons_with_label[] = array(
+				'type'  => $type,
+				'title' => ucwords( $labels[ $type ] ?? $type ),
+				'url'   => "$url_root/$icon.svg",
+			);
+		}
+
+		return $icons_with_label;
+	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
 		return new CardButtonGateway(
 			$container->get( 'wcgateway.settings.render' ),

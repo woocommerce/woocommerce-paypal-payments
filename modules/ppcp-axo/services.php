@@ -76,34 +76,13 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'axo.card_icons' ),
+			$container->get( 'wcgateway.credit-card-icons' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-
-	'axo.card_icons'                         => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-dark.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-dark.svg',
-			),
-			array(
-				'title' => 'American Express',
-				'file'  => 'amex.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover.svg',
-			),
 		);
 	},
 
