@@ -13,6 +13,7 @@ use Exception;
 use Throwable;
 use WC_Order;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 
 /**
  * Trait ProcessPaymentTrait
@@ -74,8 +75,13 @@ trait ProcessPaymentTrait {
 	 * @param Throwable $exception The exception to format.
 	 * @return string
 	 */
-	protected function format_exception( Throwable $exception ): string {
-		$output = $exception->getMessage() . ' ' . basename( $exception->getFile() ) . ':' . $exception->getLine();
+	protected function format_exception( Throwable $exception ) : string {
+		$message = $exception->getMessage();
+		if ( is_a( $exception, PayPalApiException::class ) ) {
+			$message = $exception->get_details( $message );
+		}
+
+		$output = $message . ' ' . basename( $exception->getFile() ) . ':' . $exception->getLine();
 		$prev   = $exception->getPrevious();
 		if ( ! $prev ) {
 			return $output;

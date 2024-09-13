@@ -5,20 +5,20 @@
  * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Axo\Gateway;
 
 use Psr\Log\LoggerInterface;
+use Exception;
 use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
@@ -26,12 +26,15 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class AXOGateway.
  */
 class AxoGateway extends WC_Payment_Gateway {
-	use OrderMetaTrait, GatewaySettingsRendererTrait;
+	use OrderMetaTrait, GatewaySettingsRendererTrait, ProcessPaymentTrait;
 
 	const ID = 'ppcp-axo-gateway';
 
@@ -120,25 +123,34 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $logger;
 
 	/**
+	 * The Session Handler.
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
 	 * AXOGateway constructor.
 	 *
-	 * @param SettingsRenderer          $settings_renderer The settings renderer.
-	 * @param ContainerInterface        $ppcp_settings The settings.
-	 * @param string                    $wcgateway_module_url The WcGateway module URL.
-	 * @param OrderProcessor            $order_processor The Order processor.
-	 * @param array                     $card_icons The card icons.
-	 * @param array                     $card_icons_axo The card icons.
-	 * @param OrderEndpoint             $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
-	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
-	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
-	 * @param Environment               $environment The environment.
-	 * @param LoggerInterface           $logger The logger.
+	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
+	 * @param ContainerInterface        $ppcp_settings               The settings.
+	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
+	 * @param SessionHandler            $session_handler             The session handler.
+	 * @param OrderProcessor            $order_processor             The Order processor.
+	 * @param array                     $card_icons                  The card icons.
+	 * @param array                     $card_icons_axo              The card icons.
+	 * @param OrderEndpoint             $order_endpoint              The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory       The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory Shipping preference factory.
+	 * @param TransactionUrlProvider    $transaction_url_provider    The transaction url provider.
+	 * @param Environment               $environment                 The environment.
+	 * @param LoggerInterface           $logger                      The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
 		string $wcgateway_module_url,
+		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
 		array $card_icons,
 		array $card_icons_axo,
@@ -154,6 +166,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->settings_renderer    = $settings_renderer;
 		$this->ppcp_settings        = $ppcp_settings;
 		$this->wcgateway_module_url = $wcgateway_module_url;
+		$this->session_handler      = $session_handler;
 		$this->order_processor      = $order_processor;
 		$this->card_icons           = $card_icons;
 		$this->card_icons_axo       = $card_icons_axo;
@@ -213,80 +226,83 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * Processes the order.
 	 *
 	 * @param int $order_id The WC order ID.
+	 *
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$fastlane_member = wc_clean( wp_unslash( $_POST['fastlane_member'] ?? '' ) );
-		if ( $fastlane_member ) {
-			$payment_method_title = __( 'Debit & Credit Cards (via Fastlane by PayPal)', 'woocommerce-paypal-payments' );
-			$wc_order->set_payment_method_title( $payment_method_title );
-			$wc_order->save();
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			return $this->handle_payment_failure(
+				null,
+				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
+			);
 		}
 
-		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$nonce = wc_clean( wp_unslash( $_POST['axo_nonce'] ?? '' ) );
-
 		try {
-			$shipping_preference = $this->shipping_preference_factory->from_state(
-				$purchase_unit,
-				'checkout'
-			);
-
-			$payment_source_properties                   = new \stdClass();
-			$payment_source_properties->single_use_token = $nonce;
-
-			$payment_source = new PaymentSource(
-				'card',
-				$payment_source_properties
-			);
-
-			$order = $this->order_endpoint->create(
-				array( $purchase_unit ),
-				$shipping_preference,
-				null,
-				null,
-				'',
-				ApplicationContext::USER_ACTION_CONTINUE,
-				'',
-				array(),
-				$payment_source
-			);
-
-			$this->order_processor->process_captured_and_authorized( $wc_order, $order );
-
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
-				$error = $exception->get_details( $error );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$fastlane_member = wc_clean( wp_unslash( $_POST['fastlane_member'] ?? '' ) );
+			if ( $fastlane_member ) {
+				$payment_method_title = __( 'Debit & Credit Cards (via Fastlane by PayPal)', 'woocommerce-paypal-payments' );
+				$wc_order->set_payment_method_title( $payment_method_title );
+				$wc_order->save();
 			}
 
-			$this->logger->error( $error );
-			wc_add_notice( $error, 'error' );
+			// The `axo_nonce` is not a WP nonce, but a card-token generated by the JS SDK.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$token = wc_clean( wp_unslash( $_POST['axo_nonce'] ?? '' ) );
 
-			$wc_order->update_status(
-				'failed',
-				$error
-			);
+			$order = $this->create_paypal_order( $wc_order, $token );
 
-			return array(
-				'result'   => 'failure',
-				'redirect' => wc_get_checkout_url(),
-			);
+			$this->order_processor->process_captured_and_authorized( $wc_order, $order );
+		} catch ( Exception $exception ) {
+			return $this->handle_payment_failure( $wc_order, $exception );
 		}
 
 		WC()->cart->empty_cart();
 
-		$result = array(
+		return array(
 			'result'   => 'success',
 			'redirect' => $this->get_return_url( $wc_order ),
 		);
+	}
 
-		return $result;
+	/**
+	 * Create a new PayPal order from the existing WC_Order instance.
+	 *
+	 * @param WC_Order $wc_order      The WooCommerce order to use as a base.
+	 * @param string   $payment_token The payment token, generated by the JS SDK.
+	 *
+	 * @return Order The PayPal order.
+	 */
+	protected function create_paypal_order( WC_Order $wc_order, string $payment_token ) : Order {
+		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+
+		$shipping_preference = $this->shipping_preference_factory->from_state(
+			$purchase_unit,
+			'checkout'
+		);
+
+		$payment_source_properties = (object) array(
+			'single_use_token' => $payment_token,
+		);
+
+		$payment_source = new PaymentSource(
+			'card',
+			$payment_source_properties
+		);
+
+		return $this->order_endpoint->create(
+			array( $purchase_unit ),
+			$shipping_preference,
+			null,
+			null,
+			'',
+			ApplicationContext::USER_ACTION_CONTINUE,
+			'',
+			array(),
+			$payment_source
+		);
 	}
 
 	/**
@@ -328,7 +344,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_transaction_url( $order ): string {
+	public function get_transaction_url( $order ) : string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
@@ -362,7 +378,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return SettingsRenderer
 	 */
-	protected function settings_renderer(): SettingsRenderer {
+	protected function settings_renderer() : SettingsRenderer {
 		return $this->settings_renderer;
 	}
 }

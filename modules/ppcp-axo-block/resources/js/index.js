@@ -1,15 +1,18 @@
-import { useCallback, useState } from '@wordpress/element';
+import { useState } from '@wordpress/element';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
 // Hooks
 import useFastlaneSdk from './hooks/useFastlaneSdk';
+import useTokenizeCustomerData from './hooks/useTokenizeCustomerData';
 import useCardChange from './hooks/useCardChange';
 import useAxoSetup from './hooks/useAxoSetup';
 import usePaymentSetup from './hooks/usePaymentSetup';
 import useAxoCleanup from './hooks/useAxoCleanup';
+import useHandlePaymentSetup from './hooks/useHandlePaymentSetup';
 
 // Components
 import { Payment } from './components/Payment/Payment';
+import usePaymentSetupEffect from './hooks/usePaymentSetupEffect';
 
 const gatewayHandle = 'ppcp-axo-gateway';
 const ppcpConfig = wc.wcSettings.getSetting( `${ gatewayHandle }_data` );
@@ -25,8 +28,17 @@ const Axo = ( props ) => {
 	const { onPaymentSetup } = eventRegistration;
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
+	const [ paymentComponent, setPaymentComponent ] = useState( null );
+
 	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
+	const tokenizedCustomerData = useTokenizeCustomerData();
 	const onChangeCardButtonClick = useCardChange( fastlaneSdk, setCard );
+	const handlePaymentSetup = useHandlePaymentSetup(
+		emitResponse,
+		card,
+		paymentComponent,
+		tokenizedCustomerData
+	);
 
 	useAxoSetup(
 		ppcpConfig,
@@ -36,11 +48,13 @@ const Axo = ( props ) => {
 		setCard
 	);
 	usePaymentSetup( onPaymentSetup, emitResponse, card );
-	useAxoCleanup();
 
-	const handlePaymentLoad = useCallback( ( paymentComponent ) => {
-		console.log( 'Payment component loaded', paymentComponent );
-	}, [] );
+	const { handlePaymentLoad } = usePaymentSetupEffect(
+		onPaymentSetup,
+		handlePaymentSetup
+	);
+
+	useAxoCleanup();
 
 	const handleCardChange = ( selectedCard ) => {
 		console.log( 'Card selection changed', selectedCard );
