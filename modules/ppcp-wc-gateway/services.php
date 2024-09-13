@@ -132,10 +132,13 @@ return array(
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
+		$icons = $container->get( 'wcgateway.credit-card-icons' );
+
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
 			$settings,
+			$icons,
 			$module_url,
 			$session_handler,
 			$refund_processor,
