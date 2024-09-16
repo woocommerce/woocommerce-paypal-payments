@@ -56,15 +56,13 @@ export const usePhoneSyncHandler = ( paymentComponent ) => {
 
 	// Create a debounced function that updates the prefilled phone-number.
 	const debouncedUpdatePhone = useRef(
-		debounce( ( number, component ) => {
-			updatePrefills( component, number );
-		}, PHONE_DEBOUNCE_DELAY )
+		debounce( updatePrefills, PHONE_DEBOUNCE_DELAY )
 	).current;
 
 	// Invoke debounced function when paymentComponent or phoneNumber changes.
 	useEffect( () => {
 		if ( paymentComponent && phoneNumber ) {
-			debouncedUpdatePhone( phoneNumber, paymentComponent );
+			debouncedUpdatePhone( paymentComponent, phoneNumber );
 		}
 	}, [ debouncedUpdatePhone, paymentComponent, phoneNumber ] );
 
