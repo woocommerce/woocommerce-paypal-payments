@@ -8,8 +8,12 @@ export const useAddressEditing = () => {
 		( select ) => {
 			const store = select( CHECKOUT_STORE_KEY );
 			return {
-				isEditingShippingAddress: store.getEditingShippingAddress(),
-				isEditingBillingAddress: store.getEditingBillingAddress(),
+				isEditingShippingAddress: store.getEditingShippingAddress
+					? store.getEditingShippingAddress()
+					: true,
+				isEditingBillingAddress: store.getEditingBillingAddress
+					? store.getEditingBillingAddress()
+					: true,
 			};
 		},
 		[]
