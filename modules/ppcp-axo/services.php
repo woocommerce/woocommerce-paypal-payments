@@ -77,68 +77,13 @@ return array(
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'axo.card_icons' ),
-			$container->get( 'axo.card_icons.axo' ),
+			$container->get( 'wcgateway.credit-card-icons' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-
-	'axo.card_icons'                         => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-dark.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-dark.svg',
-			),
-			array(
-				'title' => 'American Express',
-				'file'  => 'amex.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover.svg',
-			),
-		);
-	},
-
-	'axo.card_icons.axo'                     => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-light.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-light.svg',
-			),
-			array(
-				'title' => 'Amex',
-				'file'  => 'amex-light.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover-light.svg',
-			),
-			array(
-				'title' => 'Diners Club',
-				'file'  => 'dinersclub-light.svg',
-			),
-			array(
-				'title' => 'JCB',
-				'file'  => 'jcb-light.svg',
-			),
-			array(
-				'title' => 'UnionPay',
-				'file'  => 'unionpay-light.svg',
-			),
 		);
 	},
 

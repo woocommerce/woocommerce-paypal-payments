@@ -74,13 +74,6 @@ class AxoGateway extends WC_Payment_Gateway {
 	protected $card_icons;
 
 	/**
-	 * The AXO card icons.
-	 *
-	 * @var array
-	 */
-	protected $card_icons_axo;
-
-	/**
 	 * The order endpoint.
 	 *
 	 * @var OrderEndpoint
@@ -132,19 +125,17 @@ class AxoGateway extends WC_Payment_Gateway {
 	/**
 	 * AXOGateway constructor.
 	 *
-	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
-	 * @param ContainerInterface        $ppcp_settings               The settings.
-	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
-	 * @param SessionHandler            $session_handler             The session handler.
-	 * @param OrderProcessor            $order_processor             The Order processor.
-	 * @param array                     $card_icons                  The card icons.
-	 * @param array                     $card_icons_axo              The card icons.
-	 * @param OrderEndpoint             $order_endpoint              The order endpoint.
-	 * @param PurchaseUnitFactory       $purchase_unit_factory       The purchase unit factory.
-	 * @param ShippingPreferenceFactory $shipping_preference_factory Shipping preference factory.
-	 * @param TransactionUrlProvider    $transaction_url_provider    The transaction url provider.
-	 * @param Environment               $environment                 The environment.
-	 * @param LoggerInterface           $logger                      The logger.
+	 * @param SettingsRenderer          $settings_renderer The settings renderer.
+	 * @param ContainerInterface        $ppcp_settings The settings.
+	 * @param string                    $wcgateway_module_url The WcGateway module URL.
+	 * @param OrderProcessor            $order_processor The Order processor.
+	 * @param array                     $card_icons      The card icons.
+	 * @param OrderEndpoint             $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
+	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
+	 * @param Environment               $environment The environment.
+	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -153,7 +144,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
 		array $card_icons,
-		array $card_icons_axo,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
@@ -169,7 +159,6 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->session_handler      = $session_handler;
 		$this->order_processor      = $order_processor;
 		$this->card_icons           = $card_icons;
-		$this->card_icons_axo       = $card_icons_axo;
 
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Fastlane accelerates the checkout experience for guest shoppers and autofills their details so they can pay in seconds. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' );
@@ -311,16 +300,10 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @return string
 	 */
 	public function get_icon() {
-		$icon      = parent::get_icon();
-		$icons     = $this->card_icons;
-		$icons_src = esc_url( $this->wcgateway_module_url ) . 'assets/images/';
+		$icon  = parent::get_icon();
+		$icons = $this->card_icons;
 
-		if ( $this->card_icons_axo ) {
-			$icons     = $this->card_icons_axo;
-			$icons_src = esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/';
-		}
-
-		if ( empty( $this->card_icons ) ) {
+		if ( ! $icons ) {
 			return $icon;
 		}
 
@@ -329,8 +312,8 @@ class AxoGateway extends WC_Payment_Gateway {
 		foreach ( $icons as $card ) {
 			$images[] = '<img
 				class="ppcp-card-icon"
-				title="' . $card['title'] . '"
-				src="' . $icons_src . $card['file'] . '"
+				title="' . esc_attr( $card['title'] ) . '"
+				src="' . esc_url( $card['url'] ) . '"
 			> ';
 		}
 
