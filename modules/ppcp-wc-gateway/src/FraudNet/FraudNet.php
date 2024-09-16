@@ -15,13 +15,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\FraudNet;
 class FraudNet {
 
 	/**
-	 * The session ID.
-	 *
-	 * @var string
-	 */
-	protected $session_id;
-
-	/**
 	 * The source website ID.
 	 *
 	 * @var string
@@ -31,21 +24,40 @@ class FraudNet {
 	/**
 	 * FraudNet constructor.
 	 *
-	 * @param string $session_id The session ID.
 	 * @param string $source_website_id The source website ID.
 	 */
-	public function __construct( string $session_id, string $source_website_id ) {
-		$this->session_id        = $session_id;
+	public function __construct( string $source_website_id ) {
 		$this->source_website_id = $source_website_id;
 	}
 
 	/**
-	 * Returns the session ID.
+	 * Returns the Fraudnet session ID.
 	 *
 	 * @return string
 	 */
 	public function session_id(): string {
-		return $this->session_id;
+		if ( WC()->session === null ) {
+			return '';
+		}
+
+		$fraudnet_session_id = WC()->session->get( 'ppcp_fraudnet_session_id' );
+		if ( is_string( $fraudnet_session_id ) && $fraudnet_session_id !== '' ) {
+			return $fraudnet_session_id;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$pui_pay_for_order_session_id = wc_clean( wp_unslash( $_POST['pui_pay_for_order_session_id'] ?? '' ) );
+			if ( is_string( $pui_pay_for_order_session_id ) && $pui_pay_for_order_session_id !== '' ) {
+				return $pui_pay_for_order_session_id;
+			}
+		}
+
+		$session_id = bin2hex( random_bytes( 16 ) );
+		WC()->session->set( 'ppcp_fraudnet_session_id', $session_id );
+
+		return $session_id;
 	}
 
 	/**

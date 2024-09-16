@@ -1285,17 +1285,12 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
-	'wcgateway.fraudnet-session-id'                        => static function ( ContainerInterface $container ): FraudNetSessionId {
-		return new FraudNetSessionId();
-	},
 	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
 	},
 	'wcgateway.fraudnet'                                   => static function ( ContainerInterface $container ): FraudNet {
-		$session_id = $container->get( 'wcgateway.fraudnet-session-id' );
 		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
 		return new FraudNet(
-			(string) $session_id(),
 			(string) $source_website_id()
 		);
 	},
