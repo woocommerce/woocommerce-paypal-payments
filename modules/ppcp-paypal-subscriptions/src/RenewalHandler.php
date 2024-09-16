@@ -48,8 +48,7 @@ class RenewalHandler {
 	 */
 	public function process( array $subscriptions, string $transaction_id ): void {
 		foreach ( $subscriptions as $subscription ) {
-			$is_renewal = $subscription->get_meta( '_ppcp_is_subscription_renewal' ) ?? '';
-			if ( $is_renewal ) {
+			if ( $this->is_renewal( $subscription ) ) {
 				$renewal_order = wcs_create_renewal_order( $subscription );
 				if ( is_a( $renewal_order, WC_Order::class ) ) {
 					$renewal_order->set_payment_method( $subscription->get_payment_method() );
@@ -66,5 +65,20 @@ class RenewalHandler {
 				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
 			}
 		}
+	}
+
+	/**
+	 * Checks whether subscription order is for renewal or not.
+	 *
+	 * @param WC_Subscription $subscription WC Subscription.
+	 * @return bool
+	 */
+	private function is_renewal( WC_Subscription $subscription ): bool {
+		$subscription_renewal_meta = $subscription->get_meta( '_ppcp_is_subscription_renewal' ) ?? '';
+		if ( $subscription_renewal_meta === 'true' ) {
+			return true;
+		}
+
+		return false;
 	}
 }
