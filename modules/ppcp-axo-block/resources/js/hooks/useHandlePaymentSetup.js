@@ -17,9 +17,15 @@ const useHandlePaymentSetup = (
 		}
 
 		if ( ! cardToken ) {
+			let reason = 'tokenization error';
+
+			if ( ! paymentComponent ) {
+				reason = 'initialization error';
+			}
+
 			return {
 				type: emitResponse.responseTypes.ERROR,
-				message: 'Could not process the payment (tokenization error)',
+				message: `Could not process the payment (${ reason })`,
 			};
 		}
 
@@ -32,11 +38,7 @@ const useHandlePaymentSetup = (
 				},
 			},
 		};
-	}, [
-		card,
-		paymentComponent,
-		tokenizedCustomerData,
-	] );
+	}, [ card, paymentComponent, tokenizedCustomerData ] );
 };
 
 export default useHandlePaymentSetup;
