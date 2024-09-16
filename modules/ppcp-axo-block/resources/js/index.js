@@ -6,7 +6,6 @@ import useFastlaneSdk from './hooks/useFastlaneSdk';
 import useTokenizeCustomerData from './hooks/useTokenizeCustomerData';
 import useCardChange from './hooks/useCardChange';
 import useAxoSetup from './hooks/useAxoSetup';
-import usePaymentSetup from './hooks/usePaymentSetup';
 import useAxoCleanup from './hooks/useAxoCleanup';
 import useHandlePaymentSetup from './hooks/useHandlePaymentSetup';
 
@@ -49,11 +48,11 @@ const Axo = ( props ) => {
 		setCard,
 		setWooPhone
 	);
-	usePaymentSetup( onPaymentSetup, emitResponse, card );
 
 	const { handlePaymentLoad } = usePaymentSetupEffect(
 		onPaymentSetup,
-		handlePaymentSetup
+		handlePaymentSetup,
+		setPaymentComponent
 	);
 
 	useAxoCleanup();

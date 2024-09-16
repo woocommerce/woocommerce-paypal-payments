@@ -172,7 +172,7 @@ $fast-transition-duration: 0.5s;
 	}
 
 	// 4.7 Validation Error
-	.wc-block-components-validation-error {
+	.wc-block-components-address-form__email .wc-block-components-validation-error {
 		grid-area: error;
 		width: 100%;
 		margin-top: 4px;
