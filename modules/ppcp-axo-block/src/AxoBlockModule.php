@@ -72,9 +72,9 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 			function () use ( $c ) {
 				add_filter(
 					'woocommerce_paypal_payments_localized_script_data',
-					function( array $localized_script_data ) use ($c) {
+					function( array $localized_script_data ) use ( $c ) {
 						$module = $this;
-						$api = $c->get( 'api.sdk-client-token' );
+						$api    = $c->get( 'api.sdk-client-token' );
 						assert( $api instanceof SdkClientToken );
 
 						$logger = $c->get( 'woocommerce.logger.woocommerce' );
@@ -105,31 +105,6 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 				$payment_method_registry->register( $c->get( 'axoblock.method' ) );
 			}
 		);
-
-//		woocommerce_store_api_register_payment_requirements(
-//			array(
-//				'data_callback' => function() use ( $c ): array {
-//					$smart_button = $c->get( 'button.smart-button' );
-//					assert( $smart_button instanceof SmartButtonInterface );
-//
-//					if ( isset( $smart_button->script_data()['continuation'] ) ) {
-//						return array( 'ppcp_continuation' );
-//					}
-//
-//					return array();
-//				},
-//			)
-//		);
-
-//		add_action(
-//			'wc_ajax_' . UpdateShippingEndpoint::ENDPOINT,
-//			static function () use ( $c ) {
-//				$endpoint = $c->get( 'blocks.endpoint.update-shipping' );
-//				assert( $endpoint instanceof UpdateShippingEndpoint );
-//
-//				$endpoint->handle_request();
-//			}
-//		);
 
 		// Enqueue frontend scripts.
 		add_action(
