@@ -42,6 +42,7 @@ const Axo = ( props ) => {
 	useAxoSetup(
 		ppcpConfig,
 		fastlaneSdk,
+		paymentComponent,
 		onChangeCardButtonClick,
 		setShippingAddress,
 		setCard

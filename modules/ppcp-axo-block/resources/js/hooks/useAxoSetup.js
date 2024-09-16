@@ -5,6 +5,7 @@ import usePayPalScript from './usePayPalScript';
 import { setupWatermark } from '../components/Watermark';
 import { setupEmailFunctionality } from '../components/EmailButton';
 import { createEmailLookupHandler } from '../events/emailLookupManager';
+import { usePhoneSyncHandler } from './usePhoneSyncHandler';
 import { initializeClassToggles } from '../helpers/classnamesManager';
 import { snapshotFields } from '../helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
@@ -13,6 +14,7 @@ import useShippingAddressChange from './useShippingAddressChange';
 const useAxoSetup = (
 	ppcpConfig,
 	fastlaneSdk,
+	paymentComponent,
 	onChangeCardButtonClick,
 	setShippingAddress,
 	setCard
@@ -31,6 +33,8 @@ const useAxoSetup = (
 		setShippingAddress: setWooShippingAddress,
 		setBillingAddress: setWooBillingAddress,
 	} = useCustomerData();
+
+	usePhoneSyncHandler( paymentComponent );
 
 	useEffect( () => {
 		console.log( 'Initializing class toggles' );
@@ -73,6 +77,7 @@ const useAxoSetup = (
 		onChangeCardButtonClick,
 		setShippingAddress,
 		setCard,
+		paymentComponent,
 	] );
 
 	return paypalLoaded;
