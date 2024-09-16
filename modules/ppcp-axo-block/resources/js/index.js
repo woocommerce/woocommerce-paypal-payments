@@ -28,6 +28,7 @@ const Axo = ( props ) => {
 	const { onPaymentSetup } = eventRegistration;
 	const [ shippingAddress, setShippingAddress ] = useState( null );
 	const [ card, setCard ] = useState( null );
+	const [ wooPhone, setWooPhone ] = useState( '' );
 	const [ paymentComponent, setPaymentComponent ] = useState( null );
 
 	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
@@ -45,7 +46,8 @@ const Axo = ( props ) => {
 		fastlaneSdk,
 		onChangeCardButtonClick,
 		setShippingAddress,
-		setCard
+		setCard,
+		setWooPhone
 	);
 	usePaymentSetup( onPaymentSetup, emitResponse, card );
 
