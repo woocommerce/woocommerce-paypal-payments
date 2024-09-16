@@ -1,5 +1,5 @@
 import { createElement, createRoot } from '@wordpress/element';
-import { Watermark, WatermarkManager } from '../watermark';
+import { Watermark, WatermarkManager } from '../Watermark';
 
 const watermarkReference = {
 	container: null,

@@ -1,3 +1,5 @@
+import { dispatch } from '@wordpress/data';
+
 export const snapshotFields = ( shippingAddress, billingAddress ) => {
 	console.log( 'Attempting to snapshot fields' );
 	if ( ! shippingAddress || ! billingAddress ) {
@@ -74,10 +76,15 @@ export const populateWooFields = (
 	setWooShippingAddress,
 	setWooBillingAddress
 ) => {
+	const CHECKOUT_STORE_KEY = 'wc/store/checkout';
+
 	console.log(
 		'Populating WooCommerce fields with profile data:',
 		profileData
 	);
+
+	// Disable the 'Use same address for billing' checkbox
+	dispatch( CHECKOUT_STORE_KEY ).__internalSetUseShippingAsBilling( false );
 
 	// Save shipping address
 	const { address, name, phoneNumber } = profileData.shippingAddress;
@@ -113,4 +120,7 @@ export const populateWooFields = (
 
 	console.log( 'Setting WooCommerce billing address:', billingAddress );
 	setWooBillingAddress( billingAddress );
+
+	dispatch( CHECKOUT_STORE_KEY ).setEditingShippingAddress( false );
+	dispatch( CHECKOUT_STORE_KEY ).setEditingBillingAddress( false );
 };

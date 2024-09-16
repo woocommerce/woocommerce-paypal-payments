@@ -1,6 +1,6 @@
 import { createElement, createRoot } from '@wordpress/element';
 import { STORE_NAME } from '../../stores/axoStore';
-import { EmailButton } from './EmailButton';
+import EmailButton from './EmailButton';
 
 let emailInput = null;
 let submitButtonReference = {
@@ -17,7 +17,7 @@ const getEmailInput = () => {
 	return emailInput;
 };
 
-const setupEmailFunctionality = ( onEmailSubmit ) => {
+export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const input = getEmailInput();
 	if ( ! input ) {
 		console.warn(
@@ -29,7 +29,7 @@ const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const handleEmailSubmit = async () => {
 		const isEmailSubmitted = wp.data
 			.select( STORE_NAME )
-			.isEmailSubmitted();
+			.getIsEmailSubmitted();
 
 		if ( isEmailSubmitted || ! input.value ) {
 			return;
@@ -96,7 +96,7 @@ const setupEmailFunctionality = ( onEmailSubmit ) => {
 	} );
 };
 
-const removeEmailFunctionality = () => {
+export const removeEmailFunctionality = () => {
 	const input = getEmailInput();
 	if ( input && keydownHandler ) {
 		input.removeEventListener( 'keydown', keydownHandler );
@@ -120,12 +120,6 @@ const removeEmailFunctionality = () => {
 	keydownHandler = null;
 };
 
-const isEmailFunctionalitySetup = () => {
+export const isEmailFunctionalitySetup = () => {
 	return !! submitButtonReference.root;
-};
-
-export {
-	setupEmailFunctionality,
-	removeEmailFunctionality,
-	isEmailFunctionalitySetup,
 };

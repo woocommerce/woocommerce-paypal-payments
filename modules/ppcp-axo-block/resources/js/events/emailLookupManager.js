@@ -1,7 +1,7 @@
 import { populateWooFields } from '../helpers/fieldHelpers';
-import { injectShippingChangeButton } from '../components/shipping';
-import { injectCardChangeButton } from '../helpers/cardChangeButtonManager';
-import { setIsGuest } from '../stores/axoStore';
+import { injectShippingChangeButton } from '../components/Shipping';
+import { injectCardChangeButton } from '../components/Card';
+import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
 
 export const createEmailLookupHandler = (
 	fastlaneSdk,
@@ -34,6 +34,11 @@ export const createEmailLookupHandler = (
 
 			console.log( 'Lookup response:', lookup );
 
+			// Gary flow
+			if ( lookup && lookup.customerContextId === '' ) {
+				setIsEmailLookupCompleted( true );
+			}
+
 			if ( ! lookup || ! lookup.customerContextId ) {
 				console.warn( 'No customerContextId found in the response' );
 				return;
@@ -50,9 +55,13 @@ export const createEmailLookupHandler = (
 
 			const { authenticationState, profileData } = authResponse;
 
+			// OTP success/fail/cancel flow
+			if ( authResponse ) {
+				setIsEmailLookupCompleted( true );
+			}
+
 			if ( authenticationState === 'succeeded' ) {
 				snapshotFields( wooShippingAddress, wooBillingAddress );
-
 				setIsGuest( false );
 
 				if ( profileData && profileData.shippingAddress ) {

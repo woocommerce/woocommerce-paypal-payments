@@ -1,7 +1,11 @@
 import { useCallback } from '@wordpress/element';
-import useFastlaneSdk from "./useFastlaneSdk";
+import { useAddressEditing } from './useAddressEditing';
+import useCustomerData from './useCustomerData';
 
-export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
+export const useCardChange = ( fastlaneSdk, setCard ) => {
+	const { setBillingAddressEditing } = useAddressEditing();
+	const { setBillingAddress: setWooBillingAddress } = useCustomerData();
+
 	return useCallback( async () => {
 		if ( fastlaneSdk ) {
 			const { selectionChanged, selectedCard } =
@@ -18,7 +22,7 @@ export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
 				const firstName = nameParts[ 0 ];
 				const lastName = nameParts.slice( 1 ).join( ' ' );
 
-				setWooBillingAddress( {
+				const newBillingAddress = {
 					first_name: firstName,
 					last_name: lastName,
 					address_1: billingAddress.addressLine1,
@@ -27,12 +31,25 @@ export const useCardChange = ( fastlaneSdk, setCard, setWooBillingAddress ) => {
 					state: billingAddress.adminArea1,
 					postcode: billingAddress.postalCode,
 					country: billingAddress.countryCode,
+				};
+
+				await new Promise( ( resolve ) => {
+					setWooBillingAddress( newBillingAddress );
+					resolve();
 				} );
 
-				console.log( 'Billing address updated:', billingAddress );
+				await new Promise( ( resolve ) => {
+					setBillingAddressEditing( false );
+					resolve();
+				} );
 			}
 		}
-	}, [ fastlaneSdk, setCard ] );
+	}, [
+		fastlaneSdk,
+		setCard,
+		setWooBillingAddress,
+		setBillingAddressEditing,
+	] );
 };
 
 export default useCardChange;
