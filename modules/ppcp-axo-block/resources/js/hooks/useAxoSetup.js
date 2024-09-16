@@ -14,6 +14,7 @@ import useShippingAddressChange from './useShippingAddressChange';
 const useAxoSetup = (
 	ppcpConfig,
 	fastlaneSdk,
+	paymentComponent,
 	onChangeCardButtonClick,
 	setShippingAddress,
 	setCard,
@@ -34,7 +35,7 @@ const useAxoSetup = (
 		setBillingAddress: setWooBillingAddress,
 	} = useCustomerData();
 
-	usePhoneSyncHandler( setWooPhone );
+	usePhoneSyncHandler( paymentComponent, setWooPhone );
 
 	useEffect( () => {
 		console.log( 'Initializing class toggles' );
@@ -77,6 +78,7 @@ const useAxoSetup = (
 		onChangeCardButtonClick,
 		setShippingAddress,
 		setCard,
+		paymentComponent,
 	] );
 
 	return paypalLoaded;

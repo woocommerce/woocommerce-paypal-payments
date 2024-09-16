@@ -36,8 +36,9 @@ const getSanitizedPhoneNumber = ( select ) => {
  * Custom hook to synchronize the WooCommerce phone number with a React component state.
  *
  * @param {Function} setWooPhone - The state setter function for the phone number.
+ * @param {Object} paymentComponent - The CardField component from Fastlane.
  */
-export const usePhoneSyncHandler = ( setWooPhone ) => {
+export const usePhoneSyncHandler = ( paymentComponent, setWooPhone ) => {
 	// Fetch and sanitize phone number from WooCommerce.
 	const phoneNumber = useSelect( ( select ) =>
 		getSanitizedPhoneNumber( select )
