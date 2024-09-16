@@ -17,8 +17,7 @@ const useAxoSetup = (
 	paymentComponent,
 	onChangeCardButtonClick,
 	setShippingAddress,
-	setCard,
-	setWooPhone
+	setCard
 ) => {
 	const { setIsAxoActive, setIsAxoScriptLoaded } = useDispatch( STORE_NAME );
 	const paypalLoaded = usePayPalScript( ppcpConfig );
@@ -35,7 +34,7 @@ const useAxoSetup = (
 		setBillingAddress: setWooBillingAddress,
 	} = useCustomerData();
 
-	usePhoneSyncHandler( paymentComponent, setWooPhone );
+	usePhoneSyncHandler( paymentComponent );
 
 	useEffect( () => {
 		console.log( 'Initializing class toggles' );

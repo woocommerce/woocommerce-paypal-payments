@@ -46,10 +46,9 @@ const updatePrefills = ( paymentComponent, phoneNumber ) => {
 /**
  * Custom hook to synchronize the WooCommerce phone number with a React component state.
  *
- * @param {Function} setWooPhone - The state setter function for the phone number.
  * @param {Object} paymentComponent - The CardField component from Fastlane.
  */
-export const usePhoneSyncHandler = ( paymentComponent, setWooPhone ) => {
+export const usePhoneSyncHandler = ( paymentComponent ) => {
 	// Fetch and sanitize phone number from WooCommerce.
 	const phoneNumber = useSelect( ( select ) =>
 		getSanitizedPhoneNumber( select )
@@ -58,7 +57,6 @@ export const usePhoneSyncHandler = ( paymentComponent, setWooPhone ) => {
 	// Create a debounced function that updates the prefilled phone-number.
 	const debouncedUpdatePhone = useRef(
 		debounce( ( number, component ) => {
-			setWooPhone( number );
 			updatePrefills( component, number );
 		}, PHONE_DEBOUNCE_DELAY )
 	).current;
