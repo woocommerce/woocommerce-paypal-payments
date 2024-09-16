@@ -128,6 +128,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param SettingsRenderer          $settings_renderer The settings renderer.
 	 * @param ContainerInterface        $ppcp_settings The settings.
 	 * @param string                    $wcgateway_module_url The WcGateway module URL.
+	 * @param SessionHandler            $session_handler The Session Handler.
 	 * @param OrderProcessor            $order_processor The Order processor.
 	 * @param array                     $card_icons      The card icons.
 	 * @param OrderEndpoint             $order_endpoint The order endpoint.
