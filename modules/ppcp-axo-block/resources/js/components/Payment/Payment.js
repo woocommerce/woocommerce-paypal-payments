@@ -8,24 +8,35 @@ export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
 		select( STORE_NAME ).getIsGuest()
 	);
 
-	// Memoized Fastlane card rendering
+	const isEmailLookupCompleted = useSelect( ( select ) =>
+		select( STORE_NAME ).getIsEmailLookupCompleted()
+	);
+
 	const loadPaymentComponent = useCallback( async () => {
-		if ( isGuest ) {
+		if ( isGuest && isEmailLookupCompleted ) {
 			const paymentComponent = await fastlaneSdk.FastlaneCardComponent(
 				{}
 			);
 			paymentComponent.render( `#fastlane-card` );
 			onPaymentLoad( paymentComponent );
 		}
-	}, [ isGuest, fastlaneSdk, onPaymentLoad ] );
+	}, [ isGuest, isEmailLookupCompleted, fastlaneSdk, onPaymentLoad ] );
 
 	useEffect( () => {
 		loadPaymentComponent();
 	}, [ loadPaymentComponent ] );
 
-	return isGuest ? (
-		<div id="fastlane-card" key="fastlane-card" />
-	) : (
+	if ( isGuest ) {
+		if ( isEmailLookupCompleted ) {
+			return <div id="fastlane-card" key="fastlane-card" />;
+		}
+		return (
+			<div id="ppcp-axo-block-radio-content">
+				Enter your email address above to continue.
+			</div>
+		);
+	}
+	return (
 		<Card
 			card={ card }
 			fastlaneSdk={ fastlaneSdk }
