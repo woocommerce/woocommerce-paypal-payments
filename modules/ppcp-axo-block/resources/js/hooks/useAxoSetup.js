@@ -5,7 +5,7 @@ import usePayPalScript from './usePayPalScript';
 import { setupWatermark } from '../components/Watermark';
 import { setupEmailFunctionality } from '../components/EmailButton';
 import { createEmailLookupHandler } from '../events/emailLookupManager';
-import { usePhoneSyncHandler } from './phoneSyncManager';
+import { usePhoneSyncHandler } from './usePhoneSyncHandler';
 import { initializeClassToggles } from '../helpers/classnamesManager';
 import { snapshotFields } from '../helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
