@@ -1,6 +1,6 @@
 import { createElement, createRoot } from '@wordpress/element';
-import { STORE_NAME } from '../stores/axoStore';
-import { EmailSubmitButton } from '../components/EmailSubmitButton';
+import { STORE_NAME } from '../../stores/axoStore';
+import EmailButton from './EmailButton';
 
 let emailInput = null;
 let submitButtonReference = {
@@ -29,7 +29,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const handleEmailSubmit = async () => {
 		const isEmailSubmitted = wp.data
 			.select( STORE_NAME )
-			.isEmailSubmitted();
+			.getIsEmailSubmitted();
 
 		if ( isEmailSubmitted || ! input.value ) {
 			return;
@@ -42,10 +42,9 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 			await onEmailSubmit( input.value );
 		} catch ( error ) {
 			console.error( 'Error during email submission:', error );
-			// Here you might want to show an error message to the user
 		} finally {
 			wp.data.dispatch( STORE_NAME ).setIsEmailSubmitted( false );
-			renderButton(); // Re-render button to remove loading state
+			renderButton();
 		}
 	};
 
@@ -80,7 +79,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const renderButton = () => {
 		if ( submitButtonReference.root ) {
 			submitButtonReference.root.render(
-				createElement( EmailSubmitButton, {
+				createElement( EmailButton, {
 					handleSubmit: handleEmailSubmit,
 				} )
 			);
@@ -89,7 +88,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 		}
 	};
 
-	renderButton(); // Initial render
+	renderButton();
 
 	// Subscribe to state changes
 	submitButtonReference.unsubscribe = wp.data.subscribe( () => {
@@ -124,5 +123,3 @@ export const removeEmailFunctionality = () => {
 export const isEmailFunctionalitySetup = () => {
 	return !! submitButtonReference.root;
 };
-
-export default EmailSubmitButton;

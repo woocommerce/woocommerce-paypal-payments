@@ -1,13 +1,9 @@
 import { useEffect, useCallback } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import { CreditCard } from './CreditCard';
-import { STORE_NAME } from '../stores/axoStore';
+import { Card } from '../Card';
+import { STORE_NAME } from '../../stores/axoStore';
 
-export const Payment = ( {
-	fastlaneSdk,
-	card,
-	onPaymentLoad,
-} ) => {
+export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
 	const isGuest = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsGuest()
 	);
@@ -30,7 +26,7 @@ export const Payment = ( {
 	return isGuest ? (
 		<div id="fastlane-card" key="fastlane-card" />
 	) : (
-		<CreditCard
+		<Card
 			card={ card }
 			fastlaneSdk={ fastlaneSdk }
 			showWatermark={ ! isGuest }

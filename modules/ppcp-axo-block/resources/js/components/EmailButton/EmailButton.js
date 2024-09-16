@@ -1,12 +1,12 @@
-import { STORE_NAME } from '../stores/axoStore';
+import { STORE_NAME } from '../../stores/axoStore';
 import { useSelect } from '@wordpress/data';
 
-export const EmailSubmitButton = ( { handleSubmit } ) => {
+const EmailButton = ( { handleSubmit } ) => {
 	const { isGuest, isAxoActive, isEmailSubmitted } = useSelect(
 		( select ) => ( {
 			isGuest: select( STORE_NAME ).getIsGuest(),
 			isAxoActive: select( STORE_NAME ).getIsAxoActive(),
-			isEmailSubmitted: select( STORE_NAME ).isEmailSubmitted(),
+			isEmailSubmitted: select( STORE_NAME ).getIsEmailSubmitted(),
 		} )
 	);
 
@@ -29,7 +29,7 @@ export const EmailSubmitButton = ( { handleSubmit } ) => {
 					visibility: isEmailSubmitted ? 'hidden' : 'visible',
 				} }
 			>
-				Submit
+				Continue
 			</span>
 			{ isEmailSubmitted && (
 				<span
@@ -46,3 +46,5 @@ export const EmailSubmitButton = ( { handleSubmit } ) => {
 		</button>
 	);
 };
+
+export default EmailButton;

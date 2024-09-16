@@ -1,5 +1,5 @@
 import { useMemo } from '@wordpress/element';
-import { FastlaneWatermark } from './FastlaneWatermark';
+import { Watermark } from '../Watermark';
 
 const cardIcons = {
 	VISA: 'visa-light.svg',
@@ -11,7 +11,7 @@ const cardIcons = {
 	UNIONPAY: 'unionpay-light.svg',
 };
 
-export const CreditCard = ( { card, fastlaneSdk, showWatermark = true } ) => {
+const Card = ( { card, fastlaneSdk, showWatermark = true } ) => {
 	const { brand, lastDigits, expiry, name } = card?.paymentSource?.card ?? {};
 
 	const cardLogo = useMemo( () => {
@@ -48,7 +48,7 @@ export const CreditCard = ( { card, fastlaneSdk, showWatermark = true } ) => {
 				</div>
 				<div className="wc-block-checkout-axo-block-card__watermark">
 					{ showWatermark && (
-						<FastlaneWatermark
+						<Watermark
 							fastlaneSdk={ fastlaneSdk }
 							name="wc-block-checkout-axo-card-watermark"
 							includeAdditionalInfo={ false }
@@ -59,3 +59,5 @@ export const CreditCard = ( { card, fastlaneSdk, showWatermark = true } ) => {
 		</div>
 	);
 };
+
+export default Card;

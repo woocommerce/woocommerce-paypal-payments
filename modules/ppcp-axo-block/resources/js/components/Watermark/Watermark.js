@@ -1,6 +1,6 @@
 import { useEffect, useRef } from '@wordpress/element';
 
-export const FastlaneWatermark = ( {
+const Watermark = ( {
 	fastlaneSdk,
 	name = 'fastlane-watermark-container',
 	includeAdditionalInfo = true,
@@ -42,3 +42,5 @@ export const FastlaneWatermark = ( {
 
 	return <div id={ name } ref={ containerRef } />;
 };
+
+export default Watermark;
