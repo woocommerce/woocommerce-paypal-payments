@@ -33,6 +33,17 @@ const getSanitizedPhoneNumber = ( select ) => {
 };
 
 /**
+ * Updates the prefilled phone number in the Fastlane CardField component.
+ *
+ * @param {Object} paymentComponent - The CardField component from Fastlane
+ * @param {string} phoneNumber      - The new phone number to prefill.
+ */
+const updatePrefills = ( paymentComponent, phoneNumber ) => {
+	console.log( 'Update the phone prefill value', phoneNumber );
+	paymentComponent.updatePrefills( { phoneNumber } );
+};
+
+/**
  * Custom hook to synchronize the WooCommerce phone number with a React component state.
  *
  * @param {Function} setWooPhone - The state setter function for the phone number.
@@ -44,29 +55,25 @@ export const usePhoneSyncHandler = ( paymentComponent, setWooPhone ) => {
 		getSanitizedPhoneNumber( select )
 	);
 
-	// Initialize debounced setter for Fastlane.
-	const debouncedSetWooPhoneRef = useRef();
-
-	if ( ! debouncedSetWooPhoneRef.current ) {
-		debouncedSetWooPhoneRef.current = debounce( ( number ) => {
+	// Create a debounced function that updates the prefilled phone-number.
+	const debouncedUpdatePhone = useRef(
+		debounce( ( number, component ) => {
 			setWooPhone( number );
-		}, PHONE_DEBOUNCE_DELAY );
-	}
+			updatePrefills( component, number );
+		}, PHONE_DEBOUNCE_DELAY )
+	).current;
 
-	// Invoke debounced setter when phone number changes.
+	// Invoke debounced function when paymentComponent or phoneNumber changes.
 	useEffect( () => {
-		if ( phoneNumber ) {
-			console.log( 'New phone number:', phoneNumber );
-			debouncedSetWooPhoneRef.current( phoneNumber );
+		if ( paymentComponent && phoneNumber ) {
+			debouncedUpdatePhone( phoneNumber, paymentComponent );
 		}
-	}, [ phoneNumber ] );
+	}, [ debouncedUpdatePhone, paymentComponent, phoneNumber ] );
 
 	// Cleanup on unmount, canceling any pending debounced calls.
 	useEffect( () => {
 		return () => {
-			if ( debouncedSetWooPhoneRef.current?.cancel ) {
-				debouncedSetWooPhoneRef.current.cancel();
-			}
+			debouncedUpdatePhone.cancel();
 		};
-	}, [] );
+	}, [ debouncedUpdatePhone ] );
 };
