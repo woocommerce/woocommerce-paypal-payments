@@ -69,7 +69,9 @@ export const usePhoneSyncHandler = ( paymentComponent ) => {
 	// Cleanup on unmount, canceling any pending debounced calls.
 	useEffect( () => {
 		return () => {
-			debouncedUpdatePhone.cancel();
+			if ( debouncedUpdatePhone?.cancel ) {
+				debouncedUpdatePhone.cancel();
+			}
 		};
 	}, [ debouncedUpdatePhone ] );
 };
