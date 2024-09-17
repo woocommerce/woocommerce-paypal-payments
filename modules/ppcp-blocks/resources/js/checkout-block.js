@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useState, useRef } from '@wordpress/element';
 import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
@@ -45,7 +45,7 @@ const PayPalComponent = ( {
 		eventRegistration;
 	const { responseTypes } = emitResponse;
 
-	const [ paypalOrder, setPaypalOrder ] = useState( null );
+	const paypalOrder = useRef( null );
 	const [ gotoContinuationOnError, setGotoContinuationOnError ] =
 		useState( false );
 
@@ -195,7 +195,7 @@ const PayPalComponent = ( {
 				await Promise.all( promises );
 			}
 
-			setPaypalOrder( subscription );
+			paypalOrder.current = subscription;
 
 			const res = await fetch(
 				config.scriptData.ajax.approve_subscription.endpoint,
@@ -287,7 +287,7 @@ const PayPalComponent = ( {
 				await Promise.all( promises );
 			}
 
-			setPaypalOrder( order );
+			paypalOrder.current = order;
 
 			const res = await fetch(
 				config.scriptData.ajax.approve_order.endpoint,
@@ -518,13 +518,13 @@ const PayPalComponent = ( {
 				};
 			}
 
-			const addresses = paypalOrderToWcAddresses( paypalOrder );
+			const addresses = paypalOrderToWcAddresses( paypalOrder.current );
 
 			return {
 				type: responseTypes.SUCCESS,
 				meta: {
 					paymentMethodData: {
-						paypal_order_id: paypalOrder.id,
+						paypal_order_id: paypalOrder.current.id,
 						funding_source: window.ppcpFundingSource ?? 'paypal',
 					},
 					...addresses,
@@ -534,7 +534,7 @@ const PayPalComponent = ( {
 		return () => {
 			unsubscribeProcessing();
 		};
-	}, [ onPaymentSetup, paypalOrder, activePaymentMethod ] );
+	}, [ onPaymentSetup, paypalOrder.current, activePaymentMethod ] );
 
 	useEffect( () => {
 		if ( activePaymentMethod !== methodId ) {
