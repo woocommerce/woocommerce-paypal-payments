@@ -27,7 +27,7 @@ $fast-transition-duration: 0.5s;
 .wc-block-checkout-axo-block-card {
 	@include flex-center;
 	width: 100%;
-	margin-bottom: 10px;
+	margin-bottom: 2em;
 
 	&__inner {
 		display: flex;
@@ -124,7 +124,9 @@ $fast-transition-duration: 0.5s;
 		#shipping-fields,
 		#billing-fields,
 		#shipping-option,
-		#order-notes {
+		#order-notes,
+		.wp-block-woocommerce-checkout-terms-block,
+		.wp-block-woocommerce-checkout-actions-block {
 			display: none;
 		}
 	}
