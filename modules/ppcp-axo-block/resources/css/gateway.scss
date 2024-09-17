@@ -27,7 +27,7 @@ $fast-transition-duration: 0.5s;
 .wc-block-checkout-axo-block-card {
 	@include flex-center;
 	width: 100%;
-	margin-bottom: 10px;
+	margin-bottom: 2em;
 
 	&__inner {
 		display: flex;
@@ -124,7 +124,9 @@ $fast-transition-duration: 0.5s;
 		#shipping-fields,
 		#billing-fields,
 		#shipping-option,
-		#order-notes {
+		#order-notes,
+		.wp-block-woocommerce-checkout-terms-block,
+		.wp-block-woocommerce-checkout-actions-block {
 			display: none;
 		}
 	}
@@ -138,11 +140,12 @@ $fast-transition-duration: 0.5s;
 	.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input {
 		display: grid;
 		grid-template-areas:
-      "input button"
-      "watermark watermark"
-      "error error";
-		grid-template-columns: 1fr auto;
-		gap: 6px 8px;
+     "input"
+     "button"
+     "watermark"
+     "error";
+		grid-template-columns: 1fr;
+		gap: 6px;
 		align-items: start;
 
 		input[type="email"] {
@@ -152,16 +155,17 @@ $fast-transition-duration: 0.5s;
 	}
 
 	#email {
-		align-self: center;
+		align-self: stretch;
 	}
 
 	// 4.5 Email Submit Button
 	.wc-block-axo-email-submit-button-container {
 		grid-area: button;
-		align-self: center;
+		align-self: stretch;
 
 		.wc-block-components-button {
 			white-space: nowrap;
+			width: 100%;
 		}
 	}
 
@@ -176,6 +180,29 @@ $fast-transition-duration: 0.5s;
 		grid-area: error;
 		width: 100%;
 		margin-top: 4px;
+	}
+
+	@media (min-width: 783px) {
+		.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input {
+			grid-template-areas:
+         "input button"
+         "watermark watermark"
+         "error error";
+			grid-template-columns: 1fr auto;
+			gap: 6px 8px;
+		}
+
+		#email {
+			align-self: center;
+		}
+
+		.wc-block-axo-email-submit-button-container {
+			align-self: center;
+
+			.wc-block-components-button {
+				width: auto;
+			}
+		}
 	}
 }
 

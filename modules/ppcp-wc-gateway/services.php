@@ -29,6 +29,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactory;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactoryInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Tasks\SimpleRedirectTask;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -127,10 +132,13 @@ return array(
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
+		$icons = $container->get( 'wcgateway.credit-card-icons' );
+
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
 			$settings,
+			$icons,
 			$module_url,
 			$session_handler,
 			$refund_processor,
@@ -147,6 +155,68 @@ return array(
 			$container->get( 'vaulting.wc-payment-tokens' ),
 			$logger
 		);
+	},
+	'wcgateway.credit-card-labels'                         => static function ( ContainerInterface $container ) : array {
+		return array(
+			'visa'       => _x(
+				'Visa',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'mastercard' => _x(
+				'Mastercard',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'amex'       => _x(
+				'American Express',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'discover'   => _x(
+				'Discover',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'jcb'        => _x(
+				'JCB',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'elo'        => _x(
+				'Elo',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'hiper'      => _x(
+				'Hiper',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+		);
+	},
+	'wcgateway.credit-card-icons'                          => static function ( ContainerInterface $container ) : array {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$icons  = $settings->has( 'card_icons' ) ? (array) $settings->get( 'card_icons' ) : array();
+		$labels = $container->get( 'wcgateway.credit-card-labels' );
+
+		$module_url = $container->get( 'wcgateway.url' );
+		$url_root   = esc_url( $module_url ) . 'assets/images/';
+
+		$icons_with_label = array();
+		foreach ( $icons as $icon ) {
+			$type = str_replace( '-dark', '', $icon );
+
+			$icons_with_label[] = array(
+				'type'  => $type,
+				'title' => ucwords( $labels[ $type ] ?? $type ),
+				'url'   => "$url_root/$icon.svg",
+			);
+		}
+
+		return $icons_with_label;
 	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
 		return new CardButtonGateway(
@@ -1280,17 +1350,12 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
-	'wcgateway.fraudnet-session-id'                        => static function ( ContainerInterface $container ): FraudNetSessionId {
-		return new FraudNetSessionId();
-	},
 	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
 	},
 	'wcgateway.fraudnet'                                   => static function ( ContainerInterface $container ): FraudNet {
-		$session_id = $container->get( 'wcgateway.fraudnet-session-id' );
 		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
 		return new FraudNet(
-			(string) $session_id(),
 			(string) $source_website_id()
 		);
 	},
@@ -1761,5 +1826,63 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+
+	'wcgateway.settings.wc-tasks.simple-redirect-task-factory' => static function(): SimpleRedirectTaskFactoryInterface {
+		return new SimpleRedirectTaskFactory();
+	},
+	'wcgateway.settings.wc-tasks.task-registrar'           => static function(): TaskRegistrarInterface {
+		return new TaskRegistrar();
+	},
+
+	/**
+	 * A configuration for simple redirect wc tasks.
+	 *
+	 * @returns array<array{
+	 *     id: string,
+	 *     title: string,
+	 *     description: string,
+	 *     redirect_url: string
+	 * }>
+	 */
+	'wcgateway.settings.wc-tasks.simple-redirect-tasks-config' => static function( ContainerInterface $container ): array {
+		$section_id       = PayPalGateway::ID;
+		$pay_later_tab_id = Settings::PAY_LATER_TAB_ID;
+
+		$list_of_config = array();
+
+		if ( $container->get( 'paylater-configurator.is-available' ) ) {
+			$list_of_config[] = array(
+				'id'           => 'pay-later-messaging-task',
+				'title'        => __( 'Configure PayPal Pay Later messaging', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Decide where you want dynamic Pay Later messaging to show up and how you want it to look on your site.', 'woocommerce-paypal-payments' ),
+				'redirect_url' => admin_url( "admin.php?page=wc-settings&tab=checkout&section={$section_id}&ppcp-tab={$pay_later_tab_id}" ),
+			);
+		}
+
+		return $list_of_config;
+	},
+
+	/**
+	 * Retrieves the list of simple redirect task instances.
+	 *
+	 * @returns SimpleRedirectTask[]
+	 */
+	'wcgateway.settings.wc-tasks.simple-redirect-tasks'    => static function( ContainerInterface $container ): array {
+		$simple_redirect_tasks_config = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks-config' );
+		$simple_redirect_task_factory = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-task-factory' );
+		assert( $simple_redirect_task_factory instanceof SimpleRedirectTaskFactoryInterface );
+
+		$simple_redirect_tasks = array();
+
+		foreach ( $simple_redirect_tasks_config as $config ) {
+			$id = $config['id'] ?? '';
+			$title = $config['title'] ?? '';
+			$description = $config['description'] ?? '';
+			$redirect_url = $config['redirect_url'] ?? '';
+			$simple_redirect_tasks[] = $simple_redirect_task_factory->create_task( $id, $title, $description, $redirect_url );
+		}
+
+		return $simple_redirect_tasks;
 	},
 );

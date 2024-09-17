@@ -60,6 +60,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $order_processor;
 
 	/**
+	 * The card icons.
+	 *
+	 * @var array
+	 */
+	protected $card_icons;
+
+	/**
 	 * The settings.
 	 *
 	 * @var ContainerInterface
@@ -184,6 +191,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor           $order_processor The Order processor.
 	 * @param ContainerInterface       $config The settings.
+	 * @param array                    $card_icons The card icons.
 	 * @param string                   $module_url The URL to the module.
 	 * @param SessionHandler           $session_handler The Session Handler.
 	 * @param RefundProcessor          $refund_processor The refund processor.
@@ -204,6 +212,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
+		array $card_icons,
 		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
@@ -264,6 +273,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			$this->config->get( 'dcc_gateway_title' ) : $this->method_title;
 		$this->description        = $this->config->has( 'dcc_gateway_description' ) ?
 			$this->config->get( 'dcc_gateway_description' ) : $this->method_description;
+		$this->card_icons         = $card_icons;
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -339,72 +349,24 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @return string
 	 */
 	public function get_icon() {
-		$icon = parent::get_icon();
+		$icon  = parent::get_icon();
+		$icons = $this->card_icons;
 
-		$icons = $this->config->has( 'card_icons' ) ? (array) $this->config->get( 'card_icons' ) : array();
-		if ( empty( $icons ) ) {
+		if ( ! $icons ) {
 			return $icon;
 		}
 
-		$title_options = $this->card_labels();
-		$images        = array_map(
-			function ( string $type ) use ( $title_options ): string {
-				$striped_dark = str_replace( '-dark', '', $type );
-				return '<img
-                 title="' . esc_attr( $title_options[ $striped_dark ] ) . '"
-                 src="' . esc_url( $this->module_url ) . 'assets/images/' . esc_attr( $type ) . '.svg"
-                 class="ppcp-card-icon"
-                > ';
-			},
-			$icons
-		);
+		$images = array();
+
+		foreach ( $icons as $card ) {
+			$images[] = '<img
+				class="ppcp-card-icon"
+				title="' . esc_attr( $card['title'] ) . '"
+				src="' . esc_url( $card['url'] ) . '"
+			> ';
+		}
 
 		return implode( '', $images );
-	}
-
-	/**
-	 * Returns an array of credit card names.
-	 *
-	 * @return array
-	 */
-	private function card_labels(): array {
-		return array(
-			'visa'       => _x(
-				'Visa',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'mastercard' => _x(
-				'Mastercard',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'amex'       => _x(
-				'American Express',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'discover'   => _x(
-				'Discover',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'jcb'        => _x(
-				'JCB',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'elo'        => _x(
-				'Elo',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'hiper'      => _x(
-				'Hiper',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-		);
 	}
 
 	/**
