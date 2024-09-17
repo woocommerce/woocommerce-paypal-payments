@@ -278,3 +278,10 @@ a.wc-block-axo-change-link {
 #shipping-fields .wc-block-components-checkout-step__heading {
 	display: flex;
 }
+
+// 11. Fix Step Numbering
+body.ppcp-recalculate {
+	.wc-block-checkout__form--with-step-numbers .wc-block-components-checkout-step--with-step-number .wc-block-components-checkout-step__title:before {
+		content: ' ' !important;
+	}
+}

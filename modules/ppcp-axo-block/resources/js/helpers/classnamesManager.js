@@ -96,6 +96,7 @@ export const setupCheckoutBlockClassToggles = () => {
 		} else {
 			targetElement.classList.remove( axoLoadedClass );
 		}
+		triggerCounterRecalculation();
 
 		if ( ! isGuest ) {
 			targetElement.classList.add( authClass );
@@ -142,4 +143,18 @@ export const initializeClassToggles = () => {
 			unsubscribeContactInfo();
 		}
 	};
+};
+
+/**
+ * Fixes the number values on the block checkout page, when step numbering is enabled.
+ *
+ * We briefly add a CSS class to the body, that modifies the counter's CSS attributes.
+ * Changing _any_ attribute of the counter element triggers the recalculation of the counters.
+ */
+export const triggerCounterRecalculation = () => {
+	document.body.classList.add( 'ppcp-recalculate' );
+
+	requestAnimationFrame( () => {
+		document.body.classList.remove( 'ppcp-recalculate' );
+	} );
 };
