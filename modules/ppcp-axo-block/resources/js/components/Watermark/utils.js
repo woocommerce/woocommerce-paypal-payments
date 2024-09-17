@@ -27,9 +27,16 @@ export const createWatermarkContainer = () => {
 				'wc-block-checkout-axo-block-watermark-container'
 			);
 
-			emailInput.parentNode.insertBefore(
+			const emailButton = textInputContainer.querySelector(
+				'.wc-block-axo-email-submit-button-container'
+			);
+
+			// If possible, insert the watermark after the "Continue" button.
+			const insertAfterElement = emailButton || emailInput;
+
+			insertAfterElement.parentNode.insertBefore(
 				watermarkReference.container,
-				emailInput.nextSibling
+				insertAfterElement.nextSibling
 			);
 
 			watermarkReference.root = createRoot(
