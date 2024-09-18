@@ -624,8 +624,8 @@ return array(
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
-		$config = $container->get( 'wcgateway.helper.dcc-configuration' );
-		assert( $config instanceof DCCGatewayConfiguration );
+		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
 		$fields              = array(
 			'checkout_settings_heading'   => array(
@@ -985,7 +985,7 @@ return array(
 			'dcc_name_on_card'            => array(
 				'title'        => __( 'Cardholder Name', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'default'      => $config->get_default_cardholder_name(),
+				'default'      => $dcc_configuration->show_name_on_card(),
 				'options'      => PropertiesDictionary::cardholder_name_options(),
 				'classes'      => array(),
 				'class'        => array(),
