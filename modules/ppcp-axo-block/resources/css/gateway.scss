@@ -172,14 +172,24 @@ $fast-transition-duration: 0.5s;
 	// 4.6 Watermark Container
 	.wc-block-checkout-axo-block-watermark-container {
 		grid-area: watermark;
-		width: 100%;
+		justify-self: end;
+		grid-column: 1;
 	}
 
-	// 4.7 Validation Error
+	&:not(.wc-block-axo-is-authenticated) .wc-block-checkout-axo-block-watermark-container {
+		margin-top: 0;
+	}
+
+		// 4.7 Validation Error
 	.wc-block-components-address-form__email .wc-block-components-validation-error {
 		grid-area: error;
 		width: 100%;
 		margin-top: 4px;
+		grid-row: 3;
+
+		@media (min-width: 783px) {
+			grid-row: 2;
+		}
 	}
 
 	@media (min-width: 783px) {
