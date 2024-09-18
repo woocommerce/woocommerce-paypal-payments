@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class AxoBlockPaymentMethod
@@ -58,6 +59,13 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	protected $settings;
 
 	/**
+	 * The DCC gateway settings.
+	 *
+	 * @var DCCGatewayConfiguration
+	 */
+	protected DCCGatewayConfiguration $dcc_configuration;
+
+	/**
 	 * The environment object.
 	 *
 	 * @var Environment
@@ -80,6 +88,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param SmartButtonInterface|callable $smart_button         The smart button script loading
 	 *                                                            handler.
 	 * @param Settings                      $settings             The settings.
+	 * @param DCCGatewayConfiguration	    $dcc_configuration    The DCC gateway settings.
 	 * @param Environment                   $environment          The environment object.
 	 * @param string                        $wcgateway_module_url The WcGateway module URL.
 	 */
@@ -89,6 +98,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		WC_Payment_Gateway $gateway,
 		$smart_button,
 		Settings $settings,
+		DCCGatewayConfiguration	$dcc_configuration,
 		Environment $environment,
 		string $wcgateway_module_url
 	) {
@@ -98,6 +108,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		$this->gateway              = $gateway;
 		$this->smart_button         = $smart_button;
 		$this->settings             = $settings;
+		$this->dcc_configuration    = $dcc_configuration;
 		$this->environment          = $environment;
 		$this->wcgateway_module_url = $wcgateway_module_url;
 
@@ -215,7 +226,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
 				),
 			),
-			'name_on_card'              => $this->settings->has( 'axo_name_on_card' ) ? $this->settings->get( 'axo_name_on_card' ) : '',
+			'name_on_card'              => $this->dcc_configuration->show_name_on_card(),
 			'woocommerce'               => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),

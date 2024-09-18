@@ -79,6 +79,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -123,6 +124,7 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$settings            = $container->get( 'wcgateway.settings' );
+		$dcc_configuration   = $container->get( 'wcgateway.configuration.dcc' );
 		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
@@ -138,6 +140,7 @@ return array(
 			$settings_renderer,
 			$order_processor,
 			$settings,
+			$dcc_configuration,
 			$icons,
 			$module_url,
 			$session_handler,

@@ -74,6 +74,7 @@ return array(
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.dcc' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),

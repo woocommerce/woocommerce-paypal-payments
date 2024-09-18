@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class CreditCardGateway
@@ -72,6 +73,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @var ContainerInterface
 	 */
 	protected $config;
+
+	/**
+	 * The DCC Gateway Configuration.
+	 *
+	 * @var DCCGatewayConfiguration
+	 */
+	protected DCCGatewayConfiguration $dcc_configuration;
 
 	/**
 	 * The vaulted credit card handler.
@@ -191,6 +199,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor           $order_processor The Order processor.
 	 * @param ContainerInterface       $config The settings.
+	 * @param DCCGatewayConfiguration  $dcc_configuration The DCC Gateway Configuration.
 	 * @param array                    $card_icons The card icons.
 	 * @param string                   $module_url The URL to the module.
 	 * @param SessionHandler           $session_handler The Session Handler.
@@ -212,6 +221,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
+		DCCGatewayConfiguration $dcc_configuration,
 		array $card_icons,
 		string $module_url,
 		SessionHandler $session_handler,
@@ -233,6 +243,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->settings_renderer           = $settings_renderer;
 		$this->order_processor             = $order_processor;
 		$this->config                      = $config;
+		$this->dcc_configuration           = $dcc_configuration;
 		$this->module_url                  = $module_url;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
@@ -269,8 +280,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
 			'woocommerce-paypal-payments'
 		);
-		$this->title              = $this->config->has( 'dcc_gateway_title' ) ?
-			$this->config->get( 'dcc_gateway_title' ) : $this->method_title;
+		$this->title              = $this->dcc_configuration->gateway_title();
 		$this->description        = $this->config->has( 'dcc_gateway_description' ) ?
 			$this->config->get( 'dcc_gateway_description' ) : $this->method_description;
 		$this->card_icons         = $card_icons;

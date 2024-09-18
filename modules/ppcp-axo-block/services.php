@@ -35,6 +35,7 @@ return array(
 			$container->get( 'axo.gateway' ),
 			fn() : SmartButtonInterface => $container->get( 'button.smart-button' ),
 			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.dcc' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.url' )
 		);
