@@ -6,23 +6,33 @@ use WooCommerce\PayPalCommerce\PayPalSubscriptions\RenewalHandler;
 
 class PayPalSubscriptionsRenewalTest extends TestCase
 {
-	public function test_is_renewal_by_meta()
+	public function test_parent_order()
 	{
 		$c = $this->getContainer();
 		$handler = new RenewalHandler($c->get('woocommerce.logger.woocommerce'));
 
-		$subscription = $this->createSubscription();
+		// Simulates receiving webhook 1 minute after subscription start.
+		$subscription = $this->createSubscription('-1 minute');
 
 		$handler->process([$subscription], 'TRANSACTION-ID');
 		$renewal = $subscription->get_related_orders( 'ids', array( 'renewal' ) );
 		$this->assertEquals(count($renewal), 0);
+	}
+
+	public function test_renewal_order()
+	{
+		$c = $this->getContainer();
+		$handler = new RenewalHandler($c->get('woocommerce.logger.woocommerce'));
+
+		// Simulates receiving webhook 9 hours after subscription start.
+		$subscription = $this->createSubscription('-9 hour');
 
 		$handler->process([$subscription], 'TRANSACTION-ID');
 		$renewal = $subscription->get_related_orders( 'ids', array( 'renewal' ) );
 		$this->assertEquals(count($renewal), 1);
 	}
 
-	private function createSubscription()
+	private function createSubscription(string $startDate)
 	{
 		$args = [
 			'method' => 'POST',
@@ -69,6 +79,7 @@ class PayPalSubscriptionsRenewalTest extends TestCase
 				'Content-Type' => 'application/json',
 			],
 			'body' => wp_json_encode([
+				'start_date' => gmdate( 'Y-m-d H:i:s', strtotime($startDate) ),
 				'parent_id' => $body->id,
 				'customer_id' => 1,
 				'status' => 'active',
