@@ -88,7 +88,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param SmartButtonInterface|callable $smart_button         The smart button script loading
 	 *                                                            handler.
 	 * @param Settings                      $settings             The settings.
-	 * @param DCCGatewayConfiguration	    $dcc_configuration    The DCC gateway settings.
+	 * @param DCCGatewayConfiguration       $dcc_configuration    The DCC gateway settings.
 	 * @param Environment                   $environment          The environment object.
 	 * @param string                        $wcgateway_module_url The WcGateway module URL.
 	 */
@@ -98,7 +98,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		WC_Payment_Gateway $gateway,
 		$smart_button,
 		Settings $settings,
-		DCCGatewayConfiguration	$dcc_configuration,
+		DCCGatewayConfiguration $dcc_configuration,
 		Environment $environment,
 		string $wcgateway_module_url
 	) {

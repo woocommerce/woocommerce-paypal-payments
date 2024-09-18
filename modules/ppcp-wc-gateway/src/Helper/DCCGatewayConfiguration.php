@@ -20,7 +20,18 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
  * way to access gateway settings by wrapping the Settings instance.
  */
 class DCCGatewayConfiguration {
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
 	private string $gateway_title;
+
+	/**
+	 * Whether to display the cardholder's name on the payment form.
+	 *
+	 * @var string
+	 */
 	private string $show_name_on_card;
 
 	/**
