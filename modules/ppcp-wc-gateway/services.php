@@ -1278,6 +1278,13 @@ return array(
 		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
 	},
 
+	'wcgateway.configuration.dcc'                          => static function ( ContainerInterface $container ) : DCCGatewayConfiguration {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		return new DCCGatewayConfiguration( $settings );
+	},
+
 	'wcgateway.helper.dcc-product-status'                  => static function ( ContainerInterface $container ) : DCCProductStatus {
 
 		$settings         = $container->get( 'wcgateway.settings' );
