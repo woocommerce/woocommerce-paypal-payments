@@ -82,7 +82,6 @@ return array(
 								$display_manager
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
-									->action_visible( 'axo_gateway_title' )
 									->action_visible( 'axo_main_notice' )
 									->action_visible( 'axo_privacy' )
 									->action_visible( 'axo_name_on_card' )
@@ -131,25 +130,6 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array( 'dcc', 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_gateway_title'                  => array(
-					'title'        => __( 'Gateway Title', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'desc_tip'     => true,
-					'description'  => __(
-						'This controls the title of the Fastlane gateway the user sees on checkout.',
-						'woocommerce-paypal-payments'
-					),
-					'default'      => __(
-						'Debit & Credit Cards',
-						'woocommerce-paypal-payments'
-					),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
 				),
 				'axo_privacy'                        => array(
