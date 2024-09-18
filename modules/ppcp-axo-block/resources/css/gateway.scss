@@ -204,6 +204,19 @@ $fast-transition-duration: 0.5s;
 			}
 		}
 	}
+
+	// 4.8 Counter fix
+	.wc-block-checkout__form {
+		counter-reset: visible-step;
+
+		.wc-block-components-checkout-step--with-step-number {
+			counter-increment: visible-step;
+
+			.wc-block-components-checkout-step__title:before {
+				content: counter(visible-step) ". ";
+			}
+		}
+	}
 }
 
 // 5. Shipping/Card Change Link
