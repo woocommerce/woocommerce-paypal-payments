@@ -78,6 +78,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
@@ -623,6 +624,9 @@ return array(
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
+		$config = $container->get( 'wcgateway.helper.dcc-configuration' );
+		assert( $config instanceof DCCGatewayConfiguration );
+
 		$fields              = array(
 			'checkout_settings_heading'   => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
@@ -977,6 +981,20 @@ return array(
 					'dcc',
 				),
 				'gateway'      => 'dcc',
+			),
+			'dcc_name_on_card'            => array(
+				'title'        => __( 'Cardholder Name', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'default'      => $config->get_default_cardholder_name(),
+				'options'      => PropertiesDictionary::cardholder_name_options(),
+				'classes'      => array(),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'desc_tip'     => true,
+				'description'  => __( 'This setting will control whether or not the cardholder name is displayed in the card field\'s UI.', 'woocommerce-paypal-payments' ),
+				'screens'      => array( State::STATE_ONBOARDED ),
+				'gateway'      => array( 'dcc', 'axo' ),
+				'requirements' => array( 'axo' ),
 			),
 			'3d_secure_heading'           => array(
 				'heading'      => __( '3D Secure', 'woocommerce-paypal-payments' ),
