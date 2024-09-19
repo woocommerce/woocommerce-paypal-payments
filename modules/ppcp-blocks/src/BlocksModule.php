@@ -68,7 +68,11 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
-				$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
+
+				// Include ACDC in the Block Checkout only in case Axo doesn't exist or is not available.
+				if ( ! $c->has( 'axoblock.available' ) || ! $c->get( 'axoblock.available' ) ) {
+					$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
+				}
 			}
 		);
 
