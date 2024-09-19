@@ -281,8 +281,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			'woocommerce-paypal-payments'
 		);
 		$this->title              = $this->dcc_configuration->gateway_title();
-		$this->description        = $this->config->has( 'dcc_gateway_description' ) ?
-			$this->config->get( 'dcc_gateway_description' ) : $this->method_description;
+		$this->description        = $this->dcc_configuration->gateway_description();
 		$this->card_icons         = $card_icons;
 
 		$this->init_form_fields();
@@ -654,6 +653,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			$this->config->set( 'dcc_enabled', 'yes' === $value );
 			$this->config->persist();
 
+			$this->dcc_configuration->refresh();
+
 			return true;
 		}
 
@@ -666,7 +667,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @return bool
 	 */
 	private function is_enabled(): bool {
-		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
+		return $this->dcc_configuration->is_enabled();
 	}
 
 	/**
