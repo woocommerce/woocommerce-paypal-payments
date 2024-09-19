@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.3
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 2.9.0
+Stable tag: 2.9.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,22 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.9.1 - xxxx-xx-xx =
+* Fix - Improve card fields hiding #2574
+* Fix - Google Pay: Shipping callback not calculating totals correctly on Single Product page #2513
+* Fix - Fix shipping callback condition in status report #2578
+* Fix - Can't Disconnect Account #2539
+* Fix - Google Pay billing data without shipping callback #2525
+* Fix - Standard payment tab - Google Pay and Apple Pay button - Shape from one location is applied to all until saving changes #2419
+* Enhancement - Allow to override the list of Pay Later supported countries #2563
+* Enhancement - Add more feature statuses into system report #2550
+* Enhancement - Use SVG for APM gateway icons #2509
+* Enhancement - Add inline notice to inform users about ACDC block Checkout support if the store uses a Classic Checkout setup #2422
+* Enhancement - Remove leftover console.log #2589
+* Enhancement - Require PHP 7.4+, WP 6.3+, WC 6.9+ #2556
+* Enhancement - Modularity module migration #1944
+* Enhancement - Keep only 5 tags in readme.txt #2562
 
 = 2.9.0 - 2024-09-02 =
 * Fix - Fatal error in Block Editor when using WooCommerce blocks #2534

@@ -131,18 +131,6 @@ return array(
 		return $container->get( 'webhook.current' ) !== null;
 	},
 
-	'webhook.status.registered-webhooks'      => function( ContainerInterface $container ) : array {
-		$endpoint = $container->get( 'api.endpoint.webhook' );
-		assert( $endpoint instanceof WebhookEndpoint );
-
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
-			return $endpoint->list();
-		}
-
-		return array();
-	},
-
 	'webhook.status.registered-webhooks-data' => function( ContainerInterface $container ) : array {
 		$empty_placeholder = __( 'No webhooks found.', 'woocommerce-paypal-payments' );
 

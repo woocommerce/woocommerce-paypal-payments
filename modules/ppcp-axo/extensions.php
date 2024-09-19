@@ -120,7 +120,6 @@ return array(
 						'',
 						array(
 							$container->get( 'axo.settings-conflict-notice' ),
-							$container->get( 'axo.shipping-config-notice' ),
 							$container->get( 'axo.checkout-config-notice' ),
 							$container->get( 'axo.incompatible-plugins-notice' ),
 						)
