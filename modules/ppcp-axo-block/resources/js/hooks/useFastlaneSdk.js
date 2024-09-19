@@ -1,11 +1,17 @@
-import { useEffect, useRef, useState } from '@wordpress/element';
+import { useEffect, useRef, useState, useMemo } from '@wordpress/element';
 import Fastlane from '../../../../ppcp-axo/resources/js/Connection/Fastlane';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
+import { useDeleteEmptyKeys } from './useDeleteEmptyKeys';
 
 const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 	const [ fastlaneSdk, setFastlaneSdk ] = useState( null );
 	const initializingRef = useRef( false );
 	const configRef = useRef( { axoConfig, ppcpConfig } );
+	const deleteEmptyKeys = useDeleteEmptyKeys();
+
+	const styleOptions = useMemo( () => {
+		return deleteEmptyKeys( configRef.current.axoConfig.style_options );
+	}, [ deleteEmptyKeys ] );
 
 	useEffect( () => {
 		const initFastlane = async () => {
@@ -25,7 +31,7 @@ const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 
 				await fastlane.connect( {
 					locale: configRef.current.ppcpConfig.locale,
-					styles: configRef.current.ppcpConfig.styles,
+					styles: styleOptions,
 				} );
 
 				fastlane.setLocale( 'en_us' );
@@ -39,7 +45,7 @@ const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 		};
 
 		initFastlane();
-	}, [] );
+	}, [ fastlaneSdk, styleOptions ] );
 
 	useEffect( () => {
 		configRef.current = { axoConfig, ppcpConfig };
