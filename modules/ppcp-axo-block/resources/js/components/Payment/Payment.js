@@ -1,9 +1,11 @@
-import { useEffect, useCallback } from '@wordpress/element';
+import { useEffect, useCallback, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { Card } from '../Card';
 import { STORE_NAME } from '../../stores/axoStore';
 
 export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
+	const [ isCardElementReady, setIsCardElementReady ] = useState( false );
+
 	const isGuest = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsGuest()
 	);
@@ -13,14 +15,26 @@ export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
 	);
 
 	const loadPaymentComponent = useCallback( async () => {
-		if ( isGuest && isEmailLookupCompleted ) {
+		if ( isGuest && isEmailLookupCompleted && isCardElementReady ) {
 			const paymentComponent = await fastlaneSdk.FastlaneCardComponent(
 				{}
 			);
 			paymentComponent.render( `#fastlane-card` );
 			onPaymentLoad( paymentComponent );
 		}
-	}, [ isGuest, isEmailLookupCompleted, fastlaneSdk, onPaymentLoad ] );
+	}, [
+		isGuest,
+		isEmailLookupCompleted,
+		isCardElementReady,
+		fastlaneSdk,
+		onPaymentLoad,
+	] );
+
+	useEffect( () => {
+		if ( isGuest && isEmailLookupCompleted ) {
+			setIsCardElementReady( true );
+		}
+	}, [ isGuest, isEmailLookupCompleted ] );
 
 	useEffect( () => {
 		loadPaymentComponent();
