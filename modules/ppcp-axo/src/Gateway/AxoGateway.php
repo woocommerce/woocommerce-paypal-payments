@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class AXOGateway.
@@ -51,6 +52,13 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @var ContainerInterface
 	 */
 	protected $ppcp_settings;
+
+	/**
+	 * Gateway configuration object, providing relevant settings.
+	 *
+	 * @var DCCGatewayConfiguration
+	 */
+	protected DCCGatewayConfiguration $dcc_configuration;
 
 	/**
 	 * The WcGateway module URL.
@@ -127,6 +135,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @param SettingsRenderer          $settings_renderer The settings renderer.
 	 * @param ContainerInterface        $ppcp_settings The settings.
+	 * @param DCCGatewayConfiguration   $dcc_configuration The DCC Gateway configuration.
 	 * @param string                    $wcgateway_module_url The WcGateway module URL.
 	 * @param SessionHandler            $session_handler The Session Handler.
 	 * @param OrderProcessor            $order_processor The Order processor.
@@ -141,6 +150,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
+		DCCGatewayConfiguration $dcc_configuration,
 		string $wcgateway_module_url,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
@@ -156,6 +166,7 @@ class AxoGateway extends WC_Payment_Gateway {
 
 		$this->settings_renderer    = $settings_renderer;
 		$this->ppcp_settings        = $ppcp_settings;
+		$this->dcc_configuration    = $dcc_configuration;
 		$this->wcgateway_module_url = $wcgateway_module_url;
 		$this->session_handler      = $session_handler;
 		$this->order_processor      = $order_processor;
@@ -167,9 +178,7 @@ class AxoGateway extends WC_Payment_Gateway {
 		$is_axo_enabled = $this->ppcp_settings->has( 'axo_enabled' ) && $this->ppcp_settings->get( 'axo_enabled' );
 		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
 
-		$this->title = $this->ppcp_settings->has( 'axo_gateway_title' )
-			? $this->ppcp_settings->get( 'axo_gateway_title' )
-			: $this->get_option( 'title', $this->method_title );
+		$this->title = $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) );
 
 		$this->description = __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' );
 

@@ -78,7 +78,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -123,6 +125,7 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$settings            = $container->get( 'wcgateway.settings' );
+		$dcc_configuration   = $container->get( 'wcgateway.configuration.dcc' );
 		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
@@ -138,6 +141,7 @@ return array(
 			$settings_renderer,
 			$order_processor,
 			$settings,
+			$dcc_configuration,
 			$icons,
 			$module_url,
 			$session_handler,
@@ -620,6 +624,9 @@ return array(
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
+		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
 		$fields              = array(
 			'checkout_settings_heading'   => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
@@ -975,6 +982,20 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
+			'dcc_name_on_card'            => array(
+				'title'        => __( 'Cardholder Name', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'default'      => $dcc_configuration->show_name_on_card(),
+				'options'      => PropertiesDictionary::cardholder_name_options(),
+				'classes'      => array(),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'desc_tip'     => true,
+				'description'  => __( 'This setting will control whether or not the cardholder name is displayed in the card field\'s UI.', 'woocommerce-paypal-payments' ),
+				'screens'      => array( State::STATE_ONBOARDED ),
+				'gateway'      => array( 'dcc', 'axo' ),
+				'requirements' => array( 'axo' ),
+			),
 			'3d_secure_heading'           => array(
 				'heading'      => __( '3D Secure', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
@@ -1276,6 +1297,13 @@ return array(
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
 
 		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
+	},
+
+	'wcgateway.configuration.dcc'                          => static function ( ContainerInterface $container ) : DCCGatewayConfiguration {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		return new DCCGatewayConfiguration( $settings );
 	},
 
 	'wcgateway.helper.dcc-product-status'                  => static function ( ContainerInterface $container ) : DCCProductStatus {
