@@ -657,7 +657,7 @@ const PayPalComponent = ( {
 	);
 };
 
-const BlockEditorPayPalComponent = ( fundingSource ) => {
+const BlockEditorPayPalComponent = ({ fundingSource } ) => {
 	const urlParams = {
 		clientId: 'test',
 		...config.scriptData.url_params,
