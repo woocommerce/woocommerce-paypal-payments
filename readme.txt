@@ -195,6 +195,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Modularity module migration #1944
 * Enhancement - Keep only 5 tags in readme.txt #2562
 * Enhancement - Select ACDC by default during onboarding for China store locations #2619
+* Enhancement - Add title, description and gatewayId to the express payment method #2566
 
 = 2.9.0 - 2024-09-02 =
 * Fix - Fatal error in Block Editor when using WooCommerce blocks #2534
