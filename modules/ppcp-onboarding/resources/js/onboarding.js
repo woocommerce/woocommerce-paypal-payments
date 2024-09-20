@@ -326,7 +326,9 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 
 		isDisconnecting = true;
 
-		document.querySelector( '.woocommerce-save-button' ).click();
+        const saveButton = document.querySelector( '.woocommerce-save-button' );
+        saveButton.removeAttribute( 'disabled' );
+        saveButton.click();
 	};
 
 	// Prevent the message about unsaved checkbox/radiobutton when reloading the page.

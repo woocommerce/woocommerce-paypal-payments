@@ -3,6 +3,7 @@ import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
+import { __ } from '@wordpress/i18n';
 import {
 	mergeWcAddress,
 	paypalAddressToWc,
@@ -774,6 +775,12 @@ if ( block_enabled && config.enabled ) {
 		] ) {
 			registerExpressPaymentMethod( {
 				name: `${ config.id }-${ fundingSource }`,
+				title: 'PayPal',
+				description: __(
+					'Eligible users will see the PayPal button.',
+					'woocommerce-paypal-payments'
+				),
+				gatewayId: 'ppcp-gateway',
 				paymentMethodId: config.id,
 				label: (
 					<div dangerouslySetInnerHTML={ { __html: config.title } } />

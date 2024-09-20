@@ -19,6 +19,22 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
  */
 class SettingsNoticeGenerator {
 	/**
+	 * The list of Fastlane incompatible plugin names.
+	 *
+	 * @var string[]
+	 */
+	protected $incompatible_plugin_names;
+
+	/**
+	 * SettingsNoticeGenerator constructor.
+	 *
+	 * @param string[] $incompatible_plugin_names The list of Fastlane incompatible plugin names.
+	 */
+	public function __construct( array $incompatible_plugin_names ) {
+		$this->incompatible_plugin_names = $incompatible_plugin_names;
+	}
+
+	/**
 	 * Generates the full HTML of the notification.
 	 *
 	 * @param string $message  HTML of the inner message contents.
@@ -88,52 +104,14 @@ class SettingsNoticeGenerator {
 	}
 
 	/**
-	 * Generates the shipping notice.
-	 *
-	 * @return string
-	 */
-	public function generate_shipping_notice(): string {
-		$shipping_settings_link = admin_url( 'admin.php?page=wc-settings&tab=shipping&section=options' );
-
-		$notice_content = '';
-
-		if ( wc_shipping_enabled() && wc_ship_to_billing_address_only() ) {
-			$notice_content = sprintf(
-			/* translators: %1$s: URL to the Shipping destination settings page. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Shipping destination</a> of your store is currently configured to <code>Force shipping to the customer billing address</code>. To enable Fastlane and accelerate payments, the shipping destination must be configured either to <code>Default to customer shipping address</code> or <code>Default to customer billing address</code> so buyers can set separate billing and shipping details.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $shipping_settings_link )
-			);
-		}
-
-		return $notice_content ? '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>' : '';
-	}
-
-	/**
 	 * Generates the incompatible plugins notice.
 	 *
 	 * @return string
 	 */
 	public function generate_incompatible_plugins_notice(): string {
-		$incompatible_plugins = array(
-			'Elementor'  => did_action( 'elementor/loaded' ),
-			'CheckoutWC' => defined( 'CFW_NAME' ),
-		);
-
-		$active_plugins_list = array_filter( $incompatible_plugins );
-
-		if ( empty( $active_plugins_list ) ) {
+		if ( empty( $this->incompatible_plugin_names ) ) {
 			return '';
 		}
-
-		$incompatible_plugin_items = array_map(
-			function ( $plugin ) {
-				return "<li>{$plugin}</li>";
-			},
-			array_keys( $active_plugins_list )
-		);
 
 		$plugins_settings_link = esc_url( admin_url( 'plugins.php' ) );
 		$notice_content        = sprintf(
@@ -143,7 +121,7 @@ class SettingsNoticeGenerator {
 				'woocommerce-paypal-payments'
 			),
 			$plugins_settings_link,
-			implode( '', $incompatible_plugin_items )
+			implode( '', $this->incompatible_plugin_names )
 		);
 
 		return '<div class="ppcp-notice"><p>' . $notice_content . '</p></div>';

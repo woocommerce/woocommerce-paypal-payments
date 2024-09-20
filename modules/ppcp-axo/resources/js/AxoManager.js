@@ -11,16 +11,53 @@ import {
 } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
+/**
+ * Internal customer details.
+ *
+ * @typedef {Object} CustomerDetails
+ * @property {null|string} email    - Customer email.
+ * @property {null|string} phone    - Fastlane phone number.
+ * @property {null|Object} billing  - Billing details object.
+ * @property {null|Object} shipping - Shipping details object.
+ * @property {null|Object} card     - Payment details object.
+ */
+
 class AxoManager {
+	axoConfig = null;
+	ppcpConfig = null;
+	$ = null;
+
+	fastlane = null;
+	/**
+	 * @type {FastlaneCardComponent}
+	 */
+	cardComponent = null;
+
+	initialized = false;
+	hideGatewaySelection = false;
+	phoneNumber = null;
+
+	/**
+	 * @type {CustomerDetails}
+	 */
+	data = {};
+	status = {};
+	styles = {};
+	locale = 'en_us';
+
+	el = null;
+	emailInput = null;
+	phoneInput = null;
+	shippingView = null;
+	billingView = null;
+	cardView = null;
+
 	constructor( axoConfig, ppcpConfig ) {
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
 
-		this.initialized = false;
 		this.fastlane = new Fastlane();
 		this.$ = jQuery;
-
-		this.hideGatewaySelection = false;
 
 		this.status = {
 			active: false,
@@ -30,13 +67,9 @@ class AxoManager {
 			hasCard: false,
 		};
 
-		this.data = {
-			email: null,
-			billing: null,
-			shipping: null,
-			card: null,
-		};
+		this.clearData();
 
+		// TODO - Do we need a public `states` property for this?
 		this.states = this.axoConfig.woocommerce.states;
 
 		this.el = new DomElementCollection();
@@ -50,8 +83,6 @@ class AxoManager {
 				backgroundColorPrimary: '#ffffff',
 			},
 		};
-
-		this.locale = 'en_us';
 
 		this.registerEventHandlers();
 
@@ -101,7 +132,29 @@ class AxoManager {
 			}
 		}
 
+		this.onChangePhone = this.onChangePhone.bind( this );
+		this.initPhoneSyncWooToFastlane();
+
 		this.triggerGatewayChange();
+	}
+
+	/**
+	 * Checks if the current flow is the "Ryan flow": Ryan is a known customer who created a
+	 * Fastlane profile before. Ryan can leverage all benefits of the accelerated 1-click checkout.
+	 *
+	 * @return {boolean} True means, Fastlane could link the customer's email to an existing account.
+	 */
+	get isRyanFlow() {
+		return !! this.data.card;
+	}
+
+	/**
+	 * CSS selector to target the Fastlane Card Component wrapper.
+	 *
+	 * @return {string} CSS selector.
+	 */
+	get cardFormSelector() {
+		return this.el.paymentContainer.selector + '-form';
 	}
 
 	registerEventHandlers() {
@@ -458,6 +511,7 @@ class AxoManager {
 		this.initPlacements();
 		this.initFastlane();
 		this.setStatus( 'active', true );
+		this.readPhoneFromWoo();
 
 		log( `Attempt on activation - emailInput: ${ this.emailInput.value }` );
 		log(
@@ -468,6 +522,8 @@ class AxoManager {
 			this.lastEmailCheckedIdentity !== this.emailInput.value
 		) {
 			this.onChangeEmail();
+		} else {
+			this.refreshFastlanePrefills();
 		}
 	}
 
@@ -690,6 +746,51 @@ class AxoManager {
 		}
 	}
 
+	/**
+	 * Locates the WooCommerce checkout "billing phone" field and adds event listeners to it.
+	 */
+	initPhoneSyncWooToFastlane() {
+		this.phoneInput = document.querySelector( '#billing_phone' );
+		this.phoneInput?.addEventListener( 'change', this.onChangePhone );
+	}
+
+	/**
+	 * Strips the country prefix and non-numeric characters from the phone number. If the remaining
+	 * phone number is valid, it's returned. Otherwise, the function returns null.
+	 *
+	 * @param {string} number - Phone number to sanitize.
+	 * @return {string|null} A valid US phone number, or null if the number is invalid.
+	 */
+	sanitizePhoneNumber( number ) {
+		const localNumber = number.replace( /^\+1/, '' );
+		const cleanNumber = localNumber.replace( /\D/g, '' );
+
+		// All valid US mobile numbers have exactly 10 digits.
+		return cleanNumber.length === 10 ? cleanNumber : null;
+	}
+
+	/**
+	 * Reads the phone number from the WooCommerce checkout form, sanitizes it, and (if valid)
+	 * stores it in the internal customer details object.
+	 *
+	 * @return {boolean} True, if the internal phone number was updated.
+	 */
+	readPhoneFromWoo() {
+		if ( ! this.phoneInput ) {
+			return false;
+		}
+
+		const phoneNumber = this.phoneInput.value;
+		const validPhoneNumber = this.sanitizePhoneNumber( phoneNumber );
+
+		if ( ! validPhoneNumber ) {
+			return false;
+		}
+
+		this.data.phone = validPhoneNumber;
+		return true;
+	}
+
 	async onChangeEmail() {
 		this.clearData();
 
@@ -711,8 +812,8 @@ class AxoManager {
 
 		this.emailInput.value = this.stripSpaces( this.emailInput.value );
 
-		this.$( this.el.paymentContainer.selector + '-detail' ).html( '' );
-		this.$( this.el.paymentContainer.selector + '-form' ).html( '' );
+		this.$( this.el.paymentContainer.selector + '-details' ).html( '' );
+		this.removeFastlaneComponent();
 
 		this.setStatus( 'validEmail', false );
 		this.setStatus( 'hasProfile', false );
@@ -732,6 +833,8 @@ class AxoManager {
 
 		this.data.email = this.emailInput.value;
 		this.billingView.setData( this.data );
+
+		this.readPhoneFromWoo();
 
 		if ( ! this.fastlane.identity ) {
 			log( 'Not initialized.' );
@@ -755,6 +858,22 @@ class AxoManager {
 			'ppcp-axo-overlay'
 		);
 		this.enableGatewaySelection();
+	}
+
+	/**
+	 * Event handler that fires when the customer changed the phone number in the WooCommerce
+	 * checkout form. If Fastlane is active, the component is refreshed.
+	 *
+	 * @return {Promise<void>}
+	 */
+	async onChangePhone() {
+		const hasChanged = this.readPhoneFromWoo();
+
+		if ( hasChanged && this.status.active ) {
+			await this.refreshFastlanePrefills();
+		}
+
+		return Promise.resolve();
 	}
 
 	async lookupCustomerByEmail() {
@@ -792,11 +911,7 @@ class AxoManager {
 				if ( authResponse.profileData.card ) {
 					this.setStatus( 'hasCard', true );
 				} else {
-					this.cardComponent = (
-						await this.fastlane.FastlaneCardComponent(
-							this.cardComponentData()
-						)
-					).render( this.el.paymentContainer.selector + '-form' );
+					await this.initializeFastlaneComponent();
 				}
 
 				const cardBillingAddress =
@@ -837,12 +952,7 @@ class AxoManager {
 				this.setStatus( 'hasProfile', false );
 
 				await this.renderWatermark( true );
-
-				this.cardComponent = (
-					await this.fastlane.FastlaneCardComponent(
-						this.cardComponentData()
-					)
-				).render( this.el.paymentContainer.selector + '-form' );
+				await this.initializeFastlaneComponent();
 			}
 		} else {
 			// No profile found with this email address.
@@ -853,12 +963,7 @@ class AxoManager {
 			this.setStatus( 'hasProfile', false );
 
 			await this.renderWatermark( true );
-
-			this.cardComponent = (
-				await this.fastlane.FastlaneCardComponent(
-					this.cardComponentData()
-				)
-			).render( this.el.paymentContainer.selector + '-form' );
+			await this.initializeFastlaneComponent();
 		}
 	}
 
@@ -873,6 +978,7 @@ class AxoManager {
 	clearData() {
 		this.data = {
 			email: null,
+			phone: null,
 			billing: null,
 			shipping: null,
 			card: null,
@@ -897,7 +1003,7 @@ class AxoManager {
 	onClickSubmitButton() {
 		// TODO: validate data.
 
-		if ( this.data.card ) {
+		if ( this.isRyanFlow ) {
 			// Ryan flow
 			log( 'Starting Ryan flow.' );
 
@@ -935,7 +1041,7 @@ class AxoManager {
 	}
 
 	cardComponentData() {
-		return {
+		const config = {
 			fields: {
 				cardholderName: {
 					enabled: this.axoConfig.name_on_card === '1',
@@ -945,6 +1051,68 @@ class AxoManager {
 				this.axoConfig.style_options
 			),
 		};
+
+		// Ryan is a known customer, we do not need his phone number.
+		if ( this.data.phone && ! this.isRyanFlow ) {
+			config.fields.phoneNumber = {
+				prefill: this.data.phone,
+			};
+		}
+
+		return config;
+	}
+
+	/**
+	 * Initializes the Fastlane UI component, using configuration provided by the
+	 * `cardComponentData()` method. If the UI component was already initialized, nothing happens.
+	 *
+	 * @return {Promise<*>} Resolves when the component was rendered.
+	 */
+	async initializeFastlaneComponent() {
+		if ( ! this.status.active || this.cardComponent ) {
+			return Promise.resolve();
+		}
+
+		const elem = this.cardFormSelector;
+		const config = this.cardComponentData();
+
+		this.cardComponent =
+			await this.fastlane.FastlaneCardComponent( config );
+
+		return this.cardComponent.render( elem );
+	}
+
+	/**
+	 * Reverts the changes made by `initializeFastlaneComponent()`.
+	 *
+	 * Calling this method will lose any input that the user made inside the
+	 * Fastlane Card Component.
+	 */
+	removeFastlaneComponent() {
+		document.querySelector( this.cardFormSelector ).innerHTML = '';
+
+		this.cardComponent = null;
+	}
+
+	/**
+	 * Updates the prefill-values in the UI component. This method only updates empty fields.
+	 *
+	 * @return {Promise<*>} Resolves when the component was refreshed.
+	 */
+	async refreshFastlanePrefills() {
+		if ( ! this.cardComponent ) {
+			return Promise.resolve();
+		}
+
+		const { fields } = this.cardComponentData();
+		const prefills = Object.keys( fields ).reduce( ( result, key ) => {
+			if ( fields[ key ].hasOwnProperty( 'prefill' ) ) {
+				result[ key ] = fields[ key ].prefill;
+			}
+			return result;
+		}, {} );
+
+		return this.cardComponent.updatePrefills( prefills );
 	}
 
 	tokenizeData() {
@@ -1081,8 +1249,8 @@ class AxoManager {
 	ensureBillingPhoneNumber( data ) {
 		if ( data.billing_phone === '' ) {
 			let phone = '';
-			const cc = this.data?.shipping?.phoneNumber?.countryCode;
-			const number = this.data?.shipping?.phoneNumber?.nationalNumber;
+			const cc = this.data.shipping?.phoneNumber?.countryCode;
+			const number = this.data.shipping?.phoneNumber?.nationalNumber;
 
 			if ( cc ) {
 				phone = `+${ cc } `;

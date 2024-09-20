@@ -27,7 +27,7 @@ jobs:
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: 7.2
+        php-version: 7.4
 
     - name: Fix plugin version input # Add the version number if only suffix entered
       run: echo "PACKAGE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)-$PACKAGE_VERSION" >> $GITHUB_ENV

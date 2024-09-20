@@ -9,32 +9,47 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
-use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WC_Order;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class LocalAlternativePaymentMethodsModule
  */
-class LocalAlternativePaymentMethodsModule implements ModuleInterface {
+class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services() : array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions() : array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		if ( ! $settings->has( 'allow_local_apm_gateways' ) || $settings->get( 'allow_local_apm_gateways' ) !== true ) {
+			return true;
+		}
+
 		add_filter(
 			'woocommerce_payment_gateways',
 			/**
@@ -150,6 +165,39 @@ class LocalAlternativePaymentMethodsModule implements ModuleInterface {
 				}
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
+			function( WC_Order $wc_order, string $order_id ) use ( $c ) {
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				if (
+				! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods )
+				) {
+					return;
+				}
+
+				$fees_updater = $c->get( 'wcgateway.helper.fees-updater' );
+				assert( $fees_updater instanceof FeesUpdater );
+
+				$fees_updater->update( $order_id, $wc_order );
+			},
+			10,
+			2
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_allowed_refund_payment_methods',
+			function( array $payment_methods ) use ( $c ): array {
+				$local_payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+				foreach ( $local_payment_methods as $payment_method ) {
+					$payment_methods[] = $payment_method['id'];
+				}
+
+				return $payment_methods;
+			}
+		);
+
+		return true;
 	}
 
 	/**

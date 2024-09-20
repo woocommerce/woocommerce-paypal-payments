@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\CardFields;
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-
-return static function (): ModuleInterface {
+return static function (): CardFieldsModule {
 	return new CardFieldsModule();
 };

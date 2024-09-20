@@ -1642,6 +1642,21 @@ return array(
 			'SE',
 		);
 	},
+
+	'api.paylater-countries'                         => static function ( ContainerInterface $container ) : array {
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_paylater_countries',
+			array(
+				'US',
+				'DE',
+				'GB',
+				'FR',
+				'AU',
+				'IT',
+				'ES',
+			)
+		);
+	},
 	'api.order-helper'                               => static function( ContainerInterface $container ): OrderHelper {
 		return new OrderHelper();
 	},

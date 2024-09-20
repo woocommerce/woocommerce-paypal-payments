@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
 return array(
 
-	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
 		$insert_after = function( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
@@ -120,7 +120,6 @@ return array(
 						'',
 						array(
 							$container->get( 'axo.settings-conflict-notice' ),
-							$container->get( 'axo.shipping-config-notice' ),
 							$container->get( 'axo.checkout-config-notice' ),
 							$container->get( 'axo.incompatible-plugins-notice' ),
 						)

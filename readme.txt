@@ -1,10 +1,10 @@
 === WooCommerce PayPal Payments ===
 Contributors: woocommerce, automattic, syde
-Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
-Requires at least: 5.3
+Tags: woocommerce, paypal, payments, ecommerce, credit card
+Requires at least: 6.3
 Tested up to: 6.6
-Requires PHP: 7.2
-Stable tag: 2.8.3
+Requires PHP: 7.4
+Stable tag: 2.9.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -135,9 +135,9 @@ Check out the [Frequently Asked Questions](https://woocommerce.com/document/woo
 
 To install and configure WooCommerce PayPal Payments, you will need:
 
-* WordPress Version 5.3 or newer (installed)
-* WooCommerce Version 3.9 or newer (installed and activated)
-* PHP Version 7.2 or newer
+* WordPress Version 6.3 or newer (installed)
+* WooCommerce Version 6.9 or newer (installed and activated)
+* PHP Version 7.4 or newer
 * PayPal business **or** personal account
 
 = Installation instructions =
@@ -178,6 +178,44 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.9.1 - xxxx-xx-xx =
+* Fix - Improve card fields hiding #2574
+* Fix - Google Pay: Shipping callback not calculating totals correctly on Single Product page #2513
+* Fix - Fix shipping callback condition in status report #2578
+* Fix - Can't Disconnect Account #2539
+* Fix - Google Pay billing data without shipping callback #2525
+* Fix - Standard payment tab - Google Pay and Apple Pay button - Shape from one location is applied to all until saving changes #2419
+* Enhancement - Allow to override the list of Pay Later supported countries #2563
+* Enhancement - Add more feature statuses into system report #2550
+* Enhancement - Use SVG for APM gateway icons #2509
+* Enhancement - Add inline notice to inform users about ACDC block Checkout support if the store uses a Classic Checkout setup #2422
+* Enhancement - Remove leftover console.log #2589
+* Enhancement - Require PHP 7.4+, WP 6.3+, WC 6.9+ #2556
+* Enhancement - Modularity module migration #1944
+* Enhancement - Keep only 5 tags in readme.txt #2562
+* Enhancement - Select ACDC by default during onboarding for China store locations #2619
+* Enhancement - Add title, description and gatewayId to the express payment method #2566
+
+= 2.9.0 - 2024-09-02 =
+* Fix - Fatal error in Block Editor when using WooCommerce blocks #2534
+* Fix - Can't pay from block pages when the shipping callback is enabled and no shipping methods defined #2429
+* Fix - Various Google Pay button fixes #2496
+* Fix - Buying a free trial subscription with ACDC results in a $1 charge in the API call #2465
+* Fix - Problem with Google Pay and Apple Pay button placement on Pay for Order page #2542
+* Fix - When there isn't any shipping option for the address the order is still created from classic cart #2437
+* Fix - Patch the order with no shipping methods, instead of throwing an error #2435
+* Enhancement - Separate Apple Pay button for Classic Checkout #2457
+* Enhancement - Remove AMEX support for ACDC when store location is set to China #2526
+* Enhancement - Inform users of Pay Later messaging configuration when Pay Later wasn't recently enabled #2529
+* Enhancement - Update ACDC signup URLs #2475
+* Enhancement - Implement country based APMs via Orders API #2511
+* Enhancement - Update PaymentsStatusHandlingTrait.php (author @callmeahmedr) #2523
+* Enhancement - Disable PayPal Shipping callback by default #2527
+* Enhancement - Change Apple Pay and Google Pay default button labels to plain #2476
+* Enhancement - Add Package Tracking compatibility with DHL Shipping plugin #2463
+* Enhancement - Add support for WC Bookings when skipping checkout confirmation #2452
+* Enhancement - Remove currencies from country-currency matrix in card fields module #2441
 
 = 2.8.3 - 2024-08-12 =
 * Fix - Google Pay: Prevent field validation from being triggered on checkout page load #2474

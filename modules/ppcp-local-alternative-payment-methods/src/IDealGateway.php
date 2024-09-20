@@ -13,6 +13,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -72,7 +73,7 @@ class IDealGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'iDeal', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'iDeal (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'The most common payment method in the Netherlands, allowing Dutch buyers to pay directly through their preferred bank. Transactions are processed in EUR.', 'woocommerce-paypal-payments' );
 
 		$this->title       = $this->get_option( 'title', __( 'iDeal', 'woocommerce-paypal-payments' ) );
@@ -134,16 +135,13 @@ class IDealGateway extends WC_Payment_Gateway {
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$amount        = $purchase_unit->amount()->to_array();
 
-		$payment_source = array(
-			'country_code' => $wc_order->get_billing_country(),
-			'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-		);
-		// TODO get "bic" from gateway settings.
-
 		$request_body = array(
 			'intent'                 => 'CAPTURE',
 			'payment_source'         => array(
-				'ideal' => $payment_source,
+				'ideal' => array(
+					'country_code' => $wc_order->get_billing_country(),
+					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+				),
 			),
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
 			'purchase_units'         => array(
@@ -178,6 +176,9 @@ class IDealGateway extends WC_Payment_Gateway {
 		}
 
 		$body = json_decode( $response['body'] );
+
+		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+		$wc_order->save_meta_data();
 
 		$payer_action = '';
 		foreach ( $body->links as $link ) {

@@ -1,7 +1,8 @@
 import { loadCustomScript } from '@paypal/paypal-js';
-import widgetBuilder from './WidgetBuilder';
+import widgetBuilder from '../Renderer/WidgetBuilder';
 import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
 import ConsoleLogger from '../../../../../ppcp-wc-gateway/resources/js/helper/ConsoleLogger';
+import DummyPreviewButton from './DummyPreviewButton';
 
 /**
  * Manages all PreviewButton instances of a certain payment method on the page.
@@ -26,6 +27,13 @@ class PreviewButtonManager {
 	 */
 	#onInit;
 
+	/**
+	 * Initialize the new PreviewButtonManager.
+	 *
+	 * @param {string} methodName        - Name of the payment method, e.g. "Google Pay"
+	 * @param {Object} buttonConfig
+	 * @param {Object} defaultAttributes
+	 */
 	constructor( { methodName, buttonConfig, defaultAttributes } ) {
 		// Define the payment method name in the derived class.
 		this.methodName = methodName;
@@ -102,27 +110,15 @@ class PreviewButtonManager {
 	 *
 	 * This dummy is only visible on the admin side, and not rendered on the front-end.
 	 *
-	 * @todo Consider refactoring this into a new class that extends the PreviewButton class.
 	 * @param {string} wrapperId
 	 * @return {any}
 	 */
-	createDummy( wrapperId ) {
-		const elButton = document.createElement( 'div' );
-		elButton.classList.add( 'ppcp-button-apm', 'ppcp-button-dummy' );
-		elButton.innerHTML = `<span>${
-			this.apiError ?? 'Not Available'
-		}</span>`;
-
-		document.querySelector( wrapperId ).appendChild( elButton );
-
-		const instDummy = {
-			setDynamic: () => instDummy,
-			setPpcpConfig: () => instDummy,
-			render: () => {},
-			remove: () => {},
-		};
-
-		return instDummy;
+	createDummyButtonInstance( wrapperId ) {
+		return new DummyPreviewButton( {
+			selector: wrapperId,
+			label: this.apiError,
+			methodName: this.methodName,
+		} );
 	}
 
 	registerEventListeners() {
@@ -319,6 +315,17 @@ class PreviewButtonManager {
 		this.log( 'configureAllButtons', ppcpConfig );
 
 		Object.entries( this.buttons ).forEach( ( [ id, button ] ) => {
+			const limitWrapper = ppcpConfig.button?.wrapper;
+
+			/**
+			 * When the ppcpConfig object specifies a button wrapper, then ensure to limit preview
+			 * changes to this individual wrapper. If no button wrapper is defined, the
+			 * configuration is relevant for all buttons on the page.
+			 */
+			if ( limitWrapper && button.wrapper !== limitWrapper ) {
+				return;
+			}
+
 			this._configureButton( id, {
 				...ppcpConfig,
 				button: {
@@ -349,12 +356,11 @@ class PreviewButtonManager {
 				let newInst;
 
 				if ( this.apiConfig && 'object' === typeof this.apiConfig ) {
-					newInst = this.createButtonInstance( id ).setButtonConfig(
-						this.buttonConfig
-					);
+					newInst = this.createButtonInstance( id );
 				} else {
-					newInst = this.createDummy( id );
+					newInst = this.createDummyButtonInstance( id );
 				}
+				newInst.setButtonConfig( this.buttonConfig );
 
 				this.buttons[ id ] = newInst;
 			}
