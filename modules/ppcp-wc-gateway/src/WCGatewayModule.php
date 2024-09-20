@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
@@ -16,10 +17,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -53,32 +56,39 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 
 /**
  * Class WcGatewayModule
  */
-class WCGatewayModule implements ModuleInterface {
+class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 
 	use CreditCardOrderInfoHandlingTrait;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 		$this->register_payment_gateways( $c );
 		$this->register_order_functionality( $c );
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
+		$this->register_wc_tasks( $c );
 
 		add_action(
 			'woocommerce_sections_checkout',
@@ -510,6 +520,8 @@ class WCGatewayModule implements ModuleInterface {
 				}
 			}
 		);
+
+		return true;
 	}
 
 	/**
@@ -823,12 +835,33 @@ class WCGatewayModule implements ModuleInterface {
 		);
 	}
 
-
 	/**
-	 * Returns the key for the module.
+	 * Registers the tasks inside "Things to do next" WC section.
 	 *
-	 * @return string|void
+	 * @param ContainerInterface $container The container.
+	 * @return void
 	 */
-	public function getKey() {
+	protected function register_wc_tasks( ContainerInterface $container ): void {
+		$simple_redirect_tasks = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks' );
+		if ( empty( $simple_redirect_tasks ) ) {
+			return;
+		}
+
+		$task_registrar = $container->get( 'wcgateway.settings.wc-tasks.task-registrar' );
+		assert( $task_registrar instanceof TaskRegistrarInterface );
+
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
+
+		add_action(
+			'init',
+			static function () use ( $simple_redirect_tasks, $task_registrar, $logger ): void {
+				try {
+					$task_registrar->register( $simple_redirect_tasks );
+				} catch ( Exception $exception ) {
+					$logger->error( "Failed to create a task in the 'Things to do next' section of WC. " . $exception->getMessage() );
+				}
+			},
+		);
 	}
 }

@@ -16,10 +16,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -29,21 +31,28 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 /**
  * Class AxoModule
  */
-class AxoModule implements ModuleInterface {
+class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+	use ContextTrait;
+
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 
 		add_filter(
 			'woocommerce_payment_gateways',
@@ -66,7 +75,9 @@ class AxoModule implements ModuleInterface {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					// $methods[] = $gateway; - Temporarily remove Fastlane from the payment gateway list in admin area.
+					if ( ! $this->is_wc_settings_payments_tab() ) {
+						$methods[] = $gateway;
+					}
 					return $methods;
 				}
 
@@ -85,10 +96,6 @@ class AxoModule implements ModuleInterface {
 				}
 
 				if ( $this->is_excluded_endpoint() ) {
-					return $methods;
-				}
-
-				if ( ! $this->is_compatible_shipping_config() ) {
 					return $methods;
 				}
 
@@ -162,7 +169,7 @@ class AxoModule implements ModuleInterface {
 					|| ! $c->get( 'axo.eligible' )
 					|| 'continuation' === $c->get( 'button.context' )
 					|| $subscription_helper->cart_contains_subscription()
-					|| ! $this->is_compatible_shipping_config() ) {
+				) {
 					return;
 				}
 
@@ -284,6 +291,7 @@ class AxoModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+		return true;
 	}
 
 	/**
@@ -318,14 +326,6 @@ class AxoModule implements ModuleInterface {
 	}
 
 	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
-	}
-
-	/**
 	 * Condition to evaluate if Credit Card gateway should be hidden.
 	 *
 	 * @param array              $methods WC payment methods.
@@ -353,7 +353,6 @@ class AxoModule implements ModuleInterface {
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
-			&& $this->is_compatible_shipping_config()
 			&& $is_axo_enabled
 			&& $is_dcc_enabled
 			&& ! $this->is_excluded_endpoint();
@@ -408,15 +407,6 @@ class AxoModule implements ModuleInterface {
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
 		return is_wc_endpoint_url( 'order-pay' );
-	}
-
-	/**
-	 * Condition to evaluate if the shipping configuration is compatible.
-	 *
-	 * @return bool
-	 */
-	private function is_compatible_shipping_config(): bool {
-		return ! wc_shipping_enabled() || ( wc_shipping_enabled() && ! wc_ship_to_billing_address_only() );
 	}
 
 	/**

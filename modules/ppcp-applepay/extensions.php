@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 
 return array(
-	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
 		// Used in various places to mark fields for the preview button.
 		$apm_name = 'ApplePay';
@@ -101,7 +101,7 @@ return array(
 					'applepay_button_enabled' => array(
 						'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 						'title_html'        => sprintf(
-							'<img src="%sassets/images/applepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+							'<img src="%sassets/images/applepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
 							$module_url,
 							__( 'Apple Pay', 'woocommerce-paypal-payments' )
 						),
@@ -155,7 +155,7 @@ return array(
 				'applepay_button_enabled'             => array(
 					'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/applepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						'<img src="%sassets/images/applepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
 						$module_url,
 						__( 'Apple Pay', 'woocommerce-paypal-payments' )
 					),
