@@ -148,7 +148,7 @@ class BillingSubscriptions {
 	 */
 	public function cancel( string $id ): void {
 		$data = array(
-			'reason' => 'Cancelled by customer',
+			'reason' => sprintf( 'Cancelled by %s.', is_admin() ? 'merchant' : 'customer' ),
 		);
 
 		$bearer = $this->bearer->bearer();

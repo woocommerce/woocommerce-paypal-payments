@@ -215,28 +215,10 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		);
 
 		/**
-		 * Update status to pending-cancel from WC Subscriptions list page action link.
+		 * Update subscription status from WC Subscriptions list page action link.
 		 */
 		add_action(
-			'woocommerce_subscription_status_pending-cancel',
-			function( WC_Subscription $subscription ) use ( $c ) {
-				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-				if ( ! $subscription_id ) {
-					return;
-				}
-
-				$subscription_status = $c->get( 'paypal-subscriptions.status' );
-				assert( $subscription_status instanceof SubscriptionStatus );
-
-				$subscription_status->update_status( $subscription->get_status(), $subscription_id );
-			}
-		);
-
-		/**
-		 * Update status to cancelled from WC Subscriptions list page action link.
-		 */
-		add_action(
-			'woocommerce_subscription_status_cancelled',
+			'woocommerce_subscription_status_updated',
 			function( WC_Subscription $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( ! $subscription_id ) {
