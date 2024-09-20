@@ -40,4 +40,10 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
+	'paypal-subscriptions.status'                   => static function ( ContainerInterface $container ): SubscriptionStatus {
+		return new SubscriptionStatus(
+			$container->get( 'api.endpoint.billing-subscriptions' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 );
