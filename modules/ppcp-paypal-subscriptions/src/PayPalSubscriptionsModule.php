@@ -200,13 +200,9 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $id ) use ( $c ) {
-				$subscription = wcs_get_subscription( $id );
-				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
-					return;
-				}
-
+				$subscription    = wcs_get_subscription( $id );
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-				if ( ! $subscription_id ) {
+				if ( ! is_a( $subscription, WC_Subscription::class ) || ! $subscription_id ) {
 					return;
 				}
 
@@ -216,6 +212,42 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				$subscription_status->update_status( $subscription->get_status(), $subscription_id );
 			},
 			20
+		);
+
+		/**
+		 * Update status to pending-cancel from WC Subscriptions list page action link.
+		 */
+		add_action(
+			'woocommerce_subscription_status_pending-cancel',
+			function( WC_Subscription $subscription ) use ( $c ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( ! $subscription_id ) {
+					return;
+				}
+
+				$subscription_status = $c->get( 'paypal-subscriptions.status' );
+				assert( $subscription_status instanceof SubscriptionStatus );
+
+				$subscription_status->update_status( $subscription->get_status(), $subscription_id );
+			}
+		);
+
+		/**
+		 * Update status to cancelled from WC Subscriptions list page action link.
+		 */
+		add_action(
+			'woocommerce_subscription_status_cancelled',
+			function( WC_Subscription $subscription ) use ( $c ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( ! $subscription_id ) {
+					return;
+				}
+
+				$subscription_status = $c->get( 'paypal-subscriptions.status' );
+				assert( $subscription_status instanceof SubscriptionStatus );
+
+				$subscription_status->update_status( $subscription->get_status(), $subscription_id );
+			}
 		);
 
 		add_filter(
