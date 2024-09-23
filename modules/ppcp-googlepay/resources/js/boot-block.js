@@ -3,6 +3,7 @@ import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
+import { __ } from '@wordpress/i18n';
 import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { loadCustomScript } from '@paypal/paypal-js';
@@ -58,6 +59,12 @@ const features = [ 'products' ];
 
 registerExpressPaymentMethod( {
 	name: buttonData.id,
+	title: `PayPal - ${ buttonData.title }`,
+	description: __(
+		'Eligible users will see the PayPal button.',
+		'woocommerce-paypal-payments'
+	),
+	gatewayId: 'ppcp-gateway',
 	label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
 	content: <GooglePayComponent isEditing={ false } />,
 	edit: <GooglePayComponent isEditing={ true } />,
