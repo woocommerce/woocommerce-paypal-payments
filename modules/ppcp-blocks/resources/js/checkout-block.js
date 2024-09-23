@@ -19,8 +19,6 @@ import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { normalizeStyleForFundingSource } from '../../../ppcp-button/resources/js/modules/Helper/Style';
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
-import { keysToCamelCase } from '../../../ppcp-button/resources/js/modules/Helper/Utils';
-import { handleShippingOptionsChange } from '../../../ppcp-button/resources/js/modules/Helper/ShippingHandler';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
 window.ppcpFundingSource = config.fundingSource;
@@ -46,6 +44,7 @@ const PayPalComponent = ( {
 	const { responseTypes } = emitResponse;
 
 	const [ paypalOrder, setPaypalOrder ] = useState( null );
+	const [ continuationFilled, setContinuationFilled ] = useState( false );
 	const [ gotoContinuationOnError, setGotoContinuationOnError ] =
 		useState( false );
 
@@ -65,13 +64,10 @@ const PayPalComponent = ( {
 
 	useEffect( () => {
 		// fill the form if in continuation (for product or mini-cart buttons)
-		if (
-			! config.scriptData.continuation ||
-			! config.scriptData.continuation.order ||
-			window.ppcpContinuationFilled
-		) {
+		if ( continuationFilled || ! config.scriptData.continuation?.order ) {
 			return;
 		}
+
 		try {
 			const paypalAddresses = paypalOrderToWcAddresses(
 				config.scriptData.continuation.order
@@ -80,9 +76,11 @@ const PayPalComponent = ( {
 				.select( 'wc/store/cart' )
 				.getCustomerData();
 			const addresses = mergeWcAddress( wcAddresses, paypalAddresses );
+
 			wp.data
 				.dispatch( 'wc/store/cart' )
 				.setBillingAddress( addresses.billingAddress );
+
 			if ( shippingData.needsShipping ) {
 				wp.data
 					.dispatch( 'wc/store/cart' )
@@ -92,9 +90,10 @@ const PayPalComponent = ( {
 			// sometimes the PayPal address is missing, skip in this case.
 			console.log( err );
 		}
+
 		// this useEffect should run only once, but adding this in case of some kind of full re-rendering
-		window.ppcpContinuationFilled = true;
-	}, [] );
+		setContinuationFilled( true );
+	}, [ shippingData, continuationFilled ] );
 
 	const createOrder = async ( data, actions ) => {
 		try {
@@ -364,19 +363,19 @@ const PayPalComponent = ( {
 	};
 
 	const shouldHandleShippingInPayPal = () => {
-		return shouldskipFinalConfirmation() && config.needShipping
+		return shouldskipFinalConfirmation() && config.needShipping;
 	};
 
-    const shouldskipFinalConfirmation = () => {
-        if ( config.finalReviewEnabled ) {
-            return false;
-        }
+	const shouldskipFinalConfirmation = () => {
+		if ( config.finalReviewEnabled ) {
+			return false;
+		}
 
-        return (
-            window.ppcpFundingSource !== 'venmo' ||
-            ! config.scriptData.vaultingEnabled
-        );
-    };
+		return (
+			window.ppcpFundingSource !== 'venmo' ||
+			! config.scriptData.vaultingEnabled
+		);
+	};
 
 	let handleShippingOptionsChange = null;
 	let handleShippingAddressChange = null;
@@ -610,11 +609,11 @@ const PayPalComponent = ( {
 		}
 
 		return ( data, actions ) => {
-            let shippingAddressChange = shouldHandleShippingInPayPal()
+			const shippingAddressChange = shouldHandleShippingInPayPal()
 				? handleShippingAddressChange( data, actions )
 				: null;
 
-            return shippingAddressChange;
+			return shippingAddressChange;
 		};
 	};
 
