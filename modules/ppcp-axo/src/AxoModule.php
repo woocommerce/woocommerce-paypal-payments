@@ -167,7 +167,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $is_paypal_enabled
 					|| ! $c->get( 'axo.eligible' )
-					|| 'continuation' === $c->get( 'button.context' )
+					|| $this->is_paypal_continuation()
 					|| $subscription_helper->cart_contains_subscription()
 				) {
 					return;
