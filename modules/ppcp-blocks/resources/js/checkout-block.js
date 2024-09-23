@@ -24,8 +24,9 @@ const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 window.ppcpFundingSource = config.fundingSource;
 
 let registeredContext = false;
-
 let paypalScriptPromise = null;
+
+const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 const PayPalComponent = ( {
 	onClick,
@@ -61,6 +62,27 @@ const PayPalComponent = ( {
 	const methodId = fundingSource
 		? `${ config.id }-${ fundingSource }`
 		: config.id;
+
+	/**
+	 * The block cart displays express checkout buttons. Those buttons are handled by the
+	 * PAYPAL_GATEWAY_ID method on the server ("PayPal Smart Buttons").
+	 *
+	 * A possible bug in WooCommerce does not use the correct payment method ID for the express
+	 * payment buttons inside the cart, but sends the ID of the _first_ active payment method.
+	 *
+	 * This function uses an internal WooCommerce dispatcher method to set the correct method ID.
+	 */
+	const enforcePaymentMethodForCart = () => {
+		// Do nothing, unless we're handling block cart express payment buttons.
+		if ( 'cart-block' !== config.scriptData.context ) {
+			return;
+		}
+
+		// Set the active payment method to PAYPAL_GATEWAY_ID.
+		wp.data
+			.dispatch( 'wc/store/payment' )
+			.__internalSetActivePaymentMethod( PAYPAL_GATEWAY_ID, {} );
+	};
 
 	useEffect( () => {
 		// fill the form if in continuation (for product or mini-cart buttons)
@@ -230,6 +252,7 @@ const PayPalComponent = ( {
 				location.href = getCheckoutRedirectUrl();
 			} else {
 				setGotoContinuationOnError( true );
+				enforcePaymentMethodForCart();
 				onSubmit();
 			}
 		} catch ( err ) {
@@ -321,6 +344,7 @@ const PayPalComponent = ( {
 				location.href = getCheckoutRedirectUrl();
 			} else {
 				setGotoContinuationOnError( true );
+				enforcePaymentMethodForCart();
 				onSubmit();
 			}
 		} catch ( err ) {
