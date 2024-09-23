@@ -200,7 +200,11 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $id ) use ( $c ) {
-				$subscription    = wcs_get_subscription( $id );
+				$subscription = wcs_get_subscription( $id );
+				if ( $subscription === false ) {
+					return;
+				}
+
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( ! is_a( $subscription, WC_Subscription::class ) || ! $subscription_id ) {
 					return;
