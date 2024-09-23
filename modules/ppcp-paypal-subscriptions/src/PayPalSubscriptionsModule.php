@@ -206,7 +206,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				}
 
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-				if ( ! is_a( $subscription, WC_Subscription::class ) || ! $subscription_id ) {
+				if ( ! $subscription_id ) {
 					return;
 				}
 
