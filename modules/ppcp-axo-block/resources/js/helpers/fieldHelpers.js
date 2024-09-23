@@ -85,14 +85,14 @@ export const populateWooFields = (
 
 	const checkoutDispatch = dispatch( CHECKOUT_STORE_KEY );
 
-	// Disable the 'Use same address for billing' checkbox if the method exists.
+	// Uncheck the 'Use same address for billing' checkbox if the method exists.
 	if (
 		typeof checkoutDispatch.__internalSetUseShippingAsBilling === 'function'
 	) {
 		checkoutDispatch.__internalSetUseShippingAsBilling( false );
 	}
 
-	// Save shipping address
+	// Save shipping address.
 	const { address, name, phoneNumber } = profileData.shippingAddress;
 
 	const shippingAddress = {
@@ -110,7 +110,7 @@ export const populateWooFields = (
 	console.log( 'Setting WooCommerce shipping address:', shippingAddress );
 	setWooShippingAddress( shippingAddress );
 
-	// Save billing address
+	// Save billing address.
 	const billingData = profileData.card.paymentSource.card.billingAddress;
 
 	const billingAddress = {
