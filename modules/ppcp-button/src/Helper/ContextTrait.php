@@ -53,18 +53,26 @@ trait ContextTrait {
 			return true;
 		}
 
-		/**
-		 * The filter returning whether to detect WC checkout ajax requests.
-		 */
-		if ( apply_filters( 'ppcp_check_ajax_checkout', true ) ) {
-			// phpcs:ignore WordPress.Security
-			$wc_ajax = $_GET['wc-ajax'] ?? '';
-			if ( in_array( $wc_ajax, array( 'update_order_review' ), true ) ) {
-				return true;
-			}
+		if ( $this->is_checkout_ajax() ) {
+			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if performing the WC checkout ajax requests.
+	 */
+	private function is_checkout_ajax(): bool {
+		/**
+		 * The filter returning whether to detect WC checkout ajax requests.
+		 */
+		if ( ! apply_filters( 'ppcp_check_ajax_checkout', true ) ) {
+			return false;
+		}
+
+		$wc_ajax = $this->wc_ajax_endpoint_name();
+		return in_array( $wc_ajax, array( 'update_order_review' ), true );
 	}
 
 	/**
@@ -75,18 +83,38 @@ trait ContextTrait {
 			return true;
 		}
 
-		/**
-		 * The filter returning whether to detect WC cart ajax requests.
-		 */
-		if ( apply_filters( 'ppcp_check_ajax_cart', true ) ) {
-			// phpcs:ignore WordPress.Security
-			$wc_ajax = $_GET['wc-ajax'] ?? '';
-			if ( in_array( $wc_ajax, array( 'update_shipping_method' ), true ) ) {
-				return true;
-			}
+		if ( $this->is_cart_ajax() ) {
+			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if performing the WC cart ajax requests.
+	 */
+	private function is_cart_ajax(): bool {
+		/**
+		 * The filter returning whether to detect WC checkout ajax requests.
+		 */
+		if ( ! apply_filters( 'ppcp_check_ajax_cart', true ) ) {
+			return false;
+		}
+
+		$wc_ajax = $this->wc_ajax_endpoint_name();
+		return in_array( $wc_ajax, array( 'update_shipping_method' ), true );
+	}
+
+	/**
+	 * Returns the current WC ajax endpoint name or an empty string if not in ajax.
+	 */
+	private function wc_ajax_endpoint_name(): string {
+		// phpcs:ignore WordPress.Security
+		$wc_ajax = $_GET['wc-ajax'] ?? '';
+		if ( ! is_string( $wc_ajax ) ) {
+			return '';
+		}
+		return $wc_ajax;
 	}
 
 	/**
@@ -99,6 +127,14 @@ trait ContextTrait {
 		$context = 'mini-cart';
 
 		switch ( true ) {
+			case $this->is_cart_ajax():
+				$context = 'cart';
+				break;
+
+			case $this->is_checkout_ajax() && ! $this->is_paypal_continuation():
+				$context = 'checkout';
+				break;
+
 			case is_product() || wc_post_content_has_shortcode( 'product_page' ):
 				// Do this check here instead of reordering outside conditions.
 				// In order to have more control over the context.
