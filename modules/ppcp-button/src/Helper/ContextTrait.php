@@ -207,6 +207,16 @@ trait ContextTrait {
 	 */
 	private function is_paypal_continuation(): bool {
 		/**
+		 * Cannot guarantee that initialized in all places where this trait is used,
+		 * the Psalm checks seem to work weird and sometimes ignore missing property.
+		 *
+		 * @psalm-suppress RedundantPropertyInitializationCheck
+		 */
+		if ( ! isset( $this->session_handler ) ) {
+			return false;
+		}
+
+		/**
 		 * Property is already defined in trait consumers.
 		 *
 		 * @psalm-suppress UndefinedThisPropertyFetch
