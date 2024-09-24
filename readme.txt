@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.9.1 - xxxx-xx-xx =
+= 2.9.1 - 2024-09-24 =
 * Fix - Improve card fields hiding #2574
 * Fix - Google Pay: Shipping callback not calculating totals correctly on Single Product page #2513
 * Fix - Fix shipping callback condition in status report #2578
