@@ -1,4 +1,5 @@
 import { createElement } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 
 const CardChangeButton = ( { onChangeButtonClick } ) =>
 	createElement(
@@ -12,7 +13,7 @@ const CardChangeButton = ( { onChangeButtonClick } ) =>
 				onChangeButtonClick();
 			},
 		},
-		'Choose a different card'
+		__( 'Choose a different card', 'woocommerce-paypal-payments' )
 	);
 
 export default CardChangeButton;
