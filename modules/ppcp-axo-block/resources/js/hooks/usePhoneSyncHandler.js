@@ -44,6 +44,7 @@ const usePhoneSyncHandler = ( paymentComponent ) => {
 
 	const { shippingAddress, billingAddress } = useCustomerData();
 
+	// Create a debounced function that updates the prefilled phone-number.
 	const debouncedUpdatePhone = useRef(
 		debounce( updatePrefills, PHONE_DEBOUNCE_DELAY )
 	).current;
