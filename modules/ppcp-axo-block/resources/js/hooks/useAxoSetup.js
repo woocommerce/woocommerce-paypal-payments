@@ -15,11 +15,14 @@ const useAxoSetup = (
 	ppcpConfig,
 	fastlaneSdk,
 	paymentComponent,
-	onChangeCardButtonClick,
-	setShippingAddress,
-	setCard
+	onChangeCardButtonClick
 ) => {
-	const { setIsAxoActive, setIsAxoScriptLoaded } = useDispatch( STORE_NAME );
+	const {
+		setIsAxoActive,
+		setIsAxoScriptLoaded,
+		setShippingAddress,
+		setCardDetails,
+	} = useDispatch( STORE_NAME );
 	const paypalLoaded = usePayPalScript( ppcpConfig );
 
 	const onChangeShippingAddressClick = useShippingAddressChange(
@@ -53,7 +56,7 @@ const useAxoSetup = (
 			const emailLookupHandler = createEmailLookupHandler(
 				fastlaneSdk,
 				setShippingAddress,
-				setCard,
+				setCardDetails,
 				snapshotFields,
 				wooShippingAddress,
 				wooBillingAddress,
@@ -76,7 +79,7 @@ const useAxoSetup = (
 		onChangeShippingAddressClick,
 		onChangeCardButtonClick,
 		setShippingAddress,
-		setCard,
+		setCardDetails,
 		paymentComponent,
 	] );
 

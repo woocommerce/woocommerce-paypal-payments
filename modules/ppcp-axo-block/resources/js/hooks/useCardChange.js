@@ -1,53 +1,73 @@
 import { useCallback } from '@wordpress/element';
+import { useDispatch } from '@wordpress/data';
 import { useAddressEditing } from './useAddressEditing';
 import useCustomerData from './useCustomerData';
+import { STORE_NAME } from '../stores/axoStore';
 
-export const useCardChange = ( fastlaneSdk, setCard ) => {
+export const useCardChange = ( fastlaneSdk ) => {
 	const { setBillingAddressEditing } = useAddressEditing();
 	const { setBillingAddress: setWooBillingAddress } = useCustomerData();
+	const { setCardDetails, setShippingAddress } = useDispatch( STORE_NAME );
 
 	return useCallback( async () => {
 		if ( fastlaneSdk ) {
 			const { selectionChanged, selectedCard } =
 				await fastlaneSdk.profile.showCardSelector();
-			if ( selectionChanged ) {
-				setCard( selectedCard );
-				console.log( 'Selected card changed:', selectedCard );
-				console.log( 'Setting new billing details:', selectedCard );
+
+			if ( selectionChanged && selectedCard?.paymentSource?.card ) {
+				// Use the fallback logic for cardholder's name.
 				const { name, billingAddress } =
 					selectedCard.paymentSource.card;
 
-				// Split the full name into first and last name
-				const nameParts = name.split( ' ' );
-				const firstName = nameParts[ 0 ];
-				const lastName = nameParts.slice( 1 ).join( ' ' );
+				// If name is missing, use billing details as a fallback for the name.
+				let firstName = '';
+				let lastName = '';
+
+				if ( name ) {
+					const nameParts = name.split( ' ' );
+					firstName = nameParts[ 0 ];
+					lastName = nameParts.slice( 1 ).join( ' ' );
+				}
 
 				const newBillingAddress = {
 					first_name: firstName,
 					last_name: lastName,
-					address_1: billingAddress.addressLine1,
-					address_2: billingAddress.addressLine2 || '',
-					city: billingAddress.adminArea2,
-					state: billingAddress.adminArea1,
-					postcode: billingAddress.postalCode,
-					country: billingAddress.countryCode,
+					address_1: billingAddress?.addressLine1 || '',
+					address_2: billingAddress?.addressLine2 || '',
+					city: billingAddress?.adminArea2 || '',
+					state: billingAddress?.adminArea1 || '',
+					postcode: billingAddress?.postalCode || '',
+					country: billingAddress?.countryCode || '',
 				};
 
-				await new Promise( ( resolve ) => {
-					setWooBillingAddress( newBillingAddress );
-					resolve();
-				} );
-
-				await new Promise( ( resolve ) => {
-					setBillingAddressEditing( false );
-					resolve();
-				} );
+				// Batch state updates.
+				await Promise.all( [
+					new Promise( ( resolve ) => {
+						setCardDetails( selectedCard );
+						resolve();
+					} ),
+					new Promise( ( resolve ) => {
+						setWooBillingAddress( newBillingAddress );
+						resolve();
+					} ),
+					new Promise( ( resolve ) => {
+						setShippingAddress( newBillingAddress );
+						resolve();
+					} ),
+					new Promise( ( resolve ) => {
+						setBillingAddressEditing( false );
+						resolve();
+					} ),
+				] );
+			} else {
+				console.error( 'Selected card or billing address is missing.' );
 			}
 		}
 	}, [
 		fastlaneSdk,
-		setCard,
+		setCardDetails,
 		setWooBillingAddress,
+		setShippingAddress,
 		setBillingAddressEditing,
 	] );
 };

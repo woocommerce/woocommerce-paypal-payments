@@ -1,4 +1,5 @@
 import { useState } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
 // Hooks
@@ -13,6 +14,9 @@ import useHandlePaymentSetup from './hooks/useHandlePaymentSetup';
 import { Payment } from './components/Payment/Payment';
 import usePaymentSetupEffect from './hooks/usePaymentSetupEffect';
 
+// Store
+import { STORE_NAME } from './stores/axoStore';
+
 const gatewayHandle = 'ppcp-axo-gateway';
 const ppcpConfig = wc.wcSettings.getSetting( `${ gatewayHandle }_data` );
 
@@ -25,16 +29,20 @@ const axoConfig = window.wc_ppcp_axo;
 const Axo = ( props ) => {
 	const { eventRegistration, emitResponse } = props;
 	const { onPaymentSetup } = eventRegistration;
-	const [ shippingAddress, setShippingAddress ] = useState( null );
-	const [ card, setCard ] = useState( null );
 	const [ paymentComponent, setPaymentComponent ] = useState( null );
+
+	const { cardDetails } = useSelect(
+		( select ) => ( {
+			cardDetails: select( STORE_NAME ).getCardDetails(),
+		} ),
+		[]
+	);
 
 	const fastlaneSdk = useFastlaneSdk( axoConfig, ppcpConfig );
 	const tokenizedCustomerData = useTokenizeCustomerData();
-	const onChangeCardButtonClick = useCardChange( fastlaneSdk, setCard );
+	const onChangeCardButtonClick = useCardChange( fastlaneSdk );
 	const handlePaymentSetup = useHandlePaymentSetup(
 		emitResponse,
-		card,
 		paymentComponent,
 		tokenizedCustomerData
 	);
@@ -43,9 +51,7 @@ const Axo = ( props ) => {
 		ppcpConfig,
 		fastlaneSdk,
 		paymentComponent,
-		onChangeCardButtonClick,
-		setShippingAddress,
-		setCard
+		onChangeCardButtonClick
 	);
 
 	const { handlePaymentLoad } = usePaymentSetupEffect(
@@ -56,22 +62,15 @@ const Axo = ( props ) => {
 
 	useAxoCleanup();
 
-	const handleCardChange = ( selectedCard ) => {
-		console.log( 'Card selection changed', selectedCard );
-		setCard( selectedCard );
-	};
-
 	console.log( 'Rendering Axo component', {
 		fastlaneSdk,
-		card,
-		shippingAddress,
 	} );
 
 	return fastlaneSdk ? (
 		<Payment
 			fastlaneSdk={ fastlaneSdk }
-			card={ card }
-			onChange={ handleCardChange }
+			card={ cardDetails }
+			onChange={ onChangeCardButtonClick }
 			onPaymentLoad={ handlePaymentLoad }
 			onChangeButtonClick={ onChangeCardButtonClick }
 		/>

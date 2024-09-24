@@ -1,14 +1,23 @@
 import { useCallback } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
+import { STORE_NAME } from '../stores/axoStore';
 
 const useHandlePaymentSetup = (
 	emitResponse,
-	card,
 	paymentComponent,
 	tokenizedCustomerData
 ) => {
+	const { cardDetails } = useSelect(
+		( select ) => ( {
+			shippingAddress: select( STORE_NAME ).getShippingAddress(),
+			cardDetails: select( STORE_NAME ).getCardDetails(),
+		} ),
+		[]
+	);
+
 	return useCallback( async () => {
-		const isRyanFlow = !! card?.id;
-		let cardToken = card?.id;
+		const isRyanFlow = !! cardDetails?.id;
+		let cardToken = cardDetails?.id;
 
 		if ( ! cardToken && paymentComponent ) {
 			cardToken = await paymentComponent
@@ -38,7 +47,13 @@ const useHandlePaymentSetup = (
 				},
 			},
 		};
-	}, [ card, paymentComponent, tokenizedCustomerData ] );
+	}, [
+		cardDetails?.id,
+		emitResponse.responseTypes.ERROR,
+		emitResponse.responseTypes.SUCCESS,
+		paymentComponent,
+		tokenizedCustomerData,
+	] );
 };
 
 export default useHandlePaymentSetup;
