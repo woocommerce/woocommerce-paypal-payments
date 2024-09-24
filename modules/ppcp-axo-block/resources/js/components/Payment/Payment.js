@@ -3,13 +3,14 @@ import { useSelect } from '@wordpress/data';
 import { Card } from '../Card';
 import { STORE_NAME } from '../../stores/axoStore';
 
-export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
-	const isGuest = useSelect( ( select ) =>
-		select( STORE_NAME ).getIsGuest()
-	);
-
-	const isEmailLookupCompleted = useSelect( ( select ) =>
-		select( STORE_NAME ).getIsEmailLookupCompleted()
+export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
+	const { isGuest, isEmailLookupCompleted } = useSelect(
+		( select ) => ( {
+			isGuest: select( STORE_NAME ).getIsGuest(),
+			isEmailLookupCompleted:
+				select( STORE_NAME ).getIsEmailLookupCompleted(),
+		} ),
+		[]
 	);
 
 	const loadPaymentComponent = useCallback( async () => {
@@ -36,11 +37,5 @@ export const Payment = ( { fastlaneSdk, card, onPaymentLoad } ) => {
 			</div>
 		);
 	}
-	return (
-		<Card
-			card={ card }
-			fastlaneSdk={ fastlaneSdk }
-			showWatermark={ ! isGuest }
-		/>
-	);
+	return <Card fastlaneSdk={ fastlaneSdk } showWatermark={ ! isGuest } />;
 };

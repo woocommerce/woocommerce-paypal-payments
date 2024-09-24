@@ -5,18 +5,14 @@ import usePayPalScript from './usePayPalScript';
 import { setupWatermark } from '../components/Watermark';
 import { setupEmailFunctionality } from '../components/EmailButton';
 import { createEmailLookupHandler } from '../events/emailLookupManager';
-import { usePhoneSyncHandler } from './usePhoneSyncHandler';
+import usePhoneSyncHandler from './usePhoneSyncHandler';
 import { initializeClassToggles } from '../helpers/classnamesManager';
 import { snapshotFields } from '../helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
 import useShippingAddressChange from './useShippingAddressChange';
+import useCardChange from './useCardChange';
 
-const useAxoSetup = (
-	ppcpConfig,
-	fastlaneSdk,
-	paymentComponent,
-	onChangeCardButtonClick
-) => {
+const useAxoSetup = ( ppcpConfig, fastlaneSdk, paymentComponent ) => {
 	const {
 		setIsAxoActive,
 		setIsAxoScriptLoaded,
@@ -24,7 +20,7 @@ const useAxoSetup = (
 		setCardDetails,
 	} = useDispatch( STORE_NAME );
 	const paypalLoaded = usePayPalScript( ppcpConfig );
-
+	const onChangeCardButtonClick = useCardChange( fastlaneSdk );
 	const onChangeShippingAddressClick = useShippingAddressChange(
 		fastlaneSdk,
 		setShippingAddress

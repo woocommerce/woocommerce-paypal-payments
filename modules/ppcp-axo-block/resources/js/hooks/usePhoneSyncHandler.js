@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react';
-import { useSelect } from '@wordpress/data';
+import { useEffect, useRef, useCallback } from '@wordpress/element';
+import { useSelect, useDispatch } from '@wordpress/data';
 import { debounce } from '../../../../ppcp-blocks/resources/js/Helper/debounce';
+import { STORE_NAME } from '../stores/axoStore';
+import useCustomerData from './useCustomerData';
 
-const WOO_STORE_NAME = 'wc/store/cart';
 const PHONE_DEBOUNCE_DELAY = 250;
 
 /**
@@ -15,21 +16,7 @@ const PHONE_DEBOUNCE_DELAY = 250;
 const sanitizePhoneNumber = ( phoneNumber = '' ) => {
 	const localNumber = phoneNumber.replace( /^\+?[01]+/, '' );
 	const cleanNumber = localNumber.replace( /[^0-9]/g, '' );
-
 	return cleanNumber.length === 10 ? cleanNumber : '';
-};
-
-/**
- * Retrieves and sanitizes the phone number from WooCommerce customer data.
- *
- * @param {Function} select - The select function from @wordpress/data.
- * @return {string} The sanitized phone number.
- */
-const getSanitizedPhoneNumber = ( select ) => {
-	const data = select( WOO_STORE_NAME ).getCustomerData() || {};
-	const billingPhone = sanitizePhoneNumber( data.billingAddress?.phone );
-	const shippingPhone = sanitizePhoneNumber( data.shippingAddress?.phone );
-	return billingPhone || shippingPhone || '';
 };
 
 /**
@@ -48,16 +35,36 @@ const updatePrefills = ( paymentComponent, phoneNumber ) => {
  *
  * @param {Object} paymentComponent - The CardField component from Fastlane.
  */
-export const usePhoneSyncHandler = ( paymentComponent ) => {
-	// Fetch and sanitize phone number from WooCommerce.
-	const phoneNumber = useSelect( ( select ) =>
-		getSanitizedPhoneNumber( select )
-	);
+const usePhoneSyncHandler = ( paymentComponent ) => {
+	const { setPhoneNumber } = useDispatch( STORE_NAME );
 
-	// Create a debounced function that updates the prefilled phone-number.
+	const { phoneNumber } = useSelect( ( select ) => ( {
+		phoneNumber: select( STORE_NAME ).getPhoneNumber(),
+	} ) );
+
+	const { shippingAddress, billingAddress } = useCustomerData();
+
 	const debouncedUpdatePhone = useRef(
 		debounce( updatePrefills, PHONE_DEBOUNCE_DELAY )
 	).current;
+
+	// Fetch and update the phone number from the billing or shipping address.
+	const fetchAndUpdatePhoneNumber = useCallback( () => {
+		const billingPhone = billingAddress?.phone || '';
+		const shippingPhone = shippingAddress?.phone || '';
+		const sanitizedPhoneNumber = sanitizePhoneNumber(
+			billingPhone || shippingPhone
+		);
+
+		if ( sanitizedPhoneNumber && sanitizedPhoneNumber !== phoneNumber ) {
+			setPhoneNumber( sanitizedPhoneNumber );
+		}
+	}, [ billingAddress, shippingAddress, phoneNumber, setPhoneNumber ] );
+
+	// Fetch and update the phone number from the billing or shipping address.
+	useEffect( () => {
+		fetchAndUpdatePhoneNumber();
+	}, [ fetchAndUpdatePhoneNumber ] );
 
 	// Invoke debounced function when paymentComponent or phoneNumber changes.
 	useEffect( () => {
@@ -75,3 +82,5 @@ export const usePhoneSyncHandler = ( paymentComponent ) => {
 		};
 	}, [ debouncedUpdatePhone ] );
 };
+
+export default usePhoneSyncHandler;

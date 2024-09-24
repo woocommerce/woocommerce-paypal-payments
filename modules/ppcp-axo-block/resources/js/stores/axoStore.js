@@ -2,7 +2,7 @@ import { createReduxStore, register, dispatch } from '@wordpress/data';
 
 export const STORE_NAME = 'woocommerce-paypal-payments/axo-block';
 
-// Initial state.
+// Initial state
 const DEFAULT_STATE = {
 	isGuest: true,
 	isAxoActive: false,
@@ -11,9 +11,10 @@ const DEFAULT_STATE = {
 	isEmailLookupCompleted: false,
 	shippingAddress: null,
 	cardDetails: null,
+	phoneNumber: '',
 };
 
-// Actions.
+// Actions
 const actions = {
 	setIsGuest: ( isGuest ) => ( {
 		type: 'SET_IS_GUEST',
@@ -43,9 +44,13 @@ const actions = {
 		type: 'SET_CARD_DETAILS',
 		payload: cardDetails,
 	} ),
+	setPhoneNumber: ( phoneNumber ) => ( {
+		type: 'SET_PHONE_NUMBER',
+		payload: phoneNumber,
+	} ),
 };
 
-// Reducer.
+// Reducer
 const reducer = ( state = DEFAULT_STATE, action ) => {
 	switch ( action.type ) {
 		case 'SET_IS_GUEST':
@@ -62,12 +67,14 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 			return { ...state, shippingAddress: action.payload };
 		case 'SET_CARD_DETAILS':
 			return { ...state, cardDetails: action.payload };
+		case 'SET_PHONE_NUMBER':
+			return { ...state, phoneNumber: action.payload };
 		default:
 			return state;
 	}
 };
 
-// Selectors.
+// Selectors
 const selectors = {
 	getIsGuest: ( state ) => state.isGuest,
 	getIsAxoActive: ( state ) => state.isAxoActive,
@@ -76,9 +83,10 @@ const selectors = {
 	getIsEmailLookupCompleted: ( state ) => state.isEmailLookupCompleted,
 	getShippingAddress: ( state ) => state.shippingAddress,
 	getCardDetails: ( state ) => state.cardDetails,
+	getPhoneNumber: ( state ) => state.phoneNumber,
 };
 
-// Create and register the store.
+// Create and register the store
 const store = createReduxStore( STORE_NAME, {
 	reducer,
 	actions,
@@ -87,7 +95,7 @@ const store = createReduxStore( STORE_NAME, {
 
 register( store );
 
-// Action dispatchers.
+// Action dispatchers
 export const setIsGuest = ( isGuest ) => {
 	dispatch( STORE_NAME ).setIsGuest( isGuest );
 };
@@ -102,4 +110,8 @@ export const setShippingAddress = ( shippingAddress ) => {
 
 export const setCardDetails = ( cardDetails ) => {
 	dispatch( STORE_NAME ).setCardDetails( cardDetails );
+};
+
+export const setPhoneNumber = ( phoneNumber ) => {
+	dispatch( STORE_NAME ).setPhoneNumber( phoneNumber );
 };
