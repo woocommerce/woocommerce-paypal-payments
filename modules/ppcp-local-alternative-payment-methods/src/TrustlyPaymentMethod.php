@@ -91,7 +91,7 @@ class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'trustly',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }
