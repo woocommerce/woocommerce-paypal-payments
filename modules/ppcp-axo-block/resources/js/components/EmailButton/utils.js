@@ -83,8 +83,6 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 					handleSubmit: handleEmailSubmit,
 				} )
 			);
-		} else {
-			console.warn( 'Submit button root not found' );
 		}
 	};
 

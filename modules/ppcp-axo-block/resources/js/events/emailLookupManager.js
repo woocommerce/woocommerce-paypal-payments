@@ -6,7 +6,7 @@ import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
 export const createEmailLookupHandler = (
 	fastlaneSdk,
 	setShippingAddress,
-	setCard,
+	setCardDetails,
 	snapshotFields,
 	wooShippingAddress,
 	wooBillingAddress,
@@ -68,7 +68,7 @@ export const createEmailLookupHandler = (
 					setShippingAddress( profileData.shippingAddress );
 				}
 				if ( profileData && profileData.card ) {
-					setCard( profileData.card );
+					setCardDetails( profileData.card );
 				}
 
 				console.log( 'Profile Data:', profileData );

@@ -1,5 +1,3 @@
-// File: axoStore.js
-
 import { createReduxStore, register, dispatch } from '@wordpress/data';
 
 export const STORE_NAME = 'woocommerce-paypal-payments/axo-block';
@@ -11,6 +9,9 @@ const DEFAULT_STATE = {
 	isAxoScriptLoaded: false,
 	isEmailSubmitted: false,
 	isEmailLookupCompleted: false,
+	shippingAddress: null,
+	cardDetails: null,
+	phoneNumber: '',
 };
 
 // Actions
@@ -35,6 +36,18 @@ const actions = {
 		type: 'SET_IS_EMAIL_LOOKUP_COMPLETED',
 		payload: isEmailLookupCompleted,
 	} ),
+	setShippingAddress: ( shippingAddress ) => ( {
+		type: 'SET_SHIPPING_ADDRESS',
+		payload: shippingAddress,
+	} ),
+	setCardDetails: ( cardDetails ) => ( {
+		type: 'SET_CARD_DETAILS',
+		payload: cardDetails,
+	} ),
+	setPhoneNumber: ( phoneNumber ) => ( {
+		type: 'SET_PHONE_NUMBER',
+		payload: phoneNumber,
+	} ),
 };
 
 // Reducer
@@ -50,6 +63,12 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 			return { ...state, isEmailSubmitted: action.payload };
 		case 'SET_IS_EMAIL_LOOKUP_COMPLETED':
 			return { ...state, isEmailLookupCompleted: action.payload };
+		case 'SET_SHIPPING_ADDRESS':
+			return { ...state, shippingAddress: action.payload };
+		case 'SET_CARD_DETAILS':
+			return { ...state, cardDetails: action.payload };
+		case 'SET_PHONE_NUMBER':
+			return { ...state, phoneNumber: action.payload };
 		default:
 			return state;
 	}
@@ -62,6 +81,9 @@ const selectors = {
 	getIsAxoScriptLoaded: ( state ) => state.isAxoScriptLoaded,
 	getIsEmailSubmitted: ( state ) => state.isEmailSubmitted,
 	getIsEmailLookupCompleted: ( state ) => state.isEmailLookupCompleted,
+	getShippingAddress: ( state ) => state.shippingAddress,
+	getCardDetails: ( state ) => state.cardDetails,
+	getPhoneNumber: ( state ) => state.phoneNumber,
 };
 
 // Create and register the store
@@ -73,20 +95,23 @@ const store = createReduxStore( STORE_NAME, {
 
 register( store );
 
+// Action dispatchers
 export const setIsGuest = ( isGuest ) => {
-	try {
-		dispatch( STORE_NAME ).setIsGuest( isGuest );
-	} catch ( error ) {
-		console.error( 'Error updating isGuest state:', error );
-	}
+	dispatch( STORE_NAME ).setIsGuest( isGuest );
 };
 
 export const setIsEmailLookupCompleted = ( isEmailLookupCompleted ) => {
-	try {
-		dispatch( STORE_NAME ).setIsEmailLookupCompleted(
-			isEmailLookupCompleted
-		);
-	} catch ( error ) {
-		console.error( 'Error updating isEmailLookupCompleted state:', error );
-	}
+	dispatch( STORE_NAME ).setIsEmailLookupCompleted( isEmailLookupCompleted );
+};
+
+export const setShippingAddress = ( shippingAddress ) => {
+	dispatch( STORE_NAME ).setShippingAddress( shippingAddress );
+};
+
+export const setCardDetails = ( cardDetails ) => {
+	dispatch( STORE_NAME ).setCardDetails( cardDetails );
+};
+
+export const setPhoneNumber = ( phoneNumber ) => {
+	dispatch( STORE_NAME ).setPhoneNumber( phoneNumber );
 };

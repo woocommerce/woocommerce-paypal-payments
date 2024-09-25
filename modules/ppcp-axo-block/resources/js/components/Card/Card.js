@@ -1,5 +1,7 @@
 import { useMemo } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import { Watermark } from '../Watermark';
+import { STORE_NAME } from '../../stores/axoStore';
 
 const cardIcons = {
 	VISA: 'visa-light.svg',
@@ -11,7 +13,14 @@ const cardIcons = {
 	UNIONPAY: 'unionpay-light.svg',
 };
 
-const Card = ( { card, fastlaneSdk, showWatermark = true } ) => {
+const Card = ( { fastlaneSdk, showWatermark = true } ) => {
+	const { card } = useSelect(
+		( select ) => ( {
+			card: select( STORE_NAME ).getCardDetails(),
+		} ),
+		[]
+	);
+
 	const { brand, lastDigits, expiry, name } = card?.paymentSource?.card ?? {};
 
 	const cardLogo = useMemo( () => {
