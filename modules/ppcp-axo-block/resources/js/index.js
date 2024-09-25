@@ -1,4 +1,5 @@
-import { useState } from '@wordpress/element';
+import { useState, createElement } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import { registerPaymentMethod } from '@woocommerce/blocks-registry';
 
 // Hooks
@@ -50,7 +51,7 @@ const Axo = ( props ) => {
 			onPaymentLoad={ handlePaymentLoad }
 		/>
 	) : (
-		<div>Loading Fastlane...</div>
+		<>{ __( 'Loading Fastlane…', 'woocommerce-paypal-payments' ) }</>
 	);
 };
 
@@ -63,7 +64,7 @@ registerPaymentMethod( {
 		/>
 	),
 	content: <Axo />,
-	edit: <h1>This is Axo Blocks in the editor</h1>,
+	edit: createElement( ppcpConfig.title ),
 	ariaLabel: ppcpConfig.title,
 	canMakePayment: () => true,
 	supports: {

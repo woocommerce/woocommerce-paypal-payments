@@ -24,14 +24,18 @@ export const useAddressEditing = () => {
 
 	const setShippingAddressEditing = useCallback(
 		( isEditing ) => {
-			setEditingShippingAddress( isEditing );
+			if ( typeof setEditingShippingAddress === 'function' ) {
+				setEditingShippingAddress( isEditing );
+			}
 		},
 		[ setEditingShippingAddress ]
 	);
 
 	const setBillingAddressEditing = useCallback(
 		( isEditing ) => {
-			setEditingBillingAddress( isEditing );
+			if ( typeof setEditingBillingAddress === 'function' ) {
+				setEditingBillingAddress( isEditing );
+			}
 		},
 		[ setEditingBillingAddress ]
 	);

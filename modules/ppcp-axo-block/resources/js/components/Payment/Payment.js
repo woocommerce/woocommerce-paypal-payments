@@ -1,9 +1,11 @@
-import { useEffect, useCallback } from '@wordpress/element';
+import { useEffect, useCallback, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 import { Card } from '../Card';
 import { STORE_NAME } from '../../stores/axoStore';
 
 export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
+	const [ isCardElementReady, setIsCardElementReady ] = useState( false );
 	const { isGuest, isEmailLookupCompleted } = useSelect(
 		( select ) => ( {
 			isGuest: select( STORE_NAME ).getIsGuest(),
@@ -14,14 +16,26 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 	);
 
 	const loadPaymentComponent = useCallback( async () => {
-		if ( isGuest && isEmailLookupCompleted ) {
+		if ( isGuest && isEmailLookupCompleted && isCardElementReady ) {
 			const paymentComponent = await fastlaneSdk.FastlaneCardComponent(
 				{}
 			);
 			paymentComponent.render( `#fastlane-card` );
 			onPaymentLoad( paymentComponent );
 		}
-	}, [ isGuest, isEmailLookupCompleted, fastlaneSdk, onPaymentLoad ] );
+	}, [
+		isGuest,
+		isEmailLookupCompleted,
+		isCardElementReady,
+		fastlaneSdk,
+		onPaymentLoad,
+	] );
+
+	useEffect( () => {
+		if ( isGuest && isEmailLookupCompleted ) {
+			setIsCardElementReady( true );
+		}
+	}, [ isGuest, isEmailLookupCompleted ] );
 
 	useEffect( () => {
 		loadPaymentComponent();
@@ -33,7 +47,10 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 		}
 		return (
 			<div id="ppcp-axo-block-radio-content">
-				Enter your email address above to continue.
+				{ __(
+					'Enter your email address above to continue.',
+					'woocommerce-paypal-payments'
+				) }
 			</div>
 		);
 	}
