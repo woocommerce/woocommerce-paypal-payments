@@ -35,6 +35,14 @@ class DCCGatewayConfiguration {
 	private string $show_name_on_card;
 
 	/**
+	 * Whether the Fastlane watermark should be hidden on the front-end.
+	 *
+	 * @var bool
+	 */
+	private bool $hide_fastlane_watermark = false;
+
+
+	/**
 	 * Initializes the gateway details based on the provided Settings instance.
 	 *
 	 * @throws NotFoundException If an expected gateway setting is not found.
@@ -57,6 +65,16 @@ class DCCGatewayConfiguration {
 		$this->show_name_on_card = in_array( $show_on_card, $valid_options, true )
 			? $show_on_card
 			: $valid_options[0];
+
+		/**
+		 * Moved from setting "axo_privacy" to a hook-only filter:
+		 * Changing this to true (and hiding the watermark) has potential legal
+		 * consequences, and therefore is generally discouraged.
+		 */
+		$this->hide_fastlane_watermark = add_filter(
+			'woocommerce_paypal_payments_fastlane_watermark_enabled',
+			'__return_false'
+		);
 	}
 
 	/**
@@ -75,5 +93,17 @@ class DCCGatewayConfiguration {
 	 */
 	public function show_name_on_card() : string {
 		return $this->show_name_on_card;
+	}
+
+	/**
+	 * Whether to display the watermark (text branding) for the Fastlane payment
+	 * method in the front end.
+	 *
+	 * Note: This setting is planned but not implemented yet.
+	 *
+	 * @retun bool True means, the default watermark is displayed to customers.
+	 */
+	public function show_fastlane_watermark() : bool {
+		return ! $this->hide_fastlane_watermark;
 	}
 }
