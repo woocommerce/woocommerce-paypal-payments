@@ -83,7 +83,6 @@ return array(
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
 									->action_visible( 'axo_main_notice' )
-									->action_visible( 'axo_privacy' )
 									->action_visible( 'axo_style_heading' )
 									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
@@ -130,22 +129,6 @@ return array(
 					),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_privacy'                        => array(
-					'title'        => __( 'Privacy', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'description'  => __(
-						'PayPal powers this accelerated checkout solution from Fastlane. Since you\'ll share consumers\' email address with PayPal, please consult your legal advisors on the appropriate privacy setting for your business.',
-						'woocommerce-paypal-payments'
-					),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'yes',
-					'options'      => PropertiesDictionary::privacy_options(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => array( 'dcc', 'axo' ),
-					'requirements' => array( 'axo' ),
 				),
 				'axo_style_heading'                  => array(
 					'heading'      => __( 'Advanced Style Settings (optional)', 'woocommerce-paypal-payments' ),
