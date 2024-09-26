@@ -36,17 +36,12 @@ const useAxoSetup = ( ppcpConfig, fastlaneSdk, paymentComponent ) => {
 	usePhoneSyncHandler( paymentComponent );
 
 	useEffect( () => {
-		console.log( 'Initializing class toggles' );
 		initializeClassToggles();
 	}, [] );
 
 	useEffect( () => {
-		console.log( 'Setting up Axo functionality' );
 		setupWatermark( fastlaneSdk );
 		if ( paypalLoaded && fastlaneSdk ) {
-			console.log(
-				'PayPal loaded and FastlaneSDK available, setting up email functionality'
-			);
 			setIsAxoScriptLoaded( true );
 			setIsAxoActive( true );
 			const emailLookupHandler = createEmailLookupHandler(

@@ -38,7 +38,7 @@ const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 
 				setFastlaneSdk( fastlane );
 			} catch ( error ) {
-				console.error( 'Failed to initialize Fastlane:', error );
+				log( `Failed to initialize Fastlane: ${ error }`, 'error' );
 			} finally {
 				initializingRef.current = false;
 			}

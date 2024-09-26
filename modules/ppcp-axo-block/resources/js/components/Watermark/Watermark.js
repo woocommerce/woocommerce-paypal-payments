@@ -1,4 +1,5 @@
 import { useEffect, useRef } from '@wordpress/element';
+import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
 
 const Watermark = ( {
 	fastlaneSdk,
@@ -27,7 +28,7 @@ const Watermark = ( {
 				watermarkRef.current = watermark;
 				watermark.render( `#${ name }` );
 			} catch ( error ) {
-				console.error( 'Error rendering watermark:', error );
+				log( `Error rendering watermark: ${ error }`, 'error' );
 			}
 		};
 

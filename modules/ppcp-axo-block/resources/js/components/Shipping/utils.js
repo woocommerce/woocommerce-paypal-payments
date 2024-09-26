@@ -14,10 +14,6 @@ export const injectShippingChangeButton = ( onChangeShippingAddressClick ) => {
 				onChangeShippingAddressClick={ onChangeShippingAddressClick }
 			/>
 		);
-	} else {
-		console.log(
-			'Shipping change button already exists. Skipping injection.'
-		);
 	}
 };
 

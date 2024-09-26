@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from '@wordpress/element';
 import { useSelect, useDispatch } from '@wordpress/data';
+import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { debounce } from '../../../../ppcp-blocks/resources/js/Helper/debounce';
 import { STORE_NAME } from '../stores/axoStore';
 import useCustomerData from './useCustomerData';
@@ -26,7 +27,7 @@ const sanitizePhoneNumber = ( phoneNumber = '' ) => {
  * @param {string} phoneNumber      - The new phone number to prefill.
  */
 const updatePrefills = ( paymentComponent, phoneNumber ) => {
-	console.log( 'Update the phone prefill value', phoneNumber );
+	log( `Update the phone prefill value: ${ phoneNumber }` );
 	paymentComponent.updatePrefills( { phoneNumber } );
 };
 

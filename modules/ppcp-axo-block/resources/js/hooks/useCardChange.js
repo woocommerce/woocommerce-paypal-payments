@@ -1,5 +1,6 @@
 import { useCallback } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
+import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { useAddressEditing } from './useAddressEditing';
 import useCustomerData from './useCustomerData';
 import { STORE_NAME } from '../stores/axoStore';
@@ -60,7 +61,7 @@ export const useCardChange = ( fastlaneSdk ) => {
 					} ),
 				] );
 			} else {
-				console.error( 'Selected card or billing address is missing.' );
+				log( 'Selected card or billing address is missing.', 'error' );
 			}
 		}
 	}, [
