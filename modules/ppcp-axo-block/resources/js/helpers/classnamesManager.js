@@ -1,4 +1,5 @@
 import { select, subscribe } from '@wordpress/data';
+import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { STORE_NAME } from '../stores/axoStore';
 
 /**
@@ -13,7 +14,10 @@ export const setupAuthenticationClassToggle = () => {
 	const updateAuthenticationClass = () => {
 		const targetElement = document.querySelector( targetSelector );
 		if ( ! targetElement ) {
-			console.warn( `Target element not found: ${ targetSelector }` );
+			log(
+				`Authentication class target element not found: ${ targetSelector }`,
+				'warn'
+			);
 			return;
 		}
 
@@ -44,7 +48,10 @@ export const setupEmailLookupCompletedClassToggle = () => {
 	const updateEmailLookupCompletedClass = () => {
 		const targetElement = document.querySelector( targetSelector );
 		if ( ! targetElement ) {
-			console.warn( `Target element not found: ${ targetSelector }` );
+			log(
+				`Email lookup completed class target element not found: ${ targetSelector }`,
+				'warn'
+			);
 			return;
 		}
 
@@ -82,7 +89,10 @@ export const setupCheckoutBlockClassToggles = () => {
 	const updateCheckoutBlockClassToggles = () => {
 		const targetElement = document.querySelector( targetSelector );
 		if ( ! targetElement ) {
-			console.warn( `Target element not found: ${ targetSelector }` );
+			log(
+				`Checkout block class target element not found: ${ targetSelector }`,
+				'warn'
+			);
 			return;
 		}
 

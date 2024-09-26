@@ -7,11 +7,7 @@ import {
 	updateWatermarkContent,
 } from './utils';
 
-console.log( 'WatermarkManager module loaded' );
-
 const WatermarkManager = ( { fastlaneSdk } ) => {
-	console.log( 'WatermarkManager rendering', { fastlaneSdk } );
-
 	const isGuest = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsGuest()
 	);
@@ -22,17 +18,8 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 		select( STORE_NAME ).getIsAxoScriptLoaded()
 	);
 
-	console.log( 'WatermarkManager state', {
-		isGuest,
-		isAxoActive,
-		isAxoScriptLoaded,
-	} );
-
 	useEffect( () => {
-		console.log( 'WatermarkManager useEffect triggered' );
-
 		if ( isAxoActive || ( ! isAxoActive && ! isAxoScriptLoaded ) ) {
-			console.log( 'Conditions met, creating watermark' );
 			createWatermarkContainer();
 			updateWatermarkContent( {
 				isAxoActive,
@@ -41,7 +28,6 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 				isGuest,
 			} );
 		} else {
-			console.log( 'Conditions not met, removing watermark' );
 			removeWatermark();
 		}
 
