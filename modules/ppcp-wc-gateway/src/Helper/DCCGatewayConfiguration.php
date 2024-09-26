@@ -120,6 +120,7 @@ class DCCGatewayConfiguration {
 	 * Requires PayPal features to be enabled.
 	 *
 	 * @return bool
+	 * @todo Some classes still directly access `$settings->get('dcc_enabled')`
 	 */
 	public function is_enabled() : bool {
 		return $this->is_enabled;

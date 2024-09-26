@@ -384,9 +384,10 @@ return array(
 			assert( $settings instanceof Settings );
 
 			$axo_available = $container->has( 'axo.available' ) && $container->get( 'axo.available' );
-			$axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' );
+			$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+			assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
-			if ( $axo_available && $axo_enabled ) {
+			if ( $axo_available && $dcc_configuration->use_fastlane() ) {
 				return '';
 			}
 
