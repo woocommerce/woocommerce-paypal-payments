@@ -87,6 +87,7 @@ return function ( string $root_dir ): iterable {
 		getenv( 'PCP_AXO_ENABLED' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
+		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
 	}
 
 	return $modules;
