@@ -1786,7 +1786,7 @@ return array(
 
 		$list_of_config = array();
 
-		if ( $container->get( 'paylater-configurator.is-available' ) ) {
+		if ( $container->has( 'paylater-configurator.is-available' ) && $container->get( 'paylater-configurator.is-available' ) ) {
 			$list_of_config[] = array(
 				'id'           => 'pay-later-messaging-task',
 				'title'        => __( 'Configure PayPal Pay Later messaging', 'woocommerce-paypal-payments' ),
