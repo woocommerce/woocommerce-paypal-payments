@@ -8,6 +8,7 @@
 	}
 
 	&.loader:before {
+		display: block; /* Same as WooCommerce's `@mixin loader()` uses */
 		height: 12px;
 		width: 12px;
 		margin-left: -6px;
