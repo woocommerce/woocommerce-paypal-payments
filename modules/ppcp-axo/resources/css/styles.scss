@@ -3,6 +3,10 @@
 	margin-top: 10px;
 	position: relative;
 
+	&:before {
+		display: none;
+	}
+
 	&.loader:before {
 		height: 12px;
 		width: 12px;
