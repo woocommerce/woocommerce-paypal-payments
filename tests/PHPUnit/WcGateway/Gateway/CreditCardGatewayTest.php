@@ -76,7 +76,10 @@ class CreditCardGatewayTest extends TestCase
 		$this->state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 		$this->config->shouldReceive('has')->andReturn(true);
 		$this->config->shouldReceive('get')->andReturn('');
+
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('gateway_title')->andReturn('');
+		$this->dcc_configuration->shouldReceive('gateway_description')->andReturn('');
 
 		when('wc_clean')->returnArg();
 
