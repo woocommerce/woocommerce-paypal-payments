@@ -44,7 +44,7 @@ class CardView {
 								this.el.changeCardLink.attributes
 							}>Edit</a>
                         </div>
-                        <div class="axo-checkout-card-preview">
+                        <div class="axo-checkout-card-preview styled-card">
                             <div class="ppcp-card-icon-wrapper">
                                 <img
                                     class="ppcp-card-icon"
