@@ -1,30 +1,36 @@
 class FormFieldGroup {
+	#stored;
+	#data = {};
+	#active = false;
+	#baseSelector;
+	#contentSelector;
+	#fields = {};
+	#template;
+
 	constructor( config ) {
-		this.data = {};
+		this.#baseSelector = config.baseSelector;
+		this.#contentSelector = config.contentSelector;
+		this.#fields = config.fields || {};
+		this.#template = config.template;
+		this.#stored = new Map();
 
-		this.baseSelector = config.baseSelector;
-		this.contentSelector = config.contentSelector;
-		this.fields = config.fields || {};
-		this.template = config.template;
-
-		this.active = false;
 	}
 
 	setData( data ) {
-		this.data = data;
+		this.#data = data;
 		this.refresh();
 	}
 
 	dataValue( fieldKey ) {
-		if ( ! fieldKey || ! this.fields[ fieldKey ] ) {
+		if ( ! fieldKey || ! this.#fields[ fieldKey ] ) {
 			return '';
 		}
 
-		if ( typeof this.fields[ fieldKey ].valueCallback === 'function' ) {
-			return this.fields[ fieldKey ].valueCallback( this.data );
+		if ( typeof this.#fields[ fieldKey ].valueCallback === 'function' ) {
+			return this.#fields[ fieldKey ].valueCallback( this.#data );
 		}
 
-		const path = this.fields[ fieldKey ].valuePath;
+		const path = this.#fields[ fieldKey ].valuePath;
 
 		if ( ! path ) {
 			return '';
@@ -35,27 +41,42 @@ class FormFieldGroup {
 			.reduce(
 				( acc, key ) =>
 					acc && acc[ key ] !== undefined ? acc[ key ] : undefined,
-				this.data
+				this.#data
 			);
 		return value ? value : '';
 	}
 
+	/**
+	 * Activate form group: Render a custom Fastlane UI to replace the WooCommerce form.
+	 *
+	 * Indicates: Ryan flow.
+	 */
 	activate() {
-		this.active = true;
+		this.#active = true;
 		this.refresh();
 	}
 
+	/**
+	 * Deactivate form group: Remove the custom Fastlane UI - either display the default
+	 * WooCommerce checkout form or no form at all (when no email was provided yet).
+	 *
+	 * Indicates: Gary flow / no email provided / not using Fastlane.
+	 */
 	deactivate() {
-		this.active = false;
+		this.#active = false;
 		this.refresh();
 	}
 
 	toggle() {
-		this.active ? this.deactivate() : this.activate();
+		if ( this.#active ) {
+			this.deactivate();
+		} else {
+			this.activate();
+		}
 	}
 
 	refresh() {
-		const content = document.querySelector( this.contentSelector );
+		const content = document.querySelector( this.#contentSelector );
 
 		if ( ! content ) {
 			return;
@@ -63,10 +84,10 @@ class FormFieldGroup {
 
 		content.innerHTML = '';
 
-		if ( ! this.active ) {
-			this.hideField( this.contentSelector );
+		if ( ! this.#active ) {
+			this.hideField( this.#contentSelector );
 		} else {
-			this.showField( this.contentSelector );
+			this.showField( this.#contentSelector );
 		}
 
 		Object.keys( this.fields ).forEach( ( key ) => {
@@ -79,8 +100,8 @@ class FormFieldGroup {
 			}
 		} );
 
-		if ( typeof this.template === 'function' ) {
-			content.innerHTML = this.template( {
+		if ( typeof this.#template === 'function' ) {
+			content.innerHTML = this.#template( {
 				value: ( fieldKey ) => {
 					return this.dataValue( fieldKey );
 				},
@@ -100,7 +121,7 @@ class FormFieldGroup {
 
 	showField( selector ) {
 		const field = document.querySelector(
-			this.baseSelector + ' ' + selector
+			this.#baseSelector + ' ' + selector
 		);
 		if ( field ) {
 			field.classList.remove( 'ppcp-axo-field-hidden' );
@@ -109,7 +130,7 @@ class FormFieldGroup {
 
 	hideField( selector ) {
 		const field = document.querySelector(
-			this.baseSelector + ' ' + selector
+			this.#baseSelector + ' ' + selector
 		);
 		if ( field ) {
 			field.classList.add( 'ppcp-axo-field-hidden' );
@@ -117,7 +138,7 @@ class FormFieldGroup {
 	}
 
 	inputElement( name ) {
-		const baseSelector = this.fields[ name ].selector;
+		const baseSelector = this.#fields[ name ].selector;
 
 		const select = document.querySelector( baseSelector + ' select' );
 		if ( select ) {
