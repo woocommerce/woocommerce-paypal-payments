@@ -15,18 +15,6 @@ namespace WooCommerce\PayPalCommerce\Axo\Helper;
 class PropertiesDictionary {
 
 	/**
-	 * Returns the list of possible privacy options.
-	 *
-	 * @return array
-	 */
-	public static function privacy_options(): array {
-		return array(
-			'yes' => __( 'Yes (Recommended)', 'woocommerce-paypal-payments' ),
-			'no'  => __( 'No', 'woocommerce-paypal-payments' ),
-		);
-	}
-
-	/**
 	 * Returns the list of possible cardholder name options.
 	 *
 	 * @return array

@@ -82,10 +82,7 @@ return array(
 								$display_manager
 									->rule()
 									->condition_element( 'axo_enabled', '1' )
-									->action_visible( 'axo_gateway_title' )
 									->action_visible( 'axo_main_notice' )
-									->action_visible( 'axo_privacy' )
-									->action_visible( 'axo_name_on_card' )
 									->action_visible( 'axo_style_heading' )
 									->action_class( 'axo_enabled', 'active' )
 									->to_array(),
@@ -132,54 +129,6 @@ return array(
 					),
 					'requirements' => array( 'dcc', 'axo' ),
 					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_gateway_title'                  => array(
-					'title'        => __( 'Gateway Title', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'classes'      => array( 'ppcp-field-indent' ),
-					'desc_tip'     => true,
-					'description'  => __(
-						'This controls the title of the Fastlane gateway the user sees on checkout.',
-						'woocommerce-paypal-payments'
-					),
-					'default'      => __(
-						'Debit & Credit Cards',
-						'woocommerce-paypal-payments'
-					),
-					'screens'      => array(
-						State::STATE_ONBOARDED,
-					),
-					'requirements' => array( 'axo' ),
-					'gateway'      => array( 'dcc', 'axo' ),
-				),
-				'axo_privacy'                        => array(
-					'title'        => __( 'Privacy', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'description'  => __(
-						'PayPal powers this accelerated checkout solution from Fastlane. Since you\'ll share consumers\' email address with PayPal, please consult your legal advisors on the appropriate privacy setting for your business.',
-						'woocommerce-paypal-payments'
-					),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'yes',
-					'options'      => PropertiesDictionary::privacy_options(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => array( 'dcc', 'axo' ),
-					'requirements' => array( 'axo' ),
-				),
-				'axo_name_on_card'                   => array(
-					'title'        => __( 'Cardholder Name', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'default'      => 'yes',
-					'options'      => PropertiesDictionary::cardholder_name_options(),
-					'classes'      => array( 'ppcp-field-indent' ),
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'description'  => __( 'This setting will control whether or not the cardholder name is displayed in the card field\'s UI.', 'woocommerce-paypal-payments' ),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => array( 'dcc', 'axo' ),
-					'requirements' => array( 'axo' ),
 				),
 				'axo_style_heading'                  => array(
 					'heading'      => __( 'Advanced Style Settings (optional)', 'woocommerce-paypal-payments' ),
