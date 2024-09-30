@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 2.9.3 - xxxx-xx-xx =
+* Rollback to 2.9.1
+
 = 2.9.1 - 2024-09-24 =
 * Fix - Improve card fields hiding #2574
 * Fix - Google Pay: Shipping callback not calculating totals correctly on Single Product page #2513
