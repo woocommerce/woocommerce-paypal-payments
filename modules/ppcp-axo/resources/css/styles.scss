@@ -78,10 +78,40 @@
 	position: relative;
 }
 
-.axo-checkout-header-section {
-	display: flex;
-	align-items: baseline;
-	gap: 1em;
+.axo-checkout-wrapper {
+	margin-bottom: 20px;
+
+	.axo-checkout-header-section {
+		display: flex;
+		align-items: baseline;
+		gap: 1em;
+	}
+
+	.axo-checkout-card-preview {
+		border: 2px solid #cccccc;
+		border-radius: 10px;
+		padding: 16px 20px;
+		background-color: #f6f6f6;
+	}
+
+	.ppcp-card-icon-wrapper {
+		float: right;
+	}
+
+	.ppcp-card-icon {
+		width: auto;
+		height: 25px;
+	}
+
+	.axo-card-number {
+		font-family: monospace;
+		font-size: 1rem;
+		margin-top: 10px;
+	}
+
+	.axo-card-owner {
+		text-transform: uppercase;
+	}
 }
 
 .ppcp-axo-order-button {
@@ -143,6 +173,3 @@
 		}
 	}
 }
-
-
-
