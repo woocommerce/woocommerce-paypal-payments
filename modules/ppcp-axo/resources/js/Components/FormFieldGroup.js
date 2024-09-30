@@ -53,6 +53,7 @@ class FormFieldGroup {
 	 */
 	activate() {
 		this.#active = true;
+		this.storeFormData();
 		this.refresh();
 	}
 
@@ -64,6 +65,7 @@ class FormFieldGroup {
 	 */
 	deactivate() {
 		this.#active = false;
+		this.restoreFormData();
 		this.refresh();
 	}
 
@@ -131,10 +133,63 @@ class FormFieldGroup {
 
 			callback(
 				{
+					inputSelector: field.inputName
+						? `${ fieldSelector } [name="${ field.inputName }"]`
+						: '',
 					...field,
 				},
 				key
 			);
+		} );
+	}
+
+	/**
+	 * Stores the current form data in an internal storage.
+	 * This allows the original form to be restored later.
+	 */
+	storeFormData() {
+		const storeValue = ( field, name ) => {
+			if ( 'checkbox' === field.type || 'radio' === field.type ) {
+				this.#stored.set( name, field.checked );
+			} else {
+				this.#stored.set( name, field.value );
+			}
+		};
+
+		this.loopFields( ( { inputSelector }, fieldKey ) => {
+			if ( inputSelector && ! this.#stored.has( fieldKey ) ) {
+				const elInput = document.querySelector( inputSelector );
+
+				if ( elInput ) {
+					storeValue( elInput, fieldKey );
+				}
+			}
+		} );
+	}
+
+	/**
+	 * Restores the form data to its initial state before the form group was activated.
+	 * This function iterates through the stored form fields and resets their values or states.
+	 */
+	restoreFormData() {
+		const restoreValue = ( field, name ) => {
+			if ( 'checkbox' === field.type || 'radio' === field.type ) {
+				field.checked = this.#stored.get( name );
+			} else {
+				field.value = this.#stored.get( name );
+			}
+		};
+
+		this.loopFields( ( { inputSelector }, fieldKey ) => {
+			if ( inputSelector && this.#stored.has( fieldKey ) ) {
+				const elInput = document.querySelector( inputSelector );
+
+				if ( elInput ) {
+					restoreValue( elInput, fieldKey );
+				}
+
+				this.#stored.delete( fieldKey );
+			}
 		} );
 	}
 
