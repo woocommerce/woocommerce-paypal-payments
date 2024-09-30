@@ -90,13 +90,11 @@ class FormFieldGroup {
 			this.showField( this.#contentSelector );
 		}
 
-		Object.keys( this.fields ).forEach( ( key ) => {
-			const field = this.fields[ key ];
-
-			if ( this.active && ! field.showInput ) {
-				this.hideField( field.selector );
+		this.loopFields( ( { selector } ) => {
+			if ( this.#active /* && ! field.showInput */ ) {
+				this.hideField( selector );
 			} else {
-				this.showField( field.selector );
+				this.showField( selector );
 			}
 		} );
 
@@ -107,16 +105,37 @@ class FormFieldGroup {
 				},
 				isEmpty: () => {
 					let isEmpty = true;
-					Object.keys( this.fields ).forEach( ( fieldKey ) => {
+
+					this.loopFields( ( field, fieldKey ) => {
 						if ( this.dataValue( fieldKey ) ) {
 							isEmpty = false;
 							return false;
 						}
 					} );
+
 					return isEmpty;
 				},
 			} );
 		}
+	}
+
+	/**
+	 * Invoke a callback on every field in the current group.
+	 *
+	 * @param {(field: object, key: string) => void} callback
+	 */
+	loopFields( callback ) {
+		Object.keys( this.#fields ).forEach( ( key ) => {
+			const field = this.#fields[ key ];
+			const fieldSelector = `${ this.#baseSelector } ${ field.selector }`;
+
+			callback(
+				{
+					...field,
+				},
+				key
+			);
+		} );
 	}
 
 	showField( selector ) {
@@ -159,9 +178,7 @@ class FormFieldGroup {
 	}
 
 	toSubmitData( data ) {
-		Object.keys( this.fields ).forEach( ( fieldKey ) => {
-			const field = this.fields[ fieldKey ];
-
+		this.loopFields( ( field, fieldKey ) => {
 			if ( ! field.valuePath || ! field.selector ) {
 				return true;
 			}
