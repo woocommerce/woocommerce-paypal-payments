@@ -70,7 +70,12 @@ return array(
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Fastlane by PayPal', 'woocommerce-paypal-payments' )
 						. '<p class="description">'
-						. __( 'Help accelerate the checkout process for guests with PayPal\'s autofill solution. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' )
+						. sprintf(
+							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+							__( 'Help accelerate the checkout process for guests with PayPal\'s autofill solution. When enabled, Fastlane is presented as the default payment method for guests. See the %1$sFastlane setup guide%2$s for more details on the Fastlane configuration.', 'woocommerce-paypal-payments' ),
+							'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#fastlane" target="_blank">',
+							'</a>'
+						)
 						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
