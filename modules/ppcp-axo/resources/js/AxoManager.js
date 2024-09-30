@@ -689,28 +689,37 @@ class AxoManager {
 			this.el.billingEmailSubmitButtonSpinner;
 
 		if ( ! document.querySelector( billingEmailSubmitButton.selector ) ) {
-			document
-				.querySelector( this.el.billingEmailFieldWrapper.selector )
-				.insertAdjacentHTML(
-					'beforeend',
-					`
-                <button type="button" id="${ billingEmailSubmitButton.id }" class="${ billingEmailSubmitButton.className }">
-                    ${ this.axoConfig.billing_email_button_text }
-                    <span id="${ billingEmailSubmitButtonSpinner.id }"></span>
-                </button>
-            `
-				);
+			const wrapper = document.querySelector(
+				'#billing_email_field .woocommerce-input-wrapper'
+			);
+			const watermarkContainer = document.querySelector(
+				'#ppcp-axo-watermark-container'
+			);
 
-			document.querySelector( this.el.billingEmailSubmitButton.selector )
-				.offsetHeight;
-			document
-				.querySelector( this.el.billingEmailSubmitButton.selector )
-				.classList.remove(
-					'ppcp-axo-billing-email-submit-button-hidden'
-				);
-			document
-				.querySelector( this.el.billingEmailSubmitButton.selector )
-				.classList.add( 'ppcp-axo-billing-email-submit-button-loaded' );
+			wrapper.insertAdjacentHTML(
+				'beforeend',
+				`
+            <button type="button" id="${ billingEmailSubmitButton.id }" class="${ billingEmailSubmitButton.className }">
+                ${ this.axoConfig.billing_email_button_text }
+                <span id="${ billingEmailSubmitButtonSpinner.id }"></span>
+            </button>
+            `
+			);
+
+			const buttonElement = document.querySelector(
+				billingEmailSubmitButton.selector
+			);
+
+			// Reorder button to ensure it's before the watermark container
+			wrapper.insertBefore( buttonElement, watermarkContainer );
+
+			buttonElement.offsetHeight;
+			buttonElement.classList.remove(
+				'ppcp-axo-billing-email-submit-button-hidden'
+			);
+			buttonElement.classList.add(
+				'ppcp-axo-billing-email-submit-button-loaded'
+			);
 		}
 	}
 
