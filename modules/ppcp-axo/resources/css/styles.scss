@@ -3,7 +3,12 @@
 	margin-top: 10px;
 	position: relative;
 
+	&:before {
+		display: none;
+	}
+
 	&.loader:before {
+		display: block; /* Same as WooCommerce's `@mixin loader()` uses */
 		height: 12px;
 		width: 12px;
 		margin-left: -6px;
@@ -80,11 +85,11 @@
 }
 
 .ppcp-axo-order-button {
-		float: none;
-		width: 100%;
-		box-sizing: border-box;
-		margin: var(--global-md-spacing) 0 1em;
-		padding: 0.6em 1em;
+	float: none;
+	width: 100%;
+	box-sizing: border-box;
+	margin: var(--global-md-spacing) 0 1em;
+	padding: 0.6em 1em;
 }
 
 .ppcp-axo-watermark-loading {
