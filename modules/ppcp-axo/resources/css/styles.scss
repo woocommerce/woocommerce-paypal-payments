@@ -74,7 +74,6 @@
 
 .ppcp-axo-payment-container {
 	padding: 1rem 0;
-	background-color: #ffffff;
 
 	&.axo-hidden {
 		display: none;
@@ -107,6 +106,7 @@
 		display: flex;
 		align-items: baseline;
 		gap: 1em;
+		margin-bottom: 1em;
 	}
 
 	.axo-checkout-card-preview {
