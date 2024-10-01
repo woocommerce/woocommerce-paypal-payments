@@ -1,3 +1,5 @@
+import { __ } from '@wordpress/i18n';
+
 const ShippingChangeButton = ( { onChangeShippingAddressClick } ) => (
 	<a
 		className="wc-block-axo-change-link"
@@ -7,7 +9,10 @@ const ShippingChangeButton = ( { onChangeShippingAddressClick } ) => (
 			onChangeShippingAddressClick();
 		} }
 	>
-		Choose a different shipping address
+		{ __(
+			'Choose a different shipping address',
+			'woocommerce-paypal-payments'
+		) }
 	</a>
 );
 

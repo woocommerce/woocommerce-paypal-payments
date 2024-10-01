@@ -8,6 +8,9 @@ export function log( message, level = 'info' ) {
 			case 'error':
 				console.error( `[AXO] ${ message }` );
 				break;
+			case 'warn':
+				console.warn( `[AXO] ${ message }` );
+				break;
 			default:
 				console.log( `[AXO] ${ message }` );
 		}

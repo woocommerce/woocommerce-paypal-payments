@@ -1,5 +1,6 @@
 import { STORE_NAME } from '../../stores/axoStore';
 import { useSelect } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 
 const EmailButton = ( { handleSubmit } ) => {
 	const { isGuest, isAxoActive, isEmailSubmitted } = useSelect(
@@ -29,7 +30,7 @@ const EmailButton = ( { handleSubmit } ) => {
 					visibility: isEmailSubmitted ? 'hidden' : 'visible',
 				} }
 			>
-				Continue
+				{ __( 'Continue', 'woocommerce-paypal-payments' ) }
 			</span>
 			{ isEmailSubmitted && (
 				<span

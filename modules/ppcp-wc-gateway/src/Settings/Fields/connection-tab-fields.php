@@ -105,7 +105,10 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'ppcp_onboarading_options'                      => array(
 			'type'         => 'ppcp-text',
 			'classes'      => array( 'ppcp-onboarding-element' ),
-			'text'         => $onboarding_options_renderer->render( $is_shop_supports_dcc ),
+			'text'         => $onboarding_options_renderer->render(
+				$is_shop_supports_dcc,
+				$container->get( 'api.shop.country' ) === 'CN'
+			),
 			'raw'          => true,
 			'screens'      => array(
 				State::STATE_START,

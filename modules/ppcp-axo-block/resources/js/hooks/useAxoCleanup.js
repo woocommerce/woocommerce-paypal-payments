@@ -1,5 +1,6 @@
 import { useEffect } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
+import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { STORE_NAME } from '../stores/axoStore';
 import { removeShippingChangeButton } from '../components/Shipping';
 import { removeCardChangeButton } from '../components/Card';
@@ -19,9 +20,8 @@ const useAxoCleanup = () => {
 	} = useCustomerData();
 
 	useEffect( () => {
-		console.log( 'Setting up cleanup for WooCommerce fields' );
 		return () => {
-			console.log( 'Cleaning up: Restoring WooCommerce fields' );
+			log( 'Cleaning up: Restoring WooCommerce fields' );
 			restoreOriginalFields(
 				updateWooShippingAddress,
 				updateWooBillingAddress
@@ -30,16 +30,15 @@ const useAxoCleanup = () => {
 	}, [ updateWooShippingAddress, updateWooBillingAddress ] );
 
 	useEffect( () => {
-		console.log( 'Setting up cleanup for Axo component' );
 		return () => {
-			console.log( 'Cleaning up Axo component' );
+			log( 'Cleaning up Axo component' );
 			setIsAxoActive( false );
 			setIsGuest( true );
 			removeShippingChangeButton();
 			removeCardChangeButton();
 			removeWatermark();
 			if ( isEmailFunctionalitySetup() ) {
-				console.log( 'Removing email functionality' );
+				log( 'Removing email functionality' );
 				removeEmailFunctionality();
 			}
 		};

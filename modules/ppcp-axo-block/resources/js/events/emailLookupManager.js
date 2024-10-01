@@ -1,3 +1,4 @@
+import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { populateWooFields } from '../helpers/fieldHelpers';
 import { injectShippingChangeButton } from '../components/Shipping';
 import { injectCardChangeButton } from '../components/Card';
@@ -6,7 +7,7 @@ import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
 export const createEmailLookupHandler = (
 	fastlaneSdk,
 	setShippingAddress,
-	setCard,
+	setCardDetails,
 	snapshotFields,
 	wooShippingAddress,
 	wooBillingAddress,
@@ -17,7 +18,7 @@ export const createEmailLookupHandler = (
 ) => {
 	return async ( email ) => {
 		try {
-			console.log( 'Email value being looked up:', email );
+			log( `Email value being looked up: ${ email }` );
 
 			if ( ! fastlaneSdk ) {
 				throw new Error( 'FastlaneSDK is not initialized' );
@@ -32,7 +33,7 @@ export const createEmailLookupHandler = (
 			const lookup =
 				await fastlaneSdk.identity.lookupCustomerByEmail( email );
 
-			console.log( 'Lookup response:', lookup );
+			log( `Lookup response: ${ JSON.stringify( lookup ) }` );
 
 			// Gary flow
 			if ( lookup && lookup.customerContextId === '' ) {
@@ -40,7 +41,7 @@ export const createEmailLookupHandler = (
 			}
 
 			if ( ! lookup || ! lookup.customerContextId ) {
-				console.warn( 'No customerContextId found in the response' );
+				log( 'No customerContextId found in the response', 'warn' );
 				return;
 			}
 
@@ -68,10 +69,10 @@ export const createEmailLookupHandler = (
 					setShippingAddress( profileData.shippingAddress );
 				}
 				if ( profileData && profileData.card ) {
-					setCard( profileData.card );
+					setCardDetails( profileData.card );
 				}
 
-				console.log( 'Profile Data:', profileData );
+				log( `Profile Data: ${ JSON.stringify( profileData ) }` );
 
 				populateWooFields(
 					profileData,
@@ -82,12 +83,12 @@ export const createEmailLookupHandler = (
 				injectShippingChangeButton( onChangeShippingAddressClick );
 				injectCardChangeButton( onChangeCardButtonClick );
 			} else {
-				console.warn( 'Authentication failed or did not succeed' );
+				log( 'Authentication failed or did not succeed', 'warn' );
 			}
 		} catch ( error ) {
-			console.error(
-				'Error during email lookup or authentication:',
-				error
+			log(
+				`Error during email lookup or authentication:
+				${ error }`
 			);
 			throw error;
 		}

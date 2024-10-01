@@ -1,4 +1,5 @@
 import { createElement, createRoot } from '@wordpress/element';
+import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
 import { STORE_NAME } from '../../stores/axoStore';
 import EmailButton from './EmailButton';
 
@@ -20,8 +21,9 @@ const getEmailInput = () => {
 export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const input = getEmailInput();
 	if ( ! input ) {
-		console.warn(
-			'Email input element not found. Functionality not added.'
+		log(
+			'Email input element not found. Functionality not added.',
+			'warn'
 		);
 		return;
 	}
@@ -41,7 +43,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 		try {
 			await onEmailSubmit( input.value );
 		} catch ( error ) {
-			console.error( 'Error during email submission:', error );
+			log( `Error during email submission: ${ error }`, 'error' );
 		} finally {
 			wp.data.dispatch( STORE_NAME ).setIsEmailSubmitted( false );
 			renderButton();
@@ -83,8 +85,6 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 					handleSubmit: handleEmailSubmit,
 				} )
 			);
-		} else {
-			console.warn( 'Submit button root not found' );
 		}
 	};
 

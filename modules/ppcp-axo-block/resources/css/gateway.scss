@@ -172,7 +172,12 @@ $fast-transition-duration: 0.5s;
 	// 4.6 Watermark Container
 	.wc-block-checkout-axo-block-watermark-container {
 		grid-area: watermark;
-		width: 100%;
+		justify-self: end;
+		grid-column: 1;
+	}
+
+	&:not(.wc-block-axo-is-authenticated) .wc-block-checkout-axo-block-watermark-container {
+		margin-top: 0;
 	}
 
 	// 4.7 Validation Error
@@ -180,6 +185,11 @@ $fast-transition-duration: 0.5s;
 		grid-area: error;
 		width: 100%;
 		margin-top: 4px;
+		grid-row: 3;
+
+		@media (min-width: 783px) {
+			grid-row: 2;
+		}
 	}
 
 	@media (min-width: 783px) {
@@ -201,6 +211,19 @@ $fast-transition-duration: 0.5s;
 
 			.wc-block-components-button {
 				width: auto;
+			}
+		}
+	}
+
+	// 4.8 Counter fix
+	.wc-block-checkout__form {
+		counter-reset: visible-step;
+
+		.wc-block-components-checkout-step--with-step-number {
+			counter-increment: visible-step;
+
+			.wc-block-components-checkout-step__title:before {
+				content: counter(visible-step) ". ";
 			}
 		}
 	}

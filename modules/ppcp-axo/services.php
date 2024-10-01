@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 
@@ -74,6 +75,7 @@ return array(
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.dcc' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
@@ -134,10 +136,10 @@ return array(
 	},
 
 	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ) : string {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
-		if ( $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ) {
+		if ( $dcc_configuration->use_fastlane() ) {
 			$fastlane_settings_url = admin_url(
 				sprintf(
 					'admin.php?page=wc-settings&tab=checkout&section=%1$s&ppcp-tab=%2$s#field-axo_heading',
