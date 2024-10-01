@@ -301,3 +301,13 @@ a.wc-block-axo-change-link {
 #shipping-fields .wc-block-components-checkout-step__heading {
 	display: flex;
 }
+
+// 11. Fastlane modal info message fix
+.wc-block-components-text-input {
+	.wc-block-components-form &,
+	& {
+		paypal-watermark {
+			white-space: wrap;
+		}
+	}
+}
