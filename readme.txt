@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.3
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 2.9.1
+Stable tag: 2.9.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,7 +179,11 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.9.1 - xxxx-xx-xx =
+= 2.9.2 - xxxx-xx-xx =
+* Enhancement - Add Fastlane support for Classic Checkout
+* Fix - Fatal error when Pay Later messaging configurator was disabled with a code snippet
+
+= 2.9.1 - 2024-09-24 =
 * Fix - Improve card fields hiding #2574
 * Fix - Google Pay: Shipping callback not calculating totals correctly on Single Product page #2513
 * Fix - Fix shipping callback condition in status report #2578
@@ -194,6 +198,8 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Require PHP 7.4+, WP 6.3+, WC 6.9+ #2556
 * Enhancement - Modularity module migration #1944
 * Enhancement - Keep only 5 tags in readme.txt #2562
+* Enhancement - Select ACDC by default during onboarding for China store locations #2619
+* Enhancement - Add title, description and gatewayId to the express payment method #2566
 
 = 2.9.0 - 2024-09-02 =
 * Fix - Fatal error in Block Editor when using WooCommerce blocks #2534

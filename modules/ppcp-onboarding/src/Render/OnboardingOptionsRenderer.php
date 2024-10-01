@@ -54,9 +54,10 @@ class OnboardingOptionsRenderer {
 	 * Renders the onboarding options.
 	 *
 	 * @param bool $is_shop_supports_dcc Whether the shop can use DCC (country, currency).
+	 * @param bool $make_dcc_default Whether DCC should be selected by default.
 	 */
-	public function render( bool $is_shop_supports_dcc ): string {
-		$checked = $is_shop_supports_dcc ? '' : 'checked';
+	public function render( bool $is_shop_supports_dcc, bool $make_dcc_default ): string {
+		$checked_cards = ( $is_shop_supports_dcc && ! $make_dcc_default ) ? '' : 'checked';
 
 		$on_boarding_options = '
 			<li>
@@ -65,10 +66,10 @@ class OnboardingOptionsRenderer {
 				</label>
 			</li>
 			<li>
-				<label><input type="checkbox" id="ppcp-onboarding-accept-cards" ' . $checked . '> ' . __( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '</label>
+				<label><input type="checkbox" id="ppcp-onboarding-accept-cards" ' . $checked_cards . '> ' . __( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '</label>
 			</li>
 			<li>' .
-				$this->render_dcc( $is_shop_supports_dcc ) .
+				$this->render_dcc( $is_shop_supports_dcc, $make_dcc_default ) .
 			'</li>' .
 			$this->render_pui_option();
 
@@ -107,8 +108,9 @@ class OnboardingOptionsRenderer {
 	 * Renders the onboarding DCC options.
 	 *
 	 * @param bool $is_shop_supports_dcc Whether the shop can use DCC (country, currency).
+	 * @param bool $make_dcc_default Whether DCC should be selected by default.
 	 */
-	private function render_dcc( bool $is_shop_supports_dcc ): string {
+	private function render_dcc( bool $is_shop_supports_dcc, bool $make_dcc_default ): string {
 		$items = array();
 
 		$is_us_shop = 'US' === $this->country;
@@ -201,7 +203,8 @@ class OnboardingOptionsRenderer {
 <li>
 	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" ' .
-				'data-screen-url="' . $this->get_screen_url( 'acdc' ) . '"> ' .
+				( $make_dcc_default ? 'checked' : '' ) .
+				' data-screen-url="' . $this->get_screen_url( 'acdc' ) . '"> ' .
 				__( 'Advanced Card Processing', 'woocommerce-paypal-payments' ) . '
 	</label>
 	' . $this->render_tooltip( __( 'PayPal acts as the payment processor for card transactions. You can add optional features like Chargeback Protection for more security.', 'woocommerce-paypal-payments' ) ) . '
