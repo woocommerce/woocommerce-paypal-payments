@@ -50,18 +50,24 @@ class FormFieldGroup {
 	 *
 	 * @param {Element|null}   field
 	 * @param {string|boolean} value
+	 * @return {boolean} True indicates that the previous value was different from the new value.
 	 */
 	#setFieldValue( field, value ) {
 		if ( ! field ) {
 			return false;
 		}
+		let oldVal;
 
 		if ( 'checkbox' === field.type || 'radio' === field.type ) {
 			value = !! value;
+			oldVal = field.checked;
 			field.checked = value;
 		} else {
+			oldVal = field.value;
 			field.value = value;
 		}
+
+		return oldVal !== value;
 	}
 
 	/**
@@ -200,6 +206,33 @@ class FormFieldGroup {
 				this.#stored.delete( fieldKey );
 			}
 		} );
+	}
+
+	/**
+	 * Syncs the internal field-data with the hidden checkout form fields.
+	 */
+	syncDataToForm() {
+		if ( ! this.#active ) {
+			return;
+		}
+
+		let formHasChanged = false;
+
+		// Push data to the (hidden) checkout form.
+		this.loopFields( ( { inputSelector }, fieldKey ) => {
+			const elInput = inputSelector
+				? document.querySelector( inputSelector )
+				: null;
+
+			if ( this.#setFieldValue( elInput, this.dataValue( fieldKey ) ) ) {
+				formHasChanged = true;
+			}
+		} );
+
+		// Tell WooCommerce about the changes.
+		if ( formHasChanged ) {
+			document.body.dispatchEvent( new Event( 'update_checkout' ) );
+		}
 	}
 
 	showField( selector ) {

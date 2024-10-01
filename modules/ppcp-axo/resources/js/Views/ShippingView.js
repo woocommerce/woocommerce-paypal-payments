@@ -136,6 +136,8 @@ class ShippingView {
 					selector: '#ship-to-different-address',
 					valuePath: null,
 					inputName: 'ship_to_different_address',
+					// Used by Woo to ensure correct location for taxes & shipping cost.
+					valueCallback: () => true,
 				},
 				phone: {
 					//'selector': '#billing_phone_field', // There is no shipping phone field.
@@ -173,6 +175,7 @@ class ShippingView {
 
 	activate() {
 		this.group.activate();
+		this.group.syncDataToForm();
 	}
 
 	deactivate() {
@@ -185,6 +188,7 @@ class ShippingView {
 
 	setData( data ) {
 		this.group.setData( data );
+		this.group.syncDataToForm();
 	}
 
 	toSubmitData( data ) {
