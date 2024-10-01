@@ -53,10 +53,25 @@ class FormFieldGroup {
 	 * @return {boolean} True indicates that the previous value was different from the new value.
 	 */
 	#setFieldValue( field, value ) {
+		let oldVal;
+
+		const isValidOption = () => {
+			for ( let i = 0; i < field.options.length; i++ ) {
+				if ( field.options[ i ].value === value ) {
+					return true;
+				}
+			}
+			return false;
+		};
+
 		if ( ! field ) {
 			return false;
 		}
-		let oldVal;
+
+		// If an invalid option is provided, do nothing.
+		if ( 'SELECT' === field.tagName && ! isValidOption() ) {
+			return false;
+		}
 
 		if ( 'checkbox' === field.type || 'radio' === field.type ) {
 			value = !! value;
