@@ -13,7 +13,6 @@ class FormFieldGroup {
 		this.#fields = config.fields || {};
 		this.#template = config.template;
 		this.#stored = new Map();
-
 	}
 
 	setData( data ) {
@@ -44,6 +43,25 @@ class FormFieldGroup {
 				this.#data
 			);
 		return value ? value : '';
+	}
+
+	/**
+	 * Changes the value of the input field.
+	 *
+	 * @param {Element|null}   field
+	 * @param {string|boolean} value
+	 */
+	#setFieldValue( field, value ) {
+		if ( ! field ) {
+			return false;
+		}
+
+		if ( 'checkbox' === field.type || 'radio' === field.type ) {
+			value = !! value;
+			field.checked = value;
+		} else {
+			field.value = value;
+		}
 	}
 
 	/**
@@ -151,8 +169,10 @@ class FormFieldGroup {
 		const storeValue = ( field, name ) => {
 			if ( 'checkbox' === field.type || 'radio' === field.type ) {
 				this.#stored.set( name, field.checked );
+				this.#setFieldValue( field, this.dataValue( name ) );
 			} else {
 				this.#stored.set( name, field.value );
+				this.#setFieldValue( field, '' );
 			}
 		};
 
@@ -172,22 +192,11 @@ class FormFieldGroup {
 	 * This function iterates through the stored form fields and resets their values or states.
 	 */
 	restoreFormData() {
-		const restoreValue = ( field, name ) => {
-			if ( 'checkbox' === field.type || 'radio' === field.type ) {
-				field.checked = this.#stored.get( name );
-			} else {
-				field.value = this.#stored.get( name );
-			}
-		};
-
 		this.loopFields( ( { inputSelector }, fieldKey ) => {
 			if ( inputSelector && this.#stored.has( fieldKey ) ) {
 				const elInput = document.querySelector( inputSelector );
 
-				if ( elInput ) {
-					restoreValue( elInput, fieldKey );
-				}
-
+				this.#setFieldValue( elInput, this.#stored.get( fieldKey ) );
 				this.#stored.delete( fieldKey );
 			}
 		} );
