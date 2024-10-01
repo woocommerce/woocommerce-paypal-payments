@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 
@@ -74,70 +75,17 @@ return array(
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.dcc' ),
 			$container->get( 'wcgateway.url' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'axo.card_icons' ),
-			$container->get( 'axo.card_icons.axo' ),
+			$container->get( 'wcgateway.credit-card-icons' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-
-	'axo.card_icons'                         => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-dark.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-dark.svg',
-			),
-			array(
-				'title' => 'American Express',
-				'file'  => 'amex.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover.svg',
-			),
-		);
-	},
-
-	'axo.card_icons.axo'                     => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-light.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-light.svg',
-			),
-			array(
-				'title' => 'Amex',
-				'file'  => 'amex-light.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover-light.svg',
-			),
-			array(
-				'title' => 'Diners Club',
-				'file'  => 'dinersclub-light.svg',
-			),
-			array(
-				'title' => 'JCB',
-				'file'  => 'jcb-light.svg',
-			),
-			array(
-				'title' => 'UnionPay',
-				'file'  => 'unionpay-light.svg',
-			),
 		);
 	},
 
@@ -188,10 +136,10 @@ return array(
 	},
 
 	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ) : string {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
-		if ( $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ) {
+		if ( $dcc_configuration->use_fastlane() ) {
 			$fastlane_settings_url = admin_url(
 				sprintf(
 					'admin.php?page=wc-settings&tab=checkout&section=%1$s&ppcp-tab=%2$s#field-axo_heading',

@@ -28,6 +28,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WC_Payment_Gateways;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+
 /**
  * Class AxoModule
  */
@@ -85,13 +88,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
-				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
-				$is_dcc_enabled    = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
-
-				if ( ! $is_paypal_enabled || ! $is_dcc_enabled ) {
+				if ( ! $dcc_configuration->is_enabled() ) {
 					return $methods;
 				}
 
@@ -130,6 +130,23 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
+		// Enforce Fastlane to always be the first payment method in the list.
+		add_action(
+			'wc_payment_gateways_initialized',
+			function ( WC_Payment_Gateways $gateways ) {
+				if ( is_admin() ) {
+					return;
+				}
+				foreach ( $gateways->payment_gateways as $key => $gateway ) {
+					if ( $gateway->id === AxoGateway::ID ) {
+						unset( $gateways->payment_gateways[ $key ] );
+						array_unshift( $gateways->payment_gateways, $gateway );
+						break;
+					}
+				}
+			}
+		);
+
 		// Force 'cart-block' and 'cart' Smart Button locations in the settings.
 		add_action(
 			'admin_init',
@@ -137,11 +154,11 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$listener = $c->get( 'wcgateway.settings.listener' );
 				assert( $listener instanceof SettingsListener );
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
 				$listener->filter_settings(
-					$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ),
+					$dcc_configuration->use_fastlane(),
 					'smart_button_locations',
 					function( array $existing_setting_value ) {
 						$axo_forced_locations = array( 'cart-block', 'cart' );
@@ -218,12 +235,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
 
 						// Add meta tag to allow feature-detection of the site's AXO payment state.
-						$settings = $c->get( 'wcgateway.settings' );
-						assert( $settings instanceof Settings );
+						$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+						assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
-						$this->add_feature_detection_tag(
-							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
-						);
+						$this->add_feature_detection_tag( $dcc_configuration->use_fastlane() );
 					}
 				);
 
@@ -345,16 +360,12 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return bool
 	 */
 	private function should_render_fastlane( ContainerInterface $c ): bool {
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
-		$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+		$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
-			&& $is_axo_enabled
-			&& $is_dcc_enabled
+			&& $dcc_configuration->use_fastlane()
 			&& ! $this->is_excluded_endpoint();
 	}
 
