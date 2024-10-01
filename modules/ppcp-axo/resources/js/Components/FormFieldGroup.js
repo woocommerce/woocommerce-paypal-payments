@@ -210,14 +210,28 @@ class FormFieldGroup {
 	 * This function iterates through the stored form fields and resets their values or states.
 	 */
 	restoreFormData() {
-		this.loopFields( ( { inputSelector }, fieldKey ) => {
-			if ( inputSelector && this.#stored.has( fieldKey ) ) {
-				const elInput = document.querySelector( inputSelector );
+		let formHasChanged = false;
 
-				this.#setFieldValue( elInput, this.#stored.get( fieldKey ) );
-				this.#stored.delete( fieldKey );
+		// Reset form fields to their initial state.
+		this.loopFields( ( { inputSelector }, fieldKey ) => {
+			if ( ! this.#stored.has( fieldKey ) ) {
+				return;
+			}
+
+			const elInput = inputSelector
+				? document.querySelector( inputSelector )
+				: null;
+			const oldValue = this.#stored.get( fieldKey );
+			this.#stored.delete( fieldKey );
+
+			if ( this.#setFieldValue( elInput, oldValue ) ) {
+				formHasChanged = true;
 			}
 		} );
+
+		if ( formHasChanged ) {
+			document.body.dispatchEvent( new Event( 'update_checkout' ) );
+		}
 	}
 
 	/**
