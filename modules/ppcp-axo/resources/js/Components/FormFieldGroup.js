@@ -151,20 +151,17 @@ class FormFieldGroup {
 	 * @param {(field: object, key: string) => void} callback
 	 */
 	loopFields( callback ) {
-		Object.keys( this.#fields ).forEach( ( key ) => {
-			const field = this.#fields[ key ];
-			const fieldSelector = `${ this.#baseSelector } ${ field.selector }`;
+		for ( const [ key, field ] of Object.entries( this.#fields ) ) {
+			const { selector, inputName } = field;
+			const inputSelector = `${ selector } [name="${ inputName }"]`;
 
-			callback(
-				{
-					inputSelector: field.inputName
-						? `${ fieldSelector } [name="${ field.inputName }"]`
-						: '',
-					...field,
-				},
-				key
-			);
-		} );
+			const fieldInfo = {
+				inputSelector: inputName ? inputSelector : '',
+				...field,
+			};
+
+			callback( fieldInfo, key );
+		}
 	}
 
 	/**
