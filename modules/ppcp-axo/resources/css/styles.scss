@@ -1,23 +1,48 @@
 .ppcp-axo-watermark-container {
-	max-width: 200px;
-	margin-top: 10px;
-	position: relative;
+	justify-self: end;
+	align-self: end;
+	margin-top: 5px;
+
+	&.loader {
+		width: 15px;
+		align-self: center;
+	}
+
+	&:before {
+		display: none;
+	}
 
 	&.loader:before {
+		display: block; /* Same as WooCommerce's `@mixin loader()` uses */
 		height: 12px;
 		width: 12px;
 		margin-left: -6px;
 		margin-top: -6px;
 		left: 12px;
+		position: relative;
 	}
 }
 
 #ppcp-axo-billing-email-field-wrapper {
 	display: flex;
 	gap: 0.5rem;
+
+	.woocommerce-input-wrapper {
+		display: grid;
+		grid-template-areas:
+			"input"
+			"watermark"
+			"button";
+		grid-template-columns: 1fr;
+		gap: 6px;
+		align-items: start;
+		width: 100%;
+	}
 }
 
 #ppcp-axo-billing-email-submit-button {
+	grid-area: button;
+	width: 100%;
 	margin-top: 0;
 	position: relative;
 	transition: opacity 0.3s ease;
@@ -36,6 +61,8 @@
 }
 
 .ppcp-axo-billing-email-submit-button {
+	position: relative;
+
 	&-hidden {
 		opacity: 0;
 	}
@@ -47,7 +74,6 @@
 
 .ppcp-axo-payment-container {
 	padding: 1rem 0;
-	background-color: #ffffff;
 
 	&.axo-hidden {
 		display: none;
@@ -73,18 +99,102 @@
 	position: relative;
 }
 
-.axo-checkout-header-section {
-	display: flex;
-	align-items: baseline;
-	gap: 1em;
+.axo-checkout-wrapper {
+	margin-bottom: 20px;
+
+	.axo-checkout-header-section {
+		display: flex;
+		align-items: baseline;
+		gap: 1em;
+		margin-bottom: 1em;
+	}
+
+	.axo-checkout-card-preview {
+		border: 2px solid #cccccc;
+		border-radius: 10px;
+		padding: 16px 20px;
+		background-color: #f6f6f6;
+	}
+
+	.ppcp-card-icon-wrapper {
+		float: right;
+	}
+
+	.ppcp-card-icon {
+		width: auto;
+		height: 25px;
+	}
+
+	.axo-card-number {
+		font-family: monospace;
+		font-size: 1rem;
+		margin-top: 10px;
+	}
+
+	.axo-card-owner {
+		text-transform: uppercase;
+	}
+
+	.styled-card {
+		position: relative;
+		width: 100%;
+		max-width: 340px;
+		height: 210px;
+		margin: 0 auto;
+		box-shadow: 0 3px 10px -3px #0004;
+		background-image: linear-gradient(60deg, #0001, #ccc1 65%, #fff6 68%, #fff0);
+		box-sizing: border-box;
+		padding: 0;
+
+		.ppcp-card-icon-wrapper {
+			position: absolute;
+			right: 32px;
+			top: 32px;
+			height: 40px;
+		}
+
+		.axo-card-number {
+			margin-top: 76px;
+			font-size: 24px;
+			text-shadow: 0 -1px 1px #fff, 0 1px 1px #0004;
+			color: #666;
+			text-align: center;
+		}
+
+		.axo-card-expiry {
+			font-size: 14px;
+			padding-right: 32px;
+			text-align: right;
+		}
+
+		.axo-card-owner {
+			position: absolute;
+			left: 24px;
+			bottom: 20px;
+			line-height: 1em;
+		}
+
+		@media (max-width: 480px) {
+			.axo-card-number {
+				font-size: 20px;
+				text-align: left;
+				padding-left: 20px;
+			}
+		}
+		@media (max-width: 360px) {
+			.axo-card-number {
+				font-size: 16px;
+			}
+		}
+	}
 }
 
 .ppcp-axo-order-button {
-		float: none;
-		width: 100%;
-		box-sizing: border-box;
-		margin: var(--global-md-spacing) 0 1em;
-		padding: 0.6em 1em;
+	float: none;
+	width: 100%;
+	box-sizing: border-box;
+	margin: var(--global-md-spacing) 0 1em;
+	padding: 0.6em 1em;
 }
 
 .ppcp-axo-watermark-loading {
@@ -123,10 +233,6 @@
 	}
 }
 
-.ppcp-axo-customer-details #billing_email_field .woocommerce-input-wrapper {
-	flex: 1 1 auto;
-}
-
 @media screen and (max-width: 719px) {
 	#ppcp-axo-billing-email {
 		&-field-wrapper {
@@ -137,7 +243,32 @@
 			align-self: auto;
 		}
 	}
+
+	input[type="email"] {
+		grid-area: input;
+		width: 100%;
+	}
+
+	#ppcp-axo-billing-email-submit-button {
+		align-self: center;
+	}
 }
 
+@media (min-width: 783px) {
+	#ppcp-axo-billing-email-field-wrapper .woocommerce-input-wrapper {
+		grid-template-areas:
+			"input button"
+			"watermark watermark";
+		grid-template-columns: 1fr auto;
+		gap: 6px 8px;
+	}
 
+	input[type="email"] {
+		align-self: center;
+	}
 
+	#ppcp-axo-billing-email-submit-button {
+		align-self: center;
+		width: auto;
+	}
+}

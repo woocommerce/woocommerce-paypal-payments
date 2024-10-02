@@ -57,6 +57,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class WcGatewayModule
@@ -181,6 +182,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			$settings = $c->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
 
+			$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+			assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
 			$assets = new SettingsPageAssets(
 				$c->get( 'wcgateway.url' ),
 				$c->get( 'ppcp.asset-version' ),
@@ -193,7 +197,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 				$c->get( 'wcgateway.settings.funding-sources' ),
 				$c->get( 'wcgateway.is-ppcp-settings-page' ),
-				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ),
+				$dcc_configuration->is_enabled(),
 				$c->get( 'api.endpoint.billing-agreements' ),
 				$c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' )
 			);
@@ -554,10 +558,12 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $methods;
 				}
 
-				$is_dcc_enabled       = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+				$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
 				$standard_card_button = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
 
-				if ( $is_dcc_enabled && isset( $standard_card_button['enabled'] ) ) {
+				if ( $dcc_configuration->is_enabled() && isset( $standard_card_button['enabled'] ) ) {
 					$standard_card_button['enabled'] = 'no';
 					update_option( 'woocommerce_ppcp-card-button-gateway_settings', $standard_card_button );
 				}

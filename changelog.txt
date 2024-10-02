@@ -1,6 +1,10 @@
 *** Changelog ***
 
-= 2.9.1 - xxxx-xx-xx =
+= 2.9.2 - 2024-10-01 =
+* Enhancement - Add Fastlane support for Classic Checkout
+* Fix - Fatal error when Pay Later messaging configurator was disabled with a code snippet
+
+= 2.9.1 - 2024-09-24 =
 * Fix - Improve card fields hiding #2574
 * Fix - Google Pay: Shipping callback not calculating totals correctly on Single Product page #2513
 * Fix - Fix shipping callback condition in status report #2578

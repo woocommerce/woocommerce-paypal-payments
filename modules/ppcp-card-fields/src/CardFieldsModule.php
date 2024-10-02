@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class CardFieldsModule
@@ -45,9 +46,9 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 			return true;
 		}
 
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-		if ( ! $settings->has( 'dcc_enabled' ) || ! $settings->get( 'dcc_enabled' ) ) {
+		$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+		if ( ! $dcc_configuration->is_enabled() ) {
 			return true;
 		}
 
