@@ -1,0 +1,42 @@
+{
+    "name": "ppcp-axo-block",
+    "version": "1.0.0",
+    "license": "GPL-3.0-or-later",
+    "browserslist": [
+        "> 0.5%",
+        "Safari >= 8",
+        "Chrome >= 41",
+        "Firefox >= 43",
+        "Edge >= 14"
+    ],
+    "dependencies": {
+        "@paypal/paypal-js": "^8.1.1",
+        "@paypal/react-paypal-js": "^8.5.0",
+        "core-js": "^3.25.0",
+        "react": "^17.0.0",
+        "react-dom": "^17.0.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.19",
+        "@babel/preset-env": "^7.19",
+        "@babel/preset-react": "^7.18.6",
+        "@woocommerce/dependency-extraction-webpack-plugin": "2.2.0",
+        "babel-loader": "^8.2",
+        "cross-env": "^7.0.3",
+        "file-loader": "^6.2.0",
+        "sass": "^1.42.1",
+        "sass-loader": "^12.1.0",
+        "webpack": "^5.76",
+        "webpack-cli": "^4.10"
+    },
+    "scripts": {
+        "build": "cross-env BABEL_ENV=default NODE_ENV=production webpack",
+        "watch": "cross-env BABEL_ENV=default NODE_ENV=production webpack --watch",
+        "dev": "cross-env BABEL_ENV=default webpack --watch"
+    },
+    "resolve": {
+        "alias": {
+            "@woocommerce/base-context": "assets/js/base/context"
+        }
+    }
+}
