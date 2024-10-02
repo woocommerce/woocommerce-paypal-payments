@@ -4,12 +4,11 @@ import PreviewButton from '../../../../ppcp-button/resources/js/modules/Preview/
 /**
  * A single GooglePay preview button instance.
  */
-export default class GooglePayPreviewButton extends PreviewButton {	/**
-     * Instance of the preview button.
-     *
-     * @type {?PaymentButton}
-     */
-    #button = null;
+export default class GooglePayPreviewButton extends PreviewButton {
+	/**
+	 * @type {?PaymentButton}
+	 */
+	#button = null;
 
 	constructor( args ) {
 		super( args );
@@ -27,18 +26,18 @@ export default class GooglePayPreviewButton extends PreviewButton {	/**
 	}
 
 	createButton( buttonConfig ) {
-        if (!this.#button) {
-            this.#button = new GooglepayButton(
-                'preview',
-                null,
-                buttonConfig,
-                this.ppcpConfig
-            );
-        }
+		if ( ! this.#button ) {
+			this.#button = new GooglepayButton(
+				'preview',
+				null,
+				buttonConfig,
+				this.ppcpConfig
+			);
+		}
 
-        this.#button.configure( this.apiConfig, null );
-        this.#button.applyButtonStyles( buttonConfig, this.ppcpConfig );
-        this.#button.reinit();
+		this.#button.configure( this.apiConfig, null );
+		this.#button.applyButtonStyles( buttonConfig, this.ppcpConfig );
+		this.#button.reinit();
 	}
 
 	/**
