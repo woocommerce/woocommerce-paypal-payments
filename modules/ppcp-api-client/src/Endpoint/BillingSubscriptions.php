@@ -67,7 +67,7 @@ class BillingSubscriptions {
 	 */
 	public function suspend( string $id ):void {
 		$data = array(
-			'reason' => 'Suspended by customer',
+			'reason' => sprintf( 'Suspended by %s.', is_admin() ? 'merchant' : 'customer' ),
 		);
 
 		$bearer = $this->bearer->bearer();
@@ -107,7 +107,7 @@ class BillingSubscriptions {
 	 */
 	public function activate( string $id ): void {
 		$data = array(
-			'reason' => 'Reactivated by customer',
+			'reason' => sprintf( 'Reactivated by %s.', is_admin() ? 'merchant' : 'customer' ),
 		);
 
 		$bearer = $this->bearer->bearer();
