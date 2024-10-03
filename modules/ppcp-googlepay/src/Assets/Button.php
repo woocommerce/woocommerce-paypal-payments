@@ -72,13 +72,6 @@ class Button implements ButtonInterface {
 	private $settings_status;
 
 	/**
-	 * 3-letter currency code of the shop.
-	 *
-	 * @var string
-	 */
-	private $currency;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -102,7 +95,6 @@ class Button implements ButtonInterface {
 	 * @param Settings        $settings The Settings.
 	 * @param Environment     $environment The environment object.
 	 * @param SettingsStatus  $settings_status The Settings status helper.
-	 * @param string          $currency 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
@@ -113,7 +105,6 @@ class Button implements ButtonInterface {
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		string $currency,
 		LoggerInterface $logger
 	) {
 
@@ -124,7 +115,6 @@ class Button implements ButtonInterface {
 		$this->settings        = $settings;
 		$this->environment     = $environment;
 		$this->settings_status = $settings_status;
-		$this->currency        = $currency;
 		$this->logger          = $logger;
 	}
 

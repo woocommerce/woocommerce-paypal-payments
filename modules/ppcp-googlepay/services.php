@@ -177,7 +177,6 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'api.shop.currency' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
