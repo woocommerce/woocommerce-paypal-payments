@@ -33,16 +33,49 @@ trait ContextTrait {
 				if ( $is_checkout ) {
 					return $is_checkout;
 				}
-				return has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' );
+
+				if ( has_block( 'woocommerce/classic-shortcode' ) ) {
+					$classic_block = $this->find_classic_shortcode_block();
+					$type          = $classic_block['attrs']['shortcode'] ?? '';
+					return $type === 'checkout';
+				}
+
+				return $is_checkout;
 			}
 		);
 
 		// Activate is_cart() on woocommerce/classic-shortcode cart blocks.
 		if ( ! is_cart() && is_callable( 'wc_maybe_define_constant' ) ) {
-			if ( has_block( 'woocommerce/classic-shortcode' ) && ! has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' ) ) {
-				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+			if ( has_block( 'woocommerce/classic-shortcode' ) ) {
+				$classic_block = $this->find_classic_shortcode_block();
+				$type          = $classic_block['attrs']['shortcode'] ?? '';
+				if ( $type !== 'checkout' ) { // There is no 'cart' type, the attribute is just missing.
+					wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+				}
 			}
 		}
+	}
+
+	/**
+	 * Returns the parsed data of the classic shortcode block, or null if missing on the current page.
+	 * Slower than has_block( 'woocommerce/classic-shortcode' )
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	protected function find_classic_shortcode_block(): ?array {
+		$post = get_the_content();
+		if ( ! $post ) {
+			return null;
+		}
+
+		$blocks = parse_blocks( $post );
+		foreach ( $blocks as $block ) {
+			if ( $block['blockName'] === 'woocommerce/classic-shortcode' ) {
+				return $block;
+			}
+		}
+
+		return null;
 	}
 
 	/**
