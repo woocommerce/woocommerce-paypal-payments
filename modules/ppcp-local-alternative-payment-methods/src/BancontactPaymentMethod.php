@@ -91,7 +91,7 @@ class BancontactPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'bancontact',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }

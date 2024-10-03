@@ -91,7 +91,7 @@ class BlikPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'blik',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }

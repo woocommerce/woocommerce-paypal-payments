@@ -91,7 +91,7 @@ class MultibancoPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'multibanco',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }
