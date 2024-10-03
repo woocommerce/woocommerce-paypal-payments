@@ -36,7 +36,7 @@ return array(
 		return new ApmApplies(
 			$container->get( 'googlepay.supported-countries' ),
 			$container->get( 'googlepay.supported-currencies' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'api.shop.country' )
 		);
 	},

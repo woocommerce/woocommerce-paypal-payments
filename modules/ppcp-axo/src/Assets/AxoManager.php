@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -59,11 +60,11 @@ class AxoManager {
 	private $settings_status;
 
 	/**
-	 * 3-letter currency code of the shop.
+	 * The getter of the 3-letter currency code of the shop.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * The logger.
@@ -95,7 +96,7 @@ class AxoManager {
 	 * @param Settings        $settings The Settings.
 	 * @param Environment     $environment The environment object.
 	 * @param SettingsStatus  $settings_status The Settings status helper.
-	 * @param string          $currency 3-letter currency code of the shop.
+	 * @param CurrencyGetter  $currency The getter of the 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
 	 * @param string          $wcgateway_module_url The WcGateway module URL.
 	 */
@@ -106,7 +107,7 @@ class AxoManager {
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		string $currency,
+		CurrencyGetter $currency,
 		LoggerInterface $logger,
 		string $wcgateway_module_url
 	) {
@@ -178,7 +179,7 @@ class AxoManager {
 						16
 					),
 				'amount'     => array(
-					'currency_code' => get_woocommerce_currency(),
+					'currency_code' => $this->currency->get(),
 					'value'         => WC()->cart->get_total( 'numeric' ),
 				),
 			),

@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
@@ -370,7 +371,7 @@ return array(
 	},
 	'api.factory.item'                               => static function ( ContainerInterface $container ): ItemFactory {
 		return new ItemFactory(
-			$container->get( 'api.shop.currency' )
+			$container->get( 'api.shop.currency.getter' )
 		);
 	},
 	'api.factory.shipping'                           => static function ( ContainerInterface $container ): ShippingFactory {
@@ -392,7 +393,7 @@ return array(
 		return new AmountFactory(
 			$item_factory,
 			$container->get( 'api.factory.money' ),
-			$container->get( 'api.shop.currency' )
+			$container->get( 'api.shop.currency.getter' )
 		);
 	},
 	'api.factory.money'                              => static function ( ContainerInterface $container ): MoneyFactory {
@@ -458,10 +459,10 @@ return array(
 		return new ProductFactory();
 	},
 	'api.factory.billing-cycle'                      => static function( ContainerInterface $container ): BillingCycleFactory {
-		return new BillingCycleFactory( $container->get( 'api.shop.currency' ) );
+		return new BillingCycleFactory( $container->get( 'api.shop.currency.getter' ) );
 	},
 	'api.factory.payment-preferences'                => static function( ContainerInterface $container ):PaymentPreferencesFactory {
-		return new PaymentPreferencesFactory( $container->get( 'api.shop.currency' ) );
+		return new PaymentPreferencesFactory( $container->get( 'api.shop.currency.getter' ) );
 	},
 	'api.factory.plan'                               => static function( ContainerInterface $container ): PlanFactory {
 		return new PlanFactory(
@@ -476,23 +477,13 @@ return array(
 		return new DccApplies(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
 			$container->get( 'api.dcc-supported-country-card-matrix' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
 
-	'api.shop.currency'                              => static function ( ContainerInterface $container ) : string {
-		$currency = get_woocommerce_currency();
-		if ( $currency ) {
-			return $currency;
-		}
-
-		$currency = get_option( 'woocommerce_currency' );
-		if ( ! $currency ) {
-			return 'NO_CURRENCY'; // Unlikely to happen.
-		}
-
-		return $currency;
+	'api.shop.currency.getter'                       => static function ( ContainerInterface $container ) : CurrencyGetter {
+		return new CurrencyGetter();
 	},
 	'api.shop.country'                               => static function ( ContainerInterface $container ) : string {
 		$location = wc_get_base_location();
@@ -507,7 +498,7 @@ return array(
 	},
 	'api.shop.is-currency-supported'                 => static function ( ContainerInterface $container ) : bool {
 		return in_array(
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' )->get(),
 			$container->get( 'api.supported-currencies' ),
 			true
 		);
