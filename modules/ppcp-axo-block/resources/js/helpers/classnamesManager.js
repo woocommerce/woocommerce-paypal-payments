@@ -41,6 +41,10 @@ export const setupAuthenticationClassToggle = () => {
 	return unsubscribe;
 };
 
+/**
+ * Sets up a class toggle based on the isEmailLookupCompleted state for the checkout fields block.
+ * @return {Function} Unsubscribe function for cleanup.
+ */
 export const setupEmailLookupCompletedClassToggle = () => {
 	const targetSelector = '.wp-block-woocommerce-checkout-fields-block';
 	const emailLookupCompletedClass = 'wc-block-axo-email-lookup-completed';
@@ -77,7 +81,7 @@ export const setupEmailLookupCompletedClassToggle = () => {
 };
 
 /**
- * Sets up class toggles for the contact information block based on isAxoActive and isGuest states.
+ * Sets up class toggles for the contact information block based on isAxoActive, isGuest, and isEmailLookupCompleted states.
  * @return {Function} Unsubscribe function for cleanup.
  */
 export const setupCheckoutBlockClassToggles = () => {
@@ -133,7 +137,7 @@ export const setupCheckoutBlockClassToggles = () => {
 
 /**
  * Initializes all class toggles.
- * @return {Function} Cleanup function.
+ * @return {Function} Cleanup function to unsubscribe all listeners.
  */
 export const initializeClassToggles = () => {
 	const unsubscribeAuth = setupAuthenticationClassToggle();
@@ -141,6 +145,7 @@ export const initializeClassToggles = () => {
 		setupEmailLookupCompletedClassToggle();
 	const unsubscribeContactInfo = setupCheckoutBlockClassToggles();
 
+	// Return a cleanup function that unsubscribes all listeners
 	return () => {
 		if ( unsubscribeAuth ) {
 			unsubscribeAuth();
