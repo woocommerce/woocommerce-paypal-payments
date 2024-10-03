@@ -7,7 +7,15 @@ import {
 	updateWatermarkContent,
 } from './utils';
 
+/**
+ * Manages the lifecycle and content of the AXO watermark.
+ *
+ * @param {Object} props
+ * @param {Object} props.fastlaneSdk - The Fastlane SDK instance.
+ * @return {null} This component doesn't render any visible elements.
+ */
 const WatermarkManager = ( { fastlaneSdk } ) => {
+	// Select relevant states from the AXO store
 	const isGuest = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsGuest()
 	);
@@ -20,6 +28,7 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 
 	useEffect( () => {
 		if ( isAxoActive || ( ! isAxoActive && ! isAxoScriptLoaded ) ) {
+			// Create watermark container and update content when AXO is active or loading
 			createWatermarkContainer();
 			updateWatermarkContent( {
 				isAxoActive,
@@ -28,12 +37,15 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 				isGuest,
 			} );
 		} else {
+			// Remove watermark when AXO is inactive and not loading
 			removeWatermark();
 		}
 
+		// Cleanup function to remove watermark on unmount
 		return removeWatermark;
 	}, [ fastlaneSdk, isGuest, isAxoActive, isAxoScriptLoaded ] );
 
+	// This component doesn't render anything directly
 	return null;
 };
 

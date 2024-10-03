@@ -4,6 +4,21 @@ import { injectShippingChangeButton } from '../components/Shipping';
 import { injectCardChangeButton } from '../components/Card';
 import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
 
+/**
+ * Creates an email lookup handler function for AXO checkout.
+ *
+ * @param {Object}   fastlaneSdk                  - The Fastlane SDK instance.
+ * @param {Function} setShippingAddress           - Function to set shipping address in the store.
+ * @param {Function} setCardDetails               - Function to set card details in the store.
+ * @param {Function} snapshotFields               - Function to save current field values.
+ * @param {Object}   wooShippingAddress           - Current WooCommerce shipping address.
+ * @param {Object}   wooBillingAddress            - Current WooCommerce billing address.
+ * @param {Function} setWooShippingAddress        - Function to update WooCommerce shipping address.
+ * @param {Function} setWooBillingAddress         - Function to update WooCommerce billing address.
+ * @param {Function} onChangeShippingAddressClick - Handler for shipping address change.
+ * @param {Function} onChangeCardButtonClick      - Handler for card change.
+ * @return {Function} The email lookup handler function.
+ */
 export const createEmailLookupHandler = (
 	fastlaneSdk,
 	setShippingAddress,
@@ -20,6 +35,7 @@ export const createEmailLookupHandler = (
 		try {
 			log( `Email value being looked up: ${ email }` );
 
+			// Validate Fastlane SDK initialization
 			if ( ! fastlaneSdk ) {
 				throw new Error( 'FastlaneSDK is not initialized' );
 			}
@@ -30,12 +46,13 @@ export const createEmailLookupHandler = (
 				);
 			}
 
+			// Perform email lookup
 			const lookup =
 				await fastlaneSdk.identity.lookupCustomerByEmail( email );
 
 			log( `Lookup response: ${ JSON.stringify( lookup ) }` );
 
-			// Gary flow
+			// Handle Gary flow (new user)
 			if ( lookup && lookup.customerContextId === '' ) {
 				setIsEmailLookupCompleted( true );
 			}
@@ -45,6 +62,7 @@ export const createEmailLookupHandler = (
 				return;
 			}
 
+			// Trigger authentication flow
 			const authResponse =
 				await fastlaneSdk.identity.triggerAuthenticationFlow(
 					lookup.customerContextId
@@ -56,15 +74,18 @@ export const createEmailLookupHandler = (
 
 			const { authenticationState, profileData } = authResponse;
 
-			// OTP success/fail/cancel flow
+			// Mark email lookup as completed for OTP flow
 			if ( authResponse ) {
 				setIsEmailLookupCompleted( true );
 			}
 
+			// Handle successful authentication
 			if ( authenticationState === 'succeeded' ) {
+				// Save current field values
 				snapshotFields( wooShippingAddress, wooBillingAddress );
 				setIsGuest( false );
 
+				// Update store with profile data
 				if ( profileData && profileData.shippingAddress ) {
 					setShippingAddress( profileData.shippingAddress );
 				}
@@ -74,12 +95,14 @@ export const createEmailLookupHandler = (
 
 				log( `Profile Data: ${ JSON.stringify( profileData ) }` );
 
+				// Populate WooCommerce fields with profile data
 				populateWooFields(
 					profileData,
 					setWooShippingAddress,
 					setWooBillingAddress
 				);
 
+				// Inject change buttons for shipping and card
 				injectShippingChangeButton( onChangeShippingAddressClick );
 				injectCardChangeButton( onChangeCardButtonClick );
 			} else {

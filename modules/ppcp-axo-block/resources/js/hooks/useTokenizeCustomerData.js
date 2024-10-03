@@ -1,18 +1,27 @@
 import { useMemo } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
+import useCustomerData from './useCustomerData';
 
+/**
+ * Custom hook to prepare customer data for tokenization.
+ *
+ * @return {Object} Formatted customer data for tokenization.
+ */
 export const useTokenizeCustomerData = () => {
-	const customerData = useSelect( ( select ) =>
-		select( 'wc/store/cart' ).getCustomerData()
-	);
+	const { billingAddress, shippingAddress } = useCustomerData();
 
+	/**
+	 * Validates if an address contains the minimum required data.
+	 *
+	 * @param {Object} address - The address object to validate.
+	 * @return {boolean} True if the address is valid, false otherwise.
+	 */
 	const isValidAddress = ( address ) => {
-		// At least one name must be present.
+		// At least one name must be present
 		if ( ! address.first_name && ! address.last_name ) {
 			return false;
 		}
 
-		// Street, city, postcode, country are mandatory; state is optional.
+		// Street, city, postcode, country are mandatory; state is optional
 		return (
 			address.address_1 &&
 			address.city &&
@@ -21,15 +30,14 @@ export const useTokenizeCustomerData = () => {
 		);
 	};
 
-	// Memoize the customer data to avoid unnecessary re-renders (and potential infinite loops).
+	// Memoize the customer data to avoid unnecessary re-renders (and potential infinite loops)
 	return useMemo( () => {
-		const { billingAddress, shippingAddress } = customerData;
-
-		// Prefer billing address, but fallback to shipping address if billing address is not valid.
+		// Determine the main address, preferring billing address if valid
 		const mainAddress = isValidAddress( billingAddress )
 			? billingAddress
 			: shippingAddress;
 
+		// Format the customer data for tokenization
 		return {
 			cardholderName: {
 				fullName: `${ mainAddress.first_name } ${ mainAddress.last_name }`,
@@ -43,7 +51,7 @@ export const useTokenizeCustomerData = () => {
 				countryCode: mainAddress.country,
 			},
 		};
-	}, [ customerData ] );
+	}, [ billingAddress, shippingAddress ] );
 };
 
 export default useTokenizeCustomerData;

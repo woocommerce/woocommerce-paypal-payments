@@ -5,7 +5,7 @@ import { STORE_NAME } from '../../stores/axoStore';
 
 const cardIcons = {
 	VISA: 'visa-light.svg',
-	MASTER_CARD: 'mastercard-light.svg',
+	MASTERCARD: 'mastercard-light.svg',
 	AMEX: 'amex-light.svg',
 	DISCOVER: 'discover-light.svg',
 	DINERS: 'dinersclub-light.svg',
