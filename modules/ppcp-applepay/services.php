@@ -191,6 +191,7 @@ return array(
 				'FR', // France
 				'DE', // Germany
 				'GR', // Greece
+				'HK', // Hong Kong
 				'HU', // Hungary
 				'IE', // Ireland
 				'IT', // Italy
@@ -204,6 +205,7 @@ return array(
 				'PL', // Poland
 				'PT', // Portugal
 				'RO', // Romania
+				'SG', // Singapore
 				'SK', // Slovakia
 				'SI', // Slovenia
 				'ES', // Spain
