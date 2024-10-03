@@ -31,8 +31,10 @@ import moduleStorage from './Helper/GooglePayStorage';
 	}
 
 	function bootstrapCheckout() {
-		if ( context && ! [ 'continuation', 'checkout' ].includes( context ) ) {
-			// Context must be missing/empty, or "continuation"/"checkout" to proceed.
+		if ( context
+            && ! [ 'checkout' ].includes( context )
+            && ! (context === 'mini-cart' && ppcpConfig.continuation) ) {
+			// Context must be missing/empty, or "checkout"/checkout continuation to proceed.
 			return;
 		}
 		if ( ! CheckoutBootstrap.isPageWithCheckoutForm() ) {
