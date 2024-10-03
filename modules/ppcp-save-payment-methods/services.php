@@ -25,7 +25,7 @@ return array(
 	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ) : SavePaymentMethodsApplies {
 		return new SavePaymentMethodsApplies(
 			$container->get( 'save-payment-methods.supported-country-currency-matrix' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
