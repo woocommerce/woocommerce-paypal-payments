@@ -4,6 +4,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
+use WooCommerce\PayPalCommerce\Helper\CurrencyGetterStub;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -25,7 +26,7 @@ class SettingsPagesAssetsTest extends TestCase
             $modulePath,
             $subscriptionsHelper,
             '123',
-            'EUR',
+            new CurrencyGetterStub(),
             'DE',
 			Mockery::mock(Environment::class),
             true,
