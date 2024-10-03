@@ -17,7 +17,7 @@ class ApplePayManagerBlockEditor {
 
 	async config() {
 		try {
-			this.applePayConfig = await paypal.Applepay().config();
+			this.applePayConfig = await ppcpBlocksEditorPaypalApplepay.Applepay().config();
 
 			const button = new ApplePayButton(
 				this.ppcpConfig.context,
