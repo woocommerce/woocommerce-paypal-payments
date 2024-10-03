@@ -4,6 +4,8 @@ import { STORE_NAME } from '../stores/axoStore';
 
 /**
  * Sets up a class toggle based on the isGuest state for the express payment block.
+ * This hides the express payment methods if the user is authenticated (Ryan flow).
+ *
  * @return {Function} Unsubscribe function for cleanup.
  */
 export const setupAuthenticationClassToggle = () => {
@@ -43,6 +45,9 @@ export const setupAuthenticationClassToggle = () => {
 
 /**
  * Sets up a class toggle based on the isEmailLookupCompleted state for the checkout fields block.
+ * This hides the Shipping Address fields, Billing Address fields, Shipping Options section,
+ * Order Notes section, Checkout Terms section, and Place Order button until email lookup is completed.
+ *
  * @return {Function} Unsubscribe function for cleanup.
  */
 export const setupEmailLookupCompletedClassToggle = () => {
