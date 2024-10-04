@@ -42,8 +42,12 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 			const paymentComponent = await fastlaneSdk.FastlaneCardComponent(
 				{}
 			);
-			paymentComponent.render( `#fastlane-card` );
-			onPaymentLoad( paymentComponent );
+			// Check if the container exists before rendering
+			const cardContainer = document.querySelector( '#fastlane-card' );
+			if ( cardContainer ) {
+				paymentComponent.render( `#fastlane-card` );
+				onPaymentLoad( paymentComponent );
+			}
 		}
 	}, [
 		isGuest,
