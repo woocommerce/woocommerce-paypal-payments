@@ -1,6 +1,7 @@
 import { useEffect, useCallback, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
 import { Card } from '../Card';
 import { STORE_NAME } from '../../stores/axoStore';
 
@@ -39,14 +40,18 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 			( isGuest && isEmailLookupCompleted && isCardElementReady ) ||
 			( ! isGuest && ! cardDetails )
 		) {
-			const paymentComponent = await fastlaneSdk.FastlaneCardComponent(
-				{}
-			);
-			// Check if the container exists before rendering
-			const cardContainer = document.querySelector( '#fastlane-card' );
-			if ( cardContainer ) {
-				paymentComponent.render( `#fastlane-card` );
-				onPaymentLoad( paymentComponent );
+			try {
+				const paymentComponent =
+					await fastlaneSdk.FastlaneCardComponent( {} );
+				// Check if the container exists before rendering
+				const cardContainer =
+					document.querySelector( '#fastlane-card' );
+				if ( cardContainer ) {
+					paymentComponent.render( '#fastlane-card' );
+					onPaymentLoad( paymentComponent );
+				}
+			} catch ( error ) {
+				log( `Error loading payment component: ${ error }`, 'error' );
 			}
 		}
 	}, [
@@ -65,10 +70,12 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 		}
 	}, [ isGuest, isEmailLookupCompleted ] );
 
-	// Load payment component when dependencies change
+	// Load payment component when card element is ready
 	useEffect( () => {
-		loadPaymentComponent();
-	}, [ loadPaymentComponent ] );
+		if ( isCardElementReady ) {
+			loadPaymentComponent();
+		}
+	}, [ isCardElementReady, loadPaymentComponent ] );
 
 	/**
 	 * Determines which component to render based on the current state.
@@ -99,7 +106,7 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 			( isGuest && isEmailLookupCompleted ) ||
 			( ! isGuest && ! cardDetails )
 		) {
-			return <div id="fastlane-card" key="fastlane-card" />;
+			return <div id="fastlane-card" />;
 		}
 
 		// Case 4: Authenticated user with card details
