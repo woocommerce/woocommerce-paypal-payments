@@ -1,21 +1,27 @@
 import AxoManager from './AxoManager';
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
 
 ( function ( { axoConfig, ppcpConfig, jQuery } ) {
+	const namespace = 'ppcpPaypalClassicAxo';
 	const bootstrap = () => {
-		new AxoManager( axoConfig, ppcpConfig );
+		new AxoManager( namespace, axoConfig, ppcpConfig );
 	};
 
 	document.addEventListener( 'DOMContentLoaded', () => {
-		if ( ! typeof PayPalCommerceGateway ) {
+		if ( typeof PayPalCommerceGateway === 'undefined' ) {
 			console.error( 'AXO could not be configured.' );
 			return;
 		}
 
 		// Load PayPal
-		loadPaypalScript( ppcpConfig, () => {
-			bootstrap();
-		} );
+		UnifiedScriptLoader.loadPayPalScript( namespace, ppcpConfig )
+			.then( () => {
+				console.log( 'PayPal script loaded successfully' );
+				bootstrap();
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to load PayPal script:', error );
+			} );
 	} );
 } )( {
 	axoConfig: window.wc_ppcp_axo,

@@ -52,11 +52,12 @@ class AxoManager {
 	billingView = null;
 	cardView = null;
 
-	constructor( axoConfig, ppcpConfig ) {
+	constructor( namespace, axoConfig, ppcpConfig ) {
+        this.namespace = namespace;
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
 
-		this.fastlane = new Fastlane();
+		this.fastlane = new Fastlane( namespace );
 		this.$ = jQuery;
 
 		this.status = {
