@@ -5,7 +5,7 @@ import UnifiedScriptLoader from '../../../../ppcp-button/resources/js/modules/He
 import { STORE_NAME } from '../stores/axoStore';
 
 /**
- * Custom hook to load the PayPal script using UnifiedScriptLoader.
+ * Custom hook to load the PayPal script.
  *
  * @param {string}  namespace      - Namespace for the PayPal script.
  * @param {Object}  ppcpConfig     - Configuration object for PayPal script.
