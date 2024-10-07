@@ -1,14 +1,12 @@
 /* global ApplePaySession */
 /* global PayPalCommerceGateway */
 
-import ContextHandlerFactory from './Context/ContextHandlerFactory';
 import { createAppleErrors } from './Helper/applePayError';
 import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import FormValidator from '../../../ppcp-button/resources/js/modules/Helper/FormValidator';
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
-import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
 import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
 import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import {
@@ -216,7 +214,7 @@ class ApplePayButton extends PaymentButton {
 		this.#applePayConfig = apiConfig;
 	}
 
-	init( config ) {
+	init() {
 		// Use `reinit()` to force a full refresh of an initialized button.
 		if ( this.isInitialized ) {
 			return;
