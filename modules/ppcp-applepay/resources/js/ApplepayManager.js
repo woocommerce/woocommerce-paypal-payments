@@ -11,30 +11,33 @@ class ApplePayManager {
 		this.ApplePayConfig = null;
 		this.buttons = [];
 
-		buttonModuleWatcher.watchContextBootstrap( async ( bootstrap ) => {
-			this.contextHandler = ContextHandlerFactory.create(
-				bootstrap.context,
-				buttonConfig,
-				ppcpConfig,
-				bootstrap.handler
-			);
+		this.onContextBootstrap = this.onContextBootstrap.bind( this );
+		buttonModuleWatcher.watchContextBootstrap( this.onContextBootstrap );
+	}
 
-			const button = ApplePayButton.createButton(
-				bootstrap.context,
-				bootstrap.handler,
-				buttonConfig,
-				ppcpConfig,
-				this.contextHandler
-			);
+	async onContextBootstrap( bootstrap ) {
+		this.contextHandler = ContextHandlerFactory.create(
+			bootstrap.context,
+			this.buttonConfig,
+			this.ppcpConfig,
+			bootstrap.handler
+		);
 
-			this.buttons.push( button );
+		const button = ApplePayButton.createButton(
+			bootstrap.context,
+			bootstrap.handler,
+			this.buttonConfig,
+			this.ppcpConfig,
+			this.contextHandler
+		);
 
-			// Ensure ApplePayConfig is loaded before proceeding.
-			await this.init();
+		this.buttons.push( button );
 
-			button.configure( this.ApplePayConfig );
-			button.init();
-		} );
+		// Ensure ApplePayConfig is loaded before proceeding.
+		await this.init();
+
+		button.configure( this.ApplePayConfig );
+		button.init();
 	}
 
 	async init() {

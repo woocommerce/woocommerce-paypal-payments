@@ -11,33 +11,35 @@ class GooglepayManager {
 		this.googlePayConfig = null;
 		this.transactionInfo = null;
 		this.contextHandler = null;
-
 		this.buttons = [];
 
-		buttonModuleWatcher.watchContextBootstrap( async ( bootstrap ) => {
-			this.contextHandler = ContextHandlerFactory.create(
-				bootstrap.context,
-				buttonConfig,
-				ppcpConfig,
-				bootstrap.handler
-			);
+		this.onContextBootstrap = this.onContextBootstrap.bind( this );
+		buttonModuleWatcher.watchContextBootstrap( this.onContextBootstrap );
+	}
 
-			const button = GooglepayButton.createButton(
-				bootstrap.context,
-				bootstrap.handler,
-				buttonConfig,
-				ppcpConfig,
-				this.contextHandler
-			);
+	async onContextBootstrap( bootstrap ) {
+		this.contextHandler = ContextHandlerFactory.create(
+			bootstrap.context,
+			this.buttonConfig,
+			this.ppcpConfig,
+			bootstrap.handler
+		);
 
-			this.buttons.push( button );
+		const button = GooglepayButton.createButton(
+			bootstrap.context,
+			bootstrap.handler,
+			this.buttonConfig,
+			this.ppcpConfig,
+			this.contextHandler
+		);
 
-			// Ensure googlePayConfig and transactionInfo are loaded.
-			await this.init();
+		this.buttons.push( button );
 
-			button.configure( this.googlePayConfig, this.transactionInfo );
-			button.init();
-		} );
+		// Ensure googlePayConfig and transactionInfo are loaded.
+		await this.init();
+
+		button.configure( this.googlePayConfig, this.transactionInfo );
+		button.init();
 	}
 
 	async init() {
