@@ -9,6 +9,8 @@ import FormValidator from '../../../ppcp-button/resources/js/modules/Helper/Form
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
+import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
+import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
 /**
  * Plugin-specific styling.
@@ -57,14 +59,13 @@ const CONTEXT = {
  * On a single page, multiple Apple Pay buttons can be displayed, which also means multiple
  * ApplePayButton instances exist. A typical case is on the product page, where one Apple Pay button
  * is located inside the minicart-popup, and another pay-now button is in the product context.
- *
- * TODO - extend from PaymentButton (same as we do in GooglepayButton.js)
  */
-class ApplePayButton {
+class ApplePayButton extends PaymentButton {
 	/**
-	 * Whether the payment button is initialized.
-	 *
-	 * @type {boolean}
+	 * @inheritDoc
+	 */
+	static methodId = PaymentMethods.APPLEPAY;
+
 	 */
 	#isInitialized = false;
 
