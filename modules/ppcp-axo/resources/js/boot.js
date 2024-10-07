@@ -1,5 +1,6 @@
 import AxoManager from './AxoManager';
 import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
+import { log } from './Helper/Debug';
 
 ( function ( { axoConfig, ppcpConfig, jQuery } ) {
 	const namespace = 'ppcpPaypalClassicAxo';
@@ -16,11 +17,10 @@ import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helpe
 		// Load PayPal
 		UnifiedScriptLoader.loadPayPalScript( namespace, ppcpConfig )
 			.then( () => {
-				console.log( 'PayPal script loaded successfully' );
 				bootstrap();
 			} )
 			.catch( ( error ) => {
-				console.error( 'Failed to load PayPal script:', error );
+				log( `Failed to load PayPal script: ${ error }`, 'error' );
 			} );
 	} );
 } )( {

@@ -27,7 +27,6 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 	useEffect( () => {
 		const loadScript = async () => {
 			if ( ! isPayPalLoaded && isConfigLoaded ) {
-				log( `Loading PayPal script for namespace: ${ namespace }` );
 				try {
 					await UnifiedScriptLoader.loadPayPalScript(
 						namespace,
@@ -37,8 +36,8 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 					setIsPayPalLoaded( true );
 				} catch ( error ) {
 					log(
-						`Error loading PayPal script for namespace: ${ namespace }`,
-						error
+						`Error loading PayPal script for namespace: ${ namespace }. Error: ${ error }`,
+						'error'
 					);
 				}
 			}
