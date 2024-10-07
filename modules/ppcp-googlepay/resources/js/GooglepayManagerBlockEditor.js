@@ -2,7 +2,8 @@ import GooglepayButton from './GooglepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class GooglepayManagerBlockEditor {
-	constructor( buttonConfig, ppcpConfig ) {
+	constructor( namespace, buttonConfig, ppcpConfig ) {
+		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.googlePayConfig = null;
@@ -19,7 +20,9 @@ class GooglepayManagerBlockEditor {
 	async config() {
 		try {
 			// Gets GooglePay configuration of the PayPal merchant.
-			this.googlePayConfig = await ppcpBlocksEditorPaypalGooglepay.Googlepay().config();
+			this.googlePayConfig = await window[ this.namespace ]
+				.Googlepay()
+				.config();
 
 			// Fetch transaction information.
 			this.transactionInfo = await this.fetchTransactionInfo();
