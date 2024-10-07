@@ -1,3 +1,5 @@
+/* global ppcpBlocksEditorPaypalGooglepay */
+
 import GooglepayButton from './GooglepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
@@ -10,16 +12,19 @@ class GooglepayManagerBlockEditor {
 		this.contextHandler = null;
 	}
 
-	init() {
-		( async () => {
-			await this.config();
-		} )();
-	}
-
-	async config() {
+	async init() {
 		try {
 			// Gets GooglePay configuration of the PayPal merchant.
-			this.googlePayConfig = await ppcpBlocksEditorPaypalGooglepay.Googlepay().config();
+			this.googlePayConfig = await ppcpBlocksEditorPaypalGooglepay
+				.Googlepay()
+				.config();
+
+			this.contextHandler = ContextHandlerFactory.create(
+				this.ppcpConfig.context,
+				this.buttonConfig,
+				this.ppcpConfig,
+				null
+			);
 
 			// Fetch transaction information.
 			this.transactionInfo = await this.fetchTransactionInfo();
@@ -41,12 +46,7 @@ class GooglepayManagerBlockEditor {
 	async fetchTransactionInfo() {
 		try {
 			if ( ! this.contextHandler ) {
-				this.contextHandler = ContextHandlerFactory.create(
-					this.ppcpConfig.context,
-					this.buttonConfig,
-					this.ppcpConfig,
-					null
-				);
+				throw new Error( 'ContextHandler is not initialized' );
 			}
 			return null;
 		} catch ( error ) {
