@@ -92,28 +92,28 @@ class ApplePayButton extends PaymentButton {
 	initialPaymentRequest = null;
 
 	constructor(
-        context,
-        externalHandler,
-        buttonConfig,
-        ppcpConfig,
-        contextHandler
-    ) {
-        // Disable debug output in the browser console:
-        // buttonConfig.is_debug = false;
+		context,
+		externalHandler,
+		buttonConfig,
+		ppcpConfig,
+		contextHandler
+	) {
+		// Disable debug output in the browser console:
+		// buttonConfig.is_debug = false;
 
-        super(
-            context,
-            externalHandler,
-            buttonConfig,
-            ppcpConfig,
-            contextHandler
-        );
+		super(
+			context,
+			externalHandler,
+			buttonConfig,
+			ppcpConfig,
+			contextHandler
+		);
 
-        this.init = this.init.bind( this );
-        this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
-        this.onButtonClick = this.onButtonClick.bind( this );
+		this.init = this.init.bind( this );
+		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
+		this.onButtonClick = this.onButtonClick.bind( this );
 
-        this.log( 'Create instance' );
+		this.log( 'Create instance' );
 	}
 
 	/**
