@@ -32,21 +32,11 @@ class GooglepayManager {
 
 			this.buttons.push( button );
 
-			const initButton = () => {
-				button.configure( this.googlePayConfig, this.transactionInfo );
-				button.init();
-			};
+			// Ensure googlePayConfig and transactionInfo are loaded.
+			await this.init();
 
-			// Initialize button only if googlePayConfig and transactionInfo are already fetched.
-			if ( this.googlePayConfig && this.transactionInfo ) {
-				initButton();
-			} else {
-				await this.init();
-
-				if ( this.googlePayConfig && this.transactionInfo ) {
-					initButton();
-				}
-			}
+			button.configure( this.googlePayConfig, this.transactionInfo );
+			button.init();
 		} );
 	}
 
@@ -55,23 +45,17 @@ class GooglepayManager {
 			if ( ! this.googlePayConfig ) {
 				// Gets GooglePay configuration of the PayPal merchant.
 				this.googlePayConfig = await paypal.Googlepay().config();
+
+				if ( ! this.googlePayConfig ) {
+					console.error( 'No GooglePayConfig received during init' );
+				}
 			}
 
 			if ( ! this.transactionInfo ) {
 				this.transactionInfo = await this.fetchTransactionInfo();
-			}
 
-			if ( ! this.googlePayConfig ) {
-				console.error( 'No GooglePayConfig received during init' );
-			} else if ( ! this.transactionInfo ) {
-				console.error( 'No transactionInfo found during init' );
-			} else {
-				for ( const button of this.buttons ) {
-					button.configure(
-						this.googlePayConfig,
-						this.transactionInfo
-					);
-					button.init();
+				if ( ! this.transactionInfo ) {
+					console.error( 'No transactionInfo found during init' );
 				}
 			}
 		} catch ( error ) {
