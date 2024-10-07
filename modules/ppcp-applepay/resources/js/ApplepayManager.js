@@ -2,6 +2,7 @@
 
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import ApplePayButton from './ApplepayButton';
+import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class ApplePayManager {
 	constructor( buttonConfig, ppcpConfig ) {
@@ -11,11 +12,19 @@ class ApplePayManager {
 		this.buttons = [];
 
 		buttonModuleWatcher.watchContextBootstrap( ( bootstrap ) => {
-			const button = new ApplePayButton(
+			this.contextHandler = ContextHandlerFactory.create(
+				bootstrap.context,
+				buttonConfig,
+				ppcpConfig,
+				bootstrap.handler
+			);
+
+			const button = ApplePayButton.createButton(
 				bootstrap.context,
 				bootstrap.handler,
 				buttonConfig,
-				ppcpConfig
+				ppcpConfig,
+				this.contextHandler
 			);
 
 			this.buttons.push( button );
