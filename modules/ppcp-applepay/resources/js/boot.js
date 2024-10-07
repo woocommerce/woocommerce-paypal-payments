@@ -4,24 +4,28 @@ import ApplePayManager from './ApplepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
 ( function ( { buttonConfig, ppcpConfig } ) {
-	let manager;
-
 	const bootstrap = function () {
-		manager = new ApplePayManager( buttonConfig, ppcpConfig );
-		manager.init();
+		if ( ! buttonConfig || ! ppcpConfig ) {
+			return;
+		}
+
+		const manager = new ApplePayManager( buttonConfig, ppcpConfig );
+
+		setupButtonEvents( function () {
+			manager.reinit();
+		} );
 	};
 
-	setupButtonEvents( function () {
-		if ( manager ) {
-			manager.reinit();
-		}
-	} );
 
 	document.addEventListener( 'DOMContentLoaded', () => {
-		if (
-			typeof buttonConfig === 'undefined' ||
-			typeof ppcpConfig === 'undefined'
-		) {
+		if ( ! buttonConfig || ! ppcpConfig ) {
+			/*
+			 * No PayPal buttons present on this page, but maybe a bootstrap module needs to be
+			 * initialized. Skip loading the SDK or gateway configuration, and directly initialize
+			 * the module.
+			 */
+			bootstrap();
+
 			return;
 		}
 
