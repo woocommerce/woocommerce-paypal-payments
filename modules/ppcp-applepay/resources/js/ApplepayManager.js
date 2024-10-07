@@ -11,7 +11,7 @@ class ApplePayManager {
 		this.ApplePayConfig = null;
 		this.buttons = [];
 
-		buttonModuleWatcher.watchContextBootstrap( ( bootstrap ) => {
+		buttonModuleWatcher.watchContextBootstrap( async ( bootstrap ) => {
 			this.contextHandler = ContextHandlerFactory.create(
 				bootstrap.context,
 				buttonConfig,
@@ -29,33 +29,32 @@ class ApplePayManager {
 
 			this.buttons.push( button );
 
-			if ( this.ApplePayConfig ) {
-				button.init( this.ApplePayConfig );
-			}
+			// Ensure ApplePayConfig is loaded before proceeding.
+			await this.init();
+
+			button.configure( this.ApplePayConfig );
+			button.init();
 		} );
 	}
 
-	init() {
-		( async () => {
-			await this.config();
-			for ( const button of this.buttons ) {
-				button.init( this.ApplePayConfig );
+	async init() {
+		try {
+			if ( ! this.ApplePayConfig ) {
+				this.ApplePayConfig = await paypal.Applepay().config();
+
+				if ( ! this.ApplePayConfig ) {
+					console.error( 'No ApplePayConfig received during init' );
+				}
 			}
-		} )();
+		} catch ( error ) {
+			console.error( 'Error during initialization:', error );
+		}
 	}
 
 	reinit() {
 		for ( const button of this.buttons ) {
 			button.reinit();
 		}
-	}
-
-	/**
-	 * Gets Apple Pay configuration of the PayPal merchant.
-	 */
-	async config() {
-		this.ApplePayConfig = await paypal.Applepay().config();
-		return this.ApplePayConfig;
 	}
 }
 
