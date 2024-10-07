@@ -90,42 +90,54 @@ class ShippingView {
 					key: 'firstName',
 					selector: '#shipping_first_name_field',
 					valuePath: 'shipping.name.firstName',
+					inputName: 'shipping_first_name',
 				},
 				lastName: {
 					selector: '#shipping_last_name_field',
 					valuePath: 'shipping.name.lastName',
+					inputName: 'shipping_last_name',
 				},
 				street1: {
 					selector: '#shipping_address_1_field',
 					valuePath: 'shipping.address.addressLine1',
+					inputName: 'shipping_address_1',
 				},
 				street2: {
 					selector: '#shipping_address_2_field',
 					valuePath: null,
+					inputName: 'shipping_address_2',
 				},
 				postCode: {
 					selector: '#shipping_postcode_field',
 					valuePath: 'shipping.address.postalCode',
+					inputName: 'shipping_postcode',
 				},
 				city: {
 					selector: '#shipping_city_field',
 					valuePath: 'shipping.address.adminArea2',
+					inputName: 'shipping_city',
 				},
 				stateCode: {
 					selector: '#shipping_state_field',
 					valuePath: 'shipping.address.adminArea1',
+					inputName: 'shipping_state',
 				},
 				countryCode: {
 					selector: '#shipping_country_field',
 					valuePath: 'shipping.address.countryCode',
+					inputName: 'shipping_country',
 				},
 				company: {
 					selector: '#shipping_company_field',
 					valuePath: null,
+					inputName: 'shipping_company',
 				},
 				shipDifferentAddress: {
 					selector: '#ship-to-different-address',
 					valuePath: null,
+					inputName: 'ship_to_different_address',
+					// Used by Woo to ensure correct location for taxes & shipping cost.
+					valueCallback: () => true,
 				},
 				phone: {
 					//'selector': '#billing_phone_field', // There is no shipping phone field.
@@ -163,6 +175,7 @@ class ShippingView {
 
 	activate() {
 		this.group.activate();
+		this.group.syncDataToForm();
 	}
 
 	deactivate() {
@@ -175,6 +188,7 @@ class ShippingView {
 
 	setData( data ) {
 		this.group.setData( data );
+		this.group.syncDataToForm();
 	}
 
 	toSubmitData( data ) {
