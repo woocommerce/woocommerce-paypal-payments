@@ -4,7 +4,7 @@ import ApplePayManager from './ApplepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
 ( function ( { buttonConfig, ppcpConfig } ) {
-	const bootstrap = function () {
+	function bootstrapPayButton() {
 		if ( ! buttonConfig || ! ppcpConfig ) {
 			return;
 		}
@@ -14,8 +14,12 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 		setupButtonEvents( function () {
 			manager.reinit();
 		} );
-	};
+	}
 
+	function bootstrap() {
+		bootstrapPayButton();
+		// Other Apple Pay bootstrapping could happen here.
+	}
 
 	document.addEventListener( 'DOMContentLoaded', () => {
 		if ( ! buttonConfig || ! ppcpConfig ) {
@@ -29,13 +33,13 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 			return;
 		}
 
-		const isMiniCart = ppcpConfig.mini_cart_buttons_enabled;
-		const isButton =
+		const usedInMiniCart = ppcpConfig.mini_cart_buttons_enabled;
+		const pageHasButton =
 			null !== document.getElementById( buttonConfig.button.wrapper );
 
 		// If button wrapper is not present then there is no need to load the scripts.
 		// minicart loads later?
-		if ( ! isMiniCart && ! isButton ) {
+		if ( ! usedInMiniCart && ! pageHasButton ) {
 			return;
 		}
 
