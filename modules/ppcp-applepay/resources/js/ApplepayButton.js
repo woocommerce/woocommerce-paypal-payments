@@ -482,11 +482,6 @@ class ApplePayButton extends PaymentButton {
 			this.#formData
 		);
 
-		// Add custom data.
-		// "applicationData" is originating a "PayPalApplePayError: An internal server error has
-		// occurred" on paypal.Applepay().confirmOrder(). paymentRequest.applicationData =
-		// this.fillApplicationData(this.#formData);
-
 		if ( ! this.shouldRequireShippingInButton() ) {
 			return;
 		}
@@ -658,11 +653,7 @@ class ApplePayButton extends PaymentButton {
 				url: ajaxUrl,
 				method: 'POST',
 				data,
-				success: (
-					applePayShippingMethodUpdate,
-					textStatus,
-					jqXHR
-				) => {
+				success: ( applePayShippingMethodUpdate ) => {
 					this.log( 'onshippingmethodselected ok' );
 					const response = applePayShippingMethodUpdate.data;
 					if ( applePayShippingMethodUpdate.success === false ) {
@@ -673,7 +664,7 @@ class ApplePayButton extends PaymentButton {
 					// Sort the response shipping methods, so that the selected shipping method is
 					// the first one.
 					response.newShippingMethods =
-						response.newShippingMethods.sort( ( a, b ) => {
+						response.newShippingMethods.sort( ( a ) => {
 							if (
 								a.label === this.#selectedShippingMethod.label
 							) {
@@ -710,11 +701,7 @@ class ApplePayButton extends PaymentButton {
 				url: ajaxUrl,
 				method: 'POST',
 				data,
-				success: (
-					applePayShippingContactUpdate,
-					textStatus,
-					jqXHR
-				) => {
+				success: ( applePayShippingContactUpdate ) => {
 					this.log( 'onshippingcontactselected ok' );
 					const response = applePayShippingContactUpdate.data;
 					this.#updatedContactInfo = event.shippingContact;
@@ -857,14 +844,10 @@ class ApplePayButton extends PaymentButton {
 							url: this.buttonConfig.ajax_url,
 							method: 'POST',
 							data: requestData,
-							complete: ( jqXHR, textStatus ) => {
+							complete: () => {
 								this.log( 'onpaymentauthorized complete' );
 							},
-							success: (
-								authorizationResult,
-								textStatus,
-								jqXHR
-							) => {
+							success: ( authorizationResult ) => {
 								this.log( 'onpaymentauthorized ok' );
 								resolve( authorizationResult );
 							},
@@ -877,8 +860,7 @@ class ApplePayButton extends PaymentButton {
 							},
 						} );
 					} catch ( error ) {
-						this.log( 'onpaymentauthorized catch', error );
-						console.log( error ); // handle error
+						this.error( 'onpaymentauthorized catch', error );
 					}
 				} );
 			};
@@ -929,19 +911,15 @@ class ApplePayButton extends PaymentButton {
 									{
 										// actions mock object.
 										restart: () =>
-											new Promise(
-												( resolve, reject ) => {
-													approveFailed = true;
-													resolve();
-												}
-											),
+											new Promise( ( resolve ) => {
+												approveFailed = true;
+												resolve();
+											} ),
 										order: {
 											get: () =>
-												new Promise(
-													( resolve, reject ) => {
-														resolve( null );
-													}
-												),
+												new Promise( ( resolve ) => {
+													resolve( null );
+												} ),
 										},
 									}
 								);
@@ -954,14 +932,13 @@ class ApplePayButton extends PaymentButton {
 										ApplePaySession.STATUS_SUCCESS
 									);
 								} else {
-									this.log(
+									this.error(
 										'onpaymentauthorized approveOrder FAIL'
 									);
 									session.completePayment(
 										ApplePaySession.STATUS_FAILURE
 									);
 									session.abort();
-									console.error( error );
 								}
 							} else {
 								// Default payment.
@@ -1050,18 +1027,6 @@ class ApplePayButton extends PaymentButton {
 		}
 
 		return this.#extractContactInfo( data, 'shipping', 'billing' );
-	}
-
-	fillApplicationData( data ) {
-		const jsonString = JSON.stringify( data );
-		const utf8Str = encodeURIComponent( jsonString ).replace(
-			/%([0-9A-F]{2})/g,
-			( match, p1 ) => {
-				return String.fromCharCode( '0x' + p1 );
-			}
-		);
-
-		return btoa( utf8Str );
 	}
 
 	hasValidContactInfo( value ) {
