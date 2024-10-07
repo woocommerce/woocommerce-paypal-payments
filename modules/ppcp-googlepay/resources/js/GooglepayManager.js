@@ -1,3 +1,5 @@
+/* global paypal */
+
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import GooglepayButton from './GooglepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
