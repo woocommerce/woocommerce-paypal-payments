@@ -25,38 +25,42 @@ const GooglePayComponent = ( props ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
 
-	const bootstrap = function () {
-		const ManagerClass = props.isEditing
-			? GooglepayManagerBlockEditor
-			: GooglepayManager;
-
-		new ManagerClass( buttonConfig, ppcpConfig );
-	};
-
 	useEffect( () => {
-		// Load GooglePay SDK
-		loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
-			setGooglePayLoaded( true );
-		} );
-
-		ppcpConfig.url_params.components += ',googlepay';
-
-		if ( props.isEditing ) {
-			ppcpConfig.data_namespace = dataNamespace;
+		if ( bootstrapped ) {
+			return;
 		}
 
-		// Load PayPal
-		loadPaypalScript( ppcpConfig, () => {
-			setPaypalLoaded( true );
-		} );
-	}, [] );
-
-	useEffect( () => {
-		if ( ! bootstrapped && paypalLoaded && googlePayLoaded ) {
+		if ( paypalLoaded && googlePayLoaded ) {
 			setBootstrapped( true );
-			bootstrap();
+
+			const ManagerClass = props.isEditing
+				? GooglepayManagerBlockEditor
+				: GooglepayManager;
+
+			new ManagerClass( buttonConfig, ppcpConfig );
+			return;
 		}
-	}, [ paypalLoaded, googlePayLoaded ] );
+
+		if ( ! paypalLoaded ) {
+			ppcpConfig.url_params.components += ',googlepay';
+
+			if ( props.isEditing ) {
+				ppcpConfig.data_namespace = dataNamespace;
+			}
+
+			// Load PayPal
+			loadPaypalScript( ppcpConfig, () => {
+				setPaypalLoaded( true );
+			} );
+		}
+
+		if ( ! googlePayLoaded ) {
+			// Load GooglePay SDK
+			loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
+				setGooglePayLoaded( true );
+			} );
+		}
+	}, [ paypalLoaded, googlePayLoaded, bootstrapped, props.isEditing ] );
 
 	return (
 		<div
