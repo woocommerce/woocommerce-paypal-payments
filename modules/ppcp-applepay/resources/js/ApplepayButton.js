@@ -94,8 +94,6 @@ class ApplePayButton extends PaymentButton {
 	initialPaymentRequest = null;
 
 	constructor( context, externalHandler, buttonConfig, ppcpConfig ) {
-		this._initDebug( !! buttonConfig?.is_debug );
-
 		apmButtonsInit( ppcpConfig );
 
 		this.context = context;
@@ -110,34 +108,6 @@ class ApplePayButton extends PaymentButton {
 		);
 
 		this.refreshContextData();
-	}
-
-	/**
-	 * NOOP log function to avoid errors when debugging is disabled.
-	 */
-	log() {}
-
-	/**
-	 * Enables debugging tools, when the button's is_debug flag is set.
-	 *
-	 * @param {boolean} enableDebugging If debugging features should be enabled for this instance.
-	 * @private
-	 */
-	_initDebug( enableDebugging ) {
-		if ( ! enableDebugging || this.#isInitialized ) {
-			return;
-		}
-
-		document.ppcpApplepayButtons = document.ppcpApplepayButtons || {};
-		document.ppcpApplepayButtons[ this.context ] = this;
-
-		this.log = ( ...args ) => {
-			console.log( `[ApplePayButton | ${ this.context }]`, ...args );
-		};
-
-		jQuery( document ).on( 'ppcp-applepay-debug', () => {
-			this.log( this );
-		} );
 	}
 
 	/**
