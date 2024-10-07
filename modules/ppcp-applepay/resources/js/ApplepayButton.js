@@ -85,6 +85,11 @@ class ApplePayButton extends PaymentButton {
 	#initialPaymentRequest = null;
 
 	/**
+	 * Apple Pay specific API configuration.
+	 */
+	#applePayConfig = null;
+
+	/**
 	 * @inheritDoc
 	 */
 	static getWrappers( buttonConfig, ppcpConfig ) {
@@ -170,20 +175,60 @@ class ApplePayButton extends PaymentButton {
 		return this.wrapperElement instanceof HTMLElement;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
+	validateConfiguration( silent = false ) {
+		const validEnvs = [ 'PRODUCTION', 'TEST' ];
+
+		const isInvalid = ( ...args ) => {
+			if ( ! silent ) {
+				this.error( ...args );
+			}
+			return false;
+		};
+
+		if ( ! validEnvs.includes( this.buttonConfig.environment ) ) {
+			return isInvalid(
+				'Invalid environment:',
+				this.buttonConfig.environment
+			);
+		}
+
+		// Preview buttons only need a valid environment.
+		if ( this.isPreview ) {
+			return true;
+		}
+
+		if ( ! typeof this.contextHandler?.validateContext() ) {
+			return isInvalid( 'Invalid context handler.', this.contextHandler );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Configures the button instance. Must be called before the initial `init()`.
+	 *
+	 * @param {Object} apiConfig - API configuration.
+	 */
+	configure( apiConfig ) {
+		this.#applePayConfig = apiConfig;
+	}
+
 	init( config ) {
 		// Use `reinit()` to force a full refresh of an initialized button.
 		if ( this.isInitialized ) {
 			return;
 		}
 
-		if ( ! this.contextHandler.validateContext() ) {
+		// Stop, if configuration is invalid.
+		if ( ! this.validateConfiguration() ) {
 			return;
 		}
 
 		super.init();
 		this.initEventHandlers();
-
-		this.applePayConfig = config;
 
 		if ( this.isSeparateGateway ) {
 			document
