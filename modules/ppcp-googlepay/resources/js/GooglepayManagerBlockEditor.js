@@ -10,6 +10,13 @@ class GooglepayManagerBlockEditor {
 		this.googlePayConfig = null;
 		this.transactionInfo = null;
 		this.contextHandler = null;
+
+		/*
+		 * On the front-end, the init method is called when a new button context was detected
+		 * via `buttonModuleWatcher`. In the block editor, we do not need to wait for the
+		 * context, but can initialize the button in the next event loop.
+		 */
+		setTimeout( () => this.init() );
 	}
 
 	async init() {
