@@ -3,7 +3,7 @@ import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Help
 import ApplePayManager from './ApplepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
-( function ( { buttonConfig, ppcpConfig, jQuery } ) {
+( function ( { buttonConfig, ppcpConfig } ) {
 	let manager;
 
 	const bootstrap = function () {
@@ -24,8 +24,11 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 		) {
 			return;
 		}
+
 		const isMiniCart = ppcpConfig.mini_cart_buttons_enabled;
-		const isButton = jQuery( '#' + buttonConfig.button.wrapper ).length > 0;
+		const isButton =
+			null !== document.getElementById( buttonConfig.button.wrapper );
+
 		// If button wrapper is not present then there is no need to load the scripts.
 		// minicart loads later?
 		if ( ! isMiniCart && ! isButton ) {
@@ -58,5 +61,4 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 } )( {
 	buttonConfig: window.wc_ppcp_applepay,
 	ppcpConfig: window.PayPalCommerceGateway,
-	jQuery: window.jQuery,
 } );
