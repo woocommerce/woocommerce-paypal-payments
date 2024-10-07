@@ -70,6 +70,10 @@ class ApplePayButton extends PaymentButton {
 	 */
 	static methodId = PaymentMethods.APPLEPAY;
 
+	/**
+	 * @inheritDoc
+	 */
+	static cssClass = 'ppcp-button-applepay';
 
 	/**
 	 * Context describes the button's location on the website and what details it submits.
