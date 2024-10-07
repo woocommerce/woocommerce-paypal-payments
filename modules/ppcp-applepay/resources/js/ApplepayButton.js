@@ -66,7 +66,6 @@ class ApplePayButton extends PaymentButton {
 	 */
 	static methodId = PaymentMethods.APPLEPAY;
 
-	 */
 	#isInitialized = false;
 
 	#wrapperId = '';
@@ -183,120 +182,6 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
-	 * Returns the wrapper ID for the current button context.
-	 * The ID varies for the MiniCart context.
-	 *
-	 * @return {string} The wrapper-element's ID (without the `#` prefix).
-	 */
-	get wrapperId() {
-		if ( ! this.#wrapperId ) {
-			let id;
-
-			if ( CONTEXT.MiniCart === this.context ) {
-				id = this.buttonConfig.button.mini_cart_wrapper;
-			} else if ( this.isSeparateGateway ) {
-				id = 'ppc-button-ppcp-applepay';
-			} else {
-				id = this.buttonConfig.button.wrapper;
-			}
-
-			this.#wrapperId = id.replace( /^#/, '' );
-		}
-
-		return this.#wrapperId;
-	}
-
-	/**
-	 * Returns the wrapper ID for the ppcpButton
-	 *
-	 * @return {string} The wrapper-element's ID (without the `#` prefix).
-	 */
-	get ppcpButtonWrapperId() {
-		if ( ! this.#ppcpButtonWrapperId ) {
-			let id;
-
-			if ( CONTEXT.MiniCart === this.context ) {
-				id = this.ppcpConfig.button.mini_cart_wrapper;
-			} else if ( CONTEXT.Blocks.includes( this.context ) ) {
-				id = '#express-payment-method-ppcp-gateway-paypal';
-			} else {
-				id = this.ppcpConfig.button.wrapper;
-			}
-
-			this.#ppcpButtonWrapperId = id.replace( /^#/, '' );
-		}
-
-		return this.#ppcpButtonWrapperId;
-	}
-
-	/**
-	 * Returns the context-relevant PPCP style object.
-	 * The style for the MiniCart context can be different.
-	 *
-	 * The PPCP style are custom style options, that are provided by this plugin.
-	 *
-	 * @return {PPCPStyle} The style object.
-	 */
-	get ppcpStyle() {
-		if ( CONTEXT.MiniCart === this.context ) {
-			return this.ppcpConfig.button.mini_cart_style;
-		}
-
-		return this.ppcpConfig.button.style;
-	}
-
-	/**
-	 * Returns default style options that are propagated to and rendered by the Apple Pay button.
-	 *
-	 * These styles are the official style options provided by the Apple Pay SDK.
-	 *
-	 * @return {ApplePayStyle} The style object.
-	 */
-	get buttonStyle() {
-		return {
-			type: this.buttonConfig.button.type,
-			lang: this.buttonConfig.button.lang,
-			color: this.buttonConfig.button.color,
-		};
-	}
-
-	/**
-	 * Returns the HTML element that wraps the current button
-	 *
-	 * @return {HTMLElement|null} The wrapper element, or null.
-	 */
-	get wrapperElement() {
-		return document.getElementById( this.wrapperId );
-	}
-
-	/**
-	 * Returns an array of HTMLElements that belong to the payment button.
-	 *
-	 * @return {HTMLElement[]} List of payment button wrapper elements.
-	 */
-	get allElements() {
-		const selectors = [];
-
-		// Payment button (Pay now, smart button block)
-		selectors.push( `#${ this.wrapperId }` );
-
-		// Block Checkout: Express checkout button.
-		if ( CONTEXT.Blocks.includes( this.context ) ) {
-			selectors.push( '#express-payment-method-ppcp-applepay' );
-		}
-
-		// Classic Checkout: Apple Pay gateway.
-		if ( CONTEXT.Gateways.includes( this.context ) ) {
-			selectors.push( '.wc_payment_method.payment_method_ppcp-applepay' );
-		}
-
-		this.log( 'Wrapper Elements:', selectors );
-		return /** @type {HTMLElement[]} */ selectors.flatMap( ( selector ) =>
-			Array.from( document.querySelectorAll( selector ) )
-		);
-	}
-
-	/**
 	 * Checks whether the main button-wrapper is present in the current DOM.
 	 *
 	 * @return {boolean} True, if the button context (wrapper element) is found.
@@ -359,36 +244,6 @@ class ApplePayButton extends PaymentButton {
 
 		this.#isInitialized = false;
 		this.init( this.applePayConfig );
-	}
-
-	/**
-	 * Hides all wrappers that belong to this ApplePayButton instance.
-	 */
-	hide() {
-		this.log( 'Hide button' );
-		this.allElements.forEach( ( element ) => {
-			element.style.display = 'none';
-		} );
-	}
-
-	/**
-	 * Ensures all wrapper elements of this ApplePayButton instance are visible.
-	 */
-	show() {
-		this.log( 'Show button' );
-		if ( ! this.isPresent ) {
-			this.log( '!! Cannot show button, wrapper is not present' );
-			return;
-		}
-
-		// Classic Checkout/PayNow: Make the Apple Pay gateway visible after page load.
-		document
-			.querySelectorAll( 'style#ppcp-hide-apple-pay' )
-			.forEach( ( el ) => el.remove() );
-
-		this.allElements.forEach( ( element ) => {
-			element.style.display = '';
-		} );
 	}
 
 	async fetchTransactionInfo() {
