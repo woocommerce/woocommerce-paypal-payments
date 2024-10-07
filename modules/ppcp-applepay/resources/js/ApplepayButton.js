@@ -11,6 +11,10 @@ import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/Wi
 import { apmButtonsInit } from '../../../ppcp-button/resources/js/modules/Helper/ApmButtons';
 import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
 import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import {
+	combineStyles,
+	combineWrapperIds,
+} from '../../../ppcp-button/resources/js/modules/Helper/PaymentButtonHelpers';
 
 /**
  * Plugin-specific styling.
@@ -67,9 +71,6 @@ class ApplePayButton extends PaymentButton {
 	static methodId = PaymentMethods.APPLEPAY;
 
 
-	#wrapperId = '';
-	#ppcpButtonWrapperId = '';
-
 	/**
 	 * Context describes the button's location on the website and what details it submits.
 	 *
@@ -90,6 +91,29 @@ class ApplePayButton extends PaymentButton {
 	 * Stores initialization data sent to the button.
 	 */
 	initialPaymentRequest = null;
+
+	/**
+	 * @inheritDoc
+	 */
+	static getWrappers( buttonConfig, ppcpConfig ) {
+		return combineWrapperIds(
+			buttonConfig?.button?.wrapper || '',
+			buttonConfig?.button?.mini_cart_wrapper || '',
+			ppcpConfig?.button?.wrapper || '',
+			'ppc-button-applepay-container',
+			'ppc-button-ppcp-applepay'
+		);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	static getStyles( buttonConfig, ppcpConfig ) {
+		return combineStyles(
+			ppcpConfig?.button || {},
+			buttonConfig?.button || {}
+		);
+	}
 
 	constructor(
 		context,
