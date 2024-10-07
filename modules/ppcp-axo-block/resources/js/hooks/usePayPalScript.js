@@ -32,7 +32,6 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 						namespace,
 						ppcpConfig
 					);
-					log( `PayPal script loaded for namespace: ${ namespace }` );
 					setIsPayPalLoaded( true );
 				} catch ( error ) {
 					log(
