@@ -1,5 +1,5 @@
 import AxoManager from './AxoManager';
-import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { log } from './Helper/Debug';
 
 ( function ( { axoConfig, ppcpConfig, jQuery } ) {
@@ -15,7 +15,7 @@ import { log } from './Helper/Debug';
 		}
 
 		// Load PayPal
-		UnifiedScriptLoader.loadPayPalScript( namespace, ppcpConfig )
+		loadPayPalScript( namespace, ppcpConfig )
 			.then( () => {
 				bootstrap();
 			} )

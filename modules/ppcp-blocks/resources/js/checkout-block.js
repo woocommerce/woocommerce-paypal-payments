@@ -15,7 +15,7 @@ import {
 	cartHasSubscriptionProducts,
 	isPayPalSubscription,
 } from './Helper/Subscription';
-import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { normalizeStyleForFundingSource } from '../../../ppcp-button/resources/js/modules/Helper/Style';
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
@@ -56,7 +56,7 @@ const PayPalComponent = ( {
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
 			// for editor, since canMakePayment was not called
-			paypalScriptPromise = UnifiedScriptLoader.loadPayPalScript(
+			paypalScriptPromise = loadPayPalScript(
 				namespace,
 				config.scriptData
 			);
@@ -825,11 +825,10 @@ if ( block_enabled && config.enabled ) {
 				ariaLabel: config.title,
 				canMakePayment: async () => {
 					if ( ! paypalScriptPromise ) {
-						paypalScriptPromise =
-							UnifiedScriptLoader.loadPayPalScript(
-								namespace,
-								config.scriptData
-							);
+						paypalScriptPromise = loadPayPalScript(
+							namespace,
+							config.scriptData
+						);
 						paypalScriptPromise.then( () => {
 							const messagesBootstrap =
 								new BlockCheckoutMessagesBootstrap(

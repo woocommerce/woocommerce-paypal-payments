@@ -1,7 +1,7 @@
 import { useEffect } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
-import UnifiedScriptLoader from '../../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
+import { loadPayPalScript } from '../../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { STORE_NAME } from '../stores/axoStore';
 
 /**
@@ -28,10 +28,7 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 		const loadScript = async () => {
 			if ( ! isPayPalLoaded && isConfigLoaded ) {
 				try {
-					await UnifiedScriptLoader.loadPayPalScript(
-						namespace,
-						ppcpConfig
-					);
+					await loadPayPalScript( namespace, ppcpConfig );
 					setIsPayPalLoaded( true );
 				} catch ( error ) {
 					log(

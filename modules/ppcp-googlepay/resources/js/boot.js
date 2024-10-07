@@ -8,7 +8,7 @@
  */
 
 import { loadCustomScript } from '@paypal/paypal-js';
-import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 import { CheckoutBootstrap } from './ContextBootstrap/CheckoutBootstrap';
@@ -86,7 +86,7 @@ import moduleStorage from './Helper/GooglePayStorage';
 		} );
 
 		// Load PayPal
-		UnifiedScriptLoader.loadPayPalScript( namespace, ppcpConfig )
+		loadPayPalScript( namespace, ppcpConfig )
 			.then( () => {
 				paypalLoaded = true;
 				tryToBoot();

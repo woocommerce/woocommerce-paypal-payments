@@ -4,7 +4,7 @@ import {
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
-import UnifiedScriptLoader from '../../../ppcp-button/resources/js/modules/Helper/UnifiedScriptLoader';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { loadCustomScript } from '@paypal/paypal-js';
 import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
@@ -35,7 +35,7 @@ const GooglePayComponent = ( props ) => {
 		ppcpConfig.url_params.components += ',googlepay';
 
 		// Load PayPal
-		UnifiedScriptLoader.loadPayPalScript( namespace, ppcpConfig )
+		loadPayPalScript( namespace, ppcpConfig )
 			.then( () => {
 				setPaypalLoaded( true );
 			} )
