@@ -75,14 +75,14 @@ class ApplePayButton extends PaymentButton {
 	 */
 	static cssClass = 'ppcp-button-applepay';
 
-	formData = null;
-	updatedContactInfo = [];
-	selectedShippingMethod = [];
+	#formData = null;
+	#updatedContactInfo = [];
+	#selectedShippingMethod = [];
 
 	/**
-	 * Stores initialization data sent to the button.
+	 * Initialization data sent to the button.
 	 */
-	initialPaymentRequest = null;
+	#initialPaymentRequest = null;
 
 	/**
 	 * @inheritDoc
@@ -353,7 +353,7 @@ class ApplePayButton extends PaymentButton {
 				const formData = new FormData(
 					document.querySelector( checkoutFormSelector )
 				);
-				this.formData = Object.fromEntries( formData.entries() );
+				this.#formData = Object.fromEntries( formData.entries() );
 
 				this.updateRequestDataWithForm( paymentRequest );
 			} catch ( error ) {
@@ -455,13 +455,13 @@ class ApplePayButton extends PaymentButton {
 
 		// Add billing address.
 		paymentRequest.billingContact = this.fillBillingContact(
-			this.formData
+			this.#formData
 		);
 
 		// Add custom data.
 		// "applicationData" is originating a "PayPalApplePayError: An internal server error has
 		// occurred" on paypal.Applepay().confirmOrder(). paymentRequest.applicationData =
-		// this.fillApplicationData(this.formData);
+		// this.fillApplicationData(this.#formData);
 
 		if ( ! this.shouldRequireShippingInButton() ) {
 			return;
@@ -469,7 +469,7 @@ class ApplePayButton extends PaymentButton {
 
 		// Add shipping address.
 		paymentRequest.shippingContact = this.fillShippingContact(
-			this.formData
+			this.#formData
 		);
 
 		// Get shipping methods.
@@ -487,7 +487,7 @@ class ApplePayButton extends PaymentButton {
 				};
 
 				// Remember this shipping method as the selected one.
-				this.selectedShippingMethod = shippingMethod;
+				this.#selectedShippingMethod = shippingMethod;
 
 				paymentRequest.shippingMethods.push( shippingMethod );
 				break;
@@ -507,7 +507,7 @@ class ApplePayButton extends PaymentButton {
 		}
 
 		// Store for reuse in case this data is not provided by ApplePay on authorization.
-		this.initialPaymentRequest = paymentRequest;
+		this.#initialPaymentRequest = paymentRequest;
 
 		this.log(
 			'=== paymentRequest.shippingMethods',
@@ -516,7 +516,7 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	paymentRequest() {
-		const applepayConfig = this.applePayConfig;
+		const applepayConfig = this.#applePayConfig;
 		const buttonConfig = this.buttonConfig;
 		const baseRequest = {
 			countryCode: applepayConfig.countryCode,
@@ -644,14 +644,14 @@ class ApplePayButton extends PaymentButton {
 					if ( applePayShippingMethodUpdate.success === false ) {
 						response.errors = createAppleErrors( response.errors );
 					}
-					this.selectedShippingMethod = event.shippingMethod;
+					this.#selectedShippingMethod = event.shippingMethod;
 
 					// Sort the response shipping methods, so that the selected shipping method is
 					// the first one.
 					response.newShippingMethods =
 						response.newShippingMethods.sort( ( a, b ) => {
 							if (
-								a.label === this.selectedShippingMethod.label
+								a.label === this.#selectedShippingMethod.label
 							) {
 								return -1;
 							}
@@ -693,12 +693,12 @@ class ApplePayButton extends PaymentButton {
 				) => {
 					this.log( 'onshippingcontactselected ok' );
 					const response = applePayShippingContactUpdate.data;
-					this.updatedContactInfo = event.shippingContact;
+					this.#updatedContactInfo = event.shippingContact;
 					if ( applePayShippingContactUpdate.success === false ) {
 						response.errors = createAppleErrors( response.errors );
 					}
 					if ( response.newShippingMethods ) {
-						this.selectedShippingMethod =
+						this.#selectedShippingMethod =
 							response.newShippingMethods[ 0 ];
 					}
 					session.completeShippingContactSelection( response );
@@ -756,11 +756,11 @@ class ApplePayButton extends PaymentButton {
 					action: 'ppcp_update_shipping_method',
 					shipping_method: event.shippingMethod,
 					simplified_contact: this.hasValidContactInfo(
-						this.updatedContactInfo
+						this.#updatedContactInfo
 					)
-						? this.updatedContactInfo
-						: this.initialPaymentRequest?.shippingContact ??
-						  this.initialPaymentRequest?.billingContact,
+						? this.#updatedContactInfo
+						: this.#initialPaymentRequest?.shippingContact ??
+						  this.#initialPaymentRequest?.billingContact,
 					product_id: productId,
 					products: JSON.stringify( this.products ),
 					caller_page: 'productDetail',
@@ -777,11 +777,11 @@ class ApplePayButton extends PaymentButton {
 					action: 'ppcp_update_shipping_method',
 					shipping_method: event.shippingMethod,
 					simplified_contact: this.hasValidContactInfo(
-						this.updatedContactInfo
+						this.#updatedContactInfo
 					)
-						? this.updatedContactInfo
-						: this.initialPaymentRequest?.shippingContact ??
-						  this.initialPaymentRequest?.billingContact,
+						? this.#updatedContactInfo
+						: this.#initialPaymentRequest?.shippingContact ??
+						  this.#initialPaymentRequest?.billingContact,
 					caller_page: 'cart',
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
@@ -798,13 +798,13 @@ class ApplePayButton extends PaymentButton {
 					try {
 						const billingContact =
 							data.billing_contact ||
-							this.initialPaymentRequest.billingContact;
+							this.#initialPaymentRequest.billingContact;
 						const shippingContact =
 							data.shipping_contact ||
-							this.initialPaymentRequest.shippingContact;
+							this.#initialPaymentRequest.shippingContact;
 						const shippingMethod =
-							this.selectedShippingMethod ||
-							( this.initialPaymentRequest.shippingMethods ||
+							this.#selectedShippingMethod ||
+							( this.#initialPaymentRequest.shippingMethods ||
 								[] )[ 0 ];
 
 						const requestData = {
