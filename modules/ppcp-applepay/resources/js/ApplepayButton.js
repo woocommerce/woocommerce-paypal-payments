@@ -1017,62 +1017,39 @@ class ApplePayButton extends PaymentButton {
 		};
 	}
 
-	fillBillingContact( data ) {
+	#extractContactInfo( data, primaryPrefix, fallbackPrefix ) {
+		if ( ! data || typeof data !== 'object' ) {
+			data = {};
+		}
+
+		const getValue = ( key ) =>
+			data[ `${ primaryPrefix }_${ key }` ] ||
+			data[ `${ fallbackPrefix }_${ key }` ] ||
+			'';
+
 		return {
-			givenName: data.billing_first_name ?? '',
-			familyName: data.billing_last_name ?? '',
-			emailAddress: data.billing_email ?? '',
-			phoneNumber: data.billing_phone ?? '',
-			addressLines: [ data.billing_address_1, data.billing_address_2 ],
-			locality: data.billing_city ?? '',
-			postalCode: data.billing_postcode ?? '',
-			countryCode: data.billing_country ?? '',
-			administrativeArea: data.billing_state ?? '',
+			givenName: getValue( 'first_name' ),
+			familyName: getValue( 'last_name' ),
+			emailAddress: getValue( 'email' ),
+			phoneNumber: getValue( 'phone' ),
+			addressLines: [ getValue( 'address_1' ), getValue( 'address_2' ) ],
+			locality: getValue( 'city' ),
+			postalCode: getValue( 'postcode' ),
+			countryCode: getValue( 'country' ),
+			administrativeArea: getValue( 'state' ),
 		};
 	}
 
+	fillBillingContact( data ) {
+		return this.#extractContactInfo( data, 'billing', '' );
+	}
+
 	fillShippingContact( data ) {
-		if ( data.shipping_first_name === '' ) {
+		if ( ! data?.shipping_first_name ) {
 			return this.fillBillingContact( data );
 		}
-		return {
-			givenName:
-				data?.shipping_first_name && data.shipping_first_name !== ''
-					? data.shipping_first_name
-					: data?.billing_first_name,
-			familyName:
-				data?.shipping_last_name && data.shipping_last_name !== ''
-					? data.shipping_last_name
-					: data?.billing_last_name,
-			emailAddress:
-				data?.shipping_email && data.shipping_email !== ''
-					? data.shipping_email
-					: data?.billing_email,
-			phoneNumber:
-				data?.shipping_phone && data.shipping_phone !== ''
-					? data.shipping_phone
-					: data?.billing_phone,
-			addressLines: [
-				data.shipping_address_1 ?? '',
-				data.shipping_address_2 ?? '',
-			],
-			locality:
-				data?.shipping_city && data.shipping_city !== ''
-					? data.shipping_city
-					: data?.billing_city,
-			postalCode:
-				data?.shipping_postcode && data.shipping_postcode !== ''
-					? data.shipping_postcode
-					: data?.billing_postcode,
-			countryCode:
-				data?.shipping_country && data.shipping_country !== ''
-					? data.shipping_country
-					: data?.billing_country,
-			administrativeArea:
-				data?.shipping_state && data.shipping_state !== ''
-					? data.shipping_state
-					: data?.billing_state,
-		};
+
+		return this.#extractContactInfo( data, 'shipping', 'billing' );
 	}
 
 	fillApplicationData( data ) {
