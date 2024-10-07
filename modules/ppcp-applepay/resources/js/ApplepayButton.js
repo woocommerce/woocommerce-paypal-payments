@@ -66,7 +66,6 @@ class ApplePayButton extends PaymentButton {
 	 */
 	static methodId = PaymentMethods.APPLEPAY;
 
-	#isInitialized = false;
 
 	#wrapperId = '';
 	#ppcpButtonWrapperId = '';
@@ -131,41 +130,6 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
-	 * Whether the current page qualifies to use the Apple Pay button.
-	 *
-	 * In admin, the button is always eligible, to display an accurate preview.
-	 * On front-end, PayPal's response decides if customers can use Apple Pay.
-	 *
-	 * @return {boolean} True, if the button can be displayed.
-	 */
-	get isEligible() {
-		if ( ! this.#isInitialized ) {
-			return true;
-		}
-
-		if ( CONTEXT.Preview === this.context ) {
-			return true;
-		}
-
-		/**
-		 * Ensure the ApplePaySession is available and accepts payments
-		 * This check is required when using Apple Pay SDK v1; canMakePayments() returns false
-		 * if the current device is not liked to iCloud or the Apple Wallet is not available
-		 * for a different reason.
-		 */
-		try {
-			if ( ! window.ApplePaySession?.canMakePayments() ) {
-				return false;
-			}
-		} catch ( error ) {
-			console.warn( error );
-			return false;
-		}
-
-		return !! this.applePayConfig.isEligible;
-	}
-
-	/**
 	 * Determines if the current payment button should be rendered as a stand-alone gateway.
 	 * The return value `false` usually means, that the payment button is bundled with all available
 	 * payment buttons.
@@ -191,7 +155,8 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	init( config ) {
-		if ( this.#isInitialized ) {
+		// Use `reinit()` to force a full refresh of an initialized button.
+		if ( this.isInitialized ) {
 			return;
 		}
 
@@ -199,10 +164,10 @@ class ApplePayButton extends PaymentButton {
 			return;
 		}
 
+		super.init();
 		this.log( 'Init' );
 		this.initEventHandlers();
 
-		this.#isInitialized = true;
 		this.applePayConfig = config;
 
 		if ( this.isSeparateGateway ) {
@@ -238,12 +203,14 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	reinit() {
-		if ( ! this.applePayConfig ) {
+		// Missing (invalid) configuration indicates, that the first `init()` call did not happen yet.
+		if ( ! this.validateConfiguration( true ) ) {
 			return;
 		}
 
-		this.#isInitialized = false;
-		this.init( this.applePayConfig );
+		super.reinit();
+
+		this.init();
 	}
 
 	async fetchTransactionInfo() {
