@@ -29,7 +29,7 @@ class GooglepayManagerBlockEditor {
 			// Fetch transaction information.
 			this.transactionInfo = await this.fetchTransactionInfo();
 
-			const button = new GooglepayButton(
+			const button = GooglepayButton.createButton(
 				this.ppcpConfig.context,
 				null,
 				this.buttonConfig,
@@ -37,7 +37,8 @@ class GooglepayManagerBlockEditor {
 				this.contextHandler
 			);
 
-			button.init( this.googlePayConfig, this.transactionInfo );
+			button.configure( this.googlePayConfig, this.transactionInfo );
+			button.init();
 		} catch ( error ) {
 			console.error( 'Failed to initialize Google Pay:', error );
 		}
@@ -48,7 +49,7 @@ class GooglepayManagerBlockEditor {
 			if ( ! this.contextHandler ) {
 				throw new Error( 'ContextHandler is not initialized' );
 			}
-			return null;
+			return await this.contextHandler.transactionInfo();
 		} catch ( error ) {
 			console.error( 'Error fetching transaction info:', error );
 			throw error;

@@ -29,8 +29,8 @@ const GooglePayComponent = ( props ) => {
 		const ManagerClass = props.isEditing
 			? GooglepayManagerBlockEditor
 			: GooglepayManager;
-		const manager = new ManagerClass( buttonConfig, ppcpConfig );
-		manager.init();
+
+		new ManagerClass( buttonConfig, ppcpConfig );
 	};
 
 	useEffect( () => {
