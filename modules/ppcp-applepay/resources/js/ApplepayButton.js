@@ -8,7 +8,10 @@ import FormValidator from '../../../ppcp-button/resources/js/modules/Helper/Form
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
-import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import {
+	PaymentContext,
+	PaymentMethods,
+} from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import {
 	combineStyles,
 	combineWrapperIds,
@@ -32,28 +35,6 @@ import {
  * @property {string} color - Button color
  * @property {string} lang  - The locale; an empty string will apply the user-agent's language.
  */
-
-/**
- * List of valid context values that the button can have.
- *
- * @type {Object}
- */
-const CONTEXT = {
-	Product: 'product',
-	Cart: 'cart',
-	Checkout: 'checkout',
-	PayNow: 'pay-now',
-	MiniCart: 'mini-cart',
-	BlockCart: 'cart-block',
-	BlockCheckout: 'checkout-block',
-	Preview: 'preview',
-
-	// Block editor contexts.
-	Blocks: [ 'cart-block', 'checkout-block' ],
-
-	// Custom gateway contexts.
-	Gateways: [ 'checkout', 'pay-now' ],
-};
 
 /**
  * A payment button for Apple Pay.
@@ -160,7 +141,7 @@ class ApplePayButton extends PaymentButton {
 	get isSeparateGateway() {
 		return (
 			this.buttonConfig.is_wc_gateway_enabled &&
-			CONTEXT.Gateways.includes( this.context )
+			PaymentContext.Gateways.includes( this.context )
 		);
 	}
 
@@ -385,7 +366,7 @@ class ApplePayButton extends PaymentButton {
 		window.ppcpFundingSource = 'apple_pay';
 
 		// Trigger woocommerce validation if we are in the checkout page.
-		if ( CONTEXT.Checkout === this.context ) {
+		if ( PaymentContext.Checkout === this.context ) {
 			const checkoutFormSelector = 'form.woocommerce-checkout';
 			const errorHandler = new ErrorHandler(
 				PayPalCommerceGateway.labels.error.generic,
@@ -447,7 +428,7 @@ class ApplePayButton extends PaymentButton {
 		return (
 			this.contextHandler.shippingAllowed() &&
 			this.buttonConfig.product.needShipping &&
-			( CONTEXT.Checkout !== this.context ||
+			( PaymentContext.Checkout !== this.context ||
 				this.shouldUpdateButtonWithFormData() )
 		);
 	}
@@ -458,7 +439,7 @@ class ApplePayButton extends PaymentButton {
 	 * @return {boolean} True, when Apple Pay data should be submitted to WooCommerce.
 	 */
 	shouldUpdateButtonWithFormData() {
-		if ( CONTEXT.Checkout !== this.context ) {
+		if ( PaymentContext.Checkout !== this.context ) {
 			return false;
 		}
 		return (
@@ -481,7 +462,7 @@ class ApplePayButton extends PaymentButton {
 
 		// Use WC form data mode in Checkout.
 		return (
-			CONTEXT.Checkout === this.context &&
+			PaymentContext.Checkout === this.context &&
 			! this.shouldUpdateButtonWithFormData()
 		);
 	}
@@ -599,7 +580,7 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	refreshContextData() {
-		if ( CONTEXT.Product === this.context ) {
+		if ( PaymentContext.Product === this.context ) {
 			// Refresh product data that makes the price change.
 			this.productQuantity = document.querySelector( 'input.qty' )?.value;
 			this.products = this.contextHandler.products();
@@ -761,7 +742,7 @@ class ApplePayButton extends PaymentButton {
 		this.refreshContextData();
 
 		switch ( this.context ) {
-			case CONTEXT.Product:
+			case PaymentContext.Product:
 				return {
 					action: 'ppcp_update_shipping_contact',
 					product_id: productId,
@@ -773,11 +754,11 @@ class ApplePayButton extends PaymentButton {
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
 
-			case CONTEXT.Cart:
-			case CONTEXT.Checkout:
-			case CONTEXT.BlockCart:
-			case CONTEXT.BlockCheckout:
-			case CONTEXT.MiniCart:
+			case PaymentContext.Cart:
+			case PaymentContext.Checkout:
+			case PaymentContext.BlockCart:
+			case PaymentContext.BlockCheckout:
+			case PaymentContext.MiniCart:
 				return {
 					action: 'ppcp_update_shipping_contact',
 					simplified_contact: event.shippingContact,
@@ -794,7 +775,7 @@ class ApplePayButton extends PaymentButton {
 		this.refreshContextData();
 
 		switch ( this.context ) {
-			case CONTEXT.Product:
+			case PaymentContext.Product:
 				return {
 					action: 'ppcp_update_shipping_method',
 					shipping_method: event.shippingMethod,
@@ -811,11 +792,11 @@ class ApplePayButton extends PaymentButton {
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
 
-			case CONTEXT.Cart:
-			case CONTEXT.Checkout:
-			case CONTEXT.BlockCart:
-			case CONTEXT.BlockCheckout:
-			case CONTEXT.MiniCart:
+			case PaymentContext.Cart:
+			case PaymentContext.Checkout:
+			case PaymentContext.BlockCart:
+			case PaymentContext.BlockCheckout:
+			case PaymentContext.MiniCart:
 				return {
 					action: 'ppcp_update_shipping_method',
 					shipping_method: event.shippingMethod,
