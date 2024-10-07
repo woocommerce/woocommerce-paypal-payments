@@ -75,19 +75,7 @@ class ApplePayButton extends PaymentButton {
 	 */
 	static cssClass = 'ppcp-button-applepay';
 
-	/**
-	 * Context describes the button's location on the website and what details it submits.
-	 *
-	 * @type {''|'product'|'cart'|'checkout'|'pay-now'|'mini-cart'|'cart-block'|'checkout-block'|'preview'}
-	 */
-	context = '';
-
-	externalHandler = null;
-	buttonConfig = null;
-	ppcpConfig = null;
-	paymentsClient = null;
 	formData = null;
-	contextHandler = null;
 	updatedContactInfo = [];
 	selectedShippingMethod = [];
 
@@ -193,7 +181,6 @@ class ApplePayButton extends PaymentButton {
 		}
 
 		super.init();
-		this.log( 'Init' );
 		this.initEventHandlers();
 
 		this.applePayConfig = config;
