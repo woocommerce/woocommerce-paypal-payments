@@ -834,11 +834,15 @@ return array(
 	'api.client-credentials-cache'                   => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-client-credentials-cache' );
 	},
+	'api.user-id-token-cache'                        => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-id-token-cache' );
+	},
 	'api.user-id-token'                              => static function( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.client-credentials' )
+			$container->get( 'api.client-credentials' ),
+			$container->get( 'api.user-id-token-cache' )
 		);
 	},
 	'api.sdk-client-token'                           => static function( ContainerInterface $container ): SdkClientToken {
