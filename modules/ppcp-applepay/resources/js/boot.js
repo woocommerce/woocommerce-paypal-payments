@@ -1,15 +1,21 @@
 import { loadCustomScript } from '@paypal/paypal-js';
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import ApplePayManager from './ApplepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 
 ( function ( { buttonConfig, ppcpConfig } ) {
+	const namespace = 'ppcpPaypalApplepay';
+
 	function bootstrapPayButton() {
 		if ( ! buttonConfig || ! ppcpConfig ) {
 			return;
 		}
 
-		const manager = new ApplePayManager( buttonConfig, ppcpConfig );
+		const manager = new ApplePayManager(
+			namespace,
+			buttonConfig,
+			ppcpConfig
+		);
 
 		setupButtonEvents( function () {
 			manager.reinit();
@@ -61,10 +67,14 @@ import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Hel
 		} );
 
 		// Load PayPal
-		loadPaypalScript( ppcpConfig, () => {
-			paypalLoaded = true;
-			tryToBoot();
-		} );
+		loadPayPalScript( namespace, ppcpConfig )
+			.then( () => {
+				paypalLoaded = true;
+				tryToBoot();
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to load PayPal script: ', error );
+			} );
 	} );
 } )( {
 	buttonConfig: window.wc_ppcp_applepay,

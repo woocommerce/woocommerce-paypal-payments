@@ -1,11 +1,10 @@
-/* global paypal */
-
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import ApplePayButton from './ApplepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class ApplePayManager {
-	constructor( buttonConfig, ppcpConfig ) {
+	constructor( namespace, buttonConfig, ppcpConfig ) {
+		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.ApplePayConfig = null;
@@ -36,16 +35,18 @@ class ApplePayManager {
 		// Ensure ApplePayConfig is loaded before proceeding.
 		await this.init();
 
-		button.configure( this.ApplePayConfig );
+		button.configure( this.applePayConfig );
 		button.init();
 	}
 
 	async init() {
 		try {
-			if ( ! this.ApplePayConfig ) {
-				this.ApplePayConfig = await paypal.Applepay().config();
+			if ( ! this.applePayConfig ) {
+				this.applePayConfig = await window[ this.namespace ]
+					.Applepay()
+					.config();
 
-				if ( ! this.ApplePayConfig ) {
+				if ( ! this.applePayConfig ) {
 					console.error( 'No ApplePayConfig received during init' );
 				}
 			}
