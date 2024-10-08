@@ -3,6 +3,7 @@ import { createReduxStore, register, dispatch } from '@wordpress/data';
 export const STORE_NAME = 'woocommerce-paypal-payments/axo-block';
 
 const DEFAULT_STATE = {
+	isPayPalLoaded: false,
 	isGuest: true,
 	isAxoActive: false,
 	isAxoScriptLoaded: false,
@@ -15,6 +16,10 @@ const DEFAULT_STATE = {
 
 // Action creators for updating the store state
 const actions = {
+	setIsPayPalLoaded: ( isPayPalLoaded ) => ( {
+		type: 'SET_IS_PAYPAL_LOADED',
+		payload: isPayPalLoaded,
+	} ),
 	setIsGuest: ( isGuest ) => ( {
 		type: 'SET_IS_GUEST',
 		payload: isGuest,
@@ -58,6 +63,8 @@ const actions = {
  */
 const reducer = ( state = DEFAULT_STATE, action ) => {
 	switch ( action.type ) {
+		case 'SET_IS_PAYPAL_LOADED':
+			return { ...state, isPayPalLoaded: action.payload };
 		case 'SET_IS_GUEST':
 			return { ...state, isGuest: action.payload };
 		case 'SET_IS_AXO_ACTIVE':
@@ -81,6 +88,7 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 
 // Selector functions to retrieve specific pieces of state
 const selectors = {
+	getIsPayPalLoaded: ( state ) => state.isPayPalLoaded,
 	getIsGuest: ( state ) => state.isGuest,
 	getIsAxoActive: ( state ) => state.isAxoActive,
 	getIsAxoScriptLoaded: ( state ) => state.isAxoScriptLoaded,
@@ -101,6 +109,15 @@ const store = createReduxStore( STORE_NAME, {
 register( store );
 
 // Action dispatchers
+
+/**
+ * Action dispatcher to update the PayPal script load status in the store.
+ *
+ * @param {boolean} isPayPalLoaded - Whether the PayPal script has loaded.
+ */
+export const setIsPayPalLoaded = ( isPayPalLoaded ) => {
+	dispatch( STORE_NAME ).setIsPayPalLoaded( isPayPalLoaded );
+};
 
 /**
  * Action dispatcher to update the guest status in the store.

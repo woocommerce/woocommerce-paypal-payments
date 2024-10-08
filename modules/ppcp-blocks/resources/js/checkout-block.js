@@ -15,11 +15,12 @@ import {
 	cartHasSubscriptionProducts,
 	isPayPalSubscription,
 } from './Helper/Subscription';
-import { loadPaypalScriptPromise } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { normalizeStyleForFundingSource } from '../../../ppcp-button/resources/js/modules/Helper/Style';
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
+const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
 window.ppcpFundingSource = config.fundingSource;
@@ -55,7 +56,10 @@ const PayPalComponent = ( {
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
 			// for editor, since canMakePayment was not called
-			paypalScriptPromise = loadPaypalScriptPromise( config.scriptData );
+			paypalScriptPromise = loadPayPalScript(
+				namespace,
+				config.scriptData
+			);
 		}
 		paypalScriptPromise.then( () => setPaypalScriptLoaded( true ) );
 	}
@@ -614,7 +618,10 @@ const PayPalComponent = ( {
 		return null;
 	}
 
-	const PayPalButton = paypal.Buttons.driver( 'react', { React, ReactDOM } );
+	const PayPalButton = ppcpBlocksPaypalExpressButtons.Buttons.driver(
+		'react',
+		{ React, ReactDOM }
+	);
 
 	const getOnShippingOptionsChange = ( fundingSource ) => {
 		if ( fundingSource === 'venmo' ) {
@@ -818,7 +825,8 @@ if ( block_enabled && config.enabled ) {
 				ariaLabel: config.title,
 				canMakePayment: async () => {
 					if ( ! paypalScriptPromise ) {
-						paypalScriptPromise = loadPaypalScriptPromise(
+						paypalScriptPromise = loadPayPalScript(
+							namespace,
 							config.scriptData
 						);
 						paypalScriptPromise.then( () => {
@@ -831,7 +839,9 @@ if ( block_enabled && config.enabled ) {
 					}
 					await paypalScriptPromise;
 
-					return paypal.Buttons( { fundingSource } ).isEligible();
+					return ppcpBlocksPaypalExpressButtons
+						.Buttons( { fundingSource } )
+						.isEligible();
 				},
 				supports: {
 					features,
