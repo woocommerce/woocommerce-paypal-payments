@@ -7,7 +7,7 @@ registerPaymentMethod( {
 	name: config.id,
 	label: <div dangerouslySetInnerHTML={ { __html: config.title } } />,
 	content: <CardFields config={ config } />,
-	edit: <div></div>,
+	edit: <CardFields config={ config } />,
 	ariaLabel: config.title,
 	canMakePayment: () => {
 		return true;
