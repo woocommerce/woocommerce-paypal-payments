@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useRef, useState } from '@wordpress/element';
 import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
@@ -23,6 +23,7 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 const GooglePayComponent = ( props ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
+	const wrapperRef = useRef( null );
 
 	/**
 	 * Effect: Load external scripts.
@@ -55,6 +56,8 @@ const GooglePayComponent = ( props ) => {
 			return;
 		}
 
+		buttonConfig.reactWrapper = wrapperRef.current;
+
 		const ManagerClass = props.isEditing
 			? GooglepayManagerBlockEditor
 			: GooglepayManager;
@@ -65,6 +68,7 @@ const GooglePayComponent = ( props ) => {
 
 	return (
 		<div
+			ref={ wrapperRef }
 			id={ buttonConfig.button.wrapper.replace( '#', '' ) }
 			className="ppcp-button-apm ppcp-button-googlepay"
 		></div>

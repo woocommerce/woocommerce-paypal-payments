@@ -566,6 +566,10 @@ export default class PaymentButton {
 	 * @return {HTMLElement|null} The wrapper element, or null.
 	 */
 	get wrapperElement() {
+		if ( this.buttonConfig.reactWrapper ) {
+			return this.buttonConfig.reactWrapper;
+		}
+
 		return document.getElementById( this.wrapperId );
 	}
 
@@ -576,7 +580,7 @@ export default class PaymentButton {
 	 * @return {boolean} True, if the button context (wrapper element) is found.
 	 */
 	get isPresent() {
-		return this.wrapperElement instanceof HTMLElement;
+		return null !== this.wrapperElement;
 	}
 
 	/**
