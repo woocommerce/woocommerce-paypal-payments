@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
-import {
-	registerExpressPaymentMethod,
-	registerPaymentMethod,
-} from '@woocommerce/blocks-registry';
+import { registerExpressPaymentMethod } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
