@@ -136,6 +136,24 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
+	 * @inheritDoc
+	 */
+	get requiresShipping() {
+		if ( ! super.requiresShipping ) {
+			return false;
+		}
+
+		if ( ! this.buttonConfig.product?.needShipping ) {
+			return false;
+		}
+
+		return (
+			PaymentContext.Checkout !== this.context ||
+			this.shouldUpdateButtonWithFormData()
+		);
+	}
+
+	/**
 	 * Details about the processed transaction.
 	 *
 	 * This object defines the price that is charged, and text that is displayed inside the
@@ -345,7 +363,7 @@ class ApplePayButton extends PaymentButton {
 		const session = new ApplePaySession( 4, paymentRequest );
 		session.begin();
 
-		if ( this.shouldRequireShippingInButton() ) {
+		if ( this.requiresShipping ) {
 			session.onshippingmethodselected =
 				this.onShippingMethodSelected( session );
 			session.onshippingcontactselected =
@@ -464,20 +482,6 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
-	 * If the button should show the shipping fields.
-	 *
-	 * @return {boolean} True, if shipping fields should be captured by ApplePay.
-	 */
-	shouldRequireShippingInButton() {
-		return (
-			this.contextHandler.shippingAllowed() &&
-			this.buttonConfig.product.needShipping &&
-			( PaymentContext.Checkout !== this.context ||
-				this.shouldUpdateButtonWithFormData() )
-		);
-	}
-
-	/**
 	 * If the button should be updated with the form addresses.
 	 *
 	 * @return {boolean} True, when Apple Pay data should be submitted to WooCommerce.
@@ -526,7 +530,7 @@ class ApplePayButton extends PaymentButton {
 			this.#formData
 		);
 
-		if ( ! this.shouldRequireShippingInButton() ) {
+		if ( ! this.requiresShipping ) {
 			return;
 		}
 
@@ -594,7 +598,7 @@ class ApplePayButton extends PaymentButton {
 			// email and phone fields.
 		};
 
-		if ( ! this.shouldRequireShippingInButton() ) {
+		if ( ! this.requiresShipping ) {
 			if ( this.shouldCompletePaymentWithContextHandler() ) {
 				// Data needs handled externally.
 				baseRequest.requiredShippingContactFields = [];
@@ -781,7 +785,7 @@ class ApplePayButton extends PaymentButton {
 					caller_page: 'productDetail',
 					product_quantity: this.productQuantity,
 					simplified_contact: event.shippingContact,
-					need_shipping: this.shouldRequireShippingInButton(),
+					need_shipping: this.requiresShipping,
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
 
@@ -794,7 +798,7 @@ class ApplePayButton extends PaymentButton {
 					action: 'ppcp_update_shipping_contact',
 					simplified_contact: event.shippingContact,
 					caller_page: 'cart',
-					need_shipping: this.shouldRequireShippingInButton(),
+					need_shipping: this.requiresShipping,
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
 		}
