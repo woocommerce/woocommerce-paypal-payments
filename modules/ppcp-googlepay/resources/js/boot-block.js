@@ -4,7 +4,7 @@ import {
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { loadCustomScript } from '@paypal/paypal-js';
 import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
@@ -14,53 +14,54 @@ const ppcpConfig = ppcpData.scriptData;
 
 const buttonData = wc.wcSettings.getSetting( 'ppcp-googlepay_data' );
 const buttonConfig = buttonData.scriptData;
-const dataNamespace = 'ppcpBlocksEditorPaypalGooglepay';
+const namespace = 'ppcpBlocksPaypalGooglepay';
 
 if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
 const GooglePayComponent = ( props ) => {
-	const [ bootstrapped, setBootstrapped ] = useState( false );
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
 
+	/**
+	 * Effect: Load external scripts.
+	 * No dependencies - runs once on component mount.
+	 */
 	useEffect( () => {
-		if ( bootstrapped ) {
-			return;
-		}
+		// Load GooglePay SDK
+		loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
+			setGooglePayLoaded( true );
+		} );
 
-		if ( paypalLoaded && googlePayLoaded ) {
-			setBootstrapped( true );
+		ppcpConfig.url_params.components += ',googlepay';
 
-			const ManagerClass = props.isEditing
-				? GooglepayManagerBlockEditor
-				: GooglepayManager;
-
-			new ManagerClass( buttonConfig, ppcpConfig );
-			return;
-		}
-
-		if ( ! paypalLoaded ) {
-			ppcpConfig.url_params.components += ',googlepay';
-
-			if ( props.isEditing ) {
-				ppcpConfig.data_namespace = dataNamespace;
-			}
-
-			// Load PayPal
-			loadPaypalScript( ppcpConfig, () => {
+		// Load PayPal
+		loadPayPalScript( namespace, ppcpConfig )
+			.then( () => {
 				setPaypalLoaded( true );
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to load PayPal script: ', error );
 			} );
+	}, [] );
+
+	/**
+	 * Effect: Initialize the Google Pay manager when dependencies are ready.
+	 * Depends on the `...Loaded` flags - runs after each script was loaded.
+	 */
+	useEffect( () => {
+		if ( ! paypalLoaded || ! googlePayLoaded ) {
+			return;
 		}
 
-		if ( ! googlePayLoaded ) {
-			// Load GooglePay SDK
-			loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
-				setGooglePayLoaded( true );
-			} );
-		}
-	}, [ paypalLoaded, googlePayLoaded, bootstrapped, props.isEditing ] );
+		const ManagerClass = props.isEditing
+			? GooglepayManagerBlockEditor
+			: GooglepayManager;
+
+		// The manager class initializes during the constructor, no further action needed.
+		new ManagerClass( namespace, buttonConfig, ppcpConfig );
+	}, [ paypalLoaded, googlePayLoaded, props.isEditing ] );
 
 	return (
 		<div

@@ -1,23 +1,30 @@
 import { useEffect, useRef, useState, useMemo } from '@wordpress/element';
+import { useSelect } from '@wordpress/data';
 import Fastlane from '../../../../ppcp-axo/resources/js/Connection/Fastlane';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { useDeleteEmptyKeys } from './useDeleteEmptyKeys';
+import { STORE_NAME } from '../stores/axoStore';
 
 /**
  * Custom hook to initialize and manage the Fastlane SDK.
  *
+ * @param {string} namespace  - Namespace for the PayPal script.
  * @param {Object} axoConfig  - Configuration for AXO.
  * @param {Object} ppcpConfig - Configuration for PPCP.
  * @return {Object|null} The initialized Fastlane SDK instance or null.
  */
-const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
+const useFastlaneSdk = ( namespace, axoConfig, ppcpConfig ) => {
 	const [ fastlaneSdk, setFastlaneSdk ] = useState( null );
-	// Ref to prevent multiple simultaneous initializations
 	const initializingRef = useRef( false );
-	// Ref to hold the latest config values
 	const configRef = useRef( { axoConfig, ppcpConfig } );
-	// Custom hook to remove empty keys from an object
 	const deleteEmptyKeys = useDeleteEmptyKeys();
+
+	const { isPayPalLoaded } = useSelect(
+		( select ) => ( {
+			isPayPalLoaded: select( STORE_NAME ).getIsPayPalLoaded(),
+		} ),
+		[]
+	);
 
 	const styleOptions = useMemo( () => {
 		return deleteEmptyKeys( configRef.current.axoConfig.style_options );
@@ -26,7 +33,7 @@ const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 	// Effect to initialize Fastlane SDK
 	useEffect( () => {
 		const initFastlane = async () => {
-			if ( initializingRef.current || fastlaneSdk ) {
+			if ( initializingRef.current || fastlaneSdk || ! isPayPalLoaded ) {
 				return;
 			}
 
@@ -34,7 +41,7 @@ const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 			log( 'Init Fastlane' );
 
 			try {
-				const fastlane = new Fastlane();
+				const fastlane = new Fastlane( namespace );
 
 				// Set sandbox environment if configured
 				if ( configRef.current.axoConfig.environment.is_sandbox ) {
@@ -59,7 +66,7 @@ const useFastlaneSdk = ( axoConfig, ppcpConfig ) => {
 		};
 
 		initFastlane();
-	}, [ fastlaneSdk, styleOptions ] );
+	}, [ fastlaneSdk, styleOptions, isPayPalLoaded, namespace ] );
 
 	// Effect to update the config ref when configs change
 	useEffect( () => {

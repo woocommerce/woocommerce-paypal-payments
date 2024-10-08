@@ -15,12 +15,20 @@ import useCardChange from './useCardChange';
 /**
  * Custom hook to set up AXO functionality.
  *
- * @param {Object} ppcpConfig       - PayPal Checkout configuration.
- * @param {Object} fastlaneSdk      - Fastlane SDK instance.
- * @param {Object} paymentComponent - Payment component instance.
+ * @param {string}  namespace        - Namespace for the PayPal script.
+ * @param {Object}  ppcpConfig       - PayPal Checkout configuration.
+ * @param {boolean} isConfigLoaded   - Whether the PayPal config has loaded.
+ * @param {Object}  fastlaneSdk      - Fastlane SDK instance.
+ * @param {Object}  paymentComponent - Payment component instance.
  * @return {boolean} Whether PayPal script has loaded.
  */
-const useAxoSetup = ( ppcpConfig, fastlaneSdk, paymentComponent ) => {
+const useAxoSetup = (
+	namespace,
+	ppcpConfig,
+	isConfigLoaded,
+	fastlaneSdk,
+	paymentComponent
+) => {
 	// Get dispatch functions from the AXO store
 	const {
 		setIsAxoActive,
@@ -30,7 +38,11 @@ const useAxoSetup = ( ppcpConfig, fastlaneSdk, paymentComponent ) => {
 	} = useDispatch( STORE_NAME );
 
 	// Check if PayPal script has loaded
-	const paypalLoaded = usePayPalScript( ppcpConfig );
+	const paypalLoaded = usePayPalScript(
+		namespace,
+		ppcpConfig,
+		isConfigLoaded
+	);
 
 	// Set up card and shipping address change handlers
 	const onChangeCardButtonClick = useCardChange( fastlaneSdk );
