@@ -102,7 +102,14 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
-				$payment_method_registry->register( $c->get( 'axoblock.method' ) );
+				/*
+				 * Only register the method if we are not in the admin
+				 * (to avoid two Debit & Credit Cards gateways in the
+				 * checkout block in the editor: one from ACDC one from Axo).
+				 */
+				if ( ! is_admin() ) {
+					$payment_method_registry->register( $c->get( 'axoblock.method' ) );
+				}
 			}
 		);
 

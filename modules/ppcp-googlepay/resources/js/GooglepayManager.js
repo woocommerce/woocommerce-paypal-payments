@@ -1,63 +1,78 @@
-/* global paypal */
-
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import GooglepayButton from './GooglepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class GooglepayManager {
-	constructor( buttonConfig, ppcpConfig ) {
+	constructor( namespace, buttonConfig, ppcpConfig ) {
+		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.googlePayConfig = null;
 		this.transactionInfo = null;
 		this.contextHandler = null;
+
 		this.buttons = [];
 
-		this.onContextBootstrap = this.onContextBootstrap.bind( this );
-		buttonModuleWatcher.watchContextBootstrap( this.onContextBootstrap );
-	}
+		buttonModuleWatcher.watchContextBootstrap( async ( bootstrap ) => {
+			this.contextHandler = ContextHandlerFactory.create(
+				bootstrap.context,
+				buttonConfig,
+				ppcpConfig,
+				bootstrap.handler
+			);
 
-	async onContextBootstrap( bootstrap ) {
-		this.contextHandler = ContextHandlerFactory.create(
-			bootstrap.context,
-			this.buttonConfig,
-			this.ppcpConfig,
-			bootstrap.handler
-		);
+			const button = GooglepayButton.createButton(
+				bootstrap.context,
+				bootstrap.handler,
+				buttonConfig,
+				ppcpConfig,
+				this.contextHandler
+			);
 
-		const button = GooglepayButton.createButton(
-			bootstrap.context,
-			bootstrap.handler,
-			this.buttonConfig,
-			this.ppcpConfig,
-			this.contextHandler
-		);
+			this.buttons.push( button );
 
-		this.buttons.push( button );
+			const initButton = () => {
+				button.configure( this.googlePayConfig, this.transactionInfo );
+				button.init();
+			};
 
-		// Ensure googlePayConfig and transactionInfo are loaded.
-		await this.init();
+			// Initialize button only if googlePayConfig and transactionInfo are already fetched.
+			if ( this.googlePayConfig && this.transactionInfo ) {
+				initButton();
+			} else {
+				await this.init();
 
-		button.configure( this.googlePayConfig, this.transactionInfo );
-		button.init();
+				if ( this.googlePayConfig && this.transactionInfo ) {
+					initButton();
+				}
+			}
+		} );
 	}
 
 	async init() {
 		try {
 			if ( ! this.googlePayConfig ) {
 				// Gets GooglePay configuration of the PayPal merchant.
-				this.googlePayConfig = await paypal.Googlepay().config();
-
-				if ( ! this.googlePayConfig ) {
-					console.error( 'No GooglePayConfig received during init' );
-				}
+				this.googlePayConfig = await window[ this.namespace ]
+					.Googlepay()
+					.config();
 			}
 
 			if ( ! this.transactionInfo ) {
 				this.transactionInfo = await this.fetchTransactionInfo();
+			}
 
-				if ( ! this.transactionInfo ) {
-					console.error( 'No transactionInfo found during init' );
+			if ( ! this.googlePayConfig ) {
+				console.error( 'No GooglePayConfig received during init' );
+			} else if ( ! this.transactionInfo ) {
+				console.error( 'No transactionInfo found during init' );
+			} else {
+				for ( const button of this.buttons ) {
+					button.configure(
+						this.googlePayConfig,
+						this.transactionInfo
+					);
+					button.init();
 				}
 			}
 		} catch ( error ) {

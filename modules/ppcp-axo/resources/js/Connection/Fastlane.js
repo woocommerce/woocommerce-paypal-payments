@@ -1,5 +1,6 @@
 class Fastlane {
-	construct() {
+	constructor( namespace ) {
+		this.namespace = namespace;
 		this.connection = null;
 		this.identity = null;
 		this.profile = null;
@@ -10,7 +11,16 @@ class Fastlane {
 
 	connect( config ) {
 		return new Promise( ( resolve, reject ) => {
-			window.paypal
+			if ( ! window[ this.namespace ] ) {
+				reject(
+					new Error(
+						`Namespace ${ this.namespace } not found on window object`
+					)
+				);
+				return;
+			}
+
+			window[ this.namespace ]
 				.Fastlane( config )
 				.then( ( result ) => {
 					this.init( result );
@@ -18,7 +28,7 @@ class Fastlane {
 				} )
 				.catch( ( error ) => {
 					console.error( error );
-					reject();
+					reject( error );
 				} );
 		} );
 	}

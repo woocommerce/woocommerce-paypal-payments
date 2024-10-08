@@ -52,11 +52,12 @@ class AxoManager {
 	billingView = null;
 	cardView = null;
 
-	constructor( axoConfig, ppcpConfig ) {
+	constructor( namespace, axoConfig, ppcpConfig ) {
+        this.namespace = namespace;
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
 
-		this.fastlane = new Fastlane();
+		this.fastlane = new Fastlane( namespace );
 		this.$ = jQuery;
 
 		this.status = {
@@ -801,8 +802,6 @@ class AxoManager {
 	}
 
 	async onChangeEmail() {
-		this.clearData();
-
 		if ( ! this.status.active ) {
 			log( 'Email checking skipped, AXO not active.' );
 			return;
@@ -813,11 +812,17 @@ class AxoManager {
 			return;
 		}
 
+		if ( this.data.email === this.emailInput.value ) {
+			log( 'Email has not changed since last validation.' );
+			return;
+		}
+
 		log(
 			`Email changed: ${
 				this.emailInput ? this.emailInput.value : '<empty>'
 			}`
 		);
+		this.clearData();
 
 		this.emailInput.value = this.stripSpaces( this.emailInput.value );
 

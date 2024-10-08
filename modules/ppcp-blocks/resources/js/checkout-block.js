@@ -15,20 +15,20 @@ import {
 	cartHasSubscriptionProducts,
 	isPayPalSubscription,
 } from './Helper/Subscription';
-import { loadPaypalScriptPromise } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { normalizeStyleForFundingSource } from '../../../ppcp-button/resources/js/modules/Helper/Style';
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import BlockCheckoutMessagesBootstrap from './Bootstrap/BlockCheckoutMessagesBootstrap';
-import { keysToCamelCase } from '../../../ppcp-button/resources/js/modules/Helper/Utils';
-import { handleShippingOptionsChange } from '../../../ppcp-button/resources/js/modules/Helper/ShippingHandler';
+const namespace = 'ppcpBlocksPaypalExpressButtons';
 const config = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 
 window.ppcpFundingSource = config.fundingSource;
 
 let registeredContext = false;
-
 let paypalScriptPromise = null;
+
+const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
 const PayPalComponent = ( {
 	onClick,
@@ -47,6 +47,7 @@ const PayPalComponent = ( {
 	const { responseTypes } = emitResponse;
 
 	const [ paypalOrder, setPaypalOrder ] = useState( null );
+	const [ continuationFilled, setContinuationFilled ] = useState( false );
 	const [ gotoContinuationOnError, setGotoContinuationOnError ] =
 		useState( false );
 
@@ -55,7 +56,10 @@ const PayPalComponent = ( {
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
 			// for editor, since canMakePayment was not called
-			paypalScriptPromise = loadPaypalScriptPromise( config.scriptData );
+			paypalScriptPromise = loadPayPalScript(
+				namespace,
+				config.scriptData
+			);
 		}
 		paypalScriptPromise.then( () => setPaypalScriptLoaded( true ) );
 	}
@@ -64,15 +68,33 @@ const PayPalComponent = ( {
 		? `${ config.id }-${ fundingSource }`
 		: config.id;
 
-	useEffect( () => {
-		// fill the form if in continuation (for product or mini-cart buttons)
-		if (
-			! config.scriptData.continuation ||
-			! config.scriptData.continuation.order ||
-			window.ppcpContinuationFilled
-		) {
+	/**
+	 * The block cart displays express checkout buttons. Those buttons are handled by the
+	 * PAYPAL_GATEWAY_ID method on the server ("PayPal Smart Buttons").
+	 *
+	 * A possible bug in WooCommerce does not use the correct payment method ID for the express
+	 * payment buttons inside the cart, but sends the ID of the _first_ active payment method.
+	 *
+	 * This function uses an internal WooCommerce dispatcher method to set the correct method ID.
+	 */
+	const enforcePaymentMethodForCart = () => {
+		// Do nothing, unless we're handling block cart express payment buttons.
+		if ( 'cart-block' !== config.scriptData.context ) {
 			return;
 		}
+
+		// Set the active payment method to PAYPAL_GATEWAY_ID.
+		wp.data
+			.dispatch( 'wc/store/payment' )
+			.__internalSetActivePaymentMethod( PAYPAL_GATEWAY_ID, {} );
+	};
+
+	useEffect( () => {
+		// fill the form if in continuation (for product or mini-cart buttons)
+		if ( continuationFilled || ! config.scriptData.continuation?.order ) {
+			return;
+		}
+
 		try {
 			const paypalAddresses = paypalOrderToWcAddresses(
 				config.scriptData.continuation.order
@@ -81,9 +103,11 @@ const PayPalComponent = ( {
 				.select( 'wc/store/cart' )
 				.getCustomerData();
 			const addresses = mergeWcAddress( wcAddresses, paypalAddresses );
+
 			wp.data
 				.dispatch( 'wc/store/cart' )
 				.setBillingAddress( addresses.billingAddress );
+
 			if ( shippingData.needsShipping ) {
 				wp.data
 					.dispatch( 'wc/store/cart' )
@@ -93,9 +117,10 @@ const PayPalComponent = ( {
 			// sometimes the PayPal address is missing, skip in this case.
 			console.log( err );
 		}
+
 		// this useEffect should run only once, but adding this in case of some kind of full re-rendering
-		window.ppcpContinuationFilled = true;
-	}, [] );
+		setContinuationFilled( true );
+	}, [ shippingData, continuationFilled ] );
 
 	const createOrder = async ( data, actions ) => {
 		try {
@@ -232,6 +257,7 @@ const PayPalComponent = ( {
 				location.href = getCheckoutRedirectUrl();
 			} else {
 				setGotoContinuationOnError( true );
+				enforcePaymentMethodForCart();
 				onSubmit();
 			}
 		} catch ( err ) {
@@ -323,6 +349,7 @@ const PayPalComponent = ( {
 				location.href = getCheckoutRedirectUrl();
 			} else {
 				setGotoContinuationOnError( true );
+				enforcePaymentMethodForCart();
 				onSubmit();
 			}
 		} catch ( err ) {
@@ -365,19 +392,19 @@ const PayPalComponent = ( {
 	};
 
 	const shouldHandleShippingInPayPal = () => {
-		return shouldskipFinalConfirmation() && config.needShipping
+		return shouldskipFinalConfirmation() && config.needShipping;
 	};
 
-    const shouldskipFinalConfirmation = () => {
-        if ( config.finalReviewEnabled ) {
-            return false;
-        }
+	const shouldskipFinalConfirmation = () => {
+		if ( config.finalReviewEnabled ) {
+			return false;
+		}
 
-        return (
-            window.ppcpFundingSource !== 'venmo' ||
-            ! config.scriptData.vaultingEnabled
-        );
-    };
+		return (
+			window.ppcpFundingSource !== 'venmo' ||
+			! config.scriptData.vaultingEnabled
+		);
+	};
 
 	let handleShippingOptionsChange = null;
 	let handleShippingAddressChange = null;
@@ -591,7 +618,10 @@ const PayPalComponent = ( {
 		return null;
 	}
 
-	const PayPalButton = paypal.Buttons.driver( 'react', { React, ReactDOM } );
+	const PayPalButton = ppcpBlocksPaypalExpressButtons.Buttons.driver(
+		'react',
+		{ React, ReactDOM }
+	);
 
 	const getOnShippingOptionsChange = ( fundingSource ) => {
 		if ( fundingSource === 'venmo' ) {
@@ -611,11 +641,11 @@ const PayPalComponent = ( {
 		}
 
 		return ( data, actions ) => {
-            let shippingAddressChange = shouldHandleShippingInPayPal()
+			const shippingAddressChange = shouldHandleShippingInPayPal()
 				? handleShippingAddressChange( data, actions )
 				: null;
 
-            return shippingAddressChange;
+			return shippingAddressChange;
 		};
 	};
 
@@ -795,7 +825,8 @@ if ( block_enabled && config.enabled ) {
 				ariaLabel: config.title,
 				canMakePayment: async () => {
 					if ( ! paypalScriptPromise ) {
-						paypalScriptPromise = loadPaypalScriptPromise(
+						paypalScriptPromise = loadPayPalScript(
+							namespace,
 							config.scriptData
 						);
 						paypalScriptPromise.then( () => {
@@ -808,7 +839,9 @@ if ( block_enabled && config.enabled ) {
 					}
 					await paypalScriptPromise;
 
-					return paypal.Buttons( { fundingSource } ).isEligible();
+					return ppcpBlocksPaypalExpressButtons
+						.Buttons( { fundingSource } )
+						.isEligible();
 				},
 				supports: {
 					features,

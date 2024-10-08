@@ -1,6 +1,15 @@
 import { useEffect, useRef } from '@wordpress/element';
 import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
 
+/**
+ * Watermark component for displaying AXO watermark.
+ *
+ * @param {Object}  props
+ * @param {Object}  props.fastlaneSdk                           - The Fastlane SDK instance.
+ * @param {string}  [props.name='fastlane-watermark-container'] - ID for the watermark container.
+ * @param {boolean} [props.includeAdditionalInfo=true]          - Whether to include additional info in the watermark.
+ * @return {JSX.Element} The watermark container element.
+ */
 const Watermark = ( {
 	fastlaneSdk,
 	name = 'fastlane-watermark-container',
@@ -10,15 +19,19 @@ const Watermark = ( {
 	const watermarkRef = useRef( null );
 
 	useEffect( () => {
+		/**
+		 * Renders the Fastlane watermark.
+		 */
 		const renderWatermark = async () => {
 			if ( ! containerRef.current ) {
 				return;
 			}
 
-			// Clear the container
+			// Clear the container before rendering
 			containerRef.current.innerHTML = '';
 
 			try {
+				// Create and render the Fastlane watermark
 				const watermark = await fastlaneSdk.FastlaneWatermarkComponent(
 					{
 						includeAdditionalInfo,
@@ -34,6 +47,7 @@ const Watermark = ( {
 
 		renderWatermark();
 
+		// Cleanup function to clear the container on unmount
 		return () => {
 			if ( containerRef.current ) {
 				containerRef.current.innerHTML = '';
@@ -41,6 +55,7 @@ const Watermark = ( {
 		};
 	}, [ fastlaneSdk, name, includeAdditionalInfo ] );
 
+	// Render the container for the watermark
 	return <div id={ name } ref={ containerRef } />;
 };
 

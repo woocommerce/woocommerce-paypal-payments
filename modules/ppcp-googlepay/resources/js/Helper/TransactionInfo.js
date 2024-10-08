@@ -8,6 +8,8 @@ export default class TransactionInfo {
 		this.#country = country;
 		this.#currency = currency;
 
+		shippingFee = this.toAmount( shippingFee );
+		total = this.toAmount( total );
 		this.shippingFee = shippingFee;
 		this.amount = total - shippingFee;
 	}

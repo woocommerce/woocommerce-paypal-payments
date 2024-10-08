@@ -378,7 +378,8 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
 			&& $dcc_configuration->use_fastlane()
-			&& ! $this->is_excluded_endpoint();
+			&& ! $this->is_excluded_endpoint()
+			&& is_checkout();
 	}
 
 	/**
