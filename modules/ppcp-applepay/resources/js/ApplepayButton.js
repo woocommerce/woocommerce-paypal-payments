@@ -37,6 +37,18 @@ import {
  */
 
 /**
+ * This object describes the transaction details.
+ *
+ * @typedef {Object} TransactionInfo
+ * @property {string} countryCode           - The ISO country code
+ * @property {string} currencyCode          - The ISO currency code
+ * @property {string} totalPriceStatus      - Usually 'FINAL', can also be 'DRAFT'
+ * @property {string} totalPrice            - Total monetary value of the transaction.
+ * @property {Array}  chosenShippingMethods - Selected shipping method.
+ * @property {string} shippingPackages      - A list of available shipping methods, defined by WooCommerce.
+ */
+
+/**
  * A payment button for Apple Pay.
  *
  * On a single page, multiple Apple Pay buttons can be displayed, which also means multiple
@@ -62,6 +74,13 @@ class ApplePayButton extends PaymentButton {
 	 * Initialization data sent to the button.
 	 */
 	#initialPaymentRequest = null;
+
+	/**
+	 * Details about the processed transaction, provided to the Apple SDK.
+	 *
+	 * @type {?TransactionInfo}
+	 */
+	#transactionInfo = null;
 
 	/**
 	 * Apple Pay specific API configuration.
@@ -114,6 +133,29 @@ class ApplePayButton extends PaymentButton {
 		this.onButtonClick = this.onButtonClick.bind( this );
 
 		this.log( 'Create instance' );
+	}
+
+	/**
+	 * Details about the processed transaction.
+	 *
+	 * This object defines the price that is charged, and text that is displayed inside the
+	 * payment sheet.
+	 *
+	 * @return {?TransactionInfo} The TransactionInfo object.
+	 */
+	get transactionInfo() {
+		return this.#transactionInfo;
+	}
+
+	/**
+	 * Assign the new transaction details to the payment button.
+	 *
+	 * @param {TransactionInfo} newTransactionInfo - Transaction details.
+	 */
+	set transactionInfo( newTransactionInfo ) {
+		this.#transactionInfo = newTransactionInfo;
+
+		this.refresh();
 	}
 
 	/**
@@ -189,10 +231,12 @@ class ApplePayButton extends PaymentButton {
 	/**
 	 * Configures the button instance. Must be called before the initial `init()`.
 	 *
-	 * @param {Object} apiConfig - API configuration.
+	 * @param {Object}          apiConfig       - API configuration.
+	 * @param {TransactionInfo} transactionInfo - Transaction details.
 	 */
-	configure( apiConfig ) {
+	configure( apiConfig, transactionInfo ) {
 		this.#applePayConfig = apiConfig;
+		this.#transactionInfo = transactionInfo;
 	}
 
 	init() {

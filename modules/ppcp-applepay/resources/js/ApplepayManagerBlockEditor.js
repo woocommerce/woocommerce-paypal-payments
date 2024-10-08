@@ -7,6 +7,7 @@ class ApplePayManagerBlockEditor {
 	#ppcpConfig = null;
 	#applePayConfig = null;
 	#contextHandler = null;
+	#transactionInfo = null;
 
 	constructor( namespace, buttonConfig, ppcpConfig ) {
 		this.#namespace = namespace;
@@ -34,6 +35,9 @@ class ApplePayManagerBlockEditor {
 				null
 			);
 
+			// Fetch transaction information.
+			this.#transactionInfo = await this.fetchTransactionInfo();
+
 			const button = ApplePayButton.createButton(
 				this.#ppcpConfig.context,
 				null,
@@ -42,10 +46,22 @@ class ApplePayManagerBlockEditor {
 				this.#contextHandler
 			);
 
-			button.configure( this.#applePayConfig );
+			button.configure( this.#applePayConfig, this.#transactionInfo );
 			button.init();
 		} catch ( error ) {
 			console.error( 'Failed to initialize Apple Pay:', error );
+		}
+	}
+
+	async fetchTransactionInfo() {
+		try {
+			if ( ! this.#contextHandler ) {
+				throw new Error( 'ContextHandler is not initialized' );
+			}
+			return await this.#contextHandler.transactionInfo();
+		} catch ( error ) {
+			console.error( 'Error fetching transaction info:', error );
+			throw error;
 		}
 	}
 }

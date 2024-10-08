@@ -8,6 +8,7 @@ class ApplePayManager {
 	#ppcpConfig = null;
 	#applePayConfig = null;
 	#contextHandler = null;
+	#transactionInfo = null;
 	#buttons = [];
 
 	constructor( namespace, buttonConfig, ppcpConfig ) {
@@ -40,7 +41,7 @@ class ApplePayManager {
 		// Ensure ApplePayConfig is loaded before proceeding.
 		await this.init();
 
-		button.configure( this.#applePayConfig );
+		button.configure( this.#applePayConfig, this.#transactionInfo );
 		button.init();
 	}
 
@@ -55,8 +56,28 @@ class ApplePayManager {
 					console.error( 'No ApplePayConfig received during init' );
 				}
 			}
+
+			if ( ! this.#transactionInfo ) {
+				this.#transactionInfo = await this.fetchTransactionInfo();
+
+				if ( ! this.#applePayConfig ) {
+					console.error( 'No transactionInfo found during init' );
+				}
+			}
 		} catch ( error ) {
 			console.error( 'Error during initialization:', error );
+		}
+	}
+
+	async fetchTransactionInfo() {
+		try {
+			if ( ! this.#contextHandler ) {
+				throw new Error( 'ContextHandler is not initialized' );
+			}
+			return await this.#contextHandler.transactionInfo();
+		} catch ( error ) {
+			console.error( 'Error fetching transaction info:', error );
+			throw error;
 		}
 	}
 
