@@ -2,7 +2,7 @@ import UpdateCart from '../Helper/UpdateCart';
 import SingleProductActionHandler from '../ActionHandler/SingleProductActionHandler';
 import { hide, show } from '../Helper/Hiding';
 import BootstrapHelper from '../Helper/BootstrapHelper';
-import { loadAndRenderPayPalScript } from '../Helper/PayPalScriptLoading';
+import { loadPaypalJsScript } from '../Helper/ScriptLoading';
 import { getPlanIdFromVariation } from '../Helper/Subscriptions';
 import SimulateCart from '../Helper/SimulateCart';
 import { strRemoveWord, strAddWord, throttle } from '../Helper/Utils';
@@ -38,7 +38,6 @@ class SingleProductBootstap {
 		);
 
 		this.subscriptionButtonsLoaded = false;
-		this.namespace = 'ppcpPaypalSingleProduct';
 	}
 
 	form() {
@@ -255,8 +254,7 @@ class SingleProductBootstap {
 			if ( this.subscriptionButtonsLoaded ) {
 				return;
 			}
-			loadAndRenderPayPalScript(
-				this.namespace,
+			loadPaypalJsScript(
 				{
 					clientId: PayPalCommerceGateway.client_id,
 					currency: PayPalCommerceGateway.currency,
