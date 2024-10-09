@@ -232,6 +232,7 @@ class ApplePayButton extends PaymentButton {
 		}
 
 		super.init();
+		this.checkEligibility();
 
 				const button = this.addButton();
 
@@ -254,6 +255,27 @@ class ApplePayButton extends PaymentButton {
 		super.reinit();
 
 		this.init();
+	}
+
+	/**
+	 * Re-check if the current session is eligible for Apple Pay.
+	 */
+	checkEligibility() {
+		if ( this.isPreview ) {
+			this.isEligible = true;
+			return;
+		}
+
+		try {
+			if ( ! window.ApplePaySession?.canMakePayments() ) {
+				this.isEligible = false;
+				return;
+			}
+
+			this.isEligible = !! this.#applePayConfig.isEligible;
+		} catch ( error ) {
+			this.isEligible = false;
+		}
 	}
 
 	/**
