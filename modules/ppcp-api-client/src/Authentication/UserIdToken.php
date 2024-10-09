@@ -83,7 +83,7 @@ class UserIdToken {
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
 		$session_customer_id = '';
-		if ( method_exists( WC()->session, 'get_customer_id' ) ) {
+		if ( ! is_null( WC()->session ) && method_exists( WC()->session, 'get_customer_id' ) ) {
 			$session_customer_id = WC()->session->get_customer_id();
 		}
 
