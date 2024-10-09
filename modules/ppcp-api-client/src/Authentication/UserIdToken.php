@@ -82,7 +82,11 @@ class UserIdToken {
 	 * @throws RuntimeException If something unexpected happens.
 	 */
 	public function id_token( string $target_customer_id = '' ): string {
-		$session_customer_id = WC()->session->get_customer_id() ?: '';
+		$session_customer_id = '';
+		if ( method_exists( WC()->session, 'get_customer_id' ) ) {
+			$session_customer_id = WC()->session->get_customer_id();
+		}
+
 		if ( $session_customer_id && $this->cache->has( self::CACHE_KEY . (string) $session_customer_id ) ) {
 			return $this->cache->get( self::CACHE_KEY . (string) $session_customer_id );
 		}
