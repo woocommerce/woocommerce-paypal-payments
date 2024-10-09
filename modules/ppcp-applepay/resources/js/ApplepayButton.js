@@ -193,14 +193,6 @@ class ApplePayButton extends PaymentButton {
 	 * @inheritDoc
 	 */
 	registerValidationRules( invalidIf, validIf ) {
-		invalidIf(
-			() =>
-				! [ 'TEST', 'PRODUCTION' ].includes(
-					this.buttonConfig.environment
-				),
-			`Invalid environment: ${ this.buttonConfig.environment }`
-		);
-
 		validIf( () => this.isPreview );
 
 		invalidIf(
