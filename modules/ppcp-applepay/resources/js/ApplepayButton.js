@@ -233,24 +233,6 @@ class ApplePayButton extends PaymentButton {
 
 		super.init();
 
-		if ( this.isSeparateGateway ) {
-			document
-				.querySelectorAll( '#ppc-button-applepay-container' )
-				.forEach( ( el ) => el.remove() );
-		}
-
-		if ( ! this.isEligible ) {
-			this.hide();
-		} else {
-			// Bail if the button wrapper is not present; handles mini-cart logic on checkout page.
-			if ( ! this.isPresent ) {
-				this.log( 'Abort init (no wrapper found)' );
-				return;
-			}
-
-			this.show();
-
-			this.fetchTransactionInfo().then( () => {
 				const button = this.addButton();
 
 				if ( ! button ) {
@@ -261,8 +243,6 @@ class ApplePayButton extends PaymentButton {
 					evt.preventDefault();
 					this.onButtonClick();
 				} );
-			} );
-		}
 	}
 
 	reinit() {
@@ -274,10 +254,6 @@ class ApplePayButton extends PaymentButton {
 		super.reinit();
 
 		this.init();
-	}
-
-	async fetchTransactionInfo() {
-		this.transactionInfo = await this.contextHandler.transactionInfo();
 	}
 
 	/**
