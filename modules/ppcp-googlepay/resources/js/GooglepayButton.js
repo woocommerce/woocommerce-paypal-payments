@@ -218,7 +218,7 @@ class GooglepayButton extends PaymentButton {
 	registerValidationRules( invalidIf, validIf ) {
 		invalidIf(
 			() =>
-				[ 'TEST', 'PRODUCTION' ].includes(
+				! [ 'TEST', 'PRODUCTION' ].includes(
 					this.buttonConfig.environment
 				),
 			`Invalid environment: ${ this.buttonConfig.environment }`

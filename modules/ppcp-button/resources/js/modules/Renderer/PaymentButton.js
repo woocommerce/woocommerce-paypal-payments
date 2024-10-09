@@ -683,6 +683,7 @@ export default class PaymentButton {
 	 * @param {(condition: () => boolean, errorMessage: string) => void} invalidIf - Registers a validation step that fails if the condition returns true.
 	 * @param {(condition: () => boolean) => void}                       validIf   - Registers a validation step that passes if the condition returns true.
 	 */
+	// eslint-disable-next-line no-unused-vars
 	registerValidationRules( invalidIf, validIf ) {}
 
 	/**
