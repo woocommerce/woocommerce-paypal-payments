@@ -319,14 +319,13 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
-	 * Starts an Apple Pay session.
+	 * Starts an Apple Pay session, which means that the user interacted with the Apple Pay button.
 	 *
 	 * @param {Object} paymentRequest The payment request object.
 	 */
 	applePaySession( paymentRequest ) {
 		this.log( 'applePaySession', paymentRequest );
 		const session = new ApplePaySession( 4, paymentRequest );
-		session.begin();
 
 		if ( this.requiresShipping ) {
 			session.onshippingmethodselected =
@@ -337,6 +336,16 @@ class ApplePayButton extends PaymentButton {
 
 		session.onvalidatemerchant = this.onValidateMerchant( session );
 		session.onpaymentauthorized = this.onPaymentAuthorized( session );
+
+		/**
+		 * This starts the merchant validation process and displays the payment sheet
+		 * {@see https://developer.apple.com/documentation/apple_pay_on_the_web/applepaysession/1778001-begin}
+		 *
+		 * After calling the `begin` method, the browser invokes your `onvalidatemerchant` handler
+		 * {@see https://applepaydemo.apple.com/apple-pay-js-api}
+		 */
+		session.begin();
+
 		return session;
 	}
 
