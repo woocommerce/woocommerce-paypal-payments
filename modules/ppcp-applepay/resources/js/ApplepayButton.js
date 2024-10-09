@@ -2,8 +2,6 @@
 /* global PayPalCommerceGateway */
 
 import { createAppleErrors } from './Helper/applePayError';
-import { setVisible } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
-import { setEnabled } from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import FormValidator from '../../../ppcp-button/resources/js/modules/Helper/FormValidator';
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
@@ -234,7 +232,6 @@ class ApplePayButton extends PaymentButton {
 		}
 
 		super.init();
-		this.initEventHandlers();
 
 		if ( this.isSeparateGateway ) {
 			document
@@ -281,41 +278,6 @@ class ApplePayButton extends PaymentButton {
 
 	async fetchTransactionInfo() {
 		this.transactionInfo = await this.contextHandler.transactionInfo();
-	}
-
-	initEventHandlers() {
-		const ppcpButtonWrapper = `#${ this.ppcpButtonWrapperId }`;
-		const wrapperId = `#${ this.wrapperId }`;
-
-		if ( wrapperId === ppcpButtonWrapper ) {
-			throw new Error(
-				`[ApplePayButton] "wrapper" and "ppcpButtonWrapper" values must differ to avoid infinite loop. Current value: "${ wrapperId }"`
-			);
-		}
-
-		const syncButtonVisibility = () => {
-			if ( ! this.isEligible ) {
-				return;
-			}
-
-			const $ppcpButtonWrapper = jQuery( ppcpButtonWrapper );
-			setVisible( wrapperId, $ppcpButtonWrapper.is( ':visible' ) );
-			setEnabled(
-				wrapperId,
-				! $ppcpButtonWrapper.hasClass( 'ppcp-disabled' )
-			);
-		};
-
-		jQuery( document ).on(
-			'ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled',
-			( ev, data ) => {
-				if ( jQuery( data.selector ).is( ppcpButtonWrapper ) ) {
-					syncButtonVisibility();
-				}
-			}
-		);
-
-		syncButtonVisibility();
 	}
 
 	/**
