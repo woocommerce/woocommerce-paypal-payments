@@ -190,31 +190,6 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
-	 * Determines if the current payment button should be rendered as a stand-alone gateway.
-	 * The return value `false` usually means, that the payment button is bundled with all available
-	 * payment buttons.
-	 *
-	 * The decision depends on the button context (placement) and the plugin settings.
-	 *
-	 * @return {boolean} True, if the current button represents a stand-alone gateway.
-	 */
-	get isSeparateGateway() {
-		return (
-			this.buttonConfig.is_wc_gateway_enabled &&
-			PaymentContext.Gateways.includes( this.context )
-		);
-	}
-
-	/**
-	 * Checks whether the main button-wrapper is present in the current DOM.
-	 *
-	 * @return {boolean} True, if the button context (wrapper element) is found.
-	 */
-	get isPresent() {
-		return this.wrapperElement instanceof HTMLElement;
-	}
-
-	/**
 	 * @inheritDoc
 	 */
 	registerValidationRules( invalidIf, validIf ) {
