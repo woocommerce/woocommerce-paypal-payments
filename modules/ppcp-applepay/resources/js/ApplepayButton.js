@@ -331,6 +331,11 @@ class ApplePayButton extends PaymentButton {
 		button.setAttribute( 'type', type );
 		button.setAttribute( 'locale', language );
 
+		button.addEventListener( 'click', ( evt ) => {
+			evt.preventDefault();
+			this.onButtonClick();
+		} );
+
 		this.insertButton( button );
 	}
 
