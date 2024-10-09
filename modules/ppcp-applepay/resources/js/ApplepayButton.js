@@ -233,17 +233,6 @@ class ApplePayButton extends PaymentButton {
 
 		super.init();
 		this.checkEligibility();
-
-				const button = this.addButton();
-
-				if ( ! button ) {
-					return;
-				}
-
-				button.addEventListener( 'click', ( evt ) => {
-					evt.preventDefault();
-					this.onButtonClick();
-				} );
 	}
 
 	reinit() {
@@ -310,40 +299,39 @@ class ApplePayButton extends PaymentButton {
 	}
 
 	/**
-	 * Adds an Apple Pay purchase button.
-	 *
-	 * @return {HTMLElement|null} The newly created `<apple-pay-button>` element. Null on failure.
+	 * Applies CSS classes and inline styling to the payment button wrapper.
 	 */
-	addButton() {
-		this.log( 'addButton' );
+	applyWrapperStyles() {
+		super.applyWrapperStyles();
 
-		const wrapper = this.wrapperElement;
-		const style = this.buttonStyle;
-		const id = 'apple-' + this.wrapperId;
+		const { height } = this.style;
 
-		if ( ! wrapper ) {
-			return null;
-		}
+		if ( height ) {
+			const wrapper = this.wrapperElement;
 
-		const ppcpStyle = this.ppcpStyle;
-
-		wrapper.innerHTML = `<apple-pay-button id='${ id }' buttonstyle='${ style.color }' type='${ style.type }' locale='${ style.lang }' />`;
-		wrapper.classList.remove( 'ppcp-button-rect', 'ppcp-button-pill' );
-		wrapper.classList.add(
-			`ppcp-button-${ ppcpStyle.shape }`,
-			'ppcp-button-apm',
-			'ppcp-button-applepay'
-		);
-
-		if ( ppcpStyle.height ) {
 			wrapper.style.setProperty(
 				'--apple-pay-button-height',
-				`${ ppcpStyle.height }px`
+				`${ height }px`
 			);
-			wrapper.style.height = `${ ppcpStyle.height }px`;
-		}
 
-		return wrapper.querySelector( 'apple-pay-button' );
+			wrapper.style.height = `${ height }px`;
+		}
+	}
+
+	/**
+	 * Creates the payment button and calls `this.insertButton()` to make the button visible in the
+	 * correct wrapper.
+	 */
+	addButton() {
+		const { color, type, language } = this.style;
+
+		const button = document.createElement( 'apple-pay-button' );
+		button.id = 'apple-' + this.wrapperId;
+		button.setAttribute( 'buttonstyle', color );
+		button.setAttribute( 'type', type );
+		button.setAttribute( 'locale', language );
+
+		this.insertButton( button );
 	}
 
 	//------------------------
