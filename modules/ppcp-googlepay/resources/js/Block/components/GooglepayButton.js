@@ -1,14 +1,36 @@
 import { useState, useEffect } from '@wordpress/element';
 import useGooglepayApiToGenerateButton from '../hooks/useGooglepayApiToGenerateButton';
+import usePayPalScript from '../hooks/usePayPalScript';
+import useGooglepayScript from '../hooks/useGooglepayScript';
+import useGooglepayConfig from '../hooks/useGooglepayConfig';
 
-const GooglepayButton = ( {
-	namespace,
-	buttonConfig,
-	ppcpConfig,
-	googlepayConfig,
-} ) => {
+const GooglepayButton = ( { namespace, buttonConfig, ppcpConfig } ) => {
 	const [ buttonHtml, setButtonHtml ] = useState( '' );
+	const [ buttonElement, setButtonElement ] = useState( null );
+	const [ componentFrame, setComponentFrame ] = useState( null );
+
+	const buttonLoader = '<div>Loading Google Pay...</div>';
+
+	const isPayPalLoaded = usePayPalScript( namespace, ppcpConfig );
+
+	const isGooglepayLoaded = useGooglepayScript(
+		componentFrame,
+		buttonConfig,
+		isPayPalLoaded
+	);
+
+	const googlepayConfig = useGooglepayConfig( namespace, isGooglepayLoaded );
+
+	useEffect( () => {
+		if ( ! buttonElement ) {
+			return;
+		}
+
+		setComponentFrame( buttonElement.ownerDocument );
+	}, [ buttonElement ] );
+
 	const googlepayButton = useGooglepayApiToGenerateButton(
+		componentFrame,
 		namespace,
 		buttonConfig,
 		ppcpConfig,
@@ -21,11 +43,12 @@ const GooglepayButton = ( {
 		}
 	}, [ googlepayButton ] );
 
-	if ( ! buttonHtml ) {
-		return null;
-	}
-
-	return <div dangerouslySetInnerHTML={ { __html: buttonHtml } } />;
+	return (
+		<div
+			ref={ setButtonElement }
+			dangerouslySetInnerHTML={ { __html: buttonHtml || buttonLoader } }
+		/>
+	);
 };
 
 export default GooglepayButton;

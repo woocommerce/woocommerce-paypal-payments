@@ -2,6 +2,7 @@ import { useEffect, useState } from '@wordpress/element';
 import useButtonStyles from './useButtonStyles';
 
 const useGooglepayApiToGenerateButton = (
+	componentDocument,
 	namespace,
 	buttonConfig,
 	ppcpConfig,
@@ -12,16 +13,19 @@ const useGooglepayApiToGenerateButton = (
 
 	useEffect( () => {
 		if (
+			! componentDocument?.defaultView ||
 			! buttonConfig ||
-			! googlepayConfig ||
-			! window.google ||
-			! window.google.payments ||
-			! window.google.payments.api
+			! googlepayConfig
 		) {
 			return;
 		}
 
-		const paymentsClient = new window.google.payments.api.PaymentsClient( {
+		const api = componentDocument.defaultView.google?.payments?.api;
+		if ( ! api ) {
+			return;
+		}
+
+		const paymentsClient = new api.PaymentsClient( {
 			environment: 'TEST',
 		} );
 
@@ -30,24 +34,22 @@ const useGooglepayApiToGenerateButton = (
 		console.log( 'googlepayConfig', googlepayConfig );
 		console.log( 'buttonStyles?.Default', buttonStyles?.Default );
 
+		const googlePayButtonOptions = {
+			allowedPaymentMethods: googlepayConfig.allowedPaymentMethods,
+			buttonColor: buttonConfig.buttonColor || 'black',
+			buttonType: buttonConfig.buttonType || 'pay',
+			buttonLocale: buttonConfig.buttonLocale || 'en',
+			buttonSizeMode: 'fill',
+		};
+
 		const button = paymentsClient.createButton( {
+			...googlePayButtonOptions,
 			onClick: () => {
 				console.log( 'Google Pay button clicked' );
 			},
-			allowedPaymentMethods: googlepayConfig.allowedPaymentMethods,
-			buttonColor: buttonConfig.buttonColor || 'black',
-			buttonType: buttonConfig.buttonType || 'pay',
-			buttonLocale: buttonConfig.buttonLocale || 'en',
-			buttonSizeMode: 'fill',
 		} );
 
-		console.log( {
-			allowedPaymentMethods: googlepayConfig.allowedPaymentMethods,
-			buttonColor: buttonConfig.buttonColor || 'black',
-			buttonType: buttonConfig.buttonType || 'pay',
-			buttonLocale: buttonConfig.buttonLocale || 'en',
-			buttonSizeMode: 'fill',
-		} );
+		console.log( 'Google Pay Button options', googlePayButtonOptions );
 
 		setGooglepayButton( button );
 
