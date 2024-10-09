@@ -1,62 +1,32 @@
-import GooglepayButton from './GooglepayButton';
-import ContextHandlerFactory from './Context/ContextHandlerFactory';
+import GooglepayButton from './Block/components/GooglepayButton';
+import usePayPalScript from './Block/hooks/usePayPalScript';
+import useGooglepayScript from './Block/hooks/useGooglepayScript';
+import useGooglepayConfig from './Block/hooks/useGooglepayConfig';
 
-class GooglepayManagerBlockEditor {
-	constructor( namespace, buttonConfig, ppcpConfig ) {
-		this.namespace = namespace;
-		this.buttonConfig = buttonConfig;
-		this.ppcpConfig = ppcpConfig;
-		this.googlePayConfig = null;
-		this.transactionInfo = null;
-		this.contextHandler = null;
+const GooglepayManagerBlockEditor = ( {
+	namespace,
+	buttonConfig,
+	ppcpConfig,
+} ) => {
+	const isPayPalLoaded = usePayPalScript( namespace, ppcpConfig );
+	const isGooglepayLoaded = useGooglepayScript(
+		buttonConfig,
+		isPayPalLoaded
+	);
+	const googlepayConfig = useGooglepayConfig( namespace, isGooglepayLoaded );
+
+	if ( ! googlepayConfig ) {
+		return <div>Loading Google Pay...</div>; // Or any other loading indicator
 	}
 
-	init() {
-		( async () => {
-			await this.config();
-		} )();
-	}
-
-	async config() {
-		try {
-			// Gets GooglePay configuration of the PayPal merchant.
-			this.googlePayConfig = await window[ this.namespace ]
-				.Googlepay()
-				.config();
-
-			// Fetch transaction information.
-			this.transactionInfo = await this.fetchTransactionInfo();
-
-			const button = new GooglepayButton(
-				this.ppcpConfig.context,
-				null,
-				this.buttonConfig,
-				this.ppcpConfig,
-				this.contextHandler
-			);
-
-			button.init( this.googlePayConfig, this.transactionInfo );
-		} catch ( error ) {
-			console.error( 'Failed to initialize Google Pay:', error );
-		}
-	}
-
-	async fetchTransactionInfo() {
-		try {
-			if ( ! this.contextHandler ) {
-				this.contextHandler = ContextHandlerFactory.create(
-					this.ppcpConfig.context,
-					this.buttonConfig,
-					this.ppcpConfig,
-					null
-				);
-			}
-			return null;
-		} catch ( error ) {
-			console.error( 'Error fetching transaction info:', error );
-			throw error;
-		}
-	}
-}
+	return (
+		<GooglepayButton
+			namespace={ namespace }
+			buttonConfig={ buttonConfig }
+			ppcpConfig={ ppcpConfig }
+			googlepayConfig={ googlepayConfig }
+		/>
+	);
+};
 
 export default GooglepayManagerBlockEditor;

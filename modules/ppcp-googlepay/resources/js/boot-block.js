@@ -1,4 +1,5 @@
 import { useEffect, useState } from '@wordpress/element';
+import { loadCustomScript } from '@paypal/paypal-js';
 import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
@@ -6,7 +7,6 @@ import {
 import { __ } from '@wordpress/i18n';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
-import { loadCustomScript } from '@paypal/paypal-js';
 import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
@@ -20,56 +20,55 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const GooglePayComponent = ( props ) => {
-	const [ bootstrapped, setBootstrapped ] = useState( false );
+const GooglePayComponent = ( { isEditing } ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
 	const [ manager, setManager ] = useState( null );
 
 	useEffect( () => {
-		// Load GooglePay SDK
-		loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
-			setGooglePayLoaded( true );
-		} );
-
-		ppcpConfig.url_params.components += ',googlepay';
-
-		// Load PayPal
-		loadPayPalScript( namespace, ppcpConfig )
-			.then( () => {
-				setPaypalLoaded( true );
-			} )
-			.catch( ( error ) => {
-				console.error( 'Failed to load PayPal script: ', error );
+		if ( ! isEditing ) {
+			loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
+				setGooglePayLoaded( true );
 			} );
-	}, [] );
+
+			ppcpConfig.url_params.components += ',googlepay';
+
+			loadPayPalScript( namespace, ppcpConfig )
+				.then( () => {
+					setPaypalLoaded( true );
+				} )
+				.catch( ( error ) => {
+					console.error( 'Failed to load PayPal script: ', error );
+				} );
+		}
+	}, [ isEditing, buttonConfig, ppcpConfig ] );
 
 	useEffect( () => {
-		if ( paypalLoaded && googlePayLoaded && ! manager ) {
-			const ManagerClass = props.isEditing
-				? GooglepayManagerBlockEditor
-				: GooglepayManager;
-			const newManager = new ManagerClass(
+		if ( ! isEditing && paypalLoaded && googlePayLoaded && ! manager ) {
+			const newManager = new GooglepayManager(
 				namespace,
 				buttonConfig,
 				ppcpConfig
 			);
 			setManager( newManager );
 		}
-	}, [ paypalLoaded, googlePayLoaded, props.isEditing ] );
+	}, [ paypalLoaded, googlePayLoaded, isEditing, manager ] );
 
-	useEffect( () => {
-		if ( manager && ! bootstrapped ) {
-			setBootstrapped( true );
-			manager.init();
-		}
-	}, [ manager, bootstrapped ] );
+	if ( isEditing ) {
+		return (
+			<GooglepayManagerBlockEditor
+				namespace={ namespace }
+				buttonConfig={ buttonConfig }
+				ppcpConfig={ ppcpConfig }
+			/>
+		);
+	}
 
 	return (
 		<div
 			id={ buttonConfig.button.wrapper.replace( '#', '' ) }
 			className="ppcp-button-apm ppcp-button-googlepay"
-		></div>
+		/>
 	);
 };
 
