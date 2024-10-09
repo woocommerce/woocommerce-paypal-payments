@@ -91,7 +91,7 @@ class P24PaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'p24',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }

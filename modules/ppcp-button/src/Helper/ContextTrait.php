@@ -33,16 +33,49 @@ trait ContextTrait {
 				if ( $is_checkout ) {
 					return $is_checkout;
 				}
-				return has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' );
+
+				if ( has_block( 'woocommerce/classic-shortcode' ) ) {
+					$classic_block = $this->find_classic_shortcode_block();
+					$type          = $classic_block['attrs']['shortcode'] ?? '';
+					return $type === 'checkout';
+				}
+
+				return $is_checkout;
 			}
 		);
 
 		// Activate is_cart() on woocommerce/classic-shortcode cart blocks.
 		if ( ! is_cart() && is_callable( 'wc_maybe_define_constant' ) ) {
-			if ( has_block( 'woocommerce/classic-shortcode' ) && ! has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' ) ) {
-				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+			if ( has_block( 'woocommerce/classic-shortcode' ) ) {
+				$classic_block = $this->find_classic_shortcode_block();
+				$type          = $classic_block['attrs']['shortcode'] ?? '';
+				if ( $type !== 'checkout' ) { // There is no 'cart' type, the attribute is just missing.
+					wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+				}
 			}
 		}
+	}
+
+	/**
+	 * Returns the parsed data of the classic shortcode block, or null if missing on the current page.
+	 * Slower than has_block( 'woocommerce/classic-shortcode' )
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	protected function find_classic_shortcode_block(): ?array {
+		$post = get_the_content();
+		if ( ! $post ) {
+			return null;
+		}
+
+		$blocks = parse_blocks( $post );
+		foreach ( $blocks as $block ) {
+			if ( $block['blockName'] === 'woocommerce/classic-shortcode' ) {
+				return $block;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -53,18 +86,26 @@ trait ContextTrait {
 			return true;
 		}
 
-		/**
-		 * The filter returning whether to detect WC checkout ajax requests.
-		 */
-		if ( apply_filters( 'ppcp_check_ajax_checkout', true ) ) {
-			// phpcs:ignore WordPress.Security
-			$wc_ajax = $_GET['wc-ajax'] ?? '';
-			if ( in_array( $wc_ajax, array( 'update_order_review' ), true ) ) {
-				return true;
-			}
+		if ( $this->is_checkout_ajax() ) {
+			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if performing the WC checkout ajax requests.
+	 */
+	private function is_checkout_ajax(): bool {
+		/**
+		 * The filter returning whether to detect WC checkout ajax requests.
+		 */
+		if ( ! apply_filters( 'ppcp_check_ajax_checkout', true ) ) {
+			return false;
+		}
+
+		$wc_ajax = $this->wc_ajax_endpoint_name();
+		return in_array( $wc_ajax, array( 'update_order_review' ), true );
 	}
 
 	/**
@@ -75,18 +116,38 @@ trait ContextTrait {
 			return true;
 		}
 
-		/**
-		 * The filter returning whether to detect WC cart ajax requests.
-		 */
-		if ( apply_filters( 'ppcp_check_ajax_cart', true ) ) {
-			// phpcs:ignore WordPress.Security
-			$wc_ajax = $_GET['wc-ajax'] ?? '';
-			if ( in_array( $wc_ajax, array( 'update_shipping_method' ), true ) ) {
-				return true;
-			}
+		if ( $this->is_cart_ajax() ) {
+			return true;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if performing the WC cart ajax requests.
+	 */
+	private function is_cart_ajax(): bool {
+		/**
+		 * The filter returning whether to detect WC checkout ajax requests.
+		 */
+		if ( ! apply_filters( 'ppcp_check_ajax_cart', true ) ) {
+			return false;
+		}
+
+		$wc_ajax = $this->wc_ajax_endpoint_name();
+		return in_array( $wc_ajax, array( 'update_shipping_method' ), true );
+	}
+
+	/**
+	 * Returns the current WC ajax endpoint name or an empty string if not in ajax.
+	 */
+	private function wc_ajax_endpoint_name(): string {
+		// phpcs:ignore WordPress.Security
+		$wc_ajax = $_GET['wc-ajax'] ?? '';
+		if ( ! is_string( $wc_ajax ) ) {
+			return '';
+		}
+		return $wc_ajax;
 	}
 
 	/**
@@ -99,6 +160,14 @@ trait ContextTrait {
 		$context = 'mini-cart';
 
 		switch ( true ) {
+			case $this->is_cart_ajax():
+				$context = 'cart';
+				break;
+
+			case $this->is_checkout_ajax() && ! $this->is_paypal_continuation():
+				$context = 'checkout';
+				break;
+
 			case is_product() || wc_post_content_has_shortcode( 'product_page' ):
 				// Do this check here instead of reordering outside conditions.
 				// In order to have more control over the context.
@@ -137,10 +206,6 @@ trait ContextTrait {
 			case $this->is_block_editor():
 				$context = 'block-editor';
 				break;
-
-			case $this->is_paypal_continuation():
-				$context = 'continuation';
-				break;
 		}
 
 		return apply_filters( 'woocommerce_paypal_payments_context', $context );
@@ -174,6 +239,16 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	private function is_paypal_continuation(): bool {
+		/**
+		 * Cannot guarantee that initialized in all places where this trait is used,
+		 * the Psalm checks seem to work weird and sometimes ignore missing property.
+		 *
+		 * @psalm-suppress RedundantPropertyInitializationCheck
+		 */
+		if ( ! isset( $this->session_handler ) ) {
+			return false;
+		}
+
 		/**
 		 * Property is already defined in trait consumers.
 		 *

@@ -340,7 +340,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			'wp',
 			function() {
 				$page_id = get_the_ID();
-				if ( ! $page_id || ! CartCheckoutDetector::has_elementor_checkout( $page_id ) ) {
+				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
 					return;
 				}
 

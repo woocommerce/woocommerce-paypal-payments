@@ -190,7 +190,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$c->get( 'ppcp.asset-version' ),
 				$c->get( 'wc-subscriptions.helper' ),
 				$c->get( 'button.client_id_for_admin' ),
-				$c->get( 'api.shop.currency' ),
+				$c->get( 'api.shop.currency.getter' ),
 				$c->get( 'api.shop.country' ),
 				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),

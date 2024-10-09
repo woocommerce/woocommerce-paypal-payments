@@ -5,22 +5,29 @@ import { useAddressEditing } from './useAddressEditing';
 import useCustomerData from './useCustomerData';
 import { STORE_NAME } from '../stores/axoStore';
 
+/**
+ * Custom hook to handle the 'Choose a different card' selection.
+ *
+ * @param {Object} fastlaneSdk - The Fastlane SDK instance.
+ * @return {Function} Callback function to trigger card selection and update related data.
+ */
 export const useCardChange = ( fastlaneSdk ) => {
 	const { setBillingAddressEditing } = useAddressEditing();
 	const { setBillingAddress: setWooBillingAddress } = useCustomerData();
-	const { setCardDetails, setShippingAddress } = useDispatch( STORE_NAME );
+	const { setCardDetails } = useDispatch( STORE_NAME );
 
 	return useCallback( async () => {
 		if ( fastlaneSdk ) {
+			// Show card selector and get the user's selection
 			const { selectionChanged, selectedCard } =
 				await fastlaneSdk.profile.showCardSelector();
 
 			if ( selectionChanged && selectedCard?.paymentSource?.card ) {
-				// Use the fallback logic for cardholder's name.
+				// Extract cardholder and billing information from the selected card
 				const { name, billingAddress } =
 					selectedCard.paymentSource.card;
 
-				// If name is missing, use billing details as a fallback for the name.
+				// Parse cardholder's name, using billing details as a fallback if missing
 				let firstName = '';
 				let lastName = '';
 
@@ -30,6 +37,7 @@ export const useCardChange = ( fastlaneSdk ) => {
 					lastName = nameParts.slice( 1 ).join( ' ' );
 				}
 
+				// Transform the billing address into WooCommerce format
 				const newBillingAddress = {
 					first_name: firstName,
 					last_name: lastName,
@@ -41,20 +49,19 @@ export const useCardChange = ( fastlaneSdk ) => {
 					country: billingAddress?.countryCode || '',
 				};
 
-				// Batch state updates.
+				// Batch update states
 				await Promise.all( [
+					// Update the selected card details in the custom store
 					new Promise( ( resolve ) => {
 						setCardDetails( selectedCard );
 						resolve();
 					} ),
+					// Update the WooCommerce billing address in the WooCommerce store
 					new Promise( ( resolve ) => {
 						setWooBillingAddress( newBillingAddress );
 						resolve();
 					} ),
-					new Promise( ( resolve ) => {
-						setShippingAddress( newBillingAddress );
-						resolve();
-					} ),
+					// Trigger the Address Card view by setting the billing address editing state to false
 					new Promise( ( resolve ) => {
 						setBillingAddressEditing( false );
 						resolve();
@@ -68,7 +75,6 @@ export const useCardChange = ( fastlaneSdk ) => {
 		fastlaneSdk,
 		setCardDetails,
 		setWooBillingAddress,
-		setShippingAddress,
 		setBillingAddressEditing,
 	] );
 };

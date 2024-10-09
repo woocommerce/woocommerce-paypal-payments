@@ -8,7 +8,7 @@
  */
 
 import { loadCustomScript } from '@paypal/paypal-js';
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { setupButtonEvents } from '../../../ppcp-button/resources/js/modules/Helper/ButtonRefreshHelper';
 import { CheckoutBootstrap } from './ContextBootstrap/CheckoutBootstrap';
@@ -16,14 +16,18 @@ import moduleStorage from './Helper/GooglePayStorage';
 
 ( function ( { buttonConfig, ppcpConfig = {} } ) {
 	const context = ppcpConfig.context;
+	const namespace = 'ppcpPaypalGooglepay';
 
 	function bootstrapPayButton() {
 		if ( ! buttonConfig || ! ppcpConfig ) {
 			return;
 		}
 
-		const manager = new GooglepayManager( buttonConfig, ppcpConfig );
-		manager.init();
+		const manager = new GooglepayManager(
+			namespace,
+			buttonConfig,
+			ppcpConfig
+		);
 
 		setupButtonEvents( function () {
 			manager.reinit();
@@ -31,8 +35,12 @@ import moduleStorage from './Helper/GooglePayStorage';
 	}
 
 	function bootstrapCheckout() {
-		if ( context && ! [ 'continuation', 'checkout' ].includes( context ) ) {
-			// Context must be missing/empty, or "continuation"/"checkout" to proceed.
+		if (
+			context &&
+			! [ 'checkout' ].includes( context ) &&
+			! ( context === 'mini-cart' && ppcpConfig.continuation )
+		) {
+			// Context must be missing/empty, or "checkout"/checkout continuation to proceed.
 			return;
 		}
 		if ( ! CheckoutBootstrap.isPageWithCheckoutForm() ) {
@@ -78,10 +86,14 @@ import moduleStorage from './Helper/GooglePayStorage';
 		} );
 
 		// Load PayPal
-		loadPaypalScript( ppcpConfig, () => {
-			paypalLoaded = true;
-			tryToBoot();
-		} );
+		loadPayPalScript( namespace, ppcpConfig )
+			.then( () => {
+				paypalLoaded = true;
+				tryToBoot();
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to load PayPal script: ', error );
+			} );
 	} );
 } )( {
 	buttonConfig: window.wc_ppcp_googlepay,

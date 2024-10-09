@@ -36,7 +36,7 @@ return array(
 		return new ApmApplies(
 			$container->get( 'googlepay.supported-countries' ),
 			$container->get( 'googlepay.supported-currencies' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
@@ -106,6 +106,7 @@ return array(
 				'FR', // France
 				'DE', // Germany
 				'GR', // Greece
+				'HK', // Hong Kong
 				'HU', // Hungary
 				'IE', // Ireland
 				'IT', // Italy
@@ -119,6 +120,7 @@ return array(
 				'PL', // Poland
 				'PT', // Portugal
 				'RO', // Romania
+				'SG', // Singapore
 				'SK', // Slovakia
 				'SI', // Slovenia
 				'ES', // Spain
@@ -177,7 +179,6 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'api.shop.currency' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

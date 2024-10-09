@@ -12,6 +12,7 @@ const ppcpConfig = ppcpData.scriptData;
 
 const buttonData = wc.wcSettings.getSetting( 'ppcp-applepay_data' );
 const buttonConfig = buttonData.scriptData;
+const dataNamespace = 'ppcpBlocksEditorPaypalApplepay';
 
 if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
@@ -37,6 +38,10 @@ const ApplePayComponent = ( props ) => {
 		} );
 
 		ppcpConfig.url_params.components += ',applepay';
+
+		if ( props.isEditing ) {
+			ppcpConfig.data_namespace = dataNamespace;
+		}
 
 		// Load PayPal
 		loadPaypalScript( ppcpConfig, () => {

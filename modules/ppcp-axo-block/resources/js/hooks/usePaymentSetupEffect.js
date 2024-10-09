@@ -1,5 +1,13 @@
 import { useEffect, useCallback } from '@wordpress/element';
 
+/**
+ * Custom hook to handle payment setup effects in the checkout flow.
+ *
+ * @param {Function} onPaymentSetup      - Function to subscribe to payment setup events.
+ * @param {Function} handlePaymentSetup  - Callback to process payment setup.
+ * @param {Function} setPaymentComponent - Function to update the payment component state.
+ * @return {Object} Object containing the handlePaymentLoad function.
+ */
 const usePaymentSetupEffect = (
 	onPaymentSetup,
 	handlePaymentSetup,
@@ -17,6 +25,11 @@ const usePaymentSetupEffect = (
 		};
 	}, [ onPaymentSetup, handlePaymentSetup ] );
 
+	/**
+	 * Callback function to handle payment component loading.
+	 *
+	 * @param {Object} component - The loaded payment component.
+	 */
 	const handlePaymentLoad = useCallback(
 		( component ) => {
 			setPaymentComponent( component );

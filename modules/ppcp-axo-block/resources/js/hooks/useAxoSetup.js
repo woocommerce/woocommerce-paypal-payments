@@ -12,20 +12,46 @@ import useCustomerData from './useCustomerData';
 import useShippingAddressChange from './useShippingAddressChange';
 import useCardChange from './useCardChange';
 
-const useAxoSetup = ( ppcpConfig, fastlaneSdk, paymentComponent ) => {
+/**
+ * Custom hook to set up AXO functionality.
+ *
+ * @param {string}  namespace        - Namespace for the PayPal script.
+ * @param {Object}  ppcpConfig       - PayPal Checkout configuration.
+ * @param {boolean} isConfigLoaded   - Whether the PayPal config has loaded.
+ * @param {Object}  fastlaneSdk      - Fastlane SDK instance.
+ * @param {Object}  paymentComponent - Payment component instance.
+ * @return {boolean} Whether PayPal script has loaded.
+ */
+const useAxoSetup = (
+	namespace,
+	ppcpConfig,
+	isConfigLoaded,
+	fastlaneSdk,
+	paymentComponent
+) => {
+	// Get dispatch functions from the AXO store
 	const {
 		setIsAxoActive,
 		setIsAxoScriptLoaded,
 		setShippingAddress,
 		setCardDetails,
 	} = useDispatch( STORE_NAME );
-	const paypalLoaded = usePayPalScript( ppcpConfig );
+
+	// Check if PayPal script has loaded
+	const paypalLoaded = usePayPalScript(
+		namespace,
+		ppcpConfig,
+		isConfigLoaded
+	);
+
+	// Set up card and shipping address change handlers
 	const onChangeCardButtonClick = useCardChange( fastlaneSdk );
 	const onChangeShippingAddressClick = useShippingAddressChange(
 		fastlaneSdk,
 		setShippingAddress
 	);
 
+	// Get customer data and setter functions
 	const {
 		shippingAddress: wooShippingAddress,
 		billingAddress: wooBillingAddress,
@@ -33,17 +59,22 @@ const useAxoSetup = ( ppcpConfig, fastlaneSdk, paymentComponent ) => {
 		setBillingAddress: setWooBillingAddress,
 	} = useCustomerData();
 
+	// Set up phone sync handler
 	usePhoneSyncHandler( paymentComponent );
 
+	// Initialize class toggles on mount
 	useEffect( () => {
 		initializeClassToggles();
 	}, [] );
 
+	// Set up AXO functionality when PayPal and Fastlane are loaded
 	useEffect( () => {
 		setupWatermark( fastlaneSdk );
 		if ( paypalLoaded && fastlaneSdk ) {
 			setIsAxoScriptLoaded( true );
 			setIsAxoActive( true );
+
+			// Create and set up email lookup handler
 			const emailLookupHandler = createEmailLookupHandler(
 				fastlaneSdk,
 				setShippingAddress,

@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.9.2 - xxxx-xx-xx =
+= 2.9.2 - 2024-10-01 =
 * Enhancement - Add Fastlane support for Classic Checkout
 * Fix - Fatal error when Pay Later messaging configurator was disabled with a code snippet
 

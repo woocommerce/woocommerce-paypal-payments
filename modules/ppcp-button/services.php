@@ -126,7 +126,6 @@ return array(
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
-		$currency = $container->get( 'api.shop.currency' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -141,7 +140,7 @@ return array(
 			$environment,
 			$payment_token_repository,
 			$settings_status,
-			$currency,
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),

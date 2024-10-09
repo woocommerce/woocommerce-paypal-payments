@@ -2,29 +2,40 @@ import { useCallback } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { STORE_NAME } from '../stores/axoStore';
 
+/**
+ * Custom hook to handle payment setup in the checkout process.
+ *
+ * @param {Object} emitResponse          - Object containing response types.
+ * @param {Object} paymentComponent      - The payment component instance.
+ * @param {Object} tokenizedCustomerData - Tokenized customer data for payment.
+ * @return {Function} Callback function to handle payment setup.
+ */
 const useHandlePaymentSetup = (
 	emitResponse,
 	paymentComponent,
 	tokenizedCustomerData
 ) => {
+	// Select card details from the store
 	const { cardDetails } = useSelect(
 		( select ) => ( {
-			shippingAddress: select( STORE_NAME ).getShippingAddress(),
 			cardDetails: select( STORE_NAME ).getCardDetails(),
 		} ),
 		[]
 	);
 
 	return useCallback( async () => {
+		// Determine if it's a Ryan flow (saved card) based on the presence of card ID
 		const isRyanFlow = !! cardDetails?.id;
 		let cardToken = cardDetails?.id;
 
+		// If no card token and payment component exists, get a new token
 		if ( ! cardToken && paymentComponent ) {
 			cardToken = await paymentComponent
 				.getPaymentToken( tokenizedCustomerData )
 				.then( ( response ) => response.id );
 		}
 
+		// Handle error cases when card token is not available
 		if ( ! cardToken ) {
 			let reason = 'tokenization error';
 

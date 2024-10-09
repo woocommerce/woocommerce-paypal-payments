@@ -4,29 +4,27 @@ import {
 	registerPaymentMethod,
 } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import { loadCustomScript } from '@paypal/paypal-js';
+import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
 
 const buttonData = wc.wcSettings.getSetting( 'ppcp-googlepay_data' );
 const buttonConfig = buttonData.scriptData;
+const namespace = 'ppcpBlocksPaypalGooglepay';
 
 if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const GooglePayComponent = () => {
+const GooglePayComponent = ( props ) => {
 	const [ bootstrapped, setBootstrapped ] = useState( false );
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
-
-	const bootstrap = function () {
-		const manager = new GooglepayManager( buttonConfig, ppcpConfig );
-		manager.init();
-	};
+	const [ manager, setManager ] = useState( null );
 
 	useEffect( () => {
 		// Load GooglePay SDK
@@ -34,18 +32,38 @@ const GooglePayComponent = () => {
 			setGooglePayLoaded( true );
 		} );
 
+		ppcpConfig.url_params.components += ',googlepay';
+
 		// Load PayPal
-		loadPaypalScript( ppcpConfig, () => {
-			setPaypalLoaded( true );
-		} );
+		loadPayPalScript( namespace, ppcpConfig )
+			.then( () => {
+				setPaypalLoaded( true );
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to load PayPal script: ', error );
+			} );
 	}, [] );
 
 	useEffect( () => {
-		if ( ! bootstrapped && paypalLoaded && googlePayLoaded ) {
-			setBootstrapped( true );
-			bootstrap();
+		if ( paypalLoaded && googlePayLoaded && ! manager ) {
+			const ManagerClass = props.isEditing
+				? GooglepayManagerBlockEditor
+				: GooglepayManager;
+			const newManager = new ManagerClass(
+				namespace,
+				buttonConfig,
+				ppcpConfig
+			);
+			setManager( newManager );
 		}
-	}, [ paypalLoaded, googlePayLoaded ] );
+	}, [ paypalLoaded, googlePayLoaded, props.isEditing ] );
+
+	useEffect( () => {
+		if ( manager && ! bootstrapped ) {
+			setBootstrapped( true );
+			manager.init();
+		}
+	}, [ manager, bootstrapped ] );
 
 	return (
 		<div
