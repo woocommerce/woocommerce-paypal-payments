@@ -39,7 +39,9 @@ const GooglepayButton = ( { namespace, buttonConfig, ppcpConfig } ) => {
 
 	useEffect( () => {
 		if ( googlepayButton ) {
-			setButtonHtml( googlepayButton.outerHTML );
+			const hideLoader =
+				'<style>.block-editor-iframe__html .gpay-card-info-animated-progress-bar-container {display:none !important}</style>';
+			setButtonHtml( googlepayButton.outerHTML + hideLoader );
 		}
 	}, [ googlepayButton ] );
 
