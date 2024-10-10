@@ -29,11 +29,6 @@ const useGooglepayApiToGenerateButton = (
 			environment: 'TEST',
 		} );
 
-		console.log( 'paymentsClient', paymentsClient );
-
-		console.log( 'googlepayConfig', googlepayConfig );
-		console.log( 'buttonStyles?.Default', buttonStyles?.Default );
-
 		const googlePayButtonOptions = {
 			allowedPaymentMethods: googlepayConfig.allowedPaymentMethods,
 			buttonColor: buttonConfig.buttonColor || 'black',
@@ -44,12 +39,10 @@ const useGooglepayApiToGenerateButton = (
 
 		const button = paymentsClient.createButton( {
 			...googlePayButtonOptions,
-			onClick: () => {
-				console.log( 'Google Pay button clicked' );
+			onClick: ( event ) => {
+				event.preventDefault();
 			},
 		} );
-
-		console.log( 'Google Pay Button options', googlePayButtonOptions );
 
 		setGooglepayButton( button );
 

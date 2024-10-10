@@ -8,9 +8,6 @@ const GooglepayButton = ( { namespace, buttonConfig, ppcpConfig } ) => {
 	const [ buttonHtml, setButtonHtml ] = useState( '' );
 	const [ buttonElement, setButtonElement ] = useState( null );
 	const [ componentFrame, setComponentFrame ] = useState( null );
-
-	const buttonLoader = '<div>Loading Google Pay...</div>';
-
 	const isPayPalLoaded = usePayPalScript( namespace, ppcpConfig );
 
 	const isGooglepayLoaded = useGooglepayScript(
@@ -46,7 +43,7 @@ const GooglepayButton = ( { namespace, buttonConfig, ppcpConfig } ) => {
 	return (
 		<div
 			ref={ setButtonElement }
-			dangerouslySetInnerHTML={ { __html: buttonHtml || buttonLoader } }
+			dangerouslySetInnerHTML={ { __html: buttonHtml } }
 		/>
 	);
 };
