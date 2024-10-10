@@ -15,6 +15,7 @@
 * Fix - Google Pay preview config and style #2661
 * Fix - Improve context detection #2631
 * Fix - Check that get_the_ID is valid before using #2573
+* Enhancement - Enhancement - Add Fastlane support for Checkout block
 * Enhancement - Multiple calls to POST /v1/oauth2/token?grant_type=client_credentials&response_type=id_token #2671
 * Enhancement - Fastlane update shipping options & taxes when changing address #2665
 * Enhancement - Extend supported ACDC countries and currencies to HK and SG #2447
