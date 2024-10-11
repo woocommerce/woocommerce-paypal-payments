@@ -16,9 +16,6 @@ import {
  */
 const WatermarkManager = ( { fastlaneSdk } ) => {
 	// Select relevant states from the AXO store
-	const isGuest = useSelect( ( select ) =>
-		select( STORE_NAME ).getIsGuest()
-	);
 	const isAxoActive = useSelect( ( select ) =>
 		select( STORE_NAME ).getIsAxoActive()
 	);
@@ -34,7 +31,6 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 				isAxoActive,
 				isAxoScriptLoaded,
 				fastlaneSdk,
-				isGuest,
 			} );
 		} else {
 			// Remove watermark when AXO is inactive and not loading
@@ -43,7 +39,7 @@ const WatermarkManager = ( { fastlaneSdk } ) => {
 
 		// Cleanup function to remove watermark on unmount
 		return removeWatermark;
-	}, [ fastlaneSdk, isGuest, isAxoActive, isAxoScriptLoaded ] );
+	}, [ fastlaneSdk, isAxoActive, isAxoScriptLoaded ] );
 
 	// This component doesn't render anything directly
 	return null;
