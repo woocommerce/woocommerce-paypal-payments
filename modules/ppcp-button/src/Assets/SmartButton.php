@@ -1330,6 +1330,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if ( class_exists( '\WCS_Manual_Renewal_Manager' ) ) {
+			/** @psalm-suppress UndefinedClass */
 			$localize['manualRenewalEnabled'] = \WCS_Manual_Renewal_Manager::is_manual_renewal_enabled();
 		}
 
