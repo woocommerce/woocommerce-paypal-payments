@@ -112,13 +112,11 @@ export const renderWatermarkContent = ( content ) => {
  * @param {boolean} params.isAxoActive       - Whether AXO is active.
  * @param {boolean} params.isAxoScriptLoaded - Whether AXO script is loaded.
  * @param {Object}  params.fastlaneSdk       - The Fastlane SDK instance.
- * @param {boolean} params.isGuest           - Whether the user is a guest.
  */
 export const updateWatermarkContent = ( {
 	isAxoActive,
 	isAxoScriptLoaded,
 	fastlaneSdk,
-	isGuest,
 } ) => {
 	if ( ! isAxoActive && ! isAxoScriptLoaded ) {
 		// Show loading spinner
@@ -134,7 +132,7 @@ export const updateWatermarkContent = ( {
 			createElement( Watermark, {
 				fastlaneSdk,
 				name: 'fastlane-watermark-email',
-				includeAdditionalInfo: isGuest,
+				includeAdditionalInfo: true,
 			} )
 		);
 	} else {
