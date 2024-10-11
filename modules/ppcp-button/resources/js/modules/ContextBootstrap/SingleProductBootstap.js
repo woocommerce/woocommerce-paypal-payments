@@ -234,6 +234,11 @@ class SingleProductBootstap {
 			this.errorHandler
 		);
 
+        if(!this.gateway.vaultingEnabled){
+            return;
+        }
+
+
 		if (
 			PayPalCommerceGateway.data_client_id.has_subscriptions &&
 			PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
