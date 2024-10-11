@@ -19,12 +19,16 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const ApplePayComponent = ( props ) => {
+const ApplePayComponent = ( { isEditing } ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ applePayLoaded, setApplePayLoaded ] = useState( false );
 	const wrapperRef = useRef( null );
 
 	useEffect( () => {
+		if ( isEditing ) {
+			return;
+		}
+
 		// Load ApplePay SDK
 		loadCustomScript( { url: buttonConfig.sdk_url } ).then( () => {
 			setApplePayLoaded( true );
@@ -40,21 +44,31 @@ const ApplePayComponent = ( props ) => {
 			.catch( ( error ) => {
 				console.error( 'Failed to load PayPal script: ', error );
 			} );
-	}, [] );
+	}, [ isEditing ] );
 
 	useEffect( () => {
-		if ( ! paypalLoaded || ! applePayLoaded ) {
+		if ( isEditing || ! paypalLoaded || ! applePayLoaded ) {
 			return;
 		}
 
-		const ManagerClass = props.isEditing
+		const ManagerClass = isEditing
 			? ApplePayManagerBlockEditor
 			: ApplePayManager;
 
 		buttonConfig.reactWrapper = wrapperRef.current;
 
 		new ManagerClass( namespace, buttonConfig, ppcpConfig );
-	}, [ paypalLoaded, applePayLoaded, props.isEditing ] );
+	}, [ paypalLoaded, applePayLoaded, isEditing ] );
+
+	if ( isEditing ) {
+		return (
+			<ApplePayManagerBlockEditor
+				namespace={ namespace }
+				buttonConfig={ buttonConfig }
+				ppcpConfig={ ppcpConfig }
+			/>
+		);
+	}
 
 	return (
 		<div
