@@ -69,8 +69,10 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
 
+				$settings = $c->get( 'wcgateway.settings' );
+
 				// Include ACDC in the Block Checkout only in case Axo doesn't exist or is not available or the user is logged in.
-				if ( ! $c->has( 'axoblock.available' ) || ! $c->get( 'axoblock.available' ) || is_user_logged_in() ) {
+				if ( ! $settings->get( 'axo_enabled' ) || is_user_logged_in() ) {
 					$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 				}
 			}
