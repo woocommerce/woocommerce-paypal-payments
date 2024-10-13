@@ -51,7 +51,6 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 
 	public function testCreateOrder()
 	{
-		$this->markTestSkipped('must be revisited.');
 		list($items, $paymentSource, $headers) = $this->setStubs();
 
 		$response = [
@@ -64,7 +63,7 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 		$this->logger->shouldReceive('debug');
 
 		$wc_order = Mockery::mock(WC_Order::class);
-
+		$wc_order->shouldReceive('get_total_tax')->andReturn('5.00');
 
 		$result = $this->testee->create($items, $paymentSource, $wc_order );
 		$this->assertInstanceOf(Order::class, $result);
@@ -72,7 +71,6 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 
 	public function testCreateOrderWpError()
 	{
-		$this->markTestSkipped('must be revisited.');
 		list($items, $paymentSource) = $this->setStubsForError();
 
 		$wpError = Mockery::mock(\WP_Error::class);
@@ -82,6 +80,7 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 
 		$this->logger->shouldReceive('debug');
 		$wc_order = Mockery::mock(WC_Order::class);
+		$wc_order->shouldReceive('get_total_tax')->andReturn('5.00');
 
 		$this->expectException(\RuntimeException::class);
 		$this->testee->create($items, $paymentSource, $wc_order);
@@ -89,7 +88,6 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 
 	public function testCreateOrderApiError()
 	{
-		$this->markTestSkipped('must be revisited.');
 		list($items, $paymentSource) = $this->setStubsForError();
 
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
@@ -104,8 +102,9 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 		expect('wp_remote_retrieve_response_code')->with($response)->andReturn(500);
 
 		$this->logger->shouldReceive('debug');
-
 		$wc_order = Mockery::mock(WC_Order::class);
+		$wc_order->shouldReceive('get_total_tax')->andReturn('5.00');
+
 		$this->expectException(PayPalApiException::class);
 		$this->testee->create($items, $paymentSource, $wc_order);
 	}
@@ -123,13 +122,9 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 			});
 
 		$this->fraudnet->shouldReceive('session_id')->andReturn('');
-
 		$purchaseUnit = Mockery::mock(PurchaseUnit::class);
-		$purchaseUnit->shouldReceive('to_array')->andReturn([
-			'items' => [],
-		]);
+		$purchaseUnit->shouldReceive('to_array')->andReturn($this->purchaseUnitData());
 		$items = [$purchaseUnit];
-
 		$paymentSource = Mockery::mock(PaymentSource::class);
 		$paymentSource->shouldReceive('to_array')->andReturn([]);
 
@@ -145,12 +140,50 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 	{
 		$this->fraudnet->shouldReceive('session_id')->andReturn('');
 		$purchaseUnit = Mockery::mock(PurchaseUnit::class);
-		$purchaseUnit->shouldReceive('to_array')->andReturn([
-			'items' => [],
-		]);
+		$purchaseUnit->shouldReceive('to_array')->andReturn($this->purchaseUnitData());
 		$items = [$purchaseUnit];
 		$paymentSource = Mockery::mock(PaymentSource::class);
 		$paymentSource->shouldReceive('to_array')->andReturn([]);
 		return array($items, $paymentSource);
+	}
+
+	/**
+	 * @return array
+	 */
+	private function purchaseUnitData(): array
+	{
+		return [
+			'amount' => [
+				'value' => '52.00',
+				'breakdown' => [
+					'item_total' => [
+						'value' => '42.00',
+					],
+					'shipping' => [
+						'value' => '5.00',
+					],
+					'tax_total' => [
+						'value' => '5.00',
+					],
+				],
+			],
+			'items' => [
+				0 => [
+					'name' => '',
+					'unit_amount' => [
+						'currency_code' => 'EUR',
+						'value' => '42.00',
+					],
+					'quantity' => 1,
+					'description' => '',
+					'sku' => '',
+					'tax' => [
+						'currency_code' => 'EUR',
+						'value' => '5.00',
+					],
+					'tax_rate' => '19',
+				],
+			],
+		];
 	}
 }
