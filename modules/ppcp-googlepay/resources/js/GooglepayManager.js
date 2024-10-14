@@ -3,7 +3,8 @@ import GooglepayButton from './GooglepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class GooglepayManager {
-	constructor( buttonConfig, ppcpConfig ) {
+	constructor( namespace, buttonConfig, ppcpConfig ) {
+		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.googlePayConfig = null;
@@ -52,7 +53,9 @@ class GooglepayManager {
 		try {
 			if ( ! this.googlePayConfig ) {
 				// Gets GooglePay configuration of the PayPal merchant.
-				this.googlePayConfig = await paypal.Googlepay().config();
+				this.googlePayConfig = await window[ this.namespace ]
+					.Googlepay()
+					.config();
 			}
 
 			if ( ! this.transactionInfo ) {

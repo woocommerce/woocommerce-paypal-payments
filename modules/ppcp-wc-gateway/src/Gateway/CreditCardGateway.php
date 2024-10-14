@@ -263,8 +263,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$default_support = array(
 			'products',
 			'refunds',
-			'tokenization',
-			'add_payment_method',
 		);
 
 		$this->supports = array_merge(

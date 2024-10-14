@@ -12,13 +12,22 @@ import {
 import { restoreOriginalFields } from '../helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
 
+/**
+ * Custom hook to handle cleanup of AXO functionality.
+ * This hook ensures that all AXO-related changes are reverted when the component unmounts (a different payment method gets selected).
+ */
 const useAxoCleanup = () => {
-	const { setIsAxoActive, setIsGuest } = useDispatch( STORE_NAME );
+	// Get dispatch functions from the AXO store
+	const { setIsAxoActive, setIsGuest, setIsEmailLookupCompleted } =
+		useDispatch( STORE_NAME );
+
+	// Get functions to update WooCommerce shipping and billing addresses
 	const {
 		setShippingAddress: updateWooShippingAddress,
 		setBillingAddress: updateWooBillingAddress,
 	} = useCustomerData();
 
+	// Effect to restore original WooCommerce fields on unmount
 	useEffect( () => {
 		return () => {
 			log( 'Cleaning up: Restoring WooCommerce fields' );
@@ -29,14 +38,22 @@ const useAxoCleanup = () => {
 		};
 	}, [ updateWooShippingAddress, updateWooBillingAddress ] );
 
+	// Effect to clean up AXO-specific functionality on unmount
 	useEffect( () => {
 		return () => {
 			log( 'Cleaning up Axo component' );
+
+			// Reset AXO state
 			setIsAxoActive( false );
 			setIsGuest( true );
+			setIsEmailLookupCompleted( false );
+
+			// Remove AXO UI elements
 			removeShippingChangeButton();
 			removeCardChangeButton();
 			removeWatermark();
+
+			// Remove email functionality if it was set up
 			if ( isEmailFunctionalitySetup() ) {
 				log( 'Removing email functionality' );
 				removeEmailFunctionality();

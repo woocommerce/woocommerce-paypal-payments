@@ -91,7 +91,7 @@ class MyBankPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'mybank',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }

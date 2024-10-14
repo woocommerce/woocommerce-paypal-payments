@@ -417,13 +417,14 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 		);
 
 		add_filter(
-			'woocommerce_paypal_payments_credit_card_gateway_vault_supports',
+			'woocommerce_paypal_payments_credit_card_gateway_supports',
 			function( array $supports ) use ( $c ): array {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
 				if ( $settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' ) ) {
 					$supports[] = 'tokenization';
+					$supports[] = 'add_payment_method';
 				}
 
 				return $supports;

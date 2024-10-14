@@ -91,7 +91,7 @@ class EPSPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $this->gateway->title,
 			'description' => $this->gateway->description,
-			'icon'        => 'eps',
+			'icon'        => $this->gateway->icon,
 		);
 	}
 }

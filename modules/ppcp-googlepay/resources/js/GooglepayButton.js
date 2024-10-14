@@ -5,7 +5,6 @@ import {
 import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
-import TransactionInfo from './Helper/TransactionInfo';
 import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/PayerData';
 import moduleStorage from './Helper/GooglePayStorage';
@@ -42,17 +41,11 @@ import moduleStorage from './Helper/GooglePayStorage';
  *
  * @see https://developers.google.com/pay/api/web/reference/client
  * @typedef {Object} PaymentsClient
- * @property {Function}            createButton         - The convenience method is used to
- *                                                      generate a Google Pay payment button styled with the latest Google Pay branding for
- *                                                      insertion into a webpage.
- * @property {Function}            isReadyToPay         - Use the isReadyToPay(isReadyToPayRequest)
- *                                                      method to determine a user's ability to return a form of payment from the Google Pay API.
- * @property {(Object) => Promise} loadPaymentData      - This method presents a Google Pay payment
- *                                                      sheet that allows selection of a payment method and optionally configured parameters
- * @property {Function}            onPaymentAuthorized  - This method is called when a payment is
- *                                                      authorized in the payment sheet.
- * @property {Function}            onPaymentDataChanged - This method handles payment data changes
- *                                                      in the payment sheet such as shipping address and shipping options.
+ * @property {Function}            createButton         - The convenience method is used to generate a Google Pay payment button styled with the latest Google Pay branding for insertion into a webpage.
+ * @property {Function}            isReadyToPay         - Use the isReadyToPay(isReadyToPayRequest) method to determine a user's ability to return a form of payment from the Google Pay API.
+ * @property {(Object) => Promise} loadPaymentData      - This method presents a Google Pay payment sheet that allows selection of a payment method and optionally configured parameters
+ * @property {Function}            onPaymentAuthorized  - This method is called when a payment is authorized in the payment sheet.
+ * @property {Function}            onPaymentDataChanged - This method handles payment data changes in the payment sheet such as shipping address and shipping options.
  */
 
 /**
@@ -62,18 +55,12 @@ import moduleStorage from './Helper/GooglePayStorage';
  * @typedef {Object} TransactionInfo
  * @property {string} currencyCode     - Required. The ISO 4217 alphabetic currency code.
  * @property {string} countryCode      - Optional. required for EEA countries,
- * @property {string} transactionId    - Optional. A unique ID that identifies a facilitation
- *                                     attempt. Highly encouraged for troubleshooting.
- * @property {string} totalPriceStatus - Required. [ESTIMATED|FINAL] The status of the total price
- *                                     used:
- * @property {string} totalPrice       - Required. Total monetary value of the transaction with an
- *                                     optional decimal precision of two decimal places.
- * @property {Array}  displayItems     - Optional. A list of cart items shown in the payment sheet
- *                                     (e.g. subtotals, sales taxes, shipping charges, discounts etc.).
- * @property {string} totalPriceLabel  - Optional. Custom label for the total price within the
- *                                     display items.
- * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the
- *                                     Google Pay payment sheet.
+ * @property {string} transactionId    - Optional. A unique ID that identifies a facilitation attempt. Highly encouraged for troubleshooting.
+ * @property {string} totalPriceStatus - Required. [ESTIMATED|FINAL] The status of the total price used.
+ * @property {string} totalPrice       - Required. Total monetary value of the transaction with an optional decimal precision of two decimal places.
+ * @property {Array}  displayItems     - Optional. A list of cart items shown in the payment sheet (e.g. subtotals, sales taxes, shipping charges, discounts etc.).
+ * @property {string} totalPriceLabel  - Optional. Custom label for the total price within the display items.
+ * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the Google Pay payment sheet.
  */
 
 function payerDataFromPaymentResponse( response ) {

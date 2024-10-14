@@ -25,7 +25,7 @@ return array(
 			$container->get( 'api.endpoint.billing-plans' ),
 			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.payment-preferences' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

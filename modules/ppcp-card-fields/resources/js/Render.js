@@ -8,11 +8,17 @@ function renderField( cardField, inputField ) {
 
 	// Insert the PayPal card field after the original input field.
 	const styles = cardFieldStyles( inputField );
-	cardField( { style: { input: styles } } ).render( inputField.parentNode );
+    const fieldOptions = {style: { input: styles },};
 
-	// Hide the original input field.
-	hide( inputField, true );
-	inputField.hidden = true;
+    if ( inputField.getAttribute( 'placeholder' ) ) {
+        fieldOptions.placeholder = inputField.getAttribute( 'placeholder' );
+    }
+
+    cardField( fieldOptions ).render( inputField.parentNode );
+
+    // Hide the original input field.
+    hide( inputField, true );
+    inputField.hidden = true;
 }
 
 export function renderFields( cardFields ) {

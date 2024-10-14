@@ -174,9 +174,6 @@ $fast-transition-duration: 0.5s;
 		grid-area: watermark;
 		justify-self: end;
 		grid-column: 1;
-	}
-
-	&:not(.wc-block-axo-is-authenticated) .wc-block-checkout-axo-block-watermark-container {
 		margin-top: 0;
 	}
 
@@ -259,8 +256,8 @@ a.wc-block-axo-change-link {
 .wp-block-woocommerce-checkout-fields-block:not(.wc-block-axo-is-loaded) {
 	.wc-block-checkout-axo-block-watermark-container {
 		display: flex;
-		justify-content: left;
-		margin-left: 10px;
+		justify-content: right;
+		margin-right: 10px;
 		align-items: center;
 		position: relative;
 
@@ -300,4 +297,14 @@ a.wc-block-axo-change-link {
 // 10. Shipping Fields
 #shipping-fields .wc-block-components-checkout-step__heading {
 	display: flex;
+}
+
+// 11. Fastlane modal info message fix
+.wc-block-components-text-input {
+	.wc-block-components-form &,
+	& {
+		paypal-watermark {
+			white-space: wrap;
+		}
+	}
 }

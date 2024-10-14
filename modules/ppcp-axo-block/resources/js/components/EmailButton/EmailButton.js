@@ -2,7 +2,15 @@ import { STORE_NAME } from '../../stores/axoStore';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
+/**
+ * Renders a submit button for email input in the AXO checkout process.
+ *
+ * @param {Object}   props
+ * @param {Function} props.handleSubmit - Function to handle button click/submit.
+ * @return {JSX.Element|null} The rendered button or null if conditions are not met.
+ */
 const EmailButton = ( { handleSubmit } ) => {
+	// Select relevant states from the AXO store
 	const { isGuest, isAxoActive, isEmailSubmitted } = useSelect(
 		( select ) => ( {
 			isGuest: select( STORE_NAME ).getIsGuest(),
@@ -11,6 +19,7 @@ const EmailButton = ( { handleSubmit } ) => {
 		} )
 	);
 
+	// Only render the button for guests when AXO is active
 	if ( ! isGuest || ! isAxoActive ) {
 		return null;
 	}
@@ -24,6 +33,7 @@ const EmailButton = ( { handleSubmit } ) => {
 			}` }
 			disabled={ isEmailSubmitted }
 		>
+			{ /* Button text */ }
 			<span
 				className="wc-block-components-button__text"
 				style={ {
@@ -32,6 +42,7 @@ const EmailButton = ( { handleSubmit } ) => {
 			>
 				{ __( 'Continue', 'woocommerce-paypal-payments' ) }
 			</span>
+			{ /* Loading spinner */ }
 			{ isEmailSubmitted && (
 				<span
 					className="wc-block-components-spinner"
