@@ -74,7 +74,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				assert( $settings instanceof Settings );
 
 				// Include ACDC in the Block Checkout only in case Axo doesn't exist or is not available or the user is logged in.
-				if ( ($settings->has( 'axo_enabled' ) && ! $settings->get( 'axo_enabled' )) || is_user_logged_in() ) {
+				if ( ( $settings->has( 'axo_enabled' ) && ! $settings->get( 'axo_enabled' ) ) || is_user_logged_in() ) {
 					$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 				}
 			}
