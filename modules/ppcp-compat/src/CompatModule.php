@@ -79,12 +79,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			$this->initialize_wc_bookings_compat_layer( $logger );
 		}
 
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
-			function() {
-				delete_transient( 'ppcp_has_ppec_subscriptions' );
-			}
-		);
+		add_action( 'woocommerce_paypal_payments_gateway_migrate', static fn() => delete_transient( 'ppcp_has_ppec_subscriptions' ) );
 
 		return true;
 	}
