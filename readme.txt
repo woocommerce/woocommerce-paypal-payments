@@ -197,6 +197,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Axo Block: Always display the Fastlane watermark in the includeAdditionalInfo mode #2690
 * Fix - Axo Block: Display card fields for authenticated cardless profiles #2672
 * Fix - Google Pay: Fix button preview in the editor #2688
+* Fix - ACDC gateway not visible on the block Checkout for logged-out users #2693
 * Enhancement - Enhancement - Add Fastlane support for Checkout block
 * Enhancement - Multiple calls to POST /v1/oauth2/token?grant_type=client_credentials&response_type=id_token #2671
 * Enhancement - Fastlane update shipping options & taxes when changing address #2665
