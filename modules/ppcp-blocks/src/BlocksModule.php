@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class BlocksModule
@@ -70,9 +71,10 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
 
 				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
 
 				// Include ACDC in the Block Checkout only in case Axo doesn't exist or is not available or the user is logged in.
-				if ( ! $settings->get( 'axo_enabled' ) || is_user_logged_in() ) {
+				if ( $settings->has( 'axo_enabled' ) && ! $settings->get( 'axo_enabled' ) || is_user_logged_in() ) {
 					$payment_method_registry->register( $c->get( 'blocks.advanced-card-method' ) );
 				}
 			}
