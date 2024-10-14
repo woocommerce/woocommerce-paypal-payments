@@ -406,7 +406,7 @@ class RenewalHandler {
 				return;
 			}
 
-			if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+			if ( $wc_order->get_payment_method() === PayPalGateway::ID || $wc_order->get_payment_method() === 'ppec_paypal' ) {
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
 					$shipping_preference,
