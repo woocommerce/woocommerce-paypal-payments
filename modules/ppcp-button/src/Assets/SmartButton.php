@@ -1319,7 +1319,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 			'productType'                             => null,
-			'manualRenewalEnabled'                    => '',
+			'manualRenewalEnabled'                    => false,
 		);
 
 		if ( is_product() ) {
@@ -1330,7 +1330,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if ( class_exists( '\WCS_Manual_Renewal_Manager' ) ) {
-			/** @psalm-suppress UndefinedClass */
+			/**
+			 * UndefinedClass We verify the existence of the class prior to invoking a static method.
+			 *
+			 * @psalm-suppress
+			 */
 			$localize['manualRenewalEnabled'] = \WCS_Manual_Renewal_Manager::is_manual_renewal_enabled();
 		}
 
