@@ -123,6 +123,13 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $all_funding_sources;
 
 	/**
+	 * Whether shipping details must be collected during checkout; i.e. paying for physical goods?
+	 *
+	 * @var bool
+	 */
+	private $need_shipping;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string                        $module_url The url of this module.
@@ -139,6 +146,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param string                        $place_order_button_text The text for the standard "Place order" button.
 	 * @param string                        $place_order_button_description The text for additional "Place order" description.
 	 * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
+	 * @param bool                          $need_shipping Whether shipping details are required for the purchase.
 	 */
 	public function __construct(
 		string $module_url,
@@ -154,7 +162,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		bool $use_place_order,
 		string $place_order_button_text,
 		string $place_order_button_description,
-		array $all_funding_sources
+		array $all_funding_sources,
+		bool $need_shipping
 	) {
 		$this->name                           = PayPalGateway::ID;
 		$this->module_url                     = $module_url;
@@ -171,6 +180,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$this->place_order_button_text        = $place_order_button_text;
 		$this->place_order_button_description = $place_order_button_description;
 		$this->all_funding_sources            = $all_funding_sources;
+		$this->need_shipping                  = $need_shipping;
 	}
 
 	/**
@@ -254,6 +264,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 				),
 			),
 			'scriptData'                  => $script_data,
+			'needShipping'                => $this->need_shipping,
 		);
 	}
 

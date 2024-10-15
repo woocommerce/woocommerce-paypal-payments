@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -48,11 +49,11 @@ class SettingsPageAssets {
 	private $client_id;
 
 	/**
-	 * 3-letter currency code of the shop.
+	 * The getter of the 3-letter currency code of the shop.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * 2-letter country code of the shop.
@@ -124,7 +125,7 @@ class SettingsPageAssets {
 	 * @param string                    $version                            The assets version.
 	 * @param SubscriptionHelper        $subscription_helper The subscription helper.
 	 * @param string                    $client_id The PayPal SDK client ID.
-	 * @param string                    $currency 3-letter currency code of the shop.
+	 * @param CurrencyGetter            $currency The getter of the 3-letter currency code of the shop.
 	 * @param string                    $country 2-letter country code of the shop.
 	 * @param Environment               $environment The environment object.
 	 * @param bool                      $is_pay_later_button_enabled Whether Pay Later button is enabled either for checkout, cart or product page.
@@ -140,7 +141,7 @@ class SettingsPageAssets {
 		string $version,
 		SubscriptionHelper $subscription_helper,
 		string $client_id,
-		string $currency,
+		CurrencyGetter $currency,
 		string $country,
 		Environment $environment,
 		bool $is_pay_later_button_enabled,
@@ -224,7 +225,7 @@ class SettingsPageAssets {
 				array(
 					'is_subscriptions_plugin_active' => $this->subscription_helper->plugin_is_active(),
 					'client_id'                      => $this->client_id,
-					'currency'                       => $this->currency,
+					'currency'                       => $this->currency->get(),
 					'country'                        => $this->country,
 					'environment'                    => $this->environment->current_environment(),
 					'integration_date'               => PAYPAL_INTEGRATION_DATE,

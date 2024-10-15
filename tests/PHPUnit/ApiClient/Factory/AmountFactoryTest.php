@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Helper\CurrencyGetterStub;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -15,6 +16,7 @@ use function Brain\Monkey\Functions\when;
 class AmountFactoryTest extends TestCase
 {
 	private $currency = 'EUR';
+	private $currencyGetter;
 
 	private $itemFactory;
 	private $moneyFactory;
@@ -26,7 +28,8 @@ class AmountFactoryTest extends TestCase
 
 		$this->itemFactory = Mockery::mock(ItemFactory::class);
 		$this->moneyFactory = new MoneyFactory();
-		$this->testee = new AmountFactory($this->itemFactory, $this->moneyFactory, $this->currency);
+		$this->currencyGetter = new CurrencyGetterStub($this->currency);
+		$this->testee = new AmountFactory($this->itemFactory, $this->moneyFactory, $this->currencyGetter);
 	}
 
 	public function testFromWcCartDefault()

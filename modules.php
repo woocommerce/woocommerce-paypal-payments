@@ -31,6 +31,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 		( require "$modules_dir/ppcp-paypal-subscriptions/module.php" )(),
+		( require "$modules_dir/ppcp-local-alternative-payment-methods/module.php" )(),
 	);
 	// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 
@@ -83,9 +84,10 @@ return function ( string $root_dir ): iterable {
 
 	if ( apply_filters(
 		'woocommerce.feature-flags.woocommerce_paypal_payments.axo_enabled',
-		getenv( 'PCP_AXO_ENABLED' ) === '1'
+		getenv( 'PCP_AXO_ENABLED' ) !== '0'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-axo/module.php" )();
+		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
 	}
 
 	return $modules;

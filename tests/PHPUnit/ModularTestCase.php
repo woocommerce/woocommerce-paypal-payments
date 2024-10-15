@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use function Brain\Monkey\Functions\when;
 
@@ -69,16 +69,19 @@ class ModularTestCase extends TestCase
 			}
 		], $overriddenServices);
 
-		$module = new class ($overriddenServices) implements ModuleInterface {
+		$module = new class ($overriddenServices) implements ServiceModule, ExecutableModule {
+			use ModuleClassNameIdTrait;
+
 			public function __construct(array $services) {
 				$this->services = $services;
 			}
 
-			public function setup(): ServiceProviderInterface{
-				return new ServiceProvider($this->services, []);
+			public function services(): array {
+				return $this->services;
 			}
 
-			public function run(ContainerInterface $c): void {
+			public function run(ContainerInterface $c): bool {
+				return true;
 			}
 		};
 

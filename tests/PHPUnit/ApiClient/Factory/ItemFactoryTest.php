@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Helper\CurrencyGetterStub;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -12,9 +13,16 @@ use Mockery;
 
 class ItemFactoryTest extends TestCase
 {
-	private $currency = 'EUR';
+	private $currency;
 
-    public function testFromCartDefault()
+	public function setUp(): void
+	{
+		parent::setUp();
+		
+		$this->currency = new CurrencyGetterStub();
+	}
+
+	public function testFromCartDefault()
     {
         $testee = new ItemFactory($this->currency);
 
@@ -169,7 +177,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
         $order
             ->expects('get_currency')
-            ->andReturn($this->currency);
+            ->andReturn($this->currency->get());
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -228,7 +236,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
         $order
             ->expects('get_currency')
-            ->andReturn($this->currency);
+            ->andReturn($this->currency->get());
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -357,7 +365,7 @@ class ItemFactoryTest extends TestCase
             'quantity' => 1,
             'unit_amount' => (object) [
                 'value' => 1,
-                'currency_code' => $this->currency,
+                'currency_code' => $this->currency->get(),
             ],
             'category' => Item::DIGITAL_GOODS,
         ];

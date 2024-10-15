@@ -1,0 +1,310 @@
+// Variables
+$border-color: hsla(0, 0%, 7%, 0.11);
+$transition-duration: 0.3s;
+$fast-transition-duration: 0.5s;
+
+// Mixins
+@mixin flex-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+@mixin flex-space-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+// 1. AXO Block Radio Label
+#ppcp-axo-block-radio-label {
+	@include flex-space-between;
+	width: 100%;
+	padding-right: 1em;
+}
+
+// 2. AXO Block Card
+.wc-block-checkout-axo-block-card {
+	@include flex-center;
+	width: 100%;
+	margin-bottom: 2em;
+
+	&__inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		max-width: 300px;
+		width: 100%;
+	}
+
+	&__content {
+		box-sizing: border-box;
+		aspect-ratio: 1.586;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		border: 1px solid $border-color;
+		font-size: 0.875em;
+		font-family: monospace;
+		padding: 1em;
+		margin: 1em 0;
+		border-radius: 4px;
+		width: 100%;
+	}
+
+	&__meta {
+		@include flex-space-between;
+		width: 100%;
+
+		&-digits {
+			letter-spacing: 2px;
+		}
+
+		&:last-child {
+			align-self: flex-end;
+		}
+	}
+
+	&__watermark {
+		align-self: flex-end;
+	}
+
+	&__edit {
+		background-color: transparent;
+		border: 0;
+		color: inherit;
+		cursor: pointer;
+		display: block;
+		font-family: inherit;
+		margin: 0 0 0 auto;
+		font-size: 0.875em;
+		font-weight: normal;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+}
+
+.wc-block-axo-block-card__meta-icon {
+	max-height: 25px;
+}
+
+// 3. Express Payment Block
+.wp-block-woocommerce-checkout-express-payment-block {
+	transition: opacity $transition-duration ease-in,
+	scale $transition-duration ease-in,
+	display $transition-duration ease-in;
+	transition-behavior: allow-discrete;
+
+	@starting-style {
+		opacity: 0;
+		scale: 1.1;
+	}
+
+	&.wc-block-axo-is-authenticated {
+		opacity: 0;
+		scale: 0.9;
+		display: none !important;
+		transition-duration: $fast-transition-duration;
+		transition-timing-function: var(--ease-out-5);
+	}
+}
+
+// 4. AXO Loaded State
+.wc-block-axo-is-loaded {
+	// 4.1 Text Input
+	.wc-block-components-text-input {
+		display: flex;
+		margin-bottom: 0.5em;
+	}
+
+	// 4.2 Hidden Fields
+	&:not(.wc-block-axo-email-lookup-completed) {
+		#shipping-fields,
+		#billing-fields,
+		#shipping-option,
+		#order-notes,
+		.wp-block-woocommerce-checkout-terms-block,
+		.wp-block-woocommerce-checkout-actions-block {
+			display: none;
+		}
+	}
+
+	// 4.3 Authenticated State
+	&.wc-block-axo-is-authenticated .wc-block-components-text-input {
+		gap: 14px 0;
+	}
+
+	// 4.4 Contact Information Block
+	.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input {
+		display: grid;
+		grid-template-areas:
+     "input"
+     "button"
+     "watermark"
+     "error";
+		grid-template-columns: 1fr;
+		gap: 6px;
+		align-items: start;
+
+		input[type="email"] {
+			grid-area: input;
+			width: 100%;
+		}
+	}
+
+	#email {
+		align-self: stretch;
+	}
+
+	// 4.5 Email Submit Button
+	.wc-block-axo-email-submit-button-container {
+		grid-area: button;
+		align-self: stretch;
+
+		.wc-block-components-button {
+			white-space: nowrap;
+			width: 100%;
+		}
+	}
+
+	// 4.6 Watermark Container
+	.wc-block-checkout-axo-block-watermark-container {
+		grid-area: watermark;
+		justify-self: end;
+		grid-column: 1;
+		margin-top: 0;
+	}
+
+	// 4.7 Validation Error
+	.wc-block-components-address-form__email .wc-block-components-validation-error {
+		grid-area: error;
+		width: 100%;
+		margin-top: 4px;
+		grid-row: 3;
+
+		@media (min-width: 783px) {
+			grid-row: 2;
+		}
+	}
+
+	@media (min-width: 783px) {
+		.wp-block-woocommerce-checkout-contact-information-block .wc-block-components-text-input {
+			grid-template-areas:
+         "input button"
+         "watermark watermark"
+         "error error";
+			grid-template-columns: 1fr auto;
+			gap: 6px 8px;
+		}
+
+		#email {
+			align-self: center;
+		}
+
+		.wc-block-axo-email-submit-button-container {
+			align-self: center;
+
+			.wc-block-components-button {
+				width: auto;
+			}
+		}
+	}
+
+	// 4.8 Counter fix
+	.wc-block-checkout__form {
+		counter-reset: visible-step;
+
+		.wc-block-components-checkout-step--with-step-number {
+			counter-increment: visible-step;
+
+			.wc-block-components-checkout-step__title:before {
+				content: counter(visible-step) ". ";
+			}
+		}
+	}
+}
+
+// 5. Shipping/Card Change Link
+a.wc-block-axo-change-link {
+	color: var(--wp--preset--color--secondary);
+	text-decoration: underline;
+
+	&:hover {
+		text-decoration: none;
+	}
+
+	&:focus {
+		text-decoration: underline dashed;
+	}
+
+	&:active {
+		color: var(--wp--preset--color--secondary);
+		text-decoration: none;
+	}
+}
+
+// 6. Watermark Container
+.wc-block-checkout-axo-block-watermark-container {
+	height: 25px;
+	margin-top: 5px;
+	margin-left: 5px;
+}
+
+// 7. Checkout Fields Block (AXO Not Loaded)
+.wp-block-woocommerce-checkout-fields-block:not(.wc-block-axo-is-loaded) {
+	.wc-block-checkout-axo-block-watermark-container {
+		display: flex;
+		justify-content: right;
+		margin-right: 10px;
+		align-items: center;
+		position: relative;
+
+		.wc-block-components-spinner {
+			box-sizing: content-box;
+			color: inherit;
+			font-size: 1em;
+			height: auto;
+			width: auto;
+			position: relative;
+			margin-top: 12px;
+		}
+	}
+}
+
+// 8. AXO Loaded Contact Information Block
+.wc-block-axo-is-loaded .wp-block-woocommerce-checkout-contact-information-block {
+	.wc-block-checkout-axo-block-watermark-container .wc-block-components-spinner {
+		display: none;
+		visibility: hidden;
+		opacity: 0;
+	}
+}
+
+// 9. Transitions
+.wc-block-axo-email-submit-button-container,
+.wc-block-checkout-axo-block-watermark-container #fastlane-watermark-email,
+a.wc-block-axo-change-link {
+	transition: opacity 0.5s ease-in-out;
+
+	@starting-style {
+		opacity: 0;
+		scale: 1.1;
+	}
+}
+
+// 10. Shipping Fields
+#shipping-fields .wc-block-components-checkout-step__heading {
+	display: flex;
+}
+
+// 11. Fastlane modal info message fix
+.wc-block-components-text-input {
+	.wc-block-components-form &,
+	& {
+		paypal-watermark {
+			white-space: wrap;
+		}
+	}
+}

@@ -1,17 +1,18 @@
 import { useEffect, useState } from '@wordpress/element';
 import { registerExpressPaymentMethod } from '@woocommerce/blocks-registry';
-import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { cartHasSubscriptionProducts } from '../../../ppcp-blocks/resources/js/Helper/Subscription';
 import { loadCustomScript } from '@paypal/paypal-js';
 import CheckoutHandler from './Context/CheckoutHandler';
-import ApplepayManager from './ApplepayManager';
-import ApplepayManagerBlockEditor from './ApplepayManagerBlockEditor';
+import ApplePayManager from './ApplepayManager';
+import ApplePayManagerBlockEditor from './ApplepayManagerBlockEditor';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
 
 const buttonData = wc.wcSettings.getSetting( 'ppcp-applepay_data' );
 const buttonConfig = buttonData.scriptData;
+const namespace = 'ppcpBlocksPaypalApplepay';
 
 if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
@@ -24,9 +25,9 @@ const ApplePayComponent = ( props ) => {
 
 	const bootstrap = function () {
 		const ManagerClass = props.isEditing
-			? ApplepayManagerBlockEditor
-			: ApplepayManager;
-		const manager = new ManagerClass( buttonConfig, ppcpConfig );
+			? ApplePayManagerBlockEditor
+			: ApplePayManager;
+		const manager = new ManagerClass( namespace, buttonConfig, ppcpConfig );
 		manager.init();
 	};
 
@@ -39,9 +40,13 @@ const ApplePayComponent = ( props ) => {
 		ppcpConfig.url_params.components += ',applepay';
 
 		// Load PayPal
-		loadPaypalScript( ppcpConfig, () => {
-			setPaypalLoaded( true );
-		} );
+		loadPayPalScript( namespace, ppcpConfig )
+			.then( () => {
+				setPaypalLoaded( true );
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to load PayPal script: ', error );
+			} );
 	}, [] );
 
 	useEffect( () => {

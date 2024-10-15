@@ -9,10 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
@@ -26,16 +27,21 @@ use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 /**
  * Class StatusReportModule
  */
-class StatusReportModule implements ModuleInterface {
+class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
@@ -43,7 +49,7 @@ class StatusReportModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $c A services container instance.
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function run( ContainerInterface $c ): bool {
 		add_action(
 			'woocommerce_system_status_report',
 			function () use ( $c ) {
@@ -175,6 +181,38 @@ class StatusReportModule implements ModuleInterface {
 							$subscriptions_mode_settings
 						),
 					),
+					array(
+						'label'          => esc_html__( 'PayPal Shipping Callback', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'PayPal Shipping Callback',
+						'description'    => esc_html__( 'Whether the "Require final confirmation on checkout" setting is disabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'blocks_final_review_enabled' ) && ! $settings->get( 'blocks_final_review_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'Apple Pay', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Apple Pay',
+						'description'    => esc_html__( 'Whether Apple Pay is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'applepay_button_enabled' ) && $settings->get( 'applepay_button_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'Google Pay', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Google Pay',
+						'description'    => esc_html__( 'Whether Google Pay is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'Fastlane', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Fastlane',
+						'description'    => esc_html__( 'Whether Fastlane is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' )
+						),
+					),
 				);
 
 				echo wp_kses_post(
@@ -185,12 +223,9 @@ class StatusReportModule implements ModuleInterface {
 				);
 			}
 		);
-	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function getKey() {  }
+		return true;
+	}
 
 	/**
 	 * It returns the current onboarding status.

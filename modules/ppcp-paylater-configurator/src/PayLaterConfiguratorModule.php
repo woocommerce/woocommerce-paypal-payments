@@ -9,20 +9,24 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\PersistentMessage;
 
 /**
  * Class PayLaterConfiguratorModule
  */
-class PayLaterConfiguratorModule implements ModuleInterface {
+class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+
 	/**
 	 * Returns whether the module should be loaded.
 	 */
@@ -37,28 +41,35 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
-		$messages_apply = $c->get( 'button.helper.messages-apply' );
-		assert( $messages_apply instanceof MessagesApply );
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ) : bool {
+		$is_available = $c->get( 'paylater-configurator.is-available' );
+
+		if ( ! $is_available ) {
+			return true;
+		}
+
+		$current_page_id     = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
+		$is_wc_settings_page = $c->get( 'wcgateway.is-wc-settings-page' );
+		$messaging_locations = $c->get( 'paylater-configurator.messaging-locations' );
+
+		$this->add_paylater_update_notice( $messaging_locations, $is_wc_settings_page, $current_page_id );
 
 		$settings = $c->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
-
-		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
-
-		if ( $vault_enabled || ! $messages_apply->for_country() ) {
-			return;
-		}
 
 		add_action(
 			'wc_ajax_' . SaveConfig::ENDPOINT,
@@ -78,10 +89,8 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 			}
 		);
 
-		$current_page_id = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
-
 		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
-			return;
+			return true;
 		}
 
 		add_action(
@@ -140,13 +149,65 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 				);
 			}
 		);
+
+		return true;
 	}
 
 	/**
-	 * Returns the key for the module.
+	 * Conditionally registers a new admin notice to highlight the new Pay-Later UI.
 	 *
-	 * @return string|void
+	 * The notice appears on any PayPal-Settings page, except for the Pay-Later settings page,
+	 * when no Pay-Later messaging is used yet.
+	 *
+	 * @param array  $message_locations PayLater messaging locations.
+	 * @param bool   $is_settings_page  Whether the current page is a WC settings page.
+	 * @param string $current_page_id   ID of current settings page tab.
+	 *
+	 * @return void
 	 */
-	public function getKey() {
+	private function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
+		// The message must be registered on any WC-Settings page, except for the Pay Later page.
+		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
+			return;
+		}
+
+		// Don't display the notice when Pay-Later messaging is already used.
+		if ( count( $message_locations ) ) {
+			return;
+		}
+
+		add_filter(
+			Repository::NOTICES_FILTER,
+			/**
+			 * Notify the user about the new Pay-Later UI.
+			 *
+			 * @param array $notices The notices.
+			 * @return array
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $notices ) : array {
+				$settings_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' );
+
+				$message = sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag directing to the Pay-Later settings page.
+					__(
+						'<strong>NEW</strong>: Check out the recently revamped %1$sPayPal Pay Later messaging experience here%2$s. Get paid in full at checkout while giving your customers the flexibility to pay in installments over time.',
+						'woocommerce-paypal-payments'
+					),
+					'<a href="' . esc_url( $settings_url ) . '">',
+					'</a>'
+				);
+
+				$notices[] = new PersistentMessage(
+					'pay-later-messaging',
+					$message,
+					'info',
+					'ppcp-notice-wrapper'
+				);
+
+				return $notices;
+			}
+		);
 	}
 }

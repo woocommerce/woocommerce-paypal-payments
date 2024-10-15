@@ -12,36 +12,41 @@ namespace WooCommerce\PayPalCommerce\Axo;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
+use WooCommerce\PayPalCommerce\Axo\Helper\SettingsNoticeGenerator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 
 	// If AXO can be configured.
-	'axo.eligible'                          => static function ( ContainerInterface $container ): bool {
+	'axo.eligible'                           => static function ( ContainerInterface $container ): bool {
 		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country_currency() && $apm_applies->for_settings();
+		return $apm_applies->for_country_currency();
 	},
 
-	'axo.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
+	'axo.helpers.apm-applies'                => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
 
+	'axo.helpers.settings-notice-generator'  => static function ( ContainerInterface $container ) : SettingsNoticeGenerator {
+		return new SettingsNoticeGenerator( $container->get( 'axo.fastlane-incompatible-plugin-names' ) );
+	},
+
 	// If AXO is configured and onboarded.
-	'axo.available'                         => static function ( ContainerInterface $container ): bool {
+	'axo.available'                          => static function ( ContainerInterface $container ): bool {
 		return true;
 	},
 
-	'axo.url'                               => static function ( ContainerInterface $container ): string {
+	'axo.url'                                => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -52,7 +57,7 @@ return array(
 		);
 	},
 
-	'axo.manager'                           => static function ( ContainerInterface $container ): AxoManager {
+	'axo.manager'                            => static function ( ContainerInterface $container ): AxoManager {
 		return new AxoManager(
 			$container->get( 'axo.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -60,20 +65,21 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.url' )
 		);
 	},
 
-	'axo.gateway'                           => static function ( ContainerInterface $container ): AxoGateway {
+	'axo.gateway'                            => static function ( ContainerInterface $container ): AxoGateway {
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.dcc' ),
 			$container->get( 'wcgateway.url' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'axo.card_icons' ),
-			$container->get( 'axo.card_icons.axo' ),
+			$container->get( 'wcgateway.credit-card-icons' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
@@ -83,64 +89,10 @@ return array(
 		);
 	},
 
-	'axo.card_icons'                        => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-dark.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-dark.svg',
-			),
-			array(
-				'title' => 'American Express',
-				'file'  => 'amex.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover.svg',
-			),
-		);
-	},
-
-	'axo.card_icons.axo'                    => static function ( ContainerInterface $container ): array {
-		return array(
-			array(
-				'title' => 'Visa',
-				'file'  => 'visa-light.svg',
-			),
-			array(
-				'title' => 'MasterCard',
-				'file'  => 'mastercard-light.svg',
-			),
-			array(
-				'title' => 'Amex',
-				'file'  => 'amex-light.svg',
-			),
-			array(
-				'title' => 'Discover',
-				'file'  => 'discover-light.svg',
-			),
-			array(
-				'title' => 'Diners Club',
-				'file'  => 'dinersclub-light.svg',
-			),
-			array(
-				'title' => 'JCB',
-				'file'  => 'jcb-light.svg',
-			),
-			array(
-				'title' => 'UnionPay',
-				'file'  => 'unionpay-light.svg',
-			),
-		);
-	},
-
 	/**
 	 * The matrix which countries and currency combinations can be used for AXO.
 	 */
-	'axo.supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which countries and currency combinations can be used for AXO.
 		 */
@@ -159,55 +111,35 @@ return array(
 		);
 	},
 
-	'axo.checkout-config-notice'            => static function ( ContainerInterface $container ) : string {
-		$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
-		$block_checkout_docs_link = __(
-			'https://woocommerce.com/document/cart-checkout-blocks-status/#reverting-to-the-cart-and-checkout-shortcodes',
-			'woocommerce-paypal-payments'
-		);
+	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
 
-		if ( CartCheckoutDetector::has_elementor_checkout() ) {
-			$notice_content = sprintf(
-				/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store currently uses the <code>Elementor Checkout widget</code>. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $checkout_page_link ),
-				esc_url( $block_checkout_docs_link )
-			);
-		} elseif ( CartCheckoutDetector::has_block_checkout() ) {
-			$notice_content = sprintf(
-				/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store currently uses the WooCommerce <code>Checkout</code> block. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $checkout_page_link ),
-				esc_url( $block_checkout_docs_link )
-			);
-		} elseif ( ! CartCheckoutDetector::has_classic_checkout() ) {
-			$notice_content = sprintf(
-			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the block checkout docs. */
-				__(
-					'<span class="highlight">Warning:</span> The <a href="%1$s">Checkout page</a> of your store does not seem to be properly configured or uses an incompatible <code>third-party Checkout</code> solution. To enable Fastlane and accelerate payments, the page must include either the <code>Classic Checkout</code> or the <code>[woocommerce_checkout]</code> shortcode. See <a href="%2$s">this page</a> for instructions on how to switch to the classic layout.',
-					'woocommerce-paypal-payments'
-				),
-				esc_url( $checkout_page_link ),
-				esc_url( $block_checkout_docs_link )
-			);
-		} else {
-			return '';
-		}
-
-		return '<div class="ppcp-notice ppcp-notice-error"><p>' . $notice_content . '</p></div>';
-	},
-
-	'axo.smart-button-location-notice'      => static function ( ContainerInterface $container ) : string {
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		if ( $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ) {
+		return $settings_notice_generator->generate_settings_conflict_notice( $settings );
+	},
+
+	'axo.checkout-config-notice'             => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+
+		return $settings_notice_generator->generate_checkout_notice();
+	},
+
+	'axo.incompatible-plugins-notice'        => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
+		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+
+		return $settings_notice_generator->generate_incompatible_plugins_notice();
+	},
+
+	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ) : string {
+		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
+		if ( $dcc_configuration->use_fastlane() ) {
 			$fastlane_settings_url = admin_url(
 				sprintf(
 					'admin.php?page=wc-settings&tab=checkout&section=%1$s&ppcp-tab=%2$s#field-axo_heading',
@@ -230,10 +162,93 @@ return array(
 
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
-	'axo.endpoint.frontend-logger'          => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
+
+	'axo.endpoint.frontend-logger'           => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
 		return new FrontendLoggerEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	/**
+	 * The list of Fastlane incompatible plugins.
+	 *
+	 * @returns array<array{name: string, is_active: bool}>
+	 */
+	'axo.fastlane-incompatible-plugins'      => static function () : array {
+		/**
+		 * Filters the list of Fastlane incompatible plugins.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_fastlane_incompatible_plugins',
+			array(
+				array(
+					'name'      => 'Elementor',
+					'is_active' => did_action( 'elementor/loaded' ),
+				),
+				array(
+					'name'      => 'CheckoutWC',
+					'is_active' => defined( 'CFW_NAME' ),
+				),
+				array(
+					'name'      => 'Direct Checkout for WooCommerce',
+					'is_active' => defined( 'QLWCDC_PLUGIN_NAME' ),
+				),
+				array(
+					'name'      => 'Multi-Step Checkout for WooCommerce',
+					'is_active' => class_exists( 'WPMultiStepCheckout' ),
+				),
+				array(
+					'name'      => 'Fluid Checkout for WooCommerce',
+					'is_active' => class_exists( 'FluidCheckout' ),
+				),
+				array(
+					'name'      => 'MultiStep Checkout for WooCommerce',
+					'is_active' => class_exists( 'THWMSCF_Multistep_Checkout' ),
+				),
+				array(
+					'name'      => 'WooCommerce Subscriptions',
+					'is_active' => class_exists( 'WC_Subscriptions' ),
+				),
+				array(
+					'name'      => 'CartFlows',
+					'is_active' => class_exists( 'Cartflows_Loader' ),
+				),
+				array(
+					'name'      => 'FunnelKit Funnel Builder',
+					'is_active' => class_exists( 'WFFN_Core' ),
+				),
+				array(
+					'name'      => 'WooCommerce One Page Checkout',
+					'is_active' => class_exists( 'PP_One_Page_Checkout' ),
+				),
+				array(
+					'name'      => 'All Products for Woo Subscriptions',
+					'is_active' => class_exists( 'WCS_ATT' ),
+				),
+			)
+		);
+	},
+
+	'axo.fastlane-incompatible-plugin-names' => static function ( ContainerInterface $container ) : array {
+		$incompatible_plugins = $container->get( 'axo.fastlane-incompatible-plugins' );
+
+		$active_plugins_list = array_filter(
+			$incompatible_plugins,
+			function( array $plugin ): bool {
+				return (bool) $plugin['is_active'];
+			}
+		);
+
+		if ( empty( $active_plugins_list ) ) {
+			return array();
+		}
+
+		return array_map(
+			function ( array $plugin ): string {
+				return "<li>{$plugin['name']}</li>";
+			},
+			$active_plugins_list
 		);
 	},
 );

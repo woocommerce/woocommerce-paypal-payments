@@ -72,13 +72,6 @@ class Button implements ButtonInterface {
 	private $settings_status;
 
 	/**
-	 * 3-letter currency code of the shop.
-	 *
-	 * @var string
-	 */
-	private $currency;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -102,7 +95,6 @@ class Button implements ButtonInterface {
 	 * @param Settings        $settings The Settings.
 	 * @param Environment     $environment The environment object.
 	 * @param SettingsStatus  $settings_status The Settings status helper.
-	 * @param string          $currency 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
@@ -113,7 +105,6 @@ class Button implements ButtonInterface {
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
-		string $currency,
 		LoggerInterface $logger
 	) {
 
@@ -124,7 +115,6 @@ class Button implements ButtonInterface {
 		$this->settings        = $settings;
 		$this->environment     = $environment;
 		$this->settings_status = $settings_status;
-		$this->currency        = $currency;
 		$this->logger          = $logger;
 	}
 
@@ -290,6 +280,7 @@ class Button implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->googlepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -303,6 +294,7 @@ class Button implements ButtonInterface {
 				$render_placeholder,
 				function () {
 					$this->googlepay_button();
+					$this->hide_gateway_until_eligible();
 				},
 				21
 			);
@@ -332,6 +324,23 @@ class Button implements ButtonInterface {
 		<div id="ppc-button-googlepay-container" class="ppcp-button-apm ppcp-button-googlepay">
 			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
+		<?php
+	}
+
+	/**
+	 * Outputs an inline CSS style that hides the Google Pay gateway (on Classic Checkout).
+	 * The style is removed by `PaymentButton.js` once the eligibility of the payment method
+	 * is confirmed.
+	 *
+	 * @return void
+	 */
+	protected function hide_gateway_until_eligible() : void {
+		?>
+		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
+			.wc_payment_method.payment_method_ppcp-googlepay {
+				display: none;
+			}
+		</style>
 		<?php
 	}
 
@@ -412,10 +421,20 @@ class Button implements ButtonInterface {
 	 * @return array
 	 */
 	public function script_data(): array {
+		$use_shipping_form = $this->settings->has( 'googlepay_button_shipping_enabled' ) && $this->settings->get( 'googlepay_button_shipping_enabled' );
+
+		// On the product page, only show the shipping form for physical products.
+		$context = $this->context();
+		if ( $use_shipping_form && 'product' === $context ) {
+			$product = wc_get_product();
+
+			if ( ! $product || $product->is_downloadable() || $product->is_virtual() ) {
+				$use_shipping_form = false;
+			}
+		}
+
 		$shipping = array(
-			'enabled'    => $this->settings->has( 'googlepay_button_shipping_enabled' )
-				? boolval( $this->settings->get( 'googlepay_button_shipping_enabled' ) )
-				: false,
+			'enabled'    => $use_shipping_form,
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
 		);
 

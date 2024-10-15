@@ -1,15 +1,16 @@
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
-import ApplepayButton from './ApplepayButton';
+import ApplePayButton from './ApplepayButton';
 
-class ApplepayManager {
-	constructor( buttonConfig, ppcpConfig ) {
+class ApplePayManager {
+	constructor( namespace, buttonConfig, ppcpConfig ) {
+		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.ApplePayConfig = null;
 		this.buttons = [];
 
 		buttonModuleWatcher.watchContextBootstrap( ( bootstrap ) => {
-			const button = new ApplepayButton(
+			const button = new ApplePayButton(
 				bootstrap.context,
 				bootstrap.handler,
 				buttonConfig,
@@ -40,13 +41,15 @@ class ApplepayManager {
 	}
 
 	/**
-	 * Gets ApplePay configuration of the PayPal merchant.
-	 * @return {Promise<null>}
+	 * Gets Apple Pay configuration of the PayPal merchant.
 	 */
 	async config() {
-		this.ApplePayConfig = await paypal.Applepay().config();
+		this.ApplePayConfig = await window[ this.namespace ]
+			.Applepay()
+			.config();
+
 		return this.ApplePayConfig;
 	}
 }
 
-export default ApplepayManager;
+export default ApplePayManager;

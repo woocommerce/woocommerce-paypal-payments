@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 
-	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
 		// Used in various places to mark fields for the preview button.
 		$apm_name = 'GooglePay';
@@ -72,7 +72,7 @@ return array(
 					'googlepay_button_enabled' => array(
 						'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 						'title_html'        => sprintf(
-							'<img src="%sassets/images/googlepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+							'<img src="%sassets/images/googlepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
 							$module_url,
 							__( 'Google Pay', 'woocommerce-paypal-payments' )
 						),
@@ -117,7 +117,7 @@ return array(
 				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/googlepay.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						'<img src="%sassets/images/googlepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
 						$module_url,
 						__( 'Google Pay', 'woocommerce-paypal-payments' )
 					),
@@ -166,7 +166,7 @@ return array(
 					'classes'           => array( 'ppcp-field-indent' ),
 					'class'             => array(),
 					'input_class'       => array( 'wc-enhanced-select' ),
-					'default'           => 'pay',
+					'default'           => 'plain',
 					'options'           => PropertiesDictionary::button_types(),
 					'screens'           => array( State::STATE_ONBOARDED ),
 					'gateway'           => 'dcc',

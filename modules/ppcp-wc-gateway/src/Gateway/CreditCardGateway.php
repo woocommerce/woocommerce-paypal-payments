@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class CreditCardGateway
@@ -60,11 +61,25 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $order_processor;
 
 	/**
+	 * The card icons.
+	 *
+	 * @var array
+	 */
+	protected $card_icons;
+
+	/**
 	 * The settings.
 	 *
 	 * @var ContainerInterface
 	 */
 	protected $config;
+
+	/**
+	 * The DCC Gateway Configuration.
+	 *
+	 * @var DCCGatewayConfiguration
+	 */
+	protected DCCGatewayConfiguration $dcc_configuration;
 
 	/**
 	 * The vaulted credit card handler.
@@ -184,6 +199,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor           $order_processor The Order processor.
 	 * @param ContainerInterface       $config The settings.
+	 * @param DCCGatewayConfiguration  $dcc_configuration The DCC Gateway Configuration.
+	 * @param array                    $card_icons The card icons.
 	 * @param string                   $module_url The URL to the module.
 	 * @param SessionHandler           $session_handler The Session Handler.
 	 * @param RefundProcessor          $refund_processor The refund processor.
@@ -204,6 +221,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
+		DCCGatewayConfiguration $dcc_configuration,
+		array $card_icons,
 		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
@@ -224,6 +243,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->settings_renderer           = $settings_renderer;
 		$this->order_processor             = $order_processor;
 		$this->config                      = $config;
+		$this->dcc_configuration           = $dcc_configuration;
 		$this->module_url                  = $module_url;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
@@ -243,8 +263,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$default_support = array(
 			'products',
 			'refunds',
-			'tokenization',
-			'add_payment_method',
 		);
 
 		$this->supports = array_merge(
@@ -260,10 +278,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
 			'woocommerce-paypal-payments'
 		);
-		$this->title              = $this->config->has( 'dcc_gateway_title' ) ?
-			$this->config->get( 'dcc_gateway_title' ) : $this->method_title;
-		$this->description        = $this->config->has( 'dcc_gateway_description' ) ?
-			$this->config->get( 'dcc_gateway_description' ) : $this->method_description;
+		$this->title              = $this->dcc_configuration->gateway_title();
+		$this->description        = $this->dcc_configuration->gateway_description();
+		$this->card_icons         = $card_icons;
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -339,72 +356,24 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @return string
 	 */
 	public function get_icon() {
-		$icon = parent::get_icon();
+		$icon  = parent::get_icon();
+		$icons = $this->card_icons;
 
-		$icons = $this->config->has( 'card_icons' ) ? (array) $this->config->get( 'card_icons' ) : array();
-		if ( empty( $icons ) ) {
+		if ( ! $icons ) {
 			return $icon;
 		}
 
-		$title_options = $this->card_labels();
-		$images        = array_map(
-			function ( string $type ) use ( $title_options ): string {
-				$striped_dark = str_replace( '-dark', '', $type );
-				return '<img
-                 title="' . esc_attr( $title_options[ $striped_dark ] ) . '"
-                 src="' . esc_url( $this->module_url ) . 'assets/images/' . esc_attr( $type ) . '.svg"
-                 class="ppcp-card-icon"
-                > ';
-			},
-			$icons
-		);
+		$images = array();
+
+		foreach ( $icons as $card ) {
+			$images[] = '<img
+				class="ppcp-card-icon"
+				title="' . esc_attr( $card['title'] ) . '"
+				src="' . esc_url( $card['url'] ) . '"
+			> ';
+		}
 
 		return implode( '', $images );
-	}
-
-	/**
-	 * Returns an array of credit card names.
-	 *
-	 * @return array
-	 */
-	private function card_labels(): array {
-		return array(
-			'visa'       => _x(
-				'Visa',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'mastercard' => _x(
-				'Mastercard',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'amex'       => _x(
-				'American Express',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'discover'   => _x(
-				'Discover',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'jcb'        => _x(
-				'JCB',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'elo'        => _x(
-				'Elo',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-			'hiper'      => _x(
-				'Hiper',
-				'Name of credit card',
-				'woocommerce-paypal-payments'
-			),
-		);
 	}
 
 	/**
@@ -426,10 +395,40 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			WC()->session->set( 'ppcp_card_payment_token_for_free_trial', null );
+
 			return $this->handle_payment_failure(
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
 			);
+		}
+
+		$guest_card_payment_for_free_trial = WC()->session->get( 'ppcp_guest_payment_for_free_trial' ) ?? null;
+		WC()->session->get( 'ppcp_guest_payment_for_free_trial', null );
+		if ( $guest_card_payment_for_free_trial ) {
+			$customer_id = $guest_card_payment_for_free_trial->customer->id ?? '';
+			if ( $customer_id ) {
+				update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
+			}
+
+			if ( isset( $guest_card_payment_for_free_trial->payment_source->card ) ) {
+				$this->wc_payment_tokens->create_payment_token_card( $wc_order->get_customer_id(), $guest_card_payment_for_free_trial );
+
+				$wc_order->payment_complete();
+				return $this->handle_payment_success( $wc_order );
+			}
+		}
+
+		$card_payment_token_for_free_trial = WC()->session->get( 'ppcp_card_payment_token_for_free_trial' ) ?? null;
+		WC()->session->set( 'ppcp_card_payment_token_for_free_trial', null );
+		if ( $card_payment_token_for_free_trial ) {
+			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id() );
+			foreach ( $tokens as $token ) {
+				if ( $token->get_id() === (int) $card_payment_token_for_free_trial ) {
+					$wc_order->payment_complete();
+					return $this->handle_payment_success( $wc_order );
+				}
+			}
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
@@ -652,6 +651,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			$this->config->set( 'dcc_enabled', 'yes' === $value );
 			$this->config->persist();
 
+			$this->dcc_configuration->refresh();
+
 			return true;
 		}
 
@@ -664,7 +665,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @return bool
 	 */
 	private function is_enabled(): bool {
-		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
+		return $this->dcc_configuration->is_enabled();
 	}
 
 	/**

@@ -28,6 +28,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactory;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactoryInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Tasks\SimpleRedirectTask;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -72,6 +78,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -116,6 +125,7 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$settings            = $container->get( 'wcgateway.settings' );
+		$dcc_configuration   = $container->get( 'wcgateway.configuration.dcc' );
 		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
@@ -125,10 +135,14 @@ return array(
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
+		$icons = $container->get( 'wcgateway.credit-card-icons' );
+
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
 			$settings,
+			$dcc_configuration,
+			$icons,
 			$module_url,
 			$session_handler,
 			$refund_processor,
@@ -145,6 +159,68 @@ return array(
 			$container->get( 'vaulting.wc-payment-tokens' ),
 			$logger
 		);
+	},
+	'wcgateway.credit-card-labels'                         => static function ( ContainerInterface $container ) : array {
+		return array(
+			'visa'       => _x(
+				'Visa',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'mastercard' => _x(
+				'Mastercard',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'amex'       => _x(
+				'American Express',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'discover'   => _x(
+				'Discover',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'jcb'        => _x(
+				'JCB',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'elo'        => _x(
+				'Elo',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+			'hiper'      => _x(
+				'Hiper',
+				'Name of credit card',
+				'woocommerce-paypal-payments'
+			),
+		);
+	},
+	'wcgateway.credit-card-icons'                          => static function ( ContainerInterface $container ) : array {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$icons  = $settings->has( 'card_icons' ) ? (array) $settings->get( 'card_icons' ) : array();
+		$labels = $container->get( 'wcgateway.credit-card-labels' );
+
+		$module_url = $container->get( 'wcgateway.url' );
+		$url_root   = esc_url( $module_url ) . 'assets/images/';
+
+		$icons_with_label = array();
+		foreach ( $icons as $icon ) {
+			$type = str_replace( '-dark', '', $icon );
+
+			$icons_with_label[] = array(
+				'type'  => $type,
+				'title' => ucwords( $labels[ $type ] ?? $type ),
+				'url'   => "$url_root/$icon.svg",
+			);
+		}
+
+		return $icons_with_label;
 	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {
 		return new CardButtonGateway(
@@ -172,10 +248,14 @@ return array(
 		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
-	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
+	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		return 'wc-settings' === $page;
+	},
+	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
+		$is_wc_settings_page = $container->get( 'wcgateway.is-wc-settings-page' );
 		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
-		return 'wc-settings' === $page && 'checkout' === $tab;
+		return $is_wc_settings_page && 'checkout' === $tab;
 	},
 	'wcgateway.is-wc-gateways-list-page'                   => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'wcgateway.is-wc-payments-page' ) && ! isset( $_GET['section'] );
@@ -199,6 +279,7 @@ return array(
 				Settings::PAY_LATER_TAB_ID,
 				AxoGateway::ID,
 				GooglePayGateway::ID,
+				ApplePayGateway::ID,
 			),
 			true
 		);
@@ -221,6 +302,7 @@ return array(
 				Settings::PAY_LATER_TAB_ID,
 				Settings::CONNECTION_TAB_ID,
 				GooglePayGateway::ID,
+				ApplePayGateway::ID,
 			),
 			true
 		);
@@ -261,7 +343,7 @@ return array(
 	},
 	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
 		$state                    = $container->get( 'onboarding.state' );
-		$shop_currency            = $container->get( 'api.shop.currency' );
+		$shop_currency            = $container->get( 'api.shop.currency.getter' );
 		$supported_currencies     = $container->get( 'api.supported-currencies' );
 		$is_wc_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
 		$is_ppcp_settings_page    = $container->get( 'wcgateway.is-ppcp-settings-page' );
@@ -295,6 +377,38 @@ return array(
 	'wcgateway.notice.authorize-order-action'              =>
 		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
+		},
+	'wcgateway.notice.checkout-blocks'                     =>
+		static function ( ContainerInterface $container ): string {
+			$settings = $container->get( 'wcgateway.settings' );
+			assert( $settings instanceof Settings );
+
+			$axo_available = $container->has( 'axo.available' ) && $container->get( 'axo.available' );
+			$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+			assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
+			if ( $axo_available && $dcc_configuration->use_fastlane() ) {
+				return '';
+			}
+
+			if ( CartCheckoutDetector::has_block_checkout() ) {
+				return '';
+			}
+
+			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
+			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
+
+			$notice_content = sprintf(
+			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the WooCommerce Checkout instructions. */
+				__(
+					'<span class="highlight">Info:</span> The <a href="%1$s">Checkout page</a> of your store currently uses a classic checkout layout or a custom checkout widget. Advanced Card Processing supports the new <code>Checkout</code> block which improves conversion rates. See <a href="%2$s">this page</a> for instructions on how to upgrade to the new Checkout layout.',
+					'woocommerce-paypal-payments'
+				),
+				esc_url( $checkout_page_link ),
+				esc_url( $instructions_link )
+			);
+
+			return '<div class="ppcp-notice ppcp-notice-success"><p>' . $notice_content . '</p></div>';
 		},
 	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer(
@@ -511,6 +625,9 @@ return array(
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
+		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
 		$fields              = array(
 			'checkout_settings_heading'   => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
@@ -537,6 +654,17 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+			),
+			'dcc_block_checkout_notice'   => array(
+				'heading'      => '',
+				'html'         => $container->get( 'wcgateway.notice.checkout-blocks' ),
+				'type'         => 'ppcp-html',
+				'classes'      => array(),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array( 'dcc' ),
+				'gateway'      => 'dcc',
 			),
 			'dcc_enabled'                 => array(
 				'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
@@ -774,6 +902,20 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'allow_local_apm_gateways'    => array(
+				'title'        => __( 'Create gateway for alternative payment methods', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Moves the alternative payment methods from the PayPal gateway into their own dedicated gateways.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'By default, alternative payment methods are displayed in the Standard Payments payment gateway. This setting creates a gateway for each alternative payment method.', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'disable_cards'               => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
@@ -840,6 +982,20 @@ return array(
 					'dcc',
 				),
 				'gateway'      => 'dcc',
+			),
+			'dcc_name_on_card'            => array(
+				'title'        => __( 'Cardholder Name', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'default'      => $dcc_configuration->show_name_on_card(),
+				'options'      => PropertiesDictionary::cardholder_name_options(),
+				'classes'      => array(),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'desc_tip'     => true,
+				'description'  => __( 'This setting will control whether or not the cardholder name is displayed in the card field\'s UI.', 'woocommerce-paypal-payments' ),
+				'screens'      => array( State::STATE_ONBOARDED ),
+				'gateway'      => array( 'dcc', 'axo' ),
+				'requirements' => array( 'axo' ),
 			),
 			'3d_secure_heading'           => array(
 				'heading'      => __( '3D Secure', 'woocommerce-paypal-payments' ),
@@ -1144,6 +1300,13 @@ return array(
 		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
 	},
 
+	'wcgateway.configuration.dcc'                          => static function ( ContainerInterface $container ) : DCCGatewayConfiguration {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		return new DCCGatewayConfiguration( $settings );
+	},
+
 	'wcgateway.helper.dcc-product-status'                  => static function ( ContainerInterface $container ) : DCCProductStatus {
 
 		$settings         = $container->get( 'wcgateway.settings' );
@@ -1162,6 +1325,13 @@ return array(
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$logger            = $container->get( 'woocommerce.logger.woocommerce' );
 		return new RefundFeesUpdater( $order_endpoint, $logger );
+	},
+	'wcgateway.helper.fees-updater'                        => static function ( ContainerInterface $container ): FeesUpdater {
+		return new FeesUpdater(
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.capture' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {
@@ -1209,17 +1379,12 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
-	'wcgateway.fraudnet-session-id'                        => static function ( ContainerInterface $container ): FraudNetSessionId {
-		return new FraudNetSessionId();
-	},
 	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
 	},
 	'wcgateway.fraudnet'                                   => static function ( ContainerInterface $container ): FraudNet {
-		$session_id = $container->get( 'wcgateway.fraudnet-session-id' );
 		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
 		return new FraudNet(
-			(string) $session_id(),
 			(string) $source_website_id()
 		);
 	},
@@ -1412,10 +1577,10 @@ return array(
 		return $label;
 	},
 	'wcgateway.enable-dcc-url-sandbox'                     => static function ( ContainerInterface $container ): string {
-		return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
+		return 'https://www.sandbox.paypal.com/bizsignup/entry?product=ppcp';
 	},
 	'wcgateway.enable-dcc-url-live'                        => static function ( ContainerInterface $container ): string {
-		return 'https://www.paypal.com/bizsignup/entry/product/ppcp';
+		return 'https://www.paypal.com/bizsignup/entry?product=ppcp';
 	},
 	'wcgateway.enable-pui-url-sandbox'                     => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
@@ -1708,5 +1873,63 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+
+	'wcgateway.settings.wc-tasks.simple-redirect-task-factory' => static function(): SimpleRedirectTaskFactoryInterface {
+		return new SimpleRedirectTaskFactory();
+	},
+	'wcgateway.settings.wc-tasks.task-registrar'           => static function(): TaskRegistrarInterface {
+		return new TaskRegistrar();
+	},
+
+	/**
+	 * A configuration for simple redirect wc tasks.
+	 *
+	 * @returns array<array{
+	 *     id: string,
+	 *     title: string,
+	 *     description: string,
+	 *     redirect_url: string
+	 * }>
+	 */
+	'wcgateway.settings.wc-tasks.simple-redirect-tasks-config' => static function( ContainerInterface $container ): array {
+		$section_id       = PayPalGateway::ID;
+		$pay_later_tab_id = Settings::PAY_LATER_TAB_ID;
+
+		$list_of_config = array();
+
+		if ( $container->has( 'paylater-configurator.is-available' ) && $container->get( 'paylater-configurator.is-available' ) ) {
+			$list_of_config[] = array(
+				'id'           => 'pay-later-messaging-task',
+				'title'        => __( 'Configure PayPal Pay Later messaging', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Decide where you want dynamic Pay Later messaging to show up and how you want it to look on your site.', 'woocommerce-paypal-payments' ),
+				'redirect_url' => admin_url( "admin.php?page=wc-settings&tab=checkout&section={$section_id}&ppcp-tab={$pay_later_tab_id}" ),
+			);
+		}
+
+		return $list_of_config;
+	},
+
+	/**
+	 * Retrieves the list of simple redirect task instances.
+	 *
+	 * @returns SimpleRedirectTask[]
+	 */
+	'wcgateway.settings.wc-tasks.simple-redirect-tasks'    => static function( ContainerInterface $container ): array {
+		$simple_redirect_tasks_config = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks-config' );
+		$simple_redirect_task_factory = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-task-factory' );
+		assert( $simple_redirect_task_factory instanceof SimpleRedirectTaskFactoryInterface );
+
+		$simple_redirect_tasks = array();
+
+		foreach ( $simple_redirect_tasks_config as $config ) {
+			$id = $config['id'] ?? '';
+			$title = $config['title'] ?? '';
+			$description = $config['description'] ?? '';
+			$redirect_url = $config['redirect_url'] ?? '';
+			$simple_redirect_tasks[] = $simple_redirect_task_factory->create_task( $id, $title, $description, $redirect_url );
+		}
+
+		return $simple_redirect_tasks;
 	},
 );

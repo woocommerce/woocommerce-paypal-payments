@@ -13,6 +13,7 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
 
 /**
@@ -23,18 +24,18 @@ class ItemFactory {
 	use ItemTrait;
 
 	/**
-	 * 3-letter currency code of the shop.
+	 * The getter of the 3-letter currency code of the shop.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * ItemFactory constructor.
 	 *
-	 * @param string $currency 3-letter currency code of the shop.
+	 * @param CurrencyGetter $currency The getter of the 3-letter currency code of the shop.
 	 */
-	public function __construct( string $currency ) {
+	public function __construct( CurrencyGetter $currency ) {
 		$this->currency = $currency;
 	}
 
@@ -62,7 +63,7 @@ class ItemFactory {
 				$price = (float) $item['line_subtotal'] / (float) $item['quantity'];
 				return new Item(
 					$this->prepare_item_string( $product->get_name() ),
-					new Money( $price, $this->currency ),
+					new Money( $price, $this->currency->get() ),
 					$quantity,
 					$this->prepare_item_string( $product->get_description() ),
 					null,
@@ -84,7 +85,7 @@ class ItemFactory {
 				function ( \stdClass $fee ): Item {
 					return new Item(
 						$fee->name,
-						new Money( (float) $fee->amount, $this->currency ),
+						new Money( (float) $fee->amount, $this->currency->get() ),
 						1,
 						'',
 						null

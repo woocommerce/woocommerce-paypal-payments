@@ -28,7 +28,7 @@ class CardView {
 
 				const cardIcons = {
 					VISA: 'visa-light.svg',
-					MASTER_CARD: 'mastercard-light.svg',
+					MASTERCARD: 'mastercard-light.svg',
 					AMEX: 'amex-light.svg',
 					DISCOVER: 'discover-light.svg',
 					DINERS: 'dinersclub-light.svg',
@@ -37,15 +37,15 @@ class CardView {
 				};
 
 				return `
-                    <div style="margin-bottom: 20px;">
+                    <div class="axo-checkout-wrapper">
                         <div class="axo-checkout-header-section">
                             <h3>Card Details</h3>
                             <a href="javascript:void(0)" ${
 								this.el.changeCardLink.attributes
 							}>Edit</a>
                         </div>
-                        <div style="border:2px solid #cccccc; border-radius: 10px; padding: 16px 20px; background-color:#f6f6f6">
-                            <div style="float: right;">
+                        <div class="axo-checkout-card-preview styled-card">
+                            <div class="ppcp-card-icon-wrapper">
                                 <img
                                     class="ppcp-card-icon"
                                     title="${ data.value( 'brand' ) }"
@@ -55,14 +55,16 @@ class CardView {
                                     alt="${ data.value( 'brand' ) }"
                                 >
                             </div>
-                            <div style="font-family: monospace; font-size: 1rem; margin-top: 10px;">${
+                            <div class="axo-card-number">${
 								data.value( 'lastDigits' )
 									? '**** **** **** ' +
 									  data.value( 'lastDigits' )
 									: ''
 							}</div>
-                            <div>${ expiry[ 1 ] }/${ expiry[ 0 ] }</div>
-                            <div style="text-transform: uppercase">${ data.value(
+                            <div class="axo-card-expiry">${ expiry[ 1 ] }/${
+								expiry[ 0 ]
+							}</div>
+                            <div class="axo-card-owner">${ data.value(
 								'name'
 							) }</div>
                         </div>

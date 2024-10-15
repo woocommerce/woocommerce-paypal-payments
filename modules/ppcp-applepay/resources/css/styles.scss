@@ -23,6 +23,11 @@
 	&.ppcp-button-minicart {
 		--apple-pay-button-display: block;
 	}
+
+	&.ppcp-preview-button.ppcp-button-dummy {
+		/* URL must specify the correct module-folder! */
+		--apm-button-dummy-background: url(../../../ppcp-applepay/assets/images/applepay.png);
+	}
 }
 
 .wp-block-woocommerce-checkout, .wp-block-woocommerce-cart {
@@ -51,4 +56,8 @@
 			display: block;
 		}
 	}
+}
+
+#ppc-button-ppcp-applepay {
+	display: none;
 }

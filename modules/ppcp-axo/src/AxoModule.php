@@ -16,34 +16,56 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WC_Payment_Gateways;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+
 /**
  * Class AxoModule
+ *
+ * @psalm-suppress MissingConstructor
  */
-class AxoModule implements ModuleInterface {
+class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
+	use ContextTrait;
+
+	/**
+	 * The session handler for ContextTrait.
+	 *
+	 * @var SessionHandler|null
+	 */
+	protected ?SessionHandler $session_handler;
+
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 
 		add_filter(
 			'woocommerce_payment_gateways',
@@ -66,7 +88,9 @@ class AxoModule implements ModuleInterface {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					$methods[] = $gateway;
+					if ( ! $this->is_wc_settings_payments_tab() ) {
+						$methods[] = $gateway;
+					}
 					return $methods;
 				}
 
@@ -74,12 +98,10 @@ class AxoModule implements ModuleInterface {
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
-				$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
-
-				if ( ! $is_dcc_enabled ) {
+				if ( ! $dcc_configuration->is_enabled() ) {
 					return $methods;
 				}
 
@@ -118,6 +140,23 @@ class AxoModule implements ModuleInterface {
 			}
 		);
 
+		// Enforce Fastlane to always be the first payment method in the list.
+		add_action(
+			'wc_payment_gateways_initialized',
+			function ( WC_Payment_Gateways $gateways ) {
+				if ( is_admin() ) {
+					return;
+				}
+				foreach ( $gateways->payment_gateways as $key => $gateway ) {
+					if ( $gateway->id === AxoGateway::ID ) {
+						unset( $gateways->payment_gateways[ $key ] );
+						array_unshift( $gateways->payment_gateways, $gateway );
+						break;
+					}
+				}
+			}
+		);
+
 		// Force 'cart-block' and 'cart' Smart Button locations in the settings.
 		add_action(
 			'admin_init',
@@ -125,11 +164,11 @@ class AxoModule implements ModuleInterface {
 				$listener = $c->get( 'wcgateway.settings.listener' );
 				assert( $listener instanceof SettingsListener );
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
 				$listener->filter_settings(
-					$settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ),
+					$dcc_configuration->use_fastlane(),
 					'smart_button_locations',
 					function( array $existing_setting_value ) {
 						$axo_forced_locations = array( 'cart-block', 'cart' );
@@ -144,13 +183,22 @@ class AxoModule implements ModuleInterface {
 			function () use ( $c ) {
 				$module = $this;
 
+				$this->session_handler = $c->get( 'session.handler' );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$is_paypal_enabled = $settings->has( 'enabled' ) && $settings->get( 'enabled' ) ?? false;
+
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
 				// Check if the module is applicable, correct country, currency, ... etc.
-				if ( ! $c->get( 'axo.eligible' )
-					|| 'continuation' === $c->get( 'button.context' )
-					|| $subscription_helper->cart_contains_subscription() ) {
+				if ( ! $is_paypal_enabled
+					|| ! $c->get( 'axo.eligible' )
+					|| $this->is_paypal_continuation()
+					|| $subscription_helper->cart_contains_subscription()
+				) {
 					return;
 				}
 
@@ -194,9 +242,15 @@ class AxoModule implements ModuleInterface {
 
 				add_action(
 					'wp_head',
-					function () {
+					function () use ( $c ) {
 						// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
+
+						// Add meta tag to allow feature-detection of the site's AXO payment state.
+						$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+						assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+
+						$this->add_feature_detection_tag( $dcc_configuration->use_fastlane() );
 					}
 				);
 
@@ -264,6 +318,7 @@ class AxoModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+		return true;
 	}
 
 	/**
@@ -298,14 +353,6 @@ class AxoModule implements ModuleInterface {
 	}
 
 	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
-	 */
-	public function getKey() {
-	}
-
-	/**
 	 * Condition to evaluate if Credit Card gateway should be hidden.
 	 *
 	 * @param array              $methods WC payment methods.
@@ -325,17 +372,14 @@ class AxoModule implements ModuleInterface {
 	 * @return bool
 	 */
 	private function should_render_fastlane( ContainerInterface $c ): bool {
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		$is_axo_enabled = $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' ) ?? false;
-		$is_dcc_enabled = $settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' ) ?? false;
+		$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
 		return ! is_user_logged_in()
 			&& CartCheckoutDetector::has_classic_checkout()
-			&& $is_axo_enabled
-			&& $is_dcc_enabled
-			&& ! $this->is_excluded_endpoint();
+			&& $dcc_configuration->use_fastlane()
+			&& ! $this->is_excluded_endpoint()
+			&& is_checkout();
 	}
 
 	/**
@@ -387,5 +431,24 @@ class AxoModule implements ModuleInterface {
 	private function is_excluded_endpoint(): bool {
 		// Exclude the Order Pay endpoint.
 		return is_wc_endpoint_url( 'order-pay' );
+	}
+
+	/**
+	 * Outputs a meta tag to allow feature detection on certain pages.
+	 *
+	 * @param bool $axo_enabled Whether the gateway is enabled.
+	 * @return void
+	 */
+	private function add_feature_detection_tag( bool $axo_enabled ) {
+		$show_tag = is_checkout() || is_cart() || is_shop();
+
+		if ( ! $show_tag ) {
+			return;
+		}
+
+		printf(
+			'<meta name="ppcp.axo" content="ppcp.axo.%s" />',
+			$axo_enabled ? 'enabled' : 'disabled'
+		);
 	}
 }

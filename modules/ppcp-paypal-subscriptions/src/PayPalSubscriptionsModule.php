@@ -22,9 +22,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -34,22 +35,27 @@ use WP_Post;
 /**
  * Class SavedPaymentCheckerModule
  */
-class PayPalSubscriptionsModule implements ModuleInterface {
+class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, ExecutableModule {
+	use ModuleClassNameIdTrait;
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider(
-			require __DIR__ . '/../services.php',
-			require __DIR__ . '/../extensions.php'
-		);
+	public function services(): array {
+		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {
+	public function extensions(): array {
+		return require __DIR__ . '/../extensions.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): bool {
 		add_action(
 			'save_post',
 			/**
@@ -60,9 +66,7 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 			function( $product_id ) use ( $c ) {
 				$subscriptions_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscriptions_helper instanceof SubscriptionHelper );
-
-				$connect_subscription = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
-				if ( ! $subscriptions_helper->plugin_is_active() || $connect_subscription !== 'yes' ) {
+				if ( ! $subscriptions_helper->plugin_is_active() ) {
 					return;
 				}
 
@@ -703,6 +707,8 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 				}
 			}
 		);
+
+		return true;
 	}
 
 	/**

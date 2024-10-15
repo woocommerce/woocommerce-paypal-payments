@@ -31,9 +31,25 @@ $background-ident-color: #fbfbfb;
 
 	&.ppcp-button-dummy {
 		display: flex;
+		min-height: 25px;
 		align-items: center;
 		justify-content: center;
 		background: #0001;
+		position: relative;
+
+		&:before {
+			content: '';
+			position: absolute;
+			left: 12px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 42px;
+			height: 24px;
+			background-image: var(--apm-button-dummy-background, none);
+			background-repeat: no-repeat;
+			background-size: contain;
+			background-position: center left;
+		}
 	}
 }
 
@@ -79,6 +95,14 @@ $background-ident-color: #fbfbfb;
 	.highlight {
 		background: transparent;
 		font-weight: 600;
+	}
+}
+
+.ppcp-notice-success {
+	border-left-color: #00a32a;
+
+	.highlight {
+		color: #00a32a;
 	}
 }
 
@@ -131,6 +155,11 @@ $background-ident-color: #fbfbfb;
 					margin: .5em 0;
 					padding: 2px;
 				}
+			}
+
+			.ppcp-notice-list {
+				list-style-type: disc;
+				padding-left: 20px;
 			}
 
 			th, td {

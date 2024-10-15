@@ -12,12 +12,14 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Payment_Tokens;
 use WC_Product;
 use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
@@ -50,6 +52,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WC_Shipping_Method;
+use WC_Cart;
 
 /**
  * Class SmartButton
@@ -143,11 +147,11 @@ class SmartButton implements SmartButtonInterface {
 	private $payment_token_repository;
 
 	/**
-	 * 3-letter currency code of the shop.
+	 * The getter of the 3-letter currency code of the shop.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * All existing funding sources.
@@ -249,7 +253,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param Environment            $environment The environment object.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 * @param SettingsStatus         $settings_status The Settings status helper.
-	 * @param string                 $currency 3-letter currency code of the shop.
+	 * @param CurrencyGetter         $currency The getter of the 3-letter currency code of the shop.
 	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
@@ -275,7 +279,7 @@ class SmartButton implements SmartButtonInterface {
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
 		SettingsStatus $settings_status,
-		string $currency,
+		CurrencyGetter $currency,
 		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
@@ -1085,6 +1089,22 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	}
 
 	/**
+	 * Whether the current cart contains a product that requires physical shipping.
+	 *
+	 * @return bool True, if any cart item requires shipping.
+	 */
+	private function need_shipping() : bool {
+		/**
+		 * Cart instance; might be null, esp. in customizer or in Block Editor.
+		 *
+		 * @var null|WC_Cart $cart
+		 */
+		$cart = WC()->cart;
+
+		return $cart && $cart->needs_shipping();
+	}
+
+	/**
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
@@ -1100,7 +1120,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'url_params'                              => $url_params,
 			'script_attributes'                       => $this->attributes(),
 			'client_id'                               => $this->client_id,
-			'currency'                                => $this->currency,
+			'currency'                                => $this->currency->get(),
 			'data_client_id'                          => array(
 				'set_attribute'                => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
 				'endpoint'                     => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
@@ -1292,9 +1312,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'early_checkout_validation_enabled'       => $this->early_validation_enabled,
 			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
 			'user'                                    => array(
-				'is_logged' => is_user_logged_in(),
+				'is_logged'                  => is_user_logged_in(),
+				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 		);
 
@@ -1372,7 +1394,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
 		$params            = array(
 			'client-id'        => $this->client_id,
-			'currency'         => $this->currency,
+			'currency'         => $this->currency->get(),
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
@@ -2131,5 +2153,20 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			default:
 				return $location;
 		}
+	}
+
+	/**
+	 * Whether the given user has WC card payment tokens.
+	 *
+	 * @param int $user_id The user ID.
+	 * @return bool
+	 */
+	private function user_has_wc_card_payment_tokens( int $user_id ): bool {
+		$tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
+		if ( $tokens ) {
+			return true;
+		}
+
+		return false;
 	}
 }

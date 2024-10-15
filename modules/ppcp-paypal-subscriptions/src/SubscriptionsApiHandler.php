@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
 
 /**
@@ -66,9 +67,9 @@ class SubscriptionsApiHandler {
 	/**
 	 * The currency.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * The logger.
@@ -85,7 +86,7 @@ class SubscriptionsApiHandler {
 	 * @param BillingPlans              $billing_plans_endpoint Billing plans endpoint.
 	 * @param BillingCycleFactory       $billing_cycle_factory Billing cycle factory.
 	 * @param PaymentPreferencesFactory $payment_preferences_factory Payment preferences factory.
-	 * @param string                    $currency The currency.
+	 * @param CurrencyGetter            $currency The currency.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -94,7 +95,7 @@ class SubscriptionsApiHandler {
 		BillingPlans $billing_plans_endpoint,
 		BillingCycleFactory $billing_cycle_factory,
 		PaymentPreferencesFactory $payment_preferences_factory,
-		string $currency,
+		CurrencyGetter $currency,
 		LoggerInterface $logger
 	) {
 		$this->products_endpoint           = $products_endpoint;
@@ -253,7 +254,7 @@ class SubscriptionsApiHandler {
 				array(
 					'fixed_price' => array(
 						'value'         => '0',
-						'currency_code' => $this->currency,
+						'currency_code' => $this->currency->get(),
 					),
 				),
 				1
@@ -272,7 +273,7 @@ class SubscriptionsApiHandler {
 			array(
 				'fixed_price' => array(
 					'value'         => $product->get_meta( '_subscription_price' ) ?: $product->get_price(),
-					'currency_code' => $this->currency,
+					'currency_code' => $this->currency->get(),
 				),
 			),
 			(int) $product->get_meta( '_subscription_length' )
