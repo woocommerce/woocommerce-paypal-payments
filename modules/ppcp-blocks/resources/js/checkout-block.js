@@ -688,7 +688,7 @@ const PayPalComponent = ( {
 	);
 };
 
-const BlockEditorPayPalComponent = () => {
+const BlockEditorPayPalComponent = ({ fundingSource } ) => {
 	const urlParams = {
 		clientId: 'test',
 		...config.scriptData.url_params,
@@ -701,6 +701,7 @@ const BlockEditorPayPalComponent = () => {
 				onClick={ ( data, actions ) => {
 					return false;
 				} }
+                fundingSource={ fundingSource }
 			/>
 		</PayPalScriptProvider>
 	);
@@ -789,7 +790,7 @@ if ( block_enabled && config.enabled ) {
 			name: config.id,
 			label: <div dangerouslySetInnerHTML={ { __html: config.title } } />,
 			content: <PayPalComponent isEditing={ false } />,
-			edit: <BlockEditorPayPalComponent />,
+			edit: <BlockEditorPayPalComponent fundingSource={ 'paypal' }/>,
 			ariaLabel: config.title,
 			canMakePayment: () => {
 				return true;
@@ -821,7 +822,9 @@ if ( block_enabled && config.enabled ) {
 						fundingSource={ fundingSource }
 					/>
 				),
-				edit: <BlockEditorPayPalComponent />,
+				edit: <BlockEditorPayPalComponent
+                    fundingSource={ fundingSource }
+                />,
 				ariaLabel: config.title,
 				canMakePayment: async () => {
 					if ( ! paypalScriptPromise ) {
