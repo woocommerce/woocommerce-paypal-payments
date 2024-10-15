@@ -11,7 +11,8 @@ module.exports = {
     entry: {
         'checkout-block': path.resolve('./resources/js/checkout-block.js'),
         'advanced-card-checkout-block': path.resolve('./resources/js/advanced-card-checkout-block.js'),
-        "gateway": path.resolve('./resources/css/gateway.scss')
+        "gateway": path.resolve('./resources/css/gateway.scss'),
+        "gateway-editor": path.resolve('./resources/css/gateway-editor.scss')
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

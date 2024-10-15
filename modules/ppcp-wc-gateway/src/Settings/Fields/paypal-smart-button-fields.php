@@ -88,6 +88,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'checkbox',
 			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
 			'default'      => false,
+			'description'  => $container->has( 'wcgateway.button.recommended-styling-notice' ) ? $container->get( 'wcgateway.button.recommended-styling-notice' ) : '',
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),
 			'gateway'      => 'paypal',
