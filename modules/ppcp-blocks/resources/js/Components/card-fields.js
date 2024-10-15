@@ -19,11 +19,9 @@ export function CardFields( {
 	config,
 	eventRegistration,
 	emitResponse,
-	components,
 } ) {
 	const { onPaymentSetup } = eventRegistration;
 	const { responseTypes } = emitResponse;
-	const { PaymentMethodIcons } = components;
 
 	const [ cardFieldsForm, setCardFieldsForm ] = useState();
 	const getCardFieldsForm = ( cardFieldsForm ) => {
@@ -95,10 +93,6 @@ export function CardFields( {
 					} }
 				>
 					<PayPalCardFieldsForm />
-					<PaymentMethodIcons
-						icons={ config.card_icons }
-						align="left"
-					/>
 					<CheckoutHandler
 						getCardFieldsForm={ getCardFieldsForm }
 						getSavePayment={ getSavePayment }
