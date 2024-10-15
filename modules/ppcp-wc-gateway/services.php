@@ -1420,7 +1420,10 @@ return array(
 		return new OXXO(
 			$container->get( 'wcgateway.checkout-helper' ),
 			$container->get( 'wcgateway.url' ),
-			$container->get( 'ppcp.asset-version' )
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.oxxo-gateway'                               => static function( ContainerInterface $container ): OXXOGateway {
