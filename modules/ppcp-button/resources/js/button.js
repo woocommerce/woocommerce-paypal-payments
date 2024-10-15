@@ -1,3 +1,5 @@
+/* global paypal */
+
 import MiniCartBootstap from './modules/ContextBootstrap/MiniCartBootstap';
 import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBootstap';
 import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
