@@ -622,7 +622,7 @@ const PayPalComponent = ( {
 		style.borderRadius = buttonAttributes?.borderRadius
 			? Number( buttonAttributes.borderRadius )
 			: style.borderRadius;
-		style.color = buttonAttributes?.darkMode ? 'white' : '';
+		style.color = '';
 	}
 
 	if ( ! paypalScriptLoaded ) {
@@ -725,7 +725,7 @@ const BlockEditorPayPalComponent = ( { fundingSource, buttonAttributes } ) => {
 				borderRadius: buttonAttributes.borderRadius
 					? Number( buttonAttributes.borderRadius )
 					: configStyle.borderRadius,
-				color: buttonAttributes.darkMode ? 'white' : configStyle.color,
+				color: configStyle.color,
 			};
 		}
 
