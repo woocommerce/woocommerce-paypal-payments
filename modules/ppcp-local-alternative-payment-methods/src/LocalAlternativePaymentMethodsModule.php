@@ -60,7 +60,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			 */
 			function ( $methods ) use ( $c ) {
 				$onboarding_state = $c->get( 'onboarding.state' );
-				if ( $onboarding_state->current_state() >= State::STATE_START ) {
+				if ( $onboarding_state->current_state() === State::STATE_START ) {
 					return $methods;
 				}
 
