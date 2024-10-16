@@ -80,6 +80,13 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	private $wcgateway_module_url;
 
 	/**
+	 * The supported country card type matrix.
+	 *
+	 * @var array
+	 */
+	private $supported_country_card_type_matrix;
+
+	/**
 	 * AdvancedCardPaymentMethod constructor.
 	 *
 	 * @param string                        $module_url           The URL of this module.
@@ -91,6 +98,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param DCCGatewayConfiguration       $dcc_configuration    The DCC gateway settings.
 	 * @param Environment                   $environment          The environment object.
 	 * @param string                        $wcgateway_module_url The WcGateway module URL.
+	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
 		string $module_url,
@@ -100,7 +108,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		Settings $settings,
 		DCCGatewayConfiguration $dcc_configuration,
 		Environment $environment,
-		string $wcgateway_module_url
+		string $wcgateway_module_url,
+		array $supported_country_card_type_matrix
 	) {
 		$this->name                 = AxoGateway::ID;
 		$this->module_url           = $module_url;
@@ -111,7 +120,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		$this->dcc_configuration    = $dcc_configuration;
 		$this->environment          = $environment;
 		$this->wcgateway_module_url = $wcgateway_module_url;
-
+		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
 	/**
@@ -207,6 +216,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 						: null, // Set to null if WC()->cart is null or get_total doesn't exist.
 				),
 			),
+			'allowed_cards'          => $this->supported_country_card_type_matrix,
+			'disable_cards'          => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
 			'style_options'   => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
@@ -243,6 +254,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			),
 			'logging_enabled' => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
 			'wp_debug'        => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'card_icons'          => $this->settings->has( 'card_icons' ) ? (array) $this->settings->get( 'card_icons' ) : array(),
+			'merchant_country' => WC()->countries->get_base_country(),
 		);
 	}
 }

@@ -110,7 +110,31 @@ return array(
 			)
 		);
 	},
-
+	/**
+	 * The matrix which countries and card type combinations can be used for AXO.
+	 */
+	'axo.supported-country-card-type-matrix'  => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which countries and card type combinations can be used for AXO.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_axo_supported_country_card_type_matrix',
+			array(
+				'US' => array(
+					'VISA',
+					'MASTERCARD',
+					'AMEX',
+					'DISCOVER',
+				),
+				'CA' => array(
+					'VISA',
+					'MASTERCARD',
+					'AMEX',
+					'DISCOVER',
+				),
+			)
+		);
+	},
 	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ) : string {
 		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
 		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );

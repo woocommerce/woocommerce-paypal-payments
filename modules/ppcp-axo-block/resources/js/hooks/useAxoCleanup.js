@@ -3,7 +3,6 @@ import { useDispatch } from '@wordpress/data';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { STORE_NAME } from '../stores/axoStore';
 import { removeShippingChangeButton } from '../components/Shipping';
-import { removeCardChangeButton } from '../components/Card';
 import { removeWatermark } from '../components/Watermark';
 import {
 	removeEmailFunctionality,
@@ -50,7 +49,6 @@ const useAxoCleanup = () => {
 
 			// Remove AXO UI elements
 			removeShippingChangeButton();
-			removeCardChangeButton();
 			removeWatermark();
 
 			// Remove email functionality if it was set up
