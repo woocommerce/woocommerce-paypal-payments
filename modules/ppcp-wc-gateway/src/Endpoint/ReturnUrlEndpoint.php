@@ -112,6 +112,7 @@ class ReturnUrlEndpoint {
 		}
 
 		if ( $wc_order->get_payment_method() === OXXOGateway::ID ) {
+			$this->session_handler->destroy_session_data();
 			wp_safe_redirect( wc_get_checkout_url() );
 			exit();
 		}
