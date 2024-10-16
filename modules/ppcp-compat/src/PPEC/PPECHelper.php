@@ -75,10 +75,10 @@ class PPECHelper {
 		}
 
 		global $wpdb;
-		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() && isset( $wpdb->wc_orders ) ) {
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
 			$result = $wpdb->get_var(
 				$wpdb->prepare(
-					"SELECT 1 FROM {$wpdb->wc_orders} WHERE payment_method = %s",
+					"SELECT 1 FROM {$wpdb->prefix}wc_orders WHERE payment_method = %s",
 					self::PPEC_GATEWAY_ID
 				)
 			);
