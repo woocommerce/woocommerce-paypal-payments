@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Payment_Token;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
@@ -447,7 +448,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( $card_payment_token_id ) {
 			$customer_tokens = $this->wc_payment_tokens->customer_tokens( get_current_user_id() );
 
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), self::ID );
+			$wc_tokens = array_filter(
+				WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), self::ID ),
+				function( WC_Payment_Token $token ) {
+					return in_array( $token->get_gateway_id(), array( PayPalGateway::ID, CreditCardGateway::ID ), true );
+				}
+			);
 
 			if ( $customer_tokens && empty( $wc_tokens ) ) {
 				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, get_current_user_id() );
