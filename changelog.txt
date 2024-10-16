@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.9.3 - xxxx-xx-xx =
+= 2.9.3 - 2024-10-15 =
 * Fix - Multi-currency support #2667
 * Fix - "0.00" amount in Google Pay for virtual products #2636
 * Fix - Unsuccessfully payment from product page with Apple Pay button #2643
