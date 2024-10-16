@@ -104,7 +104,7 @@ class AxoManager {
 	 * @param CurrencyGetter  $currency The getter of the 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
 	 * @param string          $wcgateway_module_url The WcGateway module URL.
-	 * @param array $supported_country_card_type_matrix The supported country card type matrix for Axo.
+	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
 		string $module_url,
@@ -119,15 +119,15 @@ class AxoManager {
 		array $supported_country_card_type_matrix
 	) {
 
-		$this->module_url           = $module_url;
-		$this->version              = $version;
-		$this->session_handler      = $session_handler;
-		$this->settings             = $settings;
-		$this->environment          = $environment;
-		$this->settings_status      = $settings_status;
-		$this->currency             = $currency;
-		$this->logger               = $logger;
-		$this->wcgateway_module_url = $wcgateway_module_url;
+		$this->module_url                         = $module_url;
+		$this->version                            = $version;
+		$this->session_handler                    = $session_handler;
+		$this->settings                           = $settings;
+		$this->environment                        = $environment;
+		$this->settings_status                    = $settings_status;
+		$this->currency                           = $currency;
+		$this->logger                             = $logger;
+		$this->wcgateway_module_url               = $wcgateway_module_url;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
@@ -191,8 +191,8 @@ class AxoManager {
 					'value'         => WC()->cart->get_total( 'numeric' ),
 				),
 			),
-			'allowed_cards'          => $this->supported_country_card_type_matrix,
-			'disable_cards'          => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
+			'allowed_cards'             => $this->supported_country_card_type_matrix,
+			'disable_cards'             => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
 			'style_options'             => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
@@ -230,7 +230,7 @@ class AxoManager {
 			'logging_enabled'           => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
 			'wp_debug'                  => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'billing_email_button_text' => __( 'Continue', 'woocommerce-paypal-payments' ),
-			'merchant_country' => WC()->countries->get_base_country(),
+			'merchant_country'          => WC()->countries->get_base_country(),
 		);
 	}
 

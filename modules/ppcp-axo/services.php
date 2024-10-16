@@ -114,7 +114,7 @@ return array(
 	/**
 	 * The matrix which countries and card type combinations can be used for AXO.
 	 */
-	'axo.supported-country-card-type-matrix'  => static function ( ContainerInterface $container ) : array {
+	'axo.supported-country-card-type-matrix' => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which countries and card type combinations can be used for AXO.
 		 */
