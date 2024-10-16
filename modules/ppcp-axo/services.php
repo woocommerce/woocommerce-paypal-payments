@@ -67,7 +67,8 @@ return array(
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.url' )
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'axo.supported-country-card-type-matrix' )
 		);
 	},
 
