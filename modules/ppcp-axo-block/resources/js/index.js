@@ -13,6 +13,7 @@ import usePayPalCommerceGateway from './hooks/usePayPalCommerceGateway';
 
 // Components
 import { Payment } from './components/Payment/Payment';
+import { TitleLabel } from './components/TitleLabel';
 
 const gatewayHandle = 'ppcp-axo-gateway';
 const namespace = 'ppcpBlocksPaypalAxo';
@@ -89,12 +90,7 @@ const Axo = ( props ) => {
 
 registerPaymentMethod( {
 	name: initialConfig.id,
-	label: (
-		<div
-			id="ppcp-axo-block-radio-label"
-			dangerouslySetInnerHTML={ { __html: initialConfig.title } }
-		/>
-	),
+	label: <TitleLabel config={ initialConfig } />,
 	content: <Axo />,
 	edit: createElement( initialConfig.title ),
 	ariaLabel: initialConfig.title,

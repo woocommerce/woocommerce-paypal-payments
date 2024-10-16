@@ -53,7 +53,7 @@ class AxoManager {
 	cardView = null;
 
 	constructor( namespace, axoConfig, ppcpConfig ) {
-        this.namespace = namespace;
+		this.namespace = namespace;
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
 
@@ -84,6 +84,8 @@ class AxoManager {
 				backgroundColorPrimary: '#ffffff',
 			},
 		};
+
+		this.cardOptions = this.getCardOptions();
 
 		this.registerEventHandlers();
 
@@ -661,6 +663,9 @@ class AxoManager {
 		await this.fastlane.connect( {
 			locale: this.locale,
 			styles: this.styles,
+			cardOptions: {
+				allowedBrands: this.cardOptions,
+			},
 		} );
 
 		this.fastlane.setLocale( 'en_us' );
@@ -1243,6 +1248,31 @@ class AxoManager {
 
 	useEmailWidget() {
 		return this.axoConfig?.widgets?.email === 'use_widget';
+	}
+
+	getCardOptions() {
+		const DEFAULT_ALLOWED_CARDS = [
+			'VISA',
+			'MASTERCARD',
+			'AMEX',
+			'DISCOVER',
+		];
+		const merchantCountry = this.axoConfig.merchant_country || 'US';
+
+		const allowedCards = new Set(
+			this.axoConfig.allowed_cards?.[ merchantCountry ] ||
+				DEFAULT_ALLOWED_CARDS
+		);
+
+		const disabledCards = new Set(
+			( this.axoConfig.disable_cards || [] ).map( ( card ) =>
+				card.toUpperCase()
+			)
+		);
+
+		return [ ...allowedCards ].filter(
+			( card ) => ! disabledCards.has( card )
+		);
 	}
 
 	deleteKeysWithEmptyString = ( obj ) => {

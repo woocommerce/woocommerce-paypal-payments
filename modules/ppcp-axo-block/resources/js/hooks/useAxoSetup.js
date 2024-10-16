@@ -35,6 +35,7 @@ const useAxoSetup = (
 		setIsAxoScriptLoaded,
 		setShippingAddress,
 		setCardDetails,
+		setCardChangeHandler,
 	} = useDispatch( STORE_NAME );
 
 	// Check if PayPal script has loaded
@@ -73,6 +74,7 @@ const useAxoSetup = (
 		if ( paypalLoaded && fastlaneSdk ) {
 			setIsAxoScriptLoaded( true );
 			setIsAxoActive( true );
+			setCardChangeHandler( onChangeCardButtonClick );
 
 			// Create and set up email lookup handler
 			const emailLookupHandler = createEmailLookupHandler(
@@ -84,8 +86,7 @@ const useAxoSetup = (
 				wooBillingAddress,
 				setWooShippingAddress,
 				setWooBillingAddress,
-				onChangeShippingAddressClick,
-				onChangeCardButtonClick
+				onChangeShippingAddressClick
 			);
 			setupEmailFunctionality( emailLookupHandler );
 		}

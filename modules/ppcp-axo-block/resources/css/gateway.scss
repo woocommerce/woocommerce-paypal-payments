@@ -17,10 +17,19 @@ $fast-transition-duration: 0.5s;
 }
 
 // 1. AXO Block Radio Label
-#ppcp-axo-block-radio-label {
-	@include flex-space-between;
+.wc-block-checkout__payment-method label[for="radio-control-wc-payment-method-options-ppcp-axo-gateway"] {
+	padding-right: .875em;
+}
+
+#radio-control-wc-payment-method-options-ppcp-axo-gateway__label {
+	display: flex;
+	align-items: center;
 	width: 100%;
 	padding-right: 1em;
+
+	.wc-block-components-payment-method-icons {
+		margin: 0;
+	}
 }
 
 // 2. AXO Block Card
@@ -70,15 +79,16 @@ $fast-transition-duration: 0.5s;
 	}
 
 	&__edit {
-		background-color: transparent;
+		flex-grow: 1;
+		margin-left: auto;
+		text-align: right;
 		border: 0;
-		color: inherit;
-		cursor: pointer;
-		display: block;
 		font-family: inherit;
-		margin: 0 0 0 auto;
 		font-size: 0.875em;
 		font-weight: normal;
+		color: inherit;
+		background-color: transparent;
+		cursor: pointer;
 
 		&:hover {
 			text-decoration: underline;
