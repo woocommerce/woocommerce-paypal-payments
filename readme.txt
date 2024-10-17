@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.9.3 - xxxx-xx-xx =
+= 2.9.3 - 2024-10-15 =
 * Fix - Multi-currency support #2667
 * Fix - "0.00" amount in Google Pay for virtual products #2636
 * Fix - Unsuccessfully payment from product page with Apple Pay button #2643
@@ -197,6 +197,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Axo Block: Always display the Fastlane watermark in the includeAdditionalInfo mode #2690
 * Fix - Axo Block: Display card fields for authenticated cardless profiles #2672
 * Fix - Google Pay: Fix button preview in the editor #2688
+* Fix - ACDC gateway not visible on the block Checkout for logged-out users #2693
 * Enhancement - Enhancement - Add Fastlane support for Checkout block
 * Enhancement - Multiple calls to POST /v1/oauth2/token?grant_type=client_credentials&response_type=id_token #2671
 * Enhancement - Fastlane update shipping options & taxes when changing address #2665
