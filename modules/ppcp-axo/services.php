@@ -22,14 +22,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 return array(
 
 	// If AXO can be configured.
-	'axo.eligible'                           => static function ( ContainerInterface $container ): bool {
+	'axo.eligible'                             => static function ( ContainerInterface $container ): bool {
 		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
 		return $apm_applies->for_country_currency();
 	},
 
-	'axo.helpers.apm-applies'                => static function ( ContainerInterface $container ) : ApmApplies {
+	'axo.helpers.apm-applies'                  => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
@@ -37,16 +37,16 @@ return array(
 		);
 	},
 
-	'axo.helpers.settings-notice-generator'  => static function ( ContainerInterface $container ) : SettingsNoticeGenerator {
+	'axo.helpers.settings-notice-generator'    => static function ( ContainerInterface $container ) : SettingsNoticeGenerator {
 		return new SettingsNoticeGenerator( $container->get( 'axo.fastlane-incompatible-plugin-names' ) );
 	},
 
 	// If AXO is configured and onboarded.
-	'axo.available'                          => static function ( ContainerInterface $container ): bool {
+	'axo.available'                            => static function ( ContainerInterface $container ): bool {
 		return true;
 	},
 
-	'axo.url'                                => static function ( ContainerInterface $container ): string {
+	'axo.url'                                  => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -57,7 +57,7 @@ return array(
 		);
 	},
 
-	'axo.manager'                            => static function ( ContainerInterface $container ): AxoManager {
+	'axo.manager'                              => static function ( ContainerInterface $container ): AxoManager {
 		return new AxoManager(
 			$container->get( 'axo.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -67,11 +67,12 @@ return array(
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.url' )
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'axo.shipping-wc-enabled-locations' )
 		);
 	},
 
-	'axo.gateway'                            => static function ( ContainerInterface $container ): AxoGateway {
+	'axo.gateway'                              => static function ( ContainerInterface $container ): AxoGateway {
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
@@ -92,7 +93,7 @@ return array(
 	/**
 	 * The matrix which countries and currency combinations can be used for AXO.
 	 */
-	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ) : array {
+	'axo.supported-country-currency-matrix'    => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which countries and currency combinations can be used for AXO.
 		 */
@@ -111,7 +112,7 @@ return array(
 		);
 	},
 
-	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ) : string {
+	'axo.settings-conflict-notice'             => static function ( ContainerInterface $container ) : string {
 		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
 		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
 
@@ -121,21 +122,21 @@ return array(
 		return $settings_notice_generator->generate_settings_conflict_notice( $settings );
 	},
 
-	'axo.checkout-config-notice'             => static function ( ContainerInterface $container ) : string {
+	'axo.checkout-config-notice'               => static function ( ContainerInterface $container ) : string {
 		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
 		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
 
 		return $settings_notice_generator->generate_checkout_notice();
 	},
 
-	'axo.incompatible-plugins-notice'        => static function ( ContainerInterface $container ) : string {
+	'axo.incompatible-plugins-notice'          => static function ( ContainerInterface $container ) : string {
 		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
 		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
 
 		return $settings_notice_generator->generate_incompatible_plugins_notice();
 	},
 
-	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ) : string {
+	'axo.smart-button-location-notice'         => static function ( ContainerInterface $container ) : string {
 		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
 		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
 
@@ -163,7 +164,7 @@ return array(
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
 
-	'axo.endpoint.frontend-logger'           => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
+	'axo.endpoint.frontend-logger'             => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
 		return new FrontendLoggerEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
@@ -175,7 +176,7 @@ return array(
 	 *
 	 * @returns array<array{name: string, is_active: bool}>
 	 */
-	'axo.fastlane-incompatible-plugins'      => static function () : array {
+	'axo.fastlane-incompatible-plugins'        => static function () : array {
 		/**
 		 * Filters the list of Fastlane incompatible plugins.
 		 */
@@ -230,7 +231,7 @@ return array(
 		);
 	},
 
-	'axo.fastlane-incompatible-plugin-names' => static function ( ContainerInterface $container ) : array {
+	'axo.fastlane-incompatible-plugin-names'   => static function ( ContainerInterface $container ) : array {
 		$incompatible_plugins = $container->get( 'axo.fastlane-incompatible-plugins' );
 
 		$active_plugins_list = array_filter(
@@ -250,5 +251,46 @@ return array(
 			},
 			$active_plugins_list
 		);
+	},
+
+	'axo.shipping-wc-enabled-locations'        => static function ( ContainerInterface $container ): array {
+		$default_zone = new \WC_Shipping_Zone( 0 );
+
+		$is_method_enabled = fn( $method) => $method->enabled === 'yes';
+
+		$is_default_zone_enabled = ! empty(
+			array_filter(
+				$default_zone->get_shipping_methods(),
+				$is_method_enabled
+			)
+		);
+
+		if ( $is_default_zone_enabled ) {
+			return array();
+		}
+
+		$shipping_zones = \WC_Shipping_Zones::get_zones();
+
+		$get_zone_locations = fn($zone) =>
+		!empty(array_filter($zone->get_shipping_methods(), $is_method_enabled))
+			? array_map(
+			fn($location) => $location->code,
+			$zone->get_zone_locations()
+		)
+			: [];
+
+		$enabled_locations = array_unique(
+			array_merge(
+				...array_map(
+					$get_zone_locations,
+					array_map(
+						fn( $zone) => $zone instanceof \WC_Shipping_Zone ? $zone : new \WC_Shipping_Zone( $zone['id'] ),
+						$shipping_zones
+					)
+				)
+			)
+		);
+
+		return $enabled_locations;
 	},
 );

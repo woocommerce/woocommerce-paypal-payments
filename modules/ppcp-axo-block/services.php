@@ -37,7 +37,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.dcc' ),
 			$container->get( 'onboarding.environment' ),
-			$container->get( 'wcgateway.url' )
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'axo.shipping-wc-enabled-locations' )
 		);
 	},
 );
