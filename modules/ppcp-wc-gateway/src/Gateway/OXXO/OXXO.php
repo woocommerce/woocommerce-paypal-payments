@@ -10,13 +10,19 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO;
 
 use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
+use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 
 /**
  * Class OXXO.
  */
 class OXXO {
+	public const ID = 'ppcp-oxxo-gateway';
 
 	/**
 	 * The checkout helper.
@@ -40,21 +46,51 @@ class OXXO {
 	protected $asset_version;
 
 	/**
-	 * OXXO constructor.
+	 * The order endpoint.
 	 *
-	 * @param CheckoutHelper $checkout_helper The checkout helper.
-	 * @param string         $module_url The module URL.
-	 * @param string         $asset_version The asset version.
+	 * @var OrderEndpoint
+	 */
+	protected $order_endpoint;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
+	 * The capture factory.
+	 *
+	 * @var CaptureFactory
+	 */
+	protected $capture_factory;
+
+	/**
+	 * OXXO constructor
+	 *
+	 * @param CheckoutHelper  $checkout_helper The checkout helper.
+	 * @param string          $module_url The module URL.
+	 * @param string          $asset_version The asset version.
+	 * @param OrderEndpoint   $order_endpoint The order endpoint.
+	 * @param LoggerInterface $logger The logger.
+	 * @param CaptureFactory  $capture_factory The capture factory.
 	 */
 	public function __construct(
 		CheckoutHelper $checkout_helper,
 		string $module_url,
-		string $asset_version
+		string $asset_version,
+		OrderEndpoint $order_endpoint,
+		LoggerInterface $logger,
+		CaptureFactory $capture_factory
 	) {
 
 		$this->checkout_helper = $checkout_helper;
 		$this->module_url      = $module_url;
 		$this->asset_version   = $asset_version;
+		$this->order_endpoint  = $order_endpoint;
+		$this->logger          = $logger;
+		$this->capture_factory = $capture_factory;
 	}
 
 	/**
@@ -198,6 +234,46 @@ class OXXO {
 					}
 				}
 			}
+		);
+
+		/**
+		 * Process PayPal fees
+		 */
+		add_action(
+			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
+			function ( WC_Order $wc_order, string $order_id ) {
+				try {
+					if ( $wc_order->get_payment_method() !== OXXO::ID ) {
+						return;
+					}
+
+					$order    = $this->order_endpoint->order( $order_id );
+					$payments = $order->purchase_units()[0]->payments();
+
+					if ( ! $payments ) {
+						return;
+					}
+
+					$capture = $payments->captures()[0] ?? null;
+
+					if ( $capture ) {
+						$breakdown = $capture->seller_receivable_breakdown();
+						if ( $breakdown ) {
+							$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
+							$paypal_fee = $breakdown->paypal_fee();
+							if ( $paypal_fee ) {
+								$wc_order->update_meta_data( 'PayPal Transaction Fee', (string) $paypal_fee->value() );
+							}
+
+							$wc_order->save_meta_data();
+						}
+					}
+				} catch ( RuntimeException $exception ) {
+					$this->logger->error( $exception->getMessage() );
+				}
+			},
+			10,
+			2
 		);
 	}
 
