@@ -407,6 +407,11 @@ class ApplePayButton {
 			.querySelectorAll( 'style#ppcp-hide-apple-pay' )
 			.forEach( ( el ) => el.remove() );
 
+        const paymentMethodAppleLi = document.querySelector('.wc_payment_method.payment_method_ppcp-applepay' );
+        if (paymentMethodAppleLi.style.display === 'none' || paymentMethodAppleLi.style.display === '') {
+            paymentMethodAppleLi.style.display = 'block';
+        }
+
 		this.allElements.forEach( ( element ) => {
 			element.style.display = '';
 		} );

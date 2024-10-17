@@ -763,10 +763,15 @@ export default class PaymentButton {
 
 		const styleSelector = `style[data-hide-gateway="${ this.methodId }"]`;
 		const wrapperSelector = `#${ this.wrappers.Default }`;
+        const paymentMethodLi = document.querySelector(`.wc_payment_method.payment_method_${ this.methodId }`);
 
 		document
 			.querySelectorAll( styleSelector )
 			.forEach( ( el ) => el.remove() );
+
+        if (paymentMethodLi.style.display === 'none' || paymentMethodLi.style.display === '') {
+            paymentMethodLi.style.display = 'block';
+        }
 
 		document
 			.querySelectorAll( wrapperSelector )

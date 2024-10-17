@@ -44,6 +44,12 @@ class CardFieldsRenderer {
 		if ( hideDccGateway ) {
 			hideDccGateway.parentNode.removeChild( hideDccGateway );
 		}
+        const dccGatewayLi = document.querySelector(
+            '.wc_payment_method.payment_method_ppcp-credit-card-gateway'
+        );
+        if (dccGatewayLi.style.display === 'none' || dccGatewayLi.style.display === '') {
+            dccGatewayLi.style.display = 'block';
+        }
 
 		const cardFields = paypal.CardFields( {
 			createOrder: contextConfig.createOrder,
