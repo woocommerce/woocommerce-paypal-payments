@@ -125,7 +125,7 @@ trait PaymentsStatusHandlingTrait {
 			case AuthorizationStatus::CREATED:
 			case AuthorizationStatus::PENDING:
 				$wc_order->update_status(
-					'on-hold',
+					apply_filters( 'ppcp_authorized_order_status', 'on-hold' ),
 					__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
 				);
 				/**
