@@ -195,9 +195,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		// Do not load when definitely not needed,
 		// but we still need to check the locations later and handle in JS
 		// because has_block cannot be called here (too early).
-		return $this->plugin_settings->has( 'enabled' ) && $this->plugin_settings->get( 'enabled' )
-			&& ( $this->settings_status->is_smart_button_enabled_for_location( 'checkout-block-express' ) ||
-				$this->settings_status->is_smart_button_enabled_for_location( 'cart-block' ) );
+		return $this->plugin_settings->has( 'enabled' ) && $this->plugin_settings->get( 'enabled' );
 	}
 
 	/**
@@ -245,11 +243,15 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			);
 		}
 
+		$smart_buttons_enabled = ! $this->use_place_order && $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'block-checkout' );
+		$place_order_enabled   = $this->use_place_order || $this->add_place_order_method;
+
 		return array(
 			'id'                          => $this->gateway->id,
 			'title'                       => $this->gateway->title,
 			'description'                 => $this->gateway->description,
-			'enabled'                     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'checkout' ),
+			'smartButtonsEnabled'         => $smart_buttons_enabled,
+			'placeOrderEnabled'           => $place_order_enabled,
 			'fundingSource'               => $this->session_handler->funding_source(),
 			'finalReviewEnabled'          => $this->final_review_enabled,
 			'addPlaceOrderMethod'         => $this->add_place_order_method,
