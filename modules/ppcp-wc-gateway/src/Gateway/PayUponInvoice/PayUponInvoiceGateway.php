@@ -123,7 +123,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param State                       $state The onboarding state.
 	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param string                      $module_url The module URL
+	 * @param string                      $module_url The module URL.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
