@@ -723,7 +723,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
 		$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
 
-		if ( ! $product->get_sold_individually() ) {
+		if ( $enable_subscription_product && ! $product->get_sold_individually() ) {
 			$product->set_sold_individually( true );
 		}
 
