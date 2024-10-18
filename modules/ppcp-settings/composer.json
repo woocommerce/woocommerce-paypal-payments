@@ -1,0 +1,16 @@
+{
+    "name": "woocommerce/ppcp-settings",
+    "type": "inpsyde-module",
+    "description": "Settings module",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.4 | ^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\Settings\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

@@ -203,6 +203,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $wc_payment_tokens;
 
 	/**
+	 * Whether settings module is enabled.
+	 *
+	 * @var bool
+	 */
+	private $admin_settings_enabled;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
@@ -225,6 +232,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param bool                     $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
+	 * @param bool                     $admin_settings_enabled Whether settings module is enabled.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -246,7 +254,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		string $place_order_button_text,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
 		bool $vault_v3_enabled,
-		WooCommercePaymentTokens $wc_payment_tokens
+		WooCommercePaymentTokens $wc_payment_tokens,
+		bool $admin_settings_enabled
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -270,6 +279,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
 		$this->vault_v3_enabled            = $vault_v3_enabled;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
+		$this->admin_settings_enabled      = $admin_settings_enabled;
 
 		$default_support = array(
 			'products',
@@ -743,6 +753,17 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Override the parent admin_options method.
+	 */
+	public function admin_options() {
+		if ( ! $this->admin_settings_enabled ) {
+			parent::admin_options();
+		}
+
+		do_action( 'woocommerce_paypal_payments_gateway_admin_options_wrapper', $this );
 	}
 
 	/**
