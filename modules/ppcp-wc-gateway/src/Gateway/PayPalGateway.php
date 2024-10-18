@@ -232,7 +232,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param bool                     $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
-	 * @param string				   $module_url The module URL
+	 * @param string                   $module_url The module URL.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -279,8 +279,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
 		$this->vault_v3_enabled            = $vault_v3_enabled;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
-		$this->module_url				   = $module_url;
-		$this->icon = apply_filters('woocommerce_paypal_payments_paypal_gateway_icon', esc_url( $this->module_url ) . 'assets/images/paypal.svg');
+		$this->module_url                  = $module_url;
+		$this->icon                        = apply_filters( 'woocommerce_paypal_payments_paypal_gateway_icon', esc_url( $this->module_url ) . 'assets/images/paypal.svg' );
 
 		$default_support = array(
 			'products',
