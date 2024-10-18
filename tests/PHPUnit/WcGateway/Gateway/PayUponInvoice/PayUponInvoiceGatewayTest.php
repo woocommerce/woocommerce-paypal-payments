@@ -64,7 +64,8 @@ class PayUponInvoiceGatewayTest extends TestCase
 			$this->pui_helper,
 			$this->checkout_helper,
 			$this->state,
-			$this->refund_processor
+			$this->refund_processor,
+			''
 		);
 	}
 
