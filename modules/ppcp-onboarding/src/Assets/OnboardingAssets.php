@@ -117,7 +117,7 @@ class OnboardingAssets {
 			array(
 				'empty_smart_button_location_message' => sprintf(
 					'<p class="description ppcp-empty-smart-button-location">%1$s</p>',
-					__( 'Note: If no button location is selected, the PayPal gateway will not be available.', 'woocommerce-paypal-payments' )
+					__( 'Note: PayPal buttons and advanced payment features (Alternative Payment Methods, Subscriptions, etc.) are unavailable if no Smart Button Location is configured.', 'woocommerce-paypal-payments' )
 				),
 			)
 		);

@@ -47,6 +47,7 @@ return array(
 			$container->get( 'blocks.settings.final_review_enabled' ),
 			$container->get( 'session.cancellation.view' ),
 			$container->get( 'session.handler' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'blocks.add-place-order-method' ),
 			$container->get( 'wcgateway.use-place-order-button' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
