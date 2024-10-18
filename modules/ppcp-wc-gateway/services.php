@@ -118,7 +118,8 @@ return array(
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
-			$container->get( 'vaulting.wc-payment-tokens' )
+			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get( 'wcgateway.url' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -1376,7 +1377,8 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),
 			$container->get( 'onboarding.state' ),
-			$container->get( 'wcgateway.processor.refunds' )
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.url' )
 		);
 	},
 	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {

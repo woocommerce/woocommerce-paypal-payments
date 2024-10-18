@@ -104,6 +104,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $refund_processor;
 
 	/**
+	 * The module URL
+	 *
+	 * @var string
+	 */
+	private $module_url;
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
@@ -116,6 +123,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param State                       $state The onboarding state.
 	 * @param RefundProcessor             $refund_processor The refund processor.
+	 * @param string                      $module_url The module URL.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -127,7 +135,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
 		State $state,
-		RefundProcessor $refund_processor
+		RefundProcessor $refund_processor,
+		string $module_url
 	) {
 		$this->id = self::ID;
 
@@ -157,6 +166,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->pui_helper               = $pui_helper;
 		$this->checkout_helper          = $checkout_helper;
+		$this->module_url               = $module_url;
+		$this->icon                     = apply_filters( 'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon', esc_url( $this->module_url ) . 'assets/images/ratepay.svg' );
 
 		$this->state = $state;
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
