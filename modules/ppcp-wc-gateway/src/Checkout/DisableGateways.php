@@ -97,6 +97,9 @@ class DisableGateways {
 
 		if ( ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) ) {
 			unset( $methods[ CardButtonGateway::ID ] );
+			if ( $this->subscription_helper->cart_contains_subscription() ) {
+				unset( $methods[ PayPalGateway::ID ] );
+			}
 		}
 
 		if ( ! $this->needs_to_disable_gateways() ) {
