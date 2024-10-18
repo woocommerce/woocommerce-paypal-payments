@@ -462,6 +462,38 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		}
 	};
 
+    /**
+     * Hide the subscription settings when smart buttons are disabled for checkout,
+     * since the basic redirect gateway is disabled for subscriptions.
+     */
+	const initSettingsHidingForPlaceOrderGateway = () => {
+		const selectors = [
+			'#field-paypal_saved_payments',
+			'#field-subscriptions_mode',
+			'#field-vault_enabled',
+		];
+
+		const updateSettingsVisibility = () => {
+			const selectedLocations = getSelectedLocations(
+				smartButtonLocationsSelect
+			);
+			const hasCheckoutSmartButtons =
+				selectedLocations.includes( 'checkout' ) ||
+				selectedLocations.includes( 'checkout-block-express' );
+
+			selectors.forEach( ( selector ) => {
+				setVisibleByClass( selector, hasCheckoutSmartButtons, 'hide' );
+			} );
+		};
+
+		updateSettingsVisibility();
+
+		jQuery( smartButtonLocationsSelect ).on(
+			'change',
+			updateSettingsVisibility
+		);
+	};
+
 	( () => {
 		removeDisabledCardIcons(
 			'select[name="ppcp[disable_cards][]"]',
@@ -492,6 +524,8 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		);
 
 		toggleMessagingEnabled();
+
+        initSettingsHidingForPlaceOrderGateway();
 
 		groupToggle( '#ppcp-vault_enabled', [
 			'#field-subscription_behavior_when_vault_fails',
