@@ -33,13 +33,24 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	public function run( ContainerInterface $container ): bool {
 		add_action(
 			'admin_enqueue_scripts',
-			function( $hook_suffix ) use ( $container ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function( $hook_suffix ) use ( $container ) {
 				if ( 'woocommerce_page_wc-settings' !== $hook_suffix ) {
 					return;
 				}
 
-				$script_asset_file = require dirname( realpath( __FILE__ ), 2 ) . '/assets/index.asset.php';
-				$module_url        = $container->get( 'settings.url' );
+				/**
+				 * Require resolves.
+				 *
+				 * @psalm-suppress UnresolvableInclude
+				 */
+				$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/index.asset.php';
+
+				$module_url = $container->get( 'settings.url' );
 
 				wp_register_script(
 					'ppcp-admin-settings',
@@ -51,12 +62,18 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				wp_enqueue_script( 'ppcp-admin-settings' );
 
-				$stlye_asset_file = require dirname( realpath( __FILE__ ), 2 ) . '/assets/style.asset.php';
+				/**
+				 * Require resolves.
+				 *
+				 * @psalm-suppress UnresolvableInclude
+				 */
+				$style_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/style.asset.php';
+
 				wp_register_style(
 					'ppcp-admin-settings',
 					$module_url . '/assets/style-style.css',
-					$stlye_asset_file['dependencies'],
-					$stlye_asset_file['version']
+					$style_asset_file['dependencies'],
+					$style_asset_file['version']
 				);
 
 				wp_enqueue_style( 'ppcp-admin-settings' );
@@ -65,7 +82,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_admin_options_wrapper',
-			function( PayPalGateway $gateway ) {
+			static function( PayPalGateway $gateway ) {
 				global $hide_save_button;
 				$hide_save_button = true;
 
