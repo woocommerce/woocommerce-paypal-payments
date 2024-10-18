@@ -3,6 +3,7 @@ import { useSelect } from '@wordpress/data';
 import Fastlane from '../../../../ppcp-axo/resources/js/Connection/Fastlane';
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { useDeleteEmptyKeys } from './useDeleteEmptyKeys';
+import useAllowedLocations from './useAllowedLocations';
 import { STORE_NAME } from '../stores/axoStore';
 
 /**
@@ -30,6 +31,8 @@ const useFastlaneSdk = ( namespace, axoConfig, ppcpConfig ) => {
 		return deleteEmptyKeys( configRef.current.axoConfig.style_options );
 	}, [ deleteEmptyKeys ] );
 
+	const allowedLocations = useAllowedLocations( axoConfig );
+
 	// Effect to initialize Fastlane SDK
 	useEffect( () => {
 		const initFastlane = async () => {
@@ -52,6 +55,9 @@ const useFastlaneSdk = ( namespace, axoConfig, ppcpConfig ) => {
 				await fastlane.connect( {
 					locale: configRef.current.ppcpConfig.locale,
 					styles: styleOptions,
+					shippingAddressOptions: {
+						allowedLocations,
+					},
 				} );
 
 				// Set locale (hardcoded to 'en_us' for now)
@@ -66,7 +72,13 @@ const useFastlaneSdk = ( namespace, axoConfig, ppcpConfig ) => {
 		};
 
 		initFastlane();
-	}, [ fastlaneSdk, styleOptions, isPayPalLoaded, namespace ] );
+	}, [
+		fastlaneSdk,
+		styleOptions,
+		isPayPalLoaded,
+		namespace,
+		allowedLocations,
+	] );
 
 	// Effect to update the config ref when configs change
 	useEffect( () => {

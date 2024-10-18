@@ -67,7 +67,8 @@ return array(
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.url' )
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'axo.shipping-wc-enabled-locations' )
 		);
 	},
 
@@ -250,5 +251,47 @@ return array(
 			},
 			$active_plugins_list
 		);
+	},
+
+	'axo.shipping-wc-enabled-locations'      => static function ( ContainerInterface $container ): array {
+		$default_zone = new \WC_Shipping_Zone( 0 );
+
+		$is_method_enabled = fn( \WC_Shipping_Method $method): bool => $method->enabled === 'yes';
+
+		$is_default_zone_enabled = ! empty(
+			array_filter(
+				$default_zone->get_shipping_methods(),
+				$is_method_enabled
+			)
+		);
+
+		if ( $is_default_zone_enabled ) {
+			return array();
+		}
+
+		$shipping_zones = \WC_Shipping_Zones::get_zones();
+
+		$get_zone_locations = fn( \WC_Shipping_Zone $zone): array =>
+		! empty( array_filter( $zone->get_shipping_methods(), $is_method_enabled ) )
+			? array_map(
+				fn( object $location): string => $location->code,
+				$zone->get_zone_locations()
+			)
+			: array();
+
+		$enabled_locations = array_unique(
+			array_merge(
+				...array_map(
+					$get_zone_locations,
+					array_map(
+						fn( $zone): \WC_Shipping_Zone =>
+						$zone instanceof \WC_Shipping_Zone ? $zone : new \WC_Shipping_Zone( $zone['id'] ),
+						$shipping_zones
+					)
+				)
+			)
+		);
+
+		return $enabled_locations;
 	},
 );

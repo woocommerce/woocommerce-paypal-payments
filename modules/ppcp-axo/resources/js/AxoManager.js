@@ -53,7 +53,7 @@ class AxoManager {
 	cardView = null;
 
 	constructor( namespace, axoConfig, ppcpConfig ) {
-        this.namespace = namespace;
+		this.namespace = namespace;
 		this.axoConfig = axoConfig;
 		this.ppcpConfig = ppcpConfig;
 
@@ -84,6 +84,9 @@ class AxoManager {
 				backgroundColorPrimary: '#ffffff',
 			},
 		};
+
+		this.enabledShippingLocations =
+			this.axoConfig.enabled_shipping_locations;
 
 		this.registerEventHandlers();
 
@@ -661,6 +664,9 @@ class AxoManager {
 		await this.fastlane.connect( {
 			locale: this.locale,
 			styles: this.styles,
+			shippingAddressOptions: {
+				allowedLocations: this.enabledShippingLocations,
+			},
 		} );
 
 		this.fastlane.setLocale( 'en_us' );
