@@ -1,3 +1,8 @@
+import {
+	setVisible,
+	setVisibleByClass,
+} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+
 document.addEventListener( 'DOMContentLoaded', () => {
 	const payLaterMessagingSelectableLocations = [
 		'product',
@@ -216,6 +221,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		replace();
 	};
 
+	const hideElements = ( selectorGroup ) => {
+		selectorGroup.forEach( ( selector ) =>
+			setVisibleByClass( selector, false, 'hide' )
+		);
+	};
+
+	const showElements = ( selectorGroup ) => {
+		selectorGroup.forEach( ( selector ) =>
+			setVisibleByClass( selector, true, 'hide' )
+		);
+	};
+
 	const toggleInputsBySelectedLocations = (
 		stylingPerSelector,
 		locationsSelector,
@@ -226,30 +243,30 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		const payLaterMessagingEnabled = document.querySelector(
 			payLaterMessagingEnabledSelector
 		);
-		const stylingPerElement = document.querySelector( stylingPerSelector );
-		const locationsElement = document.querySelector( locationsSelector );
-		const stylingPerElementWrapper = stylingPerElement?.closest( 'tr' );
-		const stylingPerElementWrapperSelector =
-			'#' + stylingPerElementWrapper?.getAttribute( 'id' );
 
+		const stylingPerElement = document.querySelector( stylingPerSelector );
 		if ( ! stylingPerElement ) {
 			return;
 		}
 
+		const stylingPerElementWrapper = stylingPerElement.closest( 'tr' );
+
 		const toggleElementsBySelectedLocations = () => {
-			stylingPerElementWrapper.style.display = '';
 			const selectedLocations = getSelectedLocations( locationsSelector );
-			const emptySmartButtonLocationMessage = jQuery(
-				'.ppcp-empty-smart-button-location'
+
+			setVisibleByClass(
+				stylingPerElementWrapper,
+				selectedLocations.length > 0,
+				'hide'
 			);
 
 			if ( selectedLocations.length === 0 ) {
-				hideElements(
-					groupToHideOnChecked.concat(
-						stylingPerElementWrapperSelector
-					)
+				hideElements( groupToHideOnChecked );
+
+				const emptySmartButtonLocationMessage = document.querySelector(
+					'.ppcp-empty-smart-button-location'
 				);
-				if ( emptySmartButtonLocationMessage.length === 0 ) {
+				if ( ! emptySmartButtonLocationMessage ) {
 					jQuery(
 						PayPalCommerceSettings.empty_smart_button_location_message
 					).insertAfter(
@@ -277,28 +294,16 @@ document.addEventListener( 'DOMContentLoaded', () => {
 			);
 
 			groupToShowOnChecked.forEach( ( element ) => {
-				if ( inputSelectors.includes( element ) ) {
-					document.querySelector( element ).style.display = '';
-					return;
-				}
-				document.querySelector( element ).style.display = 'none';
+				setVisibleByClass(
+					element,
+					inputSelectors.includes( element ),
+					'hide'
+				);
 			} );
 
 			if ( inputType === 'messages' ) {
 				togglePayLaterMessageFields();
 			}
-		};
-
-		const hideElements = ( selectroGroup ) => {
-			selectroGroup.forEach( ( elementToHide ) => {
-				document.querySelector( elementToHide ).style.display = 'none';
-			} );
-		};
-
-		const showElements = ( selectroGroup ) => {
-			selectroGroup.forEach( ( elementToShow ) => {
-				document.querySelector( elementToShow ).style.display = '';
-			} );
 		};
 
 		groupToggle( stylingPerSelector, groupToShowOnChecked );
@@ -327,7 +332,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		} );
 
 		// We need to use jQuery here as the select might be a select2 element, which doesn't use native events.
-		jQuery( locationsElement ).on( 'change', function () {
+		jQuery( locationsSelector ).on( 'change', function () {
 			const emptySmartButtonLocationMessage = jQuery(
 				'.ppcp-empty-smart-button-location'
 			);
