@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
@@ -19,7 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingSendOnlyNoticeRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
 
@@ -237,6 +238,11 @@ return array(
 			'production-express_checkout',
 			'sandbox-ppcp',
 			'sandbox-express_checkout',
+		);
+	},
+	'onboarding.render-send-only-notice'        => static function( ContainerInterface $container ) {
+		return new OnboardingSendOnlyNoticeRenderer(
+			$container->get( 'wcgateway.send-only-message' )
 		);
 	},
 	'onboarding.render'                         => static function ( ContainerInterface $container ) : OnboardingRenderer {

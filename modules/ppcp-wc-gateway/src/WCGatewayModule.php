@@ -224,6 +224,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				foreach ( array(
 					$c->get( 'wcgateway.notice.dcc-without-paypal' ),
 					$c->get( 'wcgateway.notice.card-button-without-paypal' ),
+					$c->get( 'wcgateway.notice.send-only-country' ),
 				) as $gateway_without_paypal_notice ) {
 					assert( $gateway_without_paypal_notice instanceof GatewayWithoutPayPalAdminNotice );
 					$message = $gateway_without_paypal_notice->message();
