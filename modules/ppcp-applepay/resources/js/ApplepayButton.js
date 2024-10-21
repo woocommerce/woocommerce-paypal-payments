@@ -86,6 +86,13 @@ class ApplePayButton extends PaymentButton {
 	#applePayConfig = null;
 
 	/**
+	 * Details about the product (relevant on product page)
+	 *
+	 * @type {{quantity: ?number, items: []}}
+	 */
+	#product = {};
+
+	/**
 	 * @inheritDoc
 	 */
 	static getWrappers( buttonConfig, ppcpConfig ) {
@@ -130,6 +137,11 @@ class ApplePayButton extends PaymentButton {
 		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
 		this.onButtonClick = this.onButtonClick.bind( this );
 
+		this.#product = {
+			quantity: null,
+			items: [],
+		};
+
 		this.log( 'Create instance' );
 	}
 
@@ -147,7 +159,7 @@ class ApplePayButton extends PaymentButton {
 
 		return (
 			PaymentContext.Checkout !== this.context ||
-			this.shouldUpdateButtonWithFormData()
+			this.shouldUpdateButtonWithFormData
 		);
 	}
 
@@ -413,7 +425,7 @@ class ApplePayButton extends PaymentButton {
 	 *
 	 * @return {boolean} True, when Apple Pay data should be submitted to WooCommerce.
 	 */
-	shouldUpdateButtonWithFormData() {
+	get shouldUpdateButtonWithFormData() {
 		if ( PaymentContext.Checkout !== this.context ) {
 			return false;
 		}
@@ -429,7 +441,7 @@ class ApplePayButton extends PaymentButton {
 	 *
 	 * @return {boolean} True, when the Apple Pay data should be submitted to WooCommerce.
 	 */
-	shouldCompletePaymentWithContextHandler() {
+	get shouldCompletePaymentWithContextHandler() {
 		// Data already handled, ex: PayNow
 		if ( ! this.contextHandler.shippingAllowed() ) {
 			return true;
@@ -438,7 +450,7 @@ class ApplePayButton extends PaymentButton {
 		// Use WC form data mode in Checkout.
 		return (
 			PaymentContext.Checkout === this.context &&
-			! this.shouldUpdateButtonWithFormData()
+			! this.shouldUpdateButtonWithFormData
 		);
 	}
 
@@ -448,7 +460,7 @@ class ApplePayButton extends PaymentButton {
 	 * @param {Object} paymentRequest Object to extend with form data.
 	 */
 	updateRequestDataWithForm( paymentRequest ) {
-		if ( ! this.shouldUpdateButtonWithFormData() ) {
+		if ( ! this.shouldUpdateButtonWithFormData ) {
 			return;
 		}
 
@@ -521,16 +533,16 @@ class ApplePayButton extends PaymentButton {
 				'email',
 				'phone',
 			],
-			requiredBillingContactFields: [ 'postalAddress' ], // ApplePay does not implement billing
-			// email and phone fields.
+			// ApplePay does not implement billing email and phone fields.
+			requiredBillingContactFields: [ 'postalAddress' ],
 		};
 
 		if ( ! this.requiresShipping ) {
-			if ( this.shouldCompletePaymentWithContextHandler() ) {
-				// Data needs handled externally.
+			if ( this.shouldCompletePaymentWithContextHandler ) {
+				// Data is handled externally.
 				baseRequest.requiredShippingContactFields = [];
 			} else {
-				// Minimum data required for order creation.
+				// Minimum data required to create order.
 				baseRequest.requiredShippingContactFields = [
 					'email',
 					'phone',
@@ -549,13 +561,18 @@ class ApplePayButton extends PaymentButton {
 		return paymentRequest;
 	}
 
-	refreshContextData() {
-		if ( PaymentContext.Product === this.context ) {
-			// Refresh product data that makes the price change.
-			this.productQuantity = document.querySelector( 'input.qty' )?.value;
-			this.products = this.contextHandler.products();
-			this.log( 'Products updated', this.products );
+	refreshProductContextData() {
+		if ( PaymentContext.Product !== this.context ) {
+			return;
 		}
+
+		// Refresh product data that makes the price change.
+		this.#product.quantity = document.querySelector( 'input.qty' )?.value;
+
+		// Always an array; grouped products can return multiple items.
+		this.#product.items = this.contextHandler.products();
+
+		this.log( 'Products updated', this.#product );
 	}
 
 	//------------------------
@@ -701,16 +718,16 @@ class ApplePayButton extends PaymentButton {
 	getShippingContactData( event ) {
 		const productId = this.buttonConfig.product.id;
 
-		this.refreshContextData();
+		this.refreshProductContextData();
 
 		switch ( this.context ) {
 			case PaymentContext.Product:
 				return {
 					action: 'ppcp_update_shipping_contact',
 					product_id: productId,
-					products: JSON.stringify( this.products ),
+					products: JSON.stringify( this.#product.items ),
 					caller_page: 'productDetail',
-					product_quantity: this.productQuantity,
+					product_quantity: this.#product.quantity,
 					simplified_contact: event.shippingContact,
 					need_shipping: this.requiresShipping,
 					'woocommerce-process-checkout-nonce': this.nonce,
@@ -734,7 +751,7 @@ class ApplePayButton extends PaymentButton {
 	getShippingMethodData( event ) {
 		const productId = this.buttonConfig.product.id;
 
-		this.refreshContextData();
+		this.refreshProductContextData();
 
 		switch ( this.context ) {
 			case PaymentContext.Product:
@@ -748,9 +765,9 @@ class ApplePayButton extends PaymentButton {
 						: this.#initialPaymentRequest?.shippingContact ??
 						  this.#initialPaymentRequest?.billingContact,
 					product_id: productId,
-					products: JSON.stringify( this.products ),
+					products: JSON.stringify( this.#product.items ),
 					caller_page: 'productDetail',
-					product_quantity: this.productQuantity,
+					product_quantity: this.#product.quantity,
 					'woocommerce-process-checkout-nonce': this.nonce,
 				};
 
@@ -797,8 +814,8 @@ class ApplePayButton extends PaymentButton {
 							action: 'ppcp_create_order',
 							caller_page: this.context,
 							product_id: this.buttonConfig.product.id ?? null,
-							products: JSON.stringify( this.products ),
-							product_quantity: this.productQuantity ?? null,
+							products: JSON.stringify( this.#product.items ),
+							product_quantity: this.#product.quantity,
 							shipping_contact: shippingContact,
 							billing_contact: billingContact,
 							token: event.payment.token,
@@ -873,7 +890,7 @@ class ApplePayButton extends PaymentButton {
 					) {
 						try {
 							if (
-								this.shouldCompletePaymentWithContextHandler()
+								this.shouldCompletePaymentWithContextHandler
 							) {
 								// No shipping, expect immediate capture, ex: PayNow, Checkout with
 								// form data.
