@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class Button
@@ -86,36 +87,46 @@ class Button implements ButtonInterface {
 	private $session_handler;
 
 	/**
+	 * The Subscription Helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * SmartButton constructor.
 	 *
-	 * @param string          $module_url The URL to the module.
-	 * @param string          $sdk_url The URL to the SDK.
-	 * @param string          $version The assets version.
-	 * @param SessionHandler  $session_handler The Session handler.
-	 * @param Settings        $settings The Settings.
-	 * @param Environment     $environment The environment object.
-	 * @param SettingsStatus  $settings_status The Settings status helper.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string             $module_url The URL to the module.
+	 * @param string             $sdk_url The URL to the SDK.
+	 * @param string             $version The assets version.
+	 * @param SessionHandler     $session_handler The Session handler.
+	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @param Settings           $settings The Settings.
+	 * @param Environment        $environment The environment object.
+	 * @param SettingsStatus     $settings_status The Settings status helper.
+	 * @param LoggerInterface    $logger The logger.
 	 */
 	public function __construct(
 		string $module_url,
 		string $sdk_url,
 		string $version,
 		SessionHandler $session_handler,
+		SubscriptionHelper $subscription_helper,
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
 		LoggerInterface $logger
 	) {
 
-		$this->module_url      = $module_url;
-		$this->sdk_url         = $sdk_url;
-		$this->version         = $version;
-		$this->session_handler = $session_handler;
-		$this->settings        = $settings;
-		$this->environment     = $environment;
-		$this->settings_status = $settings_status;
-		$this->logger          = $logger;
+		$this->module_url          = $module_url;
+		$this->sdk_url             = $sdk_url;
+		$this->version             = $version;
+		$this->session_handler     = $session_handler;
+		$this->subscription_helper = $subscription_helper;
+		$this->settings            = $settings;
+		$this->environment         = $environment;
+		$this->settings_status     = $settings_status;
+		$this->logger              = $logger;
 	}
 
 	/**
@@ -232,6 +243,21 @@ class Button implements ButtonInterface {
 		$button_enabled_checkout = true;
 		$button_enabled_payorder = true;
 		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+
+		if (
+			$this->subscription_helper->plugin_is_active()
+			&& ! $this->subscription_helper->accept_manual_renewals()
+		) {
+			if ( is_product() && $this->subscription_helper->current_product_is_subscription() ) {
+				return false;
+			}
+			if ( $this->subscription_helper->order_pay_contains_subscription() ) {
+				return false;
+			}
+			if ( $this->subscription_helper->cart_contains_subscription() ) {
+				return false;
+			}
+		}
 
 		/**
 		 * Param types removed to avoid third-party issues.
