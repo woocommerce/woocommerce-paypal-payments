@@ -740,7 +740,7 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 }
 
 if ( block_enabled ) {
-	if ( (config.placeOrderEnabled || config.usePlaceOrder) && ! config.scriptData.continuation ) {
+	if ( config.placeOrderEnabled && ! config.scriptData.continuation ) {
 		let descriptionElement = (
 			<div
 				dangerouslySetInnerHTML={ { __html: config.description } }

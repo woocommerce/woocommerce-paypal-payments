@@ -267,8 +267,6 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			'placeOrderEnabled'           => $place_order_enabled,
 			'fundingSource'               => $this->session_handler->funding_source(),
 			'finalReviewEnabled'          => $this->final_review_enabled,
-			'addPlaceOrderMethod'         => $this->add_place_order_method,
-			'usePlaceOrder'               => $this->use_place_order,
 			'placeOrderButtonText'        => $this->place_order_button_text,
 			'placeOrderButtonDescription' => $this->place_order_button_description,
 			'enabledFundingSources'       => $funding_sources,
