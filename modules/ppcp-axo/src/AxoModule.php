@@ -222,8 +222,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				// Render submit button.
 				add_action(
 					$manager->checkout_button_renderer_hook(),
-					static function () use ( $c, $manager ) {
-						$manager->render_checkout_button();
+					static function () use ( $c, $manager, $module ) {
+						if ( $module->should_render_fastlane( $c ) ) {
+							$manager->render_checkout_button();
+						}
 					}
 				);
 
