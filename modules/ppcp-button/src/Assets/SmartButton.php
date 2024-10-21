@@ -1031,8 +1031,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	private function has_subscriptions(): bool {
+		if ( ! $this->subscription_helper->plugin_is_active() ) {
+			return false;
+		}
 		if (
-			! $this->subscription_helper->accept_only_automatic_payment_gateways()
+			$this->subscription_helper->accept_manual_renewals()
 			&& $this->paypal_subscriptions_enabled() !== true
 		) {
 			return false;
