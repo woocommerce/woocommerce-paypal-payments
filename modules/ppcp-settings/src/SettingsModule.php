@@ -82,7 +82,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_admin_options_wrapper',
-			static function( PayPalGateway $gateway ) {
+			static function(): void {
 				global $hide_save_button;
 				$hide_save_button = true;
 
