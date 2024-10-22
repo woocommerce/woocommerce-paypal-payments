@@ -851,21 +851,19 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 * @return void
 	 */
 	protected function register_wc_tasks( ContainerInterface $container ): void {
-		$simple_redirect_tasks = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks' );
-		if ( empty( $simple_redirect_tasks ) ) {
-			return;
-		}
-
-		$task_registrar = $container->get( 'wcgateway.settings.wc-tasks.task-registrar' );
-		assert( $task_registrar instanceof TaskRegistrarInterface );
-
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
 		add_action(
 			'init',
-			static function () use ( $simple_redirect_tasks, $task_registrar, $logger ): void {
+			static function () use ( $container ): void {
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
 				try {
+					$simple_redirect_tasks = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks' );
+					if ( empty( $simple_redirect_tasks ) ) {
+						return;
+					}
+					$task_registrar = $container->get( 'wcgateway.settings.wc-tasks.task-registrar' );
+					assert( $task_registrar instanceof TaskRegistrarInterface );
+
 					$task_registrar->register( $simple_redirect_tasks );
 				} catch ( Exception $exception ) {
 					$logger->error( "Failed to create a task in the 'Things to do next' section of WC. " . $exception->getMessage() );
