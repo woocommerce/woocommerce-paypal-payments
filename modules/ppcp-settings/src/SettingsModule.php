@@ -91,6 +91,14 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		add_action(
+			'rest_api_init',
+			static function () use ( $container ) : void {
+				$onboarding_endpoint = $container->get( 'settings.rest.onboarding' );
+				$onboarding_endpoint->register_routes();
+			}
+		);
+
 		return true;
 	}
 }
