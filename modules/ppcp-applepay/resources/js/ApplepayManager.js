@@ -1,10 +1,9 @@
-/* global paypal */
-
 import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
 import ApplePayButton from './ApplepayButton';
 
 class ApplePayManager {
-	constructor( buttonConfig, ppcpConfig ) {
+	constructor( namespace, buttonConfig, ppcpConfig ) {
+		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.ApplePayConfig = null;
@@ -45,7 +44,10 @@ class ApplePayManager {
 	 * Gets Apple Pay configuration of the PayPal merchant.
 	 */
 	async config() {
-		this.ApplePayConfig = await paypal.Applepay().config();
+		this.ApplePayConfig = await window[ this.namespace ]
+			.Applepay()
+			.config();
+
 		return this.ApplePayConfig;
 	}
 }

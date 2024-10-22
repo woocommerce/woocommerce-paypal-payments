@@ -25,7 +25,7 @@ return array(
 			$container->get( 'api.endpoint.billing-plans' ),
 			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.payment-preferences' ),
-			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -39,6 +39,9 @@ return array(
 			'/modules/ppcp-paypal-subscriptions/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
+	},
+	'paypal-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
+		return new RenewalHandler( $container->get( 'woocommerce.logger.woocommerce' ) );
 	},
 	'paypal-subscriptions.status'                   => static function ( ContainerInterface $container ): SubscriptionStatus {
 		return new SubscriptionStatus(

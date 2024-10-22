@@ -7,15 +7,25 @@ import { getCurrentPaymentMethod } from './CheckoutMethodState';
 import { v4 as uuidv4 } from 'uuid';
 
 // This component may be used by multiple modules. This assures that options are shared between all instances.
-const options = ( window.ppcpWidgetBuilder = window.ppcpWidgetBuilder || {
-	isLoading: false,
-	onLoadedCallbacks: [],
-	onErrorCallbacks: [],
-} );
+const scriptOptionsMap = {};
+
+const getNamespaceOptions = ( namespace ) => {
+	if ( ! scriptOptionsMap[ namespace ] ) {
+		scriptOptionsMap[ namespace ] = {
+			isLoading: false,
+			onLoadedCallbacks: [],
+			onErrorCallbacks: [],
+		};
+	}
+	return scriptOptionsMap[ namespace ];
+};
 
 export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
-	// If PayPal is already loaded call the onLoaded callback and return.
-	if ( typeof paypal !== 'undefined' ) {
+	const dataNamespace = config?.data_namespace || '';
+	const options = getNamespaceOptions( dataNamespace );
+
+	// If PayPal is already loaded for this namespace, call the onLoaded callback and return.
+	if ( typeof window.paypal !== 'undefined' && ! dataNamespace ) {
 		onLoaded();
 		return;
 	}
@@ -88,6 +98,11 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 	const userIdToken = config?.save_payment_methods?.id_token;
 	if ( userIdToken && ! sdkClientToken ) {
 		scriptOptions[ 'data-user-id-token' ] = userIdToken;
+	}
+
+	// Adds data-namespace to script options.
+	if ( dataNamespace ) {
+		scriptOptions.dataNamespace = dataNamespace;
 	}
 
 	// Load PayPal script

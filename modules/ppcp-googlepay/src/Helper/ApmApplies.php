@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Googlepay\Helper;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
+
 /**
  * Class ApmApplies
  */
@@ -30,11 +32,11 @@ class ApmApplies {
 	private $allowed_currencies;
 
 	/**
-	 * 3-letter currency code of the shop.
+	 * The getter of the 3-letter currency code of the shop.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * 2-letter country code of the shop.
@@ -46,15 +48,15 @@ class ApmApplies {
 	/**
 	 * DccApplies constructor.
 	 *
-	 * @param array  $allowed_countries The list of which countries can be used for GooglePay.
-	 * @param array  $allowed_currencies The list of which currencies can be used for GooglePay.
-	 * @param string $currency 3-letter currency code of the shop.
-	 * @param string $country 2-letter country code of the shop.
+	 * @param array          $allowed_countries The list of which countries can be used for GooglePay.
+	 * @param array          $allowed_currencies The list of which currencies can be used for GooglePay.
+	 * @param CurrencyGetter $currency The getter of the 3-letter currency code of the shop.
+	 * @param string         $country 2-letter country code of the shop.
 	 */
 	public function __construct(
 		array $allowed_countries,
 		array $allowed_currencies,
-		string $currency,
+		CurrencyGetter $currency,
 		string $country
 	) {
 		$this->allowed_countries  = $allowed_countries;
@@ -78,7 +80,7 @@ class ApmApplies {
 	 * @return bool
 	 */
 	public function for_currency(): bool {
-		return in_array( $this->currency, $this->allowed_currencies, true );
+		return in_array( $this->currency->get(), $this->allowed_currencies, true );
 	}
 
 }

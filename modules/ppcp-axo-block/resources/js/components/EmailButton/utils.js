@@ -3,6 +3,7 @@ import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
 import { STORE_NAME } from '../../stores/axoStore';
 import EmailButton from './EmailButton';
 
+// Cache for DOM elements and references
 let emailInput = null;
 let submitButtonReference = {
 	container: null,
@@ -11,6 +12,11 @@ let submitButtonReference = {
 };
 let keydownHandler = null;
 
+/**
+ * Retrieves or caches the email input element.
+ *
+ * @return {HTMLElement|null} The email input element or null if not found.
+ */
 const getEmailInput = () => {
 	if ( ! emailInput ) {
 		emailInput = document.getElementById( 'email' );
@@ -18,6 +24,11 @@ const getEmailInput = () => {
 	return emailInput;
 };
 
+/**
+ * Sets up email functionality for AXO checkout.
+ *
+ * @param {Function} onEmailSubmit - Callback function to handle email submission.
+ */
 export const setupEmailFunctionality = ( onEmailSubmit ) => {
 	const input = getEmailInput();
 	if ( ! input ) {
@@ -28,6 +39,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 		return;
 	}
 
+	// Handler for email submission
 	const handleEmailSubmit = async () => {
 		const isEmailSubmitted = wp.data
 			.select( STORE_NAME )
@@ -50,6 +62,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 		}
 	};
 
+	// Set up keydown handler for Enter key
 	keydownHandler = ( event ) => {
 		const isAxoActive = wp.data.select( STORE_NAME ).getIsAxoActive();
 		if ( event.key === 'Enter' && isAxoActive ) {
@@ -78,6 +91,7 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 		);
 	}
 
+	// Function to render the EmailButton
 	const renderButton = () => {
 		if ( submitButtonReference.root ) {
 			submitButtonReference.root.render(
@@ -90,12 +104,15 @@ export const setupEmailFunctionality = ( onEmailSubmit ) => {
 
 	renderButton();
 
-	// Subscribe to state changes
+	// Subscribe to state changes and re-render button
 	submitButtonReference.unsubscribe = wp.data.subscribe( () => {
 		renderButton();
 	} );
 };
 
+/**
+ * Removes email functionality and cleans up event listeners and DOM elements.
+ */
 export const removeEmailFunctionality = () => {
 	const input = getEmailInput();
 	if ( input && keydownHandler ) {
@@ -120,6 +137,11 @@ export const removeEmailFunctionality = () => {
 	keydownHandler = null;
 };
 
+/**
+ * Checks if email functionality is currently set up.
+ *
+ * @return {boolean} True if email functionality is set up, false otherwise.
+ */
 export const isEmailFunctionalitySetup = () => {
 	return !! submitButtonReference.root;
 };

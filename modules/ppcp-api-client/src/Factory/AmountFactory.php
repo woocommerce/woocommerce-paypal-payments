@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -41,20 +42,24 @@ class AmountFactory {
 	private $money_factory;
 
 	/**
-	 * 3-letter currency code of the shop.
+	 * The getter of the 3-letter currency code of the shop.
 	 *
-	 * @var string
+	 * @var CurrencyGetter
 	 */
-	private $currency;
+	private CurrencyGetter $currency;
 
 	/**
 	 * AmountFactory constructor.
 	 *
-	 * @param ItemFactory  $item_factory The Item factory.
-	 * @param MoneyFactory $money_factory The Money factory.
-	 * @param string       $currency 3-letter currency code of the shop.
+	 * @param ItemFactory    $item_factory The Item factory.
+	 * @param MoneyFactory   $money_factory The Money factory.
+	 * @param CurrencyGetter $currency The getter of the 3-letter currency code of the shop.
 	 */
-	public function __construct( ItemFactory $item_factory, MoneyFactory $money_factory, string $currency ) {
+	public function __construct(
+		ItemFactory $item_factory,
+		MoneyFactory $money_factory,
+		CurrencyGetter $currency
+	) {
 		$this->item_factory  = $item_factory;
 		$this->money_factory = $money_factory;
 		$this->currency      = $currency;
@@ -68,25 +73,25 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
-		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency );
+		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency->get() );
 
 		$item_total = (float) $cart->get_subtotal() + (float) $cart->get_fee_total();
-		$item_total = new Money( $item_total, $this->currency );
+		$item_total = new Money( $item_total, $this->currency->get() );
 		$shipping   = new Money(
 			(float) $cart->get_shipping_total(),
-			$this->currency
+			$this->currency->get()
 		);
 
 		$taxes = new Money(
 			(float) $cart->get_total_tax(),
-			$this->currency
+			$this->currency->get()
 		);
 
 		$discount = null;
 		if ( $cart->get_discount_total() ) {
 			$discount = new Money(
 				(float) $cart->get_discount_total(),
-				$this->currency
+				$this->currency->get()
 			);
 		}
 
