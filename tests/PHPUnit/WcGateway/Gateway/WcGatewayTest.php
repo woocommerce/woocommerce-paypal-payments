@@ -123,7 +123,8 @@ class WcGatewayTest extends TestCase
 			'Pay via PayPal',
 			$this->paymentTokensEndpoint,
 			$this->vaultV3Enabled,
-			$this->wcPaymentTokens
+			$this->wcPaymentTokens,
+			false
 		);
 	}
 
