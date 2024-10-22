@@ -7,7 +7,7 @@ import { updateOnboardingDetails } from './actions';
 /**
  * Retrieve settings from the site's REST API.
  */
-export function* getOnboardingDetails() {
+export function* getOnboardingData() {
 	const path = `${ NAMESPACE }/onboarding`;
 
 	try {

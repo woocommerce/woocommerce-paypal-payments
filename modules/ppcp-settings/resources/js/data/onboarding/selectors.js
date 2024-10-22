@@ -8,10 +8,14 @@ const getOnboardingState = ( state ) => {
 	return state.onboarding || EMPTY_OBJ;
 };
 
-export const getOnboardingDetails = ( state ) => {
+export const getOnboardingData = ( state ) => {
 	return getOnboardingState( state ).data || EMPTY_OBJ;
 };
 
+export const isSaving = ( state ) => {
+	return getOnboardingState( state ).isSaving || false;
+};
+
 export const getOnboardingStep = ( state ) => {
-	return getOnboardingDetails( state ).step || 0;
+	return getOnboardingData( state ).step || 0;
 };

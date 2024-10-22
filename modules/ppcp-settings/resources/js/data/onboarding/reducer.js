@@ -23,6 +23,17 @@ export const onboardingReducer = (
 				...state,
 				isSaving: action.isSaving,
 			};
+
+		case ACTION_TYPES.SET_ONBOARDING_STEP:
+			return {
+				...state,
+				data: {
+					...( state.data || {} ),
+					step: action.step,
+				},
+			};
+
+		default:
 	}
 
 	return state;

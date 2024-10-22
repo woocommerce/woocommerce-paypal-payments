@@ -1,8 +1,40 @@
 import * as Store from './data';
 
-export function App() {
-	// We need to "use" the Store variable, to prevent webpack from tree-shaking it.
-	console.log( 'Store ready:', Store );
+const StoreTest = () => {
+	const { isSaving, onboardingStep, setOnboardingStep } =
+		Store.useOnboardingDetails();
 
-	return <div className="red">App with Store</div>;
+	return (
+		<div>
+			<hr />
+			<div>Onboarding Step: { onboardingStep }</div>
+			<div>{ isSaving ? 'Saving...' : 'Not Saving' }</div>
+
+			<div>
+				<button
+					type={ 'button' }
+					onClick={ () => setOnboardingStep( onboardingStep - 1 ) }
+					disabled={ onboardingStep < 1 }
+				>
+					Prev
+				</button>
+				<button
+					type={ 'button' }
+					onClick={ () => setOnboardingStep( onboardingStep + 1 ) }
+					disabled={ onboardingStep > 3 }
+				>
+					Next
+				</button>
+			</div>
+		</div>
+	);
+};
+
+export function App() {
+	return (
+		<div className="red">
+			App
+			<StoreTest />
+		</div>
+	);
 }
