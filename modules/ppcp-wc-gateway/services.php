@@ -25,8 +25,10 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderReauthorizeAction;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactory;
@@ -46,7 +48,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Cli\SettingsCommand;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
-use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNetSessionId;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNetSourceWebsiteId;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -515,12 +516,20 @@ return array(
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
-		$order_endpoint      = $container->get( 'api.endpoint.order' );
-		$payments_endpoint   = $container->get( 'api.endpoint.payments' );
-		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
-		$prefix           = $container->get( 'api.prefix' );
-		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
-		return new RefundProcessor( $order_endpoint, $payments_endpoint, $refund_fees_updater, $prefix, $logger );
+		return new RefundProcessor(
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.endpoint.payments' ),
+			$container->get( 'wcgateway.helper.refund-fees-updater' ),
+			$container->get( 'wcgateway.allowed_refund_payment_methods' ),
+			$container->get( 'api.prefix' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'wcgateway.allowed_refund_payment_methods'             => static function ( ContainerInterface $container ): array {
+		return apply_filters(
+			'woocommerce_paypal_payments_allowed_refund_payment_methods',
+			array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID, PayUponInvoiceGateway::ID )
+		);
 	},
 	'wcgateway.processor.authorized-payments'              => static function ( ContainerInterface $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
@@ -1421,7 +1430,10 @@ return array(
 		return new OXXO(
 			$container->get( 'wcgateway.checkout-helper' ),
 			$container->get( 'wcgateway.url' ),
-			$container->get( 'ppcp.asset-version' )
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.oxxo-gateway'                               => static function( ContainerInterface $container ): OXXOGateway {
@@ -1914,6 +1926,24 @@ return array(
 		}
 
 		return $simple_redirect_tasks;
+	},
+
+	'wcgateway.void-button.assets'                         => function( ContainerInterface $container ) : VoidButtonAssets {
+		return new VoidButtonAssets(
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.allowed_refund_payment_methods' )
+		);
+	},
+	'wcgateway.void-button.endpoint'                       => function( ContainerInterface $container ) : VoidOrderEndpoint {
+		return new VoidOrderEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 
 	'wcgateway.settings.admin-settings-enabled'            => static function( ContainerInterface $container ): bool {

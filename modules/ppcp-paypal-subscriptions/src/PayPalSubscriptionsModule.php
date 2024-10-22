@@ -187,6 +187,9 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			30
 		);
 
+		/**
+		 * Executed when updating WC Subscription.
+		 */
 		add_action(
 			'woocommerce_process_shop_subscription_meta',
 			/**
@@ -194,65 +197,41 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $id, $post ) use ( $c ) {
+			function( $id ) use ( $c ) {
 				$subscription = wcs_get_subscription( $id );
-				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+				if ( $subscription === false ) {
 					return;
 				}
+
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( ! $subscription_id ) {
 					return;
 				}
-				$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
-				assert( $subscriptions_endpoint instanceof BillingSubscriptions );
 
-				if ( $subscription->get_status() === 'cancelled' ) {
-					try {
-						$subscriptions_endpoint->cancel( $subscription_id );
-					} catch ( RuntimeException $exception ) {
-						$error = $exception->getMessage();
-						if ( is_a( $exception, PayPalApiException::class ) ) {
-							$error = $exception->get_details( $error );
-						}
+				$subscription_status = $c->get( 'paypal-subscriptions.status' );
+				assert( $subscription_status instanceof SubscriptionStatus );
 
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						$logger->error( 'Could not cancel subscription product on PayPal. ' . $error );
-					}
-				}
-
-				if ( $subscription->get_status() === 'pending-cancel' ) {
-					try {
-						$subscriptions_endpoint->suspend( $subscription_id );
-					} catch ( RuntimeException $exception ) {
-						$error = $exception->getMessage();
-						if ( is_a( $exception, PayPalApiException::class ) ) {
-							$error = $exception->get_details( $error );
-						}
-
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						$logger->error( 'Could not suspend subscription product on PayPal. ' . $error );
-					}
-				}
-
-				if ( $subscription->get_status() === 'active' ) {
-					try {
-						$current_subscription = $subscriptions_endpoint->subscription( $subscription_id );
-						if ( $current_subscription->status === 'SUSPENDED' ) {
-							$subscriptions_endpoint->activate( $subscription_id );
-						}
-					} catch ( RuntimeException $exception ) {
-						$error = $exception->getMessage();
-						if ( is_a( $exception, PayPalApiException::class ) ) {
-							$error = $exception->get_details( $error );
-						}
-
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						$logger->error( 'Could not reactivate subscription product on PayPal. ' . $error );
-					}
-				}
+				$subscription_status->update_status( $subscription->get_status(), $subscription_id );
 			},
-			20,
-			2
+			20
+		);
+
+		/**
+		 * Update subscription status from WC Subscriptions list page action link.
+		 */
+		add_action(
+			'woocommerce_subscription_status_updated',
+			function( WC_Subscription $subscription ) use ( $c ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( ! $subscription_id ) {
+					return;
+				}
+
+				$subscription_status = $c->get( 'paypal-subscriptions.status' );
+				assert( $subscription_status instanceof SubscriptionStatus );
+
+				$subscription_status->update_status( $subscription->get_status(), $subscription_id );
+			}
 		);
 
 		add_filter(
