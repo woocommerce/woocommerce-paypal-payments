@@ -129,6 +129,14 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 			WC()->cart->get_shipping_packages()
 		);
 
+		if ( ! count( $calculated_packages ) ) {
+			// Shipping disabled, or no shipping methods available.
+			$response['chosen_shipping_methods'] = array();
+			$response['shipping_packages']       = array();
+
+			return $response;
+		}
+
 		$shipping_packages = array();
 
 		foreach ( $calculated_packages[0]['rates'] as $rate ) {

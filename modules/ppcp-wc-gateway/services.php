@@ -119,7 +119,8 @@ return array(
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
-			$container->get( 'vaulting.wc-payment-tokens' )
+			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get( 'wcgateway.settings.admin-settings-enabled' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -1940,5 +1941,9 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+
+	'wcgateway.settings.admin-settings-enabled'            => static function( ContainerInterface $container ): bool {
+		return $container->has( 'settings.url' );
 	},
 );

@@ -18,7 +18,8 @@ import useCustomerData from './useCustomerData';
  */
 const useAxoCleanup = () => {
 	// Get dispatch functions from the AXO store
-	const { setIsAxoActive, setIsGuest } = useDispatch( STORE_NAME );
+	const { setIsAxoActive, setIsGuest, setIsEmailLookupCompleted } =
+		useDispatch( STORE_NAME );
 
 	// Get functions to update WooCommerce shipping and billing addresses
 	const {
@@ -45,6 +46,7 @@ const useAxoCleanup = () => {
 			// Reset AXO state
 			setIsAxoActive( false );
 			setIsGuest( true );
+			setIsEmailLookupCompleted( false );
 
 			// Remove AXO UI elements
 			removeShippingChangeButton();

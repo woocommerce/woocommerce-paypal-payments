@@ -1,5 +1,30 @@
 *** Changelog ***
 
+= 2.9.3 - 2024-10-15 =
+* Fix - Multi-currency support #2667
+* Fix - "0.00" amount in Google Pay for virtual products #2636
+* Fix - Unsuccessfully payment from product page with Apple Pay button #2643
+* Fix - Button Unlinking PayPal Subscriptions plan does not showing for simple subscription #2618
+* Fix - Declare tokenization for ACDC only when vaulting enabled #2581
+* Fix - Classic shortcode block type checks #2608
+* Fix - PUI error in editor #2580
+* Fix - Add a new namespaced script loader for ApplePay #2682 #2675
+* Fix - Axo Block: Fix the Fastlane modal info message text overflow issue #2663
+* Fix - Add Custom Placeholder Handling when rendering the card fields #2651
+* Fix - Use the PayPal icons instead of WC ones #2639
+* Fix - Google Pay preview config and style #2661
+* Fix - Improve context detection #2631
+* Fix - Check that get_the_ID is valid before using #2573
+* Fix - Axo Block: Always display the Fastlane watermark in the includeAdditionalInfo mode #2690
+* Fix - Axo Block: Display card fields for authenticated cardless profiles #2672
+* Fix - Google Pay: Fix button preview in the editor #2688
+* Fix - ACDC gateway not visible on the block Checkout for logged-out users #2693
+* Enhancement - Enhancement - Add Fastlane support for Checkout block
+* Enhancement - Multiple calls to POST /v1/oauth2/token?grant_type=client_credentials&response_type=id_token #2671
+* Enhancement - Fastlane update shipping options & taxes when changing address #2665
+* Enhancement - Axo: Remove Axo from the Checkout block in the editor and add an ACDC card preview #2662
+* Enhancement - Set email when creating order for express payment #2577
+
 = 2.9.2 - 2024-10-01 =
 * Enhancement - Add Fastlane support for Classic Checkout
 * Fix - Fatal error when Pay Later messaging configurator was disabled with a code snippet
