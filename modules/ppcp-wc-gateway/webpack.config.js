@@ -10,6 +10,7 @@ module.exports = {
         'gateway-settings': path.resolve('./resources/js/gateway-settings.js'),
         'fraudnet': path.resolve('./resources/js/fraudnet.js'),
         'oxxo': path.resolve('./resources/js/oxxo.js'),
+        'void-button': path.resolve('./resources/js/void-button.js'),
         'gateway-settings-style': path.resolve('./resources/css/gateway-settings.scss'),
         'common-style': path.resolve('./resources/css/common.scss'),
     },
