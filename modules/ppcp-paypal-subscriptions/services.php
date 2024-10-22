@@ -43,4 +43,10 @@ return array(
 	'paypal-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		return new RenewalHandler( $container->get( 'woocommerce.logger.woocommerce' ) );
 	},
+	'paypal-subscriptions.status'                   => static function ( ContainerInterface $container ): SubscriptionStatus {
+		return new SubscriptionStatus(
+			$container->get( 'api.endpoint.billing-subscriptions' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 );
