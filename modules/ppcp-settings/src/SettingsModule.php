@@ -2,10 +2,11 @@
 /**
  * The Settings module.
  *
- * @package WooCommerce\PayPalCommerce\AxoBlock
+ * @package WooCommerce\PayPalCommerce\Settings
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
+
 namespace WooCommerce\PayPalCommerce\Settings;
 
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -23,14 +24,14 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function services(): array {
+	public function services() : array {
 		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): bool {
+	public function run( ContainerInterface $container ) : bool {
 		add_action(
 			'admin_enqueue_scripts',
 			/**
@@ -38,7 +39,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function( $hook_suffix ) use ( $container ) {
+			static function ( $hook_suffix ) use ( $container ) {
 				if ( 'woocommerce_page_wc-settings' !== $hook_suffix ) {
 					return;
 				}
@@ -82,7 +83,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_admin_options_wrapper',
-			static function(): void {
+			static function () : void {
 				global $hide_save_button;
 				$hide_save_button = true;
 
