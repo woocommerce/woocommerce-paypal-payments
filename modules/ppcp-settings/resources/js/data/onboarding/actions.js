@@ -1,6 +1,5 @@
-import { dispatch, select } from '@wordpress/data';
+import { select } from '@wordpress/data';
 import { apiFetch } from '@wordpress/data-controls';
-import { __ } from '@wordpress/i18n';
 import ACTION_TYPES from './action-types';
 import { NAMESPACE, STORE_NAME } from '../constants';
 
@@ -72,7 +71,7 @@ export const updateIsSaving = ( isSaving ) => {
 /**
  * Saves the persistent details to the WP database.
  *
- * @return {Generator<any>} A generator function that handles the saving process.
+ * @return {any} A generator function that handles the saving process.
  */
 export function* persist() {
 	let error = null;
@@ -88,15 +87,9 @@ export function* persist() {
 			method: 'post',
 			data,
 		} );
-
-		yield dispatch( 'core/notices' ).createSuccessNotice(
-			__( 'Progress saved.', 'woocommerce-paypal-payments' )
-		);
 	} catch ( e ) {
 		error = e;
-		yield dispatch( 'core/notices' ).createErrorNotice(
-			__( 'Error saving progress.', 'woocommerce-paypal-payments' )
-		);
+		console.error( 'Error saving progress.', e );
 	} finally {
 		yield updateIsSaving( false );
 	}
