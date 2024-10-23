@@ -9,12 +9,20 @@ export const useOnboardingDetails = () => {
 		persist,
 	} = useDispatch( STORE_NAME );
 
-	const onboardingStep = useSelect( ( select ) => {
-		return select( STORE_NAME ).getOnboardingStep();
-	}, [] );
-
 	const isSaving = useSelect( ( select ) => {
 		return select( STORE_NAME ).isSaving();
+	}, [] );
+
+	const onboardingStep = useSelect( ( select ) => {
+		return select( STORE_NAME ).getOnboardingData().step || 0;
+	}, [] );
+
+	const isSandboxMode = useSelect( ( select ) => {
+		return select( STORE_NAME ).getOnboardingData().useSandbox;
+	}, [] );
+
+	const isManualConnectionMode = useSelect( ( select ) => {
+		return select( STORE_NAME ).getOnboardingData().useManualConnection;
 	}, [] );
 
 	const setDetailAndPersist = async ( setter, value ) => {
@@ -25,6 +33,8 @@ export const useOnboardingDetails = () => {
 	return {
 		onboardingStep,
 		isSaving,
+		isSandboxMode,
+		isManualConnectionMode,
 		setOnboardingStep: ( step ) =>
 			setDetailAndPersist( setOnboardingStep, step ),
 		setSandboxMode: ( state ) =>

@@ -15,7 +15,3 @@ export const getOnboardingData = ( state ) => {
 export const isSaving = ( state ) => {
 	return getOnboardingState( state ).isSaving || false;
 };
-
-export const getOnboardingStep = ( state ) => {
-	return getOnboardingData( state ).step || 0;
-};
