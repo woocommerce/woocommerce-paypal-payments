@@ -9,7 +9,7 @@ import { NAMESPACE, STORE_NAME } from '../constants';
  * @param {Object} payload
  * @return {{type: string, payload}} The action.
  */
-export const updateOnboardingDetails = ( payload ) => {
+export const setOnboardingDetails = ( payload ) => {
 	return {
 		type: ACTION_TYPES.SET_ONBOARDING_DETAILS,
 		payload,
@@ -61,7 +61,7 @@ export const setManualConnectionMode = ( manualConnectionMode ) => {
  * @param {boolean} isSaving
  * @return {{type: string, isSaving}} The action.
  */
-export const updateIsSaving = ( isSaving ) => {
+export const setIsSaving = ( isSaving ) => {
 	return {
 		type: ACTION_TYPES.SET_IS_SAVING_ONBOARDING_DETAILS,
 		isSaving,
@@ -80,7 +80,7 @@ export function* persist() {
 		const path = `${ NAMESPACE }/onboarding`;
 		const data = select( STORE_NAME ).getPersistentData();
 
-		yield updateIsSaving( true );
+		yield setIsSaving( true );
 
 		yield apiFetch( {
 			path,
@@ -91,7 +91,7 @@ export function* persist() {
 		error = e;
 		console.error( 'Error saving progress.', e );
 	} finally {
-		yield updateIsSaving( false );
+		yield setIsSaving( false );
 	}
 
 	return error === null;
