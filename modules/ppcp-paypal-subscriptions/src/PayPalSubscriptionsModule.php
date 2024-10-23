@@ -696,11 +696,18 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 	 * @param WC_Product              $product The product.
 	 * @param SubscriptionsApiHandler $subscriptions_api_handler The subscription api handler.
 	 * @return void
+	 *
+	 * @psalm-suppress PossiblyInvalidCast
 	 */
 	private function update_subscription_product_meta( WC_Product $product, SubscriptionsApiHandler $subscriptions_api_handler ): void {
 		// phpcs:ignore WordPress.Security.NonceVerification
-		$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
-		$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
+		$enable_subscription_product = wc_string_to_bool( (string) wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) ) );
+		$product->update_meta_data( '_ppcp_enable_subscription_product', wc_bool_to_string( $enable_subscription_product ) );
+
+		if ( ! $enable_subscription_product ) {
+			$product->save();
+			return;
+		}
 
 		if ( ! $product->get_sold_individually() ) {
 			$product->set_sold_individually( true );
@@ -708,7 +715,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		$product->save();
 
-		if ( ( $product->get_type() === 'subscription' || $product->get_type() === 'subscription_variation' ) && $enable_subscription_product === 'yes' ) {
+		if ( $product->get_type() === 'subscription' || $product->get_type() === 'subscription_variation' ) {
 			if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 				$subscriptions_api_handler->update_product( $product );
 				$subscriptions_api_handler->update_plan( $product );
