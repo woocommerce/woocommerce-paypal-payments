@@ -1,0 +1,83 @@
+.ppcp-r-page-welcome {
+	.ppcp-r-inner-container {
+		padding-bottom: 72px;
+		@media screen and (max-width: 480px) {
+			padding-bottom: 36px;
+		}
+	}
+
+	.ppcp-r-welcome-features {
+		margin: 0 0 32px 0;
+	}
+
+	.ppcp-r-payment-method-icons {
+		margin: 0 0 12px 0;
+	}
+
+	.ppcp-r-button-activate-paypal {
+		display: block;
+		margin: 0 auto 32px auto;
+	}
+
+	.ppcp-r-page-welcome-or-separator {
+		margin: 0 0 32px 0;
+	}
+
+	.ppcp-r-page-welcome-mode-separator {
+		margin: 32px 0;
+
+		.ppcp-r-separator__line {
+			background-color: $color-gray-500;
+		}
+	}
+
+	.components-base-control__field {
+		margin: 0 0 24px 0;
+	}
+}
+
+.ppcp-r-welcome-features {
+	display: flex;
+	justify-content: center;
+	padding: 8px;
+
+	&__col {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+
+		> span {
+			@include font(11, 16, 600);
+			text-transform: uppercase;
+			color: $color-gray-800;
+		}
+
+		> p {
+			margin: 0;
+			@include font(13, 16, 400);
+			color: $color-gray-700;
+		}
+
+		&:not(:last-child) {
+			padding-right: 18px;
+			border-right: 1px solid $color-gray-200;
+			margin-right: 18px;
+		}
+	}
+
+	@media screen and (max-width: 480px) {
+		flex-wrap: wrap;
+		row-gap: 8px;
+		&__col {
+			width: 100%;
+			text-align: center;
+
+			&:not(:last-child) {
+				border-bottom: 1px solid $color-gray-200;
+				border-right: 0;
+				padding-right: 0;
+				padding-bottom: 8px;
+			}
+		}
+	}
+}

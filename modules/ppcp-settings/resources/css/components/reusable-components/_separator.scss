@@ -1,0 +1,18 @@
+.ppcp-r-separator{
+	display: flex;
+	align-items: center;
+
+	&__line {
+		height: 1px;
+		background-color: $color-gray-600;
+		display: block;
+		width: 100%;
+	}
+
+	&__text {
+		color: $color-gray;
+		@include font(12, 24, 500, 0.8px);
+		text-transform: uppercase;
+		padding: 0 23px;
+	}
+}

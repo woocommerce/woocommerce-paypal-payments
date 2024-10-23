@@ -78,6 +78,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				);
 
 				wp_enqueue_style( 'ppcp-admin-settings' );
+
+				wp_enqueue_style( 'ppcp-admin-settings-font', 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap', array(), $style_asset_file['version'] );
+				wp_localize_script(
+					'ppcp-admin-settings',
+					'ppcpSettings',
+					array(
+						'assets' => array(
+							'imagesUrl' => $module_url . '/images/',
+						),
+					)
+				);
 			}
 		);
 
