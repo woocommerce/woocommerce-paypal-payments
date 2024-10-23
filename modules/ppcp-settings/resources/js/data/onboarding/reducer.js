@@ -2,6 +2,8 @@ import ACTION_TYPES from './action-types';
 
 const defaultState = {
 	isSaving: false,
+	clientId: '',
+	clientSecret: '',
 	data: {
 		step: 0,
 		useSandbox: false,
@@ -19,6 +21,18 @@ export const onboardingReducer = (
 			return {
 				...state,
 				isSaving: action.isSaving,
+			};
+
+		case ACTION_TYPES.SET_CLIENT_ID:
+			return {
+				...state,
+				clientId: action.clientId,
+			};
+
+		case ACTION_TYPES.SET_CLIENT_SECRET:
+			return {
+				...state,
+				clientSecret: action.clientSecret,
 			};
 
 		// Persistent data.

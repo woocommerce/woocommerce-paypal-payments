@@ -69,6 +69,32 @@ export const setIsSaving = ( isSaving ) => {
 };
 
 /**
+ * Non-persistent. Changes the "client ID" value.
+ *
+ * @param {string} clientId
+ * @return {{type: string, clientId}} The action.
+ */
+export const setClientId = ( clientId ) => {
+	return {
+		type: ACTION_TYPES.SET_CLIENT_ID,
+		clientId,
+	};
+};
+
+/**
+ * Non-persistent. Changes the "client secret" value.
+ *
+ * @param {string} clientSecret
+ * @return {{type: string, clientSecret}} The action.
+ */
+export const setClientSecret = ( clientSecret ) => {
+	return {
+		type: ACTION_TYPES.SET_CLIENT_SECRET,
+		clientSecret,
+	};
+};
+
+/**
  * Saves the persistent details to the WP database.
  *
  * @return {any} A generator function that handles the saving process.
