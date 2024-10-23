@@ -2120,3 +2120,40 @@ class WC_Product_Subscription_Variation extends WC_Product_Variation {}
  *
  */
 class WC_Product_Variable_Subscription extends WC_Product_Variable {}
+
+class WCS_Manual_Renewal_Manager {
+
+	/**
+	 * Initalise the class and attach callbacks.
+	 */
+	public static function init() {
+	}
+
+	/**
+	 * Adds the manual renewal settings.
+	 *
+	 * @since 4.0.0
+	 * @param $settings The full subscription settings array.
+	 * @return $settings.
+	 */
+	public static function add_settings( $settings ) {
+	}
+
+	/**
+	 * Checks if manual renewals are required - automatic renewals are disabled.
+	 *
+	 * @since 4.0.0
+	 * @return bool Weather manual renewal is required.
+	 */
+	public static function is_manual_renewal_required() {
+	}
+
+	/**
+	 * Checks if manual renewals are enabled.
+	 *
+	 * @since 4.0.0
+	 * @return bool Weather manual renewal is enabled.
+	 */
+	public static function is_manual_renewal_enabled() {
+	}
+}
