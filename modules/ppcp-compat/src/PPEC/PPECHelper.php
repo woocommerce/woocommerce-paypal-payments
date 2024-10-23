@@ -7,6 +7,7 @@
 
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
 use Automattic\WooCommerce\Utilities\OrderUtil;
 
 /**
@@ -74,14 +75,17 @@ class PPECHelper {
 			return $has_ppec_subscriptions === 'true';
 		}
 
+		$wc_orders_table = OrdersTableDataStore::get_orders_table_name();
+
 		global $wpdb;
-		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() && isset( $wpdb->wc_orders ) ) {
-			$result = $wpdb->get_var(
-				$wpdb->prepare(
-					"SELECT 1 FROM {$wpdb->wc_orders} WHERE payment_method = %s",
-					self::PPEC_GATEWAY_ID
-				)
+		if ( $wc_orders_table && class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$query = $wpdb->prepare(
+				'SELECT 1 FROM %s WHERE payment_method = %s',
+				$wc_orders_table,
+				self::PPEC_GATEWAY_ID
 			);
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			$result = $wpdb->get_var( $query );
 		} else {
 			$result = $wpdb->get_var(
 				$wpdb->prepare(
