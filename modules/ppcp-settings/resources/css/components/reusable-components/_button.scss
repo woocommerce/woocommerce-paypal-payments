@@ -1,0 +1,22 @@
+button.components-button {
+	&.is-primary, &.is-secondary {
+		background-color: $color-blueberry;
+		border-radius: 2px;
+		padding: 14px 17px;
+		height: auto;
+		&:hover {
+			background: $gradient-header;
+		}
+	}
+
+	&.is-primary {
+		@include font(13, 16, 500);
+	}
+
+	&.is-secondary {
+		padding: 6px 12px;
+		@include font(13, 20, 500);
+		color: $color-white;
+		border: none;
+	}
+}
