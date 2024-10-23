@@ -9,20 +9,21 @@ export const useOnboardingDetails = () => {
 		persist,
 	} = useDispatch( STORE_NAME );
 
+	// Transient accessors.
 	const isSaving = useSelect( ( select ) => {
-		return select( STORE_NAME ).isSaving();
+		return select( STORE_NAME ).getTransientData().isSaving;
 	}, [] );
 
 	const onboardingStep = useSelect( ( select ) => {
-		return select( STORE_NAME ).getOnboardingData().step || 0;
+		return select( STORE_NAME ).getPersistentData().step || 0;
 	}, [] );
 
 	const isSandboxMode = useSelect( ( select ) => {
-		return select( STORE_NAME ).getOnboardingData().useSandbox;
+		return select( STORE_NAME ).getPersistentData().useSandbox;
 	}, [] );
 
 	const isManualConnectionMode = useSelect( ( select ) => {
-		return select( STORE_NAME ).getOnboardingData().useManualConnection;
+		return select( STORE_NAME ).getPersistentData().useManualConnection;
 	}, [] );
 
 	const setDetailAndPersist = async ( setter, value ) => {

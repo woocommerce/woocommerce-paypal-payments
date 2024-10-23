@@ -78,7 +78,7 @@ export function* persist() {
 
 	try {
 		const path = `${ NAMESPACE }/onboarding`;
-		const data = select( STORE_NAME ).getOnboardingData();
+		const data = select( STORE_NAME ).getPersistentData();
 
 		yield updateIsSaving( true );
 
