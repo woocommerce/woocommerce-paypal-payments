@@ -1,9 +1,9 @@
-import OnboardingHeader from '../../reusable-components/onboarding-header.js';
+import OnboardingHeader from '../../ReusableComponents/OnboardingHeader.js';
 import { __, sprintf } from '@wordpress/i18n';
 import { Button, TextControl } from '@wordpress/components';
-import PaymentMethodIcons from '../../reusable-components/payment-method-icons';
-import SettingsToggleBlock from '../../reusable-components/settings-toggle-block';
-import Separator from '../../reusable-components/separator';
+import PaymentMethodIcons from '../../ReusableComponents/PaymentMethodIcons';
+import SettingsToggleBlock from '../../ReusableComponents/SettingsToggleBlock';
+import Separator from '../../ReusableComponents/Separator';
 
 const StepWelcome = () => {
 	return (
