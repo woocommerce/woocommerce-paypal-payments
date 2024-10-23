@@ -5,6 +5,7 @@ import PaymentMethodIcons from '../../ReusableComponents/PaymentMethodIcons';
 import SettingsToggleBlock from '../../ReusableComponents/SettingsToggleBlock';
 import Separator from '../../ReusableComponents/Separator';
 import { useOnboardingDetails } from '../../../data';
+import { useDebounceField } from '../../../utils/hooks';
 
 const StepWelcome = () => {
 	return (
@@ -78,7 +79,21 @@ const WelcomeForm = () => {
 		setSandboxMode,
 		isManualConnectionMode,
 		setManualConnectionMode,
+		clientId,
+		setClientId,
+		clientSecret,
+		setClientSecret,
 	} = useOnboardingDetails();
+
+	const [ currentClientId, updateClientId ] = useDebounceField(
+		setClientId,
+		clientId
+	);
+
+	const [ currentClientSecret, updateClientSecret ] = useDebounceField(
+		setClientSecret,
+		clientSecret
+	);
 
 	const advancedUsersDescription = sprintf(
 		// translators: %s: Link to PayPal REST application guide
@@ -122,12 +137,16 @@ const WelcomeForm = () => {
 						'Sandbox Client ID',
 						'woocommerce-paypal-payments'
 					) }
+					value={ currentClientId }
+					onChange={ updateClientId }
 				></TextControl>
 				<TextControl
 					label={ __(
 						'Sandbox Secret Key',
 						'woocommerce-paypal-payments'
 					) }
+					value={ currentClientSecret }
+					onChange={ updateClientSecret }
 					type="password"
 				></TextControl>
 				<Button variant="secondary">
