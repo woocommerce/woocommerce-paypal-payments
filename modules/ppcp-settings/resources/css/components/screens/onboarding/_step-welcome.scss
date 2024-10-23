@@ -1,6 +1,9 @@
 .ppcp-r-page-welcome {
 	.ppcp-r-inner-container {
 		padding-bottom: 72px;
+		@media screen and (max-width: 480px) {
+			padding-bottom: 36px;
+		}
 	}
 
 	.ppcp-r-welcome-features {
@@ -59,6 +62,22 @@
 			padding-right: 18px;
 			border-right: 1px solid $color-gray-200;
 			margin-right: 18px;
+		}
+	}
+
+	@media screen and (max-width: 480px) {
+		flex-wrap: wrap;
+		row-gap: 8px;
+		&__col {
+			width: 100%;
+			text-align: center;
+
+			&:not(:last-child) {
+				border-bottom: 1px solid $color-gray-200;
+				border-right: 0;
+				padding-right: 0;
+				padding-bottom: 8px;
+			}
 		}
 	}
 }

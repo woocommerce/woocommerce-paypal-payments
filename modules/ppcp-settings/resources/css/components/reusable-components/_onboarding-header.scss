@@ -28,11 +28,12 @@
 	}
 
 	&__content {
-		max-width: 426px;
+		max-width: 458px;
 		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
+		padding:0 16px;
 	}
 
 	&__title {
