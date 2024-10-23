@@ -1,0 +1,17 @@
+.components-base-control {
+	&__label {
+		color: $color-gray-900;
+		@include font(13, 16, 600);
+		margin: 0 0 8px 0;
+		text-transform: none;
+	}
+
+	&__input {
+		border: 1px solid $color-gray-700;
+		border-radius: 2px;
+		box-shadow: none;
+		&:focus{
+			border-color:$color-blueberry;
+		}
+	}
+}
