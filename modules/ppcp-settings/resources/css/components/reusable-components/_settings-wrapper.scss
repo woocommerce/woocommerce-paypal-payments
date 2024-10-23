@@ -1,14 +1,17 @@
 .ppcp-r {
 
 	&-inner-container {
-		width: 620px;
+		width: 652px;
 		max-width: 100%;
 		margin: 0 auto;
+		padding:0 16px;
+		box-sizing: border-box;
 	}
 
 	&-container {
 		box-shadow: $shadow-card;
 		max-width: 1024px;
+		margin: 0 auto;
 	}
 
 	&-card {
