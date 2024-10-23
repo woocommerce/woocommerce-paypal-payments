@@ -1,4 +1,4 @@
-import PaymentMethodIcon from './payment-method-icon';
+import PaymentMethodIcon from './PaymentMethodIcon';
 
 const PaymentMethodIcons = ( props ) => {
 	return (

@@ -1,5 +1,5 @@
-import Container from '../../reusable-components/container';
-import StepWelcome from './step-welcome.js';
+import Container from '../../ReusableComponents/Container.js';
+import StepWelcome from './StepWelcome.js';
 
 const Onboarding = () => {
 	return (

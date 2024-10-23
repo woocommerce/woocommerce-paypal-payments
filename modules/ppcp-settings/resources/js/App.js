@@ -1,4 +1,4 @@
-import Onboarding from './components/screens/onboarding/onboarding.js';
+import Onboarding from './Components/Screens/Onboarding/Onboarding.js';
 
 export function App() {
 	return (
