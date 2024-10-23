@@ -97,14 +97,22 @@ class OnboardingRestEndpoint extends RestEndpoint {
 
 		$get_param = fn( $key ) => wc_clean( wp_unslash( $request->get_param( $key ) ) );
 
-		$raw_step      = $get_param( 'step' );
-		$raw_completed = $get_param( 'completed' );
+		$raw_step                  = $get_param( 'step' );
+		$raw_completed             = $get_param( 'completed' );
+		$raw_use_sandbox           = $get_param( 'useSandbox' );
+		$raw_use_manual_connection = $get_param( 'useManualConnection' );
 
 		if ( is_numeric( $raw_step ) ) {
 			$details['step'] = intval( $raw_step );
 		}
 		if ( null !== $raw_completed ) {
 			$details['completed'] = (bool) $raw_completed;
+		}
+		if ( null !== $raw_use_sandbox ) {
+			$details['useSandbox'] = (bool) $raw_use_sandbox;
+		}
+		if ( null !== $raw_use_manual_connection ) {
+			$details['useManualConnection'] = (bool) $raw_use_manual_connection;
 		}
 
 		$this->profile->save_data( $details );
