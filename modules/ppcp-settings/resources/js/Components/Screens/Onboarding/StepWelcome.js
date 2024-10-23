@@ -4,6 +4,7 @@ import { Button, TextControl } from '@wordpress/components';
 import PaymentMethodIcons from '../../ReusableComponents/PaymentMethodIcons';
 import SettingsToggleBlock from '../../ReusableComponents/SettingsToggleBlock';
 import Separator from '../../ReusableComponents/Separator';
+import { useOnboardingDetails } from '../../../data';
 
 const StepWelcome = () => {
 	return (
@@ -72,6 +73,13 @@ const WelcomeFeatures = () => {
 };
 
 const WelcomeForm = () => {
+	const {
+		isSandboxMode,
+		setSandboxMode,
+		isManualConnectionMode,
+		setManualConnectionMode,
+	} = useOnboardingDetails();
+
 	const advancedUsersDescription = sprintf(
 		// translators: %s: Link to PayPal REST application guide
 		__(
@@ -92,6 +100,8 @@ const WelcomeForm = () => {
 					'Activate Sandbox mode to safely test PayPal with sample data. Once your store is ready to go live, you can easily switch to your production account.',
 					'woocommerce-paypal-payments'
 				) }
+				isToggled={ !! isSandboxMode }
+				setToggled={ setSandboxMode }
 			>
 				<Button variant="secondary">
 					{ __( 'Connect Account', 'woocommerce-paypal-payments' ) }
@@ -104,6 +114,8 @@ const WelcomeForm = () => {
 					'woocommerce-paypal-payments'
 				) }
 				description={ advancedUsersDescription }
+				isToggled={ !! isManualConnectionMode }
+				setToggled={ setManualConnectionMode }
 			>
 				<TextControl
 					label={ __(
@@ -111,7 +123,6 @@ const WelcomeForm = () => {
 						'woocommerce-paypal-payments'
 					) }
 				></TextControl>
-
 				<TextControl
 					label={ __(
 						'Sandbox Secret Key',
