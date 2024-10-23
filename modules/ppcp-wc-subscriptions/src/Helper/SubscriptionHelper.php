@@ -17,6 +17,7 @@ use WC_Product_Subscription_Variation;
 use WC_Subscription;
 use WC_Subscriptions;
 use WC_Subscriptions_Product;
+use WCS_Manual_Renewal_Manager;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
@@ -83,20 +84,15 @@ class SubscriptionHelper {
 	}
 
 	/**
-	 * Whether only automatic payment gateways are accepted.
+	 * Whether manual renewals are accepted.
 	 *
 	 * @return bool
 	 */
-	public function accept_only_automatic_payment_gateways(): bool {
-
-		if ( ! $this->plugin_is_active() ) {
+	public function accept_manual_renewals(): bool {
+		if ( ! class_exists( WCS_Manual_Renewal_Manager::class ) ) {
 			return false;
 		}
-		$accept_manual_renewals = 'no' !== get_option(
-			\WC_Subscriptions_Admin::$option_prefix . '_accept_manual_renewals',
-			'no'
-		);
-		return ! $accept_manual_renewals;
+		return WCS_Manual_Renewal_Manager::is_manual_renewal_enabled();
 	}
 
 	/**
