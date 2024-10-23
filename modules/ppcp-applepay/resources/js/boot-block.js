@@ -13,7 +13,7 @@ const ppcpConfig = ppcpData.scriptData;
 
 const buttonData = wc.wcSettings.getSetting( 'ppcp-applepay_data' );
 const buttonConfig = buttonData.scriptData;
-const namespace = 'ppcpBlocksPaypalAppglepay';
+const namespace = 'ppcpBlocksPaypalApplepay';
 
 if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
