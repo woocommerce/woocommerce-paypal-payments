@@ -1031,8 +1031,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	private function has_subscriptions(): bool {
+		if ( ! $this->subscription_helper->plugin_is_active() ) {
+			return false;
+		}
 		if (
-			! $this->subscription_helper->accept_only_automatic_payment_gateways()
+			$this->subscription_helper->accept_manual_renewals()
 			&& $this->paypal_subscriptions_enabled() !== true
 		) {
 			return false;
@@ -1318,7 +1321,16 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
 			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
+			'productType'                             => null,
+			'manualRenewalEnabled'                    => $this->subscription_helper->accept_manual_renewals(),
 		);
+
+		if ( is_product() ) {
+			$product = wc_get_product( get_the_ID() );
+			if ( is_a( $product, \WC_Product::class ) ) {
+				$localize['productType'] = $product->get_type();
+			}
+		}
 
 		if ( 'pay-now' === $this->context() ) {
 			$localize['pay_now'] = $this->pay_now_script_data();

@@ -1,0 +1,14 @@
+@import 'variables';
+@import 'mixins';
+
+#ppcp-settings-container {
+	@import './global';
+	@import './components/reusable-components/onboarding-header';
+	@import './components/reusable-components/button';
+	@import './components/reusable-components/settings-toggle-block';
+	@import './components/reusable-components/text-control';
+	@import './components/reusable-components/separator';
+	@import './components/reusable-components/payment-method-icons';
+	@import './components/reusable-components/settings-wrapper';
+	@import './components/screens/onboarding/step-welcome';
+}

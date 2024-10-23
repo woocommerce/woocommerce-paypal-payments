@@ -174,6 +174,7 @@ return array(
 			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings.status' ),

@@ -10,8 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
-use WC_Order;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WC_Data_Exception;
+use WooCommerce\PayPalCommerce\PayPalSubscriptions\RenewalHandler;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -20,7 +20,14 @@ use WP_REST_Response;
  */
 class PaymentSaleCompleted implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RequestHandlerTrait;
+	use RequestHandlerTrait;
+
+	/**
+	 * Renewal handler.
+	 *
+	 * @var RenewalHandler
+	 */
+	private $renewal_handler;
 
 	/**
 	 * The logger.
@@ -33,9 +40,11 @@ class PaymentSaleCompleted implements RequestHandler {
 	 * PaymentSaleCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
+	 * @param RenewalHandler  $renewal_handler Renewal handler.
 	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
+	public function __construct( LoggerInterface $logger, RenewalHandler $renewal_handler ) {
+		$this->logger          = $logger;
+		$this->renewal_handler = $renewal_handler;
 	}
 
 	/**
@@ -68,7 +77,7 @@ class PaymentSaleCompleted implements RequestHandler {
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		if ( is_null( $request['resource'] ) ) {
-			return $this->failure_response();
+			return $this->failure_response( 'Could not retrieve resource.' );
 		}
 
 		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
@@ -85,7 +94,7 @@ class PaymentSaleCompleted implements RequestHandler {
 			return $this->failure_response( 'Could not retrieve transaction id for subscription.' );
 		}
 
-		$args          = array(
+		$args = array(
 			// phpcs:ignore WordPress.DB.SlowDBQuery
 			'meta_query' => array(
 				array(
@@ -95,24 +104,13 @@ class PaymentSaleCompleted implements RequestHandler {
 				),
 			),
 		);
-		$subscriptions = wcs_get_subscriptions( $args );
-		foreach ( $subscriptions as $subscription ) {
-			$is_renewal = $subscription->get_meta( '_ppcp_is_subscription_renewal' ) ?? '';
-			if ( $is_renewal ) {
-				$renewal_order = wcs_create_renewal_order( $subscription );
-				if ( is_a( $renewal_order, WC_Order::class ) ) {
-					$renewal_order->set_payment_method( $subscription->get_payment_method() );
-					$renewal_order->payment_complete();
-					$this->update_transaction_id( $transaction_id, $renewal_order, $this->logger );
-					break;
-				}
-			}
 
-			$parent_order = wc_get_order( $subscription->get_parent() );
-			if ( is_a( $parent_order, WC_Order::class ) ) {
-				$subscription->update_meta_data( '_ppcp_is_subscription_renewal', 'true' );
-				$subscription->save_meta_data();
-				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
+		$subscriptions = wcs_get_subscriptions( $args );
+		if ( $subscriptions ) {
+			try {
+				$this->renewal_handler->process( $subscriptions, $transaction_id );
+			} catch ( WC_Data_Exception $exception ) {
+				return $this->failure_response( 'Could not update payment method.' );
 			}
 		}
 

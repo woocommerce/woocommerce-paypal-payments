@@ -124,7 +124,7 @@ class MetaBoxRenderer {
 							<label for="ppcp-tracking-items"><?php echo esc_html__( 'Select items for this shipment', 'woocommerce-paypal-payments' ); ?></label>
 							<select multiple class="wc-enhanced-select ppcp-tracking-items" id="ppcp-tracking-items" name="ppcp-tracking[items]">
 								<?php foreach ( $order_items as $item ) : ?>
-									<option value="<?php echo intval( $item->get_id() ); ?>"><?php echo esc_html( $item->get_name() ); ?></option>
+									<option value="<?php echo intval( $item->get_id() ); ?>"><?php echo esc_attr( wp_strip_all_tags( $item->get_name() ) ); ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>

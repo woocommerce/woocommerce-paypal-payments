@@ -1,0 +1,30 @@
+.ppcp-r-toggle-block {
+	&__wrapper {
+		display: flex;
+		width: 100%;
+		gap: 12px;
+	}
+
+	&__switch {
+		.components-base-control__field > div {
+			display: block;
+		}
+	}
+
+	&__content-label {
+		@include font(14, 20, 600);
+		display: block;
+		margin: 0 0 4px 0;
+		color: $color-gray-900;
+	}
+
+	&__content-description {
+		@include font(13, 18, 400);
+		color: $color-gray-700;
+		margin: 0;
+	}
+
+	&__toggled-content {
+		margin-top: 24px;
+	}
+}

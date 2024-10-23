@@ -21,7 +21,9 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
@@ -90,6 +92,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
 		$this->register_wc_tasks( $c );
+		$this->register_void_button( $c );
 
 		add_action(
 			'woocommerce_sections_checkout',
@@ -848,26 +851,53 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 * @return void
 	 */
 	protected function register_wc_tasks( ContainerInterface $container ): void {
-		$simple_redirect_tasks = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks' );
-		if ( empty( $simple_redirect_tasks ) ) {
-			return;
-		}
-
-		$task_registrar = $container->get( 'wcgateway.settings.wc-tasks.task-registrar' );
-		assert( $task_registrar instanceof TaskRegistrarInterface );
-
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
 		add_action(
 			'init',
-			static function () use ( $simple_redirect_tasks, $task_registrar, $logger ): void {
+			static function () use ( $container ): void {
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
 				try {
+					$simple_redirect_tasks = $container->get( 'wcgateway.settings.wc-tasks.simple-redirect-tasks' );
+					if ( empty( $simple_redirect_tasks ) ) {
+						return;
+					}
+					$task_registrar = $container->get( 'wcgateway.settings.wc-tasks.task-registrar' );
+					assert( $task_registrar instanceof TaskRegistrarInterface );
+
 					$task_registrar->register( $simple_redirect_tasks );
 				} catch ( Exception $exception ) {
 					$logger->error( "Failed to create a task in the 'Things to do next' section of WC. " . $exception->getMessage() );
 				}
 			},
+		);
+	}
+
+	/**
+	 * Registers the assets and ajax endpoint for the void button.
+	 *
+	 * @param ContainerInterface $container The container.
+	 */
+	protected function register_void_button( ContainerInterface $container ): void {
+		add_action(
+			'admin_enqueue_scripts',
+			static function () use ( $container ) {
+				$assets = $container->get( 'wcgateway.void-button.assets' );
+				assert( $assets instanceof VoidButtonAssets );
+
+				if ( $assets->should_register() ) {
+					$assets->register();
+				}
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . VoidOrderEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'wcgateway.void-button.endpoint' );
+				assert( $endpoint instanceof VoidOrderEndpoint );
+
+				$endpoint->handle_request();
+			}
 		);
 	}
 }
