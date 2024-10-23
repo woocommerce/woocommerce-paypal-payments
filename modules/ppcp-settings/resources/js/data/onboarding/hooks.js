@@ -2,7 +2,12 @@ import { useSelect, useDispatch } from '@wordpress/data';
 import { STORE_NAME } from '../constants';
 
 export const useOnboardingDetails = () => {
-	const { setOnboardingStep, persist } = useDispatch( STORE_NAME );
+	const {
+		setOnboardingStep,
+		setSandboxMode,
+		setManualConnectionMode,
+		persist,
+	} = useDispatch( STORE_NAME );
 
 	const onboardingStep = useSelect( ( select ) => {
 		return select( STORE_NAME ).getOnboardingStep();
@@ -12,12 +17,19 @@ export const useOnboardingDetails = () => {
 		return select( STORE_NAME ).isSaving();
 	}, [] );
 
+	const setDetailAndPersist = async ( setter, value ) => {
+		setter( value );
+		await persist();
+	};
+
 	return {
 		onboardingStep,
 		isSaving,
-		setOnboardingStep: async ( step ) => {
-			setOnboardingStep( step );
-			await persist();
-		},
+		setOnboardingStep: ( step ) =>
+			setDetailAndPersist( setOnboardingStep, step ),
+		setSandboxMode: ( state ) =>
+			setDetailAndPersist( setSandboxMode, state ),
+		setManualConnectionMode: ( state ) =>
+			setDetailAndPersist( setManualConnectionMode, state ),
 	};
 };

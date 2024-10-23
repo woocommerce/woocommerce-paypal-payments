@@ -8,7 +8,7 @@ import { NAMESPACE, STORE_NAME } from '../constants';
  * Persistent. Set the full onboarding details, usually during app initialization.
  *
  * @param {Object} payload
- * @return {{payload, type: string}} The action.
+ * @return {{type: string, payload}} The action.
  */
 export const updateOnboardingDetails = ( payload ) => {
 	return {
@@ -27,6 +27,32 @@ export const setOnboardingStep = ( step ) => {
 	return {
 		type: ACTION_TYPES.SET_ONBOARDING_STEP,
 		step,
+	};
+};
+
+/**
+ * Persistent. Sets the sandbox mode on or off.
+ *
+ * @param {boolean} sandboxMode
+ * @return {{type: string, useSandbox}} An action.
+ */
+export const setSandboxMode = ( sandboxMode ) => {
+	return {
+		type: ACTION_TYPES.SET_SANDBOX_MODE,
+		useSandbox: sandboxMode,
+	};
+};
+
+/**
+ * Persistent. Toggles the "Manual Connection" mode on or off.
+ *
+ * @param {boolean} manualConnectionMode
+ * @return {{type: string, useManualConnection}} An action.
+ */
+export const setManualConnectionMode = ( manualConnectionMode ) => {
+	return {
+		type: ACTION_TYPES.SET_MANUAL_CONNECTION_MODE,
+		useManualConnection: manualConnectionMode,
 	};
 };
 

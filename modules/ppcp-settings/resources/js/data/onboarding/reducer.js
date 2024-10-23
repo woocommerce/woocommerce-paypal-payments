@@ -4,6 +4,8 @@ const defaultState = {
 	isSaving: false,
 	data: {
 		step: 0,
+		useSandbox: false,
+		useManualConnection: false,
 	},
 };
 
@@ -30,6 +32,24 @@ export const onboardingReducer = (
 				data: {
 					...( state.data || {} ),
 					step: action.step,
+				},
+			};
+
+		case ACTION_TYPES.SET_SANDBOX_MODE:
+			return {
+				...state,
+				data: {
+					...( state.data || {} ),
+					useSandbox: action.useSandbox,
+				},
+			};
+
+		case ACTION_TYPES.SET_MANUAL_CONNECTION_MODE:
+			return {
+				...state,
+				data: {
+					...( state.data || {} ),
+					useManualConnection: action.useManualConnection,
 				},
 			};
 
