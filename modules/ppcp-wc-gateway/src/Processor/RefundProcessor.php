@@ -153,7 +153,15 @@ class RefundProcessor {
 				case self::REFUND_MODE_VOID:
 					$this->void( $order );
 
-					$wc_order->set_status( 'refunded' );
+					$wc_order->set_status(
+						apply_filters(
+							'woocommerce_order_fully_refunded_status',
+							'refunded',
+							$wc_order->get_id(),
+							null
+						)
+					);
+
 					$wc_order->save();
 
 					break;
