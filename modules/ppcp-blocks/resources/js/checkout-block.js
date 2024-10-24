@@ -739,11 +739,8 @@ if ( cartHasSubscriptionProducts( config.scriptData ) ) {
 	features.push( 'subscriptions' );
 }
 
-if ( block_enabled && config.enabled ) {
-	if (
-		( config.addPlaceOrderMethod || config.usePlaceOrder ) &&
-		! config.scriptData.continuation
-	) {
+if ( block_enabled ) {
+	if ( config.placeOrderEnabled && ! config.scriptData.continuation ) {
 		let descriptionElement = (
 			<div
 				dangerouslySetInnerHTML={ { __html: config.description } }
@@ -776,7 +773,7 @@ if ( block_enabled && config.enabled ) {
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
 			canMakePayment: () => {
-				return config.enabled;
+				return true;
 			},
 			supports: {
 				features,
@@ -798,7 +795,7 @@ if ( block_enabled && config.enabled ) {
 				features: [ ...features, 'ppcp_continuation' ],
 			},
 		} );
-	} else if ( ! config.usePlaceOrder ) {
+	} else if ( config.smartButtonsEnabled ) {
 		for ( const fundingSource of [
 			'paypal',
 			...config.enabledFundingSources,

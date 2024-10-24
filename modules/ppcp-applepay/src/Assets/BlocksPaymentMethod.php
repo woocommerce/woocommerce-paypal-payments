@@ -113,7 +113,7 @@ class BlocksPaymentMethod extends AbstractPaymentMethodType {
 			'id'          => $this->name,
 			'title'       => $paypal_data['title'], // TODO : see if we should use another.
 			'description' => $paypal_data['description'], // TODO : see if we should use another.
-			'enabled'     => $paypal_data['enabled'], // This button is enabled when PayPal buttons are.
+			'enabled'     => $paypal_data['smartButtonsEnabled'], // This button is enabled when PayPal buttons are.
 			'scriptData'  => $script_data,
 		);
 	}

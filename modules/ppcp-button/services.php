@@ -37,6 +37,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 return array(
 	'button.client_id'                            => static function ( ContainerInterface $container ): string {
@@ -101,12 +102,20 @@ return array(
 		return $obj->get_context();
 	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
-		$state = $container->get( 'onboarding.state' );
-		if ( $container->get( 'wcgateway.use-place-order-button' )
-			&& in_array( $container->get( 'button.context' ), array( 'checkout', 'pay-now' ), true )
-		) {
-			return new DisabledSmartButton();
+		$context = $container->get( 'button.context' );
+
+		$settings_status = $container->get( 'wcgateway.settings.status' );
+		assert( $settings_status instanceof SettingsStatus );
+
+		if ( in_array( $context, array( 'checkout', 'pay-now' ), true ) ) {
+			if ( $container->get( 'wcgateway.use-place-order-button' )
+				|| ! $settings_status->is_smart_button_enabled_for_location( $context )
+			) {
+				return new DisabledSmartButton();
+			}
 		}
+
+		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
@@ -125,7 +134,6 @@ return array(
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'ppcp.asset-version' ),
