@@ -18,20 +18,20 @@ export const useDebounceField = (
 ) => {
 	const [ fieldValue, setFieldValue ] = useState( storeValue );
 
-	// Memoize the debounced store sync
+	// Memoize the debounced store sync.
 	const debouncedSync = useMemo(
 		() => debounce( syncToStore, delay ),
 		[ syncToStore, delay ]
 	);
 
-	// Sync field with store changes
+	// Sync field with store changes.
 	useEffect( () => {
 		if ( storeValue !== '' && fieldValue !== storeValue ) {
 			setFieldValue( storeValue );
 		}
 	}, [ storeValue, fieldValue ] );
 
-	// Handle field updates and store sync
+	// Handle field updates and store sync.
 	const updateField = useCallback(
 		( newValue ) => {
 			setFieldValue( newValue );
@@ -40,10 +40,10 @@ export const useDebounceField = (
 		[ debouncedSync ]
 	);
 
-	// Cleanup on unmount
+	// Cleanup on unmount.
 	useEffect( () => {
 		return () => {
-			debouncedSync.cancel();
+			debouncedSync?.flush();
 		};
 	}, [ debouncedSync ] );
 
