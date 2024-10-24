@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Tokens;
@@ -24,10 +25,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
@@ -149,6 +147,13 @@ class RenewalHandler {
 	private $wc_payment_tokens;
 
 	/**
+	 * Payment source factory.
+	 *
+	 * @var PaymentSourceFactory
+	 */
+	private $payment_source_factory;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface              $logger The logger.
@@ -165,6 +170,7 @@ class RenewalHandler {
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
 	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param WooCommercePaymentTokens     $wc_payment_tokens WooCommerce payments tokens factory.
+	 * @param PaymentSourceFactory $payment_source_factory Payment source factory.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -180,7 +186,8 @@ class RenewalHandler {
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		SubscriptionHelper $subscription_helper,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
-		WooCommercePaymentTokens $wc_payment_tokens
+		WooCommercePaymentTokens $wc_payment_tokens,
+		PaymentSourceFactory $payment_source_factory
 	) {
 
 		$this->logger                           = $logger;
@@ -197,6 +204,7 @@ class RenewalHandler {
 		$this->subscription_helper              = $subscription_helper;
 		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
 		$this->wc_payment_tokens                = $wc_payment_tokens;
+		$this->payment_source_factory = $payment_source_factory;
 	}
 
 	/**
@@ -256,85 +264,14 @@ class RenewalHandler {
 		);
 
 		// Vault v3.
-		$payment_source = null;
-		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
-			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
-
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
-
-			if ( $customer_tokens && empty( $wc_tokens ) ) {
-				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, $user_id );
-			}
-
-			$customer_token_ids = array();
-			foreach ( $customer_tokens as $customer_token ) {
-				$customer_token_ids[] = $customer_token['id'];
-			}
-
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
-			foreach ( $wc_tokens as $token ) {
-				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
-					$token->delete();
-					continue;
-				}
-
-				$name       = 'paypal';
-				$properties = array(
-					'vault_id' => $token->get_token(),
-				);
-
-				if ( $token instanceof PaymentTokenPayPal ) {
-					$name = 'paypal';
-				}
-
-				if ( $token instanceof PaymentTokenVenmo ) {
-					$name = 'venmo';
-				}
-
-				if ( $token instanceof PaymentTokenApplePay ) {
-					$name                            = 'apple_pay';
-					$properties['stored_credential'] = array(
-						'payment_initiator' => 'MERCHANT',
-						'payment_type'      => 'RECURRING',
-						'usage'             => 'SUBSEQUENT',
-					);
-				}
-
-				$payment_source = new PaymentSource(
-					$name,
-					(object) $properties
-				);
-
-				break;
-			}
-		}
-
-		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
-
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
-
-			if ( $customer_tokens && empty( $wc_tokens ) ) {
-				$this->wc_payment_tokens->create_wc_tokens( $customer_tokens, $user_id );
-			}
-
-			$customer_token_ids = array();
-			foreach ( $customer_tokens as $customer_token ) {
-				$customer_token_ids[] = $customer_token['id'];
-			}
-
-			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
-			foreach ( $wc_tokens as $token ) {
-				if ( ! in_array( $token->get_token(), $customer_token_ids, true ) ) {
-					$token->delete();
-				}
-			}
-
-			$wc_tokens  = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
-			$last_token = end( $wc_tokens );
-			if ( $last_token ) {
-				$payment_source = $this->card_payment_source( $last_token->get_token(), $wc_order );
-			}
+		try {
+			$payment_source = $this->payment_source_factory->payment_source(
+				$wc_order->get_payment_method(),
+				$user_id,
+				$wc_order
+			);
+		} catch (Exception $exception) {
+			$payment_source = null;
 		}
 
 		if ( $payment_source ) {

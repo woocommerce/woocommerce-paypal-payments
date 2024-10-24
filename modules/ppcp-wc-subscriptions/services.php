@@ -46,7 +46,8 @@ return array(
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'vaulting.wc-payment-tokens' )
+			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get('wc-subscriptions.payment-source-factory')
 		);
 	},
 	'wc-subscriptions.repository.payment-token'          => static function ( ContainerInterface $container ): PaymentTokenRepository {
@@ -59,4 +60,8 @@ return array(
 			$container->get( 'button.request-data' )
 		);
 	},
+	'wc-subscriptions.payment-source-factory' => static fn(ContainerInterface $container): PaymentSourceFactory => new PaymentSourceFactory(
+		$container->get( 'vaulting.wc-payment-tokens' ),
+		$container->get( 'wc-subscriptions.helper' )
+	)
 );
