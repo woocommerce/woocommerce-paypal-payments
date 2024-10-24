@@ -1008,7 +1008,7 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	protected function hide_gateway_until_eligible(): void {
 		?>
-		<style id="ppcp-hide-apple-pay">.wc_payment_method.payment_method_ppcp-applepay{display:none}</style>
+		<style data-hide-gateway="ppcp-applepay">.wc_payment_method.payment_method_ppcp-applepay{display:none}</style>
 		<?php
 	}
 

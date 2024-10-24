@@ -193,6 +193,13 @@ export default class PaymentButton {
 	#button = null;
 
 	/**
+	 * List of checks to perform to verify the PaymentButton has is configured correctly.
+	 *
+	 * @type {{check, errorMessage, shouldPass}[]}
+	 */
+	#validationChecks = [];
+
+	/**
 	 * Factory method to create a new PaymentButton while limiting a single instance per context.
 	 *
 	 * @param {string}  context         - Button context name.
@@ -304,6 +311,11 @@ export default class PaymentButton {
 			this.#ppcpConfig
 		);
 		this.applyButtonStyles( this.#buttonConfig );
+
+		this.registerValidationRules(
+			this.#assertIsInvalid.bind( this ),
+			this.#assertIsValid.bind( this )
+		);
 
 		apmButtonsInit( this.#ppcpConfig );
 		this.initEventListeners();
@@ -635,15 +647,74 @@ export default class PaymentButton {
 	}
 
 	/**
+	 * Register a validation check that marks the configuration as invalid when passed.
+	 *
+	 * @param {Function} check        - A function that returns a truthy value if the check passes.
+	 * @param {string}   errorMessage - The error message to display if the check fails.
+	 */
+	#assertIsInvalid( check, errorMessage ) {
+		this.#validationChecks.push( {
+			check,
+			errorMessage,
+			shouldPass: false,
+		} );
+	}
+
+	/**
+	 * Register a validation check that instantly marks the configuration as valid when passed.
+	 *
+	 * @param {Function} check - A function that returns a truthy value if the check passes.
+	 */
+	#assertIsValid( check ) {
+		this.#validationChecks.push( { check, shouldPass: true } );
+	}
+
+	/**
+	 * Defines a series of validation steps to ensure the payment button is configured correctly.
+	 *
+	 * Each validation step is executed in the order they are defined within this method.
+	 *
+	 * If a validation step using `invalidIf` returns true, the configuration is immediately considered
+	 * invalid, and an error message is logged. Conversely, if a validation step using `validIf`
+	 * returns true, the configuration is immediately considered valid.
+	 *
+	 * If no validation step returns true, the configuration is assumed to be valid by default.
+	 *
+	 * @param {(condition: () => boolean, errorMessage: string) => void} invalidIf - Registers a validation step that fails if the condition returns true.
+	 * @param {(condition: () => boolean) => void}                       validIf   - Registers a validation step that passes if the condition returns true.
+	 */
+	// eslint-disable-next-line no-unused-vars
+	registerValidationRules( invalidIf, validIf ) {}
+
+	/**
 	 * Determines if the current button instance has valid and complete configuration details.
 	 * Used during initialization to decide if the button can be initialized or should be skipped.
 	 *
-	 * Can be implemented by the derived class.
+	 * All required validation steps must be registered in the constructor of the derived class
+	 * using `this.addValidationFailure()` or `this.addValidationSuccess()`.
 	 *
 	 * @param {boolean} [silent=false] - Set to true to suppress console errors.
 	 * @return {boolean} True indicates the config is valid and initialization can continue.
 	 */
 	validateConfiguration( silent = false ) {
+		for ( const step of this.#validationChecks ) {
+			const result = step.check();
+
+			if ( step.shouldPass && result ) {
+				// If a success check passes, mark as valid immediately.
+				return true;
+			}
+
+			if ( ! step.shouldPass && result ) {
+				// If a failure check passes, mark as invalid.
+				if ( ! silent && step.errorMessage ) {
+					this.error( step.errorMessage );
+				}
+
+				return false;
+			}
+		}
+
 		return true;
 	}
 
