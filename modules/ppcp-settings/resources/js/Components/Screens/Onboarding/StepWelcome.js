@@ -5,7 +5,7 @@ import PaymentMethodIcons from '../../ReusableComponents/PaymentMethodIcons';
 import SettingsToggleBlock from '../../ReusableComponents/SettingsToggleBlock';
 import Separator from '../../ReusableComponents/Separator';
 import { useOnboardingDetails } from '../../../data';
-import { useDebounceField } from '../../../utils/hooks';
+import DataStoreControl from '../../ReusableComponents/DataStoreControl';
 
 const StepWelcome = () => {
 	return (
@@ -85,16 +85,6 @@ const WelcomeForm = () => {
 		setClientSecret,
 	} = useOnboardingDetails();
 
-	const [ currentClientId, updateClientId ] = useDebounceField(
-		setClientId,
-		clientId
-	);
-
-	const [ currentClientSecret, updateClientSecret ] = useDebounceField(
-		setClientSecret,
-		clientSecret
-	);
-
 	const advancedUsersDescription = sprintf(
 		// translators: %s: Link to PayPal REST application guide
 		__(
@@ -132,23 +122,25 @@ const WelcomeForm = () => {
 				isToggled={ !! isManualConnectionMode }
 				setToggled={ setManualConnectionMode }
 			>
-				<TextControl
+				<DataStoreControl
+					control={ TextControl }
 					label={ __(
 						'Sandbox Client ID',
 						'woocommerce-paypal-payments'
 					) }
-					value={ currentClientId }
-					onChange={ updateClientId }
-				></TextControl>
-				<TextControl
+					value={ clientId }
+					onChange={ setClientId }
+				/>
+				<DataStoreControl
+					control={ TextControl }
 					label={ __(
 						'Sandbox Secret Key',
 						'woocommerce-paypal-payments'
 					) }
-					value={ currentClientSecret }
-					onChange={ updateClientSecret }
+					value={ clientSecret }
+					onChange={ setClientSecret }
 					type="password"
-				></TextControl>
+				/>
 				<Button variant="secondary">
 					{ __( 'Connect Account', 'woocommerce-paypal-payments' ) }
 				</Button>
