@@ -1,7 +1,9 @@
 import Container from '../../ReusableComponents/Container.js';
 import StepWelcome from './StepWelcome.js';
-import StepBusiness from './StepBusiness';
+import StepBusiness from './StepBusiness.js';
+import StepProducts from './StepProducts.js';
 import { useState } from '@wordpress/element';
+import Dashboard from '../Dashboard/Dashboard';
 
 const Onboarding = () => {
 	const [ step, setStep ] = useState( 0 );
@@ -16,18 +18,26 @@ const Onboarding = () => {
 };
 
 const Stepper = ( { currentStep, setStep } ) => {
-	const stepperOrder = {
-		0: StepWelcome,
-		1: StepBusiness,
+	const stepperOrder = [ StepWelcome, StepBusiness, StepProducts ];
+
+	const renderSteps = () => {
+		return stepperOrder.map( ( Step, index ) => {
+			return (
+				<div
+					key={ index }
+					style={ index !== currentStep ? { display: 'none' } : {} }
+				>
+					<Step
+						setStep={ setStep }
+						currentStep={ currentStep }
+						stepperOrder={ stepperOrder }
+					/>
+				</div>
+			);
+		} );
 	};
 
-	const Component = stepperOrder[ currentStep ];
-
-	return (
-		<>
-			<Component setStep={ setStep } currentStep={ currentStep } />
-		</>
-	);
+	return <>{ renderSteps() }</>;
 };
 
 export default Onboarding;

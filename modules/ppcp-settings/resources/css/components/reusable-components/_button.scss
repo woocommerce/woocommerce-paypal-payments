@@ -1,13 +1,23 @@
 button.components-button {
 	&.is-primary, &.is-secondary {
-		background-color: $color-blueberry;
+		&:not(:disabled) {
+			background-color: $color-blueberry;
+
+			&:hover {
+				background: $gradient-header;
+			}
+		}
+
+		&:disabled {
+			background-color: $color-gray-500;
+			color: $color-white;
+		}
+
 		border-radius: 2px;
 		padding: 14px 17px;
 		height: auto;
 
-		&:hover {
-			background: $gradient-header;
-		}
+
 	}
 
 	&.is-primary {

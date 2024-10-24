@@ -1,9 +1,8 @@
-import Onboarding from './Components/Screens/Onboarding/Onboarding.js';
-
+import Settings from './Components/Screens/Settings';
 export function App() {
 	return (
 		<div>
-			<Onboarding />
+			<Settings />
 		</div>
 	);
 }

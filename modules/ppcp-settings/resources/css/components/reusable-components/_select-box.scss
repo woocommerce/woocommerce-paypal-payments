@@ -9,7 +9,7 @@
 	position: relative;
 	width: 100%;
 	border: 1px solid $color-gray-500;
-	outline:1px solid transparent;
+	outline: 1px solid transparent;
 	border-radius: 8px;
 	display: flex;
 	gap: 32px;
@@ -25,20 +25,34 @@
 	}
 
 	&__radio-value {
-		width: 100%;
-		height: 100%;
-		position: absolute;
-		left: 0;
-		top: 0;
-		margin: 0;
-		opacity: 0;
-		border-radius: 0;
+		@include hide-input-field;
+
 		&:checked {
 			+ .ppcp-r-select-box__radio-presentation {
 				background: $color-white;
 				width: 20px;
 				height: 20px;
 				border: 6px solid $color-blueberry;
+			}
+		}
+	}
+
+	&__checkbox-value {
+		@include hide-input-field;
+
+		&:not(:checked) + .ppcp-r-select-box__checkbox-presentation img {
+			display: none;
+		}
+
+		&:checked {
+			+ .ppcp-r-select-box__checkbox-presentation {
+				width: 20px;
+				height: 20px;
+				border: none;
+
+				img {
+					border-radius: 2px;
+				}
 			}
 		}
 	}
@@ -62,11 +76,26 @@
 	}
 
 	&__radio-presentation {
-		width: 20px;
-		height: 20px;
-		border: 1px solid $color-gray-600;
-		border-radius: 20px;
-		display: block;
-		pointer-events: none;
+		@include fake-input-field(20px);
+	}
+
+	&__checkbox-presentation {
+		@include fake-input-field(2px);
+	}
+
+	@media screen and (max-width: 480px) {
+		gap: 16px;
+		padding: 18px 16px;
+		&__description {
+			margin: 0 0 8px 0;
+		}
+		&__content {
+			gap: 12px;
+		}
+	}
+	@media screen and (max-width: 380px) {
+		&__content > img {
+			max-width: 32px;
+		}
 	}
 }

@@ -6,7 +6,7 @@ import PaymentMethodIcons from '../../ReusableComponents/PaymentMethodIcons';
 import { useState } from '@wordpress/element';
 import Navigation from '../../ReusableComponents/Navigation';
 
-const StepBusiness = ( { setStep, currentStep } ) => {
+const StepBusiness = ( { setStep, currentStep, stepperOrder } ) => {
 	const [ businessCategory, setBusinessCategory ] = useState( null );
 	const BUSINESS_RADIO_GROUP_NAME = 'business';
 	const CASUAL_SELLER_CHECKBOX_VALUE = 'casual_seller';
@@ -40,6 +40,7 @@ const StepBusiness = ( { setStep, currentStep } ) => {
 							businessCategory ===
 							{ CASUAL_SELLER_CHECKBOX_VALUE }
 						}
+						type="radio"
 					>
 						<PaymentMethodIcons
 							icons={ [
@@ -69,6 +70,7 @@ const StepBusiness = ( { setStep, currentStep } ) => {
 						checked={
 							businessCategory === { BUSINESS_CHECKBOX_VALUE }
 						}
+						type="radio"
 					>
 						<PaymentMethodIcons
 							icons={ [
@@ -85,7 +87,12 @@ const StepBusiness = ( { setStep, currentStep } ) => {
 						/>
 					</SelectBox>
 				</SelectBoxWrapper>
-				<Navigation setStep={ setStep } currentStep={ currentStep } />
+				<Navigation
+					setStep={ setStep }
+					currentStep={ currentStep }
+					stepperOrder={ stepperOrder }
+					canProceeedCallback={ () => businessCategory !== null }
+				/>
 			</div>
 		</div>
 	);
