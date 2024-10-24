@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class PayPalPaymentMethod
@@ -88,6 +89,13 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $session_handler;
 
 	/**
+	 * The Subscription Helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * Whether to create a non-express method with the standard "Place order" button.
 	 *
 	 * @var bool
@@ -141,6 +149,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param bool                          $final_review_enabled Whether the final review is enabled.
 	 * @param CancelView                    $cancellation_view The cancellation view.
 	 * @param SessionHandler                $session_handler The Session handler.
+	 * @param SubscriptionHelper            $subscription_helper The subscription helper.
 	 * @param bool                          $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
 	 * @param bool                          $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
 	 * @param string                        $place_order_button_text The text for the standard "Place order" button.
@@ -158,6 +167,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		bool $final_review_enabled,
 		CancelView $cancellation_view,
 		SessionHandler $session_handler,
+		SubscriptionHelper $subscription_helper,
 		bool $add_place_order_method,
 		bool $use_place_order,
 		string $place_order_button_text,
@@ -175,6 +185,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$this->final_review_enabled           = $final_review_enabled;
 		$this->cancellation_view              = $cancellation_view;
 		$this->session_handler                = $session_handler;
+		$this->subscription_helper            = $subscription_helper;
 		$this->add_place_order_method         = $add_place_order_method;
 		$this->use_place_order                = $use_place_order;
 		$this->place_order_button_text        = $place_order_button_text;
@@ -195,9 +206,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		// Do not load when definitely not needed,
 		// but we still need to check the locations later and handle in JS
 		// because has_block cannot be called here (too early).
-		return $this->plugin_settings->has( 'enabled' ) && $this->plugin_settings->get( 'enabled' )
-			&& ( $this->settings_status->is_smart_button_enabled_for_location( 'checkout-block-express' ) ||
-				$this->settings_status->is_smart_button_enabled_for_location( 'cart-block' ) );
+		return $this->plugin_settings->has( 'enabled' ) && $this->plugin_settings->get( 'enabled' );
 	}
 
 	/**
@@ -245,15 +254,19 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			);
 		}
 
+		$smart_buttons_enabled = ! $this->use_place_order
+			&& $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'block-checkout' );
+		$place_order_enabled   = ( $this->use_place_order || $this->add_place_order_method )
+			&& ! $this->subscription_helper->cart_contains_subscription();
+
 		return array(
 			'id'                          => $this->gateway->id,
 			'title'                       => $this->gateway->title,
 			'description'                 => $this->gateway->description,
-			'enabled'                     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'checkout' ),
+			'smartButtonsEnabled'         => $smart_buttons_enabled,
+			'placeOrderEnabled'           => $place_order_enabled,
 			'fundingSource'               => $this->session_handler->funding_source(),
 			'finalReviewEnabled'          => $this->final_review_enabled,
-			'addPlaceOrderMethod'         => $this->add_place_order_method,
-			'usePlaceOrder'               => $this->use_place_order,
 			'placeOrderButtonText'        => $this->place_order_button_text,
 			'placeOrderButtonDescription' => $this->place_order_button_description,
 			'enabledFundingSources'       => $funding_sources,
