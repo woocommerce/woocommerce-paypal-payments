@@ -1,0 +1,72 @@
+.ppcp-r-select-box-wrapper {
+	margin: 0 auto;
+	display: flex;
+	gap: 32px;
+	flex-wrap: wrap;
+}
+
+.ppcp-r-select-box {
+	position: relative;
+	width: 100%;
+	border: 1px solid $color-gray-500;
+	outline:1px solid transparent;
+	border-radius: 8px;
+	display: flex;
+	gap: 32px;
+	align-items: center;
+	box-sizing: border-box;
+	padding: 28px 16px 28px 32px;
+
+
+	&.selected {
+		border-color: $color-blueberry;
+		outline-color: $color-blueberry;
+		box-shadow: $shadow-selection-box;
+	}
+
+	&__radio-value {
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		left: 0;
+		top: 0;
+		margin: 0;
+		opacity: 0;
+		border-radius: 0;
+		&:checked {
+			+ .ppcp-r-select-box__radio-presentation {
+				background: $color-white;
+				width: 20px;
+				height: 20px;
+				border: 6px solid $color-blueberry;
+			}
+		}
+	}
+
+	&__content {
+		display: flex;
+		gap: 18px;
+	}
+
+	&__title {
+		@include font(16, 24, 600);
+		color: $color-blueberry;
+		margin: 0 0 4px 0;
+		display: block;
+	}
+
+	&__description {
+		@include font(14, 20, 400);
+		color: $color-gray-800;
+		margin: 0 0 18px 0;
+	}
+
+	&__radio-presentation {
+		width: 20px;
+		height: 20px;
+		border: 1px solid $color-gray-600;
+		border-radius: 20px;
+		display: block;
+		pointer-events: none;
+	}
+}

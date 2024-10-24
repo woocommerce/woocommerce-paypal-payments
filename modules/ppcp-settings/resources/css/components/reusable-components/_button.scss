@@ -4,6 +4,7 @@ button.components-button {
 		border-radius: 2px;
 		padding: 14px 17px;
 		height: auto;
+
 		&:hover {
 			background: $gradient-header;
 		}
@@ -18,5 +19,18 @@ button.components-button {
 		@include font(13, 20, 500);
 		color: $color-white;
 		border: none;
+	}
+
+	&.is-tertiary {
+		color: $color-blueberry;
+
+		&:hover {
+			color: $color-gradient-dark;
+		}
+
+		&:focus:not(:disabled) {
+			border: none;
+			box-shadow: none;
+		}
 	}
 }
