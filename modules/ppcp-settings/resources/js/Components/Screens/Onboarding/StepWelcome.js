@@ -5,7 +5,7 @@ import PaymentMethodIcons from '../../ReusableComponents/PaymentMethodIcons';
 import SettingsToggleBlock from '../../ReusableComponents/SettingsToggleBlock';
 import Separator from '../../ReusableComponents/Separator';
 
-const StepWelcome = () => {
+const StepWelcome = ( { setStep, currentStep } ) => {
 	return (
 		<div className="ppcp-r-page-welcome">
 			<OnboardingHeader
@@ -24,6 +24,7 @@ const StepWelcome = () => {
 				<Button
 					className="ppcp-r-button-activate-paypal"
 					variant="primary"
+					onClick={ () => setStep( currentStep + 1 ) }
 				>
 					{ __(
 						'Activate PayPal Payments',

@@ -1,0 +1,19 @@
+.ppcp-r-navigation {
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	gap: 12px;
+
+	.is-primary {
+		min-width: 196px;
+		justify-content: center;
+	}
+
+	.is-tertiary {
+		padding: 10px 17px;
+
+		&:hover {
+			background-color: transparent;
+		}
+	}
+}

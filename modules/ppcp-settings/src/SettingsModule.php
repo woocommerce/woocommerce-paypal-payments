@@ -12,7 +12,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class SettingsModule
@@ -71,7 +70,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				wp_register_style(
 					'ppcp-admin-settings',
-					$module_url . '/assets/style-style-rtl.css',
+					$module_url . '/assets/style-style.css',
 					$style_asset_file['dependencies'],
 					$style_asset_file['version']
 				);

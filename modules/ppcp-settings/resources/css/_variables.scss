@@ -10,4 +10,6 @@ $color-gray-200: #E0E0E0;
 $color-gray: #646970;
 
 $shadow-card: 0 3px 6px 0 rgba(0, 0, 0, 0.15);
-$gradient-header: linear-gradient(87.03deg, #003087 -0.49%, #001E51 29.22%, #001435 100%);
+$shadow-selection-box: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+$color-gradient-dark: #001435;
+$gradient-header: linear-gradient(87.03deg, #003087 -0.49%, #001E51 29.22%, $color-gradient-dark 100%);

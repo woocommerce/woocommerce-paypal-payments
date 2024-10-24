@@ -1,13 +1,20 @@
 import data from '../../utils/data';
 
 const SelectBox = ( props ) => {
+	let boxClassName = 'ppcp-r-select-box';
+
+	if ( props.value === props.currentValue ) {
+		boxClassName += ' selected';
+	}
 	return (
-		<div className="ppcp-r-select-box">
+		<div className={ boxClassName }>
 			<div className="ppcp-r-select-box__radio">
 				<input
-					checked="checked"
 					className="ppcp-r-select-box__radio-value"
 					type="radio"
+					name={ props.name }
+					value={ props.value }
+					onChange={ () => props.changeCallback( props.value ) }
 				/>
 				<span className="ppcp-r-select-box__radio-presentation"></span>
 			</div>

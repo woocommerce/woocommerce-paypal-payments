@@ -1,0 +1,17 @@
+.ppcp-r-page-business {
+	.ppcp-r-inner-container {
+		width: 622px;
+		padding-bottom: 84px;
+		@media screen and (max-width: 480px) {
+			padding-bottom: 42px;
+		}
+	}
+
+	.ppcp-r-payment-method-icons {
+		justify-content: flex-start;
+	}
+
+	.ppcp-r-select-box-wrapper{
+		margin:0 0 48px 0;
+	}
+}
