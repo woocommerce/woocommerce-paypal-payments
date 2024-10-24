@@ -1,4 +1,4 @@
-import { useEffect, useState } from '@wordpress/element';
+import { useEffect, useState, useMemo } from '@wordpress/element';
 import {
 	registerExpressPaymentMethod,
 	registerPaymentMethod,
@@ -41,6 +41,7 @@ const PayPalComponent = ( {
 	shippingData,
 	isEditing,
 	fundingSource,
+	buttonAttributes,
 } ) => {
 	const { onPaymentSetup, onCheckoutFail, onCheckoutValidation } =
 		eventRegistration;
@@ -614,6 +615,16 @@ const PayPalComponent = ( {
 		fundingSource
 	);
 
+	if ( typeof buttonAttributes !== 'undefined' ) {
+		style.height = buttonAttributes?.height
+			? Number( buttonAttributes.height )
+			: style.height;
+		style.borderRadius = buttonAttributes?.borderRadius
+			? Number( buttonAttributes.borderRadius )
+			: style.borderRadius;
+		style.color = '';
+	}
+
 	if ( ! paypalScriptLoaded ) {
 		return null;
 	}
@@ -688,19 +699,47 @@ const PayPalComponent = ( {
 	);
 };
 
-const BlockEditorPayPalComponent = () => {
-	const urlParams = {
-		clientId: 'test',
-		...config.scriptData.url_params,
-		dataNamespace: 'ppcp-blocks-editor-paypal-buttons',
-		components: 'buttons',
-	};
+const BlockEditorPayPalComponent = ( { fundingSource, buttonAttributes } ) => {
+	const urlParams = useMemo(
+		() => ( {
+			clientId: 'test',
+			...config.scriptData.url_params,
+			dataNamespace: 'ppcp-blocks-editor-paypal-buttons',
+			components: 'buttons',
+		} ),
+		[]
+	);
+
+	const style = useMemo( () => {
+		const configStyle = normalizeStyleForFundingSource(
+			config.scriptData.button.style,
+			fundingSource
+		);
+
+		if ( buttonAttributes ) {
+			return {
+				...configStyle,
+				height: buttonAttributes.height
+					? Number( buttonAttributes.height )
+					: configStyle.height,
+				borderRadius: buttonAttributes.borderRadius
+					? Number( buttonAttributes.borderRadius )
+					: configStyle.borderRadius,
+				color: configStyle.color,
+			};
+		}
+
+		return configStyle;
+	}, [ fundingSource, buttonAttributes ] );
+
 	return (
 		<PayPalScriptProvider options={ urlParams }>
 			<PayPalButtons
-				onClick={ ( data, actions ) => {
-					return false;
-				} }
+				className={ `ppc-button-container-${ fundingSource }` }
+				fundingSource={ fundingSource }
+				style={ style }
+				forceReRender={ [ buttonAttributes || {} ] }
+				onClick={ () => false }
 			/>
 		</PayPalScriptProvider>
 	);
@@ -818,7 +857,11 @@ if ( block_enabled ) {
 						fundingSource={ fundingSource }
 					/>
 				),
-				edit: <BlockEditorPayPalComponent />,
+				edit: (
+					<BlockEditorPayPalComponent
+						fundingSource={ fundingSource }
+					/>
+				),
 				ariaLabel: config.title,
 				canMakePayment: async () => {
 					if ( ! paypalScriptPromise ) {

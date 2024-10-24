@@ -126,6 +126,23 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
+		// Enqueue editor styles.
+		add_action(
+			'enqueue_block_editor_assets',
+			static function () use ( $c ) {
+				$module_url    = $c->get( 'blocks.url' );
+				$asset_version = $c->get( 'ppcp.asset-version' );
+
+				wp_register_style(
+					'wc-ppcp-blocks-editor',
+					untrailingslashit( $module_url ) . '/assets/css/gateway-editor.css',
+					array(),
+					$asset_version
+				);
+				wp_enqueue_style( 'wc-ppcp-blocks-editor' );
+			}
+		);
+
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
 			function( array $components ) {
