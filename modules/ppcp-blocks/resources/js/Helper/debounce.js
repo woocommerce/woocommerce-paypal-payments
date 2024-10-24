@@ -6,17 +6,14 @@ export const debounce = ( callback, delayMs ) => {
 
 	/**
 	 * Cancels any pending debounced execution.
-	 * @return {boolean} True if a pending execution was cancelled, false otherwise.
 	 */
 	const cancel = () => {
-		if ( ! state.timeoutId ) {
-			return false;
+		if ( state.timeoutId ) {
+			window.clearTimeout( state.timeoutId );
 		}
 
-		window.clearTimeout( state.timeoutId );
 		state.timeoutId = null;
 		state.args = null;
-		return true;
 	};
 
 	/**
@@ -24,14 +21,13 @@ export const debounce = ( callback, delayMs ) => {
 	 * @return {void}
 	 */
 	const flush = () => {
-		const args = state.args;
-
 		// If there's nothing pending, return early.
-		if ( ! cancel() ) {
+		if ( ! state.timeoutId ) {
 			return;
 		}
 
-		callback.apply( null, args || [] );
+		callback.apply( null, state.args || [] );
+		cancel();
 	};
 
 	const debouncedFunc = ( ...args ) => {
