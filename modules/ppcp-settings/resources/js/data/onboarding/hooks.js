@@ -16,15 +16,15 @@ export const useOnboardingDetails = () => {
 		return select( STORE_NAME ).getTransientData().isSaving;
 	}, [] );
 
+	// Persistent accessors.
 	const clientId = useSelect( ( select ) => {
-		return select( STORE_NAME ).getTransientData().clientId;
+		return select( STORE_NAME ).getPersistentData().clientId;
 	}, [] );
 
 	const clientSecret = useSelect( ( select ) => {
-		return select( STORE_NAME ).getTransientData().clientSecret;
+		return select( STORE_NAME ).getPersistentData().clientSecret;
 	}, [] );
 
-	// Persistent accessors.
 	const onboardingStep = useSelect( ( select ) => {
 		return select( STORE_NAME ).getPersistentData().step || 0;
 	}, [] );
@@ -48,9 +48,10 @@ export const useOnboardingDetails = () => {
 		isSandboxMode,
 		isManualConnectionMode,
 		clientId,
-		setClientId,
+		setClientId: ( value ) => setDetailAndPersist( setClientId, value ),
 		clientSecret,
-		setClientSecret,
+		setClientSecret: ( value ) =>
+			setDetailAndPersist( setClientSecret, value ),
 		setOnboardingStep: ( step ) =>
 			setDetailAndPersist( setOnboardingStep, step ),
 		setSandboxMode: ( state ) =>

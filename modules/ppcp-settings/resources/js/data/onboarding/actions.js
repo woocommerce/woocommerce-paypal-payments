@@ -4,6 +4,19 @@ import ACTION_TYPES from './action-types';
 import { NAMESPACE, STORE_NAME } from '../constants';
 
 /**
+ * Non-persistent. Changes the "saving" flag.
+ *
+ * @param {boolean} isSaving
+ * @return {{type: string, isSaving}} The action.
+ */
+export const setIsSaving = ( isSaving ) => {
+	return {
+		type: ACTION_TYPES.SET_IS_SAVING_ONBOARDING_DETAILS,
+		isSaving,
+	};
+};
+
+/**
  * Persistent. Set the full onboarding details, usually during app initialization.
  *
  * @param {Object} payload
@@ -56,20 +69,7 @@ export const setManualConnectionMode = ( manualConnectionMode ) => {
 };
 
 /**
- * Non-persistent. Changes the "saving" flag.
- *
- * @param {boolean} isSaving
- * @return {{type: string, isSaving}} The action.
- */
-export const setIsSaving = ( isSaving ) => {
-	return {
-		type: ACTION_TYPES.SET_IS_SAVING_ONBOARDING_DETAILS,
-		isSaving,
-	};
-};
-
-/**
- * Non-persistent. Changes the "client ID" value.
+ * Persistent. Changes the "client ID" value.
  *
  * @param {string} clientId
  * @return {{type: string, clientId}} The action.
@@ -82,7 +82,7 @@ export const setClientId = ( clientId ) => {
 };
 
 /**
- * Non-persistent. Changes the "client secret" value.
+ * Persistent. Changes the "client secret" value.
  *
  * @param {string} clientSecret
  * @return {{type: string, clientSecret}} The action.
