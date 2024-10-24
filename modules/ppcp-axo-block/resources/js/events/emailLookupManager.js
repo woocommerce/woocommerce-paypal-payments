@@ -1,7 +1,6 @@
 import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
 import { populateWooFields } from '../helpers/fieldHelpers';
 import { injectShippingChangeButton } from '../components/Shipping';
-import { injectCardChangeButton } from '../components/Card';
 import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
 
 /**
@@ -16,7 +15,6 @@ import { setIsGuest, setIsEmailLookupCompleted } from '../stores/axoStore';
  * @param {Function} setWooShippingAddress        - Function to update WooCommerce shipping address.
  * @param {Function} setWooBillingAddress         - Function to update WooCommerce billing address.
  * @param {Function} onChangeShippingAddressClick - Handler for shipping address change.
- * @param {Function} onChangeCardButtonClick      - Handler for card change.
  * @return {Function} The email lookup handler function.
  */
 export const createEmailLookupHandler = (
@@ -28,8 +26,7 @@ export const createEmailLookupHandler = (
 	wooBillingAddress,
 	setWooShippingAddress,
 	setWooBillingAddress,
-	onChangeShippingAddressClick,
-	onChangeCardButtonClick
+	onChangeShippingAddressClick
 ) => {
 	return async ( email ) => {
 		try {
@@ -102,9 +99,8 @@ export const createEmailLookupHandler = (
 					setWooBillingAddress
 				);
 
-				// Inject change buttons for shipping and card
+				// Inject the change button for shipping
 				injectShippingChangeButton( onChangeShippingAddressClick );
-				injectCardChangeButton( onChangeCardButtonClick );
 			} else {
 				log( 'Authentication failed or did not succeed', 'warn' );
 			}

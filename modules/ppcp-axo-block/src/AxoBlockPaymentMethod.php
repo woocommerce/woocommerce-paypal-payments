@@ -80,6 +80,13 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	private $wcgateway_module_url;
 
 	/**
+	 * The supported country card type matrix.
+	 *
+	 * @var array
+	 */
+	private $supported_country_card_type_matrix;
+
+	/**
 	 * AdvancedCardPaymentMethod constructor.
 	 *
 	 * @param string                        $module_url           The URL of this module.
@@ -91,6 +98,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param DCCGatewayConfiguration       $dcc_configuration    The DCC gateway settings.
 	 * @param Environment                   $environment          The environment object.
 	 * @param string                        $wcgateway_module_url The WcGateway module URL.
+	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
 		string $module_url,
@@ -100,18 +108,19 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		Settings $settings,
 		DCCGatewayConfiguration $dcc_configuration,
 		Environment $environment,
-		string $wcgateway_module_url
+		string $wcgateway_module_url,
+		array $supported_country_card_type_matrix
 	) {
-		$this->name                 = AxoGateway::ID;
-		$this->module_url           = $module_url;
-		$this->version              = $version;
-		$this->gateway              = $gateway;
-		$this->smart_button         = $smart_button;
-		$this->settings             = $settings;
-		$this->dcc_configuration    = $dcc_configuration;
-		$this->environment          = $environment;
-		$this->wcgateway_module_url = $wcgateway_module_url;
-
+		$this->name                               = AxoGateway::ID;
+		$this->module_url                         = $module_url;
+		$this->version                            = $version;
+		$this->gateway                            = $gateway;
+		$this->smart_button                       = $smart_button;
+		$this->settings                           = $settings;
+		$this->dcc_configuration                  = $dcc_configuration;
+		$this->environment                        = $environment;
+		$this->wcgateway_module_url               = $wcgateway_module_url;
+		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
 	/**
@@ -187,13 +196,13 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		}
 
 		return array(
-			'environment'     => array(
+			'environment'      => array(
 				'is_sandbox' => $this->environment->current_environment() === 'sandbox',
 			),
-			'widgets'         => array(
+			'widgets'          => array(
 				'email' => 'render',
 			),
-			'insights'        => array(
+			'insights'         => array(
 				'enabled'    => defined( 'WP_DEBUG' ) && WP_DEBUG,
 				'client_id'  => ( $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : null ),
 				'session_id' =>
@@ -207,7 +216,9 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 						: null, // Set to null if WC()->cart is null or get_total doesn't exist.
 				),
 			),
-			'style_options'   => array(
+			'allowed_cards'    => $this->supported_country_card_type_matrix,
+			'disable_cards'    => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
+			'style_options'    => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
 					'errorColor'      => $this->settings->has( 'axo_style_root_error_color' ) ? $this->settings->get( 'axo_style_root_error_color' ) : '',
@@ -226,23 +237,25 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 					'focusBorderColor' => $this->settings->has( 'axo_style_input_focus_border_color' ) ? $this->settings->get( 'axo_style_input_focus_border_color' ) : '',
 				),
 			),
-			'name_on_card'    => $this->dcc_configuration->show_name_on_card(),
-			'woocommerce'     => array(
+			'name_on_card'     => $this->dcc_configuration->show_name_on_card(),
+			'woocommerce'      => array(
 				'states' => array(
 					'US' => WC()->countries->get_states( 'US' ),
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'icons_directory' => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
-			'module_url'      => untrailingslashit( $this->module_url ),
-			'ajax'            => array(
+			'icons_directory'  => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
+			'module_url'       => untrailingslashit( $this->module_url ),
+			'ajax'             => array(
 				'frontend_logger' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
 				),
 			),
-			'logging_enabled' => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
-			'wp_debug'        => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'logging_enabled'  => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
+			'wp_debug'         => defined( 'WP_DEBUG' ) && WP_DEBUG,
+			'card_icons'       => $this->settings->has( 'card_icons' ) ? (array) $this->settings->get( 'card_icons' ) : array(),
+			'merchant_country' => WC()->countries->get_base_country(),
 		);
 	}
 }
