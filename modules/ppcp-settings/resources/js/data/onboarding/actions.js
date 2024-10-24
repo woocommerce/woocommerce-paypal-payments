@@ -1,16 +1,28 @@
-import { dispatch, select } from '@wordpress/data';
+import { select } from '@wordpress/data';
 import { apiFetch } from '@wordpress/data-controls';
-import { __ } from '@wordpress/i18n';
 import ACTION_TYPES from './action-types';
 import { NAMESPACE, STORE_NAME } from '../constants';
+
+/**
+ * Non-persistent. Changes the "saving" flag.
+ *
+ * @param {boolean} isSaving
+ * @return {{type: string, isSaving}} The action.
+ */
+export const setIsSaving = ( isSaving ) => {
+	return {
+		type: ACTION_TYPES.SET_IS_SAVING_ONBOARDING_DETAILS,
+		isSaving,
+	};
+};
 
 /**
  * Persistent. Set the full onboarding details, usually during app initialization.
  *
  * @param {Object} payload
- * @return {{payload, type: string}} The action.
+ * @return {{type: string, payload}} The action.
  */
-export const updateOnboardingDetails = ( payload ) => {
+export const setOnboardingDetails = ( payload ) => {
 	return {
 		type: ACTION_TYPES.SET_ONBOARDING_DETAILS,
 		payload,
@@ -31,48 +43,81 @@ export const setOnboardingStep = ( step ) => {
 };
 
 /**
- * Non-persistent. Changes the "saving" flag.
+ * Persistent. Sets the sandbox mode on or off.
  *
- * @param {boolean} isSaving
- * @return {{type: string, isSaving}} The action.
+ * @param {boolean} sandboxMode
+ * @return {{type: string, useSandbox}} An action.
  */
-export const updateIsSaving = ( isSaving ) => {
+export const setSandboxMode = ( sandboxMode ) => {
 	return {
-		type: ACTION_TYPES.SET_IS_SAVING_ONBOARDING_DETAILS,
-		isSaving,
+		type: ACTION_TYPES.SET_SANDBOX_MODE,
+		useSandbox: sandboxMode,
+	};
+};
+
+/**
+ * Persistent. Toggles the "Manual Connection" mode on or off.
+ *
+ * @param {boolean} manualConnectionMode
+ * @return {{type: string, useManualConnection}} An action.
+ */
+export const setManualConnectionMode = ( manualConnectionMode ) => {
+	return {
+		type: ACTION_TYPES.SET_MANUAL_CONNECTION_MODE,
+		useManualConnection: manualConnectionMode,
+	};
+};
+
+/**
+ * Persistent. Changes the "client ID" value.
+ *
+ * @param {string} clientId
+ * @return {{type: string, clientId}} The action.
+ */
+export const setClientId = ( clientId ) => {
+	return {
+		type: ACTION_TYPES.SET_CLIENT_ID,
+		clientId,
+	};
+};
+
+/**
+ * Persistent. Changes the "client secret" value.
+ *
+ * @param {string} clientSecret
+ * @return {{type: string, clientSecret}} The action.
+ */
+export const setClientSecret = ( clientSecret ) => {
+	return {
+		type: ACTION_TYPES.SET_CLIENT_SECRET,
+		clientSecret,
 	};
 };
 
 /**
  * Saves the persistent details to the WP database.
  *
- * @return {Generator<any>} A generator function that handles the saving process.
+ * @return {any} A generator function that handles the saving process.
  */
 export function* persist() {
 	let error = null;
 
 	try {
 		const path = `${ NAMESPACE }/onboarding`;
-		const data = select( STORE_NAME ).getOnboardingData();
+		const data = select( STORE_NAME ).getPersistentData();
 
-		yield updateIsSaving( true );
+		yield setIsSaving( true );
 
 		yield apiFetch( {
 			path,
 			method: 'post',
 			data,
 		} );
-
-		yield dispatch( 'core/notices' ).createSuccessNotice(
-			__( 'Progress saved.', 'woocommerce-paypal-payments' )
-		);
 	} catch ( e ) {
 		error = e;
-		yield dispatch( 'core/notices' ).createErrorNotice(
-			__( 'Error saving progress.', 'woocommerce-paypal-payments' )
-		);
+		console.error( 'Error saving progress.', e );
 	} finally {
-		yield updateIsSaving( false );
+		yield setIsSaving( false );
 	}
 
 	return error === null;

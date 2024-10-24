@@ -1,4 +1,4 @@
-const EMPTY_OBJ = {};
+const EMPTY_OBJ = Object.freeze( {} );
 
 const getOnboardingState = ( state ) => {
 	if ( ! state ) {
@@ -8,14 +8,11 @@ const getOnboardingState = ( state ) => {
 	return state.onboarding || EMPTY_OBJ;
 };
 
-export const getOnboardingData = ( state ) => {
+export const getPersistentData = ( state ) => {
 	return getOnboardingState( state ).data || EMPTY_OBJ;
 };
 
-export const isSaving = ( state ) => {
-	return getOnboardingState( state ).isSaving || false;
-};
-
-export const getOnboardingStep = ( state ) => {
-	return getOnboardingData( state ).step || 0;
+export const getTransientData = ( state ) => {
+	const { data, ...transientState } = getOnboardingState( state );
+	return transientState || EMPTY_OBJ;
 };

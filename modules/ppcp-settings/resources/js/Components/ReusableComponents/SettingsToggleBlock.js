@@ -1,9 +1,6 @@
-import { useState } from '@wordpress/element';
 import { ToggleControl } from '@wordpress/components';
 
-const SettingsToggleBlock = ( props ) => {
-	const [ isToggled, setToggled ] = useState( false );
-
+const SettingsToggleBlock = ( { isToggled, setToggled, ...props } ) => {
 	return (
 		<div className="ppcp-r-toggle-block">
 			<div className="ppcp-r-toggle-block__wrapper">

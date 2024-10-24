@@ -1,0 +1,50 @@
+.ppcp-r-select-box-wrapper {
+	max-width: 590px;
+	margin: 0 auto;
+	display: flex;
+	gap: 32px;
+	flex-wrap: wrap;
+}
+
+.ppcp-r-select-box {
+	width: 100%;
+	border: 1px solid $color-gray-500;
+	border-radius: 8px;
+	padding: 28px 32px;
+	display: flex;
+	align-items: center;
+	box-sizing: border-box;
+
+
+	input[type='radio'] {
+		width: 20px;
+		height: 20px;
+		position: absolute;
+		left: 0;
+		top: 0;
+		margin: 0;
+		opacity: 0;
+	}
+
+	&__radio {
+		width: 20px;
+		height: 20px;
+		position: relative;
+		box-sizing: border-box;
+
+		&:checked {
+			+ .ppcp-r-select-box__presentation {
+				background:black;
+			}
+		}
+	}
+
+	&__radio-presentation {
+		width: 20px;
+		height: 20px;
+		border: 1px solid $color-gray-600;
+		border-radius: 20px;
+		display: block;
+		pointer-events: none;
+	}
+}

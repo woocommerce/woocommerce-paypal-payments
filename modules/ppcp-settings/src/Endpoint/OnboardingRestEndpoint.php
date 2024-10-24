@@ -17,7 +17,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 /**
  * REST controller for the onboarding module.
  *
- * Responsible for persisting and loading the state of the onboarding wizard.
+ * This API acts as the intermediary between the "external world" and our
+ * internal data model.
  */
 class OnboardingRestEndpoint extends RestEndpoint {
 	/**
@@ -32,7 +33,35 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 *
 	 * @var OnboardingProfile
 	 */
-	protected $profile;
+	protected OnboardingProfile $profile;
+
+	/**
+	 * Field mapping for request to profile transformation.
+	 *
+	 * @var array
+	 */
+	private array $field_map = array(
+		'step'                  => array(
+			'js_name'  => 'step',
+			'sanitize' => 'to_number',
+		),
+		'use_sandbox'           => array(
+			'js_name'  => 'useSandbox',
+			'sanitize' => 'to_boolean',
+		),
+		'use_manual_connection' => array(
+			'js_name'  => 'useManualConnection',
+			'sanitize' => 'to_boolean',
+		),
+		'client_id'             => array(
+			'js_name'  => 'clientId',
+			'sanitize' => 'sanitize_text_field',
+		),
+		'client_secret'         => array(
+			'js_name'  => 'clientSecret',
+			'sanitize' => 'sanitize_text_field',
+		),
+	);
 
 	/**
 	 * Constructor.
@@ -73,42 +102,35 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	}
 
 	/**
-	 * Returns an object with all details of the current onboarding wizard
-	 * progress.
+	 * Returns all details of the current onboarding wizard progress.
 	 *
 	 * @return WP_REST_Response The current state of the onboarding wizard.
 	 */
 	public function get_details() : WP_REST_Response {
-		$details = $this->profile->get_data();
+		$js_data = $this->sanitize_for_javascript(
+			$this->profile->to_array(),
+			$this->field_map
+		);
 
-		return rest_ensure_response( $details );
+		return rest_ensure_response( $js_data );
 	}
 
-
 	/**
-	 * Receives an object with onboarding details and persists it in the DB.
+	 * Updates onboarding details based on the request.
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 *
-	 * @return WP_REST_Response The current state of the onboarding wizard.
+	 * @return WP_REST_Response The updated state of the onboarding wizard.
 	 */
 	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
-		$details = $this->profile->get_data();
+		$wp_data = $this->sanitize_for_wordpress(
+			$request->get_params(),
+			$this->field_map
+		);
 
-		$get_param = fn( $key ) => wc_clean( wp_unslash( $request->get_param( $key ) ) );
+		$this->profile->from_array( $wp_data );
+		$this->profile->save();
 
-		$raw_step      = $get_param( 'step' );
-		$raw_completed = $get_param( 'completed' );
-
-		if ( is_numeric( $raw_step ) ) {
-			$details['step'] = intval( $raw_step );
-		}
-		if ( null !== $raw_completed ) {
-			$details['completed'] = (bool) $raw_completed;
-		}
-
-		$this->profile->save_data( $details );
-
-		return rest_ensure_response( $details );
+		return $this->get_details();
 	}
 }

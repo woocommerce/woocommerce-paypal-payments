@@ -72,7 +72,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				wp_register_style(
 					'ppcp-admin-settings',
-					$module_url . '/assets/style-style.css',
+					$module_url . '/assets/style-style-rtl.css',
 					$style_asset_file['dependencies'],
 					$style_asset_file['version']
 				);
