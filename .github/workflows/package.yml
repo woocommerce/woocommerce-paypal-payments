@@ -50,7 +50,7 @@ jobs:
       if: github.event.inputs.filePrefix
 
     - name: Upload
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ env.FILENAME }}
         path: dist/
