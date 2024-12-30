@@ -227,6 +227,36 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		add_action(
+			'admin_init',
+			function() use ( $container ) {
+				global $wp_filter;
+
+				if ( ! $container->has( 'wcgateway.is-ppcp-settings-page' ) ||
+					$container->get( 'wcgateway.is-ppcp-settings-page' ) === false ) {
+					return;
+				}
+
+				if ( empty( $wp_filter['woocommerce_sections_checkout']->callbacks ) ) {
+					return;
+				}
+
+				foreach ( $wp_filter['woocommerce_sections_checkout']->callbacks as $priority => $callbacks ) {
+					foreach ( $callbacks as $callback_key => $callback_data ) {
+						$function = $callback_data['function'];
+
+						if (
+							is_array( $function )
+							&& is_object( $function[0] )
+							&& $function[1] === 'output_sections'
+							&& get_class( $function[0] ) === 'WC_Settings_Payment_Gateways'
+						) {
+							remove_action( 'woocommerce_sections_checkout', $function, $priority );
+						}
+					}
+				}}
+		);
+
 		return true;
 	}
 
