@@ -9,6 +9,7 @@ Payment.initStore();
 
 export const OnboardingHooks = Onboarding.hooks;
 export const CommonHooks = Common.hooks;
+export const PaymentHooks = Payment.hooks;
 
 export const OnboardingStoreName = Onboarding.STORE_NAME;
 export const CommonStoreName = Common.STORE_NAME;

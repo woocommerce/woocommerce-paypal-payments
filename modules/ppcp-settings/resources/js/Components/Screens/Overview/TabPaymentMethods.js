@@ -4,6 +4,7 @@ import { useMemo } from '@wordpress/element';
 import SettingsCard from '../../ReusableComponents/SettingsCard';
 import PaymentMethodsBlock from '../../ReusableComponents/SettingsBlocks/PaymentMethodsBlock';
 import { CommonHooks } from '../../../data';
+import { PaymentHooks } from '../../../data';
 import { useActiveModal } from '../../../data/common/hooks';
 import Modal from './Modals/Modal';
 
@@ -15,10 +16,6 @@ const TabPaymentMethods = () => {
 		const contextProps = { storeCountry, storeCurrency };
 
 		return {
-			payPalCheckout: filterPaymentMethods(
-				paymentMethodsPayPalCheckout,
-				contextProps
-			),
 			onlineCardPayments: filterPaymentMethods(
 				paymentMethodsOnlineCardPayments,
 				contextProps
@@ -29,6 +26,8 @@ const TabPaymentMethods = () => {
 			),
 		};
 	}, [ storeCountry, storeCurrency ] );
+
+	const { paymentMethods } = PaymentHooks.usePaymentMethods();
 
 	return (
 		<div className="ppcp-r-payment-methods">
@@ -43,7 +42,7 @@ const TabPaymentMethods = () => {
 				contentContainer={ false }
 			>
 				<PaymentMethodsBlock
-					paymentMethods={ filteredPaymentMethods.payPalCheckout }
+					paymentMethods={ paymentMethods?.paypalCheckout }
 					onTriggerModal={ setActiveModal }
 				/>
 			</SettingsCard>
@@ -96,54 +95,6 @@ function filterPaymentMethods( paymentMethods, contextProps ) {
 			: true
 	);
 }
-
-const paymentMethodsPayPalCheckout = [
-	{
-		id: 'paypal',
-		title: __( 'PayPal', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Our all-in-one checkout solution lets you offer PayPal, Venmo, Pay Later options, and more to help maximize conversion.',
-			'woocommerce-paypal-payments'
-		),
-		icon: 'payment-method-paypal',
-		isSelected: () => {
-			return false;
-		},
-		onSelect: ( checked ) => {
-			console.log( `update ${ checked } in data store` );
-		},
-	},
-	{
-		id: 'venmo',
-		title: __( 'Venmo', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Offer Venmo at checkout to millions of active users.',
-			'woocommerce-paypal-payments'
-		),
-		icon: 'payment-method-venmo',
-	},
-	{
-		id: 'paypal_credit',
-		title: __( 'PayPal Credit', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Get paid in full at checkout while giving your customers the option to pay interest free if paid within 6 months on orders over $99.',
-			'woocommerce-paypal-payments'
-		),
-		icon: 'payment-method-paypal',
-	},
-	{
-		id: 'credit_and_debit_card_payments',
-		title: __(
-			'Credit and debit card payments',
-			'woocommerce-paypal-payments'
-		),
-		description: __(
-			"Accept all major credit and debit cards - even if your customer doesn't have a PayPal account.",
-			'woocommerce-paypal-payments'
-		),
-		icon: 'payment-method-cards',
-	},
-];
 
 const paymentMethodsOnlineCardPayments = [
 	{

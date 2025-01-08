@@ -6,7 +6,7 @@ const PaymentMethodsBlock = ( {
 	className = '',
 	onTriggerModal,
 } ) => {
-	if ( paymentMethods.length === 0 ) {
+	if ( paymentMethods?.length === 0 ) {
 		return null;
 	}
 
@@ -14,7 +14,7 @@ const PaymentMethodsBlock = ( {
 		<SettingsBlock
 			className={ `ppcp-r-settings-block__payment-methods ${ className }` }
 		>
-			{ paymentMethods.map( ( paymentMethod ) => (
+			{ paymentMethods?.map( ( paymentMethod ) => (
 				<PaymentMethodItemBlock
 					key={ paymentMethod.id }
 					{ ...paymentMethod }
