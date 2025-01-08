@@ -1,4 +1,5 @@
 import { ToggleControl } from '@wordpress/components';
+import { useState } from '@wordpress/element';
 import SettingsBlock from './SettingsBlock';
 import PaymentMethodIcon from '../PaymentMethodIcon';
 import data from '../../../utils/data';
@@ -9,12 +10,19 @@ const PaymentMethodItemBlock = ( {
 	title,
 	description,
 	icon,
-	onTriggerModal,
-	onSelect,
 	isSelected,
+	onSelect,
+	onTriggerModal,
 } ) => {
 	// Only show settings icon if this method has a modal configured
 	const hasModal = Boolean( MODAL_CONFIG[ id ] );
+
+	const [ selected, setSelected ] = useState( isSelected );
+
+	const handleSelect = ( checked ) => {
+		setSelected( checked );
+		onSelect( selected );
+	};
 
 	return (
 		<SettingsBlock className="ppcp-r-settings-block__payment-methods__item">
@@ -31,8 +39,8 @@ const PaymentMethodItemBlock = ( {
 				<div className="ppcp-r-settings-block__payment-methods__item__footer">
 					<ToggleControl
 						__nextHasNoMarginBottom={ true }
-						checked={ isSelected }
-						onChange={ onSelect }
+						checked={ selected }
+						onChange={ ( checked ) => handleSelect( checked ) }
 					/>
 					{ hasModal && onTriggerModal && (
 						<div

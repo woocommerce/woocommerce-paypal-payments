@@ -106,6 +106,12 @@ const paymentMethodsPayPalCheckout = [
 			'woocommerce-paypal-payments'
 		),
 		icon: 'payment-method-paypal',
+		isSelected: () => {
+			return false;
+		},
+		onSelect: ( checked ) => {
+			console.log( `update ${ checked } in data store` );
+		},
 	},
 	{
 		id: 'venmo',
