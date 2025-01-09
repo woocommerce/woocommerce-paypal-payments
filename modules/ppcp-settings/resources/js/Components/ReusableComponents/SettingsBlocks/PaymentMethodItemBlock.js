@@ -3,7 +3,7 @@ import { useState } from '@wordpress/element';
 import SettingsBlock from './SettingsBlock';
 import PaymentMethodIcon from '../PaymentMethodIcon';
 import data from '../../../utils/data';
-import { MODAL_CONFIG } from '../../Screens/Overview/Modals/Modal';
+import { hasSettings } from '../../Screens/Overview/TabSettingsElements/Blocks/PaymentMethods';
 
 const PaymentMethodItemBlock = ( {
 	id,
@@ -14,8 +14,8 @@ const PaymentMethodItemBlock = ( {
 	onSelect,
 	onTriggerModal,
 } ) => {
-	// Only show settings icon if this method has a modal configured
-	const hasModal = Boolean( MODAL_CONFIG[ id ] );
+	// Only show settings icon if this method has fields configured
+	const hasModal = hasSettings( id );
 
 	const [ selected, setSelected ] = useState( isSelected );
 

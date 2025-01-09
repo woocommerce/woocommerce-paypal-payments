@@ -10,11 +10,12 @@
 import apiFetch from '@wordpress/api-fetch';
 
 import {
+	REST_PERSIST_PATH,
+	REST_DIRECT_AUTHENTICATION_PATH,
 	REST_CONNECTION_URL_PATH,
 	REST_HYDRATE_MERCHANT_PATH,
-	REST_MANUAL_CONNECTION_PATH,
-	REST_PERSIST_PATH,
 	REST_REFRESH_FEATURES_PATH,
+	REST_ISU_AUTHENTICATION_PATH,
 	REST_WEBHOOKS,
 	REST_WEBHOOKS_SIMULATE,
 } from './constants';
@@ -33,15 +34,15 @@ export const controls = {
 		}
 	},
 
-	async [ ACTION_TYPES.DO_SANDBOX_LOGIN ]() {
+	async [ ACTION_TYPES.DO_GENERATE_ONBOARDING_URL ]( {
+		products,
+		useSandbox,
+	} ) {
 		try {
 			return apiFetch( {
 				path: REST_CONNECTION_URL_PATH,
 				method: 'POST',
-				data: {
-					environment: 'sandbox',
-					products: [ 'EXPRESS_CHECKOUT' ], // Sandbox always uses EXPRESS_CHECKOUT.
-				},
+				data: { useSandbox, products },
 			} );
 		} catch ( e ) {
 			return {
@@ -51,36 +52,41 @@ export const controls = {
 		}
 	},
 
-	async [ ACTION_TYPES.DO_PRODUCTION_LOGIN ]( { products } ) {
-		try {
-			return apiFetch( {
-				path: REST_CONNECTION_URL_PATH,
-				method: 'POST',
-				data: {
-					environment: 'production',
-					products,
-				},
-			} );
-		} catch ( e ) {
-			return {
-				success: false,
-				error: e,
-			};
-		}
-	},
-
-	async [ ACTION_TYPES.DO_MANUAL_CONNECTION ]( {
+	async [ ACTION_TYPES.DO_DIRECT_API_AUTHENTICATION ]( {
 		clientId,
 		clientSecret,
 		useSandbox,
 	} ) {
 		try {
 			return await apiFetch( {
-				path: REST_MANUAL_CONNECTION_PATH,
+				path: REST_DIRECT_AUTHENTICATION_PATH,
 				method: 'POST',
 				data: {
 					clientId,
 					clientSecret,
+					useSandbox,
+				},
+			} );
+		} catch ( e ) {
+			return {
+				success: false,
+				error: e,
+			};
+		}
+	},
+
+	async [ ACTION_TYPES.DO_OAUTH_AUTHENTICATION ]( {
+		sharedId,
+		authCode,
+		useSandbox,
+	} ) {
+		try {
+			return await apiFetch( {
+				path: REST_ISU_AUTHENTICATION_PATH,
+				method: 'POST',
+				data: {
+					sharedId,
+					authCode,
 					useSandbox,
 				},
 			} );

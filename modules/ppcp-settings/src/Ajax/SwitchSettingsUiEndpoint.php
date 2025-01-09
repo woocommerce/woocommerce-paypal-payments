@@ -1,13 +1,13 @@
 <?php
 /**
- * The settings UI switching Endpoint.
+ * The settings UI switching Ajax endpoint.
  *
  * @package WooCommerce\PayPalCommerce\Settings\Endpoint
  */
 
 declare( strict_types=1 );
 
-namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
+namespace WooCommerce\PayPalCommerce\Settings\Ajax;
 
 use Exception;
 use Psr\Log\LoggerInterface;

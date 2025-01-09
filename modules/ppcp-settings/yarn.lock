@@ -2919,6 +2919,15 @@
     sprintf-js "^1.1.1"
     tannin "^1.2.0"
 
+"@wordpress/icons@^10.14.0":
+  version "10.14.0"
+  resolved "https://registry.yarnpkg.com/@wordpress/icons/-/icons-10.14.0.tgz#a27298b438653a9a502eb4ee3b02b42ce516da2e"
+  integrity sha512-4S1AaBeqvTpsTC23y0+4WPiSyz7j+b7vJ4vQ4nqnPeBF7ZeC8J/UXWQnEuKY38n8TiutXljgagkEqGNC9pF2Mw==
+  dependencies:
+    "@babel/runtime" "7.25.7"
+    "@wordpress/element" "*"
+    "@wordpress/primitives" "*"
+
 "@wordpress/is-shallow-equal@*":
   version "5.11.0"
   resolved "https://registry.yarnpkg.com/@wordpress/is-shallow-equal/-/is-shallow-equal-5.11.0.tgz#2f273d6d4de24a66a7a8316b770cf832d22bfc37"
@@ -2967,6 +2976,15 @@
   version "4.11.0"
   resolved "https://registry.yarnpkg.com/@wordpress/prettier-config/-/prettier-config-4.11.0.tgz#6b3f9aa7e2698c0d78e644037c6778b5c1da12ce"
   integrity sha512-Aoc8+xWOyiXekodjaEjS44z85XK877LzHZqsQuhC0kNgneDLrKkwI5qNgzwzAMbJ9jI58MPqVISCOX0bDLUPbw==
+
+"@wordpress/primitives@*":
+  version "4.14.0"
+  resolved "https://registry.yarnpkg.com/@wordpress/primitives/-/primitives-4.14.0.tgz#1769f45bc541fd48be2d57626a9f6bdece39942a"
+  integrity sha512-IZibRVbvWoIQ+uynH0N5bmfWz83hD8lJj6jJFhSFuALK+4U5mRGg6tl0ZV0YllR6cjheD9UhTmfrAcOx+gQAjA==
+  dependencies:
+    "@babel/runtime" "7.25.7"
+    "@wordpress/element" "*"
+    clsx "^2.1.1"
 
 "@wordpress/priority-queue@*":
   version "3.11.0"
@@ -3975,6 +3993,11 @@ clone-deep@^4.0.1:
     is-plain-object "^2.0.4"
     kind-of "^6.0.2"
     shallow-clone "^3.0.0"
+
+clsx@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/clsx/-/clsx-2.1.1.tgz#eed397c9fd8bd882bfb18deab7102049a2f32999"
+  integrity sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==
 
 co@^4.6.0:
   version "4.6.0"

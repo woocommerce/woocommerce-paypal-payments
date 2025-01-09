@@ -12,9 +12,9 @@ namespace WooCommerce\PayPalCommerce\Settings\Service;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 
 // TODO: Replace the OnboardingUrl with a new implementation for this module.
 use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
@@ -26,9 +26,9 @@ class ConnectionUrlGenerator {
 	/**
 	 * The partner referrals endpoint.
 	 *
-	 * @var PartnerReferrals
+	 * @var EnvironmentConfig<PartnerReferrals>
 	 */
-	protected PartnerReferrals $partner_referrals;
+	protected EnvironmentConfig $partner_referrals;
 
 	/**
 	 * The default partner referrals data.
@@ -45,13 +45,6 @@ class ConnectionUrlGenerator {
 	protected OnboardingUrlManager $url_manager;
 
 	/**
-	 * Which environment is used for the connection URL.
-	 *
-	 * @var string
-	 */
-	protected string $environment = '';
-
-	/**
 	 * The logger
 	 *
 	 * @var LoggerInterface
@@ -63,34 +56,21 @@ class ConnectionUrlGenerator {
 	 *
 	 * Initializes the cache and logger properties of the class.
 	 *
-	 * @param PartnerReferrals     $partner_referrals PartnerReferrals for URL generation.
+	 * @param EnvironmentConfig    $partner_referrals PartnerReferrals for URL generation.
 	 * @param PartnerReferralsData $referrals_data    Default partner referrals data.
-	 * @param string               $environment       Environment that is used to generate the URL.
-	 *                                                ['production'|'sandbox'].
 	 * @param OnboardingUrlManager $url_manager       Manages access to OnboardingUrl instances.
 	 * @param ?LoggerInterface     $logger            The logger object for logging messages.
 	 */
 	public function __construct(
-		PartnerReferrals $partner_referrals,
+		EnvironmentConfig $partner_referrals,
 		PartnerReferralsData $referrals_data,
-		string $environment,
 		OnboardingUrlManager $url_manager,
 		?LoggerInterface $logger = null
 	) {
 		$this->partner_referrals = $partner_referrals;
 		$this->referrals_data    = $referrals_data;
-		$this->environment       = $environment;
 		$this->url_manager       = $url_manager;
 		$this->logger            = $logger ?: new NullLogger();
-	}
-
-	/**
-	 * Returns the environment for which the URL is being generated.
-	 *
-	 * @return string
-	 */
-	public function environment() : string {
-		return $this->environment;
 	}
 
 	/**
@@ -100,13 +80,14 @@ class ConnectionUrlGenerator {
 	 * It handles caching of the URL, generation of new URLs when necessary,
 	 * and works for both production and sandbox environments.
 	 *
-	 * @param array $products An array of product identifiers to include in the sign-up process.
-	 *                        These determine the PayPal onboarding experience.
+	 * @param array $products    An array of product identifiers to include in the sign-up process.
+	 *                           These determine the PayPal onboarding experience.
+	 * @param bool  $use_sandbox Whether to generate a sandbox URL.
 	 *
 	 * @return string The generated PayPal onboarding URL.
 	 */
-	public function generate( array $products = array() ) : string {
-		$cache_key      = $this->cache_key( $products );
+	public function generate( array $products = array(), bool $use_sandbox = false ) : string {
+		$cache_key      = $this->cache_key( $products, $use_sandbox );
 		$user_id        = get_current_user_id();
 		$onboarding_url = $this->url_manager->get( $cache_key, $user_id );
 		$cached_url     = $this->try_get_from_cache( $onboarding_url, $cache_key );
@@ -119,7 +100,7 @@ class ConnectionUrlGenerator {
 
 		$this->logger->info( 'Generating onboarding URL for: ' . $cache_key );
 
-		$url = $this->generate_new_url( $products, $onboarding_url, $cache_key );
+		$url = $this->generate_new_url( $use_sandbox, $products, $onboarding_url, $cache_key );
 
 		if ( $url ) {
 			$this->persist_url( $onboarding_url, $url );
@@ -131,15 +112,18 @@ class ConnectionUrlGenerator {
 	/**
 	 * Generates a cache key from the environment and sorted product array.
 	 *
-	 * @param array $products Product identifiers that are part of the cache key.
+	 * @param array $products    Product identifiers that are part of the cache key.
+	 * @param bool  $for_sandbox Whether the cache contains a sandbox URL.
 	 *
 	 * @return string The cache key, defining the product list and environment.
 	 */
-	protected function cache_key( array $products = array() ) : string {
+	protected function cache_key( array $products, bool $for_sandbox ) : string {
+		$environment = $for_sandbox ? 'sandbox' : 'production';
+
 		// Sort products alphabetically, to improve cache implementation.
 		sort( $products );
 
-		return $this->environment() . '-' . implode( '-', $products );
+		return $environment . '-' . implode( '-', $products );
 	}
 
 	/**
@@ -168,13 +152,14 @@ class ConnectionUrlGenerator {
 	/**
 	 * Generates a new URL.
 	 *
+	 * @param bool          $for_sandbox    Whether to generate a sandbox URL.
 	 * @param array         $products       The products array.
 	 * @param OnboardingUrl $onboarding_url The OnboardingUrl object.
 	 * @param string        $cache_key      The cache key.
 	 *
 	 * @return string The generated URL or an empty string on failure.
 	 */
-	protected function generate_new_url( array $products, OnboardingUrl $onboarding_url, string $cache_key ) : string {
+	protected function generate_new_url( bool $for_sandbox, array $products, OnboardingUrl $onboarding_url, string $cache_key ) : string {
 		$query_args = array( 'displayMode' => 'minibrowser' );
 		$onboarding_url->init();
 
@@ -189,7 +174,8 @@ class ConnectionUrlGenerator {
 		$data = $this->prepare_referral_data( $products, $onboarding_token );
 
 		try {
-			$url = $this->partner_referrals->signup_link( $data );
+			$referral = $this->partner_referrals->get_value( $for_sandbox );
+			$url      = $referral->signup_link( $data );
 		} catch ( Exception $e ) {
 			$this->logger->warning( 'Could not generate an onboarding URL for: ' . $cache_key );
 

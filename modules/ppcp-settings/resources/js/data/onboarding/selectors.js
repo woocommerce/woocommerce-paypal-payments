@@ -52,9 +52,6 @@ export const determineProducts = ( state ) => {
 		 * The store uses the Express-checkout product.
 		 */
 		derivedProducts.push( 'EXPRESS_CHECKOUT' );
-
-		// TODO: Add the "BCDC" product/feature
-		// Requirement: "EXPRESS_CHECKOUT with BCDC"
 	} else {
 		/**
 		 * Branch 3: Merchant is business, and can use CC payments.
@@ -64,8 +61,7 @@ export const determineProducts = ( state ) => {
 	}
 
 	if ( canUseVaulting ) {
-		// TODO: Add the "Vaulting" product/feature
-		// Requirement: "... with Vault"
+		derivedProducts.push( 'ADVANCED_VAULTING' );
 	}
 
 	return derivedProducts;

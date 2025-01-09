@@ -6,11 +6,11 @@ import PaymentMethodsBlock from '../../ReusableComponents/SettingsBlocks/Payment
 import { CommonHooks } from '../../../data';
 import { PaymentHooks } from '../../../data';
 import { useActiveModal } from '../../../data/common/hooks';
-import Modal from './Modals/Modal';
+import Modal from './TabSettingsElements/Blocks/Modal';
 
 const TabPaymentMethods = () => {
 	const { storeCountry, storeCurrency } = CommonHooks.useWooSettings();
-	const { setActiveModal } = useActiveModal();
+	const { activeModal, setActiveModal } = useActiveModal();
 
 	const filteredPaymentMethods = useMemo( () => {
 		const contextProps = { storeCountry, storeCurrency };
@@ -28,6 +28,20 @@ const TabPaymentMethods = () => {
 	}, [ storeCountry, storeCurrency ] );
 
 	const { paymentMethods } = PaymentHooks.usePaymentMethods();
+
+	const getActiveMethod = () => {
+		if ( ! activeModal ) {
+			return null;
+		}
+
+		const allMethods = [
+			...filteredPaymentMethods.payPalCheckout,
+			...filteredPaymentMethods.onlineCardPayments,
+			...filteredPaymentMethods.alternative,
+		];
+
+		return allMethods.find( ( method ) => method.id === activeModal );
+	};
 
 	return (
 		<div className="ppcp-r-payment-methods">
@@ -83,7 +97,20 @@ const TabPaymentMethods = () => {
 				/>
 			</SettingsCard>
 
-			<Modal />
+			{ activeModal && (
+				<Modal
+					method={ getActiveMethod() }
+					setModalIsVisible={ () => setActiveModal( null ) }
+					onSave={ ( methodId, settings ) => {
+						console.log(
+							'Saving settings for:',
+							methodId,
+							settings
+						);
+						setActiveModal( null );
+					} }
+				/>
+			) }
 		</div>
 	);
 };
@@ -119,7 +146,7 @@ const paymentMethodsOnlineCardPayments = [
 		icon: 'payment-method-fastlane',
 	},
 	{
-		id: 'apply_pay',
+		id: 'apple_pay',
 		title: __( 'Apple Pay', 'woocommerce-paypal-payments' ),
 		description: __(
 			'Allow customers to pay via their Apple Pay digital wallet.',

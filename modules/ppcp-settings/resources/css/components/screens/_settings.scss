@@ -18,6 +18,15 @@
 	gap: 18px;
 	width: 100%;
 
+	&:hover {
+		cursor: pointer;
+		.ppcp-r-todo-item__inner {
+			.ppcp-r-todo-item__description {
+				color: $color-text-text;
+			}
+		}
+	}
+
 	&:not(:last-child) {
 		border-bottom: 1px solid $color-gray-400;
 		padding-bottom: 16px;
@@ -61,6 +70,14 @@
 	&__description {
 		@include font(13, 20, 400);
 		color: $color-blueberry;
+	}
+
+	&__icon {
+		border: 1px dashed #949494;
+		background: #fff;
+		border-radius: 50%;
+		width: 24px;
+		height: 24px;
 	}
 }
 

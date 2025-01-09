@@ -184,21 +184,17 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_filter(
 			'woocommerce_paypal_payments_rest_common_merchant_data',
-			function( array $merchant_data ) use ( $c ): array {
-				if ( ! isset( $merchant_data['features'] ) ) {
-					$merchant_data['features'] = array();
-				}
-
+			function( array $features ) use ( $c ): array {
 				$product_status = $c->get( 'applepay.apple-product-status' );
 				assert( $product_status instanceof AppleProductStatus );
 
 				$apple_pay_enabled = $product_status->is_active();
 
-				$merchant_data['features']['apple_pay'] = array(
+				$features['apple_pay'] = array(
 					'enabled' => $apple_pay_enabled,
 				);
 
-				return $merchant_data;
+				return $features;
 			}
 		);
 

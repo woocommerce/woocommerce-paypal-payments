@@ -9,8 +9,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings;
 
+use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -86,7 +87,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				}
 			);
 
-			$endpoint = $container->get( 'settings.switch-ui.endpoint' ) ? $container->get( 'settings.switch-ui.endpoint' ) : null;
+			$endpoint = $container->get( 'settings.ajax.switch_ui' ) ? $container->get( 'settings.ajax.switch_ui' ) : null;
 			assert( $endpoint instanceof SwitchSettingsUiEndpoint );
 
 			add_action(
@@ -201,6 +202,29 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				// @phpcs:ignore WordPress.Security.NonceVerification.Recommended -- no nonce; sanitation done by the handler
 				$connection_handler->process( get_current_user_id(), $_GET );
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_merchant_disconnected',
+			static function () use ( $container ) : void {
+				$onboarding_profile = $container->get( 'settings.data.onboarding' );
+				assert( $onboarding_profile instanceof OnboardingProfile );
+
+				$onboarding_profile->set_completed( false );
+				$onboarding_profile->set_step( 0 );
+				$onboarding_profile->save();
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_authenticated_merchant',
+			static function () use ( $container ) : void {
+				$onboarding_profile = $container->get( 'settings.data.onboarding' );
+				assert( $onboarding_profile instanceof OnboardingProfile );
+
+				$onboarding_profile->set_completed( true );
+				$onboarding_profile->save();
 			}
 		);
 

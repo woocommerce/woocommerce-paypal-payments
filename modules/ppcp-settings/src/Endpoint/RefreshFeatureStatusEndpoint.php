@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Settings\Endpoint
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
@@ -87,11 +87,9 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'refresh_status' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'refresh_status' ),
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
 	}
@@ -102,7 +100,7 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response
 	 */
-	public function refresh_status( WP_REST_Request $request ): WP_REST_Response {
+	public function refresh_status( WP_REST_Request $request ) : WP_REST_Response {
 		$now               = time();
 		$last_request_time = $this->cache->get( self::CACHE_KEY ) ?: 0;
 		$seconds_missing   = $last_request_time + self::TIMEOUT - $now;

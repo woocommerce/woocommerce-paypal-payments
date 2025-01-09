@@ -14,6 +14,8 @@ import ACTION_TYPES from './action-types';
 
 const defaultTransient = Object.freeze( {
 	isReady: false,
+	manualClientId: '',
+	manualClientSecret: '',
 
 	// Read only values, provided by the server.
 	flags: Object.freeze( {

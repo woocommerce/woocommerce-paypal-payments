@@ -30,6 +30,8 @@ const useHooks = () => {
 		setStep,
 		setCompleted,
 		setIsCasualSeller,
+		setManualClientId,
+		setManualClientSecret,
 		setAreOptionalPaymentMethodsEnabled,
 		setProducts,
 	} = useDispatch( STORE_NAME );
@@ -43,6 +45,8 @@ const useHooks = () => {
 
 	// Transient accessors.
 	const isReady = useTransient( 'isReady' );
+	const manualClientId = useTransient( 'manualClientId' );
+	const manualClientSecret = useTransient( 'manualClientSecret' );
 
 	// Persistent accessors.
 	const step = usePersistent( 'step' );
@@ -73,6 +77,14 @@ const useHooks = () => {
 		setIsCasualSeller: ( value ) => {
 			return savePersistent( setIsCasualSeller, value );
 		},
+		manualClientId,
+		setManualClientId: ( value ) => {
+			return savePersistent( setManualClientId, value );
+		},
+		manualClientSecret,
+		setManualClientSecret: ( value ) => {
+			return savePersistent( setManualClientSecret, value );
+		},
 		areOptionalPaymentMethodsEnabled,
 		setAreOptionalPaymentMethodsEnabled: ( value ) => {
 			return savePersistent( setAreOptionalPaymentMethodsEnabled, value );
@@ -85,6 +97,22 @@ const useHooks = () => {
 			return savePersistent( setProducts, validProducts );
 		},
 		determineProducts,
+	};
+};
+
+export const useManualConnectionForm = () => {
+	const {
+		manualClientId,
+		setManualClientId,
+		manualClientSecret,
+		setManualClientSecret,
+	} = useHooks();
+
+	return {
+		manualClientId,
+		setManualClientId,
+		manualClientSecret,
+		setManualClientSecret,
 	};
 };
 

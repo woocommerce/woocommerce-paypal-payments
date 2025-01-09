@@ -122,5 +122,4 @@ abstract class AbstractDataModel {
 
 		return $stripped_key ? "set_$stripped_key" : '';
 	}
-
 }

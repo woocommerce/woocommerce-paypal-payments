@@ -50,14 +50,6 @@ class CommonRestEndpoint extends RestEndpoint {
 			'js_name'  => 'useManualConnection',
 			'sanitize' => 'to_boolean',
 		),
-		'client_id'             => array(
-			'js_name'  => 'clientId',
-			'sanitize' => 'sanitize_text_field',
-		),
-		'client_secret'         => array(
-			'js_name'  => 'clientSecret',
-			'sanitize' => 'sanitize_text_field',
-		),
 		'webhooks'              => array(
 			'js_name' => 'webhooks',
 		),
@@ -80,6 +72,12 @@ class CommonRestEndpoint extends RestEndpoint {
 		),
 		'merchant_email'     => array(
 			'js_name' => 'email',
+		),
+		'client_id'          => array(
+			'js_name' => 'clientId',
+		),
+		'client_secret'      => array(
+			'js_name' => 'clientSecret',
 		),
 	);
 
@@ -114,11 +112,9 @@ class CommonRestEndpoint extends RestEndpoint {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_details' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_details' ),
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
 
@@ -126,11 +122,9 @@ class CommonRestEndpoint extends RestEndpoint {
 			$this->namespace,
 			'/' . $this->rest_base,
 			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_details' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'update_details' ),
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
 
@@ -138,11 +132,9 @@ class CommonRestEndpoint extends RestEndpoint {
 			$this->namespace,
 			"/$this->rest_base/merchant",
 			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_merchant_details' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_merchant_details' ),
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
 	}
@@ -243,10 +235,12 @@ class CommonRestEndpoint extends RestEndpoint {
 			$this->merchant_info_map
 		);
 
-		$extra_data['merchant'] = apply_filters(
-			'woocommerce_paypal_payments_rest_common_merchant_data',
-			$extra_data['merchant'],
-		);
+		if ( $this->settings->is_merchant_connected() ) {
+			$extra_data['features'] = apply_filters(
+				'woocommerce_paypal_payments_rest_common_merchant_data',
+				array(),
+			);
+		}
 
 		// If no real data is available yet, use mock data.
 		if ( empty( $extra_data['merchant'] ) || ( empty( $extra_data['merchant']['id'] ) && empty( $extra_data['merchant']['email'] ) ) ) {

@@ -16,8 +16,14 @@ export const persistentData = ( state ) => {
 };
 
 export const transientData = ( state ) => {
-	const { data, merchant, wooSettings, ...transientState } =
-		getState( state );
+	const {
+		data,
+		merchant,
+		features,
+		wooSettings,
+		webhooks,
+		...transientState
+	} = getState( state );
 	return transientState || EMPTY_OBJ;
 };
 
@@ -28,6 +34,10 @@ export const getActivityList = ( state ) => {
 
 export const merchant = ( state ) => {
 	return getState( state ).merchant || EMPTY_OBJ;
+};
+
+export const features = ( state ) => {
+	return getState( state ).features || EMPTY_OBJ;
 };
 
 export const wooSettings = ( state ) => {

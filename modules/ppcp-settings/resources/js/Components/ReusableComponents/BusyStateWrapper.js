@@ -24,6 +24,7 @@ const BusyContext = createContext( false );
  * @param {boolean}  props.busySpinner - Allows disabling the spinner in busy-state.
  * @param {string}   props.className   - Additional class names for the wrapper.
  * @param {Function} props.onBusy      - Callback to process child props when busy.
+ * @param {boolean}  props.isBusy      - Optional. Additional condition to determine if the component is busy.
  */
 const BusyStateWrapper = ( {
 	children,
@@ -31,11 +32,12 @@ const BusyStateWrapper = ( {
 	busySpinner = true,
 	className = '',
 	onBusy = () => ( { disabled: true } ),
+	isBusy = false,
 } ) => {
-	const { isBusy } = CommonHooks.useBusyState();
+	const { isBusy: globalIsBusy } = CommonHooks.useBusyState();
 	const hasBusyParent = useContext( BusyContext );
 
-	const isBusyComponent = isBusy && enabled;
+	const isBusyComponent = ( isBusy || globalIsBusy ) && enabled;
 	const showSpinner = busySpinner && isBusyComponent && ! hasBusyParent;
 
 	const wrapperClassName = classNames( 'ppcp-r-busy-wrapper', className, {

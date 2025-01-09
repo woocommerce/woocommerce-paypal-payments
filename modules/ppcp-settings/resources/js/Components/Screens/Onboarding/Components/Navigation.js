@@ -1,7 +1,6 @@
 import { Button, Icon } from '@wordpress/components';
 import { chevronLeft } from '@wordpress/icons';
 import { __ } from '@wordpress/i18n';
-
 import classNames from 'classnames';
 
 import { OnboardingHooks } from '../../../../data';

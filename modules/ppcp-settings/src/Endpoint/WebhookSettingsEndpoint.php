@@ -118,7 +118,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 		try {
 			$webhook_list   = ( $this->webhook_endpoint->list() )[0];
 			$webhook_events = array_map(
-				function ( stdClass $webhook ) {
+				static function ( stdClass $webhook ) {
 					return strtolower( $webhook->name );
 				},
 				$webhook_list->event_types()

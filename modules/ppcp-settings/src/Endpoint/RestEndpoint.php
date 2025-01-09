@@ -81,7 +81,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Sanitizes parameters based on a field mapping.
+	 * Sanitizes and renames input parameters, based on a field mapping.
 	 *
 	 * This method iterates through a field map, applying sanitization methods
 	 * to the corresponding values in the input parameters array.
@@ -122,7 +122,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Sanitizes data for JavaScript based on a field mapping.
+	 * Sanitizes and renames data for JavaScript, based on a field mapping.
 	 *
 	 * This method transforms the input data array according to the provided field map,
 	 * renaming keys to their JavaScript equivalents as specified in the mapping.
@@ -151,24 +151,28 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Convert a value to a boolean.
+	 * Sanitation callback: Convert a value to a boolean.
 	 *
-	 * @param mixed $value The value to convert.
+	 * @param mixed $value The value to sanitize.
 	 *
 	 * @return bool|null The boolean value, or null if not set.
 	 */
-	protected function to_boolean( $value ) : ?bool {
+	public function to_boolean( $value ) : ?bool {
 		return $value !== null ? (bool) $value : null;
 	}
 
 	/**
-	 * Convert a value to a number.
+	 * Sanitation callback: Convert a value to a number.
 	 *
-	 * @param mixed $value The value to convert.
+	 * @param mixed $value The value to sanitize.
 	 *
 	 * @return int|float|null The numeric value, or null if not set.
 	 */
-	protected function to_number( $value ) {
-		return $value !== null ? ( is_numeric( $value ) ? $value + 0 : null ) : null;
+	public function to_number( $value ) {
+		if ( $value !== null ) {
+			$value = is_numeric( $value ) ? $value + 0 : null;
+		}
+
+		return $value;
 	}
 }

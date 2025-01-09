@@ -10,22 +10,23 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\CommonSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\ConnectManualRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RefreshFeatureStatusEndpoint;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\WebhookSettingsEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
+use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 
 return array(
 	'settings.url'                                => static function ( ContainerInterface $container ) : string {
@@ -84,17 +85,14 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.rest.connect_manual'                => static function ( ContainerInterface $container ) : ConnectManualRestEndpoint {
-		return new ConnectManualRestEndpoint(
-			$container->get( 'api.paypal-host-production' ),
-			$container->get( 'api.paypal-host-sandbox' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'settings.data.general' )
+	'settings.rest.connect_manual'                => static function ( ContainerInterface $container ) : AuthenticationRestEndpoint {
+		return new AuthenticationRestEndpoint(
+			$container->get( 'settings.service.authentication_manager' ),
 		);
 	},
 	'settings.rest.login_link'                    => static function ( ContainerInterface $container ) : LoginLinkRestEndpoint {
 		return new LoginLinkRestEndpoint(
-			$container->get( 'settings.service.connection-url-generators' ),
+			$container->get( 'settings.service.connection-url-generator' ),
 		);
 	},
 	'settings.rest.webhooks'                      => static function ( ContainerInterface $container ) : WebhookSettingsEndpoint {
@@ -170,8 +168,8 @@ return array(
 
 		return new ConnectionListener(
 			$page_id,
-			$container->get( 'settings.data.common' ),
 			$container->get( 'settings.service.onboarding-url-manager' ),
+			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -184,33 +182,24 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.service.connection-url-generators'  => static function ( ContainerInterface $container ) : array {
-		// Define available environments.
-		$environments = array(
-			'production' => array(
-				'partner_referrals' => $container->get( 'api.endpoint.partner-referrals-production' ),
-			),
-			'sandbox'    => array(
-				'partner_referrals' => $container->get( 'api.endpoint.partner-referrals-sandbox' ),
-			),
+	'settings.service.connection-url-generator'   => static function ( ContainerInterface $container ) : ConnectionUrlGenerator {
+		return new ConnectionUrlGenerator(
+			$container->get( 'api.env.endpoint.partner-referrals' ),
+			$container->get( 'api.repository.partner-referrals-data' ),
+			$container->get( 'settings.service.onboarding-url-manager' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
-
-		$generators = array();
-
-		// Instantiate URL generators for each environment.
-		foreach ( $environments as $environment => $config ) {
-			$generators[ $environment ] = new ConnectionUrlGenerator(
-				$config['partner_referrals'],
-				$container->get( 'api.repository.partner-referrals-data' ),
-				$environment,
-				$container->get( 'settings.service.onboarding-url-manager' ),
-				$container->get( 'woocommerce.logger.woocommerce' )
-			);
-		}
-
-		return $generators;
 	},
-	'settings.switch-ui.endpoint'                 => static function ( ContainerInterface $container ) : SwitchSettingsUiEndpoint {
+	'settings.service.authentication_manager'     => static function ( ContainerInterface $container ) : AuthenticationManager {
+		return new AuthenticationManager(
+			$container->get( 'settings.data.common' ),
+			$container->get( 'api.env.paypal-host' ),
+			$container->get( 'api.env.endpoint.login-seller' ),
+			$container->get( 'api.repository.partner-referrals-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+		);
+	},
+	'settings.ajax.switch_ui'                     => static function ( ContainerInterface $container ) : SwitchSettingsUiEndpoint {
 		return new SwitchSettingsUiEndpoint(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.request-data' ),

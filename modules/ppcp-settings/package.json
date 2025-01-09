@@ -9,6 +9,7 @@
     "devDependencies": {
         "@wordpress/data": "^10.10.0",
         "@wordpress/data-controls": "^4.10.0",
+        "@wordpress/icons": "^10.14.0",
         "@wordpress/scripts": "^30.3.0",
         "classnames": "^2.5.1"
     },

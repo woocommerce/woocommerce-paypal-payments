@@ -18,7 +18,7 @@ const ButtonSettingsBlock = ( { title, description, ...props } ) => (
 						: undefined
 				}
 			>
-				{ props.actionProps.value }
+				{ props?.actionProps?.value }
 			</Button>
 		</Action>
 	</SettingsBlock>

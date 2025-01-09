@@ -33,8 +33,10 @@ export const Header = ( { children, className = '' } ) => (
 );
 
 // Card Elements
-export const Content = ( { children } ) => (
-	<div className="ppcp-r-settings-card__content">{ children }</div>
+export const Content = ( { children, id = '' } ) => (
+	<div id={ id } className="ppcp-r-settings-card__content">
+		{ children }
+	</div>
 );
 
 export const ContentWrapper = ( { children } ) => (

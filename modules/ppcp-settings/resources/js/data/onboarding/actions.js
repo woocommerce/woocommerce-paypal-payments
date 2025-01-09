@@ -48,6 +48,28 @@ export const setIsReady = ( isReady ) => ( {
 } );
 
 /**
+ * Transient. Sets the "manualClientId" value.
+ *
+ * @param {string} manualClientId
+ * @return {Action} The action.
+ */
+export const setManualClientId = ( manualClientId ) => ( {
+	type: ACTION_TYPES.SET_TRANSIENT,
+	payload: { manualClientId },
+} );
+
+/**
+ * Transient. Sets the "manualClientSecret" value.
+ *
+ * @param {string} manualClientSecret
+ * @return {Action} The action.
+ */
+export const setManualClientSecret = ( manualClientSecret ) => ( {
+	type: ACTION_TYPES.SET_TRANSIENT,
+	payload: { manualClientSecret },
+} );
+
+/**
  * Persistent.Set the "onboarding completed" flag which shows or hides the wizard.
  *
  * @param {boolean} completed

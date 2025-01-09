@@ -14,14 +14,12 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingSendOnlyNoticeRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
-use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
 
 return array(
 	'api.sandbox-host'                     => static function ( ContainerInterface $container ): string {
@@ -141,26 +139,6 @@ return array(
 		return plugins_url(
 			'/modules/ppcp-onboarding/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
-	},
-
-	'api.endpoint.login-seller-production' => static function ( ContainerInterface $container ) : LoginSeller {
-
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		return new LoginSeller(
-			$container->get( 'api.paypal-host-production' ),
-			$container->get( 'api.partner_merchant_id-production' ),
-			$logger
-		);
-	},
-
-	'api.endpoint.login-seller-sandbox'    => static function ( ContainerInterface $container ) : LoginSeller {
-
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		return new LoginSeller(
-			$container->get( 'api.paypal-host-sandbox' ),
-			$container->get( 'api.partner_merchant_id-sandbox' ),
-			$logger
 		);
 	},
 

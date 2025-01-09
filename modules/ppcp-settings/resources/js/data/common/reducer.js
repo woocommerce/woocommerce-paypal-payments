@@ -23,20 +23,36 @@ const defaultTransient = Object.freeze( {
 		isSandbox: false,
 		id: '',
 		email: '',
+		clientId: '',
+		clientSecret: '',
 	} ),
 
 	wooSettings: Object.freeze( {
 		storeCountry: '',
 		storeCurrency: '',
 	} ),
+
+	features: Object.freeze( {
+		save_paypal_and_venmo: {
+			enabled: false,
+		},
+		advanced_credit_and_debit_cards: {
+			enabled: false,
+		},
+		apple_pay: {
+			enabled: false,
+		},
+		google_pay: {
+			enabled: false,
+		},
+	} ),
+
+	webhooks: Object.freeze( [] ),
 } );
 
 const defaultPersistent = Object.freeze( {
 	useSandbox: false,
 	useManualConnection: false,
-	clientId: '',
-	clientSecret: '',
-	webhooks: [],
 } );
 
 // Reducer logic.
@@ -84,22 +100,25 @@ const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 	[ ACTION_TYPES.DO_REFRESH_MERCHANT ]: ( state ) => ( {
 		...state,
 		merchant: Object.freeze( { ...defaultTransient.merchant } ),
+		features: Object.freeze( { ...defaultTransient.features } ),
 	} ),
 
 	[ ACTION_TYPES.HYDRATE ]: ( state, payload ) => {
 		const newState = setPersistent( state, payload.data );
 
 		// Populate read-only properties.
-		[ 'wooSettings', 'merchant' ].forEach( ( key ) => {
-			if ( ! payload[ key ] ) {
-				return;
-			}
+		[ 'wooSettings', 'merchant', 'features', 'webhooks' ].forEach(
+			( key ) => {
+				if ( ! payload[ key ] ) {
+					return;
+				}
 
-			newState[ key ] = Object.freeze( {
-				...newState[ key ],
-				...payload[ key ],
-			} );
-		} );
+				newState[ key ] = Object.freeze( {
+					...newState[ key ],
+					...payload[ key ],
+				} );
+			}
+		);
 
 		return newState;
 	},

@@ -10,10 +10,11 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Handler;
 
-use WooCommerce\PayPalCommerce\Settings\Data\CommonSettings;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
-use Psr\Log\LoggerInterface;
 
 /**
  * Provides a listener that handles merchant-connection requests.
@@ -32,18 +33,18 @@ class ConnectionListener {
 	private string $settings_page_id;
 
 	/**
-	 * Access to connection settings.
-	 *
-	 * @var CommonSettings
-	 */
-	private CommonSettings $settings;
-
-	/**
 	 * Access to the onboarding URL manager.
 	 *
 	 * @var OnboardingUrlManager
 	 */
 	private OnboardingUrlManager $url_manager;
+
+	/**
+	 * Authentication manager service, responsible to update connection details.
+	 *
+	 * @var AuthenticationManager
+	 */
+	private AuthenticationManager $authentication_manager;
 
 	/**
 	 * Logger instance, mainly used for debugging purposes.
@@ -62,16 +63,21 @@ class ConnectionListener {
 	/**
 	 * Prepare the instance.
 	 *
-	 * @param string               $settings_page_id Current plugin settings page ID.
-	 * @param CommonSettings       $settings         Access to saved connection details.
-	 * @param OnboardingUrlManager $url_manager      Get OnboardingURL instances.
-	 * @param ?LoggerInterface     $logger           The logger, for debugging purposes.
+	 * @param string                $settings_page_id       Current plugin settings page ID.
+	 * @param OnboardingUrlManager  $url_manager            Get OnboardingURL instances.
+	 * @param AuthenticationManager $authentication_manager Authentication manager service.
+	 * @param ?LoggerInterface      $logger                 The logger, for debugging purposes.
 	 */
-	public function __construct( string $settings_page_id, CommonSettings $settings, OnboardingUrlManager $url_manager, LoggerInterface $logger = null ) {
-		$this->settings_page_id = $settings_page_id;
-		$this->settings         = $settings;
-		$this->url_manager      = $url_manager;
-		$this->logger           = $logger ?: new NullLogger();
+	public function __construct(
+		string $settings_page_id,
+		OnboardingUrlManager $url_manager,
+		AuthenticationManager $authentication_manager,
+		LoggerInterface $logger = null
+	) {
+		$this->settings_page_id       = $settings_page_id;
+		$this->url_manager            = $url_manager;
+		$this->authentication_manager = $authentication_manager;
+		$this->logger                 = $logger ?: new NullLogger();
 
 		// Initialize as "guest", the real ID is provided via process().
 		$this->user_id = 0;
@@ -82,6 +88,8 @@ class ConnectionListener {
 	 *
 	 * @param int   $user_id The current user ID.
 	 * @param array $request Request details to process.
+	 *
+	 * @throws RuntimeException If the merchant ID does not match the ID previously set via OAuth.
 	 */
 	public function process( int $user_id, array $request ) : void {
 		$this->user_id = $user_id;
@@ -100,13 +108,13 @@ class ConnectionListener {
 			return;
 		}
 
-		$this->logger->info( 'Found merchant data in request', $data );
+		$this->logger->info( 'Found OAuth merchant data in request', $data );
 
-		$this->store_data(
-			$data['is_sandbox'],
-			$data['merchant_id'],
-			$data['merchant_email']
-		);
+		try {
+			$this->authentication_manager->finish_oauth_authentication( $data );
+		} catch ( \Exception $e ) {
+			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
+		}
 	}
 
 	/**
@@ -160,24 +168,9 @@ class ConnectionListener {
 		}
 
 		return array(
-			'is_sandbox'     => $this->settings->get_sandbox(),
 			'merchant_id'    => $merchant_id,
 			'merchant_email' => $merchant_email,
 		);
-	}
-
-	/**
-	 * Persist the merchant details to the database.
-	 *
-	 * @param bool   $is_sandbox     Whether the details are for a sandbox account.
-	 * @param string $merchant_id    The anonymized merchant ID.
-	 * @param string $merchant_email The merchant's email.
-	 */
-	protected function store_data( bool $is_sandbox, string $merchant_id, string $merchant_email ) : void {
-		$this->logger->info( "Save merchant details to the DB: $merchant_email ($merchant_id)" );
-
-		$this->settings->set_merchant_data( $is_sandbox, $merchant_id, $merchant_email );
-		$this->settings->save();
 	}
 
 	/**
