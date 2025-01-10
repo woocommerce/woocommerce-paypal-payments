@@ -227,17 +227,25 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+
+		/**
+		 * Removes the default WooCommerce action that displays extra section links in the checkout tab.
+		 * Prevents unwanted section links (e.g., from WooPayments) from appearing on the PayPal settings page.
+		 *
+		 * @psalm-suppress TypeDoesNotContainType
+		 */
 		add_action(
 			'admin_init',
 			function() use ( $container ) {
-				global $wp_filter;
 
 				if ( ! $container->has( 'wcgateway.is-ppcp-settings-page' ) ||
 					$container->get( 'wcgateway.is-ppcp-settings-page' ) === false ) {
 					return;
 				}
 
-				if ( empty( $wp_filter['woocommerce_sections_checkout']->callbacks ) ) {
+				global $wp_filter;
+
+				if ( ! isset( $wp_filter['woocommerce_sections_checkout'] ) ) {
 					return;
 				}
 
