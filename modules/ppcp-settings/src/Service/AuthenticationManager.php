@@ -18,10 +18,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\InMemoryCache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
-use WooCommerce\PayPalCommerce\Settings\Data\CommonSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 /**
  * Class that manages the connection to PayPal.
@@ -30,9 +31,9 @@ class AuthenticationManager {
 	/**
 	 * Data model that stores the connection details.
 	 *
-	 * @var CommonSettings
+	 * @var GeneralSettings
 	 */
-	private CommonSettings $common_settings;
+	private GeneralSettings $common_settings;
 
 	/**
 	 * Logging instance.
@@ -65,14 +66,14 @@ class AuthenticationManager {
 	/**
 	 * Constructor.
 	 *
-	 * @param CommonSettings       $common_settings Data model that stores the connection details.
+	 * @param GeneralSettings      $common_settings Data model that stores the connection details.
 	 * @param EnvironmentConfig    $connection_host API host for direct authentication.
 	 * @param EnvironmentConfig    $login_endpoint  API handler to fetch merchant credentials.
 	 * @param PartnerReferralsData $referrals_data  Partner referrals data.
 	 * @param ?LoggerInterface     $logger          Logging instance.
 	 */
 	public function __construct(
-		CommonSettings $common_settings,
+		GeneralSettings $common_settings,
 		EnvironmentConfig $connection_host,
 		EnvironmentConfig $login_endpoint,
 		PartnerReferralsData $referrals_data,
@@ -115,6 +116,12 @@ class AuthenticationManager {
 		 * modules to clean up merchant-related details, such as eligibility flags.
 		 */
 		do_action( 'woocommerce_paypal_payments_merchant_disconnected' );
+
+		/**
+		 * Request to flush caches after disconnecting the merchant. While there
+		 * is no need for it here, it's good house-keeping practice to clean up.
+		 */
+		do_action( 'woocommerce_paypal_payments_flush_api_cache' );
 	}
 
 	/**
@@ -400,11 +407,23 @@ class AuthenticationManager {
 			$this->logger->info( 'Merchant successfully connected to PayPal' );
 
 			/**
+			 * Request to flush caches before authenticating the merchant, to
+			 * ensure the new merchant does not use stale data from previous
+			 * connections.
+			 */
+			do_action( 'woocommerce_paypal_payments_flush_api_cache' );
+
+			/**
 			 * Broadcast that the plugin connected to a new PayPal merchant account.
 			 * This is the right time to initialize merchant relative flags for the
 			 * first time.
 			 */
 			do_action( 'woocommerce_paypal_payments_authenticated_merchant' );
+
+			/**
+			 * Subscribe the new merchant to relevant PayPal webhooks.
+			 */
+			do_action( WebhookRegistrar::EVENT_HOOK );
 		}
 	}
 }

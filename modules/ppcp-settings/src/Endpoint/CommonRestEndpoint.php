@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
-use WooCommerce\PayPalCommerce\Settings\Data\CommonSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
  * REST controller for "common" settings, which are used and modified by
@@ -32,9 +32,9 @@ class CommonRestEndpoint extends RestEndpoint {
 	/**
 	 * The settings instance.
 	 *
-	 * @var CommonSettings
+	 * @var GeneralSettings
 	 */
-	protected CommonSettings $settings;
+	protected GeneralSettings $settings;
 
 	/**
 	 * Field mapping for request to profile transformation.
@@ -98,9 +98,9 @@ class CommonRestEndpoint extends RestEndpoint {
 	/**
 	 * Constructor.
 	 *
-	 * @param CommonSettings $settings The settings instance.
+	 * @param GeneralSettings $settings The settings instance.
 	 */
-	public function __construct( CommonSettings $settings ) {
+	public function __construct( GeneralSettings $settings ) {
 		$this->settings = $settings;
 	}
 

@@ -1,36 +1,46 @@
 import { __ } from '@wordpress/i18n';
 import { CommonHooks } from '../../../../../../data';
+import { Title } from '../../../../../ReusableComponents/SettingsBlocks';
 
 const HooksTableBlock = () => {
 	const { webhooks } = CommonHooks.useWebhooks();
+	const { url, events } = webhooks;
+
+	if ( ! url || ! events?.length ) {
+		return <div>...</div>;
+	}
 
 	return (
-		<table className="ppcp-r-table">
-			<thead>
-				<tr>
-					<th className="ppcp-r-table__hooks-url">
-						{ __( 'URL', 'woocommerce-paypal-payments' ) }
-					</th>
-					<th className="ppcp-r-table__hooks-events">
-						{ __(
-							'Tracked events',
-							'woocommerce-paypal-payments'
-						) }
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td className="ppcp-r-table__hooks-url">
-						{ webhooks?.url }
-					</td>
-					<td
-						className="ppcp-r-table__hooks-events"
-						dangerouslySetInnerHTML={ { __html: webhooks?.events } }
-					></td>
-				</tr>
-			</tbody>
-		</table>
+		<>
+			<WebhookUrl url={ url } />
+			<WebhookEvents events={ events } />
+		</>
+	);
+};
+
+const WebhookUrl = ( { url } ) => {
+	return (
+		<div>
+			<Title>
+				{ __( 'Notification URL', 'woocommerce-paypal-payments' ) }
+			</Title>
+			<p>{ url }</p>
+		</div>
+	);
+};
+
+const WebhookEvents = ( { events } ) => {
+	return (
+		<div>
+			<Title>
+				{ __( 'Subscribed Events', 'woocommerce-paypal-payments' ) }
+			</Title>
+			<ul>
+				{ events.map( ( event, index ) => (
+					<li key={ index }>{ event }</li>
+				) ) }
+			</ul>
+		</div>
 	);
 };
 

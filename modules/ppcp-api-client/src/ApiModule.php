@@ -20,6 +20,8 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 
 /**
  * Class ApiModule
@@ -101,6 +103,34 @@ class ApiModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			},
 			10,
 			2
+		);
+
+		/**
+		 * Flushes the API client caches.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_flush_api_cache',
+			static function () use ( $c ) {
+				$caches = array(
+					'api.paypal-bearer-cache'      => array(
+						PayPalBearer::CACHE_KEY,
+					),
+					'api.client-credentials-cache' => array(
+						SdkClientToken::CACHE_KEY,
+					),
+				);
+
+				foreach ( $caches as $cache_id => $keys ) {
+					$cache = $c->get( $cache_id );
+					assert( $cache instanceof Cache );
+
+					foreach ( $keys as $key ) {
+						if ( $cache->has( $key ) ) {
+							$cache->delete( $key );
+						}
+					}
+				}
+			}
 		);
 
 		return true;

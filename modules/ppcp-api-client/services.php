@@ -116,19 +116,13 @@ return array(
 		return 'WC-';
 	},
 	'api.bearer'                                     => static function ( ContainerInterface $container ): Bearer {
-		$cache              = new Cache( 'ppcp-paypal-bearer' );
-		$key                = $container->get( 'api.key' );
-		$secret             = $container->get( 'api.secret' );
-		$host   = $container->get( 'api.host' );
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$settings = $container->get( 'wcgateway.settings' );
 		return new PayPalBearer(
-			$cache,
-			$host,
-			$key,
-			$secret,
-			$logger,
-			$settings
+			$container->get( 'api.paypal-bearer-cache' ),
+			$container->get( 'api.host' ),
+			$container->get( 'api.key' ),
+			$container->get( 'api.secret' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'api.endpoint.partners'                          => static function ( ContainerInterface $container ) : PartnersEndpoint {
@@ -839,6 +833,9 @@ return array(
 		return new ClientCredentials(
 			$container->get( 'wcgateway.settings' )
 		);
+	},
+	'api.paypal-bearer-cache'                        => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-bearer' );
 	},
 	'api.client-credentials-cache'                   => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-client-credentials-cache' );

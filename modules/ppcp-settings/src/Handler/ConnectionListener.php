@@ -15,6 +15,8 @@ use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 
 /**
  * Provides a listener that handles merchant-connection requests.
@@ -47,6 +49,14 @@ class ConnectionListener {
 	private AuthenticationManager $authentication_manager;
 
 	/**
+	 * A redirector-instance to redirect the merchant after authentication.
+	 * ™
+	 *
+	 * @var RedirectorInterface
+	 */
+	private RedirectorInterface $redirector;
+
+	/**
 	 * Logger instance, mainly used for debugging purposes.
 	 *
 	 * @var LoggerInterface
@@ -66,17 +76,20 @@ class ConnectionListener {
 	 * @param string                $settings_page_id       Current plugin settings page ID.
 	 * @param OnboardingUrlManager  $url_manager            Get OnboardingURL instances.
 	 * @param AuthenticationManager $authentication_manager Authentication manager service.
+	 * @param RedirectorInterface   $redirector             Redirect-handler.
 	 * @param ?LoggerInterface      $logger                 The logger, for debugging purposes.
 	 */
 	public function __construct(
 		string $settings_page_id,
 		OnboardingUrlManager $url_manager,
 		AuthenticationManager $authentication_manager,
+		RedirectorInterface $redirector,
 		LoggerInterface $logger = null
 	) {
 		$this->settings_page_id       = $settings_page_id;
 		$this->url_manager            = $url_manager;
 		$this->authentication_manager = $authentication_manager;
+		$this->redirector             = $redirector;
 		$this->logger                 = $logger ?: new NullLogger();
 
 		// Initialize as "guest", the real ID is provided via process().
@@ -115,6 +128,8 @@ class ConnectionListener {
 		} catch ( \Exception $e ) {
 			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
 		}
+
+		$this->redirect_after_authentication();
 	}
 
 	/**
@@ -125,7 +140,7 @@ class ConnectionListener {
 	 *
 	 * @return bool True, if the request contains valid connection details.
 	 */
-	protected function is_valid_request( array $request ) : bool {
+	private function is_valid_request( array $request ) : bool {
 		if ( $this->user_id < 1 || ! $this->settings_page_id ) {
 			return false;
 		}
@@ -157,7 +172,7 @@ class ConnectionListener {
 	 * @return array Structured array with 'is_sandbox', 'merchant_id', and 'merchant_email' keys,
 	 *               or an empty array on failure.
 	 */
-	protected function extract_data( array $request ) : array {
+	private function extract_data( array $request ) : array {
 		$this->logger->info( 'Extracting connection data from request...' );
 
 		$merchant_id    = $this->get_merchant_id_from_request( $request );
@@ -174,13 +189,24 @@ class ConnectionListener {
 	}
 
 	/**
+	 * Redirects the browser page at the end of the authentication flow.
+	 *
+	 * @return void
+	 */
+	private function redirect_after_authentication() : void {
+		$redirect_url = $this->get_onboarding_redirect_url();
+
+		$this->redirector->redirect( $redirect_url );
+	}
+
+	/**
 	 * Returns the sanitized connection token from the incoming request.
 	 *
 	 * @param array $request Full request details.
 	 *
 	 * @return string The sanitized token, or an empty string.
 	 */
-	protected function get_token_from_request( array $request ) : string {
+	private function get_token_from_request( array $request ) : string {
 		return $this->sanitize_string( $request['ppcpToken'] ?? '' );
 	}
 
@@ -191,7 +217,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized merchant ID, or an empty string.
 	 */
-	protected function get_merchant_id_from_request( array $request ) : string {
+	private function get_merchant_id_from_request( array $request ) : string {
 		return $this->sanitize_string( $request['merchantIdInPayPal'] ?? '' );
 	}
 
@@ -206,7 +232,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized merchant email, or an empty string.
 	 */
-	protected function get_merchant_email_from_request( array $request ) : string {
+	private function get_merchant_email_from_request( array $request ) : string {
 		return $this->sanitize_merchant_email( $request['merchantId'] ?? '' );
 	}
 
@@ -217,7 +243,7 @@ class ConnectionListener {
 	 *
 	 * @return string Sanitized value.
 	 */
-	protected function sanitize_string( string $value ) : string {
+	private function sanitize_string( string $value ) : string {
 		return trim( sanitize_text_field( wp_unslash( $value ) ) );
 	}
 
@@ -228,7 +254,22 @@ class ConnectionListener {
 	 *
 	 * @return string Sanitized email address.
 	 */
-	protected function sanitize_merchant_email( string $email ) : string {
+	private function sanitize_merchant_email( string $email ) : string {
 		return sanitize_text_field( str_replace( ' ', '+', $email ) );
+	}
+
+	/**
+	 * Returns the URL opened at the end of onboarding.
+	 *
+	 * @return string
+	 */
+	private function get_onboarding_redirect_url() : string {
+		/**
+		 * The URL opened at the end of onboarding after saving the merchant ID/email.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_onboarding_redirect_url',
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )
+		);
 	}
 }

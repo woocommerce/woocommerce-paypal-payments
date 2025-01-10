@@ -23,7 +23,9 @@ export const resolvers = {
 			const result = yield apiFetch( { path: REST_HYDRATE_PATH } );
 			const webhooks = yield apiFetch( { path: REST_WEBHOOKS } );
 
-			result.data = { ...result.data, ...webhooks.data };
+			if ( webhooks.success && webhooks.data ) {
+				result.webhooks = webhooks.data;
+			}
 
 			yield dispatch( STORE_NAME ).hydrate( result );
 			yield dispatch( STORE_NAME ).setIsReady( true );

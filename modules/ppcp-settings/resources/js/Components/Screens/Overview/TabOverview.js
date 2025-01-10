@@ -16,7 +16,7 @@ import { todosData } from '../../../data/settings/tab-overview-todos-data';
 const TabOverview = () => {
 	const [ isRefreshing, setIsRefreshing ] = useState( false );
 
-	const { merchantFeatures } = useMerchantInfo();
+	const { merchant, merchantFeatures } = useMerchantInfo();
 	const { refreshFeatureStatuses, setActiveModal } =
 		useDispatch( STORE_NAME );
 

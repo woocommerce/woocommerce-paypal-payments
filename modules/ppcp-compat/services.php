@@ -121,7 +121,7 @@ return array(
 	 *
 	 * @returns SettingsMap[]
 	 */
-	'compat.setting.new-to-old-map'                  => function( ContainerInterface $container ) : array {
+	'compat.setting.new-to-old-map'                  => static function( ContainerInterface $container ) : array {
 		$are_new_settings_enabled = $container->get( 'wcgateway.settings.admin-settings-enabled' );
 		if ( ! $are_new_settings_enabled ) {
 			return array();
@@ -129,7 +129,7 @@ return array(
 
 		return array(
 			new SettingsMap(
-				$container->get( 'settings.data.common' ),
+				$container->get( 'settings.data.general' ),
 				array(
 					'client_id'     => 'client_id',
 					'client_secret' => 'client_secret',
@@ -137,16 +137,23 @@ return array(
 			),
 			new SettingsMap(
 				$container->get( 'settings.data.general' ),
+				/**
+				 * The new GeneralSettings class stores the current connection
+				 * details, without adding an environment-suffix (no `_sandbox`
+				 * or `_production` in the field name)
+				 * Only the `sandbox_merchant` flag indicates, which environment
+				 * the credentials are used for.
+				 */
 				array(
-					'is_sandbox'             => 'sandbox_on',
-					'live_client_id'         => 'client_id_production',
-					'live_client_secret'     => 'client_secret_production',
-					'live_merchant_id'       => 'merchant_id_production',
-					'live_merchant_email'    => 'merchant_email_production',
-					'sandbox_client_id'      => 'client_id_sandbox',
-					'sandbox_client_secret'  => 'client_secret_sandbox',
-					'sandbox_merchant_id'    => 'merchant_id_sandbox',
-					'sandbox_merchant_email' => 'merchant_email_sandbox',
+					'is_sandbox'             => 'sandbox_merchant',
+					'live_client_id'         => 'client_id',
+					'live_client_secret'     => 'client_secret',
+					'live_merchant_id'       => 'merchant_id',
+					'live_merchant_email'    => 'merchant_email',
+					'sandbox_client_id'      => 'client_id',
+					'sandbox_client_secret'  => 'client_secret',
+					'sandbox_merchant_id'    => 'merchant_id',
+					'sandbox_merchant_email' => 'merchant_email',
 				)
 			),
 		);

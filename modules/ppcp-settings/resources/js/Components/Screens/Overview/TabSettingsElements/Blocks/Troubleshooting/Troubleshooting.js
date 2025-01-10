@@ -42,10 +42,7 @@ const Troubleshooting = ( { updateFormValue, settings } ) => {
 			<SettingsBlock>
 				<Header>
 					<Title>
-						{ __(
-							'Subscribed PayPal webhooks',
-							'woocommerce-paypal-payments'
-						) }
+						{ __( 'Webhooks', 'woocommerce-paypal-payments' ) }
 					</Title>
 					<Description>
 						{ __(

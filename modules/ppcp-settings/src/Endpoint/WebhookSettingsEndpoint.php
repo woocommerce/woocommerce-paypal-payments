@@ -9,12 +9,14 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
-use stdClass;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
-use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use Throwable;
 use WP_REST_Response;
 use WP_REST_Server;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use stdClass;
 
 /**
  * Class WebhookSettingsEndpoint
@@ -60,8 +62,9 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	/**
 	 * WebhookSettingsEndpoint constructor.
 	 *
-	 * @param WebhookEndpoint   $webhook_endpoint A list of subscribed webhooks and a webhook endpoint URL.
-	 * @param WebhookRegistrar  $webhook_registrar A service that allows resubscribing webhooks.
+	 * @param WebhookEndpoint   $webhook_endpoint   A list of subscribed webhooks and a webhook
+	 *                                              endpoint URL.
+	 * @param WebhookRegistrar  $webhook_registrar  A service that allows resubscribing webhooks.
 	 * @param WebhookSimulation $webhook_simulation A service that allows webhook simulations.
 	 */
 	public function __construct( WebhookEndpoint $webhook_endpoint, WebhookRegistrar $webhook_registrar, WebhookSimulation $webhook_simulation ) {
@@ -73,7 +76,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() {
+	public function register_routes() : void {
 		register_rest_route(
 			$this->namespace,
 			'/' . $this->rest_base,
@@ -114,27 +117,28 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_webhooks(): WP_REST_Response {
-		try {
-			$webhook_list   = ( $this->webhook_endpoint->list() )[0];
-			$webhook_events = array_map(
-				static function ( stdClass $webhook ) {
-					return strtolower( $webhook->name );
-				},
-				$webhook_list->event_types()
-			);
-
-			return $this->return_success(
-				array(
-					'webhooks' => array(
-						'url'    => $webhook_list->url(),
-						'events' => implode( ', ', $webhook_events ),
-					),
-				)
-			);
-		} catch ( \Exception $error ) {
-			return $this->return_error( 'Problem while fetching webhooks data' );
+	public function get_webhooks() : WP_REST_Response {
+		$webhooks = $this->get_webhook_data();
+		if ( ! $webhooks ) {
+			return $this->return_error( 'No webhooks found.' );
 		}
+
+		try {
+			$webhook_url    = $webhooks->url();
+			$webhook_events = array_map(
+				static fn( stdClass $webhooks ) => strtolower( $webhooks->name ),
+				$webhooks->event_types()
+			);
+		} catch ( Throwable $error ) {
+			return $this->return_error( $error->getMessage() );
+		}
+
+		return $this->return_success(
+			array(
+				'url'    => $webhook_url,
+				'events' => $webhook_events,
+			)
+		);
 	}
 
 	/**
@@ -142,10 +146,11 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function resubscribe_webhooks(): WP_REST_Response {
+	public function resubscribe_webhooks() : WP_REST_Response {
 		if ( ! $this->webhook_registrar->register() ) {
 			return $this->return_error( 'Webhook subscription failed.' );
 		}
+
 		return $this->get_webhooks();
 	}
 
@@ -154,9 +159,10 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function simulate_webhooks_start(): WP_REST_Response {
+	public function simulate_webhooks_start() : WP_REST_Response {
 		try {
 			$this->webhook_simulation->start();
+
 			return $this->return_success( array() );
 		} catch ( \Exception $error ) {
 			return $this->return_error( $error->getMessage() );
@@ -168,18 +174,32 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function check_simulated_webhook_state(): WP_REST_Response {
+	public function check_simulated_webhook_state() : WP_REST_Response {
 		try {
 			$state = $this->webhook_simulation->get_state();
 
 			return $this->return_success(
-				array(
-					'state' => $state,
-				)
+				array( 'state' => $state )
 			);
 
 		} catch ( \Exception $error ) {
 			return $this->return_error( $error->getMessage() );
+		}
+	}
+
+
+	/**
+	 * Retrieves the Webhooks API response object.
+	 *
+	 * @return Webhook|null The webhook data instance, or null.
+	 */
+	private function get_webhook_data() : ?Webhook {
+		try {
+			$api_response = $this->webhook_endpoint->list();
+
+			return $api_response[0] ?? null;
+		} catch ( Throwable $error ) {
+			return null;
 		}
 	}
 }
