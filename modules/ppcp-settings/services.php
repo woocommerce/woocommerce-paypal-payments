@@ -13,12 +13,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\WebhookSettingsEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
@@ -65,9 +63,6 @@ return array(
 			$container->get( 'api.shop.currency.getter' )->get(),
 		);
 	},
-	'settings.data.payment'                       => static function ( ContainerInterface $container ) : PaymentSettings {
-		return new PaymentSettings();
-	},
 	'settings.rest.onboarding'                    => static function ( ContainerInterface $container ) : OnboardingRestEndpoint {
 		return new OnboardingRestEndpoint( $container->get( 'settings.data.onboarding' ) );
 	},
@@ -96,11 +91,6 @@ return array(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
 			$container->get( 'webhook.status.simulation' )
-		);
-	},
-	'settings.rest.payment'                       => static function ( ContainerInterface $container ) : PaymentRestEndpoint {
-		return new PaymentRestEndpoint(
-			$container->get( 'settings.data.payment' )
 		);
 	},
 	'settings.casual-selling.supported-countries' => static function ( ContainerInterface $container ) : array {

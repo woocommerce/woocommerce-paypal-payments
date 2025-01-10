@@ -1,10 +1,11 @@
 import { __ } from '@wordpress/i18n';
 import { useMemo } from '@wordpress/element';
+import { useDispatch, useSelect } from '@wordpress/data';
+import { useState } from '@wordpress/element';
 
 import SettingsCard from '../../ReusableComponents/SettingsCard';
 import PaymentMethodsBlock from '../../ReusableComponents/SettingsBlocks/PaymentMethodsBlock';
 import { CommonHooks } from '../../../data';
-import { PaymentHooks } from '../../../data';
 import { useActiveModal } from '../../../data/common/hooks';
 import Modal from './TabSettingsElements/Blocks/Modal';
 
@@ -27,8 +28,6 @@ const TabPaymentMethods = () => {
 		};
 	}, [ storeCountry, storeCurrency ] );
 
-	const { paymentMethods } = PaymentHooks.usePaymentMethods();
-
 	const getActiveMethod = () => {
 		if ( ! activeModal ) {
 			return null;
@@ -43,6 +42,15 @@ const TabPaymentMethods = () => {
 		return allMethods.find( ( method ) => method.id === activeModal );
 	};
 
+	const [ paymentMethods, setPaymentMethods ] = useState( [] );
+	useSelect( ( select ) => {
+		const payments = select(
+			'wc/paypal/payment-methods'
+		).getPaymentMethods();
+
+		setPaymentMethods( payments );
+	}, [] );
+
 	return (
 		<div className="ppcp-r-payment-methods">
 			<SettingsCard
@@ -56,7 +64,7 @@ const TabPaymentMethods = () => {
 				contentContainer={ false }
 			>
 				<PaymentMethodsBlock
-					paymentMethods={ paymentMethods?.paypalCheckout }
+					paymentMethods={ paymentMethods }
 					onTriggerModal={ setActiveModal }
 				/>
 			</SettingsCard>
