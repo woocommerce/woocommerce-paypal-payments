@@ -1,4 +1,5 @@
 import { createReduxStore, register, select } from '@wordpress/data';
+import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 export const initStore = () => {
@@ -49,7 +50,13 @@ export const initStore = () => {
 				const path = '/wc/v3/payment_gateways';
 				const response = yield actions.fetch( path );
 
-				return actions.updatePaymentMethods( response );
+				const paymentMethods = response.filter( ( i ) => {
+					return [ 'ppcp-gateway' ].includes( i.id );
+				} );
+
+				paymentMethods[ 0 ].icon = 'payment-method-paypal';
+
+				return actions.updatePaymentMethods( paymentMethods );
 			},
 		},
 	} );
