@@ -34,14 +34,23 @@ class ConnectAdminNotice {
 	private $settings;
 
 	/**
+	 * Whether the current store's country is classified as a send-only country..
+	 *
+	 * @var bool
+	 */
+	private bool $is_current_country_send_only;
+
+	/**
 	 * ConnectAdminNotice constructor.
 	 *
 	 * @param State              $state The state.
 	 * @param ContainerInterface $settings The settings.
+	 * @param bool               $is_current_country_send_only Whether the current store's country is classified as a send-only country.
 	 */
-	public function __construct( State $state, ContainerInterface $settings ) {
-		$this->state    = $state;
-		$this->settings = $settings;
+	public function __construct( State $state, ContainerInterface $settings, bool $is_current_country_send_only ) {
+		$this->state                        = $state;
+		$this->settings                     = $settings;
+		$this->is_current_country_send_only = $is_current_country_send_only;
 	}
 
 	/**
@@ -71,6 +80,6 @@ class ConnectAdminNotice {
 	 * @return bool
 	 */
 	protected function should_display(): bool {
-		return $this->state->current_state() !== State::STATE_ONBOARDED;
+		return $this->state->current_state() !== State::STATE_ONBOARDED && $this->is_current_country_send_only === false;
 	}
 }

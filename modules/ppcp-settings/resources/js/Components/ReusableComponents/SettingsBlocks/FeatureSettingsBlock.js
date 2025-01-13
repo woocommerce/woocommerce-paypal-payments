@@ -24,6 +24,7 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 			<Button
 				className={ button.class ? button.class : '' }
 				key={ button.text }
+                isBusy={ props.actionProps?.isBusy }
 				variant={ button.type }
 				onClick={ button.onClick }
 			>

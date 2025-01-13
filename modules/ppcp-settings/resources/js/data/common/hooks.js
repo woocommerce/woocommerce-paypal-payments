@@ -144,7 +144,7 @@ export const useWebhooks = () => {
 	};
 };
 export const useMerchantInfo = () => {
-	const { merchant, features } = useHooks();
+	const { isReady, merchant, features } = useHooks();
 	const { refreshMerchantData } = useDispatch( STORE_NAME );
 
 	const verifyLoginStatus = useCallback( async () => {
@@ -159,6 +159,7 @@ export const useMerchantInfo = () => {
 	}, [ refreshMerchantData, merchant ] );
 
 	return {
+		isReady,
 		merchant, // Merchant details
 		features, // Eligible merchant features
 		verifyLoginStatus, // Callback

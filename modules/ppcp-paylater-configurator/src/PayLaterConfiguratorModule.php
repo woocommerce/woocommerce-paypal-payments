@@ -9,9 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -68,8 +70,9 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 				$current_page_id     = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
 				$is_wc_settings_page = $c->get( 'wcgateway.is-wc-settings-page' );
 				$messaging_locations = $c->get( 'paylater-configurator.messaging-locations' );
+				$onboarding_profile  = $c->get( 'settings.data.onboarding' );
 
-				self::add_paylater_update_notice( $messaging_locations, $is_wc_settings_page, $current_page_id );
+				self::add_paylater_update_notice( $messaging_locations, $is_wc_settings_page, $current_page_id, $onboarding_profile );
 
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
@@ -159,13 +162,19 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 	 * The notice appears on any PayPal-Settings page, except for the Pay-Later settings page,
 	 * when no Pay-Later messaging is used yet.
 	 *
-	 * @param array  $message_locations PayLater messaging locations.
-	 * @param bool   $is_settings_page  Whether the current page is a WC settings page.
-	 * @param string $current_page_id   ID of current settings page tab.
+	 * @param array             $message_locations   PayLater messaging locations.
+	 * @param bool              $is_settings_page    Whether the current page is a WC settings page.
+	 * @param string            $current_page_id     ID of current settings page tab.
+	 * @param OnboardingProfile $onboarding_profile  Onboarding profile.
 	 *
 	 * @return void
 	 */
-	private static function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
+	private static function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id, OnboardingProfile $onboarding_profile ) : void {
+		// Don't display the notice if the user has not completed the onboarding process.
+		if ( $onboarding_profile->get_completed() !== true ) {
+			return;
+		}
+
 		// The message must be registered on any WC-Settings page, except for the Pay Later page.
 		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
 			return;

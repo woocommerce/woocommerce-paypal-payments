@@ -343,9 +343,10 @@ return array(
 		}
 	),
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
-		$state    = $container->get( 'onboarding.state' );
-		$settings = $container->get( 'wcgateway.settings' );
-		return new ConnectAdminNotice( $state, $settings );
+		$state                        = $container->get( 'onboarding.state' );
+		$settings                     = $container->get( 'wcgateway.settings' );
+		$is_current_country_send_only = $container->get( 'wcgateway.is-send-only-country' );
+		return new ConnectAdminNotice( $state, $settings, $is_current_country_send_only );
 	},
 	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
 		$state                    = $container->get( 'onboarding.state' );

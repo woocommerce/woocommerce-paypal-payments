@@ -40,18 +40,21 @@ class GeneralSettings extends AbstractDataModel {
 	/**
 	 * Constructor.
 	 *
-	 * @param string $country  WooCommerce store country.
-	 * @param string $currency WooCommerce store currency.
+	 * @param string $country              WooCommerce store country.
+	 * @param string $currency             WooCommerce store currency.
+	 * @param bool   $is_send_only_country Whether the store's country is classified as a send-only
+	 *                                     country.
 	 *
 	 * @throws RuntimeException When forgetting to define the OPTION_KEY in this class.
 	 */
-	public function __construct( string $country, string $currency ) {
+	public function __construct( string $country, string $currency, bool $is_send_only_country ) {
 		parent::__construct();
 
 		$this->woo_settings['country']  = $country;
 		$this->woo_settings['currency'] = $currency;
 
-		$this->data['merchant_connected'] = $this->is_merchant_connected();
+		$this->data['is_send_only_country'] = $is_send_only_country;
+		$this->data['merchant_connected']   = $this->is_merchant_connected();
 	}
 
 	/**
@@ -63,6 +66,7 @@ class GeneralSettings extends AbstractDataModel {
 		return array(
 			'use_sandbox'           => false, // UI state, not a connection detail.
 			'use_manual_connection' => false, // UI state, not a connection detail.
+			'is_send_only_country'  => false, // Read-only flag.
 
 			// Details about connected merchant account.
 			'merchant_connected'    => false,

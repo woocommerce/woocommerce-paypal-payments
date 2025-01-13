@@ -3,6 +3,7 @@ import TabOverview from './Overview/TabOverview';
 import TabPaymentMethods from './Overview/TabPaymentMethods';
 import TabSettings from './Overview/TabSettings';
 import TabStyling from './Overview/TabStyling';
+import TabPayLaterMessaging from './Overview/TabPayLaterMessaging';
 
 export const getSettingsTabs = () => {
 	const tabs = [];
@@ -29,6 +30,12 @@ export const getSettingsTabs = () => {
 		name: 'styling',
 		title: __( 'Styling', 'woocommerce-paypal-payments' ),
 		component: <TabStyling />,
+	} );
+
+	tabs.push( {
+		name: 'pay-later-messaging',
+		title: __( 'Pay Later Messaging', 'woocommerce-paypal-payments' ),
+		component: <TabPayLaterMessaging />,
 	} );
 
 	return tabs;

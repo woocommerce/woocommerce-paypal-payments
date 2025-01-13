@@ -4,6 +4,7 @@ export const TAB_IDS = {
 	PAYMENT_METHODS: 'tab-panel-0-payment-methods',
 	SETTINGS: 'tab-panel-0-settings',
 	STYLING: 'tab-panel-0-styling',
+	PAY_LATER_MESSAGING: 'tab-panel-0-pay-later-messaging',
 };
 
 /**

@@ -3,6 +3,7 @@ import { useState, useMemo } from '@wordpress/element';
 import { Button, Icon } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import { reusableBlock } from '@wordpress/icons';
+import { store as noticesStore } from '@wordpress/notices';
 
 import SettingsCard from '../../ReusableComponents/SettingsCard';
 import TodoSettingsBlock from '../../ReusableComponents/SettingsBlocks/TodoSettingsBlock';
@@ -12,6 +13,10 @@ import { useMerchantInfo } from '../../../data/common/hooks';
 import { STORE_NAME } from '../../../data/common';
 import Features from './TabSettingsElements/Blocks/Features';
 import { todosData } from '../../../data/settings/tab-overview-todos-data';
+import {
+	NOTIFICATION_ERROR,
+	NOTIFICATION_SUCCESS,
+} from '../../ReusableComponents/Icons';
 
 const TabOverview = () => {
 	const [ isRefreshing, setIsRefreshing ] = useState( false );
@@ -19,6 +24,8 @@ const TabOverview = () => {
 	const { merchant, merchantFeatures } = useMerchantInfo();
 	const { refreshFeatureStatuses, setActiveModal } =
 		useDispatch( STORE_NAME );
+	const { createSuccessNotice, createErrorNotice } =
+		useDispatch( noticesStore );
 
 	// Get the features data with access to setActiveModal
 	const featuresData = useMemo(
@@ -42,11 +49,35 @@ const TabOverview = () => {
 		try {
 			const result = await refreshFeatureStatuses();
 			if ( result && ! result.success ) {
-				console.error(
-					'Failed to refresh features:',
-					result.message || 'Unknown error'
-				);
-			}
+                const errorMessage = sprintf(
+                    /* translators: %s: error message */
+                    __(
+                        'Operation failed: %s Check WooCommerce logs for more details.',
+                        'woocommerce-paypal-payments'
+                    ),
+                    result.message ||
+                    __( 'Unknown error', 'woocommerce-paypal-payments' )
+                );
+
+                createErrorNotice( errorMessage, {
+                    icon: NOTIFICATION_ERROR,
+                } );
+                console.error(
+                    'Failed to refresh features:',
+                    result.message || 'Unknown error'
+                );
+			} else {
+                createSuccessNotice(
+                    __(
+                        'Features refreshed successfully.',
+                        'woocommerce-paypal-payments'
+                    ),
+                    {
+                        icon: NOTIFICATION_SUCCESS,
+                    }
+                );
+                console.log( 'Features refreshed successfully.' );
+            }
 		} finally {
 			setIsRefreshing( false );
 		}
@@ -130,6 +161,7 @@ const TabOverview = () => {
 												: button.urls.live
 											: button.url,
 									} ) ),
+                                isBusy: isRefreshing,
 								enabled: feature.enabled,
 								notes: feature.notes,
 								badge: feature.enabled

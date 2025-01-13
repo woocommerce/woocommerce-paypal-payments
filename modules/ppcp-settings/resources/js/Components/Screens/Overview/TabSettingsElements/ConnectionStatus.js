@@ -1,13 +1,13 @@
 import { __ } from '@wordpress/i18n';
 import SettingsCard from '../../../ReusableComponents/SettingsCard';
-import ConnectionInfo, {
-	connectionStatusDataDefault,
-} from '../../../ReusableComponents/ConnectionInfo';
+import { CommonHooks } from '../../../../data';
 import TitleBadge, {
 	TITLE_BADGE_NEGATIVE,
 	TITLE_BADGE_POSITIVE,
 } from '../../../ReusableComponents/TitleBadge';
+import ConnectionInfo from '../../../ReusableComponents/ConnectionInfo';
 const ConnectionStatus = () => {
+	const { merchant } = CommonHooks.useMerchantInfo();
 	return (
 		<SettingsCard
 			className="ppcp-r-tab-overview-support"
@@ -20,7 +20,7 @@ const ConnectionStatus = () => {
 			<div className="ppcp-r-connection-status">
 				<div className="ppcp-r-connection-status__status">
 					<div className="ppcp-r-connection-status__status-status">
-						{ connectionStatusDataDefault.connectionStatus ? (
+						{ merchant.isConnected ? (
 							<TitleBadge
 								type={ TITLE_BADGE_POSITIVE }
 								text={ __(
@@ -39,12 +39,8 @@ const ConnectionStatus = () => {
 						) }
 					</div>
 				</div>
-				{ connectionStatusDataDefault.connectionStatus && (
-					<ConnectionInfo
-						connectionStatusDataDefault={
-							connectionStatusDataDefault
-						}
-					/>
+				{ merchant.isConnected && (
+					<ConnectionInfo connectionStatusDataDefault={ merchant } />
 				) }
 			</div>
 		</SettingsCard>
