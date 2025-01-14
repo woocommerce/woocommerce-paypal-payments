@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname( __DIR__ ) . '/stubs/autoload.php';
+
 if ( ! function_exists( 'wp_is_stream' ) ) {
 	function wp_is_stream( $path ) {
 		$scheme_separator = strpos( $path, '://' );
@@ -37,5 +39,19 @@ if ( ! function_exists( 'wp_normalize_path' ) ) {
 		}
 
 		return $wrapper . $path;
+	}
+}
+
+if ( ! function_exists( 'rest_ensure_response' ) ) {
+	function rest_ensure_response( $response ) {
+		if ( is_wp_error( $response ) ) {
+			return $response;
+		}
+
+		if ( $response instanceof WP_REST_Response ) {
+			return $response;
+		}
+
+		return new WP_REST_Response( $response );
 	}
 }
