@@ -19,11 +19,18 @@ export const resolvers = {
 	 * Retrieve settings from the site's REST API.
 	 */
 	*persistentData() {
+		let webhooks = null;
+		try {
+			webhooks = yield apiFetch( { path: REST_WEBHOOKS } );
+		} catch ( e ) {
+			// If webhook retrieval fails we can continue. Usually, this is temporary.
+			console.error( 'Could not retrieve webhooks: ', e );
+		}
+
 		try {
 			const result = yield apiFetch( { path: REST_HYDRATE_PATH } );
-			const webhooks = yield apiFetch( { path: REST_WEBHOOKS } );
 
-			if ( webhooks.success && webhooks.data ) {
+			if ( webhooks?.success && webhooks?.data ) {
 				result.webhooks = webhooks.data;
 			}
 
