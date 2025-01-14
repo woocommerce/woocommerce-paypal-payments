@@ -62,12 +62,13 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	/**
 	 * Returns an error REST API response.
 	 *
-	 * @param string $reason  The reason for the error.
-	 * @param mixed  $details Optional details about the error.
+	 * @param string $reason      The reason for the error.
+	 * @param mixed  $details     Optional details about the error.
+	 * @param int    $status_code Optional, HTTP status code for the response. Default is 400.
 	 *
 	 * @return WP_REST_Response The error response.
 	 */
-	protected function return_error( string $reason, $details = null ) : WP_REST_Response {
+	protected function return_error( string $reason, $details = null, int $status_code = 400 ) : WP_REST_Response {
 		$response = array(
 			'success' => false,
 			'message' => $reason,
@@ -77,7 +78,9 @@ abstract class RestEndpoint extends WC_REST_Controller {
 			$response['details'] = $details;
 		}
 
-		return rest_ensure_response( $response );
+		$rest_error = new WP_REST_Response( $response, $status_code );
+
+		return rest_ensure_response( $rest_error );
 	}
 
 	/**

@@ -201,7 +201,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		}
 
 		$account  = $this->authentication_manager->get_account_details();
-		$response = $this->sanitize_for_javascript( $this->response_map, $account );
+		$response = $this->sanitize_for_javascript( $account, $this->response_map );
 
 		return $this->return_success( $response );
 	}
