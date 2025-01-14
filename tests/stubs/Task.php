@@ -1,12 +1,11 @@
 <?php
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace Automattic\WooCommerce\Admin\Features\OnboardingTasks;
 
 use Automattic\WooCommerce\Internal\Admin\WCAdminUser;
 
-abstract class Task
-{
+abstract class Task {
 
 	/**
 	 * Constructor

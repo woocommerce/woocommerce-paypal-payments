@@ -1,22 +1,21 @@
 <?php
-declare(strict_types=1);
+declare( strict_types = 1 );
 
-class WC_Payment_Gateway
-{
+class WC_Payment_Gateway {
 
-    public function get_option(string $key, $empty_value = null) {
-        return $key;
-    }
+	public function get_option( string $key, $empty_value = null ) {
+		return $key;
+	}
 
-    protected function init_settings() {
+	protected function init_settings() {
 
-    }
+	}
 
-    protected function get_return_url($wcOrder) {
-        return $wcOrder;
-    }
+	protected function get_return_url( $wcOrder ) {
+		return $wcOrder;
+	}
 
-    public function process_admin_options() {
+	public function process_admin_options() {
 
-    }
+	}
 }

@@ -1,5 +1,5 @@
 <?php
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 class WC_Checkout {
 	public function get_posted_data() {
