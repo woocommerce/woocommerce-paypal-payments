@@ -227,7 +227,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-
 		/**
 		 * Removes the default WooCommerce action that displays extra section links in the checkout tab.
 		 * Prevents unwanted section links (e.g., from WooPayments) from appearing on the PayPal settings page.
