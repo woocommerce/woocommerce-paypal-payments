@@ -7,23 +7,49 @@ import {
 } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import PaymentMethodModal from '../../../../ReusableComponents/PaymentMethodModal';
-import { getPaymentMethods } from './PaymentMethods';
+import {
+	usePaymentMethods,
+	usePaymentMethodsModal,
+} from '../../../../../data/payment/hooks';
 
 const Modal = ( { method, setModalIsVisible, onSave } ) => {
+	const { paymentMethods } = usePaymentMethods();
+	const {
+		paypalShowLogo,
+		threeDSecure,
+		fastlaneCardholderName,
+		fastlaneDisplayWatermark,
+	} = usePaymentMethodsModal();
+
 	const [ settings, setSettings ] = useState( () => {
 		if ( ! method?.id ) {
 			return {};
 		}
 
-		const methodConfig = getPaymentMethods( method );
+		const methodConfig = paymentMethods.find( ( i ) => i.id === method.id );
 		if ( ! methodConfig?.fields ) {
 			return {};
 		}
 
 		const initialSettings = {};
 		Object.entries( methodConfig.fields ).forEach( ( [ key, field ] ) => {
-			initialSettings[ key ] = field.default;
+			switch ( key ) {
+				case 'checkoutPageTitle':
+					initialSettings[ key ] = methodConfig.title;
+					break;
+				case 'checkoutPageDescription':
+					initialSettings[ key ] = methodConfig.description;
+					break;
+				default:
+					initialSettings[ key ] = field.default;
+			}
 		} );
+
+		initialSettings.paypalShowLogo = paypalShowLogo;
+		initialSettings.threeDSecure = threeDSecure;
+		initialSettings.fastlaneCardholderName = fastlaneCardholderName;
+		initialSettings.fastlaneDisplayWatermark = fastlaneDisplayWatermark;
+
 		return initialSettings;
 	} );
 
@@ -31,7 +57,7 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 		return null;
 	}
 
-	const methodConfig = getPaymentMethods( method );
+	const methodConfig = paymentMethods.find( ( i ) => i.id === method.id );
 	if ( ! methodConfig?.fields ) {
 		return null;
 	}

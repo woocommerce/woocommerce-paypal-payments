@@ -5,10 +5,11 @@
  * @package WooCommerce\PayPalCommerce
  */
 
+namespace WooCommerce\PayPalCommerce;
+
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\PayLaterConfiguratorModule;
-use WooCommerce\PayPalCommerce\PluginModule;
 
 return function ( string $root_dir ): iterable {
 	$modules_dir = "$root_dir/modules";

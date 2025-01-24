@@ -48,11 +48,11 @@
 				@include font(16, 24, 600);
 				color: var(--color-text);
 
-				.title {
+				.ppcp--nav-title {
 					margin-left: 18px;
 				}
 
-				.big {
+				.ppcp--big {
 					@include font(20, 28, 400);
 				}
 			}
@@ -79,7 +79,7 @@
 		}
 	}
 
-	&.is-scrolled {
+	&.ppcp--is-scrolled {
 		box-shadow: 0 -1px 0 0 $color-gray-300 inset, 0 8px 8px 0 rgba(85, 93, 102, .3);
 	}
 
@@ -90,7 +90,7 @@
 			row-gap: 8px;
 			white-space: nowrap;
 
-			&--right {
+			.ppcp-r-navigation--right {
 				position: absolute;
 				right: 10px;
 				z-index: 10;
@@ -98,12 +98,12 @@
 				box-shadow: -5px 0 8px var(--ppcp-color-app-bg);
 			}
 
-			&--progress-bar {
+			.ppcp-r-navigation--progress-bar {
 				height: 2px;
 			}
 
 			.components-button.is-title {
-				.title {
+				.ppcp--title {
 					margin-left: 4px;
 				}
 			}

@@ -9,6 +9,12 @@ import * as hooks from './hooks';
 import { resolvers } from './resolvers';
 import { controls } from './controls';
 
+/**
+ * Initializes and registers the settings store with WordPress data layer.
+ * Combines custom controls with WordPress data controls.
+ *
+ * @return {boolean} True if initialization succeeded, false otherwise.
+ */
 export const initStore = () => {
 	const store = createReduxStore( STORE_NAME, {
 		reducer,
@@ -19,6 +25,8 @@ export const initStore = () => {
 	} );
 
 	register( store );
+
+	return Boolean( wp.data.select( STORE_NAME ) );
 };
 
 export { hooks, selectors, STORE_NAME };

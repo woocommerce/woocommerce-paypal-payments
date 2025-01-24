@@ -1,7 +1,7 @@
 import { __, sprintf } from '@wordpress/i18n';
 
 import BadgeBox from '../../../ReusableComponents/BadgeBox';
-import Separator from '../../../ReusableComponents/Separator';
+import { Separator } from '../../../ReusableComponents/Elements';
 import PricingTitleBadge from '../../../ReusableComponents/PricingTitleBadge';
 
 const AcdcOptionalPaymentMethods = ( {

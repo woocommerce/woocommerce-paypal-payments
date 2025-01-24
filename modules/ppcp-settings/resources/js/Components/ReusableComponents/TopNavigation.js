@@ -20,10 +20,10 @@ const TopNavigation = ( {
 	const { isScrolled } = useIsScrolled();
 
 	const className = classNames( 'ppcp-r-navigation-container', {
-		'is-scrolled': isScrolled,
+		'ppcp--is-scrolled': isScrolled,
 	} );
-	const titleClassName = classNames( 'title', {
-		big: isMainTitle,
+	const titleClassName = classNames( 'ppcp--nav-title', {
+		'ppcp--big': isMainTitle,
 	} );
 
 	const handleTitleClick = useCallback( () => {

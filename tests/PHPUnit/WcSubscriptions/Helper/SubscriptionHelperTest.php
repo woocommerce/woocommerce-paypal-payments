@@ -7,6 +7,7 @@ use Mockery;
 use WC_Order;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use function Brain\Monkey\Functions\when;
 
 class SubscriptionHelperTest extends TestCase
@@ -26,6 +27,7 @@ class SubscriptionHelperTest extends TestCase
 		$wc_order = Mockery::mock(WC_Order::class);
 		$wc_order->shouldReceive('get_status')->andReturn('processing');
 		$wc_order->shouldReceive('get_transaction_id')->andReturn('ABC123');
+		$wc_order->shouldReceive('get_payment_method')->andReturn(CreditCardGateway::ID);
 
 		when('wc_get_order')->justReturn($wc_order);
 

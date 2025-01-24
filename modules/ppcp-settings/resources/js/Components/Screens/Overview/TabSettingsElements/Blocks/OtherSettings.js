@@ -1,10 +1,48 @@
 import { __ } from '@wordpress/i18n';
-import {
-	AccordionSettingsBlock,
-	SelectSettingsBlock,
-} from '../../../../ReusableComponents/SettingsBlocks';
 
-const creditCardExamples = [
+import Accordion from '../../../../ReusableComponents/AccordionSection';
+import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
+import { ControlSelect } from '../../../../ReusableComponents/Controls';
+import { SettingsHooks } from '../../../../../data';
+
+const OtherSettings = () => {
+	const { disabledCards, setDisabledCards } = SettingsHooks.useSettings();
+
+	return (
+		<Accordion
+			title={ __(
+				'Other payment method settings',
+				'woocommerce-paypal-payments'
+			) }
+			description={ __(
+				'Modify the checkout experience for alternative payment methods, credit cards, and digital wallets.',
+				'woocommerce-paypal-payments'
+			) }
+		>
+			<SettingsBlock
+				title={ __(
+					'Disable specific credit cards',
+					'woocommerce-paypal-payments'
+				) }
+				description={ __(
+					"If left blank, PayPal and other buttons will present in the user's detected language. Enter a language here to force all buttons to display in that language.",
+					'woocommerce-paypal-payments'
+				) }
+			>
+				<ControlSelect
+					options={ disabledCardChoices }
+					value={ disabledCards }
+					onChange={ setDisabledCards }
+					isMulti={ true }
+				/>
+			</SettingsBlock>
+		</Accordion>
+	);
+};
+
+export default OtherSettings;
+
+const disabledCardChoices = [
 	{ value: '', label: __( 'Select', 'woocommerce-paypal-payments' ) },
 	{
 		value: 'mastercard',
@@ -21,39 +59,3 @@ const creditCardExamples = [
 		label: __( 'Diners Club', 'woocommerce-paypal-payments' ),
 	},
 ];
-
-const OtherSettings = ( { settings, updateFormValue } ) => {
-	return (
-		<AccordionSettingsBlock
-			title={ __(
-				'Other payment method settings',
-				'woocommerce-paypal-payments'
-			) }
-			description={ __(
-				'Modify the checkout experience for alternative payment methods, credit cards, and digital wallets.',
-				'woocommerce-paypal-payments'
-			) }
-		>
-			<SelectSettingsBlock
-				title={ __(
-					'Disable specific credit cards',
-					'woocommerce-paypal-payments'
-				) }
-				description={ __(
-					"If left blank, PayPal and other buttons will present in the user's detected language. Enter a language here to force all buttons to display in that language.",
-					'woocommerce-paypal-payments'
-				) }
-				actionProps={ {
-					options: creditCardExamples,
-					value: settings.buttonLanguage,
-					callback: updateFormValue,
-					key: 'buttonLanguage',
-					isMulti: true,
-				} }
-				order={ [ 'title', 'description', 'action' ] }
-			/>
-		</AccordionSettingsBlock>
-	);
-};
-
-export default OtherSettings;

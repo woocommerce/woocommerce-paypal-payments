@@ -9,41 +9,31 @@
 
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useCallback } from '@wordpress/element';
+
+import { createHooksForStore } from '../utils';
 import { STORE_NAME } from './constants';
 
-const useTransient = ( key ) =>
-	useSelect(
-		( select ) => select( STORE_NAME ).transientData()?.[ key ],
-		[ key ]
-	);
-
-const usePersistent = ( key ) =>
-	useSelect(
-		( select ) => select( STORE_NAME ).persistentData()?.[ key ],
-		[ key ]
-	);
-
 const useHooks = () => {
+	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
 	const {
 		persist,
-		setSandboxMode,
-		setManualConnectionMode,
 		sandboxOnboardingUrl,
 		productionOnboardingUrl,
 		authenticateWithCredentials,
 		authenticateWithOAuth,
-		setActiveModal,
 		startWebhookSimulation,
 		checkWebhookSimulationState,
 	} = useDispatch( STORE_NAME );
 
 	// Transient accessors.
-	const isReady = useTransient( 'isReady' );
-	const activeModal = useTransient( 'activeModal' );
+	const [ isReady ] = useTransient( 'isReady' );
+	const [ activeModal, setActiveModal ] = useTransient( 'activeModal' );
 
 	// Persistent accessors.
-	const isSandboxMode = usePersistent( 'useSandbox' );
-	const isManualConnectionMode = usePersistent( 'useManualConnection' );
+	const [ isSandboxMode, setSandboxMode ] = usePersistent( 'useSandbox' );
+	const [ isManualConnectionMode, setManualConnectionMode ] = usePersistent(
+		'useManualConnection'
+	);
 	const merchant = useSelect(
 		( select ) => select( STORE_NAME ).merchant(),
 		[]
@@ -143,6 +133,7 @@ export const useWebhooks = () => {
 		checkWebhookSimulationState,
 	};
 };
+
 export const useMerchantInfo = () => {
 	const { isReady, merchant, features } = useHooks();
 	const { refreshMerchantData } = useDispatch( STORE_NAME );

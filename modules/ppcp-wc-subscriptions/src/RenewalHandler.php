@@ -257,7 +257,8 @@ class RenewalHandler {
 
 		// Vault v3.
 		$payment_source = null;
-		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+		$payment_method = $wc_order->get_payment_method();
+		if ( $payment_method === PayPalGateway::ID ) {
 			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
 
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, PayPalGateway::ID );
@@ -309,7 +310,7 @@ class RenewalHandler {
 			}
 		}
 
-		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+		if ( $payment_method === CreditCardGateway::ID ) {
 			$customer_tokens = $this->wc_payment_tokens->customer_tokens( $user_id );
 
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
@@ -352,7 +353,7 @@ class RenewalHandler {
 
 			$this->handle_paypal_order( $wc_order, $order );
 
-			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+			if ( $payment_method === CreditCardGateway::ID ) {
 				$card_payment_source = $order->payment_source();
 				if ( $card_payment_source ) {
 					$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $user_id, CreditCardGateway::ID );
@@ -379,7 +380,7 @@ class RenewalHandler {
 		// Vault v2.
 		$token = $this->get_token_for_customer( $customer, $wc_order );
 		if ( $token ) {
-			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+			if ( $payment_method === CreditCardGateway::ID ) {
 				$payment_source = $this->card_payment_source( $token->id(), $wc_order );
 
 				$order = $this->order_endpoint->create(
@@ -406,7 +407,7 @@ class RenewalHandler {
 				return;
 			}
 
-			if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+			if ( $payment_method === PayPalGateway::ID || $payment_method === 'ppec_paypal' ) {
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
 					$shipping_preference,

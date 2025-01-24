@@ -9,49 +9,37 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Helper;
 
-use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
-
 /**
  * Class SavePaymentMethodsApplies
  */
 class SavePaymentMethodsApplies {
 
 	/**
-	 * The matrix which countries and currency combinations can be used for Save Payment Methods.
+	 * The countries can be used for Save Payment Methods.
 	 *
 	 * @var array
 	 */
-	private $allowed_country_currency_matrix;
-
-	/**
-	 * The getter of the 3-letter currency code of the shop.
-	 *
-	 * @var CurrencyGetter
-	 */
-	private CurrencyGetter $currency;
+	private array $allowed_countries;
 
 	/**
 	 * 2-letter country code of the shop.
 	 *
 	 * @var string
 	 */
-	private $country;
+	private string $country;
 
 	/**
 	 * SavePaymentMethodsApplies constructor.
 	 *
-	 * @param array          $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for Save Payment Methods.
-	 * @param CurrencyGetter $currency The getter of the 3-letter currency code of the shop.
-	 * @param string         $country 2-letter country code of the shop.
+	 * @param array  $allowed_countries The matrix which countries and currency combinations can be used for Save Payment Methods.
+	 * @param string $country 2-letter country code of the shop.
 	 */
 	public function __construct(
-		array $allowed_country_currency_matrix,
-		CurrencyGetter $currency,
+		array $allowed_countries,
 		string $country
 	) {
-		$this->allowed_country_currency_matrix = $allowed_country_currency_matrix;
-		$this->currency                        = $currency;
-		$this->country                         = $country;
+		$this->allowed_countries = $allowed_countries;
+		$this->country           = $country;
 	}
 
 	/**
@@ -59,10 +47,8 @@ class SavePaymentMethodsApplies {
 	 *
 	 * @return bool
 	 */
-	public function for_country_currency(): bool {
-		if ( ! in_array( $this->country, array_keys( $this->allowed_country_currency_matrix ), true ) ) {
-			return false;
-		}
-		return in_array( $this->currency->get(), $this->allowed_country_currency_matrix[ $this->country ], true );
+	public function for_country(): bool {
+
+		return in_array( $this->country, $this->allowed_countries, true );
 	}
 }

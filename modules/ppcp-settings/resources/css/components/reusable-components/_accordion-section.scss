@@ -2,7 +2,7 @@
 	margin-left: auto;
 	margin-right: auto;
 
-	&__toggler {
+	.ppcp--toggler {
 		display: block;
 		cursor: pointer;
 
@@ -10,19 +10,38 @@
 		border: 0;
 		box-shadow: none;
 		padding: 0;
-		margin: 24px auto;
+		text-align: var(--accordion-text-align, center);
+		width: var(--accordion-width, auto);
+		margin: var(--accordion-toggler-gap, 24px) auto;
 	}
 
-	&__title-wrapper {
-		@include font(14, 32, 450);
-		color: $color-gray-900;
-
+	.ppcp--title-wrapper {
 		display: flex;
 		align-items: center;
 		gap: 16px;
 	}
 
-	&__content {
-		margin: 24px 0 0;
+	.ppcp--accordion-content {
+		display: grid;
+		grid-template-rows: 0fr;
+		transition: grid-template-rows 0.2s ease-out, opacity 0.2s ease-out, margin 0.2s ease-out;
+		opacity: 0;
+		margin: 0;
+
+		> .ppcp--content {
+			overflow: hidden;
+		}
+
+		&.ppcp--is-open {
+			grid-template-rows: 1fr;
+			opacity: 1;
+			margin: 24px 0 0;
+			transition: grid-template-rows 0.3s ease-in, opacity 0.3s ease-in, margin 0.3s ease-in;
+
+			> .ppcp--content {
+				// Show the overflow, since the focus-outline can extend outside the content div.
+				overflow: visible;
+			}
+		}
 	}
 }

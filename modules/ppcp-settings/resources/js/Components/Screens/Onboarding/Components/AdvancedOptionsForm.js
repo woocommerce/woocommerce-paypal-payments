@@ -1,4 +1,4 @@
-import Separator from '../../../ReusableComponents/Separator';
+import { Separator } from '../../../ReusableComponents/Elements';
 import SandboxConnectionForm from './SandboxConnectionForm';
 import ManualConnectionForm from './ManualConnectionForm';
 

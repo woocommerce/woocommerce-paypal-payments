@@ -13,17 +13,24 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\WebhookSettingsEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\SettingsRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\StylingRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 
 return array(
 	'settings.url'                                => static function ( ContainerInterface $container ) : string {
@@ -64,11 +71,28 @@ return array(
 			$container->get( 'wcgateway.is-send-only-country' )
 		);
 	},
+	'settings.data.styling'                       => static function ( ContainerInterface $container ) : StylingSettings {
+		return new StylingSettings(
+			$container->get( 'settings.service.sanitizer' )
+		);
+	},
+	'settings.data.payment'                       => static function ( ContainerInterface $container ) : PaymentSettings {
+		return new PaymentSettings();
+	},
 	'settings.rest.onboarding'                    => static function ( ContainerInterface $container ) : OnboardingRestEndpoint {
 		return new OnboardingRestEndpoint( $container->get( 'settings.data.onboarding' ) );
 	},
 	'settings.rest.common'                        => static function ( ContainerInterface $container ) : CommonRestEndpoint {
 		return new CommonRestEndpoint( $container->get( 'settings.data.general' ) );
+	},
+	'settings.rest.payment'                       => static function ( ContainerInterface $container ) : PaymentRestEndpoint {
+		return new PaymentRestEndpoint( $container->get( 'settings.data.payment' ) );
+	},
+	'settings.rest.styling'                       => static function ( ContainerInterface $container ) : StylingRestEndpoint {
+		return new StylingRestEndpoint(
+			$container->get( 'settings.data.styling' ),
+			$container->get( 'settings.service.sanitizer' )
+		);
 	},
 	'settings.rest.refresh_feature_status'        => static function ( ContainerInterface $container ) : RefreshFeatureStatusEndpoint {
 		return new RefreshFeatureStatusEndpoint(
@@ -187,10 +211,24 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 		);
 	},
+	'settings.service.sanitizer'                  => static function ( ContainerInterface $container ) : DataSanitizer {
+		return new DataSanitizer();
+	},
 	'settings.ajax.switch_ui'                     => static function ( ContainerInterface $container ) : SwitchSettingsUiEndpoint {
 		return new SwitchSettingsUiEndpoint(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.request-data' ),
+			$container->get( 'settings.data.onboarding' ),
+			$container->get( 'api.merchant_id' ) !== ''
 		);
+	},
+	'settings.rest.settings'                      => static function( ContainerInterface $container ): SettingsRestEndpoint {
+		return new SettingsRestEndpoint(
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+		);
+	},
+	'settings.data.settings'                      => static function() : SettingsModel {
+		return new SettingsModel();
 	},
 );

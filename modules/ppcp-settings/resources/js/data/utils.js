@@ -1,3 +1,6 @@
+import { useDispatch, useSelect } from '@wordpress/data';
+import { useCallback } from '@wordpress/element';
+
 /**
  * Updates an object with new values, filtering based on allowed keys.
  *
@@ -13,6 +16,10 @@ const updateObject = ( oldObject, newValues, allowedKeys = {} ) => ( {
 	...Object.keys( newValues ).reduce( ( acc, key ) => {
 		if ( key in allowedKeys ) {
 			acc[ key ] = newValues[ key ];
+		} else {
+			console.warn(
+				`Ignoring unknown key "${ key }" - to use it, add it to the initial store properties in the reducer.`
+			);
 		}
 		return acc;
 	}, {} ),
@@ -29,16 +36,16 @@ const updateObject = ( oldObject, newValues, allowedKeys = {} ) => ( {
  * @param {Object} defaultPersistent Object defining initial persistent values.
  * @return {[Function, Function]} An array containing setTransient and setPersistent functions.
  */
-export const createSetters = ( defaultTransient, defaultPersistent ) => {
-	const setTransient = ( oldState, newValues = {} ) =>
+export const createReducerSetters = ( defaultTransient, defaultPersistent ) => {
+	const changeTransient = ( oldState, newValues = {} ) =>
 		updateObject( oldState, newValues, defaultTransient );
 
-	const setPersistent = ( oldState, newValues = {} ) => ( {
+	const changePersistent = ( oldState, newValues = {} ) => ( {
 		...oldState,
 		data: updateObject( oldState.data, newValues, defaultPersistent ),
 	} );
 
-	return [ setTransient, setPersistent ];
+	return [ changeTransient, changePersistent ];
 };
 
 /**
@@ -71,5 +78,65 @@ export const createReducer = (
 		}
 
 		return state;
+	};
+};
+
+/**
+ * Returns an object with two hooks:
+ * - useTransient( prop )
+ * - usePersistent( prop )
+ *
+ * Both hooks have a similar syntax to the native "useState( prop )" hook, but provide access to
+ * a transient or persistent property in the relevant Redux store.
+ *
+ * Sample:
+ *
+ * const { useTransient } = createHooksForStore( STORE_NAME );
+ * const [ isReady, setIsReady ] = useTransient( 'isReady' );
+ *
+ * @param {string} storeName Store name.
+ * @return {{useTransient, usePersistent}} Store hooks.
+ */
+export const createHooksForStore = ( storeName ) => {
+	const createHook = ( selector, dispatcher ) => ( key ) => {
+		const value = useSelect(
+			( select ) => {
+				const store = select( storeName );
+				if ( ! store?.[ selector ] ) {
+					throw new Error(
+						`Please create the selector "${ selector }" for store "${ storeName }"`
+					);
+				}
+				const selectorResult = store[ selector ]();
+				if ( undefined === selectorResult?.[ key ] ) {
+					console.error(
+						`Warning: ${ selector }()[${ key }] is undefined in store "${ storeName }". This may indicate a bug.`
+					);
+				}
+				return selectorResult?.[ key ];
+			},
+			[ key ]
+		);
+
+		const actions = useDispatch( storeName );
+
+		const setValue = useCallback(
+			( newValue ) => {
+				if ( ! actions?.[ dispatcher ] ) {
+					throw new Error(
+						`Please create the action "${ dispatcher }" for store "${ storeName }"`
+					);
+				}
+				actions[ dispatcher ]( key, newValue );
+			},
+			[ actions, key ]
+		);
+
+		return [ value, setValue ];
+	};
+
+	return {
+		useTransient: createHook( 'transientData', 'setTransient' ),
+		usePersistent: createHook( 'persistentData', 'setPersistent' ),
 	};
 };

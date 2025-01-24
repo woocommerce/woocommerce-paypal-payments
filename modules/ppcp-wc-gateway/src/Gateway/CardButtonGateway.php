@@ -362,4 +362,19 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	protected function settings_renderer(): SettingsRenderer {
 		return $this->settings_renderer;
 	}
+
+	/**
+	 * Determines if the Gateway is available for use.
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		$is_available = parent::is_available();
+
+		if ( $is_available && $this->is_free_trial_cart() ) {
+			$is_available = false;
+		}
+
+		return $is_available;
+	}
 }

@@ -1,0 +1,71 @@
+/**
+ * General styling for reusable components in the "Elements" folder.
+ */
+
+.ppcp--header {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+
+	&:not(:last-child) {
+		padding-bottom: var(--block-header-gap, 6px);
+	}
+}
+
+.ppcp--title {
+	@include font(11, 22, 600);
+	color: var(--color-text-title);
+	display: block;
+	text-transform: uppercase;
+
+	&.ppcp--no-caps {
+		@include font(14, 16, 600);
+		text-transform: none;
+	}
+
+	&.ppcp--big {
+		@include font(16, 20, 600);
+	}
+
+	.ppcp-r-title-badge {
+		text-transform: none;
+		margin-left: 6px;
+	}
+}
+
+.ppcp--title-extra {
+	@include font(13, 20, 400);
+	color: var(--color-text-teriary);
+	text-transform: none;
+	margin-left: 5px;
+}
+
+.ppcp--title-wrapper {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.ppcp--description {
+	@include font(13, 20, 400);
+	margin: 0;
+	color: var(--color-text-description);
+
+	&:not(:last-child) {
+		padding-bottom: 1em;
+	}
+
+	a {
+		color: var(--color-blueberry);
+	}
+
+	strong {
+		color: var(--color-gray-800);
+	}
+}
+
+.ppcp--action {
+	& + .ppcp--action {
+		margin-top: var(--block-action-gap, 16px);
+	}
+}

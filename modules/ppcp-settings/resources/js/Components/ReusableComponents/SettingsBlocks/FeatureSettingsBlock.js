@@ -1,6 +1,7 @@
 import { Button } from '@wordpress/components';
-import SettingsBlock from './SettingsBlock';
-import { Header, Title, Action, Description } from './SettingsBlockElements';
+
+import { Header, Title, Action, Description } from '../Elements';
+import SettingsBlock from '../SettingsBlock';
 import TitleBadge from '../TitleBadge';
 
 const FeatureSettingsBlock = ( { title, description, ...props } ) => {
@@ -24,7 +25,7 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 			<Button
 				className={ button.class ? button.class : '' }
 				key={ button.text }
-                isBusy={ props.actionProps?.isBusy }
+				isBusy={ props.actionProps?.isBusy }
 				variant={ button.type }
 				onClick={ button.onClick }
 			>
@@ -32,13 +33,17 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 			</Button>
 		);
 
-		return button.urls ? (
-			<a href={ button.urls.live } key={ button.text }>
-				{ buttonElement }
-			</a>
-		) : (
-			buttonElement
-		);
+		// If there's a URL (either direct or in urls object), wrap in anchor tag
+		if ( button.url || button.urls ) {
+			const href = button.urls ? button.urls.live : button.url;
+			return (
+				<a href={ href } key={ button.text }>
+					{ buttonElement }
+				</a>
+			);
+		}
+
+		return buttonElement;
 	};
 
 	return (

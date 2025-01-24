@@ -1,0 +1,7 @@
+.ppcp--static-value {
+	@include font(13, 26, 400);
+
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

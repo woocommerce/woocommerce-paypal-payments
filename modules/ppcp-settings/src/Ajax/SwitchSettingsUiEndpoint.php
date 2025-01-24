@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Ajax;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 
 /**
  * Class SwitchSettingsUiEndpoint
@@ -38,17 +39,37 @@ class SwitchSettingsUiEndpoint {
 	protected LoggerInterface $logger;
 
 	/**
+	 * The Onboarding profile.
+	 *
+	 * @var OnboardingProfile
+	 */
+	protected OnboardingProfile $onboarding_profile;
+
+	/**
+	 * True if the merchant is onboarded, otherwise false.
+	 *
+	 * @var bool
+	 */
+	protected bool $is_onboarded;
+
+	/**
 	 * SwitchSettingsUiEndpoint constructor.
 	 *
-	 * @param LoggerInterface $logger The logger.
-	 * @param RequestData     $request_data The Request data.
+	 * @param LoggerInterface   $logger The logger.
+	 * @param RequestData       $request_data The Request data.
+	 * @param OnboardingProfile $onboarding_profile The Onboarding profile.
+	 * @param bool              $is_onboarded True if the merchant is onboarded, otherwise false.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
-		RequestData $request_data
+		RequestData $request_data,
+		OnboardingProfile $onboarding_profile,
+		bool $is_onboarded
 	) {
-		$this->logger       = $logger;
-		$this->request_data = $request_data;
+		$this->logger             = $logger;
+		$this->request_data       = $request_data;
+		$this->onboarding_profile = $onboarding_profile;
+		$this->is_onboarded       = $is_onboarded;
 	}
 
 	/**
@@ -62,7 +83,12 @@ class SwitchSettingsUiEndpoint {
 
 		try {
 			$this->request_data->read_request( $this->nonce() );
-			update_option( self::OPTION_NAME_SHOULD_USE_OLD_UI, false );
+			update_option( self::OPTION_NAME_SHOULD_USE_OLD_UI, 'no' );
+
+			if ( $this->is_onboarded ) {
+				$this->onboarding_profile->set_completed( true );
+				$this->onboarding_profile->save();
+			}
 
 			wp_send_json_success();
 		} catch ( Exception $error ) {

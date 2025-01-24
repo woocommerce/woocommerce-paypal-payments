@@ -16,6 +16,7 @@ $color-text-tertiary: #505050;
 $color-text-text: #070707;
 $color-border: #AEAEAE;
 $color-divider: #F0F0F0;
+$color-error-red: #cc1818;
 
 $shadow-card: 0 3px 6px 0 rgba(0, 0, 0, 0.15);
 $shadow-selection-box: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
@@ -55,8 +56,19 @@ $card-vertical-gap: 48px;
 	--color-gray-100: #{$color-gray-100};
 	--color-gradient-dark: #{$color-gradient-dark};
 
+	--color-preview-background: #FAF8F5;
+	--color-separators: #{$color-gray-200};
 	--color-text-title: #{$color-gray-900};
 	--color-text-main: #{$color-text-text};
 	--color-text-teriary: #{$color-text-tertiary};
 	--color-text-description: #{$color-gray-700};
+	--color-error: #{$color-error-red};
+
+	// Default settings-block theme.
+	--block-item-gap: 16px;
+	--block-header-gap: 6px;
+	--block-separator-gap: 32px;
+	--block-separator-size: 1px;
+	--block-separator-color: var(--color-gray-200);
+	--block-action-gap: 16px; // Space between two consecutive action blocks.
 }

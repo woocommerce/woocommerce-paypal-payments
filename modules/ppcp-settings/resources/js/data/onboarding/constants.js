@@ -8,7 +8,7 @@
 export const STORE_NAME = 'wc/paypal/onboarding';
 
 /**
- * REST path to hydrate data of this module by loading data from the WP DB..
+ * REST path to hydrate data of this module by loading data from the WP DB.
  *
  * Used by: Resolvers
  * See: OnboardingRestEndpoint.php

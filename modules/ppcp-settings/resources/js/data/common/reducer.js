@@ -7,7 +7,7 @@
  * @file
  */
 
-import { createReducer, createSetters } from '../utils';
+import { createReducer, createReducerSetters } from '../utils';
 import ACTION_TYPES from './action-types';
 
 // Store structure.
@@ -45,6 +45,12 @@ const defaultTransient = Object.freeze( {
 		google_pay: {
 			enabled: false,
 		},
+		alternative_payment_methods: {
+			enabled: false,
+		},
+		pay_later_messaging: {
+			enabled: false,
+		},
 	} ),
 
 	webhooks: Object.freeze( [] ),
@@ -57,21 +63,21 @@ const defaultPersistent = Object.freeze( {
 
 // Reducer logic.
 
-const [ setTransient, setPersistent ] = createSetters(
+const [ changeTransient, changePersistent ] = createReducerSetters(
 	defaultTransient,
 	defaultPersistent
 );
 
 const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 	[ ACTION_TYPES.SET_TRANSIENT ]: ( state, action ) =>
-		setTransient( state, action ),
+		changeTransient( state, action ),
 
 	[ ACTION_TYPES.SET_PERSISTENT ]: ( state, action ) =>
-		setPersistent( state, action ),
+		changePersistent( state, action ),
 
 	[ ACTION_TYPES.RESET ]: ( state ) => {
-		const cleanState = setTransient(
-			setPersistent( state, defaultPersistent ),
+		const cleanState = changeTransient(
+			changePersistent( state, defaultPersistent ),
 			defaultTransient
 		);
 
@@ -85,7 +91,7 @@ const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 	},
 
 	[ ACTION_TYPES.START_ACTIVITY ]: ( state, payload ) => {
-		return setTransient( state, {
+		return changeTransient( state, {
 			activities: new Map( state.activities ).set(
 				payload.id,
 				payload.description
@@ -96,7 +102,7 @@ const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 	[ ACTION_TYPES.STOP_ACTIVITY ]: ( state, payload ) => {
 		const newActivities = new Map( state.activities );
 		newActivities.delete( payload.id );
-		return setTransient( state, { activities: newActivities } );
+		return changeTransient( state, { activities: newActivities } );
 	},
 
 	[ ACTION_TYPES.DO_REFRESH_MERCHANT ]: ( state ) => ( {
@@ -106,7 +112,7 @@ const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 	} ),
 
 	[ ACTION_TYPES.HYDRATE ]: ( state, payload ) => {
-		const newState = setPersistent( state, payload.data );
+		const newState = changePersistent( state, payload.data );
 
 		// Populate read-only properties.
 		[ 'wooSettings', 'merchant', 'features', 'webhooks' ].forEach(

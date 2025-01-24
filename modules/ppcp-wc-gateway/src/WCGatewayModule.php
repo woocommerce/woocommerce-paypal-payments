@@ -554,7 +554,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
 				assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
 
-				$reference_transactions_enabled                     = $billing_agreements_endpoint->reference_transaction_enabled();
+				$reference_transactions_enabled    = $billing_agreements_endpoint->reference_transaction_enabled();
 				$features['save_paypal_and_venmo'] = array(
 					'enabled' => $reference_transactions_enabled,
 				);
@@ -562,7 +562,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
-				$dcc_enabled = $dcc_product_status->dcc_is_active();
+				$dcc_enabled                                 = $dcc_product_status->dcc_is_active();
 				$features['advanced_credit_and_debit_cards'] = array(
 					'enabled' => $dcc_enabled,
 				);

@@ -1,27 +1,96 @@
-.ppcp-r {
+.ppcp-r__radio-value {
+	@include hide-input-field;
 
-	&__radio-value {
-		@include hide-input-field;
+	&:checked + .ppcp-r__radio-presentation {
+		position: relative;
 
-		&:checked + .ppcp-r__radio-presentation {
-			position: relative;
+		&::before {
+			content: '';
+			width: 12px;
+			height: 12px;
+			border-radius: 12px;
+			background-color: $color-blueberry;
+			display: block;
+			position: absolute;
+			transform: translate(-50%, -50%);
+			left: 50%;
+			top: 50%;
+		}
+	}
+}
 
-			&::before {
-				content: '';
-				width: 12px;
-				height: 12px;
-				border-radius: 12px;
-				background-color: $color-blueberry;
-				display: block;
-				position: absolute;
-				transform: translate(-50%, -50%);
-				left: 50%;
-				top: 50%;
-			}
+.ppcp-r__radio-presentation {
+	@include fake-input-field(20px);
+}
+
+.ppcp-r__checkbox-presentation {
+	@include fake-input-field(2px);
+}
+
+.ppcp-r__radio-wrapper {
+	display: flex;
+	gap: 18px;
+	align-items: center;
+	position: relative;
+
+	label {
+		@include font(13, 20, 400);
+		color: $color-gray-800;
+	}
+}
+
+.ppcp-r__radio-description {
+	@include font(13, 20, 400);
+	margin: 0;
+	color: $color-gray-800;
+}
+
+.ppcp-r__radio-content-additional {
+	padding-left: 38px;
+	padding-top: 18px;
+}
+
+
+.ppcp-r-app {
+	@include disabled-state('base');
+	@include disabled-state('checkbox');
+
+	.components-base-control__label {
+		@include font(13, 16, 600);
+		color: $color-gray-900;
+		text-transform: none;
+	}
+
+	.components-base-control__input {
+		border: 1px solid $color-gray-700;
+		border-radius: 2px;
+		box-shadow: none;
+
+		&:focus {
+			border-color: $color-blueberry;
 		}
 	}
 
-	&__checkbox {
+	.components-base-control__help {
+		margin-bottom: 0;
+	}
+
+	// Text input fields.
+	input[type='text'] {
+		@include font(14, 20, 400);
+		@include primaryFont;
+		padding: 7px 11px;
+		border-radius: 2px;
+	}
+
+	// Select lists.
+	select {
+		@include font(14, 20, 400);
+		padding: 7px 27px 7px 11px;
+	}
+
+	// Checkboxes.
+	.components-checkbox-control {
 		position: relative;
 
 		input {
@@ -30,7 +99,7 @@
 
 			&:checked {
 				background-color: $color-blueberry;
-				border-color:$color-blueberry;
+				border-color: $color-blueberry;
 			}
 		}
 
@@ -43,78 +112,17 @@
 		}
 	}
 
-	&__radio-presentation {
-		@include fake-input-field(20px);
+	// Custom styles.
+	.components-form-toggle.is-checked > .components-form-toggle__track {
+		background-color: $color-blueberry;
 	}
 
-	&__checkbox-presentation {
-		@include fake-input-field(2px);
-	}
-
-	&__radio-wrapper {
-		display: flex;
-		gap: 18px;
-		align-items: center;
-		position: relative;
-
-		label {
-			@include font(13, 20, 400);
-			color: $color-gray-800;
+	.ppcp-r-vertical-text-control {
+		.components-base-control__field {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+			margin: 0;
 		}
-	}
-
-	&__radio-description {
-		@include font(13, 20, 400);
-		margin: 0;
-		color: $color-gray-800;
-	}
-
-	&__radio-content-additional {
-		padding-left: 38px;
-		padding-top: 18px;
-	}
-}
-
-.components-base-control {
-	&__label {
-		color: $color-gray-900;
-		@include font(13, 16, 600);
-		text-transform: none;
-	}
-
-	&__input {
-		border: 1px solid $color-gray-700;
-		border-radius: 2px;
-		box-shadow: none;
-
-		&:focus {
-			border-color: $color-blueberry;
-		}
-	}
-}
-
-
-input[type='text'] {
-	padding: 7px 11px;
-	@include font(14, 20, 400);
-	@include primaryFont;
-	border-radius: 2px;
-}
-
-select {
-	padding: 7px 27px 7px 11px;
-	@include font(14, 20, 400);
-}
-
-.components-form-toggle.is-checked > .components-form-toggle__track {
-	background-color: $color-blueberry;
-}
-
-.ppcp-r-vertical-text-control {
-	.components-base-control__field {
-		display: flex;
-		flex-direction: column;
-		gap: 0;
-		margin: 0;
 	}
 }

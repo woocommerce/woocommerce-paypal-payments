@@ -1,5 +1,5 @@
 // Fields
-.ppcp-r {
+.ppcp-r-app {
 	input[type='text'] {
 		border-color: $color-gray-700;
 		width: 100%;
@@ -13,13 +13,13 @@
 }
 
 // MultiSelect control
-.ppcp-r {
-	&__radio-wrapper {
+.ppcp-r-app {
+	.ppcp-r__radio-wrapper {
 		align-items: flex-start;
 		gap: 12px;
 	}
 
-	&__radio-content {
+	.ppcp-r__radio-content {
 		display: flex;
 		flex-direction: column;
 		gap: 4px;
@@ -29,49 +29,47 @@
 		}
 	}
 
-	&__radio-content-additional {
+	.ppcp-r__radio-content-additional {
 		padding-left: 32px;
 	}
 
-	// Select control styles
-	&__control {
-		border-radius: 2px;
-		border-color: $color-gray-700;
-		min-height: auto;
-		padding: 0;
-	}
-
-	&__input-container {
-		padding: 0;
-		margin: 0;
-	}
-
-	&__value-container {
-		padding: 0 0 0 7px;
-	}
-
-	&__indicator {
-		padding: 5px;
-	}
-
-	&__indicator-separator {
-		display: none;
-	}
-
-	&__value-container--has-value {
-		.ppcp-r__single-value {
-			color: $color-gray-800;
+	// Styles for "react-select" (see `Fields/Select.js`)
+	.ppcp-r-select {
+		.ppcp__control {
+			border-radius: 2px;
+			border-color: $color-gray-700;
+			min-height: auto;
+			padding: 0;
 		}
-	}
 
-	&__placeholder,
-	&__single-value {
-		@include font(13, 20, 400);
-	}
+		.ppcp__input-container {
+			padding: 0;
+			margin: 0;
+		}
 
-	&__option {
-		&--is-selected {
-			background-color: $color-gray-200;
+		.ppcp__value-container {
+			padding: 0 0 0 7px;
+		}
+
+		.ppcp__indicator {
+			padding: 5px;
+		}
+
+		.ppcp__value-container--has-value {
+			.ppcp__single-value {
+				color: $color-gray-800;
+			}
+		}
+
+		.ppcp__placeholder,
+		.ppcp__single-value {
+			@include font(13, 20, 400);
+		}
+
+		.ppcp__option {
+			.ppcp__option--is-selected {
+				background-color: $color-gray-200;
+			}
 		}
 	}
 }

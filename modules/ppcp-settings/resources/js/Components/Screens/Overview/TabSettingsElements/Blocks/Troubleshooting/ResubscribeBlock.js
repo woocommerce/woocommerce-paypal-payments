@@ -1,13 +1,15 @@
-import { useState } from '@wordpress/element';
-import { STORE_NAME } from '../../../../../../data/common';
-import { ButtonSettingsBlock } from '../../../../../ReusableComponents/SettingsBlocks';
 import { __ } from '@wordpress/i18n';
 import { useDispatch } from '@wordpress/data';
+import { useState } from '@wordpress/element';
 import { store as noticesStore } from '@wordpress/notices';
+
+import { STORE_NAME } from '../../../../../../data/common';
+import { ControlButton } from '../../../../../ReusableComponents/Controls';
 import {
 	NOTIFICATION_ERROR,
 	NOTIFICATION_SUCCESS,
 } from '../../../../../ReusableComponents/Icons';
+import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 
 const ResubscribeBlock = () => {
 	const { createSuccessNotice, createErrorNotice } =
@@ -47,7 +49,7 @@ const ResubscribeBlock = () => {
 	};
 
 	return (
-		<ButtonSettingsBlock
+		<SettingsBlock
 			title={ __(
 				'Resubscribe webhooks',
 				'woocommerce-paypal-payments'
@@ -56,17 +58,18 @@ const ResubscribeBlock = () => {
 				'Click to remove the current webhook subscription and subscribe again, for example, if the website domain or URL structure changed.',
 				'woocommerce-paypal-payments'
 			) }
-			separatorAndGap={ false }
-			actionProps={ {
-				buttonType: 'secondary',
-				isBusy: resubscribing,
-				callback: () => startResubscribingWebhooks(),
-				value: __(
+			horizontalLayout={ true }
+		>
+			<ControlButton
+				type={ 'secondary' }
+				isBusy={ resubscribing }
+				onClick={ () => startResubscribingWebhooks() }
+				buttonLabel={ __(
 					'Resubscribe webhooks',
 					'woocommerce-paypal-payments'
-				),
-			} }
-		/>
+				) }
+			/>
+		</SettingsBlock>
 	);
 };
 

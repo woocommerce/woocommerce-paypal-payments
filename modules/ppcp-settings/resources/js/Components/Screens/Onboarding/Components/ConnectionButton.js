@@ -54,8 +54,8 @@ const ConnectionButton = ( {
 		removeCompleteHandler,
 	} = useHandleOnboardingButton( isSandbox );
 	const buttonClassName = classNames( 'ppcp-r-connection-button', className, {
-		'sandbox-mode': isSandbox,
-		'live-mode': ! isSandbox,
+		'ppcp--mode-sandbox': isSandbox,
+		'ppcp--mode-live': ! isSandbox,
 	} );
 	const environment = isSandbox ? 'sandbox' : 'production';
 

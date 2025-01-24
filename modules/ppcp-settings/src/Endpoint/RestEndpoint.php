@@ -115,9 +115,9 @@ abstract class RestEndpoint extends WC_REST_Controller {
 			if ( null === $sanitation_cb ) {
 				$sanitized[ $key ] = $value;
 			} elseif ( is_string( $sanitation_cb ) && method_exists( $this, $sanitation_cb ) ) {
-				$sanitized[ $key ] = $this->{$sanitation_cb}( $value );
+				$sanitized[ $key ] = $this->{$sanitation_cb}( $value, $key );
 			} elseif ( is_callable( $sanitation_cb ) ) {
-				$sanitized[ $key ] = $sanitation_cb( $value );
+				$sanitized[ $key ] = $sanitation_cb( $value, $key );
 			}
 		}
 

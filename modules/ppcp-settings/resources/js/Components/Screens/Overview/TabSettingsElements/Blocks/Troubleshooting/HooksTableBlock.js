@@ -1,9 +1,8 @@
 import { __ } from '@wordpress/i18n';
+
 import { CommonHooks } from '../../../../../../data';
-import {
-	SettingsBlock,
-	Title,
-} from '../../../../../ReusableComponents/SettingsBlocks';
+import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+import { Title } from '../../../../../ReusableComponents/Elements';
 
 const HooksTableBlock = () => {
 	const { webhooks } = CommonHooks.useWebhooks();

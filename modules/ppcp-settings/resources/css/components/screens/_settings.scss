@@ -1,4 +1,6 @@
+@import './settings/controls';
 @import './settings/input';
+@import './settings/tab-settings';
 @import './settings/tab-styling';
 @import './settings/tab-paylater-configurator';
 
@@ -22,6 +24,7 @@
 
 	&:hover {
 		cursor: pointer;
+
 		.ppcp-r-todo-item__inner {
 			.ppcp-r-todo-item__description {
 				color: $color-text-text;
@@ -117,91 +120,7 @@
 			font-weight: 500;
 		}
 
-		margin-top:24px;
-	}
-}
-
-// Connection Status
-.ppcp-r-connection-status {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 12px;
-
-	&__status-status {
-		margin: 0 0 8px 0;
-
-		strong {
-			@include font(14, 24, 700);
-			color: $color-black;
-		}
-	}
-
-	&__show-all-data {
-		margin-left: 12px;
-	}
-
-	&__status-label {
-		@include font(11, 22, 600);
-		color: $color-gray-900;
-		display: block;
-		text-transform: uppercase;
-	}
-
-	&__status-value {
-		@include font(13, 26, 400);
-		color: $color-text-tertiary;
-	}
-
-	&__data {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-	}
-
-	&__status-toggle--toggled {
-		.ppcp-r-connection-status__show-all-data {
-			transform: rotate(180deg);
-		}
-	}
-
-	&__status-row {
-		display: flex;
-		flex-direction: column;
-		* {
-			user-select: none;
-		}
-		strong {
-			@include font(14, 24, 600);
-			color: $color-gray-800;
-			margin-right: 12px;
-			white-space: nowrap;
-		}
-
-		.ppcp-r-connection-status__status-toggle {
-			line-height: 0;
-		}
-		&--first {
-			&:hover {
-				cursor: pointer;
-			}
-		}
-	}
-
-	@media screen and (max-width: 767px) {
-		flex-wrap: wrap;
-		&__status {
-			width: 100%;
-		}
-		&__status-row {
-			flex-wrap: wrap;
-			strong {
-				width: 100%;
-			}
-			span {
-				word-break: break-all;
-			}
-		}
+		margin-top: 24px;
 	}
 }
 

@@ -36,7 +36,8 @@ const ALL_STEPS = [
 		id: 'methods',
 		title: __( 'Choose checkout options', 'woocommerce-paypal-payments' ),
 		StepComponent: StepPaymentMethods,
-		canProceed: () => true,
+		canProceed: ( { methods } ) =>
+			methods.areOptionalPaymentMethodsEnabled !== null,
 	},
 	{
 		id: 'complete',

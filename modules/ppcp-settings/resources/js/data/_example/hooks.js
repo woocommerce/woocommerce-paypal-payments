@@ -7,39 +7,24 @@
  * @file
  */
 
-import { useSelect, useDispatch } from '@wordpress/data';
+import { useDispatch } from '@wordpress/data';
 
+import { createHooksForStore } from '../utils';
 import { STORE_NAME } from './constants';
 
-const useTransient = ( key ) =>
-	useSelect(
-		( select ) => select( STORE_NAME ).transientData()?.[ key ],
-		[ key ]
-	);
-
-const usePersistent = ( key ) =>
-	useSelect(
-		( select ) => select( STORE_NAME ).persistentData()?.[ key ],
-		[ key ]
-	);
-
 const useHooks = () => {
-	const {
-		persist,
-
-		// TODO: Replace with real property.
-		setSampleValue,
-	} = useDispatch( STORE_NAME );
+	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
+	const { persist } = useDispatch( STORE_NAME );
 
 	// Read-only flags and derived state.
 	// Nothing here yet.
 
 	// Transient accessors.
-	const isReady = useTransient( 'isReady' );
+	const [ isReady ] = useTransient( 'isReady' );
 
 	// Persistent accessors.
 	// TODO: Replace with real property.
-	const sampleValue = usePersistent( 'sampleValue' );
+	const [ sampleValue, setSampleValue ] = usePersistent( 'sampleValue' );
 
 	return {
 		persist,

@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from '@wordpress/element';
-import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 
 import { OnboardingHooks, CommonHooks } from '../data';
@@ -9,7 +8,8 @@ import OnboardingScreen from './Screens/Onboarding';
 import SettingsScreen from './Screens/Settings';
 
 const SettingsApp = () => {
-	const onboardingProgress = OnboardingHooks.useSteps();
+	const { isReady: onboardingIsReady, completed: onboardingCompleted } =
+		OnboardingHooks.useSteps();
 	const {
 		isReady: merchantIsReady,
 		merchant: { isSendOnlyCountry },
@@ -21,32 +21,26 @@ const SettingsApp = () => {
 			event.stopImmediatePropagation();
 			return undefined;
 		};
-
 		window.addEventListener( 'beforeunload', suppressBeforeUnload );
-
 		return () => {
 			window.removeEventListener( 'beforeunload', suppressBeforeUnload );
 		};
 	}, [] );
 
 	const wrapperClass = classNames( 'ppcp-r-app', {
-		loading: ! onboardingProgress.isReady,
+		loading: ! onboardingIsReady,
 	} );
 
 	const Content = useMemo( () => {
-		if ( ! onboardingProgress.isReady || ! merchantIsReady ) {
-			return (
-				<SpinnerOverlay
-					message={ __( 'Loading…', 'woocommerce-paypal-payments' ) }
-				/>
-			);
+		if ( ! onboardingIsReady || ! merchantIsReady ) {
+			return <SpinnerOverlay />;
 		}
 
 		if ( isSendOnlyCountry ) {
 			return <SendOnlyMessage />;
 		}
 
-		if ( ! onboardingProgress.completed ) {
+		if ( ! onboardingCompleted ) {
 			return <OnboardingScreen />;
 		}
 
@@ -54,8 +48,8 @@ const SettingsApp = () => {
 	}, [
 		isSendOnlyCountry,
 		merchantIsReady,
-		onboardingProgress.completed,
-		onboardingProgress.isReady,
+		onboardingCompleted,
+		onboardingIsReady,
 	] );
 
 	return <div className={ wrapperClass }>{ Content }</div>;

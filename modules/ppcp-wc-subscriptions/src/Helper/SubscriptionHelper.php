@@ -19,6 +19,8 @@ use WC_Subscriptions;
 use WC_Subscriptions_Product;
 use WCS_Manual_Renewal_Manager;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class SubscriptionHelper
@@ -301,7 +303,11 @@ class SubscriptionHelper {
 
 		foreach ( $orders as $order_id ) {
 			$order = wc_get_order( $order_id );
-			if ( is_a( $order, WC_Order::class ) && in_array( $order->get_status(), array( 'processing', 'completed' ), true ) ) {
+			if (
+				is_a( $order, WC_Order::class )
+				&& in_array( $order->get_status(), array( 'processing', 'completed' ), true )
+				&& in_array( $order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID ), true )
+			) {
 				$transaction_id = $order->get_transaction_id();
 				if ( $transaction_id ) {
 					return $transaction_id;

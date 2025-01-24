@@ -157,7 +157,7 @@ const ManualConnectionForm = () => {
 					value={ manualClientId }
 					onChange={ setManualClientId }
 					className={ classNames( {
-						'has-error': ! clientValid,
+						'ppcp--has-error': ! clientValid,
 					} ) }
 				/>
 				{ clientValid || (

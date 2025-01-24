@@ -21,13 +21,18 @@
 	}
 
 	.client-id-error {
-		color: #cc1818;
-		margin: -16px 0 24px;
 		@include font(11, 16, 450);
+		margin: -16px 0 24px;
+		color: var(--color-error);
 	}
 
 	.onboarding-advanced-options {
+		margin-top: 24px;
 		max-width: 800px;
+
+		.ppcp--toggler .ppcp--title-wrapper {
+			justify-content: center;
+		}
 	}
 }
 

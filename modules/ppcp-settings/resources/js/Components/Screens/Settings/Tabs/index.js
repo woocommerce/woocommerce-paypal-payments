@@ -1,9 +1,9 @@
 import { __ } from '@wordpress/i18n';
 
-import TabOverview from '../../Overview/TabOverview';
+import TabOverview from './TabOverview';
 import TabPaymentMethods from '../../Overview/TabPaymentMethods';
-import TabSettings from '../../Overview/TabSettings';
-import TabStyling from '../../Overview/TabStyling';
+import TabSettings from './TabSettings';
+import TabStyling from './TabStyling';
 import TabPayLaterMessaging from '../../Overview/TabPayLaterMessaging';
 
 /**

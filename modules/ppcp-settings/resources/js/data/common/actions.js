@@ -37,15 +37,36 @@ export const hydrate = ( payload ) => ( {
 } );
 
 /**
+ * Generic transient-data updater.
+ *
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
+ * @return {Action} The action.
+ */
+export const setTransient = ( prop, value ) => ( {
+	type: ACTION_TYPES.SET_TRANSIENT,
+	payload: { [ prop ]: value },
+} );
+
+/**
+ * Generic persistent-data updater.
+ *
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
+ * @return {Action} The action.
+ */
+export const setPersistent = ( prop, value ) => ( {
+	type: ACTION_TYPES.SET_PERSISTENT,
+	payload: { [ prop ]: value },
+} );
+
+/**
  * Transient. Marks the onboarding details as "ready", i.e., fully initialized.
  *
  * @param {boolean} isReady
  * @return {Action} The action.
  */
-export const setIsReady = ( isReady ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isReady },
-} );
+export const setIsReady = ( isReady ) => setTransient( 'isReady', isReady );
 
 /**
  * Transient. Sets the active settings tab.
@@ -53,21 +74,8 @@ export const setIsReady = ( isReady ) => ( {
  * @param {string} activeModal
  * @return {Action} The action.
  */
-export const setActiveModal = ( activeModal ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { activeModal },
-} );
-
-/**
- * Transient. Changes the "saving" flag.
- *
- * @param {boolean} isSaving
- * @return {Action} The action.
- */
-export const setIsSaving = ( isSaving ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isSaving },
-} );
+export const setActiveModal = ( activeModal ) =>
+	setTransient( 'activeModal', activeModal );
 
 /**
  * Transient (Activity): Marks the start of an async activity
@@ -107,10 +115,8 @@ export const stopActivity = ( id ) => ( {
  * @param {boolean} useSandbox
  * @return {Action} The action.
  */
-export const setSandboxMode = ( useSandbox ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { useSandbox },
-} );
+export const setSandboxMode = ( useSandbox ) =>
+	setPersistent( 'useSandbox', useSandbox );
 
 /**
  * Persistent. Toggles the "Manual Connection" mode on or off.
@@ -118,10 +124,8 @@ export const setSandboxMode = ( useSandbox ) => ( {
  * @param {boolean} useManualConnection
  * @return {Action} The action.
  */
-export const setManualConnectionMode = ( useManualConnection ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { useManualConnection },
-} );
+export const setManualConnectionMode = ( useManualConnection ) =>
+	setPersistent( 'useManualConnection', useManualConnection );
 
 /**
  * Side effect. Saves the persistent details to the WP database.

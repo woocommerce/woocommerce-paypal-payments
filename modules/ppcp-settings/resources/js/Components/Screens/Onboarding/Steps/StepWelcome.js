@@ -2,8 +2,8 @@ import { __ } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 
 import PaymentMethodIcons from '../../../ReusableComponents/PaymentMethodIcons';
-import Separator from '../../../ReusableComponents/Separator';
-import AccordionSection from '../../../ReusableComponents/AccordionSection';
+import { Separator } from '../../../ReusableComponents/Elements';
+import Accordion from '../../../ReusableComponents/AccordionSection';
 import { CommonHooks } from '../../../../data';
 import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
 import OnboardingHeader from '../Components/OnboardingHeader';
@@ -55,16 +55,17 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 				storeCountry={ storeCountry }
 			/>
 			<Separator text={ __( 'or', 'woocommerce-paypal-payments' ) } />
-			<AccordionSection
+			<Accordion
 				title={ __(
 					'See advanced options',
 					'woocommerce-paypal-payments'
 				) }
 				className="onboarding-advanced-options"
+				noCaps={ true }
 				id="advanced-options"
 			>
 				<AdvancedOptionsForm />
-			</AccordionSection>
+			</Accordion>
 		</div>
 	);
 };

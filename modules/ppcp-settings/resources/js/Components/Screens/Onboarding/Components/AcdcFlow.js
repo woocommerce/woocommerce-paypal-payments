@@ -3,7 +3,7 @@ import { __, sprintf } from '@wordpress/i18n';
 import BadgeBox, {
 	BADGE_BOX_TITLE_BIG,
 } from '../../../ReusableComponents/BadgeBox';
-import Separator from '../../../ReusableComponents/Separator';
+import { Separator } from '../../../ReusableComponents/Elements';
 import PricingTitleBadge from '../../../ReusableComponents/PricingTitleBadge';
 import OptionalPaymentMethods from './OptionalPaymentMethods';
 

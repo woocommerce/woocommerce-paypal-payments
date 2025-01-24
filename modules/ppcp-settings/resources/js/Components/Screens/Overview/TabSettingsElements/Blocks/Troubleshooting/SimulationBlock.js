@@ -1,13 +1,15 @@
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { ButtonSettingsBlock } from '../../../../../ReusableComponents/SettingsBlocks';
 import { useDispatch } from '@wordpress/data';
 import { store as noticesStore } from '@wordpress/notices';
+
+import { ControlButton } from '../../../../../ReusableComponents/Controls';
 import { CommonHooks } from '../../../../../../data';
 import {
 	NOTIFICATION_ERROR,
 	NOTIFICATION_SUCCESS,
 } from '../../../../../ReusableComponents/Icons';
+import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 
 const SimulationBlock = () => {
 	const {
@@ -107,20 +109,24 @@ const SimulationBlock = () => {
 	};
 
 	return (
-		<ButtonSettingsBlock
+		<SettingsBlock
 			title={ __( 'Test webhooks', 'woocommerce-paypal-payments' ) }
 			description={ __(
 				'Send a test-webhook from PayPal to confirm that webhooks are being received and processed correctly.',
 				'woocommerce-paypal-payments'
 			) }
-			separatorAndGap={ false }
-			actionProps={ {
-				buttonType: 'secondary',
-				isBusy: simulating,
-				callback: () => startSimulation( 30 ),
-				value: __( 'Simulate webhooks', 'woocommerce-paypal-payments' ),
-			} }
-		/>
+			horizontalLayout={ true }
+		>
+			<ControlButton
+				type={ 'secondary' }
+				isBusy={ simulating }
+				onClick={ () => startSimulation( 30 ) }
+				buttonLabel={ __(
+					'Simulate webhooks',
+					'woocommerce-paypal-payments'
+				) }
+			/>
+		</SettingsBlock>
 	);
 };
 export default SimulationBlock;

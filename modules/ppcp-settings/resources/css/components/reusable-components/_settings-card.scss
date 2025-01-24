@@ -40,12 +40,15 @@
 		gap: 24px;
 	}
 
-	.ppcp-r-settings-card__content {
+	.ppcp--content {
 		flex: 1;
-		max-width: var(--card-width-content);
-		border: 1px solid var(--color-gray-200);
-		border-radius: 4px;
-		padding: 24px;
+
+		&.ppcp--is-card {
+			max-width: var(--card-width-content);
+			border: 1px solid var(--color-gray-200);
+			border-radius: 4px;
+			padding: 24px;
+		}
 	}
 
 	.ppcp-r-settings-card__title {

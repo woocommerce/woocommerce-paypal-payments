@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 
-import { Content, ContentWrapper } from './SettingsBlocks';
+import { Content, ContentWrapper } from './Elements';
 
 const SettingsCard = ( {
 	id,

@@ -1,8 +1,10 @@
 .ppcp-r-paylater-configurator {
 	display: flex;
-	border: 1px solid $color-gray-200;
+	border: 1px solid var(--color-separators);
 	border-radius: 8px;
 	overflow: hidden;
+	font-family: "PayPalPro", sans-serif;
+	-webkit-font-smoothing: antialiased;
 
 	.css-1snxoyf.eolpigi0 {
 		margin: 0;
@@ -46,30 +48,25 @@
 	}
 
 	&__subheader, #configurator-controlPanelSubHeader {
-		@include font(13, 20, 400);
-		color: $color-gray-800;
+		color: var(--color-text-description);
 		margin: 0 0 18px 0;
 	}
 
-	.css-1caaugt-links_base-text_body_strong, .css-dpyjrq-text_body {
-		@include font(13, 20, 400);
-	}
-
 	&__header, #configurator-controlPanelHeader, #configurator-previewSectionSubHeaderText.css-14ujlqd-text_body, .css-16jt5za-text_body {
-		@include font(14, 20, 600);
-		color: $color-gray-800;
-		margin: 0 0 8px 0;
-		display: block;
+		@include font(16, 20, 600);
+		color: var(--color-text-title);
+		margin-bottom: 6px;
+		font-family: "PayPalPro", sans-serif;
+		-webkit-font-smoothing: antialiased;
 	}
 
 	.css-1yo2lxy-text_body_strong {
-		@include font(13, 16, 600);
-		color: $color-black;
+		color: var(--color-text-description);
 		margin: 0;
 		text-transform: none;
 	}
 
-	.css-rok10q {
+	.css-rok10q, .css-dfgbdq-text_body_strong {
 		margin-top: 0;
 	}
 
@@ -77,13 +74,40 @@
 		display: none;
 	}
 
-	.css-1oxdnb3-dropdown_menu_button-text_field_value_sm-active, .css-1wvwydd-dropdown_menu_button-text_field_value_sm-active-active, .css-16jt5za-text_body {
-		font-size: 13px;
-		line-height: 1.5384615385;
-		font-weight: 400;
-	}
-
 	.css-udzaps {
 		padding: 0px;
+	}
+
+	.css-104jwuk,
+	.css-dpyjrq-text_body,
+	.css-1oxdnb3-dropdown_menu_button-text_field_value_sm-active,
+	.css-1wvwydd-dropdown_menu_button-text_field_value_sm-active-active,
+	.css-16jt5za-text_body,
+	.css-1caaugt-links_base-text_body_strong,
+	.css-dpyjrq-text_body,
+	&__subheader,
+	#configurator-controlPanelSubHeader,
+	.css-1yo2lxy-text_body_strong{
+		@include font(13, 20, 400);
+		font-family: "PayPalPro", sans-serif;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.css-1k9r7mv-text_body, .css-ra9ecy-text_body_strong {
+		font-family: "PayPalPro", sans-serif;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.css-1hs85tj {
+		display: none;
+	}
+
+	.css-4nclxm.e1vy3g880,  {
+		width: 100%;
+		padding: 48px 8px;
+
+		.css-11hsg2u.e1vy3g880 {
+			width: 100%;
+		}
 	}
 }
