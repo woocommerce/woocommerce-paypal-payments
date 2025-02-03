@@ -1,7 +1,7 @@
 import { RadioControl } from '@wordpress/components';
 import classNames from 'classnames';
 
-import HStack from '../../../../../ReusableComponents/HStack';
+import { HStack } from '../../../../../ReusableComponents/Stack';
 import StylingSection from './StylingSection';
 
 const StylingSectionWithRadiobuttons = ( {

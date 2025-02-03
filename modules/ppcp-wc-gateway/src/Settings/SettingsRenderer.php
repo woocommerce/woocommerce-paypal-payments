@@ -465,7 +465,7 @@ $data_rows_html
 			if ( $this->dcc_applies->for_country_currency() ) {
 				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
 					$this->render_dcc_onboarding_info();
-				} elseif ( ! $this->dcc_product_status->dcc_is_active() ) {
+				} elseif ( ! $this->dcc_product_status->is_active() ) {
 					$this->render_dcc_not_active_yet();
 				}
 			} else {

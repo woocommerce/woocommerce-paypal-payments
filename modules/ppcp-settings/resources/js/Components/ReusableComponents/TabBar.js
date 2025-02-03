@@ -1,26 +1,14 @@
-import { useCallback, useEffect, useState } from '@wordpress/element';
+import { useCallback, useEffect } from '@wordpress/element';
 
 // TODO: Migrate to Tabs (TabPanel v2) once its API is publicly available, as it provides programmatic tab switching support: https://github.com/WordPress/gutenberg/issues/52997
 import { TabPanel } from '@wordpress/components';
 
-import { getQuery, updateQueryString } from '../../utils/navigation';
+import { updateQueryString } from '../../utils/navigation';
 
-const TabNavigation = ( { tabs } ) => {
-	const { panel } = getQuery();
-
+const TabBar = ( { tabs, activePanel, setActivePanel } ) => {
 	const isValidTab = ( tabsList, checkTab ) => {
 		return tabsList.some( ( tab ) => tab.name === checkTab );
 	};
-
-	const getValidInitialPanel = () => {
-		if ( ! panel || ! isValidTab( tabs, panel ) ) {
-			return tabs[ 0 ].name;
-		}
-		return panel;
-	};
-
-	const [ activePanel, setActivePanel ] = useState( getValidInitialPanel );
-
 	const updateActivePanel = useCallback(
 		( tabName ) => {
 			if ( isValidTab( tabs, tabName ) ) {
@@ -29,7 +17,7 @@ const TabNavigation = ( { tabs } ) => {
 				console.warn( `Invalid tab name: ${ tabName }` );
 			}
 		},
-		[ tabs ]
+		[ tabs, setActivePanel ]
 	);
 
 	useEffect( () => {
@@ -43,9 +31,9 @@ const TabNavigation = ( { tabs } ) => {
 			onSelect={ updateActivePanel }
 			tabs={ tabs }
 		>
-			{ ( { Component } ) => Component }
+			{ () => '' }
 		</TabPanel>
 	);
 };
 
-export default TabNavigation;
+export default TabBar;

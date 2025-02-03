@@ -9,7 +9,12 @@ const ControlButton = ( {
 	buttonLabel,
 } ) => (
 	<Action>
-		<Button isBusy={ isBusy } variant={ type } onClick={ onClick }>
+		<Button
+			className="small-button"
+			isBusy={ isBusy }
+			variant={ type }
+			onClick={ onClick }
+		>
 			{ buttonLabel }
 		</Button>
 	</Action>

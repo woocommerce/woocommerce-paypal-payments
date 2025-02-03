@@ -9,9 +9,7 @@ const SpinnerOverlay = ( { message = null } ) => {
 	return (
 		<div className="ppcp-r-spinner-overlay">
 			{ message && (
-				<span className="ppcp-r-spinner-overlay__message">
-					{ message }
-				</span>
+				<span className="ppcp--spinner-message">{ message }</span>
 			) }
 			<Spinner />
 		</div>

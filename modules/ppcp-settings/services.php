@@ -15,21 +15,24 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PaymentRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\WebhookSettingsEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\SettingsRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\StylingRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\TodosRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\StylingRestEndpoint;
-use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 
 return array(
@@ -79,6 +82,20 @@ return array(
 	'settings.data.payment'                       => static function ( ContainerInterface $container ) : PaymentSettings {
 		return new PaymentSettings();
 	},
+	'settings.data.settings'                      => static function ( ContainerInterface $container ) : SettingsModel {
+		return new SettingsModel(
+			$container->get( 'settings.service.sanitizer' )
+		);
+	},
+	/**
+	 * Checks if valid merchant connection details are stored in the DB.
+	 */
+	'settings.flag.is-connected'                  => static function ( ContainerInterface $container ) : bool {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		return $data->is_merchant_connected();
+	},
 	'settings.rest.onboarding'                    => static function ( ContainerInterface $container ) : OnboardingRestEndpoint {
 		return new OnboardingRestEndpoint( $container->get( 'settings.data.onboarding' ) );
 	},
@@ -116,6 +133,17 @@ return array(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
 			$container->get( 'webhook.status.simulation' )
+		);
+	},
+	'settings.rest.pay_later_messaging'           => static function ( ContainerInterface $container ) : PayLaterMessagingEndpoint {
+		return new PayLaterMessagingEndpoint(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'paylater-configurator.endpoint.save-config' )
+		);
+	},
+	'settings.rest.settings'                      => static function ( ContainerInterface $container ) : SettingsRestEndpoint {
+		return new SettingsRestEndpoint(
+			$container->get( 'settings.data.settings' )
 		);
 	},
 	'settings.casual-selling.supported-countries' => static function ( ContainerInterface $container ) : array {
@@ -222,13 +250,12 @@ return array(
 			$container->get( 'api.merchant_id' ) !== ''
 		);
 	},
-	'settings.rest.settings'                      => static function( ContainerInterface $container ): SettingsRestEndpoint {
-		return new SettingsRestEndpoint(
-			$container->get( 'settings.data.settings' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
+	'settings.rest.todos'                         => static function ( ContainerInterface $container ) : TodosRestEndpoint {
+		return new TodosRestEndpoint(
+			$container->get( 'settings.data.todos' ),
 		);
 	},
-	'settings.data.settings'                      => static function() : SettingsModel {
-		return new SettingsModel();
+	'settings.data.todos'                         => static function ( ContainerInterface $container ) : TodosModel {
+		return new TodosModel();
 	},
 );

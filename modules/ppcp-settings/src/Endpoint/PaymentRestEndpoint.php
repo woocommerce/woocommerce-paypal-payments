@@ -576,7 +576,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 					'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304',
 					'woocommerce-paypal-payments'
 				),
-				'icon'            => '',
+				'icon'            => 'payment-method-oxxo',
 				'itemTitle'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
 				'itemDescription' => __(
 					'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304',
@@ -669,7 +669,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 
 			$gateway_settings[ $key ] = array(
 				'enabled'         => 'yes' === $gateway->enabled,
-				'title'           => $gateway->get_title(),
+				'title'           => str_replace( '&amp;', '&', $gateway->get_title() ),
 				'description'     => $gateway->get_description(),
 				'id'              => $this->gateways()[ $key ]['id'] ?? $key,
 				'icon'            => $this->gateways()[ $key ]['icon'] ?? '',
@@ -687,7 +687,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 		$gateway_settings['fastlaneCardholderName']   = $this->settings->get_fastlane_cardholder_name();
 		$gateway_settings['fastlaneDisplayWatermark'] = $this->settings->get_fastlane_display_watermark();
 
-		return $this->return_success( $gateway_settings );
+		return $this->return_success( apply_filters( 'woocommerce_paypal_payments_payment_methods', $gateway_settings ) );
 	}
 
 	/**

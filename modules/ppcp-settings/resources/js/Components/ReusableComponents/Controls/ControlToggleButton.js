@@ -5,7 +5,7 @@ const ControlToggleButton = ( { label, description, value, onChange } ) => (
 	<Action>
 		<ToggleControl
 			className="ppcp--control-toggle"
-			__nextHasNoMarginBottom={ true }
+			__nextHasNoMarginBottom
 			checked={ value }
 			onChange={ onChange }
 			label={ label }

@@ -116,6 +116,7 @@ const SimulationBlock = () => {
 				'woocommerce-paypal-payments'
 			) }
 			horizontalLayout={ true }
+			className="ppcp--webhook-simulation"
 		>
 			<ControlButton
 				type={ 'secondary' }

@@ -445,7 +445,7 @@ class PayUponInvoice {
 				}
 
 				if (
-					! $this->pui_product_status->pui_is_active()
+					! $this->pui_product_status->is_active()
 					|| ! $this->pui_helper->is_checkout_ready_for_pui()
 				) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
@@ -478,7 +478,7 @@ class PayUponInvoice {
 			function() {
 				if (
 				PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
-				&& $this->pui_product_status->pui_is_active()
+				&& $this->pui_product_status->is_active()
 				) {
 					$error_messages = array();
 					$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];

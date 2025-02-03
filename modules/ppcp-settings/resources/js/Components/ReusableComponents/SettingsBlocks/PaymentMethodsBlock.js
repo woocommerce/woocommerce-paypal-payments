@@ -1,42 +1,38 @@
 import SettingsBlock from '../SettingsBlock';
 import PaymentMethodItemBlock from './PaymentMethodItemBlock';
-import { usePaymentMethods } from '../../../data/payment/hooks';
+import { PaymentHooks } from '../../../data';
 
-const PaymentMethodsBlock = ( {
-	paymentMethods,
-	className = '',
-	onTriggerModal,
-} ) => {
-	const { setPersistent } = usePaymentMethods();
+// TODO: This is not a reusable component, as it's connected to the Redux store.
+const PaymentMethodsBlock = ( { paymentMethods = [], onTriggerModal } ) => {
+	const { changePaymentSettings } = PaymentHooks.useStore();
 
-	if ( ! paymentMethods?.length ) {
+	const handleSelect = ( methodId, isSelected ) =>
+		changePaymentSettings( methodId, {
+			enabled: isSelected,
+		} );
+
+	if ( ! paymentMethods.length ) {
 		return null;
 	}
 
-	const handleSelect = ( paymentMethod, isSelected ) => {
-		setPersistent( paymentMethod.id, {
-			...paymentMethod,
-			enabled: isSelected,
-		} );
-	};
-
 	return (
-		<SettingsBlock
-			className={ `ppcp-r-settings-block__payment-methods ${ className }` }
-		>
-			{ paymentMethods.map( ( paymentMethod ) => (
-				<PaymentMethodItemBlock
-					key={ paymentMethod.id }
-					paymentMethod={ paymentMethod }
-					isSelected={ paymentMethod.enabled }
-					onSelect={ ( checked ) =>
-						handleSelect( paymentMethod, checked )
-					}
-					onTriggerModal={ () =>
-						onTriggerModal?.( paymentMethod.id )
-					}
-				/>
-			) ) }
+		<SettingsBlock className="ppcp--grid ppcp-r-settings-block__payment-methods">
+			{ paymentMethods
+				// Remove empty/invalid payment method entries.
+				.filter( ( m ) => m.id )
+				.map( ( paymentMethod ) => (
+					<PaymentMethodItemBlock
+						key={ paymentMethod.id }
+						paymentMethod={ paymentMethod }
+						isSelected={ paymentMethod.enabled }
+						onSelect={ ( checked ) =>
+							handleSelect( paymentMethod.id, checked )
+						}
+						onTriggerModal={ () =>
+							onTriggerModal?.( paymentMethod.id )
+						}
+					/>
+				) ) }
 		</SettingsBlock>
 	);
 };

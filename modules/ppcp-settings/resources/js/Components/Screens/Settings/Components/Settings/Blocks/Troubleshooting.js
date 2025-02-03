@@ -6,7 +6,7 @@ import Accordion from '../../../../../ReusableComponents/AccordionSection';
 
 import SimulationBlock from './SimulationBlock';
 import ResubscribeBlock from './ResubscribeBlock';
-import HooksTableBlock from './HooksTableBlock';
+import HooksListBlock from './HooksListBlock';
 import { SettingsHooks } from '../../../../../../data';
 
 const Troubleshooting = () => {
@@ -43,7 +43,7 @@ const Troubleshooting = () => {
 					'https://woocommerce.com/document/woocommerce-paypal-payments/#webhook-status'
 				) }
 			>
-				<HooksTableBlock />
+				<HooksListBlock />
 				<ResubscribeBlock />
 				<SimulationBlock />
 			</SettingsBlock>

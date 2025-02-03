@@ -41,6 +41,27 @@
 		padding-top: 16px;
 	}
 
+	&.is-completed {
+		.ppcp-r-todo-item__icon {
+			border-style: solid;
+			background-color: $color-blueberry;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+
+			.dashicons {
+				color: #fff;
+				font-size: 18px;
+				width: 18px;
+				height: 18px;
+			}
+		}
+
+		.ppcp-r-todo-item__content {
+			text-decoration: line-through;
+		}
+	}
+
 	p {
 		@include font(14, 20, 400);
 	}
@@ -86,33 +107,26 @@
 	}
 }
 
-.ppcp-r-feature-item {
-	padding-top: 32px;
-	border-top: 1px solid $color-gray-400;
+.ppcp-r-tab-overview-features {
+	--block-header-gap: 12px;
+}
 
-	&__title {
-		@include font(16, 20, 600);
-		color: $color-black;
-		display: block;
-		margin: 0 0 8px 0;
-	}
+.ppcp-r-tab-overview-help {
+	--block-header-gap: 8px;
+}
 
-	&__description {
-		@include font(14, 20, 400);
-		color: $color-gray-800;
-		margin: 0 0 18px 0;
-	}
-
-	&:not(:last-child) {
-		padding-bottom: 32px;
-	}
-
-	&__buttons {
+.ppcp-r-settings-block__feature {
+	.ppcp--action-buttons {
 		display: flex;
 		gap: 18px;
+
+		.components-button.is-tertiary {
+			padding-left: 0;
+			padding-right: 0;
+		}
 	}
 
-	&__notes {
+	.ppcp--item-notes {
 		display: flex;
 		flex-direction: column;
 

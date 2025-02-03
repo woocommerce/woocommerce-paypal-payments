@@ -12,7 +12,7 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 		}
 
 		return (
-			<span className="ppcp-r-feature-item__notes">
+			<span className="ppcp--item-notes">
 				{ notes.map( ( note, index ) => (
 					<span key={ index }>{ note }</span>
 				) ) }
@@ -20,30 +20,39 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 		);
 	};
 
-	const renderButton = ( button ) => {
-		const buttonElement = (
-			<Button
-				className={ button.class ? button.class : '' }
-				key={ button.text }
-				isBusy={ props.actionProps?.isBusy }
-				variant={ button.type }
-				onClick={ button.onClick }
-			>
-				{ button.text }
-			</Button>
-		);
+	const FeatureButton = ( {
+		className,
+		variant,
+		text,
+		isBusy,
+		url,
+		urls,
+		onClick,
+	} ) => {
+		const buttonProps = {
+			className,
+			isBusy,
+			variant,
+		};
 
-		// If there's a URL (either direct or in urls object), wrap in anchor tag
-		if ( button.url || button.urls ) {
-			const href = button.urls ? button.urls.live : button.url;
-			return (
-				<a href={ href } key={ button.text }>
-					{ buttonElement }
-				</a>
-			);
+		if ( url || urls ) {
+			buttonProps.href = urls ? urls.live : url;
+			buttonProps.target = '_blank';
+		}
+		if ( ! buttonProps.href ) {
+			buttonProps.onClick = onClick;
 		}
 
-		return buttonElement;
+		return <Button { ...buttonProps }>{ text }</Button>;
+	};
+
+	const renderDescription = () => {
+		return (
+			<span
+				className="ppcp-r-feature-item__description ppcp-r-settings-block__feature__description"
+				dangerouslySetInnerHTML={ { __html: description } }
+			/>
+		);
 	};
 
 	return (
@@ -56,13 +65,33 @@ const FeatureSettingsBlock = ( { title, description, ...props } ) => {
 					) }
 				</Title>
 				<Description className="ppcp-r-settings-block__feature__description">
-					{ description }
+					{ renderDescription() }
 					{ printNotes() }
 				</Description>
 			</Header>
 			<Action>
-				<div className="ppcp-r-feature-item__buttons">
-					{ props.actionProps?.buttons.map( renderButton ) }
+				<div className="ppcp--action-buttons">
+					{ props.actionProps?.buttons.map(
+						( {
+							class: className,
+							type,
+							text,
+							url,
+							urls,
+							onClick,
+						} ) => (
+							<FeatureButton
+								key={ text }
+								className={ className }
+								variant={ type }
+								text={ text }
+								isBusy={ props.actionProps.isBusy }
+								url={ url }
+								urls={ urls }
+								onClick={ onClick }
+							/>
+						)
+					) }
 				</div>
 			</Action>
 		</SettingsBlock>

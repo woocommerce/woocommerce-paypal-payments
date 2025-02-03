@@ -43,6 +43,7 @@ const SettingsToggleBlock = ( {
 				</div>
 				<div className="ppcp-r-toggle-block__switch">
 					<ToggleControl
+						__nextHasNoMarginBottom
 						ref={ toggleRef }
 						checked={ isToggled }
 						onChange={ ( newState ) => setToggled( newState ) }

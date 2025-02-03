@@ -9,8 +9,8 @@ const SectionPaymentMethods = ( { location } ) => {
 
 	return (
 		<CheckboxStylingSection
+			name="payment-methods"
 			title={ __( 'Payment Methods', 'woocommerce-paypal-payments' ) }
-			className="payment-methods"
 			options={ choices }
 			value={ paymentMethods }
 			onChange={ setPaymentMethods }

@@ -5,10 +5,10 @@ import {
 	ControlToggleButton,
 	ControlTextInput,
 	ControlSelect,
-} from '../../../../ReusableComponents/Controls';
-import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
-import Accordion from '../../../../ReusableComponents/AccordionSection';
-import { SettingsHooks } from '../../../../../data';
+} from '../../../../../ReusableComponents/Controls';
+import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+import Accordion from '../../../../../ReusableComponents/AccordionSection';
+import { SettingsHooks } from '../../../../../../data';
 
 const PaypalSettings = () => {
 	const {

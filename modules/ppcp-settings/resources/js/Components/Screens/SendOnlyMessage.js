@@ -1,4 +1,5 @@
 import { __, sprintf } from '@wordpress/i18n';
+import { Button } from '@wordpress/components';
 
 import Container from '../ReusableComponents/Container';
 import SettingsCard from '../ReusableComponents/SettingsCard';
@@ -9,7 +10,7 @@ const SendOnlyMessage = () => {
 
 	return (
 		<>
-			<SettingsNavigation />
+			<SettingsNavigation canSave={ false } />
 			<Container page="settings">
 				<SettingsCard
 					title={ __(
@@ -45,6 +46,19 @@ const SendOnlyMessage = () => {
 							),
 						} }
 					/>
+
+					<div>
+						<Button
+							href={ settingsPageUrl }
+							variant="primary"
+							className="small-button"
+						>
+							{ __(
+								'Go to WooCommerce settings',
+								'woocommerce-paypal-payments'
+							) }
+						</Button>
+					</div>
 				</SettingsCard>
 			</Container>
 		</>

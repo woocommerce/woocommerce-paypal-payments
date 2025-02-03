@@ -1,15 +1,20 @@
+import { Icon } from '@wordpress/components';
+
 import data from '../../utils/data';
 
-const PaymentMethodIcon = ( props ) => {
-	if (
-		( Array.isArray( props.icons ) &&
-			props.icons.includes( props.type ) ) ||
-		props.icons === 'all'
-	) {
-		return data().getImage( 'icon-button-' + props.type + '.svg' );
+const PaymentMethodIcon = ( { icons, type } ) => {
+	const validIcon = Array.isArray( icons ) && icons.includes( type );
+
+	if ( validIcon || icons === 'all' ) {
+		return (
+			<Icon
+				icon={ data().getImage( 'icon-button-' + type + '.svg' ) }
+				className="ppcp--method-icon"
+			/>
+		);
 	}
 
-	return <></>;
+	return null;
 };
 
 export default PaymentMethodIcon;

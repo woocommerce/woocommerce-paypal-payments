@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 return array(
 	'ppcp-local-apms.url'                       => static function ( ContainerInterface $container ): string {
@@ -65,6 +66,14 @@ return array(
 				'countries'  => array( 'PT' ),
 				'currencies' => array( 'EUR' ),
 			),
+		);
+	},
+	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
+		return new LocalApmProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'api.helper.failure-registry' )
 		);
 	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {

@@ -21,7 +21,7 @@ const SectionTagline = ( { location } ) => {
 
 	return (
 		<CheckboxStylingSection
-			className="tagline"
+			name="tagline"
 			separatorAndGap={ false }
 			options={ [ checkbox ] }
 			value={ tagline }

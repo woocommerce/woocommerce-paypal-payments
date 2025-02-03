@@ -1,18 +1,22 @@
-.ppcp-r-title-badge{
+.ppcp-r-title-badge {
+	--badge-bg-color: #F5F5F5;
+	--badge-text-color: #2F2F2F;
+
+	color: var(--badge-text-color);
+	background-color: var(--badge-bg-color);
+
 	@include font(12, 16, 400);
 	padding: 4px 8px;
 	border-radius: 2px;
 	white-space: nowrap;
-	&--positive{
-		color: #144722;
-		background-color: #DAFFE0;
+
+	&.ppcp-r-title-badge--positive {
+		--badge-bg-color: #DAFFE0;
+		--badge-text-color: #144722;
 	}
-	&--negative{
-		color:#5c0000;
-		background-color: #faeded;
-	}
-	&--info{
-		color: #2F2F2F;
-		background-color: #F5F5F5;
+
+	&.ppcp-r-title-badge--negative {
+		--badge-bg-color: #faeded;
+		--badge-text-color: #5c0000;
 	}
 }

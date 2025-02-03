@@ -1,7 +1,7 @@
 import { Button } from '@wordpress/components';
 import { useEffect } from '@wordpress/element';
 import classNames from 'classnames';
-import { openSignup } from '../../../ReusableComponents/Icons';
+import { OpenSignup } from '../../../ReusableComponents/Icons';
 import { useHandleOnboardingButton } from '../../../../hooks/useHandleConnections';
 import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
 
@@ -27,7 +27,7 @@ const ButtonOrPlaceholder = ( {
 	const buttonProps = {
 		className,
 		variant,
-		icon: showIcon ? openSignup : null,
+		icon: showIcon ? OpenSignup : null,
 	};
 
 	if ( href ) {

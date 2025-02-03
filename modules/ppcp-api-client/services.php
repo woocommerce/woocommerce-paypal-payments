@@ -80,10 +80,19 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 
 return array(
-	'api.host'                                       => function( ContainerInterface $container ) : string {
-		return PAYPAL_API_URL;
+	'api.host'                                       => static function( ContainerInterface $container ) : string {
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+
+		if ( $environment->is_sandbox() ) {
+			return (string) $container->get( 'api.sandbox-host' );
+		}
+
+		return (string) $container->get( 'api.production-host' );
 	},
 	'api.paypal-host'                                => function( ContainerInterface $container ) : string {
 		return PAYPAL_API_URL;
@@ -116,6 +125,12 @@ return array(
 		return 'WC-';
 	},
 	'api.bearer'                                     => static function ( ContainerInterface $container ): Bearer {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+
+		if ( ! $is_connected ) {
+			return new ConnectBearer();
+		}
+
 		return new PayPalBearer(
 			$container->get( 'api.paypal-bearer-cache' ),
 			$container->get( 'api.host' ),
@@ -811,7 +826,7 @@ return array(
 		return new OrderHelper();
 	},
 	'api.helper.order-transient'                     => static function( ContainerInterface $container ): OrderTransient {
-		$cache                   = new Cache( 'ppcp-paypal-bearer' );
+		$cache                   = $container->get( 'api.paypal-bearer-cache' );
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
@@ -926,5 +941,23 @@ return array(
 			$container->get( 'api.endpoint.partner-referrals-production' ),
 			$container->get( 'api.endpoint.partner-referrals-sandbox' )
 		);
+	},
+	'api.sandbox-host'                               => static function ( ContainerInterface $container ): string {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+
+		if ( $is_connected ) {
+			return PAYPAL_SANDBOX_API_URL;
+		}
+
+		return CONNECT_WOO_SANDBOX_URL;
+	},
+	'api.production-host'                            => static function ( ContainerInterface $container ): string {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+
+		if ( $is_connected ) {
+			return PAYPAL_API_URL;
+		}
+
+		return CONNECT_WOO_URL;
 	},
 );

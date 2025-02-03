@@ -1,4 +1,8 @@
 .ppcp-r-select-box-wrapper {
+	--box-border-color: var(--color-gray-200);
+	--box-outline-color: transparent;
+	--box-shadow: 0;
+
 	margin: 0 auto;
 	display: flex;
 	gap: 32px;
@@ -6,92 +10,62 @@
 }
 
 .ppcp-r-select-box {
+	border: 1px solid var(--box-border-color);
+	outline: 1px solid var(--box-outline-color);
+	box-shadow: var(--box-shadow);
+
 	position: relative;
 	width: 100%;
-	border: 1px solid $color-gray-200;
-	outline: 1px solid transparent;
 	border-radius: 4px;
 	display: flex;
 	gap: 16px;
 	padding: 24px 16px 24px 16px;
+	transition: all 0.3s;
+	cursor: pointer;
 
+	&:hover {
+		--box-border-color: var(--color-gray-500);
+		--box-shadow: var(--box-shadow-active-item);
+	}
 
 	&.ppcp--selected {
-		border-color: $color-blueberry;
-		outline-color: $color-blueberry;
-		box-shadow: $shadow-selection-box;
+		--box-border-color: var(--color-blueberry);
+		--box-outline-color: var(--color-blueberry);
+		--box-shadow: var(--box-shadow-active-item);
 	}
 
-	&__radio-value {
-		@include hide-input-field;
-
-		&:checked {
-			+ .ppcp-r-select-box__radio-presentation {
-				background: $color-white;
-				width: 20px;
-				height: 20px;
-				border: 6px solid $color-blueberry;
-			}
-		}
-	}
-
-	&__checkbox-value {
-		@include hide-input-field;
-
-		&:not(:checked) + .ppcp-r-select-box__checkbox-presentation img {
-			display: none;
-		}
-
-		&:checked {
-			+ .ppcp-r-select-box__checkbox-presentation {
-				width: 20px;
-				height: 20px;
-				border: none;
-
-				img {
-					border-radius: 2px;
-				}
-			}
-		}
-	}
-
-	&__content {
+	.ppcp--box-content {
 		display: flex;
 		position: relative;
 		pointer-events: none;
-		*:not(a){
+
+		*:not(a) {
 			pointer-events: none;
 		}
+
 		a {
 			pointer-events: all;
 		}
 	}
 
-	&__title {
+	.ppcp--box-title {
 		@include font(14, 20, 700);
 		color: $color-black;
 		margin: 0 0 4px 0;
 		display: block;
 	}
 
-	&__description {
+	.ppcp--box-description {
 		@include font(13, 20, 400);
 		color: $color-gray-700;
-		margin:0;
+		margin: 0;
 
-		&:not(:last-child){
-			margin-block-end:18px;
+		&:not(:last-child) {
+			margin-block-end: 18px;
 		}
 	}
 
-	&__radio-presentation {
-		@include fake-input-field(20px);
-	}
-
-	&__checkbox-presentation {
-		@include fake-input-field(2px);
-	}
-	&__additional-content{
+	.ppcp--box-details {
 		position: relative;
 		z-index: 1;
 	}
@@ -99,15 +73,18 @@
 	@media screen and (max-width: 480px) {
 		gap: 16px;
 		padding: 18px 16px;
-		&__description {
+
+		.ppcp--box-description {
 			margin: 0 0 8px 0;
 		}
-		&__content {
+
+		.ppcp--box-content {
 			gap: 12px;
 		}
 	}
+
 	@media screen and (max-width: 380px) {
-		&__content > img {
+		.ppcp--box-content > img {
 			max-width: 32px;
 		}
 	}

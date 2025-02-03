@@ -21,9 +21,37 @@ const OnboardingNavigation = ( { stepDetails, onNext, onPrev } ) => {
 			showProgressBar={ true }
 			progressBarPercent={ percentage * 0.9 }
 		>
-			<Button variant="link" onClick={ goToWooCommercePaymentsTab }>
+			<OnboardingNavigationActions
+				onExit={ goToWooCommercePaymentsTab }
+				isFirst={ isFirst }
+				isDisabled={ isDisabled }
+				showNext={ showNext }
+				onNext={ onNext }
+			/>
+		</TopNavigation>
+	);
+};
+
+export default OnboardingNavigation;
+
+const OnboardingNavigationActions = ( {
+	isFirst,
+	showNext,
+	isDisabled,
+	onExit,
+	onNext,
+} ) => {
+	// On first page we don't have any actions.
+	if ( isFirst ) {
+		return null;
+	}
+
+	return (
+		<>
+			<Button variant="link" onClick={ onExit }>
 				{ __( 'Save and exit', 'woocommerce-paypal-payments' ) }
 			</Button>
+
 			{ showNext && (
 				<Button
 					variant="primary"
@@ -33,8 +61,6 @@ const OnboardingNavigation = ( { stepDetails, onNext, onPrev } ) => {
 					{ __( 'Continue', 'woocommerce-paypal-payments' ) }
 				</Button>
 			) }
-		</TopNavigation>
+		</>
 	);
 };
-
-export default OnboardingNavigation;

@@ -1,17 +1,18 @@
 import Container from '../../ReusableComponents/Container';
-import TabNavigation from '../../ReusableComponents/TabNavigation';
-import { getSettingsTabs } from './Tabs';
 import SettingsNavigation from './Components/Navigation';
+import { getSettingsTabs } from './Tabs';
 
-const SettingsScreen = () => {
+const SettingsScreen = ( { activePanel, setActivePanel } ) => {
 	const tabs = getSettingsTabs();
-
+	const { Component } = tabs.find( ( tab ) => tab.name === activePanel );
 	return (
 		<>
-			<SettingsNavigation />
-			<Container page="settings">
-				<TabNavigation tabs={ tabs }></TabNavigation>
-			</Container>
+			<SettingsNavigation
+				tabs={ tabs }
+				activePanel={ activePanel }
+				setActivePanel={ setActivePanel }
+			/>
+			<Container page="settings">{ Component }</Container>
 		</>
 	);
 };

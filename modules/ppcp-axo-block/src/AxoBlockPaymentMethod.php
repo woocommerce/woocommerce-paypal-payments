@@ -13,7 +13,7 @@ use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;

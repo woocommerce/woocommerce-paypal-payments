@@ -1,13 +1,13 @@
 import { Icon } from '@wordpress/components';
 
-import { logoPayPal } from '../../../ReusableComponents/Icons';
+import { LogoPayPal } from '../../../ReusableComponents/Icons';
 
 const OnboardingHeader = ( props ) => {
 	return (
 		<section className="ppcp-r-onboarding-header">
 			<div className="ppcp-r-onboarding-header__logo">
 				<div className="ppcp-r-onboarding-header__logo-wrapper">
-					<Icon icon={ logoPayPal } width="auto" height={ 38 } />
+					<Icon icon={ LogoPayPal } width={ 110 } height={ 38 } />
 				</div>
 			</div>
 			<div className="ppcp-r-onboarding-header__content">

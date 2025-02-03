@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from '@wordpress/element';
+import { useEffect, useMemo, useState } from '@wordpress/element';
 import classNames from 'classnames';
 
 import { OnboardingHooks, CommonHooks } from '../data';
@@ -31,6 +31,8 @@ const SettingsApp = () => {
 		loading: ! onboardingIsReady,
 	} );
 
+	const [ activePanel, setActivePanel ] = useState( 'overview' );
+
 	const Content = useMemo( () => {
 		if ( ! onboardingIsReady || ! merchantIsReady ) {
 			return <SpinnerOverlay />;
@@ -44,12 +46,18 @@ const SettingsApp = () => {
 			return <OnboardingScreen />;
 		}
 
-		return <SettingsScreen />;
+		return (
+			<SettingsScreen
+				activePanel={ activePanel }
+				setActivePanel={ setActivePanel }
+			/>
+		);
 	}, [
 		isSendOnlyCountry,
 		merchantIsReady,
 		onboardingCompleted,
 		onboardingIsReady,
+		activePanel,
 	] );
 
 	return <div className={ wrapperClass }>{ Content }</div>;

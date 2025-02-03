@@ -1,11 +1,12 @@
 import classNames from 'classnames';
 
 import { CheckboxGroup } from '../../../../../ReusableComponents/Fields';
-import HStack from '../../../../../ReusableComponents/HStack';
+import { VStack } from '../../../../../ReusableComponents/Stack';
 import StylingSection from './StylingSection';
 
 const StylingSectionWithCheckboxes = ( {
 	title,
+	name,
 	className = '',
 	description = '',
 	separatorAndGap = true,
@@ -14,7 +15,14 @@ const StylingSectionWithCheckboxes = ( {
 	onChange,
 	children,
 } ) => {
-	className = classNames( 'ppcp--has-checkboxes', className );
+	className = classNames( 'ppcp--has-checkboxes', name, className );
+
+	if ( ! name ) {
+		console.error(
+			'Checkbox sections need a unique name! No name given to:',
+			title
+		);
+	}
 
 	return (
 		<StylingSection
@@ -23,13 +31,14 @@ const StylingSectionWithCheckboxes = ( {
 			description={ description }
 			separatorAndGap={ separatorAndGap }
 		>
-			<HStack spacing={ 6 }>
+			<VStack spacing={ 6 }>
 				<CheckboxGroup
+					name={ name }
 					options={ options }
 					value={ value }
 					onChange={ onChange }
 				/>
-			</HStack>
+			</VStack>
 
 			{ children }
 		</StylingSection>

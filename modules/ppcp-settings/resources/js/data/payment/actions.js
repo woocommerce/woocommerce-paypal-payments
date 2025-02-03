@@ -37,26 +37,16 @@ export const hydrate = ( payload ) => ( {
 } );
 
 /**
- * Transient. Marks the store as "ready", i.e., fully initialized.
+ * Generic transient-data updater.
  *
- * @param {boolean} isReady
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
  * @return {Action} The action.
  */
-export const setIsReady = ( isReady ) => ( {
+export const setTransient = ( prop, value ) => ( {
 	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isReady },
+	payload: { [ prop ]: value },
 } );
-
-/**
- * Side effect. Triggers the persistence of store data to the server.
- *
- * @return {Action} The action.
- */
-export const persist = function* () {
-	const data = yield select( STORE_NAME ).persistentData();
-
-	yield { type: ACTION_TYPES.DO_PERSIST_DATA, data };
-};
 
 /**
  * Generic persistent-data updater.
@@ -69,3 +59,34 @@ export const setPersistent = ( prop, value ) => ( {
 	type: ACTION_TYPES.SET_PERSISTENT,
 	payload: { [ prop ]: value },
 } );
+
+/**
+ * Transient. Marks the store as "ready", i.e., fully initialized.
+ *
+ * @param {boolean} isReady
+ * @return {Action} The action.
+ */
+export const setIsReady = ( isReady ) => setTransient( 'isReady', isReady );
+
+/**
+ * Modify properties of a specific payment method.
+ *
+ * @param {string} id    The payment method ID.
+ * @param {Object} props New props.
+ * @return {Action} The action.
+ */
+export const changePaymentSettings = ( id, props ) => ( {
+	type: ACTION_TYPES.CHANGE_PAYMENT_SETTING,
+	payload: { id, props },
+} );
+
+/**
+ * Side effect. Triggers the persistence of store data to the server.
+ *
+ * @return {Action} The action.
+ */
+export const persist = function* () {
+	const data = yield select( STORE_NAME ).persistentData();
+
+	yield { type: ACTION_TYPES.DO_PERSIST_DATA, data };
+};

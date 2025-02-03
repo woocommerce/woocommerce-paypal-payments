@@ -70,10 +70,14 @@ class EnvironmentConfig {
 	/**
 	 * Get the value for the specified environment.
 	 *
-	 * @param bool $for_sandbox Whether to get the sandbox value.
+	 * @param bool|Environment $for_sandbox Whether to get the sandbox value.
 	 * @return T The value for the specified environment.
 	 */
-	public function get_value( bool $for_sandbox = false ) {
+	public function get_value( $for_sandbox = false ) {
+		if ( $for_sandbox instanceof Environment ) {
+			return $for_sandbox->is_sandbox() ? $this->sandbox_value : $this->production_value;
+		}
+
 		return $for_sandbox ? $this->sandbox_value : $this->production_value;
 	}
 }

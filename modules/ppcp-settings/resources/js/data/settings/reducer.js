@@ -25,18 +25,25 @@ const defaultTransient = Object.freeze( {
  * These represent the core PayPal payment settings configuration.
  */
 const defaultPersistent = Object.freeze( {
+	// String values.
 	invoicePrefix: '', // Prefix for PayPal invoice IDs
-	authorizeOnly: false, // Whether to only authorize payments initially
-	captureVirtualOnlyOrders: false, // Auto-capture virtual-only orders
-	savePaypalAndVenmo: false, // Enable PayPal & Venmo vaulting
-	saveCardDetails: false, // Enable card vaulting
-	payNowExperience: false, // Enable Pay Now experience
-	logging: false, // Enable debug logging
-	subtotalAdjustment: 'skip_details', // Handling for subtotal mismatches
 	brandName: '', // Merchant brand name for PayPal
 	softDescriptor: '', // Payment descriptor on statements
-	landingPage: 'any', // PayPal checkout landing page
+
+	// Limited value strings.
+	subtotalAdjustment: 'no_details', // [correction|no_details] Handling for subtotal mismatches
+	landingPage: 'any', // [any|login|guest_checkout] PayPal checkout landing page
 	buttonLanguage: '', // Language for PayPal buttons
+
+	// Boolean flags.
+	authorizeOnly: false, // Whether to only authorize payments initially
+	captureVirtualOrders: false, // Auto-capture virtual-only orders
+	savePaypalAndVenmo: false, // Enable PayPal & Venmo vaulting
+	saveCardDetails: false, // Enable card vaulting
+	enablePayNow: false, // Enable Pay Now experience
+	enableLogging: false, // Enable debug logging
+
+	// String arrays.
 	disabledCards: [], // Disabled credit card types
 } );
 

@@ -4,9 +4,9 @@ import { Button } from '@wordpress/components';
 import {
 	ControlTextInput,
 	ControlRadioGroup,
-} from '../../../../ReusableComponents/Controls';
-import Accordion from '../../../../ReusableComponents/AccordionSection';
-import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
+} from '../../../../../ReusableComponents/Controls';
+import Accordion from '../../../../../ReusableComponents/AccordionSection';
+import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 
 const ConnectionDetails = ( { settings, updateFormValue } ) => {
 	const isSandbox = settings.sandboxConnected;

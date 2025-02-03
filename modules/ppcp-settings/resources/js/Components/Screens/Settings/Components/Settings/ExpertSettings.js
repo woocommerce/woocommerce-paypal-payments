@@ -4,10 +4,10 @@ import {
 	Content,
 	ContentWrapper,
 } from '../../../../ReusableComponents/Elements';
-import ConnectionDetails from '../../../Overview/TabSettingsElements/Blocks/ConnectionDetails';
-import Troubleshooting from '../../../Overview/TabSettingsElements/Blocks/Troubleshooting/Troubleshooting';
-import PaypalSettings from '../../../Overview/TabSettingsElements/Blocks/PaypalSettings';
-import OtherSettings from '../../../Overview/TabSettingsElements/Blocks/OtherSettings';
+import ConnectionDetails from './Blocks/ConnectionDetails';
+import Troubleshooting from './Blocks/Troubleshooting';
+import PaypalSettings from './Blocks/PaypalSettings';
+import OtherSettings from './Blocks/OtherSettings';
 
 const ExpertSettings = () => {
 	const settings = {}; // dummy object

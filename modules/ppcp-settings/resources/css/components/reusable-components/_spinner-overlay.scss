@@ -1,11 +1,13 @@
 .ppcp-r-spinner-overlay {
-	position: absolute;
-	left: 0;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 10;
+	width: var(--spinner-overlay-width);
+	height: var(--spinner-overlay-height);
+	box-shadow: var(--spinner-overlay-box-shadow);
 	background: var(--spinner-overlay-color);
+	position: fixed;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	z-index: 10;
 
 	.components-spinner {
 		position: absolute;
@@ -13,5 +15,15 @@
 		left: 50%;
 		transform: translate(-50%, -50%);
 		margin: 0;
+		width: var(--spinner-size);
+		height: var(--spinner-size);
+	}
+
+	.ppcp--spinner-message {
+		position: absolute;
+		left: 0;
+		width: 100%;
+		text-align: center;
+		top: calc(50% + 20px + var(--spinner-size));
 	}
 }

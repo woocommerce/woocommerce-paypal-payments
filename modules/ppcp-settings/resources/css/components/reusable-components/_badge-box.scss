@@ -30,7 +30,7 @@
 
 		&--has-image-badge .ppcp-r-title-badge--info {
 			display: block;
-			margin: 6px 0px 0px 0px;
+			margin: 6px 0 0 0;
 			width: fit-content;
 		}
 
@@ -42,9 +42,9 @@
 			flex-direction: column;
 
 			.ppcp-r-badge-box__title-text:not(:empty) + .ppcp-r-badge-box__title-image-badge {
-				margin: 0px;
+				margin: 0;
 				img:first-of-type {
-					margin: 0px;
+					margin: 0;
 				}
 			}
 		}

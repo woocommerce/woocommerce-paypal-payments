@@ -8,14 +8,14 @@
  * @package WooCommerce\PayPalCommerce\Settings\Endpoint
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use Psr\Log\LoggerInterface;
 use WP_REST_Request;
 use WP_REST_Response;
+use WP_REST_Server;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 
 /**
  * Class SettingsRestEndpoint
@@ -25,18 +25,11 @@ use WP_REST_Response;
 class SettingsRestEndpoint extends RestEndpoint {
 
 	/**
-	 * The REST API endpoint base.
+	 * The base path for this REST controller.
 	 *
 	 * @var string
 	 */
-	private const ENDPOINT = 'settings';
-
-	/**
-	 * The REST API namespace.
-	 *
-	 * @var string
-	 */
-	protected $namespace = 'wc/v3/wc_paypal';
+	protected $rest_base = 'settings';
 
 	/**
 	 * The settings model instance.
@@ -46,42 +39,87 @@ class SettingsRestEndpoint extends RestEndpoint {
 	private SettingsModel $settings;
 
 	/**
-	 * The logger instance.
+	 * Field mapping for request to profile transformation.
 	 *
-	 * @var LoggerInterface
+	 * @var array
 	 */
-	private LoggerInterface $logger;
+	private array $field_map = array(
+		'invoice_prefix'         => array(
+			'js_name' => 'invoicePrefix',
+		),
+		'brand_name'             => array(
+			'js_name' => 'brandName',
+		),
+		'soft_descriptor'        => array(
+			'js_name' => 'softDescriptor',
+		),
+		'subtotal_adjustment'    => array(
+			'js_name' => 'subtotalAdjustment',
+		),
+		'landing_page'           => array(
+			'js_name' => 'landingPage',
+		),
+		'button_language'        => array(
+			'js_name' => 'buttonLanguage',
+		),
+		'authorize_only'         => array(
+			'js_name'  => 'authorizeOnly',
+			'sanitize' => 'to_boolean',
+		),
+		'capture_virtual_orders' => array(
+			'js_name'  => 'captureVirtualOrders',
+			'sanitize' => 'to_boolean',
+		),
+		'save_paypal_and_venmo'  => array(
+			'js_name'  => 'savePaypalAndVenmo',
+			'sanitize' => 'to_boolean',
+		),
+		'save_card_details'      => array(
+			'js_name'  => 'saveCardDetails',
+			'sanitize' => 'to_boolean',
+		),
+		'enable_pay_now'         => array(
+			'js_name'  => 'enablePayNow',
+			'sanitize' => 'to_boolean',
+		),
+		'enable_logging'         => array(
+			'js_name'  => 'enableLogging',
+			'sanitize' => 'to_boolean',
+		),
+		'disabled_cards'         => array(
+			'js_name' => 'disabledCards',
+		),
+	);
 
 	/**
 	 * SettingsRestEndpoint constructor.
 	 *
-	 * @param SettingsModel   $settings The settings model instance.
-	 * @param LoggerInterface $logger   The logger instance.
+	 * @param SettingsModel $settings The settings model instance.
 	 */
-	public function __construct(
-		SettingsModel $settings,
-		LoggerInterface $logger
-	) {
+	public function __construct( SettingsModel $settings ) {
 		$this->settings = $settings;
-		$this->logger   = $logger;
 	}
 
 	/**
 	 * Registers the REST API routes for settings management.
 	 */
-	public function register_routes(): void {
+	public function register_routes() : void {
+		/**
+		 * GET wc/v3/wc_paypal/settings
+		 * POST wc/v3/wc_paypal/settings
+		 */
 		register_rest_route(
 			$this->namespace,
-			'/' . self::ENDPOINT,
+			'/' . $this->rest_base,
 			array(
 				array(
-					'methods'             => 'GET',
-					'callback'            => array( $this, 'get_settings' ),
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => array( $this, 'get_details' ),
 					'permission_callback' => array( $this, 'check_permission' ),
 				),
 				array(
-					'methods'             => 'POST',
-					'callback'            => array( $this, 'update_settings' ),
+					'methods'             => WP_REST_Server::CREATABLE,
+					'callback'            => array( $this, 'update_details' ),
 					'permission_callback' => array( $this, 'check_permission' ),
 				),
 			)
@@ -91,37 +129,15 @@ class SettingsRestEndpoint extends RestEndpoint {
 	/**
 	 * Retrieves the current settings.
 	 *
-	 * @param WP_REST_Request $request The request instance.
 	 * @return WP_REST_Response The response containing settings data or error details.
-	 * @throws \Exception When encoding settings data fails.
 	 */
-	public function get_settings( WP_REST_Request $request ): WP_REST_Response {
-		try {
-			// Get settings data.
-			$data = $this->settings->get();
+	public function get_details() : WP_REST_Response {
+		$js_data = $this->sanitize_for_javascript(
+			$this->settings->to_array(),
+			$this->field_map
+		);
 
-			// Ensure the data is JSON-encodable.
-			$encoded = wp_json_encode( $data );
-			if ( $encoded === false ) {
-				throw new \Exception( 'Failed to encode settings data: ' . json_last_error_msg() );
-			}
-
-			// Create response with pre-verified JSON data.
-			$response_data = array(
-				'success' => true,
-				'data'    => json_decode( $encoded, true ),
-			);
-
-			return new WP_REST_Response( $response_data, 200 );
-		} catch ( \Exception $error ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => $error->getMessage(),
-				),
-				500
-			);
-		}
+		return $this->return_success( $js_data );
 	}
 
 	/**
@@ -129,35 +145,16 @@ class SettingsRestEndpoint extends RestEndpoint {
 	 *
 	 * @param WP_REST_Request $request The request instance containing new settings.
 	 * @return WP_REST_Response The response containing updated settings or error details.
-	 * @throws \Exception When encoding updated settings fails.
 	 */
-	public function update_settings( WP_REST_Request $request ): WP_REST_Response {
-		try {
-			$data = $request->get_json_params();
-			$this->settings->update( $data );
-			$updated_data = $this->settings->get();
+	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+		$wp_data = $this->sanitize_for_wordpress(
+			$request->get_params(),
+			$this->field_map
+		);
 
-			// Verify JSON encoding.
-			$encoded = wp_json_encode( $updated_data );
-			if ( $encoded === false ) {
-				throw new \Exception( 'Failed to encode updated settings: ' . json_last_error_msg() );
-			}
+		$this->settings->from_array( $wp_data );
+		$this->settings->save();
 
-			return new WP_REST_Response(
-				array(
-					'success' => true,
-					'data'    => json_decode( $encoded, true ),
-				),
-				200
-			);
-		} catch ( \Exception $error ) {
-			return new WP_REST_Response(
-				array(
-					'success' => false,
-					'message' => $error->getMessage(),
-				),
-				500
-			);
-		}
+		return $this->get_details();
 	}
 }

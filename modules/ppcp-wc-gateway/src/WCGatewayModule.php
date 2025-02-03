@@ -15,6 +15,7 @@ use Throwable;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -62,6 +63,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 /**
  * Class WcGatewayModule
@@ -340,11 +342,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Update caches.
 				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_status instanceof DCCProductStatus );
-				$dcc_status->dcc_is_active();
+				$dcc_status->is_active();
 
 				$pui_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
 				assert( $pui_status instanceof PayUponInvoiceProductStatus );
-				$pui_status->pui_is_active();
+				$pui_status->is_active();
 			}
 		);
 
@@ -549,23 +551,37 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		);
 
 		add_filter(
-			'woocommerce_paypal_payments_rest_common_merchant_data',
-			function( array $features ) use ( $c ): array {
+			'woocommerce_paypal_payments_rest_common_merchant_features',
+			static function ( array $features ) use ( $c ) : array {
+				$is_connected = $c->get( 'settings.flag.is-connected' );
+
+				if ( ! $is_connected ) {
+					return $features;
+				}
+
 				$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
 				assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
-
-				$reference_transactions_enabled    = $billing_agreements_endpoint->reference_transaction_enabled();
-				$features['save_paypal_and_venmo'] = array(
-					'enabled' => $reference_transactions_enabled,
-				);
 
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
-				$dcc_enabled                                 = $dcc_product_status->dcc_is_active();
-				$features['advanced_credit_and_debit_cards'] = array(
-					'enabled' => $dcc_enabled,
+				$apms_product_status = $c->get( 'ppcp-local-apms.product-status' );
+				assert( $apms_product_status instanceof LocalApmProductStatus );
+
+				$features['save_paypal_and_venmo'] = array(
+					'enabled' => $billing_agreements_endpoint->reference_transaction_enabled(),
 				);
+
+				$features['advanced_credit_and_debit_cards'] = array(
+					'enabled' => $dcc_product_status->is_active(),
+				);
+
+				$features['alternative_payment_methods'] = array(
+					'enabled' => $apms_product_status->is_active(),
+				);
+
+				// When local APMs are available, then PayLater messaging is also available.
+				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
 
 				return $features;
 			}
@@ -625,7 +641,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					// Performing the full DCCProductStatus check only when on the gateway list page
 					// to avoid sending the API requests all the time.
 					( $is_our_page ||
-						( $is_gateways_list_page && $dcc_product_status->dcc_is_active() ) ||
+						( $is_gateways_list_page && $dcc_product_status->is_active() ) ||
 						( $settings->has( 'products_dcc_enabled' ) && $settings->get( 'products_dcc_enabled' ) )
 					)
 				) {
@@ -643,7 +659,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				if ( 'DE' === $shop_country &&
 					( $is_our_page ||
-						( $is_gateways_list_page && $pui_product_status->pui_is_active() ) ||
+						( $is_gateways_list_page && $pui_product_status->is_active() ) ||
 						( $settings->has( 'products_pui_enabled' ) && $settings->get( 'products_pui_enabled' ) )
 					)
 				) {

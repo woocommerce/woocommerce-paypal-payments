@@ -7,6 +7,9 @@
 .ppcp-r-container--onboarding {
 	--max-container-width: var(--max-width-onboarding);
 
+	margin-left: auto;
+	margin-right: auto;
+
 	.ppcp-r-inner-container {
 		max-width: var(--max-width-onboarding-content);
 	}

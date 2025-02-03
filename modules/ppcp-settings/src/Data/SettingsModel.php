@@ -9,93 +9,319 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
 
 /**
  * Class SettingsModel
  *
  * Handles the storage and retrieval of PayPal Commerce settings in WordPress options table.
- * Provides methods to get and update settings with proper type casting and default values.
  */
-class SettingsModel {
+class SettingsModel extends AbstractDataModel {
+
 	/**
-	 * WordPress option name for storing the settings.
+	 * Option key where settings are stored.
 	 *
 	 * @var string
 	 */
-	const OPTION_NAME = 'ppcp_settings';
+	protected const OPTION_KEY = 'woocommerce-ppcp-data-settings';
 
 	/**
-	 * Retrieves the formatted settings from WordPress options.
+	 * Valid options for subtotal adjustment.
 	 *
-	 * Loads the raw settings from wp_options table and formats them into a
-	 * standardized array structure with proper type casting.
-	 *
-	 * @return array The formatted settings array.
+	 * @var array
 	 */
-	public function get() : array {
-		$settings = get_option( self::OPTION_NAME, array() );
+	public const SUBTOTAL_ADJUSTMENT_OPTIONS = array( 'no_details', 'correction' );
 
-		$formatted = array(
-			'invoicePrefix'             => $settings['invoice_prefix'] ?? '',
-			'authorizeOnly'             => (bool) ( $settings['authorize_only'] ?? false ),
-			'captureVirtualOnlyOrders'  => (bool) ( $settings['capture_virtual_only_orders'] ?? false ),
-			'savePaypalAndVenmo'        => (bool) ( $settings['save_paypal_and_venmo'] ?? false ),
-			'saveCardDetails'           => (bool) ( $settings['save_credit_card_and_debit_card'] ?? false ),
-			'payNowExperience'          => (bool) ( $settings['pay_now_experience'] ?? false ),
-			'sandboxAccountCredentials' => (bool) ( $settings['sandbox_account_credentials'] ?? false ),
-			'sandboxMode'               => $settings['sandbox_mode'] ?? null,
-			'sandboxEnabled'            => (bool) ( $settings['sandbox_enabled'] ?? false ),
-			'sandboxClientId'           => $settings['sandbox_client_id'] ?? '',
-			'sandboxSecretKey'          => $settings['sandbox_secret_key'] ?? '',
-			'sandboxConnected'          => (bool) ( $settings['sandbox_connected'] ?? false ),
-			'logging'                   => (bool) ( $settings['logging'] ?? false ),
-			'subtotalAdjustment'        => $settings['subtotal_mismatch_fallback'] ?? null,
-			'brandName'                 => $settings['brand_name'] ?? '',
-			'softDescriptor'            => $settings['soft_descriptor'] ?? '',
-			'landingPage'               => $settings['paypal_landing_page'] ?? null,
-			'buttonLanguage'            => $settings['button_language'] ?? '',
-		);
+	/**
+	 * Valid options for landing page.
+	 *
+	 * @var array
+	 */
+	public const LANDING_PAGE_OPTIONS = array( 'any', 'login', 'guest_checkout' );
 
-		return $formatted;
+	/**
+	 * Data sanitizer service.
+	 *
+	 * @var DataSanitizer
+	 */
+	protected DataSanitizer $sanitizer;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param DataSanitizer $sanitizer Data sanitizer service.
+	 * @throws RuntimeException If the OPTION_KEY is not defined in the child class.
+	 */
+	public function __construct( DataSanitizer $sanitizer ) {
+		$this->sanitizer = $sanitizer;
+		parent::__construct();
 	}
 
 	/**
-	 * Updates the settings in WordPress options.
+	 * Get default values for the model.
 	 *
-	 * Converts the provided data array from camelCase to snake_case format
-	 * and saves it to wp_options table. Throws an exception if update fails.
-	 *
-	 * @param array $data The settings data to update.
-	 * @return void
-	 * @throws RuntimeException When the settings update fails.
+	 * @return array
 	 */
-	public function update( array $data ) : void {
-		$settings = array(
-			'invoice_prefix'                  => $data['invoicePrefix'] ?? '',
-			'authorize_only'                  => (bool) ( $data['authorizeOnly'] ?? false ),
-			'capture_virtual_only_orders'     => (bool) ( $data['captureVirtualOnlyOrders'] ?? false ),
-			'save_paypal_and_venmo'           => (bool) ( $data['savePaypalAndVenmo'] ?? false ),
-			'save_credit_card_and_debit_card' => (bool) ( $data['saveCardDetails'] ?? false ),
-			'pay_now_experience'              => (bool) ( $data['payNowExperience'] ?? false ),
-			'sandbox_account_credentials'     => (bool) ( $data['sandboxAccountCredentials'] ?? false ),
-			'sandbox_mode'                    => $data['sandboxMode'] ?? null,
-			'sandbox_enabled'                 => (bool) ( $data['sandboxEnabled'] ?? false ),
-			'sandbox_client_id'               => $data['sandboxClientId'] ?? '',
-			'sandbox_secret_key'              => $data['sandboxSecretKey'] ?? '',
-			'sandbox_connected'               => (bool) ( $data['sandboxConnected'] ?? false ),
-			'logging'                         => (bool) ( $data['logging'] ?? false ),
-			'subtotal_mismatch_fallback'      => $data['subtotalAdjustment'] ?? null,
-			'brand_name'                      => $data['brandName'] ?? '',
-			'soft_descriptor'                 => $data['softDescriptor'] ?? '',
-			'paypal_landing_page'             => $data['landingPage'] ?? null,
-			'button_language'                 => $data['buttonLanguage'] ?? '',
+	protected function get_defaults() : array {
+		return array(
+			// Free-form string values.
+			'invoice_prefix'         => '',
+			'brand_name'             => '',
+			'soft_descriptor'        => '',
+
+			// Enum-type string values.
+			'subtotal_adjustment'    => 'skip_details', // Options: [correction|no_details].
+			'landing_page'           => 'any',          // Options: [any|login|guest_checkout].
+			'button_language'        => '',             // empty or a 2-letter language code.
+
+			// Boolean flags.
+			'authorize_only'         => false,
+			'capture_virtual_orders' => false,
+			'save_paypal_and_venmo'  => false,
+			'save_card_details'      => false,
+			'enable_pay_now'         => false,
+			'enable_logging'         => false,
+
+			// Array of string values.
+			'disabled_cards'         => array(),
 		);
+	}
 
-		$result = update_option( self::OPTION_NAME, $settings );
+	/**
+	 * Gets the invoice prefix.
+	 *
+	 * @return string The invoice prefix.
+	 */
+	public function get_invoice_prefix() : string {
+		return $this->data['invoice_prefix'];
+	}
 
-		if ( ! $result ) {
-			throw new RuntimeException( 'Failed to update settings' );
-		}
+	/**
+	 * Sets the invoice prefix.
+	 *
+	 * @param string $prefix The invoice prefix to set.
+	 */
+	public function set_invoice_prefix( string $prefix ) : void {
+		$this->data['invoice_prefix'] = $this->sanitizer->sanitize_text( $prefix );
+	}
+
+	/**
+	 * Gets the brand name.
+	 *
+	 * @return string The brand name.
+	 */
+	public function get_brand_name() : string {
+		return $this->data['brand_name'];
+	}
+
+	/**
+	 * Sets the brand name.
+	 *
+	 * @param string $name The brand name to set.
+	 */
+	public function set_brand_name( string $name ) : void {
+		$this->data['brand_name'] = $this->sanitizer->sanitize_text( $name );
+	}
+
+	/**
+	 * Gets the soft descriptor.
+	 *
+	 * @return string The soft descriptor.
+	 */
+	public function get_soft_descriptor() : string {
+		return $this->data['soft_descriptor'];
+	}
+
+	/**
+	 * Sets the soft descriptor.
+	 *
+	 * @param string $descriptor The soft descriptor to set.
+	 */
+	public function set_soft_descriptor( string $descriptor ) : void {
+		$this->data['soft_descriptor'] = $this->sanitizer->sanitize_text( $descriptor );
+	}
+
+	/**
+	 * Gets the subtotal adjustment setting.
+	 *
+	 * @return string The subtotal adjustment setting.
+	 */
+	public function get_subtotal_adjustment() : string {
+		return $this->data['subtotal_adjustment'];
+	}
+
+	/**
+	 * Sets the subtotal adjustment setting.
+	 *
+	 * @param string $adjustment The subtotal adjustment to set.
+	 */
+	public function set_subtotal_adjustment( string $adjustment ) : void {
+		$this->data['subtotal_adjustment'] = $this->sanitizer->sanitize_enum( $adjustment, self::SUBTOTAL_ADJUSTMENT_OPTIONS );
+	}
+
+	/**
+	 * Gets the landing page setting.
+	 *
+	 * @return string The landing page setting.
+	 */
+	public function get_landing_page() : string {
+		return $this->data['landing_page'];
+	}
+
+	/**
+	 * Sets the landing page setting.
+	 *
+	 * @param string $page The landing page to set.
+	 */
+	public function set_landing_page( string $page ) : void {
+		$this->data['landing_page'] = $this->sanitizer->sanitize_enum( $page, self::LANDING_PAGE_OPTIONS );
+	}
+
+	/**
+	 * Gets the button language setting.
+	 *
+	 * @return string The button language.
+	 */
+	public function get_button_language() : string {
+		return $this->data['button_language'];
+	}
+
+	/**
+	 * Sets the button language.
+	 *
+	 * @param string $language The button language to set.
+	 */
+	public function set_button_language( string $language ) : void {
+		$this->data['button_language'] = $this->sanitizer->sanitize_text( $language );
+	}
+
+	/**
+	 * Gets the authorize only setting.
+	 *
+	 * @return bool True if authorize only is enabled, false otherwise.
+	 */
+	public function get_authorize_only() : bool {
+		return $this->data['authorize_only'];
+	}
+
+	/**
+	 * Sets the authorize only setting.
+	 *
+	 * @param bool $authorize Whether to enable authorize only.
+	 */
+	public function set_authorize_only( bool $authorize ) : void {
+		$this->data['authorize_only'] = $this->sanitizer->sanitize_bool( $authorize );
+	}
+
+	/**
+	 * Gets the capture virtual orders setting.
+	 *
+	 * @return bool True if capturing virtual orders is enabled, false otherwise.
+	 */
+	public function get_capture_virtual_orders() : bool {
+		return $this->data['capture_virtual_orders'];
+	}
+
+	/**
+	 * Sets the capture virtual orders setting.
+	 *
+	 * @param bool $capture Whether to capture virtual orders.
+	 */
+	public function set_capture_virtual_orders( bool $capture ) : void {
+		$this->data['capture_virtual_orders'] = $this->sanitizer->sanitize_bool( $capture );
+	}
+
+	/**
+	 * Gets the save PayPal and Venmo setting.
+	 *
+	 * @return bool True if saving PayPal and Venmo is enabled, false otherwise.
+	 */
+	public function get_save_paypal_and_venmo() : bool {
+		return $this->data['save_paypal_and_venmo'];
+	}
+
+	/**
+	 * Sets the save PayPal and Venmo setting.
+	 *
+	 * @param bool $save Whether to save PayPal and Venmo.
+	 */
+	public function set_save_paypal_and_venmo( bool $save ) : void {
+		$this->data['save_paypal_and_venmo'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Gets the save card details setting.
+	 *
+	 * @return bool True if saving card details is enabled, false otherwise.
+	 */
+	public function get_save_card_details() : bool {
+		return $this->data['save_card_details'];
+	}
+
+	/**
+	 * Sets the save card details setting.
+	 *
+	 * @param bool $save Whether to save card details.
+	 */
+	public function set_save_card_details( bool $save ) : void {
+		$this->data['save_card_details'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Gets the enable Pay Now setting.
+	 *
+	 * @return bool True if Pay Now is enabled, false otherwise.
+	 */
+	public function get_enable_pay_now() : bool {
+		return $this->data['enable_pay_now'];
+	}
+
+	/**
+	 * Sets the enable Pay Now setting.
+	 *
+	 * @param bool $enable Whether to enable Pay Now.
+	 */
+	public function set_enable_pay_now( bool $enable ) : void {
+		$this->data['enable_pay_now'] = $this->sanitizer->sanitize_bool( $enable );
+	}
+
+	/**
+	 * Gets the enable logging setting.
+	 *
+	 * @return bool True if logging is enabled, false otherwise.
+	 */
+	public function get_enable_logging() : bool {
+		return $this->data['enable_logging'];
+	}
+
+	/**
+	 * Sets the enable logging setting.
+	 *
+	 * @param bool $enable Whether to enable logging.
+	 */
+	public function set_enable_logging( bool $enable ) : void {
+		$this->data['enable_logging'] = $this->sanitizer->sanitize_bool( $enable );
+	}
+
+	/**
+	 * Gets the disabled cards.
+	 *
+	 * @return array The array of disabled cards.
+	 */
+	public function get_disabled_cards() : array {
+		return $this->data['disabled_cards'];
+	}
+
+	/**
+	 * Sets the disabled cards.
+	 *
+	 * @param array $cards The array of cards to disable.
+	 */
+	public function set_disabled_cards( array $cards ) : void {
+		$this->data['disabled_cards'] = array_map(
+			array( $this->sanitizer, 'sanitize_text' ),
+			$cards
+		);
 	}
 }

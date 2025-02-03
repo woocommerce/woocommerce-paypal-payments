@@ -15,6 +15,7 @@ const TopNavigation = ( {
 	onTitleClick = null,
 	showProgressBar = false,
 	progressBarPercent = 0,
+	subNavigation = null,
 } ) => {
 	const { goToWooCommercePaymentsTab } = useNavigation();
 	const { isScrolled } = useIsScrolled();
@@ -40,35 +41,43 @@ const TopNavigation = ( {
 	}, [] );
 
 	return (
-		<div className={ className }>
-			<div className="ppcp-r-navigation">
-				<BusyStateWrapper
-					className="ppcp-r-navigation--left"
-					busySpinner={ false }
-					enabled={ ! exitOnTitleClick }
-				>
-					<Button
-						variant="link"
-						onClick={ handleTitleClick }
-						className="is-title"
+		<>
+			<nav className={ className }>
+				<div className="ppcp-r-navigation">
+					<BusyStateWrapper
+						className="ppcp-r-navigation--left"
+						busySpinner={ false }
+						enabled={ ! exitOnTitleClick }
 					>
-						<Icon icon={ chevronLeft } />
-						<span className={ titleClassName }>{ title }</span>
-					</Button>
-				</BusyStateWrapper>
+						<Button
+							variant="link"
+							onClick={ handleTitleClick }
+							className="is-title"
+						>
+							<Icon icon={ chevronLeft } />
+							<span className={ titleClassName }>{ title }</span>
+						</Button>
+					</BusyStateWrapper>
 
-				<BusyStateWrapper
-					className="ppcp-r-navigation--right"
-					busySpinner={ false }
-				>
-					{ children }
-				</BusyStateWrapper>
+					<BusyStateWrapper
+						className="ppcp-r-navigation--right"
+						busySpinner={ false }
+					>
+						{ children }
+					</BusyStateWrapper>
+				</div>
+
+				{ subNavigation && (
+					<section className="ppcp--top-sub-navigation">
+						{ subNavigation }
+					</section>
+				) }
 
 				{ showProgressBar && (
 					<ProgressBar percent={ progressBarPercent } />
 				) }
-			</div>
-		</div>
+			</nav>
+		</>
 	);
 };
 

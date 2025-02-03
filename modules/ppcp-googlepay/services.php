@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -75,7 +75,7 @@ return array(
 			return new ApmProductStatus(
 				$container->get( 'wcgateway.settings' ),
 				$container->get( 'api.endpoint.partners' ),
-				$container->get( 'onboarding.state' ),
+				$container->get( 'settings.flag.is-connected' ),
 				$container->get( 'api.helper.failure-registry' )
 			);
 		}

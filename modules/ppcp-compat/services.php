@@ -130,13 +130,6 @@ return array(
 		return array(
 			new SettingsMap(
 				$container->get( 'settings.data.general' ),
-				array(
-					'client_id'     => 'client_id',
-					'client_secret' => 'client_secret',
-				)
-			),
-			new SettingsMap(
-				$container->get( 'settings.data.general' ),
 				/**
 				 * The new GeneralSettings class stores the current connection
 				 * details, without adding an environment-suffix (no `_sandbox`
@@ -145,7 +138,10 @@ return array(
 				 * the credentials are used for.
 				 */
 				array(
-					'is_sandbox'             => 'sandbox_merchant',
+					'merchant_id'            => 'merchant_id',
+					'client_id'              => 'client_id',
+					'client_secret'          => 'client_secret',
+					'sandbox_on'             => 'sandbox_merchant',
 					'live_client_id'         => 'client_id',
 					'live_client_secret'     => 'client_secret',
 					'live_merchant_id'       => 'merchant_id',

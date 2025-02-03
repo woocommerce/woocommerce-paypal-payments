@@ -4,8 +4,18 @@ import * as Common from './common';
 import * as Payment from './payment';
 import * as Settings from './settings';
 import * as Styling from './styling';
+import * as Todos from './todos';
+import * as PayLaterMessaging from './pay-later-messaging';
 
-const stores = [ Onboarding, Common, Payment, Settings, Styling ];
+const stores = [
+	Onboarding,
+	Common,
+	Payment,
+	Settings,
+	Styling,
+	Todos,
+	PayLaterMessaging,
+];
 
 stores.forEach( ( store ) => {
 	try {
@@ -28,12 +38,16 @@ export const CommonHooks = Common.hooks;
 export const PaymentHooks = Payment.hooks;
 export const SettingsHooks = Settings.hooks;
 export const StylingHooks = Styling.hooks;
+export const TodosHooks = Todos.hooks;
+export const PayLaterMessagingHooks = PayLaterMessaging.hooks;
 
 export const OnboardingStoreName = Onboarding.STORE_NAME;
 export const CommonStoreName = Common.STORE_NAME;
 export const PaymentStoreName = Payment.STORE_NAME;
 export const SettingsStoreName = Settings.STORE_NAME;
 export const StylingStoreName = Styling.STORE_NAME;
+export const TodosStoreName = Todos.STORE_NAME;
+export const PayLaterMessagingStoreName = PayLaterMessaging.STORE_NAME;
 
 export * from './configuration';
 

@@ -1,74 +1,80 @@
-.ppcp-r-settings-block__payment-methods {
-	&.ppcp-r-settings-block {
-		display: flex;
-		flex-wrap: wrap;
-		flex-direction: row;
-		gap: 16px;
+// Grid layout.
+.ppcp-r-settings-block.ppcp--grid > .ppcp--content {
+	--block-separator-gap: 0;
+
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 16px;
+
+	@media screen and (max-width: 767px) {
+		grid-template-columns: repeat(2, 1fr);
 	}
 
-	&__item {
+	@media screen and (max-width: 480px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+// Theming & visual styles.
+.ppcp-r-settings-block__payment-methods {
+	.ppcp-r-settings-block {
 		display: flex;
 		align-items: flex-start;
-		width: calc(100% / 3 - 32px / 3);
 		border: 1px solid $color-gray-300;
+		border-radius: var(--container-border-radius);
 		padding: 16px;
-		border-radius: 8px;
 		min-height: 200px;
 
-		@media screen and (max-width: 767px) {
-		    width: calc(50% - 8px);
-		}
-
-		@media screen and (max-width: 480px) {
-		    width: 100%;
-		}
-
-		&__inner {
+		.ppcp--method-inner {
 			display: flex;
 			flex-direction: column;
 			height: 100%;
 		}
 
-		&__title-wrapper {
+		.ppcp--method-title-wrapper {
 			display: flex;
 			align-items: center;
 			margin: 0 0 8px 0;
 			gap: 12px;
 		}
 
-		&__description {
+		.ppcp--method-description {
 			p {
+				@include font(13, 20, 400);
 				margin: 0;
 				color: $color-text-tertiary;
-				@include font(13, 20, 400);
 			}
 
 			margin: 0 0 12px 0;
 		}
 
-		&__title {
+		.ppcp--method-title {
 			@include font(13, 20, 500);
 			color: $color-black;
 			display: block;
 		}
 
-		&__settings {
-			line-height: 0;
+		.ppcp--method-settings {
+			padding: 0;
 			transition: 0.2s ease-out transform;
 			transform: rotate(0deg);
 			zoom: 1.005;
 
 			&:hover {
 				transform: rotate(45deg);
-				cursor: pointer;
 			}
+		}
+
+		.ppcp--method-icon {
+			width: 30px;
+			height: 30px;
 		}
 
 		button.is-secondary {
 			@include small-button;
 		}
 
-		&__footer {
+		.ppcp--method-footer {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;

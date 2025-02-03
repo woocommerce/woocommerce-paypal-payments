@@ -20,7 +20,7 @@ const StylingSection = ( {
 			separatorAndGap={ separatorAndGap }
 		>
 			<Header>
-				<Title altStyle={ true } big={ bigTitle }>
+				<Title noCaps={ true } big={ bigTitle }>
 					{ title }
 				</Title>
 				<Description>{ description }</Description>

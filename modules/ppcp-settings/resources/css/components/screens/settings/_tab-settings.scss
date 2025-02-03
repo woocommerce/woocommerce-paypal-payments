@@ -7,3 +7,25 @@
 	--block-header-gap: 0;
 	--block-separator-size: 0;
 }
+
+.ppcp--webhooks {
+	.ppcp--webhook-list li {
+		list-style: none;
+
+		&::before {
+			content: '✔︎';
+			opacity: 0.35;
+			font-size: 0.75em;
+			line-height: 1.35;
+			display: inline-block;
+			margin-right: 8px;
+		}
+	}
+}
+.ppcp--webhook-resubscribe,
+.ppcp--webhook-simulation {
+	.ppcp--action .components-button {
+		min-width: 160px;
+		display: block;
+	}
+}

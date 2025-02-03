@@ -49,10 +49,12 @@ const OptionItem = ( {
 } ) => {
 	const boxClassName = classNames( 'ppcp-r-select-box', {
 		'ppcp--selected': isSelected,
+		'ppcp--multiselect': isMulti,
 	} );
 
 	return (
-		<div className={ boxClassName }>
+		// eslint-disable-next-line jsx-a11y/label-has-associated-control -- label has a nested input control.
+		<label className={ boxClassName }>
 			<InputField
 				value={ itemValue }
 				isRadio={ ! isMulti }
@@ -60,22 +62,18 @@ const OptionItem = ( {
 				isSelected={ isSelected }
 			/>
 
-			<div className="ppcp-r-select-box__content">
-				<div className="ppcp-r-select-box__content-inner">
-					<span className="ppcp-r-select-box__title">
-						{ itemTitle }
-					</span>
-					<p className="ppcp-r-select-box__description">
+			<div className="ppcp--box-content">
+				<div className="ppcp--box-content-inner">
+					<span className="ppcp--box-title">{ itemTitle }</span>
+					<div className="ppcp--box-description">
 						{ itemDescription }
-					</p>
+					</div>
 					{ children && (
-						<div className="ppcp-r-select-box__additional-content">
-							{ children }
-						</div>
+						<div className="ppcp--box-details">{ children }</div>
 					) }
 				</div>
 			</div>
-		</div>
+		</label>
 	);
 };
 

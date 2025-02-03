@@ -168,7 +168,7 @@ class SectionsRenderer {
 			}
 		}
 
-		if ( ! $this->dcc_product_status->dcc_is_active() || ! $this->dcc_applies->for_country_currency() ) {
+		if ( ! $this->dcc_product_status->is_active() || ! $this->dcc_applies->for_country_currency() ) {
 			unset( $sections['ppcp-credit-card-gateway'] );
 		}
 
@@ -176,7 +176,7 @@ class SectionsRenderer {
 			unset( $sections[ Settings::PAY_LATER_TAB_ID ] );
 		}
 
-		if ( ! $this->pui_product_status->pui_is_active() ) {
+		if ( ! $this->pui_product_status->is_active() ) {
 			unset( $sections[ PayUponInvoiceGateway::ID ] );
 		}
 

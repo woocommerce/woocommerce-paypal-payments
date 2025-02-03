@@ -21,25 +21,28 @@ const useHooks = () => {
 	// Persistent accessors.
 	const [ invoicePrefix, setInvoicePrefix ] =
 		usePersistent( 'invoicePrefix' );
+	const [ brandName, setBrandName ] = usePersistent( 'brandName' );
+	const [ softDescriptor, setSoftDescriptor ] =
+		usePersistent( 'softDescriptor' );
+
+	const [ subtotalAdjustment, setSubtotalAdjustment ] =
+		usePersistent( 'subtotalAdjustment' );
+	const [ landingPage, setLandingPage ] = usePersistent( 'landingPage' );
+	const [ buttonLanguage, setButtonLanguage ] =
+		usePersistent( 'buttonLanguage' );
+
 	const [ authorizeOnly, setAuthorizeOnly ] =
 		usePersistent( 'authorizeOnly' );
 	const [ captureVirtualOnlyOrders, setCaptureVirtualOnlyOrders ] =
-		usePersistent( 'captureVirtualOnlyOrders' );
+		usePersistent( 'captureVirtualOrders' );
 	const [ savePaypalAndVenmo, setSavePaypalAndVenmo ] =
 		usePersistent( 'savePaypalAndVenmo' );
 	const [ saveCardDetails, setSaveCardDetails ] =
 		usePersistent( 'saveCardDetails' );
 	const [ payNowExperience, setPayNowExperience ] =
-		usePersistent( 'payNowExperience' );
-	const [ logging, setLogging ] = usePersistent( 'logging' );
-	const [ subtotalAdjustment, setSubtotalAdjustment ] =
-		usePersistent( 'subtotalAdjustment' );
-	const [ brandName, setBrandName ] = usePersistent( 'brandName' );
-	const [ softDescriptor, setSoftDescriptor ] =
-		usePersistent( 'softDescriptor' );
-	const [ landingPage, setLandingPage ] = usePersistent( 'landingPage' );
-	const [ buttonLanguage, setButtonLanguage ] =
-		usePersistent( 'buttonLanguage' );
+		usePersistent( 'enablePayNow' );
+	const [ logging, setLogging ] = usePersistent( 'enableLogging' );
+
 	const [ disabledCards, setDisabledCards ] =
 		usePersistent( 'disabledCards' );
 

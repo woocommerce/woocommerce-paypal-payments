@@ -24,6 +24,7 @@ const Checkbox = ( {
 
 	return (
 		<CheckboxControl
+			__nextHasNoMarginBottom={ true }
 			label={ label }
 			value={ value }
 			checked={ checked }

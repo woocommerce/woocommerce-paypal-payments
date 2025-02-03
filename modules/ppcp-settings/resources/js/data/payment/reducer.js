@@ -57,6 +57,20 @@ const reducer = createReducer( defaultTransient, defaultPersistent, {
 	[ ACTION_TYPES.SET_PERSISTENT ]: ( state, payload ) =>
 		changePersistent( state, payload ),
 
+	[ ACTION_TYPES.CHANGE_PAYMENT_SETTING ]: ( state, payload ) => {
+		const methodId = payload.id;
+		const oldProps = state.data[ methodId ];
+
+		if ( ! oldProps || oldProps.id !== methodId ) {
+			return state;
+		}
+
+		return changePersistent( state, {
+			...state,
+			[ methodId ]: { ...oldProps, ...payload.props },
+		} );
+	},
+
 	[ ACTION_TYPES.RESET ]: ( state ) => {
 		const cleanState = changeTransient(
 			changePersistent( state, defaultPersistent ),

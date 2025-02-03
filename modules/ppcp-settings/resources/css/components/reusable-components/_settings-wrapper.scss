@@ -1,29 +1,26 @@
-.ppcp-r {
-	&-container {
-		max-width: var(--max-container-width, none);
-		margin-left: auto;
-		margin-right: auto;
+.ppcp-r-container {
+	max-width: var(--max-container-width, none);
+	margin: 0 auto 0 35px;
+}
+
+.ppcp-r-inner-container {
+	margin-left: auto;
+	margin-right: auto;
+	padding: 0 16px 48px;
+	box-sizing: content-box;
+
+	@media screen and (max-width: 480px) {
+		padding-bottom: 36px;
+	}
+}
+
+.ppcp-r-settings {
+	> * {
+		margin-bottom: $card-vertical-gap;
 	}
 
-	&-inner-container {
-		margin-left: auto;
-		margin-right: auto;
-		padding: 0 16px 48px;
-		box-sizing: content-box;
-
-		@media screen and (max-width: 480px) {
-			padding-bottom: 36px;
-		}
-	}
-
-	&-settings {
-		 > * {
-			margin-bottom: $card-vertical-gap;
-		}
-
-		 > *:not(:last-child) {
-			padding-bottom: $card-vertical-gap;
-			border-bottom: 1px solid $color-gray-200;
-		}
+	> *:not(:last-child) {
+		padding-bottom: $card-vertical-gap;
+		border-bottom: 1px solid $color-gray-200;
 	}
 }

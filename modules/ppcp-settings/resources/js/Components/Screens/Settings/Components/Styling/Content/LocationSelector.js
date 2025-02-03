@@ -49,7 +49,7 @@ const LocationSelector = ( { location, setLocation } ) => {
 				) }
 			</SelectStylingSection>
 			<CheckboxStylingSection
-				className="location-activation"
+				name="location-activation"
 				separatorAndGap={ false }
 				options={ [ activateCheckbox ] }
 				value={ isActive }

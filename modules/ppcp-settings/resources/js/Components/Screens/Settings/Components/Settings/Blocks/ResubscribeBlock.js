@@ -59,6 +59,7 @@ const ResubscribeBlock = () => {
 				'woocommerce-paypal-payments'
 			) }
 			horizontalLayout={ true }
+			className="ppcp--webhook-resubscribe"
 		>
 			<ControlButton
 				type={ 'secondary' }

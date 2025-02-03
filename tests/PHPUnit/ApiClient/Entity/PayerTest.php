@@ -18,7 +18,7 @@ class PayerTest extends TestCase
             ->andReturn(['address']);
 	    $address
 		    ->expects('country_code')
-		    ->andReturn('UK');
+		    ->andReturn('GB');
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
             ->expects('to_array')
@@ -70,7 +70,7 @@ class PayerTest extends TestCase
             ->andReturn(['address']);
 	    $address
 		    ->expects('country_code')
-		    ->andReturn('UK');
+		    ->andReturn('GB');
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
             ->expects('to_array')
@@ -110,7 +110,7 @@ class PayerTest extends TestCase
             ->andReturn(['address']);
 	    $address
 		    ->expects('country_code')
-		    ->andReturn('UK');
+		    ->andReturn('GB');
         $phone = null;
         $taxInfo = Mockery::mock(PayerTaxInfo::class);
         $taxInfo
@@ -147,7 +147,7 @@ class PayerTest extends TestCase
             ->andReturn(['address']);
 	    $address
 		    ->expects('country_code')
-		    ->andReturn('UK');
+		    ->andReturn('GB');
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
             ->expects('to_array')
@@ -184,7 +184,7 @@ class PayerTest extends TestCase
             ->andReturn(['address']);
 	    $address
 		    ->expects('country_code')
-		    ->andReturn('UK');
+		    ->andReturn('GB');
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
             ->expects('to_array')

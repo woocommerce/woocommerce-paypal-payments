@@ -1,24 +1,33 @@
+$margin_bottom: 48px;
+
 .ppcp-r-navigation-container {
+	// Theming.
+	--wp-components-color-accent: #{$color-blueberry};
+	--color-text: #{$color-gray-900};
+	--color-disabled: #CCC;
+	--navbar-height: 40px;
+	--navbar-vertical-padding: 10px;
+	--subnavigation-height: 40px;
+
+	// Styling.
 	position: sticky;
 	top: var(--wp-admin--admin-bar--height);
 	z-index: 10;
 
-	padding: 10px 48px;
-	margin: 0 -20px 48px -20px;
+	padding: 0 48px;
+	margin: 0 -20px #{$margin_bottom} -20px;
 
 	box-shadow: 0 -1px 0 0 $color-gray-300 inset;
 	background: var(--ppcp-color-app-bg);
 	transition: box-shadow 0.3s;
 
-	--wp-components-color-accent: #{$color-blueberry};
-	--color-text: #{$color-gray-900};
-	--color-disabled: #CCC;
-
 	.ppcp-r-navigation {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		height: 40px;
+		flex-direction: row;
+		height: calc(var(--navbar-height) + (2 * var(--navbar-vertical-padding)));
+		padding: var(--navbar-vertical-padding) 0;
 
 		.components-button {
 			@include font(13, 20, 400);
@@ -57,30 +66,44 @@
 				}
 			}
 		}
+	}
 
-		&--left {
-			align-items: center;
-			display: inline-flex;
-		}
+	.ppcp-r-navigation--left {
+		align-items: center;
+		display: inline-flex;
+	}
 
-		&--right {
-			.is-link {
-				padding: 10px 16px;
-			}
+	.ppcp-r-navigation--right {
+		.is-link {
+			padding: 10px 16px;
 		}
+	}
 
-		&--progress-bar {
-			position: absolute;
-			bottom: 0;
-			left: 0;
-			background-color: var(--wp-components-color-accent);
-			height: 4px;
-			transition: width 0.3s;
-		}
+	.ppcp-r-navigation--progress-bar {
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		background-color: var(--wp-components-color-accent);
+		height: 4px;
+		transition: width 0.3s;
 	}
 
 	&.ppcp--is-scrolled {
 		box-shadow: 0 -1px 0 0 $color-gray-300 inset, 0 8px 8px 0 rgba(85, 93, 102, .3);
+	}
+
+	.ppcp--top-sub-navigation {
+		height: var(--subnavigation-height);
+		margin: 0;
+		padding: 0;
+
+		.ppcp-r-tabs {
+			margin: 0;
+		}
+
+		.components-tab-panel__tabs-item {
+			height: var(--subnavigation-height);
+		}
 	}
 
 	@media screen and (max-width: 782px) {

@@ -19,7 +19,6 @@ $color-divider: #F0F0F0;
 $color-error-red: #cc1818;
 
 $shadow-card: 0 3px 6px 0 rgba(0, 0, 0, 0.15);
-$shadow-selection-box: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
 $color-gradient-dark: #001435;
 $gradient-header: linear-gradient(87.03deg, #003087 -0.49%, #001E51 29.22%, $color-gradient-dark 100%);
 
@@ -71,4 +70,15 @@ $card-vertical-gap: 48px;
 	--block-separator-size: 1px;
 	--block-separator-color: var(--color-gray-200);
 	--block-action-gap: 16px; // Space between two consecutive action blocks.
+
+	// Default visual effects.
+	--box-shadow-active-item: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+	--container-border-radius: 8px;
+
+	// Spinner/loader.
+	--spinner-size: 20px;
+	--spinner-overlay-width: 320px;
+	--spinner-overlay-height: 320px;
+	--spinner-overlay-color: #fafafa;
+	--spinner-overlay-box-shadow: var(--box-shadow-active-item);
 }

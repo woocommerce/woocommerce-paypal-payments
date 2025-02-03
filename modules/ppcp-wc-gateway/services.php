@@ -21,7 +21,7 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
@@ -570,10 +570,10 @@ return array(
 		$settings         = $container->get( 'wcgateway.settings' );
 		$fields           = $container->get( 'wcgateway.settings.fields' );
 		$webhook_registrar = $container->get( 'webhook.registrar' );
-		$state            = $container->get( 'onboarding.state' );
-		$cache = new Cache( 'ppcp-paypal-bearer' );
-		$bearer = $container->get( 'api.bearer' );
-		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+		$state             = $container->get( 'onboarding.state' );
+		$cache             = $container->get( 'api.paypal-bearer-cache' );
+		$bearer            = $container->get( 'api.bearer' );
+		$page_id           = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$signup_link_cache = $container->get( 'onboarding.signup-link-cache' );
 		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
 		$pui_status_cache = $container->get( 'pui.status-cache' );
@@ -1431,7 +1431,7 @@ return array(
 			$partner_endpoint,
 			$container->get( 'dcc.status-cache' ),
 			$container->get( 'api.helpers.dccapplies' ),
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
@@ -1515,7 +1515,7 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'pui.status-cache' ),
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
@@ -1659,9 +1659,12 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof ContainerInterface );
 
-		return $settings->has( 'allow_card_button_gateway' ) ?
+		return apply_filters(
+			'woocommerce_paypal_payments_enable_standard_card_button_gateway_settings',
+			$settings->has( 'allow_card_button_gateway' ) ?
 			(bool) $settings->get( 'allow_card_button_gateway' ) :
-			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' );
+			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' )
+		);
 	},
 	'wcgateway.settings.has_enabled_separate_button_gateways' => static function ( ContainerInterface $container ): bool {
 		return (bool) $container->get( 'wcgateway.settings.allow_card_button_gateway' );
@@ -1725,7 +1728,7 @@ return array(
 		$environment = $container->get( 'onboarding.environment' );
 		assert( $environment instanceof Environment );
 
-		$dcc_enabled = $dcc_product_status->dcc_is_active();
+		$dcc_enabled = $dcc_product_status->is_active();
 
 		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
@@ -1796,7 +1799,7 @@ return array(
 		$environment = $container->get( 'onboarding.environment' );
 		assert( $environment instanceof Environment );
 
-		$pui_enabled = $pui_product_status->pui_is_active();
+		$pui_enabled = $pui_product_status->is_active();
 
 		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );

@@ -4,7 +4,7 @@ import { CommonHooks } from '../../../../../../data';
 import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 import { Title } from '../../../../../ReusableComponents/Elements';
 
-const HooksTableBlock = () => {
+const HooksListBlock = () => {
 	const { webhooks } = CommonHooks.useWebhooks();
 	const { url, events } = webhooks;
 
@@ -13,7 +13,7 @@ const HooksTableBlock = () => {
 	}
 
 	return (
-		<SettingsBlock separatorAndGap={ false }>
+		<SettingsBlock separatorAndGap={ false } className="ppcp--webhooks">
 			<WebhookUrl url={ url } />
 			<WebhookEvents events={ events } />
 		</SettingsBlock>
@@ -37,7 +37,7 @@ const WebhookEvents = ( { events } ) => {
 			<Title>
 				{ __( 'Subscribed Events', 'woocommerce-paypal-payments' ) }
 			</Title>
-			<ul>
+			<ul className="ppcp--webhook-list">
 				{ events.map( ( event, index ) => (
 					<li key={ index }>{ event }</li>
 				) ) }
@@ -46,4 +46,4 @@ const WebhookEvents = ( { events } ) => {
 	);
 };
 
-export default HooksTableBlock;
+export default HooksListBlock;

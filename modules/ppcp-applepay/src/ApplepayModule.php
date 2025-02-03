@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -183,7 +183,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		);
 
 		add_filter(
-			'woocommerce_paypal_payments_rest_common_merchant_data',
+			'woocommerce_paypal_payments_rest_common_merchant_features',
 			function( array $features ) use ( $c ): array {
 				$product_status = $c->get( 'applepay.apple-product-status' );
 				assert( $product_status instanceof AppleProductStatus );

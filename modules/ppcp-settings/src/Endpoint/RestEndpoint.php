@@ -102,6 +102,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 			$source_key    = $details['js_name'] ?? '';
 			$sanitation_cb = $details['sanitize'] ?? null;
 
+			// Skip missing values, skip "null" values, skip "read_only" values.
 			if (
 				! $source_key
 				|| ! isset( $params[ $source_key ] )
@@ -114,8 +115,11 @@ abstract class RestEndpoint extends WC_REST_Controller {
 
 			if ( null === $sanitation_cb ) {
 				$sanitized[ $key ] = $value;
-			} elseif ( is_string( $sanitation_cb ) && method_exists( $this, $sanitation_cb ) ) {
-				$sanitized[ $key ] = $this->{$sanitation_cb}( $value, $key );
+				continue;
+			}
+
+			if ( is_string( $sanitation_cb ) && method_exists( $this, $sanitation_cb ) ) {
+				$sanitized[ $key ] = $this->{$sanitation_cb}( $value );
 			} elseif ( is_callable( $sanitation_cb ) ) {
 				$sanitized[ $key ] = $sanitation_cb( $value, $key );
 			}
@@ -158,10 +162,11 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * @param mixed $value The value to sanitize.
 	 *
-	 * @return bool|null The boolean value, or null if not set.
+	 * @return bool The boolean value.
+	 * @todo Switch to the DataSanitizer class.
 	 */
-	public function to_boolean( $value ) : ?bool {
-		return $value !== null ? (bool) $value : null;
+	public function to_boolean( $value ) : bool {
+		return (bool) $value;
 	}
 
 	/**
@@ -169,13 +174,10 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	 *
 	 * @param mixed $value The value to sanitize.
 	 *
-	 * @return int|float|null The numeric value, or null if not set.
+	 * @return int The numeric value.
+	 * @todo Switch to the DataSanitizer class.
 	 */
-	public function to_number( $value ) {
-		if ( $value !== null ) {
-			$value = is_numeric( $value ) ? $value + 0 : null;
-		}
-
-		return $value;
+	public function to_number( $value ) : int {
+		return (int) $value;
 	}
 }

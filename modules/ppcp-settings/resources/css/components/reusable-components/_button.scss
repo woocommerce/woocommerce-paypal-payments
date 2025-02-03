@@ -38,6 +38,8 @@ button.components-button, a.components-button {
 
 	/* style the button template */
 
+	text-align: center;
+
 	&:not(:disabled) {
 		@extend %button-style-default;
 	}

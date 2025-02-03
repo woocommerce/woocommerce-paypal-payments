@@ -8,6 +8,7 @@ import * as actions from './actions';
 import * as hooks from './hooks';
 import { resolvers } from './resolvers';
 import { controls } from './controls';
+import { initTodoSync } from '../sync/todo-state-sync';
 
 /**
  * Initializes and registers the settings store with WordPress data layer.
@@ -25,6 +26,9 @@ export const initStore = () => {
 	} );
 
 	register( store );
+
+	// Initialize todo sync after store registration. Potentially should be moved elsewhere.
+	initTodoSync();
 
 	return Boolean( wp.data.select( STORE_NAME ) );
 };

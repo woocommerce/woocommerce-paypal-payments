@@ -11,6 +11,8 @@ body:has(.ppcp-r-container--onboarding) {
 	.nav-tab-wrapper.woo-nav-tab-wrapper,
 	.woocommerce-layout__header,
 	.wrap.woocommerce form > h2,
+	#mainform .subsubsub,
+	#mainform .subsubsub + br.clear,
 	#screen-meta-links {
 		display: none !important;
 		visibility: hidden;

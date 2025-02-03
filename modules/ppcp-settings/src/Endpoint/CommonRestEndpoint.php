@@ -218,7 +218,7 @@ class CommonRestEndpoint extends RestEndpoint {
 
 		if ( $this->settings->is_merchant_connected() ) {
 			$extra_data['features'] = apply_filters(
-				'woocommerce_paypal_payments_rest_common_merchant_data',
+				'woocommerce_paypal_payments_rest_common_merchant_features',
 				array(),
 			);
 		}
