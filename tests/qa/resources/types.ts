@@ -57,12 +57,34 @@ export namespace PcpSettings {
 	export type Oxxo = { [ key: string ]: any };
 
 	export type PayUponInvoice = { [ key: string ]: any };
+	
+	export type OnboardingStepTitle =
+		| 'PayPal Payments'
+		| 'Set up store type'
+		| 'Select product types'
+		| 'Choose checkout options'
+		| 'Connect your PayPal account';
+
+	export type OnboardingAdvancedOptions = {
+		enableSandboxMode: boolean;
+		enableManualConnection: boolean;
+		merchant: PcpMerchant;
+	};
+
+	export type OnboardingProductTypes = {
+		enableVirtual: boolean;
+		enablePhysicalGoods: boolean;
+	};
+
+	export type OnboardingCheckoutOptions = {
+		enableOptionalPaymentMethods: boolean;
+	};
 }
 
 export type PcpConfig = {
 	merchant?: PcpMerchant;
 	clearPCPDB?: boolean;
-	merchantIsDisconnected?: boolean;
+	disconnectMerchant?: boolean;
 	enablePayUponInvoice?: boolean;
 	standardPayments?: PcpSettings.StandardPayments;
 	payLater?: PcpSettings.PayLater;

@@ -8,3 +8,4 @@ export * from './pcp-settings-page';
 export * from './standard-card-button';
 export * from './standard-payments';
 export * from './woocommerce-subscription-edit';
+export * from './pcp-onboarding';

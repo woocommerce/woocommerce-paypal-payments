@@ -6,21 +6,12 @@ import {
 	RequestUtils,
 	Plugins,
 	WooCommerceUtils,
-	Login,
 	restLogin,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import {
-	Connection,
-	StandardPayments,
-	PayLater,
-	AdvancedCardProcessing,
-	StandardCardButton,
-	OXXO,
-	PayUponInvoice,
-} from './admin';
+import { PcpOnboarding } from './admin';
 import {
 	PayForOrder,
 	Checkout,
@@ -31,7 +22,6 @@ import {
 } from './frontend';
 import {
 	subscriptionsPlugin,
-	disableNoncePlugin,
 	wpDebuggingPlugin,
 	pcpPlugin,
 	PcpMerchant,
@@ -45,13 +35,7 @@ export class Utils {
 	requestUtils: RequestUtils;
 	wooCommerceApi: WooCommerceApi;
 	visitorWooCommerceApi: WooCommerceApi;
-	connection: Connection;
-	standardPayments: StandardPayments;
-	payLater: PayLater;
-	advancedCardProcessing: AdvancedCardProcessing;
-	standardCardButton: StandardCardButton;
-	oxxo: OXXO;
-	payUponInvoice: PayUponInvoice;
+	pcpOnboarding: PcpOnboarding;
 	payForOrder: PayForOrder;
 	checkout: Checkout;
 	classicCheckout: ClassicCheckout;
@@ -64,13 +48,7 @@ export class Utils {
 		wooCommerceUtils,
 		requestUtils,
 		wooCommerceApi,
-		connection,
-		standardPayments,
-		payLater,
-		advancedCardProcessing,
-		standardCardButton,
-		oxxo,
-		payUponInvoice,
+		pcpOnboarding,
 		payForOrder,
 		checkout,
 		classicCheckout,
@@ -83,13 +61,7 @@ export class Utils {
 		this.wooCommerceUtils = wooCommerceUtils;
 		this.requestUtils = requestUtils;
 		this.wooCommerceApi = wooCommerceApi;
-		this.connection = connection;
-		this.standardPayments = standardPayments;
-		this.payLater = payLater;
-		this.oxxo = oxxo;
-		this.payUponInvoice = payUponInvoice;
-		this.advancedCardProcessing = advancedCardProcessing;
-		this.standardCardButton = standardCardButton;
+		this.pcpOnboarding = pcpOnboarding;
 		this.payForOrder = payForOrder;
 		this.checkout = checkout;
 		this.classicCheckout = classicCheckout;
@@ -98,22 +70,6 @@ export class Utils {
 		this.customerPaymentMethods = customerPaymentMethods;
 		this.visitorWooCommerceApi = visitorWooCommerceApi;
 	}
-
-	activateWpDebuggingPlugin = async () => {
-		await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
-	};
-
-	deactivateWpDebuggingPlugin = async () => {
-		await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
-	};
-
-	activateWcSubscriptionsPlugin = async () => {
-		await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
-	};
-
-	deactivateWcSubscriptionsPlugin = async () => {
-		await this.requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
-	};
 
 	restoreCustomer = async ( customer: WooCommerce.CreateCustomer ) => {
 		await this.wooCommerceUtils.deleteCustomer( customer );
@@ -201,29 +157,9 @@ export class Utils {
 		options = {
 			enablePayUponInvoice: false,
 		}
-	) => {
-		await this.connection.visit();
-		// check if merchant with expected email is not connected
-		const isExpectedMerchantConnected =
-			await this.connection.isMerchantConnected( merchant );
-		if ( ! isExpectedMerchantConnected ) {
-			await this.connection.disconnectMerchant();
-			await this.connection.connectMerchant( merchant, options );
-		}
-	};
+	) => {};
 
-	disconnectMerchant = async () => {
-		await this.connection.visit();
-		await this.connection.disconnectMerchant();
-	};
-
-	clearPcpDb = async ( data: PcpMerchant ) => {
-		await this.connection.visit();
-		if ( ! ( await this.connection.isMerchantConnected() ) ) {
-			await this.connection.connectMerchant( data );
-		}
-		await this.connection.clearDB();
-	};
+	disconnectMerchant = async () => {};
 
 	/**
 	 * Enable PayPal funding source
@@ -233,57 +169,27 @@ export class Utils {
 	pcpPaymentMethodIsEnabled = async ( method ) => {
 		switch ( method ) {
 			case 'PayPal':
-				// Is enabled by default within Standard Payments
 				break;
 
 			case 'PayLater':
-				await this.activateWpDebuggingPlugin();
-				await this.standardPayments.setup( { vaulting: false } );
-				await this.payLater.setup( { enableGateway: true } );
 				break;
 
 			case 'Venmo':
-				await this.activateWpDebuggingPlugin();
 				break;
 
 			case 'ACDC':
-				await this.advancedCardProcessing.setup( {
-					enableGateway: true,
-					threeDSecure: 'Always trigger 3D Secure',
-				} );
 				break;
 
 			case 'OXXO':
-				await this.oxxo.setup( { enableGateway: true } );
 				break;
 
 			case 'DebitOrCreditCard':
-				await this.standardPayments.visit();
-				await this.standardPayments.enableAlternativePaymentMethods( [
-					'Credit or debit cards',
-				] );
-				await this.standardPayments
-					.standardCardButtonCheckbox()
-					.uncheck();
-				await this.standardPayments.saveChanges();
-				await this.advancedCardProcessing.setup( {
-					enableGateway: false,
-				} );
 				break;
 
 			case 'StandardCardButton':
-				await this.standardPayments.setup( {
-					standardCardButton: true,
-				} );
-				await this.advancedCardProcessing.setup( {
-					enableGateway: false,
-				} );
-				await this.standardCardButton.setup( { enableGateway: true } );
 				break;
 
 			case 'PayUponInvoice':
-				// Is activated before merchant connection
-				await this.payUponInvoice.setup( { enableGateway: true } );
 				break;
 		}
 	};
@@ -295,19 +201,21 @@ export class Utils {
 	 */
 	configureStore = async ( data ) => {
 		if ( data.wpDebugging === true ) {
-			await this.activateWpDebuggingPlugin();
+			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
 		}
 
 		if ( data.wpDebugging === false ) {
-			await this.deactivateWpDebuggingPlugin();
+			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 		}
 
 		if ( data.subscription === true ) {
-			await this.activateWcSubscriptionsPlugin();
+			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
 		}
 
 		if ( data.subscription === false ) {
-			await this.deactivateWcSubscriptionsPlugin();
+			await this.requestUtils.deactivatePlugin(
+				subscriptionsPlugin.slug
+			);
 		}
 
 		if ( data.classicPages === true ) {
@@ -345,10 +253,9 @@ export class Utils {
 
 		if ( data.merchant ) {
 			if ( data.clearPCPDB ) {
-				await this.clearPcpDb( data.merchant );
 			}
 
-			if ( data.merchantIsDisconnected ) {
+			if ( data.disconnectMerchant ) {
 				await this.disconnectMerchant();
 				return;
 			}
@@ -356,32 +263,6 @@ export class Utils {
 			await this.connectMerchant( data.merchant, {
 				enablePayUponInvoice: data.enablePayUponInvoice || false,
 			} );
-		}
-
-		if ( data.standardPayments ) {
-			await this.standardPayments.setup( data.standardPayments );
-		}
-
-		if ( data.payLater ) {
-			await this.payLater.setup( data.payLater );
-		}
-
-		if ( data.advancedCardProcessing ) {
-			await this.advancedCardProcessing.setup(
-				data.advancedCardProcessing
-			);
-		}
-
-		if ( data.standardCardButton ) {
-			await this.standardCardButton.setup( data.standardCardButton );
-		}
-
-		if ( data.oxxo ) {
-			await this.oxxo.setup( data.oxxo );
-		}
-
-		if ( data.payUponInvoice ) {
-			await this.payUponInvoice.setup( data.payUponInvoice );
 		}
 	};
 }

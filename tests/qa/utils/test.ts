@@ -17,13 +17,7 @@ import { Utils } from './utils';
 
 // PCP tabs
 import {
-	Connection,
-	StandardPayments,
-	PayLater,
-	AdvancedCardProcessing,
-	StandardCardButton,
-	OXXO,
-	PayUponInvoice,
+	PcpOnboarding,
 	WooCommerceOrderEdit,
 	WooCommerceSubscriptionEdit,
 } from './admin';
@@ -52,13 +46,7 @@ type BaseExtend = {
 	visitorWooCommerceApi: WooCommerceApi;
 
 	// PCP tabs
-	connection: Connection;
-	standardPayments: StandardPayments;
-	payLater: PayLater;
-	advancedCardProcessing: AdvancedCardProcessing;
-	standardCardButton: StandardCardButton;
-	oxxo: OXXO;
-	payUponInvoice: PayUponInvoice;
+	pcpOnboarding: PcpOnboarding;
 
 	// WooCommerce dashboard
 	wooCommerceOrderEdit: WooCommerceOrderEdit;
@@ -114,27 +102,9 @@ const test = base.extend< BaseExtend >( {
 		await use( new PayPalUI( { page: visitorPage, ppapi } ) );
 	},
 
-	// PCP tabs
-	connection: async ( { page }, use ) => {
-		await use( new Connection( { page } ) );
-	},
-	standardPayments: async ( { page }, use ) => {
-		await use( new StandardPayments( { page } ) );
-	},
-	payLater: async ( { page }, use ) => {
-		await use( new PayLater( { page } ) );
-	},
-	advancedCardProcessing: async ( { page }, use ) => {
-		await use( new AdvancedCardProcessing( { page } ) );
-	},
-	standardCardButton: async ( { page }, use ) => {
-		await use( new StandardCardButton( { page } ) );
-	},
-	oxxo: async ( { page }, use ) => {
-		await use( new OXXO( { page } ) );
-	},
-	payUponInvoice: async ( { page }, use ) => {
-		await use( new PayUponInvoice( { page } ) );
+	// PCP settings
+	pcpOnboarding: async ( { page }, use ) => {
+		await use( new PcpOnboarding( { page } ) );
 	},
 
 	// WooCommerce dashboard
@@ -190,13 +160,7 @@ const test = base.extend< BaseExtend >( {
 			wooCommerceUtils,
 			requestUtils,
 			wooCommerceApi,
-			connection,
-			standardPayments,
-			payLater,
-			advancedCardProcessing,
-			standardCardButton,
-			oxxo,
-			payUponInvoice,
+			pcpOnboarding,
 			payForOrder,
 			checkout,
 			classicCheckout,
@@ -213,13 +177,7 @@ const test = base.extend< BaseExtend >( {
 				wooCommerceUtils,
 				requestUtils,
 				wooCommerceApi,
-				connection,
-				standardPayments,
-				payLater,
-				advancedCardProcessing,
-				standardCardButton,
-				oxxo,
-				payUponInvoice,
+				pcpOnboarding,
 				payForOrder,
 				checkout,
 				classicCheckout,
