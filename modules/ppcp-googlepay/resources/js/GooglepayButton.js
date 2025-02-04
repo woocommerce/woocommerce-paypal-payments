@@ -883,21 +883,6 @@ class GooglepayButton extends PaymentButton {
 				.initiatePayerAction( { orderId: orderID } );
 
 			this.log( '===== Payer Action Completed =====' );
-
-			// TODO GET Order
-			const orderResponse = null;
-
-			this.log( '===== 3DS Contingency Result Fetched =====' );
-			this.log(
-				orderResponse?.payment_source?.google_pay?.card
-					?.authentication_result
-			);
-
-			// TODO CAPTURE THE ORDER
-			const captureResponse = null;
-
-			this.log( '===== Order Capture Completed =====' );
-			this.log( captureResponse );
 		};
 
 		const processPaymentPromise = async ( resolve ) => {
@@ -915,7 +900,6 @@ class GooglepayButton extends PaymentButton {
 			if ( isApprovedByPayPal === 'action_required' ) {
 				await initiatePayerAction( id );
 				resolve( paymentError( 'PAYER ACTION REQUIRED' ) );
-				return;
 			}
 
 			// This must be the last step in the process, as it initiates a redirect.
