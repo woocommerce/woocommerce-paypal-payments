@@ -824,7 +824,14 @@ class GooglepayButton extends PaymentButton {
 
 			this.log( 'confirmOrder', confirmOrderResponse );
 
-			return 'APPROVED' === confirmOrderResponse?.status;
+			switch ( confirmOrderResponse?.status ) {
+				case 'APPROVED':
+					return true;
+				case 'PAYER_ACTION_REQUIRED':
+					return 'action_required';
+				default:
+					return false;
+			}
 		};
 
 		/**
@@ -860,6 +867,39 @@ class GooglepayButton extends PaymentButton {
 			return isApproved;
 		};
 
+		/**
+		 * Initiates payer action and handles the 3DS contingency.
+		 *
+		 * @param {string} orderID
+		 */
+		const initiatePayerAction = async ( orderID ) => {
+			this.log( 'initiatePayerAction', orderID );
+
+			this.log(
+				'==== Confirm Payment Completed Payer Action Required ====='
+			);
+			await widgetBuilder.paypal
+				.Googlepay()
+				.initiatePayerAction( { orderId: orderID } );
+
+			this.log( '===== Payer Action Completed =====' );
+
+			// TODO GET Order
+			const orderResponse = null;
+
+			this.log( '===== 3DS Contingency Result Fetched =====' );
+			this.log(
+				orderResponse?.payment_source?.google_pay?.card
+					?.authentication_result
+			);
+
+			// TODO CAPTURE THE ORDER
+			const captureResponse = null;
+
+			this.log( '===== Order Capture Completed =====' );
+			this.log( captureResponse );
+		};
+
 		const processPaymentPromise = async ( resolve ) => {
 			const id = await this.contextHandler.createOrder();
 
@@ -867,9 +907,14 @@ class GooglepayButton extends PaymentButton {
 
 			const isApprovedByPayPal = await checkPayPalApproval( id );
 
-			if ( ! isApprovedByPayPal ) {
+			if ( isApprovedByPayPal === false ) {
 				resolve( paymentError( 'TRANSACTION FAILED' ) );
+				return;
+			}
 
+			if ( isApprovedByPayPal === 'action_required' ) {
+				await initiatePayerAction( id );
+				resolve( paymentError( 'PAYER ACTION REQUIRED' ) );
 				return;
 			}
 
