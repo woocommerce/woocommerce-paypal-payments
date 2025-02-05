@@ -1,7 +1,7 @@
 {
-  "name": "@inpsyde/playwright-tests",
+  "name": "woocommerce-paypal-payments-tests",
   "version": "1.0.0",
-  "description": "Monorepo for Playwright tests",
+  "description": "WooCommerce Paypal Payments Playwright tests",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -21,6 +21,7 @@
     "playwright-utils"
   ],
   "dependencies": {
+    "@inpsyde/playwright-utils": "^2.1.0",
     "dotenv": "^16.3.1",
     "dotenv-cli": "^7.3.0",
     "playwright": "^1.49.1",
@@ -29,7 +30,7 @@
   "devDependencies": {
     "@percy/cli": "^1.28.0",
     "@percy/playwright": "^1.0.4",
-    "@playwright/test": "^1.38.1",
+    "@playwright/test": "^1.50.0",
     "@types/node": "^20.8.4",
     "@wordpress/scripts": "^25.0.0"
   },
