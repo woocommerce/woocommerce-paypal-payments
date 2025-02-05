@@ -12,6 +12,7 @@ const invalid: PcpMerchant = {
 		'123EFzI8FCerbL8qvMs0baJiVAqvA4SwXka3WM-WWE-o0c6b2acaGu_Q7a4n1nEGQf2-dnCgtmKLgm0AXmC',
 	account_id: '123MQEBC2LND7J3L',
 };
+
 const germany: PcpMerchant = {
 	email: 'sb-vzlb326615278@business.example.com',
 	password: '-*Gv5z#X',
@@ -21,6 +22,7 @@ const germany: PcpMerchant = {
 		'EFzI8FCerbL8qvMs0baJiVAqvA4SwXka3WM-WWE-o0c6b2acaGu_Q7a4n1nEGQf2-dnCgtmKLgm0AXmC',
 	account_id: 'MQEBC2LND7J3L',
 };
+
 const usa: PcpMerchant = {
 	email: 'sb-hskbh29881597@business.example.com',
 	password: '',
@@ -30,14 +32,6 @@ const usa: PcpMerchant = {
 		'EIXJLpKYTzPF4bS5ZKZYxO47t99i52OBBuQ_3JMpuV-G_SUnoWg0YHpZxa_JSxdlmzbn8AGs7_5pGB5R',
 	account_id: 'RRPUW6YXX22W2',
 };
-
-// const usa: PcpMerchant = {
-//   email: 'sb-1vqws26578261@business.example.com',
-//   password: 'xc\'#0\'Xf',
-//   client_id: 'ASld_H2Yc6Fpkh6Q0NZuQvckyAjAfWfm_kW-IpROgYPUhpsAxU6KCYRcEw1sf60n6xULzj4K_n_Jg_Y5',
-//   client_secret: 'EJ88I1fmwA7QkGvkkuYC4z1_R_M6ZfV511OpRDPI61D6TuAaCm9rULpr-wxqeVTKJfZV1Zzszj9XtDVR',
-//   account_id: 'QTGBXV4YCQLD6'
-// };
 
 const mexico: PcpMerchant = {
 	email: 'sb-zafdx26915775@business.example.com',
