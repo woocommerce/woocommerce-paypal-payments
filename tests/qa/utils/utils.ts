@@ -25,7 +25,6 @@ import {
 	wpDebuggingPlugin,
 	pcpPlugin,
 	PcpMerchant,
-	PcpConfig,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers';
 
@@ -243,7 +242,7 @@ export class Utils {
 		}
 	};
 
-	configurePcp = async ( data: PcpConfig ) => {
+	configurePcp = async ( data ) => {
 		if (
 			! ( await this.requestUtils.isPluginInstalled( pcpPlugin.slug ) )
 		) {

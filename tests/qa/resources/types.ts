@@ -46,18 +46,6 @@ export type PcpPayment = {
 };
 
 export namespace PcpSettings {
-	export type StandardPayments = { [ key: string ]: any };
-
-	export type PayLater = { [ key: string ]: any };
-
-	export type AdvancedCardProcessing = { [ key: string ]: any };
-
-	export type StandardCardButton = { [ key: string ]: any };
-
-	export type Oxxo = { [ key: string ]: any };
-
-	export type PayUponInvoice = { [ key: string ]: any };
-
 	export type OnboardingStepTitle =
 		| 'PayPal Payments'
 		| 'Set up store type'
@@ -80,16 +68,3 @@ export namespace PcpSettings {
 		enableOptionalPaymentMethods: boolean;
 	};
 }
-
-export type PcpConfig = {
-	merchant?: PcpMerchant;
-	clearPCPDB?: boolean;
-	disconnectMerchant?: boolean;
-	enablePayUponInvoice?: boolean;
-	standardPayments?: PcpSettings.StandardPayments;
-	payLater?: PcpSettings.PayLater;
-	advancedCardProcessing?: PcpSettings.AdvancedCardProcessing;
-	standardCardButton?: PcpSettings.StandardCardButton;
-	oxxo?: PcpSettings.Oxxo;
-	payUponInvoice?: PcpSettings.PayUponInvoice;
-};

@@ -96,8 +96,6 @@ export default defineConfig( {
 			fullyParallel: false,
 		},
 		...storeSetupProjects,
-		...pcpSetupProjects,
-		...gatewaySetupProjects,
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
