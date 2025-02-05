@@ -50,10 +50,21 @@ const ALL_STEPS = [
 	},
 ];
 
-export const getSteps = ( flags ) => {
-	const steps = flags.canUseCasualSelling
-		? ALL_STEPS
-		: ALL_STEPS.filter( ( step ) => step.id !== 'business' );
+const filterSteps = ( steps, conditions ) => {
+	return steps.filter( ( step ) =>
+		conditions.every( ( condition ) => condition( step ) )
+	);
+};
+
+export const getSteps = ( flags, isCasualSeller ) => {
+	const steps = filterSteps( ALL_STEPS, [
+		// Casual selling: Unlock the "Personal Account" choice.
+		( step ) => flags.canUseCasualSelling || step.id !== 'business',
+		// Card payments: Unlocks the "Extended Checkout" choice.
+		( step ) => flags.canUseCardPayments || step.id !== 'methods',
+		// Card payments are only available for business sellers.
+		( step ) => ! isCasualSeller || step.id !== 'methods',
+	] );
 
 	const totalStepsCount = steps.length;
 

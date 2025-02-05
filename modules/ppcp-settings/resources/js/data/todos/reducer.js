@@ -28,6 +28,7 @@ const defaultTransient = Object.freeze( {
 const defaultPersistent = Object.freeze( {
 	todos: [],
 	dismissedTodos: [],
+	completedOnClickTodos: [],
 } );
 
 // Reducer logic.

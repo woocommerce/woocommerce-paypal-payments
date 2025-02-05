@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
  * Class TodosDefinition
@@ -27,12 +28,24 @@ class TodosDefinition {
 	protected TodosEligibilityService $eligibilities;
 
 	/**
+	 * The general settings service.
+	 *
+	 * @var GeneralSettings
+	 */
+	protected GeneralSettings $settings;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param TodosEligibilityService $eligibilities The todos eligibility service.
+	 * @param GeneralSettings         $settings The general settings service.
 	 */
-	public function __construct( TodosEligibilityService $eligibilities ) {
+	public function __construct(
+		TodosEligibilityService $eligibilities,
+		GeneralSettings $settings
+	) {
 		$this->eligibilities = $eligibilities;
+		$this->settings      = $settings;
 	}
 
 	/**
@@ -110,9 +123,11 @@ class TodosDefinition {
 				'description' => __( 'To enable Apple Pay, you must register your domain with PayPal', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['register_domain_apple_pay'],
 				'action'      => array(
-					'type'    => 'tab',
-					'tab'     => 'overview',
-					'section' => 'apple_pay',
+					'type'            => 'external',
+					'url'             => $this->settings->is_sandbox_merchant()
+						? 'https://www.sandbox.paypal.com/uccservicing/apm/applepay'
+						: 'https://www.paypal.com/uccservicing/apm/applepay',
+					'completeOnClick' => true,
 				),
 			),
 			'add_digital_wallets'           => array(

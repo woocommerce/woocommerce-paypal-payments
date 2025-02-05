@@ -151,6 +151,7 @@ const ManualConnectionForm = () => {
 				setToggled={ setManualConnectionMode }
 			>
 				<DataStoreControl
+					__nextHasNoMarginBottom
 					control={ TextControl }
 					ref={ refClientId }
 					label={ clientIdLabel }
@@ -166,6 +167,7 @@ const ManualConnectionForm = () => {
 					</p>
 				) }
 				<DataStoreControl
+					__nextHasNoMarginBottom
 					control={ TextControl }
 					ref={ refClientSecret }
 					label={ secretKeyLabel }

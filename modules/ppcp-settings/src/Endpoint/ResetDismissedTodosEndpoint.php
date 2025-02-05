@@ -57,7 +57,11 @@ class ResetDismissedTodosEndpoint extends RestEndpoint {
 		$settings = get_option( 'ppcp-settings', array() );
 
 		$settings['dismissedTodos'] = array();
-		$update_result              = update_option( 'ppcp-settings', $settings );
+
+		// Clear the completedOnClickTodos for testing purposes.
+		// $settings['completedOnClickTodos'] = array();.
+
+		$update_result = update_option( 'ppcp-settings', $settings );
 
 		if ( ! $update_result ) {
 			return $this->return_error( __( 'Failed to reset dismissed todos.', 'woocommerce-paypal-payments' ) );

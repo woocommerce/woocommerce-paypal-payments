@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import PricingDescription from '../../../ReusableComponents/PricingDescription';
+import PricingDescription from './PricingDescription';
 import PaymentFlow from './PaymentFlow';
 
 const WelcomeDocs = ( { useAcdc, isFastlane, isPayLater, storeCountry } ) => {

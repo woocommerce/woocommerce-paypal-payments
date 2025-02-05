@@ -9,3 +9,4 @@ export const REST_PATH = '/wc/v3/wc_paypal/todos';
 export const REST_PERSIST_PATH = '/wc/v3/wc_paypal/todos';
 export const REST_RESET_DISMISSED_TODOS_PATH =
 	'/wc/v3/wc_paypal/reset-dismissed-todos';
+export const REST_COMPLETE_ONCLICK_PATH = '/wc/v3/wc_paypal/complete-onclick';

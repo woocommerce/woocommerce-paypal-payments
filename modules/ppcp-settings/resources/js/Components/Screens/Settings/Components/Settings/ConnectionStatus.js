@@ -3,6 +3,7 @@ import { __ } from '@wordpress/i18n';
 import SettingsCard from '../../../../ReusableComponents/SettingsCard';
 import { CommonHooks } from '../../../../../data';
 import ConnectionStatusBadge from './Parts/ConnectionStatusBadge';
+import DisconnectButton from './Parts/DisconnectButton';
 import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
 import { ControlStaticValue } from '../../../../ReusableComponents/Controls';
 
@@ -13,10 +14,7 @@ const ConnectionStatus = () => {
 		<SettingsCard
 			className="ppcp-connection-details ppcp--value-list"
 			title={ __( 'Connection status', 'woocommerce-paypal-payments' ) }
-			description={ __(
-				'Your PayPal account connection details',
-				'woocommerce-paypal-payments'
-			) }
+			description={ <ConnectionDescription /> }
 		>
 			<SettingsBlock>
 				<ControlStaticValue
@@ -48,3 +46,15 @@ const ConnectionStatus = () => {
 };
 
 export default ConnectionStatus;
+
+const ConnectionDescription = () => {
+	return (
+		<>
+			{ __(
+				'Your PayPal account connection details.',
+				'woocommerce-paypal-payments'
+			) }
+			<DisconnectButton />
+		</>
+	);
+};

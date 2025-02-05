@@ -22,7 +22,7 @@ const PaymentMethodItem = ( { Component, learnMore, showSeparator } ) => {
 		<>
 			<Component learnMore={ learnMore } />
 			{ showSeparator && (
-				<Separator className="ppcp-r-page-welcome-mode-separator" />
+				<Separator className="ppcp-r-payment-method--separator" />
 			) }
 		</>
 	);

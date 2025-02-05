@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\AuthenticationRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\CompleteOnClickEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\LoginLinkRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\OnboardingRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\PayLaterMessagingEndpoint;
@@ -265,7 +266,8 @@ return array(
 	},
 	'settings.data.definition.todos'              => static function ( ContainerInterface $container ) : TodosDefinition {
 		return new TodosDefinition(
-			$container->get( 'settings.service.todos_eligibilities' )
+			$container->get( 'settings.service.todos_eligibilities' ),
+			$container->get( 'settings.data.general' )
 		);
 	},
 	'settings.service.todos_eligibilities'        => static function( ContainerInterface $container ): TodosEligibilityService {
@@ -313,5 +315,8 @@ return array(
 	},
 	'settings.rest.reset_dismissed_todos'         => static function( ContainerInterface $container ): ResetDismissedTodosEndpoint {
 		return new ResetDismissedTodosEndpoint();
+	},
+	'settings.rest.complete_onclick'              => static function( ContainerInterface $container ): CompleteOnClickEndpoint {
+		return new CompleteOnClickEndpoint();
 	},
 );

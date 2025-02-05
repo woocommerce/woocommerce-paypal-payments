@@ -39,8 +39,7 @@ export const resetDismissedTodos = function* () {
 	const result = yield { type: ACTION_TYPES.DO_RESET_DISMISSED_TODOS };
 
 	if ( result && result.success ) {
-		// After successful reset, fetch fresh todos
-		yield fetchTodos();
+		yield setDismissedTodos( [] );
 	}
 
 	return result;
@@ -50,3 +49,19 @@ export const setCompletedTodos = ( completedTodos ) => ( {
 	type: ACTION_TYPES.SET_COMPLETED_TODOS,
 	payload: completedTodos,
 } );
+
+export const completeOnClick = function* ( todoId ) {
+	const result = yield {
+		type: ACTION_TYPES.DO_COMPLETE_ONCLICK,
+		todoId,
+	};
+
+	if ( result && result.success ) {
+		// Set transient completed state for visual feedback
+		const currentTransientCompleted =
+			yield select( STORE_NAME ).getCompletedTodos();
+		yield setCompletedTodos( [ ...currentTransientCompleted, todoId ] );
+	}
+
+	return result;
+};

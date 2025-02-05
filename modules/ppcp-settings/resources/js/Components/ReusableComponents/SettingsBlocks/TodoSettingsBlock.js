@@ -1,6 +1,6 @@
 import { selectTab, TAB_IDS } from '../../../utils/tabSelector';
 import { useEffect, useState } from '@wordpress/element';
-import { useSelect } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
 import { STORE_NAME as TODOS_STORE_NAME } from '../../../data/todos';
 
 const TodoSettingsBlock = ( {
@@ -20,6 +20,8 @@ const TodoSettingsBlock = ( {
 		} ),
 		[]
 	);
+
+	const { completeOnClick } = useDispatch( TODOS_STORE_NAME );
 
 	useEffect( () => {
 		if ( dismissedTodos.length === 0 ) {
@@ -41,6 +43,26 @@ const TodoSettingsBlock = ( {
 		}, 300 );
 	};
 
+	const handleClick = async ( todo ) => {
+		if ( todo.action.type === 'tab' ) {
+			const tabId = TAB_IDS[ todo.action.tab.toUpperCase() ];
+			await selectTab( tabId, todo.action.section );
+		} else if ( todo.action.type === 'external' ) {
+			window.open( todo.action.url, '_blank' );
+			// If it has completeOnClick flag, trigger the action
+			if ( todo.action.completeOnClick === true ) {
+				await completeOnClick( todo.id );
+			}
+		}
+
+		if ( todo.action.modal ) {
+			setActiveModal( todo.action.modal );
+		}
+		if ( todo.action.highlight ) {
+			setActiveHighlight( todo.action.highlight );
+		}
+	};
+
 	// Filter out dismissed todos for display
 	const visibleTodos = todosData.filter(
 		( todo ) => ! dismissedTodos.includes( todo.id )
@@ -59,22 +81,7 @@ const TodoSettingsBlock = ( {
 					isCompleted={ completedTodos.includes( todo.id ) }
 					isDismissing={ dismissingIds.has( todo.id ) }
 					onDismiss={ ( e ) => handleDismiss( todo.id, e ) }
-					onClick={ async () => {
-						if ( todo.action.type === 'tab' ) {
-							const tabId =
-								TAB_IDS[ todo.action.tab.toUpperCase() ];
-							await selectTab( tabId, todo.action.section );
-						} else if ( todo.action.type === 'external' ) {
-							window.open( todo.action.url, '_blank' );
-						}
-
-						if ( todo.action.modal ) {
-							setActiveModal( todo.action.modal );
-						}
-						if ( todo.action.highlight ) {
-							setActiveHighlight( todo.action.highlight );
-						}
-					} }
+					onClick={ () => handleClick( todo ) }
 				/>
 			) ) }
 		</div>

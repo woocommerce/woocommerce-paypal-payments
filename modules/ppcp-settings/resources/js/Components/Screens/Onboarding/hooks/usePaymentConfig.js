@@ -1,5 +1,7 @@
 import { __ } from '@wordpress/i18n';
+import { useMemo } from '@wordpress/element';
 
+import { learnMoreLinks } from '../../../../utils/countryInfoLinks';
 import {
 	PayWithPayPal,
 	PayLater,
@@ -12,7 +14,6 @@ import {
 	Fastlane,
 	CreditDebitCards,
 } from '../Components/PaymentOptions';
-import { useMemo } from '@wordpress/element';
 
 // Default configuration, used for all countries, unless they override individual attributes below.
 const defaultConfig = {
@@ -33,61 +34,6 @@ const defaultConfig = {
 		'with additional application',
 		'woocommerce-paypal-payments'
 	),
-};
-
-const learnMoreLinks = {
-	US: {
-		PayPalCheckout:
-			'https://www.paypal.com/us/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/us/business/accept-payments/checkout/installments',
-		Venmo: 'https://www.paypal.com/us/enterprise/payment-processing/accept-venmo',
-		Crypto: 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
-		OptionalMethods:
-			'https://www.paypal.com/us/business/accept-payments/checkout/integration#expanded-checkout',
-		Fastlane:
-			'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
-	},
-	CA: {
-		PayPalCheckout:
-			'https://www.paypal.com/ca/business/accept-payments/checkout',
-	},
-	GB: {
-		PayPalCheckout:
-			'https://www.paypal.com/uk/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/uk/business/accept-payments/checkout/installments',
-	},
-	FR: {
-		PayPalCheckout:
-			'https://www.paypal.com/fr/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/fr/business/accept-payments/checkout/installments',
-	},
-	ES: {
-		PayPalCheckout:
-			'https://www.paypal.com/es/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/es/business/accept-payments/checkout/installments',
-	},
-	IT: {
-		PayPalCheckout:
-			'https://www.paypal.com/it/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/it/business/accept-payments/checkout/installments',
-	},
-	DE: {
-		PayPalCheckout:
-			'https://www.paypal.com/de/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/de/business/accept-payments/checkout/installments',
-	},
-	AU: {
-		PayPalCheckout:
-			'https://www.paypal.com/au/business/accept-payments/checkout',
-		PayLater:
-			'https://www.paypal.com/au/business/accept-payments/checkout/installments',
-	},
 };
 
 const countrySpecificConfigs = {
@@ -113,7 +59,6 @@ const countrySpecificConfigs = {
 	GB: {
 		includedMethods: [
 			{ name: 'PayWithPayPal', Component: PayWithPayPal },
-			{ name: 'PayLater', Component: PayLater },
 			{ name: 'PayInThree', Component: PayInThree },
 		],
 	},

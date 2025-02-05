@@ -103,11 +103,22 @@ class TodosRestEndpoint extends RestEndpoint {
 	 * @return WP_REST_Response The response containing todos data.
 	 */
 	public function get_todos(): WP_REST_Response {
-		$settings      = get_option( 'ppcp-settings', array() );
-		$dismissed_ids = $settings['dismissedTodos'] ?? array();
+		$settings              = get_option( 'ppcp-settings', array() );
+		$dismissed_ids         = $settings['dismissedTodos'] ?? array();
+		$completed_onclick_ids = $settings['completedOnClickTodos'] ?? array();
 
 		$todos = array();
 		foreach ( $this->todos_definition->get() as $id => $todo ) {
+			// Skip if todo has completeOnClick flag and is in completed list.
+			if (
+				in_array( $id, $completed_onclick_ids, true ) &&
+				isset( $todo['action']['completeOnClick'] ) &&
+				$todo['action']['completeOnClick'] === true
+			) {
+				continue;
+			}
+
+			// Check eligibility and add to todos if eligible.
 			if ( $todo['isEligible']() ) {
 				$todos[] = array_merge(
 					array( 'id' => $id ),
@@ -118,8 +129,9 @@ class TodosRestEndpoint extends RestEndpoint {
 
 		return $this->return_success(
 			array(
-				'todos'          => $todos,
-				'dismissedTodos' => $dismissed_ids,
+				'todos'                 => $todos,
+				'dismissedTodos'        => $dismissed_ids,
+				'completedOnClickTodos' => $completed_onclick_ids,
 			)
 		);
 	}

@@ -1,7 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 
-import { countryPriceInfo } from '../../utils/countryPriceInfo';
-import { CommonHooks } from '../../data';
+import { countryPriceInfo } from '../../../../utils/countryPriceInfo';
+import { learnMoreLinks } from '../../../../utils/countryInfoLinks';
+import { CommonHooks } from '../../../../data';
 
 const PricingDescription = () => {
 	const { storeCountry } = CommonHooks.useWooSettings();
@@ -11,8 +12,7 @@ const PricingDescription = () => {
 	}
 
 	const lastDate = 'October 25th, 2024'; // TODO -- needs to be the last plugin update date.
-	const detailsUrl =
-		'https://woocommerce.com/document/woocommerce-paypal-payments/#manual-credential-input';
+	const countryLinks = learnMoreLinks[ storeCountry ] || learnMoreLinks.US;
 
 	const label = sprintf(
 		// translators: %1$s: Pricing date, %2$s Link to PayPal price-details page.
@@ -21,7 +21,7 @@ const PricingDescription = () => {
 			'woocommerce-paypal-payments'
 		),
 		lastDate,
-		detailsUrl
+		countryLinks.PaymentDetails
 	);
 
 	return (

@@ -115,6 +115,11 @@ export const useAuthentication = () => {
 	};
 };
 
+export const useDisconnectMerchant = () => {
+	const { disconnectMerchant } = useDispatch( STORE_NAME );
+	return { disconnectMerchant };
+};
+
 export const useWooSettings = () => {
 	const { wooSettings } = useHooks();
 
