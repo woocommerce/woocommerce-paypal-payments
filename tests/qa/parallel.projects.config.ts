@@ -1,0 +1,142 @@
+export const parallelProjects = [
+	{
+		name: 'parallel-transaction-block',
+		dependencies: [ 'setup-gateway-block-paypal-pay-later-acdc' ],
+		testMatch: /01-block-germany\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic',
+		dependencies: [ 'setup-gateway-classic-paypal-pay-later-acdc' ],
+		testMatch: /02-classic-germany\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-block-excluding-tax',
+		dependencies: [ 'setup-gateway-block-paypal-pay-later-acdc' ],
+		testMatch: /03-block-germany-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-excluding-tax',
+		dependencies: [ 'setup-gateway-classic-paypal-pay-later-acdc' ],
+		testMatch: /04-classic-germany-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-block-authorized',
+		dependencies: [ 'setup-gateway-block-paypal-pay-later-acdc' ],
+		testMatch: /05-block-germany-authorized\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-authorized',
+		dependencies: [ 'setup-gateway-classic-paypal-pay-later-acdc' ],
+		testMatch: /06-classic-germany-authorized\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-block-button-orientation',
+		dependencies: [ 'setup-gateway-block-paypal-pay-later-acdc' ],
+		testMatch: /07-block-germany-button-orientation\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-button-orientation',
+		dependencies: [ 'setup-gateway-classic-paypal-pay-later-acdc' ],
+		testMatch: /08-classic-germany-button-orientation\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-wp-debugging',
+		dependencies: [ 'setup-gateway-block-paypal-pay-later-acdc' ],
+		testMatch: /09-block-germany-wp-debugging\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-wp-debugging',
+		dependencies: [ 'setup-gateway-classic-paypal-pay-later-acdc' ],
+		testMatch: /10-classic-germany-wp-debugging\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-standard-card-button',
+		dependencies: [ 'setup-gateway-classic-standard-card-button' ],
+		testMatch: /11-classic-germany-standard-card-button\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-standard-card-button-excluding-tax',
+		dependencies: [ 'setup-gateway-classic-standard-card-button' ],
+		testMatch:
+			/12-classic-germany-standard-card-button-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-standard-card-button-authorized',
+		dependencies: [ 'setup-gateway-classic-standard-card-button' ],
+		testMatch: /13-classic-germany-standard-card-button-authorized\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-debit-or-credit-card',
+		dependencies: [ 'setup-gateway-classic-debit-or-credit-card' ],
+		testMatch: /14-classic-germany-debit-or-credit-card\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-debit-or-credit-card-excluding-tax',
+		dependencies: [ 'setup-gateway-classic-debit-or-credit-card' ],
+		testMatch:
+			/15-classic-germany-debit-or-credit-card-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-germany',
+		dependencies: [ 'setup-gateway-classic-pay-upon-invoice' ],
+		testMatch: /16-classic-germany-pay-upon-invoice\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-germany-excluding-tax',
+		dependencies: [ 'setup-gateway-classic-pay-upon-invoice' ],
+		testMatch: /17-classic-germany-pay-upon-invoice-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-mexico',
+		dependencies: [ 'setup-gateway-classic-oxxo' ],
+		testMatch: /18-classic-mexico-oxxo\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-mexico-excluding-tax',
+		dependencies: [ 'setup-gateway-classic-oxxo' ],
+		testMatch: /19-classic-mexico-oxxo-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-usa',
+		dependencies: [ 'setup-gateway-classic-venmo' ],
+		testMatch: /20-classic-usa-venmo\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-usa-excluding-tax',
+		dependencies: [ 'setup-gateway-classic-venmo' ],
+		testMatch: /21-classic-usa-venmo-excluding-tax\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-transaction-classic-specific-merchant',
+		dependencies: [ 'setup-store-classic-germany' ],
+		testMatch: /22-classic-germany-specific-merchant\.spec/,
+		fullyParallel: true,
+	},
+	{
+		name: 'parallel-refund',
+		dependencies: [ 'setup-gateway-classic-paypal-pay-later-acdc' ],
+		testMatch: /parallel-refund-block-germany\.spec/,
+		fullyParallel: true,
+	},
+];

@@ -1,0 +1,53 @@
+{
+  "name": "@inpsyde/playwright-tests",
+  "version": "1.0.0",
+  "description": "Monorepo for Playwright tests",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inpsyde/playwright-tests.git"
+  },
+  "author": {
+    "name": "Syde GmbH",
+    "email": "hello@syde.com",
+    "url": "https://syde.com/"
+  },
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/woocommerce/woocommerce-paypal-payments/issues"
+  },
+  "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
+  "workspaces": [
+    "playwright-utils"
+  ],
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "dotenv-cli": "^7.3.0",
+    "playwright": "^1.49.1",
+    "yarn": "^1.22.21"
+  },
+  "devDependencies": {
+    "@percy/cli": "^1.28.0",
+    "@percy/playwright": "^1.0.4",
+    "@playwright/test": "^1.38.1",
+    "@types/node": "^20.8.4",
+    "@wordpress/scripts": "^25.0.0"
+  },
+  "scripts": {
+    "all": "npx playwright test --workers=1 --project \"all\"",
+    "setup:tests": "npm install && npx playwright install",
+    "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
+    "lint:md": "wp-scripts lint-md-docs ./**/*.md README.md",
+    "lint:js": "wp-scripts lint-js projects/**/*.{ts,tsx,mjs} projects/**/.*/*.{ts,tsx,mjs}",
+    "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix '**/*.{ts,tsx,mjs}'"  },
+  "eslintConfig": {
+    "extends": [
+      "plugin:@wordpress/eslint-plugin/recommended"
+    ],
+    "rules": {
+      "@wordpress/dependency-group": "error",
+      "@wordpress/no-unsafe-wp-apis": "off",
+      "no-console": "off"
+    }
+  }
+}
