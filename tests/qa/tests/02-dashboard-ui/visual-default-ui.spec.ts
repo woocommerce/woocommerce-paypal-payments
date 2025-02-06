@@ -20,7 +20,6 @@ const percyConfig: PercyConfig = {
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.configurePcp( {
-		clearPCPDB: true,
 		disconnectMerchant: true,
 	} );
 } );

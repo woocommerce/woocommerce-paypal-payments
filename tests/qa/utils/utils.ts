@@ -24,7 +24,7 @@ import {
 	subscriptionsPlugin,
 	wpDebuggingPlugin,
 	pcpPlugin,
-	PcpMerchant,
+	Pcp,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers';
 
@@ -151,12 +151,7 @@ export class Utils {
 		);
 	};
 
-	connectMerchant = async (
-		merchant: PcpMerchant,
-		options = {
-			enablePayUponInvoice: false,
-		}
-	) => {};
+	connectMerchant = async ( merchant: Pcp.Merchant ) => {};
 
 	disconnectMerchant = async () => {};
 
@@ -242,7 +237,7 @@ export class Utils {
 		}
 	};
 
-	configurePcp = async ( data ) => {
+	configurePcp = async ( data: Pcp.Admin.Config ) => {
 		if (
 			! ( await this.requestUtils.isPluginInstalled( pcpPlugin.slug ) )
 		) {
@@ -251,17 +246,12 @@ export class Utils {
 		await this.requestUtils.activatePlugin( pcpPlugin.slug );
 
 		if ( data.merchant ) {
-			if ( data.clearPCPDB ) {
-			}
-
 			if ( data.disconnectMerchant ) {
 				await this.disconnectMerchant();
 				return;
 			}
 
-			await this.connectMerchant( data.merchant, {
-				enablePayUponInvoice: data.enablePayUponInvoice || false,
-			} );
+			await this.connectMerchant( data.merchant );
 		}
 	};
 }
