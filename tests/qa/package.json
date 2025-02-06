@@ -28,19 +28,21 @@
     "yarn": "^1.22.21"
   },
   "devDependencies": {
-    "@percy/cli": "^1.28.0",
+    "@percy/cli": "^1.30.6",
     "@percy/playwright": "^1.0.4",
     "@playwright/test": "^1.50.0",
     "@types/node": "^20.8.4",
     "@wordpress/scripts": "^25.0.0"
   },
   "scripts": {
-    "all": "npx playwright test --workers=1 --project \"all\"",
     "setup:tests": "npm install && npx playwright install",
     "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
     "lint:md": "wp-scripts lint-md-docs ./**/*.md README.md",
-    "lint:js": "wp-scripts lint-js projects/**/*.{ts,tsx,mjs} projects/**/.*/*.{ts,tsx,mjs}",
-    "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix '**/*.{ts,tsx,mjs}'"  },
+    "lint:md:fix": "wp-scripts lint-md-docs --fix ./**/*.md README.md",
+    "lint:js": "wp-scripts lint-js **/*.{ts,tsx,mjs} **/.*/*.{ts,tsx,mjs}",
+    "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix ./**/*.{ts,tsx,mjs} ./**/.*/*.{ts,tsx,mjs}",
+    "all": "npx playwright test --workers=1 --project \"all\""
+  },
   "eslintConfig": {
     "extends": [
       "plugin:@wordpress/eslint-plugin/recommended"
