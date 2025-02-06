@@ -9,9 +9,13 @@ export {
 	coupons,
 	products,
 } from '@inpsyde/playwright-utils/build/e2e/plugins/woocommerce';
+
 export * from './cards';
-export * from './gateways';
-export * from './merchants';
+export * from './paypal-accounts';
+export * from './pcp-config';
+export * from './pcp-gateways';
+export * from './pcp-payments';
+export * from './pcp-merchants';
 export * from './orders';
 export * from './woocommerce-config';
 export * from './types';

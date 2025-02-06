@@ -1,70 +1,131 @@
-export type PcpMerchant = {
-	email: string;
-	password: string;
-	client_id: string;
-	client_secret: string;
-	account_id: string;
-};
-
 export type PayPalAccount = {
 	email: string;
 	password: string;
 };
 
-export type PcpPaymentMethod =
-	| 'PayPal'
-	| 'PayLater'
-	| 'OXXO'
-	| 'Venmo'
-	| 'ACDC'
-	| 'ACDC3DS'
-	| 'DebitOrCreditCard'
-	| 'StandardCardButton'
-	| 'PayUponInvoice';
-
-export type PcpFundingSource =
-	| 'paypal'
-	| 'paylater'
-	| 'oxxo'
-	| 'venmo'
-	| 'acdc'
-	| 'card'
-	| 'pay_upon_invoice';
-
-export type PcpPayment = {
-	gatewayName: string;
-	method: PcpPaymentMethod;
-	dataFundingSource: PcpFundingSource;
-	gateway: string;
-	card?: WooCommerce.CreditCard;
-	payPalAccount?: PayPalAccount;
-	useNotVaultedAccount?: PayPalAccount;
-	birthDate?: string;
-	isAuthorized?: boolean;
-	isVaulted?: boolean;
-	saveToAccount?: boolean;
-};
-
-export namespace PcpSettings {
-	export type OnboardingStepTitle =
-		| 'PayPal Payments'
-		| 'Set up store type'
-		| 'Select product types'
-		| 'Choose checkout options'
-		| 'Connect your PayPal account';
-
-	export type OnboardingAdvancedOptions = {
-		enableSandboxMode: boolean;
-		enableManualConnection: boolean;
-		merchant: PcpMerchant;
+export namespace Pcp {
+	export type Merchant = {
+		email: string;
+		client_id: string;
+		client_secret: string;
+		account_id: string;
 	};
 
-	export type OnboardingProductTypes = {
-		enableVirtual: boolean;
-		enablePhysicalGoods: boolean;
+	export type Gateway = {
+		enabled?: boolean;
+		title?: string;
+		dataFundingSource?: string; // data-funding-source - an attribute of  payment method container on frontend pages
+		slug?: string;
+		description?: string;
+		paypalShowLogo?: boolean;
+		acdc3ds?:
+			| 'no-3d-secure'
+			| 'only-required-3d-secure'
+			| 'always-3d-secure';
+		fastlaneDisplayCardholderName?: boolean;
+		fastlaneDisplayFastlaneWatermark?: boolean;
 	};
 
-	export type OnboardingCheckoutOptions = {
-		enableOptionalPaymentMethods: boolean;
+	export type Payment = {
+		gateway: Gateway;
+		payPalAccount?: PayPalAccount;
+		card?: WooCommerce.CreditCard;
+		isVaulted?: boolean;
+		birthDate?: string;
+		useNotVaultedAccount?: PayPalAccount;
+		isAuthorized?: boolean;
+		saveToAccount?: boolean;
 	};
+
+	export namespace Admin {
+		export namespace Onboarding {
+			export type StepTitle =
+				| 'PayPal Payments'
+				| 'Set up store type'
+				| 'Select product types'
+				| 'Choose checkout options'
+				| 'Connect your PayPal account';
+
+			export type AdvancedOptions = {
+				enableSandboxMode: boolean;
+				enableManualConnection: boolean;
+				merchant: Pcp.Merchant;
+			};
+
+			export type ProductTypes = {
+				enableVirtual: boolean;
+				enablePhysicalGoods: boolean;
+			};
+
+			export type CheckoutOptions = {
+				enableOptionalPaymentMethods: boolean;
+			};
+		}
+
+		export type Settings = {
+			invoicePrefix: string;
+			// TODO: add other settings
+		};
+
+		export namespace Styling {
+			export type Location =
+				| 'Cart'
+				| 'Classic Checkout'
+				| 'Express Checkout'
+				| 'Mini Cart'
+				| 'Product Page';
+
+			export type Config = {
+				location: Location;
+				// TODO
+			};
+		}
+
+		export namespace PayLaterMessaging {
+			export type LogoType = 'Full Logo' | ''; // TODO
+
+			export type LogoPosition = ''; // TODO
+
+			export type TextColor = ''; // TODO
+
+			export type TextSize = ''; // TODO
+
+			export type BannerColor = ''; // TODO
+
+			export type BannerSize = ''; // TODO
+
+			export type CheckoutPage = {
+				enabled?: boolean;
+				logoType?: LogoType;
+				logoPosition?: LogoPosition;
+				textColor?: TextColor;
+				textSize?: TextSize;
+			};
+
+			export type BannerPage = {
+				enabled?: boolean;
+				bannerColor?: BannerColor;
+				bannerSize?: BannerSize;
+			};
+
+			export type Config = {
+				enabledDarkMode?: boolean;
+				product?: CheckoutPage;
+				cart?: CheckoutPage;
+				checkout?: CheckoutPage;
+				home?: BannerPage;
+				shop?: BannerPage;
+				enabledWooCommerceBlock?: boolean;
+			};
+		}
+
+		export type Config = {
+			disconnectMerchant?: boolean;
+			merchant?: Merchant;
+			paymentMethods?: Gateway[];
+			settings?: Settings;
+			styling?: Styling.Config;
+			payLaterMessaging?: PayLaterMessaging.Config;
+		};
+	}
 }
