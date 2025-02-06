@@ -23,7 +23,8 @@ setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 	await requestUtils.setPermalinks( '/%postname%/' );
 } );
 
-setup( 'Setup Disable Nonce plugin (inactive)',
+setup(
+	'Setup Disable Nonce plugin (inactive)',
 	async ( { requestUtils, plugins } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled(
@@ -47,7 +48,8 @@ setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
 	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 } );
 
-setup( 'Setup Disable WooCommerce Setup Wizard Plugin (active)',
+setup(
+	'Setup Disable WooCommerce Setup Wizard Plugin (active)',
 	async ( { requestUtils, plugins } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled(
@@ -69,7 +71,8 @@ setup( 'Setup WooCommerce plugin (active)', async ( { requestUtils } ) => {
 	await requestUtils.activatePlugin( 'woocommerce' );
 } );
 
-setup( 'Setup WC Subscriptions plugin (inactive)',
+setup(
+	'Setup WC Subscriptions plugin (inactive)',
 	async ( { requestUtils, plugins } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled(
@@ -92,7 +95,8 @@ setup( 'Setup theme', async ( { requestUtils } ) => {
 	await requestUtils.activateTheme( slug );
 } );
 
-setup( 'Setup WooCommerce Live site visibility',
+setup(
+	'Setup WooCommerce Live site visibility',
 	async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setSiteVisibility();
 	}
@@ -101,7 +105,7 @@ setup( 'Setup WooCommerce Live site visibility',
 setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {
 		const apiKeys = await wooCommerceUtils.createApiKeys();
-		if( ! process.env.CI ) {
+		if ( ! process.env.CI ) {
 			await updateDotenv( './.env', apiKeys );
 		}
 		for ( const [ key, value ] of Object.entries( apiKeys ) ) {
@@ -120,15 +124,42 @@ setup( 'Setup Block and Classic pages', async ( { wooCommerceUtils } ) => {
 setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 	const disabled = { enabled: 'no' };
 	await wooCommerceApi.updateEmailSubSettings( 'email_new_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_cancelled_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_failed_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_on_hold_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_processing_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_completed_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_refunded_order', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_note', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_reset_password', disabled );
-	await wooCommerceApi.updateEmailSubSettings( 'email_customer_new_account', disabled );
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_cancelled_order',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_failed_order',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_on_hold_order',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_processing_order',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_completed_order',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_refunded_order',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_note',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_reset_password',
+		disabled
+	);
+	await wooCommerceApi.updateEmailSubSettings(
+		'email_customer_new_account',
+		disabled
+	);
 } );
 
 setup( 'Setup WooCommerce general settings', async ( { wooCommerceApi } ) => {
