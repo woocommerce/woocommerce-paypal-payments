@@ -1,13 +1,15 @@
 /**
  * Internal dependencies
  */
-import urls from '../urls';
 import { PcpAdminPage } from './pcp-admin-page';
+import urls from '../urls';
 
 export class PcpOverview extends PcpAdminPage {
-	url = urls.pcp.overview;
+	url = urls.admin.pcp.overview;
 
 	// Locators
+
 	// Actions
+
 	// Assertions
 }

@@ -1,15 +1,15 @@
 /**
  * Internal dependencies
  */
-
-import urls from '../urls';
 import { PcpAdminPage } from './pcp-admin-page';
+import urls from '../urls';
 
 export class PcpPaymentMethods extends PcpAdminPage {
-	url = urls.pcp.paymentMehods;
+	url = urls.admin.pcp.paymentMethods;
 
 	// Locators
 
 	// Actions
+
 	// Assertions
 }

@@ -1,18 +1,14 @@
 /**
  * Internal dependencies
  */
-import { PcpMerchant, PcpSettings } from '../../resources';
+import { Pcp } from '../../resources';
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
 
 export class PcpOnboarding extends PcpAdminPage {
-	url = urls.pcp.onboarding;
+	url = urls.admin.pcp.onboarding;
 
 	// Locators
-	navigationPanel = () => this.page.locator( '.ppcp-r-navigation' );
-	backButton = () => this.navigationPanel().locator( 'button.is-title' );
-	onboardingPageTitle = ( title: PcpSettings.OnboardingStepTitle ) =>
-		this.backButton().getByText( title );
 	saveAndExitButton = () =>
 		this.navigationPanel().getByRole( 'button', { name: 'Save and exit' } );
 	continueButton = () =>
@@ -52,18 +48,18 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page.getByRole( 'button', { name: 'Connect to PayPal' } );
 
 	// Actions
-	isCurrentStep = async ( title: PcpSettings.OnboardingStepTitle ) => {
+	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
 		await this.page.waitForFunction(() => !!document.querySelector('button.is-title'));
-		return await this.onboardingPageTitle( title ).isVisible();
+		return await this.pageTitle( String( title ) ).isVisible();
 	};
 
 	gotoInitialOnboardingPage = async () => {
-		if ( await this.isCurrentStep( 'PayPal Payments' ) ) {
-			return;
+		if ( ! ( await this.isCurrentStep( 'PayPal Payments' ) ) ) {
+			await this.backButton().click();
+			await this.page.waitForLoadState();
+			await this.gotoInitialOnboardingPage();
 		}
-		await this.backButton().click();
-		await this.gotoInitialOnboardingPage();
-	};	
+	};
 
 	openAdvancedOptions = async () => {
 		await this.gotoInitialOnboardingPage();
