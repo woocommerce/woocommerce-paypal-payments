@@ -8,9 +8,6 @@ require( 'dotenv' ).config();
  * Internal dependencies
  */
 import { storeSetupProjects } from './tests/.setup/store';
-import { pcpSetupProjects } from './tests/.setup/pcp';
-import { gatewaySetupProjects } from './tests/.setup/gateways';
-import { parallelProjects } from './parallel.projects.config';
 
 export default defineConfig( {
 	testDir: 'tests',
