@@ -18,6 +18,11 @@ import { Utils } from './utils';
 // PCP tabs
 import {
 	PcpOnboarding,
+	PcpOverview,
+	PcpPaymentMethods,
+	PcpSettings,
+	PcpStyling,
+	PcpPayLaterMessaging,
 	WooCommerceOrderEdit,
 	WooCommerceSubscriptionEdit,
 } from './admin';
@@ -47,6 +52,11 @@ type BaseExtend = {
 
 	// PCP tabs
 	pcpOnboarding: PcpOnboarding;
+	pcpOverview: PcpOverview;
+	pcpPaymentMethods: PcpPaymentMethods;
+	pcpSettings: PcpSettings;
+	pcpStyling: PcpStyling;
+	pcpPayLaterMessaging: PcpPayLaterMessaging;
 
 	// WooCommerce dashboard
 	wooCommerceOrderEdit: WooCommerceOrderEdit;
@@ -105,6 +115,21 @@ const test = base.extend< BaseExtend >( {
 	// PCP settings
 	pcpOnboarding: async ( { page }, use ) => {
 		await use( new PcpOnboarding( { page } ) );
+	},
+	pcpOverview: async ( { page }, use ) => {
+		await use( new PcpOverview( { page } ) );
+	},
+	pcpPaymentMethods: async ( { page }, use ) => {
+		await use( new PcpPaymentMethods( { page } ) );
+	},
+	pcpSettings: async ( { page }, use ) => {
+		await use( new PcpSettings( { page } ) );
+	},
+	pcpStyling: async ( { page }, use ) => {
+		await use( new PcpStyling( { page } ) );
+	},
+	pcpPayLaterMessaging: async ( { page }, use ) => {
+		await use( new PcpPayLaterMessaging( { page } ) );
 	},
 
 	// WooCommerce dashboard
