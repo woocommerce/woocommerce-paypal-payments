@@ -6,7 +6,7 @@ import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { PayPalAccount, PcpMerchant, PcpPayment } from '../../resources';
+import { PayPalAccount, Pcp } from '../../resources';
 import { PayPalPopup } from './paypal-popup';
 import { PayPalAPI } from '../paypal-api';
 
@@ -355,86 +355,80 @@ export class PayPalUI {
 	 * @param data.merchant
 	 */
 	makeClassicPayment = async ( data: {
-		payment: PcpPayment;
-		merchant?: PcpMerchant;
+		payment: Pcp.Payment;
+		merchant?: Pcp.Merchant;
 	} ) => {
+		const { payment, merchant } = data;
+		const { gateway } = payment;
 		// Map to the tested method
-		switch ( data.payment.method ) {
-			case 'PayPal':
+		switch ( gateway.dataFundingSource ) {
+			case 'paypal':
 				// pay with vaulted account
-				if ( data.payment.isVaulted ) {
+				if ( payment.isVaulted ) {
 					await this.completePayPalVaultedPayment(
-						data.payment.payPalAccount
+						payment.payPalAccount
 					);
 					break;
 				}
 				// pay with account other than vaulted
-				if ( data.payment.useNotVaultedAccount ) {
+				if ( payment.useNotVaultedAccount ) {
 					await this.completePayPalPayment(
 						await this.openPayPalPupupDifferentAccount(),
-						data.payment.useNotVaultedAccount
+						payment.useNotVaultedAccount
 					);
 					break;
 				}
 
 				await this.completePayPalPayment(
 					await this.openPayPalPupup(),
-					data.payment.payPalAccount
+					payment.payPalAccount
 				);
 				break;
 
-			case 'PayLater':
+			case 'paylater':
 				await this.completePayLaterPayment(
 					await this.openPayPalPupup( 'paylater' ),
-					data.payment.payPalAccount
+					payment.payPalAccount
 				);
 				break;
 
-			case 'ACDC':
-				if ( data.payment.isVaulted ) {
-					await this.completeAcdcVaultedPayment(
-						data.payment,
-						data.merchant
-					);
+			case 'acdc':
+				if ( gateway.acdc3ds === 'always-3d-secure' ) {
+					await this.completeAcdc3dsPayment( payment, merchant );
 					break;
 				}
-				await this.completeAcdcPayment( data.payment, data.merchant );
+				if ( payment.isVaulted ) {
+					await this.completeAcdcVaultedPayment( payment, merchant );
+					break;
+				}
+				await this.completeAcdcPayment( payment, merchant );
 				break;
 
-			case 'ACDC3DS':
-				await this.completeAcdc3dsPayment(
-					data.payment,
-					data.merchant
-				);
-				break;
-
-			case 'OXXO':
+			case 'oxxo':
 				await this.completeOXXOPayment();
 				break;
 
-			case 'Venmo':
+			case 'venmo':
 				await this.completePayPalPayment(
 					await this.openVenmoPopup(),
-					data.payment.payPalAccount
+					payment.payPalAccount
 				);
 				break;
 
-			case 'DebitOrCreditCard':
-				await this.completeDebitOrCreditCardPayment(
-					data.payment.card
-				);
+			case 'card':
+				// Standard Card Button
+				if ( gateway.slug === 'ppcp-card-button-gateway' ) {
+					await this.completeStandardCardButtonPayment(
+						payment.card
+					);
+					break;
+				}
+				// Debit Or Credit Card
+				await this.completeDebitOrCreditCardPayment( payment.card );
 				break;
 
-			case 'StandardCardButton':
-				await this.completeStandardCardButtonPayment(
-					data.payment.card
-				);
-				break;
-
-			case 'PayUponInvoice':
-				await this.completePayUponInvoicePayment(
-					data.payment.birthDate
-				);
+			case 'pay_upon_invoice':
+				await this.completePayUponInvoicePayment( payment.birthDate );
 				break;
 		}
 	};
@@ -445,23 +439,24 @@ export class PayPalUI {
 	 * @param data
 	 */
 	makePayment = async ( data ) => {
+		const { payment } = data;
 		// Make payment with tested method
-		switch ( data.payment.method ) {
-			case 'PayPal':
-				// if(paymentData.payment.isVaulted) {
-				//   await this.completePayPalVaultedPayment(paymentData.payment.payPalAccount);
+		switch ( payment.method ) {
+			case 'paypal':
+				// if(payment.isVaulted) {
+				//   await this.completePayPalVaultedPayment(payment.payPalAccount);
 				//   return;
 				// }
 				await this.completePayPalPayment(
 					await this.openBlockPayPalPopup(),
-					data.payment.payPalAccount
+					payment.payPalAccount
 				);
 				break;
 
-			case 'PayLater':
+			case 'paylater':
 				await this.completePayLaterPayment(
 					await this.openBlockPayLaterPopup(),
-					data.payment.payPalAccount
+					payment.payPalAccount
 				);
 				break;
 		}
@@ -472,13 +467,14 @@ export class PayPalUI {
 	 *
 	 * @param payment
 	 */
-	savePaymentMethod = async ( payment: PcpPayment ) => {
-		switch ( payment.method ) {
-			case 'PayPal':
+	savePaymentMethod = async ( payment: Pcp.Payment ) => {
+		const { gateway } = payment;
+		switch ( gateway.dataFundingSource ) {
+			case 'paypal':
 				await this.addPayPalPaymentMethod( payment.payPalAccount );
 				break;
 
-			case 'ACDC':
+			case 'acdc':
 				await this.addCardPaymentMethod( payment );
 				break;
 		}
@@ -487,14 +483,14 @@ export class PayPalUI {
 	/**
 	 * Opens PayPal popup
 	 *
-	 * @param fundingSource
+	 * @param dataFundingSource
 	 * @return PayPalPopup
 	 */
-	openPayPalPupup = async ( fundingSource = 'paypal' ) => {
+	openPayPalPupup = async ( dataFundingSource: string = 'paypal' ) => {
 		const popupPromise = this.page.waitForEvent( 'popup' );
 
-		await expect( this.fundingSourceButton( fundingSource ) ).toBeVisible();
-		await this.fundingSourceButton( fundingSource ).click();
+		await expect( this.fundingSourceButton( dataFundingSource ) ).toBeVisible();
+		await this.fundingSourceButton( dataFundingSource ).click();
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
@@ -615,7 +611,7 @@ export class PayPalUI {
 
 	// In the following request Playwright replaces Auth header with Basic Auth from .env,
 	// But the header should be from PayPal. Here it's replaced manually:
-	replacePayPalAuthToken = async ( merchant: PcpMerchant ) => {
+	replacePayPalAuthToken = async ( merchant: Pcp.Merchant ) => {
 		await this.page.route(
 			'https://www.sandbox.paypal.com/v2/checkout/orders/**/*',
 			async ( route ) => {
@@ -637,8 +633,8 @@ export class PayPalUI {
 	 * @param merchant
 	 */
 	completeAcdcPayment = async (
-		payment: PcpPayment,
-		merchant: PcpMerchant
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
@@ -666,8 +662,8 @@ export class PayPalUI {
 	};
 
 	completeAcdcVaultedPayment = async (
-		payment: PcpPayment,
-		merchant: PcpMerchant
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
@@ -677,8 +673,8 @@ export class PayPalUI {
 	};
 
 	completeAcdc3dsPayment = async (
-		payment: PcpPayment,
-		merchant: PcpMerchant
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
 	) => {
 		await this.completeAcdcPayment( payment, merchant );
 		await this.threeDSAcceptCookiesButton().click();
@@ -779,7 +775,7 @@ export class PayPalUI {
 		await payPal.savePaymentMethodAndContinue();
 	};
 
-	addCardPaymentMethod = async ( payment: PcpPayment ) => {
+	addCardPaymentMethod = async ( payment: Pcp.Payment ) => {
 		await expect( this.debitCreditCardsGateway() ).toBeVisible();
 		await this.debitCreditCardsGateway().click();
 		await this.cardNumberInput().fill( payment.card.card_number );

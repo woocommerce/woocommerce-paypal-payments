@@ -6,7 +6,7 @@ import { CustomerPaymentMethods as CustomerPaymentMethodsBase } from '@inpsyde/p
  * Internal dependencies
  */
 import { PayPalUI } from './paypal-ui';
-import { PcpPayment } from '../../resources';
+import { Pcp } from '../../resources';
 
 export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 	ppui: PayPalUI;
@@ -21,14 +21,14 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 		this.page.getByText( 'No saved methods found' );
 
 	// Actions
-	isSavedPaymentMethod = async ( payment: PcpPayment ) => {
+	isSavedPaymentMethod = async ( payment: Pcp.Payment ) => {
 		await this.visit();
 
 		if ( await this.noSavedMethodsMessage().isVisible() ) {
 			return false;
 		}
 
-		switch ( payment.dataFundingSource ) {
+		switch ( payment.gateway.dataFundingSource ) {
 			case 'paypal':
 				return await this.savedPaymentMethodRow(
 					`Paypal /`
@@ -46,7 +46,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 	 *
 	 * @param payment
 	 */
-	savePaymentMethod = async ( payment: PcpPayment ) => {
+	savePaymentMethod = async ( payment: Pcp.Payment ) => {
 		if ( ! ( await this.isSavedPaymentMethod( payment ) ) ) {
 			await this.addPaymentMethodButton().click();
 			await this.page.waitForLoadState();

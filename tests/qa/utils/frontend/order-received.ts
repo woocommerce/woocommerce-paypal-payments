@@ -37,7 +37,7 @@ export class OrderReceived extends OrderReceivedBase {
 	assertOrderDetails = async ( order: WooCommerce.ShopOrder ) => {
 		await super.assertOrderDetails( order );
 
-		if ( order.payment.dataFundingSource === 'oxxo' ) {
+		if ( order.payment.gateway.dataFundingSource === 'oxxo' ) {
 			await expect( this.seeOXXOVoucherButton_1() ).toBeVisible();
 			await expect( this.seeOXXOVoucherButton_2() ).toBeVisible();
 		}

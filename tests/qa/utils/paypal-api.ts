@@ -6,7 +6,7 @@ import { createAuthHeader } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
-import { PcpFundingSource, PcpMerchant, PcpPayment } from '../resources';
+import { Pcp } from '../resources';
 
 /**
  * Class for PayPal API
@@ -23,7 +23,7 @@ export class PayPalAPI {
 	private apiRequest = async (
 		requestType: string,
 		endPoint: string,
-		merchant: PcpMerchant,
+		merchant: Pcp.Merchant,
 		data?: any
 	) => {
 		try {
@@ -56,7 +56,7 @@ export class PayPalAPI {
 	 *
 	 * @param merchant - { client_id: '...', client_secret: '...' }
 	 */
-	getToken = async ( merchant: PcpMerchant ) => {
+	getToken = async ( merchant: Pcp.Merchant ) => {
 		const response = await this.request.post(
 			'https://api.sandbox.paypal.com/v1/oauth2/token',
 			{
@@ -78,7 +78,7 @@ export class PayPalAPI {
 	 */
 	getCapturedPayment = async (
 		resourceId: string,
-		merchant: PcpMerchant
+		merchant: Pcp.Merchant
 	) => {
 		return await this.apiRequest(
 			'get',
@@ -95,7 +95,7 @@ export class PayPalAPI {
 	 */
 	getAuthorizedPayment = async (
 		resourceId: string,
-		merchant: PcpMerchant
+		merchant: Pcp.Merchant
 	) => {
 		return await this.apiRequest(
 			'get',
@@ -110,7 +110,7 @@ export class PayPalAPI {
 	 * @param resourceId - PayPal order ID
 	 * @param merchant   - { client_id: '...', client_secret: '...' }
 	 */
-	getOrder = async ( resourceId: string, merchant: PcpMerchant ) => {
+	getOrder = async ( resourceId: string, merchant: Pcp.Merchant ) => {
 		return await this.apiRequest(
 			'get',
 			`/checkout/orders/${ resourceId }`,
@@ -124,7 +124,7 @@ export class PayPalAPI {
 	 * @param resourceId - PayPal order ID
 	 * @param merchant   - { client_id: '...', client_secret: '...' }
 	 */
-	getRefund = async ( resourceId: string, merchant: PcpMerchant ) => {
+	getRefund = async ( resourceId: string, merchant: Pcp.Merchant ) => {
 		return await this.apiRequest(
 			'get',
 			`/payments/refunds/${ resourceId }`,
@@ -146,8 +146,8 @@ export class PayPalAPI {
 	 * @param payPalOrder
 	 * @param payment
 	 */
-	getPaymentIdFromOrder = async ( payPalOrder, payment: PcpPayment ) => {
-		const fundingSource: PcpFundingSource = payment.dataFundingSource;
+	getPaymentIdFromOrder = async ( payPalOrder, payment: Pcp.Payment ) => {
+		const fundingSource = payment.gateway.dataFundingSource;
 
 		if ( fundingSource === 'pay_upon_invoice' ) {
 			return '';
@@ -190,8 +190,7 @@ export class PayPalAPI {
 	 * @param shopOrder
 	 */
 	getFee = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) => {
-		const fundingSource: PcpFundingSource =
-			shopOrder.payment.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
 		if (
 			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
 			shopOrder.payment.isAuthorized
@@ -206,8 +205,7 @@ export class PayPalAPI {
 		resourceId: string,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource: PcpFundingSource =
-			shopOrder.payment.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
 		if (
 			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
 			shopOrder.payment.isAuthorized
@@ -230,8 +228,7 @@ export class PayPalAPI {
 		wooCommerceOrderJson: WooCommerce.Order,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource: PcpFundingSource =
-			shopOrder.payment.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
 		const payPalOrderId = await this.getOrderIdFromWooCommerce(
 			wooCommerceOrderJson
 		);
@@ -348,8 +345,7 @@ export class PayPalAPI {
 		paymentId: string,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource: PcpFundingSource =
-			shopOrder.payment.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
 
 		if ( fundingSource === 'pay_upon_invoice' ) {
 			return;
