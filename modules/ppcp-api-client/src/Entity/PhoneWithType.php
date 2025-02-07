@@ -14,7 +14,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
  */
 class PhoneWithType {
 
-	const VALLID_TYPES = array(
+	const VALID_TYPES = array(
 		'FAX',
 		'HOME',
 		'MOBILE',
@@ -43,7 +43,7 @@ class PhoneWithType {
 	 * @param Phone  $phone The phone.
 	 */
 	public function __construct( string $type, Phone $phone ) {
-		$this->type  = in_array( $type, self::VALLID_TYPES, true ) ? $type : 'OTHER';
+		$this->type  = in_array( $type, self::VALID_TYPES, true ) ? $type : 'OTHER';
 		$this->phone = $phone;
 	}
 

@@ -1,7 +1,7 @@
-import MiniCartBootstap from './modules/ContextBootstrap/MiniCartBootstap';
-import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBootstap';
+import MiniCartBootstrap from './modules/ContextBootstrap/MiniCartBootstap';
+import SingleProductBootstrap from './modules/ContextBootstrap/SingleProductBootstap';
 import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
-import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
+import CheckoutBootstrap from './modules/ContextBootstrap/CheckoutBootstap';
 import PayNowBootstrap from './modules/ContextBootstrap/PayNowBootstrap';
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
@@ -246,7 +246,7 @@ const bootstrap = () => {
 	);
 
 	if ( PayPalCommerceGateway.mini_cart_buttons_enabled === '1' ) {
-		const miniCartBootstrap = new MiniCartBootstap(
+		const miniCartBootstrap = new MiniCartBootstrap(
 			PayPalCommerceGateway,
 			renderer,
 			errorHandler
@@ -264,7 +264,7 @@ const bootstrap = () => {
 		( PayPalCommerceGateway.single_product_buttons_enabled === '1' ||
 			hasMessages() )
 	) {
-		const singleProductBootstrap = new SingleProductBootstap(
+		const singleProductBootstrap = new SingleProductBootstrap(
 			PayPalCommerceGateway,
 			renderer,
 			errorHandler
@@ -289,17 +289,17 @@ const bootstrap = () => {
 	}
 
 	if ( context === 'checkout' ) {
-		const checkoutBootstap = new CheckoutBootstap(
+		const checkoutBootstrap = new CheckoutBootstrap(
 			PayPalCommerceGateway,
 			renderer,
 			spinner,
 			errorHandler
 		);
 
-		checkoutBootstap.init();
+		checkoutBootstrap.init();
 		buttonModuleWatcher.registerContextBootstrap(
 			'checkout',
-			checkoutBootstap
+			checkoutBootstrap
 		);
 	}
 

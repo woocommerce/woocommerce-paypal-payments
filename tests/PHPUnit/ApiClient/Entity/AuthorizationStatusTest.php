@@ -27,7 +27,7 @@ class AuthorizationStatusTest extends TestCase
         new AuthorizationStatus('invalid');
     }
 
-    public function testStatusComparision()
+    public function testStatusComparison()
     {
         $authorizationStatus = new AuthorizationStatus('CREATED');
 

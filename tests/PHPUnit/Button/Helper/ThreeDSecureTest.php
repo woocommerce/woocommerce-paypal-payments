@@ -57,7 +57,7 @@ class ThreeDSecureTest extends TestCase
     {
         $matrix = [
             'test_1' => [
-                ThreeDSecure::PROCCEED,
+                ThreeDSecure::PROCEED,
                 CardAuthenticationResult::LIABILITY_SHIFT_POSSIBLE,
                 CardAuthenticationResult::AUTHENTICATION_RESULT_YES,
                 CardAuthenticationResult::ENROLLMENT_STATUS_YES,
@@ -75,7 +75,7 @@ class ThreeDSecureTest extends TestCase
                 CardAuthenticationResult::ENROLLMENT_STATUS_YES,
             ],
             'test_4' => [
-                ThreeDSecure::PROCCEED,
+                ThreeDSecure::PROCEED,
                 CardAuthenticationResult::LIABILITY_SHIFT_POSSIBLE,
                 CardAuthenticationResult::AUTHENTICATION_RESULT_ATTEMPTED,
                 CardAuthenticationResult::ENROLLMENT_STATUS_YES,
@@ -105,13 +105,13 @@ class ThreeDSecureTest extends TestCase
                 CardAuthenticationResult::ENROLLMENT_STATUS_YES,
             ],
             'test_9' => [
-                ThreeDSecure::PROCCEED,
+                ThreeDSecure::PROCEED,
                 CardAuthenticationResult::LIABILITY_SHIFT_NO,
                 '',
                 CardAuthenticationResult::ENROLLMENT_STATUS_NO,
             ],
             'test_10' => [
-                ThreeDSecure::PROCCEED,
+                ThreeDSecure::PROCEED,
                 CardAuthenticationResult::LIABILITY_SHIFT_NO,
                 '',
                 CardAuthenticationResult::ENROLLMENT_STATUS_UNAVAILABLE,
@@ -123,7 +123,7 @@ class ThreeDSecureTest extends TestCase
                 CardAuthenticationResult::ENROLLMENT_STATUS_UNAVAILABLE,
             ],
             'test_12' => [
-                ThreeDSecure::PROCCEED,
+                ThreeDSecure::PROCEED,
                 CardAuthenticationResult::LIABILITY_SHIFT_NO,
                 '',
                 CardAuthenticationResult::ENROLLMENT_STATUS_BYPASS,

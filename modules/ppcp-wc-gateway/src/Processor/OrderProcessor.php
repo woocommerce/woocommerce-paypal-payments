@@ -403,7 +403,7 @@ class OrderProcessor {
 			$this->threed_secure->proceed_with_order( $order ),
 			array(
 				ThreeDSecure::NO_DECISION,
-				ThreeDSecure::PROCCEED,
+				ThreeDSecure::PROCEED,
 			),
 			true
 		);

@@ -249,7 +249,7 @@ if ( ! function_exists( 'WooCommerce\PayPalCommerce\OrderTracking\tr' ) ) {
 					'FERCAM_IT'                  => tr( 'fercam_it', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'FETCHR'                     => tr( 'Fetchr', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'FIRST_LOGISTICS_API'        => tr( 'First Logistics', 'Name of carrier', 'woocommerce-paypal-payments' ),
-					'FIRST_LOGISITCS'            => tr( 'first_logisitcs', 'Name of carrier', 'woocommerce-paypal-payments' ),
+					'FIRST_LOGISTICS'            => tr( 'first_logistics', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'FITZMARK_API'               => tr( 'FitzMark', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'FLASHEXPRESS_WEBHOOK'       => tr( 'Flash Express', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'FLIGHTLG'                   => tr( 'Flight Logistics Group', 'Name of carrier', 'woocommerce-paypal-payments' ),

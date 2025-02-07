@@ -21,7 +21,7 @@ class ShippingPreferenceFactory {
 	/**
 	 * Returns shipping_preference for the given state.
 	 *
-	 * @param PurchaseUnit $purchase_unit Thw PurchaseUnit.
+	 * @param PurchaseUnit $purchase_unit The PurchaseUnit.
 	 * @param string       $context The operation context like 'checkout', 'cart'.
 	 * @param WC_Cart|null $cart The current cart if relevant.
 	 * @param string       $funding_source The funding source (PayPal button) like 'paypal', 'venmo', 'card'.

@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the Early Order logic, when we need to create the WC_Order by ourselfs.
+ * Handles the Early Order logic, when we need to create the WC_Order by ourselves.
  *
  * @package WooCommerce\PayPalCommerce\Button\Helper
  */

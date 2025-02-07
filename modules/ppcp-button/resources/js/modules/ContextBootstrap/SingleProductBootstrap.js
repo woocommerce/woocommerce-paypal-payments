@@ -9,7 +9,7 @@ import { strRemoveWord, strAddWord, throttle } from '../Helper/Utils';
 import merge from 'deepmerge';
 import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
 
-class SingleProductBootstap {
+class SingleProductBootstrap {
 	constructor( gateway, renderer, errorHandler ) {
 		this.gateway = gateway;
 		this.renderer = renderer;
@@ -368,4 +368,4 @@ class SingleProductBootstap {
 	}
 }
 
-export default SingleProductBootstap;
+export default SingleProductBootstrap;

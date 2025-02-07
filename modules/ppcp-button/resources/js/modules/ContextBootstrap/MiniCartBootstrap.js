@@ -1,7 +1,7 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 import BootstrapHelper from '../Helper/BootstrapHelper';
 
-class MiniCartBootstap {
+class MiniCartBootstrap {
 	constructor( gateway, renderer, errorHandler ) {
 		this.gateway = gateway;
 		this.renderer = renderer;
@@ -71,4 +71,4 @@ class MiniCartBootstap {
 	}
 }
 
-export default MiniCartBootstap;
+export default MiniCartBootstrap;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Controlls the cancel mechanism to step out of the PayPal order session.
+ * Controls the cancel mechanism to step out of the PayPal order session.
  *
  * @package WooCommerce\PayPalCommerce\Session\Cancellation
  */

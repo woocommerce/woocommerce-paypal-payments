@@ -15,7 +15,7 @@ import {
 	dispatchButtonEvent,
 } from '../Helper/PaymentButtonHelpers';
 
-class CheckoutBootstap {
+class CheckoutBootstrap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
 		this.gateway = gateway;
 		this.renderer = renderer;
@@ -344,4 +344,4 @@ class CheckoutBootstap {
 	}
 }
 
-export default CheckoutBootstap;
+export default CheckoutBootstrap;

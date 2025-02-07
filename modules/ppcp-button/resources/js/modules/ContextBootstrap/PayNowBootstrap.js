@@ -1,7 +1,7 @@
-import CheckoutBootstap from './CheckoutBootstap';
+import CheckoutBootstrap from './CheckoutBootstrap';
 import { isChangePaymentPage } from '../Helper/Subscriptions';
 
-class PayNowBootstrap extends CheckoutBootstap {
+class PayNowBootstrap extends CheckoutBootstrap {
 	constructor( gateway, renderer, spinner, errorHandler ) {
 		super( gateway, renderer, spinner, errorHandler );
 	}

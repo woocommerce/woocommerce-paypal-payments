@@ -299,7 +299,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Shipping methods during callback not updated correctly #2421
 * Fix - Preserve subscription renewal processing when switching Subscriptions Mode or disabling gateway #2394
 * Fix - Remove shipping callback for Venmo express button #2374
-* Fix - Google Pay: Fix issuse with data.paymentSource being undefined #2390
+* Fix - Google Pay: Fix issues with data.paymentSource being undefined #2390
 * Fix - Loading of non-Order as a WC_Order causes warnings and potential data corruption #2343
 * Fix - Apple Pay and Google Pay buttons don't appear in PayPal Button stack on multi-step Checkout #2372
 * Fix - Apple Pay: Fix when shipping is disabled #2391
@@ -696,7 +696,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
 * Fix - Fix product price retrieval for variable product buttons #1000
 * Fix - All tabs hidden on OXXO tab visit #1048
-* Fix - Woocommerce Germanized Invoice bug #1017
+* Fix - WooCommerce Germanized Invoice bug #1017
 * Fix - Fix shipping address validation #1047
 * Fix - Trigger WC JS validation on button click to highlight empty fields #1004
 * Fix - Fix PHP 8.1 deprecated error #1009

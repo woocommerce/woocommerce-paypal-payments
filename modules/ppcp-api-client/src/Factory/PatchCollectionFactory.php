@@ -23,7 +23,7 @@ class PatchCollectionFactory {
 	/**
 	 * Creates a Patch Collection by comparing two orders.
 	 *
-	 * @param Order $from The inital order.
+	 * @param Order $from The initial order.
 	 * @param Order $to The target order.
 	 *
 	 * @return PatchCollection

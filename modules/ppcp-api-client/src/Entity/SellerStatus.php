@@ -73,7 +73,7 @@ class SellerStatus {
 	}
 
 	/**
-	 * Returns the enitity as array.
+	 * Returns the entity as array.
 	 *
 	 * @return array
 	 */

@@ -359,7 +359,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 							payLaterMessagingInputSelectorByLocation( location )
 					  )
 					: inputSelectros.concat(
-							butttonInputSelectorByLocation( location )
+							buttonInputSelectorByLocation( location )
 					  );
 		} );
 
@@ -386,7 +386,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		return inputSelectors;
 	};
 
-	const butttonInputSelectorByLocation = ( location ) => {
+	const buttonInputSelectorByLocation = ( location ) => {
 		const locationPrefix = location === 'checkout' ? '' : '_' + location;
 		const inputSelectors = [
 			'#field-button' + locationPrefix + '_layout',
