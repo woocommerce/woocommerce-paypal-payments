@@ -75,6 +75,16 @@ test.describe.serial( () => {
 		await pcpOnboarding.page.waitForLoadState();
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
+
+	test( 'PCP-0000 | Settings - Oboarding - Enable Sandbox mode - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.enableSandboxMode();
+		await percy.takeSnapshot( testInfo.title, percyConfig );
+	} );
 } );
 
 test( 'PCP-0000 | Settings - Badge values per country @percy', async ( {
