@@ -36,20 +36,24 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page.locator( 'input[type="checkbox"][value="physical"]' );
 
 	enableOptionalPaymentMethodsRadio = () =>
-		this.page.locator(
-			'input.ppcp-r__radio-value[value="true"]'
-		);
+		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
 	disableOptionalPaymentMethodsRadio = () =>
-		this.page.locator(
-			'input.ppcp-r__radio-value[value="false"]'
-		);
+		this.page.locator( 'input.ppcp-r__radio-value[value="false"]' );
 
 	connectToPayPalButton = () =>
 		this.page.getByRole( 'button', { name: 'Connect to PayPal' } );
 
+	enableManuallyConnectLabel = () =>
+		this.page.getByText( 'Manually Connect' );
+
+	enableManuallyConnectToggle = () =>
+		this.page.locator( '.components-form-toggle' ).nth( 1 );
+
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
-		await this.page.waitForFunction(() => !!document.querySelector('button.is-title'));
+		await this.page.waitForFunction(
+			() => !! document.querySelector( 'button.is-title' )
+		);
 		return await this.pageTitle( String( title ) ).isVisible();
 	};
 
@@ -72,6 +76,16 @@ export class PcpOnboarding extends PcpAdminPage {
 		await this.gotoInitialOnboardingPage();
 		if ( await this.advancedOptionsContent().isVisible() ) {
 			await this.seeAdvancedOptionsButton().click();
+		}
+	};
+
+	disableManuallyConnect = async () => {
+		const isChecked = await this.enableManuallyConnectToggle().getAttribute(
+			'class'
+		);
+		const isToggleChecked = isChecked.includes( 'is-checked' );
+		if ( isToggleChecked ) {
+			await this.enableManuallyConnectLabel().click();
 		}
 	};
 

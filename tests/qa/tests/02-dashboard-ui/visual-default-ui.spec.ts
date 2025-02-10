@@ -75,6 +75,16 @@ test.describe.serial( () => {
 		await pcpOnboarding.page.waitForLoadState();
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
+
+	test( 'PCP-0000 | Settings - Onboarding - Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.enableManuallyConnect();
+		await percy.takeSnapshot( testInfo.title, percyConfig );
+	} );
 } );
 
 test( 'PCP-0000 | Settings - Badge values per country @percy', async ( {

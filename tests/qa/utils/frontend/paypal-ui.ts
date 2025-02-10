@@ -489,7 +489,9 @@ export class PayPalUI {
 	openPayPalPupup = async ( dataFundingSource: string = 'paypal' ) => {
 		const popupPromise = this.page.waitForEvent( 'popup' );
 
-		await expect( this.fundingSourceButton( dataFundingSource ) ).toBeVisible();
+		await expect(
+			this.fundingSourceButton( dataFundingSource )
+		).toBeVisible();
 		await this.fundingSourceButton( dataFundingSource ).click();
 
 		const popup = await popupPromise;
