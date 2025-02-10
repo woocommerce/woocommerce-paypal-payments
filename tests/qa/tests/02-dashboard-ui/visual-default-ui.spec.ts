@@ -76,7 +76,7 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Onboarding - Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @percy', async ( {
+	test( 'PCP-0000 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {

@@ -79,14 +79,15 @@ export class PcpOnboarding extends PcpAdminPage {
 		}
 	};
 
-	disableManuallyConnect = async () => {
+	enableManuallyConnect = async () => {
 		const isChecked = await this.enableManuallyConnectToggle().getAttribute(
 			'class'
 		);
 		const isToggleChecked = isChecked.includes( 'is-checked' );
-		if ( isToggleChecked ) {
+		if ( ! isToggleChecked ) {
 			await this.enableManuallyConnectLabel().click();
 		}
+		await this.page.waitForLoadState( 'networkidle' );
 	};
 
 	// Assertions
