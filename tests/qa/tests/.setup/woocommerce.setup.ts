@@ -163,7 +163,7 @@ setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 } );
 
 setup( 'Setup WooCommerce general settings', async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.updateGeneralSettings( shopSettings.germany.general );
+	await wooCommerceApi.updateGeneralSettings( shopSettings.usa.general );
 } );
 
 setup( 'Setup WooCommerce shipping', async ( { wooCommerceUtils } ) => {
