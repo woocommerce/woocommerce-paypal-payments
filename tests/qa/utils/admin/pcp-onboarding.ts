@@ -43,9 +43,10 @@ export class PcpOnboarding extends PcpAdminPage {
 	connectToPayPalButton = () =>
 		this.page.getByRole( 'button', { name: 'Connect to PayPal' } );
 
-	enableSandboxModeLabel = () => this.page.getByText( 'Enable Sandbox Mode' );
+	enableConnectionTypeLabel = ( label: string ) =>
+		this.page.getByText( label );
 	enableSandboxModeToggle = () =>
-		this.page.locator( '.components-form-toggle' ).nth( 0 );
+		this.page.locator( '.components-form-toggle' ).first();
 
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
@@ -83,7 +84,9 @@ export class PcpOnboarding extends PcpAdminPage {
 		);
 		const isToggleChecked = isChecked.includes( 'is-checked' );
 		if ( ! isToggleChecked ) {
-			await this.enableSandboxModeLabel().click();
+			await this.enableConnectionTypeLabel(
+				'Enable Sandbox Mode'
+			).click();
 		}
 	};
 

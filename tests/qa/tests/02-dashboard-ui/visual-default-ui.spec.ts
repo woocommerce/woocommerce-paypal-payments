@@ -83,6 +83,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
 		await pcpOnboarding.enableSandboxMode();
+		await pcpOnboarding.page.waitForLoadState();
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 } );
