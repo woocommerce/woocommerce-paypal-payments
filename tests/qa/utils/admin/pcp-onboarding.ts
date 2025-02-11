@@ -37,9 +37,8 @@ export class PcpOnboarding extends PcpAdminPage {
 
 	enableOptionalPaymentMethodsRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
-		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
+
 	disableOptionalPaymentMethodsRadio = () =>
-		this.page.locator( 'input.ppcp-r__radio-value[value="false"]' );
 		this.page.locator( 'input.ppcp-r__radio-value[value="false"]' );
 
 	connectToPayPalButton = () =>
