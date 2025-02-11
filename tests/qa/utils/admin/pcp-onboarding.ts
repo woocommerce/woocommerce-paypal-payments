@@ -84,8 +84,8 @@ export class PcpOnboarding extends PcpAdminPage {
 		const isToggleChecked = isChecked.includes( 'is-checked' );
 		if ( ! isToggleChecked ) {
 			await this.enableSandboxModeLabel().click();
+			await this.page.waitForLoadState( 'networkidle' );
 		}
-		this.page.waitForLoadState( 'networkidle' );
 	};
 
 	// Assertions
