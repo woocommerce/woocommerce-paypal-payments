@@ -86,8 +86,8 @@ export class PcpOnboarding extends PcpAdminPage {
 		const isToggleChecked = isChecked.includes( 'is-checked' );
 		if ( ! isToggleChecked ) {
 			await this.enableManuallyConnectLabel().click();
+			await this.page.waitForLoadState( 'networkidle' );
 		}
-		await this.page.waitForLoadState( 'networkidle' );
 	};
 
 	// Assertions
