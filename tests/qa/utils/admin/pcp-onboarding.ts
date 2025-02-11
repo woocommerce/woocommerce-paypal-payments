@@ -37,7 +37,9 @@ export class PcpOnboarding extends PcpAdminPage {
 
 	enableOptionalPaymentMethodsRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
+		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
 	disableOptionalPaymentMethodsRadio = () =>
+		this.page.locator( 'input.ppcp-r__radio-value[value="false"]' );
 		this.page.locator( 'input.ppcp-r__radio-value[value="false"]' );
 
 	connectToPayPalButton = () =>
@@ -49,8 +51,15 @@ export class PcpOnboarding extends PcpAdminPage {
 	enableManuallyConnectToggle = () =>
 		this.page.locator( '.components-form-toggle' ).nth( 1 );
 
+	enableSandboxModeLabel = () => this.page.getByText( 'Enable Sandbox Mode' );
+	enableSandboxModeToggle = () =>
+		this.page.locator( '.components-form-toggle' ).first();
+
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
+		await this.page.waitForFunction(
+			() => !! document.querySelector( 'button.is-title' )
+		);
 		await this.page.waitForFunction(
 			() => !! document.querySelector( 'button.is-title' )
 		);
@@ -86,6 +95,17 @@ export class PcpOnboarding extends PcpAdminPage {
 		const isToggleChecked = isChecked.includes( 'is-checked' );
 		if ( ! isToggleChecked ) {
 			await this.enableManuallyConnectLabel().click();
+			await this.page.waitForLoadState( 'networkidle' );
+		}
+	};
+
+	enableSandboxMode = async () => {
+		const isChecked = await this.enableSandboxModeToggle().getAttribute(
+			'class'
+		);
+		const isToggleChecked = isChecked.includes( 'is-checked' );
+		if ( ! isToggleChecked ) {
+			await this.enableSandboxModeLabel().click();
 			await this.page.waitForLoadState( 'networkidle' );
 		}
 	};

@@ -25,7 +25,7 @@ test.beforeAll( async ( { utils } ) => {
 } );
 
 test.describe.serial( () => {
-	test( 'PCP-0000 | Settings - PayPal Payments - Default UI @percy', async ( {
+	test( 'PCP-0000 | Settings - Onboarding initial page - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
@@ -35,7 +35,7 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - PayPal Payments - See advanced options - Default UI @percy', async ( {
+	test( 'PCP-0000 | Settings - Onboarding initial page - See advanced options - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
@@ -44,7 +44,7 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Select product types - Default UI @percy', async ( {
+	test( 'PCP-0000 | Settings - Onboarding - Select product types - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
@@ -54,7 +54,7 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Choose checkout options - Default UI @percy', async ( {
+	test( 'PCP-0000 | Settings - Onboarding - Choose checkout options - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
@@ -65,7 +65,7 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Connect your PayPal account - Default UI @percy', async ( {
+	test( 'PCP-0000 | Settings - Onbarding - Connect your PayPal account - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
@@ -73,6 +73,16 @@ test.describe.serial( () => {
 		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.page.waitForLoadState();
+		await percy.takeSnapshot( testInfo.title, percyConfig );
+	} );
+
+	test( 'PCP-0000 | Settings - Onboarding - Enable Sandbox mode - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.enableSandboxMode();
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
 
