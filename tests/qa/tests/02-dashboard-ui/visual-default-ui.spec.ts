@@ -8,8 +8,7 @@ import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy
  */
 import { test } from '../../utils';
 import { storeConfigDefault } from '../../resources';
-import { badgeValuesPerCountry } from './.test-scenarios';
-import { countries, currencies } from './.test-data/badges-per-country';
+import { badgeTestsData } from './.test-data/badges-per-country.data';
 
 const percyConfig: PercyConfig = {
 	scope: '#ppcp-settings-container',
@@ -99,24 +98,44 @@ test.describe.serial( () => {
 	} );
 } );
 
-test.describe.only(
-	'PCP-0000 | Settings - Onboarding - Badge values per country @percy',
-	() => {
+test.describe.only( () => {
 		const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
-		for ( const { country, label } of countries ) {
-			test( `PCP-0000 | Settings - ${ label } - Onboarding - Badge values for ${ country }`, async ( {
+		for ( const testData of badgeTestsData ) {
+			const {
+				testKey,
+				countryCode,
+				wooCommerceCountryCode,
+			} = testData;
+
+			test( `${ testKey } | Settings - ${ countryCode } - Onboarding - Badge values`, async ( {
 				wooCommerceApi,
 				pcpOnboarding,
 				percy,
 			}, testInfo ) => {
-				await badgeValuesPerCountry(
-					{ wooCommerceApi, pcpOnboarding, percy },
-					testInfo,
-					country,
-					label,
-					currencies
-				);
+				await pcpOnboarding.visit();
+				for (const currency of currencies) {
+					await wooCommerceApi.updateGeneralSettings({
+						woocommerce_default_country: wooCommerceCountryCode,
+						woocommerce_currency: currency,
+					});
+			
+					await pcpOnboarding.page.reload();
+					await pcpOnboarding.gotoInitialOnboardingPage();
+					await pcpOnboarding.badgeContainer().waitFor( { state: 'visible' } );
+					await pcpOnboarding.closeAdvancedOptions();
+					await pcpOnboarding.page.waitForLoadState( 'load' );
+					await percy.takeSnapshot(`${ testInfo.title } - PayPal Settings - ${ countryCode } - ${ currency }`, percyConfig);
+			
+					await pcpOnboarding.activatePayPalPaymentsButton().click();
+					await pcpOnboarding.businessRadio().click();
+					await pcpOnboarding.continueButton().click();
+					await pcpOnboarding.virtualCheckbox().check();
+					await pcpOnboarding.continueButton().click();
+					await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+					await pcpOnboarding.page.waitForLoadState( 'load' );
+					await percy.takeSnapshot(`${ testInfo.title } - Choose checkout options - ${ countryCode } - ${ currency }`, percyConfig);
+				}
 			} );
 		}
 	}
