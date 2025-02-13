@@ -99,7 +99,7 @@ export class Utils {
 			merchant: order.merchant,
 			payment: order.payment,
 		} );
-		return await this.wooCommerceApi.getOrderWithStatus(
+		return await this.wooCommerceApi.getOrderByIdAndStatus(
 			orderId,
 			'processing'
 		);
@@ -128,7 +128,7 @@ export class Utils {
 
 		await this.checkout.makeOrder( shopOrder );
 		const orderId = await this.orderReceived.getOrderNumber();
-		return await this.wooCommerceApi.getOrderWithStatus(
+		return await this.wooCommerceApi.getOrderByIdAndStatus(
 			orderId,
 			'processing'
 		);
@@ -145,7 +145,7 @@ export class Utils {
 		await this.fillVisitorsCart( shopOrder.products );
 		await this.classicCheckout.makeOrder( shopOrder );
 		const orderId = await this.orderReceived.getOrderNumber();
-		return await this.wooCommerceApi.getOrderWithStatus(
+		return await this.wooCommerceApi.getOrderByIdAndStatus(
 			orderId,
 			'processing'
 		);
