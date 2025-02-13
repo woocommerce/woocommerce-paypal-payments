@@ -1,0 +1,1 @@
+export {badgeValuesPerCountry} from './countries-currencies';

@@ -8,6 +8,8 @@ import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy
  */
 import { test } from '../../utils';
 import { storeConfigDefault } from '../../resources';
+import { badgeValuesPerCountry } from './.test-scenarios';
+import { countries, currencies } from './.test-data/badges-per-country';
 
 const percyConfig: PercyConfig = {
 	scope: '#ppcp-settings-container',
@@ -97,40 +99,25 @@ test.describe.serial( () => {
 	} );
 } );
 
-test( 'PCP-0000 | Settings - Badge values per country @percy', async ( {
-	wooCommerceApi,
-	pcpOnboarding,
-	percy,
-}, testInfo ) => {
-	const countries = [ 'germany', 'usa' ];
+test.describe.only(
+	'PCP-0000 | Settings - Onboarding - Badge values per country @percy',
+	() => {
+		const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
-	await pcpOnboarding.visit();
-
-	for ( const country of countries ) {
-		const generalCountrySettings = shopSettings[ country ].general;
-		await wooCommerceApi.updateGeneralSettings( generalCountrySettings );
-		await pcpOnboarding.page.reload();
-		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.page.waitForSelector(
-			'span.ppcp-r-title-badge.ppcp-r-title-badge--info'
-		);
-		await pcpOnboarding.closeAdvancedOptions();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - PayPal Settings - ${ country }`,
-			percyConfig
-		);
-
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		if ( country === 'usa' ) {
-			await pcpOnboarding.businessRadio().click();
-			await pcpOnboarding.continueButton().click();
+		for ( const { country, label } of countries ) {
+			test( `PCP-0000 | Settings - ${ label } - Onboarding - Badge values for ${ country }`, async ( {
+				wooCommerceApi,
+				pcpOnboarding,
+				percy,
+			}, testInfo ) => {
+				await badgeValuesPerCountry(
+					{ wooCommerceApi, pcpOnboarding, percy },
+					testInfo,
+					country,
+					label,
+					currencies
+				);
+			} );
 		}
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - Choose checkout options - ${ country }`,
-			percyConfig
-		);
 	}
-} );
+);
