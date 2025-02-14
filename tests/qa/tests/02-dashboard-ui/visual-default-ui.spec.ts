@@ -98,7 +98,7 @@ test.describe.serial( () => {
 	} );
 } );
 
-test.describe.only( () => {
+test.describe( () => {
 		const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
 		for ( const testData of badgeTestsData ) {
