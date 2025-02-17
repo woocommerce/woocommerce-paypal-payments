@@ -54,7 +54,9 @@ export class PcpOnboarding extends PcpAdminPage {
 	enableSandboxModeToggle = () =>
 		this.page.locator( '.components-form-toggle' ).first();
 	badgeContainer = () =>
-		this.page.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' ).last();
+		this.page
+			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
+			.last();
 
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
