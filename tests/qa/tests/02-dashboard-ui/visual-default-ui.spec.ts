@@ -98,7 +98,7 @@ test.describe.serial( () => {
 	} );
 } );
 
-test( 'PCP-0000 | Settings - Croatia - Onboarding - Default UI (only BCDC) - Default UI @percy', async ( {
+test( 'PCP-0000 | Settings - Croatia - Onboarding initial page (only BCDC) - Default UI @percy', async ( {
 	pcpOnboarding,
 	percy,
 	wooCommerceApi,
