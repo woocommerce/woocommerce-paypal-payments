@@ -8,6 +8,7 @@ import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy
  */
 import { test } from '../../utils';
 import { storeConfigDefault } from '../../resources';
+import { badgeTestsData } from './.test-data/badges-per-country.data';
 
 const percyConfig: PercyConfig = {
 	scope: '#ppcp-settings-container',
@@ -97,40 +98,45 @@ test.describe.serial( () => {
 	} );
 } );
 
-test( 'PCP-0000 | Settings - Badge values per country @percy', async ( {
-	wooCommerceApi,
-	pcpOnboarding,
-	percy,
-}, testInfo ) => {
-	const countries = [ 'germany', 'usa' ];
+test.describe( () => {
+		const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
-	await pcpOnboarding.visit();
+		for ( const testData of badgeTestsData ) {
+			const {
+				testKey,
+				countryCode,
+				wooCommerceCountryCode,
+			} = testData;
 
-	for ( const country of countries ) {
-		const generalCountrySettings = shopSettings[ country ].general;
-		await wooCommerceApi.updateGeneralSettings( generalCountrySettings );
-		await pcpOnboarding.page.reload();
-		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.page.waitForSelector(
-			'span.ppcp-r-title-badge.ppcp-r-title-badge--info'
-		);
-		await pcpOnboarding.closeAdvancedOptions();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - PayPal Settings - ${ country }`,
-			percyConfig
-		);
-
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		if ( country === 'usa' ) {
-			await pcpOnboarding.businessRadio().click();
-			await pcpOnboarding.continueButton().click();
+			test( `${ testKey } | Settings - ${ countryCode } - Onboarding - Badge values`, async ( {
+				wooCommerceApi,
+				pcpOnboarding,
+				percy,
+			}, testInfo ) => {
+				await pcpOnboarding.visit();
+				for (const currency of currencies) {
+					await wooCommerceApi.updateGeneralSettings({
+						woocommerce_default_country: wooCommerceCountryCode,
+						woocommerce_currency: currency,
+					});
+			
+					await pcpOnboarding.page.reload();
+					await pcpOnboarding.gotoInitialOnboardingPage();
+					await pcpOnboarding.badgeContainer().waitFor( { state: 'visible' } );
+					await pcpOnboarding.closeAdvancedOptions();
+					await pcpOnboarding.page.waitForLoadState( 'load' );
+					await percy.takeSnapshot(`${ testInfo.title } - PayPal Settings - ${ countryCode } - ${ currency }`, percyConfig);
+			
+					await pcpOnboarding.activatePayPalPaymentsButton().click();
+					await pcpOnboarding.businessRadio().click();
+					await pcpOnboarding.continueButton().click();
+					await pcpOnboarding.virtualCheckbox().check();
+					await pcpOnboarding.continueButton().click();
+					await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+					await pcpOnboarding.page.waitForLoadState( 'load' );
+					await percy.takeSnapshot(`${ testInfo.title } - Choose checkout options - ${ countryCode } - ${ currency }`, percyConfig);
+				}
+			} );
 		}
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - Choose checkout options - ${ country }`,
-			percyConfig
-		);
 	}
-} );
+);

@@ -53,15 +53,12 @@ export class PcpOnboarding extends PcpAdminPage {
 	enableSandboxModeLabel = () => this.page.getByText( 'Enable Sandbox Mode' );
 	enableSandboxModeToggle = () =>
 		this.page.locator( '.components-form-toggle' ).first();
+	badgeContainer = () =>
+		this.page.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' ).last();
 
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
-		await this.page.waitForFunction(
-			() => !! document.querySelector( 'button.is-title' )
-		);
-		await this.page.waitForFunction(
-			() => !! document.querySelector( 'button.is-title' )
-		);
+		await this.backButton().waitFor( { state: 'visible' } );
 		return await this.pageTitle( String( title ) ).isVisible();
 	};
 
