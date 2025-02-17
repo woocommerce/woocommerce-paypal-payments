@@ -96,6 +96,21 @@ test.describe.serial( () => {
 		await pcpOnboarding.enableManuallyConnect();
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
+
+	test.only( 'PCP-0000 | Settings - UK - Onboarding - Default UI (acdc, paylater) - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+		wooCommerceApi,
+	}, testInfo ) => {
+		await wooCommerceApi.updateGeneralSettings( {
+			woocommerce_default_country: 'GB',
+			woocommerce_currency: 'GBP',
+		} );
+		await pcpOnboarding.visit();
+		await pcpOnboarding.gotoInitialOnboardingPage();
+		
+		await percy.takeSnapshot( testInfo.title, percyConfig );
+	} );
 } );
 
 test.describe( () => {
