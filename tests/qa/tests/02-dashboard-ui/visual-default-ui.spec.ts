@@ -103,9 +103,7 @@ test( 'PCP-0000 | Settings - Croatia - Onboarding - Default UI (only BCDC) - Def
 	percy,
 	wooCommerceApi,
 }, testInfo ) => {
-	await wooCommerceApi.updateGeneralSettings( {
-		woocommerce_default_country: 'HR:HR-21',
-	} );
+	await wooCommerceApi.updateGeneralSettings( shopSettings.croatia.general );
 
 	await pcpOnboarding.visit();
 	await pcpOnboarding.gotoInitialOnboardingPage();
