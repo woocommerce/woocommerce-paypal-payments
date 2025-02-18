@@ -1,3 +1,5 @@
+import { shopSettings } from '@inpsyde/playwright-utils/build';
+
 export const badgeTestsData = [
     {
         testKey: 'PCP-0000',
@@ -40,3 +42,14 @@ export const badgeTestsData = [
         countryCode: 'DE',
     }
 ];
+
+export const initialOnboardingScreenData = [ 
+    {
+    testSummary: 'PCP-0000 | Settings - UK - Onboarding - Default UI (acdc, paylater) - Default UI @percy',
+    wooCommerceGeneralSettings: shopSettings.uk.general,
+    }, 
+    {
+    testSummary: 'PCP-0000 | Settings - Croatia - Onboarding - Default UI (only BCDC) - Default UI @percy',
+    wooCommerceGeneralSettings: shopSettings.croatia.general,
+    },
+]
