@@ -99,69 +99,69 @@ test.describe.serial( () => {
 		await pcpOnboarding.enableManuallyConnect();
 		await percy.takeSnapshot( testInfo.title, percyConfig );
 	} );
+} );
 
-	test.describe.only( () => {
-		for ( const data of initialOnboardingScreenData ) {
-			test( `${ data.testSummary }`, async ( {
-				pcpOnboarding,
-				percy,
-				wooCommerceApi,
-			}, testInfo ) => {
-				await wooCommerceApi.updateGeneralSettings(
-					data.wooCommerceGeneralSettings
-				);
-				await pcpOnboarding.visit();
+test.describe.only( () => {
+	for ( const data of initialOnboardingScreenData ) {
+		test( `${ data.testSummary }`, async ( {
+			pcpOnboarding,
+			percy,
+			wooCommerceApi,
+		}, testInfo ) => {
+			await wooCommerceApi.updateGeneralSettings(
+				data.wooCommerceGeneralSettings
+			);
+			await pcpOnboarding.visit();
+			await pcpOnboarding.gotoInitialOnboardingPage();
+			await percy.takeSnapshot( testInfo.title, percyConfig );
+		} );
+	}
+} );
+
+test.describe( () => {
+	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
+
+	for ( const testData of badgeTestsData ) {
+		const { testKey, countryCode, wooCommerceCountryCode } = testData;
+
+		test( `${ testKey } | Settings - ${ countryCode } - Onboarding - Badge values`, async ( {
+			wooCommerceApi,
+			pcpOnboarding,
+			percy,
+		}, testInfo ) => {
+			await pcpOnboarding.visit();
+			for ( const currency of currencies ) {
+				await wooCommerceApi.updateGeneralSettings( {
+					woocommerce_default_country: wooCommerceCountryCode,
+					woocommerce_currency: currency,
+				} );
+
+				await pcpOnboarding.page.reload();
 				await pcpOnboarding.gotoInitialOnboardingPage();
-				await percy.takeSnapshot( testInfo.title, percyConfig );
-			} );
-		}
-	} );
+				await pcpOnboarding
+					.badgeContainer()
+					.waitFor( { state: 'visible' } );
+				await pcpOnboarding.closeAdvancedOptions();
+				await pcpOnboarding.page.waitForLoadState( 'load' );
+				await percy.takeSnapshot(
+					`${ testInfo.title } - PayPal Settings - ${ countryCode } - ${ currency }`,
+					percyConfig
+				);
 
-	test.describe( () => {
-		const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
-
-		for ( const testData of badgeTestsData ) {
-			const { testKey, countryCode, wooCommerceCountryCode } = testData;
-
-			test( `${ testKey } | Settings - ${ countryCode } - Onboarding - Badge values`, async ( {
-				wooCommerceApi,
-				pcpOnboarding,
-				percy,
-			}, testInfo ) => {
-				await pcpOnboarding.visit();
-				for ( const currency of currencies ) {
-					await wooCommerceApi.updateGeneralSettings( {
-						woocommerce_default_country: wooCommerceCountryCode,
-						woocommerce_currency: currency,
-					} );
-
-					await pcpOnboarding.page.reload();
-					await pcpOnboarding.gotoInitialOnboardingPage();
-					await pcpOnboarding
-						.badgeContainer()
-						.waitFor( { state: 'visible' } );
-					await pcpOnboarding.closeAdvancedOptions();
-					await pcpOnboarding.page.waitForLoadState( 'load' );
-					await percy.takeSnapshot(
-						`${ testInfo.title } - PayPal Settings - ${ countryCode } - ${ currency }`,
-						percyConfig
-					);
-
-					await pcpOnboarding.activatePayPalPaymentsButton().click();
-					await pcpOnboarding.businessRadio().click();
-					await pcpOnboarding.continueButton().click();
-					await pcpOnboarding.virtualCheckbox().check();
-					await pcpOnboarding.continueButton().click();
-					await pcpOnboarding
-						.disableOptionalPaymentMethodsRadio()
-						.click();
-					await pcpOnboarding.page.waitForLoadState( 'load' );
-					await percy.takeSnapshot(
-						`${ testInfo.title } - Choose checkout options - ${ countryCode } - ${ currency }`,
-						percyConfig
-					);
-				}
-			} );
-		}
-	} );
+				await pcpOnboarding.activatePayPalPaymentsButton().click();
+				await pcpOnboarding.businessRadio().click();
+				await pcpOnboarding.continueButton().click();
+				await pcpOnboarding.virtualCheckbox().check();
+				await pcpOnboarding.continueButton().click();
+				await pcpOnboarding
+					.disableOptionalPaymentMethodsRadio()
+					.click();
+				await pcpOnboarding.page.waitForLoadState( 'load' );
+				await percy.takeSnapshot(
+					`${ testInfo.title } - Choose checkout options - ${ countryCode } - ${ currency }`,
+					percyConfig
+				);
+			}
+		} );
+	}
 } );
