@@ -1,0 +1,18 @@
+#!/bin/bash
+## Description: Runs phpcs and psalm checks against a provided file
+## Usage: php-ci [path]
+## Example: "ddev php-ci uninstall.php"
+## ProjectTypes: php
+
+file_path="$1"
+
+if [[ -z "$file_path" ]]; then
+	echo "Please provide a file path."
+    exit 1
+fi
+
+echo "▶︎ Running phpcs"
+phpcs -sp "$file_path"
+
+echo "▶︎ Running Psalm"
+psalm "$file_path"
