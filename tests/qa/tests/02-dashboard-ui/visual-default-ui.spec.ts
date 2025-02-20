@@ -6,8 +6,9 @@ import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy
 /**
  * Internal dependencies
  */
-import { test } from '../../utils';
-import { storeConfigDefault } from '../../resources';
+import { test, expect } from '../../utils';
+import urls from '../../utils/urls';
+import { payPalAccounts, storeConfigDefault } from '../../resources';
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
@@ -101,7 +102,7 @@ test.describe.serial( () => {
 	} );
 } );
 
-test.describe.only( () => {
+test.describe( () => {
 	for ( const data of initialOnboardingScreenData ) {
 		test( `${ data.testSummary }`, async ( {
 			pcpOnboarding,
@@ -164,4 +165,15 @@ test.describe( () => {
 			}
 		} );
 	}
+} );
+
+test.only( 'Settings - US - Onboarding  - Connect with personal sandbox account', async ( { pcpOnboarding, percy }, testInfo ) => {
+	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
+	await pcpOnboarding.openAdvancedOptions();
+	await pcpOnboarding.enableSandboxMode();
+	await pcpOnboarding.connectToSandbox( payPalAccounts.usa );
+	await pcpOnboarding.page.waitForLoadState('domcontentloaded');
+// 	await pcpOnboarding.visit(urls.admin.pcp.settings);
+// 	await percy.takeSnapshot( testInfo.title, percyConfig );	
 } );

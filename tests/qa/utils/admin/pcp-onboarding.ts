@@ -1,9 +1,10 @@
 /**
  * Internal dependencies
  */
-import { Pcp } from '../../resources';
+import { PayPalAccount, Pcp } from '../../resources';
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
+import { expect } from 'playwright/test';
 
 export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;
@@ -58,6 +59,19 @@ export class PcpOnboarding extends PcpAdminPage {
 			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
 			.last();
 
+	enableSandboxModeContainer = () =>
+		this.page.locator( '.ppcp-r-busy-wrapper', {
+			has: this.enableSandboxModeLabel(),
+		} );
+
+	connectButton = () =>
+		this.enableSandboxModeContainer().getByText( 'Connect Account' );
+
+	popupEmail = () => this.page.locator( '#email' );
+	popupContinueButton = () => this.page.locator( '#continueButton' );
+	popupPassword = () => this.page.locator( '#password' );
+	popupLoginButton = () => this.page.locator( '#btnLogin' );
+
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
 		await this.backButton().waitFor( { state: 'visible' } );
@@ -107,6 +121,51 @@ export class PcpOnboarding extends PcpAdminPage {
 			await this.page.waitForLoadState( 'networkidle' );
 		}
 	};
+
+	openConnectionPopup = async () => {
+		const popupPromise = this.page.waitForEvent( 'popup' );
+		await this.connectButton().click();
+		const popup = await popupPromise;
+		await popup.waitForLoadState('networkidle');
+		return popup;
+	};
+
+
+	connectToSandbox = async (country: PayPalAccount) => {
+		// await this.gotoInitialOnboardingPage();
+		// await this.openAdvancedOptions();
+		// await this.enableSandboxMode();
+	  
+		// Wait for and handle the popup
+		const popup = await this.openConnectionPopup();
+	  
+		// Fill in the email and password and click the login button
+		await popup.fill('#email', country.email);
+		await popup.click('#continueButton');
+		await popup.fill('#password', country.password);
+		await popup.click('#btnLogin');
+		await popup.waitForLoadState('networkidle');
+	  
+		// Check the radio button for a personal account and click the continue button
+		await popup.click('#continueButton');
+		await popup.waitForLoadState('networkidle');
+		await popup.locator('#agreeAndConnectButton', { hasText: 'Agree and Connect' }).click();
+	  
+		// Check if the popup is still open
+		//expect( popup.isClosed()).toBeFalsy();
+	  
+		//Wait for the "Go back" button to be visible and enabled
+		await popup.locator('.Button--primary', { hasText: "Go back to test facilitator's Test Store" }).waitFor({ state: 'visible' });
+
+		//Wait for the main page to navigate
+		const expectedUrl = urls.admin.pcp.overview; 
+		await Promise.all([
+			this.page.waitForURL( expectedUrl ), 
+			popup.locator('.Button--primary', { hasText: "Go back to test facilitator's Test Store" }).click(),
+		  ]);
+	  
+		await expect(this.page).toHaveURL(urls.admin.pcp.overview); 
+	  };
 
 	// Assertions
 }
