@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { PayPalAccount, Pcp } from '../../resources';
-import { PcpAdminPage } from './pcp-admin-page';
+import { PcpAdminPage, PayPalConnectionPopup } from '.';
 import urls from '../urls';
 import { expect } from 'playwright/test';
 
@@ -126,45 +126,15 @@ export class PcpOnboarding extends PcpAdminPage {
 		const popupPromise = this.page.waitForEvent( 'popup' );
 		await this.connectButton().click();
 		const popup = await popupPromise;
-		await popup.waitForLoadState('networkidle');
-		return popup;
+		await popup.waitForLoadState();
+		return new PayPalConnectionPopup( { popup } );
 	};
 
-
-	connectToSandbox = async (country: PayPalAccount) => {
-		// await this.gotoInitialOnboardingPage();
-		// await this.openAdvancedOptions();
-		// await this.enableSandboxMode();
-	  
-		// Wait for and handle the popup
+	connectToSandbox = async ( paypalUser: PayPalAccount ) => {
 		const popup = await this.openConnectionPopup();
-	  
-		// Fill in the email and password and click the login button
-		await popup.fill('#email', country.email);
-		await popup.click('#continueButton');
-		await popup.fill('#password', country.password);
-		await popup.click('#btnLogin');
-		await popup.waitForLoadState('networkidle');
-	  
-		// Check the radio button for a personal account and click the continue button
-		await popup.click('#continueButton');
-		await popup.waitForLoadState('networkidle');
-		await popup.locator('#agreeAndConnectButton', { hasText: 'Agree and Connect' }).click();
-	  
-		// Check if the popup is still open
-		//expect( popup.isClosed()).toBeFalsy();
-	  
-		//Wait for the "Go back" button to be visible and enabled
-		await popup.locator('.Button--primary', { hasText: "Go back to test facilitator's Test Store" }).waitFor({ state: 'visible' });
-
-		//Wait for the main page to navigate
-		const expectedUrl = urls.admin.pcp.overview; 
-		await Promise.all([
-			this.page.waitForURL( expectedUrl ), 
-			popup.locator('.Button--primary', { hasText: "Go back to test facilitator's Test Store" }).click(),
-		  ]);
-	  
-		await expect(this.page).toHaveURL(urls.admin.pcp.overview); 
+		await popup.login( paypalUser.email, paypalUser.password);
+		await this.page.waitForLoadState( 'networkidle' );
+		await expect( this.page ).toHaveURL( urls.admin.pcp.overview );
 	  };
 
 	// Assertions

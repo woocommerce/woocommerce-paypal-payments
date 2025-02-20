@@ -9,8 +9,8 @@ const germany: PayPalAccount = {
 };
 
 const usa: PayPalAccount = {
-	email: 'sb-tb1aj26722276@personal.example.com',
-	password: 'Z9+6Az-G',
+	email: 'sb-0ijyy37927254@personal.example.com', // old: 'sb-tb1aj26722276@personal.example.com',
+	password: 'hckTG7F^', // old: 'Z9+6Az-G',
 };
 
 const mexico: PayPalAccount = {

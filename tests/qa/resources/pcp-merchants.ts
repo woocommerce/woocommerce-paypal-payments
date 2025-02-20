@@ -14,6 +14,7 @@ const invalid: Pcp.Merchant = {
 
 const usa: Pcp.Merchant = {
 	email: 'new-us-3wbh337372180@business.example.com',
+	//password: '3!G4!m(x',
 	client_id:
 		'AZC4b9RPfnq3xtiFZ-_3xDsgPvQwQdNPtVqYXBRUJBpHSC3Qffli97AOYlfbb4Ej27WApTOtGJwv_V9E',
 	client_secret:

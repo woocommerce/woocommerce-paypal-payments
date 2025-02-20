@@ -1,3 +1,4 @@
+export * from './paypal-connection-popup';
 export * from './pcp-admin-page';
 export * from './pcp-onboarding';
 export * from './pcp-overview';
