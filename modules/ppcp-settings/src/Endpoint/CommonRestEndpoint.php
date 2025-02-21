@@ -73,6 +73,9 @@ class CommonRestEndpoint extends RestEndpoint {
 		'merchant_email'       => array(
 			'js_name' => 'email',
 		),
+		'seller_type'          => array(
+			'js_name' => 'sellerType',
+		),
 		'client_id'            => array(
 			'js_name' => 'clientId',
 		),

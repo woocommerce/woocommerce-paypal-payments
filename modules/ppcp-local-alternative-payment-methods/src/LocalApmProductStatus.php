@@ -71,6 +71,7 @@ class LocalApmProductStatus extends ProductStatus {
 			}
 		}
 
+		// Settings used as a cache; `settings->set` is compatible with new UI.
 		if ( $has_capability ) {
 			$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
 		} else {

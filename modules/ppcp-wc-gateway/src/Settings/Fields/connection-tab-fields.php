@@ -28,6 +28,8 @@ return function ( ContainerInterface $container, array $fields ): array {
 		return $fields;
 	}
 
+	// Legacy settings module, use of `State` class is correct.
+
 	$state = $container->get( 'onboarding.state' );
 	assert( $state instanceof State );
 

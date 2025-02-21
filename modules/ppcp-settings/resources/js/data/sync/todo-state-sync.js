@@ -23,13 +23,18 @@ export const initTodoSync = () => {
 
 		try {
 			const paymentState = select( 'wc/paypal/payment' ).persistentData();
-			const todosState = select( 'wc/paypal/todos' ).getTodos();
+			const completedTodos =
+				select( 'wc/paypal/todos' ).getCompletedTodos();
 
 			// Skip if states haven't been initialized yet
-			if ( ! paymentState || ! todosState || ! previousPaymentState ) {
+			if ( ! paymentState || ! previousPaymentState ) {
 				previousPaymentState = paymentState;
+				isProcessing = false;
 				return;
 			}
+
+			// Track which todos should be marked as completed
+			let newCompletedTodos = [ ...( completedTodos || [] ) ];
 
 			Object.entries( TODO_TRIGGERS ).forEach(
 				( [ paymentMethod, todoId ] ) => {
@@ -38,26 +43,34 @@ export const initTodoSync = () => {
 					const isEnabled = paymentState[ paymentMethod ]?.enabled;
 
 					if ( wasEnabled !== isEnabled ) {
-						const todoToUpdate = todosState.find(
-							( todo ) => todo.id === todoId
-						);
-
-						if ( todoToUpdate ) {
-							const updatedTodos = todosState.map( ( todo ) =>
-								todo.id === todoId
-									? { ...todo, isCompleted: isEnabled }
-									: todo
-							);
-
-							dispatch( 'wc/paypal/todos' ).setTodos(
-								updatedTodos
+						if ( isEnabled ) {
+							// Add to completed todos if not already there
+							if ( ! newCompletedTodos.includes( todoId ) ) {
+								newCompletedTodos.push( todoId );
+							}
+						} else {
+							// Remove from completed todos
+							newCompletedTodos = newCompletedTodos.filter(
+								( id ) => id !== todoId
 							);
 						}
 					}
 				}
 			);
 
-			previousPaymentState = paymentState;
+			// Only dispatch if there are changes
+			if (
+				newCompletedTodos.length !== completedTodos.length ||
+				newCompletedTodos.some(
+					( id ) => ! completedTodos.includes( id )
+				)
+			) {
+				dispatch( 'wc/paypal/todos' ).setCompletedTodos(
+					newCompletedTodos
+				);
+			}
+
+			previousPaymentState = { ...paymentState };
 		} catch ( error ) {
 			console.error( 'Error in todo sync:', error );
 		} finally {

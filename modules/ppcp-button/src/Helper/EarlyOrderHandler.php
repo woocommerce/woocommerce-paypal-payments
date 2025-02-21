@@ -11,8 +11,6 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -23,11 +21,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 class EarlyOrderHandler {
 
 	/**
-	 * The State.
+	 * Whether the merchant is connected to PayPal (onboarding completed).
 	 *
-	 * @var State
+	 * @var bool
 	 */
-	private $state;
+	private bool $is_connected;
 
 	/**
 	 * The Order Processor.
@@ -46,17 +44,17 @@ class EarlyOrderHandler {
 	/**
 	 * EarlyOrderHandler constructor.
 	 *
-	 * @param State          $state The State.
+	 * @param bool           $is_connected Whether onboarding was completed.
 	 * @param OrderProcessor $order_processor The Order Processor.
 	 * @param SessionHandler $session_handler The Session Handler.
 	 */
 	public function __construct(
-		State $state,
+		bool $is_connected,
 		OrderProcessor $order_processor,
 		SessionHandler $session_handler
 	) {
 
-		$this->state           = $state;
+		$this->is_connected    = $is_connected;
 		$this->order_processor = $order_processor;
 		$this->session_handler = $session_handler;
 	}
@@ -67,7 +65,7 @@ class EarlyOrderHandler {
 	 * @return bool
 	 */
 	public function should_create_early_order(): bool {
-		return $this->state->current_state() === State::STATE_ONBOARDED;
+		return $this->is_connected;
 	}
 
     //phpcs:disable WordPress.Security.NonceVerification.Recommended

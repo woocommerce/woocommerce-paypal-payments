@@ -67,11 +67,12 @@ class OnboardingProfile extends AbstractDataModel {
 	 */
 	protected function get_defaults() : array {
 		return array(
-			'completed'                            => false,
-			'step'                                 => 0,
-			'is_casual_seller'                     => null,
-			'are_optional_payment_methods_enabled' => null,
-			'products'                             => array(),
+			'completed'            => false,
+			'step'                 => 0,
+			'is_casual_seller'     => null,
+			'accept_card_payments' => null,
+			'products'             => array(),
+			'setup_done'           => false,
 		);
 	}
 
@@ -89,10 +90,10 @@ class OnboardingProfile extends AbstractDataModel {
 	/**
 	 * Sets the 'completed' flag.
 	 *
-	 * @param bool $step Whether the onboarding process has been completed.
+	 * @param bool $state Whether the onboarding process has been completed.
 	 */
-	public function set_completed( bool $step ) : void {
-		$this->data['completed'] = $step;
+	public function set_completed( bool $state ) : void {
+		$this->data['completed'] = $state;
 	}
 
 	/**
@@ -132,12 +133,21 @@ class OnboardingProfile extends AbstractDataModel {
 	}
 
 	/**
-	 * Sets the optional payment methods flag.
+	 * Whether the merchant wants to accept card payments via the PayPal plugin.
 	 *
-	 * @param bool|null $are_optional_payment_methods_enabled Whether the PayPal optional payment methods are enabled.
+	 * @return bool
 	 */
-	public function set_are_optional_payment_methods_enabled( ?bool $are_optional_payment_methods_enabled ) : void {
-		$this->data['are_optional_payment_methods_enabled'] = $are_optional_payment_methods_enabled;
+	public function get_accept_card_payments() : bool {
+		return (bool) $this->data['accept_card_payments'];
+	}
+
+	/**
+	 * Sets the "accept card payments" flag.
+	 *
+	 * @param bool|null $accept_cards Whether to accept card payments via the PayPal plugin.
+	 */
+	public function set_accept_card_payments( ?bool $accept_cards ) : void {
+		$this->data['accept_card_payments'] = $accept_cards;
 	}
 
 	/**
@@ -165,5 +175,23 @@ class OnboardingProfile extends AbstractDataModel {
 	 */
 	public function get_flags() : array {
 		return $this->flags;
+	}
+
+	/**
+	 * Gets the 'setup_done' flag.
+	 *
+	 * @return bool
+	 */
+	public function is_setup_done() : bool {
+		return (bool) $this->data['setup_done'];
+	}
+
+	/**
+	 * Sets the 'setup_done' flag.
+	 *
+	 * @param bool $done Whether the onboarding process has been setup_done.
+	 */
+	public function set_setup_done( bool $done ) : void {
+		$this->data['setup_done'] = $done;
 	}
 }

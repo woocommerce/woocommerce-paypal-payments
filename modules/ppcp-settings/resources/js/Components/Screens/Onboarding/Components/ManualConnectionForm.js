@@ -151,11 +151,13 @@ const ManualConnectionForm = () => {
 				setToggled={ setManualConnectionMode }
 			>
 				<DataStoreControl
+					__nextHasNoMarginBottom
 					control={ TextControl }
 					ref={ refClientId }
 					label={ clientIdLabel }
 					value={ manualClientId }
 					onChange={ setManualClientId }
+					onConfirm={ handleManualConnect }
 					className={ classNames( {
 						'ppcp--has-error': ! clientValid,
 					} ) }
@@ -166,11 +168,13 @@ const ManualConnectionForm = () => {
 					</p>
 				) }
 				<DataStoreControl
+					__nextHasNoMarginBottom
 					control={ TextControl }
 					ref={ refClientSecret }
 					label={ secretKeyLabel }
 					value={ manualClientSecret }
 					onChange={ setManualClientSecret }
+					onConfirm={ handleManualConnect }
 					type="password"
 				/>
 				<Button

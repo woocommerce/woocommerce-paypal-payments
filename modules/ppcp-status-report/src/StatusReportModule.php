@@ -21,7 +21,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 /**
@@ -58,8 +57,8 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 
 				$subscriptions_mode_settings = $c->get( 'wcgateway.settings.fields.subscriptions_mode' ) ?: array();
 
-				/* @var State $state The state. */
-				$state = $c->get( 'onboarding.state' );
+				/* @var bool $is_connected Whether onboarding is complete. */
+				$is_connected = $c->get( 'settings.flag.is-connected' );
 
 				/* @var Bearer $bearer The bearer. */
 				$bearer = $c->get( 'api.bearer' );
@@ -92,7 +91,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Onboarded',
 						'description'    => esc_html__( 'Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$this->onboarded( $bearer, $state )
+							$this->onboarded( $bearer, $is_connected )
 						),
 					),
 					array(
@@ -230,19 +229,18 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 	/**
 	 * It returns the current onboarding status.
 	 *
-	 * @param Bearer $bearer The bearer.
-	 * @param State  $state The state.
+	 * @param Bearer $bearer       The bearer.
+	 * @param bool   $is_connected Whether onboarding is complete.
 	 * @return bool
 	 */
-	private function onboarded( Bearer $bearer, State $state ): bool {
+	private function onboarded( Bearer $bearer, bool $is_connected ): bool {
 		try {
 			$token = $bearer->bearer();
 		} catch ( RuntimeException $exception ) {
 			return false;
 		}
 
-		$current_state = $state->current_state();
-		return $token->is_valid() && $current_state === $state::STATE_ONBOARDED;
+		return $is_connected && $token->is_valid();
 	}
 
 	/**

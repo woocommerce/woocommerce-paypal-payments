@@ -1,6 +1,8 @@
+import { __ } from '@wordpress/i18n';
 document.addEventListener( 'DOMContentLoaded', () => {
-	const variations = document.querySelector( '.woocommerce_variations' );
+
 	const disableFields = ( productId ) => {
+        const variations = document.querySelector( '.woocommerce_variations' );
 		if ( variations ) {
 			const children = variations.children;
 			for ( let i = 0; i < children.length; i++ ) {
@@ -68,16 +70,94 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		soldIndividually.setAttribute( 'disabled', 'disabled' );
 	};
 
+    const checkSubscriptionPeriodsInterval = (period, period_interval, price, linkBtn) => {
+        if (
+            ( period === 'year' && parseInt( period_interval ) > 1 ) ||
+            ( period === 'month' && parseInt( period_interval ) > 12 ) ||
+            ( period === 'week' && parseInt( period_interval ) > 52 ) ||
+            ( period === 'day' && parseInt( period_interval ) > 356 ) ||
+            ( ! price || parseInt( price ) <= 0 )
+        ) {
+            linkBtn.disabled = true;
+            linkBtn.checked = false;
+            if (! price || parseInt( price ) <= 0 ) {
+                linkBtn.setAttribute('title', __( 'Prices must be above zero for PayPal Subscriptions!', 'woocommerce-paypal-subscriptions' ) );
+            } else {
+                linkBtn.setAttribute('title', __( 'Not allowed period intervall combination for PayPal Subscriptions!', 'woocommerce-paypal-subscriptions' ) );
+            }
+
+        } else {
+            linkBtn.disabled = false;
+            linkBtn.removeAttribute('title');
+        }
+    }
+
 	const setupProducts = () => {
+        jQuery( '.wc_input_subscription_period' ).on( 'change', (e) => {
+            const linkBtn = e.target.parentElement.parentElement.parentElement.parentElement.querySelector('input[name="_ppcp_enable_subscription_product"]');
+            const period_interval = e.target.parentElement.querySelector('select.wc_input_subscription_period_interval')?.value;
+            const period = e.target.value;
+            const price = e.target.parentElement.querySelector('input.wc_input_subscription_price')?.value;
+
+            checkSubscriptionPeriodsInterval(period, period_interval, price, linkBtn);
+        });
+
+        jQuery( '.wc_input_subscription_period_interval' ).on( 'change', (e) => {
+            const linkBtn = e.target.parentElement.parentElement.parentElement.parentElement.querySelector('input[name="_ppcp_enable_subscription_product"]');
+            const period_interval = e.target.value;
+            const period = e.target.parentElement.querySelector('select.wc_input_subscription_period')?.value;
+            const price = e.target.parentElement.querySelector('input.wc_input_subscription_price')?.value;
+
+            checkSubscriptionPeriodsInterval(period, period_interval, price, linkBtn);
+        });
+
+        jQuery( '.wc_input_subscription_price' ).on( 'change', (e) => {
+            const linkBtn = e.target.parentElement.parentElement.parentElement.parentElement.querySelector('input[name="_ppcp_enable_subscription_product"]');
+            const period_interval = e.target.parentElement.querySelector('select.wc_input_subscription_period_interval')?.value;
+            const period = e.target.parentElement.querySelector('select.wc_input_subscription_period')?.value;
+            const price = e.target.value;
+
+            checkSubscriptionPeriodsInterval(period, period_interval, price, linkBtn);
+        });
+
+        jQuery( '.wc_input_subscription_price' ).trigger( 'change' );
+
 		PayPalCommerceGatewayPayPalSubscriptionProducts?.forEach(
 			( product ) => {
 				if ( product.product_connected === 'yes' ) {
 					disableFields( product.product_id );
 				}
 
-				const unlinkBtn = document.getElementById(
-					`ppcp-unlink-sub-plan-${ product.product_id }`
-				);
+                const linkBtn = document.getElementById(
+                    `ppcp_enable_subscription_product-${ product.product_id }`
+                );
+                linkBtn?.addEventListener( 'click', ( event ) => {
+                    const unlinkBtnP = document.getElementById(
+                        `ppcp-enable-subscription-${ product.product_id }`
+                    );
+                    const titleP = document.getElementById(
+                        `ppcp_subscription_plan_name_p-${ product.product_id }`
+                    );
+                    if (event.target.checked === true) {
+                        if ( unlinkBtnP ) {
+                            unlinkBtnP.style.display = 'none';
+                        }
+                        if ( titleP ) {
+                            titleP.style.display = 'block';
+                        }
+                    } else {
+                        if ( unlinkBtnP ) {
+                            unlinkBtnP.style.display = 'block';
+                        }
+                        if ( titleP ) {
+                            titleP.style.display = 'none';
+                        }
+                    }
+                });
+
+                const unlinkBtn = document.getElementById(
+                    `ppcp-unlink-sub-plan-${ product.product_id }`
+                );
 				unlinkBtn?.addEventListener( 'click', ( event ) => {
 					event.preventDefault();
 					unlinkBtn.disabled = true;
@@ -110,23 +190,22 @@ document.addEventListener( 'DOMContentLoaded', () => {
 							}
 
 							const enableSubscription = document.getElementById(
-								'ppcp-enable-subscription'
+								'ppcp-enable-subscription-' + data.data.product_id
 							);
-							const product =
-								document.getElementById( 'pcpp-product' );
-							const plan = document.getElementById( 'pcpp-plan' );
+							const product =	document.getElementById( 'pcpp-product-' + data.data.product_id );
+							const plan = document.getElementById( 'pcpp-plan-' + data.data.product_id );
 							enableSubscription.style.display = 'none';
 							product.style.display = 'none';
 							plan.style.display = 'none';
 
 							const enable_subscription_product =
 								document.getElementById(
-									'ppcp_enable_subscription_product'
+									'ppcp_enable_subscription_product-' + data.data.product_id
 								);
 							enable_subscription_product.disabled = true;
 
 							const planUnlinked =
-								document.getElementById( 'pcpp-plan-unlinked' );
+								document.getElementById( 'pcpp-plan-unlinked-' + data.data.product_id );
 							planUnlinked.style.display = 'block';
 
 							setTimeout( () => {

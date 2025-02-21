@@ -1,18 +1,18 @@
 <?php
 /**
- * A map of new to old settings.
+ * A map of old to new settings.
  *
- * @package WooCommerce\PayPalCommerce\Compat
+ * @package WooCommerce\PayPalCommerce\Compat\Settings
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Compat;
+namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
 use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
 
 /**
- * A map of new to old settings.
+ * A map of old to new settings.
  *
  * @psalm-type newSettingsKey = string
  * @psalm-type oldSettingsKey = string
@@ -26,9 +26,9 @@ class SettingsMap {
 	private AbstractDataModel $model;
 
 	/**
-	 * The map of the new setting key to the old setting keys.
+	 * The map of the old setting key to the new setting keys.
 	 *
-	 * @var array<newSettingsKey, oldSettingsKey>
+	 * @var array<oldSettingsKey, newSettingsKey>
 	 */
 	private array $map;
 
@@ -36,7 +36,7 @@ class SettingsMap {
 	 * The constructor.
 	 *
 	 * @param AbstractDataModel                     $model The new settings model.
-	 * @param array<newSettingsKey, oldSettingsKey> $map The map of the new setting key to the old setting keys.
+	 * @param array<oldSettingsKey, newSettingsKey> $map The map of the old setting key to the new setting keys.
 	 */
 	public function __construct( AbstractDataModel $model, array $map ) {
 		$this->model = $model;
@@ -53,9 +53,9 @@ class SettingsMap {
 	}
 
 	/**
-	 * The map of the new setting key to the old setting keys.
+	 * The map of the old setting key to the new setting keys.
 	 *
-	 * @return array<newSettingsKey, oldSettingsKey>
+	 * @return array<oldSettingsKey, newSettingsKey>
 	 */
 	public function get_map(): array {
 		return $this->map;

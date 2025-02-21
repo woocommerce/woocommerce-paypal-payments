@@ -175,12 +175,13 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Fastlane accelerates the checkout experience for guest shoppers and autofills their details so they can pay in seconds. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' );
 
-		$is_axo_enabled = $this->dcc_configuration->use_fastlane();
-		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
+		if ( apply_filters( 'woocommerce_paypal_payments_axo_gateway_should_update_enabled', true ) ) {
+			$is_axo_enabled = $this->dcc_configuration->use_fastlane();
+			$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
+		}
 
-		$this->title = $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) );
-
-		$this->description = __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' );
+		$this->title       = apply_filters( 'woocommerce_paypal_payments_axo_gateway_title', $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) ), $this );
+		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ), $this );
 
 		$this->init_form_fields();
 		$this->init_settings();

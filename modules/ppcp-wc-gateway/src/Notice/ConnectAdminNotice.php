@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -20,11 +19,11 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 class ConnectAdminNotice {
 
 	/**
-	 * The state.
+	 * Whether the merchant completed the onboarding and is connected to PayPal.
 	 *
-	 * @var State
+	 * @var bool
 	 */
-	private $state;
+	private bool $is_connected;
 
 	/**
 	 * The settings.
@@ -43,12 +42,16 @@ class ConnectAdminNotice {
 	/**
 	 * ConnectAdminNotice constructor.
 	 *
-	 * @param State              $state The state.
+	 * @param bool               $is_connected Whether onboarding was completed.
 	 * @param ContainerInterface $settings The settings.
 	 * @param bool               $is_current_country_send_only Whether the current store's country is classified as a send-only country.
 	 */
-	public function __construct( State $state, ContainerInterface $settings, bool $is_current_country_send_only ) {
-		$this->state                        = $state;
+	public function __construct(
+		bool $is_connected,
+		ContainerInterface $settings,
+		bool $is_current_country_send_only
+	) {
+		$this->is_connected                 = $is_connected;
 		$this->settings                     = $settings;
 		$this->is_current_country_send_only = $is_current_country_send_only;
 	}
@@ -77,9 +80,13 @@ class ConnectAdminNotice {
 	/**
 	 * Whether the message should display.
 	 *
+	 * Only display the "almost ready" message for merchants that did not complete
+	 * the onboarding wizard. Also, ensure their store country is eligible for
+	 * collecting PayPal payments.
+	 *
 	 * @return bool
 	 */
 	protected function should_display(): bool {
-		return $this->state->current_state() !== State::STATE_ONBOARDED && $this->is_current_country_send_only === false;
+		return ! $this->is_connected && ! $this->is_current_country_send_only;
 	}
 }

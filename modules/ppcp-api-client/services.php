@@ -80,12 +80,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 
 return array(
 	'api.host'                                       => static function( ContainerInterface $container ) : string {
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		if ( $environment->is_sandbox() ) {

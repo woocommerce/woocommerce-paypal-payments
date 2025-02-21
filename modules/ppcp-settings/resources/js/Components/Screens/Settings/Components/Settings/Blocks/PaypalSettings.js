@@ -1,5 +1,5 @@
 import { __ } from '@wordpress/i18n';
-
+import { useSelect } from '@wordpress/data';
 import {
 	ControlRadioGroup,
 	ControlToggleButton,
@@ -9,6 +9,7 @@ import {
 import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 import Accordion from '../../../../../ReusableComponents/AccordionSection';
 import { SettingsHooks } from '../../../../../../data';
+import SoftDescriptorInput from '../../../../../ReusableComponents/Controls/SoftdescriptorInput';
 
 const PaypalSettings = () => {
 	const {
@@ -25,7 +26,8 @@ const PaypalSettings = () => {
 		buttonLanguage,
 		setButtonLanguage,
 	} = SettingsHooks.useSettings();
-
+	const siteData = useSelect( ( select ) => select( 'core' ).getSite(), [] );
+	const siteTitle = siteData?.title;
 	return (
 		<Accordion
 			className="ppcp--paypal-settings"
@@ -77,10 +79,10 @@ const PaypalSettings = () => {
 				<ControlTextInput
 					value={ brandName }
 					onChange={ setBrandName }
-					placeholder={ __(
-						'Brand name',
-						'woocommerce-paypal-payments'
-					) }
+					placeholder={
+						siteTitle ||
+						__( 'Brand name', 'woocommerce-paypal-payments' )
+					}
 				/>
 			</SettingsBlock>
 
@@ -91,7 +93,7 @@ const PaypalSettings = () => {
 					'woocommerce-paypal-payments'
 				) }
 			>
-				<ControlTextInput
+				<SoftDescriptorInput
 					value={ softDescriptor }
 					onChange={ setSoftDescriptor }
 					placeholder={ __(
@@ -140,10 +142,10 @@ const PaypalSettings = () => {
 };
 
 const languagesExample = [
-	{ value: 'en', label: 'English' },
-	{ value: 'de', label: 'German' },
-	{ value: 'es', label: 'Spanish' },
-	{ value: 'it', label: 'Italian' },
+	{ value: 'en_US', label: 'English' },
+	{ value: 'de_DE', label: 'German' },
+	{ value: 'es_ES', label: 'Spanish' },
+	{ value: 'it_IT', label: 'Italian' },
 ];
 
 const subtotalAdjustmentChoices = [

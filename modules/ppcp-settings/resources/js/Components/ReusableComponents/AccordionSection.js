@@ -2,7 +2,7 @@ import { Icon } from '@wordpress/components';
 import { chevronDown, chevronUp } from '@wordpress/icons';
 import classNames from 'classnames';
 
-import { useAccordionState } from '../../hooks/useAccordionState';
+import { useToggleState } from '../../hooks/useToggleState';
 import {
 	Content,
 	Description,
@@ -21,7 +21,7 @@ const Accordion = ( {
 	children = null,
 	className = '',
 } ) => {
-	const { isOpen, toggleOpen } = useAccordionState( { id, initiallyOpen } );
+	const { isOpen, toggleOpen } = useToggleState( id, initiallyOpen );
 	const wrapperClasses = classNames( 'ppcp-r-accordion', className, {
 		'ppcp--is-open': isOpen,
 	} );

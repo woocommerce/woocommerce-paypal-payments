@@ -368,7 +368,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		if ( ! $button->is_enabled() ) {
 			return;
 		}
-		$env = $c->get( 'onboarding.environment' );
+		$env = $c->get( 'settings.environment' );
 		assert( $env instanceof Environment );
 		$is_sandobx = $env->current_environment_is( Environment::SANDBOX );
 		$this->load_domain_association_file( $is_sandobx );

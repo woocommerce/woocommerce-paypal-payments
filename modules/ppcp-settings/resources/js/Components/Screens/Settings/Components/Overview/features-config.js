@@ -27,7 +27,7 @@ export const getFeatures = ( setActiveModal ) => {
 				},
 				{
 					type: 'secondary',
-					text: __( 'Apply', 'woocommerce-paypal-payments' ),
+					text: __( 'Sign up', 'woocommerce-paypal-payments' ),
 					urls: {
 						sandbox:
 							'https://www.sandbox.paypal.com/bizsignup/entry?product=ADVANCED_VAULTING',
@@ -39,10 +39,7 @@ export const getFeatures = ( setActiveModal ) => {
 				{
 					type: 'tertiary',
 					text: __( 'Learn more', 'woocommerce-paypal-payments' ),
-					urls: {
-						sandbox: '#',
-						live: '#',
-					},
+					url: 'https://www.paypal.com/us/enterprise/payment-processing/accept-venmo',
 					class: 'small-button',
 				},
 			],
@@ -74,7 +71,7 @@ export const getFeatures = ( setActiveModal ) => {
 				},
 				{
 					type: 'secondary',
-					text: __( 'Apply', 'woocommerce-paypal-payments' ),
+					text: __( 'Sign up', 'woocommerce-paypal-payments' ),
 					urls: {
 						sandbox:
 							'https://www.sandbox.paypal.com/bizsignup/entry?product=ppcp',
@@ -116,7 +113,7 @@ export const getFeatures = ( setActiveModal ) => {
 				},
 				{
 					type: 'secondary',
-					text: __( 'Apply', 'woocommerce-paypal-payments' ),
+					text: __( 'Sign up', 'woocommerce-paypal-payments' ),
 					url: 'https://developer.paypal.com/docs/checkout/apm/',
 					showWhen: 'disabled',
 					class: 'small-button',
@@ -153,7 +150,7 @@ export const getFeatures = ( setActiveModal ) => {
 				},
 				{
 					type: 'secondary',
-					text: __( 'Apply', 'woocommerce-paypal-payments' ),
+					text: __( 'Sign up', 'woocommerce-paypal-payments' ),
 					urls: {
 						sandbox:
 							'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY',
@@ -214,7 +211,7 @@ export const getFeatures = ( setActiveModal ) => {
 				},
 				{
 					type: 'secondary',
-					text: __( 'Apply', 'woocommerce-paypal-payments' ),
+					text: __( 'Sign up', 'woocommerce-paypal-payments' ),
 					urls: {
 						sandbox:
 							'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=APPLE_PAY',
@@ -239,6 +236,17 @@ export const getFeatures = ( setActiveModal ) => {
 		!! window.ppcpSettings?.isPayLaterConfiguratorAvailable &&
 		countryData
 	) {
+		const countryLocation = [
+			'UK',
+			'ES',
+			'IT',
+			'FR',
+			'US',
+			'DE',
+			'AU',
+		].includes( storeCountry )
+			? storeCountry.toLowerCase()
+			: 'us';
 		features.push( {
 			id: 'pay_later_messaging',
 			title: __( 'Pay Later Messaging', 'woocommerce-paypal-payments' ),
@@ -257,19 +265,9 @@ export const getFeatures = ( setActiveModal ) => {
 					class: 'small-button',
 				},
 				{
-					type: 'secondary',
-					text: __( 'Apply', 'woocommerce-paypal-payments' ),
-					urls: {
-						sandbox: '#',
-						live: '#',
-					},
-					showWhen: 'disabled',
-					class: 'small-button',
-				},
-				{
 					type: 'tertiary',
 					text: __( 'Learn more', 'woocommerce-paypal-payments' ),
-					url: 'https://developer.paypal.com/studio/checkout/pay-later/us',
+					url: `https://www.paypal.com/${ countryLocation }/business/accept-payments/checkout/installments`,
 					class: 'small-button',
 				},
 			],

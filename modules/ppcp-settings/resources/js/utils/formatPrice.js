@@ -15,7 +15,7 @@ const priceFormatInfo = {
 		prefix: '€',
 		suffix: '',
 	},
-	GPB: {
+	GBP: {
 		prefix: '£',
 		suffix: '',
 	},

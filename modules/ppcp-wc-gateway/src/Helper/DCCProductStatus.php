@@ -103,6 +103,7 @@ class DCCProductStatus extends ProductStatus {
 				continue;
 			}
 
+			// Settings used as a cache; `settings->set` is compatible with new UI.
 			if ( in_array( 'CUSTOM_CARD_PROCESSING', $product->capabilities(), true ) ) {
 				$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
 				$this->settings->persist();

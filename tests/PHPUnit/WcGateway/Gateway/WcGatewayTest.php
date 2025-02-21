@@ -10,7 +10,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -38,7 +37,7 @@ class WcGatewayTest extends TestCase
 	private $orderProcessor;
 	private $settings;
 	private $refundProcessor;
-	private $onboardingState;
+	private $isConnected;
 	private $transactionUrlProvider;
 	private $subscriptionHelper;
 	private $environment;
@@ -63,7 +62,7 @@ class WcGatewayTest extends TestCase
 		$this->settings = Mockery::mock(Settings::class);
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
 		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
-		$this->onboardingState = Mockery::mock(State::class);
+		$this->isConnected = true;
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->environment = Mockery::mock(Environment::class);
@@ -75,8 +74,6 @@ class WcGatewayTest extends TestCase
 		);
 		$this->apiShopCountry = 'DE';
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
-
-		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 
 		$this->sessionHandler
 			->shouldReceive('funding_source')
@@ -108,7 +105,7 @@ class WcGatewayTest extends TestCase
 			$this->settings,
 			$this->sessionHandler,
 			$this->refundProcessor,
-			$this->onboardingState,
+			$this->isConnected,
 			$this->transactionUrlProvider,
 			$this->subscriptionHelper,
 			PayPalGateway::ID,
@@ -159,7 +156,7 @@ class WcGatewayTest extends TestCase
             ->andReturn($wcOrder);
 
         when('wc_get_checkout_url')
-		->justReturn('test');
+			->justReturn('test');
 
 		$woocommerce = Mockery::mock(\WooCommerce::class);
 		$cart = Mockery::mock(\WC_Cart::class);
@@ -268,23 +265,6 @@ class WcGatewayTest extends TestCase
     }
 
     /**
-     * @dataProvider dataForTestNeedsSetup
-     */
-    public function testNeedsSetup($currentState, $needSetup)
-    {
-		$this->isAdmin = true;
-
-		$this->onboardingState = Mockery::mock(State::class);
-		$this->onboardingState
-		    ->expects('current_state')
-		    ->andReturn($currentState);
-
-    	$testee = $this->createGateway();
-
-    	$this->assertSame($needSetup, $testee->needs_setup());
-    }
-
-    /**
      * @dataProvider dataForFundingSource
      */
     public function testFundingSource($fundingSource, $title, $description)
@@ -313,14 +293,6 @@ class WcGatewayTest extends TestCase
                 AuthorizeOrderActionNotice::FAILED,
             ],
         ];
-    }
-
-    public function dataForTestNeedsSetup(): array
-    {
-    	return [
-    		[State::STATE_START, true],
-		    [State::STATE_ONBOARDED, false]
-	    ];
     }
 
     public function dataForFundingSource(): array

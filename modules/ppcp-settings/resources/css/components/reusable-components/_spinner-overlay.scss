@@ -1,12 +1,10 @@
 .ppcp-r-spinner-overlay {
-	width: var(--spinner-overlay-width);
-	height: var(--spinner-overlay-height);
-	box-shadow: var(--spinner-overlay-box-shadow);
 	background: var(--spinner-overlay-color);
-	position: fixed;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%);
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
 	z-index: 10;
 
 	.components-spinner {
@@ -25,5 +23,15 @@
 		width: 100%;
 		text-align: center;
 		top: calc(50% + 20px + var(--spinner-size));
+	}
+
+	&.ppcp--is-modal {
+		position: fixed;
+		width: var(--spinner-overlay-width);
+		height: var(--spinner-overlay-height);
+		box-shadow: var(--spinner-overlay-box-shadow);
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
 	}
 }

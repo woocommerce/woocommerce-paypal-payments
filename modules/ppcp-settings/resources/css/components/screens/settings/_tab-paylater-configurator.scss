@@ -13,7 +13,7 @@
 	#configurator-eligibleContainer.css-4nclxm.e1vy3g880 {
 		width: 100%;
 		max-width: 100%;
-		padding: 48px 0px 48px 48px;
+		padding: 16px 0px 16px 16px;
 
 		#configurator-controlPanelContainer.css-5urmrq.e1vy3g880 {
 			width: 374px;
@@ -25,6 +25,7 @@
 
 			.css-7xkxom, .css-8tvj6u {
 				height: auto;
+				width: 1.2rem;
 			}
 
 			.css-10nkerk.ej6n7t60 {
@@ -37,13 +38,18 @@
 			}
 
 			.css-1vc34jy-handler {
-				height: 1.6rem;
-				width: 1.6rem;
+				height: 1.7em;
+				width: 1.5rem;
 			}
 
 			.css-8vwtr6-state {
-				height: 1.6rem;
+				height: 1.4rem;
+				width: 3rem;
 			}
+		}
+
+		.css-1s8clkf.etu8a6w2 {
+			width: 374px;
 		}
 	}
 
@@ -68,6 +74,7 @@
 
 	.css-rok10q, .css-dfgbdq-text_body_strong {
 		margin-top: 0;
+		margin-bottom: 0;
 	}
 
 	&__publish-button {
@@ -108,6 +115,32 @@
 
 		.css-11hsg2u.e1vy3g880 {
 			width: 100%;
+		}
+	}
+
+	.css-n4cwz8 {
+		margin-top: 20px;
+	}
+
+	.css-1ce6bcu-container {
+		width: 3rem;
+		height: 1.8rem;
+	}
+
+	#configurator-previewSectionSubHeaderText {
+		margin-right: 10px;
+	}
+
+	.css-zcyvrz.ej6n7t60 {
+		margin-bottom: 5px;
+
+		.css-3xbhoy-svg-size_md-icon {
+			width: 1.5rem;
+			height: 1.5rem;
+		}
+
+		.css-7i5kpm-icon-button_base-size_xl-size_sm-secondary {
+			padding: 0.5rem;
 		}
 	}
 }

@@ -14,8 +14,6 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -33,7 +31,6 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -59,7 +56,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
@@ -209,7 +205,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$c->get( 'button.client_id_for_admin' ),
 					$c->get( 'api.shop.currency.getter' ),
 					$c->get( 'api.shop.country' ),
-					$c->get( 'onboarding.environment' ),
+					$c->get( 'settings.environment' ),
 					$settings_status->is_pay_later_button_enabled(),
 					$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 					$c->get( 'wcgateway.settings.funding-sources' ),
@@ -607,16 +603,14 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$methods[] = $paypal_gateway;
 
-				$onboarding_state = $container->get( 'onboarding.state' );
-				assert( $onboarding_state instanceof State );
-
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
 				$is_our_page           = $container->get( 'wcgateway.is-ppcp-settings-page' );
 				$is_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
+				$is_connected          = $container->get( 'settings.flag.is-connected' );
 
-				if ( $onboarding_state->current_state() !== State::STATE_ONBOARDED ) {
+				if ( ! $is_connected ) {
 					return $methods;
 				}
 
@@ -648,7 +642,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 
-				if ( $paypal_gateway_enabled && $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) {
+				if ( $paypal_gateway_enabled && apply_filters( 'woocommerce_paypal_payments_card_button_gateway_should_register_gateway', $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) ) {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
 

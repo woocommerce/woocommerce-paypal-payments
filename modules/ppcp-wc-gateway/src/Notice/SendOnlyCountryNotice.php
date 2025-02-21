@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 
 /**
  * Creates an admin message that notifies user about send only country.
@@ -47,9 +46,9 @@ class SendOnlyCountryNotice {
 	/**
 	 * Onboarding state
 	 *
-	 * @var int
+	 * @var bool
 	 */
-	private int $onboarding_state;
+	private bool $is_connected;
 
 	/**
 	 * AdminNotice constructor.
@@ -58,20 +57,20 @@ class SendOnlyCountryNotice {
 	 * @param bool   $is_send_only_country Determines if current WC country is a send only country.
 	 * @param bool   $is_ppcp_settings_page Determines if current page is ppcp settings page.
 	 * @param bool   $is_wc_gateways_list_page Determines if current page is ppcp gateway list page.
-	 * @param int    $onboarding_state Determines current onboarding state.
+	 * @param bool   $is_connected Whether onboarding was completed.
 	 */
 	public function __construct(
 		string $message_text,
 		bool $is_send_only_country,
 		bool $is_ppcp_settings_page,
 		bool $is_wc_gateways_list_page,
-		int $onboarding_state
+		bool $is_connected
 	) {
 		$this->message_text             = $message_text;
 		$this->is_send_only_country     = $is_send_only_country;
 		$this->is_ppcp_settings_page    = $is_ppcp_settings_page;
 		$this->is_wc_gateways_list_page = $is_wc_gateways_list_page;
-		$this->onboarding_state         = $onboarding_state;
+		$this->is_connected             = $is_connected;
 	}
 
 	/**
@@ -80,10 +79,9 @@ class SendOnlyCountryNotice {
 	 * @return Message|null
 	 */
 	public function message(): ?Message {
-
 		if ( ! $this->is_send_only_country ||
-			! $this->is_ppcp_page() ||
-			$this->onboarding_state === State::STATE_START
+			! $this->is_connected ||
+			! $this->is_ppcp_page()
 		) {
 			return null;
 		}

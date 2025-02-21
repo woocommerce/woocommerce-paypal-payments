@@ -28,7 +28,7 @@ return array(
 		$endpoint              = $container->get( 'api.endpoint.order' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
-		$environment           = $container->get( 'onboarding.environment' );
+		$environment           = $container->get( 'settings.environment' );
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$funding_source_renderer       = $container->get( 'wcgateway.funding-source.renderer' );

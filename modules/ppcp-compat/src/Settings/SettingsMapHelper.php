@@ -2,14 +2,16 @@
 /**
  * A helper for mapping the new/old settings.
  *
- * @package WooCommerce\PayPalCommerce\Compat
+ * @package WooCommerce\PayPalCommerce\Compat\Settings
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Compat;
+namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
 use RuntimeException;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 
 /**
  * A helper class to manage the transition between legacy and new settings.
@@ -42,14 +44,36 @@ class SettingsMapHelper {
 	protected array $model_cache = array();
 
 	/**
+	 * A helper for mapping the old/new styling settings.
+	 *
+	 * @var StylingSettingsMapHelper
+	 */
+	protected StylingSettingsMapHelper $styling_settings_map_helper;
+
+	/**
+	 * A helper for mapping the old/new settings tab settings.
+	 *
+	 * @var SettingsTabMapHelper
+	 */
+	protected SettingsTabMapHelper $settings_tab_map_helper;
+
+	/**
 	 * Constructor.
 	 *
-	 * @param SettingsMap[] $settings_map A list of settings maps containing key definitions.
+	 * @param SettingsMap[]            $settings_map A list of settings maps containing key definitions.
+	 * @param StylingSettingsMapHelper $styling_settings_map_helper A helper for mapping the old/new styling settings.
+	 * @param SettingsTabMapHelper     $settings_tab_map_helper A helper for mapping the old/new settings tab settings.
 	 * @throws RuntimeException When an old key has multiple mappings.
 	 */
-	public function __construct( array $settings_map ) {
+	public function __construct(
+		array $settings_map,
+		StylingSettingsMapHelper $styling_settings_map_helper,
+		SettingsTabMapHelper $settings_tab_map_helper
+	) {
 		$this->validate_settings_map( $settings_map );
-		$this->settings_map = $settings_map;
+		$this->settings_map                = $settings_map;
+		$this->styling_settings_map_helper = $styling_settings_map_helper;
+		$this->settings_tab_map_helper     = $settings_tab_map_helper;
 	}
 
 	/**
@@ -80,15 +104,18 @@ class SettingsMapHelper {
 	 */
 	public function mapped_value( string $old_key ) {
 		$this->ensure_map_initialized();
-
 		if ( ! isset( $this->key_to_model[ $old_key ] ) ) {
 			return null;
 		}
 
-		$mapping  = $this->key_to_model[ $old_key ];
-		$model_id = spl_object_id( $mapping['model'] );
+		$mapping = $this->key_to_model[ $old_key ];
+		$model   = $mapping['model'] ?? false;
 
-		return $this->get_cached_model_value( $model_id, $mapping['new_key'], $mapping['model'] );
+		if ( ! $model ) {
+			return null;
+		}
+
+		return $this->get_cached_model_value( spl_object_id( $model ), $old_key, $mapping['new_key'], $mapping['model'] );
 	}
 
 	/**
@@ -108,17 +135,27 @@ class SettingsMapHelper {
 	 * Retrieves a cached model value or caches it if not already cached.
 	 *
 	 * @param int    $model_id The unique identifier for the model object.
+	 * @param string $old_key  The key in the old settings structure.
 	 * @param string $new_key  The key in the new settings structure.
 	 * @param object $model    The model object.
 	 *
 	 * @return mixed|null The value of the key in the model, or null if not found.
 	 */
-	protected function get_cached_model_value( int $model_id, string $new_key, object $model ) {
+	protected function get_cached_model_value( int $model_id, string $old_key, string $new_key, object $model ) {
 		if ( ! isset( $this->model_cache[ $model_id ] ) ) {
 			$this->model_cache[ $model_id ] = $model->to_array();
 		}
 
-		return $this->model_cache[ $model_id ][ $new_key ] ?? null;
+		switch ( true ) {
+			case $model instanceof StylingSettings:
+				return $this->styling_settings_map_helper->mapped_value( $old_key, $this->model_cache[ $model_id ] );
+
+			case $model instanceof SettingsModel:
+				return $this->settings_tab_map_helper->mapped_value( $old_key, $this->model_cache[ $model_id ] );
+
+			default:
+				return $this->model_cache[ $model_id ][ $new_key ] ?? null;
+		}
 	}
 
 	/**

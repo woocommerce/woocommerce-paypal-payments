@@ -18,10 +18,11 @@ use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingSendOnlyNoticeRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'api.paypal-host'                    => function( ContainerInterface $container ) : string {
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		/**
 		 * The current environment.
 		 *
@@ -34,7 +35,7 @@ return array(
 
 	},
 	'api.paypal-website-url'             => function( ContainerInterface $container ) : string {
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
 			return $container->get( 'api.paypal-website-url-sandbox' );
@@ -56,9 +57,16 @@ return array(
 
 		return $state->current_state() >= State::STATE_ONBOARDED;
 	},
-	'onboarding.environment'             => function( ContainerInterface $container ) : Environment {
+	'settings.flag.is-sandbox'           => static function ( ContainerInterface $container ) : bool {
 		$settings = $container->get( 'wcgateway.settings' );
-		return new Environment( $settings );
+		assert( $settings instanceof Settings );
+
+		return $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' );
+	},
+	'settings.environment'               => function ( ContainerInterface $container ) : Environment {
+		return new Environment(
+			$container->get( 'settings.flag.is-sandbox' )
+		);
 	},
 
 	'onboarding.assets'                  => function( ContainerInterface $container ) : OnboardingAssets {
@@ -68,7 +76,7 @@ return array(
 			$container->get( 'onboarding.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$state,
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$login_seller_endpoint,
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' )
 		);

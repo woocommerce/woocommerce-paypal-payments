@@ -8,29 +8,27 @@
  * @file
  */
 
-import { dispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { apiFetch } from '@wordpress/data-controls';
+import apiFetch from '@wordpress/api-fetch';
 
-import { STORE_NAME, REST_HYDRATE_PATH } from './constants';
+import { REST_HYDRATE_PATH } from './constants';
 
-export const resolvers = {
-	/**
-	 * Retrieve settings from the site's REST API.
-	 */
-	*persistentData() {
+export function persistentData() {
+	return async ( { dispatch, registry } ) => {
 		try {
-			const result = yield apiFetch( { path: REST_HYDRATE_PATH } );
+			const result = await apiFetch( { path: REST_HYDRATE_PATH } );
 
-			yield dispatch( STORE_NAME ).hydrate( result );
-			yield dispatch( STORE_NAME ).setIsReady( true );
+			await dispatch.hydrate( result );
+			await dispatch.setIsReady( true );
 		} catch ( e ) {
-			yield dispatch( 'core/notices' ).createErrorNotice(
-				__(
-					'Error retrieving onboarding details.',
-					'woocommerce-paypal-payments'
-				)
-			);
+			await registry
+				.dispatch( 'core/notices' )
+				.createErrorNotice(
+					__(
+						'Error retrieving onboarding details.',
+						'woocommerce-paypal-payments'
+					)
+				);
 		}
-	},
-};
+	};
+}

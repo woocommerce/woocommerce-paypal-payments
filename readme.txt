@@ -12,122 +12,99 @@ PayPal's latest payment processing solution. Accept PayPal, Pay Later, credit/de
 
 == Description ==
 
-One checkout solution. Many ways to pay. PayPal’s all-in-one solution allows you to offer PayPal, Venmo (US), Pay Later at no additional cost, credit and debit cards, and country-specific payment options.
-= The all-in-one checkout solution* =
-**WooCommerce PayPal Payments** lets you offer PayPal, Venmo (US only), Pay Later options, credit cards and more — all designed to help you maximize conversion.
+WooCommerce PayPal Payments is an **all-in-one solution** to help you **maximize conversions** by offering PayPal, Venmo (US), Pay Later options, credit and debit cards, and more.
 
-= PayPal =
-Help increase conversion by automatically offering PayPal buttons on product pages and at checkout. **Consumers are nearly three times more likely to purchase when you offer PayPal.¹**
+= Features =
+* **Instant access** to funds while payment is processing.
+* **Fraud detection** and **global compliance** (including PCI, PSD2, and 3D Secure).
+* **Faster checkout** via PayPal buttons on product pages and in-cart.
+* Convenience to **pay over time** with PayPal Pay Later.
+* Allow Venmo shoppers (US only) to **share purchases** with friends.
+* **Standard** and **Advanced Card Processing** options. 
+* **Country-specific** payment methods to build global trust.
+* Multiple **subscription payment** options to help drive repeat business.
 
-= PayPal Pay Later =
-Let customers pay over time while you get paid up front — at no additional cost. **PayPal Pay Later options are boosting merchant conversion rates and increasing cart sizes by 39%.²**
+= Get started =
+If you're new to PayPal, [add it to your store today](https://woocommerce.com/document/woocommerce-paypal-payments/). Existing user? [Upgrade your integration](https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-upgrade-guide/) now to access these exciting new features.
 
-= Help increase conversions with Pay Later messaging =
-PayPal Pay Later allows customers to pay over time while you get paid up front — at no additional cost to your business. And since 81% of younger consumers who use buy now, pay later decide which payment method to use before they get to checkout⁴, showing Pay Later messaging on your site lets customers know they have flexible options to pay over time while they are browsing — helping convert your browsers into buyers.
+= It pays to PayPal =
+Get **instant access to funds** in your PayPal business account while payment is processing. Save time and money with **fraud detection** and Seller Protection features†.
 
-[Pay Later features are available in these countries.](https://developer.paypal.com/docs/checkout/pay-later/us/) Customers automatically see the most relevant Pay Later offering.
+Plus, you'll meet **global compliance standards** (such as PCI, PSD2, SCA, and 3D Secure), bringing international markets within reach.
 
-= Venmo (US only) =
-Reach Venmo shoppers while allowing customers to share purchases with friends. **Venmo users spend 2.2 times more annually on online purchases compared to other online buyers.³**
+†Available on eligible purchases. Limits apply.
 
-= Country-specific payment methods =
-Offer locally recognized payment methods to help build trust and reach international customers, including Payment Upon Invoice (PUI), a local payment option available only for purchases completed in Germany.
+= Flexible payment options =
+Shoppers are nearly **three times more likely to buy** when you offer PayPal.¹ Increase conversions by automatically [displaying PayPal buttons](https://woocommerce.com/document/woocommerce-paypal-payments/#section-35) on product pages, in-cart, and at checkout.
 
-= Add credit and debit card processing capabilities =
-**PayPal Payments** provides two different card processing options:
+[PayPal Pay Later](https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later) options help boost conversion rates and **increase cart sizes by 39%**.² Let customers pay over time while you get paid upfront — at no additional cost. Available in select countries. [Learn more about Pay Later messaging](https://developer.paypal.com/docs/checkout/pay-later/us/).
 
-- **Standard Card Processing**: Card transactions are managed by PayPal in a prebuilt user experience, which simplifies your compliance requirements. Suitable for all business and personal seller accounts.
+**Venmo users spend 2.2 times more annually** on online purchases than other online buyers.³ Now you can [reach Venmo shoppers](https://woocommerce.com/document/woocommerce-paypal-payments/#pay-with-venmo) (US only) and allow them to share their purchases with friends.
 
-- **Advanced Card Processing**: Get everything that comes with PayPal’s standard integration, along with the ability to customize the look, feel, and placement of your debit and credit card payment fields. You can also use fraud protection tools to set up your own risk tolerance filters.
+= Country-specific payments =
+* **Standard Card Processing:** Suitable for all business and personal seller accounts. Card transactions are managed via a prebuilt user experience, simplifying compliance.
+* **Advanced Card Processing:** Customize the look, feel, and placement of debit and credit card payment fields. You can also use fraud protection tools to set up personal risk tolerance filters.
 
-= Offer Subscription payments to help drive repeat business =
+= Earn recurring revenue through subscriptions =
+Drive repeat business for stable, predictable income using [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) or [PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments).
 
-Create stable, predictable income by offering subscription plans.
-WooCommerce PayPal Payments is compatible with [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/).
+You can also use PayPal's [Vaulting](https://www.paypal.com/us/brc/article/securely-store-payments) feature to:
 
-[PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments) allow business and casual sellers to accept reliable recurring payments on a fixed billing schedule (buyers may require a PayPal account).
+* Offer flexible plans with fixed or quantity-based pricing.
+* Set billing cycles for any period.
+* Offer discounted trial periods or prorated payments.
 
-With the [Vaulting](https://www.paypal.com/us/brc/article/securely-store-payments) feature ([business account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)), you can offer flexible plans with fixed or quantity pricing, set billing cycles for the time period you want, and offer all kinds of subscriptions with prorated payments or discounted trial periods.
-
-It’s easy for shoppers, simple for you, and great for your business – with no monthly or setup fees.
-
-= Activate PayPal =
-Are you new to PayPal? [Learn how to add it to your store.](https://woocommerce.com/document/woocommerce-paypal-payments/)
-Need to update your existing PayPal integration? [Learn how to upgrade your integration.](https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-upgrade-guide/)
-
-[Watch the video on how to activate PayPal for your WooCommerce store](https://woocommerce.com/document/woocommerce-paypal-payments/#complete-setup-video)
-
-= More reasons it pays to PayPal =
-- **Instant access to funds**: Access card payments, send money or make a payment from your bank account. You’re credited immediately while the payment is processing. Funds settle instantly into your PayPal business account.
-
-- **Fraud Detection**: Save time and money by letting PayPal help you handle the risk of fraudulent transactions with our fraud, chargeback, and Seller Protection capabilities (on eligible transactions†). Our AI technology works hard to monitor all of your transactions — so you can focus on what matters most. †Available on eligible purchases. Limits apply.
-
-- **Global compliance**: PayPal payment solutions help you meet your global compliance standards, such as PCI and PSD2, bringing international markets within reach for your business. Our platform has built-in compliance with two-factor authentication provided by cards (3D Secure). We include automatic updates as security protocols change.
+With no monthly or setup fees, it’s simple for your customers — and **great for your business** ([account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)).
 
 ---
 
 **Legal Disclosures:**
 
-\*For Australian users, the PayPal service is provided by PayPal Australia Pty Limited AFSL 304962. Any information provided is general only and does not take into account your objectives, financial situation or needs. Please read and consider the CFSGPDS (paypal.com.au) before acquiring or using the service. See website for TMD.
+\*For Australian users, the PayPal service is provided by PayPal Australia Pty Limited AFSL 304962. Any information provided is general only and does not take into account your objectives, financial situation, or needs. Please read and consider the CFSGPDS (paypal.com.au) before acquiring or using the service. See website for TMD.
 
 1. An online study commissioned by PayPal and conducted by Netfluential in November 2020, involving 1,000 US online shoppers ages 18-39.
-2. PayPal Q2 Earnings-2021.
-3. Edison Trends commissioned by PayPal, April 2020 to March 2021. Edison Trends conducted a behavioural panel of email receipts from 306,939 US consumers and 3.4+ M purchases at a vertical level between Pay with Venmo and Non-Venmo users during a 12-month period.
-4. TRC online survey commissioned by PayPal in April 2021 involving 5,000 consumers ages 18+ across US, UK, DE, FR, AU (among Millennial & Gen Z BNPL users (ages 18-40), US (n=222), UK (n=269), DE (n=275), AU (n=344), FR (n=150).
-5. Morning Consult – The 15 Most Trusted Brands Globally. March 2021. Morning Consult surveyed over 330,000 consumers across 10 international markets to provide a global view on the current state of consumer trust across brands.
+2. PayPal Q2 Earnings 2021.
+3. Edison Trends commissioned by PayPal, April 2020 to March 2021. Edison Trends conducted a behavioral panel of email receipts from 306,939 US consumers and 3.4+ M purchases at a vertical level between Pay with Venmo and non-Venmo users during a 12-month period.
 
 == Frequently Asked Questions ==
 
-= Where can I find the WooCommerce PayPal Payments documentation and setup guide? =
+= Where can I find documentation and a setup guide? =
 
-For help setting up and configuring WooCommerce PayPal Payments, please refer to the documentation. [Learn how to add PayPal to your store.](https://woocommerce.com/document/woocommerce-paypal-payments/)
-Need to update your existing PayPal integration? [Learn how to upgrade your integration.](https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-upgrade-guide/)
+You’ve come to the right place. [Our documentation](https://woocommerce.com/document/woocommerce-paypal-payments/) for WooCommerce PayPal Payments includes detailed setup instructions, troubleshooting tips, and more.
 
-= Where can I get help for WooCommerce PayPal Payments? =
+= Where can I get support, report bugs, or request new features? =
 
-For questions regarding the plugin setup, we recommend reviewing our [documentation](https://woocommerce.com/document/woocommerce-paypal-payments/) and the [troubleshooting guide](https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting) if you encounter any issues.
-If the question or problem persists after reviewing the documentation, kindly create a new thread in the [support forums](https://wordpress.org/support/plugin/woocommerce-paypal-payments/#new-topic-0) or open a support ticket via [our helpdesk](https://woocommerce.com/document/woocommerce-paypal-payments/#get-help).
+To start, [review our troubleshooting tips](https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting) for answers to common questions. Then, if you need further assistance, get in touch via the [official support forum](https://wordpress.org/support/plugin/woocommerce-paypal-payments/). 
 
-= WooCommerce PayPal Payments suddenly no longer works – what do I do? =
+Please report bugs via [GitHub](https://github.com/woocommerce/woocommerce-paypal-payments/issues) or the official support forum. You can request (or vote for) new features on our [feature request board](https://woocommerce.com/feature-requests/woocommerce-paypal-payments/).
 
-Start by diagnosing the issue using our helpful [troubleshooting guide](https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting).
-If you notice an error or any other issue after updating a plugin or the theme, there could be a potential compatibility issue between it and WooCommerce PayPal Payments.
-In such cases, we recommend running a [conflict test](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting) using [Health Check](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting#test-on-staging) (which allows you to disable themes and plugins without affecting your visitors) or troubleshooting the issue using a [staging site](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting#test-on-staging).
+= WooCommerce PayPal Payments has stopped working — what should I do? =
 
-If you can't solve the problem yourself, don't worry! Please open a support ticket via [our helpdesk](https://woocommerce.com/document/woocommerce-paypal-payments/#get-help).
+First, diagnose the issue using our [troubleshooting guide](https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting). If you notice an error after updating an extension or theme, there could be a compatibility issue.
 
-= Where can I report bugs? =
+We recommend running a [conflict test](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting) using [Health Check](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting#test-on-staging) (which allows you to disable themes and extensions without affecting your live store) or testing via a [staging site](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Advanced-Troubleshooting#test-on-staging).
 
-Please report confirmed bugs on the [WooCommerce PayPal Payments GitHub repository](https://github.com/woocommerce/woocommerce-paypal-payments/issues). You can also notify us via our [support forum](https://wordpress.org/support/plugin/woocommerce-paypal-payments/) if you are not sure if the problem you encounter is the result of a bug in the plugin. When reporting a bug as a [GitHub issue](https://github.com/woocommerce/woocommerce-paypal-payments/issues) directly, be sure to search the repository to confirm that the bug has not already been reported.
+= Does this extension support subscriptions? =
 
-= Where can I request new features or compatibility with other extensions? =
+Yes! WooCommerce PayPal Payments can be used with [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) and [PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments). You can also use [Vaulting](https://www.paypal.com/us/brc/article/securely-store-payments) to save customers’ payment methods for future transactions. [Review our subscriptions FAQ](https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq).
 
-Request new and vote on existing suggestions  for features and extensions on our official [feature request board](https://woocommerce.com/feature-requests/woocommerce-paypal-payments/). Our product teams regularly review requests and consider them valuable for product planning. Our support team is also always interested in learning about your ideas to improve the extension.
+= Does this extension support WooCommerce Blocks? =
 
-= Does WooCommerce PayPal Payments support subscriptions? =
+Yes! WooCommerce PayPal Payments offers experimental support for Cart and Checkout Blocks. [Review our Blocks FAQ](https://woocommerce.com/document/woocommerce-paypal-payments/#faq-does-paypal-payments-support-blocks).
 
-Yes, WooCommerce PayPal Payments can be used with the official [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/) plugin.
-Accept recurring payments on a fixed billing schedule with [PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments) or save your buyers' payment methods for future payments using the Vaulting feature ([business account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)).
-View the [Subscriptions FAQ](https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq) for more details.
+= Are there any new features in development? =
 
-= Does WooCommerce PayPal Payments support WooCommerce Blocks? =
+Yes! [Review our feature previews FAQ](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Testing-features-previews) for more details.
 
-Yes, WooCommerce PayPal Payments offers experimental support for the new WooCommerce Cart & Checkout Blocks. The team continues to work on providing a seamless integration with the new WooCommerce Blocks.
-View the [Blocks FAQ](https://woocommerce.com/document/woocommerce-paypal-payments/#faq-does-paypal-payments-support-blocks) for more details.
+= Can I contribute to WooCommerce PayPal Payments? =
 
-= Are there any other new features in development? =
+Yes, you can! [Join our GitHub repository](https://github.com/woocommerce/woocommerce-paypal-payments/issues).
 
-Yes, the WooCommerce PayPal Payments development team is constantly expanding the functionality of the WooCommerce PayPal Payments plugin with the latest features that PayPal offers.
-View the [Testing features previews FAQ](https://github.com/woocommerce/woocommerce-paypal-payments/wiki/Testing-features-previews) for more details.
+If you like this extension, please [leave a review on WordPress.org](https://wordpress.org/support/plugin/woocommerce-paypal-payments/reviews) or [WooCommerce.com](https://woocommerce.com/products/woocommerce-paypal-payments/#reviews) — your valuable feedback is appreciated.
 
-= WooCommerce PayPal Payments is awesome! Can I contribute? =
+= My question is not listed; where can I find more answers? =
 
-Yes, you can! Contributions are always appreciated. Join in on our [GitHub repository](https://github.com/woocommerce/woocommerce-paypal-payments/issues) to stay up-to-date with the latest developments.
-If you like the plugin, please also consider leaving a review [here](https://wordpress.org/support/plugin/woocommerce-paypal-payments/reviews/#new-post) or [here](https://woocommerce.com/de-de/products/woocommerce-paypal-payments/#reviews) to share your valuable feedback with other users as it is much appreciated.
-
-= My question is not listed here. Where can I find more answers? =
-
-Check out the [Frequently Asked Questions](https://woocommerce.com/document/woocommerce-paypal-payments/#faqs) for more or contact the support team.
+[Review our general](https://woocommerce.com/document/woocommerce-paypal-payments/#faqs) or [contact support](https://wordpress.org/support/plugin/woocommerce-paypal-payments/).
 
 == Installation ==
 

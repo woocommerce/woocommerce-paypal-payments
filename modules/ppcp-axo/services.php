@@ -66,7 +66,7 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'axo.insights' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency.getter' ),
@@ -89,7 +89,7 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

@@ -365,7 +365,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			function( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
-					$environment = $c->get( 'onboarding.environment' );
+					$environment = $c->get( 'settings.environment' );
 					$host        = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 					?>
 					<tr>
@@ -476,7 +476,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 							return;
 						}
 
-						$environment = $c->get( 'onboarding.environment' );
+						$environment = $c->get( 'settings.environment' );
 						echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
 						$this->render_paypal_subscription_fields( $product, $environment );
 						echo '</div>';
@@ -507,7 +507,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 							return;
 						}
 
-						$environment = $c->get( 'onboarding.environment' );
+						$environment = $c->get( 'settings.environment' );
 						$this->render_paypal_subscription_fields( $product, $environment );
 
 					}
@@ -562,9 +562,14 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				wp_enqueue_script(
 					'ppcp-paypal-subscription',
 					untrailingslashit( $module_url ) . '/assets/js/paypal-subscription.js',
-					array( 'jquery' ),
+					array( 'jquery', 'wc-admin-product-editor' ),
 					$c->get( 'ppcp.asset-version' ),
 					true
+				);
+
+				wp_set_script_translations(
+					'ppcp-paypal-subscription',
+					'woocommerce-paypal-payments'
 				);
 
 				$products = array( $this->set_product_config( $product ) );
@@ -780,10 +785,10 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		echo sprintf(
 		// translators: %1$s and %2$s are label open and close tags.
 			esc_html__( '%1$sConnect to PayPal%2$s', 'woocommerce-paypal-payments' ),
-			'<label for="_ppcp_enable_subscription_product" style="' . esc_attr( $style ) . '">',
+			'<label for="_ppcp_enable_subscription_product-' . esc_attr( (string) $product->get_id() ) . '" style="' . esc_attr( $style ) . '">',
 			'</label>'
 		);
-		echo '<input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/>';
+		echo '<input type="checkbox" id="ppcp_enable_subscription_product-' . esc_attr( (string) $product->get_id() ) . '" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/>';
 		echo sprintf(
 		// translators: %1$s and %2$s are label open and close tags.
 			esc_html__( '%1$sConnect Product to PayPal Subscriptions Plan%2$s', 'woocommerce-paypal-payments' ),
@@ -797,41 +802,51 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		$subscription_product   = $product->get_meta( 'ppcp_subscription_product' );
 		$subscription_plan      = $product->get_meta( 'ppcp_subscription_plan' );
 		$subscription_plan_name = $product->get_meta( '_ppcp_subscription_plan_name' );
-		if ( $subscription_product && $subscription_plan ) {
+		if ( $subscription_product || $subscription_plan ) {
+			$display_unlink_p = 'display:none;';
 			if ( $enable_subscription_product !== 'yes' ) {
-				echo sprintf(
-				// translators: %1$s and %2$s are button and wrapper html tags.
-					esc_html__( '%1$sUnlink PayPal Subscription Plan%2$s', 'woocommerce-paypal-payments' ),
-					'<p class="form-field" id="ppcp-enable-subscription"><label></label><button class="button" id="ppcp-unlink-sub-plan-' . esc_attr( (string) $product->get_id() ) . '">',
-					'</button><span class="spinner is-active" id="spinner-unlink-plan" style="float: none; display:none;"></span></p>'
-				);
-				echo sprintf(
-				// translators: %1$s and %2$s is open and closing paragraph tag.
-					esc_html__( '%1$sPlan unlinked successfully ✔️%2$s', 'woocommerce-paypal-payments' ),
-					'<p class="form-field" id="pcpp-plan-unlinked" style="display: none;">',
-					'</p>'
-				);
+				$display_unlink_p = '';
 			}
+			echo sprintf(
+			// translators: %1$s and %2$s are button and wrapper html tags.
+				esc_html__( '%1$sUnlink PayPal Subscription Plan%2$s', 'woocommerce-paypal-payments' ),
+				'<p class="form-field ppcp-enable-subscription" id="ppcp-enable-subscription-' . esc_attr( (string) $product->get_id() ) . '" style="' . esc_attr( $display_unlink_p ) . '"><label></label><button class="button ppcp-unlink-sub-plan" id="ppcp-unlink-sub-plan-' . esc_attr( (string) $product->get_id() ) . '">',
+				'</button><span class="spinner is-active" id="spinner-unlink-plan" style="float: none; display:none;"></span></p>'
+			);
+			echo sprintf(
+			// translators: %1$s and %2$s is open and closing paragraph tag.
+				esc_html__( '%1$sPlan unlinked successfully ✔️%2$s', 'woocommerce-paypal-payments' ),
+				'<p class="form-field pcpp-plan-unlinked" id="pcpp-plan-unlinked-' . esc_attr( (string) $product->get_id() ) . '" style="display: none;">',
+				'</p>'
+			);
 
 			$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
-			echo sprintf(
-			// translators: %1$s and %2$s are wrapper html tags.
-				esc_html__( '%1$sProduct%2$s', 'woocommerce-paypal-payments' ),
-				'<p class="form-field" id="pcpp-product"><label style="' . esc_attr( $style ) . '">',
-				'</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>'
-			);
-			echo sprintf(
-			// translators: %1$s and %2$s are wrapper html tags.
-				esc_html__( '%1$sPlan%2$s', 'woocommerce-paypal-payments' ),
-				'<p class="form-field" id="pcpp-plan"><label style="' . esc_attr( $style ) . '">',
-				'</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>'
-			);
+			if ( $subscription_product ) {
+				echo sprintf(
+				// translators: %1$s and %2$s are wrapper html tags.
+					esc_html__( '%1$sProduct%2$s', 'woocommerce-paypal-payments' ),
+					'<p class="form-field pcpp-product" id="pcpp-product-' . esc_attr( (string) $product->get_id() ) . '"><label style="' . esc_attr( $style ) . '">',
+					'</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>'
+				);
+			}
+			if ( $subscription_plan ) {
+				echo sprintf(
+				// translators: %1$s and %2$s are wrapper html tags.
+					esc_html__( '%1$sPlan%2$s', 'woocommerce-paypal-payments' ),
+					'<p class="form-field pcpp-plan" id="pcpp-plan-' . esc_attr( (string) $product->get_id() ) . '"><label style="' . esc_attr( $style ) . '">',
+					'</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>'
+				);
+			}
 		} else {
+			$display_plan_name_p = '';
+			if ( $enable_subscription_product !== 'yes' && $product->get_name() !== 'AUTO-DRAFT' ) {
+				$display_plan_name_p = 'display:none;';
+			}
 			echo sprintf(
 			// translators: %1$s and %2$s are wrapper html tags.
 				esc_html__( '%1$sPlan Name%2$s', 'woocommerce-paypal-payments' ),
-				'<p class="form-field"><label for="_ppcp_subscription_plan_name">',
-				'</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>'
+				'<p class="form-field ppcp_subscription_plan_name_p" id="ppcp_subscription_plan_name_p-' . esc_attr( (string) $product->get_id() ) . '" style="' . esc_attr( $display_plan_name_p ) . '"><label for="_ppcp_subscription_plan_name-' . esc_attr( (string) $product->get_id() ) . '">',
+				'</label><input type="text" class="short ppcp_subscription_plan_name" id="ppcp_subscription_plan_name-' . esc_attr( (string) $product->get_id() ) . '" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>'
 			);
 		}
 	}

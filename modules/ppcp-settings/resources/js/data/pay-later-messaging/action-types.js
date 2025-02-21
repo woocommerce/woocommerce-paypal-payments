@@ -6,13 +6,10 @@
 
 export default {
 	// Transient data.
-	SET_TRANSIENT: 'PAY_LATER_MESSAGING:SET_TRANSIENT',
+	SET_TRANSIENT: 'ppcp/paylater/SET_TRANSIENT',
 
 	// Persistent data.
-	SET_PERSISTENT: 'PAY_LATER_MESSAGING:SET_PERSISTENT',
-	RESET: 'PAY_LATER_MESSAGING:RESET',
-	HYDRATE: 'PAY_LATER_MESSAGING:HYDRATE',
-
-	// Controls - always start with "DO_".
-	DO_PERSIST_DATA: 'PAY_LATER_MESSAGING:DO_PERSIST_DATA',
+	SET_PERSISTENT: 'ppcp/paylater/SET_PERSISTENT',
+	RESET: 'ppcp/paylater/RESET',
+	HYDRATE: 'ppcp/paylater/HYDRATE',
 };

@@ -3,8 +3,8 @@
 	--block-separator-gap: 24px;
 	--block-header-gap: 18px;
 	--panel-width: 422px;
-	--sticky-offset-top: 92px; // 32px admin-bar + 60px TopNavigation height
-	--preview-height-reduction: 236px; // 32px admin-bar + 60px TopNavigation height + 48px TopNavigation margin + 48px TabList height + 48px TabList margin
+	--sticky-offset-top: 132px; // 32px admin-bar + 100px TopNavigation height
+	--preview-height-reduction: 276px; // 32px admin-bar + 100px TopNavigation height + 48px TopNavigation margin + 48px TabList height + 48px TabList margin
 
 	display: flex;
 	border: 1px solid var(--color-separators);

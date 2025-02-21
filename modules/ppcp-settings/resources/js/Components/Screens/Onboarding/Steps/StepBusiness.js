@@ -22,8 +22,33 @@ const StepBusiness = ( {} ) => {
 	);
 
 	useEffect( () => {
+		if ( ! businessChoice ) {
+			return;
+		}
+
 		setIsCasualSeller( BUSINESS_TYPES.CASUAL_SELLER === businessChoice );
 	}, [ businessChoice, setIsCasualSeller ] );
+
+	const { canUseSubscriptions } = OnboardingHooks.useFlags();
+	const businessChoices = [
+		{
+			value: BUSINESS_TYPES.BUSINESS,
+			title: __( 'Business', 'woocommerce-paypal-payments' ),
+			description: __(
+				'Recommended for individuals and organizations that primarily use PayPal to sell goods or services or receive donations, even if your business is not incorporated.',
+				'woocommerce-paypal-payments'
+			),
+		},
+		{
+			value: BUSINESS_TYPES.CASUAL_SELLER,
+			title: __( 'Personal Account', 'woocommerce-paypal-payments' ),
+			description: __(
+				'Ideal for those who primarily make purchases or send personal transactions to family and friends.',
+				'woocommerce-paypal-payments'
+			),
+			contents: canUseSubscriptions ? <DetailsAccountType /> : null,
+		},
+	];
 
 	return (
 		<div className="ppcp-r-page-business">
@@ -45,23 +70,13 @@ const StepBusiness = ( {} ) => {
 	);
 };
 
-const businessChoices = [
-	{
-		value: BUSINESS_TYPES.BUSINESS,
-		title: __( 'Business', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Recommended for individuals and organizations that primarily use PayPal to sell goods or services or receive donations, even if your business is not incorporated.',
+const DetailsAccountType = () => (
+	<p>
+		{ __(
+			'* Business account is required for subscriptions.',
 			'woocommerce-paypal-payments'
-		),
-	},
-	{
-		value: BUSINESS_TYPES.CASUAL_SELLER,
-		title: __( 'Personal Account', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Ideal for those who primarily make purchases or send personal transactions to family and friends.',
-			'woocommerce-paypal-payments'
-		),
-	},
-];
+		) }
+	</p>
+);
 
 export default StepBusiness;

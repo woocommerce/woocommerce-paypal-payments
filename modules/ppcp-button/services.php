@@ -36,7 +36,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
@@ -49,7 +48,7 @@ return array(
 			return $client_id;
 		}
 
-		$env = $container->get( 'onboarding.environment' );
+		$env = $container->get( 'settings.environment' );
 		/**
 		 * The environment.
 		 *
@@ -125,8 +124,8 @@ return array(
 			}
 		}
 
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return new DisabledSmartButton();
 		}
 
@@ -142,7 +141,7 @@ return array(
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
-		$environment         = $container->get( 'onboarding.environment' );
+		$environment         = $container->get( 'settings.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
@@ -241,11 +240,11 @@ return array(
 		);
 	},
 	'button.helper.early-order-handler'           => static function ( ContainerInterface $container ) : EarlyOrderHandler {
-
-		$state          = $container->get( 'onboarding.state' );
-		$order_processor = $container->get( 'wcgateway.order-processor' );
-		$session_handler = $container->get( 'session.handler' );
-		return new EarlyOrderHandler( $state, $order_processor, $session_handler );
+		return new EarlyOrderHandler(
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'session.handler' )
+		);
 	},
 	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data         = $container->get( 'button.request-data' );

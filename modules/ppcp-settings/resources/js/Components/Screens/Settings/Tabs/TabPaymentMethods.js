@@ -3,7 +3,7 @@ import { useCallback } from '@wordpress/element';
 
 import SettingsCard from '../../../ReusableComponents/SettingsCard';
 import { PaymentMethodsBlock } from '../../../ReusableComponents/SettingsBlocks';
-import { PaymentHooks } from '../../../../data';
+import { CommonHooks, OnboardingHooks, PaymentHooks } from '../../../../data';
 import { useActiveModal } from '../../../../data/common/hooks';
 import Modal from '../Components/Payment/Modal';
 
@@ -45,6 +45,9 @@ const TabPaymentMethods = () => {
 		[ changePaymentSettings, setActiveModal, setPersistent ]
 	);
 
+	const merchant = CommonHooks.useMerchant();
+	const { canUseCardPayments } = OnboardingHooks.useFlags();
+
 	return (
 		<div className="ppcp-r-payment-methods">
 			<PaymentMethodCard
@@ -58,20 +61,22 @@ const TabPaymentMethods = () => {
 				methods={ methods.paypal }
 				onTriggerModal={ setActiveModal }
 			/>
-			<PaymentMethodCard
-				id="ppcp-card-payments-card"
-				title={ __(
-					'Online Card Payments',
-					'woocommerce-paypal-payments'
-				) }
-				description={ __(
-					'Select your preferred card payment options for efficient payment processing.',
-					'woocommerce-paypal-payments'
-				) }
-				icon="icon-checkout-online-methods.svg"
-				methods={ methods.cardPayment }
-				onTriggerModal={ setActiveModal }
-			/>
+			{ merchant.isBusinessSeller && canUseCardPayments && (
+				<PaymentMethodCard
+					id="ppcp-card-payments-card"
+					title={ __(
+						'Online Card Payments',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						'Select your preferred card payment options for efficient payment processing.',
+						'woocommerce-paypal-payments'
+					) }
+					icon="icon-checkout-online-methods.svg"
+					methods={ methods.cardPayment }
+					onTriggerModal={ setActiveModal }
+				/>
+			) }
 			<PaymentMethodCard
 				id="ppcp-alternative-payments-card"
 				title={ __(

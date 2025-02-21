@@ -6,17 +6,38 @@
  *
  * @file
  */
-import { useDispatch } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
 
 import { STORE_NAME } from './constants';
 import { createHooksForStore } from '../utils';
+import { useMemo } from '@wordpress/element';
+
+/**
+ * Single source of truth for access Redux details.
+ *
+ * This hook returns a stable API to access actions, selectors and special hooks to generate
+ * getter- and setters for transient or persistent properties.
+ *
+ * @return {{select, dispatch, useTransient, usePersistent}} Store data API.
+ */
+const useStoreData = () => {
+	const select = useSelect( ( selectors ) => selectors( STORE_NAME ), [] );
+	const dispatch = useDispatch( STORE_NAME );
+	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
+
+	return useMemo(
+		() => ( {
+			select,
+			dispatch,
+			useTransient,
+			usePersistent,
+		} ),
+		[ select, dispatch, useTransient, usePersistent ]
+	);
+};
 
 const useHooks = () => {
-	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
-	const { persist } = useDispatch( STORE_NAME );
-
-	// Read-only flags and derived state.
-	const [ isReady ] = useTransient( 'isReady' );
+	const { usePersistent } = useStoreData();
 
 	// Persistent accessors.
 	const [ invoicePrefix, setInvoicePrefix ] =
@@ -47,8 +68,6 @@ const useHooks = () => {
 		usePersistent( 'disabledCards' );
 
 	return {
-		persist,
-		isReady,
 		invoicePrefix,
 		setInvoicePrefix,
 		authorizeOnly,
@@ -79,8 +98,16 @@ const useHooks = () => {
 };
 
 export const useStore = () => {
-	const { persist, isReady } = useHooks();
-	return { persist, isReady };
+	const { select, dispatch, useTransient } = useStoreData();
+	const { persist, refresh } = dispatch;
+	const [ isReady ] = useTransient( 'isReady' );
+
+	// Load persistent data from REST if not done yet.
+	if ( ! isReady ) {
+		select.persistentData();
+	}
+
+	return { persist, refresh, isReady };
 };
 
 export const useSettings = () => {

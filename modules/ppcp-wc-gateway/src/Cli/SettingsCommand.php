@@ -62,6 +62,7 @@ class SettingsCommand {
 			$value = false;
 		}
 
+		// TODO new-ux: The setting must also be updated in the new settings.
 		$this->settings->set( $key, $value );
 		$this->settings->persist();
 

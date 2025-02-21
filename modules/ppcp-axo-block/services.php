@@ -36,7 +36,7 @@ return array(
 			fn(): SmartButtonInterface => $container->get( 'button.smart-button' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.dcc' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'axo.payment_method_selected_map' ),
 			$container->get( 'axo.supported-country-card-type-matrix' )

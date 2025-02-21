@@ -36,8 +36,7 @@ const ALL_STEPS = [
 		id: 'methods',
 		title: __( 'Choose checkout options', 'woocommerce-paypal-payments' ),
 		StepComponent: StepPaymentMethods,
-		canProceed: ( { methods } ) =>
-			methods.areOptionalPaymentMethodsEnabled !== null,
+		canProceed: ( { methods } ) => methods.optionalMethods !== null,
 	},
 	{
 		id: 'complete',
@@ -50,10 +49,19 @@ const ALL_STEPS = [
 	},
 ];
 
+const filterSteps = ( steps, conditions ) => {
+	return steps.filter( ( step ) =>
+		conditions.every( ( condition ) => condition( step ) )
+	);
+};
+
 export const getSteps = ( flags ) => {
-	const steps = flags.canUseCasualSelling
-		? ALL_STEPS
-		: ALL_STEPS.filter( ( step ) => step.id !== 'business' );
+	const steps = filterSteps( ALL_STEPS, [
+		// Casual selling: Unlock the "Personal Account" choice.
+		( step ) => flags.canUseCasualSelling || step.id !== 'business',
+		// Card payments: Unlocks the "Extended Checkout" choice.
+		( step ) => flags.canUseCardPayments || step.id !== 'methods',
+	] );
 
 	const totalStepsCount = steps.length;
 

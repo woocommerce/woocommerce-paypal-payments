@@ -69,4 +69,34 @@ $width_gap: 24px;
 		color: var(--color-text-teriary);
 		margin: 0;
 	}
+
+	+ .ppcp-r-settings-card {
+		margin-top: $card-vertical-gap;
+		padding-top: $card-vertical-gap;
+		border-top: 1px solid $color-gray-200;
+	}
+
+	.ppcp--card-actions {
+		transition: opacity 0.3s;
+
+		&.ppcp--dimmed {
+			opacity: 0.5;
+
+			&:hover {
+				opacity: 1;
+			}
+		}
+
+		.components-button.is-tertiary {
+			transition: color 0.3s, background 0.3s;
+
+			&:first-child {
+				padding-left: 0;
+			}
+
+			svg {
+				margin-right: 4px;
+			}
+		}
+	}
 }

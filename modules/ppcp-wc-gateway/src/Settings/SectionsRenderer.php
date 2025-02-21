@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
@@ -35,11 +34,11 @@ class SectionsRenderer {
 	protected $page_id;
 
 	/**
-	 * The onboarding state.
+	 * Whether onboarding was completed and the merchant is connected to PayPal.
 	 *
-	 * @var State
+	 * @var bool
 	 */
-	private $state;
+	private bool $is_connected;
 
 	/**
 	 * The DCC product status
@@ -72,15 +71,8 @@ class SectionsRenderer {
 	/**
 	 * SectionsRenderer constructor.
 	 *
-	 * @param string                $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param State                 $state The onboarding state.
-	 */
-
-	/**
-	 * SectionsRenderer constructor.
-	 *
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param State                       $state The onboarding state.
+	 * @param bool                        $is_connected Whether the merchant completed onboarding.
 	 * @param DCCProductStatus            $dcc_product_status The DCC product status.
 	 * @param DccApplies                  $dcc_applies The DCC applies.
 	 * @param MessagesApply               $messages_apply The Messages apply.
@@ -88,14 +80,14 @@ class SectionsRenderer {
 	 */
 	public function __construct(
 		string $page_id,
-		State $state,
+		bool $is_connected,
 		DCCProductStatus $dcc_product_status,
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
 		PayUponInvoiceProductStatus $pui_product_status
 	) {
 		$this->page_id            = $page_id;
-		$this->state              = $state;
+		$this->is_connected       = $is_connected;
 		$this->dcc_product_status = $dcc_product_status;
 		$this->dcc_applies        = $dcc_applies;
 		$this->messages_apply     = $messages_apply;
@@ -108,9 +100,7 @@ class SectionsRenderer {
 	 * @return bool
 	 */
 	public function should_render() : bool {
-		return ! empty( $this->page_id ) &&
-			( $this->state->production_state() === State::STATE_ONBOARDED ||
-			$this->state->sandbox_state() === State::STATE_ONBOARDED );
+		return $this->page_id && $this->is_connected;
 	}
 
 	/**

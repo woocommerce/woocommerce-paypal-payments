@@ -2,6 +2,7 @@ import classNames from 'classnames';
 import { Description, Header, Title, TitleExtra, Content } from './Elements';
 
 const SettingsBlock = ( {
+	id,
 	className,
 	children,
 	title,
@@ -15,14 +16,18 @@ const SettingsBlock = ( {
 		'ppcp--horizontal': horizontalLayout,
 	} );
 
+	const props = {
+		className: blockClassName,
+		...( id && { id } ),
+	};
+
 	return (
-		<div className={ blockClassName } id={ className }>
+		<div { ...props }>
 			<BlockTitle
 				blockTitle={ title }
 				blockSuffix={ titleSuffix }
 				blockDescription={ description }
 			/>
-
 			<Content asCard={ false }>{ children }</Content>
 		</div>
 	);

@@ -7,10 +7,10 @@
  * @file
  */
 
-import { select } from '@wordpress/data';
+import apiFetch from '@wordpress/api-fetch';
 
 import ACTION_TYPES from './action-types';
-import { STORE_NAME } from './constants';
+import { REST_PERSIST_PATH } from './constants';
 
 /**
  * @typedef {Object} Action An action object that is handled by a reducer or control.
@@ -69,79 +69,34 @@ export const setPersistent = ( prop, value ) => ( {
 export const setIsReady = ( isReady ) => setTransient( 'isReady', isReady );
 
 /**
- * Transient. Sets the "manualClientId" value.
+ * Thunk action creator. Triggers the persistence of onboarding data to the server.
  *
- * @param {string} manualClientId
- * @return {Action} The action.
+ * @return {Function} The thunk function.
  */
-export const setManualClientId = ( manualClientId ) =>
-	setTransient( 'manualClientId', manualClientId );
+export function persist() {
+	return async ( { select } ) => {
+		try {
+			await apiFetch( {
+				path: REST_PERSIST_PATH,
+				method: 'POST',
+				data: select.persistentData(),
+			} );
+		} catch ( e ) {
+			// We catch errors here, as the onboarding module is not handled by the persistAll hook.
+			console.error( 'Error saving progress.', e );
+		}
+	};
+}
 
 /**
- * Transient. Sets the "manualClientSecret" value.
+ * Thunk action creator. Forces a data refresh from the REST API, replacing the current Redux values.
  *
- * @param {string} manualClientSecret
- * @return {Action} The action.
+ * @return {Function} The thunk function.
  */
-export const setManualClientSecret = ( manualClientSecret ) =>
-	setTransient( 'manualClientSecret', manualClientSecret );
+export function refresh() {
+	return ( { dispatch, select } ) => {
+		dispatch.invalidateResolutionForStore();
 
-/**
- * Persistent.Set the "onboarding completed" flag which shows or hides the wizard.
- *
- * @param {boolean} completed
- * @return {Action} The action.
- */
-export const setCompleted = ( completed ) =>
-	setPersistent( 'completed', completed );
-
-/**
- * Persistent. Sets the onboarding wizard to a new step.
- *
- * @param {number} step
- * @return {Action} The action.
- */
-export const setStep = ( step ) => setPersistent( 'step', step );
-
-/**
- * Persistent. Sets the "isCasualSeller" value.
- *
- * @param {boolean} isCasualSeller
- * @return {Action} The action.
- */
-export const setIsCasualSeller = ( isCasualSeller ) =>
-	setPersistent( 'isCasualSeller', isCasualSeller );
-
-/**
- * Persistent. Sets the "areOptionalPaymentMethodsEnabled" value.
- *
- * @param {boolean} areOptionalPaymentMethodsEnabled
- * @return {Action} The action.
- */
-export const setAreOptionalPaymentMethodsEnabled = (
-	areOptionalPaymentMethodsEnabled
-) =>
-	setPersistent(
-		'areOptionalPaymentMethodsEnabled',
-		areOptionalPaymentMethodsEnabled
-	);
-
-/**
- * Persistent. Sets the "products" array.
- *
- * @param {string[]} products
- * @return {Action} The action.
- */
-export const setProducts = ( products ) =>
-	setPersistent( 'products', products );
-
-/**
- * Side effect. Triggers the persistence of onboarding data to the server.
- *
- * @return {Action} The action.
- */
-export const persist = function* () {
-	const data = yield select( STORE_NAME ).persistentData();
-
-	yield { type: ACTION_TYPES.DO_PERSIST_DATA, data };
-};
+		select.persistentData();
+	};
+}

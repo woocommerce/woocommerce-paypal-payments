@@ -9,8 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMap;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsTabMapHelper;
+use WooCommerce\PayPalCommerce\Compat\Settings\StylingSettingsMapHelper;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
@@ -127,6 +131,12 @@ return array(
 			return array();
 		}
 
+		$styling_settings_map_helper = $container->get( 'compat.settings.styling_map_helper' );
+		assert( $styling_settings_map_helper instanceof StylingSettingsMapHelper );
+
+		$settings_tab_map_helper = $container->get( 'compat.settings.settings_tab_map_helper' );
+		assert( $settings_tab_map_helper instanceof SettingsTabMapHelper );
+
 		return array(
 			new SettingsMap(
 				$container->get( 'settings.data.general' ),
@@ -152,9 +162,37 @@ return array(
 					'sandbox_merchant_email' => 'merchant_email',
 				)
 			),
+			new SettingsMap(
+				$container->get( 'settings.data.settings' ),
+				$settings_tab_map_helper->map()
+			),
+			new SettingsMap(
+				$container->get( 'settings.data.styling' ),
+				/**
+				 * The `StylingSettings` class stores settings as `LocationStylingDTO` objects.
+				 * This method creates a mapping from old setting keys to the corresponding style names.
+				 *
+				 * Example:
+				 * 'button_product_layout' => 'layout'
+				 *
+				 * This mapping will allow to retrieve the correct style value
+				 * from a `LocationStylingDTO` object by dynamically accessing its properties.
+				 */
+				$styling_settings_map_helper->map()
+			),
 		);
 	},
 	'compat.settings.settings_map_helper'            => static function( ContainerInterface $container ) : SettingsMapHelper {
-		return new SettingsMapHelper( $container->get( 'compat.setting.new-to-old-map' ) );
+		return new SettingsMapHelper(
+			$container->get( 'compat.setting.new-to-old-map' ),
+			$container->get( 'compat.settings.styling_map_helper' ),
+			$container->get( 'compat.settings.settings_tab_map_helper' )
+		);
+	},
+	'compat.settings.styling_map_helper'             => static function() : StylingSettingsMapHelper {
+		return new StylingSettingsMapHelper();
+	},
+	'compat.settings.settings_tab_map_helper'        => static function() : SettingsTabMapHelper {
+		return new SettingsTabMapHelper();
 	},
 );

@@ -19,6 +19,7 @@ const defaultTransient = Object.freeze( {
 
 // Persistent: Values that are loaded from the DB.
 const defaultPersistent = Object.freeze( {
+	// Payment methods.
 	'ppcp-gateway': {},
 	venmo: {},
 	'pay-later': {},
@@ -37,6 +38,8 @@ const defaultPersistent = Object.freeze( {
 	'ppcp-multibanco': {},
 	'ppcp-pay-upon-invoice-gateway': {},
 	'ppcp-oxxo-gateway': {},
+
+	// Custom payment method properties.
 	paypalShowLogo: false,
 	threeDSecure: 'no-3d-secure',
 	fastlaneCardholderName: false,

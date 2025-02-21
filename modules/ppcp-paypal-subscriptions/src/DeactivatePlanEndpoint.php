@@ -78,7 +78,7 @@ class DeactivatePlanEndpoint {
 				}
 			}
 
-			wp_send_json_success();
+			wp_send_json_success( array( 'product_id' => (string) $product_id ) );
 		} catch ( Exception $error ) {
 			wp_send_json_error();
 		}

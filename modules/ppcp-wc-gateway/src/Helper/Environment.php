@@ -9,8 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-
 /**
  * Class Environment
  */
@@ -27,36 +25,73 @@ class Environment {
 	public const SANDBOX = 'sandbox';
 
 	/**
-	 * The Settings.
+	 * Name of the current environment.
 	 *
-	 * @var ContainerInterface
+	 * @var string
 	 */
-	private ContainerInterface $settings;
+	private string $environment_name;
 
 	/**
 	 * Environment constructor.
 	 *
-	 * @param ContainerInterface $settings The settings.
+	 * @param bool $is_sandbox Whether this instance represents a sandbox environment.
 	 */
-	public function __construct( ContainerInterface $settings ) {
-		$this->settings = $settings;
+	public function __construct( bool $is_sandbox = false ) {
+		$this->environment_name = $this->prepare_environment_name( $is_sandbox );
 	}
 
 	/**
-	 * Returns the current environment.
+	 * Returns a valid environment name based on the provided argument.
+	 *
+	 * @param bool $is_sandbox Whether this instance represents a sandbox environment.
+	 * @return string The environment name.
+	 */
+	private function prepare_environment_name( bool $is_sandbox ) : string {
+		if ( $is_sandbox ) {
+			return self::SANDBOX;
+		}
+
+		return self::PRODUCTION;
+	}
+
+	/**
+	 * Updates the current environment.
+	 *
+	 * @param bool $is_sandbox Whether this instance represents a sandbox environment.
+	 */
+	public function set_environment( bool $is_sandbox ) : void {
+		$new_environment = $this->prepare_environment_name( $is_sandbox );
+
+		if ( $new_environment !== $this->environment_name ) {
+			/**
+			 * Action that fires before the environment status changes.
+			 *
+			 * @param string $new_environment The new environment name.
+			 * @param string $old_environment The previous environment name.
+			 */
+			do_action(
+				'woocommerce_paypal_payments_merchant_environment_change',
+				$new_environment,
+				$this->environment_name
+			);
+		}
+
+		$this->environment_name = $new_environment;
+	}
+
+	/**
+	 * Returns the current environment's name.
 	 *
 	 * @return string
 	 */
 	public function current_environment() : string {
-		return (
-			$this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' )
-		) ? self::SANDBOX : self::PRODUCTION;
+		return $this->environment_name;
 	}
 
 	/**
 	 * Detect whether the current environment equals $environment
 	 *
-	 * @deprecated Use the is_sandbox() and is_production() methods instead.
+	 * @deprecated 3.0.0 - Use the is_sandbox() and is_production() methods instead.
 	 *             These methods provide better encapsulation, are less error-prone,
 	 *             and improve code readability by removing the need to pass environment constants.
 	 * @param string $environment The value to check against.

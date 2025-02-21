@@ -73,7 +73,7 @@ class SettingsModel extends AbstractDataModel {
 			// Enum-type string values.
 			'subtotal_adjustment'    => 'skip_details', // Options: [correction|no_details].
 			'landing_page'           => 'any',          // Options: [any|login|guest_checkout].
-			'button_language'        => '',             // empty or a 2-letter language code.
+			'button_language'        => '',             // empty or a language locale code.
 
 			// Boolean flags.
 			'authorize_only'         => false,
@@ -111,8 +111,8 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The brand name.
 	 */
-	public function get_brand_name() : string {
-		return $this->data['brand_name'];
+	public function get_brand_name(): string {
+		return ! empty( $this->data['brand_name'] ) ? $this->data['brand_name'] : get_bloginfo( 'name' );
 	}
 
 	/**
@@ -139,7 +139,10 @@ class SettingsModel extends AbstractDataModel {
 	 * @param string $descriptor The soft descriptor to set.
 	 */
 	public function set_soft_descriptor( string $descriptor ) : void {
-		$this->data['soft_descriptor'] = $this->sanitizer->sanitize_text( $descriptor );
+		$descriptor = $this->sanitizer->sanitize_text( $descriptor );
+		$descriptor = preg_replace( '/[^a-zA-Z0-9\-*. ]/', '', $descriptor ) ?? '';
+
+		$this->data['soft_descriptor'] = substr( $descriptor, 0, 22 );
 	}
 
 	/**

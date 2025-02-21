@@ -8,13 +8,37 @@
  */
 
 import { useDispatch, useSelect } from '@wordpress/data';
-import { useCallback } from '@wordpress/element';
+import { useCallback, useEffect, useMemo, useState } from '@wordpress/element';
 
 import { createHooksForStore } from '../utils';
 import { STORE_NAME } from './constants';
 
-const useHooks = () => {
+/**
+ * Single source of truth for access Redux details.
+ *
+ * This hook returns a stable API to access actions, selectors and special hooks to generate
+ * getter- and setters for transient or persistent properties.
+ *
+ * @return {{select, dispatch, useTransient, usePersistent}} Store data API.
+ */
+const useStoreData = () => {
+	const select = useSelect( ( selectors ) => selectors( STORE_NAME ), [] );
+	const dispatch = useDispatch( STORE_NAME );
 	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
+
+	return useMemo(
+		() => ( {
+			select,
+			dispatch,
+			useTransient,
+			usePersistent,
+		} ),
+		[ select, dispatch, useTransient, usePersistent ]
+	);
+};
+
+const useHooks = () => {
+	const { useTransient, usePersistent, dispatch, select } = useStoreData();
 	const {
 		persist,
 		sandboxOnboardingUrl,
@@ -23,35 +47,23 @@ const useHooks = () => {
 		authenticateWithOAuth,
 		startWebhookSimulation,
 		checkWebhookSimulationState,
-	} = useDispatch( STORE_NAME );
+	} = dispatch;
 
 	// Transient accessors.
-	const [ isReady ] = useTransient( 'isReady' );
 	const [ activeModal, setActiveModal ] = useTransient( 'activeModal' );
+	const [ activeHighlight, setActiveHighlight ] =
+		useTransient( 'activeHighlight' );
 
 	// Persistent accessors.
 	const [ isSandboxMode, setSandboxMode ] = usePersistent( 'useSandbox' );
 	const [ isManualConnectionMode, setManualConnectionMode ] = usePersistent(
 		'useManualConnection'
 	);
-	const merchant = useSelect(
-		( select ) => select( STORE_NAME ).merchant(),
-		[]
-	);
 
 	// Read-only properties.
-	const wooSettings = useSelect(
-		( select ) => select( STORE_NAME ).wooSettings(),
-		[]
-	);
-	const features = useSelect(
-		( select ) => select( STORE_NAME ).features(),
-		[]
-	);
-	const webhooks = useSelect(
-		( select ) => select( STORE_NAME ).webhooks(),
-		[]
-	);
+	const wooSettings = select.wooSettings();
+	const features = select.features();
+	const webhooks = select.webhooks();
 
 	const savePersistent = async ( setter, value ) => {
 		setter( value );
@@ -59,9 +71,10 @@ const useHooks = () => {
 	};
 
 	return {
-		isReady,
 		activeModal,
 		setActiveModal,
+		activeHighlight,
+		setActiveHighlight,
 		isSandboxMode,
 		setSandboxMode: ( state ) => {
 			return savePersistent( setSandboxMode, state );
@@ -74,13 +87,25 @@ const useHooks = () => {
 		productionOnboardingUrl,
 		authenticateWithCredentials,
 		authenticateWithOAuth,
-		merchant,
 		wooSettings,
 		features,
 		webhooks,
 		startWebhookSimulation,
 		checkWebhookSimulationState,
 	};
+};
+
+export const useStore = () => {
+	const { select, dispatch, useTransient } = useStoreData();
+	const { persist, refresh } = dispatch;
+	const [ isReady ] = useTransient( 'isReady' );
+
+	// Load persistent data from REST if not done yet.
+	if ( ! isReady ) {
+		select.persistentData();
+	}
+
+	return { persist, refresh, isReady };
 };
 
 export const useSandbox = () => {
@@ -111,6 +136,11 @@ export const useAuthentication = () => {
 	};
 };
 
+export const useDisconnectMerchant = () => {
+	const { disconnectMerchant } = useDispatch( STORE_NAME );
+	return { disconnectMerchant };
+};
+
 export const useWooSettings = () => {
 	const { wooSettings } = useHooks();
 
@@ -135,26 +165,58 @@ export const useWebhooks = () => {
 };
 
 export const useMerchantInfo = () => {
-	const { isReady, merchant, features } = useHooks();
-	const { refreshMerchantData } = useDispatch( STORE_NAME );
+	const { features } = useHooks();
+	const merchant = useMerchant();
+	const { refreshMerchantData, setMerchant } = useDispatch( STORE_NAME );
 
 	const verifyLoginStatus = useCallback( async () => {
 		const result = await refreshMerchantData();
 
-		if ( ! result.success ) {
+		if ( ! result.success || ! result.merchant ) {
 			throw new Error( result?.message || result?.error?.message );
 		}
 
+		const newMerchant = result.merchant;
+
 		// Verify if the server state is "connected" and we have a merchant ID.
-		return merchant?.isConnected && merchant?.id;
-	}, [ refreshMerchantData, merchant ] );
+		if ( newMerchant?.isConnected && newMerchant?.id ) {
+			// Update the verified merchant details in Redux.
+			setMerchant( newMerchant );
+
+			return true;
+		}
+
+		return false;
+	}, [ refreshMerchantData, setMerchant ] );
 
 	return {
-		isReady,
 		merchant, // Merchant details
 		features, // Eligible merchant features
 		verifyLoginStatus, // Callback
 	};
+};
+
+// Read-only access to the sanitized merchant details.
+export const useMerchant = () => {
+	const merchant = useSelect(
+		( select ) => select( STORE_NAME ).merchant(),
+		[]
+	);
+
+	return useMemo(
+		() => ( {
+			isConnected: merchant.isConnected ?? false,
+			isSandbox: merchant.isSandbox ?? true,
+			id: merchant.id ?? '',
+			email: merchant.email ?? '',
+			clientId: merchant.clientId ?? '',
+			clientSecret: merchant.clientSecret ?? '',
+			isBusinessSeller: 'business' === merchant.sellerType,
+			isCasualSeller: 'personal' === merchant.sellerType,
+		} ),
+		// the merchant object is stable, so a new memo is only generated when a merchant prop changes.
+		[ merchant ]
+	);
 };
 
 export const useActiveModal = () => {
@@ -162,7 +224,14 @@ export const useActiveModal = () => {
 	return { activeModal, setActiveModal };
 };
 
-// -- Not using the `useHooks()` data provider --
+export const useActiveHighlight = () => {
+	const { activeHighlight, setActiveHighlight } = useHooks();
+	return { activeHighlight, setActiveHighlight };
+};
+
+/*
+ * Busy state management hooks
+ */
 
 export const useBusyState = () => {
 	const { startActivity, stopActivity } = useDispatch( STORE_NAME );
@@ -180,6 +249,8 @@ export const useBusyState = () => {
 	const withActivity = useCallback(
 		async ( id, description, asyncFn ) => {
 			startActivity( id, description );
+
+			// Intentionally does not catch errors but propagates them to the calling module.
 			try {
 				return await asyncFn();
 			} finally {
@@ -190,8 +261,58 @@ export const useBusyState = () => {
 	);
 
 	return {
+		startActivity,
+		stopActivity,
 		withActivity, // HOC
 		isBusy, // Boolean.
-		activities, // Object.
+	};
+};
+
+export const useActivityObserver = () => {
+	const activities = useSelect(
+		( select ) => select( STORE_NAME ).getActivityList(),
+		[]
+	);
+
+	const [ prevActivities, setPrevActivities ] = useState( activities );
+
+	useEffect( () => {
+		setPrevActivities( activities );
+	}, [ activities ] );
+
+	const onStarted = useCallback(
+		( callback ) => {
+			const newActivities = Object.keys( activities ).filter(
+				( id ) => ! prevActivities[ id ]
+			);
+			if ( ! newActivities.length ) {
+				return;
+			}
+			newActivities.forEach( ( id ) =>
+				callback( id, Object.keys( activities ) )
+			);
+		},
+		[ activities, prevActivities ]
+	);
+
+	const onFinished = useCallback(
+		( callback ) => {
+			const finishedActivities = Object.keys( prevActivities ).filter(
+				( id ) => ! activities[ id ]
+			);
+			if ( ! finishedActivities.length ) {
+				return;
+			}
+			finishedActivities.forEach( ( id ) =>
+				callback( id, Object.keys( activities ) )
+			);
+		},
+		[ activities, prevActivities ]
+	);
+
+	return {
+		activities,
+		onStarted,
+		onFinished,
 	};
 };

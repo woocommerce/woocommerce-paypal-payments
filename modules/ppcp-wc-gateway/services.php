@@ -87,35 +87,21 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
-		$order_processor     = $container->get( 'wcgateway.order-processor' );
-		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
-		$funding_source_renderer   = $container->get( 'wcgateway.funding-source.renderer' );
-		$settings            = $container->get( 'wcgateway.settings' );
-		$session_handler     = $container->get( 'session.handler' );
-		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
-		$state               = $container->get( 'onboarding.state' );
-		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-		$environment         = $container->get( 'onboarding.environment' );
-		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
-		$api_shop_country = $container->get( 'api.shop.country' );
 		return new PayPalGateway(
-			$settings_renderer,
-			$funding_source_renderer,
-			$order_processor,
-			$settings,
-			$session_handler,
-			$refund_processor,
-			$state,
-			$transaction_url_provider,
-			$subscription_helper,
-			$page_id,
-			$environment,
-			$payment_token_repository,
-			$logger,
-			$api_shop_country,
+			$container->get( 'wcgateway.settings.render' ),
+			$container->get( 'wcgateway.funding-source.renderer' ),
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get( 'settings.environment' ),
+			$container->get( 'vaulting.repository.payment-token' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.shop.country' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
@@ -127,42 +113,26 @@ return array(
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
-		$order_processor     = $container->get( 'wcgateway.order-processor' );
-		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
-		$settings            = $container->get( 'wcgateway.settings' );
-		$dcc_configuration   = $container->get( 'wcgateway.configuration.dcc' );
-		$module_url          = $container->get( 'wcgateway.url' );
-		$session_handler     = $container->get( 'session.handler' );
-		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
-		$state               = $container->get( 'onboarding.state' );
-		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-		$payments_endpoint = $container->get( 'api.endpoint.payments' );
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
-		$icons = $container->get( 'wcgateway.credit-card-icons' );
-
 		return new CreditCardGateway(
-			$settings_renderer,
-			$order_processor,
-			$settings,
-			$dcc_configuration,
-			$icons,
-			$module_url,
-			$session_handler,
-			$refund_processor,
-			$state,
-			$transaction_url_provider,
-			$subscription_helper,
-			$payments_endpoint,
-			$vaulted_credit_card_handler,
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'wcgateway.settings.render' ),
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.dcc' ),
+			$container->get( 'wcgateway.credit-card-icons' ),
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'api.endpoint.payments' ),
+			$container->get( 'vaulting.credit-card-handler' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.endpoint.capture-card-payment' ),
 			$container->get( 'api.prefix' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'vaulting.wc-payment-tokens' ),
-			$logger
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'wcgateway.credit-card-labels'                         => static function ( ContainerInterface $container ) : array {
@@ -234,11 +204,11 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.factory.paypal-checkout-url' ),
@@ -321,10 +291,9 @@ return array(
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
 		$ppcp_tab = isset( $_GET[ SectionsRenderer::KEY ] ) ? sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) : '';
 
-		$state = $container->get( 'onboarding.state' );
-		assert( $state instanceof State );
+		$is_connected = $container->get( 'settings.flag.is-connected' );
 
-		if ( ! $ppcp_tab && PayPalGateway::ID === $section && $state->current_state() !== State::STATE_ONBOARDED ) {
+		if ( ! $ppcp_tab && PayPalGateway::ID === $section && ! $is_connected ) {
 			return Settings::CONNECTION_TAB_ID;
 		}
 
@@ -343,29 +312,25 @@ return array(
 		}
 	),
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
-		$state                        = $container->get( 'onboarding.state' );
-		$settings                     = $container->get( 'wcgateway.settings' );
-		$is_current_country_send_only = $container->get( 'wcgateway.is-send-only-country' );
-		return new ConnectAdminNotice( $state, $settings, $is_current_country_send_only );
+		return new ConnectAdminNotice(
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.is-send-only-country' )
+		);
 	},
 	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
-		$state                    = $container->get( 'onboarding.state' );
-		$shop_currency            = $container->get( 'api.shop.currency.getter' );
-		$supported_currencies     = $container->get( 'api.supported-currencies' );
-		$is_wc_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
-		$is_ppcp_settings_page    = $container->get( 'wcgateway.is-ppcp-settings-page' );
 		return new UnsupportedCurrencyAdminNotice(
-			$state,
-			$shop_currency,
-			$supported_currencies,
-			$is_wc_gateways_list_page,
-			$is_ppcp_settings_page
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'api.shop.currency.getter' ),
+			$container->get( 'api.supported-currencies' ),
+			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
+			$container->get( 'wcgateway.is-ppcp-settings-page' )
 		);
 	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
 			CreditCardGateway::ID,
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
 			$container->get( 'wcgateway.is-ppcp-settings-page' )
@@ -374,7 +339,7 @@ return array(
 	'wcgateway.notice.card-button-without-paypal'          => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
 			CardButtonGateway::ID,
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
@@ -477,14 +442,12 @@ return array(
 		return in_array( $store_country, $send_only_countries, true );
 	},
 	'wcgateway.notice.send-only-country'                   => static function ( ContainerInterface $container ) {
-		$onboarding_state = $container->get( 'onboarding.state' );
-		assert( $onboarding_state instanceof State );
 		return new SendOnlyCountryNotice(
 			$container->get( 'wcgateway.send-only-message' ),
 			$container->get( 'wcgateway.is-send-only-country' ),
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
-			$onboarding_state->current_state()
+			$container->get( 'settings.flag.is-connected' )
 		);
 	},
 
@@ -527,7 +490,7 @@ return array(
 	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.helper.dcc-product-status' ),
 			$container->get( 'api.helpers.dccapplies' ),
 			$container->get( 'button.helper.messages-apply' ),
@@ -545,57 +508,36 @@ return array(
 		return new SettingsStatus( $settings );
 	},
 	'wcgateway.settings.render'                            => static function ( ContainerInterface $container ): SettingsRenderer {
-		$settings      = $container->get( 'wcgateway.settings' );
-		$state         = $container->get( 'onboarding.state' );
-		$fields        = $container->get( 'wcgateway.settings.fields' );
-		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		$messages_apply = $container->get( 'button.helper.messages-apply' );
-		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
-		$settings_status = $container->get( 'wcgateway.settings.status' );
-		$page_id         = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		$api_shop_country = $container->get( 'api.shop.country' );
 		return new SettingsRenderer(
-			$settings,
-			$state,
-			$fields,
-			$dcc_applies,
-			$messages_apply,
-			$dcc_product_status,
-			$settings_status,
-			$page_id,
-			$api_shop_country
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'onboarding.state' ), // Correct.
+			$container->get( 'wcgateway.settings.fields' ),
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'button.helper.messages-apply' ),
+			$container->get( 'wcgateway.helper.dcc-product-status' ),
+			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get( 'api.shop.country' )
 		);
 	},
 	'wcgateway.settings.listener'                          => static function ( ContainerInterface $container ): SettingsListener {
-		$settings         = $container->get( 'wcgateway.settings' );
-		$fields           = $container->get( 'wcgateway.settings.fields' );
-		$webhook_registrar = $container->get( 'webhook.registrar' );
-		$state             = $container->get( 'onboarding.state' );
-		$cache             = $container->get( 'api.paypal-bearer-cache' );
-		$bearer            = $container->get( 'api.bearer' );
-		$page_id           = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		$signup_link_cache = $container->get( 'onboarding.signup-link-cache' );
-		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
-		$pui_status_cache = $container->get( 'pui.status-cache' );
-		$dcc_status_cache = $container->get( 'dcc.status-cache' );
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new SettingsListener(
-			$settings,
-			$fields,
-			$webhook_registrar,
-			$cache,
-			$state,
-			$bearer,
-			$page_id,
-			$signup_link_cache,
-			$signup_link_ids,
-			$pui_status_cache,
-			$dcc_status_cache,
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.settings.fields' ),
+			$container->get( 'webhook.registrar' ),
+			$container->get( 'api.paypal-bearer-cache' ),
+			$container->get( 'onboarding.state' ), // Correct.
+			$container->get( 'api.bearer' ),
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get( 'onboarding.signup-link-cache' ),
+			$container->get( 'onboarding.signup-link-ids' ),
+			$container->get( 'pui.status-cache' ),
+			$container->get( 'dcc.status-cache' ),
 			$container->get( 'http.redirector' ),
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'api.endpoint.billing-agreements' ),
-			$logger,
+			$container->get( 'woocommerce.logger.woocommerce' ),
 			new Cache( 'ppcp-client-credentials-cache' )
 		);
 	},
@@ -607,7 +549,7 @@ return array(
 		$threed_secure                = $container->get( 'button.helper.three-d-secure' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$settings                      = $container->get( 'wcgateway.settings' );
-		$environment                   = $container->get( 'onboarding.environment' );
+		$environment                   = $container->get( 'settings.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$order_helper = $container->get( 'api.order-helper' );
@@ -727,6 +669,8 @@ return array(
 		if ( ! $should_render_settings ) {
 			return array();
 		}
+
+		// Legacy settings service, correct use of `State` class.
 
 		$state = $container->get( 'onboarding.state' );
 		assert( $state instanceof State );
@@ -1485,12 +1429,12 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.pay-upon-invoice-payment-source-factory' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.url' )
 		);
@@ -1524,7 +1468,7 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.state' ),
+			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
@@ -1549,7 +1493,7 @@ return array(
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -1717,15 +1661,15 @@ return array(
 		return 'https://www.paypal.com/bizsignup/entry?product=ADVANCED_VAULTING';
 	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return '';
 		}
 
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		assert( $dcc_product_status instanceof DCCProductStatus );
 
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		$dcc_enabled = $dcc_product_status->is_active();
@@ -1755,7 +1699,7 @@ return array(
 		);
 	},
 	'wcgateway.settings.connection.reference-transactions-status-text' => static function ( ContainerInterface $container ): string {
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
@@ -1788,15 +1732,15 @@ return array(
 		);
 	},
 	'wcgateway.settings.connection.pui-status-text'        => static function ( ContainerInterface $container ): string {
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return '';
 		}
 
 		$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
 		assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
 
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		$pui_enabled = $pui_product_status->is_active();
@@ -1910,6 +1854,13 @@ return array(
 		$settings      = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
+		if ( apply_filters(
+			'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
+			getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
+		) ) {
+			return true;
+		}
+
 		return $settings->has( 'fraudnet_enabled' ) && $settings->get( 'fraudnet_enabled' );
 	},
 	'wcgateway.fraudnet-assets'                            => function( ContainerInterface $container ) : FraudNetAssets {
@@ -1917,7 +1868,7 @@ return array(
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.fraudnet' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.gateway-repository' ),
 			$container->get( 'session.handler' ),

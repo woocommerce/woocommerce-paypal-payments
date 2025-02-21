@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WC_Order;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -56,8 +55,9 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 				if ( ! self::should_add_local_apm_gateways( $c ) ) {
 					return $methods;
 				}
-				$onboarding_state = $c->get( 'onboarding.state' );
-				if ( $onboarding_state->current_state() === State::STATE_START ) {
+
+				$is_connected = $c->get( 'settings.flag.is-connected' );
+				if ( ! $is_connected ) {
 					return $methods;
 				}
 

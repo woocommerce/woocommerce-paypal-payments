@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
+use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 
 /**
  * Provides a listener that handles merchant-connection requests.
@@ -177,6 +178,7 @@ class ConnectionListener {
 
 		$merchant_id    = $this->get_merchant_id_from_request( $request );
 		$merchant_email = $this->get_merchant_email_from_request( $request );
+		$seller_type    = $this->get_seller_type_from_request( $request );
 
 		if ( ! $merchant_id || ! $merchant_email ) {
 			return array();
@@ -185,6 +187,7 @@ class ConnectionListener {
 		return array(
 			'merchant_id'    => $merchant_id,
 			'merchant_email' => $merchant_email,
+			'seller_type'    => $seller_type,
 		);
 	}
 
@@ -226,7 +229,7 @@ class ConnectionListener {
 	 *
 	 * Note that the email is provided via the argument "merchantId", which
 	 * looks incorrect at first, but PayPal uses the email address as merchant
-	 * IDm and offers a more anonymous ID via the "merchantIdInPayPal" argument.
+	 * ID, and offers a more anonymous ID via the "merchantIdInPayPal" argument.
 	 *
 	 * @param array $request Full request details.
 	 *
@@ -234,6 +237,40 @@ class ConnectionListener {
 	 */
 	private function get_merchant_email_from_request( array $request ) : string {
 		return $this->sanitize_merchant_email( $request['merchantId'] ?? '' );
+	}
+
+	/**
+	 * Returns the sanitized seller type, based on the incoming request.
+	 *
+	 * PayPal reports this via an `accountStatus` GET parameter, which can have
+	 * the value "BUSINESS_ACCOUNT", or "???". This method translates the GET
+	 * parameter into a SellerTypeEnum value.
+	 *
+	 * @param array $request Full request details.
+	 *
+	 * @return string A valid SellerTypeEnum value.
+	 */
+	private function get_seller_type_from_request( array $request ) : string {
+		$account_status = $request['accountStatus'] ?? '';
+
+		if ( 'BUSINESS_ACCOUNT' === $account_status ) {
+			return SellerTypeEnum::BUSINESS;
+		}
+
+		if ( ! $account_status ) {
+			/**
+			 * We assume that a valid authentication request that has no
+			 * accountStatus property must be a personal account.
+			 *
+			 * This logic is not officially documented, but was discovered
+			 * by trial-and-error.
+			 */
+			return SellerTypeEnum::PERSONAL;
+		}
+
+		$this->logger->info( 'Request with unknown accountStatus: ' . $account_status );
+
+		return SellerTypeEnum::UNKNOWN;
 	}
 
 	/**

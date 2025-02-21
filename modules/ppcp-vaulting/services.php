@@ -37,7 +37,7 @@ return array(
 			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.processor.authorized-payments' ),
 			$container->get( 'wcgateway.settings' )
 		);

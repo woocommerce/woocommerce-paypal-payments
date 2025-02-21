@@ -20,7 +20,6 @@ use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -260,15 +259,15 @@ return array(
 	},
 
 	'applepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return '';
 		}
 
 		$product_status = $container->get( 'applepay.apple-product-status' );
 		assert( $product_status instanceof AppleProductStatus );
 
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		$enabled = $product_status->is_active();
@@ -308,5 +307,4 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-
 );

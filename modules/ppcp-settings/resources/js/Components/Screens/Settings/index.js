@@ -5,6 +5,7 @@ import { getSettingsTabs } from './Tabs';
 const SettingsScreen = ( { activePanel, setActivePanel } ) => {
 	const tabs = getSettingsTabs();
 	const { Component } = tabs.find( ( tab ) => tab.name === activePanel );
+
 	return (
 		<>
 			<SettingsNavigation

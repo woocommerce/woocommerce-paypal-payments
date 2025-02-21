@@ -272,8 +272,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @return void
 	 */
 	protected function toggle_final_review_enabled_setting(): void {
+		// TODO new-ux: This flag must also be updated in the new settings.
 		$final_review_enabled_setting = $this->settings->has( 'blocks_final_review_enabled' ) && $this->settings->get( 'blocks_final_review_enabled' );
-		$final_review_enabled_setting ? $this->settings->set( 'blocks_final_review_enabled', false ) : $this->settings->set( 'blocks_final_review_enabled', true );
+		$this->settings->set( 'blocks_final_review_enabled', ! $final_review_enabled_setting );
 		$this->settings->persist();
 	}
 }

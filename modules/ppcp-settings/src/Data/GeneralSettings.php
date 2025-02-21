@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 
 /**
  * Class GeneralSettings
@@ -73,8 +74,10 @@ class GeneralSettings extends AbstractDataModel {
 			'sandbox_merchant'      => false,
 			'merchant_id'           => '',
 			'merchant_email'        => '',
+			'merchant_country'      => '',
 			'client_id'             => '',
 			'client_secret'         => '',
+			'seller_type'           => 'unknown',
 		);
 	}
 
@@ -136,8 +139,10 @@ class GeneralSettings extends AbstractDataModel {
 		$this->data['sandbox_merchant']   = $connection->is_sandbox;
 		$this->data['merchant_id']        = sanitize_text_field( $connection->merchant_id );
 		$this->data['merchant_email']     = sanitize_email( $connection->merchant_email );
+		$this->data['merchant_country']   = sanitize_text_field( $connection->merchant_country );
 		$this->data['client_id']          = sanitize_text_field( $connection->client_id );
 		$this->data['client_secret']      = sanitize_text_field( $connection->client_secret );
+		$this->data['seller_type']        = sanitize_text_field( $connection->seller_type );
 		$this->data['merchant_connected'] = $this->is_merchant_connected();
 	}
 
@@ -152,7 +157,9 @@ class GeneralSettings extends AbstractDataModel {
 			$this->data['client_id'],
 			$this->data['client_secret'],
 			$this->data['merchant_id'],
-			$this->data['merchant_email']
+			$this->data['merchant_email'],
+			$this->data['merchant_country'],
+			$this->data['seller_type']
 		);
 	}
 
@@ -167,8 +174,10 @@ class GeneralSettings extends AbstractDataModel {
 		$this->data['sandbox_merchant']   = $defaults['sandbox_merchant'];
 		$this->data['merchant_id']        = $defaults['merchant_id'];
 		$this->data['merchant_email']     = $defaults['merchant_email'];
+		$this->data['merchant_country']   = $defaults['merchant_country'];
 		$this->data['client_id']          = $defaults['client_id'];
 		$this->data['client_secret']      = $defaults['client_secret'];
+		$this->data['seller_type']        = $defaults['seller_type'];
 		$this->data['merchant_connected'] = false;
 	}
 
@@ -194,6 +203,30 @@ class GeneralSettings extends AbstractDataModel {
 	}
 
 	/**
+	 * Whether the merchant uses a business account.
+	 *
+	 * Note: It's possible that the seller type is unknown, and both methods,
+	 * `is_casual_seller()` and `is_business_seller()` return false.
+	 *
+	 * @return bool
+	 */
+	public function is_business_seller() : bool {
+		return SellerTypeEnum::BUSINESS === $this->data['seller_type'];
+	}
+
+	/**
+	 * Whether the merchant is a casual seller using a personal account.
+	 *
+	 * Note: It's possible that the seller type is unknown, and both methods,
+	 * `is_casual_seller()` and `is_business_seller()` return false.
+	 *
+	 * @return bool
+	 */
+	public function is_casual_seller() : bool {
+		return SellerTypeEnum::PERSONAL === $this->data['seller_type'];
+	}
+
+	/**
 	 * Gets the currently connected merchant ID.
 	 *
 	 * @return string
@@ -209,5 +242,14 @@ class GeneralSettings extends AbstractDataModel {
 	 */
 	public function get_merchant_email() : string {
 		return $this->data['merchant_email'];
+	}
+
+	/**
+	 * Gets the currently connected merchant's country.
+	 *
+	 * @return string
+	 */
+	public function get_merchant_country() : string {
+		return $this->data['merchant_country'];
 	}
 }

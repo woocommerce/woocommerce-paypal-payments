@@ -7,44 +7,57 @@
  * @file
  */
 
-import { useDispatch } from '@wordpress/data';
+import { useMemo } from '@wordpress/element';
+import { useDispatch, useSelect } from '@wordpress/data';
 
 import { createHooksForStore } from '../utils';
 import { STORE_NAME } from './constants';
 
-const useHooks = () => {
+/**
+ * Single source of truth for access Redux details.
+ *
+ * This hook returns a stable API to access actions, selectors and special hooks to generate
+ * getter- and setters for transient or persistent properties.
+ *
+ * @return {{select, dispatch, useTransient, usePersistent}} Store data API.
+ */
+const useStoreData = () => {
+	const select = useSelect( ( selectors ) => selectors( STORE_NAME ), [] );
+	const dispatch = useDispatch( STORE_NAME );
 	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
-	const { persist } = useDispatch( STORE_NAME );
 
-	// Read-only flags and derived state.
-	// Nothing here yet.
-
-	// Transient accessors.
-	const [ isReady ] = useTransient( 'isReady' );
-
-	// Persistent accessors.
-	// TODO: Replace with real property.
-	const [ sampleValue, setSampleValue ] = usePersistent( 'sampleValue' );
-
-	return {
-		persist,
-		isReady,
-		sampleValue,
-		setSampleValue,
-	};
+	return useMemo(
+		() => ( {
+			select,
+			dispatch,
+			useTransient,
+			usePersistent,
+		} ),
+		[ select, dispatch, useTransient, usePersistent ]
+	);
 };
 
 export const useStore = () => {
-	const { persist, isReady } = useHooks();
-	return { persist, isReady };
+	const { select, dispatch, useTransient } = useStoreData();
+	const { persist, refresh } = dispatch;
+	const [ isReady ] = useTransient( 'isReady' );
+
+	// Load persistent data from REST if not done yet.
+	if ( ! isReady ) {
+		select.persistentData();
+	}
+
+	return { persist, refresh, isReady };
 };
 
 // TODO: Replace with real hook.
 export const useSampleValue = () => {
-	const { sampleValue, setSampleValue } = useHooks();
+	const { usePersistent, select } = useStoreData();
+	const [ sampleValue, setSampleValue ] = usePersistent( 'sampleValue' );
 
 	return {
 		sampleValue,
 		setSampleValue,
+		flags: select.flags(),
 	};
 };

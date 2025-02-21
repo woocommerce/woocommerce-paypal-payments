@@ -2,11 +2,11 @@
 
 namespace WooCommerce\PayPalCommerce\Tests\E2e;
 
-use WooCommerce\PayPalCommerce\Compat\SettingsMap;
-use WooCommerce\PayPalCommerce\Compat\SettingsMapHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMap;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 class SettingsTest extends TestCase {
 	private Settings $settings;

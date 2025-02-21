@@ -13,14 +13,3 @@
 		padding-bottom: 36px;
 	}
 }
-
-.ppcp-r-settings {
-	> * {
-		margin-bottom: $card-vertical-gap;
-	}
-
-	> *:not(:last-child) {
-		padding-bottom: $card-vertical-gap;
-		border-bottom: 1px solid $color-gray-200;
-	}
-}

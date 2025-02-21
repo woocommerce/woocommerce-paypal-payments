@@ -50,10 +50,18 @@ export const selectTab = ( tabId, scrollToId ) => {
 					// Resolve after scroll animation
 					setTimeout( resolve, 300 );
 				} else {
+					console.error(
+						`Failed to scroll: Element with ID "${
+							scrollToId || 'ppcp-settings-container'
+						}" not found`
+					);
 					resolve();
 				}
 			}, 100 );
 		} else {
+			console.error(
+				`Failed to select tab: Tab with ID "${ tabId }" not found`
+			);
 			resolve();
 		}
 	} );

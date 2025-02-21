@@ -1,61 +1,56 @@
 .ppcp-r-welcome-docs {
 	margin: 0 0 48px 0;
+}
 
-	&__title {
+.ppcp-r-welcome-docs__title {
+	text-align: center;
+	@include font(20, 28, 700);
+	margin: 32px 0 32px 0;
+}
+
+.ppcp-r-welcome-docs__wrapper {
+	padding: 8px;
+	margin: 0 0 48px 0;
+	display: flex;
+	justify-content: center;
+
+	@media screen and (max-width: 480px) {
+		display: block;
+	}
+}
+
+.ppcp-r-welcome-docs__col {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	flex: 1;
+
+	> p {
+		margin: 0;
+		@include font(13, 16, 400);
+		color: $color-gray-700;
+	}
+
+	&:not(:last-child) {
+		padding-right: 48px;
+		border-right: 1px solid $color-gray-200;
+		margin-right: 48px;
+	}
+
+	@media screen and (max-width: 480px) {
+		width: 100%;
 		text-align: center;
-		@include font(20, 28, 700);
-		margin: 32px 0 32px 0;
-	}
-
-	&__wrapper {
-		padding: 8px;
-		margin: 0 0 48px 0;
-
-		&--one-col .ppcp-r-badge-box {
-			margin: 0 0 24px 0;
-		}
-
-		&:not(&--one-col) {
-			display: flex;
-			justify-content: center;
-
-			@media screen and (max-width: 480px) {
-				display: block;
-			}
-		}
-	}
-
-	&__col {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		flex: 1;
-
-		> p {
-			margin: 0;
-			@include font(13, 16, 400);
-			color: $color-gray-700;
-		}
+		border-right: 0 !important;
+		padding-right: 0 !important;
 
 		&:not(:last-child) {
-			padding-right: 48px;
-			border-right: 1px solid $color-gray-200;
-			margin-right: 48px;
-		}
-
-		@media screen and (max-width: 480px) {
-			width: 100%;
-			text-align: center;
-			border-right: 0 !important;
-			padding-right: 0 !important;
-
-			&:not(:last-child) {
-				padding-bottom: 8px;
-			}
+			padding-bottom: 8px;
 		}
 	}
+}
 
-	.ppcp-r-page-welcome-mode-separator {
-		margin: 8px 0 24px 0 !important;
+.ppcp-r-select-box.ppcp--no-title {
+	.ppcp-r-welcome-docs__col {
+		margin-top: -4px;
 	}
 }

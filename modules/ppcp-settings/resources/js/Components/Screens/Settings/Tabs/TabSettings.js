@@ -8,7 +8,7 @@ const TabSettings = () => {
 	const { isReady } = SettingsHooks.useStore();
 
 	if ( ! isReady ) {
-		return <SpinnerOverlay />;
+		return <SpinnerOverlay asModal={ true } />;
 	}
 
 	return (

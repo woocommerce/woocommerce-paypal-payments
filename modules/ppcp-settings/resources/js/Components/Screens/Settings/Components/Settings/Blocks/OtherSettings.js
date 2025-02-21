@@ -25,7 +25,7 @@ const OtherSettings = () => {
 					'woocommerce-paypal-payments'
 				) }
 				description={ __(
-					"If left blank, PayPal and other buttons will present in the user's detected language. Enter a language here to force all buttons to display in that language.",
+					'By default, all possible credit cards will be accepted. Card types added here will be rejected at checkout.',
 					'woocommerce-paypal-payments'
 				) }
 			>
@@ -34,6 +34,10 @@ const OtherSettings = () => {
 					value={ disabledCards }
 					onChange={ setDisabledCards }
 					isMulti={ true }
+					placeholder={ __(
+						'Show all cards',
+						'woocommerce-paypal-payments'
+					) }
 				/>
 			</SettingsBlock>
 		</Accordion>

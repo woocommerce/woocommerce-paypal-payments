@@ -141,6 +141,7 @@ class TrustlyGateway extends WC_Payment_Gateway {
 				'trustly' => array(
 					'country_code' => $wc_order->get_billing_country(),
 					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+					'email'        => $wc_order->get_billing_email(),
 				),
 			),
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',

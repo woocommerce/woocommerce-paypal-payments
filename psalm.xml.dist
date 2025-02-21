@@ -28,7 +28,7 @@
 		<directory name="modules" />
 		<file name="bootstrap.php" />
 		<file name="woocommerce-paypal-payments.php" />
-		<ignoreFiles>
+		<ignoreFiles allowMissingFiles="true">
 			<directory name="node_modules"/>
 			<directory name="modules/*/node_modules"/>
 		</ignoreFiles>

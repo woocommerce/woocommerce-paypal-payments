@@ -37,7 +37,7 @@ class OrderProcessorTest extends TestCase
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->environment = new Environment(new ReadOnlyContainer([], [], [], []));
+		$this->environment = new Environment( false );
 	}
 
     public function testAuthorize() {

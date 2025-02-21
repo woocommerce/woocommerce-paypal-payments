@@ -4,7 +4,6 @@ import {
 	Content,
 	ContentWrapper,
 } from '../../../../ReusableComponents/Elements';
-import ConnectionDetails from './Blocks/ConnectionDetails';
 import Troubleshooting from './Blocks/Troubleshooting';
 import PaypalSettings from './Blocks/PaypalSettings';
 import OtherSettings from './Blocks/OtherSettings';
@@ -29,12 +28,12 @@ const ExpertSettings = () => {
 			contentContainer={ false }
 		>
 			<ContentWrapper>
-				<Content>
+				{ /*<Content>
 					<ConnectionDetails
 						updateFormValue={ updateFormValue }
 						settings={ settings }
 					/>
-				</Content>
+				</Content>*/ }
 
 				<Content>
 					<Troubleshooting

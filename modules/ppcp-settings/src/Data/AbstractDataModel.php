@@ -70,6 +70,13 @@ abstract class AbstractDataModel {
 	}
 
 	/**
+	 * Deletes the settings entry from the WordPress database.
+	 */
+	public function purge() : void {
+		delete_option( static::OPTION_KEY );
+	}
+
+	/**
 	 * Gets all model data as an array.
 	 *
 	 * @return array

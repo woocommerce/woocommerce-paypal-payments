@@ -139,7 +139,15 @@ class ConnectionUrlGenerator {
 			if ( $onboarding_url->load() ) {
 				$this->logger->debug( 'Loaded onboarding URL from cache: ' . $cache_key );
 
-				return $onboarding_url->get();
+				/**
+				 * Filters the cached onboarding URL. Used for cache control
+				 * when testing or development.
+				 */
+				return apply_filters(
+					'woocommerce_paypal_payments_cached_onboarding_url',
+					$onboarding_url->get(),
+					$onboarding_url
+				);
 			}
 		} catch ( Exception $e ) {
 			// No problem, return an empty string to generate a new URL.

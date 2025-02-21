@@ -4,25 +4,14 @@ import { useState, useEffect, useCallback, useRef } from '@wordpress/element';
 import { store as noticesStore } from '@wordpress/notices';
 
 import { CommonHooks, OnboardingHooks } from '../data';
+import { useStoreManager } from './useStoreManager';
 
 const PAYPAL_PARTNER_SDK_URL =
 	'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js';
 
 const MESSAGES = {
 	CONNECTED: __( 'Connected to PayPal', 'woocommerce-paypal-payments' ),
-	POPUP_BLOCKED: __(
-		'Popup blocked. Please allow popups for this site to connect to PayPal.',
-		'woocommerce-paypal-payments'
-	),
-	SANDBOX_ERROR: __(
-		'Could not generate a Sandbox login link.',
-		'woocommerce-paypal-payments'
-	),
-	PRODUCTION_ERROR: __(
-		'Could not generate a login link.',
-		'woocommerce-paypal-payments'
-	),
-	MANUAL_ERROR: __(
+	API_ERROR: __(
 		'Could not connect to PayPal. Please make sure your Client ID and Secret Key are correct.',
 		'woocommerce-paypal-payments'
 	),
@@ -33,17 +22,16 @@ const MESSAGES = {
 };
 
 const ACTIVITIES = {
-	CONNECT_SANDBOX: 'ISU_LOGIN_SANDBOX',
-	CONNECT_PRODUCTION: 'ISU_LOGIN_PRODUCTION',
-	CONNECT_ISU: 'ISU_LOGIN',
-	CONNECT_MANUAL: 'MANUAL_LOGIN',
+	OAUTH_VERIFY: 'oauth/login',
+	API_LOGIN: 'auth/api-login',
+	API_VERIFY: 'auth/verify-login',
 };
 
 export const useHandleOnboardingButton = ( isSandbox ) => {
 	const { sandboxOnboardingUrl } = CommonHooks.useSandbox();
 	const { productionOnboardingUrl } = CommonHooks.useProduction();
 	const products = OnboardingHooks.useDetermineProducts();
-	const { withActivity } = CommonHooks.useBusyState();
+	const { startActivity } = CommonHooks.useBusyState();
 	const { authenticateWithOAuth } = CommonHooks.useAuthentication();
 	const [ onboardingUrl, setOnboardingUrl ] = useState( '' );
 	const [ scriptLoaded, setScriptLoaded ] = useState( false );
@@ -123,16 +111,15 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 				 * frame before the REST endpoint returns a value. Using "withActivity" is more of a
 				 * visual cue to the user that something is still processing in the background.
 				 */
-				await withActivity(
-					ACTIVITIES.CONNECT_ISU,
-					'Validating the connection details',
-					async () => {
-						await authenticateWithOAuth(
-							sharedId,
-							authCode,
-							'sandbox' === environment
-						);
-					}
+				startActivity(
+					ACTIVITIES.OAUTH_VERIFY,
+					'Validating the connection details'
+				);
+
+				await authenticateWithOAuth(
+					sharedId,
+					authCode,
+					'sandbox' === environment
 				);
 			};
 
@@ -148,7 +135,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 			// Ensure the onComplete handler is not removed by a PayPal init script.
 			timerRef.current = setInterval( addHandler, 250 );
 		},
-		[ authenticateWithOAuth, withActivity ]
+		[ authenticateWithOAuth, startActivity ]
 	);
 
 	const removeCompleteHandler = useCallback( () => {
@@ -168,11 +155,14 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 	};
 };
 
+// Base connection is only used for API login (manual connection).
 const useConnectionBase = () => {
 	const { setCompleted } = OnboardingHooks.useSteps();
 	const { createSuccessNotice, createErrorNotice } =
 		useDispatch( noticesStore );
 	const { verifyLoginStatus } = CommonHooks.useMerchantInfo();
+	const { withActivity } = CommonHooks.useBusyState();
+	const { refreshAll } = useStoreManager();
 
 	return {
 		handleFailed: ( res, genericMessage ) => {
@@ -180,18 +170,27 @@ const useConnectionBase = () => {
 			createErrorNotice( res?.message ?? genericMessage );
 		},
 		handleCompleted: async () => {
-			try {
-				const loginSuccessful = await verifyLoginStatus();
+			await withActivity(
+				ACTIVITIES.API_VERIFY,
+				'Verifying Authentication',
+				async () => {
+					try {
+						const loginSuccessful = await verifyLoginStatus();
 
-				if ( loginSuccessful ) {
-					createSuccessNotice( MESSAGES.CONNECTED );
-					await setCompleted( true );
-				} else {
-					createErrorNotice( MESSAGES.LOGIN_FAILED );
+						if ( loginSuccessful ) {
+							createSuccessNotice( MESSAGES.CONNECTED );
+							await setCompleted( true );
+							refreshAll();
+						} else {
+							createErrorNotice( MESSAGES.LOGIN_FAILED );
+						}
+					} catch ( error ) {
+						createErrorNotice(
+							error.message ?? MESSAGES.LOGIN_FAILED
+						);
+					}
 				}
-			} catch ( error ) {
-				createErrorNotice( error.message ?? MESSAGES.LOGIN_FAILED );
-			}
+			);
 		},
 		createErrorNotice,
 	};
@@ -218,7 +217,7 @@ export const useDirectAuthentication = () => {
 
 	const handleDirectAuthentication = async ( connectionDetails ) => {
 		return withActivity(
-			ACTIVITIES.CONNECT_MANUAL,
+			ACTIVITIES.API_LOGIN,
 			'Connecting manually via Client ID and Secret',
 			async () => {
 				let data;
@@ -250,7 +249,7 @@ export const useDirectAuthentication = () => {
 				if ( res.success ) {
 					await handleCompleted();
 				} else {
-					handleFailed( res, MESSAGES.MANUAL_ERROR );
+					handleFailed( res, MESSAGES.API_ERROR );
 				}
 
 				return res.success;

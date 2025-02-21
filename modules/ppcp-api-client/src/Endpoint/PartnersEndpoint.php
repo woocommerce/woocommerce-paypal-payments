@@ -160,7 +160,7 @@ class PartnersEndpoint {
 
 		$this->failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
 
-		$status = $this->seller_status_factory->from_paypal_reponse( $json );
+		$status = $this->seller_status_factory->from_paypal_response( $json );
 		return $status;
 	}
 }
