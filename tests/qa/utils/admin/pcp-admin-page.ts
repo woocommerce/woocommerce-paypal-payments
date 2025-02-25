@@ -10,6 +10,8 @@ export class PcpAdminPage extends WpPage {
 	pageTitle = ( title: string ) => this.backButton().getByText( title );
 	saveButton = () =>
 		this.navigationPanel().getByRole( 'button', { name: 'Save' } );
+	modalContainer = () =>
+		this.page.locator( '.components-modal__content[role="document"]' );
 
 	// Actions
 

@@ -11,7 +11,11 @@ import {
 /**
  * Internal dependencies
  */
-import { PcpOnboarding } from './admin';
+import {
+	PcpOnboarding,
+	PcpOverview,
+	PcpSettings
+} from './admin';
 import {
 	PayForOrder,
 	Checkout,
@@ -35,6 +39,8 @@ export class Utils {
 	wooCommerceApi: WooCommerceApi;
 	visitorWooCommerceApi: WooCommerceApi;
 	pcpOnboarding: PcpOnboarding;
+	pcpOverview: PcpOverview;
+	pcpSettings: PcpSettings;
 	payForOrder: PayForOrder;
 	checkout: Checkout;
 	classicCheckout: ClassicCheckout;
@@ -48,6 +54,8 @@ export class Utils {
 		requestUtils,
 		wooCommerceApi,
 		pcpOnboarding,
+		pcpOverview,
+		pcpSettings,
 		payForOrder,
 		checkout,
 		classicCheckout,
@@ -61,6 +69,8 @@ export class Utils {
 		this.requestUtils = requestUtils;
 		this.wooCommerceApi = wooCommerceApi;
 		this.pcpOnboarding = pcpOnboarding;
+		this.pcpOverview = pcpOverview;
+		this.pcpSettings = pcpSettings;
 		this.payForOrder = payForOrder;
 		this.checkout = checkout;
 		this.classicCheckout = classicCheckout;
@@ -151,9 +161,38 @@ export class Utils {
 		);
 	};
 
-	connectMerchant = async ( merchant: Pcp.Merchant ) => {};
+	/**
+	 * Connects provided merchant
+	 * @param merchant 
+	 */
+	connectMerchant = async ( merchant: Pcp.Merchant ) => {
+		await this.pcpOnboarding.visit();
+		await this.pcpOnboarding.gotoInitialOnboardingPage();
+		await this.pcpOnboarding.openAdvancedOptions();
+		await this.pcpOnboarding.enableSandboxMode();
+		await this.pcpOnboarding.enableManuallyConnect();
+		await this.pcpOnboarding.sandboxClientIdInput().fill( merchant.client_id );
+		await this.pcpOnboarding.sandboxSecretKeyInput().fill( merchant.client_secret );
+		// TODO: investigate
+		await this.pcpOnboarding.page.waitForTimeout( 500 ); // unfortunately required to make use of the secret key
+		await this.pcpOnboarding.connectAccountButton().click();
+		await this.pcpOverview.assertUrl();
+	};
 
-	disconnectMerchant = async () => {};
+	disconnectMerchant = async (
+		options: { resetDb: boolean; } = { resetDb: false }
+	) => {
+		const { resetDb } = options;
+		await this.pcpSettings.visit();
+		await this.pcpSettings.disconnectButton().click();
+		if( resetDb ) {
+			await this.pcpSettings.startOverToggle().check();
+		}
+		await this.pcpSettings.disconnectButton().click();
+		await this.pcpOnboarding.page.waitForLoadState( 'networkidle' );
+		// TODO: report bug for following assertion:
+		// await this.pcpOnboarding.assertUrl(); // Bug: the URL isn't changed
+	};
 
 	/**
 	 * Enable PayPal funding source
