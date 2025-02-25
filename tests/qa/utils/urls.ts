@@ -11,15 +11,15 @@ export default {
 			onboarding:
 				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway',
 			overview:
-				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection&panel=overview',
+				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=overview',
 			paymentMethods:
-				'./wp-admin/page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection&panel=payment-methods',
+				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=payment-methods',
 			settings:
-				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection&panel=settings',
+				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=settings',
 			styling:
-				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection&panel=styling',
+				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=styling',
 			payLaterMessaging:
-				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection&panel=pay-later-messaging',
+				'./wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=pay-later-messaging',
 		},
 	},
 };
