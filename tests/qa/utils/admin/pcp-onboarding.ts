@@ -50,6 +50,13 @@ export class PcpOnboarding extends PcpAdminPage {
 	enableManuallyConnectToggle = () =>
 		this.page.locator( '.components-form-toggle' ).nth( 1 );
 
+	sandboxClientIdInput = () =>
+		this.page.getByLabel( 'Sandbox Client ID' );
+	sandboxSecretKeyInput = () =>
+		this.page.getByLabel( 'Sandbox Secret Key' );
+	connectAccountButton = () =>
+		this.page.getByRole( 'button', { name: 'Connect Account' } ).last();
+
 	enableSandboxModeLabel = () => this.page.getByText( 'Enable Sandbox Mode' );
 	enableSandboxModeToggle = () =>
 		this.page.locator( '.components-form-toggle' ).first();
