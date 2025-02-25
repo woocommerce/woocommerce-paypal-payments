@@ -276,14 +276,16 @@ export class Utils {
 		}
 	};
 
-	configurePcp = async ( data: Pcp.Admin.Config ) => {
+	installAndActivatePcp = async () => {
 		if (
 			! ( await this.requestUtils.isPluginInstalled( pcpPlugin.slug ) )
 		) {
 			await this.plugins.installPluginFromFile( pcpPlugin.zipFilePath );
 		}
 		await this.requestUtils.activatePlugin( pcpPlugin.slug );
+	}
 
+	configurePcp = async ( data: Pcp.Admin.Config ) => {
 		if ( data.merchant ) {
 			if ( data.disconnectMerchant ) {
 				await this.disconnectMerchant();

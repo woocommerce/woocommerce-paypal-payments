@@ -96,7 +96,6 @@ export default defineConfig( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
-			testIgnore: '**/.parallel-specs/**',
 		},
 	],
 } );
