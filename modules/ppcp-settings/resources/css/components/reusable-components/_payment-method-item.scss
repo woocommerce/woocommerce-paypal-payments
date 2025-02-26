@@ -63,6 +63,10 @@
 			&:hover {
 				transform: rotate(45deg);
 			}
+
+			&.components-button {
+				height: auto;
+			}
 		}
 
 		.ppcp--method-icon {
@@ -79,6 +83,89 @@
 			justify-content: space-between;
 			align-items: center;
 			margin-top: auto;
+			min-height: 24px;
 		}
+	}
+}
+
+// Disabled state styling.
+.ppcp--method-item--disabled {
+	position: relative;
+
+	// Apply grayscale and disable interactions.
+	.ppcp--method-inner {
+		opacity: 0.7;
+		filter: grayscale(1);
+		pointer-events: none;
+		transition: filter 0.2s ease;
+	}
+
+	// Override text colors.
+	.ppcp--method-title {
+		color: $color-gray-700 !important;
+	}
+
+	.ppcp--method-description p {
+		color: $color-gray-500 !important;
+	}
+
+	.ppcp--method-disabled-message {
+		opacity: 0;
+		transform: translateY(-5px);
+		transition: opacity 0.2s ease, transform 0.2s ease;
+	}
+
+	// Style all buttons and toggle controls.
+	.components-button,
+	.components-form-toggle {
+		opacity: 0.5;
+	}
+
+	// Hover state - only blur the inner content.
+	&:hover {
+		.ppcp--method-inner {
+			filter: blur(2px) grayscale(1);
+		}
+
+		.ppcp--method-disabled-message {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+}
+
+// Disabled overlay.
+.ppcp--method-disabled-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba($color-white, 0.4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 50;
+	border-radius: var(--container-border-radius);
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.ppcp--method-item--disabled:hover .ppcp--method-disabled-overlay {
+	opacity: 1;
+}
+
+.ppcp--method-disabled-message {
+	padding: 14px 18px;
+	text-align: center;
+	@include font(13, 20, 500);
+	color: $color-text-tertiary;
+	position: relative;
+	z-index: 51;
+	border: none;
+
+	a {
+		text-decoration: none;
 	}
 }

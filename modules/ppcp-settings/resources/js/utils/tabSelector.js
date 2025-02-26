@@ -7,6 +7,8 @@ export const TAB_IDS = {
 	PAY_LATER_MESSAGING: 'tab-panel-0-pay-later-messaging',
 };
 
+import { scrollAndHighlight } from './scrollAndHighlight';
+
 /**
  * Select a tab by simulating a click event and scroll to specified element,
  * accounting for navigation container height
@@ -23,40 +25,8 @@ export const selectTab = ( tabId, scrollToId ) => {
 		if ( tab ) {
 			tab.click();
 			setTimeout( () => {
-				const scrollTarget = scrollToId
-					? document.getElementById( scrollToId )
-					: document.getElementById( 'ppcp-settings-container' );
-
-				if ( scrollTarget ) {
-					const navContainer = document.querySelector(
-						'.ppcp-r-navigation-container'
-					);
-					const navHeight = navContainer
-						? navContainer.offsetHeight
-						: 0;
-
-					// Get the current scroll position and element's position relative to viewport
-					const rect = scrollTarget.getBoundingClientRect();
-
-					// Calculate the final position with offset
-					const scrollPosition =
-						rect.top + window.scrollY - ( navHeight + 55 );
-
-					window.scrollTo( {
-						top: scrollPosition,
-						behavior: 'smooth',
-					} );
-
-					// Resolve after scroll animation
-					setTimeout( resolve, 300 );
-				} else {
-					console.error(
-						`Failed to scroll: Element with ID "${
-							scrollToId || 'ppcp-settings-container'
-						}" not found`
-					);
-					resolve();
-				}
+				const targetId = scrollToId || 'ppcp-settings-container';
+				scrollAndHighlight( targetId, false ).then( resolve );
 			}, 100 );
 		} else {
 			console.error(

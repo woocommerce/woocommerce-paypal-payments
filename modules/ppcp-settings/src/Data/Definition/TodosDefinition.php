@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class TodosDefinition
@@ -36,27 +35,17 @@ class TodosDefinition {
 	protected GeneralSettings $settings;
 
 	/**
-	 * The subscription helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	protected SubscriptionHelper $subscription_helper;
-
-	/**
 	 * Constructor.
 	 *
 	 * @param TodosEligibilityService $eligibilities The todos eligibility service.
 	 * @param GeneralSettings         $settings The general settings service.
-	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		TodosEligibilityService $eligibilities,
-		GeneralSettings $settings,
-		SubscriptionHelper $subscription_helper
+		GeneralSettings $settings
 	) {
-		$this->eligibilities       = $eligibilities;
-		$this->settings            = $settings;
-		$this->subscription_helper = $subscription_helper;
+		$this->eligibilities = $eligibilities;
+		$this->settings      = $settings;
 	}
 
 	/**
@@ -79,18 +68,6 @@ class TodosDefinition {
 					'highlight' => 'ppcp-axo-gateway',
 				),
 				'priority'    => 1,
-			),
-			'enable_credit_debit_cards'            => array(
-				'title'       => __( 'Enable Credit and Debit Cards on your checkout', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Credit and Debit Cards is now available for Blocks checkout pages', 'woocommerce-paypal-payments' ),
-				'isEligible'  => $eligibility_checks['enable_credit_debit_cards'],
-				'action'      => array(
-					'type'      => 'tab',
-					'tab'       => 'payment_methods',
-					'section'   => 'ppcp-card-button-gateway',
-					'highlight' => 'ppcp-card-button-gateway',
-				),
-				'priority'    => 2,
 			),
 			'enable_pay_later_messaging'           => array(
 				'title'       => __( 'Enable Pay Later messaging', 'woocommerce-paypal-payments' ),
@@ -138,9 +115,7 @@ class TodosDefinition {
 				'isEligible'  => $eligibility_checks['configure_paypal_subscription'],
 				'action'      => array(
 					'type'            => 'external',
-					'url'             => $this->subscription_helper->has_subscription_products()
-						? admin_url( 'edit.php?post_type=product&product_type=subscription' )  // If subscription products exist, go to the subscriptions products archive page.
-						: admin_url( 'post-new.php?post_type=product' ), // If there are no subscriptions products, go to create one.
+					'url'             => 'https://woocommerce.com/document/woocommerce-paypal-payments/#paypal-subscriptions',
 					'completeOnClick' => true,
 				),
 				'priority'    => 5,

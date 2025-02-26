@@ -4,7 +4,7 @@ import { Button } from '@wordpress/components';
 import PaymentMethodIcons from '../../../ReusableComponents/PaymentMethodIcons';
 import { Separator } from '../../../ReusableComponents/Elements';
 import Accordion from '../../../ReusableComponents/AccordionSection';
-import { CommonHooks } from '../../../../data';
+import { CommonHooks, OnboardingHooks } from '../../../../data';
 import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
 import OnboardingHeader from '../Components/OnboardingHeader';
 import WelcomeDocs from '../Components/WelcomeDocs';
@@ -12,6 +12,8 @@ import AdvancedOptionsForm from '../Components/AdvancedOptionsForm';
 
 const StepWelcome = ( { setStep, currentStep } ) => {
 	const { storeCountry } = CommonHooks.useWooSettings();
+	const { canUseCardPayments } = OnboardingHooks.useFlags();
+	const nonAcdcIcons = [ 'paypal', 'visa', 'mastercard', 'amex', 'discover' ];
 
 	return (
 		<div className="ppcp-r-page-welcome">
@@ -27,7 +29,9 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 			/>
 			<div className="ppcp-r-inner-container">
 				<WelcomeFeatures />
-				<PaymentMethodIcons icons="all" />
+				<PaymentMethodIcons
+					icons={ canUseCardPayments ? 'all' : nonAcdcIcons }
+				/>
 				<p className="ppcp-r-button__description">
 					{ __(
 						`Click the button below to be guided through connecting your existing PayPal account or creating a new one.You will be able to choose the payment options that are right for your store.`,
@@ -49,7 +53,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 			</div>
 			<Separator className="ppcp-r-page-welcome-mode-separator" />
 			<WelcomeDocs
-				useAcdc={ true }
+				useAcdc={ canUseCardPayments }
 				isFastlane={ true }
 				isPayLater={ true }
 				storeCountry={ storeCountry }

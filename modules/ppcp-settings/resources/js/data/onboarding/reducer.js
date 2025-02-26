@@ -23,6 +23,7 @@ const defaultTransient = Object.freeze( {
 		canUseVaulting: false,
 		canUseCardPayments: false,
 		canUseSubscriptions: false,
+		shouldSkipPaymentMethods: false,
 	} ),
 } );
 

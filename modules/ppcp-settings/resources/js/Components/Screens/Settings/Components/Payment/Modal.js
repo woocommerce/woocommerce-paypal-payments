@@ -100,14 +100,16 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 			case 'radio':
 				return (
 					<>
-						<strong className="ppcp-r-modal__content-title">
-							{ field.label }
-						</strong>
-						{ field.description && (
-							<p className="ppcp-r-modal__description">
-								{ field.description }
-							</p>
-						) }
+						<div className="ppcp-r-modal__field-row">
+							<strong className="ppcp-r-modal__content-title">
+								{ field.label }
+							</strong>
+							{ field.description && (
+								<span className="ppcp-r-modal__field-description">
+									{ field.description }
+								</span>
+							) }
+						</div>
 						<div className="ppcp-r-modal__field-row">
 							<RadioControl
 								selected={ settings[ key ] }

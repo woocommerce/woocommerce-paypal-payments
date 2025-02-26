@@ -88,6 +88,56 @@ const reducer = createReducer( defaultTransient, defaultPersistent, {
 
 	[ ACTION_TYPES.HYDRATE ]: ( state, payload ) =>
 		changePersistent( state, payload.data ),
+
+	[ ACTION_TYPES.SET_DISABLED_BY_DEPENDENCY ]: ( state, payload ) => {
+		const { methodId } = payload;
+		const method = state.data[ methodId ];
+
+		if ( ! method ) {
+			return state;
+		}
+
+		// Create a new state with the method disabled due to dependency
+		const updatedData = {
+			...state.data,
+			[ methodId ]: {
+				...method,
+				enabled: false,
+				_disabledByDependency: true,
+				_originalState: method.enabled,
+			},
+		};
+
+		return {
+			...state,
+			data: updatedData,
+		};
+	},
+
+	[ ACTION_TYPES.RESTORE_DEPENDENCY_STATE ]: ( state, payload ) => {
+		const { methodId } = payload;
+		const method = state.data[ methodId ];
+
+		if ( ! method || ! method._disabledByDependency ) {
+			return state;
+		}
+
+		// Restore the method to its original state
+		const updatedData = {
+			...state.data,
+			[ methodId ]: {
+				...method,
+				enabled: method._originalState === true,
+				_disabledByDependency: false,
+				_originalState: undefined,
+			},
+		};
+
+		return {
+			...state,
+			data: updatedData,
+		};
+	},
 } );
 
 export default reducer;

@@ -159,7 +159,7 @@ class Settings implements ContainerInterface {
 		if ( $this->settings ) {
 			return false;
 		}
-		$this->settings = get_option( self::KEY, array() );
+		$this->settings = (array) get_option( self::KEY, array() );
 
 		$defaults = array(
 			'title'                                    => __( 'PayPal', 'woocommerce-paypal-payments' ),

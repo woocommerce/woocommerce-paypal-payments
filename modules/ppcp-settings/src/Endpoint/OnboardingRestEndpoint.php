@@ -68,17 +68,20 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 * @var array
 	 */
 	private array $flag_map = array(
-		'can_use_casual_selling' => array(
+		'can_use_casual_selling'      => array(
 			'js_name' => 'canUseCasualSelling',
 		),
-		'can_use_vaulting'       => array(
+		'can_use_vaulting'            => array(
 			'js_name' => 'canUseVaulting',
 		),
-		'can_use_card_payments'  => array(
+		'can_use_card_payments'       => array(
 			'js_name' => 'canUseCardPayments',
 		),
-		'can_use_subscriptions'  => array(
+		'can_use_subscriptions'       => array(
 			'js_name' => 'canUseSubscriptions',
+		),
+		'should_skip_payment_methods' => array(
+			'js_name' => 'shouldSkipPaymentMethods',
 		),
 	);
 

@@ -11,6 +11,8 @@ const PaymentMethodItemBlock = ( {
 	onTriggerModal,
 	onSelect,
 	isSelected,
+	isDisabled,
+	disabledMessage,
 } ) => {
 	const { activeHighlight, setActiveHighlight } = useActiveHighlight();
 	const isHighlighted = activeHighlight === paymentMethod.id;
@@ -31,9 +33,16 @@ const PaymentMethodItemBlock = ( {
 			id={ paymentMethod.id }
 			className={ `ppcp--method-item ${
 				isHighlighted ? 'ppcp-highlight' : ''
-			}` }
+			} ${ isDisabled ? 'ppcp--method-item--disabled' : '' }` }
 			separatorAndGap={ false }
 		>
+			{ isDisabled && (
+				<div className="ppcp--method-disabled-overlay">
+					<p className="ppcp--method-disabled-message">
+						{ disabledMessage }
+					</p>
+				</div>
+			) }
 			<div className="ppcp--method-inner">
 				<div className="ppcp--method-title-wrapper">
 					{ paymentMethod?.icon && (

@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
 import { PayLaterMessagingHooks } from '../../../data';
+import { useEffect } from '@wordpress/element';
 
 const TabPayLaterMessaging = () => {
 	const {

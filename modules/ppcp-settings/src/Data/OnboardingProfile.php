@@ -43,6 +43,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 * @param bool $can_use_vaulting       Whether vaulting is enabled in the store's country.
 	 * @param bool $can_use_card_payments  Whether credit card payments are possible.
 	 * @param bool $can_use_subscriptions  Whether WC Subscriptions plugin is active.
+	 * @param bool $should_skip_payment_methods  Whether it should skip payment methods screen.
 	 *
 	 * @throws RuntimeException If the OPTION_KEY is not defined in the child class.
 	 */
@@ -50,14 +51,16 @@ class OnboardingProfile extends AbstractDataModel {
 		bool $can_use_casual_selling = false,
 		bool $can_use_vaulting = false,
 		bool $can_use_card_payments = false,
-		bool $can_use_subscriptions = false
+		bool $can_use_subscriptions = false,
+		bool $should_skip_payment_methods = false
 	) {
 		parent::__construct();
 
-		$this->flags['can_use_casual_selling'] = $can_use_casual_selling;
-		$this->flags['can_use_vaulting']       = $can_use_vaulting;
-		$this->flags['can_use_card_payments']  = $can_use_card_payments;
-		$this->flags['can_use_subscriptions']  = $can_use_subscriptions;
+		$this->flags['can_use_casual_selling']      = $can_use_casual_selling;
+		$this->flags['can_use_vaulting']            = $can_use_vaulting;
+		$this->flags['can_use_card_payments']       = $can_use_card_payments;
+		$this->flags['can_use_subscriptions']       = $can_use_subscriptions;
+		$this->flags['should_skip_payment_methods'] = $should_skip_payment_methods;
 	}
 
 	/**

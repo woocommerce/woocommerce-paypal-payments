@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 
 import { OptionSelector } from '../../../ReusableComponents/Fields';
@@ -14,23 +14,24 @@ const StepProducts = () => {
 
 	useEffect( () => {
 		const initChoices = () => {
-			if ( optionState === canUseSubscriptions ) {
-				return;
-			}
-
-			let choices = productChoicesFull;
-
-			// Remove subscription details, if not available.
-			if ( ! canUseSubscriptions ) {
-				choices = choices.filter(
-					( { value } ) => value !== PRODUCT_TYPES.SUBSCRIPTIONS
-				);
-				setProducts(
-					products.filter(
-						( value ) => value !== PRODUCT_TYPES.SUBSCRIPTIONS
-					)
-				);
-			}
+			const choices = productChoicesFull.map( ( choice ) => {
+				if (
+					choice.value === PRODUCT_TYPES.SUBSCRIPTIONS &&
+					! canUseSubscriptions
+				) {
+					return {
+						...choice,
+						isDisabled: true,
+						contents: (
+							<DetailsSubscriptions
+								showLink={ true }
+								showNotice={ isCasualSeller }
+							/>
+						),
+					};
+				}
+				return choice;
+			} );
 
 			setProductChoices( choices );
 			setOptionState( canUseSubscriptions );
@@ -130,15 +131,18 @@ const DetailsPhysical = () => (
 const DetailsSubscriptions = ( { showLink, showNotice } ) => (
 	<>
 		{ showLink && (
-			<a
-				target="__blank"
-				href="https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq"
-			>
-				{ __(
-					'WooCommerce Subscriptions',
-					'woocommerce-paypal-payments'
-				) }
-			</a>
+			<p
+				dangerouslySetInnerHTML={ {
+					__html: sprintf(
+						/* translators: %s is the URL to the WooCommerce Subscriptions product page */
+						__(
+							'* To use subscriptions, you must have <a target="_blank" href="%s">WooCommerce Subscriptions</a> enabled.',
+							'woocommerce-paypal-payments'
+						),
+						'https://woocommerce.com/products/woocommerce-subscriptions/'
+					),
+				} }
+			/>
 		) }
 		{ showNotice && (
 			<p>

@@ -73,7 +73,6 @@
 		gap: 8px;
 
 		&--save {
-			margin-top: -4px;
 			align-items: flex-end;
 		}
 
@@ -87,7 +86,7 @@
 	&__field-rows {
 		display: flex;
 		flex-direction: column;
-		gap: 24px;
+		gap: 18px;
 
 		&--acdc {
 			gap: 18px;
@@ -98,17 +97,9 @@
 		}
 
 		.components-radio-control {
-			.components-flex {
-				gap: 18px;
-			}
-
 			label {
 				@include font(14, 20, 400);
 				color: $color-black;
-			}
-
-			&__option {
-				gap: 18px;
 			}
 
 			&__input {

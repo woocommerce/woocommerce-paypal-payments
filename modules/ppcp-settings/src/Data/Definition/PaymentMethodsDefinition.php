@@ -1,6 +1,6 @@
 <?php
 /**
- * PayPal Commerce Todos Definitions
+ * Payment Methods Definitions
  *
  * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
  */
@@ -41,6 +41,13 @@ class PaymentMethodsDefinition {
 	private PaymentSettings $settings;
 
 	/**
+	 * Payment method dependencies definition.
+	 *
+	 * @var PaymentMethodsDependenciesDefinition
+	 */
+	private PaymentMethodsDependenciesDefinition $dependencies_definition;
+
+	/**
 	 * List of WooCommerce payment gateways.
 	 *
 	 * @var array|null
@@ -50,10 +57,15 @@ class PaymentMethodsDefinition {
 	/**
 	 * Constructor.
 	 *
-	 * @param PaymentSettings $settings Payment methods data model.
+	 * @param PaymentSettings                      $settings Payment methods data model.
+	 * @param PaymentMethodsDependenciesDefinition $dependencies_definition Payment dependencies definition.
 	 */
-	public function __construct( PaymentSettings $settings ) {
-		$this->settings = $settings;
+	public function __construct(
+		PaymentSettings $settings,
+		PaymentMethodsDependenciesDefinition $dependencies_definition
+	) {
+		$this->settings                = $settings;
+		$this->dependencies_definition = $dependencies_definition;
 	}
 
 	/**
@@ -73,14 +85,29 @@ class PaymentMethodsDefinition {
 
 		$result = array();
 		foreach ( $all_methods as $method ) {
-			$result[ $method['id'] ] = $this->build_method_definition(
-				$method['id'],
+			$method_id = $method['id'];
+
+			// Add dependency info if applicable.
+			$depends_on = $this->dependencies_definition->get_parent_methods( $method_id );
+			if ( ! empty( $depends_on ) ) {
+				$method['depends_on'] = $depends_on;
+			}
+
+			$result[ $method_id ] = $this->build_method_definition(
+				$method_id,
 				$method['title'],
 				$method['description'],
 				$method['icon'],
-				$method['fields'] ?? array()
+				$method['fields'] ?? array(),
+				$depends_on
 			);
 		}
+
+		// Add dependency maps to metadata.
+		$result['__meta'] = array(
+			'dependencies' => $this->dependencies_definition->get_dependencies(),
+			'dependents'   => $this->dependencies_definition->get_dependents_map(),
+		);
 
 		return $result;
 	}
@@ -95,14 +122,15 @@ class PaymentMethodsDefinition {
 	 * @param string      $icon        Admin-side icon of the payment method.
 	 * @param array|false $fields      Optional. Additional fields to display in the edit modal.
 	 *                                 Setting this to false omits all fields.
+	 * @param array       $depends_on  Optional. IDs of payment methods that this depends on.
 	 * @return array Payment method definition.
 	 */
 	private function build_method_definition(
 		string $gateway_id,
 		string $title,
 		string $description,
-		string $icon,
-		$fields = array()
+		string $icon, $fields = array(),
+		array $depends_on = array()
 	) : array {
 		$gateway = $this->wc_gateways[ $gateway_id ] ?? null;
 
@@ -118,6 +146,11 @@ class PaymentMethodsDefinition {
 			'itemTitle'       => $title,
 			'itemDescription' => $description,
 		);
+
+		// Add dependency information if provided - ensure it's included directly in the config.
+		if ( ! empty( $depends_on ) ) {
+			$config['depends_on'] = $depends_on;
+		}
 
 		if ( is_array( $fields ) ) {
 			$config['fields'] = array_merge(

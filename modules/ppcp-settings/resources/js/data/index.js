@@ -6,6 +6,7 @@ import * as Settings from './settings';
 import * as Styling from './styling';
 import * as Todos from './todos';
 import * as PayLaterMessaging from './pay-later-messaging';
+import * as Features from './features';
 
 const stores = [
 	Onboarding,
@@ -15,6 +16,7 @@ const stores = [
 	Styling,
 	Todos,
 	PayLaterMessaging,
+	Features,
 ];
 
 stores.forEach( ( store ) => {
@@ -40,6 +42,7 @@ export const SettingsHooks = Settings.hooks;
 export const StylingHooks = Styling.hooks;
 export const TodosHooks = Todos.hooks;
 export const PayLaterMessagingHooks = PayLaterMessaging.hooks;
+export const FeaturesHooks = Features.hooks;
 
 export const OnboardingStoreName = Onboarding.STORE_NAME;
 export const CommonStoreName = Common.STORE_NAME;
@@ -48,6 +51,7 @@ export const SettingsStoreName = Settings.STORE_NAME;
 export const StylingStoreName = Styling.STORE_NAME;
 export const TodosStoreName = Todos.STORE_NAME;
 export const PayLaterMessagingStoreName = PayLaterMessaging.STORE_NAME;
+export const FeaturesStoreName = Features.STORE_NAME;
 
 export * from './configuration';
 

@@ -19,12 +19,14 @@ const PaymentMethodsBlock = ( { paymentMethods = [], onTriggerModal } ) => {
 		<SettingsBlock className="ppcp--grid ppcp-r-settings-block__payment-methods">
 			{ paymentMethods
 				// Remove empty/invalid payment method entries.
-				.filter( ( m ) => m.id )
+				.filter( ( m ) => m && m.id )
 				.map( ( paymentMethod ) => (
 					<PaymentMethodItemBlock
 						key={ paymentMethod.id }
 						paymentMethod={ paymentMethod }
 						isSelected={ paymentMethod.enabled }
+						isDisabled={ paymentMethod.isDisabled }
+						disabledMessage={ paymentMethod.disabledMessage }
 						onSelect={ ( checked ) =>
 							handleSelect( paymentMethod.id, checked )
 						}

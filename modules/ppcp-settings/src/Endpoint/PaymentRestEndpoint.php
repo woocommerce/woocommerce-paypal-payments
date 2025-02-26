@@ -150,7 +150,17 @@ class PaymentRestEndpoint extends RestEndpoint {
 		$gateway_settings = array();
 		$all_methods      = $this->gateways();
 
+		// First extract __meta if present.
+		if ( isset( $all_methods['__meta'] ) ) {
+			$gateway_settings['__meta'] = $all_methods['__meta'];
+		}
+
 		foreach ( $all_methods as $key => $method ) {
+			// Skip the __meta key as we've already handled it.
+			if ( $key === '__meta' ) {
+				continue;
+			}
+
 			$gateway_settings[ $key ] = array(
 				'id'              => $method['id'],
 				'title'           => $method['title'],
@@ -163,6 +173,11 @@ class PaymentRestEndpoint extends RestEndpoint {
 
 			if ( isset( $method['fields'] ) ) {
 				$gateway_settings[ $key ]['fields'] = $method['fields'];
+			}
+
+			// Preserve dependency information.
+			if ( isset( $method['depends_on'] ) ) {
+				$gateway_settings[ $key ]['depends_on'] = $method['depends_on'];
 			}
 		}
 

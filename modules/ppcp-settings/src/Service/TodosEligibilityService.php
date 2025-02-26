@@ -25,13 +25,6 @@ class TodosEligibilityService {
 	private bool $is_fastlane_eligible;
 
 	/**
-	 * Whether card payments are eligible.
-	 *
-	 * @var bool
-	 */
-	private bool $is_card_payment_eligible;
-
-	/**
 	 * Whether Pay Later messaging is eligible.
 	 *
 	 * @var bool
@@ -133,7 +126,6 @@ class TodosEligibilityService {
 	 * Constructor.
 	 *
 	 * @param bool $is_fastlane_eligible                Whether Fastlane is eligible.
-	 * @param bool $is_card_payment_eligible            Whether card payments are eligible.
 	 * @param bool $is_pay_later_messaging_eligible     Whether Pay Later messaging is eligible.
 	 * @param bool $is_pay_later_messaging_product_eligible Whether Pay Later messaging for product page is eligible.
 	 * @param bool $is_pay_later_messaging_cart_eligible Whether Pay Later messaging for cart is eligible.
@@ -151,7 +143,6 @@ class TodosEligibilityService {
 	 */
 	public function __construct(
 		bool $is_fastlane_eligible,
-		bool $is_card_payment_eligible,
 		bool $is_pay_later_messaging_eligible,
 		bool $is_pay_later_messaging_product_eligible,
 		bool $is_pay_later_messaging_cart_eligible,
@@ -168,7 +159,6 @@ class TodosEligibilityService {
 		bool $is_enable_google_pay_eligible
 	) {
 		$this->is_fastlane_eligible                      = $is_fastlane_eligible;
-		$this->is_card_payment_eligible                  = $is_card_payment_eligible;
 		$this->is_pay_later_messaging_eligible           = $is_pay_later_messaging_eligible;
 		$this->is_pay_later_messaging_product_eligible   = $is_pay_later_messaging_product_eligible;
 		$this->is_pay_later_messaging_cart_eligible      = $is_pay_later_messaging_cart_eligible;
@@ -193,7 +183,6 @@ class TodosEligibilityService {
 	public function get_eligibility_checks(): array {
 		return array(
 			'enable_fastlane'                      => fn() => $this->is_fastlane_eligible,
-			'enable_credit_debit_cards'            => fn() => $this->is_card_payment_eligible,
 			'enable_pay_later_messaging'           => fn() => $this->is_pay_later_messaging_eligible,
 			'add_pay_later_messaging_product_page' => fn() => $this->is_pay_later_messaging_product_eligible,
 			'add_pay_later_messaging_cart'         => fn() => $this->is_pay_later_messaging_cart_eligible,

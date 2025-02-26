@@ -58,7 +58,7 @@ abstract class AbstractDataModel {
 	 */
 	public function load() : void {
 		$saved_data    = get_option( static::OPTION_KEY, array() );
-		$filtered_data = array_intersect_key( $saved_data, $this->data );
+		$filtered_data = array_intersect_key( (array) $saved_data, $this->data );
 		$this->data    = array_merge( $this->data, $filtered_data );
 	}
 

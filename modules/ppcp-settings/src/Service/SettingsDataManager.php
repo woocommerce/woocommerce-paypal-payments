@@ -225,10 +225,11 @@ class SettingsDataManager {
 			if ( $flags->use_card_payments ) {
 				// Enable ACDC for business sellers.
 				$this->payment_methods->toggle_method_state( CreditCardGateway::ID, true );
-			}
 
-			$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
-			$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
+				// Apple Pay and Google Pay depend on the ACDC gateway.
+				$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
+				$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
+			}
 
 			// Enable all APM methods.
 			foreach ( $methods_apm as $method ) {

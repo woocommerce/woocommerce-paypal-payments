@@ -258,6 +258,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					'styling'                => $container->get( 'settings.rest.styling' ),
 					'todos'                  => $container->get( 'settings.rest.todos' ),
 					'pay_later_messaging'    => $container->get( 'settings.rest.pay_later_messaging' ),
+					'features'               => $container->get( 'settings.rest.features' ),
 				);
 
 				foreach ( $endpoints as $endpoint ) {
@@ -341,6 +342,12 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 				assert( $dcc_applies instanceof DCCApplies );
 
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				$merchant_data    = $general_settings->get_merchant_data();
+				$merchant_country = $merchant_data->merchant_country;
+
 				// Unset BCDC if merchant is eligible for ACDC and country is eligible for card fields.
 				$card_fields_eligible = $container->get( 'card-fields.eligible' );
 				if ( $dcc_product_status->is_active() && $card_fields_eligible ) {
@@ -365,6 +372,16 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				// Unset Fastlane if country/currency is not supported or merchant is not eligible for BCDC.
 				if ( ! $container->get( 'axo.eligible' ) || ! $dcc_product_status->is_active() ) {
 					unset( $payment_methods['ppcp-axo-gateway'] );
+				}
+
+				// Unset OXXO if merchant country is not Mexico.
+				if ( 'MX' !== $merchant_country ) {
+					unset( $payment_methods[ OXXO::ID ] );
+				}
+
+				// Unset Pay Unon Invoice if merchant country is not Germany.
+				if ( 'DE' !== $merchant_country ) {
+					unset( $payment_methods[ PayUponInvoiceGateway::ID ] );
 				}
 
 				// For non-ACDC regions unset ACDC, local APMs and set BCDC.
