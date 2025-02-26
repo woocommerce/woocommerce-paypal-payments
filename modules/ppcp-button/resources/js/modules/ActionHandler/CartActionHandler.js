@@ -58,31 +58,39 @@ class CartActionHandler {
 				'undefined'
 					? this.config.bn_codes[ this.config.context ]
 					: '';
+
+			let body = {
+				nonce: this.config.ajax.create_order.nonce,
+				purchase_units: [],
+				payment_method: PaymentMethods.PAYPAL,
+				funding_source: window.ppcpFundingSource,
+				bn_code: bnCode,
+				payer,
+				context: this.config.context,
+			};
+			if ( data ) {
+				body = {
+					...body,
+					...data,
+				};
+			}
 			return fetch( this.config.ajax.create_order.endpoint, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				credentials: 'same-origin',
-				body: JSON.stringify( {
-					nonce: this.config.ajax.create_order.nonce,
-					purchase_units: [],
-					payment_method: PaymentMethods.PAYPAL,
-					funding_source: window.ppcpFundingSource,
-					bn_code: bnCode,
-					payer,
-					context: this.config.context,
-				} ),
+				body: JSON.stringify( body ),
 			} )
 				.then( function ( res ) {
 					return res.json();
 				} )
-				.then( function ( data ) {
-					if ( ! data.success ) {
-						console.error( data );
-						throw Error( data.data.message );
+				.then( function ( responseData ) {
+					if ( ! responseData.success ) {
+						console.error( responseData );
+						throw Error( responseData.data.message );
 					}
-					return data.data.id;
+					return responseData.data.id;
 				} );
 		};
 

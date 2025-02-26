@@ -48,7 +48,19 @@ class BaseHandler {
 	}
 
 	createOrder() {
-		return this.actionHandler().configuration().createOrder( null, null );
+		console.log( 'createOrder' );
+		const data = {
+			payment_source: {
+				google_pay: {
+					attributes: {
+						verification: {
+							method: 'SCA_ALWAYS',
+						},
+					},
+				},
+			},
+		};
+		return this.actionHandler().configuration().createOrder( data, null );
 	}
 
 	approveOrder( data, actions ) {
@@ -56,6 +68,7 @@ class BaseHandler {
 	}
 
 	actionHandler() {
+		console.log( 'cart action handler' );
 		return new CartActionHandler( this.ppcpConfig, this.errorHandler() );
 	}
 
