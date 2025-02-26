@@ -11,7 +11,7 @@ test.describe( () => {
 	const countries = Object.keys( learnMoreLinksByCountry );
 
 	for ( const country of countries ) {
-		test( `Settings -  ${ country } - Onboarding - Links Learn more and link for fees in footer`, async ( {
+		test( `PCP-0000 | Settings -  ${ country } - Onboarding - Links Learn more and link for fees in footer`, async ( {
 			pcpOnboarding,
 			wooCommerceApi,
 		} ) => {
