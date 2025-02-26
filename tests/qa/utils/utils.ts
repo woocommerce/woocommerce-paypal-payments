@@ -29,6 +29,7 @@ import {
 	wpDebuggingPlugin,
 	pcpPlugin,
 	Pcp,
+	merchants,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers';
 
@@ -162,7 +163,35 @@ export class Utils {
 	};
 
 	/**
+	 * Checks if merchant is connected
+	 * 
+	 * @returns { boolean }
+	 */
+	isMerchantConnected = async () => {
+		await this.pcpOverview.visit();
+		await this.pcpOverview.backButton().waitFor( { state: 'visible' } );
+		return await this.pcpOverview.overviewContainer().isVisible();
+	}
+
+
+	/**
+	 * Checks if required merchant is connected
+	 * 
+	 * @returns { boolean }
+	 */
+	isExpectedMerchantConnected = async ( merchant: Pcp.Merchant ) => {
+		if( ! await this.isMerchantConnected() ) {
+			return false;
+		}
+		await this.pcpSettings.visit();
+		const merchantEmail =
+			await this.pcpSettings.merchantEmailAddressText().textContent();
+		return merchantEmail === merchant.email;
+	}
+
+	/**
 	 * Connects provided merchant
+	 * 
 	 * @param merchant 
 	 */
 	connectMerchant = async ( merchant: Pcp.Merchant ) => {
@@ -179,6 +208,11 @@ export class Utils {
 		await this.pcpOverview.assertUrl();
 	};
 
+	/**
+	 * Disconnects merchant, optionally with clearing DB
+	 * 
+	 * @param options 
+	 */
 	disconnectMerchant = async (
 		options: { resetDb: boolean; } = { resetDb: false }
 	) => {
@@ -186,13 +220,25 @@ export class Utils {
 		await this.pcpSettings.visit();
 		await this.pcpSettings.disconnectButton().click();
 		if( resetDb ) {
-			await this.pcpSettings.startOverToggle().check();
+			await this.pcpSettings.modalStartOverToggle().check();
 		}
 		await this.pcpSettings.disconnectButton().click();
 		await this.pcpOnboarding.page.waitForLoadState( 'networkidle' );
 		// TODO: report bug for following assertion:
 		// await this.pcpOnboarding.assertUrl(); // Bug: the URL isn't changed
 	};
+
+	/**
+	 * Resets PCP DB:
+	 * 1. Connects USA merchant if none is connected
+	 * 2. Disconnects merchant with reset of DB
+	 */
+	resetPcpDb = async () => {
+		if( ! ( await this.isMerchantConnected() ) ) {
+			await this.connectMerchant( merchants.usa );
+		}
+		await this.disconnectMerchant( { resetDb: true } );
+	}
 
 	/**
 	 * Enable PayPal funding source
@@ -276,6 +322,9 @@ export class Utils {
 		}
 	};
 
+	/**
+	 * Installs and activates PCP plugin
+	 */
 	installAndActivatePcp = async () => {
 		if (
 			! ( await this.requestUtils.isPluginInstalled( pcpPlugin.slug ) )
@@ -285,14 +334,20 @@ export class Utils {
 		await this.requestUtils.activatePlugin( pcpPlugin.slug );
 	}
 
+	/**
+	 * Configures PCP according to the data provided.
+	 * If merchant is provided - checks if he's already connected.
+	 * Use methods resetPcpDb or disconnectMerchant to guerantee initial state before configuration.
+	 * 
+	 * @param data 
+	 */
 	configurePcp = async ( data: Pcp.Admin.Config ) => {
-		if ( data.merchant ) {
-			if ( data.disconnectMerchant ) {
-				await this.disconnectMerchant();
-				return;
-			}
-
-			await this.connectMerchant( data.merchant );
+		const { merchant } = data;
+		if (
+			merchant &&
+			! ( await this.isExpectedMerchantConnected( merchant ) )
+		) {
+			await this.connectMerchant( merchant );
 		}
 	};
 }

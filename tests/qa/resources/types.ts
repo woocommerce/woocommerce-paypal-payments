@@ -120,7 +120,6 @@ export namespace Pcp {
 		}
 
 		export type Config = {
-			disconnectMerchant?: boolean;
 			merchant?: Merchant;
 			paymentMethods?: Gateway[];
 			settings?: Settings;

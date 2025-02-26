@@ -13,6 +13,13 @@ export class PcpAdminPage extends WpPage {
 	modalContainer = () =>
 		this.page.locator( '.components-modal__content[role="document"]' );
 
+	settingLabel = ( labelText: string ) =>
+		this.page.locator( '.ppcp--title' ).filter( { hasText: labelText } );
+	settingBlock = ( labelText: string ) =>
+		this.page.locator( 'ppcp-r-settings-block' ).filter( {
+			has: this.settingLabel( labelText )
+		} );
+
 	// Actions
 
 	/**
