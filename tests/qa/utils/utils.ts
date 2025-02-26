@@ -169,8 +169,13 @@ export class Utils {
 	 */
 	isMerchantConnected = async () => {
 		await this.pcpOverview.visit();
-		await this.pcpOverview.backButton().waitFor( { state: 'visible' } );
-		return await this.pcpOverview.overviewContainer().isVisible();
+		await this.pcpOverview.waitForLoadingMaskRemoved();
+
+		const actualUrl = new URL( this.pcpOverview.page.url() );
+		const actualPath =  actualUrl.pathname + actualUrl.search;
+		const expectedPath = this.pcpOverview.url.replace(/^\./, '');
+
+		return actualPath === expectedPath;
 	}
 
 
@@ -223,9 +228,7 @@ export class Utils {
 			await this.pcpSettings.modalStartOverToggle().check();
 		}
 		await this.pcpSettings.disconnectButton().click();
-		await this.pcpOnboarding.page.waitForLoadState( 'networkidle' );
-		// TODO: report bug for following assertion:
-		// await this.pcpOnboarding.assertUrl(); // Bug: the URL isn't changed
+		await this.pcpOnboarding.assertUrl();
 	};
 
 	/**

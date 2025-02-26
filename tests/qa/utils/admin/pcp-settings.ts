@@ -28,18 +28,6 @@ export class PcpSettings extends PcpAdminPage {
 
 
 	// Actions
-	isExpectedMerchantConnected = async ( merchant: Pcp.Merchant ) => {
-		const isExpectedMerchantId =
-			await this.merchantIdText().textContent() === merchant.account_id;
-		const isExpectedMerchantEmailAddress =
-			await this.merchantEmailAddressText().textContent() === merchant.email;
-		const isExpectedMerchantClientId =
-			await this.merchantClientIdText().textContent() === merchant.client_id;
-
-		return isExpectedMerchantId
-			&& isExpectedMerchantEmailAddress
-			&& isExpectedMerchantClientId;
-	}
 
 	// Assertions
 }
