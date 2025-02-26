@@ -5,7 +5,7 @@ import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy
 /**
  * Internal dependencies
  */
-import { test, expect } from '../../utils';
+import { test } from '../../utils';
 import { storeConfigDefault } from '../../resources';
 import {
 	badgeTestsData,
