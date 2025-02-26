@@ -58,6 +58,8 @@ export class PcpOnboarding extends PcpAdminPage {
 			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
 			.last();
 
+	learnMoreLinks = () => this.page.locator( '.ppcp-r-welcome-docs a' );
+
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
 		await this.backButton().waitFor( { state: 'visible' } );
@@ -106,6 +108,50 @@ export class PcpOnboarding extends PcpAdminPage {
 			await this.enableSandboxModeLabel().click();
 			await this.page.waitForLoadState( 'networkidle' );
 		}
+	};
+
+	getLearnMoreLinks = async (): Promise<
+		{ url: string; title: string }[]
+	> => {
+		await this.page.waitForSelector( '.ppcp-r-welcome-docs a', {
+			state: 'visible',
+		} );
+
+		const links = await this.learnMoreLinks().all();
+
+		const extractedLinks = [];
+		for ( const link of links ) {
+			const href = await link.getAttribute( 'href' );
+
+			if ( href ) {
+				const fullUrl = href.startsWith( 'http' )
+					? href
+					: new URL( href, 'https://www.paypal.com' ).href;
+
+				extractedLinks.push( {
+					url: fullUrl,
+					title: await link.innerText(),
+				} );
+			}
+		}
+		console.log( 'extractedLinks:', extractedLinks );
+		return extractedLinks;
+	};
+
+	clickLearnMoreLink = async ( linkUrl: string ) => {
+		const link = this.page.locator( `a[href="${ linkUrl }"]` );
+
+		const [ newPage ] = await Promise.all( [
+			this.page.context().waitForEvent( 'page' ),
+			link.first().click(),
+		] );
+
+		await newPage.waitForLoadState( 'domcontentloaded' );
+		return newPage;
+	};
+
+	getPageTitle = async ( newPage = this.page ) => {
+		return await newPage.title();
 	};
 
 	// Assertions

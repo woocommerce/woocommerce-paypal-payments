@@ -1,12 +1,11 @@
 /**
  * External dependencies
  */
-import { shopSettings } from '@inpsyde/playwright-utils/build';
 import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy';
 /**
  * Internal dependencies
  */
-import { test } from '../../utils';
+import { test, expect } from '../../utils';
 import { storeConfigDefault } from '../../resources';
 import {
 	badgeTestsData,
@@ -101,7 +100,7 @@ test.describe.serial( () => {
 	} );
 } );
 
-test.describe.only( () => {
+test.describe( () => {
 	for ( const data of initialOnboardingScreenData ) {
 		test( `${ data.testSummary }`, async ( {
 			pcpOnboarding,
