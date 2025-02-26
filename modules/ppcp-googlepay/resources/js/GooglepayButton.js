@@ -190,7 +190,6 @@ class GooglepayButton extends PaymentButton {
 		);
 
 		this.init = this.init.bind( this );
-		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
 		this.onPaymentDataChanged = this.onPaymentDataChanged.bind( this );
 		this.onButtonClick = this.onButtonClick.bind( this );
 
@@ -411,8 +410,6 @@ class GooglepayButton extends PaymentButton {
 			return callbacks;
 		}
 
-		callbacks.onPaymentAuthorized = this.onPaymentAuthorized;
-
 		if ( this.requiresShipping ) {
 			callbacks.onPaymentDataChanged = this.onPaymentDataChanged;
 		}
@@ -473,7 +470,7 @@ class GooglepayButton extends PaymentButton {
 			buttonLocale: language || 'en',
 			buttonType: type || 'pay',
 			buttonRadius: parseInt( this.buttonAttributes?.borderRadius, 10 ),
-			onClick: this.onButtonClick,
+			onClick: () => this.onButtonClick(),
 			allowedPaymentMethods: [ baseCardPaymentMethod ],
 		};
 
@@ -536,10 +533,10 @@ class GooglepayButton extends PaymentButton {
 	/**
 	 * Show Google Pay payment sheet when Google Pay payment button is clicked
 	 */
-	onButtonClick() {
+	async onButtonClick() {
 		this.log( 'onButtonClick' );
 
-		const initiatePaymentRequest = () => {
+		const initiatePaymentRequest = async () => {
 			window.ppcpFundingSource = 'googlepay';
 			const paymentDataRequest = this.paymentDataRequest();
 
@@ -549,8 +546,19 @@ class GooglepayButton extends PaymentButton {
 				this.context
 			);
 
-			return this.paymentsClient.loadPaymentData( paymentDataRequest );
+			try {
+				const paymentData =
+					await this.paymentsClient.loadPaymentData(
+						paymentDataRequest
+					);
+				// handle the response
+				await this.processPayment( paymentData );
+			} catch ( err ) {
+				// show error in developer console for debugging
+				console.error( err );
+			}
 		};
+		await initiatePaymentRequest();
 
 		const validateForm = () => {
 			if ( 'function' !== typeof this.contextHandler.validateForm ) {
@@ -591,7 +599,7 @@ class GooglepayButton extends PaymentButton {
 		};
 
 		const useShippingCallback = this.requiresShipping;
-		const callbackIntents = [ 'PAYMENT_AUTHORIZATION' ];
+		const callbackIntents = [];
 
 		if ( useShippingCallback ) {
 			callbackIntents.push( 'SHIPPING_ADDRESS', 'SHIPPING_OPTION' );
