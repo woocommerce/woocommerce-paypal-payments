@@ -336,14 +336,14 @@ export class PayPalUI {
 	payWithDifferentAccountButton = () =>
 		this.payPalMenuIframe().getByText( 'pay with a different account' );
 
-	submitOrder = async () => {
-		// on Pay for Order page the button name is Pay for order
-		if ( this.page.url().includes( 'pay_for_order' ) ) {
-			await this.payForOrderButton().click();
-		} else {
-			await this.placeOrderButton().click();
-		}
-	};
+	payLaterMessageIframe = () =>
+		this.page.frameLocator(
+			'iframe[name^="__zoid__paypal_message__"]'
+		);
+	payLaterMessageContainer = () =>
+		this.payLaterMessageIframe().locator( '.message__container' );
+	payLaterMessageTextPart = () =>
+		this.payLaterMessageContainer().getByText( 'Pay in 4 interest-free payments on' );
 
 	// Actions
 
@@ -785,6 +785,15 @@ export class PayPalUI {
 		await this.page.keyboard.type( payment.card.expiration_date );
 		await this.cardCVVInput().fill( payment.card.card_cvv );
 		await this.addPaymentMethodButton().click();
+	};
+
+	submitOrder = async () => {
+		// on Pay for Order page the button name is Pay for order
+		if ( this.page.url().includes( 'pay_for_order' ) ) {
+			await this.payForOrderButton().click();
+		} else {
+			await this.placeOrderButton().click();
+		}
 	};
 
 	// Assertions
