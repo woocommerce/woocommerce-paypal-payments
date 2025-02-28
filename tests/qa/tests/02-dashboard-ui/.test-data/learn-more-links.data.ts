@@ -1,12 +1,14 @@
 export const learnMoreLinksByCountry = {
-    "US:AZ": [
+    "US:AZ": {
+        testTitle: "PCP-0000 | Settings - United States - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/us/business/accept-payments/checkout",
-            title: "PayPal Checkout | Custom Online Checkout"
+            title: "PayPal Checkout | Custom Online Checkout | PayPal US"
         },
         {
             url: "https://www.paypal.com/us/business/accept-payments/checkout/installments",
-            title: "Installment Payments | Offer Pay in 4 or Pay Monthly"
+            title: "Installment Payments | Offer Pay in 4 or Pay Monthly | PayPal US"
         },
         {
             url: "https://www.paypal.com/us/enterprise/payment-processing/accept-venmo",
@@ -28,8 +30,12 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/us/business/paypal-business-fees",
             title: "Fees | Merchant and Business | PayPal US"
         }
-    ],
-    "CA:ON": [
+      ]
+    }
+    ,
+    "CA:ON":{ 
+        testTitle: "PCP-0000 | Settings - Canada - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/ca/business/accept-payments/checkout",
             title: "PayPal Checkout| Express Online Checkout | PayPal CA"
@@ -37,9 +43,12 @@ export const learnMoreLinksByCountry = {
         {
             url: "https://www.paypal.com/ca/business/paypal-business-fees",
             title: "Fees | Merchant and Business | PayPal CA"
-        },
-    ],
-    "GB": [
+        }
+       ]
+    },
+    "GB": {
+        testTitle: "PCP-0000 | Settings - United Kingdom - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/uk/business/accept-payments/checkout",
             title: "PayPal Checkout | Custom Online Checkout | PayPal UK"
@@ -52,8 +61,11 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/uk/business/paypal-business-fees",
             title: "PayPal Merchant Fees - Seller Fees | PayPal UK"
         }
-    ],
-    "FR": [
+       ]
+    },
+    "FR": {
+        testTitle: "PCP-0000 | Settings - France - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/fr/business/accept-payments/checkout",
             title: "Checkout | Paiement en ligne personnalisé | PayPal FR"
@@ -66,8 +78,11 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/fr/business/paypal-business-fees",
             title: "Tarifs - Frais PayPal pour les marchands | PayPal FR"
         }
-    ],
-    "ES:B": [
+       ]
+    },
+    "ES:B": {
+        testTitle: "PCP-0000 | Settings - Spain - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/es/business/accept-payments/checkout",
             title: "PayPal Online Checkout para Negocios | PayPal ES"
@@ -80,8 +95,11 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/es/business/paypal-business-fees",
             title: "Tarifas de Vendedor PayPal | PayPal ES"
         }
-    ],
-    "IT:RM": [
+       ]
+    },
+    "IT:RM": {
+        testTitle: "PCP-0000 | Settings - Italy - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/it/business/accept-payments/checkout",
             title: "Checkout Pagamento Personalizzato e Ottimizato | PayPal IT"
@@ -94,8 +112,11 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/it/business/paypal-business-fees",
             title: "Tariffe per i Venditori PayPal | PayPal IT"
         }
-    ],
-    "DE:DE-BE": [
+       ]
+    },
+    "DE:DE-BE": {
+        testTitle: "PCP-0000 | Settings - Germany - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/de/business/accept-payments/checkout",
             title: "PayPal Checkout | Benutzerdefinierter Online-Checkout | PayPal DE"
@@ -108,8 +129,11 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/de/business/paypal-business-fees",
             title: "PayPal Händler - und Verkäufergebühren | PayPal DE"
         }
-    ],
-    "AU:NSW": [
+       ]
+    },
+    "AU:NSW": {
+        testTitle: "PCP-0000 | Settings - Australia - Onboarding - Links Learn more and link for fees in footer",
+        links: [
         {
             url: "https://www.paypal.com/au/business/accept-payments/checkout",
             title: "PayPal Checkout | Custom Online Checkout | PayPal AU"
@@ -122,5 +146,6 @@ export const learnMoreLinksByCountry = {
             url: "https://www.paypal.com/au/business/paypal-business-fees",
             title: "PayPal Fees for Sellers (Business) | PayPal AU"
         }
-    ],
+       ]
+    },
 }

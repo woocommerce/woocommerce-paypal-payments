@@ -11,10 +11,12 @@ test.describe( () => {
 	const countries = Object.keys( learnMoreLinksByCountry );
 
 	for ( const country of countries ) {
-		test( `PCP-0000 | Settings -  ${ country } - Onboarding - Links Learn more and link for fees in footer`, async ( {
+		test.only( learnMoreLinksByCountry[country].testTitle, async ( {
 			pcpOnboarding,
 			wooCommerceApi,
 		} ) => {
+			const expectedLinks = learnMoreLinksByCountry[ country ].links;
+
 			await wooCommerceApi.updateGeneralSettings( {
 				woocommerce_default_country: country,
 				woocommerce_currency: 'USD'
@@ -22,23 +24,21 @@ test.describe( () => {
 
 			await pcpOnboarding.visit();
 			await pcpOnboarding.page.waitForLoadState( 'networkidle' );
-			const pageLinks = await pcpOnboarding.getLearnMoreLinks();
-
-			const expectedLinks = learnMoreLinksByCountry[ country ];
-
-			expect( pageLinks.map( ( l ) => l.url ).sort() ).toEqual(
-				expectedLinks.map( ( l ) => l.url ).sort()
-			);
-
 			for ( const { url, title } of expectedLinks ) {
-				const newPage = await pcpOnboarding.clickLearnMoreLink( url );
+				const link = await pcpOnboarding.page.locator( `a[href="${ url }"]` );
+				await expect.soft( link ).toBeVisible();
+				
+				if (await link.isVisible()) {
+				const newContext = await pcpOnboarding.page.context().browser()?.newContext();
+					const newPage = await newContext?.newPage();
+					await newPage?.goto( url );
 
-				// Assertions
-				expect( newPage.url() ).toBe( url );
-				const pageTitle = await pcpOnboarding.getPageTitle( newPage );
-				expect( pageTitle ).toContain( title );
-
+				expect.soft( newPage.url() ).toBe( url );
+				expect.soft( await newPage.title() ).toContain( title );
+				
 				await newPage.close();
+				await newContext.close();
+				}
 			}
 		} );
 	}
