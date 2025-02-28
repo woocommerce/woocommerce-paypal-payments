@@ -1,30 +1,23 @@
 /**
- * External dependencies
- */
-import { shopSettings } from '@inpsyde/playwright-utils/build';
-import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy';
-/**
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { storeConfigDefault } from '../../resources';
+import {
+	merchants,
+	storeConfigDefault,
+	percyPcpSettingsConfig,
+} from '../../resources';
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
 } from './.test-data/badges-per-country.data';
 
-const percyConfig: PercyConfig = {
-	scope: '#ppcp-settings-container',
-	httpCredentials: {
-		username: process.env.WP_BASIC_AUTH_USER,
-		password: process.env.WP_BASIC_AUTH_PASS,
-	},
-};
-
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( storeConfigDefault );
+	await utils.installAndActivatePcp();
+	await utils.resetPcpDb();
 	await utils.configurePcp( {
-		disconnectMerchant: true,
+		merchant: merchants.usa,
 	} );
 } );
 
@@ -36,7 +29,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
 	test( 'PCP-0000 | Settings - Onboarding initial page - See advanced options - Default UI @percy', async ( {
@@ -45,7 +38,7 @@ test.describe.serial( () => {
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
 	test( 'PCP-0000 | Settings - Onboarding - Select product types - Default UI @percy', async ( {
@@ -55,7 +48,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
 		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
 	test( 'PCP-0000 | Settings - Onboarding - Choose checkout options - Default UI @percy', async ( {
@@ -66,7 +59,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.virtualCheckbox().check();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
 	test( 'PCP-0000 | Settings - Onbarding - Connect your PayPal account - Default UI @percy', async ( {
@@ -77,7 +70,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
 	test( 'PCP-0000 | Settings - Onboarding - Enable Sandbox mode - Default UI @percy', async ( {
@@ -87,7 +80,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
 		await pcpOnboarding.enableSandboxMode();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
 	test( 'PCP-0000 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @percy', async ( {
@@ -97,7 +90,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
 		await pcpOnboarding.enableManuallyConnect();
-		await percy.takeSnapshot( testInfo.title, percyConfig );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 } );
 
@@ -113,7 +106,7 @@ test.describe.only( () => {
 			);
 			await pcpOnboarding.visit();
 			await pcpOnboarding.gotoInitialOnboardingPage();
-			await percy.takeSnapshot( testInfo.title, percyConfig );
+			await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 		} );
 	}
 } );
@@ -145,7 +138,7 @@ test.describe( () => {
 				await pcpOnboarding.page.waitForLoadState( 'load' );
 				await percy.takeSnapshot(
 					`${ testInfo.title } - PayPal Settings - ${ countryCode } - ${ currency }`,
-					percyConfig
+					percyPcpSettingsConfig
 				);
 
 				await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -159,7 +152,7 @@ test.describe( () => {
 				await pcpOnboarding.page.waitForLoadState( 'load' );
 				await percy.takeSnapshot(
 					`${ testInfo.title } - Choose checkout options - ${ countryCode } - ${ currency }`,
-					percyConfig
+					percyPcpSettingsConfig
 				);
 			}
 		} );

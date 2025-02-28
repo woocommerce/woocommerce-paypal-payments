@@ -117,7 +117,11 @@ export class Utils {
 	};
 
 	/**
-	 * Pays for order on checkout page
+	 * Fills cart with array of products.
+	 * 
+	 * - Creates WooCommerce.CartProduct from WooCommerce.CreateProduct (or gets CartProduct from process.env).
+	 * - Clears cart.
+	 * - Adds provided products.
 	 *
 	 * @param products
 	 */

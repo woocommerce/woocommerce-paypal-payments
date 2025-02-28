@@ -14,7 +14,8 @@ export class PcpAdminPage extends WpPage {
 		this.page.locator( '.components-modal__content[role="document"]' );
 	loadingMask = () =>
 		this.page.locator( '.ppcp--spinner-message' );
-
+	completedMessage = () =>
+		this.page.locator( '.ppcp-r-navbar-notice' ).getByText( 'Completed' );
 	settingLabel = ( labelText: string ) =>
 		this.page.locator( '.ppcp--title' ).filter( { hasText: labelText } );
 	settingBlock = ( labelText: string ) =>
@@ -29,12 +30,12 @@ export class PcpAdminPage extends WpPage {
 	 */
 	saveChanges = async () => {
 		await this.saveButton().click();
-		await this.page.waitForLoadState( 'networkidle' );
+		await this.completedMessage().waitFor( { state: 'visible' } );
 	};
 
 	/**
-	 * Waits until loading spinner is detached.
-	 * May be needed after .visit() on PCP settings pages.
+	 * Waits until 'networkidle' and loading spinner is detached.
+	 * May be helpful after .visit() on PCP settings pages.
 	 */
 	waitForLoadingMaskRemoved = async () => {
 		await this.page.waitForLoadState( 'networkidle' );
