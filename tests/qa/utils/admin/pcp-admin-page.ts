@@ -12,14 +12,13 @@ export class PcpAdminPage extends WpPage {
 		this.navigationPanel().getByRole( 'button', { name: 'Save' } );
 	modalContainer = () =>
 		this.page.locator( '.components-modal__content[role="document"]' );
-	loadingMask = () =>
-		this.page.locator( '.ppcp--spinner-message' );
+	loadingMask = () => this.page.locator( '.ppcp--spinner-message' );
 
 	settingLabel = ( labelText: string ) =>
 		this.page.locator( '.ppcp--title' ).filter( { hasText: labelText } );
 	settingBlock = ( labelText: string ) =>
 		this.page.locator( 'ppcp-r-settings-block' ).filter( {
-			has: this.settingLabel( labelText )
+			has: this.settingLabel( labelText ),
 		} );
 
 	// Actions
@@ -39,5 +38,5 @@ export class PcpAdminPage extends WpPage {
 	waitForLoadingMaskRemoved = async () => {
 		await this.page.waitForLoadState( 'networkidle' );
 		await this.loadingMask().waitFor( { state: 'detached' } );
-	}
+	};
 }

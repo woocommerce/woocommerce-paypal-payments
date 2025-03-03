@@ -7,7 +7,7 @@ require( 'dotenv' ).config();
 /**
  * Internal dependencies
  */
-import { storeSetupProjects } from './tests/.setup/store';
+import { storeSetupProjects } from './tests/_setup/store';
 
 export default defineConfig( {
 	testDir: 'tests',

@@ -10,7 +10,7 @@ import { storeConfigDefault } from '../../resources';
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
-} from './.test-data/badges-per-country.data';
+} from './_test-data/badges-per-country.data';
 
 const percyConfig: PercyConfig = {
 	scope: '#ppcp-settings-container',
