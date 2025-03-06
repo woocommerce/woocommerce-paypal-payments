@@ -89,7 +89,6 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 
 	/**
 	 * Expands section of the accordion by provided location.
-	 *
 	 * Simply clicking on a button doesn't work because there's no way to tell if section is expanded.
 	 * Unfortunately there's no other way to differentiate between collapsed and expanded section except svg path value.
 	 *
