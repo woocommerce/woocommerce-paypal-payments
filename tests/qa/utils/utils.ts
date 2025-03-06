@@ -114,7 +114,7 @@ export class Utils {
 
 	/**
 	 * Fills cart with array of products.
-	 * 
+	 *
 	 * - Creates WooCommerce.CartProduct from WooCommerce.CreateProduct (or gets CartProduct from process.env).
 	 * - Clears cart.
 	 * - Adds provided products.
@@ -164,8 +164,6 @@ export class Utils {
 
 	/**
 	 * Checks if merchant is connected
-	 *
-	 * @return { boolean }
 	 */
 	isMerchantConnected = async () => {
 		await this.pcpOverview.visit();
@@ -181,8 +179,7 @@ export class Utils {
 	/**
 	 * Checks if required merchant is connected
 	 *
-	 * @param  merchant
-	 * @return { boolean }
+	 * @param merchant
 	 */
 	isExpectedMerchantConnected = async ( merchant: Pcp.Merchant ) => {
 		if ( ! ( await this.isMerchantConnected() ) ) {

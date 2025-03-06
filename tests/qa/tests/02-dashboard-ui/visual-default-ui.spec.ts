@@ -10,7 +10,7 @@ import {
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
-} from './.test-data/badges-per-country.data';
+} from './_test-data/badges-per-country.data';
 
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( storeConfigDefault );

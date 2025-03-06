@@ -112,5 +112,6 @@ export class PcpOnboarding extends PcpAdminPage {
 			await this.page.waitForLoadState( 'networkidle' );
 		}
 	};
+
 	// Assertions
 }
