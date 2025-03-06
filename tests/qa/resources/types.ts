@@ -81,7 +81,7 @@ export namespace Pcp {
 			};
 		}
 
-		export namespace PayLaterMessaging {
+		export namespace Plm {
 			export type Location =
 				| 'Product page'
 				| 'Cart'
@@ -101,30 +101,19 @@ export namespace Pcp {
 				| 'Monochrome'
 				| 'Black / Gray logo';
 
-			export type LogoPosition =
-				| 'Left'
-				| 'Right'
-				| 'Top';
+			export type LogoPosition = 'Left' | 'Right' | 'Top';
 
-			export type TextSize = 
-				| 'Small'
-				| 'Medium'
-				| 'Large';
+			export type TextSize = 'Small' | 'Medium' | 'Large';
 
-			export type BannerColor = 
+			export type BannerColor =
 				| 'Blue'
 				| 'Black'
 				| 'White'
 				| 'White (no border)';
 
-			export type BannerSize = 
-				| '20 x 1'
-				| '8 x 1';
+			export type BannerSize = '20 x 1' | '8 x 1';
 
-			export type PreviewLayout =
-				| 'Text'
-				| 'Desktop'
-				| 'Mobile';
+			export type PreviewLayout = 'Text' | 'Desktop' | 'Mobile';
 
 			// Checkout locations - pages where checkout can be done with paypal (Products, Carts, Checkouts)
 			export type CheckoutLocation = {
@@ -158,7 +147,7 @@ export namespace Pcp {
 			paymentMethods?: Gateway[];
 			settings?: Settings;
 			styling?: Styling.Config;
-			payLaterMessaging?: PayLaterMessaging.Config;
+			payLaterMessaging?: Plm.Config;
 		};
 	}
 }
