@@ -9,7 +9,7 @@ export class PcpOverview extends PcpAdminPage {
 
 	// Locators
 	overviewContainer = () => this.page.locator( '.ppcp-r-tab-overview' );
-	
+
 	// Actions
 
 	// Assertions

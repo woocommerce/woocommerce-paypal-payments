@@ -11,11 +11,7 @@ import {
 /**
  * Internal dependencies
  */
-import {
-	PcpOnboarding,
-	PcpOverview,
-	PcpSettings
-} from './admin';
+import { PcpOnboarding, PcpOverview, PcpSettings } from './admin';
 import {
 	PayForOrder,
 	Checkout,
@@ -168,40 +164,41 @@ export class Utils {
 
 	/**
 	 * Checks if merchant is connected
-	 * 
-	 * @returns { boolean }
+	 *
+	 * @return { boolean }
 	 */
 	isMerchantConnected = async () => {
 		await this.pcpOverview.visit();
 		await this.pcpOverview.waitForLoadingMaskRemoved();
 
 		const actualUrl = new URL( this.pcpOverview.page.url() );
-		const actualPath =  actualUrl.pathname + actualUrl.search;
-		const expectedPath = this.pcpOverview.url.replace(/^\./, '');
+		const actualPath = actualUrl.pathname + actualUrl.search;
+		const expectedPath = this.pcpOverview.url.replace( /^\./, '' );
 
 		return actualPath === expectedPath;
-	}
-
+	};
 
 	/**
 	 * Checks if required merchant is connected
-	 * 
-	 * @returns { boolean }
+	 *
+	 * @param  merchant
+	 * @return { boolean }
 	 */
 	isExpectedMerchantConnected = async ( merchant: Pcp.Merchant ) => {
-		if( ! await this.isMerchantConnected() ) {
+		if ( ! ( await this.isMerchantConnected() ) ) {
 			return false;
 		}
 		await this.pcpSettings.visit();
-		const merchantEmail =
-			await this.pcpSettings.merchantEmailAddressText().textContent();
+		const merchantEmail = await this.pcpSettings
+			.merchantEmailAddressText()
+			.textContent();
 		return merchantEmail === merchant.email;
-	}
+	};
 
 	/**
 	 * Connects provided merchant
-	 * 
-	 * @param merchant 
+	 *
+	 * @param merchant
 	 */
 	connectMerchant = async ( merchant: Pcp.Merchant ) => {
 		await this.pcpOnboarding.visit();
@@ -209,8 +206,12 @@ export class Utils {
 		await this.pcpOnboarding.openAdvancedOptions();
 		await this.pcpOnboarding.enableSandboxMode();
 		await this.pcpOnboarding.enableManuallyConnect();
-		await this.pcpOnboarding.sandboxClientIdInput().fill( merchant.client_id );
-		await this.pcpOnboarding.sandboxSecretKeyInput().fill( merchant.client_secret );
+		await this.pcpOnboarding
+			.sandboxClientIdInput()
+			.fill( merchant.client_id );
+		await this.pcpOnboarding
+			.sandboxSecretKeyInput()
+			.fill( merchant.client_secret );
 		// TODO: investigate
 		await this.pcpOnboarding.page.waitForTimeout( 500 ); // unfortunately required to make use of the secret key
 		await this.pcpOnboarding.connectAccountButton().click();
@@ -219,16 +220,17 @@ export class Utils {
 
 	/**
 	 * Disconnects merchant, optionally with clearing DB
-	 * 
-	 * @param options 
+	 *
+	 * @param options
+	 * @param options.resetDb
 	 */
 	disconnectMerchant = async (
-		options: { resetDb: boolean; } = { resetDb: false }
+		options: { resetDb: boolean } = { resetDb: false }
 	) => {
 		const { resetDb } = options;
 		await this.pcpSettings.visit();
 		await this.pcpSettings.disconnectButton().click();
-		if( resetDb ) {
+		if ( resetDb ) {
 			await this.pcpSettings.modalStartOverToggle().check();
 		}
 		await this.pcpSettings.disconnectButton().click();
@@ -241,11 +243,11 @@ export class Utils {
 	 * 2. Disconnects merchant with reset of DB
 	 */
 	resetPcpDb = async () => {
-		if( ! ( await this.isMerchantConnected() ) ) {
+		if ( ! ( await this.isMerchantConnected() ) ) {
 			await this.connectMerchant( merchants.usa );
 		}
 		await this.disconnectMerchant( { resetDb: true } );
-	}
+	};
 
 	/**
 	 * Enable PayPal funding source
@@ -339,14 +341,14 @@ export class Utils {
 			await this.plugins.installPluginFromFile( pcpPlugin.zipFilePath );
 		}
 		await this.requestUtils.activatePlugin( pcpPlugin.slug );
-	}
+	};
 
 	/**
 	 * Configures PCP according to the data provided.
 	 * If merchant is provided - checks if he's already connected.
 	 * Use methods resetPcpDb or disconnectMerchant to guerantee initial state before configuration.
-	 * 
-	 * @param data 
+	 *
+	 * @param data
 	 */
 	configurePcp = async ( data: Pcp.Admin.Config ) => {
 		const { merchant } = data;

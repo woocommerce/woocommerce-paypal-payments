@@ -1,3 +1,6 @@
+/**
+ * External dependencies
+ */
 import { PercyConfig } from '@inpsyde/playwright-utils/build/@types/visual/percy';
 
 export const percyPcpSettingsConfig: PercyConfig = {

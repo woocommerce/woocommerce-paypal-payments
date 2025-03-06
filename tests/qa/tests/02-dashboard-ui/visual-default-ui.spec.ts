@@ -94,7 +94,7 @@ test.describe.serial( () => {
 	} );
 } );
 
-test.describe.only( () => {
+test.describe( () => {
 	for ( const data of initialOnboardingScreenData ) {
 		test( `${ data.testSummary }`, async ( {
 			pcpOnboarding,

@@ -20,7 +20,7 @@ export class PcpAdminPage extends WpPage {
 		this.page.locator( '.ppcp--title' ).filter( { hasText: labelText } );
 	settingBlock = ( labelText: string ) =>
 		this.page.locator( 'ppcp-r-settings-block' ).filter( {
-			has: this.settingLabel( labelText )
+			has: this.settingLabel( labelText ),
 		} );
 
 	// Actions
@@ -40,5 +40,5 @@ export class PcpAdminPage extends WpPage {
 	waitForLoadingMaskRemoved = async () => {
 		await this.page.waitForLoadState( 'networkidle' );
 		await this.loadingMask().waitFor( { state: 'detached' } );
-	}
+	};
 }
