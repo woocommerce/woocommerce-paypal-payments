@@ -3,10 +3,6 @@
  */
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
-/**
- * External dependencies
- */
-import { Pcp } from 'resources';
 
 export class PcpSettings extends PcpAdminPage {
 	url = urls.admin.pcp.settings;

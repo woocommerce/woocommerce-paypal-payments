@@ -12,8 +12,7 @@ export class PcpAdminPage extends WpPage {
 		this.navigationPanel().getByRole( 'button', { name: 'Save' } );
 	modalContainer = () =>
 		this.page.locator( '.components-modal__content[role="document"]' );
-	loadingMask = () =>
-		this.page.locator( '.ppcp--spinner-message' );
+	loadingMask = () => this.page.locator( '.ppcp--spinner-message' );
 	completedMessage = () =>
 		this.page.locator( '.ppcp-r-navbar-notice' ).getByText( 'Completed' );
 	settingLabel = ( labelText: string ) =>
@@ -38,7 +37,7 @@ export class PcpAdminPage extends WpPage {
 	 * May be helpful after .visit() on PCP settings pages.
 	 */
 	waitForLoadingMaskRemoved = async () => {
-		await this.page.waitForLoadState( 'networkidle' );
+		await this.page.waitForLoadState();
 		await this.loadingMask().waitFor( { state: 'detached' } );
 	};
 }
