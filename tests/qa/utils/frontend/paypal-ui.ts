@@ -337,13 +337,13 @@ export class PayPalUI {
 		this.payPalMenuIframe().getByText( 'pay with a different account' );
 
 	payLaterMessageIframe = () =>
-		this.page.frameLocator(
-			'iframe[name^="__zoid__paypal_message__"]'
-		);
+		this.page.frameLocator( 'iframe[name^="__zoid__paypal_message__"]' );
 	payLaterMessageContainer = () =>
 		this.payLaterMessageIframe().locator( '.message__container' );
 	payLaterMessageTextPart = () =>
-		this.payLaterMessageContainer().getByText( 'Pay in 4 interest-free payments on' );
+		this.payLaterMessageContainer().getByText(
+			'Pay in 4 interest-free payments on'
+		);
 
 	// Actions
 
