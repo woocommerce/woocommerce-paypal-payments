@@ -82,19 +82,52 @@ export namespace Pcp {
 		}
 
 		export namespace PayLaterMessaging {
-			export type LogoType = 'Full Logo' | ''; // TODO
+			export type Location =
+				| 'Product page'
+				| 'Cart'
+				| 'Checkout'
+				| 'Home'
+				| 'Shop';
 
-			export type LogoPosition = ''; // TODO
+			export type LogoType =
+				| 'Full Logo'
+				| 'Monogram'
+				| 'Inline'
+				| 'Message only';
 
-			export type TextColor = ''; // TODO
+			export type TextColor =
+				| 'Black / Blue logo'
+				| 'White / White logo'
+				| 'Monochrome'
+				| 'Black / Gray logo';
 
-			export type TextSize = ''; // TODO
+			export type LogoPosition =
+				| 'Left'
+				| 'Right'
+				| 'Top';
 
-			export type BannerColor = ''; // TODO
+			export type TextSize = 
+				| 'Small'
+				| 'Medium'
+				| 'Large';
 
-			export type BannerSize = ''; // TODO
+			export type BannerColor = 
+				| 'Blue'
+				| 'Black'
+				| 'White'
+				| 'White (no border)';
 
-			export type CheckoutPage = {
+			export type BannerSize = 
+				| '20 x 1'
+				| '8 x 1';
+
+			export type PreviewLayout =
+				| 'Text'
+				| 'Desktop'
+				| 'Mobile';
+
+			// Checkout locations - pages where checkout can be done with paypal (Products, Carts, Checkouts)
+			export type CheckoutLocation = {
 				enabled?: boolean;
 				logoType?: LogoType;
 				logoPosition?: LogoPosition;
@@ -102,7 +135,8 @@ export namespace Pcp {
 				textSize?: TextSize;
 			};
 
-			export type BannerPage = {
+			// Banner locations - pages where only banner is displayed (Home, Shop)
+			export type BannerLocation = {
 				enabled?: boolean;
 				bannerColor?: BannerColor;
 				bannerSize?: BannerSize;
@@ -110,12 +144,12 @@ export namespace Pcp {
 
 			export type Config = {
 				enabledDarkMode?: boolean;
-				product?: CheckoutPage;
-				cart?: CheckoutPage;
-				checkout?: CheckoutPage;
-				home?: BannerPage;
-				shop?: BannerPage;
-				enabledWooCommerceBlock?: boolean;
+				product?: CheckoutLocation;
+				cart?: CheckoutLocation;
+				checkout?: CheckoutLocation;
+				home?: BannerLocation;
+				shop?: BannerLocation;
+				enabledWooCommerceBlock?: boolean; // TODO: check for deprecation
 			};
 		}
 
