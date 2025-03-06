@@ -81,7 +81,7 @@ export namespace Pcp {
 			};
 		}
 
-		export namespace PayLaterMessaging {
+		export namespace Plm {
 			export type Location =
 				| 'Product page'
 				| 'Cart'
@@ -147,7 +147,7 @@ export namespace Pcp {
 			paymentMethods?: Gateway[];
 			settings?: Settings;
 			styling?: Styling.Config;
-			payLaterMessaging?: PayLaterMessaging.Config;
+			payLaterMessaging?: Plm.Config;
 		};
 	}
 }
