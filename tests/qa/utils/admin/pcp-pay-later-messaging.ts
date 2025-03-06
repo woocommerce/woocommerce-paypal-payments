@@ -59,9 +59,11 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	previewIframe = () =>
 		this.previewContainer().locator( 'iframe' ).first().contentFrame();
 	previewIframeSpan = () =>
-			this.previewIframe().locator( '[id^="zoid-paypal-message-uid"]' );
+		this.previewIframe().locator( '[id^="zoid-paypal-message-uid"]' );
 	previewMessageIframe = () =>
-			this.previewIframeSpan().frameLocator( 'iframe[name^="__zoid__paypal_message__"]' );
+		this.previewIframeSpan().frameLocator(
+			'iframe[name^="__zoid__paypal_message__"]'
+		);
 	previewMessageTextPart = () =>
 		this.previewMessageIframe().getByText(
 			'Pay in 4 interest-free payments'
@@ -118,7 +120,9 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 *
 	 * @param location
 	 */
-	isMessagingForLocationEnabled = async ( location: Pcp.Admin.Plm.Location ) => {
+	isMessagingForLocationEnabled = async (
+		location: Pcp.Admin.Plm.Location
+	) => {
 		// Get the current 'color' property of SVG
 		const color = await this.accordionCheckboxSvg( location ).evaluate(
 			( el ) => getComputedStyle( el ).color
@@ -133,7 +137,7 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 * Enables/disabled messaging for location.
 	 *
 	 * @param location
-	 * @param isEnabled
+	 * @param isChecked
 	 */
 	setMessagingCheckboxStateForLocation = async (
 		location: Pcp.Admin.Plm.Location,
@@ -195,6 +199,12 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	 *
 	 * @param location
 	 * @param settings
+	 * @param settings.logoType
+	 * @param settings.textColor
+	 * @param settings.logoPosition
+	 * @param settings.textSize
+	 * @param settings.bannerColor
+	 * @param settings.bannerSize
 	 */
 	updateLocationSettings = async (
 		location: Pcp.Admin.Plm.Location,
@@ -207,16 +217,23 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 			bannerSize?: Pcp.Admin.Plm.BannerSize;
 		}
 	) => {
-		const { logoType, textColor, logoPosition, textSize, bannerColor, bannerSize } = settings;
+		const {
+			logoType,
+			textColor,
+			logoPosition,
+			textSize,
+			bannerColor,
+			bannerSize,
+		} = settings;
 
 		await this.expandAccordionSection( location );
 
-		if( logoType ) {
+		if ( logoType ) {
 			await this.logoTypeCombobox().click();
 			await this.comboboxOption( logoType ).click();
 		}
 
-		if( textColor ) {
+		if ( textColor ) {
 			await this.textColorCombobox().click();
 			await this.comboboxOption( textColor ).click();
 		}
@@ -226,17 +243,17 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 			await this.comboboxOption( logoPosition ).click();
 		}
 
-		if( textSize ) {
+		if ( textSize ) {
 			await this.textSizeCombobox().click();
 			await this.comboboxOption( textSize ).click();
 		}
 
-		if( bannerColor ) {
+		if ( bannerColor ) {
 			await this.bannerColorCombobox().click();
 			await this.comboboxOption( bannerColor ).click();
 		}
 
-		if( bannerSize ) {
+		if ( bannerSize ) {
 			await this.bannerSizeCombobox().click();
 			await this.comboboxOption( bannerSize ).click();
 		}
@@ -247,46 +264,78 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	/**
 	 * Softly asserts combobox settings for location
 	 *
-	 * @param location
 	 * @param settings
+	 * @param settings.logoType
+	 * @param settings.textColor
+	 * @param settings.logoPosition
+	 * @param settings.textSize
+	 * @param settings.bannerColor
+	 * @param settings.bannerSize
 	 */
-	assertLocationSettings = async (
-		location: Pcp.Admin.Plm.Location,
-		settings: {
-			logoType?: Pcp.Admin.Plm.LogoType;
-			textColor?: Pcp.Admin.Plm.TextColor;
-			logoPosition?: Pcp.Admin.Plm.LogoPosition;
-			textSize?: Pcp.Admin.Plm.TextSize;
-			bannerColor?: Pcp.Admin.Plm.BannerColor;
-			bannerSize?: Pcp.Admin.Plm.BannerSize;
-		}
-	) => {
-		const { logoType, textColor, logoPosition, textSize, bannerColor, bannerSize } = settings;
+	assertLocationSettings = async ( settings: {
+		logoType?: Pcp.Admin.Plm.LogoType;
+		textColor?: Pcp.Admin.Plm.TextColor;
+		logoPosition?: Pcp.Admin.Plm.LogoPosition;
+		textSize?: Pcp.Admin.Plm.TextSize;
+		bannerColor?: Pcp.Admin.Plm.BannerColor;
+		bannerSize?: Pcp.Admin.Plm.BannerSize;
+	} ) => {
+		const {
+			logoType,
+			textColor,
+			logoPosition,
+			textSize,
+			bannerColor,
+			bannerSize,
+		} = settings;
 
-		await this.expandAccordionSection( location );
-
-		if( logoType ) {
+		if ( logoType ) {
 			await expect( this.logoTypeCombobox() ).toHaveText( logoType );
 		}
 
-		if( textColor ) {
+		if ( textColor ) {
 			await expect( this.textColorCombobox() ).toHaveText( textColor );
 		}
 
 		if ( logoPosition && logoType === 'Full Logo' ) {
-			await expect( this.logoPositionCombobox() ).toHaveText( logoPosition );
+			await expect( this.logoPositionCombobox() ).toHaveText(
+				logoPosition
+			);
 		}
 
-		if( textSize ) {
+		if ( textSize ) {
 			await expect( this.textSizeCombobox() ).toHaveText( textSize );
 		}
 
-		if( bannerColor ) {
-			await expect( this.bannerColorCombobox() ).toHaveText( bannerColor );
+		if ( bannerColor ) {
+			await expect( this.bannerColorCombobox() ).toHaveText(
+				bannerColor
+			);
 		}
 
-		if( bannerSize ) {
+		if ( bannerSize ) {
 			await expect( this.bannerSizeCombobox() ).toHaveText( bannerSize );
 		}
+	};
+
+	/**
+	 * Compares actual configurator screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotPlmConfigurator = async ( snapshotName: string ) => {
+		// Assert message is displayed
+		await expect( this.previewMessageTextPart() ).toBeVisible();
+		// Wait for potential animation
+		await this.page.waitForTimeout( 500 );
+		// Take actual screenshot of configurator and compare to expected
+		expect
+			.soft(
+				await this.configContainer().screenshot( {
+					animations: 'disabled',
+					style: '.ppcp-r-navigation-container { display: none; }',
+				} )
+			)
+			.toMatchSnapshot( snapshotName, { threshold: 0.8 } );
 	};
 }
