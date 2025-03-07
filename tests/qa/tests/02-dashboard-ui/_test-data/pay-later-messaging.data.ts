@@ -38,10 +38,7 @@ const bannerColors: Pcp.Admin.Plm.BannerColor[] = [
 	'White',
 	'White (no border)',
 ];
-const bannerSizes: Pcp.Admin.Plm.BannerSize[] = [
-	'20 x 1',
-	'8 x 1'
-];
+const bannerSizes: Pcp.Admin.Plm.BannerSize[] = [ '20 x 1', '8 x 1' ];
 
 /**
  * Builds data combinations for pages with payment buttons (Procuct, Cart, Checkout) in the following format:

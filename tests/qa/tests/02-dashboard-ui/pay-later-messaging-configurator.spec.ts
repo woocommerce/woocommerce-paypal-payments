@@ -17,7 +17,7 @@ const TEST_RESULTS_FILE = 'plm-test-results.json';
 /**
  * Adds settings values to test name.
  *
- * @param  baseName
+ * @param  baseTitle
  * @param  settings
  * @param  settings.logoType
  * @param  settings.textColor
@@ -27,8 +27,8 @@ const TEST_RESULTS_FILE = 'plm-test-results.json';
  * @param  settings.bannerSize
  * @return { string } Example: (PCP-000) PLM - Product page - Full Logo - Black / Gray logo - Left - Small
  */
-const buildTestName = (
-	baseName: string,
+const completeTestTitle = (
+	baseTitle: string,
 	settings: {
 		logoType?: Pcp.Admin.Plm.LogoType;
 		textColor?: Pcp.Admin.Plm.TextColor;
@@ -46,33 +46,33 @@ const buildTestName = (
 		bannerColor,
 		bannerSize,
 	} = settings;
-	let snapshotName = baseName;
+	let title = baseTitle;
 
 	if ( logoType ) {
-		snapshotName += ` - ${ logoType }`;
+		title += ` - ${ logoType }`;
 	}
 
 	if ( textColor ) {
-		snapshotName += ` - ${ textColor }`;
+		title += ` - ${ textColor }`;
 	}
 
 	if ( logoPosition && logoType === 'Full Logo' ) {
-		snapshotName += ` - ${ logoPosition }`;
+		title += ` - ${ logoPosition }`;
 	}
 
 	if ( textSize ) {
-		snapshotName += ` - ${ textSize }`;
+		title += ` - ${ textSize }`;
 	}
 
 	if ( bannerColor ) {
-		snapshotName += ` - ${ bannerColor }`;
+		title += ` - ${ bannerColor }`;
 	}
 
 	if ( bannerSize ) {
-		snapshotName += ` - ${ bannerSize }`;
+		title += ` - ${ bannerSize }`;
 	}
 
-	return snapshotName;
+	return title;
 };
 
 /**
@@ -127,22 +127,22 @@ const snapshotPlmContainer = async ( ppui: PayPalUI, snapshotName: string ) => {
 	).toMatchSnapshot( snapshotName );
 };
 
-test.beforeAll( async ( { utils } ) => {
-	await utils.configureStore( storeConfigDefault );
-	await utils.installAndActivatePcp();
-	await utils.resetPcpDb();
-	await utils.configurePcp( {
-		merchant: merchants.usa,
+test.describe( 'Subtests', () => {
+	test.beforeAll( async ( { utils } ) => {
+		await utils.configureStore( storeConfigDefault );
+		await utils.installAndActivatePcp();
+		await utils.resetPcpDb();
+		await utils.configurePcp( {
+			merchant: merchants.usa,
+		} );
 	} );
-} );
 
-test.describe( () => {
 	const productPlm =
 		payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
 
 	for ( const settings of productPlm.settings ) {
 		test(
-			buildTestName( `(PCP-0001) PLM - Product page`, settings ),
+			completeTestTitle( `(PCP-0001) PLM - Product page`, settings ),
 			async ( { pcpPayLaterMessaging, product, ppui }, testInfo ) => {
 				const snapshotName = testInfo.title;
 				const { location } = productPlm;
@@ -176,7 +176,7 @@ test.describe( () => {
 
 	for ( const settings of cartPlm.settings ) {
 		test(
-			buildTestName( `(PCP-0002) PLM - Cart`, settings ),
+			completeTestTitle( `(PCP-0002) PLM - Cart`, settings ),
 			async (
 				{ utils, pcpPayLaterMessaging, cart, classicCart, ppui },
 				testInfo
@@ -221,7 +221,7 @@ test.describe( () => {
 
 	for ( const settings of checkoutPlm.settings ) {
 		test(
-			buildTestName( `(PCP-0003) PLM - Checkout`, settings ),
+			completeTestTitle( `(PCP-0003) PLM - Checkout`, settings ),
 			async (
 				{
 					utils,
@@ -272,7 +272,7 @@ test.describe( () => {
 
 	for ( const settings of homePlm.settings ) {
 		test(
-			buildTestName( `(PCP-0004) PLM - Home`, settings ),
+			completeTestTitle( `(PCP-0004) PLM - Home`, settings ),
 			async (
 				{
 					pcpPayLaterMessaging,
@@ -313,7 +313,7 @@ test.describe( () => {
 
 	for ( const settings of shopPlm.settings ) {
 		test(
-			buildTestName( `(PCP-0005) PLM - Shop`, settings ),
+			completeTestTitle( `(PCP-0005) PLM - Shop`, settings ),
 			async ( { pcpPayLaterMessaging, shop, ppui }, testInfo ) => {
 				const snapshotName = testInfo.title;
 				const { location } = shopPlm;
