@@ -81,3 +81,85 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	await ppui.page.goto( '/' ); // home page
 	await expect( ppui.payLaterMessageContainer() ).not.toBeVisible();
 } );
+
+test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
+	utils,
+	ppui,
+	pcpPayLaterMessaging,
+	shop,
+	product,
+	cart,
+	classicCart,
+	checkout,
+	classicCheckout,
+} ) => {
+	await utils.fillVisitorsCart( [ products.simple10 ] );
+
+	await pcpPayLaterMessaging.visit();
+	await pcpPayLaterMessaging.disableMessagingForLocation( 'Product page' );
+	await pcpPayLaterMessaging.disableMessagingForLocation( 'Cart' );
+	await pcpPayLaterMessaging.disableMessagingForLocation( 'Checkout' );
+	await pcpPayLaterMessaging.disableMessagingForLocation( 'Home' );
+	await pcpPayLaterMessaging.disableMessagingForLocation( 'Shop' );
+	await pcpPayLaterMessaging.saveChanges();
+	await pcpPayLaterMessaging.page.reload();
+
+	expect
+		.soft(
+			await pcpPayLaterMessaging.isMessagingForLocationEnabled(
+				'Product page'
+			)
+		)
+		.toBeFalsy();
+	expect
+		.soft(
+			await pcpPayLaterMessaging.isMessagingForLocationEnabled( 'Cart' )
+		)
+		.toBeFalsy();
+	expect
+		.soft(
+			await pcpPayLaterMessaging.isMessagingForLocationEnabled(
+				'Checkout'
+			)
+		)
+		.toBeFalsy();
+	expect
+		.soft(
+			await pcpPayLaterMessaging.isMessagingForLocationEnabled( 'Home' )
+		)
+		.toBeFalsy();
+	expect
+		.soft(
+			await pcpPayLaterMessaging.isMessagingForLocationEnabled( 'Shop' )
+		)
+		.toBeFalsy();
+
+	await product.visit( products.simple10.slug );
+	await expect
+		.soft( product.ppui.payLaterMessageContainer() )
+		.not.toBeVisible();
+
+	await cart.visit();
+	await expect.soft( cart.ppui.payLaterMessageContainer() ).not.toBeVisible();
+
+	await classicCart.visit();
+	await expect
+		.soft( classicCart.ppui.payLaterMessageContainer() )
+		.not.toBeVisible();
+
+	await checkout.visit();
+	await expect
+		.soft( checkout.ppui.payLaterMessageContainer() )
+		.not.toBeVisible();
+
+	await classicCheckout.visit();
+	await expect
+		.soft( classicCheckout.ppui.payLaterMessageContainer() )
+		.not.toBeVisible();
+
+	await shop.visit();
+	await expect.soft( shop.ppui.payLaterMessageContainer() ).not.toBeVisible();
+
+	await ppui.page.goto( '/' ); // home page
+	await expect.soft( ppui.payLaterMessageContainer() ).not.toBeVisible();
+} );
