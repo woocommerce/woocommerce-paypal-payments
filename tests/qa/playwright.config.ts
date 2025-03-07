@@ -23,6 +23,8 @@ export default defineConfig( {
 	retries: process.env.CI ? 2 : 0,
 	/* Opt out of parallel tests on CI. */
 	workers: process.env.CI ? 1 : 1,
+	/* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot */
+	snapshotDir: './snapshots',
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
 	reporter: process.env.CI
 		? [
@@ -41,7 +43,7 @@ export default defineConfig( {
 		  ]
 		: [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
+				[ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{
