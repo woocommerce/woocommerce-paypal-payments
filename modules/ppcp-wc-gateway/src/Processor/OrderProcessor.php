@@ -212,17 +212,10 @@ class OrderProcessor {
 					throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
 				}
 			} else {
-				$this->logger->warning(
-					sprintf(
-						'No PayPal order ID found in order #%d meta.',
-						$wc_order->get_id()
-					)
-				);
-
 				throw new PayPalOrderMissingException(
-					esc_attr__(
-						'There was an error processing your order. Please check for any charges in your payment method and review your order history before placing the order again.',
-						'woocommerce-paypal-payments'
+					sprintf(
+						'No PayPal order ID found for WooCommerce order #%d.',
+						$wc_order->get_id()
 					)
 				);
 			}
