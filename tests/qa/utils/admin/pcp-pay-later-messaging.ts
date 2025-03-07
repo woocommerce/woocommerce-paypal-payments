@@ -332,7 +332,7 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 			.soft(
 				await this.configContainer().screenshot( {
 					animations: 'disabled',
-					style: '.ppcp-r-navigation-container { display: none; }',
+					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
 				} )
 			)
 			.toMatchSnapshot( snapshotName, { threshold: 0.8 } );

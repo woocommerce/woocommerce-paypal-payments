@@ -1,4 +1,16 @@
 /**
+ * External dependencies
+ */
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
+/**
+ * Internal dependencies
+ */
+import { expect } from './test';
+
+const TEST_RESULTS_DIR = join( process.cwd(), 'test-results' ); // Root 'test-results/' dir
+
+/**
  * Sets annotation about tested customer
  * If tested customer is registered (has non-empty username),
  * then his billing.country will be added to annotation for example: customer-germany
@@ -254,3 +266,88 @@ export function generateRandomString( length: number ): string {
 	}
 	return result;
 }
+
+/**
+ * Saves test result and writes to a JSON file.
+ * Is used for complex scenarios when one resulting test includes many subtests.
+ * - Expects testKey in following format: (PCP-0005)
+ * - Saves result in following format:
+ *     {
+ *         "PCP-0004": { status: "failed", errors: [ ""(PCP-0004) PLM - Home - Black" ] },
+ *         "PCP-0005": { status: "failed", errors: [ ""(PCP-0005) PLM - Shop - Black", "(PCP-0005) PLM - Shop - Blue" ] },
+ *     }
+ * - Subtests can have same testKeys but the titles should differ.
+ *
+ * @param testTitle
+ * @param testStatus
+ * @param filename
+ */
+export const saveTestResultsToFile = (
+	testTitle: string,
+	testStatus: string,
+	filename: string = 'test-results.json'
+) => {
+	const resultsFile = join( TEST_RESULTS_DIR, filename );
+
+	// Ensure directory exists
+	if ( ! existsSync( TEST_RESULTS_DIR ) ) {
+		mkdirSync( TEST_RESULTS_DIR, { recursive: true } );
+	}
+
+	// Read existing results or initialize empty object
+	const results = existsSync( resultsFile )
+		? JSON.parse( readFileSync( resultsFile, 'utf-8' ) )
+		: {};
+
+	const match = testTitle.match( /\((.*?)\)/ );
+	if ( ! match ) return;
+
+	const testKey = match[ 1 ]; // Extract test key
+
+	if ( ! results[ testKey ] ) {
+		results[ testKey ] = { status: 'passed', errors: [] };
+	}
+
+	if ( testStatus !== 'passed' ) {
+		results[ testKey ].status = 'failed';
+		results[ testKey ].errors.push( testTitle );
+	}
+
+	// Write updated results to file
+	writeFileSync( resultsFile, JSON.stringify( results, null, 2 ), 'utf-8' );
+};
+
+/**
+ * Reads test results from a JSON file and validates test status.
+ * Is used for complex scenarios when one resulting test includes many subtests.
+ * - Reads subtest(s) results by testKey.
+ * - Passes/fails test accordinf to "status".
+ * - Outputs "errors" if any.
+ *
+ * @param testKey
+ * @param filename
+ */
+export const getTestResultsFromFile = (
+	testKey: string,
+	filename: string = 'test-results.json'
+) => {
+	const resultsFile = join( TEST_RESULTS_DIR, filename );
+
+	if ( ! existsSync( resultsFile ) ) {
+		throw new Error( `Test results file '${ filename }' not found.` );
+	}
+
+	const results = JSON.parse( readFileSync( resultsFile, 'utf-8' ) );
+	const { status, errors } = results[ testKey ] || {
+		status: 'skipped',
+		errors: [],
+	};
+
+	expect.soft( status ).toBe( 'passed' );
+
+	if ( errors.length > 0 ) {
+		for ( const error of errors ) {
+			expect.soft( error ).toBe( '' );
+		}
+	}
+};
