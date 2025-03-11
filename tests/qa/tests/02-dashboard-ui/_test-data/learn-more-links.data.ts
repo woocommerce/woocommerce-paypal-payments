@@ -107,11 +107,11 @@ export const learnMoreLinksByCountry = {
 		links: [
 			{
 				url: 'https://www.paypal.com/it/business/accept-payments/checkout',
-				title: 'Checkout Pagamento Personalizzato e Ottimizato | PayPal IT',
+				title: 'Checkout PayPal | Checkout Online Personalizzato | PayPal IT',
 			},
 			{
 				url: 'https://www.paypal.com/it/business/accept-payments/checkout/installments',
-				title: 'Pagamenti a Rate | Offri Compra Ora Paga Dopo | PayPal IT',
+				title: 'Pagamenti a Rate | Offri Paga in 3 | PayPal IT',
 			},
 			{
 				url: 'https://www.paypal.com/it/business/paypal-business-fees',
