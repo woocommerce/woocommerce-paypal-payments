@@ -58,3 +58,26 @@ export const initialOnboardingScreenData = [
 		wooCommerceGeneralSettings: shopSettings.croatia.general,
 	},
 ];
+
+export const countriesToCheckConsoleWarnings = [
+	{
+		testSummary:
+			'PCP-0000 | Settings - Croatia - Onboarding initial page - Default UI @percy',
+		wooCommerceGeneralSettings: shopSettings.croatia.general,
+	},
+	{
+		testSummary:
+			'PCP-0000 | Settings - Germany - Onboarding initial page - Default UI @percy',
+		wooCommerceGeneralSettings: shopSettings.germany.general,
+	},
+	{
+		testSummary:
+			'PCP-0000 | Settings - UK - Onboarding initial page - Default UI @percy',
+		wooCommerceGeneralSettings: shopSettings.uk.general,
+	},
+	{
+		testSummary:
+			'PCP-0000 | Settings - US - Onboarding initial page - Default UI @percy',
+		wooCommerceGeneralSettings: shopSettings.usa.general,
+	},
+];

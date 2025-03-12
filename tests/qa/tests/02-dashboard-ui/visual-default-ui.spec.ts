@@ -1,36 +1,50 @@
 /**
  * Internal dependencies
  */
-import { test } from '../../utils';
+import { test, expect } from '../../utils';
 import {
 	merchants,
 	storeConfigDefault,
 	percyPcpSettingsConfig,
+	subscriptionsPlugin,
 } from '../../resources';
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
+	countriesToCheckConsoleWarnings,
 } from './_test-data/badges-per-country.data';
 
 test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
 	await utils.resetPcpDb();
-	await utils.configurePcp( {
-		merchant: merchants.usa,
-	} );
+	// await utils.configurePcp( {
+	// 	merchant: merchants.usa,
+	// } );
 } );
 
 test.describe.serial( () => {
-	test( 'PCP-0000 | Settings - Onboarding initial page - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
+	for ( const country of countriesToCheckConsoleWarnings ) {
+		test.only( `${ country.testSummary }`, async ( {
+			pcpOnboarding,
+			percy,
+			wooCommerceApi,
+		}, testInfo ) => {
+			await wooCommerceApi.updateGeneralSettings(
+				country.wooCommerceGeneralSettings
+			);
+
+			await pcpOnboarding.visit();
+			await pcpOnboarding.gotoInitialOnboardingPage();
+			await pcpOnboarding.page.waitForLoadState();
+
+			const noWarnings =
+				await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
+			expect( noWarnings ).toBeTruthy();
+
+			await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+		} );
+	}
 
 	test( 'PCP-0000 | Settings - Onboarding initial page - See advanced options - Default UI @percy', async ( {
 		pcpOnboarding,
