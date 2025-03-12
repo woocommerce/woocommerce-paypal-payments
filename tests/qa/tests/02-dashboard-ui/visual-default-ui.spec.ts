@@ -3,10 +3,8 @@
  */
 import { test, expect } from '../../utils';
 import {
-	merchants,
 	storeConfigDefault,
 	percyPcpSettingsConfig,
-	subscriptionsPlugin,
 } from '../../resources';
 import {
 	badgeTestsData,
@@ -18,14 +16,11 @@ test.beforeAll( async ( { utils } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
 	await utils.resetPcpDb();
-	// await utils.configurePcp( {
-	// 	merchant: merchants.usa,
-	// } );
 } );
 
 test.describe.serial( () => {
 	for ( const country of countriesToCheckConsoleWarnings ) {
-		test.only( `${ country.testSummary }`, async ( {
+		test( `${ country.testSummary }`, async ( {
 			pcpOnboarding,
 			percy,
 			wooCommerceApi,
