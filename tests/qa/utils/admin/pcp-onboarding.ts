@@ -114,4 +114,32 @@ export class PcpOnboarding extends PcpAdminPage {
 	};
 
 	// Assertions
+	/**
+	 * verifies if there is no warning on the console about badgeBoxUtils.js
+	 */
+	assertNoBadgeBoxUtilsWarnings = async () => {
+		// stores console messages
+		const consoleMessages: Array< { type: string; text: string } > = [];
+
+		// Listens for console messages
+		const listener = ( msg: any ) => {
+			consoleMessages.push( {
+				type: msg.type(),
+				text: msg.text(),
+			} );
+		};
+		this.page.on( 'console', listener );
+		await this.page.waitForTimeout( 500 );
+
+		this.page.removeListener( 'console', listener );
+
+		const badgeBoxWarnings = consoleMessages.filter(
+			( msg ) =>
+				msg.type === 'warning' &&
+				msg.text.includes( 'badgeBoxUtils.js' )
+		);
+
+		// return true if there is no warning
+		return badgeBoxWarnings.length === 0;
+	};
 }

@@ -20,16 +20,8 @@ const textColors: Pcp.Admin.Plm.TextColor[] = [
 	'Monochrome',
 	'Black / Gray logo',
 ];
-const logoPositions: Pcp.Admin.Plm.LogoPosition[] = [
-	'Left',
-	'Right',
-	'Top'
-];
-const textSizes: Pcp.Admin.Plm.TextSize[] = [
-	'Small',
-	'Medium',
-	'Large'
-];
+const logoPositions: Pcp.Admin.Plm.LogoPosition[] = [ 'Left', 'Right', 'Top' ];
+const textSizes: Pcp.Admin.Plm.TextSize[] = [ 'Small', 'Medium', 'Large' ];
 
 const bannerLocations: Pcp.Admin.Plm.Location[] = [ 'Home', 'Shop' ];
 const bannerColors: Pcp.Admin.Plm.BannerColor[] = [
