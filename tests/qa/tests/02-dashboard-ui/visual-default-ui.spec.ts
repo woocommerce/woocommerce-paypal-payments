@@ -9,7 +9,7 @@ import {
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
-	countriesToCheckConsoleWarnings,
+	defaultUITestData
 } from './_test-data/badges-per-country.data';
 
 test.beforeAll( async ( { utils } ) => {
@@ -19,7 +19,7 @@ test.beforeAll( async ( { utils } ) => {
 } );
 
 test.describe.serial( () => {
-	for ( const country of countriesToCheckConsoleWarnings ) {
+	for ( const country of defaultUITestData ) {
 		test( `${ country.testSummary }`, async ( {
 			pcpOnboarding,
 			percy,
