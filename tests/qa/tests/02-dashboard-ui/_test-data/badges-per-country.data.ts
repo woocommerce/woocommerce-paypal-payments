@@ -59,7 +59,7 @@ export const initialOnboardingScreenData = [
 	},
 ];
 
-export const countriesToCheckConsoleWarnings = [
+export const defaultUITestData = [
 	{
 		testSummary:
 			'PCP-0000 | Settings - Croatia - Onboarding initial page - Default UI @percy',
