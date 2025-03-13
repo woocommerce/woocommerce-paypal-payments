@@ -91,24 +91,32 @@ export class PcpOnboarding extends PcpAdminPage {
 		}
 	};
 
-	enableManuallyConnect = async () => {
-		const isChecked = await this.enableManuallyConnectToggle().getAttribute(
-			'class'
+	toggleManuallyConnect = async ( enable: boolean ) => {
+		await this.enableConnectionOptionsToogle(
+			this.enableManuallyConnectToggle(),
+			this.enableManuallyConnectLabel(),
+			enable
 		);
-		const isToggleChecked = isChecked.includes( 'is-checked' );
-		if ( ! isToggleChecked ) {
-			await this.enableManuallyConnectLabel().click();
-			await this.page.waitForLoadState( 'networkidle' );
-		}
 	};
 
-	enableSandboxMode = async () => {
-		const isChecked = await this.enableSandboxModeToggle().getAttribute(
-			'class'
+	toggleSandboxMode = async ( enable: boolean ) => {
+		await this.enableConnectionOptionsToogle(
+			this.enableSandboxModeToggle(),
+			this.enableSandboxModeLabel(),
+			enable
 		);
+	};
+
+	enableConnectionOptionsToogle = async (
+		toggleLocator,
+		labelLocator,
+		enable: boolean
+	) => {
+		const isChecked = await toggleLocator.getAttribute( 'class' );
 		const isToggleChecked = isChecked.includes( 'is-checked' );
-		if ( ! isToggleChecked ) {
-			await this.enableSandboxModeLabel().click();
+
+		if ( isToggleChecked !== enable ) {
+			await labelLocator.click();
 			await this.page.waitForLoadState( 'networkidle' );
 		}
 	};

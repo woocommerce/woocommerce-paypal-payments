@@ -5,7 +5,6 @@ import { test, expect } from '../../utils';
 import { storeConfigDefault, percyPcpSettingsConfig } from '../../resources';
 import {
 	badgeTestsData,
-	initialOnboardingScreenData,
 	defaultUITestData,
 } from './_test-data/ui-tests-per-country.data';
 
