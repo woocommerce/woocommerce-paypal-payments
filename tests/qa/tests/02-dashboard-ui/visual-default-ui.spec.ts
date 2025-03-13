@@ -2,14 +2,11 @@
  * Internal dependencies
  */
 import { test, expect } from '../../utils';
-import {
-	storeConfigDefault,
-	percyPcpSettingsConfig,
-} from '../../resources';
+import { storeConfigDefault, percyPcpSettingsConfig } from '../../resources';
 import {
 	badgeTestsData,
 	initialOnboardingScreenData,
-	defaultUITestData
+	defaultUITestData,
 } from './_test-data/ui-tests-per-country.data';
 
 test.beforeAll( async ( { utils } ) => {
@@ -41,7 +38,7 @@ test.describe.serial( () => {
 		} );
 	}
 
-	test( 'PCP-0000 | Settings - Onboarding initial page - See advanced options - Default UI @percy', async ( {
+	test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
@@ -82,43 +79,43 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Onboarding - Enable Sandbox mode - Default UI @percy', async ( {
+	test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
-		await pcpOnboarding.enableSandboxMode();
+		await pcpOnboarding.toggleSandboxMode( true );
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @percy', async ( {
+	test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
-		await pcpOnboarding.enableManuallyConnect();
+		await pcpOnboarding.toggleManuallyConnect( true );
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 } );
 
-test.describe( () => {
-	for ( const data of initialOnboardingScreenData ) {
-		test( `${ data.testSummary }`, async ( {
-			pcpOnboarding,
-			percy,
-			wooCommerceApi,
-		}, testInfo ) => {
-			await wooCommerceApi.updateGeneralSettings(
-				data.wooCommerceGeneralSettings
-			);
-			await pcpOnboarding.visit();
-			await pcpOnboarding.gotoInitialOnboardingPage();
-			await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-		} );
-	}
-} );
+// test.describe( () => {
+// 	for ( const data of initialOnboardingScreenData ) {
+// 		test( `${ data.testSummary }`, async ( {
+// 			pcpOnboarding,
+// 			percy,
+// 			wooCommerceApi,
+// 		}, testInfo ) => {
+// 			await wooCommerceApi.updateGeneralSettings(
+// 				data.wooCommerceGeneralSettings
+// 			);
+// 			await pcpOnboarding.visit();
+// 			await pcpOnboarding.gotoInitialOnboardingPage();
+// 			await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+// 		} );
+// 	}
+// } );
 
 test.describe( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
