@@ -5,7 +5,7 @@ import { test, expect } from '../../utils';
 import { storeConfigDefault, percyPcpSettingsConfig } from '../../resources';
 import {
 	badgeTestsData,
-	defaultUITestData,
+	defaultUiTestData,
 } from './_test-data/ui-tests-per-country.data';
 
 test.beforeAll( async ( { utils } ) => {
@@ -15,7 +15,7 @@ test.beforeAll( async ( { utils } ) => {
 } );
 
 test.describe.serial( () => {
-	for ( const country of defaultUITestData ) {
+	for ( const country of defaultUiTestData ) {
 		test( `${ country.testSummary }`, async ( {
 			pcpOnboarding,
 			percy,

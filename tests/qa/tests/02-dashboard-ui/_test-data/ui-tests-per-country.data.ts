@@ -47,7 +47,7 @@ export const badgeTestsData = [
 ];
 
 
-export const defaultUITestData = [
+export const defaultUiTestData = [
 	{
 		testSummary:
 			'PCP-4311 | Settings - Croatia - Onboarding initial page - Default UI @percy',
