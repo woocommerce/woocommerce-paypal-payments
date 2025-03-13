@@ -45,39 +45,6 @@ test.describe.serial( () => {
 		await pcpOnboarding.openAdvancedOptions();
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
-
-	test( 'PCP-0000 | Settings - Onboarding - Select product types - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
-
-	test( 'PCP-0000 | Settings - Onboarding - Choose checkout options - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
-
-	test( 'PCP-0000 | Settings - Onbarding - Connect your PayPal account - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
-
 	test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
@@ -95,6 +62,47 @@ test.describe.serial( () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.openAdvancedOptions();
 		await pcpOnboarding.toggleManuallyConnect( true );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+	} );
+
+
+	test( 'PCP-0000 | Settings - Onboarding - Select product types - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.activatePayPalPaymentsButton().click();
+		await pcpOnboarding.page.waitForLoadState();
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+	} );
+
+	test( 'PCP-0000 | Settings - Onboarding - Choose checkout options - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.businessRadio().click();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.virtualCheckbox().check();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.page.waitForLoadState();
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+	} );
+
+	test( 'PCP-0000 | Settings - Onbarding - Connect your PayPal account - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.gotoInitialOnboardingPage();
+		await pcpOnboarding.activatePayPalPaymentsButton().click();
+		await pcpOnboarding.businessRadio().click();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.virtualCheckbox().check();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.page.waitForLoadState();
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 } );
