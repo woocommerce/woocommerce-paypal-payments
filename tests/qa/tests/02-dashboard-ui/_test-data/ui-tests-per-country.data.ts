@@ -46,38 +46,26 @@ export const badgeTestsData = [
 	},
 ];
 
-export const initialOnboardingScreenData = [
-	{
-		testSummary:
-			'PCP-0000 | Settings - UK - Onboarding - Default UI (acdc, paylater) - Default UI @percy',
-		wooCommerceGeneralSettings: shopSettings.uk.general,
-	},
-	{
-		testSummary:
-			'PCP-0000 | Settings - Croatia - Onboarding - Default UI (only BCDC) - Default UI @percy',
-		wooCommerceGeneralSettings: shopSettings.croatia.general,
-	},
-];
 
 export const defaultUITestData = [
 	{
 		testSummary:
-			'PCP-0000 | Settings - Croatia - Onboarding initial page - Default UI @percy',
+			'PCP-4311 | Settings - Croatia - Onboarding initial page - Default UI @percy',
 		wooCommerceGeneralSettings: shopSettings.croatia.general,
 	},
 	{
 		testSummary:
-			'PCP-0000 | Settings - Germany - Onboarding initial page - Default UI @percy',
+			'PCP-4309 | Settings - Germany - Onboarding initial page - Default UI @percy',
 		wooCommerceGeneralSettings: shopSettings.germany.general,
 	},
 	{
 		testSummary:
-			'PCP-0000 | Settings - UK - Onboarding initial page - Default UI @percy',
+			'PCP-4310 | Settings - UK - Onboarding initial page - Default UI @percy',
 		wooCommerceGeneralSettings: shopSettings.uk.general,
 	},
 	{
 		testSummary:
-			'PCP-0000 | Settings - US - Onboarding initial page - Default UI @percy',
+			'PCP-4308 | Settings - US - Onboarding initial page - Default UI @percy',
 		wooCommerceGeneralSettings: shopSettings.usa.general,
 	},
 ];

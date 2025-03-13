@@ -100,22 +100,6 @@ test.describe.serial( () => {
 	} );
 } );
 
-// test.describe( () => {
-// 	for ( const data of initialOnboardingScreenData ) {
-// 		test( `${ data.testSummary }`, async ( {
-// 			pcpOnboarding,
-// 			percy,
-// 			wooCommerceApi,
-// 		}, testInfo ) => {
-// 			await wooCommerceApi.updateGeneralSettings(
-// 				data.wooCommerceGeneralSettings
-// 			);
-// 			await pcpOnboarding.visit();
-// 			await pcpOnboarding.gotoInitialOnboardingPage();
-// 			await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-// 		} );
-// 	}
-// } );
 
 test.describe( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
