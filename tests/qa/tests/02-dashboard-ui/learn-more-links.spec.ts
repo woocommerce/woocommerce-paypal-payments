@@ -19,6 +19,7 @@ test.describe( () => {
 				} );
 
 				await pcpOnboarding.visit();
+				await pcpOnboarding.gotoInitialOnboardingPage();
 				await pcpOnboarding.page.waitForLoadState( 'networkidle' );
 				for ( const { url, title } of expectedLinks ) {
 					const link = await pcpOnboarding.page.locator(
