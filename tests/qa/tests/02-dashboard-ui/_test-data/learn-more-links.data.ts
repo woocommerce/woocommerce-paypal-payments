@@ -1,7 +1,7 @@
 export const learnMoreLinksByCountry = {
 	'US:AZ': {
 		testTitle:
-			'PCP-0000 | Settings - United States - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4327 | Settings - United States - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/us/business/accept-payments/checkout',
@@ -35,7 +35,7 @@ export const learnMoreLinksByCountry = {
 	},
 	'CA:ON': {
 		testTitle:
-			'PCP-0000 | Settings - Canada - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4328 | Settings - Canada - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/ca/business/accept-payments/checkout',
@@ -49,7 +49,7 @@ export const learnMoreLinksByCountry = {
 	},
 	GB: {
 		testTitle:
-			'PCP-0000 | Settings - United Kingdom - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4329 | Settings - United Kingdom - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/uk/business/accept-payments/checkout',
@@ -67,7 +67,7 @@ export const learnMoreLinksByCountry = {
 	},
 	FR: {
 		testTitle:
-			'PCP-0000 | Settings - France - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4331 | Settings - France - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/fr/business/accept-payments/checkout',
@@ -85,7 +85,7 @@ export const learnMoreLinksByCountry = {
 	},
 	'ES:B': {
 		testTitle:
-			'PCP-0000 | Settings - Spain - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4332 | Settings - Spain - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/es/business/accept-payments/checkout',
@@ -103,7 +103,7 @@ export const learnMoreLinksByCountry = {
 	},
 	'IT:RM': {
 		testTitle:
-			'PCP-0000 | Settings - Italy - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4333 | Settings - Italy - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/it/business/accept-payments/checkout',
@@ -121,7 +121,7 @@ export const learnMoreLinksByCountry = {
 	},
 	'DE:DE-BE': {
 		testTitle:
-			'PCP-0000 | Settings - Germany - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4334 | Settings - Germany - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/de/business/accept-payments/checkout',
@@ -139,7 +139,7 @@ export const learnMoreLinksByCountry = {
 	},
 	'AU:NSW': {
 		testTitle:
-			'PCP-0000 | Settings - Australia - Onboarding - Links Learn more and link for fees in footer',
+			'PCP-4335 | Settings - Australia - Onboarding - Links Learn more and link for fees in footer',
 		links: [
 			{
 				url: 'https://www.paypal.com/au/business/accept-payments/checkout',

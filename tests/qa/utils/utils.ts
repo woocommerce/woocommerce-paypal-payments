@@ -201,8 +201,8 @@ export class Utils {
 		await this.pcpOnboarding.visit();
 		await this.pcpOnboarding.gotoInitialOnboardingPage();
 		await this.pcpOnboarding.openAdvancedOptions();
-		await this.pcpOnboarding.enableSandboxMode();
-		await this.pcpOnboarding.enableManuallyConnect();
+		await this.pcpOnboarding.toggleSandboxMode( true );
+		await this.pcpOnboarding.toggleManuallyConnect( true );
 		await this.pcpOnboarding
 			.sandboxClientIdInput()
 			.fill( merchant.client_id );
