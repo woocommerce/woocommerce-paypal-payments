@@ -75,7 +75,7 @@ test.describe.serial( () => {
 		await pcpOnboarding.toggleManuallyConnect( true );
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
-	
+
 	test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
@@ -88,7 +88,6 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 } );
-
 
 test.describe( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
