@@ -67,9 +67,33 @@ test.describe.serial( () => {
 		await pcpOnboarding.toggleManuallyConnect( true );
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
+
+	test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NOT enabled - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.toggleSandboxMode( false );
+		await pcpOnboarding.toggleManuallyConnect( true );
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+	} );
+	
+	test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI @percy', async ( {
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.toggleSandboxMode( false );
+		await pcpOnboarding.toggleManuallyConnect( false );
+		await pcpOnboarding.enableManuallyConnectToggle().click();
+		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+	} );
 } );
 
-test.describe.serial.only( () => {
+
+test.describe( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
 	for ( const testData of badgeTestsData ) {
