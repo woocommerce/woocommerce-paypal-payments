@@ -33,7 +33,7 @@ test.describe.serial( () => {
 				await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
 			expect( noWarnings ).toBeTruthy();
 
-			await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
+			await percy.takeSnapshot( `${testInfo.title} - ${country}`, percyPcpSettingsConfig );
 		} );
 	}
 
@@ -64,51 +64,10 @@ test.describe.serial( () => {
 		await pcpOnboarding.toggleManuallyConnect( true );
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
-
-
-	test( 'PCP-0000 | Settings - Onboarding - Select product types - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
-
-	test( 'PCP-0000 | Settings - Onboarding - Choose checkout options - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.businessRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
-
-	test( 'PCP-0000 | Settings - Onbarding - Connect your PayPal account - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await pcpOnboarding.businessRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
 } );
 
 
-test.describe( () => {
+test.describe.serial( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
 	for ( const testData of badgeTestsData ) {
@@ -119,14 +78,14 @@ test.describe( () => {
 			pcpOnboarding,
 			percy,
 		}, testInfo ) => {
-			await pcpOnboarding.visit();
+			
 			for ( const currency of currencies ) {
 				await wooCommerceApi.updateGeneralSettings( {
 					woocommerce_default_country: wooCommerceCountryCode,
 					woocommerce_currency: currency,
 				} );
-
-				await pcpOnboarding.page.reload();
+				await pcpOnboarding.visit();
+				// await pcpOnboarding.page.reload();
 				await pcpOnboarding.gotoInitialOnboardingPage();
 				await pcpOnboarding
 					.badgeContainer()
@@ -155,3 +114,23 @@ test.describe( () => {
 		} );
 	}
 } );
+
+	test('PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ({ pcpOnboarding, percy}, testInfo) => {
+		await pcpOnboarding.visit();
+		await pcpOnboarding.activatePayPalPaymentsButton().click();
+		await percy.takeSnapshot(`${testInfo.title} - `, percyPcpSettingsConfig);
+
+		await pcpOnboarding.businessRadio().click();
+		await percy.takeSnapshot(`${testInfo.title} - Set up store type`, percyPcpSettingsConfig);
+		await pcpOnboarding.continueButton().click();
+		await percy.takeSnapshot(`${testInfo.title} - Select product types - No option selected`, percyPcpSettingsConfig);
+
+		await pcpOnboarding.physicalGoodsCheckbox().check();
+		await pcpOnboarding.virtualCheckbox().check();
+		await percy.takeSnapshot(`${testInfo.title} - Select product types - Products selected `, percyPcpSettingsConfig);
+		await pcpOnboarding.continueButton().click();
+		await percy.takeSnapshot(`${testInfo.title} - Choose checkout options`, percyPcpSettingsConfig);
+		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+		await percy.takeSnapshot(`${testInfo.title} - Choose checkout options - Card payments disabled`, percyPcpSettingsConfig);
+
+	});
