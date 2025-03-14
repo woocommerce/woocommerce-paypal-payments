@@ -46,7 +46,6 @@ export const badgeTestsData = [
 	},
 ];
 
-
 export const defaultUiTestData = [
 	{
 		testSummary:

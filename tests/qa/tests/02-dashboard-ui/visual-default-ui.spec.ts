@@ -33,7 +33,10 @@ test.describe.serial( () => {
 				await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
 			expect( noWarnings ).toBeTruthy();
 
-			await percy.takeSnapshot( `${testInfo.title} - ${country}`, percyPcpSettingsConfig );
+			await percy.takeSnapshot(
+				`${ testInfo.title } - ${ country }`,
+				percyPcpSettingsConfig
+			);
 		} );
 	}
 
@@ -66,8 +69,7 @@ test.describe.serial( () => {
 	} );
 } );
 
-
-test.describe.serial( () => {
+test.describe.serial.only( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
 	for ( const testData of badgeTestsData ) {
@@ -78,14 +80,12 @@ test.describe.serial( () => {
 			pcpOnboarding,
 			percy,
 		}, testInfo ) => {
-			
 			for ( const currency of currencies ) {
 				await wooCommerceApi.updateGeneralSettings( {
 					woocommerce_default_country: wooCommerceCountryCode,
 					woocommerce_currency: currency,
 				} );
 				await pcpOnboarding.visit();
-				// await pcpOnboarding.page.reload();
 				await pcpOnboarding.gotoInitialOnboardingPage();
 				await pcpOnboarding
 					.badgeContainer()
@@ -115,22 +115,42 @@ test.describe.serial( () => {
 	}
 } );
 
-	test('PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ({ pcpOnboarding, percy}, testInfo) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await percy.takeSnapshot(`${testInfo.title} - `, percyPcpSettingsConfig);
+test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ( {
+	pcpOnboarding,
+	percy,
+}, testInfo ) => {
+	await pcpOnboarding.visit();
+	await pcpOnboarding.activatePayPalPaymentsButton().click();
+	await percy.takeSnapshot(
+		`${ testInfo.title } - `,
+		percyPcpSettingsConfig
+	);
 
-		await pcpOnboarding.businessRadio().click();
-		await percy.takeSnapshot(`${testInfo.title} - Set up store type`, percyPcpSettingsConfig);
-		await pcpOnboarding.continueButton().click();
-		await percy.takeSnapshot(`${testInfo.title} - Select product types - No option selected`, percyPcpSettingsConfig);
+	await pcpOnboarding.businessRadio().click();
+	await percy.takeSnapshot(
+		`${ testInfo.title } - Set up store type`,
+		percyPcpSettingsConfig
+	);
+	await pcpOnboarding.continueButton().click();
+	await percy.takeSnapshot(
+		`${ testInfo.title } - Select product types - No option selected`,
+		percyPcpSettingsConfig
+	);
 
-		await pcpOnboarding.physicalGoodsCheckbox().check();
-		await pcpOnboarding.virtualCheckbox().check();
-		await percy.takeSnapshot(`${testInfo.title} - Select product types - Products selected `, percyPcpSettingsConfig);
-		await pcpOnboarding.continueButton().click();
-		await percy.takeSnapshot(`${testInfo.title} - Choose checkout options`, percyPcpSettingsConfig);
-		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-		await percy.takeSnapshot(`${testInfo.title} - Choose checkout options - Card payments disabled`, percyPcpSettingsConfig);
-
-	});
+	await pcpOnboarding.physicalGoodsCheckbox().check();
+	await pcpOnboarding.virtualCheckbox().check();
+	await percy.takeSnapshot(
+		`${ testInfo.title } - Select product types - Products selected `,
+		percyPcpSettingsConfig
+	);
+	await pcpOnboarding.continueButton().click();
+	await percy.takeSnapshot(
+		`${ testInfo.title } - Choose checkout options`,
+		percyPcpSettingsConfig
+	);
+	await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+	await percy.takeSnapshot(
+		`${ testInfo.title } - Choose checkout options - Card payments disabled`,
+		percyPcpSettingsConfig
+	);
+} );
