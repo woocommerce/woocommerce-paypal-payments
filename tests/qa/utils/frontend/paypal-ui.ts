@@ -32,8 +32,10 @@ export class PayPalUI {
 
 	payPalIframe = () =>
 		this.page.frameLocator(
-			'[id^="ppc-button-ppcp-gateway"] .component-frame.visible'
+			'#ppc-button-ppcp-gateway iframe[name^="__zoid__paypal_buttons__"]'
 		);
+	payPalButtonsClassicContainer = () =>
+		this.payPalIframe().locator( '#buttons-container' );
 	fundingSourceButton = ( name ) =>
 		this.payPalIframe().locator( `[data-funding-source="${ name }"]` );
 
@@ -75,8 +77,14 @@ export class PayPalUI {
 	acdcGatewayText = () =>
 		this.page.locator( '.payment_method_ppcp-credit-card-gateway>label' );
 
-	blockSmartButtonIframe = () =>
-		this.page.locator( '[id^="express-payment-method-ppcp-gateway-"]' );
+	payPalButtonsBlockContainer = () =>
+		this.page.locator(
+			'ul.wc-block-components-express-payment__event-buttons'
+		);
+	blockSmartButtonListItem = () =>
+		this.payPalButtonsBlockContainer().locator(
+			'li[id^="express-payment-method-"]'
+		);
 	blockPayPalButton = () =>
 		this.page
 			.frameLocator(
@@ -156,6 +164,8 @@ export class PayPalUI {
 
 	miniCartButtonIframe = () =>
 		this.page.frameLocator( '#ppc-button-minicart .component-frame' );
+	miniCartButtonContainer = () =>
+		this.miniCartButtonIframe().locator( '#buttons-container' );
 	miniCartFundingSourceButton = ( name ) =>
 		this.miniCartButtonIframe().locator(
 			`[data-funding-source="${ name }"]`
@@ -850,7 +860,7 @@ export class PayPalUI {
 
 	collectBlockSmartButtons = async () => {
 		const blockSmartButtons: any = [];
-		const listIframes = await this.blockSmartButtonIframe().all();
+		const listIframes = await this.blockSmartButtonListItem().all();
 		for ( const iframe of listIframes ) {
 			const smartButton = iframe
 				.frameLocator( '.component-frame' )
