@@ -124,7 +124,7 @@ const snapshotPlmContainer = async ( ppui: PayPalUI, snapshotName: string ) => {
 		await ppui
 			.payLaterMessageContainer()
 			.screenshot( { animations: 'disabled' } )
-	).toMatchSnapshot( snapshotName );
+	).toMatchSnapshot( `${ snapshotName }.png` );
 };
 
 test.describe( 'Subtests', () => {
@@ -160,13 +160,13 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
 				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save.png`
+					`${ snapshotName } - After save`
 				);
 
 				await product.visit( products.simple10.slug );
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend.png`
+					`${ snapshotName } - Frontend`
 				);
 			}
 		);
@@ -199,19 +199,19 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
 				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save.png`
+					`${ snapshotName } - After save`
 				);
 				// Block cart
 				await cart.visit();
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend - Block cart.png`
+					`${ snapshotName } - Frontend - Block cart`
 				);
 				// Classic cart
 				await classicCart.visit();
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend - Classic cart.png`
+					`${ snapshotName } - Frontend - Classic cart`
 				);
 			}
 		);
@@ -250,19 +250,19 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
 				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save.png`
+					`${ snapshotName } - After save`
 				);
 				// Block checkout
 				await checkout.visit();
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend - Block checkout.png`
+					`${ snapshotName } - Frontend - Block checkout`
 				);
 				// Classic checkout
 				await classicCheckout.visit();
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend - Classic checkout.png`
+					`${ snapshotName } - Frontend - Classic checkout`
 				);
 			}
 		);
@@ -297,13 +297,13 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
 				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save.png`
+					`${ snapshotName } - After save`
 				);
 
 				await ppui.page.goto( '/' );
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend.png`
+					`${ snapshotName } - Frontend`
 				);
 			}
 		);
@@ -331,13 +331,13 @@ test.describe( 'Subtests', () => {
 				await pcpPayLaterMessaging.expandAccordionSection( location );
 				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
 				await pcpPayLaterMessaging.snapshotPlmConfigurator(
-					`${ snapshotName } - After save.png`
+					`${ snapshotName } - After save`
 				);
 
 				await shop.visit();
 				await snapshotPlmContainer(
 					ppui,
-					`${ snapshotName } - Frontend.png`
+					`${ snapshotName } - Frontend`
 				);
 			}
 		);

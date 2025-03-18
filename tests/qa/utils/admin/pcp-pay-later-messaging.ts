@@ -335,6 +335,6 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
 				} )
 			)
-			.toMatchSnapshot( snapshotName, { threshold: 0.8 } );
+			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
 	};
 }
