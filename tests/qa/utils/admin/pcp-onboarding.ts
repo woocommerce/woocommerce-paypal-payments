@@ -25,15 +25,29 @@ export class PcpOnboarding extends PcpAdminPage {
 	advancedOptionsContent = () =>
 		this.advancedOptionsSection().locator( '.ppcp-r-accordion__content' );
 
+	selectBoxContentContainer = () => this.page.locator( '.ppcp--box-content' );
+	selectBoxContentDetail = () =>
+		this.selectBoxContentContainer().locator( '.ppcp--box-details p' );
+
 	businessRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="business"]' );
 	personalAccountRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="casual_seller"]' );
+	personalAccountContentDetail = () =>
+		this.selectBoxContentContainer().locator(
+			this.selectBoxContentDetail()
+		);
 
 	virtualCheckbox = () =>
 		this.page.locator( 'input[type="checkbox"][value="virtual"]' );
 	physicalGoodsCheckbox = () =>
 		this.page.locator( 'input[type="checkbox"][value="physical"]' );
+	subscriptionsCheckbox = () =>
+		this.page.locator( 'input[type="checkbox"][value="subscriptions"]' );
+	subscriptionsContentDetail = () =>
+		this.selectBoxContentContainer().locator(
+			this.selectBoxContentDetail()
+		);
 
 	enableOptionalPaymentMethodsRadio = () =>
 		this.page.locator( 'input.ppcp-r__radio-value[value="true"]' );
