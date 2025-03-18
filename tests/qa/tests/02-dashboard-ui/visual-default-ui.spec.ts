@@ -65,48 +65,29 @@ test.describe.serial( () => {
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
-
-	test( 'PCP-0000 | Settings - Onboarding - Select product types - Default UI @percy', async ( {
+	test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NOT enabled - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await pcpOnboarding.page.waitForLoadState();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.toggleSandboxMode( false );
+		await pcpOnboarding.toggleManuallyConnect( true );
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 
-	test( 'PCP-0000 | Settings - Onboarding - Choose checkout options - Default UI @percy', async ( {
+	test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI @percy', async ( {
 		pcpOnboarding,
 		percy,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
-		await pcpOnboarding.businessRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.page.waitForLoadState();
-		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
-	} );
-
-	test( 'PCP-0000 | Settings - Onbarding - Connect your PayPal account - Default UI @percy', async ( {
-		pcpOnboarding,
-		percy,
-	}, testInfo ) => {
-		await pcpOnboarding.visit();
-		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await pcpOnboarding.businessRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.virtualCheckbox().check();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.page.waitForLoadState();
+		await pcpOnboarding.openAdvancedOptions();
+		await pcpOnboarding.toggleSandboxMode( false );
+		await pcpOnboarding.toggleManuallyConnect( false );
+		await pcpOnboarding.enableManuallyConnectToggle().click();
 		await percy.takeSnapshot( testInfo.title, percyPcpSettingsConfig );
 	} );
 } );
-
 
 test.describe( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
