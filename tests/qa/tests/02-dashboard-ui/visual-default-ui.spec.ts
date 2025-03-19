@@ -2,7 +2,11 @@
  * Internal dependencies
  */
 import { test, expect } from '../../utils';
-import { storeConfigDefault, percyPcpSettingsConfig } from '../../resources';
+import {
+	storeConfigDefault,
+	percyPcpSettingsConfig,
+	subscriptionsPlugin,
+} from '../../resources';
 import {
 	badgeTestsData,
 	defaultUiTestData,
