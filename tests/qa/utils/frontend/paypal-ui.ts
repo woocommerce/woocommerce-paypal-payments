@@ -807,6 +807,7 @@ export class PayPalUI {
 	};
 
 	// Assertions
+	// TODO: cleanup methods after migration of legacy tests
 
 	assertPayPalButtonVisibility = async ( isVisible: boolean ) => {
 		await expect( this.payPalButton() ).toBeVisible( {
@@ -868,5 +869,59 @@ export class PayPalUI {
 			await blockSmartButtons.push( smartButton );
 		}
 		return blockSmartButtons;
+	};
+
+	/**
+	 * - Asserts PayPal buttons classic container is visible.
+	 * - Compares actual PayPal buttons container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotClassicPayPalButtons = async (
+		snapshotName: string
+	) => {
+		await expect( this.payPalButtonsClassicContainer() ).toBeVisible();
+		await this.page.waitForTimeout( 500 );
+		expect(
+			await this
+				.payPalButtonsClassicContainer()
+				.screenshot( { animations: 'disabled' } )
+		).toMatchSnapshot( `${ snapshotName }.png` );
+	};
+	
+	/**
+	 * - Asserts Minicart PayPal buttons container is visible.
+	 * - Compares actual PayPal buttons container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotMinicartPayPalButtons = async (
+		snapshotName: string
+	) => {
+		await expect( this.miniCartButtonContainer() ).toBeVisible();
+		await this.page.waitForTimeout( 500 );
+		expect(
+			await this
+				.miniCartButtonContainer()
+				.screenshot( { animations: 'disabled' } )
+		).toMatchSnapshot( `${ snapshotName }.png` );
+	};
+	
+	/**
+	 * - Asserts PayPal buttons block container is visible.
+	 * - Compares actual PayPal buttons container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotBlockPayPalButtons = async (
+		snapshotName: string
+	) => {
+		await expect( this.payPalButtonsBlockContainer() ).toBeVisible();
+		await this.page.waitForTimeout( 500 );
+		expect(
+			await this
+				.payPalButtonsBlockContainer()
+				.screenshot( { animations: 'disabled' } )
+		).toMatchSnapshot( `${ snapshotName }.png` );
 	};
 }
