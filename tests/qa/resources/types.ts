@@ -75,9 +75,39 @@ export namespace Pcp {
 				| 'Mini Cart'
 				| 'Product Page';
 
+			export type PaymentMethods =
+				| 'PayPal'
+				| 'Venmo'
+				| 'Pay Later'
+				| 'Google Pay'
+				| 'Apple Pay';
+
+			export type ButtonLayout = 'Vertical' | 'Horizontal';
+
+			export type ButtonShape = 'Rectangle' | 'Pill';
+
+			export type ButtonLabel =
+				| 'Paypal'
+				| 'Checkout'
+				| 'PayPal Buy Now'
+				| 'Pay with PayPal';
+
+			export type ButtonColor =
+				| 'Gold (recommended)'
+				| 'Blue'
+				| 'Silver'
+				| 'Black'
+				| 'White';
+
 			export type Config = {
-				location: Location;
-				// TODO
+				location?: Location;
+				enablePaymentMethodsInLocation?: boolean;
+				paymentMethods?: PaymentMethods;
+				buttonLayout?: ButtonLayout;
+				enableTagline?: boolean;
+				buttonShape?: ButtonShape;
+				buttonLabel?: ButtonLabel;
+				buttonColor?: ButtonColor;
 			};
 		}
 

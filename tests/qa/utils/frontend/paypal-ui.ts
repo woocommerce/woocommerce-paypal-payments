@@ -32,8 +32,10 @@ export class PayPalUI {
 
 	payPalIframe = () =>
 		this.page.frameLocator(
-			'[id^="ppc-button-ppcp-gateway"] .component-frame.visible'
+			'#ppc-button-ppcp-gateway iframe[name^="__zoid__paypal_buttons__"]'
 		);
+	payPalButtonsClassicContainer = () =>
+		this.payPalIframe().locator( '#buttons-container' );
 	fundingSourceButton = ( name ) =>
 		this.payPalIframe().locator( `[data-funding-source="${ name }"]` );
 
@@ -75,8 +77,14 @@ export class PayPalUI {
 	acdcGatewayText = () =>
 		this.page.locator( '.payment_method_ppcp-credit-card-gateway>label' );
 
-	blockSmartButtonIframe = () =>
-		this.page.locator( '[id^="express-payment-method-ppcp-gateway-"]' );
+	payPalButtonsBlockContainer = () =>
+		this.page.locator(
+			'ul.wc-block-components-express-payment__event-buttons'
+		);
+	blockSmartButtonListItem = () =>
+		this.payPalButtonsBlockContainer().locator(
+			'li[id^="express-payment-method-"]'
+		);
 	blockPayPalButton = () =>
 		this.page
 			.frameLocator(
@@ -156,6 +164,8 @@ export class PayPalUI {
 
 	miniCartButtonIframe = () =>
 		this.page.frameLocator( '#ppc-button-minicart .component-frame' );
+	miniCartButtonContainer = () =>
+		this.miniCartButtonIframe().locator( '#buttons-container' );
 	miniCartFundingSourceButton = ( name ) =>
 		this.miniCartButtonIframe().locator(
 			`[data-funding-source="${ name }"]`
@@ -797,6 +807,7 @@ export class PayPalUI {
 	};
 
 	// Assertions
+	// TODO: cleanup methods after migration of legacy tests
 
 	assertPayPalButtonVisibility = async ( isVisible: boolean ) => {
 		await expect( this.payPalButton() ).toBeVisible( {
@@ -850,7 +861,7 @@ export class PayPalUI {
 
 	collectBlockSmartButtons = async () => {
 		const blockSmartButtons: any = [];
-		const listIframes = await this.blockSmartButtonIframe().all();
+		const listIframes = await this.blockSmartButtonListItem().all();
 		for ( const iframe of listIframes ) {
 			const smartButton = iframe
 				.frameLocator( '.component-frame' )
@@ -858,5 +869,59 @@ export class PayPalUI {
 			await blockSmartButtons.push( smartButton );
 		}
 		return blockSmartButtons;
+	};
+
+	/**
+	 * - Asserts PayPal buttons classic container is visible.
+	 * - Compares actual PayPal buttons container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotClassicPayPalButtons = async (
+		snapshotName: string
+	) => {
+		await expect( this.payPalButtonsClassicContainer() ).toBeVisible();
+		await this.page.waitForTimeout( 500 );
+		expect(
+			await this
+				.payPalButtonsClassicContainer()
+				.screenshot( { animations: 'disabled' } )
+		).toMatchSnapshot( `${ snapshotName }.png` );
+	};
+	
+	/**
+	 * - Asserts Minicart PayPal buttons container is visible.
+	 * - Compares actual PayPal buttons container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotMinicartPayPalButtons = async (
+		snapshotName: string
+	) => {
+		await expect( this.miniCartButtonContainer() ).toBeVisible();
+		await this.page.waitForTimeout( 500 );
+		expect(
+			await this
+				.miniCartButtonContainer()
+				.screenshot( { animations: 'disabled' } )
+		).toMatchSnapshot( `${ snapshotName }.png` );
+	};
+	
+	/**
+	 * - Asserts PayPal buttons block container is visible.
+	 * - Compares actual PayPal buttons container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotBlockPayPalButtons = async (
+		snapshotName: string
+	) => {
+		await expect( this.payPalButtonsBlockContainer() ).toBeVisible();
+		await this.page.waitForTimeout( 500 );
+		expect(
+			await this
+				.payPalButtonsBlockContainer()
+				.screenshot( { animations: 'disabled' } )
+		).toMatchSnapshot( `${ snapshotName }.png` );
 	};
 }
