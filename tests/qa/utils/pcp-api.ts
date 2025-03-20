@@ -5,11 +5,6 @@ import {
 	RequestUtils,
 	WooCommerceApi as WooCommerceApiBase,
 } from '@inpsyde/playwright-utils/build';
-/**
- * Internal dependencies
- */
-import { urls, expect } from '.';
-import { Pcp } from '../resources';
 
 export class PcpApi extends WooCommerceApiBase {
 	requestUtils: RequestUtils;
