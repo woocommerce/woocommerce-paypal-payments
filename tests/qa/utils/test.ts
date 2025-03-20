@@ -12,7 +12,7 @@ import {
  * Internal dependencies
  */
 import { PayPalAPI } from './paypal-api';
-import { PayPalUI } from './frontend/paypal-ui';
+import { PcpApi } from './pcp-api';
 import { Utils } from './utils';
 
 // PCP tabs
@@ -29,6 +29,7 @@ import {
 
 // WooCommerce front end
 import {
+	PayPalUI,
 	Shop,
 	Product,
 	Cart,
@@ -45,10 +46,11 @@ import {
 
 type BaseExtend = {
 	ppapi: PayPalAPI;
-	ppui: PayPalUI;
+	pcpApi: PcpApi;
 	visitorPage: Page;
 	visitorRequest: APIRequestContext;
 	visitorWooCommerceApi: WooCommerceApi;
+	ppui: PayPalUI;
 
 	// PCP tabs
 	pcpOnboarding: PcpOnboarding;
@@ -83,6 +85,9 @@ type BaseExtend = {
 const test = base.extend< BaseExtend >( {
 	ppapi: async ( { request }, use ) => {
 		await use( new PayPalAPI( { request } ) );
+	},
+	pcpApi: async ( { request, requestUtils }, use ) => {
+		await use( new PcpApi( { request, requestUtils } ) );
 	},
 	visitorPage: async ( { browser }, use, testInfo ) => {
 		// check if visitor is specified in test otherwise use guest
@@ -181,39 +186,29 @@ const test = base.extend< BaseExtend >( {
 	// Utils & preconditions
 	utils: async (
 		{
-			plugins,
-			wooCommerceUtils,
 			requestUtils,
 			wooCommerceApi,
-			pcpOnboarding,
-			pcpOverview,
-			pcpSettings,
+			visitorWooCommerceApi,
+			wooCommerceUtils,
+			plugins,
 			payForOrder,
 			checkout,
 			classicCheckout,
 			orderReceived,
-			customerAccount,
-			customerPaymentMethods,
-			visitorWooCommerceApi,
 		},
 		use
 	) => {
 		await use(
 			new Utils( {
-				plugins,
-				wooCommerceUtils,
 				requestUtils,
 				wooCommerceApi,
-				pcpOnboarding,
-				pcpOverview,
-				pcpSettings,
+				visitorWooCommerceApi,
+				wooCommerceUtils,
+				plugins,
 				payForOrder,
 				checkout,
 				classicCheckout,
 				orderReceived,
-				customerAccount,
-				customerPaymentMethods,
-				visitorWooCommerceApi,
 			} )
 		);
 	},

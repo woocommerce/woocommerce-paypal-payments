@@ -1,7 +1,8 @@
+export * from './admin';
+export * from './frontend';
 export * from './test';
 export * from './helpers';
 export * from './paypal-api';
-export * from './urls';
+export * from './pcp-api';
 export * from './utils';
-export * from './admin';
-export * from './frontend';
+export { default as urls } from './urls';

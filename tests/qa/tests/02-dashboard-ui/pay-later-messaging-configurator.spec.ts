@@ -128,13 +128,14 @@ const snapshotPlmContainer = async ( ppui: PayPalUI, snapshotName: string ) => {
 };
 
 test.describe( 'Subtests', () => {
-	test.beforeAll( async ( { utils } ) => {
+	test.beforeAll( async ( { utils, pcpApi } ) => {
 		await utils.configureStore( storeConfigDefault );
 		await utils.installAndActivatePcp();
-		await utils.resetPcpDb();
-		await utils.configurePcp( {
-			merchant: merchants.usa,
-		} );
+		await pcpApi.resetDb();
+		await pcpApi.connectMerchant(
+			merchants.usa.client_id,
+			merchants.usa.client_secret
+		);
 	} );
 
 	const productPlm =

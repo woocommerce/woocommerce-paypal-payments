@@ -57,6 +57,11 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		} );
 	};
 
+	/**
+	 * Completes order payed via PayPal on product page
+	 *
+	 * @param tested
+	 */
 	completeOrderFromProduct = async ( tested ) => {
 		await this.assertUrl();
 		await expect(

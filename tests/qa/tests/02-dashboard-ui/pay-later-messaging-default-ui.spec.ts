@@ -4,13 +4,14 @@
 import { expect, test } from '../../utils';
 import { merchants, storeConfigDefault, products } from '../../resources';
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
-	await utils.resetPcpDb();
-	await utils.configurePcp( {
-		merchant: merchants.usa,
-	} );
+	await pcpApi.resetDb();
+	await pcpApi.connectMerchant(
+		merchants.usa.client_id,
+		merchants.usa.client_secret
+	);
 } );
 
 test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
