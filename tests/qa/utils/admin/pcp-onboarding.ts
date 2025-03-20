@@ -135,6 +135,14 @@ export class PcpOnboarding extends PcpAdminPage {
 		}
 	};
 
+	chooseOptionalPaymentMethods = async ( enable: boolean ) => {
+		if ( enable ) {
+			await this.enableOptionalPaymentMethodsRadio().click();
+		} else {
+			await this.disableOptionalPaymentMethodsRadio().click();
+		}
+	};
+
 	// Assertions
 	/**
 	 * verifies if there is no warning on the console about badgeBoxUtils.js

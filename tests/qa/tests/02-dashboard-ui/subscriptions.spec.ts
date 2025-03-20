@@ -1,24 +1,27 @@
 /**
  * Internal dependencies
  */
-import { test, expect } from '../../utils';
+import { test, expect, PcpApi } from '../../utils';
 import {
 	storeConfigDefault,
 	percyPcpSettingsConfig,
 	subscriptionsPlugin,
 	merchants,
-	Pcp
+	Pcp,
 } from '../../resources';
-import { customers, orders, products } from 'playwright-utils/src';
+/**
+ * External dependencies
+ */
+import { products } from '@inpsyde/playwright-utils/build';
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
-	await utils.resetPcpDb();
+	await pcpApi.resetDb();
 } );
 
 test.describe( () => {
-	test.beforeAll( async ( { requestUtils } ) => {
+	test.beforeEach( async ( { requestUtils } ) => {
 		await requestUtils.activatePlugin( subscriptionsPlugin.slug );
 	} );
 
@@ -49,10 +52,17 @@ test.describe( () => {
 		);
 	} );
 
-	test('PCP-4357 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment enabled', async ({ pcpOnboarding, percy, utils, pcpPaymentMethods, pcpSettings, pcpStyling  }, testInfo) => {
-		
-		await utils.fillVisitorsCart([products.simple10])
-		
+	test( 'PCP-4357 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment enabled', async ( {
+		pcpOnboarding,
+		percy,
+		utils,
+		pcpPaymentMethods,
+		pcpSettings,
+		pcpStyling,
+		pcpApi,
+	}, testInfo ) => {
+		await utils.fillVisitorsCart( [ products.simple10 ] );
+
 		await pcpOnboarding.visit();
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -64,41 +74,52 @@ test.describe( () => {
 		await pcpOnboarding.subscriptionsCheckbox().check();
 		await pcpOnboarding.continueButton().click();
 
-		await pcpOnboarding.enableOptionalPaymentMethodsRadio().click();
+		await pcpOnboarding.chooseOptionalPaymentMethods( true );
 		await pcpOnboarding.continueButton().click();
 
 		await pcpOnboarding.gotoInitialOnboardingPage();
 
-		await utils.connectMerchant(merchants.usa);
+		await pcpApi.connectMerchant(
+			merchants.usa.client_id,
+			merchants.usa.client_secret
+		);
 		await pcpPaymentMethods.visit();
-		await percy.takeSnapshot(`${ testInfo.title } - Payment methods - PayPal, Venmo, ACDC enabled - All APMs enabled - Default`, percyPcpSettingsConfig);
+		await percy.takeSnapshot(
+			`${ testInfo.title } - Payment methods - PayPal, Venmo, ACDC enabled - All APMs enabled - Default`,
+			percyPcpSettingsConfig
+		);
 
 		await pcpSettings.visit();
-		await percy.takeSnapshot(`${ testInfo.title } - Settings - Pay Now Experience enabled - Default`, percyPcpSettingsConfig);
+		await percy.takeSnapshot(
+			`${ testInfo.title } - Settings - Pay Now Experience enabled - Default`,
+			percyPcpSettingsConfig
+		);
 
 		await pcpStyling.visit();
-		await percy.takeSnapshot(`${ testInfo.title } - Styling - Default (For Cart- Paypal and Venmo enabled)`, percyPcpSettingsConfig);
+		await percy.takeSnapshot(
+			`${ testInfo.title } - Styling - Default (For Cart- Paypal and Venmo enabled)`,
+			percyPcpSettingsConfig
+		);
 
 		const snapshotName = testInfo.title;
 		const locations: Pcp.Admin.Styling.Location[] = [
-				'Classic Checkout',
-				'Express Checkout',
-				'Mini Cart',
-				'Product Page',
-			];
-			for ( const location of locations ) {
-				await pcpStyling.locationSelectbox().selectOption( location );
-				await pcpStyling.snapshotStylingConfigurator(
-					`${ snapshotName } - ${ location }`
-				);
-			}
+			'Classic Checkout',
+			'Express Checkout',
+			'Mini Cart',
+			'Product Page',
+		];
+		for ( const location of locations ) {
+			await pcpStyling.locationSelectbox().selectOption( location );
+			await pcpStyling.snapshotStylingConfigurator(
+				`${ snapshotName } - ${ location }`
+			);
+		}
+		//! FRONTEND TRANSACTION FLOW WILL BE ADDED HERE
+	} );
 
 
-	
-
-	
+	test.afterEach( async ( { requestUtils, pcpApi } ) => {
+		await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
+		await pcpApi.resetDb();
+	} );
 } );
-test.afterAll( async ( { requestUtils } ) => {
-	await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
-} );
-});
