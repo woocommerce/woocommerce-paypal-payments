@@ -8,10 +8,10 @@ import {
 	subscriptionsPlugin,
 } from '../../resources';
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
-	await utils.resetPcpDb();
+	await pcpApi.resetDb();
 } );
 
 test.describe( () => {
