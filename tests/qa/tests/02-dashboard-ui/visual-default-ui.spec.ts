@@ -12,10 +12,10 @@ import {
 	defaultUiTestData,
 } from './_test-data/ui-tests-per-country.data';
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
-	await utils.resetPcpDb();
+	await pcpApi.resetDb();
 } );
 
 test.describe.serial( () => {
