@@ -6,7 +6,11 @@ module.exports = {
 	cache: false,
 	...{
 		entry: {
-			index: path.resolve( process.cwd(), 'resources/js', 'index.js' ),
+			'ppcp-admin-settings': path.resolve(
+				process.cwd(),
+				'resources/js',
+				'ppcp-admin-settings.js'
+			),
 			switchSettingsUi: path.resolve(
 				process.cwd(),
 				'resources/js',

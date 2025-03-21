@@ -167,13 +167,13 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				 *
 				 * @psalm-suppress UnresolvableInclude
 				 */
-				$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/index.asset.php';
+				$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/ppcp-admin-settings.asset.php';
 
 				$module_url = $container->get( 'settings.url' );
 
 				wp_register_script(
 					'ppcp-admin-settings',
-					$module_url . '/assets/index.js',
+					$module_url . '/assets/ppcp-admin-settings.js',
 					$script_asset_file['dependencies'],
 					$script_asset_file['version'],
 					true

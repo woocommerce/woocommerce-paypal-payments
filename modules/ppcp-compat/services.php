@@ -58,6 +58,7 @@ return array(
 			'ppcp-fraudnet',
 			'ppcp-tracking-compat',
 			'ppcp-clear-db',
+			'ppcp-admin-settings',
 		);
 	},
 
@@ -70,6 +71,7 @@ return array(
 			'fraudnet.js',
 			'tracking-compat.js',
 			'ppcp-clear-db.js',
+			'ppcp-admin-settings.js',
 		);
 	},
 
