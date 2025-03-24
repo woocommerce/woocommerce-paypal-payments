@@ -95,14 +95,9 @@ test.describe( () => {
 			percyPcpSettingsConfig
 		);
 
-		await pcpStyling.visit();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - Styling - Default (For Cart- Paypal and Venmo enabled)`,
-			percyPcpSettingsConfig
-		);
-
 		const snapshotName = testInfo.title;
 		const locations: Pcp.Admin.Styling.Location[] = [
+			'Cart',
 			'Classic Checkout',
 			'Express Checkout',
 			'Mini Cart',
