@@ -254,7 +254,18 @@ class AxoGateway extends WC_Payment_Gateway {
 
 			$order = $this->create_paypal_order( $wc_order, $token );
 
-			$this->order_processor->process_captured_and_authorized( $wc_order, $order );
+			/**
+			 * This filter controls if the method 'process()' from OrderProcessor will be called.
+			 * So you can implement your own for example on subscriptions
+			 *
+			 * - true bool controls execution of 'OrderProcessor::process()'
+			 * - $this \WC_Payment_Gateway
+			 * - $wc_order \WC_Order
+			 */
+			$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+			if ( $process ) {
+				$this->order_processor->process_captured_and_authorized( $wc_order, $order );
+			}
 		} catch ( Exception $exception ) {
 			return $this->handle_payment_failure( $wc_order, $exception );
 		}

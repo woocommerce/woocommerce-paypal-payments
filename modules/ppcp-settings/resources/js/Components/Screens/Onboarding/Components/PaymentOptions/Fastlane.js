@@ -11,7 +11,7 @@ const Fastlane = ( { learnMore = '' } ) => {
 				<PricingTitleBadge item="fast country currency=storeCurrency=storeCountrylane" />
 			}
 			description={ __(
-				"Speed up guest checkout with Fatslane. Link a customer's email address to their payment details.",
+				"Speed up guest checkout with Fastlane. Link a customer's email address to their payment details.",
 				'woocommerce-paypal-payments'
 			) }
 			learnMoreLink={ learnMore }

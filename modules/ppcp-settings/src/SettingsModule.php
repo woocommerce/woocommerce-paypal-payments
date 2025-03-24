@@ -303,6 +303,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				$onboarding_profile->set_completed( false );
 				$onboarding_profile->set_step( 0 );
+				$onboarding_profile->set_gateways_synced( false );
+				$onboarding_profile->set_gateways_refreshed( false );
 				$onboarding_profile->save();
 
 				// Reset dismissed and completed on click todos.
@@ -579,19 +581,28 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		// Enable Fastlane after onboarding if the store is compatible.
 		add_action(
-			'woocommerce_paypal_payments_apply_default_configuration',
-			static function () use ( $container ) {
-				$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
-				assert( $compatibility_checker instanceof CompatibilityChecker );
+			'woocommerce_paypal_payments_toggle_payment_gateways',
+			function( PaymentSettings $payment_methods, ConfigurationFlagsDTO $flags ) use ( $container ) {
+				if ( $flags->is_business_seller && $flags->use_card_payments ) {
+					$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
+					assert( $compatibility_checker instanceof CompatibilityChecker );
 
-				$payment_settings = $container->get( 'settings.data.payment' );
-				assert( $payment_settings instanceof PaymentSettings );
-
-				if ( $compatibility_checker->is_fastlane_compatible() ) {
-					$payment_settings->toggle_method_state( AxoGateway::ID, true );
+					if ( $compatibility_checker->is_fastlane_compatible() ) {
+						$payment_methods->toggle_method_state( AxoGateway::ID, true );
+					}
 				}
+			},
+			10,
+			2
+		);
 
-				$payment_settings->save();
+		// Toggle payment gateways after onboarding based on flags.
+		add_action(
+			'woocommerce_paypal_payments_sync_gateways',
+			static function() use ( $container ) {
+				$settings_data_manager = $container->get( 'settings.service.data-manager' );
+				assert( $settings_data_manager instanceof SettingsDataManager );
+				$settings_data_manager->sync_gateway_settings();
 			}
 		);
 

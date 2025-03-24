@@ -60,6 +60,14 @@ class OnboardingRestEndpoint extends RestEndpoint {
 		'products'             => array(
 			'js_name' => 'products',
 		),
+		'gateways_synced'      => array(
+			'js_name'  => 'gatewaysSynced',
+			'sanitize' => 'to_boolean',
+		),
+		'gateways_refreshed'   => array(
+			'js_name'  => 'gatewaysRefreshed',
+			'sanitize' => 'to_boolean',
+		),
 	);
 
 	/**

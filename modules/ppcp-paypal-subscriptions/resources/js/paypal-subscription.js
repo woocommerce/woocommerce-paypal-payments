@@ -9,7 +9,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 				const variableId = children[ i ]
 					.querySelector( 'h3' )
 					.getElementsByClassName( 'variable_post_id' )[ 0 ].value;
-				if ( parseInt( variableId ) === productId ) {
+				if ( variableId === productId ) {
 					children[ i ]
 						.querySelector( '.woocommerce_variable_attributes' )
 						.getElementsByClassName(
@@ -122,21 +122,26 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
         jQuery( '.wc_input_subscription_price' ).trigger( 'change' );
 
-		PayPalCommerceGatewayPayPalSubscriptionProducts?.forEach(
-			( product ) => {
-				if ( product.product_connected === 'yes' ) {
-					disableFields( product.product_id );
-				}
+        let variationProductIds = [ PayPalCommerceGatewayPayPalSubscriptionProducts.product_id ];
+        const variationsInput =  document.querySelectorAll( '.variable_post_id' );
+        for ( let i = 0; i < variationsInput.length; i++ ) {
+            variationProductIds.push( variationsInput[ i ].value );
+        }
 
+        variationProductIds?.forEach(
+			( productId ) => {
                 const linkBtn = document.getElementById(
-                    `ppcp_enable_subscription_product-${ product.product_id }`
+                    `ppcp_enable_subscription_product-${ productId }`
                 );
+				if ( linkBtn.checked && linkBtn.value === 'yes' ) {
+					disableFields( productId );
+				}
                 linkBtn?.addEventListener( 'click', ( event ) => {
                     const unlinkBtnP = document.getElementById(
-                        `ppcp-enable-subscription-${ product.product_id }`
+                        `ppcp-enable-subscription-${ productId }`
                     );
                     const titleP = document.getElementById(
-                        `ppcp_subscription_plan_name_p-${ product.product_id }`
+                        `ppcp_subscription_plan_name_p-${ productId }`
                     );
                     if (event.target.checked === true) {
                         if ( unlinkBtnP ) {
@@ -156,26 +161,26 @@ document.addEventListener( 'DOMContentLoaded', () => {
                 });
 
                 const unlinkBtn = document.getElementById(
-                    `ppcp-unlink-sub-plan-${ product.product_id }`
+                    `ppcp-unlink-sub-plan-${ productId }`
                 );
 				unlinkBtn?.addEventListener( 'click', ( event ) => {
 					event.preventDefault();
 					unlinkBtn.disabled = true;
 					const spinner = document.getElementById(
-						'spinner-unlink-plan'
+						`spinner-unlink-plan-${ productId }`
 					);
 					spinner.style.display = 'inline-block';
 
-					fetch( product.ajax.deactivate_plan.endpoint, {
+					fetch( PayPalCommerceGatewayPayPalSubscriptionProducts.ajax.deactivate_plan.endpoint, {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json',
 						},
 						credentials: 'same-origin',
 						body: JSON.stringify( {
-							nonce: product.ajax.deactivate_plan.nonce,
-							plan_id: product.plan_id,
-							product_id: product.product_id,
+							nonce: PayPalCommerceGatewayPayPalSubscriptionProducts.ajax.deactivate_plan.nonce,
+							plan_id: linkBtn.dataset.subsPlan,
+							product_id: productId,
 						} ),
 					} )
 						.then( function ( res ) {

@@ -2095,6 +2095,16 @@ function wcs_order_contains_product($order, $product)
 function wc_get_page_screen_id( $for ) {}
 
 /**
+ * Checks if manual renewals are enabled.
+ *
+ * @since 1.0.0 - Migrated from WooCommerce Subscriptions v4.0.0
+ * @return bool Whether manual renewal is enabled.
+ */
+function wcs_is_manual_renewal_enabled()
+{
+}
+
+/**
  * Subscription Product Variation Class
  *
  * The subscription product variation class extends the WC_Product_Variation product class

@@ -28,7 +28,7 @@ trait OrderMetaTrait {
 	 * @param Environment         $environment The environment.
 	 * @param OrderTransient|null $order_transient The order transient helper.
 	 */
-	protected function add_paypal_meta(
+	public function add_paypal_meta(
 		WC_Order $wc_order,
 		Order $order,
 		Environment $environment,

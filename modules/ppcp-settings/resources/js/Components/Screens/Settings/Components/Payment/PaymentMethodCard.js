@@ -6,8 +6,13 @@ import useSettingDependencyState from '../../../../../hooks/useSettingDependency
 import PaymentDependencyMessage from './PaymentDependencyMessage';
 import SettingDependencyMessage from './SettingDependencyMessage';
 import SpinnerOverlay from '../../../../ReusableComponents/SpinnerOverlay';
-import { PaymentHooks, SettingsHooks } from '../../../../../data';
+import {
+	PaymentHooks,
+	SettingsHooks,
+	OnboardingHooks,
+} from '../../../../../data';
 import { useNavigation } from '../../../../../hooks/useNavigation';
+import usePaymentGatewayRefresh from '../../../../../hooks/usePaymentGatewayRefresh';
 
 /**
  * Renders a payment method card with dependency handling
@@ -36,6 +41,10 @@ const PaymentMethodCard = ( {
 	const { isReady: isPaymentStoreReady } = PaymentHooks.useStore();
 	const { isReady: isSettingsStoreReady } = SettingsHooks.useStore();
 	const { handleHighlightFromUrl } = useNavigation();
+	const { gatewaysRefreshed } = OnboardingHooks.useGatewayRefresh();
+
+	// Re-fetch payment gateway data to hide methods based on exclusion conditions.
+	usePaymentGatewayRefresh();
 
 	const paymentDependencies = usePaymentDependencyState(
 		methods,
@@ -50,7 +59,11 @@ const PaymentMethodCard = ( {
 		}
 	}, [ handleHighlightFromUrl, isPaymentStoreReady, isSettingsStoreReady ] );
 
-	if ( ! isPaymentStoreReady || ! isSettingsStoreReady ) {
+	if (
+		! isPaymentStoreReady ||
+		! isSettingsStoreReady ||
+		! gatewaysRefreshed
+	) {
 		return <SpinnerOverlay asModal={ true } />;
 	}
 

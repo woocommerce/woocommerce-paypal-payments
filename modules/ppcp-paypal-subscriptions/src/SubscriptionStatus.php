@@ -55,7 +55,7 @@ class SubscriptionStatus {
 	 * @return void
 	 */
 	public function update_status( string $subscription_status, string $subscription_id ): void {
-		if ( $subscription_status === 'pending-cancel' || $subscription_status === 'cancelled' ) {
+		if ( $subscription_status === 'cancelled' ) {
 			try {
 				$current_subscription = $this->subscriptions_endpoint->subscription( $subscription_id );
 				if ( $current_subscription->status === 'CANCELLED' ) {
@@ -81,7 +81,7 @@ class SubscriptionStatus {
 			}
 		}
 
-		if ( $subscription_status === 'on-hold' ) {
+		if ( $subscription_status === 'on-hold' || $subscription_status === 'pending-cancel' ) {
 			try {
 				$this->logger->info(
 					sprintf(

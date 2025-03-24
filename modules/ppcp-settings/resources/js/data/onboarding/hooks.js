@@ -12,10 +12,11 @@ import { useSelect, useDispatch } from '@wordpress/data';
 import { createHooksForStore } from '../utils';
 import { PRODUCT_TYPES } from './configuration';
 import { STORE_NAME } from './constants';
+import ACTION_TYPES from './action-types';
 
 const useHooks = () => {
 	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
-	const { persist } = useDispatch( STORE_NAME );
+	const { persist, dispatch } = useDispatch( STORE_NAME );
 
 	// Read-only flags and derived state.
 	const flags = useSelect( ( select ) => select( STORE_NAME ).flags(), [] );
@@ -36,6 +37,12 @@ const useHooks = () => {
 		'areOptionalPaymentMethodsEnabled'
 	);
 	const [ products, setProducts ] = usePersistent( 'products' );
+	// Add the setter for gatewaysSynced
+	const [ gatewaysSynced, setGatewaysSynced ] =
+		usePersistent( 'gatewaysSynced' );
+
+	const [ gatewaysRefreshed, setGatewaysRefreshed ] =
+		usePersistent( 'gatewaysRefreshed' );
 
 	const savePersistent = async ( setter, value ) => {
 		setter( value );
@@ -75,6 +82,26 @@ const useHooks = () => {
 				Object.values( PRODUCT_TYPES ).includes( item )
 			);
 			return savePersistent( setProducts, validProducts );
+		},
+		gatewaysSynced,
+		setGatewaysSynced: ( value ) => {
+			return savePersistent( setGatewaysSynced, value );
+		},
+		syncGateways: async () => {
+			await savePersistent( setGatewaysSynced, true );
+			dispatch( {
+				type: ACTION_TYPES.SYNC_GATEWAYS,
+			} );
+		},
+		gatewaysRefreshed,
+		setGatewaysRefreshed: ( value ) => {
+			return savePersistent( setGatewaysRefreshed, value );
+		},
+		refreshGateways: async () => {
+			await savePersistent( setGatewaysRefreshed, true );
+			dispatch( {
+				type: ACTION_TYPES.REFRESH_GATEWAYS,
+			} );
 		},
 	};
 };
@@ -144,4 +171,14 @@ export const useDetermineProducts = () => {
 export const useFlags = () => {
 	const { flags } = useHooks();
 	return flags;
+};
+
+export const useGatewaySync = () => {
+	const { gatewaysSynced, syncGateways } = useHooks();
+	return { gatewaysSynced, syncGateways };
+};
+
+export const useGatewayRefresh = () => {
+	const { gatewaysRefreshed, refreshGateways } = useHooks();
+	return { gatewaysRefreshed, refreshGateways };
 };

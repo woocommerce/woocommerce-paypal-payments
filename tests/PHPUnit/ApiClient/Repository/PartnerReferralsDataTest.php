@@ -97,39 +97,79 @@ class PartnerReferralsDataTest extends TestCase {
 	/**
 	 * Data provider for testing flag combinations.
 	 *
-	 * @return array[] Test cases with [has_subscriptions, has_cards, expected_changes]
+	 * @return array[] Test cases with [has_subscriptions, has_cards, is_acdc_eligible, expected_changes]
 	 */
 	public function flagCombinationsProvider() : array {
 		return [
-			'with subscriptions and cards' => [
-				true, // With subscription?
-				true, // With cards?
+			'with subscriptions and cards, ACDC eligible' => [
+				true,  // With subscription?
+				true,  // With cards?
+				true,  // ACDC eligible?
 				[
 					'capabilities'         => [ 'PAYPAL_WALLET_VAULTING_ADVANCED' ],
 					'show_add_credit_card' => true,
 					'has_vault_features'   => true,
 				],
 			],
-			'with subscriptions, no cards' => [
+			'with subscriptions, no cards, ACDC eligible' => [
 				true,  // With subscription?
 				false, // With cards?
+				true,  // ACDC eligible?
 				[
 					'capabilities'         => [ 'PAYPAL_WALLET_VAULTING_ADVANCED' ],
 					'show_add_credit_card' => false,
 					'has_vault_features'   => true,
 				],
 			],
-			'no subscriptions, with cards' => [
+			'no subscriptions, with cards, ACDC eligible' => [
 				false, // With subscription?
 				true,  // With cards?
+				true,  // ACDC eligible?
 				[
 					'show_add_credit_card' => true,
 					'has_vault_features'   => false,
 				],
 			],
-			'no subscriptions, no cards'   => [
+			'no subscriptions, no cards, ACDC eligible' => [
 				false, // With subscription?
 				false, // With cards?
+				true,  // ACDC eligible?
+				[
+					'show_add_credit_card' => false,
+					'has_vault_features'   => false,
+				],
+			],
+			'with subscriptions and cards, ACDC is not eligible' => [
+				true,  // With subscription?
+				true,  // With cards?
+				false, // ACDC eligible?
+				[
+					'show_add_credit_card' => true,
+					'has_vault_features'   => true,
+				],
+			],
+			'with subscriptions, no cards, ACDC is not eligible' => [
+				true,  // With subscription?
+				false, // With cards?
+				false, // ACDC eligible?
+				[
+					'show_add_credit_card' => false,
+					'has_vault_features'   => true,
+				],
+			],
+			'no subscriptions, with cards, ACDC is not eligible' => [
+				false, // With subscription?
+				true,  // With cards?
+				false, // ACDC eligible?
+				[
+					'show_add_credit_card' => true,
+					'has_vault_features'   => false,
+				],
+			],
+			'no subscriptions, no cards, ACDC is not eligible' => [
+				false, // With subscription?
+				false, // With cards?
+				false, // ACDC eligible?
 				[
 					'show_add_credit_card' => false,
 					'has_vault_features'   => false,
@@ -189,7 +229,9 @@ class PartnerReferralsDataTest extends TestCase {
 	 *
 	 * @dataProvider flagCombinationsProvider
 	 */
-	public function testDataStructureWithFlags( bool $has_subscriptions, bool $has_cards, array $expected_changes ) : void {
+	public function testDataStructureWithFlags( bool $has_subscriptions, bool $has_cards, bool $is_acdc_eligible, array $expected_changes ) : void {
+		$this->dccApplies->shouldReceive('for_country_currency')->andReturn($is_acdc_eligible);
+
 		$result   = $this->testee->data( [ 'PPCP' ], self::TOKEN, $has_subscriptions, $has_cards );
 		$expected = $this->getBaseExpectedArray();
 

@@ -32,7 +32,10 @@ const FeatureItem = ( {
 	);
 	const handleClick = async ( feature ) => {
 		if ( feature.action?.type === 'tab' ) {
-			const highlight = Boolean( feature.action?.highlight );
+			const highlight =
+				feature.action?.highlight === undefined
+					? true
+					: Boolean( feature.action.highlight );
 			const tabId = TAB_IDS[ feature.action.tab.toUpperCase() ];
 			await selectTab( tabId, feature.action.section, highlight );
 		}

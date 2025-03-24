@@ -614,30 +614,19 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			$paypal_subscription_id = WC()->session->get( 'ppcp_subscription_id' ) ?? '';
-			if ( $paypal_subscription_id ) {
-				$order = $this->session_handler->order();
-				$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-				$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order_id ) : array();
-				foreach ( $subscriptions as $subscription ) {
-					$subscription->update_meta_data( 'ppcp_subscription', $paypal_subscription_id );
-					$subscription->save();
-
-					$subscription->add_order_note( "PayPal subscription {$paypal_subscription_id} added." );
-				}
-
-				$transaction_id = $this->get_paypal_order_transaction_id( $order );
-				if ( $transaction_id ) {
-					$this->update_transaction_id( $transaction_id, $wc_order );
-				}
-
-				$wc_order->payment_complete();
-
-				return $this->handle_payment_success( $wc_order );
-			}
 			try {
-				$this->order_processor->process( $wc_order );
+				/**
+				 * This filter controls if the method 'process()' from OrderProcessor will be called.
+				 * So you can implement your own for example on subscriptions
+				 *
+				 * - true bool controls execution of 'OrderProcessor::process()'
+				 * - $this \WC_Payment_Gateway
+				 * - $wc_order \WC_Order
+				 */
+				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+				if ( $process ) {
+					$this->order_processor->process( $wc_order );
+				}
 
 				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 

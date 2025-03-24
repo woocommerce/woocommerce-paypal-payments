@@ -12,4 +12,8 @@ export default {
 	SET_PERSISTENT: 'ppcp/onboarding/SET_PERSISTENT',
 	RESET: 'ppcp/onboarding/RESET',
 	HYDRATE: 'ppcp/onboarding/HYDRATE',
+
+	// Gateway sync flag
+	SYNC_GATEWAYS: 'ppcp/onboarding/SYNC_GATEWAYS',
+	REFRESH_GATEWAYS: 'ppcp/onboarding/REFRESH_GATEWAYS',
 };

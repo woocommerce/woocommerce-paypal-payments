@@ -88,7 +88,10 @@ class PartnerReferralsData {
 		);
 
 		if ( true === $use_subscriptions ) {
-			$capabilities[]         = 'PAYPAL_WALLET_VAULTING_ADVANCED';
+			if ( $this->dcc_applies->for_country_currency() ) {
+				$capabilities[] = 'PAYPAL_WALLET_VAULTING_ADVANCED';
+			}
+
 			$first_party_features[] = 'BILLING_AGREEMENT';
 		}
 
