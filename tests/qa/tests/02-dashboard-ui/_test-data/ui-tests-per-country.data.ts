@@ -11,8 +11,8 @@ export const badgeTestsData = [
 	},
 	{
 		testKey: 'PCP-4320',
-		wooCommerceCountryCode: 'United Kingdom',
-		country: 'UK',
+		wooCommerceCountryCode: 'UK',
+		country: 'United Kingdom',
 	},
 	{
 		testKey: 'PCP-4321',
