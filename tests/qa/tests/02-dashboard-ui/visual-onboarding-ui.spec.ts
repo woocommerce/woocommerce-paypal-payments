@@ -100,9 +100,9 @@ test.describe( () => {
 	const currencies = [ 'USD', 'GBP', 'CAD', 'AUD', 'EUR' ];
 
 	for ( const testData of badgeTestsData ) {
-		const { testKey, countryCode, wooCommerceCountryCode } = testData;
+		const { testKey, country, wooCommerceCountryCode } = testData;
 
-		test( `${ testKey } | Settings - ${ countryCode } - Onboarding - Badge values`, async ( {
+		test( `${ testKey } | Settings - ${ country } - Onboarding - Badge values`, async ( {
 			wooCommerceApi,
 			pcpOnboarding,
 			percy,
@@ -113,6 +113,7 @@ test.describe( () => {
 					woocommerce_currency: currency,
 				} );
 				await pcpOnboarding.visit();
+				await pcpOnboarding.page.reload();
 				await pcpOnboarding.gotoInitialOnboardingPage();
 				await pcpOnboarding
 					.badgeContainer()
@@ -120,7 +121,7 @@ test.describe( () => {
 				await pcpOnboarding.closeAdvancedOptions();
 				await pcpOnboarding.page.waitForLoadState( 'load' );
 				await percy.takeSnapshot(
-					`${ testInfo.title } - PayPal Settings - ${ countryCode } - ${ currency }`,
+					`${ testInfo.title } - PayPal Settings - ${ country } - ${ currency }`,
 					percyPcpSettingsConfig
 				);
 
@@ -134,12 +135,47 @@ test.describe( () => {
 					.click();
 				await pcpOnboarding.page.waitForLoadState( 'load' );
 				await percy.takeSnapshot(
-					`${ testInfo.title } - Choose checkout options - ${ countryCode } - ${ currency }`,
+					`${ testInfo.title } - Choose checkout options - ${ country } - ${ currency }`,
 					percyPcpSettingsConfig
 				);
 			}
 		} );
 	}
+
+	test( 'PCP-4325 | Settings - DE - Onboarding - Badge values', async ( {
+		wooCommerceApi,
+		pcpOnboarding,
+		percy,
+	}, testInfo ) => {
+		for ( const currency of currencies ) {
+			await wooCommerceApi.updateGeneralSettings( {
+				woocommerce_default_country: 'DE:DE-BE',
+				woocommerce_currency: currency,
+			} );
+			await pcpOnboarding.visit();
+			await pcpOnboarding.page.reload();
+			await pcpOnboarding.gotoInitialOnboardingPage();
+			await pcpOnboarding
+				.badgeContainer()
+				.waitFor( { state: 'visible' } );
+			await pcpOnboarding.closeAdvancedOptions();
+			await pcpOnboarding.page.waitForLoadState( 'load' );
+			await percy.takeSnapshot(
+				`${ testInfo.title } - PayPal Settings - Germany - ${ currency }`,
+				percyPcpSettingsConfig
+			);
+
+			await pcpOnboarding.activatePayPalPaymentsButton().click();
+			await pcpOnboarding.virtualCheckbox().check();
+			await pcpOnboarding.continueButton().click();
+			await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+			await pcpOnboarding.page.waitForLoadState( 'load' );
+			await percy.takeSnapshot(
+				`${ testInfo.title } - Choose checkout options - Germany - ${ currency }`,
+				percyPcpSettingsConfig
+			);
+		}
+	} );
 } );
 
 test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ( {
