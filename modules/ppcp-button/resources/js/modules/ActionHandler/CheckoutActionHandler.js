@@ -104,7 +104,7 @@ class CheckoutActionHandler {
 				.then( function ( data ) {
 					if ( ! data.success ) {
 						spinner.unblock();
-						//handle both messages sent from Woocommerce (data.messages) and this plugin (data.data.message)
+						//handle both messages sent from WooCommerce (data.messages) and this plugin (data.data.message)
 						if ( typeof data.messages !== 'undefined' ) {
 							const domParser = new DOMParser();
 							errorHandler.appendPreparedErrorMessageElement(
