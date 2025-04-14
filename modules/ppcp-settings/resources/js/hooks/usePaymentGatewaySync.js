@@ -19,8 +19,8 @@ export const usePaymentGatewaySync = () => {
 	const { isReady: merchantIsReady } = CommonHooks.useStore();
 
 	const [ isSyncing, setIsSyncing ] = useState( false );
-	const [ syncCompleted, setSyncCompleted ] = useState( false );
-	const [ syncError, setSyncError ] = useState( null );
+	const [ , setSyncCompleted ] = useState( false );
+	const [ , setSyncError ] = useState( null );
 
 	// Use a ref to track if we've initiated a sync during this session.
 	const syncAttemptedRef = useRef( false );

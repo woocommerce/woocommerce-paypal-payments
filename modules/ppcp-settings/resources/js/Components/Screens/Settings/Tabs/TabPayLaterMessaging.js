@@ -9,7 +9,7 @@ const TabPayLaterMessaging = () => {
 		setProduct,
 		setShop,
 		setHome,
-		setCustom_placement,
+		setCustomPlacement,
 	} = PayLaterMessagingHooks.usePayLaterMessaging();
 	const PcpPayLaterConfigurator =
 		window.ppcpSettings?.PcpPayLaterConfigurator;
@@ -41,11 +41,20 @@ const TabPayLaterMessaging = () => {
 					setProduct( data.config.product );
 					setShop( data.config.shop );
 					setHome( data.config.home );
-					setCustom_placement( data.config.custom_placement );
+					setCustomPlacement( data.config.custom_placement );
 				},
 			} );
 		}
-	}, [ PcpPayLaterConfigurator, config ] );
+	}, [
+		PcpPayLaterConfigurator,
+		config,
+		setCart,
+		setCheckout,
+		setCustomPlacement,
+		setHome,
+		setProduct,
+		setShop,
+	] );
 
 	return (
 		<div

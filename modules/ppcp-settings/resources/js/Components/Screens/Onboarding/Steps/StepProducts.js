@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 
@@ -38,7 +39,13 @@ const StepProducts = () => {
 		};
 
 		initChoices();
-	}, [ canUseSubscriptions, optionState, products, setProducts ] );
+	}, [
+		canUseSubscriptions,
+		optionState,
+		isCasualSeller,
+		products,
+		setProducts,
+	] );
 
 	const handleChange = ( key, checked ) => {
 		const getNewValue = () => {

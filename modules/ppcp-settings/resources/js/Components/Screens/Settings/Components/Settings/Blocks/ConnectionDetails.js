@@ -73,6 +73,7 @@ const generateOptions = ( config, settings, updateFormValue ) => [
 		value: 'manual_connect',
 		label: __( 'Manual Connect', 'woocommerce-paypal-payments' ),
 		description: sprintf(
+			// translators: %s: Link to PayPal REST application documentation.
 			__(
 				'For advanced users: Connect a custom PayPal REST app for full control over your integration. For more information on creating a PayPal REST application, <a target="_blank" href="%s">click here</a>.',
 				'woocommerce-paypal-payments'
@@ -128,9 +129,10 @@ const generateOptions = ( config, settings, updateFormValue ) => [
 const generateModeData = ( config, settings, updateFormValue ) => ( {
 	title: config.title,
 	description: config.description,
-	connectTitle: __(
-		`Connect ${ config.label } Account`, // TODO: Avoid variables inside __() translation literal.
-		'woocommerce-paypal-payments'
+	connectTitle: sprintf(
+		/* translators: %s: Account type (e.g., Sandbox, Live) */
+		__( 'Connect %s Account', 'woocommerce-paypal-payments' ),
+		config.label
 	),
 	connectDescription: config.connectDescription,
 	options: generateOptions( config, settings, updateFormValue ),

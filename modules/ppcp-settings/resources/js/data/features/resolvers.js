@@ -8,7 +8,6 @@
  * @file
  */
 
-import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 
 import { REST_PATH } from './constants';

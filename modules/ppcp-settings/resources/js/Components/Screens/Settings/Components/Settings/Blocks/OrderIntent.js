@@ -1,4 +1,5 @@
 import { __ } from '@wordpress/i18n';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { useEffect } from 'react';
 
 import { ControlToggleButton } from '../../../../../ReusableComponents/Controls';
@@ -17,7 +18,11 @@ const OrderIntent = () => {
 		if ( ! authorizeOnly && captureVirtualOnlyOrders ) {
 			setCaptureVirtualOnlyOrders( false );
 		}
-	}, [ authorizeOnly ] );
+	}, [
+		authorizeOnly,
+		captureVirtualOnlyOrders,
+		setCaptureVirtualOnlyOrders,
+	] );
 
 	return (
 		<SettingsBlock

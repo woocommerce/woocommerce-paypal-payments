@@ -57,7 +57,9 @@ const filterSteps = ( steps, conditions ) => {
 };
 
 export const getSteps = ( flags ) => {
+	// eslint-disable-next-line react-hooks/rules-of-hooks
 	const { ownBrandOnly } = CommonHooks.useWooSettings();
+	// eslint-disable-next-line react-hooks/rules-of-hooks
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
 	const steps = filterSteps( ALL_STEPS, [

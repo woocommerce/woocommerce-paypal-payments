@@ -29,8 +29,10 @@ const ACTIVITIES = {
 
 export const useHandleOnboardingButton = ( isSandbox ) => {
 	const { onboardingUrl } = isSandbox
-		? CommonHooks.useSandbox()
-		: CommonHooks.useProduction();
+		? // eslint-disable-next-line react-hooks/rules-of-hooks
+		  CommonHooks.useSandbox()
+		: // eslint-disable-next-line react-hooks/rules-of-hooks
+		  CommonHooks.useProduction();
 	const { ownBrandOnly } = CommonHooks.useWooSettings();
 	const { products, options } =
 		OnboardingHooks.useDetermineProducts( ownBrandOnly );

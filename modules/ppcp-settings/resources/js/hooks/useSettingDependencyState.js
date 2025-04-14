@@ -32,7 +32,7 @@ const useSettingDependencyState = ( methods ) => {
 				if ( method.depends_on_settings.settings ) {
 					const settingsObj = method.depends_on_settings.settings;
 
-					for ( const [ settingId, settingData ] of Object.entries(
+					for ( const [ , settingData ] of Object.entries(
 						settingsObj
 					) ) {
 						const requiredId = settingData.id;

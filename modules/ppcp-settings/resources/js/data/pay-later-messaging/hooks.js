@@ -28,7 +28,7 @@ const useHooks = () => {
 	const [ product, setProduct ] = usePersistent( 'product' );
 	const [ shop, setShop ] = usePersistent( 'shop' );
 	const [ home, setHome ] = usePersistent( 'home' );
-	const [ custom_placement, setCustom_placement ] =
+	const [ customPlacement, setCustomPlacement ] =
 		usePersistent( 'custom_placement' );
 
 	return {
@@ -44,8 +44,8 @@ const useHooks = () => {
 		setShop,
 		home,
 		setHome,
-		custom_placement,
-		setCustom_placement,
+		customPlacement,
+		setCustomPlacement,
 	};
 };
 
@@ -66,8 +66,8 @@ export const usePayLaterMessaging = () => {
 		setShop,
 		home,
 		setHome,
-		custom_placement,
-		setCustom_placement,
+		customPlacement,
+		setCustomPlacement,
 	} = useHooks();
 
 	return {
@@ -77,13 +77,13 @@ export const usePayLaterMessaging = () => {
 			product,
 			shop,
 			home,
-			custom_placement,
+			customPlacement,
 		},
 		setCart,
 		setCheckout,
 		setProduct,
 		setShop,
 		setHome,
-		setCustom_placement,
+		setCustomPlacement,
 	};
 };

@@ -20,7 +20,6 @@ import {
 	STYLING_PAYMENT_METHODS,
 	STYLING_SHAPES,
 } from './configuration';
-import { persistentData } from './selectors';
 
 /**
  * Single source of truth for access Redux details.

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef, jsdoc/no-undefined-types */
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
 
@@ -7,11 +8,12 @@ import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounc
  * A generic wrapper that adds debounced store updates to any controlled component.
  *
  * @param {Object}              props
- * @param {React.ComponentType} props.control     The controlled component to render
+ * @param {React.ComponentType} props.control     The controlled component to render // eslint-disable-line jsdoc/no-undefined-types
  * @param {string|number}       props.value       The controlled value
  * @param {Function}            props.onChange    Change handler
  * @param {number}              [props.delay=300] Debounce delay in milliseconds
  */
+
 const DataStoreControl = React.forwardRef(
 	(
 		{

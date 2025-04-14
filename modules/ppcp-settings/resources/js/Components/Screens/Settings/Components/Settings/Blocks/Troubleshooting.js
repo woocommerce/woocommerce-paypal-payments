@@ -36,6 +36,7 @@ const Troubleshooting = () => {
 			<SettingsBlock
 				title={ __( 'Webhooks', 'woocommerce-paypal-payments' ) }
 				description={ sprintf(
+					// Translators: %s is the URL to the Webhook Status documentation.
 					__(
 						'The following PayPal webhooks are subscribed. More information about the webhooks is available in the <a href="%s">Webhook Status documentation</a>.',
 						'woocommerce-paypal-payments'

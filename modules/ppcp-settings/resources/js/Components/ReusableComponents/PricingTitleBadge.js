@@ -36,6 +36,7 @@ const PricingTitleBadge = ( { item } ) => {
 	);
 
 	const label = sprintf(
+		// Translators: %1$s is the percentage, %2$s is the fixed amount.
 		__( 'from %1$s%% + %2$s', 'woocommerce-paypal-payments' ),
 		percentage,
 		fixedAmount

@@ -70,7 +70,7 @@ export const usePaymentGatewayRefresh = () => {
 			}
 
 			// Update Redux state to mark gateways as refreshed.
-			const result = await refreshGateways();
+			await refreshGateways();
 
 			setRefreshCompleted( true );
 			return { success: true };

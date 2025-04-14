@@ -32,13 +32,15 @@ const StepPaymentMethods = () => {
 			description: <OptionalMethodDescription />,
 		},
 		{
-			title: ownBrandOnly ? __(
-				'No thanks, I prefer to use a different provider for local payment methods',
-				'woocommerce-paypal-payments'
-			) : __(
-				'No thanks, I prefer to use a different provider for processing credit cards, digital wallets, and local payment methods',
-				'woocommerce-paypal-payments'
-			),
+			title: ownBrandOnly
+				? __(
+						'No thanks, I prefer to use a different provider for local payment methods',
+						'woocommerce-paypal-payments'
+				  )
+				: __(
+						'No thanks, I prefer to use a different provider for processing credit cards, digital wallets, and local payment methods',
+						'woocommerce-paypal-payments'
+				  ),
 			value: false,
 		},
 	];

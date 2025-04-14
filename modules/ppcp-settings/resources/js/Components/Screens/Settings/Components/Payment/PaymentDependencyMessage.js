@@ -22,6 +22,7 @@ const PaymentDependencyMessage = ( { parentId, parentName } ) => {
 		{
 			methodLink: (
 				<strong>
+					{ /* eslint-disable-next-line jsx-a11y/anchor-is-valid */ }
 					<a
 						href="#"
 						onClick={ ( e ) => {

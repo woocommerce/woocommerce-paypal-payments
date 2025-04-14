@@ -24,7 +24,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 				}
 				return response.json();
 			} )
-			.then( ( data ) => {
+			.then( () => {
 				window.location.reload();
 			} )
 			.catch( ( error ) => {

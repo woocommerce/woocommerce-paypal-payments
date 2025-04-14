@@ -24,7 +24,7 @@ const DisconnectButton = () => {
 	const handleConfirm = useCallback( async () => {
 		await disconnectMerchant( resetFlag );
 		goToPluginSettings();
-	}, [ disconnectMerchant, resetFlag ] );
+	}, [ disconnectMerchant, goToPluginSettings, resetFlag ] );
 
 	const confirmationTitle = __(
 		'Disconnect from PayPal?',

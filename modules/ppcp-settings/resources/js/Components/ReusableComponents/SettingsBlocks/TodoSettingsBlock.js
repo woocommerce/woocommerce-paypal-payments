@@ -97,6 +97,7 @@ const TodoItem = ( {
 	onDismiss,
 } ) => {
 	return (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events,jsx-a11y/no-static-element-interactions
 		<div
 			className={ `ppcp-r-todo-item ${
 				isCompleted ? 'is-completed' : ''

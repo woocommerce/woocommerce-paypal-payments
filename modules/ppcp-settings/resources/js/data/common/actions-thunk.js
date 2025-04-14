@@ -45,7 +45,7 @@ export function refresh() {
  *
  * @param {string[]} [products=[]] Which products/features to display in the ISU popup.
  * @param {Object}   [options={}]  Options to customize the onboarding workflow.
- * @param            isSandbox     True if is sandbox, otherwise false.
+ * @param {boolean}  isSandbox     True if is sandbox, otherwise false.
  * @return {Function} The thunk function.
  */
 export function onboardingUrl(

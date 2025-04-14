@@ -24,7 +24,7 @@ const defaultPersistent = Object.freeze( {
 	product: {},
 	shop: {},
 	home: {},
-	custom_placement: [],
+	customPlacement: [],
 } );
 
 // Reducer logic.
