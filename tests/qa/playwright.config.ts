@@ -8,8 +8,9 @@ require( 'dotenv' ).config();
  * Internal dependencies
  */
 import { storeSetupProjects } from './tests/_setup/store';
+import { BaseExtend } from '@inpsyde/playwright-utils/build';
 
-export default defineConfig( {
+export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
 	expect: {
 		timeout: 20 * 1000,
