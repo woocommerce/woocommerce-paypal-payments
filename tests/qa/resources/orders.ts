@@ -7,11 +7,13 @@ import { orders } from '@inpsyde/playwright-utils/build/e2e/plugins/woocommerce'
  */
 import { merchants } from '.';
 
-const country = 'germany';
+const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
+const currency = process.env.WC_DEFAULT_CURRENCY || 'USD';
 const merchant = merchants[ country ];
 
 for ( const order in orders ) {
 	orders[ order ].merchant = merchant;
+	orders[ order ].currency = currency;
 }
 
 export { orders };

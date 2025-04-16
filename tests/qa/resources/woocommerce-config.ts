@@ -3,7 +3,7 @@
  */
 import { shopSettings, customers } from '.';
 
-const country = 'usa';
+const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
 export const storeConfigDefault = {
 	classicPages: false, // false = block cart and checkout (default), true = classic cart & checkout pages
