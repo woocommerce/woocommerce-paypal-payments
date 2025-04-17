@@ -11,9 +11,7 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalApi } from './paypal-api';
-import { PcpApi } from './pcp-api';
-import { Utils } from './utils';
+import { PayPalApi, PcpApi, Utils } from '.';
 
 // PCP tabs
 import {
