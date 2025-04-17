@@ -4,7 +4,8 @@
 import {
 	expect,
 	getTestResultsFromFile,
-	PayPalUI,
+	PayPalUi,
+	PayPalUiClassic,
 	PcpPayLaterMessaging,
 	saveTestResultsToFile,
 	test,
@@ -114,14 +115,14 @@ const takePreviewSnapshots = async (
  * - Asserts Pay Later Messaging container is visible.
  * - Compares actual PLM container screenshot to expected.
  *
- * @param ppui
+ * @param payPalUi
  * @param snapshotName
  */
-const snapshotPlmContainer = async ( ppui: PayPalUI, snapshotName: string ) => {
-	await expect( ppui.payLaterMessageContainer() ).toBeVisible();
-	await ppui.page.waitForTimeout( 500 );
+const snapshotPlmContainer = async ( payPalUi: PayPalUi | PayPalUiClassic, snapshotName: string ) => {
+	await expect( payPalUi.payLaterMessageContainer() ).toBeVisible();
+	await payPalUi.page.waitForTimeout( 500 );
 	expect(
-		await ppui
+		await payPalUi
 			.payLaterMessageContainer()
 			.screenshot( { animations: 'disabled' } )
 	).toMatchSnapshot( `${ snapshotName }.png` );
@@ -144,7 +145,7 @@ test.describe( 'Subtests', () => {
 	for ( const settings of productPlm.settings ) {
 		test(
 			completeTestTitle( `(PCP-0001) PLM - Product page`, settings ),
-			async ( { pcpPayLaterMessaging, product, ppui }, testInfo ) => {
+			async ( { pcpPayLaterMessaging, product }, testInfo ) => {
 				const snapshotName = testInfo.title;
 				const { location } = productPlm;
 				await pcpPayLaterMessaging.visit();
@@ -166,7 +167,7 @@ test.describe( 'Subtests', () => {
 
 				await product.visit( products.simple10.slug );
 				await snapshotPlmContainer(
-					ppui,
+					product.payPalUi,
 					`${ snapshotName } - Frontend`
 				);
 			}
@@ -179,7 +180,7 @@ test.describe( 'Subtests', () => {
 		test(
 			completeTestTitle( `(PCP-0002) PLM - Cart`, settings ),
 			async (
-				{ utils, pcpPayLaterMessaging, cart, classicCart, ppui },
+				{ utils, pcpPayLaterMessaging, cart, classicCart },
 				testInfo
 			) => {
 				const snapshotName = testInfo.title;
@@ -205,13 +206,13 @@ test.describe( 'Subtests', () => {
 				// Block cart
 				await cart.visit();
 				await snapshotPlmContainer(
-					ppui,
+					cart.payPalUi,
 					`${ snapshotName } - Frontend - Block cart`
 				);
 				// Classic cart
 				await classicCart.visit();
 				await snapshotPlmContainer(
-					ppui,
+					classicCart.payPalUi,
 					`${ snapshotName } - Frontend - Classic cart`
 				);
 			}
@@ -229,7 +230,6 @@ test.describe( 'Subtests', () => {
 					pcpPayLaterMessaging,
 					checkout,
 					classicCheckout,
-					ppui,
 				},
 				testInfo
 			) => {
@@ -256,13 +256,13 @@ test.describe( 'Subtests', () => {
 				// Block checkout
 				await checkout.visit();
 				await snapshotPlmContainer(
-					ppui,
+					checkout.payPalUi,
 					`${ snapshotName } - Frontend - Block checkout`
 				);
 				// Classic checkout
 				await classicCheckout.visit();
 				await snapshotPlmContainer(
-					ppui,
+					classicCheckout.payPalUi,
 					`${ snapshotName } - Frontend - Classic checkout`
 				);
 			}
@@ -275,11 +275,8 @@ test.describe( 'Subtests', () => {
 		test(
 			completeTestTitle( `(PCP-0004) PLM - Home`, settings ),
 			async (
-				{
-					pcpPayLaterMessaging,
-					ppui, // PayPal UI
-				},
-				testInfo
+				{ pcpPayLaterMessaging, payPalUiClassic },
+				testInfo,
 			) => {
 				test.setTimeout( 10 * 60 * 1000 );
 				const snapshotName = testInfo.title;
@@ -301,9 +298,9 @@ test.describe( 'Subtests', () => {
 					`${ snapshotName } - After save`
 				);
 
-				await ppui.page.goto( '/' );
+				await payPalUiClassic.page.goto( '/' );
 				await snapshotPlmContainer(
-					ppui,
+					payPalUiClassic,
 					`${ snapshotName } - Frontend`
 				);
 			}
@@ -315,7 +312,7 @@ test.describe( 'Subtests', () => {
 	for ( const settings of shopPlm.settings ) {
 		test(
 			completeTestTitle( `(PCP-0005) PLM - Shop`, settings ),
-			async ( { pcpPayLaterMessaging, shop, ppui }, testInfo ) => {
+			async ( { pcpPayLaterMessaging, shop }, testInfo ) => {
 				const snapshotName = testInfo.title;
 				const { location } = shopPlm;
 				await pcpPayLaterMessaging.visit();
@@ -337,7 +334,7 @@ test.describe( 'Subtests', () => {
 
 				await shop.visit();
 				await snapshotPlmContainer(
-					ppui,
+					shop.payPalUi,
 					`${ snapshotName } - Frontend`
 				);
 			}

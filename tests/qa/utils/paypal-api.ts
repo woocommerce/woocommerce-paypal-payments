@@ -12,7 +12,7 @@ import { Pcp } from '../resources';
  * Class for PayPal API
  */
 
-export class PayPalAPI {
+export class PayPalApi {
 	request: APIRequestContext;
 	apiBaseUrl = 'https://api-m.sandbox.paypal.com/v2';
 
@@ -147,7 +147,7 @@ export class PayPalAPI {
 	 * @param payment
 	 */
 	getPaymentIdFromOrder = async ( payPalOrder, payment: Pcp.Payment ) => {
-		const fundingSource = payment.gateway.dataFundingSource;
+		const fundingSource = payment.gateway.shortcut;
 
 		if ( fundingSource === 'pay_upon_invoice' ) {
 			return '';
@@ -190,7 +190,7 @@ export class PayPalAPI {
 	 * @param shopOrder
 	 */
 	getFee = async ( resourceId: string, shopOrder: WooCommerce.ShopOrder ) => {
-		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.shortcut;
 		if (
 			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
 			shopOrder.payment.isAuthorized
@@ -205,7 +205,7 @@ export class PayPalAPI {
 		resourceId: string,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.shortcut;
 		if (
 			[ 'pay_upon_invoice', 'oxxo' ].includes( fundingSource ) ||
 			shopOrder.payment.isAuthorized
@@ -228,7 +228,7 @@ export class PayPalAPI {
 		wooCommerceOrderJson: WooCommerce.Order,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.shortcut;
 		const payPalOrderId = await this.getOrderIdFromWooCommerce(
 			wooCommerceOrderJson
 		);
@@ -345,7 +345,7 @@ export class PayPalAPI {
 		paymentId: string,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource = shopOrder.payment.gateway.dataFundingSource;
+		const fundingSource = shopOrder.payment.gateway.shortcut;
 
 		if ( fundingSource === 'pay_upon_invoice' ) {
 			return;

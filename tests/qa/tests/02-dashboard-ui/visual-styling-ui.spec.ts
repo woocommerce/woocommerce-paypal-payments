@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { expect, PayPalUI, test } from '../../utils';
+import { expect, test } from '../../utils';
 import { merchants, storeConfigDefault, Pcp, products } from '../../resources';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
@@ -46,33 +46,33 @@ test( 'PCP-0000 | Settings - Styling - Default UI', async ( {
 	await utils.fillVisitorsCart( [ products.simple10 ] );
 
 	await product.visit( products.simple10.slug );
-	await product.ppui.snapshotClassicPayPalButtons(
+	await product.payPalUi.snapshotClassicPayPalButtons(
 		`${ snapshotName } - Frontend - Product`
 	);
 
 	await product.minicartContainer().hover();
-	await product.ppui.snapshotMinicartPayPalButtons(
+	await product.payPalUi.snapshotMinicartPayPalButtons(
 		`${ snapshotName } - Frontend - Minicart`
 	);
 
 	await cart.visit();
-	await cart.ppui.snapshotBlockPayPalButtons(
+	await cart.payPalUi.snapshotBlockPayPalButtons(
 		`${ snapshotName } - Frontend - Cart`
 	);
 
 	await classicCart.visit();
-	await classicCart.ppui.snapshotClassicPayPalButtons(
+	await classicCart.payPalUi.snapshotClassicPayPalButtons(
 		`${ snapshotName } - Frontend - Classic Cart`
 	);
 
 	await checkout.visit();
-	await checkout.ppui.snapshotBlockPayPalButtons(
+	await checkout.payPalUi.snapshotBlockPayPalButtons(
 		`${ snapshotName } - Frontend - Checkout`
 	);
 
 	await classicCheckout.visit();
 	await classicCheckout.paymentOption( 'PayPal' ).click();
-	await classicCheckout.ppui.snapshotClassicPayPalButtons(
+	await classicCheckout.payPalUi.snapshotClassicPayPalButtons(
 		`${ snapshotName } - Frontend - Classic checkout`
 	);
 } );

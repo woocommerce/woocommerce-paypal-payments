@@ -5,15 +5,15 @@ import { CustomerPaymentMethods as CustomerPaymentMethodsBase } from '@inpsyde/p
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 import { Pcp } from '../../resources';
 
 export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
@@ -28,7 +28,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 			return false;
 		}
 
-		switch ( payment.gateway.dataFundingSource ) {
+		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
 				return await this.savedPaymentMethodRow(
 					`Paypal /`
@@ -50,7 +50,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 		if ( ! ( await this.isSavedPaymentMethod( payment ) ) ) {
 			await this.addPaymentMethodButton().click();
 			await this.page.waitForLoadState();
-			await this.ppui.savePaymentMethod( payment );
+			await this.payPalUi.savePaymentMethod( payment );
 		}
 	};
 
