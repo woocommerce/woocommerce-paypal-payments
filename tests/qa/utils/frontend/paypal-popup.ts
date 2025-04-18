@@ -35,6 +35,7 @@ export class PayPalPopup {
 			'Log in to your PayPal account'
 		);
 
+		// Sometimes the phone may be requested
 		if (
 			! ( await this.loginInput().isEditable() ) &&
 			this.loginWithPasswordInsteadLink().isVisible()
@@ -43,10 +44,20 @@ export class PayPalPopup {
 		}
 
 		await this.loginInput().fill( email );
+
 		// Sometimes we get a popup with email and password fields at the same screen
 		if ( await this.nextButton().isVisible() ) {
 			await this.nextButton().click();
 		}
+
+		// Sometimes the phone may be requested
+		if (
+			! ( await this.passwordInput().isEditable() ) &&
+			this.loginWithPasswordInsteadLink().isVisible()
+		) {
+			this.loginWithPasswordInsteadLink().click();
+		}
+
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
 	};
