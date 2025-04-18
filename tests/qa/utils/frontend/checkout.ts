@@ -32,41 +32,41 @@ export class Checkout extends CheckoutBase {
 		}
 	};
 
-	makeOrder = async ( tested ) => {
+	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		await this.visit();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( tested.coupons );
+		await this.applyCouponIfNeeded( data.coupons );
 
 		// Fill billing details
-		await this.fillCheckoutForm( tested.customer );
+		await this.fillCheckoutForm( data.customer );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( tested.shipping.settings.title );
+		await this.selectShippingMethod( data.shipping.settings.title );
 
 		// Make payment with tested method
 		await this.payPalUi.makePayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 
-	completeOrderFromProduct = async ( tested ) => {
+	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
 		await this.assertUrl();
 		await expect(
 			this.page.getByText(
-				`You are currently paying with ${ tested.payment.gatewayName }.`
+				`You are currently paying with ${ data.payment.gatewayName }.`
 			)
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( tested.coupons );
+		await this.applyCouponIfNeeded( data.coupons );
 
 		// Fill billing details
-		await this.fillCheckoutForm( tested.customer );
+		await this.fillCheckoutForm( data.customer );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( tested.shipping.settings.title );
+		await this.selectShippingMethod( data.shipping.settings.title );
 
 		// Make payment with tested method
 		await this.placeOrder();
