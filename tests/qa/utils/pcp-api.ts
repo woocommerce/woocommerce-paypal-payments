@@ -50,11 +50,31 @@ export class PcpApi extends WooCommerceApiBase {
 
 	resetDb = () => this.disconnectMerchant( true );
 
-	updatePaymentMethods = async ( data: Pcp.Api ) => {
-		const response = await this.wcRequest( 'post', `wc_paypal/payment`, {
-			...data,
-			_locale: 'user',
-		} );
+	updatePcpPaymentMethods = async (
+		data: Pcp.Api.PaymentMethods
+	) => {
+		const response = await this.wcRequest(
+			'post',
+			`wc_paypal/payment`,
+			{
+				...data,
+				_locale: 'user',
+			}
+		);
+		return response;
+	};
+
+	updatePcpSettings = async (
+		data: Pcp.Api.Settings
+	) => {
+		const response = await this.wcRequest(
+			'post',
+			`wc_paypal/settings`,
+			{
+				...data,
+				_locale: 'user',
+			}
+		);
 		return response;
 	};
 }

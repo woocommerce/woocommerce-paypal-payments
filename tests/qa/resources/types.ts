@@ -65,6 +65,28 @@ export namespace Pcp {
 		isAuthorized?: boolean;
 		saveToAccount?: boolean;
 	};
+	
+	export namespace Api {
+		export type PaymentMethods =
+			GatewayOptions &
+			{ [ key in GatewayId ]?: WooCommerce.PaymentGateway };
+
+		export type Settings = {
+			authorizeOnly?: boolean;
+			brandName?: string;
+			buttonLanguage?: 'en_EN' | 'de_DE' | 'es_ES' | 'it_IT' | ( string & {} );
+			captureVirtualOrders?: boolean;
+			disabledCards?: ( "mastercard" | "visa" | "amex" | "jcb" | "diners-club" )[];
+			enableLogging?: boolean;
+			enablePayNow?: boolean;
+			invoicePrefix?: string;
+			landingPage?: string;
+			saveCardDetails?: boolean;
+			savePaypalAndVenmo?: boolean;
+			softDescriptor?: string;
+			subtotalAdjustment?: string;
+		}
+	}
 
 	export namespace Admin {
 		export namespace Onboarding {
