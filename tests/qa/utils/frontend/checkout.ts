@@ -8,14 +8,14 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUi } from './paypal-ui';
 
 export class Checkout extends CheckoutBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUi;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
@@ -45,11 +45,10 @@ export class Checkout extends CheckoutBase {
 		await this.selectShippingMethod( tested.shipping.settings.title );
 
 		// Make payment with tested method
-		await this.ppui.makePayment( {
+		await this.payPalUi.makePayment( {
 			merchant: tested.merchant,
 			payment: tested.payment,
 		} );
-		await this.placeOrder();
 	};
 
 	completeOrderFromProduct = async ( tested ) => {

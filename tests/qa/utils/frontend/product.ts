@@ -8,14 +8,14 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class Product extends ProductBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
@@ -29,7 +29,7 @@ export class Product extends ProductBase {
 
 	makeOrder = async ( tested ) => {
 		await this.visit( tested.products[ 0 ].slug );
-		await this.ppui.makeClassicPayment( {
+		await this.payPalUi.makePayment( {
 			merchant: tested.merchant,
 			payment: tested.payment,
 		} );

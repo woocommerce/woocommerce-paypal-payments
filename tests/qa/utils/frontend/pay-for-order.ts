@@ -5,14 +5,14 @@ import { PayForOrder as PayForOrderBase } from '@inpsyde/playwright-utils/build'
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class PayForOrder extends PayForOrderBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
@@ -21,7 +21,7 @@ export class PayForOrder extends PayForOrderBase {
 
 	makeOrder = async ( tested, order ) => {
 		await this.visit( order.id, order.order_key );
-		await this.ppui.makeClassicPayment( {
+		await this.payPalUi.makePayment( {
 			merchant: tested.merchant,
 			payment: tested.payment,
 		} );
