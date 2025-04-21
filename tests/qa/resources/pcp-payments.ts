@@ -6,7 +6,7 @@ import { Pcp } from './types';
 import { gateways } from './pcp-gateways';
 import { payPalAccounts } from './paypal-accounts';
 
-const country = 'germany';
+const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
 const payPal: Pcp.Payment = {
 	gateway: gateways.payPal,

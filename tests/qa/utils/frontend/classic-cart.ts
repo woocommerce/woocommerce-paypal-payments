@@ -5,14 +5,14 @@ import { ClassicCart as ClassicCartBase } from '@inpsyde/playwright-utils/build'
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class ClassicCart extends ClassicCartBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
@@ -30,7 +30,7 @@ export class ClassicCart extends ClassicCartBase {
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.selectShippingMethod( tested.shipping.settings.title );
 		// Make payment with tested method
-		await this.ppui.makeClassicPayment( {
+		await this.payPalUi.makePayment( {
 			merchant: tested.merchant,
 			payment: tested.payment,
 		} );

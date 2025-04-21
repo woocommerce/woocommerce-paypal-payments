@@ -11,20 +11,51 @@ export namespace Pcp {
 		account_id: string;
 	};
 
-	export type Gateway = {
-		enabled?: boolean;
-		title?: string;
-		dataFundingSource?: string; // data-funding-source - an attribute of  payment method container on frontend pages
-		slug?: string;
-		description?: string;
+	export type GatewayId =
+		| 'ppcp-gateway'
+		| 'pay-later'
+		| 'venmo'
+		| 'ppcp-applepay'
+		| 'ppcp-card-button-gateway'
+		| 'ppcp-credit-card-gateway'
+		| 'ppcp-axo-gateway'
+		| 'ppcp-bancontact'
+		| 'ppcp-blik'
+		| 'ppcp-eps'
+		| 'ppcp-googlepay'
+		| 'ppcp-ideal'
+		| 'ppcp-multibanco'
+		| 'ppcp-mybank'
+		| 'ppcp-oxxo-gateway'
+		| 'ppcp-p24'
+		| 'ppcp-pay-upon-invoice-gateway'
+		| 'ppcp-trustly';
+	
+	export type GatewayOptions = {
+		fastlaneCardholderName?: boolean;
+		fastlaneDisplayWatermark?: boolean;
 		paypalShowLogo?: boolean;
-		acdc3ds?:
+		threeDSecure?:
 			| 'no-3d-secure'
 			| 'only-required-3d-secure'
 			| 'always-3d-secure';
-		fastlaneDisplayCardholderName?: boolean;
-		fastlaneDisplayFastlaneWatermark?: boolean;
 	};
+	
+	export type Api =
+		GatewayOptions &
+		{ [ key in GatewayId ]?: WooCommerce.PaymentGateway };
+
+	export type Gateway =
+		WooCommerce.PaymentGateway &
+		GatewayOptions &
+		{
+			id?: GatewayId;
+			shortcut?: string; // data-funding-source - an attribute of  payment method container on frontend pages
+			country?: string;
+			currency?: string;
+			minAmount?: string;
+			maxAmount?: string;
+		};
 
 	export type Payment = {
 		gateway: Gateway;
@@ -60,6 +91,13 @@ export namespace Pcp {
 			export type CheckoutOptions = {
 				enableOptionalPaymentMethods: boolean;
 			};
+		}
+
+		export namespace PaymentMethods {
+			export type ThreeDSecure =
+				| 'No 3D Secure'
+				| 'Only when required'
+				| 'Always require 3D Secure';
 		}
 
 		export type Settings = {

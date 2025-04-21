@@ -11,9 +11,7 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalAPI } from './paypal-api';
-import { PcpApi } from './pcp-api';
-import { Utils } from './utils';
+import { PayPalApi, PcpApi, Utils } from '.';
 
 // PCP tabs
 import {
@@ -29,7 +27,8 @@ import {
 
 // WooCommerce front end
 import {
-	PayPalUI,
+	PayPalUi,
+	PayPalUiClassic,
 	Shop,
 	Product,
 	Cart,
@@ -45,12 +44,13 @@ import {
 } from './frontend';
 
 type BaseExtend = {
-	ppapi: PayPalAPI;
+	payPalApi: PayPalApi;
 	pcpApi: PcpApi;
 	visitorPage: Page;
 	visitorRequest: APIRequestContext;
 	visitorWooCommerceApi: WooCommerceApi;
-	ppui: PayPalUI;
+	payPalUi: PayPalUi;
+	payPalUiClassic: PayPalUiClassic;
 
 	// PCP tabs
 	pcpOnboarding: PcpOnboarding;
@@ -83,8 +83,8 @@ type BaseExtend = {
 };
 
 const test = base.extend< BaseExtend >( {
-	ppapi: async ( { request }, use ) => {
-		await use( new PayPalAPI( { request } ) );
+	payPalApi: async ( { request }, use ) => {
+		await use( new PayPalApi( { request } ) );
 	},
 	pcpApi: async ( { request, requestUtils }, use ) => {
 		await use( new PcpApi( { request, requestUtils } ) );
@@ -113,8 +113,11 @@ const test = base.extend< BaseExtend >( {
 	visitorWooCommerceApi: async ( { visitorRequest }, use ) => {
 		await use( new WooCommerceApi( { request: visitorRequest } ) );
 	},
-	ppui: async ( { visitorPage, ppapi }, use ) => {
-		await use( new PayPalUI( { page: visitorPage, ppapi } ) );
+	payPalUi: async ( { visitorPage, payPalApi }, use ) => {
+		await use( new PayPalUi( { page: visitorPage, payPalApi } ) );
+	},
+	payPalUiClassic: async ( { visitorPage, payPalApi }, use ) => {
+		await use( new PayPalUiClassic( { page: visitorPage, payPalApi } ) );
 	},
 
 	// PCP settings
@@ -146,41 +149,41 @@ const test = base.extend< BaseExtend >( {
 	},
 
 	// WooCommerce front end
-	shop: async ( { visitorPage, ppui }, use ) => {
-		await use( new Shop( { page: visitorPage, ppui } ) );
+	shop: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new Shop( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	product: async ( { visitorPage, ppui }, use ) => {
-		await use( new Product( { page: visitorPage, ppui } ) );
+	product: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new Product( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	cart: async ( { visitorPage, ppui }, use ) => {
-		await use( new Cart( { page: visitorPage, ppui } ) );
+	cart: async ( { visitorPage, payPalUi }, use ) => {
+		await use( new Cart( { page: visitorPage, payPalUi } ) );
 	},
-	checkout: async ( { visitorPage, ppui }, use ) => {
-		await use( new Checkout( { page: visitorPage, ppui } ) );
+	checkout: async ( { visitorPage, payPalUi }, use ) => {
+		await use( new Checkout( { page: visitorPage, payPalUi } ) );
 	},
-	classicCart: async ( { visitorPage, ppui }, use ) => {
-		await use( new ClassicCart( { page: visitorPage, ppui } ) );
+	classicCart: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new ClassicCart( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	classicCheckout: async ( { visitorPage, ppui }, use ) => {
-		await use( new ClassicCheckout( { page: visitorPage, ppui } ) );
+	classicCheckout: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new ClassicCheckout( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	classicPayForOrder: async ( { visitorPage, ppui }, use ) => {
-		await use( new ClassicPayForOrder( { page: visitorPage, ppui } ) );
+	classicPayForOrder: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new ClassicPayForOrder( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	payForOrder: async ( { visitorPage, ppui }, use ) => {
-		await use( new PayForOrder( { page: visitorPage, ppui } ) );
+	payForOrder: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new PayForOrder( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	orderReceived: async ( { visitorPage, ppui }, use ) => {
-		await use( new OrderReceived( { page: visitorPage, ppui } ) );
+	orderReceived: async ( { visitorPage }, use ) => {
+		await use( new OrderReceived( { page: visitorPage } ) );
 	},
-	customerAccount: async ( { visitorPage, ppui }, use ) => {
-		await use( new CustomerAccount( { page: visitorPage, ppui } ) );
+	customerAccount: async ( { visitorPage }, use ) => {
+		await use( new CustomerAccount( { page: visitorPage } ) );
 	},
-	customerPaymentMethods: async ( { visitorPage, ppui }, use ) => {
-		await use( new CustomerPaymentMethods( { page: visitorPage, ppui } ) );
+	customerPaymentMethods: async ( { visitorPage, payPalUiClassic }, use ) => {
+		await use( new CustomerPaymentMethods( { page: visitorPage, payPalUi: payPalUiClassic } ) );
 	},
-	customerSubscriptions: async ( { visitorPage, ppui }, use ) => {
-		await use( new CustomerSubscriptions( { page: visitorPage, ppui } ) );
+	customerSubscriptions: async ( { visitorPage }, use ) => {
+		await use( new CustomerSubscriptions( { page: visitorPage } ) );
 	},
 
 	// Utils & preconditions

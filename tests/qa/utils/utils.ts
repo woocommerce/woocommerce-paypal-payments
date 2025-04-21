@@ -82,7 +82,7 @@ export class Utils {
 		order: WooCommerce.ShopOrder
 	) => {
 		await this.payForOrder.visit( orderId, orderKey );
-		await this.payForOrder.ppui.makeClassicPayment( {
+		await this.payForOrder.payPalUi.makePayment( {
 			merchant: order.merchant,
 			payment: order.payment,
 		} );

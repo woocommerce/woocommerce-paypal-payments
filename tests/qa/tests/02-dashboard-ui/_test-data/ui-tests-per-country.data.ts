@@ -5,44 +5,39 @@ import { shopSettings } from '@inpsyde/playwright-utils/build';
 
 export const badgeTestsData = [
 	{
-		testKey: 'PCP-0000',
+		testKey: 'PCP-4319',
 		wooCommerceCountryCode: 'US:SC',
-		countryCode: 'US',
+		country: 'United States',
 	},
 	{
-		testKey: 'PCP-0000',
-		wooCommerceCountryCode: 'GB',
-		countryCode: 'UK',
+		testKey: 'PCP-4320',
+		wooCommerceCountryCode: 'UK',
+		country: 'United Kingdom',
 	},
 	{
-		testKey: 'PCP-0000',
+		testKey: 'PCP-4321',
 		wooCommerceCountryCode: 'CA:AB',
-		countryCode: 'CA',
+		country: 'Canada',
 	},
 	{
-		testKey: 'PCP-0000',
+		testKey: 'PCP-4322',
 		wooCommerceCountryCode: 'AU:NSW',
-		countryCode: 'AU',
+		country: 'Australia',
 	},
 	{
-		testKey: 'PCP-0000',
+		testKey: 'PCP-4323',
 		wooCommerceCountryCode: 'FR',
-		countryCode: 'FR',
+		country: 'France',
 	},
 	{
-		testKey: 'PCP-0000',
+		testKey: 'PCP-4324',
 		wooCommerceCountryCode: 'IT:GE',
-		countryCode: 'IT',
+		country: 'Italy',
 	},
 	{
-		testKey: 'PCP-0000',
+		testKey: 'PCP-4326',
 		wooCommerceCountryCode: 'ES:GR',
-		countryCode: 'ES',
-	},
-	{
-		testKey: 'PCP-0000',
-		wooCommerceCountryCode: 'DE:DE-BE',
-		countryCode: 'DE',
+		country: 'Spain',
 	},
 ];
 

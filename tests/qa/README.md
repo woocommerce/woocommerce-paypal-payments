@@ -1,12 +1,8 @@
 # PCP Tests
 
-Folder for Playwright tests. Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-utils) package.
+Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-utils) package.
 
-## Folder structure
-
-Tests for PCP project are stored under the __tests/qa__ dir.
-
-### Project structure
+## Project structure
 
 - `resources` - files with test-data, images, project related installation packages, types, etc.
 
@@ -32,7 +28,9 @@ Tests for PCP project are stored under the __tests/qa__ dir.
 
 - `.env`, `playwright.config.ts`, `package.json` - see below.
 
-### Setup @inpsyde/playwright-utils as a node package
+## Setup @inpsyde/playwright-utils as a node package
+
+> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
 
 1. Remove `"workspaces": [ "playwright-utils" ]` from `package.json`.
 
@@ -42,7 +40,9 @@ Tests for PCP project are stored under the __tests/qa__ dir.
 npm run setup:tests
 ```
 
-### Setup @inpsyde/playwright-utils for local development
+## Setup @inpsyde/playwright-utils for local development
+
+> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#development).
 
 1. Add `"workspaces": [ "playwright-utils" ]` to `package.json`.
 
@@ -70,31 +70,21 @@ npm run setup:tests
 	10:00:00 - Found 0 errors. Watching for file changes.
 	```
 
-7. If you plan to make changes in `playwright-utils` keep current terminal window opened and create another instance of terminal.
+7. If you plan to make changes in `playwright-utils` keep current terminal window opened and create another instance of terminal for other commands.
 
 ## Project configuration
 
-Project requires a working WordPress website with WooCommmerce, `.env` file and configured Playwright.
-
 1. [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) - will be deprecated in Q1 of 2025.
 
-2. Tested user with Administrator role should be created
-  
-2. In the Dashboard navigate to __Settings -> Permalinks__ and select `Post name` in __Permalink structure__ for correct format of REST path.
+2. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`.
 
-3. Install __Storefront__ theme.
-   
-4. Install __WooCommerce__ plugin.
+3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
-5. In __WooCommerce -> Settings -> Advanced -> REST API__ create _Consumer Key_ and _Secret_ with Read/Write permissions and store them in `.env`.
+4. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
 
-6. To avoid conflicts make sure any other payment plugins like are deleted.
+5. To avoid conflicts make sure any other payment plugins are deleted.
 
-7. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`.
-
-8. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
-
-9. Reporting to __Xray in Jira__ is configured [this way](https://github.com/inpsyde/playwright-utils/blob/main/docs/test-report-api/report-to-xray.md).
+6. Reporting to __Xray in Jira__ is configured [this way](https://github.com/inpsyde/playwright-utils/blob/main/docs/test-report-api/report-to-xray.md).
 
 ## Run tests
 
@@ -154,7 +144,7 @@ npx playwright test
 
 8. When finished test results should be exported to the specified test execution ticket in Jira.
 
-9. Analyze failed tests (if any). Restart execution for failed tests, possibly in debug mode:
+9. Analyze failed tests (if any). Restart execution for failed tests, possibly in debug mode (for Windows):
 
 	```bash
 	npx playwright test --grep --% "WOL-123^|WOL-124^|WOL-125" --debug

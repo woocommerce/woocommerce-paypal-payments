@@ -165,11 +165,11 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			);
 		}
 
-		if ( orderData.payment.gateway.dataFundingSource === 'oxxo' ) {
+		if ( orderData.payment.gateway.shortcut === 'oxxo' ) {
 			await expect( this.seeOXXOVoucherButton() ).toBeVisible();
 		}
 
-		if ( orderData.payment.gateway.dataFundingSource === 'acdc' ) {
+		if ( orderData.payment.gateway.shortcut === 'acdc' ) {
 			await this.assertAddressVerificationResult(
 				orderData.payment.card
 			);
@@ -177,7 +177,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		if (
 			[ 'paypal', 'paylater', 'venmo' ].includes(
-				orderData.payment.gateway.dataFundingSource
+				orderData.payment.gateway.shortcut
 			)
 		) {
 			await this.assertPayPalEmailAddress(
