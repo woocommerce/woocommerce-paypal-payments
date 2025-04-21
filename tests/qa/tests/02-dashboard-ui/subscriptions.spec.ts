@@ -109,7 +109,6 @@ test.describe( () => {
 				`${ snapshotName } - ${ location }`
 			);
 		}
-		//! FRONTEND TRANSACTION FLOW WILL BE ADDED HERE
 	} );
 
 
