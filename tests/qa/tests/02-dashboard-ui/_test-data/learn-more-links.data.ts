@@ -89,11 +89,11 @@ export const learnMoreLinksByCountry = {
 		links: [
 			{
 				url: 'https://www.paypal.com/es/business/accept-payments/checkout',
-				title: 'PayPal Online Checkout para Negocios | PayPal ES',
+				title: 'PayPal Checkout | Checkout Online Personalizado | PayPal ES',
 			},
 			{
 				url: 'https://www.paypal.com/es/business/accept-payments/checkout/installments',
-				title: 'Pagar a Plazos | Paga a Plazos con PayPal | PayPal ES',
+				title: 'Pagos a plazos | Ofrece Paga en 3 | PayPal ES',
 			},
 			{
 				url: 'https://www.paypal.com/es/business/paypal-business-fees',
