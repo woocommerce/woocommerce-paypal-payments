@@ -61,8 +61,6 @@ test.describe( () => {
 		pcpStyling,
 		pcpApi,
 	}, testInfo ) => {
-		await utils.fillVisitorsCart( [ products.simple10 ] );
-
 		await pcpOnboarding.visit();
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -83,15 +81,17 @@ test.describe( () => {
 			merchants.usa.client_id,
 			merchants.usa.client_secret
 		);
-		await pcpPaymentMethods.visit();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - Payment methods - PayPal, Venmo, ACDC enabled - All APMs enabled - Default`,
-			percyPcpSettingsConfig
-		);
 
+		await pcpOnboarding.page.waitForLoadState();
 		await pcpSettings.visit();
 		await percy.takeSnapshot(
 			`${ testInfo.title } - Settings - Pay Now Experience enabled - Default`,
+			percyPcpSettingsConfig
+		);
+
+		await pcpPaymentMethods.visit();
+		await percy.takeSnapshot(
+			`${ testInfo.title } - Payment methods - PayPal, Venmo, ACDC enabled - All APMs enabled - Default`,
 			percyPcpSettingsConfig
 		);
 
@@ -103,6 +103,11 @@ test.describe( () => {
 			'Mini Cart',
 			'Product Page',
 		];
+
+		await pcpStyling.visit();
+		await expect( pcpStyling.configContainer() ).toBeVisible();
+		await expect( pcpStyling.locationSelectbox() ).toBeVisible();
+
 		for ( const location of locations ) {
 			await pcpStyling.locationSelectbox().selectOption( location );
 			await pcpStyling.snapshotStylingConfigurator(
