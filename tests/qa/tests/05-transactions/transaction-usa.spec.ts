@@ -6,10 +6,14 @@ import {
 	merchants,
 	storeConfigUsa,
 	gateways,
-	taxSettings
+	taxSettings,
 } from '../../resources';
 import { transactionsOnCheckout } from './_test-scenarios';
-import { payPalCheckout, payPalCheckoutExcludingTax, payPalCheckoutIntentAuthorized } from './_test-data/paypal';
+import {
+	payPalCheckout,
+	payPalCheckoutExcludingTax,
+	payPalCheckoutIntentAuthorized,
+} from './_test-data/paypal';
 
 const { payPal, venmo, fastlane } = gateways;
 
