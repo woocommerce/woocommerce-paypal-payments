@@ -72,9 +72,9 @@ export class PayPalUi {
 
 	/**
 	 * Opens PayPal popup per given funding source options
-	 * 
-	 * @param payment 
-	 * @returns 
+	 *
+	 * @param payment
+	 * @return
 	 */
 	openPayPalGatewayPupup = async ( payment: Pcp.Payment ) => {
 		const { gateway } = payment;
@@ -92,10 +92,14 @@ export class PayPalUi {
 				}
 				// pay with account other than vaulted (vaulting enabled)
 				if ( payment.useNotVaultedAccount ) {
-					await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+					await expect(
+						this.payPalButtonMoreOptions()
+					).toBeVisible();
 					await this.payPalButtonMoreOptions().click();
-			
-					await expect( this.payWithDifferentAccountButton() ).toBeVisible();
+
+					await expect(
+						this.payWithDifferentAccountButton()
+					).toBeVisible();
 					await this.payWithDifferentAccountButton().click();
 					break;
 				}
@@ -118,7 +122,7 @@ export class PayPalUi {
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		return new PayPalPopup( popup );
-	}
+	};
 
 	/**
 	 * Completes payment on Classic pages with given payment method
@@ -222,16 +226,17 @@ export class PayPalUi {
 		// on Pay for Order page the button name is Pay for order
 		if ( this.page.url().includes( 'pay_for_order' ) ) {
 			await this.payForOrderButton().click();
-		}
-		else {
+		} else {
 			await this.placeOrderButton().click();
 		}
 	};
-	
+
 	/**
 	 * Corrects Authorization header for PayPal which is messed up with Basic Auth.
 	 * In the following request Playwright replaces Auth header with Basic Auth from .env,
 	 * But the header should be from PayPal. Here it's replaced explicitly:
+	 *
+	 * @param merchant
 	 */
 	replacePayPalAuthToken = async ( merchant: Pcp.Merchant ) => {
 		await this.page.route(
@@ -253,22 +258,24 @@ export class PayPalUi {
 
 	completeAcdcVaultedPayment = async ( ...args ) =>
 		console.log( `TODO: completeAcdc3dsPayment for block pages` );
-	
+
 	completeAcdcPayment = async ( ...args ) =>
 		console.log( `TODO: completeAcdcPayment for block pages` );
-	
+
 	completeOXXOPayment = async ( ...args ) =>
 		console.log( `TODO: completeOXXOPayment for block pages` );
-	
+
 	completeStandardCardButtonPayment = async ( ...args ) =>
-		console.log( `TODO: completeStandardCardButtonPayment for block pages` );
-	
+		console.log(
+			`TODO: completeStandardCardButtonPayment for block pages`
+		);
+
 	completeDebitOrCreditCardPayment = async ( ...args ) =>
 		console.log( `TODO: completeDebitOrCreditCardPayment for block pages` );
-	
+
 	completePayUponInvoicePayment = async ( ...args ) =>
 		console.log( `TODO: completePayUponInvoicePayment for block pages` );
-	
+
 	addCardPaymentMethod = async ( ...args ) =>
 		console.log( `TODO: addCardPaymentMethod for block pages` );
 

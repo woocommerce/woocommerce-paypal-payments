@@ -215,12 +215,9 @@ setup( 'Setup products', async ( { wooCommerceUtils } ) => {
 	process.env.PRODUCTS = JSON.stringify( cartItems );
 } );
 
-setup(
-	'Setup Deactivate Disable new UI plugin',
-	async ( { requestUtils } ) => {
-		const pluginSlug = 'disable-new-ui';
-		if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
-			await requestUtils.deactivatePlugin( pluginSlug );
-		}
+setup( 'Setup Deactivate Disable new UI plugin', async ( { requestUtils } ) => {
+	const pluginSlug = 'disable-new-ui';
+	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
+		await requestUtils.deactivatePlugin( pluginSlug );
 	}
-);
+} );

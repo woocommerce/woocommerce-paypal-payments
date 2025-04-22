@@ -5,6 +5,9 @@ import {
 	RequestUtils,
 	WooCommerceApi as WooCommerceApiBase,
 } from '@inpsyde/playwright-utils/build';
+/**
+ * Internal dependencies
+ */
 import { Pcp } from '../resources';
 
 export class PcpApi extends WooCommerceApiBase {
@@ -47,17 +50,11 @@ export class PcpApi extends WooCommerceApiBase {
 
 	resetDb = () => this.disconnectMerchant( true );
 
-	updatePaymentMethods = async (
-		data: Pcp.Api
-	) => {
-		const response = await this.wcRequest(
-			'post',
-			`wc_paypal/payment`,
-			{
-				...data,
-				_locale: 'user',
-			}
-		);
+	updatePaymentMethods = async ( data: Pcp.Api ) => {
+		const response = await this.wcRequest( 'post', `wc_paypal/payment`, {
+			...data,
+			_locale: 'user',
+		} );
 		return response;
 	};
 }

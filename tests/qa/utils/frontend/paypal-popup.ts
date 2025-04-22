@@ -24,8 +24,7 @@ export class PayPalPopup {
 	payLaterSwitcher = () => this.popup.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.popup.locator( 'label[for^="credit-offer"]' ).first();
-	venmoButton = () =>
-		this.popup.locator( '.venmo-button-wrapper>button' );
+	venmoButton = () => this.popup.locator( '.venmo-button-wrapper>button' );
 	saveAndContinueButton = () => this.popup.getByTestId( 'consentButton' );
 	cancelLink = () => this.popup.locator( '#cancelLink' );
 
@@ -65,16 +64,14 @@ export class PayPalPopup {
 			this.saveAndContinueButton().click(),
 		] );
 	};
-	
+
 	/**
 	 * Completes payment with PayPal
 	 *
 	 * @param payPalPopup
 	 * @param payPalAccount
 	 */
-	completePayPalPayment = async (
-		payPalAccount: PayPalAccount
-	) => {
+	completePayPalPayment = async ( payPalAccount: PayPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
 		await expect( this.popup ).toHaveTitle( 'PayPal Checkout' );
 		await this.completePayment();
@@ -96,9 +93,7 @@ export class PayPalPopup {
 	 * @param payPalPopup
 	 * @param payPalAccount = { "email": "...", "password": "..." }
 	 */
-	completePayLaterPayment = async (
-		payPalAccount: PayPalAccount
-	) => {
+	completePayLaterPayment = async ( payPalAccount: PayPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
 		await expect( this.payLaterSwitcher() ).toHaveAttribute(
 			'aria-selected',

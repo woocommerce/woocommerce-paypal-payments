@@ -317,7 +317,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	completeAcdcPayment = async (
 		payment: Pcp.Payment,
-		merchant: Pcp.Merchant,
+		merchant: Pcp.Merchant
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
@@ -344,7 +344,6 @@ export class PayPalUiClassic extends PayPalUi {
 		await this.replacePayPalAuthToken( merchant );
 	};
 
-
 	/**
 	 * Completes payment with ACDC (vaulting enabled)
 	 *
@@ -353,7 +352,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	completeAcdcVaultedPayment = async (
 		payment: Pcp.Payment,
-		merchant: Pcp.Merchant,
+		merchant: Pcp.Merchant
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
@@ -361,7 +360,6 @@ export class PayPalUiClassic extends PayPalUi {
 		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
 	};
-
 
 	/**
 	 * Completes payment with ACDC 3D-Secure (vaulting disabled)
@@ -371,7 +369,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	completeAcdc3dsPayment = async (
 		payment: Pcp.Payment,
-		merchant: Pcp.Merchant,
+		merchant: Pcp.Merchant
 	) => {
 		await this.completeAcdcPayment( payment, merchant );
 		await this.threeDSAcceptCookiesButton().click();

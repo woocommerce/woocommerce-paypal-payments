@@ -30,7 +30,7 @@ export namespace Pcp {
 		| 'ppcp-p24'
 		| 'ppcp-pay-upon-invoice-gateway'
 		| 'ppcp-trustly';
-	
+
 	export type GatewayOptions = {
 		fastlaneCardholderName?: boolean;
 		fastlaneDisplayWatermark?: boolean;
@@ -40,15 +40,13 @@ export namespace Pcp {
 			| 'only-required-3d-secure'
 			| 'always-3d-secure';
 	};
-	
-	export type Api =
-		GatewayOptions &
-		{ [ key in GatewayId ]?: WooCommerce.PaymentGateway };
 
-	export type Gateway =
-		WooCommerce.PaymentGateway &
-		GatewayOptions &
-		{
+	export type Api = GatewayOptions & {
+		[ key in GatewayId ]?: WooCommerce.PaymentGateway;
+	};
+
+	export type Gateway = WooCommerce.PaymentGateway &
+		GatewayOptions & {
 			id?: GatewayId;
 			shortcut?: string; // data-funding-source - an attribute of  payment method container on frontend pages
 			country?: string;

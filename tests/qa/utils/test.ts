@@ -150,10 +150,14 @@ const test = base.extend< BaseExtend >( {
 
 	// WooCommerce front end
 	shop: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new Shop( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new Shop( { page: visitorPage, payPalUi: payPalUiClassic } )
+		);
 	},
 	product: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new Product( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new Product( { page: visitorPage, payPalUi: payPalUiClassic } )
+		);
 	},
 	cart: async ( { visitorPage, payPalUi }, use ) => {
 		await use( new Cart( { page: visitorPage, payPalUi } ) );
@@ -162,16 +166,30 @@ const test = base.extend< BaseExtend >( {
 		await use( new Checkout( { page: visitorPage, payPalUi } ) );
 	},
 	classicCart: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new ClassicCart( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new ClassicCart( { page: visitorPage, payPalUi: payPalUiClassic } )
+		);
 	},
 	classicCheckout: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new ClassicCheckout( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new ClassicCheckout( {
+				page: visitorPage,
+				payPalUi: payPalUiClassic,
+			} )
+		);
 	},
 	classicPayForOrder: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new ClassicPayForOrder( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new ClassicPayForOrder( {
+				page: visitorPage,
+				payPalUi: payPalUiClassic,
+			} )
+		);
 	},
 	payForOrder: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new PayForOrder( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new PayForOrder( { page: visitorPage, payPalUi: payPalUiClassic } )
+		);
 	},
 	orderReceived: async ( { visitorPage }, use ) => {
 		await use( new OrderReceived( { page: visitorPage } ) );
@@ -180,7 +198,12 @@ const test = base.extend< BaseExtend >( {
 		await use( new CustomerAccount( { page: visitorPage } ) );
 	},
 	customerPaymentMethods: async ( { visitorPage, payPalUiClassic }, use ) => {
-		await use( new CustomerPaymentMethods( { page: visitorPage, payPalUi: payPalUiClassic } ) );
+		await use(
+			new CustomerPaymentMethods( {
+				page: visitorPage,
+				payPalUi: payPalUiClassic,
+			} )
+		);
 	},
 	customerSubscriptions: async ( { visitorPage }, use ) => {
 		await use( new CustomerSubscriptions( { page: visitorPage } ) );

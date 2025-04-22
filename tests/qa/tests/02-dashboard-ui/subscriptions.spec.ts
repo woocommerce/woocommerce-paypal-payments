@@ -115,7 +115,6 @@ test.describe( () => {
 		}
 	} );
 
-
 	test.afterEach( async ( { requestUtils, pcpApi } ) => {
 		await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
 		await pcpApi.resetDb();
