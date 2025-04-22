@@ -19,20 +19,20 @@ export class ClassicCart extends ClassicCartBase {
 
 	// Actions
 
-	makeOrder = async ( tested ) => {
+	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		await this.visit();
 		// Add coupons if needed
-		if ( tested.coupons ) {
-			for ( const coupon of tested.coupons ) {
+		if ( data.coupons ) {
+			for ( const coupon of data.coupons ) {
 				await this.applyCoupon( coupon.code );
 			}
 		}
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( tested.shipping.settings.title );
+		await this.selectShippingMethod( data.shipping.settings.title );
 		// Make payment with tested method
 		await this.payPalUi.makePayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 

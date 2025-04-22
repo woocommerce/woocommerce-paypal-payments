@@ -27,11 +27,11 @@ export class Product extends ProductBase {
 		await this.addToCartButton().click();
 	};
 
-	makeOrder = async ( tested ) => {
-		await this.visit( tested.products[ 0 ].slug );
+	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
+		await this.visit( data.products[ 0 ].slug );
 		await this.payPalUi.makePayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 

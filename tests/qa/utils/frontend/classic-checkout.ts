@@ -30,62 +30,62 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		}
 	};
 
-	makeOrder = async ( tested ) => {
+	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		await this.visit();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( tested.coupons );
+		await this.applyCouponIfNeeded( data.coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		if (
-			tested.products.some(
+			data.products.some(
 				( product ) => product.type === 'subscription'
 			)
 		) {
-			await this.selectInitialShipment( tested.shipping.settings.title );
+			await this.selectInitialShipment( data.shipping.settings.title );
 		} else {
-			await this.selectShippingMethod( tested.shipping.settings.title );
+			await this.selectShippingMethod( data.shipping.settings.title );
 		}
 
 		// Fill billing details
-		await this.fillCheckoutForm( tested.customer );
+		await this.fillCheckoutForm( data.customer );
 
 		// Make payment with tested method
 		await this.payPalUi.makePayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 
 	/**
 	 * Completes order payed via PayPal on product page
 	 *
-	 * @param tested
+	 * @param data
 	 */
-	completeOrderFromProduct = async ( tested ) => {
+	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
 		await this.assertUrl();
 		await expect(
 			this.page.getByText(
-				`You are currently paying with ${ tested.payment.gatewayName }.`
+				`You are currently paying with ${ data.payment.gatewayName }.`
 			)
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( tested.coupons );
+		await this.applyCouponIfNeeded( data.coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		if (
-			tested.products.some(
+			data.products.some(
 				( product ) => product.type === 'subscription'
 			)
 		) {
-			await this.selectInitialShipment( tested.shipping.settings.title );
+			await this.selectInitialShipment( data.shipping.settings.title );
 		} else {
-			await this.selectShippingMethod( tested.shipping.settings.title );
+			await this.selectShippingMethod( data.shipping.settings.title );
 		}
 
 		// Fill billing details
-		await this.fillCheckoutForm( tested.customer );
+		await this.fillCheckoutForm( data.customer );
 
 		// Make payment with tested method
 		await this.placeOrder();
