@@ -12,7 +12,6 @@ import {
 /**
  * External dependencies
  */
-import { products } from '@inpsyde/playwright-utils/build';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
