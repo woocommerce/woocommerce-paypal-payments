@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.0.4 - xxxx-xx-xx =
+= 3.0.4 - 2025-04-23 =
 * Fix - Onboarding screen blank when WooPayments plugin is active #3312
 
 = 3.0.3 - 2025-04-08 =
