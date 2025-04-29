@@ -10,6 +10,7 @@ import {
 import {
 	badgeTestsData,
 	defaultUiTestData,
+	onboardingCheckoutComparison
 } from './_test-data/ui-tests-per-country.data';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
@@ -217,3 +218,43 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 		percyPcpSettingsConfig
 	);
 } );
+
+test.describe.only('', () => {
+	for ( const country of onboardingCheckoutComparison ) {
+	  test( `${ country.testSummary }`, async ( {
+		pcpOnboarding,
+		wooCommerceApi,
+	  }, testInfo ) => {
+		await wooCommerceApi.updateGeneralSettings(
+		  country.wooCommerceGeneralSettings
+		);
+  
+		await pcpOnboarding.visit();
+		await pcpOnboarding.gotoInitialOnboardingPage();
+		await pcpOnboarding.page.waitForLoadState();
+		await pcpOnboarding.snapshotContent( `${ testInfo.title } - Initial Page` );
+  
+		await pcpOnboarding.activatePayPalPaymentsButton().click();
+		await pcpOnboarding.businessRadio().click();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.physicalGoodsCheckbox().check();
+		await pcpOnboarding.continueButton().click();
+		await pcpOnboarding.snapshotContent( `${ testInfo.title } - Checkout Page` );
+	  });
+	}
+  
+	test('PCP-4372 | Settings - Germany - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen', async ({ wooCommerceApi, pcpOnboarding }, testInfo) => {
+	  await wooCommerceApi.updateGeneralSettings({
+		woocommerce_default_country: 'DE:DE-BE',
+		woocommerce_currency: 'EUR'
+	  });
+	  await pcpOnboarding.visit();
+	  await pcpOnboarding.gotoInitialOnboardingPage();
+	  await pcpOnboarding.page.waitForLoadState();
+	  await pcpOnboarding.snapshotContent( `${ testInfo.title } - Initial Page` );
+	  await pcpOnboarding.activatePayPalPaymentsButton().click();
+	  await pcpOnboarding.physicalGoodsCheckbox().check();
+	  await pcpOnboarding.continueButton().click();
+	  await pcpOnboarding.snapshotContent( `${ testInfo.title } - Checkout Page` );
+	})
+  });
