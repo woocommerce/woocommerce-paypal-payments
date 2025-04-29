@@ -217,3 +217,13 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 		percyPcpSettingsConfig
 	);
 } );
+
+test.only('PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for PayPal payments', async ({ wooCommerceApi, pcpOnboarding }, testInfo) => {
+	
+	await wooCommerceApi.updateGeneralSettings({
+		woocommerce_default_country: 'ZW',
+		woocommerce_currency: 'USD',
+	});
+	await pcpOnboarding.visit();
+	await pcpOnboarding.snapshotContent(testInfo.title)
+})
