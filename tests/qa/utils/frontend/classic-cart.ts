@@ -5,34 +5,34 @@ import { ClassicCart as ClassicCartBase } from '@inpsyde/playwright-utils/build'
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class ClassicCart extends ClassicCartBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
 
 	// Actions
 
-	makeOrder = async ( tested ) => {
+	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		await this.visit();
 		// Add coupons if needed
-		if ( tested.coupons ) {
-			for ( const coupon of tested.coupons ) {
+		if ( data.coupons ) {
+			for ( const coupon of data.coupons ) {
 				await this.applyCoupon( coupon.code );
 			}
 		}
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( tested.shipping.settings.title );
+		await this.selectShippingMethod( data.shipping.settings.title );
 		// Make payment with tested method
-		await this.ppui.makeClassicPayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+		await this.payPalUi.makePayment( {
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 

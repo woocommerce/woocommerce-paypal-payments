@@ -8,14 +8,14 @@ import {
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class Product extends ProductBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
@@ -27,11 +27,11 @@ export class Product extends ProductBase {
 		await this.addToCartButton().click();
 	};
 
-	makeOrder = async ( tested ) => {
-		await this.visit( tested.products[ 0 ].slug );
-		await this.ppui.makeClassicPayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
+		await this.visit( data.products[ 0 ].slug );
+		await this.payPalUi.makePayment( {
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 

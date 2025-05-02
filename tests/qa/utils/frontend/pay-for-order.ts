@@ -5,25 +5,25 @@ import { PayForOrder as PayForOrderBase } from '@inpsyde/playwright-utils/build'
 /**
  * Internal dependencies
  */
-import { PayPalUI } from './paypal-ui';
+import { PayPalUiClassic } from './paypal-ui-classic';
 
 export class PayForOrder extends PayForOrderBase {
-	ppui: PayPalUI;
+	payPalUi: PayPalUiClassic;
 
-	constructor( { page, ppui } ) {
+	constructor( { page, payPalUi } ) {
 		super( { page } );
-		this.ppui = ppui;
+		this.payPalUi = payPalUi;
 	}
 
 	// Locators
 
 	// Actions
 
-	makeOrder = async ( tested, order ) => {
+	makeOrder = async ( data: WooCommerce.ShopOrder, order: WooCommerce.Order ) => {
 		await this.visit( order.id, order.order_key );
-		await this.ppui.makeClassicPayment( {
-			merchant: tested.merchant,
-			payment: tested.payment,
+		await this.payPalUi.makePayment( {
+			merchant: data.merchant,
+			payment: data.payment,
 		} );
 	};
 

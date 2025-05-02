@@ -5,18 +5,8 @@ import {
 	OrderReceived as OrderReceivedBase,
 	expect,
 } from '@inpsyde/playwright-utils/build';
-/**
- * Internal dependencies
- */
-import { PayPalUI } from './paypal-ui';
 
 export class OrderReceived extends OrderReceivedBase {
-	ppui: PayPalUI;
-
-	constructor( { page, ppui } ) {
-		super( { page } );
-		this.ppui = ppui;
-	}
 
 	// Locators
 	seeOXXOVoucherButton_1 = () =>
@@ -37,7 +27,7 @@ export class OrderReceived extends OrderReceivedBase {
 	assertOrderDetails = async ( order: WooCommerce.ShopOrder ) => {
 		await super.assertOrderDetails( order );
 
-		if ( order.payment.gateway.dataFundingSource === 'oxxo' ) {
+		if ( order.payment.gateway.shortcut === 'oxxo' ) {
 			await expect( this.seeOXXOVoucherButton_1() ).toBeVisible();
 			await expect( this.seeOXXOVoucherButton_2() ).toBeVisible();
 		}

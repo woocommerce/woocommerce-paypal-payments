@@ -16,7 +16,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 
 test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	utils,
-	ppui,
+	payPalUi,
 	pcpPayLaterMessaging,
 	shop,
 	product,
@@ -60,32 +60,32 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	);
 
 	await product.visit( products.simple10.slug );
-	await expect( product.ppui.payLaterMessageContainer() ).toBeVisible();
+	await expect( product.payPalUi.payLaterMessageContainer() ).toBeVisible();
 
 	await cart.visit();
-	await expect( cart.ppui.payLaterMessageContainer() ).toBeVisible();
+	await expect( cart.payPalUi.payLaterMessageContainer() ).toBeVisible();
 
 	await classicCart.visit();
-	await expect( classicCart.ppui.payLaterMessageContainer() ).toBeVisible();
+	await expect( classicCart.payPalUi.payLaterMessageContainer() ).toBeVisible();
 
 	await checkout.visit();
-	await expect( checkout.ppui.payLaterMessageContainer() ).toBeVisible();
+	await expect( checkout.payPalUi.payLaterMessageContainer() ).toBeVisible();
 
 	await classicCheckout.visit();
 	await expect(
-		classicCheckout.ppui.payLaterMessageContainer()
+		classicCheckout.payPalUi.payLaterMessageContainer()
 	).toBeVisible();
 
 	await shop.visit();
-	await expect( shop.ppui.payLaterMessageContainer() ).not.toBeVisible();
+	await expect( shop.payPalUi.payLaterMessageContainer() ).not.toBeVisible();
 
-	await ppui.page.goto( '/' ); // home page
-	await expect( ppui.payLaterMessageContainer() ).not.toBeVisible();
+	await payPalUi.page.goto( '/' ); // home page
+	await expect( payPalUi.payLaterMessageContainer() ).not.toBeVisible();
 } );
 
 test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
 	utils,
-	ppui,
+	payPalUi,
 	pcpPayLaterMessaging,
 	shop,
 	product,
@@ -137,30 +137,30 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async
 
 	await product.visit( products.simple10.slug );
 	await expect
-		.soft( product.ppui.payLaterMessageContainer() )
+		.soft( product.payPalUi.payLaterMessageContainer() )
 		.not.toBeVisible();
 
 	await cart.visit();
-	await expect.soft( cart.ppui.payLaterMessageContainer() ).not.toBeVisible();
+	await expect.soft( cart.payPalUi.payLaterMessageContainer() ).not.toBeVisible();
 
 	await classicCart.visit();
 	await expect
-		.soft( classicCart.ppui.payLaterMessageContainer() )
+		.soft( classicCart.payPalUi.payLaterMessageContainer() )
 		.not.toBeVisible();
 
 	await checkout.visit();
 	await expect
-		.soft( checkout.ppui.payLaterMessageContainer() )
+		.soft( checkout.payPalUi.payLaterMessageContainer() )
 		.not.toBeVisible();
 
 	await classicCheckout.visit();
 	await expect
-		.soft( classicCheckout.ppui.payLaterMessageContainer() )
+		.soft( classicCheckout.payPalUi.payLaterMessageContainer() )
 		.not.toBeVisible();
 
 	await shop.visit();
-	await expect.soft( shop.ppui.payLaterMessageContainer() ).not.toBeVisible();
+	await expect.soft( shop.payPalUi.payLaterMessageContainer() ).not.toBeVisible();
 
-	await ppui.page.goto( '/' ); // home page
-	await expect.soft( ppui.payLaterMessageContainer() ).not.toBeVisible();
+	await payPalUi.page.goto( '/' ); // home page
+	await expect.soft( payPalUi.payLaterMessageContainer() ).not.toBeVisible();
 } );
