@@ -30,7 +30,9 @@ export namespace Pcp {
 		| 'ppcp-p24'
 		| 'ppcp-pay-upon-invoice-gateway'
 		| 'ppcp-trustly';
-	
+
+	export type GatewayShortcut = string;
+
 	export type GatewayOptions = {
 		fastlaneCardholderName?: boolean;
 		fastlaneDisplayWatermark?: boolean;
@@ -41,16 +43,18 @@ export namespace Pcp {
 			| 'always-3d-secure';
 	};
 
-	export type Gateway =
-		WooCommerce.PaymentGateway &
-		GatewayOptions &
-		{
+	export type Gateway = WooCommerce.PaymentGateway &
+		GatewayOptions & {
 			id?: GatewayId;
-			shortcut?: string; // data-funding-source - an attribute of  payment method container on frontend pages
+			shortcut?: GatewayShortcut; // data-funding-source - an attribute of  payment method container on frontend pages
 			country?: string;
 			currency?: string;
 			minAmount?: string;
 			maxAmount?: string;
+			titleInWcSettings?: string; // gateway title on WooCommerce > Settings > Payments tab
+			titleInPcpSettings?: string; // gateway title on PCP Settings > Payment Methods tab
+			hasSettingsButton?: boolean; // gateway has Settings icon on PCP Settings > Payment Methods tab
+			dependsOn?: GatewayShortcut; // gateway can be enabled if leading gateway is enabled on PCP Settings > Payment Methods tab
 		};
 
 	export type Payment = {
@@ -63,18 +67,29 @@ export namespace Pcp {
 		isAuthorized?: boolean;
 		saveToAccount?: boolean;
 	};
-	
+
 	export namespace Api {
-		export type PaymentMethods =
-			GatewayOptions &
-			{ [ key in GatewayId ]?: WooCommerce.PaymentGateway };
+		export type PaymentMethods = GatewayOptions & {
+			[ key in GatewayId ]?: WooCommerce.PaymentGateway;
+		};
 
 		export type Settings = {
 			authorizeOnly?: boolean;
 			brandName?: string;
-			buttonLanguage?: 'en_EN' | 'de_DE' | 'es_ES' | 'it_IT' | ( string & {} );
+			buttonLanguage?:
+				| 'en_EN'
+				| 'de_DE'
+				| 'es_ES'
+				| 'it_IT'
+				| ( string & {} );
 			captureVirtualOrders?: boolean;
-			disabledCards?: ( "mastercard" | "visa" | "amex" | "jcb" | "diners-club" )[];
+			disabledCards?: (
+				| 'mastercard'
+				| 'visa'
+				| 'amex'
+				| 'jcb'
+				| 'diners-club'
+			 )[];
 			enableLogging?: boolean;
 			enablePayNow?: boolean;
 			invoicePrefix?: string;
@@ -83,7 +98,7 @@ export namespace Pcp {
 			savePaypalAndVenmo?: boolean;
 			softDescriptor?: string;
 			subtotalAdjustment?: string;
-		}
+		};
 	}
 
 	export namespace Admin {
