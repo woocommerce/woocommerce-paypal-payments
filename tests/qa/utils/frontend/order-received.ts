@@ -7,7 +7,6 @@ import {
 } from '@inpsyde/playwright-utils/build';
 
 export class OrderReceived extends OrderReceivedBase {
-
 	// Locators
 	seeOXXOVoucherButton_1 = () =>
 		this.page.getByRole( 'link', { name: 'See OXXO voucher' } ).first();

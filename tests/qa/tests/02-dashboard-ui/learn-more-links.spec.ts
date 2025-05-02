@@ -6,7 +6,6 @@ import { learnMoreLinksByCountry } from './_test-data/learn-more-links.data';
 import { storeConfigDefault } from '../../resources';
 
 test.describe( () => {
-
 	test.beforeAll( async ( { utils, pcpApi } ) => {
 		await utils.configureStore( storeConfigDefault );
 		await utils.installAndActivatePcp();
