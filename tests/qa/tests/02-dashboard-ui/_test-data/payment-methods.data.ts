@@ -2,9 +2,9 @@ const defaultUi = [
 	{
 		testKey: 'PCP-0000',
 		country: 'usa',
-		gateways: [
+		testGateways: [
 			'payPal',
-			'vanmo',
+			'venmo',
 			'payLater',
 			'acdc',
 			'fastlane',

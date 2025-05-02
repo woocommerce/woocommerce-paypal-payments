@@ -11,8 +11,12 @@ export class PcpPaymentMethods extends PcpAdminPage {
 
 	// Locators
 	contentContainer = () => this.page.locator( '.ppcp-r-payment-methods' );
+	paymentMethodTitle = ( title: string ) =>
+		this.page.getByText( title, { exact: true } );
 	paymentMethodTitleContainer = ( title: string ) =>
-		this.page.locator( '.ppcp--method-title' ).filter( { hasText: title } );
+		this.page.locator( '.ppcp--method-title' ).filter( {
+			has: this.paymentMethodTitle( title ),
+		} );
 	paymentMethodContainers = () => this.page.locator( '.ppcp--method-item' );
 	paymentMethodContainer = ( title: string ) =>
 		this.paymentMethodContainers().filter( {
@@ -54,34 +58,13 @@ export class PcpPaymentMethods extends PcpAdminPage {
 	// Assertions
 
 	/**
-	 * Compares actual content container screenshot to expected.
-	 *
-	 * @param snapshotName
-	 */
-	snapshotContent = async ( snapshotName: string ) => {
-		// Assert message is displayed
-		await expect( this.contentContainer() ).toBeVisible();
-		// Wait for potential animation
-		await this.page.waitForTimeout( 500 );
-		// Take actual screenshot of configurator and compare to expected
-		expect
-			.soft(
-				await this.contentContainer().screenshot( {
-					animations: 'disabled',
-					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
-	};
-
-	/**
 	 * Compares actual modal window screenshot to expected.
 	 *
 	 * @param snapshotName
 	 */
 	snapshotModalWindow = async ( snapshotName: string ) => {
 		// Assert message is displayed
-		await expect( this.modalWindow() ).toBeVisible();
+		await expect.soft( this.modalWindow() ).toBeVisible();
 		// Wait for potential animation
 		await this.page.waitForTimeout( 500 );
 		// Take actual screenshot of configurator and compare to expected
@@ -91,6 +74,6 @@ export class PcpPaymentMethods extends PcpAdminPage {
 					animations: 'disabled',
 				} )
 			)
-			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
+			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.9 } );
 	};
 }

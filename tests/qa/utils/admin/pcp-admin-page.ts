@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { WpPage } from '@inpsyde/playwright-utils/build';
+import { expect, WpPage } from '@inpsyde/playwright-utils/build';
 
 export class PcpAdminPage extends WpPage {
 	// Locators
@@ -15,6 +15,10 @@ export class PcpAdminPage extends WpPage {
 	loadingMask = () => this.page.locator( '.ppcp--spinner-message' );
 	completedMessage = () =>
 		this.page.locator( '.ppcp-r-navbar-notice' ).getByText( 'Completed' );
+	contentContainer = () =>
+		this.page.locator(
+			'.ppcp-r-container.ppcp-r-container--card.ppcp-r-container--settings'
+		);
 	settingLabel = ( labelText: string ) =>
 		this.page.locator( '.ppcp--title' ).filter( { hasText: labelText } );
 	settingBlock = ( labelText: string ) =>
@@ -39,5 +43,28 @@ export class PcpAdminPage extends WpPage {
 	waitForLoadingMaskRemoved = async () => {
 		await this.page.waitForLoadState();
 		await this.loadingMask().waitFor( { state: 'detached' } );
+	};
+
+	// Assertions
+
+	/**
+	 * Compares actual content container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 */
+	snapshotContent = async ( snapshotName: string ) => {
+		// Assert message is displayed
+		await expect( this.contentContainer() ).toBeVisible();
+		// Wait for potential animation
+		await this.page.waitForTimeout( 500 );
+		// Take actual screenshot of configurator and compare to expected
+		expect
+			.soft(
+				await this.contentContainer().screenshot( {
+					animations: 'disabled',
+					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
+				} )
+			)
+			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
 	};
 }
