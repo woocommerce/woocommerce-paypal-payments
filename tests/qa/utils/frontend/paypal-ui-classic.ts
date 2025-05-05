@@ -317,7 +317,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	completeAcdcPayment = async (
 		payment: Pcp.Payment,
-		merchant: Pcp.Merchant,
+		merchant: Pcp.Merchant
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
@@ -344,7 +344,6 @@ export class PayPalUiClassic extends PayPalUi {
 		await this.replacePayPalAuthToken( merchant );
 	};
 
-
 	/**
 	 * Completes payment with ACDC (vaulting enabled)
 	 *
@@ -353,7 +352,7 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	completeAcdcVaultedPayment = async (
 		payment: Pcp.Payment,
-		merchant: Pcp.Merchant,
+		merchant: Pcp.Merchant
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
@@ -361,7 +360,6 @@ export class PayPalUiClassic extends PayPalUi {
 		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
 	};
-
 
 	/**
 	 * Completes payment with ACDC 3D-Secure (vaulting disabled)
@@ -371,12 +369,13 @@ export class PayPalUiClassic extends PayPalUi {
 	 */
 	completeAcdc3dsPayment = async (
 		payment: Pcp.Payment,
-		merchant: Pcp.Merchant,
+		merchant: Pcp.Merchant
 	) => {
 		await this.completeAcdcPayment( payment, merchant );
-		await this.threeDSAcceptCookiesButton().click();
-		await this.threeDSOtpInput().fill( payment.card.code_3ds );
-		await this.threeDSSubmitButton().click();
+		// PayPal change: Manual 3DS input is not required any more
+		// await this.threeDSAcceptCookiesButton().click();
+		// await this.threeDSOtpInput().fill( payment.card.code_3ds );
+		// await this.threeDSSubmitButton().click();
 	};
 
 	/**
@@ -523,13 +522,15 @@ export class PayPalUiClassic extends PayPalUi {
 	 * @param snapshotName
 	 */
 	snapshotClassicPayPalButtons = async ( snapshotName: string ) => {
-		await expect( this.payPalButtonsClassicContainer() ).toBeVisible();
+		await expect.soft( this.payPalButtonsClassicContainer() ).toBeVisible();
 		await this.page.waitForTimeout( 500 );
-		expect(
-			await this.payPalButtonsClassicContainer().screenshot( {
-				animations: 'disabled',
-			} )
-		).toMatchSnapshot( `${ snapshotName }.png` );
+		expect
+			.soft(
+				await this.payPalButtonsClassicContainer().screenshot( {
+					animations: 'disabled',
+				} )
+			)
+			.toMatchSnapshot( `${ snapshotName }.png` );
 	};
 
 	/**
@@ -539,12 +540,14 @@ export class PayPalUiClassic extends PayPalUi {
 	 * @param snapshotName
 	 */
 	snapshotMinicartPayPalButtons = async ( snapshotName: string ) => {
-		await expect( this.miniCartButtonContainer() ).toBeVisible();
+		await expect.soft( this.miniCartButtonContainer() ).toBeVisible();
 		await this.page.waitForTimeout( 500 );
-		expect(
-			await this.miniCartButtonContainer().screenshot( {
-				animations: 'disabled',
-			} )
-		).toMatchSnapshot( `${ snapshotName }.png` );
+		expect
+			.soft(
+				await this.miniCartButtonContainer().screenshot( {
+					animations: 'disabled',
+				} )
+			)
+			.toMatchSnapshot( `${ snapshotName }.png` );
 	};
 }

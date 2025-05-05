@@ -66,7 +66,9 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	await expect( cart.payPalUi.payLaterMessageContainer() ).toBeVisible();
 
 	await classicCart.visit();
-	await expect( classicCart.payPalUi.payLaterMessageContainer() ).toBeVisible();
+	await expect(
+		classicCart.payPalUi.payLaterMessageContainer()
+	).toBeVisible();
 
 	await checkout.visit();
 	await expect( checkout.payPalUi.payLaterMessageContainer() ).toBeVisible();
@@ -141,7 +143,9 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async
 		.not.toBeVisible();
 
 	await cart.visit();
-	await expect.soft( cart.payPalUi.payLaterMessageContainer() ).not.toBeVisible();
+	await expect
+		.soft( cart.payPalUi.payLaterMessageContainer() )
+		.not.toBeVisible();
 
 	await classicCart.visit();
 	await expect
@@ -159,7 +163,9 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async
 		.not.toBeVisible();
 
 	await shop.visit();
-	await expect.soft( shop.payPalUi.payLaterMessageContainer() ).not.toBeVisible();
+	await expect
+		.soft( shop.payPalUi.payLaterMessageContainer() )
+		.not.toBeVisible();
 
 	await payPalUi.page.goto( '/' ); // home page
 	await expect.soft( payPalUi.payLaterMessageContainer() ).not.toBeVisible();

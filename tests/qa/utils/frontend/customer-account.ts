@@ -5,8 +5,6 @@ import { CustomerAccount as CustomerAccountBase } from '@inpsyde/playwright-util
 
 export class CustomerAccount extends CustomerAccountBase {
 	// Locators
-
 	// Actions
-
 	// Assertions
 }
