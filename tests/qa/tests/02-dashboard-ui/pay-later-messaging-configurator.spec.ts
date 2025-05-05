@@ -118,7 +118,10 @@ const takePreviewSnapshots = async (
  * @param payPalUi
  * @param snapshotName
  */
-const snapshotPlmContainer = async ( payPalUi: PayPalUi | PayPalUiClassic, snapshotName: string ) => {
+const snapshotPlmContainer = async (
+	payPalUi: PayPalUi | PayPalUiClassic,
+	snapshotName: string
+) => {
 	await expect( payPalUi.payLaterMessageContainer() ).toBeVisible();
 	await payPalUi.page.waitForTimeout( 500 );
 	expect(
@@ -225,12 +228,7 @@ test.describe( 'Subtests', () => {
 		test(
 			completeTestTitle( `(PCP-0003) PLM - Checkout`, settings ),
 			async (
-				{
-					utils,
-					pcpPayLaterMessaging,
-					checkout,
-					classicCheckout,
-				},
+				{ utils, pcpPayLaterMessaging, checkout, classicCheckout },
 				testInfo
 			) => {
 				const snapshotName = testInfo.title;
@@ -274,10 +272,7 @@ test.describe( 'Subtests', () => {
 	for ( const settings of homePlm.settings ) {
 		test(
 			completeTestTitle( `(PCP-0004) PLM - Home`, settings ),
-			async (
-				{ pcpPayLaterMessaging, payPalUiClassic },
-				testInfo,
-			) => {
+			async ( { pcpPayLaterMessaging, payPalUiClassic }, testInfo ) => {
 				test.setTimeout( 10 * 60 * 1000 );
 				const snapshotName = testInfo.title;
 				const { location } = homePlm;

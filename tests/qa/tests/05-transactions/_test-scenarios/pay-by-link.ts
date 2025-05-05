@@ -40,7 +40,10 @@ export const transactionsOnPayByLink = ( testsData ) => {
 				};
 
 				await payPalApi.assertOrder( orderJson, testData );
-				await payPalApi.assertPayment( orderJson.transaction_id, testData );
+				await payPalApi.assertPayment(
+					orderJson.transaction_id,
+					testData
+				);
 				await wooCommerceOrderEdit.assertOrderDetails(
 					order.id,
 					testData,
