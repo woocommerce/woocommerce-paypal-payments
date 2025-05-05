@@ -78,8 +78,6 @@ export class PcpOnboarding extends PcpAdminPage {
 			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
 			.last();
 
-	snapshotContainer = () => this.page.locator( '#ppcp-settings-container' );
-
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
 		await this.backButton().waitFor( { state: 'visible' } );
@@ -166,21 +164,5 @@ export class PcpOnboarding extends PcpAdminPage {
 
 		// return true if there is no warning
 		return badgeBoxWarnings.length === 0;
-	};
-
-	snapshotContent = async ( snapshotName: string ) => {
-		// Assert message is displayed
-		await expect( this.snapshotContainer() ).toBeVisible();
-		// Wait for potential animation
-		await this.page.waitForTimeout( 700 );
-		// Take actual screenshot of configurator and compare to expected
-		expect
-			.soft(
-				await this.snapshotContainer().screenshot( {
-					// animations: 'disabled',
-					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
 	};
 }
