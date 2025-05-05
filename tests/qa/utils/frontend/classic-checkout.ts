@@ -38,9 +38,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		if (
-			data.products.some(
-				( product ) => product.type === 'subscription'
-			)
+			data.products.some( ( product ) => product.type === 'subscription' )
 		) {
 			await this.selectInitialShipment( data.shipping.settings.title );
 		} else {
@@ -75,9 +73,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		if (
-			data.products.some(
-				( product ) => product.type === 'subscription'
-			)
+			data.products.some( ( product ) => product.type === 'subscription' )
 		) {
 			await this.selectInitialShipment( data.shipping.settings.title );
 		} else {

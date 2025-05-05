@@ -19,7 +19,10 @@ export class PayForOrder extends PayForOrderBase {
 
 	// Actions
 
-	makeOrder = async ( data: WooCommerce.ShopOrder, order: WooCommerce.Order ) => {
+	makeOrder = async (
+		data: WooCommerce.ShopOrder,
+		order: WooCommerce.Order
+	) => {
 		await this.visit( order.id, order.order_key );
 		await this.payPalUi.makePayment( {
 			merchant: data.merchant,

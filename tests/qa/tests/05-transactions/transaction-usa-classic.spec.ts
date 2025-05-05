@@ -6,7 +6,7 @@ import {
 	merchants,
 	storeConfigUsa,
 	gateways,
-	taxSettings
+	taxSettings,
 } from '../../resources';
 import {
 	transactionsOnClassicCart,
@@ -18,12 +18,16 @@ import {
 	venmoClassicCheckoutUsa,
 	venmoClassicProductUsa,
 } from './_test-data/venmo';
-import { payPalCheckoutExcludingTax, payPalClassicCheckout, payPalClassicCheckoutIntentAuthorized } from './_test-data/paypal';
+import {
+	payPalCheckoutExcludingTax,
+	payPalClassicCheckout,
+	payPalClassicCheckoutIntentAuthorized,
+} from './_test-data/paypal';
 
 const { payPal, venmo, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
-	await utils.configureStore(  {
+	await utils.configureStore( {
 		...storeConfigUsa,
 		classicPages: true,
 	} );

@@ -273,8 +273,8 @@ export function generateRandomString( length: number ): string {
  * - Expects testKey in following format: (PCP-0005)
  * - Saves result in following format:
  *     {
- *         "PCP-0004": { status: "failed", errors: [ ""(PCP-0004) PLM - Home - Black" ] },
- *         "PCP-0005": { status: "failed", errors: [ ""(PCP-0005) PLM - Shop - Black", "(PCP-0005) PLM - Shop - Blue" ] },
+ *         "PCP-0004": { status: "failed", errors: [ "(PCP-0004) PLM - Home - Black" ] },
+ *         "PCP-0005": { status: "failed", errors: [ "(PCP-0005) PLM - Shop - Black", "(PCP-0005) PLM - Shop - Blue" ] },
  *     }
  * - Subtests can have same testKeys but the titles should differ.
  *

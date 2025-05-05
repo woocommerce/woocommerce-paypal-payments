@@ -5,8 +5,6 @@ import { CustomerSubscriptions as CustomerSubscriptionsBase } from '@inpsyde/pla
 
 export class CustomerSubscriptions extends CustomerSubscriptionsBase {
 	// Locators
-
 	// Actions
-
 	// Assertions
 }
