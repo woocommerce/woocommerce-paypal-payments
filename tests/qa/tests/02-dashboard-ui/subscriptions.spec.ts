@@ -2,11 +2,7 @@
  * Internal dependencies
  */
 import { test, expect } from '../../utils';
-import {
-	storeConfigDefault,
-	percyPcpSettingsConfig,
-	subscriptionsPlugin,
-} from '../../resources';
+import { storeConfigDefault, subscriptionsPlugin } from '../../resources';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
@@ -21,7 +17,6 @@ test.describe( () => {
 
 	test( 'PCP-4356 | Subscription - Settings - US - Onboarding - Connect with personal account - Subscription type of product not allowed', async ( {
 		pcpOnboarding,
-		percy,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -30,9 +25,8 @@ test.describe( () => {
 			'* Business account is required for subscriptions.'
 		);
 		await pcpOnboarding.personalAccountRadio().click();
-		await percy.takeSnapshot(
-			`${ testInfo.title } - Set up store type`,
-			percyPcpSettingsConfig
+		await pcpOnboarding.snapshotContent(
+			`${ testInfo.title } - Set up store type`
 		);
 		await pcpOnboarding.continueButton().click();
 
@@ -40,9 +34,8 @@ test.describe( () => {
 		await expect( pcpOnboarding.subscriptionsCheckbox() ).toHaveAttribute(
 			'disabled'
 		);
-		await percy.takeSnapshot(
-			`${ testInfo.title } - Select product types - Subscription type of product not allowed`,
-			percyPcpSettingsConfig
+		await pcpOnboarding.snapshotContent(
+			`${ testInfo.title } - Select product types - Subscription type of product not allowed`
 		);
 	} );
 
