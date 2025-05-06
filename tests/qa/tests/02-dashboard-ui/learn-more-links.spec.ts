@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { test, expect } from '../../utils';
-import { learnMoreLinksByCountry } from './_test-data/learn-more-links.data';
+import { learnMoreLinksByCountry } from './_test-data';
 import { storeConfigDefault } from '../../resources';
 
 test.describe( () => {
