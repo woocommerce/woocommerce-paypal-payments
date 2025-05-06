@@ -11,7 +11,7 @@ import {
 	test,
 } from '../../utils';
 import { merchants, storeConfigDefault, products, Pcp } from '../../resources';
-import { payLaterMessagingData } from './_test-data/pay-later-messaging.data';
+import { payLaterMessagingData } from './_test-data';
 
 const TEST_RESULTS_FILE = 'plm-test-results.json';
 
@@ -353,7 +353,7 @@ test( 'PCP-0002 | Pay Later Messaging - Customize on Cart (block and classic)', 
 	getTestResultsFromFile( 'PCP-0002', TEST_RESULTS_FILE );
 } );
 
-test( 'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic', async () => {
+test( 'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic)', async () => {
 	getTestResultsFromFile( 'PCP-0003', TEST_RESULTS_FILE );
 } );
 
