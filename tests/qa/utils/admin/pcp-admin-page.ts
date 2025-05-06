@@ -2,6 +2,7 @@
  * External dependencies
  */
 import { expect, WpPage } from '@inpsyde/playwright-utils/build';
+import { Locator, LocatorScreenshotOptions } from 'playwright';
 
 export class PcpAdminPage extends WpPage {
 	// Locators
@@ -50,21 +51,40 @@ export class PcpAdminPage extends WpPage {
 	/**
 	 * Compares actual content container screenshot to expected.
 	 *
+	 * @param locator
 	 * @param snapshotName
+	 * @param options
 	 */
-	snapshotContent = async ( snapshotName: string ) => {
+	snapshotLocator = async (
+		locator: Locator,
+		snapshotName: string,
+		options: LocatorScreenshotOptions
+	) => {
+		options = {
+			timeout: 500,
+			animations: 'disabled',
+			style: '#adminmenuwrap, #wpadminbar, .ppcp-r-navigation-container { display: none !important; }',
+			...options,
+		};
 		// Assert message is displayed
-		await expect( this.contentContainer() ).toBeVisible();
+		await expect.soft( locator ).toBeVisible();
 		// Wait for potential animation
-		await this.page.waitForTimeout( 500 );
+		await this.page.waitForTimeout( options.timeout );
 		// Take actual screenshot of configurator and compare to expected
 		expect
-			.soft(
-				await this.contentContainer().screenshot( {
-					animations: 'disabled',
-					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
-				} )
-			)
+			.soft( await locator.screenshot( options ) )
 			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
 	};
+
+	/**
+	 * Compares actual content container screenshot to expected.
+	 *
+	 * @param snapshotName
+	 * @param timeout
+	 */
+	snapshotContent = async ( snapshotName: string, timeout = 500 ) => this.snapshotLocator(
+		this.contentContainer(),
+		snapshotName,
+		{ timeout }
+	);
 }
