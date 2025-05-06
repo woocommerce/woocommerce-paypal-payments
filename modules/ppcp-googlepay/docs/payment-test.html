@@ -7,21 +7,79 @@
 </head>
 <body>
 <section>
-	<div>
-		<h3>Google Pay with PayPal SDK Integration</h3>
-		<p>Click the Google Pay button below to complete a test payment.</p>
+	<h3>Google Pay with PayPal SDK Integration</h3>
+	<div id='test-form'>
+		<p>
+			PayPal client ID: <span id='client-id'></span>
+			<button id='clear-credentials'>Clear</button>
+		</p>
 		<div id='google-pay-button'></div>
 	</div>
 	<div class='logger' id='response-log'></div>
 </section>
 
 <script>
-	const PAYPAL_CLIENT_ID = '(sandbox client ID)';
-	const PAYPAL_CLIENT_SECRET = '(sandbox client secret)';
+	// Check if credentials exist in localStorage
+	const PAYPAL_CLIENT_ID = localStorage.getItem('PAYPAL_CLIENT_ID');
+	const PAYPAL_CLIENT_SECRET = localStorage.getItem('PAYPAL_CLIENT_SECRET');
+	const SCA_METHOD = localStorage.getItem('SCA_METHOD');
 
-	//const SCA_METHOD = ''; // Never ask for 3DS verification.
-	//const SCA_METHOD = 'SCA_WHEN_REQUIRED'; // Let PayPal decide if to show 3DS.
-	const SCA_METHOD = 'SCA_ALWAYS'; // Always ask for 3DS verification.
+	// If credentials don't exist, show input form
+	if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
+		document.getElementById('test-form').innerHTML = `
+            <div id='credentials-form'>
+                <h4>Enter PayPal API Credentials</h4>
+                <div style='margin-bottom: 10px;'>
+                    <label for='client-id'>Client ID:</label>
+                    <input type='text' id='client-id' style='width: 100%;'>
+                </div>
+                <div style='margin-bottom: 10px;'>
+                    <label for='client-secret'>Client Secret:</label>
+                    <input type='text' id='client-secret' style='width: 100%;'>
+                </div>
+                <div style='margin-bottom: 10px;'>
+                    <label for='sca-method'>SCA Method:</label>
+                    <select id='sca-method' style='width: 100%;'>
+                        <option value='' >NEVER - Do not ask for 3DS verification</option>
+                        <option value='SCA_WHEN_REQUIRED'>WHEN REQUIRED - Let PayPal decide if to show 3DS</option>
+                        <option value='SCA_ALWAYS'>ALWAYS - Ask for 3DS verification</option>
+                    </select>
+                </div>
+                <button id='save-credentials' style='padding: 8px 16px;'>Save Credentials</button>
+            </div>
+        `;
+
+		document.addEventListener('DOMContentLoaded', () => {
+			document.getElementById('save-credentials').addEventListener('click', () => {
+				const clientId = document.getElementById('client-id').value.trim();
+				const clientSecret = document.getElementById('client-secret').value.trim();
+				const scaMethod = document.getElementById('sca-method').value;
+
+				if (!clientId || !clientSecret) {
+					alert('Please enter both Client ID and Client Secret');
+					return;
+				}
+
+				localStorage.setItem('PAYPAL_CLIENT_ID', clientId);
+				localStorage.setItem('PAYPAL_CLIENT_SECRET', clientSecret);
+				localStorage.setItem('SCA_METHOD', scaMethod);
+
+				window.location.reload();
+			});
+		});
+	} else {
+		const clientIdElement = document.getElementById('client-id');
+		clientIdElement.textContent = PAYPAL_CLIENT_ID;
+
+		document.getElementById('clear-credentials').addEventListener('click', () => {
+			if (confirm('Are you sure you want to clear your PayPal credentials?')) {
+				localStorage.removeItem('PAYPAL_CLIENT_ID');
+				localStorage.removeItem('PAYPAL_CLIENT_SECRET');
+				localStorage.removeItem('SCA_METHOD');
+				window.location.reload();
+			}
+		});
+	}
 
 	// ---
 
@@ -36,7 +94,8 @@
 			logger.innerHTML += `<div>[${timestamp}] ${message}</div>`;
 			console.log(message);
 		} else {
-			logger.innerHTML += `<div>[${timestamp}] ${message}<pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+			logger.innerHTML +=
+				`<div>[${timestamp}] ${message}<pre>${JSON.stringify(data, null, 2)}</pre></div>`;
 			console.log(message, data);
 		}
 
@@ -44,9 +103,14 @@
 	}
 
 	function loadSdk() {
+		if (!PAYPAL_CLIENT_ID) {
+			return;
+		}
+
 		logResponse('Loading the JS SDK...');
 		const script = document.createElement('script');
-		script.src = 'https://www.paypal.com/sdk/js?components=googlepay&client-id=' + PAYPAL_CLIENT_ID;
+		script.src =
+			'https://www.paypal.com/sdk/js?components=googlepay&client-id=' + PAYPAL_CLIENT_ID;
 		script.onload = initializeDemo;
 		document.head.appendChild(script);
 	}
@@ -280,6 +344,16 @@
 
 	h3 {
 		color: #333;
+	}
+
+	#client-id {
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		width: 500px;
+		display: inline-block;
+		vertical-align: text-bottom;
+		font-size: 0.8em;
 	}
 </style>
 </body>
