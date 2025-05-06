@@ -19,7 +19,6 @@ export * from './pcp-merchants';
 export * from './orders';
 export * from './woocommerce-config';
 export * from './types';
-export * from './percy';
 
 export { default as pcpPlugin } from './pcp-plugin.json';
 export { default as disableNoncePlugin } from './disable-nonce-plugin.json';
