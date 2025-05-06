@@ -15,6 +15,10 @@ export class PcpOnboarding extends PcpAdminPage {
 	continueButton = () =>
 		this.navigationPanel().getByRole( 'button', { name: 'Continue' } );
 
+	contentContainer = () =>
+		this.page.locator(
+			'.ppcp-r-container.ppcp-r-container--card.ppcp-r-container--onboarding'
+		);
 	activatePayPalPaymentsButton = () =>
 		this.page.getByRole( 'button', { name: 'Activate PayPal Payments' } );
 
@@ -77,6 +81,13 @@ export class PcpOnboarding extends PcpAdminPage {
 		this.page
 			.locator( 'span.ppcp-r-title-badge.ppcp-r-title-badge--info' )
 			.last();
+	welcomeDocsContainer = () =>
+		this.page.locator( '.ppcp-r-welcome-docs__wrapper' ).last();
+	checkoutAlternativeOptionsContainer = () =>
+		this.page
+			.locator( '.ppcp-r-select-box' )
+			.first()
+			.locator( '.ppcp--box-content' );
 
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
