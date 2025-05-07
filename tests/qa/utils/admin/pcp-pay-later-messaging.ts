@@ -325,16 +325,10 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 	snapshotPlmConfigurator = async ( snapshotName: string ) => {
 		// Assert message is displayed
 		await expect( this.previewMessageTextPart() ).toBeVisible();
-		// Wait for potential animation
-		await this.page.waitForTimeout( 500 );
-		// Take actual screenshot of configurator and compare to expected
-		expect
-			.soft(
-				await this.configContainer().screenshot( {
-					animations: 'disabled',
-					style: '#wpadminbar, .ppcp-r-navigation-container { display: none; }',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
+		// Screenshot configurator
+		this.snapshotLocator(
+			this.configContainer(),
+			snapshotName,
+		);
 	};
 }
