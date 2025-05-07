@@ -148,10 +148,6 @@ class ScriptDataHandler {
 		$is_pay_later_configurator_available = $this->paylater_is_available;
 		$disabled_cards_choices              = array(
 			array(
-				'value' => '',
-				'label' => _x( 'Select', 'Name of credit card', 'woocommerce-paypal-payments' ),
-			),
-			array(
 				'value' => 'visa',
 				'label' => _x( 'Visa', 'Name of credit card', 'woocommerce-paypal-payments' ),
 			),
