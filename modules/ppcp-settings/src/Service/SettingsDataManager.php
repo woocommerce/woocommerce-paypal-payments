@@ -265,6 +265,9 @@ class SettingsDataManager {
 				if ( ! $flags->use_subscriptions ) {
 					$this->payment_methods->toggle_method_state( 'pay-later', true );
 				}
+
+				// Enable BCDC for business sellers without ACDC.
+				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
 			}
 
 			// Enable all APM methods.
