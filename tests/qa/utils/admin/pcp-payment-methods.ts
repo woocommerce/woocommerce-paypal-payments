@@ -62,18 +62,9 @@ export class PcpPaymentMethods extends PcpAdminPage {
 	 *
 	 * @param snapshotName
 	 */
-	snapshotModalWindow = async ( snapshotName: string ) => {
-		// Assert message is displayed
-		await expect.soft( this.modalWindow() ).toBeVisible();
-		// Wait for potential animation
-		await this.page.waitForTimeout( 500 );
-		// Take actual screenshot of configurator and compare to expected
-		expect
-			.soft(
-				await this.modalWindow().screenshot( {
-					animations: 'disabled',
-				} )
-			)
-			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.9 } );
-	};
+	snapshotModalWindow = async ( snapshotName: string ) => this.snapshotLocator(
+		this.modalWindow(),
+		snapshotName,
+		{ threshold: 0.9, }
+	);
 }
