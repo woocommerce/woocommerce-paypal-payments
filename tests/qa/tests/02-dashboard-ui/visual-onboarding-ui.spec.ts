@@ -5,6 +5,7 @@ import { test, expect } from '../../utils';
 import { storeConfigDefault } from '../../resources';
 import { defaultUiTestData, onboardingCheckoutComparison} from './_test-data';
 
+
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
 	await utils.installAndActivatePcp();
