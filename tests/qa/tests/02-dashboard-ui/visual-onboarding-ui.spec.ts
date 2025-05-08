@@ -3,7 +3,7 @@
  */
 import { test, expect } from '../../utils';
 import { storeConfigDefault } from '../../resources';
-import { defaultUiTestData } from './_test-data';
+import { defaultUiTestData, onboardingCheckoutComparison} from './_test-data';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
@@ -117,7 +117,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	);
 } );
 
-test.describe.only('', () => {
+test.describe.only('Comparison of initial and checkout pages of onboarding per country', () => {
 	for ( const country of onboardingCheckoutComparison ) {
 	  test( `${ country.testSummary }`, async ( {
 		pcpOnboarding,
@@ -133,26 +133,15 @@ test.describe.only('', () => {
 		await pcpOnboarding.snapshotContent( `${ testInfo.title } - Initial Page` );
   
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
-		await pcpOnboarding.businessRadio().click();
-		await pcpOnboarding.continueButton().click();
+		const businessRadio = await pcpOnboarding.businessRadio();
+		if (await businessRadio.isVisible()) {
+		  await businessRadio.click();
+		  await pcpOnboarding.continueButton().click();
+
+		}
 		await pcpOnboarding.physicalGoodsCheckbox().check();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.snapshotContent( `${ testInfo.title } - Checkout Page` );
 	  });
 	}
-  
-	test('PCP-4372 | Settings - Germany - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen', async ({ wooCommerceApi, pcpOnboarding }, testInfo) => {
-	  await wooCommerceApi.updateGeneralSettings({
-		woocommerce_default_country: 'DE:DE-BE',
-		woocommerce_currency: 'EUR'
-	  });
-	  await pcpOnboarding.visit();
-	  await pcpOnboarding.gotoInitialOnboardingPage();
-	  await pcpOnboarding.page.waitForLoadState();
-	  await pcpOnboarding.snapshotContent( `${ testInfo.title } - Initial Page` );
-	  await pcpOnboarding.activatePayPalPaymentsButton().click();
-	  await pcpOnboarding.physicalGoodsCheckbox().check();
-	  await pcpOnboarding.continueButton().click();
-	  await pcpOnboarding.snapshotContent( `${ testInfo.title } - Checkout Page` );
-	})
   });

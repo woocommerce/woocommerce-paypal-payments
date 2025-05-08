@@ -59,6 +59,11 @@ export const onboardingCheckoutComparison = [
     },
     {
       testSummary:
+        'PCP-4372 | Settings - Germany - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
+      wooCommerceGeneralSettings: shopSettings.germany.general,
+    },
+    {
+      testSummary:
         'PCP-4373 | Settings - Spain - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
       wooCommerceGeneralSettings: shopSettings.spain.general,
     },
