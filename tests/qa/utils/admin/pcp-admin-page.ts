@@ -58,12 +58,17 @@ export class PcpAdminPage extends WpPage {
 	snapshotLocator = async (
 		locator: Locator,
 		snapshotName: string,
-		options: LocatorScreenshotOptions
+		options?: LocatorScreenshotOptions & {
+			maxDiffPixelRatio?: number;
+			maxDiffPixels?: number;
+			threshold?: number;
+		}
 	) => {
 		options = {
 			timeout: 500,
 			animations: 'disabled',
-			style: '#adminmenuwrap, #wpadminbar, .ppcp-r-navigation-container { display: none !important; }',
+			style: '#adminmenuback, #adminmenuwrap, #wpadminbar, .ppcp-r-navigation-container { display: none !important; }',
+			threshold: 0.8,
 			...options,
 		};
 		// Assert message is displayed
@@ -73,7 +78,7 @@ export class PcpAdminPage extends WpPage {
 		// Take actual screenshot of configurator and compare to expected
 		expect
 			.soft( await locator.screenshot( options ) )
-			.toMatchSnapshot( `${ snapshotName }.png`, { threshold: 0.8 } );
+			.toMatchSnapshot( `${ snapshotName }.png`, options );
 	};
 
 	/**
