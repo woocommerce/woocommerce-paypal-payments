@@ -89,6 +89,11 @@ export class PcpOnboarding extends PcpAdminPage {
 			.first()
 			.locator( '.ppcp--box-content' );
 
+	onboardingContentContainer = () =>
+		this.page.locator(
+			'.ppcp-r-container.ppcp-r-container--card.ppcp-r-container--onboarding'
+		);
+
 	// Actions
 	isCurrentStep = async ( title: Pcp.Admin.Onboarding.StepTitle ) => {
 		await this.backButton().waitFor( { state: 'visible' } );

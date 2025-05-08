@@ -24,13 +24,12 @@ for ( const country of defaultUiTestData ) {
 		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.page.waitForLoadState();
 
-		const noWarnings =
-			await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
+		const noWarnings = await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
 		expect( noWarnings ).toBeTruthy();
 
 		await pcpOnboarding.snapshotContent(
 			`${ testInfo.title } - ${ country }`,
-			3000,
+			3000
 		);
 	} );
 }
@@ -97,14 +96,14 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	await pcpOnboarding.continueButton().click();
 	await pcpOnboarding.snapshotContent(
 		`${ testInfo.title } - Select product types - No option selected`,
-		3000,
+		3000
 	);
 
 	await pcpOnboarding.physicalGoodsCheckbox().check();
 	await pcpOnboarding.virtualCheckbox().check();
 	await pcpOnboarding.snapshotContent(
 		`${ testInfo.title } - Select product types - Products selected`,
-		3000,
+		3000
 	);
 	await pcpOnboarding.continueButton().click();
 	await pcpOnboarding.snapshotContent(
@@ -113,7 +112,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
 	await pcpOnboarding.snapshotContent(
 		`${ testInfo.title } - Choose checkout options - Card payments disabled`,
-		3000,
+		3000
 	);
 } );
 test.describe( '', () => {
@@ -135,8 +134,10 @@ test.describe( '', () => {
 		pcpOnboarding,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
-		await pcpOnboarding.snapshotContent(
-			`${ testInfo.title } - WooPayments - Onboarding Initial Page`
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.welcomeDocsContainer(),
+			`${ testInfo.title } - WooPayments - Onboarding Initial Page`,
+			{ timeout: 3000 }
 		);
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -144,8 +145,10 @@ test.describe( '', () => {
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.physicalGoodsCheckbox().check();
 		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.snapshotContent(
-			`${ testInfo.title } - WooPayments - Connect your PayPal Acount - Product Types`
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.onboardingContentContainer(),
+			`${ testInfo.title } - WooPayments - Connect your PayPal Acount - Product Types`,
+			{ timeout: 3000 }
 		);
 	} );
 
@@ -161,8 +164,10 @@ test.describe( '', () => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.page.reload();
 		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.snapshotContent(
-			`${ testInfo.title }WooPayments - Onboarding Initial Page - Serbia`
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.welcomeDocsContainer(),
+			`${ testInfo.title }WooPayments - Onboarding Initial Page - Serbia`,
+			{ timeout: 3000 }
 		);
 	} );
 } );
