@@ -117,7 +117,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	);
 } );
 
-test.describe.only('Comparison of initial and checkout pages of onboarding per country', () => {
+test.describe('Comparison of initial and checkout pages of onboarding per country', () => {
 	for ( const country of onboardingCheckoutComparison ) {
 	  test( `${ country.testSummary }`, async ( {
 		pcpOnboarding,
