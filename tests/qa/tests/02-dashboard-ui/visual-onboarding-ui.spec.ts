@@ -130,8 +130,8 @@ test.describe( '', () => {
 			await pcpOnboarding.visit();
 			await pcpOnboarding.gotoInitialOnboardingPage();
 			await pcpOnboarding.page.waitForLoadState();
-			await pcpOnboarding.snapshotContent(
-				`${ testKey } - Initial Page`
+			await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
+				`${ testKey } - Initial Page`, {timeout: 3000} 
 			);
 
 			await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -141,8 +141,8 @@ test.describe( '', () => {
 			}
 			await pcpOnboarding.physicalGoodsCheckbox().check();
 			await pcpOnboarding.continueButton().click();
-			await pcpOnboarding.snapshotContent(
-				`${ testKey } - Checkout Page`
+			await pcpOnboarding.snapshotLocator(pcpOnboarding.onboardingContentContainer(),
+				`${ testKey } - Checkout Page` , {timeout: 3000}
 			);
 		} );
 	}

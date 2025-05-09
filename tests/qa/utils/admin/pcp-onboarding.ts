@@ -15,7 +15,7 @@ export class PcpOnboarding extends PcpAdminPage {
 	continueButton = () =>
 		this.navigationPanel().getByRole( 'button', { name: 'Continue' } );
 
-	contentContainer = () =>
+	onboardingContentContainer = () =>
 		this.page.locator(
 			'.ppcp-r-container.ppcp-r-container--card.ppcp-r-container--onboarding'
 		);
