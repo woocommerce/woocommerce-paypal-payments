@@ -87,9 +87,8 @@ export class PcpAdminPage extends WpPage {
 	 * @param snapshotName
 	 * @param timeout
 	 */
-	snapshotContent = async ( snapshotName: string, timeout = 500 ) => this.snapshotLocator(
-		this.contentContainer(),
-		snapshotName,
-		{ timeout }
-	);
+	snapshotContent = async ( snapshotName: string, timeout = 500 ) =>
+		this.snapshotLocator( this.contentContainer(), snapshotName, {
+			timeout,
+		} );
 }

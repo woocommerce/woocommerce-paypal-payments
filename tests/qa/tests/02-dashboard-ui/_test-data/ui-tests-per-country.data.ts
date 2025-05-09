@@ -27,44 +27,44 @@ export const defaultUiTestData = [
 ];
 
 export const onboardingCheckoutComparison = [
-    {
-      testSummary:
-        'PCP-4366 | Settings - US - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.usa.general,
-    },
-    {
-      testSummary:
-        'PCP-4367 | Settings - UK - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.uk.general,
-    },
-    {
-      testSummary:
-        'PCP-4368 | Settings - Canada - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.canada.general,
-    },
-    {
-      testSummary:
-        'PCP-4369 | Settings - Australia - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.australia.general,
-    },
-    {
-      testSummary:
-        'PCP-4370 | Settings - France - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.france.general,
-    },
-    {
-      testSummary:
-        'PCP-4371 | Settings - Italy - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.italy.general,
-    },
-    {
-      testSummary:
-        'PCP-4372 | Settings - Germany - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.germany.general,
-    },
-    {
-      testSummary:
-        'PCP-4373 | Settings - Spain - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen',
-      wooCommerceGeneralSettings: shopSettings.spain.general,
-    },
-  ];
+	{
+		testKey: 'PCP-4366',
+		country: 'US',
+		wooCommerceGeneralSettings: shopSettings.usa.general,
+	},
+	{
+		testKey: 'PCP-4367',
+		country: 'UK',
+		wooCommerceGeneralSettings: shopSettings.uk.general,
+	},
+	{
+		testKey: 'PCP-4368',
+		country: 'Canada',
+		wooCommerceGeneralSettings: shopSettings.canada.general,
+	},
+	{
+		testKey: 'PCP-4369',
+		country: 'Australia',
+		wooCommerceGeneralSettings: shopSettings.australia.general,
+	},
+	{
+		testKey: 'PCP-4370',
+		country: 'France',
+		wooCommerceGeneralSettings: shopSettings.france.general,
+	},
+	{
+		testKey: 'PCP-4371',
+		country: 'Italy',
+		wooCommerceGeneralSettings: shopSettings.italy.general,
+	},
+	{
+		testKey: 'PCP-4372',
+		country: 'Germany',
+		wooCommerceGeneralSettings: shopSettings.germany.general,
+	},
+	{
+		testKey: 'PCP-4373',
+		country: 'Spain',
+		wooCommerceGeneralSettings: shopSettings.spain.general,
+	},
+];

@@ -326,9 +326,6 @@ export class PcpPayLaterMessaging extends PcpAdminPage {
 		// Assert message is displayed
 		await expect( this.previewMessageTextPart() ).toBeVisible();
 		// Screenshot configurator
-		this.snapshotLocator(
-			this.configContainer(),
-			snapshotName,
-		);
+		this.snapshotLocator( this.configContainer(), snapshotName );
 	};
 }

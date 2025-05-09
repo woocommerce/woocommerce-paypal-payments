@@ -46,9 +46,6 @@ export class PcpStyling extends PcpAdminPage {
 		// Assert message is displayed
 		await expect( this.payPalButtonsPreviewContainer() ).toBeVisible();
 		// Screenshot configurator
-		this.snapshotLocator(
-			this.configContainer(),
-			snapshotName,
-		);
+		this.snapshotLocator( this.configContainer(), snapshotName );
 	};
 }
