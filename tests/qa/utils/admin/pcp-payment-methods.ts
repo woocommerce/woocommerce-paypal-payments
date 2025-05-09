@@ -62,9 +62,8 @@ export class PcpPaymentMethods extends PcpAdminPage {
 	 *
 	 * @param snapshotName
 	 */
-	snapshotModalWindow = async ( snapshotName: string ) => this.snapshotLocator(
-		this.modalWindow(),
-		snapshotName,
-		{ threshold: 0.9, }
-	);
+	snapshotModalWindow = async ( snapshotName: string ) =>
+		this.snapshotLocator( this.modalWindow(), snapshotName, {
+			threshold: 0.9,
+		} );
 }

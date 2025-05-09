@@ -3,7 +3,7 @@
  */
 import { test, expect } from '../../utils';
 import { storeConfigDefault } from '../../resources';
-import { defaultUiTestData } from './_test-data';
+import { defaultUiTestData, onboardingCheckoutComparison } from './_test-data';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
@@ -24,13 +24,12 @@ for ( const country of defaultUiTestData ) {
 		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.page.waitForLoadState();
 
-		const noWarnings =
-			await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
+		const noWarnings = await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
 		expect( noWarnings ).toBeTruthy();
 
 		await pcpOnboarding.snapshotContent(
 			`${ testInfo.title } - ${ country }`,
-			3000,
+			3000
 		);
 	} );
 }
@@ -97,14 +96,14 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	await pcpOnboarding.continueButton().click();
 	await pcpOnboarding.snapshotContent(
 		`${ testInfo.title } - Select product types - No option selected`,
-		3000,
+		3000
 	);
 
 	await pcpOnboarding.physicalGoodsCheckbox().check();
 	await pcpOnboarding.virtualCheckbox().check();
 	await pcpOnboarding.snapshotContent(
 		`${ testInfo.title } - Select product types - Products selected`,
-		3000,
+		3000
 	);
 	await pcpOnboarding.continueButton().click();
 	await pcpOnboarding.snapshotContent(
@@ -113,6 +112,38 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
 	await pcpOnboarding.snapshotContent(
 		`${ testInfo.title } - Choose checkout options - Card payments disabled`,
-		3000,
+		3000
 	);
+} );
+
+test.describe( '', () => {
+	for ( const testData of onboardingCheckoutComparison ) {
+		const { testKey, country, wooCommerceGeneralSettings } = testData;
+		test( `${ testKey } | Settings - ${ country } - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen`, async ( {
+			pcpOnboarding,
+			wooCommerceApi,
+		}, testInfo ) => {
+			await wooCommerceApi.updateGeneralSettings(
+				wooCommerceGeneralSettings
+			);
+
+			await pcpOnboarding.visit();
+			await pcpOnboarding.gotoInitialOnboardingPage();
+			await pcpOnboarding.page.waitForLoadState();
+			await pcpOnboarding.snapshotContent(
+				`${ testKey } - Initial Page`
+			);
+
+			await pcpOnboarding.activatePayPalPaymentsButton().click();
+			if ( country !== 'Germany' ) {
+				await pcpOnboarding.businessRadio().click();
+				await pcpOnboarding.continueButton().click();
+			}
+			await pcpOnboarding.physicalGoodsCheckbox().check();
+			await pcpOnboarding.continueButton().click();
+			await pcpOnboarding.snapshotContent(
+				`${ testKey } - Checkout Page`
+			);
+		} );
+	}
 } );

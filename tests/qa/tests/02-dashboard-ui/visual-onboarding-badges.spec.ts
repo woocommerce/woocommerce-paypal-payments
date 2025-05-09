@@ -1,7 +1,12 @@
 /**
  * Internal dependencies
  */
-import { test, expect, saveTestResultsToFile, getTestResultsFromFile } from '../../utils';
+import {
+	test,
+	expect,
+	saveTestResultsToFile,
+	getTestResultsFromFile,
+} from '../../utils';
 import { storeConfigDefault } from '../../resources';
 import { badgeTestsData } from './_test-data';
 
@@ -30,7 +35,9 @@ for ( const testData of badgeTestsData ) {
 				} );
 				await pcpOnboarding.visit();
 				await pcpOnboarding.gotoInitialOnboardingPage();
-				await pcpOnboarding.badgeContainer().waitFor( { state: 'visible' } );
+				await pcpOnboarding
+					.badgeContainer()
+					.waitFor( { state: 'visible' } );
 				await pcpOnboarding.closeAdvancedOptions();
 				await pcpOnboarding.page.waitForLoadState( 'load' );
 				await pcpOnboarding.snapshotLocator(
@@ -42,13 +49,15 @@ for ( const testData of badgeTestsData ) {
 				);
 
 				await pcpOnboarding.activatePayPalPaymentsButton().click();
-				if( country !== 'Germany' ) {
+				if ( country !== 'Germany' ) {
 					await pcpOnboarding.businessRadio().click();
 					await pcpOnboarding.continueButton().click();
 				}
 				await pcpOnboarding.virtualCheckbox().check();
 				await pcpOnboarding.continueButton().click();
-				await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
+				await pcpOnboarding
+					.disableOptionalPaymentMethodsRadio()
+					.click();
 				await pcpOnboarding.page.waitForLoadState( 'load' );
 				await pcpOnboarding.snapshotLocator(
 					pcpOnboarding.checkoutAlternativeOptionsContainer(),
@@ -59,7 +68,7 @@ for ( const testData of badgeTestsData ) {
 				);
 			} );
 		}
-		
+
 		test.afterEach( async ( {}, testInfo ) => {
 			saveTestResultsToFile(
 				testInfo.title,
