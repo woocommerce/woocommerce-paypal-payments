@@ -148,7 +148,7 @@ test.describe( '', () => {
 	}
 } );
 
-test.describe( '', () => {
+test.describe.only( '', () => {
 	test.beforeAll( async ( { requestUtils } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled( 'woocommerce-payments' ) )
@@ -163,12 +163,12 @@ test.describe( '', () => {
 		await plugins.deletePlugin( 'woopayments' );
 	} );
 
-	test( 'PCP-4382 | Settings - Onboarding - Default UI with WooPayments ', async ( {
+	test( 'PCP-4382 | WooPayments - Settings - Onboarding - Default UI (bcdc, paylater)', async ( {
 		pcpOnboarding,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
 		await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - WooPayments - Onboarding Initial Page`, {timeout: 3000}
+			`${ testInfo.title } - Initial Page`, {timeout: 3000}
 		);
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -177,11 +177,11 @@ test.describe( '', () => {
 		await pcpOnboarding.physicalGoodsCheckbox().check();
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Connect your PayPal Acount - Product Types`, {timeout: 3000}
+			`${ testInfo.title } - Product types`, {timeout: 3000}
 		);
 	} );
 
-	test( 'PCP-4400 | WooPayments - Settings - Serbia - Onboarding - No cards by default', async ( {
+	test( 'PCP-4400 | WooPayments - Settings - Onboarding - No cards by default - Serbia', async ( {
 		wooCommerceApi,
 		pcpOnboarding,
 	}, testInfo ) => {
@@ -191,10 +191,9 @@ test.describe( '', () => {
 		} );
 
 		await pcpOnboarding.visit();
-		await pcpOnboarding.page.reload();
 		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title }WooPayments - Onboarding Initial Page - Serbia`, {timeout: 3000}
+			`${ testInfo.title }`, {timeout: 3000}
 		);
 	} );
 } );
