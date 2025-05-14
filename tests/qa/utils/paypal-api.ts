@@ -266,6 +266,7 @@ export class PayPalApi {
 				break;
 
 			case 'acdc':
+			case 'fastlane':
 				await expect( payPalOrder.status ).toEqual( 'COMPLETED' );
 				await expect( payPalOrder.payment_source ).toHaveProperty(
 					'card'
@@ -324,14 +325,9 @@ export class PayPalApi {
 					).toEqual( 'VAULTED' );
 					break;
 				}
-
-				// SIARHEI-TODO fix this:
-				// if (!(shopOrder.payment.isVaulted==false && shopOrder.payment.method === 'PayPal')) {
 				await expect(
 					payPalOrder.payment_source.paypal.email_address
 				).toEqual( shopOrder.payment.payPalAccount.email );
-			// break;
-			// }
 		}
 	};
 

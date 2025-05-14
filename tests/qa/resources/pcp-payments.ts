@@ -42,6 +42,18 @@ const acdc3ds: Pcp.Payment = {
 	card: cards.visa3ds,
 };
 
+const fastlaneGary: Pcp.Payment = {
+	gateway: gateways.fastlane,
+	fastlaneFlow: 'gary',
+	card: cards.visa,
+};
+
+const fastlaneRyan: Pcp.Payment = {
+	gateway: gateways.fastlane,
+	fastlaneFlow: 'ryan',
+	fastlaneOtp: '111111',
+};
+
 const debitOrCreditCard: Pcp.Payment = {
 	gateway: gateways.debitOrCreditCard,
 	card: cards.visa,
@@ -65,6 +77,8 @@ export const payments = {
 	venmo,
 	acdc,
 	acdc3ds,
+	fastlaneGary,
+	fastlaneRyan,
 	debitOrCreditCard,
 	standardCardButton,
 	payUponInvoice,

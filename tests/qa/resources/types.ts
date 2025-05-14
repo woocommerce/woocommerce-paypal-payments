@@ -60,6 +60,8 @@ export namespace Pcp {
 	export type Payment = {
 		gateway: Gateway;
 		payPalAccount?: PayPalAccount;
+		fastlaneFlow?: 'gary' | 'ryan'; // gary = new user, ryan = user with stored data
+		fastlaneOtp?: string;
 		card?: WooCommerce.CreditCard;
 		isVaulted?: boolean;
 		birthDate?: string;

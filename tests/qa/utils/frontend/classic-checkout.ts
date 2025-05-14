@@ -19,6 +19,10 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	}
 
 	// Locators
+	fastlaneShippingAddressContainer = () =>
+		this.page.locator( '#ppcp-axo-shipping-address-container' );
+	fastlaneBillingAddressContainer = () =>
+		this.page.locator( '#ppcp-axo-billing-address-container' );
 
 	// Actions
 
@@ -31,27 +35,43 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	};
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, products, shipping, customer, merchant } = data;
+		const isFastlane = payment.gateway.shortcut === 'fastlane';
+		
 		await this.visit();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( data.coupons );
+		await this.applyCouponIfNeeded( coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		if (
-			data.products.some( ( product ) => product.type === 'subscription' )
+			products.some( ( product ) => product.type === 'subscription' )
 		) {
-			await this.selectInitialShipment( data.shipping.settings.title );
+			await this.selectInitialShipment( shipping.settings.title );
 		} else {
-			await this.selectShippingMethod( data.shipping.settings.title );
+			await this.selectShippingMethod( shipping.settings.title );
 		}
 
-		// Fill billing details
-		await this.fillCheckoutForm( data.customer );
+		if( isFastlane ) {
+			await this.payPalUi.provideFastlaneEmail( customer.email );
+		}
+		
+		if( isFastlane && payment.fastlaneFlow === 'ryan' ) {
+			// For "Ryan's flow" the OTP is required
+			await this.payPalUi.provideFastlaneOtp();
+			// Checkout form and payment card is already prefilled
+			await this.assertShippingAddressIsPopulated( customer.shipping );
+			// await this.assertBillingAddressIsPopulated( customer.billing ); // TODO: confirm requirement
+		}
+		else {
+			// Fill billing details
+			await this.fillCheckoutForm( customer );
+		}
 
 		// Make payment with tested method
 		await this.payPalUi.makePayment( {
-			merchant: data.merchant,
-			payment: data.payment,
+			merchant: merchant,
+			payment: payment,
 		} );
 	};
 
@@ -87,5 +107,47 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		await this.placeOrder();
 	};
 
+	/**
+	 * Fills billing details on Classic Checkout page
+	 *
+	 * @param billing
+	 */
+	fillFastlaneBillingDetails = async ( billing: WooCommerce.Billing ) => {
+		await this.billingFirstNameInput().fill( billing.first_name );
+		await this.billingLastNameInput().fill( billing.last_name );
+		await this.billingCountryCombobox().click();
+		await this.billingCountryOptionByCode( billing.country ).click();
+		await this.billingStreetAddressInput().fill( billing.address_1 );
+		await this.billingPostcodeInput().fill( billing.postcode );
+		await this.billingCityInput().fill( billing.city );
+		if ( billing.state ) {
+			await this.billingStateCombobox().click();
+			await this.billingStateOptionByCode( billing.state ).click();
+		}
+		await this.billingPhoneInput().fill( billing.phone );
+	};
+
 	// Assertions
+
+	assertShippingAddressIsPopulated = async ( shipping: WooCommerce.Shipping) => {
+		const shippingAddress = this.fastlaneShippingAddressContainer();
+		await expect( shippingAddress ).toContainText( shipping.first_name );
+		await expect( shippingAddress ).toContainText( shipping.last_name );
+		await expect( shippingAddress ).toContainText( shipping.address_1 );
+		await expect( shippingAddress ).toContainText( shipping.city );
+		// await expect( shippingAddress ).toContainText( shipping.state ); // TODO: fix for the full state name
+		await expect( shippingAddress ).toContainText( shipping.postcode );
+		await expect( shippingAddress ).toContainText( shipping.countryName );
+	}
+
+	assertBillingAddressIsPopulated = async ( billing: WooCommerce.Shipping) => {
+		const billingAddress = this.fastlaneBillingAddressContainer();
+		await expect( billingAddress ).toContainText( billing.first_name );
+		await expect( billingAddress ).toContainText( billing.last_name );
+		await expect( billingAddress ).toContainText( billing.address_1 );
+		await expect( billingAddress ).toContainText( billing.city );
+		// await expect( billingAddress ).toContainText( billing.state ); // TODO: fix for the full state name
+		await expect( billingAddress ).toContainText( billing.postcode );
+		await expect( billingAddress ).toContainText( billing.countryName );
+	}
 }

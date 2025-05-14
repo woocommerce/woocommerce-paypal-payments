@@ -3,7 +3,6 @@ export {
 	shippingZones,
 	flatRate,
 	freeShipping,
-	guests,
 	customers,
 	taxSettings,
 	coupons,
@@ -16,6 +15,7 @@ export * from './pcp-config';
 export * from './pcp-gateways';
 export * from './pcp-payments';
 export * from './pcp-merchants';
+export * from './guests';
 export * from './orders';
 export * from './woocommerce-config';
 export * from './types';

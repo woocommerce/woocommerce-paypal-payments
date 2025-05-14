@@ -68,6 +68,43 @@ export class PayPalUi {
 			'Pay in 4 interest-free payments on'
 		);
 
+	fastlaneContinueButton = () =>
+		this.page
+			.locator( '.wc-block-axo-email-submit-button-container' )
+			.getByRole( 'button', { name: 'Continue' } );
+	fastlaneContactContainer = () =>
+		this.page
+			.locator( '.wc-block-components-address-form__email', {
+				has: this.fastlaneContinueButton(),
+			} );
+	fastlaneEmailInput = () =>
+		this.fastlaneContactContainer().getByLabel( 'Email address' );
+	fastlaneGateway = () =>
+		this.page.locator( '#radio-control-wc-payment-method-options-ppcp-axo-gateway' );
+	fastlaneCardNumberInput = () =>
+		this.page
+			.frameLocator( '#card-number iframe' )
+			.locator( '#credit-card-number' );
+	fastlaneExpirationDateInput = () =>
+		this.page
+			.frameLocator( '#expiration-date iframe' )
+			.locator( '#expiration' );
+	fastlaneCvvInput = () =>
+		this.page
+			.frameLocator( '#cvv iframe' )
+			.locator( '#cvv' );
+	fastlaneCardHolderInput = () =>
+		this.page
+			.frameLocator( '#cardholder-name iframe' )
+			.locator( '#cardholder-name' );
+	fastlaneOtpWindow = () => this.page.getByTestId( 'modal-sheet-inner-sheet' );
+	fastlaneOtp0Input = () => this.page.locator( '#otp0-input' );
+	fastlaneOtp1Input = () => this.page.locator( '#otp1-input' );
+	fastlaneOtp2Input = () => this.page.locator( '#otp2-input' );
+	fastlaneOtp3Input = () => this.page.locator( '#otp3-input' );
+	fastlaneOtp4Input = () => this.page.locator( '#otp4-input' );
+	fastlaneOtp5Input = () => this.page.locator( '#otp5-input' );
+
 	// Actions
 
 	/**
@@ -195,6 +232,10 @@ export class PayPalUi {
 			case 'pay_upon_invoice':
 				await this.completePayUponInvoicePayment( payment.birthDate );
 				break;
+
+			case 'fastlane':
+				await this.completeFastlanePayment( payment );
+				break;
 		}
 	};
 
@@ -250,6 +291,60 @@ export class PayPalUi {
 				await route.continue( { headers: updatedHeaders } );
 			}
 		);
+	};
+
+	/**
+	 * Asserts Fastlane input field and button
+	 * Inputs fastlane email and clicks Continue
+	 * 
+	 * @param payment 
+	 */
+	provideFastlaneEmail = async ( email: string ) => {
+		await expect( this.fastlaneEmailInput() ).toBeVisible();
+		await expect( this.fastlaneContinueButton() ).toBeVisible();
+		
+		await this.fastlaneEmailInput().fill( email );
+		await this.fastlaneContinueButton().click();
+		await this.page.waitForLoadState( 'networkidle' );
+	}
+
+	/**
+	 * Types in Fastlane OPT for Ryan's flow
+	 */
+	provideFastlaneOtp = async () => {
+		await expect( this.fastlaneOtpWindow() ).toBeVisible();
+		await this.fastlaneOtp0Input().press( '1' );
+		await this.fastlaneOtp1Input().press( '1' );
+		await this.fastlaneOtp2Input().press( '1' );
+		await this.fastlaneOtp3Input().press( '1' );
+		await this.fastlaneOtp4Input().press( '1' );
+		await this.fastlaneOtp5Input().press( '1' );
+		await expect( this.fastlaneOtpWindow() ).not.toBeVisible();
+	};
+
+	/**
+	 * Completes payment with Fastlane
+	 * Guest without saved details
+	 *
+	 * @param payment
+	 */
+	completeFastlanePayment = async ( payment: Pcp.Payment ) => {
+		// For Ryan the payment details are already populated
+		// For Gary's flow it is required to provide address and card details
+		if( payment.fastlaneFlow === 'gary' ) {
+			const { card_number, card_cvv, expiration_date } = payment.card;
+			await expect( this.fastlaneGateway() ).toBeVisible();
+			await this.fastlaneGateway().click();
+			await this.fastlaneCardNumberInput().fill( card_number );
+			await this.fastlaneExpirationDateInput().pressSequentially( expiration_date );
+			await this.fastlaneCvvInput().fill( card_cvv );
+			// TODO: clarify Cardholder name presence (bug PCP-4623)
+			if( await this.fastlaneCardHolderInput().isVisible() ) {
+				await this.fastlaneCardHolderInput().fill( 'Gary From-USA' );
+			}
+		}
+		await this.page.waitForTimeout( 1000 );
+		await this.submitOrder();
 	};
 
 	completeAcdc3dsPayment = async ( ...args ) =>
