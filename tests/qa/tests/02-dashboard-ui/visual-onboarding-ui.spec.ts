@@ -207,3 +207,15 @@ test.describe( () => {
 		);
 	} );
 } );
+
+test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for PayPal payments', async ( {
+	wooCommerceApi,
+	pcpOnboarding,
+}, testInfo ) => {
+	await wooCommerceApi.updateGeneralSettings( {
+		woocommerce_default_country: 'ZW',
+		woocommerce_currency: 'USD',
+	} );
+	await pcpOnboarding.visit();
+	await pcpOnboarding.snapshotContent( testInfo.title );
+} );
