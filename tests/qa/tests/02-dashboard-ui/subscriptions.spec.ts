@@ -50,8 +50,6 @@ test.describe( () => {
 
 	test( 'PCP-4357 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment enabled', async ( {
 		pcpOnboarding,
-		percy,
-		utils,
 		pcpPaymentMethods,
 		pcpSettings,
 		pcpStyling,
