@@ -3,7 +3,6 @@
  */
 import { test, expect } from '../../utils';
 import { storeConfigDefault, subscriptionsPlugin, merchants, Pcp } from '../../resources';
-import { time } from 'console';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( storeConfigDefault );
