@@ -33,21 +33,36 @@ export class Checkout extends CheckoutBase {
 	};
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer, merchant } = data;
+		const isFastlane = payment.gateway.shortcut === 'fastlane';
 		await this.visit();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( data.coupons );
+		await this.applyCouponIfNeeded( coupons );
 
-		// Fill billing details
-		await this.fillCheckoutForm( data.customer );
+		if( isFastlane ) {
+			await this.payPalUi.provideFastlaneEmail( customer.email );
+		}
+		
+		if( isFastlane && payment.fastlaneFlow === 'ryan' ) {
+			// For "Ryan's flow" the OTP is required
+			await this.payPalUi.provideFastlaneOtp();
+			// Checkout form and payment card is already prefilled
+			// await this.assertShippingAddressIsPopulated( customer.shipping ); // TODO: confirm requirement
+			await this.assertBillingAddressIsPopulated( customer.billing );
+		}
+		else {
+			// Fill billing details
+			await this.fillCheckoutForm( customer );
+		}
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( data.shipping.settings.title );
+		await this.selectShippingMethod( shipping.settings.title );
 
 		// Make payment with tested method
 		await this.payPalUi.makePayment( {
-			merchant: data.merchant,
-			payment: data.payment,
+			merchant: merchant,
+			payment: payment,
 		} );
 	};
 
@@ -73,4 +88,26 @@ export class Checkout extends CheckoutBase {
 	};
 
 	// Assertions
+
+	assertShippingAddressIsPopulated = async ( shipping: WooCommerce.Shipping) => {
+		const shippingAddress = this.shippingAddressContainer();
+		await expect( shippingAddress ).toContainText( shipping.first_name );
+		await expect( shippingAddress ).toContainText( shipping.last_name );
+		await expect( shippingAddress ).toContainText( shipping.address_1 );
+		await expect( shippingAddress ).toContainText( shipping.city );
+		// await expect( shippingAddress ).toContainText( shipping.state ); // TODO: fix for the full state name
+		await expect( shippingAddress ).toContainText( shipping.postcode );
+		await expect( shippingAddress ).toContainText( shipping.countryName );
+	}
+
+	assertBillingAddressIsPopulated = async ( billing: WooCommerce.Shipping) => {
+		const billingAddress = this.billingAddressContainer();
+		await expect( billingAddress ).toContainText( billing.first_name );
+		await expect( billingAddress ).toContainText( billing.last_name );
+		await expect( billingAddress ).toContainText( billing.address_1 );
+		await expect( billingAddress ).toContainText( billing.city );
+		// await expect( billingAddress ).toContainText( billing.state ); // TODO: fix for the full state name
+		await expect( billingAddress ).toContainText( billing.postcode );
+		await expect( billingAddress ).toContainText( billing.countryName );
+	}
 }

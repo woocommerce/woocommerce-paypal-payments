@@ -307,6 +307,17 @@ export class PayPalUiClassic extends PayPalUi {
 	payWithDifferentAccountButton = () =>
 		this.payPalMenuIframe().getByText( 'pay with a different account' );
 
+	fastlaneContinueButton = () =>
+		this.page.locator( '#ppcp-axo-billing-email-submit-button' );
+	fastlaneContactContainer = () =>
+		this.page.locator( '#ppcp-axo-billing-email-field-wrapper' );
+	fastlaneEmailInput = () =>
+		this.fastlaneContactContainer().locator( 'input[name="billing_email"]' );
+	fastlaneGateway = () =>
+		this.page.locator(
+			'li.payment_method_ppcp-axo-gateway label[for="payment_method_ppcp-axo-gateway"]'
+		);
+
 	// Actions
 
 	/**

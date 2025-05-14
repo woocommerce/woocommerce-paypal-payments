@@ -7,6 +7,7 @@ import {
 	storeConfigUsa,
 	gateways,
 	taxSettings,
+	wpDebuggingPlugin,
 } from '../../resources';
 import {
 	transactionsOnClassicCart,
@@ -23,13 +24,14 @@ import {
 	payPalClassicCheckout,
 	payPalClassicCheckoutIntentAuthorized,
 } from './_test-data/paypal';
+import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
-const { payPal, venmo, fastlane } = gateways;
+const { payPal, venmo, acdc, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		classicPages: true
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -40,6 +42,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
+		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
 } );
@@ -75,5 +78,21 @@ test.describe( 'Intent Authorized', () => {
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );
+	} );
+} );
+
+test.describe( 'Fastlane', () => {
+	test.beforeAll( async ( { utils, pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( {
+			[ fastlane.id ]: { id: fastlane.id, enabled: true },
+		} );
+	} );
+
+	transactionsOnClassicCheckout( fastlaneClassicCheckout );
+
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( {
+			[ fastlane.id ]: { id: fastlane.id, enabled: false },
+		} );
 	} );
 } );
