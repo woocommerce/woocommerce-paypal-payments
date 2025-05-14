@@ -116,7 +116,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	);
 } );
 
-test.describe( '', () => {
+test.describe( () => {
 	for ( const testData of onboardingCheckoutComparison ) {
 		const { testKey, country, wooCommerceGeneralSettings } = testData;
 		test( `${ testKey } | Settings - ${ country } - Onboarding - Compare initial onboarding page (right part) with expanded checkout screen`, async ( {
@@ -130,8 +130,10 @@ test.describe( '', () => {
 			await pcpOnboarding.visit();
 			await pcpOnboarding.gotoInitialOnboardingPage();
 			await pcpOnboarding.page.waitForLoadState();
-			await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-				`${ testKey } - Initial Page`, {timeout: 3000} 
+			await pcpOnboarding.snapshotLocator(
+				pcpOnboarding.onboardingContentContainer(),
+				`${ testKey } - Initial Page`,
+				{ timeout: 3000 }
 			);
 
 			await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -141,14 +143,16 @@ test.describe( '', () => {
 			}
 			await pcpOnboarding.physicalGoodsCheckbox().check();
 			await pcpOnboarding.continueButton().click();
-			await pcpOnboarding.snapshotLocator(pcpOnboarding.onboardingContentContainer(),
-				`${ testKey } - Checkout Page` , {timeout: 3000}
+			await pcpOnboarding.snapshotLocator(
+				pcpOnboarding.onboardingContentContainer(),
+				`${ testKey } - Checkout Page`,
+				{ timeout: 3000 }
 			);
 		} );
 	}
 } );
 
-test.describe.only( '', () => {
+test.describe( () => {
 	test.beforeAll( async ( { requestUtils } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled( 'woocommerce-payments' ) )
@@ -167,8 +171,10 @@ test.describe.only( '', () => {
 		pcpOnboarding,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
-		await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Initial Page`, {timeout: 3000}
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.onboardingContentContainer(),
+			`${ testInfo.title } - Initial Page`,
+			{ timeout: 3000 }
 		);
 
 		await pcpOnboarding.activatePayPalPaymentsButton().click();
@@ -176,8 +182,10 @@ test.describe.only( '', () => {
 		await pcpOnboarding.continueButton().click();
 		await pcpOnboarding.physicalGoodsCheckbox().check();
 		await pcpOnboarding.continueButton().click();
-		await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title } - Product types`, {timeout: 3000}
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.onboardingContentContainer(),
+			`${ testInfo.title } - Product types`,
+			{ timeout: 3000 }
 		);
 	} );
 
@@ -192,8 +200,10 @@ test.describe.only( '', () => {
 
 		await pcpOnboarding.visit();
 		await pcpOnboarding.gotoInitialOnboardingPage();
-		await pcpOnboarding.snapshotLocator( pcpOnboarding.onboardingContentContainer(),
-			`${ testInfo.title }`, {timeout: 3000}
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.onboardingContentContainer(),
+			testInfo.title,
+			{ timeout: 3000 }
 		);
 	} );
 } );
