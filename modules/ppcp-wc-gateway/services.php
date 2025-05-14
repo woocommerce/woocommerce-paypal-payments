@@ -1366,7 +1366,8 @@ return array(
 		return new CardPaymentsConfiguration(
 			$container->get( 'settings.connection-state' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.helpers.dccapplies' )
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'wcgateway.helper.dcc-product-status' )
 		);
 	},
 

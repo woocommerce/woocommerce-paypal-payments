@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.0.5
+Stable tag: 3.0.6
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -155,6 +155,29 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 3.0.6 - xxxx-xx-xx =
+* Enhancement - Implement 3D secure check for Google Pay #3163
+* Enhancement - Add options for "Disable Credit Cards" and "Language" #3226
+* Enhancement - Improve the loading experience for the new UI #3269
+* Enhancement - Enhance the accessibility of the new Settings UI #3294
+* Enhancement - Add capture pre-conditions for card payment source #3300
+* Enhancement - Enable all/Disable all toggle next to Alternative Payment methods on Payment Methods tab #3321
+* Fix - APFS plugin triggers incorrect renewal date for simple products as subscriptions #3272
+* Fix - PayPal Smart Button incompatible with WooCommerce Subscription Switching #3291
+* Fix - Fastlane gateway visible on Pay for Order page #3293
+* Fix - Pay Later Messaging configurator preview alignment #3305
+* Fix - Product editing screen for variable products unresponsive (PayPal Subscriptions API error) #3311
+* Fix - Update selector for hiding express checkout #3318
+* Fix - 'Ignoring unknown key' console warnings when modifying payment gateway state #3322
+* Fix - Ratepay Payment Option Not Available for Unassembled Product Bundles #3325
+* Fix - "Disable Specific credit cards" shows "Select" as a possible value #3342
+* Fix - Stripe not visible at checkout when PayPal Subscriptions API is enabled #3343
+* Fix - Ensure correct ACDC behavior for non-ACDC countries (e.g., Vietnam) #3351
+* Fix - ACDC payments for Subscriptions failing at checkout for new users #3355
+* Fix - BCDC not enabled by default when cards selected during onboarding #3366
+* Fix - Block checkout - Address form missing after payment on Product and Cart pages #3371
+* Fix - Payments with Debit & Credit Cards failing #3376
 
 = 3.0.5 - 2025-04-23 =
 * Fix - Onboarding screen blank when WooPayments plugin is active #3312

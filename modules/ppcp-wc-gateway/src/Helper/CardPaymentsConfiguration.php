@@ -63,6 +63,13 @@ class CardPaymentsConfiguration {
 	private DccApplies $dcc_applies;
 
 	/**
+	 * Manages the Seller status.
+	 *
+	 * @var DCCProductStatus
+	 */
+	private DCCProductStatus $dcc_status;
+
+	/**
 	 * This classes lazily resolves settings on first access. This flag indicates
 	 * whether the setting values were resolved, or still need to be evaluated.
 	 *
@@ -120,18 +127,24 @@ class CardPaymentsConfiguration {
 	 */
 	private bool $hide_fastlane_watermark = false;
 
-
 	/**
 	 * Initializes the gateway details based on the provided Settings instance.
 	 *
-	 * @param ConnectionState $connection_state Connection state instance.
-	 * @param Settings        $settings         Plugin settings instance.
-	 * @param DccApplies      $dcc_applies      DCC eligibility helper.
+	 * @param ConnectionState  $connection_state Connection state instance.
+	 * @param Settings         $settings         Plugin settings instance.
+	 * @param DccApplies       $dcc_applies      DCC eligibility helper.
+	 * @param DCCProductStatus $dcc_status        Manages the Seller status.
 	 */
-	public function __construct( ConnectionState $connection_state, Settings $settings, DccApplies $dcc_applies ) {
+	public function __construct(
+		ConnectionState $connection_state,
+		Settings $settings,
+		DccApplies $dcc_applies,
+		DCCProductStatus $dcc_status
+	) {
 		$this->connection_state = $connection_state;
 		$this->settings         = $settings;
 		$this->dcc_applies      = $dcc_applies;
+		$this->dcc_status       = $dcc_status;
 
 		$this->is_resolved = false;
 	}
@@ -241,7 +254,7 @@ class CardPaymentsConfiguration {
 		 */
 		$this->use_acdc = (bool) apply_filters(
 			'woocommerce_paypal_payments_is_acdc_active',
-			$this->dcc_applies->for_country_currency()
+			$this->dcc_applies->for_country_currency() && $this->dcc_status->is_active()
 		);
 
 		/**

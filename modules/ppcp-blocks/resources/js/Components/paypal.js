@@ -98,7 +98,7 @@ export const PayPalComponent = ( {
 
 		// this useEffect should run only once, but adding this in case of some kind of full re-rendering
 		setContinuationFilled( true );
-	}, [ shippingData, continuationFilled ] );
+	}, [ shippingData.needsShipping, continuationFilled ] );
 
 	const getCheckoutRedirectUrl = () => {
 		const checkoutUrl = new URL( config.scriptData.redirect );

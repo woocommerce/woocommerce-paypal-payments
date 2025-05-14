@@ -253,7 +253,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'ppcp_create_order_request_body_data',
 			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
 
-				$funding_source = $request['funding_source'];
+				$funding_source = $request['funding_source'] ?? '';
 				if ( $payment_method !== GooglePayGateway::ID && $funding_source !== 'googlepay' ) {
 					return $data;
 				}
