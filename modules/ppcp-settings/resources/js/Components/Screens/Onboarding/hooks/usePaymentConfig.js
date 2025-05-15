@@ -113,22 +113,6 @@ const COUNTRY_CONFIGS = {
 			{ name: 'PayInThree', Component: PayInThree },
 		],
 	},
-	MX: {
-		extendedMethods: [
-			{
-				name: 'CardFields',
-				Component: CardFields,
-				isOwnBrand: false,
-				isAcdc: true,
-			},
-			{
-				name: 'APMs',
-				Component: AlternativePaymentMethods,
-				isOwnBrand: true,
-				isAcdc: true,
-			},
-		],
-	},
 };
 
 /**

@@ -80,7 +80,7 @@ class FeaturesDefinition {
 		$eligible_features  = array();
 		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
 		foreach ( $all_features as $feature_key => $feature ) {
-			if ( $eligibility_checks[ $feature_key ]() ) {
+			if ( is_callable($eligibility_checks[ $feature_key ]) ? $eligibility_checks[ $feature_key ]() :  $eligibility_checks[ $feature_key ] ) {
 				$eligible_features[ $feature_key ] = $feature;
 			}
 		}

@@ -91,12 +91,17 @@ class FeaturesEligibilityService {
 	 * @return array<string, callable>
 	 */
 	public function get_eligibility_checks() : array {
+		$features = apply_filters(
+			'woocommerce_paypal_payments_rest_common_merchant_features',
+			array(),
+		);
+
 		return array(
-			'save_paypal_and_venmo'           => fn() => $this->is_save_paypal_eligible,
-			'advanced_credit_and_debit_cards' => $this->check_acdc_eligible,
-			'alternative_payment_methods'     => fn() => $this->is_apm_eligible,
-			'google_pay'                      => $this->check_google_pay_eligible,
-			'apple_pay'                       => $this->check_apple_pay_eligible,
+			'save_paypal_and_venmo'           => $features['save_paypal_and_venmo']['enabled'] ?? fn() => $this->is_save_paypal_eligible,
+			'advanced_credit_and_debit_cards' => $features['advanced_credit_and_debit_cards']['enabled'] ?? $this->check_acdc_eligible,
+			'alternative_payment_methods'     => $features['alternative_payment_methods']['enabled'] ?? fn() => $this->is_apm_eligible,
+			'google_pay'                      => $features['google_pay']['enabled'] ?? $this->check_google_pay_eligible,
+			'apple_pay'                       => $features['apple_pay']['enabled'] ?? $this->check_apple_pay_eligible,
 			'pay_later'                       => fn() => $this->is_pay_later_eligible,
 		);
 	}
