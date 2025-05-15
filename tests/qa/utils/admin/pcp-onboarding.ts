@@ -153,7 +153,6 @@ export class PcpOnboarding extends PcpAdminPage {
 		} else {
 			await this.disableOptionalPaymentMethodsRadio().check();
 		}
-		await this.continueButton().click();
 	};
 
 	// Assertions

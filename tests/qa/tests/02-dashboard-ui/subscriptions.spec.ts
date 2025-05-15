@@ -47,7 +47,7 @@ test.describe( () => {
 		await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
 	} );
 
-	test( 'PCP-4357 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment enabled', async ( {
+	test.only( 'PCP-4357 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment enabled', async ( {
 		pcpOnboarding,
 		pcpPaymentMethods,
 		pcpSettings,
@@ -66,6 +66,8 @@ test.describe( () => {
 		await pcpOnboarding.continueButton().click();
 	
 		await pcpOnboarding.chooseOptionalPaymentMethods( true );
+		await pcpOnboarding.continueButton().click();
+
 		await pcpOnboarding.gotoInitialOnboardingPage();
 	
 		await pcpApi.connectMerchant(
