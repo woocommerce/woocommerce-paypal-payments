@@ -1,7 +1,13 @@
 /**
  * Internal dependencies
  */
-import { orders, merchants, guests, payments } from '../../../../resources';
+import {
+	orders,
+	merchants,
+	guests,
+	payments,
+	ShopOrder,
+} from '../../../../resources';
 
 const { venmo } = payments;
 
@@ -14,7 +20,7 @@ const usaOrderData: WooCommerce.ShopOrder = {
 	currency: 'USD',
 };
 
-export const venmoClassicProductUsa = [
+export const venmoClassicProductUsa: ShopOrder[] = [
 	{
 		title: 'PCP-2985 | Transaction - Product (classic checkout) - Venmo - Simple product',
 		...orders.default,

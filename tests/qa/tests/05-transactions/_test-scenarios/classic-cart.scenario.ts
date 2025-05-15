@@ -1,9 +1,10 @@
 /**
  * Internal dependencies
  */
+import { ShopOrder } from '../../../resources';
 import { annotateVisitor, test } from '../../../utils';
 
-export const transactionsOnClassicCart = ( testsData ) => {
+export const transactionsOnClassicCart = ( testsData: ShopOrder[] ) => {
 	for ( const testData of testsData ) {
 		test(
 			testData.title,

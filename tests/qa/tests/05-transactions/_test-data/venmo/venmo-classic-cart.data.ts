@@ -1,7 +1,13 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, guests, merchants } from '../../../../resources';
+import {
+	payments,
+	orders,
+	guests,
+	merchants,
+	ShopOrder,
+} from '../../../../resources';
 
 const { venmo } = payments;
 
@@ -14,7 +20,7 @@ const usaOrderData: WooCommerce.ShopOrder = {
 	customer: guests.usa,
 };
 
-export const venmoClassicCartUsa = [
+export const venmoClassicCartUsa: ShopOrder[] = [
 	{
 		title: 'PCP-3147 | Transaction - Classic cart - Venmo - Default order @Critical',
 		...orders.default,

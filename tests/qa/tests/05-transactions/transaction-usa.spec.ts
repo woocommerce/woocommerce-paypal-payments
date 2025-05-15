@@ -36,7 +36,8 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 
 transactionsOnCheckout( payPalCheckout );
 
-test.describe( 'Excluding Tax', () => {
+// Excluding Tax
+test.describe( () => {
 	test.beforeAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
@@ -48,7 +49,8 @@ test.describe( 'Excluding Tax', () => {
 	} );
 } );
 
-test.describe( 'Intent Authorized', () => {
+// Intent Authorized
+test.describe( () => {
 	test.beforeAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
@@ -60,18 +62,26 @@ test.describe( 'Intent Authorized', () => {
 	} );
 } );
 
-test.describe( 'Fastlane', () => {
-	test.beforeAll( async ( { pcpApi } ) => {
-		await pcpApi.updatePcpPaymentMethods( {
-			[ fastlane.id ]: { id: fastlane.id, enabled: true },
-		} );
-	} );
+/**
+ * Fastlane is eligible only for USA/USD
+ */
+// NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
+// https://inpsyde.atlassian.net/browse/PCP-4625
+// https://inpsyde.atlassian.net/browse/PCP-4623
 
-	transactionsOnCheckout( fastlaneCheckout );
+// Fastlane
+// test.describe( () => {
+// 	test.beforeAll( async ( { pcpApi } ) => {
+// 		await pcpApi.updatePcpPaymentMethods( {
+// 			[ fastlane.id ]: { id: fastlane.id, enabled: true },
+// 		} );
+// 	} );
 
-	test.afterAll( async ( { pcpApi } ) => {
-		await pcpApi.updatePcpPaymentMethods( {
-			[ fastlane.id ]: { id: fastlane.id, enabled: false },
-		} );
-	} );
-} );
+// 	transactionsOnCheckout( fastlaneCheckout );
+
+// 	test.afterAll( async ( { pcpApi } ) => {
+// 		await pcpApi.updatePcpPaymentMethods( {
+// 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
+// 		} );
+// 	} );
+// } );

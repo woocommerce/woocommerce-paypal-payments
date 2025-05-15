@@ -7,6 +7,7 @@ import {
 	orders,
 	merchants,
 	customers,
+	ShopOrder,
 } from '../../../../resources';
 
 const { venmo } = payments;
@@ -20,7 +21,7 @@ const usaOrderData: WooCommerce.ShopOrder = {
 	customer: guests.usa,
 };
 
-export const venmoClassicCheckoutUsa = [
+export const venmoClassicCheckoutUsa: ShopOrder[] = [
 	{
 		title: 'PCP-2911 | Transaction - Classic checkout - USA - Venmo - Default order @Critical',
 		payment: venmo,
@@ -36,7 +37,7 @@ export const venmoClassicCheckoutUsa = [
 	},
 ];
 
-export const venmoClassicCheckoutUsaExcludingTax = [
+export const venmoClassicCheckoutUsaExcludingTax: ShopOrder[] = [
 	{
 		title: 'PCP-2981 | Transaction - Classic checkout - USA - Venmo - Order with price excluding tax',
 		payment: venmo,

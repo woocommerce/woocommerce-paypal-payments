@@ -1,9 +1,10 @@
 /**
  * Internal dependencies
  */
+import { ShopOrder } from '../../../resources';
 import { test, expect, annotateVisitor } from '../../../utils';
 
-export const transactionsOnPayByLink = ( testsData ) => {
+export const transactionsOnPayByLink = ( testsData: ShopOrder[] ) => {
 	for ( const testData of testsData ) {
 		test(
 			testData.title,

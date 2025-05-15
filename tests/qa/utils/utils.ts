@@ -57,6 +57,12 @@ export class Utils {
 		this.orderReceived = orderReceived;
 	}
 
+	/**
+	 * (Re)creates registered customer and refreshes his storage state.
+	 * May be required for testing subscriptions/vaulting.
+	 *
+	 * @param customer
+	 */
 	restoreCustomer = async ( customer: WooCommerce.CreateCustomer ) => {
 		await this.wooCommerceUtils.deleteCustomer( customer );
 		await this.wooCommerceUtils.createCustomer( customer );
@@ -76,6 +82,14 @@ export class Utils {
 		} );
 	};
 
+	/**
+	 * Pays for order created via API (dashboard order).
+	 * May be used for testing refunds/vaulting/subscriptions.
+	 *
+	 * @param orderId
+	 * @param orderKey
+	 * @param order
+	 */
 	payForApiOrder = async (
 		orderId: number,
 		orderKey: string,
@@ -143,51 +157,83 @@ export class Utils {
 	};
 
 	/**
-	 * Configures store according to the data provided
+	 * Configures store according to the data provided:
 	 *
-	 * @param {Object} data see /resources/woocommerce-config.ts
+	 * wpDebugging: Is WP Debugging plugin activated
+	 * subscription: Is WC Subscriptions plugin activated
+	 * classicPages: Are classic cart and checkout pages set in WC > Settings > Advanced
+	 * settings: WooCommerce settings by tabs (general, advanced, etc.)
+	 * taxes: Tax settings in WC > Settings > General tab and Taxes > Tax rates tab
+	 * customer: Registered customer to be created
+	 *
+	 * @param {Object} data               see also /resources/woocommerce-config.ts
+	 * @param          data.wpDebugging
+	 * @param          data.subscription
+	 * @param          data.classicPages
+	 * @param          data.settings
+	 * @param          data.taxes
+	 * @param          data.taxes.options
+	 * @param          data.taxes.rates
+	 * @param          data.customer
 	 */
-	configureStore = async ( data ) => {
-		if ( data.wpDebugging === true ) {
+	configureStore = async ( data: {
+		wpDebugging?: boolean; // Is WP Debugging plugin activated
+		subscription?: boolean; // Is WC Subscriptions plugin activated
+		classicPages?: boolean; // Are classic cart and checkout pages set in WC > Settings > Advanced
+		settings?: WooCommerce.Settings; // WooCommerce settings by tabs (general, advanced, etc.)
+		taxes?: {
+			options: WooCommerce.Settings; // Tax settings in WC > Settings > General tab
+			rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
+		};
+		customer?: WooCommerce.CreateCustomer; // Registered customer to be created
+	} ) => {
+		const {
+			wpDebugging,
+			subscription,
+			classicPages,
+			settings,
+			taxes,
+			customer,
+		} = data;
+
+		if ( wpDebugging === true ) {
 			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
 		}
 
-		if ( data.wpDebugging === false ) {
+		if ( wpDebugging === false ) {
 			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 		}
 
-		if ( data.subscription === true ) {
+		if ( subscription === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
 		}
 
-		if ( data.subscription === false ) {
+		if ( subscription === false ) {
 			await this.requestUtils.deactivatePlugin(
 				subscriptionsPlugin.slug
 			);
 		}
 
-		if ( data.classicPages === true ) {
+		if ( classicPages === true ) {
 			await this.wooCommerceUtils.activateClassicCartPage();
 			await this.wooCommerceUtils.activateClassicCheckoutPage();
 		}
 
-		if ( data.classicPages === false ) {
+		if ( classicPages === false ) {
 			await this.wooCommerceUtils.activateBlockCartPage();
 			await this.wooCommerceUtils.activateBlockCheckoutPage();
 		}
 
-		if ( data.settings?.general ) {
-			await this.wooCommerceApi.updateGeneralSettings(
-				data.settings.general
-			);
+		if ( settings?.general ) {
+			await this.wooCommerceApi.updateGeneralSettings( settings.general );
 		}
 
-		if ( data.taxes ) {
-			await this.wooCommerceUtils.setTaxes( data.taxes );
+		if ( taxes ) {
+			await this.wooCommerceUtils.setTaxes( taxes );
 		}
 
-		if ( data.customer ) {
-			await this.restoreCustomer( data.customer );
+		if ( customer ) {
+			await this.restoreCustomer( customer );
 		}
 	};
 

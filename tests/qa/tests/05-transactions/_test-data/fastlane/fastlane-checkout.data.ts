@@ -1,11 +1,11 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, guests } from '../../../../resources';
+import { payments, orders, guests, ShopOrder } from '../../../../resources';
 
 const { fastlaneGary, fastlaneRyan } = payments;
 
-export const fastlaneCheckout = [
+export const fastlaneCheckout: ShopOrder[] = [
 	{
 		title: 'PCP-4005 | Transaction - Checkout - Fastlane - Gary - Default order',
 		...orders.default,
