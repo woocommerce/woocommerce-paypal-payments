@@ -35,43 +35,41 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	};
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, products, shipping, customer, merchant } = data;
+		const { payment, coupons, products, shipping, customer, merchant } =
+			data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
-		
+
 		await this.visit();
 
 		// Add coupons if needed
 		await this.applyCouponIfNeeded( coupons );
+		await this.applyCouponIfNeeded( coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		if (
-			products.some( ( product ) => product.type === 'subscription' )
-		) {
+		if ( products.some( ( product ) => product.type === 'subscription' ) ) {
 			await this.selectInitialShipment( shipping.settings.title );
 		} else {
 			await this.selectShippingMethod( shipping.settings.title );
 		}
 
-		if( isFastlane ) {
+		if ( isFastlane ) {
 			await this.payPalUi.provideFastlaneEmail( customer.email );
 		}
-		
-		if( isFastlane && payment.fastlaneFlow === 'ryan' ) {
+
+		if ( isFastlane && payment.fastlaneFlow === 'ryan' ) {
 			// For "Ryan's flow" the OTP is required
 			await this.payPalUi.provideFastlaneOtp();
 			// Checkout form and payment card is already prefilled
 			await this.assertShippingAddressIsPopulated( customer.shipping );
-			// await this.assertBillingAddressIsPopulated( customer.billing ); // TODO: confirm requirement
-		}
-		else {
+		} else {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
 
 		// Make payment with tested method
 		await this.payPalUi.makePayment( {
-			merchant: merchant,
-			payment: payment,
+			merchant,
+			payment,
 		} );
 	};
 
@@ -129,7 +127,9 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 	// Assertions
 
-	assertShippingAddressIsPopulated = async ( shipping: WooCommerce.Shipping) => {
+	assertShippingAddressIsPopulated = async (
+		shipping: WooCommerce.Shipping
+	) => {
 		const shippingAddress = this.fastlaneShippingAddressContainer();
 		await expect( shippingAddress ).toContainText( shipping.first_name );
 		await expect( shippingAddress ).toContainText( shipping.last_name );
@@ -138,9 +138,11 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		// await expect( shippingAddress ).toContainText( shipping.state ); // TODO: fix for the full state name
 		await expect( shippingAddress ).toContainText( shipping.postcode );
 		await expect( shippingAddress ).toContainText( shipping.countryName );
-	}
+	};
 
-	assertBillingAddressIsPopulated = async ( billing: WooCommerce.Shipping) => {
+	assertBillingAddressIsPopulated = async (
+		billing: WooCommerce.Shipping
+	) => {
 		const billingAddress = this.fastlaneBillingAddressContainer();
 		await expect( billingAddress ).toContainText( billing.first_name );
 		await expect( billingAddress ).toContainText( billing.last_name );
@@ -149,5 +151,5 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		// await expect( billingAddress ).toContainText( billing.state ); // TODO: fix for the full state name
 		await expect( billingAddress ).toContainText( billing.postcode );
 		await expect( billingAddress ).toContainText( billing.countryName );
-	}
+	};
 }

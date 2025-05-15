@@ -73,14 +73,15 @@ export class PayPalUi {
 			.locator( '.wc-block-axo-email-submit-button-container' )
 			.getByRole( 'button', { name: 'Continue' } );
 	fastlaneContactContainer = () =>
-		this.page
-			.locator( '.wc-block-components-address-form__email', {
-				has: this.fastlaneContinueButton(),
-			} );
+		this.page.locator( '.wc-block-components-address-form__email', {
+			has: this.fastlaneContinueButton(),
+		} );
 	fastlaneEmailInput = () =>
 		this.fastlaneContactContainer().getByLabel( 'Email address' );
 	fastlaneGateway = () =>
-		this.page.locator( '#radio-control-wc-payment-method-options-ppcp-axo-gateway' );
+		this.page.locator(
+			'#radio-control-wc-payment-method-options-ppcp-axo-gateway'
+		);
 	fastlaneCardNumberInput = () =>
 		this.page
 			.frameLocator( '#card-number iframe' )
@@ -90,14 +91,13 @@ export class PayPalUi {
 			.frameLocator( '#expiration-date iframe' )
 			.locator( '#expiration' );
 	fastlaneCvvInput = () =>
-		this.page
-			.frameLocator( '#cvv iframe' )
-			.locator( '#cvv' );
+		this.page.frameLocator( '#cvv iframe' ).locator( '#cvv' );
 	fastlaneCardHolderInput = () =>
 		this.page
 			.frameLocator( '#cardholder-name iframe' )
 			.locator( '#cardholder-name' );
-	fastlaneOtpWindow = () => this.page.getByTestId( 'modal-sheet-inner-sheet' );
+	fastlaneOtpWindow = () =>
+		this.page.getByTestId( 'modal-sheet-inner-sheet' );
 	fastlaneOtp0Input = () => this.page.locator( '#otp0-input' );
 	fastlaneOtp1Input = () => this.page.locator( '#otp1-input' );
 	fastlaneOtp2Input = () => this.page.locator( '#otp2-input' );
@@ -296,17 +296,17 @@ export class PayPalUi {
 	/**
 	 * Asserts Fastlane input field and button
 	 * Inputs fastlane email and clicks Continue
-	 * 
-	 * @param payment 
+	 *
+	 * @param email
 	 */
 	provideFastlaneEmail = async ( email: string ) => {
 		await expect( this.fastlaneEmailInput() ).toBeVisible();
 		await expect( this.fastlaneContinueButton() ).toBeVisible();
-		
+
 		await this.fastlaneEmailInput().fill( email );
 		await this.fastlaneContinueButton().click();
 		await this.page.waitForLoadState( 'networkidle' );
-	}
+	};
 
 	/**
 	 * Types in Fastlane OPT for Ryan's flow
@@ -331,15 +331,17 @@ export class PayPalUi {
 	completeFastlanePayment = async ( payment: Pcp.Payment ) => {
 		// For Ryan the payment details are already populated
 		// For Gary's flow it is required to provide address and card details
-		if( payment.fastlaneFlow === 'gary' ) {
-			const { card_number, card_cvv, expiration_date } = payment.card;
+		if ( payment.fastlaneFlow === 'gary' ) {
+			const { card } = payment;
 			await expect( this.fastlaneGateway() ).toBeVisible();
 			await this.fastlaneGateway().click();
-			await this.fastlaneCardNumberInput().fill( card_number );
-			await this.fastlaneExpirationDateInput().pressSequentially( expiration_date );
-			await this.fastlaneCvvInput().fill( card_cvv );
+			await this.fastlaneCardNumberInput().fill( card.card_number );
+			await this.fastlaneExpirationDateInput().pressSequentially(
+				card.expiration_date
+			);
+			await this.fastlaneCvvInput().fill( card.card_cvv );
 			// TODO: clarify Cardholder name presence (bug PCP-4623)
-			if( await this.fastlaneCardHolderInput().isVisible() ) {
+			if ( await this.fastlaneCardHolderInput().isVisible() ) {
 				await this.fastlaneCardHolderInput().fill( 'Gary From-USA' );
 			}
 		}
@@ -374,18 +376,6 @@ export class PayPalUi {
 		console.log( `TODO: addCardPaymentMethod for block pages` );
 
 	// Assertions
-
-	collectBlockSmartButtons = async () => {
-		const blockSmartButtons: any = [];
-		const listIframes = await this.blockSmartButtonListItem().all();
-		for ( const iframe of listIframes ) {
-			const smartButton = iframe
-				.frameLocator( '.component-frame' )
-				.locator( '.paypal-button' );
-			await blockSmartButtons.push( smartButton );
-		}
-		return blockSmartButtons;
-	};
 
 	/**
 	 * - Asserts PayPal buttons block container is visible.

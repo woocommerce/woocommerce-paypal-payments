@@ -4,7 +4,6 @@
 import { Pcp } from '../../resources';
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
-import { expect } from '../../utils';
 
 export class PcpOnboarding extends PcpAdminPage {
 	url = urls.admin.pcp.onboarding;

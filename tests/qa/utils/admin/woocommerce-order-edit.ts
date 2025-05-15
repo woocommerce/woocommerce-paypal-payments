@@ -92,6 +92,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 * @param payment
 	 */
 	assertAddressVerificationResult = async ( payment ) => {
+		// TODO: clarify expected order notes format
 		// await expect(this.cvv2MatchOrderNote()).toBeVisible();
 		// const orderNote = await this.addressVerificationOrderNote();
 		// await expect(orderNote).toContainText(`AVS: Y`);
@@ -102,28 +103,37 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	};
 
 	/**
-	 * Asserts data provided on the order page
+	 * Asserts order edit page including PayPal related fields
 	 *
 	 * @param orderId
 	 * @param orderData
-	 * @param pcpData   = {
-	 *                  transactionId: 'QW23134212341234',
-	 *                  paypalFee: '1.00',
-	 *                  paypalPayout: '29.00',
-	 *
-	 *                  paymentMethod: 'PayPal',
-	 *                  itemsSubtotal: '20.00',
-	 *                  totalCoupons: '10.00',
-	 *                  totalFees: '10.00',
-	 *                  totalShipping: '10.00',
-	 *                  orderTotal: '30.00',
-	 *                  currency: 'EUR'
-	 *                  }
+	 * @param pcpData
+	 * @param pcpData.transactionId
+	 * @param pcpData.payPalFee
+	 * @param pcpData.payPalPayout
+	 * @param pcpData.paymentMethod
+	 * @param pcpData.itemsSubtotal
+	 * @param pcpData.totalCoupons
+	 * @param pcpData.totalFees
+	 * @param pcpData.totalShipping
+	 * @param pcpData.orderTotal
+	 * @param pcpData.currency
 	 */
 	assertOrderDetails = async (
 		orderId: number,
 		orderData: WooCommerce.ShopOrder,
-		pcpData?
+		pcpData?: {
+			transactionId?: string;
+			payPalFee?: string;
+			payPalPayout?: string;
+			paymentMethod?: string;
+			itemsSubtotal?: string;
+			totalCoupons?: string;
+			totalFees?: string;
+			totalShipping?: string;
+			orderTotal?: string;
+			currency?: string;
+		}
 	) => {
 		await super.assertOrderDetails( orderId, orderData );
 
@@ -133,23 +143,23 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 
 		// Transaction ID
 		if (
-			pcpData.transaction_id !== undefined &&
+			pcpData.transactionId !== undefined &&
 			pcpData.orderTotal !== undefined
 		) {
 			await expect(
-				this.transactionIdLink( pcpData.transaction_id )
+				this.transactionIdLink( pcpData.transactionId )
 			).toBeVisible();
 		}
 
 		// PayPal fees
 		if (
-			pcpData.paypPalFee !== undefined &&
+			pcpData.payPalFee !== undefined &&
 			pcpData.orderTotal !== undefined
 		) {
 			await expect( this.totalPayPalFee() ).toHaveText(
 				'- ' +
 					( await formatMoney(
-						pcpData.payPalFee,
+						Number( pcpData.payPalFee ),
 						orderData.currency
 					) )
 			);
@@ -161,7 +171,10 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			pcpData.orderTotal !== undefined
 		) {
 			await expect( this.totalPayPalPayout() ).toHaveText(
-				await formatMoney( pcpData.payPalPayout, orderData.currency )
+				await formatMoney(
+					Number( pcpData.payPalPayout ),
+					orderData.currency
+				)
 			);
 		}
 
@@ -187,79 +200,104 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	};
 
 	/**
-	 * Asserts data provided on the order page
+	 * Asserts refund fields on the order edit page
 	 *
-	 * @param data = {
-	 *             refund_id: ,
-	 *             refunded: ,
-	 *             totalRefunded: ,
-	 *             netPayment: ,
-	 *             payPalFee: ,
-	 *             payPalRefundFee: ,
-	 *             payPalRefunded: ,
-	 *             payPalPayout: ,
-	 *             payPalNetTotal: ,
-	 *             currency: 'EUR'
-	 *             }
+	 * @param data
+	 * @param data.orderStatus
+	 * @param data.refundId
+	 * @param data.refunded
+	 * @param data.totalRefunded
+	 * @param data.netPayment
+	 * @param data.payPalFee
+	 * @param data.payPalRefundFee
+	 * @param data.payPalRefunded
+	 * @param data.payPalPayout
+	 * @param data.payPalNetTotal
+	 * @param data.currency
 	 */
-	assertRefundData = async ( data ) => {
+	assertRefundData = async (
+		data: {
+			orderStatus?: string;
+			refundId?: string;
+			refunded?: number;
+			totalRefunded?: number;
+			netPayment?: number;
+			payPalFee?: number;
+			payPalRefundFee?: number;
+			payPalRefunded?: number;
+			payPalPayout?: number;
+			payPalNetTotal?: number;
+			currency?: string;
+		} = {
+			currency: 'EUR',
+		}
+	) => {
+		const {
+			orderStatus,
+			refundId,
+			refunded,
+			totalRefunded,
+			netPayment,
+			payPalFee,
+			payPalRefundFee,
+			payPalRefunded,
+			payPalPayout,
+			payPalNetTotal,
+			currency,
+		} = data;
 		// Order status
-		if ( data.orderStatus !== undefined ) {
-			await expect( this.statusCombobox() ).toHaveText(
-				data.orderStatus
-			);
+		if ( orderStatus !== undefined ) {
+			await expect( this.statusCombobox() ).toHaveText( orderStatus );
 		}
 
-		if ( data.refund_id !== undefined && data.refunded !== undefined ) {
+		if ( refundId !== undefined && refunded !== undefined ) {
 			await expect( this.refundNumber() ).toContainText(
-				`Refund #${ data.refund_id }`
+				`Refund #${ refundId }`
 			);
 			await expect( this.refundAmount() ).toHaveText(
-				'-' + ( await formatMoney( data.refunded, data.currency ) )
+				'-' + ( await formatMoney( refunded, currency ) )
 			);
 		}
 
-		if ( data.totalRefunded !== undefined ) {
+		if ( totalRefunded !== undefined ) {
 			await expect( this.totalRefunded() ).toHaveText(
-				'-' + ( await formatMoney( data.totalRefunded, data.currency ) )
+				'-' + ( await formatMoney( totalRefunded, currency ) )
 			);
 		}
 
-		if ( data.netPayment !== undefined ) {
+		if ( netPayment !== undefined ) {
 			await expect( this.totalNetPayment() ).toHaveText(
-				await formatMoney( data.netPayment, data.currency )
+				await formatMoney( netPayment, currency )
 			);
 		}
 
-		if ( data.payPalFee !== undefined ) {
+		if ( payPalFee !== undefined ) {
 			await expect( this.totalPayPalFee() ).toHaveText(
-				'- ' + ( await formatMoney( data.payPalFee, data.currency ) )
+				'- ' + ( await formatMoney( payPalFee, currency ) )
 			);
 		}
 
-		if ( data.payPalRefundFee !== undefined ) {
+		if ( payPalRefundFee !== undefined ) {
 			await expect( this.totalPayPalRefundFee() ).toHaveText(
-				'- ' +
-					( await formatMoney( data.payPalRefundFee, data.currency ) )
+				'- ' + ( await formatMoney( payPalRefundFee, currency ) )
 			);
 		}
 
-		if ( data.payPalRefunded !== undefined ) {
+		if ( payPalRefunded !== undefined ) {
 			await expect( this.totalPayPalRefunded() ).toHaveText(
-				'- ' +
-					( await formatMoney( data.payPalRefunded, data.currency ) )
+				'- ' + ( await formatMoney( payPalRefunded, currency ) )
 			);
 		}
 
-		if ( data.payPalPayout !== undefined ) {
+		if ( payPalPayout !== undefined ) {
 			await expect( this.totalPayPalPayout() ).toHaveText(
-				await formatMoney( data.payPalPayout, data.currency )
+				await formatMoney( payPalPayout, currency )
 			);
 		}
 
-		if ( data.payPalNetTotal !== undefined ) {
+		if ( payPalNetTotal !== undefined ) {
 			await expect( this.totalPayPalNetTotal() ).toHaveText(
-				await formatMoney( data.payPalNetTotal, data.currency )
+				await formatMoney( payPalNetTotal, currency )
 			);
 		}
 	};

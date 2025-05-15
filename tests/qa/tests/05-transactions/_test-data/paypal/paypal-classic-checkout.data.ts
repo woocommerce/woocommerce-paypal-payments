@@ -1,11 +1,11 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, Pcp } from '../../../../resources';
+import { payments, orders, ShopOrder } from '../../../../resources';
 
 const { payPal } = payments;
 
-export const payPalClassicCheckout = [
+export const payPalClassicCheckout: ShopOrder[] = [
 	{
 		title: 'PCP-1173 | Transaction - Classic checkout - PayPal - Default order @Critical',
 		payment: payPal,
@@ -18,7 +18,7 @@ export const payPalClassicCheckout = [
 	},
 ];
 
-export const payPalClassicCheckoutExcludingTax = [
+export const payPalClassicCheckoutExcludingTax: ShopOrder[] = [
 	{
 		title: 'PCP-1269 | Transaction - Classic checkout - PayPal - Order with price excluding tax',
 		payment: payPal,
@@ -26,7 +26,7 @@ export const payPalClassicCheckoutExcludingTax = [
 	},
 ];
 
-export const payPalClassicCheckoutIntentAuthorized = [
+export const payPalClassicCheckoutIntentAuthorized: ShopOrder[] = [
 	{
 		title: 'PCP-2756 | Transaction - Classic checkout - PayPal - Order with Intent Authorized',
 		...orders.default,

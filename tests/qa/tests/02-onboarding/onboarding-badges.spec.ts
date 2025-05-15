@@ -3,7 +3,6 @@
  */
 import {
 	test,
-	expect,
 	saveTestResultsToFile,
 	getTestResultsFromFile,
 } from '../../utils';

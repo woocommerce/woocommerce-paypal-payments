@@ -3,6 +3,10 @@ export type PayPalAccount = {
 	password: string;
 };
 
+export type ShopOrder = {
+	title?: string;
+} & WooCommerce.ShopOrder;
+
 export namespace Pcp {
 	export type Merchant = {
 		email: string;

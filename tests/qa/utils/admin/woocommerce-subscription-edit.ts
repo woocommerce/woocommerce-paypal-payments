@@ -26,7 +26,10 @@ export class WooCommerceSubscriptionEdit extends WooCommerceSubscriptionEditBase
 	 * @param subscriptionId
 	 * @param data
 	 */
-	assertSubscriptionDetails = async ( subscriptionId, data ) => {
+	assertSubscriptionDetails = async (
+		subscriptionId: number,
+		data: WooCommerce.ShopOrder
+	) => {
 		const statusLabels = {
 			active: 'Active',
 		};
