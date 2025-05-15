@@ -13,12 +13,10 @@ const invalid: Pcp.Merchant = {
 };
 
 const usa: Pcp.Merchant = {
-	email: 'new-us-3wbh337372180@business.example.com',
-	client_id:
-		'AZC4b9RPfnq3xtiFZ-_3xDsgPvQwQdNPtVqYXBRUJBpHSC3Qffli97AOYlfbb4Ej27WApTOtGJwv_V9E',
-	client_secret:
-		'EPKkYlxrQcl7SS-qHzijnfLD0W7E5i0pNUdaNJqk3t1325F2GboiuCrwrF6q61Iq5sn3J_aTdc4TzoRM',
-	account_id: '3GZZS42NRDTMY',
+	email: process.env.MERCHANT_USA_EMAIL,
+	client_id: process.env.MERCHANT_USA_CLIENT_ID,
+	client_secret: process.env.MERCHANT_USA_CLIENT_SECRET,
+	account_id: process.env.MERCHANT_USA_ACCOUNT_ID,
 };
 
 export const merchants: {
