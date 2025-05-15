@@ -476,57 +476,6 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	// Assertions
-	// TODO: cleanup methods after migration of legacy tests
-
-	assertPayPalButtonVisibility = async ( isVisible: boolean ) => {
-		await expect( this.payPalButton() ).toBeVisible( {
-			visible: isVisible,
-		} );
-	};
-
-	assertPayLaterButtonVisibility = async ( isVisible: boolean ) => {
-		await expect( this.payLaterButton() ).toBeVisible( {
-			visible: isVisible,
-		} );
-	};
-
-	assertDebitOrCreditCardButtonVisibility = async ( isVisible: boolean ) => {
-		await expect( this.debitOrCreditCardButton() ).toBeVisible( {
-			visible: isVisible,
-		} );
-	};
-
-	assertPoweredByPayPalTextVisibility = async ( isVisible: boolean ) => {
-		await expect( this.debitOrCreditCardPoweredByText() ).toBeVisible( {
-			visible: isVisible,
-		} );
-		await expect( this.debitOrCreditCardPoweredByLogo() ).toBeVisible( {
-			visible: isVisible,
-		} );
-	};
-
-	assertMiniCartPayPalButtonVisibility = async ( isVisible: boolean ) => {
-		await this.cartMenu().hover();
-		await expect( this.miniCartPayPalButton() ).toBeVisible( {
-			visible: isVisible,
-		} );
-	};
-
-	assertPayPalButtonsHaveClass = async ( payPalButtonsFrontEnd, regex ) => {
-		const listLengthFrontEnd: any = await payPalButtonsFrontEnd.length;
-		for ( let el = 0; el < listLengthFrontEnd; el++ ) {
-			await expect( payPalButtonsFrontEnd[ el ] ).toHaveClass( regex );
-		}
-	};
-
-	assertPayPalButtonsMiniCartHaveClass = async ( regex ) => {
-		const payPalButtonsFrontEnd =
-			await this.miniCartIframePayPalButton().all();
-		const listLengthFrontEnd: any = await payPalButtonsFrontEnd.length;
-		for ( let el = 0; el < listLengthFrontEnd; el++ ) {
-			await expect( payPalButtonsFrontEnd[ el ] ).toHaveClass( regex );
-		}
-	};
 
 	/**
 	 * - Asserts PayPal buttons classic container is visible.

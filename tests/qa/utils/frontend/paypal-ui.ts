@@ -377,18 +377,6 @@ export class PayPalUi {
 
 	// Assertions
 
-	collectBlockSmartButtons = async () => {
-		const blockSmartButtons: any = [];
-		const listIframes = await this.blockSmartButtonListItem().all();
-		for ( const iframe of listIframes ) {
-			const smartButton = iframe
-				.frameLocator( '.component-frame' )
-				.locator( '.paypal-button' );
-			await blockSmartButtons.push( smartButton );
-		}
-		return blockSmartButtons;
-	};
-
 	/**
 	 * - Asserts PayPal buttons block container is visible.
 	 * - Compares actual PayPal buttons container screenshot to expected.
