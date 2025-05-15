@@ -4,7 +4,6 @@
 import { PcpAdminPage } from './pcp-admin-page';
 import urls from '../urls';
 import { Pcp } from '../../resources';
-import { expect } from '../test';
 
 export class PcpPaymentMethods extends PcpAdminPage {
 	url = urls.admin.pcp.paymentMethods;

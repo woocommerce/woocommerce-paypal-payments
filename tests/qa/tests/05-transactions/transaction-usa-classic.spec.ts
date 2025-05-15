@@ -31,7 +31,7 @@ const { payPal, venmo, acdc, fastlane } = gateways;
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true
+		classicPages: true,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -82,7 +82,7 @@ test.describe( 'Intent Authorized', () => {
 } );
 
 test.describe( 'Fastlane', () => {
-	test.beforeAll( async ( { utils, pcpApi } ) => {
+	test.beforeAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {
 			[ fastlane.id ]: { id: fastlane.id, enabled: true },
 		} );

@@ -25,7 +25,7 @@ const usaFastlaneGary: WooCommerce.CreateCustomer = {
 		email: emailGary,
 		phone: '2135551234',
 	},
-		shipping: {
+	shipping: {
 		first_name: 'Gary',
 		last_name: 'From-USA',
 		company: '',
@@ -82,4 +82,4 @@ export const guests: {
 	...guestsBase,
 	usaFastlaneGary,
 	usaFastlaneRyan,
-}
+};
