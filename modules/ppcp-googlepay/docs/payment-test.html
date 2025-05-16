@@ -1,62 +1,145 @@
 <!DOCTYPE html>
 <html lang='en'>
 <!--
+
 URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs/payment-test.html
+
 -->
 <head>
 	<meta charset='UTF-8'>
 	<title>Google Pay Test</title>
 	<script defer src='https://pay.google.com/gp/p/js/pay.js' onload='loadSdk()'></script>
+
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			max-width: 800px;
+			margin: 0 auto;
+			padding: 0;
+		}
+
+		section {
+			border: 1px solid #ddd;
+			padding: 20px;
+			border-radius: 8px;
+			margin-top: 20px;
+		}
+
+		.logger {
+			margin-top: 20px;
+			border: 1px solid #eee;
+			padding: 10px;
+			min-height: 100px;
+			max-height: calc(100vh - 296px);
+			overflow-y: auto;
+			background-color: #f9f9f9;
+			border-radius: 4px;
+			font-family: monospace;
+
+			> div {
+				border-bottom: 1px solid #eee;
+				padding: 0 0 10px 0;
+				margin: 0 0 10px 0;
+
+				&:last-child {
+					border-bottom: none;
+					margin-bottom: 0;
+					padding-bottom: 0;
+				}
+			}
+		}
+
+		#google-pay-button {
+			margin-top: 15px;
+		}
+
+		h3 {
+			color: #333;
+		}
+
+		.form-group {
+			display: flex;
+			height: 24px;
+			line-height: 24px;
+			margin: 6px 0;
+			justify-content: space-between;
+		}
+
+		#credentials-form .form-group {
+			flex-direction: column;
+			height: 46px;
+		}
+
+		#client-id {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			padding: 0 10px;
+			width: 500px;
+			display: inline-block;
+			vertical-align: text-bottom;
+			font-size: 0.8em;
+		}
+	</style>
 </head>
 <body>
 <section>
 	<h3>Google Pay with PayPal SDK Integration</h3>
 	<div id='test-form'>
-		<p>
-			PayPal client ID: <span id='client-id'></span>
+		<div class='form-group'>
+			<div>
+				PayPal client ID:
+				<span id='client-id'></span>
+			</div>
 			<button id='clear-credentials'>Clear</button>
-		</p>
+		</div>
+		<div class='form-group'>
+			<label for='sca-method'>3DS Verification:</label>
+			<select id='sca-method'>
+				<option value=''>NEVER - Do not ask for 3DS verification</option>
+				<option value='SCA_WHEN_REQUIRED'>WHEN REQUIRED - Let PayPal decide if to show
+					3DS
+				</option>
+				<option value='SCA_ALWAYS'>ALWAYS - Ask for 3DS verification</option>
+			</select>
+		</div>
 		<div id='google-pay-button'></div>
 	</div>
 	<div class='logger' id='response-log'></div>
 </section>
 
+<!--
+
+SCRIPT
+
+-->
+
 <script>
 	// Check if credentials exist in localStorage
 	const PAYPAL_CLIENT_ID = localStorage.getItem('PAYPAL_CLIENT_ID');
 	const PAYPAL_CLIENT_SECRET = localStorage.getItem('PAYPAL_CLIENT_SECRET');
-	const SCA_METHOD = localStorage.getItem('SCA_METHOD');
 
 	// If credentials don't exist, show input form
 	if (!PAYPAL_CLIENT_ID || !PAYPAL_CLIENT_SECRET) {
 		document.getElementById('test-form').innerHTML = `
             <div id='credentials-form'>
                 <h4>Enter PayPal API Credentials</h4>
-                <div style='margin-bottom: 10px;'>
-                    <label for='client-id'>Client ID:</label>
-                    <input type='text' id='client-id' style='width: 100%;'>
+                <div class='form-group'>
+                    <label for='form-client-id'>Client ID:</label>
+                    <input type='text' id='form-client-id'>
                 </div>
-                <div style='margin-bottom: 10px;'>
-                    <label for='client-secret'>Client Secret:</label>
-                    <input type='text' id='client-secret' style='width: 100%;'>
+                <div class='form-group'>
+                    <label for='form-client-secret'>Client Secret:</label>
+                    <input type='text' id='form-client-secret'>
                 </div>
-                <div style='margin-bottom: 10px;'>
-                    <label for='sca-method'>SCA Method:</label>
-                    <select id='sca-method' style='width: 100%;'>
-                        <option value='' >NEVER - Do not ask for 3DS verification</option>
-                        <option value='SCA_WHEN_REQUIRED'>WHEN REQUIRED - Let PayPal decide if to show 3DS</option>
-                        <option value='SCA_ALWAYS'>ALWAYS - Ask for 3DS verification</option>
-                    </select>
-                </div>
-                <button id='save-credentials' style='padding: 8px 16px;'>Save Credentials</button>
+                <button id='save-credentials'>Save Credentials</button>
             </div>
         `;
 
 		document.addEventListener('DOMContentLoaded', () => {
 			document.getElementById('save-credentials').addEventListener('click', () => {
-				const clientId = document.getElementById('client-id').value.trim();
-				const clientSecret = document.getElementById('client-secret').value.trim();
-				const scaMethod = document.getElementById('sca-method').value;
+				const clientId = document.getElementById('form-client-id').value.trim();
+				const clientSecret = document.getElementById('form-client-secret').value.trim();
 
 				if (!clientId || !clientSecret) {
 					alert('Please enter both Client ID and Client Secret');
@@ -65,7 +148,6 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 
 				localStorage.setItem('PAYPAL_CLIENT_ID', clientId);
 				localStorage.setItem('PAYPAL_CLIENT_SECRET', clientSecret);
-				localStorage.setItem('SCA_METHOD', scaMethod);
 
 				window.location.reload();
 			});
@@ -78,10 +160,18 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 			if (confirm('Are you sure you want to clear your PayPal credentials?')) {
 				localStorage.removeItem('PAYPAL_CLIENT_ID');
 				localStorage.removeItem('PAYPAL_CLIENT_SECRET');
-				localStorage.removeItem('SCA_METHOD');
 				window.location.reload();
 			}
 		});
+
+		const selectSCA = document.getElementById('sca-method');
+
+		selectSCA.addEventListener('change', () => {
+			const scaMethod = selectSCA.value;
+			localStorage.setItem('SCA_METHOD', scaMethod);
+			logResponse(`3DS verification method changed to: ${scaMethod || 'NEVER'}`);
+		});
+		selectSCA.value = localStorage.getItem('SCA_METHOD');
 	}
 
 	// ---
@@ -104,6 +194,14 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 
 		logger.scrollTop = logger.scrollHeight;
 	}
+
+	/*
+	 *
+	 *
+	 * Actual Google Pay test logic starts here
+	 *
+	 *
+	 */
 
 	function loadSdk() {
 		if (!PAYPAL_CLIENT_ID) {
@@ -166,8 +264,10 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 			buttonType: 'plain',
 			buttonColor: 'black',
 			buttonSizeMode: 'fill',
-			onClick: function() {
-				onGooglePayButtonClicked(paymentRequest);
+			onClick: async function() {
+				await onGooglePayButtonClicked(paymentRequest);
+
+				logResponse('========== end of payment process');
 			},
 		});
 
@@ -202,8 +302,8 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 				logResponse('Payment approved!', paypalOrder);
 			} else if (paypalOrder.status === 'PAYER_ACTION_REQUIRED') {
 				logResponse('Additional authentication required');
-				await paypal.Googlepay().initiatePayerAction({ orderId });
-				logResponse('Authentication completed');
+				const res = await paypal.Googlepay().initiatePayerAction({ orderId });
+				logResponse('Authentication completed', res);
 			}
 		} catch (err) {
 			logResponse('Payment error:', err);
@@ -229,6 +329,7 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 				return response.json();
 			})
 			.then(function(tokenData) {
+				const SCA_METHOD = localStorage.getItem('SCA_METHOD');
 				const accessToken = tokenData.access_token;
 
 				const payer = {
@@ -302,62 +403,5 @@ URL: /wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-googlepay/docs
 			});
 	}
 </script>
-<style>
-	body {
-		font-family: Arial, sans-serif;
-		max-width: 800px;
-		margin: 0 auto;
-		padding: 0;
-	}
-
-	section {
-		border: 1px solid #ddd;
-		padding: 20px;
-		border-radius: 8px;
-		margin-top: 20px;
-	}
-
-	.logger {
-		margin-top: 20px;
-		border: 1px solid #eee;
-		padding: 10px;
-		min-height: 100px;
-		max-height: calc(100vh - 260px);
-		overflow-y: auto;
-		background-color: #f9f9f9;
-		border-radius: 4px;
-		font-family: monospace;
-
-		> div {
-			border-bottom: 1px solid #eee;
-			padding: 0 0 10px 0;
-			margin: 0 0 10px 0;
-
-			&:last-child {
-				border-bottom: none;
-				margin-bottom: 0;
-				padding-bottom: 0;
-			}
-		}
-	}
-
-	#google-pay-button {
-		margin-top: 15px;
-	}
-
-	h3 {
-		color: #333;
-	}
-
-	#client-id {
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		width: 500px;
-		display: inline-block;
-		vertical-align: text-bottom;
-		font-size: 0.8em;
-	}
-</style>
 </body>
 </html>
