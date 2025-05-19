@@ -24,6 +24,12 @@ import {
 	payPalClassicCheckout,
 	payPalClassicCheckoutIntentAuthorized,
 } from './_test-data/paypal';
+import {
+	acdcClassicCheckout,
+	acdcClassicCheckoutIntentAuthorized,
+	acdcClassicCheckoutExcludingTax,
+	acdcClassicCheckout3ds,
+} from './_test-data/acdc';
 import { fastlaneClassicCheckout } from './_test-data/fastlane';
 
 const { payPal, venmo, acdc, fastlane } = gateways;
@@ -48,6 +54,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 } );
 
 transactionsOnClassicCheckout( payPalClassicCheckout );
+transactionsOnClassicCheckout( acdcClassicCheckout );
 
 /**
  * Venmo is eligible only for USA/USD
@@ -64,6 +71,7 @@ test.describe( () => {
 	} );
 
 	transactionsOnClassicCheckout( payPalCheckoutExcludingTax );
+	transactionsOnClassicCheckout( acdcClassicCheckoutExcludingTax );
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.including );
@@ -77,9 +85,23 @@ test.describe( () => {
 	} );
 
 	transactionsOnClassicCheckout( payPalClassicCheckoutIntentAuthorized );
+	transactionsOnClassicCheckout( acdcClassicCheckoutIntentAuthorized );
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );
+	} );
+} );
+
+// ACDC 3DS
+test.describe( () => {
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( { threeDSecure: 'always-3d-secure' } );
+	} );
+
+	transactionsOnClassicCheckout( acdcClassicCheckout3ds );
+
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( { threeDSecure: 'no-3d-secure' } );
 	} );
 } );
 

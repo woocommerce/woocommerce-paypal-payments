@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { APIRequestContext, expect } from '@playwright/test';
-import { createAuthHeader } from '@inpsyde/playwright-utils/build';
+import { createAuthHeader, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
@@ -228,7 +228,7 @@ export class PayPalApi {
 		wooCommerceOrderJson: WooCommerce.Order,
 		shopOrder: WooCommerce.ShopOrder
 	) => {
-		const fundingSource = shopOrder.payment.gateway.shortcut;
+		const gatewayShortcut = shopOrder.payment.gateway.shortcut;
 		const payPalOrderId = await this.getOrderIdFromWooCommerce(
 			wooCommerceOrderJson
 		);
@@ -239,7 +239,7 @@ export class PayPalApi {
 			shopOrder.merchant
 		);
 
-		if ( fundingSource !== 'oxxo' ) {
+		if ( gatewayShortcut !== 'oxxo' ) {
 			const payPalPaymentId = await this.getPaymentIdFromOrder(
 				payPalOrder,
 				shopOrder.payment
@@ -254,7 +254,7 @@ export class PayPalApi {
 			: 'CAPTURE';
 		await expect( payPalOrder.intent ).toEqual( expectedIntent );
 
-		switch ( fundingSource ) {
+		switch ( gatewayShortcut ) {
 			case 'oxxo':
 				await expect( payPalOrder.status ).toEqual( 'COMPLETED' );
 				await expect( payPalOrder.payment_source ).toHaveProperty(
@@ -271,8 +271,8 @@ export class PayPalApi {
 				await expect( payPalOrder.payment_source ).toHaveProperty(
 					'card'
 				);
-				await expect( payPalOrder.payment_source.card.name ).toEqual(
-					`${ shopOrder.customer.first_name } ${ shopOrder.customer.last_name }`
+				await expect( payPalOrder.payment_source.card.last_digits ).toEqual(
+					getLast4CardDigits( shopOrder.payment.card.card_number )
 				);
 				break;
 

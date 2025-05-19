@@ -8,12 +8,25 @@ import {
 	gateways,
 	taxSettings,
 } from '../../resources';
-import { transactionsOnCheckout } from './_test-scenarios';
+import {
+	transactionsOnCheckout,
+	transactionsOnPayByLink,
+} from './_test-scenarios';
 import {
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
 } from './_test-data/paypal';
+import {
+	acdcCheckout,
+	acdcCheckoutExcludingTax,
+	acdcCheckoutIntentAuthorized,
+	acdcCheckout3ds,
+	acdcPayByLink,
+	acdcPayByLink3ds,
+	acdcPayByLinkExcludingTax,
+	acdcPayByLinkIntentAuthorized,
+} from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
 const { payPal, venmo, acdc, fastlane } = gateways;
@@ -35,6 +48,8 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 } );
 
 transactionsOnCheckout( payPalCheckout );
+transactionsOnCheckout( acdcCheckout );
+transactionsOnPayByLink( acdcPayByLink );
 
 // Excluding Tax
 test.describe( () => {
@@ -43,6 +58,8 @@ test.describe( () => {
 	} );
 
 	transactionsOnCheckout( payPalCheckoutExcludingTax );
+	transactionsOnCheckout( acdcCheckoutExcludingTax );
+	transactionsOnPayByLink( acdcPayByLinkExcludingTax );
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.including );
@@ -56,9 +73,25 @@ test.describe( () => {
 	} );
 
 	transactionsOnCheckout( payPalCheckoutIntentAuthorized );
+	transactionsOnCheckout( acdcCheckoutIntentAuthorized );
+	transactionsOnPayByLink( acdcPayByLinkIntentAuthorized );
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );
+	} );
+} );
+
+// ACDC 3DS
+test.describe( () => {
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( { threeDSecure: 'always-3d-secure' } );
+	} );
+
+	transactionsOnCheckout( acdcCheckout3ds );
+	transactionsOnPayByLink( acdcPayByLink3ds );
+
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( { threeDSecure: 'no-3d-secure' } );
 	} );
 } );
 

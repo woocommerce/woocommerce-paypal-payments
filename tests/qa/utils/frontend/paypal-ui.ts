@@ -24,6 +24,11 @@ export class PayPalUi {
 	}
 
 	// Locators
+	paymentOptionsContainers = () =>
+		this.page
+			.locator( '#payment-method' )
+			.locator( '.wc-block-components-radio-control-accordion-option' );
+
 	placeOrderButton = () =>
 		this.page.getByRole( 'button', { name: 'Place order' } );
 	payForOrderButton = () =>
@@ -104,6 +109,44 @@ export class PayPalUi {
 	fastlaneOtp3Input = () => this.page.locator( '#otp3-input' );
 	fastlaneOtp4Input = () => this.page.locator( '#otp4-input' );
 	fastlaneOtp5Input = () => this.page.locator( '#otp5-input' );
+	
+	acdcGateway = () => this.page.locator(
+		'#radio-control-wc-payment-method-options-ppcp-credit-card-gateway'
+	);
+	acdcContainer = () => this.paymentOptionsContainers().filter( {
+		has: this.acdcGateway()
+	} );
+	acdcCardholderNameInput = () =>
+		this.acdcContainer()
+			.frameLocator( '[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]' )
+			.locator( 'input.card-field-name' );
+	acdcCardNumberInput = () =>
+		this.acdcContainer()
+			.frameLocator( '[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]' )
+			.locator( 'input.card-field-number' );
+	acdcCardExpirationInput = () =>
+		this.acdcContainer()
+			.frameLocator( '[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]' )
+			.locator( 'input.card-field-expiry' );
+	acdcCardCvvInput = () =>
+		this.acdcContainer()
+			.frameLocator( '[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]' )
+			.locator( 'input.card-field-cvv' );
+
+	threeDSFrame1 = () =>
+		this.page
+			.frameLocator( '.paypal-checkout-sandbox-iframe' )
+			.frameLocator( '[name^="__zoid__three_domain_secure__"]' );
+	threeDSFrame2 = () =>
+		this.threeDSFrame1()
+			.frameLocator( '#threedsIframeV2' )
+			.frameLocator( '[id^="cardinal-stepUpIframe-"]' );
+	threeDSAcceptCookiesButton = () =>
+		this.threeDSFrame1().locator( '#acceptAllButton' );
+	threeDSOtpInput = () =>
+		this.threeDSFrame2().locator( 'input[name="challengeDataEntry"]' );
+	threeDSSubmitButton = () =>
+		this.threeDSFrame2().locator( 'input.primary[type="submit"]' );
 
 	// Actions
 
@@ -294,6 +337,69 @@ export class PayPalUi {
 	};
 
 	/**
+	 * Completes payment with ACDC (vaulting disabled)
+	 *
+	 * @param payment
+	 * @param merchant
+	 */
+	completeAcdcPayment = async (
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
+	) => {
+		const { card, saveToAccount } = payment;
+		await expect( this.acdcGateway() ).toBeVisible();
+		await this.acdcGateway().click();
+
+		// TODO: implement tests
+		// //if some cards are already stored then "Use a new payment method" radio should be checked
+		// if ( await this.acdcUseNewPaymentRadio().isVisible() ) {
+		// 	await this.acdcUseNewPaymentRadio().check();
+		// }
+
+		// On block checkout the Cardholder Name input is present
+		// Needed to assert payment via PayPal API
+		// await this.acdcCardholderNameInput().fill( card.card_holder );
+			
+		await this.acdcCardNumberInput().fill( card.card_number );
+		// trick to properly fill expiration date input
+		await this.acdcCardExpirationInput().click();
+		for ( const char of card.expiration_date ) {
+			await this.page.keyboard.type( char );
+			await this.page.waitForTimeout( 200 );
+		}
+		await this.acdcCardCvvInput().fill( card.card_cvv );
+
+		// TODO: implement tests
+		// if ( saveToAccount ) {
+		// 	await this.acdcSaveToAccountCheckbox().check();
+		// }
+
+		await this.submitOrder();
+		await this.replacePayPalAuthToken( merchant );
+	};
+
+	/**
+	 * Completes payment with ACDC 3D-Secure (vaulting disabled)
+	 *
+	 * @param payment
+	 * @param merchant
+	 */
+	completeAcdc3dsPayment = async (
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
+	) => {
+		await this.completeAcdcPayment( payment, merchant );
+		// TODO: report misbehavior
+		// PayPal change: Manual 3DS input is not required any more
+		// await this.threeDSAcceptCookiesButton().click();
+		// await this.threeDSOtpInput().fill( payment.card.code_3ds );
+		// await this.threeDSSubmitButton().click();
+	};
+
+	completeAcdcVaultedPayment = async ( ...args ) =>
+		console.log( `TODO: completeAcdc3dsPayment for block pages` );
+
+	/**
 	 * Asserts Fastlane input field and button
 	 * Inputs fastlane email and clicks Continue
 	 *
@@ -348,15 +454,6 @@ export class PayPalUi {
 		await this.page.waitForTimeout( 1000 );
 		await this.submitOrder();
 	};
-
-	completeAcdc3dsPayment = async ( ...args ) =>
-		console.log( `TODO: completeAcdc3dsPayment for block pages` );
-
-	completeAcdcVaultedPayment = async ( ...args ) =>
-		console.log( `TODO: completeAcdc3dsPayment for block pages` );
-
-	completeAcdcPayment = async ( ...args ) =>
-		console.log( `TODO: completeAcdcPayment for block pages` );
 
 	completeOXXOPayment = async ( ...args ) =>
 		console.log( `TODO: completeOXXOPayment for block pages` );
