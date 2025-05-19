@@ -23,7 +23,7 @@ const usaOrderData: WooCommerce.ShopOrder = {
 
 export const venmoClassicCheckoutUsa: ShopOrder[] = [
 	{
-		title: 'PCP-2911 | Transaction - Classic checkout - USA - Venmo - Default order @Critical',
+		title: 'PCP-2911 | Transaction - Classic checkout - USA - Venmo - Default order',
 		payment: venmo,
 		...orders.default,
 		...usaOrderData,

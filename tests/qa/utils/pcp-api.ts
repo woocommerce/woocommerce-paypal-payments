@@ -10,6 +10,9 @@ import {
  */
 import { Pcp } from '../resources';
 
+/**
+ * Class for REST API interactions with PCP Settings.
+ */
 export class PcpApi extends WooCommerceApiBase {
 	requestUtils: RequestUtils;
 
@@ -18,6 +21,13 @@ export class PcpApi extends WooCommerceApiBase {
 		this.requestUtils = requestUtils;
 	}
 
+	/**
+	 * Connects merchant via REST API.
+	 * 
+	 * @param clientId PayPal merchant's client ID
+	 * @param clientSecret PayPal merchant's client Isecret
+	 * @param useSandbox is sandbox mode enabled
+	 */
 	connectMerchant = async (
 		clientId: string,
 		clientSecret: string,
@@ -36,6 +46,11 @@ export class PcpApi extends WooCommerceApiBase {
 		return response;
 	};
 
+	/**
+	 * Disconnects merchant via REST API with optional DB reset parameter.
+	 * 
+	 * @param reset 
+	 */
 	disconnectMerchant = async ( reset: boolean = false ) => {
 		const response = await this.wcRequest(
 			'post',
@@ -48,8 +63,26 @@ export class PcpApi extends WooCommerceApiBase {
 		return response;
 	};
 
+	/**
+	 * Disconnects merchant with DB reset via REST API.
+	 */
 	resetDb = () => this.disconnectMerchant( true );
 
+	/**
+	 * Updates Payment Methods tab via REST API.
+	 * 
+	 * @example of data (all params are optional):
+	 * {
+	 * 		fastlaneCardholderName: false,
+	 *		fastlaneDisplayWatermark: true,
+	 *		paypalShowLogo: false,
+	 *		threeDSecure: 'always-3d-secure',
+	 * 		"ppcp-gateway": { enabled: true },
+	 * 		"pay-later": { enabled: true },
+	 * 	}
+	 * 
+	 * @param data 
+	 */
 	updatePcpPaymentMethods = async ( data: Pcp.Api.PaymentMethods ) => {
 		const response = await this.wcRequest( 'post', `wc_paypal/payment`, {
 			...data,
@@ -58,6 +91,11 @@ export class PcpApi extends WooCommerceApiBase {
 		return response;
 	};
 
+	/**
+	 * Updates Settings tab via REST API.
+	 * 
+	 * @param data 
+	 */
 	updatePcpSettings = async ( data: Pcp.Api.Settings ) => {
 		const response = await this.wcRequest( 'post', `wc_paypal/settings`, {
 			...data,
