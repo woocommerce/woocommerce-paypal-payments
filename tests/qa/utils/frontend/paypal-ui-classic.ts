@@ -65,15 +65,15 @@ export class PayPalUiClassic extends PayPalUi {
 	acdcGatewayText = () =>
 		this.page.locator( '.payment_method_ppcp-credit-card-gateway>label' );
 
-	cardNumberInput = () =>
+	acdcCardNumberInput = () =>
 		this.page
 			.frameLocator( 'iframe[title="paypal_card_number_field"]' )
 			.locator( 'input.card-field-number ' );
-	cardExpirationInput = () =>
+	acdcCardExpirationInput = () =>
 		this.page
 			.frameLocator( 'iframe[title="paypal_card_expiry_field"]' )
 			.locator( 'input.card-field-expiry' );
-	cardCVVInput = () =>
+	acdcCardCvvInput = () =>
 		this.page
 			.frameLocator( 'iframe[title="paypal_card_cvv_field"]' )
 			.locator( 'input.card-field-cvv' );
@@ -264,21 +264,6 @@ export class PayPalUiClassic extends PayPalUi {
 	acdcUseNewPaymentRadio = () =>
 		this.page.locator( '.woocommerce-SavedPaymentMethods-new > input' );
 
-	threeDSFrame1 = () =>
-		this.page
-			.frameLocator( '.paypal-checkout-sandbox-iframe' )
-			.frameLocator( '[name^="__zoid__three_domain_secure__"]' );
-	threeDSFrame2 = () =>
-		this.threeDSFrame1()
-			.frameLocator( '#threedsIframeV2' )
-			.frameLocator( '[id^="cardinal-stepUpIframe-"]' );
-	threeDSAcceptCookiesButton = () =>
-		this.threeDSFrame1().locator( '#acceptAllButton' );
-	threeDSOtpInput = () =>
-		this.threeDSFrame2().locator( 'input[name="challengeDataEntry"]' );
-	threeDSSubmitButton = () =>
-		this.threeDSFrame2().locator( 'input.primary[type="submit"]' );
-
 	payUponInvoiceBirthDateInput = () =>
 		this.page.locator( '#billing_birth_date' );
 	payUponInvoiceGatewayTitle = () =>
@@ -323,41 +308,6 @@ export class PayPalUiClassic extends PayPalUi {
 	// Actions
 
 	/**
-	 * Completes payment with ACDC (vaulting disabled)
-	 *
-	 * @param payment
-	 * @param merchant
-	 */
-	completeAcdcPayment = async (
-		payment: Pcp.Payment,
-		merchant: Pcp.Merchant
-	) => {
-		await expect( this.acdcGateway() ).toBeVisible();
-		await this.acdcGateway().click();
-
-		//if some cards are already stored then "Use a new payment method" radio should be checked
-		if ( await this.acdcUseNewPaymentRadio().isVisible() ) {
-			await this.acdcUseNewPaymentRadio().check();
-		}
-
-		await this.cardNumberInput().fill( payment.card.card_number );
-		// trick to properly fill expiration date input
-		await this.cardExpirationInput().click();
-		for ( const char of payment.card.expiration_date ) {
-			await this.page.keyboard.type( char );
-			await this.page.waitForTimeout( 250 );
-		}
-		await this.cardCVVInput().fill( payment.card.card_cvv );
-
-		if ( payment.saveToAccount ) {
-			await this.acdcSaveToAccountCheckbox().check();
-		}
-
-		await this.submitOrder();
-		await this.replacePayPalAuthToken( merchant );
-	};
-
-	/**
 	 * Completes payment with ACDC (vaulting enabled)
 	 *
 	 * @param payment
@@ -372,23 +322,6 @@ export class PayPalUiClassic extends PayPalUi {
 		await this.acdcSavedCardByNumber( payment.card.card_number ).click();
 		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
-	};
-
-	/**
-	 * Completes payment with ACDC 3D-Secure (vaulting disabled)
-	 *
-	 * @param payment
-	 * @param merchant
-	 */
-	completeAcdc3dsPayment = async (
-		payment: Pcp.Payment,
-		merchant: Pcp.Merchant
-	) => {
-		await this.completeAcdcPayment( payment, merchant );
-		// PayPal change: Manual 3DS input is not required any more
-		// await this.threeDSAcceptCookiesButton().click();
-		// await this.threeDSOtpInput().fill( payment.card.code_3ds );
-		// await this.threeDSSubmitButton().click();
 	};
 
 	/**
@@ -468,10 +401,10 @@ export class PayPalUiClassic extends PayPalUi {
 	addCardPaymentMethod = async ( payment: Pcp.Payment ) => {
 		await expect( this.debitCreditCardsGateway() ).toBeVisible();
 		await this.debitCreditCardsGateway().click();
-		await this.cardNumberInput().fill( payment.card.card_number );
-		await this.cardExpirationInput().click();
+		await this.acdcCardNumberInput().fill( payment.card.card_number );
+		await this.acdcCardExpirationInput().click();
 		await this.page.keyboard.type( payment.card.expiration_date );
-		await this.cardCVVInput().fill( payment.card.card_cvv );
+		await this.acdcCardCvvInput().fill( payment.card.card_cvv );
 		await this.addPaymentMethodButton().click();
 	};
 

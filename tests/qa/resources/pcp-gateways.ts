@@ -64,7 +64,6 @@ const acdc: Pcp.Gateway = {
 
 const acdc3ds: Pcp.Gateway = {
 	...acdc,
-	shortcut: 'acdc3ds',
 	threeDSecure: 'always-3d-secure',
 };
 
