@@ -111,7 +111,6 @@ test.describe( () => {
 						3000
 					);
 
-					const snapshotName = testInfo.title;
 					const locations: Pcp.Admin.Styling.Location[] = [
 						'Cart',
 						'Classic Checkout',
@@ -131,7 +130,7 @@ test.describe( () => {
 							.locationSelectbox()
 							.selectOption( location );
 						await pcpStyling.snapshotStylingConfigurator(
-							`${ snapshotName } - ${ location }`
+							`${ testInfo.title } - ${ location }`
 						);
 					}
 				}
