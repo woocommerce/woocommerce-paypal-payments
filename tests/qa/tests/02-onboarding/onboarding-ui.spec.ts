@@ -27,9 +27,10 @@ for ( const country of defaultUiTestData ) {
 		const noWarnings = await pcpOnboarding.assertNoBadgeBoxUtilsWarnings();
 		expect( noWarnings ).toBeTruthy();
 
-		await pcpOnboarding.snapshotContent(
+		await pcpOnboarding.snapshotLocator(
+			pcpOnboarding.onboardingContentContainer(),
 			`${ testInfo.title } - ${ country }`,
-			3000
+			{ timeout: 3000 }
 		);
 	} );
 }
@@ -39,7 +40,11 @@ test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - De
 }, testInfo ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.openAdvancedOptions();
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+ 		testInfo.title,
+		{ timeout: 3000 }
+	);
 } );
 
 test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI', async ( {
@@ -48,7 +53,11 @@ test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI', asy
 	await pcpOnboarding.visit();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+		testInfo.title,
+		{ timeout: 3000 }
+	);
 } );
 
 test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connect by clicking on label - Default UI', async ( {
@@ -58,7 +67,11 @@ test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connec
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
 	await pcpOnboarding.toggleManuallyConnect( true );
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+		testInfo.title,
+		{ timeout: 3000 }
+	);
 } );
 
 test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NOT enabled - Default UI', async ( {
@@ -68,7 +81,11 @@ test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NO
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( false );
 	await pcpOnboarding.toggleManuallyConnect( true );
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+		testInfo.title,
+		{ timeout: 3000 }
+	);
 } );
 
 test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable Sandbox mode in Manually connect section - Default UI', async ( {
@@ -79,7 +96,11 @@ test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable 
 	await pcpOnboarding.toggleSandboxMode( false );
 	await pcpOnboarding.toggleManuallyConnect( false );
 	await pcpOnboarding.enableManuallyConnectToggle().click();
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+		testInfo.title,
+		{ timeout: 3000 }
+	);
 } );
 
 test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ( {
@@ -87,32 +108,43 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 }, testInfo ) => {
 	await pcpOnboarding.visit();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
-	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+		testInfo.title,
+		{ timeout: 3000 }
+	);
 
 	await pcpOnboarding.businessRadio().click();
-	await pcpOnboarding.snapshotContent(
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+
 		`${ testInfo.title } - Set up store type`
 	);
 	await pcpOnboarding.continueButton().click();
-	await pcpOnboarding.snapshotContent(
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
 		`${ testInfo.title } - Select product types - No option selected`,
-		3000
+		{ timeout: 3000 }
 	);
-
+	
 	await pcpOnboarding.physicalGoodsCheckbox().check();
 	await pcpOnboarding.virtualCheckbox().check();
-	await pcpOnboarding.snapshotContent(
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
 		`${ testInfo.title } - Select product types - Products selected`,
-		3000
+		{ timeout: 3000 }
 	);
 	await pcpOnboarding.continueButton().click();
-	await pcpOnboarding.snapshotContent(
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+
 		`${ testInfo.title } - Choose checkout options`
 	);
 	await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-	await pcpOnboarding.snapshotContent(
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
 		`${ testInfo.title } - Choose checkout options - Card payments disabled`,
-		3000
+		{ timeout: 3000 }
 	);
 } );
 
@@ -217,5 +249,9 @@ test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for P
 		woocommerce_currency: 'USD',
 	} );
 	await pcpOnboarding.visit();
-	await pcpOnboarding.snapshotContent( testInfo.title );
+	await pcpOnboarding.snapshotLocator(
+		pcpOnboarding.onboardingContentContainer(),
+			testInfo.title,
+			{ timeout: 3000 }
+		);
 } );
