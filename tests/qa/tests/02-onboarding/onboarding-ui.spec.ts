@@ -42,7 +42,7 @@ test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - De
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.snapshotLocator(
 		pcpOnboarding.onboardingContentContainer(),
- 		testInfo.title,
+		testInfo.title,
 		{ timeout: 3000 }
 	);
 } );
@@ -126,7 +126,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 		`${ testInfo.title } - Select product types - No option selected`,
 		{ timeout: 3000 }
 	);
-	
+
 	await pcpOnboarding.physicalGoodsCheckbox().check();
 	await pcpOnboarding.virtualCheckbox().check();
 	await pcpOnboarding.snapshotLocator(
@@ -249,9 +249,5 @@ test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for P
 		woocommerce_currency: 'USD',
 	} );
 	await pcpOnboarding.visit();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-			testInfo.title,
-			{ timeout: 3000 }
-		);
+	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
 } );
