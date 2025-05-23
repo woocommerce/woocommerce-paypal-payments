@@ -68,3 +68,18 @@ export const onboardingCheckoutComparison = [
 		wooCommerceGeneralSettings: shopSettings.spain.general,
 	},
 ];
+
+export const onboardingSubscriptionComparisonByOPM = [
+	{
+		testSummary:
+			'PCP-4357 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment enabled',
+		// subscriptionsEnabled: true,
+		optionalPaymentsEnabled: true,
+	},
+	{
+		testSummary:
+			'PCP-4360 | Subscription - Settings - US - Onboarding - Connect with business account, all product types, card payment disabled',
+		// subscriptionsEnabled: true,
+		optionalPaymentsEnabled: false,
+	},
+];
