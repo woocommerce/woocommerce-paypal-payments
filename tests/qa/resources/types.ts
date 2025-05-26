@@ -3,9 +3,28 @@ export type PayPalAccount = {
 	password: string;
 };
 
-export type ShopOrder = {
+export type ShopOrder = WooCommerce.ShopOrder & {
 	title?: string;
-} & WooCommerce.ShopOrder;
+};
+
+export type ShopRefund = ShopOrder & {
+	isApiOrder?: boolean;
+	refundPercentage?: number; // how much of order price to refund 0.01...100.00%
+	refundOrderStatus?: WooCommerce.OrderStatus; // WooCommerce refunded order status
+	refundPaymentStatus?: PayPal.PaymentStatus; // Payment status obtained from PayPal Payment
+};
+
+export namespace PayPal {
+	export type PaymentStatus =
+		| 'REFUNDED'
+		| 'PARTIALLY_REFUNDED'
+		| string; // TODO: complete the type
+
+	export type OrderStatus =
+		| 'COMPLETED'
+		| 'PENDING_APPROVAL'
+		| string; // TODO: complete the type
+}
 
 export namespace Pcp {
 	export type Merchant = {

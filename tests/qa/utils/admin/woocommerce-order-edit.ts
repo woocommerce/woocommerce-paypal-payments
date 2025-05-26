@@ -205,8 +205,8 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 * @param data
 	 * @param data.orderStatus
 	 * @param data.refundId
-	 * @param data.refunded
-	 * @param data.totalRefunded
+	 * @param data.refundAmount
+	 * @param data.refundTotal
 	 * @param data.netPayment
 	 * @param data.payPalFee
 	 * @param data.payPalRefundFee
@@ -217,10 +217,10 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	 */
 	assertRefundData = async (
 		data: {
-			orderStatus?: string;
-			refundId?: string;
-			refunded?: number;
-			totalRefunded?: number;
+			orderStatus?: WooCommerce.OrderStatus;
+			refundId?: number;
+			refundAmount?: number;
+			refundTotal?: number;
 			netPayment?: number;
 			payPalFee?: number;
 			payPalRefundFee?: number;
@@ -233,11 +233,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 		}
 	) => {
 		const {
-			orderStatus,
-			refundId,
-			refunded,
-			totalRefunded,
-			netPayment,
 			payPalFee,
 			payPalRefundFee,
 			payPalRefunded,
@@ -245,31 +240,8 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			payPalNetTotal,
 			currency,
 		} = data;
-		// Order status
-		if ( orderStatus !== undefined ) {
-			await expect( this.statusCombobox() ).toHaveText( orderStatus );
-		}
-
-		if ( refundId !== undefined && refunded !== undefined ) {
-			await expect( this.refundNumber() ).toContainText(
-				`Refund #${ refundId }`
-			);
-			await expect( this.refundAmount() ).toHaveText(
-				'-' + ( await formatMoney( refunded, currency ) )
-			);
-		}
-
-		if ( totalRefunded !== undefined ) {
-			await expect( this.totalRefunded() ).toHaveText(
-				'-' + ( await formatMoney( totalRefunded, currency ) )
-			);
-		}
-
-		if ( netPayment !== undefined ) {
-			await expect( this.totalNetPayment() ).toHaveText(
-				await formatMoney( netPayment, currency )
-			);
-		}
+		
+		await super.assertRefundData( data );
 
 		if ( payPalFee !== undefined ) {
 			await expect( this.totalPayPalFee() ).toHaveText(
