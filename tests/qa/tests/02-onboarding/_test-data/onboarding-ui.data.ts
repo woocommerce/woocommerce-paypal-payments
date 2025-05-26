@@ -24,6 +24,11 @@ export const defaultUiTestData = [
 			'PCP-4308 | Settings - US - Onboarding initial page - Default UI',
 		wooCommerceGeneralSettings: shopSettings.usa.general,
 	},
+	{
+		testSummary:
+			'PCP-4733 | Settings - Mexico - Onboarding initial page - Default UI',
+		wooCommerceGeneralSettings: shopSettings.mexico.general,
+	},
 ];
 
 export const onboardingCheckoutComparison = [
