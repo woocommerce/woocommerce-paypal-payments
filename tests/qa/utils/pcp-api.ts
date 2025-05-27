@@ -31,15 +31,28 @@ export class PcpApi extends WooCommerceApiBase {
 	connectMerchant = async (
 		clientId: string,
 		clientSecret: string,
-		useSandbox: boolean = true
+		onboardingOptions: Pcp.Api.OnboardingOptions = {
+			isCasualSeller: false,
+			products: [ 'physical', 'virtual' ],
+		},
 	) => {
+		// Preset onboarding options
+		await this.wcRequest(
+			'post',
+			'wc_paypal/onboarding',
+			{
+				...onboardingOptions,
+				_locale: 'user',
+			}
+		);
+		// Merchant connection request
 		const response = await this.wcRequest(
 			'post',
 			'wc_paypal/authenticate/direct',
 			{
 				clientId,
 				clientSecret,
-				useSandbox,
+				useSandbox: onboardingOptions?.useSandbox || true,
 				_locale: 'user',
 			}
 		);

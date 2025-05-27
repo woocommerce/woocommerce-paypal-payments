@@ -98,6 +98,16 @@ export namespace Pcp {
 			[ key in GatewayId ]?: WooCommerce.PaymentGateway;
 		};
 
+		export type OnboardingOptions = {
+			useSandbox?: boolean; // See advanced options > Enable Sandbox Mode
+			areOptionalPaymentMethodsEnabled?: boolean; // Choose checkout options
+			completed?: boolean;
+			gatewaysRefreshed?: boolean;
+			gatewaysSynced?: boolean;
+			isCasualSeller?: boolean; // Set up store type: Business = false, Personal = true
+			products?: ( 'physical' | 'virtual' | 'subscriptions' )[]; // Select product types
+		};
+
 		export type Settings = {
 			authorizeOnly?: boolean;
 			brandName?: string;
