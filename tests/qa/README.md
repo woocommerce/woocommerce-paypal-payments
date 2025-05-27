@@ -76,7 +76,7 @@ npm run setup:tests
 
 1. [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) - will be deprecated in Q1 of 2025.
 
-2. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`.
+2. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`. The [`.env` content with actual test users' credentials](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=qrw2rcy27xpwiedd5gifyga2pa&i=iddsl6wdm62lwwqbzz474jodme&h=inpsyde.1password.eu) is in 1Password.
 
 3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 

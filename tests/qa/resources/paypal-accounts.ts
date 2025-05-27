@@ -3,19 +3,19 @@
  */
 import { PayPalAccount } from './types';
 
-const germany: PayPalAccount = {
-	email: 'sb-pshsb27001797@personal.example.com',
-	password: '#D0:c!DO',
+const usa: PayPalAccount = {
+	email: process.env.PAYPAL_PERSONAL_EMAIL_US,
+	password: process.env.PAYPAL_PERSONAL_PASS_US,
 };
 
-const usa: PayPalAccount = {
-	email: 'sb-tb1aj26722276@personal.example.com',
-	password: 'Z9+6Az-G',
+const germany: PayPalAccount = {
+	email: process.env.PAYPAL_PERSONAL_EMAIL_DE,
+	password: process.env.PAYPAL_PERSONAL_PASS_DE,
 };
 
 const mexico: PayPalAccount = {
-	email: 'sb-z2t6h26996394@personal.example.com',
-	password: 'C-cg>?33',
+	email: process.env.PAYPAL_PERSONAL_EMAIL_MX,
+	password: process.env.PAYPAL_PERSONAL_PASS_MX,
 };
 
 export const payPalAccounts: {
