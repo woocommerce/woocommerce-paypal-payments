@@ -63,9 +63,10 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
 	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-2. (Temporary, till autotests are not yet merged into main branch) Switch to `qa/e2e-tests` branch:
+2. (Temporary, till autotests are not yet merged into main branch) Switch to `qa` branch:
 
 	```bash
+ 	git fetch origin
 	git checkout qa
 	```
 
