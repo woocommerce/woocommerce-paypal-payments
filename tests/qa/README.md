@@ -66,7 +66,7 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
 2. (Temporary, till autotests are not yet merged into main branch) Switch to `qa/e2e-tests` branch:
 
 	```bash
-	git checkout qa/e2e-tests
+	git checkout qa
 	```
 
 3.  Change directory to `./tests/qa/`:
