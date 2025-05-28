@@ -1,60 +1,107 @@
-# PCP Tests
+# WooCommerce PayPal Payment Plugin Tests
 
 Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-utils) package.
 
-## Project structure
+## Table of Content
+
+- [Test project structure](#test-project-structure)
+- [Local repo installation](#local-repo-installation)
+- [Installation of `node_modules`](#installation-of-node_modules)
+- [Installation of `playwright-utils` for local development](#installation-of-playwright-utils-for-local-development)
+- [Project configuration](#project-configuration)
+- [Run tests](#run-tests)
+    - [Additional options to run tests from command line](#additional-options-to-run-tests-from-command-line)
+- [Autotest Execution workflow](#autotest-execution-workflow)
+- [Coding standards](#coding-standards)
+
+## Test project structure
 
 - `resources` - files with test-data, images, project related installation packages, types, etc.
 
 - `tests` - test specifications. For payment plugins contains following folders:
 	
-	- `01-plugin-foundation` - general tests for plugin installation, uninstallation, activation, deactivation, display of plugin in __WooCommerce -> Settings -> Payments__.
+    - 01-plugin-foundation - general tests for plugin installation, uninstallation, activation, deactivation, display of plugin in WooCommerce -> Settings -> Payments.
 
-	__The rest of the tests will be added over time__
+    - 02-onboarding - tests for connection of current plugin instance to the payment system provider API via merchant (seller) credentials.
 
-	\* - folders are numerated on purpose, to force correct sequence of tests - from basic to advanced. Although each test should be independent and work separately, it is better to start testing from `plugin-foundation` and move to more complex tests.
+    - 03-plugin-settings - tests for various plugin settings, may include assertions of settings effect on frontend.
 
-	\*\* - folders and numeration can be different, based on project requirements.
+    - 04-frontend-ui - tests for plugin UI on frontend: display of payment buttons, display of payment methods depending on customer's country, etc.
+
+    - 05-transaction - tests of payment process. Typically include: adding products to cart as precondition, payment (transaction) process, assertions on order received page, dashboard order edit page, payment via payment system provider API.
+
+    - 06-refund - tests for refund transactions. Typically include: finished transaction as precondition, refund via payment system provider API on dashboard order edit page, assertion of refund statuses.
+
+    - 07-vaulting - tests for transactions with enabled vaulting (saved payment methods for registered customers). Ability to remember payment methods and use them for transactions.
+
+    - 08-subscriptions - tests for transactions for subscription products. Requires WooCommerce Subscriptions plugin. Usually available to registered customers and also includes vaulting and renewal of subscription (with automatic payment). WooCommerce Subscriptions plugin (can be downloaded here, login credentials in 1Password).
+
+    - 09-compatibility - tests for compatibility with other themes, plugins, etc.
+
+	> Note 1: Folders are numerated on purpose, to force correct sequence of tests - from basic to advanced. Although each test should be independent and work separately, it is better to start testing from `plugin-foundation` and move to more complex tests.
+
+	> Note 2: Folders and numeration can be different, based on project requirements.
 
 - `utils` - project related utility files, built on top of `@inpsyde/playwright-utils`.
 
-	- `admin` - functionality for operating dashboard pages.
+    - `admin` - functionality for operating dashboard pages.
 
-	- `frontend` - functionality for operating frontend pages, hosted checkout pages (payment system provider's pages).
+    - `frontend` - functionality for operating frontend pages, hosted checkout pages (payment system provider's pages).
 
-	- `test.ts` - declarations of project related test fixtures.
+    - `test.ts` - declarations of project related test fixtures.
 
-	- other project related functionality, like helpers, APIs, urls.
+    - other project related functionality, like helpers, APIs, urls.
 
 - `.env`, `playwright.config.ts`, `package.json` - see below.
 
-## Setup @inpsyde/playwright-utils as a node package
 
-> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
+## Local repo installation
+
+1. In VSCode open the open the terminal and clone Millie repository to your local PC:
+
+	```bash
+	git clone https://github.com/mollie/WooCommerce.git
+	```
+
+2. (Temporary, till autotests are not yet merged into main branch) Switch to `qa/e2e-tests` branch:
+
+	```bash
+	git checkout qa/e2e-tests
+	```
+
+3.  Change directory to `./tests/qa/`:
+
+	```bash
+	cd tests/qa
+	```
+
+## Installation of `node_modules`
 
 1. Remove `"workspaces": [ "playwright-utils" ]` from `package.json`.
 
-2. In the root of the tests (which is __qa__) run following command:
+2. In the test project (`./tests/qa/`) run following command:
 
 ```bash
 npm run setup:tests
 ```
 
-## Setup @inpsyde/playwright-utils for local development
+## Installation of `playwright-utils` for local development
 
-> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#development).
+> Note: skip this section if you're not going to update code in `playwright-utils`.
+
+> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
 
 1. Add `"workspaces": [ "playwright-utils" ]` to `package.json`.
 
 2. Delete `@inpsyde/playwright-utils` from `/node_modules`.
 
-3. In the root of the project (which is __qa__ in this case) run following command:
+3. In the test project directory (`./tests/qa/`) run following command:
 
 	```bash
 	git clone https://github.com/inpsyde/playwright-utils.git
 	```
 
-	[`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-utils) repository should be cloned as `playwright-utils` right inside the root directory of project.
+	[`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-utils) repository should be cloned as `playwright-utils` right inside the root directory of monorepo.
 
 4. Restart VSCode editor. This will create `playwright-utils` instance in the source control tab of VSCode editor.
 
@@ -70,28 +117,33 @@ npm run setup:tests
 	10:00:00 - Found 0 errors. Watching for file changes.
 	```
 
-7. If you plan to make changes in `playwright-utils` keep current terminal window opened and create another instance of terminal for other commands.
+7. If you plan to make changes in `playwright-utils` keep current terminal window opened and create another instance of terminal.
+
 
 ## Project configuration
 
 1. [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) - will be deprecated in Q1 of 2025.
 
-2. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`. The [`.env` content with actual test users' credentials](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=qrw2rcy27xpwiedd5gifyga2pa&i=iddsl6wdm62lwwqbzz474jodme&h=inpsyde.1password.eu) is in 1Password.
+2. In the test project directory (`./tests/qa/`) create and configure `.env` file:
+
+	2.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
+	
+	2.2 Set PayPal API keys and test credentials. See `.env.example`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=qrw2rcy27xpwiedd5gifyga2pa&i=iddsl6wdm62lwwqbzz474jodme&h=inpsyde.1password.eu).
 
 3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
-4. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
+4. Configure reporting to __Xray in Jira__ following [these steps](https://github.com/inpsyde/playwright-utils/blob/main/docs/test-report-api/report-to-xray.md).
 
 5. To avoid conflicts make sure any other payment plugins are deleted.
 
-6. Reporting to __Xray in Jira__ is configured [this way](https://github.com/inpsyde/playwright-utils/blob/main/docs/test-report-api/report-to-xray.md).
+6. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
 
 ## Run tests
 
 To execute tests, in the terminal, navigate to the __qa__ directory of the project (e.g. `cd tests/qa`) and run following command:
 
 ```bash
-npx playwright test
+npx playwright test --project=all
 ```
 
 ### Additional options to run tests from command line
@@ -117,38 +169,42 @@ npx playwright test
 - Run several tests by test ID (on Windows, Powershell):
 
 	```bash
-	npx playwright test --grep --% "WOL-123^|WOL-124^|WOL-125"
+	npx playwright test --grep --% "PCP-123^|PCP-124^|PCP-125"
 	```
 
 	It may be required additionally to specify the project (if tests relate to more then one project):
 
 	```bash
-	npx playwright test --project "project-name" --grep --% "WOL-123^|WOL-124^|WOL-125"
+	npx playwright test --project "project-name" --grep --% "PCP-123^|PCP-124^|PCP-125"
 	```
 
 ## Autotest Execution workflow
 
 1. Create Test Execution ticket in Jira, named after the tested plugin version, for example "Test Execution for v2.3.4-rc1, PHP8.1".
 
-2. Link release ticket (via `tests: WOL-234`).
+	> Note: For autotest execution there's no need to manually add tests cases to the execution - the executed tests will be imported automatically after execution.
+
+2. Link release ticket (via `tests: PCP-234`) to test execution ticket.
 
 3. Set Test Execution ticket status `In progress`.
 
-4. Add/update test execution ticket key in `.env` file of the project (`TEST_EXEC_KEY`).
+4. In `.env` file of the test project (`/tests/qa/`) add/update test execution ticket key (`TEST_EXEC_KEY='PCP-234'`).
 
-5. Download tested plugin `.zip` package (usually attached to release ticket) and add it to `/project/<project-name>/resources/files`. You may need to remove version number from the file name.
+5. Download tested plugin `.zip` package (usually attached to release ticket) and add it to `/tests/qa/resources/files`. You may need to remove version number from the file name (expected name: `woocommerce-paypal-payments.zip`).
 
 6. Optional: delete previous version of tested plugin from the website if you don't execute __plugin foundation__ tests.
 
-7. Start autotest execution from command line for the defined scope of tests (e.g. all, Critical, etc.). You should see `Test execution Jira key: WOL-234` in the terminal.
+7. Start autotest execution from command line for the defined scope of tests (see [this section](#run-tests)). You should see `Test execution Jira key: PCP-234` in the terminal.
 
-8. When finished test results should be exported to the specified test execution ticket in Jira.
+8. When finished test results will be imported to the specified test execution ticket in Jira.
 
 9. Analyze failed tests (if any). Restart execution for failed tests, possibly in debug mode (for Windows):
 
 	```bash
-	npx playwright test --grep --% "WOL-123^|WOL-124^|WOL-125" --debug
+	npx playwright test --grep --% "PCP-123^|PCP-124^|PCP-125" --debug
 	```
+
+	> Note: command for restarting failed/skipped tests is posted to the terminal after the execution.
 
 10. Report bugs (if any) and attach them to the test-runs of failed tests (Click "Create defect" or "Add defect" on test execution screen).
 
