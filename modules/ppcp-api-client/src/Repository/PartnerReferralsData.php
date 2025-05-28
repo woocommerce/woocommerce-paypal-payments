@@ -97,8 +97,8 @@ class PartnerReferralsData {
 		$first_party_features[] = 'BILLING_AGREEMENT';
 
 		if ( $use_card_payments !== false ) {
-			$first_party_features[] = 'VAULT';
 			$first_party_features[] = 'FUTURE_PAYMENT';
+			$first_party_features[] = 'VAULT';
 		}
 
 		$payload = array(
