@@ -57,10 +57,10 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
 
 ## Local repo installation
 
-1. In VSCode open the terminal and clone Millie repository to your local PC:
+1. In VSCode open the terminal and clone PCP repository to your local PC:
 
 	```bash
-	git clone https://github.com/mollie/WooCommerce.git
+	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
 2. (Temporary, till autotests are not yet merged into main branch) Switch to `qa/e2e-tests` branch:
