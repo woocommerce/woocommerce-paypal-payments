@@ -63,14 +63,20 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
 	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-2. (Temporary, till autotests are not yet merged into main branch) Switch to `qa` branch:
+2. Change directory to newly cloned repo:
+
+	```bash
+    cd woocommerce-paypal-payments
+    ```
+
+3. (Temporary, till autotests are not yet merged into main branch) Switch to `qa` branch:
 
 	```bash
  	git fetch origin
 	git checkout qa
 	```
 
-3.  Change directory to `./tests/qa/`:
+4.  Change directory to `./tests/qa/`:
 
 	```bash
 	cd tests/qa
