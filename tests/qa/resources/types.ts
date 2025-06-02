@@ -5,6 +5,8 @@ export type PayPalAccount = {
 
 export type ShopOrder = WooCommerce.ShopOrder & {
 	title?: string;
+	payment?: Pcp.Payment;
+	merchant?: Pcp.Merchant;
 };
 
 export type ShopRefund = ShopOrder & {
@@ -15,15 +17,9 @@ export type ShopRefund = ShopOrder & {
 };
 
 export namespace PayPal {
-	export type PaymentStatus =
-		| 'REFUNDED'
-		| 'PARTIALLY_REFUNDED'
-		| string; // TODO: complete the type
+	export type PaymentStatus = 'REFUNDED' | 'PARTIALLY_REFUNDED' | string; // TODO: complete the type
 
-	export type OrderStatus =
-		| 'COMPLETED'
-		| 'PENDING_APPROVAL'
-		| string; // TODO: complete the type
+	export type OrderStatus = 'COMPLETED' | 'PENDING_APPROVAL' | string; // TODO: complete the type
 }
 
 export namespace Pcp {

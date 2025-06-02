@@ -2,7 +2,7 @@
  * External dependencies
  */
 import { Page } from '@playwright/test';
-import { expect } from '@inpsyde/playwright-utils/build';
+import { expect, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
@@ -61,8 +61,16 @@ export class PayPalUi {
 			)
 			.locator( `[data-funding-source="venmo"]` );
 
-	payPalButtonMoreOptions = () => this.page.locator( '.todo' );
-	payWithDifferentAccountButton = () => this.page.locator( '.todo' );
+	payPalGateway = () =>
+		this.page.locator(
+			'#radio-control-wc-payment-method-options-ppcp-gateway'
+		);
+	payPalButtonMoreOptions = () => this.page.locator( '.todo' ); // TODO
+	payWithDifferentAccountButton = () => this.page.locator( '.todo' ); // TODO
+	payPalVaultedGateway = () =>
+		this.paymentOptionsContainers().filter( {
+			hasText: 'Saved token for ppcp-gateway',
+		} );
 
 	payLaterMessageIframe = () =>
 		this.page.frameLocator( 'iframe[name^="__zoid__paypal_message__"]' );
@@ -109,29 +117,46 @@ export class PayPalUi {
 	fastlaneOtp3Input = () => this.page.locator( '#otp3-input' );
 	fastlaneOtp4Input = () => this.page.locator( '#otp4-input' );
 	fastlaneOtp5Input = () => this.page.locator( '#otp5-input' );
-	
-	acdcGateway = () => this.page.locator(
-		'#radio-control-wc-payment-method-options-ppcp-credit-card-gateway'
-	);
-	acdcContainer = () => this.paymentOptionsContainers().filter( {
-		has: this.acdcGateway()
-	} );
+
+	acdcGateway = () =>
+		this.page.locator(
+			'#radio-control-wc-payment-method-options-ppcp-credit-card-gateway'
+		);
+	acdcContainer = () =>
+		this.paymentOptionsContainers().filter( {
+			has: this.acdcGateway(),
+		} );
 	acdcCardholderNameInput = () =>
 		this.acdcContainer()
-			.frameLocator( '[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]' )
+			.frameLocator(
+				'[id^="zoid-paypal-card-name-field"] iframe[name^="__zoid__paypal_card_name_field__"]'
+			)
 			.locator( 'input.card-field-name' );
 	acdcCardNumberInput = () =>
 		this.acdcContainer()
-			.frameLocator( '[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]' )
+			.frameLocator(
+				'[id^="zoid-paypal-card-number-field"] iframe[name^="__zoid__paypal_card_number_field__"]'
+			)
 			.locator( 'input.card-field-number' );
 	acdcCardExpirationInput = () =>
 		this.acdcContainer()
-			.frameLocator( '[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]' )
+			.frameLocator(
+				'[id^="zoid-paypal-card-expiry-field"] iframe[name^="__zoid__paypal_card_expiry_field__"]'
+			)
 			.locator( 'input.card-field-expiry' );
 	acdcCardCvvInput = () =>
 		this.acdcContainer()
-			.frameLocator( '[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]' )
+			.frameLocator(
+				'[id^="zoid-paypal-card-cvv-field"] iframe[name^="__zoid__paypal_card_cvv_field__"]'
+			)
 			.locator( 'input.card-field-cvv' );
+	acdcSaveToAccountCheckbox = () => this.page.locator( '#save' );
+	acdcSavedCard = ( card: WooCommerce.CreditCard ) =>
+		this.paymentOptionsContainers().filter( {
+			hasText: `${ card.card_type } ending in ${ getLast4CardDigits(
+				card.card_number
+			) } (expires ${ card.expiration_date })`,
+		} );
 
 	threeDSFrame1 = () =>
 		this.page
@@ -151,52 +176,38 @@ export class PayPalUi {
 	// Actions
 
 	/**
-	 * Opens PayPal popup per given funding source options
-	 *
-	 * @param payment
+	 * Clicks PayPal button to open popup
 	 */
-	openPayPalGatewayPupup = async ( payment: Pcp.Payment ) => {
-		const { gateway } = payment;
-		const { shortcut } = gateway;
-
+	openPayPalPupup = async (): Promise< PayPalPopup > => {
 		const popupPromise = this.page.waitForEvent( 'popup' );
+		await expect( this.payPalButton() ).toBeVisible();
+		await this.payPalButton().click();
 
-		switch ( shortcut ) {
-			case 'paypal':
-				// pay with vaulted account (vaulting enabled)
-				if ( payment.isVaulted ) {
-					await expect( this.payPalButton() ).toBeVisible();
-					await this.payPalButton().click();
-					break;
-				}
-				// pay with account other than vaulted (vaulting enabled)
-				if ( payment.useNotVaultedAccount ) {
-					await expect(
-						this.payPalButtonMoreOptions()
-					).toBeVisible();
-					await this.payPalButtonMoreOptions().click();
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	};
 
-					await expect(
-						this.payWithDifferentAccountButton()
-					).toBeVisible();
-					await this.payWithDifferentAccountButton().click();
-					break;
-				}
-				// pay with PayPal button (vaulting disabled)
-				await expect( this.payPalButton() ).toBeVisible();
-				await this.payPalButton().click();
-				break;
+	/**
+	 * Clicks Pay Later button to open popup
+	 */
+	openPayLaterPupup = async (): Promise< PayPalPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup' );
+		await expect( this.payLaterButton() ).toBeVisible();
+		await this.payLaterButton().click();
 
-			case 'paylater':
-				await expect( this.payLaterButton() ).toBeVisible();
-				await this.payLaterButton().click();
-				break;
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	};
 
-			case 'venmo':
-				await expect( this.venmoButton() ).toBeVisible();
-				await this.venmoButton().click();
-				break;
-		}
+	/**
+	 * Clicks Venmo button to open popup
+	 */
+	openVenmoPupup = async (): Promise< PayPalPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup' );
+		await expect( this.venmoButton() ).toBeVisible();
+		await this.venmoButton().click();
 
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
@@ -221,36 +232,38 @@ export class PayPalUi {
 		// Map to the tested method
 		switch ( shortcut ) {
 			case 'paypal':
-				// open expected PayPal popup
-				popup = await this.openPayPalGatewayPupup( payment );
 				// pay with vaulted account
 				if ( payment.isVaulted ) {
-					await popup.completePayPalVaultedPayment();
+					await expect( this.payPalButton() ).toBeVisible();
+					await this.assertVaultedPaymentMethodIsDisplayed( payment );
+					await this.payPalButton().click();
 					break;
 				}
-				// pay with PayPal (vaulting disabled)
-				// or account other than vaulted (vaulting enabled)
+				// open expected PayPal popup
+				popup = await this.openPayPalPupup();
+				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
 				break;
 
 			case 'paylater':
 				// open expected PayPal popup
-				popup = await this.openPayPalGatewayPupup( payment );
+				popup = await this.openPayLaterPupup();
 				await popup.completePayLaterPayment( payPalAccount );
 				break;
 
 			case 'venmo':
-				popup = await this.openPayPalGatewayPupup( payment );
+				popup = await this.openVenmoPupup();
 				await popup.completeVenmoPayment();
 				break;
 
 			case 'acdc':
-				if ( gateway.threeDSecure === 'always-3d-secure' ) {
-					await this.completeAcdc3dsPayment( payment, merchant );
+				if ( payment.isVaulted ) {
+					await this.assertVaultedPaymentMethodIsDisplayed( payment );
+					await this.completeAcdcVaultedPayment( payment, merchant );
 					break;
 				}
-				if ( payment.isVaulted ) {
-					await this.completeAcdcVaultedPayment( payment, merchant );
+				if ( gateway.threeDSecure === 'always-3d-secure' ) {
+					await this.completeAcdc3dsPayment( payment, merchant );
 					break;
 				}
 				await this.completeAcdcPayment( payment, merchant );
@@ -278,26 +291,6 @@ export class PayPalUi {
 
 			case 'fastlane':
 				await this.completeFastlanePayment( payment );
-				break;
-		}
-	};
-
-	/**
-	 * Adds payment method on My Account/Payment Methods page
-	 *
-	 * @param payment
-	 */
-	savePaymentMethod = async ( payment: Pcp.Payment ) => {
-		const { gateway, payPalAccount } = payment;
-		const { shortcut } = gateway;
-		switch ( shortcut ) {
-			case 'paypal':
-				const popup = await this.openPayPalGatewayPupup( payment );
-				await popup.savePayPalPaymentMethod( payPalAccount );
-				break;
-
-			case 'acdc':
-				await this.addCardPaymentMethod( payment );
 				break;
 		}
 	};
@@ -337,7 +330,7 @@ export class PayPalUi {
 	};
 
 	/**
-	 * Completes payment with ACDC (vaulting disabled)
+	 * Completes payment with ACDC
 	 *
 	 * @param payment
 	 * @param merchant
@@ -350,16 +343,10 @@ export class PayPalUi {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
 
-		// TODO: implement tests
-		// //if some cards are already stored then "Use a new payment method" radio should be checked
-		// if ( await this.acdcUseNewPaymentRadio().isVisible() ) {
-		// 	await this.acdcUseNewPaymentRadio().check();
-		// }
-
 		// On block checkout the Cardholder Name input is present
 		// Needed to assert payment via PayPal API
 		// await this.acdcCardholderNameInput().fill( card.card_holder );
-			
+
 		await this.acdcCardNumberInput().fill( card.card_number );
 		// trick to properly fill expiration date input
 		await this.acdcCardExpirationInput().click();
@@ -369,10 +356,9 @@ export class PayPalUi {
 		}
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
-		// TODO: implement tests
-		// if ( saveToAccount ) {
-		// 	await this.acdcSaveToAccountCheckbox().check();
-		// }
+		if ( saveToAccount ) {
+			await this.acdcSaveToAccountCheckbox().check();
+		}
 
 		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
@@ -396,8 +382,22 @@ export class PayPalUi {
 		// await this.threeDSSubmitButton().click();
 	};
 
-	completeAcdcVaultedPayment = async ( ...args ) =>
-		console.log( `TODO: completeAcdc3dsPayment for block pages` );
+	/**
+	 * Completes payment with ACDC (vaulting enabled)
+	 *
+	 * @param payment
+	 * @param merchant
+	 */
+	completeAcdcVaultedPayment = async (
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
+	) => {
+		const savedCardGateway = this.acdcSavedCard( payment.card );
+		await expect( savedCardGateway ).toBeVisible();
+		await savedCardGateway.click();
+		await this.submitOrder();
+		await this.replacePayPalAuthToken( merchant );
+	};
 
 	/**
 	 * Asserts Fastlane input field and button
@@ -469,10 +469,53 @@ export class PayPalUi {
 	completePayUponInvoicePayment = async ( ...args ) =>
 		console.log( `TODO: completePayUponInvoicePayment for block pages` );
 
-	addCardPaymentMethod = async ( ...args ) =>
-		console.log( `TODO: addCardPaymentMethod for block pages` );
-
 	// Assertions
+
+	/**
+	 * Asserts the saved payment method is visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsDisplayed = async ( payment: Pcp.Payment ) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await expect( this.payPalButton() ).toContainText( 'Pay Now' );
+				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				break;
+
+			case 'acdc':
+				await expect(
+					this.acdcSavedCard( payment.card )
+				).toBeVisible();
+				break;
+		}
+	};
+
+	/**
+	 * Asserts the saved payment method is not visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsNotDisplayed = async (
+		payment: Pcp.Payment
+	) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await expect( this.payPalButton() ).not.toContainText(
+					'Pay Now'
+				);
+				await expect(
+					this.payPalButtonMoreOptions()
+				).not.toBeVisible();
+				break;
+
+			case 'acdc':
+				await expect(
+					this.acdcSavedCard( payment.card )
+				).not.toBeVisible();
+				break;
+		}
+	};
 
 	/**
 	 * - Asserts PayPal buttons block container is visible.
