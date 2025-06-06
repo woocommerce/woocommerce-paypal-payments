@@ -21,6 +21,7 @@ import {
 	subscriptionsPlugin,
 	wpDebuggingPlugin,
 	pcpPlugin,
+	ShopOrder,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers';
 
@@ -93,7 +94,7 @@ export class Utils {
 	payForApiOrder = async (
 		orderId: number,
 		orderKey: string,
-		order: WooCommerce.ShopOrder
+		order: ShopOrder
 	) => {
 		await this.payForOrder.visit( orderId, orderKey );
 		await this.payForOrder.payPalUi.makePayment( {
@@ -128,7 +129,7 @@ export class Utils {
 	 *
 	 * @param shopOrder
 	 */
-	completeOrderOnCheckout = async ( shopOrder: WooCommerce.ShopOrder ) => {
+	completeOrderOnCheckout = async ( shopOrder: ShopOrder ) => {
 		await this.fillVisitorsCart( shopOrder.products );
 
 		await this.checkout.makeOrder( shopOrder );
@@ -144,9 +145,7 @@ export class Utils {
 	 *
 	 * @param shopOrder
 	 */
-	completeOrderOnClassicCheckout = async (
-		shopOrder: WooCommerce.ShopOrder
-	) => {
+	completeOrderOnClassicCheckout = async ( shopOrder: ShopOrder ) => {
 		await this.fillVisitorsCart( shopOrder.products );
 		await this.classicCheckout.makeOrder( shopOrder );
 		const orderId = await this.orderReceived.getOrderNumber();

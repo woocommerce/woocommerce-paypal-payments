@@ -1,4 +1,8 @@
 /**
+ * External dependencies
+ */
+import { updateDotenv } from '@inpsyde/playwright-utils/build';
+/**
  * Internal dependencies
  */
 import { test as setup } from '../../utils';
@@ -14,10 +18,8 @@ import {
 	subscriptionsPlugin,
 	disableWcSetupWizard,
 } from '../../resources';
-/**
- * External dependencies
- */
-import { updateDotenv } from '@inpsyde/playwright-utils/build';
+
+const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
 setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 	await requestUtils.setPermalinks( '/%postname%/' );
@@ -163,7 +165,7 @@ setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 } );
 
 setup( 'Setup WooCommerce general settings', async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.updateGeneralSettings( shopSettings.germany.general );
+	await wooCommerceApi.updateGeneralSettings( shopSettings[country].general );
 } );
 
 setup( 'Setup WooCommerce shipping', async ( { wooCommerceUtils } ) => {
@@ -175,7 +177,7 @@ setup( 'Setup WooCommerce taxes (included)', async ( { wooCommerceUtils } ) => {
 } );
 
 setup( 'Setup Registered Customer', async ( { wooCommerceUtils } ) => {
-	await wooCommerceUtils.createCustomer( customers.germany );
+	await wooCommerceUtils.createCustomer( customers[country] );
 } );
 
 setup( 'Setup Delete Previous Orders', async ( { wooCommerceApi } ) => {

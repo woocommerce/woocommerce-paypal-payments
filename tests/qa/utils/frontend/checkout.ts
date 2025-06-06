@@ -53,7 +53,7 @@ export class Checkout extends CheckoutBase {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
-		
+
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.selectShippingMethod( shipping.settings.title );
 

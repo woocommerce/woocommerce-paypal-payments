@@ -240,7 +240,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			payPalNetTotal,
 			currency,
 		} = data;
-		
+
 		await super.assertRefundData( data );
 
 		if ( payPalFee !== undefined ) {

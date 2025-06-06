@@ -1,7 +1,13 @@
 /**
  * Internal dependencies
  */
-import { payments, orders, ShopRefund, customers, guests } from '../../../../resources';
+import {
+	payments,
+	orders,
+	ShopRefund,
+	customers,
+	guests,
+} from '../../../../resources';
 
 const { payPal } = payments;
 const customer = customers.usa;
