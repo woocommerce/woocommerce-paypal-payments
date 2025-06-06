@@ -1,0 +1,53 @@
+<?php
+/**
+ * Service for checking payment method tokens.
+ *
+ * @package WooCommerce\PayPalCommerce\SavePaymentMethods\Helper
+ */
+
+declare(strict_types=1);
+
+namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Service;
+
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+
+/**
+ * Class PaymentMethodTokensChecker.
+ */
+class PaymentMethodTokensChecker {
+
+	/**
+	 * Payment method tokens endpoint.
+	 *
+	 * @var PaymentTokensEndpoint
+	 */
+	private PaymentTokensEndpoint $payment_method_tokens_endpoint;
+
+	/**
+	 * PaymentMethodTokensChecker constructor.
+	 *
+	 * @param PaymentTokensEndpoint $payment_method_tokens_endpoint Payment method tokens endpoint.
+	 */
+	public function __construct( PaymentTokensEndpoint $payment_method_tokens_endpoint ) {
+		$this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
+	}
+
+	/**
+	 * Checks if customer has a saved PayPal payment token.
+	 *
+	 * @param string $customer_id PayPal customer ID.
+	 * @return bool
+	 */
+	public function has_paypal_payment_token( string $customer_id ): bool {
+		$tokens = $this->payment_method_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+
+		foreach ( $tokens as $token ) {
+			$payment_source = $token['payment_source']->name() ?? '';
+			if ( $payment_source === 'paypal' ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+}

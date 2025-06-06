@@ -82,25 +82,26 @@ import {
 					renderFields( cardFields );
 				}
 
-                const placeOrderButton = document.querySelector( '#place_order' );
+				const placeOrderButton =
+					document.querySelector( '#place_order' );
 				placeOrderButton?.addEventListener( 'click', ( event ) => {
-						const cardPaymentToken = document.querySelector(
-							'input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked'
-						)?.value;
-						if (
-							getCurrentPaymentMethod() !==
-								'ppcp-credit-card-gateway' ||
-							( cardPaymentToken && cardPaymentToken !== 'new' )
-						) {
-							return;
-						}
-                        placeOrderButton.disabled = true;
-						event.preventDefault();
-						cardFields.submit().catch( ( error ) => {
-							console.error( error );
-                            placeOrderButton.disabled = false;
-						} );
+					const cardPaymentToken = document.querySelector(
+						'input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked'
+					)?.value;
+					if (
+						getCurrentPaymentMethod() !==
+							'ppcp-credit-card-gateway' ||
+						( cardPaymentToken && cardPaymentToken !== 'new' )
+					) {
+						return;
+					}
+					placeOrderButton.disabled = true;
+					event.preventDefault();
+					cardFields.submit().catch( ( error ) => {
+						console.error( error );
+						placeOrderButton.disabled = false;
 					} );
+				} );
 			} );
 		}, 1000 );
 	} );
