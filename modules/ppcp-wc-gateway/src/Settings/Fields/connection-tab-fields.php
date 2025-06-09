@@ -539,7 +539,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'stay_updated'                               => array(
+		'stay_updated'                                  => array(
 			'title'        => __( 'Stay Updated', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'desc_tip'     => true,
