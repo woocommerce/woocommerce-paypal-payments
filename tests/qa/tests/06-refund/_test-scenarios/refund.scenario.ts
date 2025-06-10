@@ -31,7 +31,7 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 				const refundAvailable = total.order;
 				const refundAmount = getAmountPercentage(
 					refundAvailable,
-					testData.refundPercentage,
+					testData.refundPercentage
 				);
 
 				// Precondition
@@ -40,7 +40,7 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 					order = await utils.payForApiOrder(
 						order.id,
 						order.order_key,
-						testData,
+						testData
 					);
 				} else {
 					order = await utils.completeOrderOnCheckout( testData );
@@ -59,7 +59,9 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 				).toHaveText( `-${ formatMoney( 0, testData.currency ) }` );
 				await expect(
 					wooCommerceOrderEdit.totalAvailableToRefund()
-				).toHaveText( formatMoney( Number( refundAvailable ), testData.currency ) );
+				).toHaveText(
+					formatMoney( Number( refundAvailable ), testData.currency )
+				);
 
 				// Make refund
 				await wooCommerceOrderEdit.makePayPalRefund( refundAmount );
@@ -70,7 +72,10 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 					wooCommerceOrderEdit.refundNumber()
 				).toContainText( `Refund #` );
 				await expect( wooCommerceOrderEdit.refundAmount() ).toHaveText(
-					`-${ formatMoney( Number( refundAmount ), testData.currency ) }`
+					`-${ formatMoney(
+						Number( refundAmount ),
+						testData.currency
+					) }`
 				);
 
 				// Assert via API WooCommerce Order refund status and presence of refunds
@@ -83,7 +88,7 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 				// Assert via API the refund status of PayPal payment
 				const payPalPayment = await payPalApi.getCapturedPayment(
 					order.transaction_id,
-					testData.merchant,
+					testData.merchant
 				);
 				await expect( payPalPayment.status ).toEqual(
 					testData.refundPaymentStatus
@@ -100,7 +105,7 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 				const payPalRefundId = payPalRefunds[ 0 ];
 				const payPalRefund = await payPalApi.getRefund(
 					payPalRefundId,
-					testData.merchant,
+					testData.merchant
 				);
 				await expect( payPalRefund.status ).toEqual( 'COMPLETED' );
 

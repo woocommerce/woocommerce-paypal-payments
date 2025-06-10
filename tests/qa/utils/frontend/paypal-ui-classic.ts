@@ -20,7 +20,8 @@ export class PayPalUiClassic extends PayPalUi {
 
 	payPalIframe = () =>
 		this.page.frameLocator(
-			'#ppc-button-ppcp-gateway iframe[name^="__zoid__paypal_buttons__"]'
+			// unified selector for My Account and checkout pages
+			'[id^="ppc-button-ppcp-gateway"] iframe[name^="__zoid__paypal_buttons__"]'
 		);
 	payPalButtonsClassicContainer = () =>
 		this.payPalIframe().locator( '#buttons-container' );
@@ -255,12 +256,12 @@ export class PayPalUiClassic extends PayPalUi {
 		this.page.locator( '#wc-ppcp-credit-card-gateway-new-payment-method' );
 	acdcSavedCards = () =>
 		this.page.locator( '.woocommerce-SavedPaymentMethods-token' );
-	acdcSavedCardByNumber = ( cardNumber ) =>
-		this.acdcSavedCards()
-			.filter( {
-				hasText: `ending in ${ getLast4CardDigits( cardNumber ) }`,
-			} )
-			.first();
+	acdcSavedCard = ( card: WooCommerce.CreditCard ) =>
+		this.acdcSavedCards().filter( {
+			hasText: `${ card.card_type } ending in ${ getLast4CardDigits(
+				card.card_number
+			) } (expires ${ card.expiration_date })`,
+		} );
 	acdcUseNewPaymentRadio = () =>
 		this.page.locator( '.woocommerce-SavedPaymentMethods-new > input' );
 
@@ -308,6 +309,45 @@ export class PayPalUiClassic extends PayPalUi {
 	// Actions
 
 	/**
+	 * Completes payment with ACDC
+	 *
+	 * @param payment
+	 * @param merchant
+	 */
+	completeAcdcPayment = async (
+		payment: Pcp.Payment,
+		merchant: Pcp.Merchant
+	) => {
+		const { card, saveToAccount, isVaulted } = payment;
+		await expect( this.acdcGateway() ).toBeVisible();
+		await this.acdcGateway().click();
+
+		//if some cards are already stored then "Use a new payment method" radio should be checked
+		if (
+			! isVaulted &&
+			( await this.acdcUseNewPaymentRadio().isVisible() )
+		) {
+			await this.acdcUseNewPaymentRadio().check();
+		}
+
+		await this.acdcCardNumberInput().fill( card.card_number );
+		// trick to properly fill expiration date input
+		await this.acdcCardExpirationInput().click();
+		for ( const char of card.expiration_date ) {
+			await this.page.keyboard.type( char );
+			await this.page.waitForTimeout( 200 );
+		}
+		await this.acdcCardCvvInput().fill( card.card_cvv );
+
+		if ( saveToAccount ) {
+			await this.acdcSaveToAccountCheckbox().check();
+		}
+
+		await this.submitOrder();
+		await this.replacePayPalAuthToken( merchant );
+	};
+
+	/**
 	 * Completes payment with ACDC (vaulting enabled)
 	 *
 	 * @param payment
@@ -319,7 +359,7 @@ export class PayPalUiClassic extends PayPalUi {
 	) => {
 		await expect( this.acdcGateway() ).toBeVisible();
 		await this.acdcGateway().click();
-		await this.acdcSavedCardByNumber( payment.card.card_number ).click();
+		await this.acdcSavedCard( payment.card ).click();
 		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
 	};
@@ -409,6 +449,56 @@ export class PayPalUiClassic extends PayPalUi {
 	};
 
 	// Assertions
+
+	/**
+	 * Asserts the saved payment method is visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsDisplayed = async ( payment: Pcp.Payment ) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await this.payPalGateway().click();
+				await expect( this.payPalButton() ).toContainText( 'Pay Now' );
+				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				break;
+
+			case 'acdc':
+				await this.acdcGateway().click();
+				await expect(
+					this.acdcSavedCard( payment.card )
+				).toBeVisible();
+				break;
+		}
+	};
+
+	/**
+	 * Asserts the saved payment method is not visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsNotDisplayed = async (
+		payment: Pcp.Payment
+	) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await this.payPalGateway().click();
+				await expect( this.payPalButton() ).not.toContainText(
+					'Pay Now'
+				);
+				await expect(
+					this.payPalButtonMoreOptions()
+				).not.toBeVisible();
+				break;
+
+			case 'acdc':
+				await this.acdcGateway().click();
+				await expect(
+					this.acdcSavedCard( payment.card )
+				).not.toBeVisible();
+				break;
+		}
+	};
 
 	/**
 	 * - Asserts PayPal buttons classic container is visible.

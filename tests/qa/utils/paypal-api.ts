@@ -2,7 +2,10 @@
  * External dependencies
  */
 import { APIRequestContext, expect } from '@playwright/test';
-import { createAuthHeader, getLast4CardDigits } from '@inpsyde/playwright-utils/build';
+import {
+	createAuthHeader,
+	getLast4CardDigits,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
@@ -271,7 +274,9 @@ export class PayPalApi {
 				await expect( payPalOrder.payment_source ).toHaveProperty(
 					'card'
 				);
-				await expect( payPalOrder.payment_source.card.last_digits ).toEqual(
+				await expect(
+					payPalOrder.payment_source.card.last_digits
+				).toEqual(
 					getLast4CardDigits( shopOrder.payment.card.card_number )
 				);
 				break;

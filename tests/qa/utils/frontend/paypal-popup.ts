@@ -23,7 +23,10 @@ export class PayPalPopup {
 	passwordInput = () => this.popup.locator( '[name="login_password"]' );
 	nextButton = () => this.popup.locator( '#btnNext' );
 	loginButton = () => this.popup.locator( '#btnLogin' );
-	submitPaymentButton = () => this.popup.locator( '#payment-submit-btn' );
+	submitPaymentButton = () =>
+		this.popup
+			.locator( '#payment-submit-btn' )
+			.or( this.popup.getByTestId( 'submit-button-initial' ) );
 	payLaterSwitcher = () => this.popup.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.popup.locator( 'label[for^="credit-offer"]' ).first();

@@ -43,7 +43,6 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 		// Add coupons if needed
 		await this.applyCouponIfNeeded( coupons );
-		await this.applyCouponIfNeeded( coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		if ( products.some( ( product ) => product.type === 'subscription' ) ) {

@@ -1,7 +1,11 @@
 /**
  * External dependencies
  */
-import { CustomerPaymentMethods as CustomerPaymentMethodsBase } from '@inpsyde/playwright-utils/build';
+import {
+	CustomerPaymentMethods as CustomerPaymentMethodsBase,
+	expect,
+	getLast4CardDigits,
+} from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
  */
@@ -17,28 +21,45 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 	}
 
 	// Locators
+	paymentMethodDeletedMessage = () =>
+		// TODO: remove with playwright-utils version > 2.6.1
+		this.page.getByText( 'Payment method deleted.' );
 	noSavedMethodsMessage = () =>
+		// TODO: remove with playwright-utils version > 2.6.1
 		this.page.getByText( 'No saved methods found' );
+	addPaymentMethodButton = () =>
+		// TODO: remove with playwright-utils version > 2.6.1
+		this.page
+			.getByRole( 'link', { name: 'Add payment method' } )
+			.or(
+				this.page.getByRole( 'button', { name: 'Add payment method' } )
+			);
 
 	// Actions
-	isSavedPaymentMethod = async ( payment: Pcp.Payment ) => {
-		await this.visit();
+	getSavedPaymentMethodText = async ( payment: Pcp.Payment ) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				const payPalEmail = payment.payPalAccount.email;
+				const match = payPalEmail.replace( /.{2}-.{1}/, '' );
+				return new RegExp( `Paypal /.*${ match }`, 'i' );
 
+			case 'acdc':
+				const { card } = payment;
+				const last4Digits = getLast4CardDigits( card.card_number );
+				return `${ card.card_type } ending in ${ last4Digits }`;
+		}
+	};
+
+	isSavedPaymentMethod = async ( payment: Pcp.Payment ) => {
 		if ( await this.noSavedMethodsMessage().isVisible() ) {
 			return false;
 		}
-
-		switch ( payment.gateway.shortcut ) {
-			case 'paypal':
-				return await this.savedPaymentMethodRow(
-					`Paypal /`
-				).isVisible();
-
-			case 'card':
-				return await this.savedPaymentMethodRow(
-					payment.card?.card_number
-				).isVisible();
-		}
+		const paymentMethodText = await this.getSavedPaymentMethodText(
+			payment
+		);
+		return await this.savedPaymentMethodRow(
+			paymentMethodText
+		).isVisible();
 	};
 
 	/**
@@ -47,12 +68,65 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 	 * @param payment
 	 */
 	savePaymentMethod = async ( payment: Pcp.Payment ) => {
-		if ( ! ( await this.isSavedPaymentMethod( payment ) ) ) {
-			await this.addPaymentMethodButton().click();
-			await this.page.waitForLoadState();
-			await this.payPalUi.savePaymentMethod( payment );
+		const { gateway, card, payPalAccount } = payment;
+
+		const addPaymentMethodButton = this.addPaymentMethodButton();
+		await expect( addPaymentMethodButton ).toBeVisible();
+		await addPaymentMethodButton.click();
+		await this.page.waitForLoadState();
+
+		switch ( gateway.shortcut ) {
+			case 'paypal':
+				await this.payPalUi.payPalGateway().click();
+				const popup = await this.payPalUi.openPayPalPupup();
+				await popup.savePayPalPaymentMethod( payPalAccount );
+				break;
+
+			case 'acdc':
+				await this.payPalUi.acdcGateway().click();
+				await this.payPalUi
+					.acdcCardNumberInput()
+					.fill( card.card_number );
+				// trick to properly fill expiration date input
+				await this.payPalUi.acdcCardExpirationInput().click();
+				for ( const char of card.expiration_date ) {
+					await this.page.keyboard.type( char );
+					await this.page.waitForTimeout( 200 );
+				}
+				await this.payPalUi.acdcCardCvvInput().fill( card.card_cvv );
+				await this.addPaymentMethodButton().click();
+				await this.page.waitForLoadState();
+				break;
 		}
 	};
 
 	// Assertions
+
+	/**
+	 * Asserts payment method row is visible
+	 *
+	 * @param payment
+	 */
+	assertIsSavedPaymentMethod = async ( payment: Pcp.Payment ) => {
+		const paymentMethodText = await this.getSavedPaymentMethodText(
+			payment
+		);
+		await expect(
+			this.savedPaymentMethodRow( paymentMethodText )
+		).toBeVisible();
+	};
+
+	/**
+	 * Asserts payment method row is not visible
+	 *
+	 * @param payment
+	 */
+	assertIsNotSavedPaymentMethod = async ( payment: Pcp.Payment ) => {
+		const paymentMethodText = await this.getSavedPaymentMethodText(
+			payment
+		);
+		await expect(
+			this.savedPaymentMethodRow( paymentMethodText )
+		).not.toBeVisible();
+	};
 }

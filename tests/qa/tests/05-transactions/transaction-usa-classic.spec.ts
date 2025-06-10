@@ -95,13 +95,17 @@ test.describe( () => {
 // ACDC 3DS
 test.describe( () => {
 	test.beforeAll( async ( { pcpApi } ) => {
-		await pcpApi.updatePcpPaymentMethods( { threeDSecure: 'always-3d-secure' } );
+		await pcpApi.updatePcpPaymentMethods( {
+			threeDSecure: 'always-3d-secure',
+		} );
 	} );
 
 	transactionsOnClassicCheckout( acdcClassicCheckout3ds );
 
 	test.afterAll( async ( { pcpApi } ) => {
-		await pcpApi.updatePcpPaymentMethods( { threeDSecure: 'no-3d-secure' } );
+		await pcpApi.updatePcpPaymentMethods( {
+			threeDSecure: 'no-3d-secure',
+		} );
 	} );
 } );
 

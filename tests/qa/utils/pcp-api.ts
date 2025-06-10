@@ -23,10 +23,10 @@ export class PcpApi extends WooCommerceApiBase {
 
 	/**
 	 * Connects merchant via REST API.
-	 * 
-	 * @param clientId PayPal merchant's client ID
-	 * @param clientSecret PayPal merchant's client Isecret
-	 * @param useSandbox is sandbox mode enabled
+	 *
+	 * @param clientId          PayPal merchant's client ID
+	 * @param clientSecret      PayPal merchant's client Isecret
+	 * @param onboardingOptions
 	 */
 	connectMerchant = async (
 		clientId: string,
@@ -34,17 +34,13 @@ export class PcpApi extends WooCommerceApiBase {
 		onboardingOptions: Pcp.Api.OnboardingOptions = {
 			isCasualSeller: false,
 			products: [ 'physical', 'virtual' ],
-		},
+		}
 	) => {
 		// Preset onboarding options
-		await this.wcRequest(
-			'post',
-			'wc_paypal/onboarding',
-			{
-				...onboardingOptions,
-				_locale: 'user',
-			}
-		);
+		await this.wcRequest( 'post', 'wc_paypal/onboarding', {
+			...onboardingOptions,
+			_locale: 'user',
+		} );
 		// Merchant connection request
 		const response = await this.wcRequest(
 			'post',
@@ -61,8 +57,8 @@ export class PcpApi extends WooCommerceApiBase {
 
 	/**
 	 * Disconnects merchant via REST API with optional DB reset parameter.
-	 * 
-	 * @param reset 
+	 *
+	 * @param reset
 	 */
 	disconnectMerchant = async ( reset: boolean = false ) => {
 		const response = await this.wcRequest(
@@ -83,7 +79,7 @@ export class PcpApi extends WooCommerceApiBase {
 
 	/**
 	 * Updates Payment Methods tab via REST API.
-	 * 
+	 *
 	 * @example of data (all params are optional):
 	 * {
 	 * 		fastlaneCardholderName: false,
@@ -93,8 +89,8 @@ export class PcpApi extends WooCommerceApiBase {
 	 * 		"ppcp-gateway": { enabled: true },
 	 * 		"pay-later": { enabled: true },
 	 * 	}
-	 * 
-	 * @param data 
+	 *
+	 * @param data
 	 */
 	updatePcpPaymentMethods = async ( data: Pcp.Api.PaymentMethods ) => {
 		const response = await this.wcRequest( 'post', `wc_paypal/payment`, {
@@ -106,8 +102,8 @@ export class PcpApi extends WooCommerceApiBase {
 
 	/**
 	 * Updates Settings tab via REST API.
-	 * 
-	 * @param data 
+	 *
+	 * @param data
 	 */
 	updatePcpSettings = async ( data: Pcp.Api.Settings ) => {
 		const response = await this.wcRequest( 'post', `wc_paypal/settings`, {
