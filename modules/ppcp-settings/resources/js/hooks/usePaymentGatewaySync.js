@@ -19,8 +19,6 @@ export const usePaymentGatewaySync = () => {
 	const { isReady: merchantIsReady } = CommonHooks.useStore();
 
 	const [ isSyncing, setIsSyncing ] = useState( false );
-	const [ , setSyncCompleted ] = useState( false );
-	const [ , setSyncError ] = useState( null );
 
 	// Use a ref to track if we've initiated a sync during this session.
 	const syncAttemptedRef = useRef( false );
@@ -36,7 +34,6 @@ export const usePaymentGatewaySync = () => {
 		}
 
 		setIsSyncing( true );
-		setSyncError( null );
 
 		try {
 			const result = await syncGateways();
@@ -44,13 +41,11 @@ export const usePaymentGatewaySync = () => {
 			if ( result.success ) {
 				// Add a small delay to ensure UI updates properly.
 				await new Promise( ( resolve ) => setTimeout( resolve, 1000 ) );
-				setSyncCompleted( true );
 				return { success: true };
 			}
 
 			throw new Error( result.message || 'Failed to sync gateways' );
 		} catch ( error ) {
-			setSyncError( error );
 			// After an error, allow retry after 5 seconds.
 			setTimeout( () => {
 				syncAttemptedRef.current = false;
