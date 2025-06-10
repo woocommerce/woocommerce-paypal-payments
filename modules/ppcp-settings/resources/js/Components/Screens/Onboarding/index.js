@@ -1,13 +1,26 @@
-import Container from '../../ReusableComponents/Container';
-import { OnboardingHooks } from '../../../data';
-
 import { getSteps, getCurrentStep } from './Steps';
+import { OnboardingHooks, CommonHooks } from '../../../data';
 import OnboardingNavigation from './Components/Navigation';
+import Container from '../../ReusableComponents/Container';
 
 const OnboardingScreen = () => {
 	const { step, setStep, flags } = OnboardingHooks.useSteps();
+	const { ownBrandOnly } = CommonHooks.useWooSettings();
+	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
-	const Steps = getSteps( flags );
+	const shouldSkipPaymentMethods = flags?.shouldSkipPaymentMethods || false;
+	const canUseCasualSelling = flags?.canUseCasualSelling || false;
+
+	// Determine if payment methods screen should be skipped
+	const skipPaymentMethodsStep =
+		shouldSkipPaymentMethods || ( ownBrandOnly && isCasualSeller );
+
+	// Pass all conditions as arguments
+	const Steps = getSteps( flags, {
+		skipBusinessStep: ! canUseCasualSelling,
+		skipPaymentMethodsStep,
+	} );
+
 	const currentStep = getCurrentStep( step, Steps );
 
 	if ( ! currentStep?.StepComponent ) {

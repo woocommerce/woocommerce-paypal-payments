@@ -1,6 +1,5 @@
 import { __ } from '@wordpress/i18n';
 
-import { CommonHooks, OnboardingHooks } from '../../../../data';
 import StepWelcome from './StepWelcome';
 import StepBusiness from './StepBusiness';
 import StepProducts from './StepProducts';
@@ -56,20 +55,18 @@ const filterSteps = ( steps, conditions ) => {
 	);
 };
 
-export const getSteps = ( flags ) => {
-	// eslint-disable-next-line react-hooks/rules-of-hooks
-	const { ownBrandOnly } = CommonHooks.useWooSettings();
-	// eslint-disable-next-line react-hooks/rules-of-hooks
-	const { isCasualSeller } = OnboardingHooks.useBusiness();
+export const getSteps = ( flags, skipConditions = {} ) => {
+	const { canUseCasualSelling = false } = flags;
+	const {
+		skipBusinessStep = ! canUseCasualSelling,
+		skipPaymentMethodsStep = false,
+	} = skipConditions;
 
 	const steps = filterSteps( ALL_STEPS, [
 		// Casual selling: Unlock the "Personal Account" choice.
-		( step ) => flags.canUseCasualSelling || step.id !== 'business',
+		( step ) => ! skipBusinessStep || step.id !== 'business',
 		// Skip payment methods screen.
-		( step ) =>
-			step.id !== 'methods' ||
-			( ! flags.shouldSkipPaymentMethods &&
-				! ( ownBrandOnly && isCasualSeller ) ),
+		( step ) => step.id !== 'methods' || ! skipPaymentMethodsStep,
 	] );
 
 	const totalStepsCount = steps.length;
