@@ -78,7 +78,7 @@ return array(
 				'RE',
 				'GP',
 				'GF',
-				'MQ'
+				'MQ',
 			)
 		);
 	},
