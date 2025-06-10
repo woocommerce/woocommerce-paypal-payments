@@ -7,7 +7,6 @@ require( 'dotenv' ).config();
 /**
  * Internal dependencies
  */
-import { storeSetupProjects } from './tests/_setup/store';
 import { BaseExtend } from '@inpsyde/playwright-utils/build';
 
 export default defineConfig< BaseExtend >( {
@@ -44,7 +43,7 @@ export default defineConfig< BaseExtend >( {
 		  ]
 		: [
 				[ 'list' ],
-				[ 'html', { outputFolder: 'playwright-report' } ],
+				// [ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{
@@ -95,7 +94,6 @@ export default defineConfig< BaseExtend >( {
 			testMatch: /woocommerce\.setup\.ts/,
 			fullyParallel: false,
 		},
-		...storeSetupProjects,
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
