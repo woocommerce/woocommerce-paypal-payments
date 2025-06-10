@@ -167,7 +167,9 @@ class VaultedCreditCardHandler {
 				array( $purchase_unit ),
 				$shipping_preference,
 				$payer,
-				$selected_token
+				'',
+				array(),
+				$selected_token->to_payment_source()
 			);
 
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );

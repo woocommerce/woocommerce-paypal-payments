@@ -539,6 +539,20 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
+		'stay_updated'                               => array(
+			'title'        => __( 'Stay Updated', 'woocommerce-paypal-payments' ),
+			'type'         => 'checkbox',
+			'desc_tip'     => true,
+			'label'        => __( 'Update to the latest features when available. ', 'woocommerce-paypal-payments' ),
+			'description'  => __( 'Get the latest PayPal features and capabilities as they are released. When the extension is updated, new features, payment methods, styling options, and more will automatically update.', 'woocommerce-paypal-payments' ),
+			'default'      => true,
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
 		'subtotal_mismatch_behavior'                    => array(
 			'title'             => __( 'Subtotal mismatch behavior', 'woocommerce-paypal-payments' ),
 			'type'              => 'select',

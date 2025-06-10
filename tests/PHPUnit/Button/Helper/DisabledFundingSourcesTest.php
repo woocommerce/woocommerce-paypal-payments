@@ -32,10 +32,11 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration);
+		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'US');
 
 		$this->setExpectations();
 		$this->setWcPaymentGateways();
+		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
 
@@ -50,10 +51,11 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration);
+		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'US');
 
 		$this->setExpectations();
 		$this->setWcPaymentGateways();
+		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(false);
 
@@ -71,15 +73,80 @@ class DisabledFundingSourcesTest extends TestCase
 				'paypal' => 'PayPal',
 				'foo' => 'Bar',
 			],
-			$this->dcc_configuration
+			$this->dcc_configuration,
+			'US'
 		);
 
 		$this->setExpectations();
 		$this->setWcPaymentGateways();
+		$this->setWooCommerceFunctionMocks();
 
 		when('is_checkout')->justReturn(true);
 
 		$this->assertEquals(['card', 'foo'], $sut->sources('checkout-block'));
+	}
+
+	/**
+	 * Test Mexico-specific logic: BCDC enabled should not disable card funding
+	 */
+	public function test_mexico_bcdc_enabled_does_not_disable_card_funding()
+	{
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(false); // Changed to false
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
+
+		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'MX');
+
+		$this->setExpectations();
+		$this->setWcPaymentGateways();
+		$this->setWooCommerceFunctionMocks();
+
+		when('is_checkout')->justReturn(true);
+
+		// For Mexico with BCDC enabled, card should not be in disabled funding sources
+		$this->assertEquals([], $sut->sources('checkout-block'));
+	}
+
+	/**
+	 * Test Mexico-specific logic: BCDC disabled should disable card funding
+	 */
+	public function test_mexico_bcdc_disabled_disables_card_funding()
+	{
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true); // This should cause card to be disabled
+		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
+
+		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'MX');
+
+		$this->setExpectations();
+		$this->setWcPaymentGateways();
+		$this->setWooCommerceFunctionMocks();
+
+		when('is_checkout')->justReturn(true);
+
+		// For Mexico with BCDC disabled, card should be in disabled funding sources
+		$this->assertEquals(['card'], $sut->sources('checkout-block'));
+	}
+
+	/**
+	 * Test non-Mexico country behavior remains unchanged
+	 */
+	public function test_non_mexico_country_behavior_unchanged()
+	{
+		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
+		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
+		// BCDC method should not be called for non-Mexico countries
+
+		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'CA');
+
+		$this->setExpectations();
+		$this->setWcPaymentGateways();
+		$this->setWooCommerceFunctionMocks();
+
+		when('is_checkout')->justReturn(true);
+
+		// For non-Mexico countries, existing logic applies
+		$this->assertEquals(['card'], $sut->sources('checkout-block'));
 	}
 
 	private function setExpectations(
@@ -112,5 +179,19 @@ class DisabledFundingSourcesTest extends TestCase
 		$woocommerce->payment_gateways = $payment_gateways;
 		$payment_gateways->shouldReceive('get_available_payment_gateways')
 			->andReturn($paymentGateways);
+	}
+
+	/**
+	 * Set up common WooCommerce function mocks
+	 */
+	private function setWooCommerceFunctionMocks(): void
+	{
+		when('wc_get_page_id')->justReturn(123);
+		when('has_block')->justReturn(false);
+		when('get_post')->justReturn((object) [
+			'ID' => 123,
+			'post_content' => 'Mock post content',
+			'post_type' => 'page'
+		]);
 	}
 }

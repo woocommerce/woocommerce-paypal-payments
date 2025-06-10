@@ -86,6 +86,10 @@ class SettingsRestEndpoint extends RestEndpoint {
 			'js_name'  => 'enableLogging',
 			'sanitize' => 'to_boolean',
 		),
+		'stay_updated'           => array(
+			'js_name'  => 'stayUpdated',
+			'sanitize' => 'to_boolean',
+		),
 		'disabled_cards'         => array(
 			'js_name' => 'disabledCards',
 		),

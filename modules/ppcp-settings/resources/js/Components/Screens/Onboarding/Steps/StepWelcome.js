@@ -14,6 +14,7 @@ import { usePaymentConfig } from '../hooks/usePaymentConfig';
 const StepWelcome = ( { setStep, currentStep } ) => {
 	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
 	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
+	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
 	const { icons } = usePaymentConfig(
 		storeCountry,
@@ -23,7 +24,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 	);
 
 	const onboardingHeaderDescription =
-		canUseCardPayments && ! ownBrandOnly
+		canUseCardPayments && ! ownBrandOnly && 'MX' !== storeCountry
 			? __(
 					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, all major credit/debit cards, Apple Pay, Google Pay, and more.',
 					'woocommerce-paypal-payments'

@@ -100,6 +100,16 @@ class PaymentToken {
 	}
 
 	/**
+	 * Returns the PaymentSource object.
+	 */
+	public function to_payment_source(): PaymentSource {
+		return new PaymentSource(
+			'token',
+			(object) $this->to_array()
+		);
+	}
+
+	/**
 	 * Returns a list of valid token types.
 	 * Can be modified through the `woocommerce_paypal_payments_valid_payment_token_types` filter.
 	 *

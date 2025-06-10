@@ -8,6 +8,7 @@ use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use ReflectionClass;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -147,6 +148,7 @@ class CreateOrderEndpointTest extends TestCase
     {
         $request_data = Mockery::mock(RequestData::class);
 		$shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
+		$experienceContextBuilder = Mockery::mock(ExperienceContextBuilder::class);
         $purchase_unit_factory = Mockery::mock(PurchaseUnitFactory::class);
         $order_endpoint = Mockery::mock(OrderEndpoint::class);
         $payer_factory = Mockery::mock(PayerFactory::class);
@@ -159,6 +161,7 @@ class CreateOrderEndpointTest extends TestCase
             $request_data,
             $purchase_unit_factory,
 			$shippingPreferenceFactory,
+			$experienceContextBuilder,
             $order_endpoint,
             $payer_factory,
             $session_handler,

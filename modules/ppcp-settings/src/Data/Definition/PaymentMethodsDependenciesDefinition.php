@@ -108,6 +108,27 @@ class PaymentMethodsDependenciesDefinition {
 	}
 
 	/**
+	 * Get payment method value dependencies for a specific method
+	 *
+	 * @return array Value dependencies for the method or empty array if none exist
+	 */
+	public function get_payment_method_value_dependencies(): array {
+		$dependencies = array(
+			CardButtonGateway::ID => array(
+				CreditCardGateway::ID => false,
+			),
+			CreditCardGateway::ID => array(
+				CardButtonGateway::ID => false,
+			),
+		);
+
+		return apply_filters(
+			'woocommerce_paypal_payments_method_value_dependencies',
+			$dependencies
+		);
+	}
+
+	/**
 	 * Get method setting dependencies
 	 *
 	 * Returns the setting dependencies for a specific method ID.
@@ -137,6 +158,15 @@ class PaymentMethodsDependenciesDefinition {
 			$payment_method_dependencies = $this->get_method_payment_method_dependencies( $method_id );
 			if ( ! empty( $payment_method_dependencies ) ) {
 				$method['depends_on_payment_methods'] = $payment_method_dependencies;
+			}
+
+			// Add payment method value dependency info if applicable.
+			$all_payment_method_value_dependencies = $this->get_payment_method_value_dependencies();
+
+			// Only add dependencies that directly apply to this method.
+			if ( isset( $all_payment_method_value_dependencies[ $method_id ] ) ) {
+				// Direct dependencies on other method values.
+				$method['depends_on_payment_methods_values'] = $all_payment_method_value_dependencies[ $method_id ];
 			}
 
 			// Check if this method has setting dependencies.

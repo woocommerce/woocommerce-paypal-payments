@@ -85,14 +85,9 @@ class GatewayRedirectService {
 
 		// Get current URL parameters.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-		// The sanitize_get_param method handles unslashing and sanitization internally.
-		$page    = isset( $_GET['page'] ) ? $this->sanitize_get_param( $_GET['page'] ) : '';
-		$tab     = isset( $_GET['tab'] ) ? $this->sanitize_get_param( $_GET['tab'] ) : '';
-		$section = isset( $_GET['section'] ) ? $this->sanitize_get_param( $_GET['section'] ) : '';
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
-		// phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$page    = isset( $_GET['page'] ) ? wc_clean( wp_unslash( $_GET['page'] ) ) : '';
+		$tab     = isset( $_GET['tab'] ) ? wc_clean( wp_unslash( $_GET['tab'] ) ) : '';
+		$section = isset( $_GET['section'] ) ? wc_clean( wp_unslash( $_GET['section'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		// Check if we're on a WooCommerce settings page and checkout tab.
@@ -112,18 +107,5 @@ class GatewayRedirectService {
 			wp_safe_redirect( $redirect_url );
 			exit;
 		}
-	}
-
-	/**
-	 * Sanitizes a GET parameter that could be string or array.
-	 *
-	 * @param mixed $param The parameter to sanitize.
-	 * @return string The sanitized parameter.
-	 */
-	private function sanitize_get_param( $param ): string {
-		if ( is_array( $param ) ) {
-			return '';
-		}
-		return sanitize_text_field( wp_unslash( $param ) );
 	}
 }

@@ -5,7 +5,7 @@
 .ppcp-r-welcome-docs__title {
 	text-align: center;
 	@include font(20, 28, 700);
-	margin: 32px 0 32px 0;
+	margin: 32px 0 32px 0 !important;
 }
 
 .ppcp-r-welcome-docs__wrapper {

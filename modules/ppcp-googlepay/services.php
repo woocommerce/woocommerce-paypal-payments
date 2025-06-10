@@ -132,6 +132,11 @@ return array(
 				'SE', // Sweden
 				'US', // United States
 				'GB', // United Kingdom
+				'YT', // Mayotte
+				'RE', // Reunion
+				'GP', // Guadelope
+				'GF', // French Guiana
+				'MQ', // Martinique
 			)
 			// phpcs:enable Squiz.Commenting.InlineComment
 		);

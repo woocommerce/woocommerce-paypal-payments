@@ -217,6 +217,16 @@ class TodosDefinition {
 				),
 				'priority'    => 12,
 			),
+			'enable_installments'                  => array(
+				'title'       => __( 'Enable Installments', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Allow your customers to pay in installments without interest while you receive the full payment in a single transaction', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['enable_installments'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => 'https://www.paypal.com/businessmanage/preferences/installmentplan',
+				),
+				'priority'    => 13,
+			),
 		);
 	}
 }

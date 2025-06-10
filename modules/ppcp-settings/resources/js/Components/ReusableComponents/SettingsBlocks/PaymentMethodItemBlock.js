@@ -31,10 +31,15 @@ const PaymentMethodItemBlock = ( {
 			id={ paymentMethod.id }
 			className={ methodItemClasses }
 			separatorAndGap={ false }
+			aria-disabled={ isDisabled ? 'true' : 'false' }
 		>
 			{ isDisabled && (
-				<div className="ppcp--method-disabled-overlay">
-					<p className="ppcp--method-disabled-message">
+				<div
+					className="ppcp--method-disabled-overlay"
+					role="alert"
+					aria-live="polite"
+				>
+					<p className="ppcp--method-disabled-message" tabIndex="0">
 						{ disabledMessage }
 					</p>
 				</div>
@@ -60,6 +65,8 @@ const PaymentMethodItemBlock = ( {
 							__nextHasNoMarginBottom
 							checked={ isSelected }
 							onChange={ onSelect }
+							disabled={ isDisabled }
+							aria-label={ `Enable ${ paymentMethod.itemTitle }` }
 						/>
 						{ hasWarning && ! isDisabled && isSelected && (
 							<WarningMessages
@@ -70,7 +77,9 @@ const PaymentMethodItemBlock = ( {
 					{ paymentMethod?.fields && onTriggerModal && (
 						<Button
 							className="ppcp--method-settings"
+							disabled={ isDisabled }
 							onClick={ onTriggerModal }
+							aria-label={ `Configure ${ paymentMethod.itemTitle } settings` }
 						>
 							<Icon icon={ cog } />
 						</Button>

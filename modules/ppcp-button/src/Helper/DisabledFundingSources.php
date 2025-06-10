@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
 /**
  * Class DisabledFundingSources
@@ -43,16 +44,25 @@ class DisabledFundingSources {
 	private CardPaymentsConfiguration $dcc_configuration;
 
 	/**
+	 * Merchant Country
+	 *
+	 * @var string
+	 */
+	private string $merchant_country;
+
+	/**
 	 * DisabledFundingSources constructor.
 	 *
 	 * @param Settings                  $settings            The settings.
 	 * @param array                     $all_funding_sources All existing funding sources.
 	 * @param CardPaymentsConfiguration $dcc_configuration   DCC gateway configuration.
+	 * @param string                    $merchant_country     Merchant country.
 	 */
-	public function __construct( Settings $settings, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration ) {
+	public function __construct( Settings $settings, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
 		$this->settings            = $settings;
 		$this->all_funding_sources = $all_funding_sources;
 		$this->dcc_configuration   = $dcc_configuration;
+		$this->merchant_country    = $merchant_country;
 	}
 
 	/**
@@ -145,11 +155,13 @@ class DisabledFundingSources {
 	 * @return array
 	 */
 	private function apply_context_rules( array $disable_funding ) : array {
+		if ( 'MX' === $this->merchant_country && $this->dcc_configuration->is_bcdc_enabled() && CartCheckoutDetector::has_classic_checkout() && is_checkout() ) {
+			return $disable_funding;
+		}
+
 		if ( ! is_checkout() || $this->dcc_configuration->use_acdc() ) {
 			// Non-checkout pages, or ACDC capability: Don't load card button.
 			$disable_funding[] = 'card';
-
-			return $disable_funding;
 		}
 
 		return $disable_funding;

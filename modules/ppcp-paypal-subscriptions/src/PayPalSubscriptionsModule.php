@@ -62,50 +62,6 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		}
 
 		add_filter(
-			'woocommerce_available_payment_gateways',
-			function ( array $gateways ) use ( $c ) {
-				if ( is_account_page() || is_admin() || ! WC()->cart || WC()->cart->is_empty() || wcs_is_manual_renewal_enabled() ) {
-					return $gateways;
-				}
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				$subscriptions_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
-				if ( $subscriptions_mode !== 'subscriptions_api' ) {
-					return $gateways;
-				}
-
-				$pp_subscriptions_product = false;
-				foreach ( WC()->cart->get_cart() as $cart_item ) {
-					$cart_product = wc_get_product( $cart_item['product_id'] );
-					if ( isset( $cart_item['subscription_renewal']['subscription_id'] ) ) {
-						$subscription_renewal = wcs_get_subscription( $cart_item['subscription_renewal']['subscription_id'] );
-						if ( $subscription_renewal && $subscription_renewal->get_meta( 'ppcp_subscription' ) ) {
-							$pp_subscriptions_product = true;
-							break;
-						}
-					} elseif ( $cart_product instanceof \WC_Product_Subscription || $cart_product instanceof \WC_Product_Variable_Subscription ) {
-						if ( $cart_product->get_meta( '_ppcp_enable_subscription_product' ) === 'yes' ) {
-							$pp_subscriptions_product = true;
-							break;
-						}
-					}
-				}
-
-				if ( $pp_subscriptions_product ) {
-					foreach ( $gateways as $id => $gateway ) {
-						if ( $gateway->id !== PayPalGateway::ID ) {
-							unset( $gateways[ $id ] );
-						}
-					}
-					return $gateways;
-				}
-
-				return $gateways;
-			}
-		);
-
-		add_filter(
 			'woocommerce_subscription_payment_gateway_supports',
 			function ( bool $payment_gateway_supports, string $payment_gateway_feature, \WC_Subscription $wc_order ): bool {
 				if ( ! in_array( $payment_gateway_feature, array( 'gateway_scheduled_payments', 'subscription_date_changes', 'subscription_amount_changes', 'subscription_payment_method_change', 'subscription_payment_method_change_customer', 'subscription_payment_method_change_admin' ), true ) ) {
@@ -582,7 +538,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 						),
 						'product_id' => $product->get_id(),
 						'i18n'       => array(
-							'prices_must_be_above_zero' => __( 'Prices must be above zero for PayPal Subscriptions!', 'woocommerce-paypal-payments' ),
+							'prices_must_be_above_zero'   => __( 'Prices must be above zero for PayPal Subscriptions!', 'woocommerce-paypal-payments' ),
 							'not_allowed_period_interval' => __( 'Not allowed period interval combination for PayPal Subscriptions!', 'woocommerce-paypal-payments' ),
 						),
 					)
@@ -725,7 +681,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			'<label for="ppcp_enable_subscription_product-' . esc_attr( (string) $product->get_id() ) . '" style="' . esc_attr( $style ) . '">',
 			'</label>'
 		);
-		$plan_id = isset( $subscription_plan['id'] ) ?? '';
+		$plan_id = $subscription_plan['id'] ?? '';
 		echo '<input type="checkbox" id="ppcp_enable_subscription_product-' . esc_attr( (string) $product->get_id() ) . '" data-subs-plan="' . esc_attr( (string) $plan_id ) . '" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/>';
 		echo sprintf(
 		// translators: %1$s and %2$s are label open and close tags.

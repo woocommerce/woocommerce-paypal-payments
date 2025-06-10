@@ -42,6 +42,7 @@ const defaultPersistent = Object.freeze( {
 	saveCardDetails: false, // Enable card vaulting
 	enablePayNow: false, // Enable Pay Now experience
 	enableLogging: false, // Enable debug logging
+	stayUpdated: false, // Enable to get the latest PayPal features
 
 	// String arrays.
 	disabledCards: [], // Disabled credit card types

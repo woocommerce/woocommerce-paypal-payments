@@ -7,7 +7,7 @@ import { SettingsHooks } from '../../../../../../data';
 
 const OtherSettings = () => {
 	const { disabledCards, setDisabledCards } = SettingsHooks.useSettings();
-
+	const disabledCardChoices = window.ppcpSettings.disabledCardsChoices;
 	return (
 		<Accordion
 			title={ __(
@@ -45,21 +45,3 @@ const OtherSettings = () => {
 };
 
 export default OtherSettings;
-
-const disabledCardChoices = [
-	{ value: '', label: __( 'Select', 'woocommerce-paypal-payments' ) },
-	{
-		value: 'mastercard',
-		label: __( 'Mastercard', 'woocommerce-paypal-payments' ),
-	},
-	{ value: 'visa', label: __( 'Visa', 'woocommerce-paypal-payments' ) },
-	{
-		value: 'amex',
-		label: __( 'American Express', 'woocommerce-paypal-payments' ),
-	},
-	{ value: 'jcb', label: __( 'JCB', 'woocommerce-paypal-payments' ) },
-	{
-		value: 'diners-club',
-		label: __( 'Diners Club', 'woocommerce-paypal-payments' ),
-	},
-];

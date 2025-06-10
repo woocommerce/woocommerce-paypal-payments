@@ -1,6 +1,6 @@
 <?php
 /**
- * The CardauthenticationResult object
+ * The CardAuthenticationResult object
  *
  * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */

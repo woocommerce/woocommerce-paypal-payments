@@ -70,7 +70,6 @@ const reducer = createReducer( defaultTransient, defaultPersistent, {
 		}
 
 		return changePersistent( state, {
-			...state,
 			[ methodId ]: { ...oldProps, ...payload.props },
 		} );
 	},

@@ -2,15 +2,17 @@ import { __ } from '@wordpress/i18n';
 import { useCallback } from '@wordpress/element';
 
 import { CommonHooks, OnboardingHooks, PaymentHooks } from '../../../../data';
-import { useActiveModal } from '../../../../data/common/hooks';
+import { useActiveModal, useWooSettings } from '../../../../data/common/hooks';
 import Modal from '../Components/Payment/Modal';
 import PaymentMethodCard from '../Components/Payment/PaymentMethodCard';
+import { useFeatures } from '../../../../data/features/hooks';
 
 const TabPaymentMethods = () => {
 	const methods = PaymentHooks.usePaymentMethods();
 	const store = PaymentHooks.useStore();
 	const { setPersistent, changePaymentSettings } = store;
 	const { activeModal, setActiveModal } = useActiveModal();
+	const { features } = useFeatures();
 
 	// Get all methods as a map for dependency checking
 	const methodsMap = {};
@@ -52,18 +54,33 @@ const TabPaymentMethods = () => {
 	);
 
 	const merchant = CommonHooks.useMerchant();
+	const { storeCountry } = useWooSettings();
 	const { canUseCardPayments } = OnboardingHooks.useFlags();
 
 	const showCardPayments =
 		methods.cardPayment.length > 0 &&
 		merchant.isBusinessSeller &&
-		canUseCardPayments;
+		canUseCardPayments &&
+		// Show ACDC if the merchant has the feature enabled in PayPal account.
+		features.some(
+			( feature ) =>
+				feature.id === 'advanced_credit_and_debit_cards' &&
+				feature.enabled
+		);
 
-	const showApms =
-		methods.apm.length > 0 &&
-		merchant.isBusinessSeller &&
-		canUseCardPayments;
+	// Hide BCDC for all countries except Mexico when ACDC is turned on.
+	const filteredPayPalMethods = methods.paypal.filter(
+		( method ) =>
+			method.id !== 'ppcp-card-button-gateway' ||
+			storeCountry === 'MX' ||
+			! features.some(
+				( feature ) =>
+					feature.id === 'advanced_credit_and_debit_cards' &&
+					feature.enabled === true
+			)
+	);
 
+	const showApms = methods.apm.length > 0 && merchant.isBusinessSeller;
 	return (
 		<div className="ppcp-r-payment-methods">
 			<PaymentMethodCard
@@ -74,7 +91,7 @@ const TabPaymentMethods = () => {
 					'woocommerce-paypal-payments'
 				) }
 				icon="icon-checkout-standard.svg"
-				methods={ methods.paypal }
+				methods={ filteredPayPalMethods }
 				onTriggerModal={ setActiveModal }
 				methodsMap={ methodsMap }
 			/>
@@ -112,6 +129,8 @@ const TabPaymentMethods = () => {
 					methods={ methods.apm }
 					onTriggerModal={ setActiveModal }
 					methodsMap={ methodsMap }
+					showBulkToggle={ methods.apm.length > 1 }
+					groupName="Alternative Payment"
 				/>
 			) }
 

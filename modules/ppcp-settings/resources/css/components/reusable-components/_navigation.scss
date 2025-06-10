@@ -103,6 +103,11 @@ $margin_bottom: 48px;
 
 		.components-tab-panel__tabs-item {
 			height: var(--subnavigation-height);
+
+			&:focus-visible:not(:disabled),
+			&[data-focus-visible="true"]:focus:not(:disabled) {
+				outline: none;
+			}
 		}
 	}
 

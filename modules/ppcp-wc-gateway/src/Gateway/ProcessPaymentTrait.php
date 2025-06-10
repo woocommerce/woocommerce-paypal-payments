@@ -34,10 +34,15 @@ trait ProcessPaymentTrait {
 				'failed',
 				$this->format_exception( $error )
 			);
+
+			if ( WC()->session->get( 'ppcp_delete_wc_order_on_payment_failure' ) ?? false ) {
+				$wc_order->delete( true );
+			}
 		}
 
 		$this->session_handler->destroy_session_data();
 		WC()->session->set( 'ppcp_subscription_id', '' );
+		WC()->session->set( 'ppcp_delete_wc_order_on_payment_failure', false );
 
 		wc_add_notice( $error->getMessage(), 'error' );
 

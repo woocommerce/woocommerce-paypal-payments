@@ -82,6 +82,7 @@ class SettingsModel extends AbstractDataModel {
 			'save_card_details'      => false,
 			'enable_pay_now'         => false,
 			'enable_logging'         => false,
+			'stay_updated'           => true,
 
 			// Array of string values.
 			'disabled_cards'         => array(),

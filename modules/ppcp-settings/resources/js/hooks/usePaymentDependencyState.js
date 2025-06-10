@@ -6,15 +6,13 @@ import { useSelect } from '@wordpress/data';
 /**
  * Gets the display name for a parent payment method
  *
- * @param {string} parentId   - ID of the parent payment method
+ * @param {string} methodId   - ID of the payment method
  * @param {Object} methodsMap - Map of all payment methods by ID
- * @return {string} The display name to use for the parent method
+ * @return {string} The display name of the method
  */
-const getParentMethodName = ( parentId, methodsMap ) => {
-	const parentMethod = methodsMap[ parentId ];
-	return parentMethod
-		? parentMethod.itemTitle || parentMethod.title || ''
-		: '';
+const getMethodName = ( methodId, methodsMap ) => {
+	const method = methodsMap[ methodId ];
+	return method ? method.itemTitle || method.title || '' : '';
 };
 
 /**
@@ -38,7 +36,51 @@ const findDisabledParents = ( method, methodsMap ) => {
 };
 
 /**
- * Hook to evaluate payment method dependencies
+ * Checks if method should be disabled due to value dependencies
+ *
+ * @param {Object} method     - The payment method to check
+ * @param {Object} methodsMap - Map of all payment methods by ID
+ * @return {Object|null} Value dependency info if should be disabled, null otherwise
+ */
+const checkValueDependencies = ( method, methodsMap ) => {
+	const valueDependencies = method.depends_on_payment_methods_values;
+
+	if ( ! valueDependencies ) {
+		return null;
+	}
+
+	// Check each dependency against the actual state of the dependent method.
+	for ( const [ dependentId, requiredValue ] of Object.entries(
+		valueDependencies
+	) ) {
+		const dependent = methodsMap[ dependentId ];
+
+		if ( ! dependent ) {
+			continue;
+		}
+
+		// Example: card-button-gateway depends on credit-card-gateway being FALSE.
+		// So if credit-card-gateway is TRUE (enabled), card-button-gateway should be disabled.
+
+		// If the dependency requires a method to be false but it's enabled (or vice versa).
+		if (
+			typeof requiredValue === 'boolean' &&
+			dependent.enabled !== requiredValue
+		) {
+			// This dependency is violated - the dependent method is in the wrong state.
+			return {
+				dependentId,
+				dependentName: getMethodName( dependentId, methodsMap ),
+				requiredValue,
+			};
+		}
+	}
+
+	return null;
+};
+
+/**
+ * Hook to evaluate all payment method dependencies
  *
  * @param {Array}  methods    - List of payment methods
  * @param {Object} methodsMap - Map of payment methods by ID
@@ -51,6 +93,7 @@ const usePaymentDependencyState = ( methods, methodsMap ) => {
 		if ( methods && methodsMap && Object.keys( methodsMap ).length > 0 ) {
 			methods.forEach( ( method ) => {
 				if ( method && method.id ) {
+					// Check regular parent-child dependencies first.
 					const disabledParents = findDisabledParents(
 						method,
 						methodsMap
@@ -59,18 +102,32 @@ const usePaymentDependencyState = ( methods, methodsMap ) => {
 					if ( disabledParents.length > 0 ) {
 						const parentId = disabledParents[ 0 ];
 						result[ method.id ] = {
+							type: 'parent',
 							isDisabled: true,
 							parentId,
-							parentName: getParentMethodName(
-								parentId,
-								methodsMap
-							),
+							parentName: getMethodName( parentId, methodsMap ),
+						};
+						return; // Skip other checks if already disabled.
+					}
+
+					// Check value dependencies.
+					const valueDependency = checkValueDependencies(
+						method,
+						methodsMap
+					);
+
+					if ( valueDependency ) {
+						result[ method.id ] = {
+							type: 'value',
+							isDisabled: true,
+							dependentId: valueDependency.dependentId,
+							dependentName: valueDependency.dependentName,
+							requiredValue: valueDependency.requiredValue,
 						};
 					}
 				}
 			} );
 		}
-
 		return result;
 	}, [ methods, methodsMap ] );
 };

@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class GooglepayModule
@@ -246,6 +247,42 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				return $features;
 			}
+		);
+
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+
+				$funding_source = $request['funding_source'] ?? '';
+				if ( $payment_method !== GooglePayGateway::ID && $funding_source !== 'googlepay' ) {
+					return $data;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$three_d_secure_contingency =
+					$settings->has( '3d_secure_contingency' )
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+						: '';
+
+				if (
+					$three_d_secure_contingency === 'SCA_ALWAYS'
+					|| $three_d_secure_contingency === 'SCA_WHEN_REQUIRED'
+				) {
+					$data['payment_source']['google_pay'] = array(
+						'attributes' => array(
+							'verification' => array(
+								'method' => $three_d_secure_contingency,
+							),
+						),
+					);
+				}
+
+				return $data;
+			},
+			10,
+			3
 		);
 
 		return true;

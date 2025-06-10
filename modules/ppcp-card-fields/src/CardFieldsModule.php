@@ -9,6 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\CardFields;
 
+use DomainException;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\CardFields\Service\CardCaptureValidator;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -168,6 +172,29 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 			},
 			10,
 			2
+		);
+
+		// Validates if an order with card payment source can be captured.
+		add_action(
+			'woocommerce_paypal_payments_before_capture_order',
+			function( Order $order ) use ( $c ) {
+				$validator = $c->get( 'card-fields.service.card-capture-validator' );
+				assert( $validator instanceof CardCaptureValidator );
+
+				if ( ! $validator->is_valid( $order ) ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
+
+					$logger->warning( "Could not capture order {$order->id()}" );
+
+					if ( apply_filters( 'woocommerce_paypal_payments_force_delete_wc_order_on_failed_capture', true ) ) {
+						// Add delete order flag in WC session to force delete on process payment failure handler.
+						WC()->session->set( 'ppcp_delete_wc_order_on_payment_failure', true );
+					}
+
+					throw new DomainException( esc_html__( 'Could not capture the PayPal order.', 'woocommerce-paypal-payments' ) );
+				}
+			}
 		);
 
 		return true;

@@ -6,10 +6,8 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 
@@ -29,24 +27,17 @@ class OrderFactoryTest extends TestCase
         $order->expects('intent')->andReturn('intent');
         $order->expects('create_time')->andReturn($createTime);
         $order->expects('update_time')->andReturn($updateTime);
-        $order->expects('application_context')->andReturnNull();
         $order->expects('payment_source')->andReturnNull();
         $wcOrder = Mockery::mock(\WC_Order::class);
         $purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnitFactory->expects('from_wc_order')->with($wcOrder)->andReturn($purchaseUnit);
         $payerFactory = Mockery::mock(PayerFactory::class);
-        $applicationRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationFactory = Mockery::mock(ApplicationContextFactory::class);
-        $paymentSourceFactory = Mockery::mock(PaymentSourceFactory::class);
 
 
         $testee = new OrderFactory(
             $purchaseUnitFactory,
-            $payerFactory,
-            $applicationRepository,
-            $applicationFactory,
-            $paymentSourceFactory
+            $payerFactory
         );
         $result = $testee->from_wc_order($wcOrder, $order);
         $resultPurchaseUnit = current($result->purchase_units());
@@ -72,16 +63,10 @@ class OrderFactoryTest extends TestCase
                 ->expects('from_paypal_response')
                 ->andReturn(Mockery::mock(Payer::class));
         }
-        $applicationRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationFactory = Mockery::mock(ApplicationContextFactory::class);
-        $paymentSourceFactory = Mockery::mock(PaymentSourceFactory::class);
 
         $testee = new OrderFactory(
             $purchaseUnitFactory,
-            $payerFactory,
-            $applicationRepository,
-            $applicationFactory,
-            $paymentSourceFactory
+            $payerFactory
         );
         $order = $testee->from_paypal_response($orderData);
 
@@ -161,16 +146,10 @@ class OrderFactoryTest extends TestCase
     {
         $purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
         $payerFactory = Mockery::mock(PayerFactory::class);
-        $applicationRepository = Mockery::mock(ApplicationContextRepository::class);
-        $applicationFactory = Mockery::mock(ApplicationContextFactory::class);
-        $paymentSourceFactory = Mockery::mock(PaymentSourceFactory::class);
 
         $testee = new OrderFactory(
             $purchaseUnitFactory,
-            $payerFactory,
-            $applicationRepository,
-            $applicationFactory,
-            $paymentSourceFactory
+            $payerFactory
         );
 
         $this->expectException(RuntimeException::class);

@@ -64,8 +64,11 @@ class LocalApmProductStatus extends ProductStatus {
 	protected function check_active_state( SellerStatus $seller_status ) : bool {
 		$has_capability = false;
 
-		foreach ( $seller_status->products() as $product ) {
-			if ( $product->name() === 'PAYMENT_METHODS' ) {
+		foreach ( $seller_status->capabilities() as $capability ) {
+			if ( 'ACTIVE' !== $capability->status() ) {
+				continue;
+			}
+			if ( 'PAYPAL_CHECKOUT_ALTERNATIVE_PAYMENT_METHODS' === $capability->name() ) {
 				$has_capability = true;
 				break;
 			}

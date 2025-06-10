@@ -17,3 +17,18 @@
 		}
 	}
 }
+
+.ppcp-r-modal {
+	button.components-button,
+	a.components-button {
+		&:focus:not(:disabled) {
+			outline: none;
+		}
+
+		&:focus-visible:not(:disabled),
+		&:not(.components-tab-panel__tabs-item):focus-visible:not(:disabled)
+		&[data-focus-visible="true"] {
+			outline: 2px solid #{$color-blueberry};
+		}
+	}
+}

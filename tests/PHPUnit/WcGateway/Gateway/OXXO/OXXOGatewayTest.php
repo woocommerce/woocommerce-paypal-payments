@@ -7,9 +7,12 @@ use Mockery;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -22,6 +25,7 @@ class OXXOGatewayTest extends TestCase
 private $orderEndpoint;
 private $purchaseUnitFactory;
 private $shippingPreferenceFactory;
+private $experienceContextBuilder;
 private $environment;
 private $logger;
 private $wcOrder;
@@ -35,6 +39,7 @@ private $testee;
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
 		$this->shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
+		$this->experienceContextBuilder = Mockery::mock(ExperienceContextBuilder::class);
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
@@ -50,11 +55,24 @@ private $testee;
 			$this->orderEndpoint,
 			$this->purchaseUnitFactory,
 			$this->shippingPreferenceFactory,
+			$this->experienceContextBuilder,
 			'oxxo.svg',
 			$this->transactionUrlProvider,
 			$this->environment,
 			$this->logger
 		);
+
+		$experienceContext = Mockery::mock(ExperienceContext::class);
+
+		$this->experienceContextBuilder
+			->shouldReceive('with_default_paypal_config')
+			->andReturn($this->experienceContextBuilder);
+		$this->experienceContextBuilder
+			->shouldReceive('build')
+			->andReturn($experienceContext);
+		$experienceContext
+			->shouldReceive('to_array')
+			->andReturn(['foo' => 'bar']);
 	}
 
 	public function testProcessPaymentSuccess()
@@ -74,6 +92,9 @@ private $testee;
 						'name' => 'John Doe',
 						'email' => 'foo@bar.com',
 						'country_code' => 'MX',
+						'experience_context' => [
+							'foo' => 'bar',
+						]
 					]
 				]
 			)->andReturn((object)[
@@ -93,7 +114,7 @@ private $testee;
 
 		$this->orderEndpoint
 			->shouldReceive('create')
-			->with([$purchaseUnit], $shippingPreference)
+			->with([$purchaseUnit], $shippingPreference, null, '', [], Mockery::any())
 			->andReturn($order);
 
 		$this->wcOrder
@@ -118,11 +139,15 @@ private $testee;
 
 	public function testProcessPaymentFailure()
 	{
+		$this->wcOrder->shouldReceive('get_billing_first_name')->andReturn('John');
+		$this->wcOrder->shouldReceive('get_billing_last_name')->andReturn('Doe');
+		$this->wcOrder->shouldReceive('get_billing_email')->andReturn('foo@bar.com');
+		$this->wcOrder->shouldReceive('get_billing_country')->andReturn('MX');
+
 		list($purchaseUnit, $shippingPreference) = $this->setStubs();
 
 		$this->orderEndpoint
 			->shouldReceive('create')
-			->with([$purchaseUnit], $shippingPreference)
 			->andThrows(RuntimeException::class);
 
 		$this->logger->shouldReceive('error');

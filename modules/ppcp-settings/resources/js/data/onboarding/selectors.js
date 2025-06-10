@@ -35,9 +35,14 @@ export const flags = ( state ) => {
  *
  * @param {{}}      state
  * @param {boolean} ownBrandOnly
+ * @param {string}  storeCountry
  * @return {{products:string[], options:{}}} The ISU products, based on choices made in the onboarding wizard.
  */
-export const determineProductsAndCaps = ( state, ownBrandOnly ) => {
+export const determineProductsAndCaps = (
+	state,
+	ownBrandOnly,
+	storeCountry
+) => {
 	/**
 	 * An array of product-names that are used to build an onboarding URL via the
 	 * PartnerReferrals API. To avoid confusion with the "products" property from the
@@ -80,7 +85,7 @@ export const determineProductsAndCaps = ( state, ownBrandOnly ) => {
 		if ( canUseVaulting ) {
 			apiModules.push( PAYPAL_PRODUCTS.VAULTING );
 		}
-	} else if ( isCasualSeller ) {
+	} else if ( isCasualSeller || 'MX' === storeCountry ) {
 		/**
 		 * Branch 2: Merchant has no business.
 		 * The store uses the Express-checkout product.

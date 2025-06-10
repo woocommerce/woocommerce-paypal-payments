@@ -60,6 +60,13 @@ class FeaturesEligibilityService {
 	private bool $is_pay_later_eligible;
 
 	/**
+	 * Whether Installments is eligible.
+	 *
+	 * @var bool
+	 */
+	private bool $is_installments_eligible;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param bool     $is_save_paypal_eligible   If saving PayPal and Venmo is eligible.
@@ -68,6 +75,7 @@ class FeaturesEligibilityService {
 	 * @param callable $check_google_pay_eligible If Google Pay is eligible.
 	 * @param callable $check_apple_pay_eligible  If Apple Pay is eligible.
 	 * @param bool     $is_pay_later_eligible     If Pay Later is eligible.
+	 * @param bool     $is_installments_eligible   If Installments is eligible.
 	 */
 	public function __construct(
 		bool $is_save_paypal_eligible,
@@ -75,7 +83,8 @@ class FeaturesEligibilityService {
 		bool $is_apm_eligible,
 		callable $check_google_pay_eligible,
 		callable $check_apple_pay_eligible,
-		bool $is_pay_later_eligible
+		bool $is_pay_later_eligible,
+		bool $is_installments_eligible
 	) {
 		$this->is_save_paypal_eligible   = $is_save_paypal_eligible;
 		$this->check_acdc_eligible       = $check_acdc_eligible;
@@ -83,6 +92,7 @@ class FeaturesEligibilityService {
 		$this->check_google_pay_eligible = $check_google_pay_eligible;
 		$this->check_apple_pay_eligible  = $check_apple_pay_eligible;
 		$this->is_pay_later_eligible     = $is_pay_later_eligible;
+		$this->is_installments_eligible  = $is_installments_eligible;
 	}
 
 	/**
@@ -98,6 +108,7 @@ class FeaturesEligibilityService {
 			'google_pay'                      => $this->check_google_pay_eligible,
 			'apple_pay'                       => $this->check_apple_pay_eligible,
 			'pay_later'                       => fn() => $this->is_pay_later_eligible,
+			'installments'                    => fn() => $this->is_installments_eligible,
 		);
 	}
 }

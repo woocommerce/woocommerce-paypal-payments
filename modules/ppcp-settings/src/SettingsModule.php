@@ -13,8 +13,10 @@ use WC_Payment_Gateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
@@ -32,6 +34,7 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
+use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -42,7 +45,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
@@ -156,108 +158,38 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				&& update_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes' )
 		);
 
+		/**
+		 * This hook is fired when the plugin is installed or updated.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			function () use ( $container ) {
+				$path_repository = $container->get( 'settings.service.branded-experience.path-repository' );
+				assert( $path_repository instanceof PathRepository );
+
+				$partner_attribution = $container->get( 'api.helper.partner-attribution' );
+				assert( $partner_attribution instanceof PartnerAttribution );
+
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				$path_repository->persist();
+				$partner_attribution->initialize_bn_code( $general_settings->get_installation_path() );
+			}
+		);
+
+		// Suppress WooCommerce Settings UI elements via CSS to improve the loading experience.
+		$loading_screen_service = $container->get( 'settings.services.loading-screen-service' );
+		assert( $loading_screen_service instanceof LoadingScreenService );
+		$loading_screen_service->register();
+
 		$this->apply_branded_only_limitations( $container );
 
 		add_action(
 			'admin_enqueue_scripts',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			static function ( $hook_suffix ) use ( $container ) {
-				if ( 'woocommerce_page_wc-settings' !== $hook_suffix ) {
-					return;
-				}
-
-				/**
-				 * Require resolves.
-				 *
-				 * @psalm-suppress UnresolvableInclude
-				 */
-				$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/index.asset.php';
-
-				$module_url = $container->get( 'settings.url' );
-
-				wp_register_script(
-					'ppcp-admin-settings',
-					$module_url . '/assets/index.js',
-					$script_asset_file['dependencies'],
-					$script_asset_file['version'],
-					true
-				);
-
-				wp_enqueue_script( 'ppcp-admin-settings', '', array( 'wp-i18n' ), $script_asset_file['version'], false );
-				wp_set_script_translations(
-					'ppcp-admin-settings',
-					'woocommerce-paypal-payments',
-				);
-
-				/**
-				 * Require resolves.
-				 *
-				 * @psalm-suppress UnresolvableInclude
-				 */
-				$style_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/style.asset.php';
-
-				wp_register_style(
-					'ppcp-admin-settings',
-					$module_url . '/assets/style-style.css',
-					$style_asset_file['dependencies'],
-					$style_asset_file['version']
-				);
-
-				$settings = $container->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				wp_enqueue_style( 'ppcp-admin-settings' );
-
-				wp_enqueue_style( 'ppcp-admin-settings-font', 'https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap', array(), $style_asset_file['version'] );
-
-				$is_pay_later_configurator_available = $container->get( 'paylater-configurator.is-available' );
-
-				$script_data = array(
-					'assets'                          => array(
-						'imagesUrl' => $module_url . '/images/',
-					),
-					'wcPaymentsTabUrl'                => admin_url( 'admin.php?page=wc-settings&tab=checkout' ),
-					'pluginSettingsUrl'               => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-					'debug'                           => defined( 'WP_DEBUG' ) && WP_DEBUG,
-					'isPayLaterConfiguratorAvailable' => $is_pay_later_configurator_available,
-					'storeCountry'                    => $container->get( 'wcgateway.store-country' ),
-				);
-
-				if ( $is_pay_later_configurator_available ) {
-					$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-					assert( $partner_attribution instanceof PartnerAttribution );
-
-					wp_enqueue_script(
-						'ppcp-paylater-configurator-lib',
-						'https://www.paypalobjects.com/merchant-library/merchant-configurator.js',
-						array( 'wp-i18n' ),
-						$script_asset_file['version'],
-						true
-					);
-					wp_set_script_translations(
-						'ppcp-paylater-configurator-lib',
-						'woocommerce-paypal-payments',
-					);
-					$script_data['PcpPayLaterConfigurator'] = array(
-						'config'           => array(),
-						'merchantClientId' => $settings->get( 'client_id' ),
-						'partnerClientId'  => $container->get( 'api.partner_merchant_id' ),
-						'bnCode'           => $partner_attribution->get_bn_code(),
-					);
-				}
-
-				wp_localize_script(
-					'ppcp-admin-settings',
-					'ppcpSettings',
-					$script_data
-				);
-
-				// Dequeue the PayPal Subscription script.
-				wp_dequeue_script( 'ppcp-paypal-subscription' );
+			function ( string $hook_suffix ) use ( $container ) : void {
+				$script_data_handler = $container->get( 'settings.service.script-data-handler' );
+				$script_data_handler->localize_scripts( $hook_suffix );
 			}
 		);
 
@@ -391,22 +323,13 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				// Unset BCDC if merchant is eligible for ACDC and country is eligible for card fields.
 				$card_fields_eligible = $container->get( 'card-fields.eligible' );
-				if ( $dcc_product_status->is_active() && $card_fields_eligible ) {
-					unset( $payment_methods[ CardButtonGateway::ID ] );
-				} else {
-					// For non-ACDC regions unset ACDC, local APMs and set BCDC.
-					unset( $payment_methods[ CreditCardGateway::ID ] );
-					unset( $payment_methods['pay-later'] );
-					unset( $payment_methods[ BancontactGateway::ID ] );
-					unset( $payment_methods[ BlikGateway::ID ] );
-					unset( $payment_methods[ EPSGateway::ID ] );
-					unset( $payment_methods[ IDealGateway::ID ] );
-					unset( $payment_methods[ MyBankGateway::ID ] );
-					unset( $payment_methods[ P24Gateway::ID ] );
-					unset( $payment_methods[ TrustlyGateway::ID ] );
-					unset( $payment_methods[ MultibancoGateway::ID ] );
-					unset( $payment_methods[ PayUponInvoiceGateway::ID ] );
-					unset( $payment_methods[ OXXO::ID ] );
+				if ( 'MX' !== $container->get( 'api.shop.country' ) ) {
+					if ( $dcc_product_status->is_active() && $card_fields_eligible ) {
+						unset( $payment_methods[ CardButtonGateway::ID ] );
+					} else {
+						// For non-ACDC regions unset ACDC.
+						unset( $payment_methods[ CreditCardGateway::ID ] );
+					}
 				}
 
 				// Unset Venmo when store location is not United States.
@@ -437,6 +360,18 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				// Unset Pay Upon Invoice if merchant country is not Germany.
 				if ( 'DE' !== $merchant_country ) {
 					unset( $payment_methods[ PayUponInvoiceGateway::ID ] );
+				}
+
+				// Unset all APMs other than OXXO for Mexico.
+				if ( 'MX' === $merchant_country ) {
+					unset( $payment_methods[ BancontactGateway::ID ] );
+					unset( $payment_methods[ BlikGateway::ID ] );
+					unset( $payment_methods[ EPSGateway::ID ] );
+					unset( $payment_methods[ IDealGateway::ID ] );
+					unset( $payment_methods[ MyBankGateway::ID ] );
+					unset( $payment_methods[ P24Gateway::ID ] );
+					unset( $payment_methods[ TrustlyGateway::ID ] );
+					unset( $payment_methods[ MultibancoGateway::ID ] );
 				}
 
 				return $payment_methods;
@@ -618,6 +553,55 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 					if ( $compatibility_checker->is_fastlane_compatible() ) {
 						$payment_methods->toggle_method_state( AxoGateway::ID, true );
+					}
+				}
+
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				$merchant_data    = $general_settings->get_merchant_data();
+				$merchant_country = $merchant_data->merchant_country;
+
+				// Disable all extended checkout card methods if the store is in Mexico.
+				if ( 'MX' === $merchant_country ) {
+					$payment_methods->toggle_method_state( CreditCardGateway::ID, false );
+					$payment_methods->toggle_method_state( ApplePayGateway::ID, false );
+					$payment_methods->toggle_method_state( GooglePayGateway::ID, false );
+				}
+			},
+			10,
+			2
+		);
+
+		// Enable APMs after onboarding if the country is compatible.
+		add_action(
+			'woocommerce_paypal_payments_toggle_payment_gateways_apms',
+			function ( PaymentSettings $payment_methods, array $methods_apm ) use ( $container ) {
+
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				$merchant_data    = $general_settings->get_merchant_data();
+				$merchant_country = $merchant_data->merchant_country;
+
+				// Enable all APM methods.
+				foreach ( $methods_apm as $method ) {
+					// Skip PayUponInvoice if merchant is not in Germany.
+					if ( PayUponInvoiceGateway::ID === $method['id'] && 'DE' !== $merchant_country ) {
+						continue;
+					}
+
+					// For OXXO: enable ONLY if merchant is in Mexico.
+					if ( OXXO::ID === $method['id'] ) {
+						if ( 'MX' === $merchant_country ) {
+							$payment_methods->toggle_method_state( $method['id'], true );
+						}
+						continue;
+					}
+
+					// For all other APMs: enable only if merchant is NOT in Mexico.
+					if ( 'MX' !== $merchant_country ) {
+						$payment_methods->toggle_method_state( $method['id'], true );
 					}
 				}
 			},

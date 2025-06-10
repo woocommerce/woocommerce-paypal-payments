@@ -123,6 +123,13 @@ class TodosEligibilityService {
 	private bool $is_enable_google_pay_eligible;
 
 	/**
+	 * Whether Enabling Installments is eligible.
+	 *
+	 * @var bool
+	 */
+	private bool $is_enable_installments_eligible;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param bool $is_fastlane_eligible                Whether Fastlane is eligible.
@@ -140,6 +147,7 @@ class TodosEligibilityService {
 	 * @param bool $is_google_pay_eligible              Whether Google Pay is eligible.
 	 * @param bool $is_enable_apple_pay_eligible        Whether enabling Apple Pay is eligible.
 	 * @param bool $is_enable_google_pay_eligible       Whether enabling Google Pay is eligible.
+	 * @param bool $is_enable_installments_eligible     Whether enabling Installments is eligible.
 	 */
 	public function __construct(
 		bool $is_fastlane_eligible,
@@ -156,7 +164,8 @@ class TodosEligibilityService {
 		bool $is_apple_pay_eligible,
 		bool $is_google_pay_eligible,
 		bool $is_enable_apple_pay_eligible,
-		bool $is_enable_google_pay_eligible
+		bool $is_enable_google_pay_eligible,
+		bool $is_enable_installments_eligible
 	) {
 		$this->is_fastlane_eligible                      = $is_fastlane_eligible;
 		$this->is_pay_later_messaging_eligible           = $is_pay_later_messaging_eligible;
@@ -173,6 +182,7 @@ class TodosEligibilityService {
 		$this->is_google_pay_eligible                    = $is_google_pay_eligible;
 		$this->is_enable_apple_pay_eligible              = $is_enable_apple_pay_eligible;
 		$this->is_enable_google_pay_eligible             = $is_enable_google_pay_eligible;
+		$this->is_enable_installments_eligible           = $is_enable_installments_eligible;
 	}
 
 	/**
@@ -197,6 +207,7 @@ class TodosEligibilityService {
 			'add_google_pay'                       => fn() => $this->is_google_pay_eligible,
 			'enable_apple_pay'                     => fn() => $this->is_enable_apple_pay_eligible,
 			'enable_google_pay'                    => fn() => $this->is_enable_google_pay_eligible,
+			'enable_installments'                  => fn() => $this->is_enable_installments_eligible,
 		);
 	}
 }

@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -28,7 +29,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Class ApiModule
  */
-class ApiModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -36,6 +37,13 @@ class ApiModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function factories(): array {
+		return require __DIR__ . '/../factories.php';
 	}
 
 	/**

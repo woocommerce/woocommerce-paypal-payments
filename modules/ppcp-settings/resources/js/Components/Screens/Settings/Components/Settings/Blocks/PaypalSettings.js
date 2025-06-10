@@ -28,6 +28,7 @@ const PaypalSettings = () => {
 	} = SettingsHooks.useSettings();
 	const siteData = useSelect( ( select ) => select( 'core' ).getSite(), [] );
 	const siteTitle = siteData?.title;
+	const buttonLanguageChoices = window.ppcpSettings.buttonLanguageChoices;
 	return (
 		<Accordion
 			className="ppcp--paypal-settings"
@@ -128,7 +129,7 @@ const PaypalSettings = () => {
 				) }
 			>
 				<ControlSelect
-					options={ languagesExample }
+					options={ buttonLanguageChoices }
 					value={ buttonLanguage }
 					onChange={ setButtonLanguage }
 					placeholder={ __(
@@ -140,13 +141,6 @@ const PaypalSettings = () => {
 		</Accordion>
 	);
 };
-
-const languagesExample = [
-	{ value: 'en_US', label: 'English' },
-	{ value: 'de_DE', label: 'German' },
-	{ value: 'es_ES', label: 'Spanish' },
-	{ value: 'it_IT', label: 'Italian' },
-];
 
 const subtotalAdjustmentChoices = [
 	{

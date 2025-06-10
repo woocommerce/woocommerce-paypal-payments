@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -215,7 +216,7 @@ class SettingsDataManager {
 
 		$flags->is_business_seller = ! ( $profile_data['is_casual_seller'] ?? false );
 		$flags->use_card_payments  = $profile_data['accept_card_payments'] ?? false;
-		$flags->use_subscriptions  = in_array( 'SUBSCRIPTIONS', $profile_data['products'] ?? array(), true );
+		$flags->use_subscriptions  = in_array( ProductChoicesEnum::SUBSCRIPTIONS, $profile_data['products'] ?? array(), true );
 
 		$this->toggle_payment_gateways( $flags );
 	}
@@ -259,14 +260,24 @@ class SettingsDataManager {
 				$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
 				$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
 
-				// Enable Pay Later for business sellers.
-				$this->payment_methods->toggle_method_state( 'pay-later', true );
+				// Enable Pay Later for business sellers if subscriptions were not selected.
+				// Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
+				if ( ! $flags->use_subscriptions ) {
+					$this->payment_methods->toggle_method_state( 'pay-later', true );
+				}
+
+				// Enable BCDC for business sellers without ACDC.
+				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
 			}
 
-			// Enable all APM methods.
-			foreach ( $methods_apm as $method ) {
-				$this->payment_methods->toggle_method_state( $method['id'], true );
-			}
+			/**
+			 * Allow plugins to modify apm payment gateway states before saving.
+			 *
+			 * @param PaymentSettings $payment_methods The payment methods object.
+			 * @param PaymentSettings $methods_apm List of APM methods.
+			 * @param ConfigurationFlagsDTO $flags Configuration flags that determine which gateways to enable.
+			 */
+			do_action( 'woocommerce_paypal_payments_toggle_payment_gateways_apms', $this->payment_methods, $methods_apm, $flags );
 		}
 
 		/**

@@ -29,13 +29,13 @@ const ACTIVITIES = {
 
 export const useHandleOnboardingButton = ( isSandbox ) => {
 	const { onboardingUrl } = isSandbox
-		? // eslint-disable-next-line react-hooks/rules-of-hooks
-		  CommonHooks.useSandbox()
-		: // eslint-disable-next-line react-hooks/rules-of-hooks
-		  CommonHooks.useProduction();
-	const { ownBrandOnly } = CommonHooks.useWooSettings();
-	const { products, options } =
-		OnboardingHooks.useDetermineProducts( ownBrandOnly );
+		? CommonHooks.useSandbox()
+		: CommonHooks.useProduction();
+	const { ownBrandOnly, storeCountry } = CommonHooks.useWooSettings();
+	const { products, options } = OnboardingHooks.useDetermineProducts(
+		ownBrandOnly,
+		storeCountry
+	);
 	const { startActivity } = CommonHooks.useBusyState();
 	const { authenticateWithOAuth } = CommonHooks.useAuthentication();
 	const [ onboardingUrlState, setOnboardingUrl ] = useState( '' );

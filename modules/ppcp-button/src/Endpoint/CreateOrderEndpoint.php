@@ -15,13 +15,15 @@ use stdClass;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -65,6 +67,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @var ShippingPreferenceFactory
 	 */
 	private $shipping_preference_factory;
+
+	/**
+	 * The ExperienceContextBuilder.
+	 */
+	private ExperienceContextBuilder $experience_context_builder;
 
 	/**
 	 * The order endpoint.
@@ -177,6 +184,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param RequestData               $request_data The RequestData object.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The PurchaseUnit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping_preference factory.
+	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
 	 * @param OrderEndpoint             $order_endpoint The OrderEndpoint object.
 	 * @param PayerFactory              $payer_factory The PayerFactory object.
 	 * @param SessionHandler            $session_handler The SessionHandler object.
@@ -194,6 +202,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		RequestData $request_data,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
+		ExperienceContextBuilder $experience_context_builder,
 		OrderEndpoint $order_endpoint,
 		PayerFactory $payer_factory,
 		SessionHandler $session_handler,
@@ -211,6 +220,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->request_data                     = $request_data;
 		$this->purchase_unit_factory            = $purchase_unit_factory;
 		$this->shipping_preference_factory      = $shipping_preference_factory;
+		$this->experience_context_builder       = $experience_context_builder;
 		$this->api_endpoint                     = $order_endpoint;
 		$this->payer_factory                    = $payer_factory;
 		$this->session_handler                  = $session_handler;
@@ -454,16 +464,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 		);
 
 		$action = in_array( $this->parsed_request_data['context'], $this->pay_now_contexts, true ) ?
-			ApplicationContext::USER_ACTION_PAY_NOW : ApplicationContext::USER_ACTION_CONTINUE;
+			ExperienceContext::USER_ACTION_PAY_NOW : ExperienceContext::USER_ACTION_CONTINUE;
 
 		if ( 'card' === $funding_source ) {
 			if ( CardBillingMode::MINIMAL_INPUT === $this->card_billing_data_mode ) {
-				if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
+				if ( ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
 					if ( $payer ) {
 						$payer->set_address( null );
 					}
 				}
-				if ( ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
+				if ( ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
 					if ( $payer ) {
 						$payer->set_name( null );
 					}
@@ -475,16 +485,23 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
+		$payment_source = new PaymentSource(
+			'paypal',
+			(object) array(
+				'experience_context' => $this->experience_context_builder
+					->with_default_paypal_config( $shipping_preference, $action )
+					->build()->to_array(),
+			)
+		);
+
 		try {
 			return $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
 				$payer,
-				null,
-				'',
-				$action,
 				$payment_method,
-				$data
+				$data,
+				$payment_source
 			);
 		} catch ( PayPalApiException $exception ) {
 			// Looks like currently there is no proper way to validate the shipping address for PayPal,
@@ -505,7 +522,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null
+					$payment_method,
+					$data,
+					$payment_source
 				);
 			}
 

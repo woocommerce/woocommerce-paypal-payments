@@ -1,5 +1,6 @@
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
+import { speak } from '@wordpress/a11y';
 import { useCallback, useEffect, useRef, useState } from '@wordpress/element';
 
 import TopNavigation from '../../../ReusableComponents/TopNavigation';
@@ -21,8 +22,17 @@ const SettingsNavigation = ( {
 	setActivePanel = () => {},
 } ) => {
 	const { persistAll } = useStoreManager();
-
 	const title = __( 'PayPal Payments', 'woocommerce-paypal-payments' );
+	const [ isSaving, setIsSaving ] = useState( false );
+
+	const handleSave = () => {
+		setIsSaving( true );
+		speak(
+			__( 'Saving settings…', 'woocommerce-paypal-payments' ),
+			'assertive'
+		);
+		persistAll();
+	};
 
 	return (
 		<TopNavigation
@@ -38,10 +48,19 @@ const SettingsNavigation = ( {
 		>
 			{ canSave && (
 				<>
-					<Button variant="primary" onClick={ persistAll }>
-						{ __( 'Save', 'woocommerce-paypal-payments' ) }
+					<Button
+						variant="primary"
+						onClick={ handleSave }
+						aria-busy={ isSaving }
+					>
+						{ isSaving
+							? __( 'Saving…', 'woocommerce-paypal-payments' )
+							: __( 'Save', 'woocommerce-paypal-payments' ) }
 					</Button>
-					<SaveStateMessage />
+					<SaveStateMessage
+						setIsSaving={ setIsSaving }
+						isSaving={ isSaving }
+					/>
 				</>
 			) }
 		</TopNavigation>
@@ -50,24 +69,26 @@ const SettingsNavigation = ( {
 
 export default SettingsNavigation;
 
-const SaveStateMessage = () => {
-	const [ isSaving, setIsSaving ] = useState( false );
+const SaveStateMessage = ( { setIsSaving, isSaving } ) => {
 	const [ isVisible, setIsVisible ] = useState( false );
 	const [ isAnimating, setIsAnimating ] = useState( false );
 	const { onStarted, onFinished } = CommonHooks.useActivityObserver();
 	const timerRef = useRef( null );
 
-	const handleActivityStart = useCallback( ( started ) => {
-		if ( started.startsWith( 'persist' ) ) {
-			setIsSaving( true );
-			setIsVisible( false );
-			setIsAnimating( false );
+	const handleActivityStart = useCallback(
+		( started ) => {
+			if ( started.startsWith( 'persist' ) ) {
+				setIsSaving( true );
+				setIsVisible( false );
+				setIsAnimating( false );
 
-			if ( timerRef.current ) {
-				clearTimeout( timerRef.current );
+				if ( timerRef.current ) {
+					clearTimeout( timerRef.current );
+				}
 			}
-		}
-	}, [] );
+		},
+		[ setIsSaving ]
+	);
 
 	const handleActivityDone = useCallback(
 		( done, remaining ) => {
@@ -75,6 +96,14 @@ const SaveStateMessage = () => {
 				setIsSaving( false );
 				setIsVisible( true );
 				setTimeout( () => setIsAnimating( true ), 50 );
+
+				speak(
+					__(
+						'Settings saved successfully.',
+						'woocommerce-paypal-payments'
+					),
+					'assertive'
+				);
 
 				timerRef.current = setTimeout( () => {
 					setIsAnimating( false );
@@ -85,7 +114,7 @@ const SaveStateMessage = () => {
 				}, SAVE_CONFIRMATION_DURATION );
 			}
 		},
-		[ isSaving ]
+		[ isSaving, setIsSaving ]
 	);
 
 	useEffect( () => {
@@ -102,7 +131,7 @@ const SaveStateMessage = () => {
 	} );
 
 	return (
-		<span className={ className }>
+		<span className={ className } role="status" aria-live="polite">
 			<span className="ppcp--inner-text">
 				{ __( 'Completed', 'woocommerce-paypal-payments' ) }
 			</span>

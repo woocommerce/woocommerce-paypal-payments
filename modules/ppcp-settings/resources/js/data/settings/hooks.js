@@ -63,6 +63,7 @@ const useHooks = () => {
 	const [ payNowExperience, setPayNowExperience ] =
 		usePersistent( 'enablePayNow' );
 	const [ logging, setLogging ] = usePersistent( 'enableLogging' );
+	const [ stayUpdated, setStayUpdated ] = usePersistent( 'stayUpdated' );
 
 	const [ disabledCards, setDisabledCards ] =
 		usePersistent( 'disabledCards' );
@@ -82,6 +83,8 @@ const useHooks = () => {
 		setPayNowExperience,
 		logging,
 		setLogging,
+		stayUpdated,
+		setStayUpdated,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
 		brandName,
@@ -126,6 +129,8 @@ export const useSettings = () => {
 		setPayNowExperience,
 		logging,
 		setLogging,
+		stayUpdated,
+		setStayUpdated,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
 		brandName,
@@ -155,6 +160,8 @@ export const useSettings = () => {
 		setPayNowExperience,
 		logging,
 		setLogging,
+		stayUpdated,
+		setStayUpdated,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
 		brandName,

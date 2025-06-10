@@ -647,7 +647,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
 				function() use ( $enabled_on_cart ) {
-					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() || isset( reset( WC()->cart->cart_contents )['subscription_switch'] ) ) {
 						return;
 					}
 
@@ -1901,13 +1901,15 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$variations = $product->get_available_variations( 'objects' );
 			$in_stock   = $this->has_in_stock_variation( $variations );
 		}
+		$enable_button = ! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock &&
+			! ( ( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' ) ) && ! empty( $_GET['switch-subscription'] ) );
 
 		/**
 		 * Allows to filter if PayPal buttons/messages can be rendered for the given product.
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_product_supports_payment_request_button',
-			! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock,
+			$enable_button,
 			$product
 		);
 	}

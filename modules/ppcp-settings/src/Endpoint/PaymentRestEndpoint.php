@@ -197,6 +197,10 @@ class PaymentRestEndpoint extends RestEndpoint {
 				$gateway_settings[ $key ]['depends_on_payment_methods'] = $payment_method['depends_on_payment_methods'];
 			}
 
+			if ( isset( $payment_method['depends_on_payment_methods_values'] ) ) {
+				$gateway_settings[ $key ]['depends_on_payment_methods_values'] = $payment_method['depends_on_payment_methods_values'];
+			}
+
 			if ( isset( $payment_method['depends_on_settings'] ) ) {
 				$gateway_settings[ $key ]['depends_on_settings'] = $payment_method['depends_on_settings'];
 			}

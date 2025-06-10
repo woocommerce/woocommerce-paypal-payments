@@ -317,6 +317,34 @@ class FeaturesDefinition {
 					),
 				),
 			),
+			'installments'                    => array(
+				'title'       => __( 'Installments', 'woocommerce-paypal-payments' ),
+				'description' =>
+					__( 'Allow your customers to pay in installments without interest while you receive the full payment.*', 'woocommerce-paypal-payments' ) .
+					'<p>' . __( 'Activate your Installments without interest with PayPal.', 'woocommerce-paypal-payments' ) . '</p>' .
+					'<p>' . sprintf(
+					/* translators: %s: Link to terms and conditions */
+						__( '*You will receive the full payment minus the applicable PayPal fee. See %s.', 'woocommerce-paypal-payments' ),
+						'<a href="https://www.paypal.com/mx/webapps/mpp/merchant-fees">' . __( 'terms and conditions', 'woocommerce-paypal-payments' ) . '</a>'
+					) . '</p>',
+				'enabled'     => $this->merchant_capabilities['installments'],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'url'      => 'https://www.paypal.com/businessmanage/preferences/installmentplan',
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'url'      => 'https://www.paypal.com/businessmanage/preferences/installmentplan',
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+				),
+			),
 		);
 	}
 }

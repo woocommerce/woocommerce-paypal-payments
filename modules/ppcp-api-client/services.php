@@ -47,7 +47,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
@@ -74,7 +73,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -254,7 +252,6 @@ return array(
 		assert( $settings instanceof Settings );
 
 		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
@@ -263,7 +260,6 @@ return array(
 			$patch_collection_factory,
 			$intent,
 			$logger,
-			$application_context_repository,
 			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
 			$container->get( 'wcgateway.fraudnet' ),
@@ -315,11 +311,6 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.repository.application-context'             => static function( ContainerInterface $container ) : ApplicationContextRepository {
-
-		$settings = $container->get( 'wcgateway.settings' );
-		return new ApplicationContextRepository( $settings );
-	},
 	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ) : PartnerReferralsData {
 
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
@@ -338,9 +329,6 @@ return array(
 		return new OrderRepository(
 			$container->get( 'api.endpoint.order' )
 		);
-	},
-	'api.factory.application-context'                => static function ( ContainerInterface $container ) : ApplicationContextFactory {
-		return new ApplicationContextFactory();
 	},
 	'api.factory.payment-token'                      => static function ( ContainerInterface $container ) : PaymentTokenFactory {
 		return new PaymentTokenFactory();
@@ -440,13 +428,9 @@ return array(
 	'api.factory.order'                              => static function ( ContainerInterface $container ): OrderFactory {
 		$purchase_unit_factory          = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory                  = $container->get( 'api.factory.payer' );
-		$application_context_repository = $container->get( 'api.repository.application-context' );
-		$application_context_factory    = $container->get( 'api.factory.application-context' );
 		return new OrderFactory(
 			$purchase_unit_factory,
-			$payer_factory,
-			$application_context_repository,
-			$application_context_factory
+			$payer_factory
 		);
 	},
 	'api.factory.payments'                           => static function ( ContainerInterface $container ): PaymentsFactory {

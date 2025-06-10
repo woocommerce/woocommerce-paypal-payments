@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Button\Helper
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
@@ -19,49 +19,49 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory
  */
 class ThreeDSecure {
 
-	const NO_DECISION = 0;
-	const PROCEED     = 1;
-	const REJECT      = 2;
-	const RETRY       = 3;
+	public const NO_DECISION = 0;
+	public const PROCEED     = 1;
+	public const REJECT      = 2;
+	public const RETRY       = 3;
 
 	/**
 	 * Card authentication result factory.
 	 *
 	 * @var CardAuthenticationResultFactory
 	 */
-	private $card_authentication_result_factory;
+	private CardAuthenticationResultFactory $authentication_result;
 
 	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
-	protected $logger;
+	protected LoggerInterface $logger;
 
 	/**
 	 * ThreeDSecure constructor.
 	 *
-	 * @param CardAuthenticationResultFactory $card_authentication_result_factory Card authentication result factory.
-	 * @param LoggerInterface                 $logger The logger.
+	 * @param CardAuthenticationResultFactory $authentication_factory Card authentication result factory.
+	 * @param LoggerInterface                 $logger                 The logger.
 	 */
 	public function __construct(
-		CardAuthenticationResultFactory $card_authentication_result_factory,
+		CardAuthenticationResultFactory $authentication_factory,
 		LoggerInterface $logger
 	) {
-		$this->logger                             = $logger;
-		$this->card_authentication_result_factory = $card_authentication_result_factory;
+		$this->logger                = $logger;
+		$this->authentication_result = $authentication_factory;
 	}
 
 	/**
 	 * Determine, how we proceed with a given order.
 	 *
-	 * @link https://developer.paypal.com/docs/business/checkout/add-capabilities/3d-secure/#authenticationresult
+	 * @link https://developer.paypal.com/docs/checkout/advanced/customize/3d-secure/response-parameters/
 	 *
 	 * @param Order $order The order for which the decision is needed.
 	 *
 	 * @return int
 	 */
-	public function proceed_with_order( Order $order ): int {
+	public function proceed_with_order( Order $order ) : int {
 
 		do_action( 'woocommerce_paypal_payments_three_d_secure_before_check', $order );
 
@@ -70,29 +70,44 @@ class ThreeDSecure {
 			return $this->return_decision( self::NO_DECISION, $order );
 		}
 
-		if ( ! ( $payment_source->properties()->brand ?? '' ) ) {
+		if ( isset( $payment_source->properties()->card ) ) {
+			/**
+			 * GooglePay provides the credit-card details and authentication-result
+			 * via the "cards" attribute. We assume, that this structure is also
+			 * used for other payment methods that support 3DS.
+			 */
+			$card_properties = $payment_source->properties()->card;
+		} else {
+			/**
+			 * For regular credit card payments (via PayPal) we get all details
+			 * directly in the payment_source properties.
+			 */
+			$card_properties = $payment_source->properties();
+		}
+
+		if ( empty( $card_properties->brand ) ) {
 			return $this->return_decision( self::NO_DECISION, $order );
 		}
-		if ( ! ( $payment_source->properties()->authentication_result ?? '' ) ) {
+
+		if ( empty( $card_properties->authentication_result ) ) {
 			return $this->return_decision( self::NO_DECISION, $order );
 		}
 
-		$authentication_result = $payment_source->properties()->authentication_result ?? null;
-		if ( $authentication_result ) {
-			$result = $this->card_authentication_result_factory->from_paypal_response( $authentication_result );
+		$result    = $this->authentication_result->from_paypal_response( $card_properties->authentication_result );
+		$liability = $result->liability_shift();
 
-			$this->logger->info( '3DS Authentication Result: ' . wc_print_r( $result->to_array(), true ) );
+		$this->logger->info( '3DS Authentication Result: ' . wc_print_r( $result->to_array(), true ) );
 
-			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
-				return $this->return_decision( self::PROCEED, $order );
-			}
+		if ( $liability === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
+			return $this->return_decision( self::PROCEED, $order );
+		}
 
-			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
-				return $this->return_decision( self::RETRY, $order );
-			}
-			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_NO ) {
-				return $this->return_decision( $this->no_liability_shift( $result ), $order );
-			}
+		if ( $liability === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
+			return $this->return_decision( self::RETRY, $order );
+		}
+
+		if ( $liability === AuthResult::LIABILITY_SHIFT_NO ) {
+			return $this->return_decision( $this->no_liability_shift( $result ), $order );
 		}
 
 		return $this->return_decision( self::NO_DECISION, $order );
@@ -102,12 +117,13 @@ class ThreeDSecure {
 	 * Processes and returns a ThreeD secure decision.
 	 *
 	 * @param int   $decision The ThreeD secure decision.
-	 * @param Order $order The PayPal Order object.
+	 * @param Order $order    The PayPal Order object.
 	 * @return int
 	 */
-	public function return_decision( int $decision, Order $order ) {
+	public function return_decision( int $decision, Order $order ) : int {
 		$decision = apply_filters( 'woocommerce_paypal_payments_three_d_secure_decision', $decision, $order );
 		do_action( 'woocommerce_paypal_payments_three_d_secure_after_check', $order, $decision );
+
 		return $decision;
 	}
 
@@ -118,42 +134,40 @@ class ThreeDSecure {
 	 *
 	 * @return int
 	 */
-	private function no_liability_shift( AuthResult $result ): int {
+	private function no_liability_shift( AuthResult $result ) : int {
+		$enrollment     = $result->enrollment_status();
+		$authentication = $result->authentication_result();
 
-		if (
-			$result->enrollment_status() === AuthResult::ENROLLMENT_STATUS_BYPASS
-			&& ! $result->authentication_result()
-		) {
-			return self::PROCEED;
-		}
-		if (
-			$result->enrollment_status() === AuthResult::ENROLLMENT_STATUS_UNAVAILABLE
-			&& ! $result->authentication_result()
-		) {
-			return self::PROCEED;
-		}
-		if (
-			$result->enrollment_status() === AuthResult::ENROLLMENT_STATUS_NO
-			&& ! $result->authentication_result()
-		) {
-			return self::PROCEED;
+		if ( ! $authentication ) {
+			if ( $enrollment === AuthResult::ENROLLMENT_STATUS_BYPASS ) {
+				return self::PROCEED;
+			}
+
+			if ( $enrollment === AuthResult::ENROLLMENT_STATUS_UNAVAILABLE ) {
+				return self::PROCEED;
+			}
+
+			if ( $enrollment === AuthResult::ENROLLMENT_STATUS_NO ) {
+				return self::PROCEED;
+			}
 		}
 
-		if ( $result->authentication_result() === AuthResult::AUTHENTICATION_RESULT_REJECTED ) {
+		if ( $authentication === AuthResult::AUTHENTICATION_RESULT_REJECTED ) {
 			return self::REJECT;
 		}
 
-		if ( $result->authentication_result() === AuthResult::AUTHENTICATION_RESULT_NO ) {
+		if ( $authentication === AuthResult::AUTHENTICATION_RESULT_NO ) {
 			return self::REJECT;
 		}
 
-		if ( $result->authentication_result() === AuthResult::AUTHENTICATION_RESULT_UNABLE ) {
+		if ( $authentication === AuthResult::AUTHENTICATION_RESULT_UNABLE ) {
 			return self::RETRY;
 		}
 
-		if ( ! $result->authentication_result() ) {
+		if ( ! $authentication ) {
 			return self::RETRY;
 		}
+
 		return self::NO_DECISION;
 	}
 }

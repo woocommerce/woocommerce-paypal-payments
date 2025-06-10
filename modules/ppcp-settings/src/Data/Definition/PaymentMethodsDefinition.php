@@ -137,10 +137,10 @@ class PaymentMethodsDefinition {
 
 		$gateway_title       = $gateway ? $gateway->get_title() : $title;
 		$gateway_description = $gateway ? $gateway->get_description() : $description;
-
-		$config = array(
+		$enabled             = $this->settings->is_method_enabled( $gateway_id );
+		$config              = array(
 			'id'              => $gateway_id,
-			'enabled'         => $this->settings->is_method_enabled( $gateway_id ),
+			'enabled'         => $enabled,
 			'title'           => str_replace( '&amp;', '&', $gateway_title ),
 			'description'     => $gateway_description,
 			'icon'            => $icon,

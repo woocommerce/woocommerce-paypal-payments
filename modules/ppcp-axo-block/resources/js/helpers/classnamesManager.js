@@ -10,7 +10,7 @@ import { STORE_NAME } from '../stores/axoStore';
  */
 export const setupAuthenticationClassToggle = () => {
 	const targetSelector =
-		'.wp-block-woocommerce-checkout-express-payment-block';
+		'.wc-block-components-express-payment--checkout, .wp-block-woocommerce-checkout-express-payment-block';
 	const authClass = 'wc-block-axo-is-authenticated';
 
 	const updateAuthenticationClass = () => {

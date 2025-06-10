@@ -162,14 +162,15 @@ export const useNavigationState = () => {
 	};
 };
 
-export const useDetermineProducts = ( ownBrandOnly ) => {
+export const useDetermineProducts = ( ownBrandOnly, storeCountry ) => {
 	return useSelect(
 		( select ) => {
 			return select( STORE_NAME ).determineProductsAndCaps(
-				ownBrandOnly
+				ownBrandOnly,
+				storeCountry
 			);
 		},
-		[ ownBrandOnly ]
+		[ ownBrandOnly, storeCountry ]
 	);
 };
 

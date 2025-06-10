@@ -28,6 +28,7 @@ const PAYMENT_ICONS = [
 	{ name: 'blik', isOwnBrand: true, onlyAcdc: true },
 	{ name: 'ideal', isOwnBrand: true, onlyAcdc: true },
 	{ name: 'bancontact', isOwnBrand: true, onlyAcdc: true },
+	{ name: 'oxxo', isOwnBrand: true, onlyAcdc: false, countries: [ 'MX' ] },
 ];
 
 // Default configuration, used for all countries, unless they override individual attributes below.
@@ -116,16 +117,16 @@ const COUNTRY_CONFIGS = {
 	MX: {
 		extendedMethods: [
 			{
-				name: 'CardFields',
-				Component: CardFields,
+				name: 'CreditDebitCards',
+				Component: CreditDebitCards,
 				isOwnBrand: false,
-				isAcdc: true,
+				isAcdc: false,
 			},
 			{
 				name: 'APMs',
 				Component: AlternativePaymentMethods,
 				isOwnBrand: true,
-				isAcdc: true,
+				isAcdc: false,
 			},
 		],
 	},
@@ -211,6 +212,11 @@ const getRelevantIcons = ( country, includeAcdc, onlyBranded ) =>
 				return true;
 			}
 
+			// If we're in Mexico, only show OXXO from the APMs.
+			if ( country === 'MX' && onlyAcdc ) {
+				return false;
+			}
+
 			if ( onlyBranded && ! isOwnBrand ) {
 				return false;
 			}
@@ -277,8 +283,11 @@ export const usePaymentConfig = (
 		const availableOptionalMethods = filterMethods(
 			config.extendedMethods,
 			[
-				// Either include Acdc or non-Acdc methods.
-				( method ) => method.isAcdc === canUseCardPayments,
+				// Either include Acdc or non-Acdc methods except for Mexico.
+				( method ) =>
+					country === 'MX'
+						? ! method.isAcdc || canUseCardPayments
+						: method.isAcdc === canUseCardPayments,
 				// Only include own-brand methods when ownBrandOnly is true.
 				( method ) => ! ownBrandOnly || method.isOwnBrand === true,
 				// Only include Fastlane when hasFastlane is true.
