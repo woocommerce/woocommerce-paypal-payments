@@ -14,7 +14,6 @@ import { usePaymentConfig } from '../hooks/usePaymentConfig';
 const StepWelcome = ( { setStep, currentStep } ) => {
 	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
 	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
-	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
 	const { icons } = usePaymentConfig(
 		storeCountry,
