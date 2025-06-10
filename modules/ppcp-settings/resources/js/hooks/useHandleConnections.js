@@ -28,9 +28,9 @@ const ACTIVITIES = {
 };
 
 export const useHandleOnboardingButton = ( isSandbox ) => {
-	const { onboardingUrl } = isSandbox
-		? CommonHooks.useSandbox()
-		: CommonHooks.useProduction();
+	const sandboxData = CommonHooks.useSandbox();
+	const productionData = CommonHooks.useProduction();
+	const { onboardingUrl } = isSandbox ? sandboxData : productionData;
 	const { ownBrandOnly, storeCountry } = CommonHooks.useWooSettings();
 	const { products, options } = OnboardingHooks.useDetermineProducts(
 		ownBrandOnly,
