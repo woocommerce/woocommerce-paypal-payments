@@ -38,7 +38,19 @@
     "lint:md:fix": "wp-scripts lint-md-docs --fix ./**/*.md README.md",
     "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
     "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
-    "all": "npx playwright test --workers=1 --project \"all\""
+    "all": "npx playwright test --workers=1 --project \"all\"",
+    "reset:sse": "\"\"C:\\Program Files\\Git\\bin\\bash.exe\" reset-sse.sh\"",
+    "setup:store:default": "npx playwright test store-default.setup",
+    "setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
+    "setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
+    "setup:tax:inc": "npx playwright test --grep=\"setup:tax:inc;\"",
+    "setup:tax:exc": "npx playwright test --grep=\"setup:tax:exc;\"",
+    "setup:pcp:usa": "npx playwright test --grep=\"setup:pcp:usa;\"",
+    "setup:pcp:germany": "npx playwright test --grep \"setup:pcp:germany;\"",
+    "setup:pcp:mexico": "npx playwright test --grep \"setup:pcp:mexico;\"",
+    "setup:pcp:usa:vaulting": "npx playwright test --grep \"setup:pcp:usa:vaulting;\"",
+    "setup:pcp:usa:vaulting:classic": "npx playwright test --grep \"setup:pcp:usa:vaulting:classic;\"",
+    "setup:pcp:usa:subscription": "npx playwright test --grep \"setup:pcp:usa:subscription;\""
   },
   "eslintConfig": {
     "extends": [

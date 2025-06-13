@@ -95,6 +95,12 @@ export default defineConfig< BaseExtend >( {
 			fullyParallel: false,
 		},
 		{
+			name: 'setup-store',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /store\.setup\.ts/,
+			fullyParallel: false,
+		},
+		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
 		},

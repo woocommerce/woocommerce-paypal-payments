@@ -13,6 +13,7 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
     - [Additional options to run tests from command line](#additional-options-to-run-tests-from-command-line)
 - [Autotest Execution workflow](#autotest-execution-workflow)
 - [Coding standards](#coding-standards)
+- [Automated env setup scripts](#automated-env-setup-scripts)
 
 ## Test project structure
 
@@ -225,4 +226,83 @@ Before commiting changes run following command:
 
 ```bash
 npm run lint:js:fix
+```
+
+## Automated env setup scripts
+
+### Reset SSE env
+
+```bash
+npm run reset:sse
+```
+
+### Setup store
+
+- Installs WooCommerce, Storefront theme, additional plugins (WP Debugging, Disable Nonce, Subscriptions, etc.).
+- Configures website permalinks (`%postname%`).
+- Configures WooCommerce default settings (country, currency, taxes, shipping, API keys, emails).
+- Creates classic pages, products, coupons, registered customer.
+
+```bash
+npm run setup:store:default
+```
+
+### Setup block pages
+
+```bash
+npm run setup:checkout:block
+```
+
+### Setup classic pages
+
+```bash
+npm run setup:checkout:classic
+```
+
+### Setup taxes included
+
+```bash
+npm run setup:tax:inc
+```
+
+### Setup taxes excluded
+
+```bash
+npm run setup:tax:exc
+```
+
+### Setup US store and merchant (block pages)
+
+```bash
+npm run setup:pcp:usa
+```
+
+### Setup German store and merchant (block pages)
+
+```bash
+npm run setup:pcp:germany
+```
+
+### Setup Mexican store and merchant (block pages)
+
+```bash
+npm run setup:pcp:mexico
+```
+
+### Setup US store and merchant with vaulting (PayPal, ACDC) enabled (block pages)
+
+```bash
+npm run setup:pcp:usa:vaulting
+```
+
+### Setup US store and merchant with vaulting (PayPal, ACDC) enabled (classic pages)
+
+```bash
+npm run setup:pcp:usa:vaulting:classic
+```
+
+### Setup US store and merchant with subscription plugin and products (block pages)
+
+```bash
+npm run setup:pcp:usa:subscription
 ```
