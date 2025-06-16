@@ -230,6 +230,16 @@ npm run lint:js:fix
 
 ## Automated env setup scripts
 
+Local usage of _automated env setup scripts_ assumes that the following steps are fulfilled:
+
+1. Your current terminal dir to run scripts is `./tests/qa`.
+
+2. Dependencies and `node_modules` are installed (see [this section](#installation-of-node_modules)).
+
+	> Note: for now the storage of .zip files is restricted in .gitignore. Please ask someone of QA to provide the content of `./tests/qa/resources/files` dir.
+
+3. `.env` file is configured as per step 2 of [this section](#project-configuration) (simply copy-paste it from `PCP .env` vault of 1Password).
+
 ### Reset SSE env
 
 ```bash

@@ -197,14 +197,6 @@ export class Utils {
 			products,
 		} = data;
 
-		if ( wpDebugging === true ) {
-			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
-		}
-
-		if ( wpDebugging === false ) {
-			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
-		}
-
 		if ( subscription === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
 		}
@@ -213,6 +205,14 @@ export class Utils {
 			await this.requestUtils.deactivatePlugin(
 				subscriptionsPlugin.slug
 			);
+		}
+
+		if ( wpDebugging === true ) {
+			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
+		}
+
+		if ( wpDebugging === false ) {
+			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 		}
 
 		if ( classicPages === true ) {

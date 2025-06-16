@@ -43,26 +43,26 @@ type EnvConfig = {
 const configureEnv = ( data: EnvConfig ) => {
 	const { title, store, pcp } = data;
 
-	setup( title, async ( { utils, pcpApi } ) => {
-		await setup.step('Install/activate PCP', async () => {
+	if( store ) {
+		setup( `${ title } Setup store settings`, async ( { utils } ) => {
+			await utils.configureStore( store );
+		} );
+	}
+
+	if( pcp ) {
+		setup( `${ title } Install/activate PCP`, async ( { utils } ) => {
 			await utils.installAndActivatePcp();
 		} );
 
-		if( store ) {
-			await setup.step('Setup store settings', async () => {
-				await utils.configureStore( store );
-			} );
-		}
-
 		if( pcp?.resetDb ) {
-			await setup.step('Reset PCP DB', async () => {
+			setup( `${ title } Reset PCP DB`, async ( { pcpApi } ) => {
 				await pcpApi.resetDb();
 			} );
 		}
 
 		if( pcp?.onboarding ) {
+			setup( `${ title } Onboarding`, async ( { pcpApi } ) => {
 			const { merchant, onboardingOptions } = pcp.onboarding;
-			await setup.step('Onboarding', async () => {
 				await pcpApi.connectMerchant(
 					merchant.client_id,
 					merchant.client_secret,
@@ -72,17 +72,17 @@ const configureEnv = ( data: EnvConfig ) => {
 		}
 
 		if( pcp?.settings ) {
-			await setup.step('Update PCP settings', async () => {
+			setup( `${ title } Update PCP settings`, async ( { pcpApi } ) => {
 				await pcpApi.updatePcpSettings( pcp.settings );
 			} );
 		}
-		
+			
 		if( pcp?.paymentMethods ) {
-			await setup.step('Update PCP payment methods', async () => {
+			setup( `${ title } Update PCP payment methods`, async ( { pcpApi } ) => {
 				await pcpApi.updatePcpPaymentMethods( pcp.paymentMethods );
 			} );
 		}
-	} );
+	}
 }
 
 configureEnv( {

@@ -96,7 +96,6 @@ export default defineConfig< BaseExtend >( {
 		},
 		{
 			name: 'setup-store',
-			dependencies: [ 'setup-woocommerce' ],
 			testMatch: /store\.setup\.ts/,
 			fullyParallel: false,
 		},
