@@ -354,6 +354,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( 'pay-now' === $data['context'] && is_a( $wc_order, \WC_Order::class ) ) {
+				$wc_order->update_meta_data( PayPalGateway::ORDER_STATUS_META_KEY, $order->status()->name() );
 				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 				$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 

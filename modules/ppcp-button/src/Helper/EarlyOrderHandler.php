@@ -154,7 +154,9 @@ class EarlyOrderHandler {
 		 */
 		WC()->session->set( 'order_awaiting_payment', $order_id );
 
+		/** @var \WC_Order $wc_order */
 		$wc_order = wc_get_order( $order_id );
+		$wc_order->update_meta_data( PayPalGateway::ORDER_STATUS_META_KEY, $order->status()->name() );
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 

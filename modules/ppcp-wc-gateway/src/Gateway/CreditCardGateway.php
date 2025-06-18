@@ -470,6 +470,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 					}
 
 					$order = $this->order_endpoint->order( $create_order->id );
+					$wc_order->update_meta_data( PayPalGateway::ORDER_STATUS_META_KEY, $order->status()->name() );
 					$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 					$wc_order->add_payment_token( $token );
 
