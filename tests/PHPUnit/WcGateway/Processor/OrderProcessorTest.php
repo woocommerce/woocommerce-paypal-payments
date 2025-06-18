@@ -79,8 +79,9 @@ class OrderProcessorTest extends TestCase
 		    ->shouldReceive('is')
 		    ->with(OrderStatus::COMPLETED)
 		    ->andReturn(true);
+		$orderStatus->shouldReceive('name')->andReturn(OrderStatus::COMPLETED);
 
-        $orderId = 'abc';
+		$orderId = 'abc';
         $orderIntent = 'AUTHORIZE';
 
         $currentOrder = Mockery::mock(Order::class);
@@ -183,6 +184,12 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
+		$wcOrder
+			->expects('update_meta_data')
+			->with(
+				PayPalGateway::ORDER_STATUS_META_KEY,
+				OrderStatus::COMPLETED
+			);
         $wcOrder
             ->expects('update_status')
             ->with('on-hold', 'Awaiting payment.');
@@ -231,7 +238,8 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('is')
             ->with(OrderStatus::COMPLETED)
             ->andReturn(true);
-        $orderId = 'abc';
+		$orderStatus->shouldReceive('name')->andReturn(OrderStatus::COMPLETED);
+		$orderId = 'abc';
         $orderIntent = 'CAPTURE';
         $currentOrder = Mockery::mock(Order::class);
         $currentOrder
@@ -324,6 +332,12 @@ class OrderProcessorTest extends TestCase
             );
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
+		$wcOrder
+			->expects('update_meta_data')
+			->with(
+				PayPalGateway::ORDER_STATUS_META_KEY,
+				OrderStatus::COMPLETED
+			);
         $wcOrder->expects('set_transaction_id')
             ->with($transactionId);
         $wcOrder
@@ -374,8 +388,9 @@ class OrderProcessorTest extends TestCase
 		$orderStatus
 			->expects('is')
 			->with(OrderStatus::CREATED)
-			->andReturn(false);
-        $orderId = 'abc';
+			->andReturn(true);
+		$orderStatus->shouldReceive('name')->andReturn(OrderStatus::CREATED);
+		$orderId = 'abc';
         $orderIntent = 'CAPTURE';
         $currentOrder = Mockery::mock(Order::class);
         $currentOrder
@@ -450,6 +465,12 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
+		$wcOrder
+			->expects('update_meta_data')
+			->with(
+				PayPalGateway::ORDER_STATUS_META_KEY,
+				OrderStatus::CREATED
+			);
 		$wcOrder->shouldReceive('save');
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);

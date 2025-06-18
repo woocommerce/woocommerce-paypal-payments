@@ -9,6 +9,8 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
@@ -109,11 +111,16 @@ private $testee;
 				]
 			]);
 
+		$orderStatus = Mockery::mock(OrderStatus::class);
+		$orderStatus->shouldReceive('is')->andReturn(true);
+		$orderStatus->shouldReceive('name')->andReturn('AUTHORIZED');
+
 		$order = Mockery::mock(Order::class);
 		$order->shouldReceive('id')->andReturn('1');
 		$order->shouldReceive('intent');
 		$order->shouldReceive('payment_source');
 		$order->shouldReceive('payer');
+		$order->shouldReceive('status')->andReturn($orderStatus);
 		$order->shouldReceive('purchase_units')->andReturn([]);
 
 		$this->orderEndpoint

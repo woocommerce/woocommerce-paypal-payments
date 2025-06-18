@@ -109,6 +109,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 
 		$orderStatus = Mockery::mock(OrderStatus::class);
 		$orderStatus->shouldReceive('is')->andReturn(true);
+		$orderStatus->shouldReceive('name')->andReturn('AUTHORIZED');
 		$order->shouldReceive('status')->andReturn($orderStatus);
 
 		$order->shouldReceive('purchase_units')->andReturn([$purchaseUnit]);
