@@ -58,6 +58,10 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			hasText: 'Address Verification Result',
 		} );
 
+	// Intent Authorization locators
+	notCapturedIndicator = () => this.page.getByText( 'Not captured' );
+	voidButton = () => this.page.locator( '#pcpVoid' );
+
 	// Actions
 
 	/**
@@ -100,6 +104,15 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 		// await expect(orderNote).toContainText(`Postal Match: N`);
 		// await expect(orderNote).toContainText(`Card Brand: ${payment.card_type}`);
 		// await expect(orderNote).toContainText(`Card Last Digits: ${payment.card_number.slice(-4)}`);
+	};
+
+	/**
+	 * Asserts intent authorized state elements on order edit page
+	 */
+	assertIntentAuthorizedState = async () => {
+		await expect( this.notCapturedIndicator() ).toBeVisible();
+		await expect( this.voidButton() ).toBeVisible();
+		await expect( this.voidButton() ).toBeEnabled();
 	};
 
 	/**
@@ -196,6 +209,11 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			await this.assertPayPalEmailAddress(
 				orderData.payment.payPalAccount.email
 			);
+		}
+
+		// Intent Authorization assertions
+		if ( orderData.payment.isAuthorized ) {
+			await this.assertIntentAuthorizedState();
 		}
 	};
 
