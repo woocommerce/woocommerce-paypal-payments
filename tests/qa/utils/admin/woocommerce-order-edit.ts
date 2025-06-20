@@ -58,7 +58,6 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 			hasText: 'Address Verification Result',
 		} );
 
-	// Intent Authorization locators
 	notCapturedIndicator = () => this.page.getByText( 'Not captured' );
 	voidButton = () => this.page.locator( '#pcpVoid' );
 
