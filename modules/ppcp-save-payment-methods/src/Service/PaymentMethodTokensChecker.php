@@ -39,8 +39,11 @@ class PaymentMethodTokensChecker {
 	 * @return bool
 	 */
 	public function has_paypal_payment_token( string $customer_id ): bool {
-		$tokens = $this->payment_method_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+		if ( ! $customer_id ) {
+			return false;
+		}
 
+		$tokens = $this->payment_method_tokens_endpoint->payment_tokens_for_customer( $customer_id );
 		foreach ( $tokens as $token ) {
 			$payment_source = $token['payment_source']->name() ?? '';
 			if ( $payment_source === 'paypal' ) {
