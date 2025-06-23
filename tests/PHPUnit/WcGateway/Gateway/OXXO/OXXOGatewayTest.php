@@ -9,7 +9,6 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
@@ -111,6 +110,7 @@ private $testee;
 		$order->shouldReceive('intent');
 		$order->shouldReceive('payment_source');
 		$order->shouldReceive('payer');
+		$order->shouldReceive('purchase_units')->andReturn([]);
 
 		$this->orderEndpoint
 			->shouldReceive('create')

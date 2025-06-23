@@ -254,6 +254,11 @@ class SmartButton implements SmartButtonInterface {
 	protected PartnerAttribution $partner_attribution;
 
 	/**
+	 * Whether the server-side shipping callback is enabled (feature flag).
+	 */
+	private bool $server_side_shipping_callback_enabled;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                    $module_url                        The URL to the module.
@@ -279,6 +284,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param PaymentTokensEndpoint     $payment_tokens_endpoint           Payment tokens endpoint.
 	 * @param LoggerInterface           $logger                            The logger.
 	 * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
+	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
 	 * @param DisabledFundingSources    $disabled_funding_sources          List of funding sources to be disabled.
 	 * @param CardPaymentsConfiguration $dcc_configuration                 The DCC Gateway Configuration.
 	 * @param PartnerAttribution        $partner_attribution The PayPal Partner Attribution Helper.
@@ -307,36 +313,38 @@ class SmartButton implements SmartButtonInterface {
 		PaymentTokensEndpoint $payment_tokens_endpoint,
 		LoggerInterface $logger,
 		bool $should_handle_shipping_in_paypal,
+		bool $server_side_shipping_callback_enabled,
 		DisabledFundingSources $disabled_funding_sources,
 		CardPaymentsConfiguration $dcc_configuration,
 		PartnerAttribution $partner_attribution
 	) {
-		$this->module_url                        = $module_url;
-		$this->version                           = $version;
-		$this->session_handler                   = $session_handler;
-		$this->settings                          = $settings;
-		$this->payer_factory                     = $payer_factory;
-		$this->client_id                         = $client_id;
-		$this->request_data                      = $request_data;
-		$this->dcc_applies                       = $dcc_applies;
-		$this->subscription_helper               = $subscription_helper;
-		$this->messages_apply                    = $messages_apply;
-		$this->environment                       = $environment;
-		$this->payment_token_repository          = $payment_token_repository;
-		$this->settings_status                   = $settings_status;
-		$this->currency                          = $currency;
-		$this->all_funding_sources               = $all_funding_sources;
-		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
-		$this->early_validation_enabled          = $early_validation_enabled;
-		$this->pay_now_contexts                  = $pay_now_contexts;
-		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
-		$this->vault_v3_enabled                  = $vault_v3_enabled;
-		$this->logger                            = $logger;
-		$this->payment_tokens_endpoint           = $payment_tokens_endpoint;
-		$this->should_handle_shipping_in_paypal  = $should_handle_shipping_in_paypal;
-		$this->disabled_funding_sources          = $disabled_funding_sources;
-		$this->dcc_configuration                 = $dcc_configuration;
-		$this->partner_attribution               = $partner_attribution;
+		$this->module_url                            = $module_url;
+		$this->version                               = $version;
+		$this->session_handler                       = $session_handler;
+		$this->settings                              = $settings;
+		$this->payer_factory                         = $payer_factory;
+		$this->client_id                             = $client_id;
+		$this->request_data                          = $request_data;
+		$this->dcc_applies                           = $dcc_applies;
+		$this->subscription_helper                   = $subscription_helper;
+		$this->messages_apply                        = $messages_apply;
+		$this->environment                           = $environment;
+		$this->payment_token_repository              = $payment_token_repository;
+		$this->settings_status                       = $settings_status;
+		$this->currency                              = $currency;
+		$this->all_funding_sources                   = $all_funding_sources;
+		$this->basic_checkout_validation_enabled     = $basic_checkout_validation_enabled;
+		$this->early_validation_enabled              = $early_validation_enabled;
+		$this->pay_now_contexts                      = $pay_now_contexts;
+		$this->funding_sources_without_redirect      = $funding_sources_without_redirect;
+		$this->vault_v3_enabled                      = $vault_v3_enabled;
+		$this->logger                                = $logger;
+		$this->payment_tokens_endpoint               = $payment_tokens_endpoint;
+		$this->should_handle_shipping_in_paypal      = $should_handle_shipping_in_paypal;
+		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
+		$this->disabled_funding_sources              = $disabled_funding_sources;
+		$this->dcc_configuration                     = $dcc_configuration;
+		$this->partner_attribution                   = $partner_attribution;
 	}
 
 	/**
@@ -1341,6 +1349,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'server_side_shipping_callback'           => array(
+				'enabled' => $this->server_side_shipping_callback_enabled,
+			),
 			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 			'productType'                             => null,

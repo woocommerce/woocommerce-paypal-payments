@@ -71,6 +71,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
+		$this->migrate_three_d_secure_setting();
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
@@ -270,6 +271,35 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				}
 
 				update_option( $is_smart_button_settings_migrated_option_name, true );
+			}
+		);
+	}
+
+
+	/**
+	 * Migrates the old Three D Secure setting located in PaymentSettings to the new location in SettingsModel.
+	 *
+	 * The migration will be done on plugin update if it hasn't already done.
+	 */
+	protected function migrate_three_d_secure_setting(): void {
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			function () {
+				$payment_settings = get_option( 'woocommerce-ppcp-data-payment' ) ?: array();
+				$data_settings    = get_option( 'woocommerce-ppcp-data-settings' ) ?: array();
+
+				// Skip if payment settings don't have the setting but data settings do.
+				if ( ! isset( $payment_settings['three_d_secure'] ) && isset( $data_settings['three_d_secure'] ) ) {
+					return;
+				}
+
+				// Move the setting.
+				$data_settings['three_d_secure'] = $payment_settings['three_d_secure'];
+				unset( $payment_settings['three_d_secure'] );
+
+				// Save both.
+				update_option( 'woocommerce-ppcp-data-settings', $data_settings );
+				update_option( 'woocommerce-ppcp-data-payment', $payment_settings );
 			}
 		);
 	}

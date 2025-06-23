@@ -71,6 +71,7 @@ use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 return array(
 	'settings.url'                                        => static function ( ContainerInterface $container ) : string {
@@ -120,8 +121,12 @@ return array(
 		return new PaymentSettings();
 	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ) : SettingsModel {
+		$environment = $container->get( 'settings.environment' );
+		assert( $environment instanceof Environment );
+
 		return new SettingsModel(
-			$container->get( 'settings.service.sanitizer' )
+			$container->get( 'settings.service.sanitizer' ),
+			$environment->is_sandbox() ? $container->get( 'wcgateway.settings.invoice-prefix-random' ) : $container->get( 'wcgateway.settings.invoice-prefix' )
 		);
 	},
 	'settings.data.paylater-messaging'                    => static function ( ContainerInterface $container ) : array {
@@ -600,6 +605,7 @@ return array(
 		assert( $messages_apply instanceof MessagesApply );
 		$pay_later_eligible = $messages_apply->for_country();
 
+		// TODO: Variable "merchant_country" contains "shop-country". Which is correct?
 		$merchant_country = $container->get( 'api.shop.country' );
 		$ineligible_countries = array( 'RU', 'BR', 'JP' );
 		$apm_eligible = ! in_array( $merchant_country, $ineligible_countries, true );
@@ -658,5 +664,16 @@ return array(
 			$container->get( 'settings.service.branded-experience.activation-detector' ),
 			$container->get( 'settings.data.general' )
 		);
+	},
+	'settings.merchant-details'                           => static function ( ContainerInterface $container ) : MerchantDetails {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$merchant_country = $data->get_merchant_country();
+		$woo_data         = $data->get_woo_settings();
+
+		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
+
+		return new MerchantDetails( $merchant_country, $woo_data['country'], $eligibility_checks );
 	},
 );

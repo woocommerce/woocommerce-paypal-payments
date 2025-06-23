@@ -11,9 +11,11 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WC_AJAX;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CallbackConfig;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Shipping\ShippingCallbackUrlFactory;
 
 /**
  * Class ExperienceContextBuilder
@@ -30,15 +32,16 @@ class ExperienceContextBuilder {
 	 */
 	private ContainerInterface $settings;
 
-	/**
-	 * ExperienceContextBuilder constructor.
-	 *
-	 * @param ContainerInterface $settings The settings.
-	 */
-	public function __construct( ContainerInterface $settings ) {
+	private ShippingCallbackUrlFactory $shipping_callback_url_factory;
+
+	public function __construct(
+		ContainerInterface $settings,
+		ShippingCallbackUrlFactory $shipping_callback_url_factory
+	) {
 		$this->experience_context = new ExperienceContext();
 
-		$this->settings = $settings;
+		$this->settings                      = $settings;
+		$this->shipping_callback_url_factory = $shipping_callback_url_factory;
 	}
 
 	/**
@@ -157,6 +160,37 @@ class ExperienceContextBuilder {
 					ExperienceContext::PAYMENT_METHOD_IMMEDIATE_PAYMENT_REQUIRED
 					: ExperienceContext::PAYMENT_METHOD_UNRESTRICTED
 			);
+
+		return $builder;
+	}
+
+	/**
+	 * Uses the server-side shipping callback configuration.
+	 */
+	public function with_shipping_callback(): ExperienceContextBuilder {
+		$builder = clone $this;
+
+		$builder->experience_context = $builder->experience_context
+			->with_order_update_callback_config(
+				new CallbackConfig(
+					array( CallbackConfig::EVENT_SHIPPING_ADDRESS, CallbackConfig::EVENT_SHIPPING_OPTIONS ),
+					$this->shipping_callback_url_factory->create()
+				)
+			);
+
+		return $builder;
+	}
+
+	/**
+	 * Applies a custom contact preference to the experience context.
+	 *
+	 * @param string|null $preference The new preference to apply.
+	 */
+	public function with_contact_preference( ?string $preference = null ) : ExperienceContextBuilder {
+		$builder = clone $this;
+
+		$builder->experience_context = $builder->experience_context
+			->with_contact_preference( $preference );
 
 		return $builder;
 	}

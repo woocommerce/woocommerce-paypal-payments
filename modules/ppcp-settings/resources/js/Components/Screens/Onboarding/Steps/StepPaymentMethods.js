@@ -47,6 +47,10 @@ const StepPaymentMethods = () => {
 		},
 	];
 
+	const handleMethodChange = ( value ) => {
+		setOptionalMethods( value, 'user' );
+	};
+
 	return (
 		<div className="ppcp-r-page-optional-payment-methods">
 			<OnboardingHeader
@@ -56,7 +60,7 @@ const StepPaymentMethods = () => {
 				<OptionSelector
 					multiSelect={ false }
 					options={ methodChoices }
-					onChange={ setOptionalMethods }
+					onChange={ handleMethodChange }
 					value={ optionalMethods }
 				/>
 

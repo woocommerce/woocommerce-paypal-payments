@@ -12,6 +12,10 @@
 
 	.ppcp-r-inner-container {
 		max-width: var(--max-width-onboarding-content);
+
+		&.ppcp--wide {
+			--max-width-onboarding-content: none;
+		}
 	}
 
 	.ppcp-r-payment-method--separator {

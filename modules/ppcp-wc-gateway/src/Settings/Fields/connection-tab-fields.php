@@ -49,6 +49,9 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$onboarding_send_only_notice_renderer = $container->get( 'onboarding.render-send-only-notice' );
 	assert( $onboarding_send_only_notice_renderer instanceof OnboardingSendOnlyNoticeRenderer );
 
+	$environment = $container->get( 'settings.environment' );
+	assert( $environment instanceof Environment );
+
 	$is_send_only_country           = $container->get( 'wcgateway.is-send-only-country' );
 	$onboarding_elements_class      = $is_send_only_country ? 'hide' : 'ppcp-onboarding-element';
 	$send_only_country_notice_class = $is_send_only_country ? 'ppcp-onboarding-element' : 'hide';
@@ -510,13 +513,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'custom_attributes' => array(
 				'pattern' => '[a-zA-Z_\\-]+',
 			),
-			'default'           => ( static function (): string {
-				$site_url = get_site_url( get_current_blog_id() );
-				$hash = md5( $site_url );
-				$letters = preg_replace( '~\d~', '', $hash ) ?? '';
-				$prefix = substr( $letters, 0, 6 );
-				return $prefix ? $prefix . '-' : '';
-			} )(),
+			'default'           => $environment->is_sandbox() ? $container->get( 'wcgateway.settings.invoice-prefix-random' ) : $container->get( 'wcgateway.settings.invoice-prefix' ),
 			'screens'           => array(
 				State::STATE_START,
 				State::STATE_ONBOARDED,

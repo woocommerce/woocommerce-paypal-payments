@@ -352,6 +352,10 @@ export const PayPalComponent = ( {
 	);
 
 	const getOnShippingOptionsChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -364,6 +368,10 @@ export const PayPalComponent = ( {
 	};
 
 	const getOnShippingAddressChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}

@@ -10,8 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ShippingOption;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
 
 /**
  * Class ShippingFactory
@@ -60,9 +60,12 @@ class ShippingFactory {
 			$customer->get_shipping_last_name()
 		);
 		$address = $this->address_factory->from_wc_customer( $customer );
+
 		return new Shipping(
 			$full_name,
 			$address,
+			null,
+			null,
 			$with_shipping_options ? $this->shipping_option_factory->from_wc_cart() : array()
 		);
 	}
@@ -77,6 +80,7 @@ class ShippingFactory {
 	public function from_wc_order( \WC_Order $order ): Shipping {
 		$full_name = $order->get_formatted_shipping_full_name();
 		$address   = $this->address_factory->from_wc_order( $order );
+
 		return new Shipping(
 			$full_name,
 			$address
@@ -102,14 +106,27 @@ class ShippingFactory {
 				__( 'No address was given for shipping.', 'woocommerce-paypal-payments' )
 			);
 		}
-		$address = $this->address_factory->from_paypal_response( $data->address );
+		$contact_phone = null;
+		$contact_email = null;
+		$address       = $this->address_factory->from_paypal_response( $data->address );
+
 		$options = array_map(
 			array( $this->shipping_option_factory, 'from_paypal_response' ),
 			$data->options ?? array()
 		);
+
+		if ( isset( $data->phone_number->national_number ) ) {
+			$contact_phone = new Phone( $data->phone_number->national_number );
+		}
+		if ( isset( $data->email_address ) ) {
+			$contact_email = $data->email_address;
+		}
+
 		return new Shipping(
 			$data->name->full_name,
 			$address,
+			$contact_email,
+			$contact_phone,
 			$options
 		);
 	}

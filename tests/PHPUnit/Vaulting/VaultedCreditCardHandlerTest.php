@@ -24,8 +24,6 @@ use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use function Brain\Monkey\Functions\expect;
-use function Brain\Monkey\Functions\when;
 
 class VaultedCreditCardHandlerTest extends TestCase
 {
@@ -123,6 +121,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$capture->shouldReceive('status')->andReturn($captureStatus);
 		$payments->shouldReceive('captures')->andReturn([$capture]);
 		$purchaseUnit->shouldReceive('payments')->andReturn($payments);
+		$purchaseUnit->shouldReceive('shipping')->andReturn(null);
 
 		$this->orderEndpoint->shouldReceive('create')
 			->with([$purchaseUnit], 'some_preference', $payer, '', array(), $requestPaymentSource)

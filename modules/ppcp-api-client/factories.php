@@ -16,7 +16,8 @@ return array(
 
 	'wcgateway.builder.experience-context' => static function ( ContainerInterface $container ): ExperienceContextBuilder {
 		return new ExperienceContextBuilder(
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.shipping.callback.factory.url' )
 		);
 	},
 );

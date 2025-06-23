@@ -144,7 +144,10 @@ class Renderer {
 			};
 
 			// Check the condition and add the handler if needed
-			if ( this.shouldEnableShippingCallback() ) {
+			if (
+				this.shouldEnableShippingCallback() &&
+				! this.defaultSettings.server_side_shipping_callback.enabled
+			) {
 				options.onShippingOptionsChange = ( data, actions ) => {
 					const shippingOptionsChange =
 						! this.isVenmoButtonClickedWhenVaultingIsEnabled(

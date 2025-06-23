@@ -79,6 +79,11 @@ return array(
 				'SE',
 				'GB',
 				'US',
+				'YT',
+				'RE',
+				'GP',
+				'GF',
+				'MQ',
 			)
 		);
 	},

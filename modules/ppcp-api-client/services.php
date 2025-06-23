@@ -32,7 +32,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundPayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerPayableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\ActivationDetector;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
@@ -82,6 +81,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 
 return array(
 	'api.host'                                       => static function( ContainerInterface $container ) : string {
@@ -328,6 +329,22 @@ return array(
 	'api.repository.order'                           => static function( ContainerInterface $container ): OrderRepository {
 		return new OrderRepository(
 			$container->get( 'api.endpoint.order' )
+		);
+	},
+	'api.factory.contact-preference'                 => static function ( ContainerInterface $container ): ContactPreferenceFactory {
+		if ( $container->has( 'settings.data.settings' ) ) {
+			$settings = $container->get( 'settings.data.settings' );
+			assert( $settings instanceof SettingsModel );
+
+			$contact_module_active = $settings->get_enable_contact_module();
+		} else {
+			// #legacy-ui: Auto-enable the feature; can be disabled via eligibility hook.
+			$contact_module_active = true;
+		}
+
+		return new ContactPreferenceFactory(
+			$contact_module_active,
+			$container->get( 'settings.merchant-details' )
 		);
 	},
 	'api.factory.payment-token'                      => static function ( ContainerInterface $container ) : PaymentTokenFactory {
@@ -682,6 +699,11 @@ return array(
 				'GB' => $default_currencies,
 				'US' => $default_currencies,
 				'NO' => $default_currencies,
+				'YT' => $default_currencies,
+				'RE' => $default_currencies,
+				'GP' => $default_currencies,
+				'GF' => $default_currencies,
+				'MQ' => $default_currencies,
 			)
 		);
 	},

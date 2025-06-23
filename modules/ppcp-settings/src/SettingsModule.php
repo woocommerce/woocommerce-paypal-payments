@@ -31,6 +31,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
 use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
@@ -576,7 +577,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		// Enable APMs after onboarding if the country is compatible.
 		add_action(
 			'woocommerce_paypal_payments_toggle_payment_gateways_apms',
-			function ( PaymentSettings $payment_methods, array $methods_apm ) use ( $container ) {
+			function ( PaymentSettings $payment_methods, array $methods_apm, ConfigurationFlagsDTO $flags ) use ( $container ) {
 
 				$general_settings = $container->get( 'settings.data.general' );
 				assert( $general_settings instanceof GeneralSettings );
@@ -586,6 +587,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				// Enable all APM methods.
 				foreach ( $methods_apm as $method ) {
+					if ( $flags->use_card_payments === false ) {
+						$payment_methods->toggle_method_state( $method['id'], $flags->use_card_payments );
+						continue;
+					}
+
 					// Skip PayUponInvoice if merchant is not in Germany.
 					if ( PayUponInvoiceGateway::ID === $method['id'] && 'DE' !== $merchant_country ) {
 						continue;
@@ -606,7 +612,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				}
 			},
 			10,
-			2
+			3
 		);
 
 		// Toggle payment gateways after onboarding based on flags.
@@ -632,6 +638,25 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				assert( $settings_model instanceof SettingsModel );
 
 				return ! $settings_model->get_save_paypal_and_venmo();
+			}
+		);
+
+		// Migration code to update BN code of merchants that are on whitelabel mode (own_brand_only false) to use the whitelabel BN code (direct).
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function() use ( $container ) {
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				$partner_attribution = $container->get( 'api.helper.partner-attribution' );
+				assert( $partner_attribution instanceof PartnerAttribution );
+
+				$own_brand_only    = $general_settings->own_brand_only();
+				$installation_path = $general_settings->get_installation_path();
+
+				if ( ! $own_brand_only && $installation_path !== InstallationPathEnum::DIRECT ) {
+					$partner_attribution->initialize_bn_code( InstallationPathEnum::DIRECT, true );
+				}
 			}
 		);
 

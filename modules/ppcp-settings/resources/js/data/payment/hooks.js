@@ -129,7 +129,6 @@ export const usePaymentMethodsModal = () => {
 	const { usePersistent } = useStoreData();
 
 	const [ paypalShowLogo ] = usePersistent( 'paypalShowLogo' );
-	const [ threeDSecure ] = usePersistent( 'threeDSecure' );
 	const [ fastlaneCardholderName ] = usePersistent(
 		'fastlaneCardholderName'
 	);
@@ -139,7 +138,6 @@ export const usePaymentMethodsModal = () => {
 
 	return {
 		paypalShowLogo,
-		threeDSecure,
 		fastlaneCardholderName,
 		fastlaneDisplayWatermark,
 	};

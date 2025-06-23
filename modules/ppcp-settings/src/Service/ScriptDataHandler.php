@@ -176,7 +176,35 @@ class ScriptDataHandler {
 				'label' => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
 			),
 		);
-		$transformed_button_choices          = array_map(
+
+		$three_d_secure_options = array(
+			array(
+				'value'       => 'no-3d-secure',
+				'label'       => __( 'No 3D Secure', 'woocommerce-paypal-payments' ),
+				'description' => __(
+					'Do not use 3D Secure authentication for any transactions.',
+					'woocommerce-paypal-payments'
+				),
+			),
+			array(
+				'value'       => 'only-required-3d-secure',
+				'label'       => __( 'Only when required', 'woocommerce-paypal-payments' ),
+				'description' => __(
+					'Use 3D Secure when required by the card issuer or payment processor.',
+					'woocommerce-paypal-payments'
+				),
+			),
+			array(
+				'value'       => 'always-3d-secure',
+				'label'       => __( 'Always require 3D Secure', 'woocommerce-paypal-payments' ),
+				'description' => __(
+					'Always authenticate transactions with 3D Secure when available.',
+					'woocommerce-paypal-payments'
+				),
+			),
+		);
+
+		$transformed_button_choices = array_map(
 			function( $key, $value ) {
 				return array(
 					'value' => $key,
@@ -198,6 +226,7 @@ class ScriptDataHandler {
 			'storeCountry'                    => $this->store_country,
 			'buttonLanguageChoices'           => $transformed_button_choices,
 			'disabledCardsChoices'            => $disabled_cards_choices,
+			'threeDSecureOptions'             => $three_d_secure_options,
 		);
 
 		if ( $is_pay_later_configurator_available ) {
@@ -230,5 +259,3 @@ class ScriptDataHandler {
 		wp_dequeue_script( 'ppcp-paypal-subscription' );
 	}
 }
-
-

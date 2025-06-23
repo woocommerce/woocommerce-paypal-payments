@@ -7,6 +7,7 @@ import { CommonHooks, SettingsHooks } from '../../../../data';
 const TabSettings = () => {
 	const { ownBrandOnly } = CommonHooks.useWooSettings();
 	const { isReady } = SettingsHooks.useStore();
+	const { features } = CommonHooks.useMerchantInfo();
 
 	if ( ! isReady ) {
 		return <SpinnerOverlay asModal={ true } />;
@@ -16,7 +17,10 @@ const TabSettings = () => {
 		<div className="ppcp-r-settings">
 			<ConnectionStatus />
 			<CommonSettings ownBradOnly={ ownBrandOnly } />
-			<ExpertSettings ownBradOnly={ ownBrandOnly } />
+			<ExpertSettings
+				ownBradOnly={ ownBrandOnly }
+				hasContactModule={ features?.contact_module?.enabled }
+			/>
 		</div>
 	);
 };

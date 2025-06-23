@@ -58,20 +58,22 @@ class PartnerAttribution {
 	}
 
 	/**
-	 * Initializes the BN Code if not already set.
-	 *
-	 * This method ensures that the BN Code is only stored once during the initial setup.
+	 * Initializes or updates the BN Code.
 	 *
 	 * @param string $installation_path The installation path used to determine the BN Code.
+	 * @param bool   $force_update Whether to force an update of the BN code if it already exists.
 	 */
-	public function initialize_bn_code( string $installation_path ) : void {
+	public function initialize_bn_code( string $installation_path, bool $force_update = false ) : void {
 		$selected_bn_code = $this->bn_codes[ $installation_path ] ?? '';
-
-		if ( ! $selected_bn_code || get_option( $this->bn_code_option_name ) ) {
+		if ( ! $selected_bn_code ) {
 			return;
 		}
 
-		// This option is permanent and should not change.
+		$existing_bn_code = get_option( $this->bn_code_option_name );
+		if ( $existing_bn_code && ! $force_update ) {
+			return;
+		}
+
 		update_option( $this->bn_code_option_name, $selected_bn_code );
 	}
 

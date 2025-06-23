@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ShippingCallbackEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
@@ -499,44 +500,17 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		 */
 		add_filter(
 			'woocommerce_admin_billing_fields',
-			function ( $fields ) {
-				global $theorder;
+			fn( $fields ) => $this->insert_custom_fields_into_order_details( $fields )
+		);
 
-				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
-					return $fields;
-				}
-
-				if ( ! is_array( $fields ) ) {
-					return $fields;
-				}
-
-				if ( ! $theorder instanceof WC_Order ) {
-					return $fields;
-				}
-
-				$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
-
-				if ( ! $email ) {
-					return $fields;
-				}
-
-				// Is payment source is paypal exclude all non paypal funding sources.
-				$payment_source           = $theorder->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ?: '';
-				$is_paypal_funding_source = ( strpos( $theorder->get_payment_method_title(), '(via PayPal)' ) === false );
-
-				if ( $payment_source === 'paypal' && ! $is_paypal_funding_source ) {
-					return $fields;
-				}
-
-				$fields['paypal_email'] = array(
-					'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
-					'value'             => $email,
-					'wrapper_class'     => 'form-field-wide',
-					'custom_attributes' => array( 'disabled' => 'disabled' ),
-				);
-
-				return $fields;
-			}
+		/**
+		 * Param types removed to avoid third-party issues.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_action(
+			'woocommerce_admin_order_data_after_shipping_address',
+			fn( $order ) => $this->display_original_contact_in_order_details( $order )
 		);
 
 		add_action(
@@ -573,6 +547,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$installments_product_status = $c->get( 'wcgateway.installments-product-status' );
 				assert( $installments_product_status instanceof InstallmentsProductStatus );
 
+				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
+				assert( is_callable( $contact_module_check ) );
+
 				$features['save_paypal_and_venmo'] = array(
 					'enabled' => $billing_agreements_endpoint->reference_transaction_enabled(),
 				);
@@ -592,7 +569,21 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					'enabled' => $installments_product_status->is_active(),
 				);
 
+				$features['contact_module'] = array(
+					'enabled' => $contact_module_check(),
+				);
+
 				return $features;
+			}
+		);
+
+		add_action(
+			'rest_api_init',
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'wcgateway.shipping.callback.endpoint' );
+				assert( $endpoint instanceof ShippingCallbackEndpoint );
+
+				$endpoint->register();
 			}
 		);
 
@@ -969,5 +960,124 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$endpoint->handle_request();
 			}
 		);
+	}
+
+	/**
+	 * Checks, if the provided argument is a WC_Order which was paid directly by PayPal.
+	 *
+	 * Only considers direct PayPal payments, and returns false for orders that were paid "via"
+	 * PayPal, like wallets (Google Pay, ...) or local APMs.
+	 *
+	 * @param WC_Order|mixed $order The order to verify.
+	 * @return bool True, if it's a valid order that was paid via PayPal.
+	 */
+	private function is_order_paid_by_paypal( $order ) : bool {
+		if ( ! $order instanceof WC_Order ) {
+			return false;
+		}
+
+		if ( ! $order->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ) {
+			return false;
+		}
+
+		if ( 'paypal' !== $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ) {
+			return false;
+		}
+
+		return false === strpos( $order->get_payment_method_title(), '(via PayPal)' );
+	}
+
+	/**
+	 * Inserts custom fields into the order-detail view.
+	 *
+	 * @param mixed $fields The field-list provided by WooCommerce, should be an array.
+	 * @return array|mixed The filtered field list.
+	 *
+	 * @psalm-suppress MissingClosureParamType
+	 */
+	private function insert_custom_fields_into_order_details( $fields ) {
+		global $theorder;
+
+		if ( ! is_array( $fields ) ) {
+			return $fields;
+		}
+
+		if ( ! $this->is_order_paid_by_paypal( $theorder ) ) {
+			return $fields;
+		}
+
+		/**
+		 * We use this filter to de-customize the order details - 'billing' and 'shipping' section.
+		 */
+		if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
+			return $fields;
+		}
+
+		$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
+
+		$fields['paypal_email'] = array(
+			'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
+			'value'             => $email,
+			'wrapper_class'     => 'form-field-wide',
+			'custom_attributes' => array( 'disabled' => 'disabled' ),
+		);
+
+		return $fields;
+	}
+
+	/**
+	 * Displays a custom section in the order details page with the original contact details entered
+	 * during checkout.
+	 *
+	 * When the Contact module is active, those contact details are replaced with details provided
+	 * by PayPal; this section shows the (unused) details which the user originally entered.
+	 *
+	 * @param WC_Order|mixed $order The order which is rendered.
+	 * @return void
+	 */
+	private function display_original_contact_in_order_details( $order ) : void {
+		if ( ! $this->is_order_paid_by_paypal( $order ) ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_original_contact', true ) ) {
+			return;
+		}
+
+		assert( $order instanceof WC_Order );
+		$contact_email = $order->get_meta( PayPalGateway::ORIGINAL_EMAIL_META_KEY );
+		$contact_phone = $order->get_meta( PayPalGateway::ORIGINAL_PHONE_META_KEY );
+
+		if ( ! $contact_email && ! $contact_phone ) {
+			return;
+		}
+
+		?>
+		<div class="ppcp-original-contact-data address" style="clear:both">
+			<h3>
+				<?php esc_html_e( 'Other', 'woocommerce-paypal-payments' ); ?>
+				<span
+					class="woocommerce-help-tip alignright" tabindex="0"
+					data-tip="<?php esc_attr_e( 'The customer entered these contact details during checkout, but provided different details in the PayPal popup. These details are kept for reference only.', 'woocommerce-paypal-payments' ); ?>"
+				></span>
+			</h3>
+			<?php if ( ! empty( $contact_email ) ) : ?>
+				<p>
+					<strong>
+						<?php esc_html_e( 'Email address', 'woocommerce-paypal-payments' ); ?>:
+					</strong>
+					<a href="<?php echo esc_url( 'mailto:' . $contact_email ); ?>"><?php echo esc_html( $contact_email ); ?></a>
+				</p>
+			<?php endif; ?>
+			<?php if ( ! empty( $contact_phone ) ) : ?>
+				<p>
+					<strong>
+						<?php esc_html_e( 'Phone', 'woocommerce-paypal-payments' ); ?>:
+					</strong>
+					<?php echo wc_make_phone_clickable( $contact_phone ); ?>
+				</p>
+			<?php endif; ?>
+		</div>
+		<?php
 	}
 }

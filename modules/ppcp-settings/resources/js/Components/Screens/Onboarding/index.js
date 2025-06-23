@@ -19,8 +19,8 @@ const OnboardingScreen = () => {
 		} );
 	}
 
-	const handleNext = () => setStep( currentStep.nextStep );
-	const handlePrev = () => setStep( currentStep.prevStep );
+	const handleNext = () => setStep( currentStep.nextStep, 'user' );
+	const handlePrev = () => setStep( currentStep.prevStep, 'user' );
 
 	return (
 		<>

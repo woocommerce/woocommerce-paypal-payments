@@ -12,11 +12,10 @@ import { useSelect, useDispatch } from '@wordpress/data';
 import { createHooksForStore } from '../utils';
 import { PRODUCT_TYPES } from './configuration';
 import { STORE_NAME } from './constants';
-import ACTION_TYPES from './action-types';
 
 const useHooks = () => {
 	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
-	const { persist, dispatch } = useDispatch( STORE_NAME );
+	const dispatchActions = useDispatch( STORE_NAME );
 
 	// Read-only flags and derived state.
 	const flags = useSelect( ( select ) => select( STORE_NAME ).flags(), [] );
@@ -27,6 +26,8 @@ const useHooks = () => {
 		useTransient( 'manualClientId' );
 	const [ manualClientSecret, setManualClientSecret ] =
 		useTransient( 'manualClientSecret' );
+	const [ connectionButtonClicked, setConnectionButtonClicked ] =
+		useTransient( 'connectionButtonClicked' );
 
 	// Persistent accessors.
 	const [ step, setStep ] = usePersistent( 'step' );
@@ -37,32 +38,34 @@ const useHooks = () => {
 		'areOptionalPaymentMethodsEnabled'
 	);
 	const [ products, setProducts ] = usePersistent( 'products' );
-	// Add the setter for gatewaysSynced
 	const [ gatewaysSynced, setGatewaysSynced ] =
 		usePersistent( 'gatewaysSynced' );
-
 	const [ gatewaysRefreshed, setGatewaysRefreshed ] =
 		usePersistent( 'gatewaysRefreshed' );
 
-	const savePersistent = async ( setter, value ) => {
-		setter( value );
-		await persist();
+	const savePersistent = async ( setter, value, source ) => {
+		setter( value, source );
+		await dispatchActions.persist();
+	};
+
+	const saveTransient = ( setter, value, source ) => {
+		setter( value, source );
 	};
 
 	return {
 		flags,
 		isReady,
 		step,
-		setStep: ( value ) => {
-			return savePersistent( setStep, value );
+		setStep: ( value, source ) => {
+			return savePersistent( setStep, value, source );
 		},
 		completed,
-		setCompleted: ( state ) => {
-			return savePersistent( setCompleted, state );
+		setCompleted: ( state, source ) => {
+			return savePersistent( setCompleted, state, source );
 		},
 		isCasualSeller,
-		setIsCasualSeller: ( value ) => {
-			return savePersistent( setIsCasualSeller, value );
+		setIsCasualSeller: ( value, source ) => {
+			return savePersistent( setIsCasualSeller, value, source );
 		},
 		manualClientId,
 		setManualClientId: ( value ) => {
@@ -73,35 +76,33 @@ const useHooks = () => {
 			return savePersistent( setManualClientSecret, value );
 		},
 		optionalMethods,
-		setOptionalMethods: ( value ) => {
-			return savePersistent( setOptionalMethods, value );
+		setOptionalMethods: ( value, source ) => {
+			return savePersistent( setOptionalMethods, value, source );
 		},
 		products,
-		setProducts: ( activeProducts ) => {
+		setProducts: ( activeProducts, source ) => {
 			const validProducts = activeProducts.filter( ( item ) =>
 				Object.values( PRODUCT_TYPES ).includes( item )
 			);
-			return savePersistent( setProducts, validProducts );
+			return savePersistent( setProducts, validProducts, source );
 		},
 		gatewaysSynced,
 		setGatewaysSynced: ( value ) => {
-			return savePersistent( setGatewaysSynced, value );
+			return savePersistent( setGatewaysSynced, value, undefined );
 		},
 		syncGateways: async () => {
-			await savePersistent( setGatewaysSynced, true );
-			dispatch( {
-				type: ACTION_TYPES.SYNC_GATEWAYS,
-			} );
+			return await dispatchActions.syncGateways( undefined );
 		},
 		gatewaysRefreshed,
 		setGatewaysRefreshed: ( value ) => {
-			return savePersistent( setGatewaysRefreshed, value );
+			return savePersistent( setGatewaysRefreshed, value, undefined );
 		},
 		refreshGateways: async () => {
-			await savePersistent( setGatewaysRefreshed, true );
-			dispatch( {
-				type: ACTION_TYPES.REFRESH_GATEWAYS,
-			} );
+			return await dispatchActions.refreshGateways( undefined );
+		},
+		connectionButtonClicked,
+		setConnectionButtonClicked: ( value ) => {
+			return saveTransient( setConnectionButtonClicked, value, 'user' );
 		},
 	};
 };
@@ -187,4 +188,27 @@ export const useGatewaySync = () => {
 export const useGatewayRefresh = () => {
 	const { gatewaysRefreshed, refreshGateways } = useHooks();
 	return { gatewaysRefreshed, refreshGateways };
+};
+
+export const useConnectionButton = () => {
+	const { connectionButtonClicked, setConnectionButtonClicked } = useHooks();
+
+	return {
+		connectionButtonClicked,
+		setConnectionButtonClicked,
+	};
+};
+
+export const OnboardingHooks = {
+	useManualConnectionForm,
+	useBusiness,
+	useProducts,
+	useOptionalPaymentMethods,
+	useSteps,
+	useNavigationState,
+	useDetermineProducts,
+	useFlags,
+	useGatewaySync,
+	useGatewayRefresh,
+	useConnectionButton,
 };

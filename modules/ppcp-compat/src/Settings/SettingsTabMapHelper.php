@@ -24,6 +24,17 @@ class SettingsTabMapHelper {
 	use ContextTrait;
 
 	/**
+	 * A map of new to old 3d secure values.
+	 *
+	 * @var array<string, string>
+	 */
+	protected const THREE_D_SECURE_VALUES_MAP = array(
+		'no-3d-secure'            => 'NO_3D_SECURE',
+		'only-required-3d-secure' => 'SCA_WHEN_REQUIRED',
+		'always-3d-secure'        => 'SCA_ALWAYS',
+	);
+
+	/**
 	 * Maps old setting keys to new setting keys.
 	 *
 	 * @psalm-return array<oldSettingsKey, newSettingsKey>
@@ -43,6 +54,7 @@ class SettingsTabMapHelper {
 			'blocks_final_review_enabled' => 'enable_pay_now',
 			'logging_enabled'             => 'enable_logging',
 			'vault_enabled'               => 'save_paypal_and_venmo',
+			'3d_secure_contingency'       => 'threeDSecure',
 		);
 	}
 
@@ -69,9 +81,28 @@ class SettingsTabMapHelper {
 			case 'blocks_final_review_enabled':
 				return $this->mapped_pay_now_value( $settings_model );
 
+			case '3d_secure_contingency':
+				return $this->mapped_3d_secure_value( $settings_model );
+
 			default:
 				return $settings_model[ $new_key ] ?? null;
 		}
+	}
+
+	/**
+	 * Retrieves the mapped value for the '3d_secure_contingency' from the new settings.
+	 *
+	 * @param array $settings_model The new settings model data.
+	 * @return string|null The mapped '3d_secure_contingency' setting value.
+	 */
+	protected function mapped_3d_secure_value( array $settings_model ): ?string {
+		$three_d_secure = $settings_model['threeDSecure'] ?? null;
+
+		if ( ! is_string( $three_d_secure ) ) {
+			return null;
+		}
+
+		return self::THREE_D_SECURE_VALUES_MAP[ $three_d_secure ] ?? null;
 	}
 
 	/**

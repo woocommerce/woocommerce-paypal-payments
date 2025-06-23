@@ -240,40 +240,7 @@ class PaymentMethodsDefinition {
 				'title'       => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 				'description' => __( "Present custom credit and debit card fields to your payers so they can pay with credit and debit cards using your site's branding.", 'woocommerce-paypal-payments' ),
 				'icon'        => 'payment-method-advanced-cards',
-				'fields'      => array(
-					'threeDSecure' => array(
-						'type'        => 'radio',
-						'default'     => $this->settings->get_three_d_secure(),
-						'label'       => __( '3D Secure', 'woocommerce-paypal-payments' ),
-						'description' => __(
-							'Authenticate cardholders through their card issuers to reduce fraud and improve transaction security. Successful 3D Secure authentication can shift liability for fraudulent chargebacks to the card issuer.',
-							'woocommerce-paypal-payments'
-						),
-						'options'     => array(
-							array(
-								'label' => __(
-									'No 3D Secure',
-									'woocommerce-paypal-payments'
-								),
-								'value' => 'no-3d-secure',
-							),
-							array(
-								'label' => __(
-									'Only when required',
-									'woocommerce-paypal-payments'
-								),
-								'value' => 'only-required-3d-secure',
-							),
-							array(
-								'label' => __(
-									'Always require 3D Secure',
-									'woocommerce-paypal-payments'
-								),
-								'value' => 'always-3d-secure',
-							),
-						),
-					),
-				),
+				'fields'      => array(),
 			);
 			$group[] = array(
 				'id'              => AxoGateway::ID,

@@ -12,12 +12,8 @@ import { PaymentHooks } from '../../../../../data';
 
 const Modal = ( { method, setModalIsVisible, onSave } ) => {
 	const { all: paymentMethods } = PaymentHooks.usePaymentMethods();
-	const {
-		paypalShowLogo,
-		threeDSecure,
-		fastlaneCardholderName,
-		fastlaneDisplayWatermark,
-	} = PaymentHooks.usePaymentMethodsModal();
+	const { paypalShowLogo, fastlaneCardholderName, fastlaneDisplayWatermark } =
+		PaymentHooks.usePaymentMethodsModal();
 
 	const [ settings, setSettings ] = useState( () => {
 		if ( ! method?.id ) {
@@ -44,7 +40,6 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 		} );
 
 		initialSettings.paypalShowLogo = paypalShowLogo;
-		initialSettings.threeDSecure = threeDSecure;
 		initialSettings.fastlaneCardholderName = fastlaneCardholderName;
 		initialSettings.fastlaneDisplayWatermark = fastlaneDisplayWatermark;
 

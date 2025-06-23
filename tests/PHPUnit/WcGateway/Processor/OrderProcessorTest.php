@@ -23,13 +23,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ReadOnlyContainer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Mockery;
-use function Brain\Monkey\Functions\when;
 
 class OrderProcessorTest extends TestCase
 {
@@ -59,6 +57,8 @@ class OrderProcessorTest extends TestCase
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnit->shouldReceive('payments')
             ->andReturn($payments);
+	    $purchaseUnit->shouldReceive('shipping')
+		    ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_items')->andReturn([]);
@@ -213,6 +213,8 @@ class OrderProcessorTest extends TestCase
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnit->shouldReceive('payments')
             ->andReturn($payments);
+        $purchaseUnit->shouldReceive('shipping')
+	        ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_items')->andReturn([]);
@@ -348,7 +350,9 @@ class OrderProcessorTest extends TestCase
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnit->shouldReceive('payments')
-            ->andReturn($payments);
+            ->andReturn($payments);;
+	    $purchaseUnit->shouldReceive('shipping')
+		    ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 

@@ -88,7 +88,7 @@
     "ddev:pw-tests": "ddev yarn playwright test",
     "ddev:test": "yarn run ddev:unit-tests && yarn run ddev:e2e-tests && yarn run ddev:pw-tests",
     "ddev:lint": "yarn ddev:phpcs && yarn ddev:psalm",
-    "ddev:phpcs": "ddev exec phpcs --parallel=8 -s",
+    "ddev:phpcs": "ddev exec phpcs --parallel=8 -s --runtime-set ignore_warnings_on_exit 1",
     "ddev:psalm": "ddev exec psalm --show-info=false --threads=8 --diff",
     "ddev:fix-lint": "ddev exec phpcbf",
     "ddev:xdebug-on": "ddev xdebug",

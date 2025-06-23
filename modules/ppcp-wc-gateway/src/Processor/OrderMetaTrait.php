@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 
 /**
  * Trait OrderMetaTrait.
@@ -57,9 +58,72 @@ trait OrderMetaTrait {
 			}
 		}
 
+		$this->add_contact_details_to_wc_order( $wc_order, $order );
+
 		$wc_order->save();
 
 		do_action( 'woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order );
+	}
+
+	/**
+	 * Swaps out the billing details with the custom contact details provided by PayPal via the
+	 * "Contact Module" integration.
+	 *
+	 * The contact module can provide a custom email and phone number via the shipping details;
+	 * Though it's part of the shipping object, these two properties are intended to be treated
+	 * as primary contact details.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order to update.
+	 * @param Order    $order    The PayPal order which provides the details.
+	 * @return void
+	 */
+	private function add_contact_details_to_wc_order( WC_Order $wc_order, Order $order ) : void {
+		$shipping_details = $this->get_shipping_details( $order );
+
+		if ( ! $shipping_details ) {
+			return;
+		}
+
+		$contact_email = $shipping_details->email_address();
+		$contact_phone = $shipping_details->phone_number();
+
+		if ( $contact_email && is_email( $contact_email ) ) {
+			$billing_email = $wc_order->get_billing_email();
+
+			if ( $billing_email && $billing_email !== $contact_email ) {
+				$wc_order->update_meta_data( PayPalGateway::ORIGINAL_EMAIL_META_KEY, $billing_email );
+			}
+
+			$wc_order->set_billing_email( $contact_email );
+		}
+
+		if ( $contact_phone ) {
+			$billing_phone        = $wc_order->get_billing_phone();
+			$contact_phone_number = $contact_phone->national_number();
+
+			if ( $billing_phone && $billing_phone !== $contact_phone_number ) {
+				$wc_order->update_meta_data( PayPalGateway::ORIGINAL_PHONE_META_KEY, $billing_phone );
+			}
+
+			$wc_order->set_billing_phone( $contact_phone_number );
+		}
+	}
+
+	/**
+	 * Returns the shipping address details for the order.
+	 *
+	 * @param Order $order The PayPal order that contains potential shipping information.
+	 * @return ?Shipping The shipping details, or null if none present.
+	 */
+	private function get_shipping_details( Order $order ) : ?Shipping {
+		foreach ( $order->purchase_units() as $unit ) {
+			$shipping = $unit->shipping();
+			if ( $shipping ) {
+				return $shipping;
+			}
+		}
+
+		return null;
 	}
 
 	/**

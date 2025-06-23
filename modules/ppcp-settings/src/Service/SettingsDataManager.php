@@ -269,7 +269,6 @@ class SettingsDataManager {
 				// Enable BCDC for business sellers without ACDC.
 				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
 			}
-
 			/**
 			 * Allow plugins to modify apm payment gateway states before saving.
 			 *

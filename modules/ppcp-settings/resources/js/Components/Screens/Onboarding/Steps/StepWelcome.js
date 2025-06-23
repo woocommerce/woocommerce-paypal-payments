@@ -14,7 +14,6 @@ import { usePaymentConfig } from '../hooks/usePaymentConfig';
 const StepWelcome = ( { setStep, currentStep } ) => {
 	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
 	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
-	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
 	const { icons } = usePaymentConfig(
 		storeCountry,
@@ -33,6 +32,11 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, and more.',
 					'woocommerce-paypal-payments'
 			  );
+
+	const handleActivatePayPal = () => {
+		const nextStep = currentStep + 1;
+		setStep( nextStep, 'user' );
+	};
 
 	return (
 		<div className="ppcp-r-page-welcome">
@@ -56,7 +60,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					<Button
 						className="ppcp-r-button-activate-paypal"
 						variant="primary"
-						onClick={ () => setStep( currentStep + 1 ) }
+						onClick={ handleActivatePayPal }
 					>
 						{ __(
 							'Activate PayPal Payments',
