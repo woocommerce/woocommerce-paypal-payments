@@ -1,5 +1,5 @@
 import { Button } from '@wordpress/components';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useCallback } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 import { OpenSignup } from '../../../ReusableComponents/Icons';
