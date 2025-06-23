@@ -155,7 +155,7 @@ class CaptureCardPayment {
 			'intent'         => $intent,
 			'purchase_units' => array_map(
 				static function ( PurchaseUnit $item ): array {
-					return $item->to_array( true, false );
+					return $item->to_array();
 				},
 				$items
 			),
