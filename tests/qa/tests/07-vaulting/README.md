@@ -43,9 +43,9 @@ Approximate scenario for "Save payment method":
 
 3. Assert payment method has been saved.
 
-### Classic checkout
+### Vauting transaction on Checkout
 
-> Note: same for Checkout, Pay for Order.
+> Note: similar for Classic checkout, Checkout, Pay for Order.
 
 - PCP-0000 | Vaulting - Transaction - Classic checkout - PayPal - Save payment method
 - PCP-0000 | Vaulting - Transaction - Classic checkout - ACDC - Do not save payment method
@@ -57,31 +57,31 @@ Approximate scenario for "Save payment method":
 
 #### Approximate scenario for "Save payment method":
 
-	1. Assert customer has no saved payment method.
+1. Assert customer has no saved payment method.
 
-	2. Add product to cart and perform a transaction.
+2. Add product to cart and perform a transaction.
 
-	3. Assert payment method has been saved. Depends on specified `saveToAccount` flag.
+3. Assert payment method has been saved. Depends on specified `saveToAccount` flag.
 
 #### Approximate scenario for "Pay with saved payment method":
 
-	1. Save payment method via My Account.
+1. Save payment method via My Account.
 
-	2. Add product to cart and perform a transaction, asserting the display of vaulted pyment method.
+2. Add product to cart and perform a transaction, asserting the display of vaulted pyment method.
 
-	3. Assert details on Order Received page.
+3. Assert details on Order Received page.
 
-	4. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
+4. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
 
-	5. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, etc.)
+5. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, etc.)
 
-### Classic cart
+### Vauting transaction on other pages
 
-> Note: same for Cart, Product, (Minicart?).
+> Note 1: similar for Classic cart, Cart, Product, (Minicart?).
+
+> Note 2: Only for PayPal, since ACDC is only available on checkout pages.
 
 - PCP-0000 | Vaulting - Transaction - Classic cart - PayPal - Save payment method
 - PCP-0000 | Vaulting - Transaction - Classic cart - PayPal - Pay with saved payment method
 
 Approximate scenarios are similar to Classic checout section.
-
-> Note: Only for PayPal, since ACDC is only available on checkout pages.
