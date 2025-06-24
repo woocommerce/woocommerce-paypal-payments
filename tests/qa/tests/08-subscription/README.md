@@ -19,11 +19,11 @@
 WooCommerce Subscriptions plugin provides functionality for products of _subscription_ type. Once a subscription product is purchased it is expected to be automatically reordered after certain period of time (_renewal process_), using payment method provided for the initial order.
 
 There are 2 main types of _renewal process_:
-- **Vaulting subscription:** renewal using _vaulted_ payment method (by WooCommerce). Available for merchants **with** reference transactions.
-- **PayPal subscription:** renewal controlled by PayPal. Only available for
-	- Merchants **without** reference transactions. _TODO_
-	- Products connected to PayPal plan. _TODO_
-	- Payments with PayPal.
+- **Vaulting subscription:** renewal using _vaulted_ payment method (default, by WooCommerce). Available for merchants with reference transactions.
+- **PayPal subscription:** renewal controlled by PayPal. Steps to enable:
+	- After onboarding with Subscriptions - turn off vaulting. Alternative (not available at the moment): onboard merchant without reference transactions.
+	- Create subscription products, connected to PayPal plan.
+	- Only for payments via PayPal.
 
 Additional cases:
 - Guest should be automatically registered as a customer after purchasing subscription product.
@@ -33,20 +33,20 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 
 ## Tests data
 
-- Order (type `ShopOrder`) with tested subscription product. _TODO_
+- Order (type `ShopOrder`) with tested subscription product.
 - Payment details (type `Pcp.Payment`).
 - Guest or registered customer (type `WooCommerce.CreateCustomer`).
-- Merchant (with or without reference transaction). _TODO_
+- Tested subscription ptoduct.
 
 ## Preconditions
 
 - Before all tests:
 	- Install WooCommerce Subscriptions plugin.
 	- Create subscription products:
-		- Simple subscription product (for _Vaulting subscription_ tests) _TODO_
-		- Simple subscription product connected to PayPal plan (for _PayPal subscription_ tests) _TODO_
-		- Simple subscription product with free trial (for _Vaulting subscription_ tests) _TODO_
-		- Simple subscription product with free trial connected to PayPal plan (for _PayPal subscription_ tests) _TODO_
+		- Simple subscription product (for _Vaulting subscription_ tests).
+		- Simple subscription product connected to PayPal plan (for _PayPal subscription_ tests).
+		- Simple subscription product with free trial (for _Vaulting subscription_ tests).
+		- Simple subscription product with free trial connected to PayPal plan (for _PayPal subscription_ tests).
 
 - `beforeAll` hook (in the spec):
 	- Activate WooCommerce Subscriptions plugin.
@@ -88,17 +88,25 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 
 2. Assert details on Order Received page.
 
-3. Assert that guest is automatically registered as a customer and logged in.
+3. Assert customer's subscription payment method. 
 
-4. Assert payment method is saved on customer's My Account page.
+4. Assert that guest is automatically registered as a customer and logged in.
 
-5. Assert subscription on custommer's Subscriptions page.
+5. Assert payment method
+	
+	5.1 For vaulting subsctiption: is saved on customer's My Account and checkout pages.
 
-6. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
+	5.2 For PayPal subsctiption: is not saved on customer's My Account and checkout pages.
 
-7. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
+**_TODO:_** move following steps to separate tests (Subscription Renewal):
 
-8. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, etc.).
+6. Assert subscription on custommer's Subscriptions page.
+
+7. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
+
+8. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
+
+9. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, etc.).
 
 #### Approximate scenario for customer:
 
@@ -110,17 +118,25 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 
 4. Assert details on Order Received page.
 
-5. Assert payment method is saved on customer's My Account page.
+5. Assert customer's subscription payment method. 
 
-6. Assert subscription on custommer's Subscriptions page.
+6. Assert payment method
+	
+	6.1 For vaulting subsctiption: is saved on customer's My Account and checkout pages.
 
-7. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
+	6.2 For PayPal subsctiption: is not saved on customer's My Account and checkout pages.
 
-8. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
+**_TODO:_** move following steps to separate tests (Subscription Renewal?):
 
-9. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, etc.).
+7. Assert subscription on custommer's Subscriptions page.
 
-### Subscription order on other pages
+8. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
+
+9. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
+
+10. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, etc.).
+
+### Subscription order on other pages _TODO_
 
 > Note 1: similar for Classic cart, Cart, Product, (Minicart?).
 
@@ -137,7 +153,7 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 
 Approximate scenarios are similar to Checkout section.
 
-### Subscription Renewal
+### Subscription Renewal _TODO_
 
 - PCP-0000 | Vaulting subscription - PayPal - Order renewal
 - PCP-0000 | Vaulting subscription - ACDC - Order renewal
@@ -151,7 +167,7 @@ Approximate scenarios are similar to Checkout section.
 
 1. Provide customer with active subscription order
 
-2. Trigger subscription renewal for the tested renewal type and payment method. _TODO_
+2. Trigger subscription renewal for the tested renewal type and payment method.
 
 3. Assert subscription on custommer's Subscriptions page.
 
