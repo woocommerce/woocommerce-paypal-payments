@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
   "dependencies": {
-    "@inpsyde/playwright-utils": "^2.6.1",
+    "@inpsyde/playwright-utils": "^2.6.2",
     "dotenv": "^16.3.1",
     "dotenv-cli": "^7.3.0",
     "playwright": "^1.49.1",
@@ -49,7 +49,8 @@
     "setup:pcp:mexico": "npx playwright test --grep \"setup:pcp:mexico;\"",
     "setup:pcp:usa:vaulting": "npx playwright test --grep \"setup:pcp:usa:vaulting;\"",
     "setup:pcp:usa:vaulting:classic": "npx playwright test --grep \"setup:pcp:usa:vaulting:classic;\"",
-    "setup:pcp:usa:vaulting:subscription": "npx playwright test --grep \"setup:pcp:usa:vaulting:subscription;\""
+    "setup:pcp:usa:vaulting:subscription": "npx playwright test --grep \"setup:pcp:usa:vaulting:subscription;\"",
+    "setup:pcp:usa:paypal:subscription": "npx playwright test --grep \"setup:pcp:usa:paypal:subscription;\""
   },
   "eslintConfig": {
     "extends": [
