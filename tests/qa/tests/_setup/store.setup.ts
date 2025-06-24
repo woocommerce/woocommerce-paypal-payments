@@ -186,7 +186,7 @@ configureEnv( {
 } );
 
 configureEnv( {
-	title: 'setup:pcp:usa:subscription;',
+	title: 'setup:pcp:usa:vaulting:subscription;',
 	store: {
 		...storeConfigUsa,
 		subscription: true,

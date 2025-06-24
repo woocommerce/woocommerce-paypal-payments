@@ -242,9 +242,19 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 
 ### Reset SSE env
 
-```bash
-npm run reset:sse
-```
+> Note: see [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) don in Confluence (will be deprecated in 2025).
+
+1. Connect via `ssh`:
+
+	```bash
+	ssh -l fname php_version.emp.pluginpsyde.com
+	```
+
+2. Reset SSE website:
+
+	```bash
+	rm -rf /var/www/html/* 2>/dev/null; wp core download --version=X.Y.Z && wp config create && mariadb -e "DROP DATABASE fname; CREATE DATABASE fname;" && wp core install
+	```
 
 ### Setup store
 
@@ -314,5 +324,5 @@ npm run setup:pcp:usa:vaulting:classic
 ### Setup US store and merchant with subscription plugin and products (block pages)
 
 ```bash
-npm run setup:pcp:usa:subscription
+npm run setup:pcp:usa:vaulting:subscription
 ```
