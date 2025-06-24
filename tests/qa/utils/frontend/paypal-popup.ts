@@ -26,27 +26,29 @@ export class PayPalPopup {
 	submitPaymentButton = () =>
 		this.popup
 			.locator( '#payment-submit-btn' )
-			.or( this.popup.getByTestId( 'submit-button-initial' ) );
+			.or( this.popup.getByTestId( 'submit-button-initial' ) )
+			.or( this.popup.getByTestId( 'consentButton' ) )
+			.or( this.popup.getByRole( 'button', { name: 'Continue' } ) )
+			.or( this.popup.locator( '#confirmButtonTop' ) );
 	payLaterSwitcher = () => this.popup.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.popup.locator( 'label[for^="credit-offer"]' ).first();
 	venmoButton = () => this.popup.locator( '.venmo-button-wrapper>button' );
 	saveAndContinueButton = () => this.popup.getByTestId( 'consentButton' );
 	cancelLink = () => this.popup.locator( '#cancelLink' );
+	loadSpinnerContainer = () => this.popup.locator( '#preloaderSpinner' );
 
 	// Actions
 
 	login = async ( email, password ) => {
-		await expect( this.popup ).toHaveTitle(
-			'Log in to your PayPal account'
-		);
-
+		await this.popup.waitForLoadState();
+		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
 		// Sometimes the phone may be requested
 		if (
 			! ( await this.loginInput().isEditable() ) &&
-			this.loginWithPasswordInsteadLink().isVisible()
+			await this.loginWithPasswordInsteadLink().isVisible()
 		) {
-			this.loginWithPasswordInsteadLink().click();
+			await this.loginWithPasswordInsteadLink().click();
 		}
 
 		await this.loginInput().fill( email );
@@ -54,6 +56,7 @@ export class PayPalPopup {
 		// Sometimes we get a popup with email and password fields at the same screen
 		if ( await this.nextButton().isVisible() ) {
 			await this.nextButton().click();
+			await this.popup.waitForLoadState();
 		}
 
 		// Sometimes the phone may be requested
@@ -62,23 +65,48 @@ export class PayPalPopup {
 			this.loginWithPasswordInsteadLink().isVisible()
 		) {
 			this.loginWithPasswordInsteadLink().click();
+			await this.popup.waitForLoadState();
 		}
 
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
 	};
 
+	clickSubmitButton = async () => {
+		await this.popup.waitForLoadState();
+		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
+
+		while ( ! this.popup.isClosed() ) {
+			const submitButton = this.submitPaymentButton();
+			if ( ! await submitButton.isVisible() ) {
+				break; // No visible button, exit
+			}
+
+			// Race click with popup closure
+			try {
+				await Promise.race( [
+					submitButton.click(),
+					this.popup.waitForEvent( 'close', { timeout: 30 * 1000 } ) // Short timeout to prevent hang
+				] );
+			} catch ( error ) {
+				if ( this.popup.isClosed() ) break; // Exit cleanly if popup closed
+				throw error; // Rethrow unexpected errors
+			}
+
+			// Optional: wait for spinner to disappear
+			try {
+				await expect( this.loadSpinnerContainer() ).toBeVisible( { timeout: 1000 } );
+				await expect( this.loadSpinnerContainer() ).not.toBeVisible( { timeout: 5000 } );
+			} catch {
+				// Spinner didn't appear, continue
+			}
+		}
+	};
+
 	completePayment = async () => {
 		await Promise.all( [
 			this.popup.waitForEvent( 'close' ),
-			this.submitPaymentButton().click(),
-		] );
-	};
-
-	savePaymentMethodAndContinue = async () => {
-		await Promise.all( [
-			this.popup.waitForEvent( 'close' ),
-			this.saveAndContinueButton().click(),
+			this.clickSubmitButton(),
 		] );
 	};
 
@@ -89,15 +117,6 @@ export class PayPalPopup {
 	 */
 	completePayPalPayment = async ( payPalAccount: PayPalAccount ) => {
 		await this.login( payPalAccount.email, payPalAccount.password );
-		await expect( this.popup ).toHaveTitle( 'PayPal Checkout' );
-		await this.completePayment();
-	};
-
-	/**
-	 * Completes payment with PayPal
-	 */
-	completePayPalVaultedPayment = async () => {
-		await expect( this.popup ).toHaveTitle( 'PayPal Checkout' );
 		await this.completePayment();
 	};
 
@@ -126,21 +145,5 @@ export class PayPalPopup {
 	completeVenmoPayment = async () => {
 		await this.venmoButton().click();
 		await this.completePayment();
-	};
-
-	/**
-	 * Adds PayPal as customer's saved payment method (Vaulting)
-	 *
-	 * @param payPalAccount = { "email": "...", "password": "..." }
-	 */
-	savePayPalPaymentMethod = async ( payPalAccount: PayPalAccount ) => {
-		await expect( this.popup ).toHaveTitle(
-			'Log in to your PayPal account'
-		);
-		await this.login( payPalAccount.email, payPalAccount.password );
-		await expect( this.popup ).toHaveTitle(
-			'PayPal Checkout - Review your payment'
-		);
-		await this.savePaymentMethodAndContinue();
 	};
 }

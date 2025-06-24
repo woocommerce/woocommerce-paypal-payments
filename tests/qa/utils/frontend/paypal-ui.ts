@@ -27,12 +27,17 @@ export class PayPalUi {
 	paymentOptionsContainers = () =>
 		this.page
 			.locator( '#payment-method' )
-			.locator( '.wc-block-components-radio-control-accordion-option' );
+			.locator( '.wc-block-components-radio-control' );
 
+	// "Place Order" or "Pay for order" or "Sign up now" button
 	placeOrderButton = () =>
-		this.page.getByRole( 'button', { name: 'Place order' } );
-	payForOrderButton = () =>
-		this.page.getByRole( 'button', { name: 'Pay for order' } );
+		this.page.getByRole( 'button', { name: 'Place order' } )
+			.or(
+				this.page.getByRole( 'button', { name: 'Pay for order' } )
+			)
+			.or(
+				this.page.getByRole( 'button', { name: 'Sign up now' } )
+			);
 
 	payPalButtonsBlockContainer = () =>
 		this.page.locator(
@@ -42,12 +47,13 @@ export class PayPalUi {
 		this.payPalButtonsBlockContainer().locator(
 			'li[id^="express-payment-method-"]'
 		);
+	payPalIframe = () =>
+		this.page.frameLocator(
+			// unified selector for My Account and checkout pages
+			'#express-payment-method-ppcp-gateway-paypal .component-frame'
+		);
 	payPalButton = () =>
-		this.page
-			.frameLocator(
-				'#express-payment-method-ppcp-gateway-paypal .component-frame'
-			)
-			.locator( `[data-funding-source="paypal"]` );
+		this.payPalIframe().locator( `[data-funding-source="paypal"]` );
 	payLaterButton = () =>
 		this.page
 			.frameLocator(
@@ -65,8 +71,8 @@ export class PayPalUi {
 		this.page.locator(
 			'#radio-control-wc-payment-method-options-ppcp-gateway'
 		);
-	payPalButtonMoreOptions = () => this.page.locator( '.todo' ); // TODO
-	payWithDifferentAccountButton = () => this.page.locator( '.todo' ); // TODO
+	payPalButtonMoreOptions = () =>
+		this.payPalIframe().locator( '[aria-label="More options"]' );
 	payPalVaultedGateway = () =>
 		this.paymentOptionsContainers().filter( {
 			hasText: 'Saved token for ppcp-gateway',
@@ -296,15 +302,11 @@ export class PayPalUi {
 	};
 
 	/**
-	 * Clicks "Place Order" or "Pay for order" button depending on the page URL
+	 * Submits order and waits for page load
 	 */
 	submitOrder = async () => {
-		// on Pay for Order page the button name is Pay for order
-		if ( this.page.url().includes( 'pay_for_order' ) ) {
-			await this.payForOrderButton().click();
-		} else {
-			await this.placeOrderButton().click();
-		}
+		await this.placeOrderButton().click();
+		await this.page.waitForLoadState();
 	};
 
 	/**
