@@ -185,6 +185,7 @@ export class Utils {
 			rates: WooCommerce.CreateTax[]; // Tax rates to be active in WC > Settings > Taxes > Tax rates tab
 		};
 		customer?: WooCommerce.CreateCustomer; // Registered customer to be created
+		products?: WooCommerce.CreateProduct[]; // Products to be created if not existing
 	} ) => {
 		const {
 			wpDebugging,
@@ -193,15 +194,8 @@ export class Utils {
 			settings,
 			taxes,
 			customer,
+			products,
 		} = data;
-
-		if ( wpDebugging === true ) {
-			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
-		}
-
-		if ( wpDebugging === false ) {
-			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
-		}
 
 		if ( subscription === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
@@ -211,6 +205,14 @@ export class Utils {
 			await this.requestUtils.deactivatePlugin(
 				subscriptionsPlugin.slug
 			);
+		}
+
+		if ( wpDebugging === true ) {
+			await this.requestUtils.activatePlugin( wpDebuggingPlugin.slug );
+		}
+
+		if ( wpDebugging === false ) {
+			await this.requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 		}
 
 		if ( classicPages === true ) {
@@ -233,6 +235,31 @@ export class Utils {
 
 		if ( customer ) {
 			await this.restoreCustomer( customer );
+		}
+
+		if( products ) {
+			// create test products
+			const cartItems = {};
+			await Promise.all(
+				products.map( async ( product ) => {
+					const createdProduct = await this.wooCommerceUtils.createProduct(
+						product
+					);
+					// Create cart items { id: 123 }
+					cartItems[ product.slug ] = { id: createdProduct.id };
+				} )
+			);
+
+			// Parse existing PRODUCTS, if any
+			const existingProducts = process.env.PRODUCTS
+				? JSON.parse(process.env.PRODUCTS)
+				: {};
+
+			// Merge created products with existing and store back as JSON string
+			process.env.PRODUCTS = JSON.stringify( {
+				...existingProducts,
+				...cartItems,
+			} );
 		}
 	};
 

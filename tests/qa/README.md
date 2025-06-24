@@ -13,6 +13,7 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
     - [Additional options to run tests from command line](#additional-options-to-run-tests-from-command-line)
 - [Autotest Execution workflow](#autotest-execution-workflow)
 - [Coding standards](#coding-standards)
+- [Automated env setup scripts](#automated-env-setup-scripts)
 
 ## Test project structure
 
@@ -225,4 +226,103 @@ Before commiting changes run following command:
 
 ```bash
 npm run lint:js:fix
+```
+
+## Automated env setup scripts
+
+Local usage of _automated env setup scripts_ assumes that the following steps are fulfilled:
+
+1. Your current terminal dir to run scripts is `./tests/qa`.
+
+2. Dependencies and `node_modules` are installed (see [this section](#installation-of-node_modules)).
+
+	> Note: for now the storage of .zip files is restricted in .gitignore. Please ask someone of QA to provide the content of `./tests/qa/resources/files` dir.
+
+3. `.env` file is configured as per step 2 of [this section](#project-configuration) (simply copy-paste it from `PCP .env` vault of 1Password).
+
+### Reset SSE env
+
+> Note: see [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) don in Confluence (will be deprecated in 2025).
+
+1. Connect via `ssh`:
+
+	```bash
+	ssh -l fname php_version.emp.pluginpsyde.com
+	```
+
+2. Reset SSE website:
+
+	```bash
+	rm -rf /var/www/html/* 2>/dev/null; wp core download --version=X.Y.Z && wp config create && mariadb -e "DROP DATABASE fname; CREATE DATABASE fname;" && wp core install
+	```
+
+### Setup store
+
+- Installs WooCommerce, Storefront theme, additional plugins (WP Debugging, Disable Nonce, Subscriptions, etc.).
+- Configures website permalinks (`%postname%`).
+- Configures WooCommerce default settings (country, currency, taxes, shipping, API keys, emails).
+- Creates classic pages, products, coupons, registered customer.
+
+```bash
+npm run setup:store:default
+```
+
+### Setup block pages
+
+```bash
+npm run setup:checkout:block
+```
+
+### Setup classic pages
+
+```bash
+npm run setup:checkout:classic
+```
+
+### Setup taxes included
+
+```bash
+npm run setup:tax:inc
+```
+
+### Setup taxes excluded
+
+```bash
+npm run setup:tax:exc
+```
+
+### Setup US store and merchant (block pages)
+
+```bash
+npm run setup:pcp:usa
+```
+
+### Setup German store and merchant (block pages)
+
+```bash
+npm run setup:pcp:germany
+```
+
+### Setup Mexican store and merchant (block pages)
+
+```bash
+npm run setup:pcp:mexico
+```
+
+### Setup US store and merchant with vaulting (PayPal, ACDC) enabled (block pages)
+
+```bash
+npm run setup:pcp:usa:vaulting
+```
+
+### Setup US store and merchant with vaulting (PayPal, ACDC) enabled (classic pages)
+
+```bash
+npm run setup:pcp:usa:vaulting:classic
+```
+
+### Setup US store and merchant with subscription plugin and products (block pages)
+
+```bash
+npm run setup:pcp:usa:vaulting:subscription
 ```
