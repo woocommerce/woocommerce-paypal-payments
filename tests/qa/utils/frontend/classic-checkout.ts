@@ -35,7 +35,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	};
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, products, shipping, customer, merchant } =
+		const { payment, coupons, shipping, customer, merchant } =
 			data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
 
@@ -45,11 +45,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		await this.applyCouponIfNeeded( coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		if ( products.some( ( product ) => product.type === 'subscription' ) ) {
-			await this.selectInitialShipment( shipping.settings.title );
-		} else {
-			await this.selectShippingMethod( shipping.settings.title );
-		}
+		await this.shippingMethodRadio( shipping.settings.title ).click();
 
 		if ( isFastlane ) {
 			await this.payPalUi.provideFastlaneEmail( customer.email );
@@ -78,27 +74,23 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	 * @param data
 	 */
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer } =
+			data;
 		await this.assertUrl();
 		await expect(
 			this.page.getByText(
-				`You are currently paying with ${ data.payment.gatewayName }.`
+				`You are currently paying with ${ payment.gatewayName }.`
 			)
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( data.coupons );
+		await this.applyCouponIfNeeded( coupons );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		if (
-			data.products.some( ( product ) => product.type === 'subscription' )
-		) {
-			await this.selectInitialShipment( data.shipping.settings.title );
-		} else {
-			await this.selectShippingMethod( data.shipping.settings.title );
-		}
+		await this.shippingMethodRadio( shipping.settings.title ).click();
 
 		// Fill billing details
-		await this.fillCheckoutForm( data.customer );
+		await this.fillCheckoutForm( customer );
 
 		// Make payment with tested method
 		await this.placeOrder();
