@@ -9,6 +9,7 @@ import {
  * Internal dependencies
  */
 import { Pcp } from '../resources';
+import urls from './urls';
 
 /**
  * Class for REST API interactions with PCP Settings.
@@ -112,4 +113,57 @@ export class PcpApi extends WooCommerceApiBase {
 		} );
 		return response;
 	};
+
+	/**
+	 * Triggers Vaulting Subscription Renewal process
+	 * 
+	 * @param subscriptionId
+	 */
+	triggerVaultingSubscriptionRenewal = async ( subscriptionId: number ) => {
+		const url = urls.admin.wooCommerce.subscription.edit + subscriptionId;
+		const wpnonce = await this.requestUtils.getPageNonce( url );
+		const formData = {
+			_wpnonce: wpnonce,
+			post_ID: subscriptionId,
+			action: 'edit_order',
+			wc_order_action: 'wcs_process_renewal',
+		};
+		const response = await this.requestUtils.submitPageForm( url, formData );
+		return response.ok();
+	}
+
+	getPayPalSubscriptionBillingId = async ( subscriptionId: number ) => {
+		const subscription = await this.getSubscription( subscriptionId );
+
+		if( ! subscription ) {
+			console.error( `Subscription #${ subscriptionId } was not found.` );
+		}
+
+		const subscriptionMeta = subscription.meta_data.find(
+			( meta ) => meta.key === 'ppcp_subscription'
+		);
+
+		return subscriptionMeta.value;
+	}
+
+	/**
+	 * Triggers PayPal Subscription Renewal process
+	 * 
+	 * @param subscriptionId
+	 */
+	triggerPayPalSubscriptionRenewal = async ( subscriptionId: number ) => {
+		const billingId = await this.getPayPalSubscriptionBillingId( subscriptionId );
+		const response = await this.requestUtils.request.post(
+			urls.payPalWebhook, {
+			data: {
+				id: 'NOT-IMPORTANT',
+				event_type: 'PAYMENT.SALE.COMPLETED',
+				resource: {
+					billing_agreement_id: billingId,
+					id: 'NOT-IMPORTANT',
+				},
+			},
+		} );
+		return response.ok();
+	}
 }
