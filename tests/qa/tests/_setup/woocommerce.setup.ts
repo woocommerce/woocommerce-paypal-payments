@@ -205,7 +205,7 @@ setup( 'Setup products', async ( { wooCommerceUtils } ) => {
 	await Promise.all(
 		productEntries.map( async ( [ key, product ] ) => {
 			// check if not subscription product - requires Supscriptions plugin
-			if ( ! product.slug.includes( 'subscription' ) ) {
+			if ( product.type !== 'subscription' ) {
 				const createdProduct = await wooCommerceUtils.createProduct(
 					product
 				);
