@@ -321,8 +321,14 @@ npm run setup:pcp:usa:vaulting
 npm run setup:pcp:usa:vaulting:classic
 ```
 
-### Setup US store and merchant with subscription plugin and products (block pages)
+### Setup US store and merchant for Vaulting subscription (WC Subscriptions plugin, products, block pages)
 
 ```bash
 npm run setup:pcp:usa:vaulting:subscription
+```
+
+### Setup US store and merchant for PayPal subscriptions (WC Subscriptions plugin, products, block pages)
+
+```bash
+npm run setup:pcp:usa:paypal:subscription
 ```
