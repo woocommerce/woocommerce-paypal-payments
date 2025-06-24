@@ -15,7 +15,6 @@ const subscriptionFreeTrial: WooCommerce.CreateProduct = {
 		{ key: '_subscription_price', value: '100.00' },
 		{ key: '_subscription_period', value: 'month' },
 		{ key: '_subscription_period_interval', value: '1' },
-		{ key: '_subscription_length', value: '0' },
 		{ key: '_subscription_trial_length', value: '15' },
 		{ key: '_subscription_trial_period', value: 'day' },
 		
@@ -39,7 +38,6 @@ const subscriptionPayPal: WooCommerce.CreateProduct = {
 		{ key: '_subscription_price', value: '100.00' },
 		{ key: '_subscription_period', value: 'month' },
 		{ key: '_subscription_period_interval', value: '1' },
-		{ key: '_subscription_length', value: '0' },
 		{ key: '_ppcp_enable_subscription_product', value: 'yes' },
 		{ key: '_ppcp_subscription_plan_name', value: 'test' },
 		
@@ -63,7 +61,6 @@ const subscriptionPayPalFreeTrial: WooCommerce.CreateProduct = {
 		{ key: '_subscription_price', value: '100.00' },
 		{ key: '_subscription_period', value: 'month' },
 		{ key: '_subscription_period_interval', value: '1' },
-		{ key: '_subscription_length', value: '0' },
 		{ key: '_subscription_trial_length', value: '15' },
 		{ key: '_subscription_trial_period', value: 'day' },
 		{ key: '_ppcp_enable_subscription_product', value: 'yes' },
