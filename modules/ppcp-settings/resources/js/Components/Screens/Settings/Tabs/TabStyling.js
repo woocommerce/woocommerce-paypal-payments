@@ -8,7 +8,7 @@ const TabStyling = () => {
 	const { location, setLocation } = StylingHooks.useStylingLocation();
 
 	if ( ! isReady ) {
-		return <SpinnerOverlay />;
+		return <SpinnerOverlay asModal={ true } />;
 	}
 
 	return (

@@ -114,6 +114,8 @@ class SettingsRenderer {
 		string $api_shop_country
 	) {
 
+		// This is a legacy settings class, it's correctly relying on the `Status` class.
+
 		$this->settings           = $settings;
 		$this->state              = $state;
 		$this->fields             = $fields;

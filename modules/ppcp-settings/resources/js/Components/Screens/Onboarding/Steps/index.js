@@ -1,5 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
+import { CommonHooks, OnboardingHooks } from '../../../../data';
 import StepWelcome from './StepWelcome';
 import StepBusiness from './StepBusiness';
 import StepProducts from './StepProducts';
@@ -36,8 +37,7 @@ const ALL_STEPS = [
 		id: 'methods',
 		title: __( 'Choose checkout options', 'woocommerce-paypal-payments' ),
 		StepComponent: StepPaymentMethods,
-		canProceed: ( { methods } ) =>
-			methods.areOptionalPaymentMethodsEnabled !== null,
+		canProceed: ( { methods } ) => methods.optionalMethods !== null,
 	},
 	{
 		id: 'complete',
@@ -56,14 +56,18 @@ const filterSteps = ( steps, conditions ) => {
 	);
 };
 
-export const getSteps = ( flags, isCasualSeller ) => {
+export const getSteps = ( flags ) => {
+	const { ownBrandOnly } = CommonHooks.useWooSettings();
+	const { isCasualSeller } = OnboardingHooks.useBusiness();
+
 	const steps = filterSteps( ALL_STEPS, [
 		// Casual selling: Unlock the "Personal Account" choice.
 		( step ) => flags.canUseCasualSelling || step.id !== 'business',
-		// Card payments: Unlocks the "Extended Checkout" choice.
-		( step ) => flags.canUseCardPayments || step.id !== 'methods',
-		// Card payments are only available for business sellers.
-		( step ) => ! isCasualSeller || step.id !== 'methods',
+		// Skip payment methods screen.
+		( step ) =>
+			step.id !== 'methods' ||
+			( ! flags.shouldSkipPaymentMethods &&
+				! ( ownBrandOnly && isCasualSeller ) ),
 	] );
 
 	const totalStepsCount = steps.length;

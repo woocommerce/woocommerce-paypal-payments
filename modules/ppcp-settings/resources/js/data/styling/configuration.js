@@ -104,8 +104,8 @@ export const STYLING_SHAPES = {
 };
 
 export const STYLING_PAYMENT_METHODS = {
-	paypal: {
-		value: '',
+	'ppcp-gateway': {
+		value: 'ppcp-gateway',
 		label: __( 'PayPal', 'woocommerce-paypal-payments' ),
 		checked: true,
 		disabled: true,
@@ -115,17 +115,17 @@ export const STYLING_PAYMENT_METHODS = {
 		label: __( 'Venmo', 'woocommerce-paypal-payments' ),
 		isFunding: true,
 	},
-	paylater: {
-		value: 'paylater',
+	'pay-later': {
+		value: 'pay-later',
 		label: __( 'Pay Later', 'woocommerce-paypal-payments' ),
 		isFunding: true,
 	},
-	googlepay: {
-		value: 'googlepay',
+	'ppcp-googlepay': {
+		value: 'ppcp-googlepay',
 		label: __( 'Google Pay', 'woocommerce-paypal-payments' ),
 	},
-	applepay: {
-		value: 'applepay',
+	'ppcp-applepay': {
+		value: 'ppcp-applepay',
 		label: __( 'Apple Pay', 'woocommerce-paypal-payments' ),
 	},
 };

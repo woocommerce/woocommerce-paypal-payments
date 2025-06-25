@@ -7,7 +7,6 @@ const TodoSettingsBlock = ( {
 	todosData,
 	className = '',
 	setActiveModal,
-	setActiveHighlight,
 	onDismissTodo,
 } ) => {
 	const [ dismissingIds, setDismissingIds ] = useState( new Set() );
@@ -44,29 +43,30 @@ const TodoSettingsBlock = ( {
 	};
 
 	const handleClick = async ( todo ) => {
-		if ( todo.action.type === 'tab' ) {
-			const tabId = TAB_IDS[ todo.action.tab.toUpperCase() ];
-			await selectTab( tabId, todo.action.section );
-		} else if ( todo.action.type === 'external' ) {
-			window.open( todo.action.url, '_blank' );
-			// If it has completeOnClick flag, trigger the action
-			if ( todo.action.completeOnClick === true ) {
-				await completeOnClick( todo.id );
-			}
+		const { action } = todo;
+		const highlight = Boolean( action.highlight );
+
+		// Handle different action types.
+		if ( action.type === 'tab' ) {
+			const tabId = TAB_IDS[ action.tab.toUpperCase() ];
+			await selectTab( tabId, action.section, highlight );
+		} else if ( action.type === 'external' ) {
+			window.open( action.url, '_blank' );
 		}
 
-		if ( todo.action.modal ) {
-			setActiveModal( todo.action.modal );
+		if ( action.completeOnClick ) {
+			await completeOnClick( todo.id );
 		}
-		if ( todo.action.highlight ) {
-			setActiveHighlight( todo.action.highlight );
+
+		if ( action.modal ) {
+			setActiveModal( action.modal );
 		}
 	};
 
-	// Filter out dismissed todos for display
-	const visibleTodos = todosData.filter(
-		( todo ) => ! dismissedTodos.includes( todo.id )
-	);
+	// Filter out dismissed todos for display and limit to 5.
+	const visibleTodos = todosData
+		.filter( ( todo ) => ! dismissedTodos.includes( todo.id ) )
+		.slice( 0, 5 );
 
 	return (
 		<div

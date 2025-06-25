@@ -63,6 +63,10 @@
 			&:hover {
 				transform: rotate(45deg);
 			}
+
+			&.components-button {
+				height: auto;
+			}
 		}
 
 		.ppcp--method-icon {
@@ -79,6 +83,234 @@
 			justify-content: space-between;
 			align-items: center;
 			margin-top: auto;
+			min-height: 24px;
+		}
+
+		.ppcp--method-toggle-wrapper {
+			display: flex;
+			align-items: center;
+		}
+	}
+}
+
+.ppcp-r-payment-methods {
+	.ppcp-highlight {
+		animation: ppcp-highlight-fade 2s cubic-bezier(0.4, 0, 0.2, 1);
+		border: 1px solid $color-blueberry;
+		border-radius: var(--container-border-radius);
+		position: relative;
+		z-index: 1;
+	}
+
+	@keyframes ppcp-highlight-fade {
+		0%, 20% {
+			background-color: rgba($color-blueberry, 0.08);
+			border-color: $color-blueberry;
+			border-width: 1px;
+		}
+		100% {
+			background-color: transparent;
+			border-color: $color-gray-300;
+			border-width: 1px;
+		}
+	}
+}
+
+// Disabled state styling.
+.ppcp--method-item--disabled {
+	position: relative;
+
+	// Apply grayscale and disable interactions.
+	.ppcp--method-inner {
+		opacity: 0.7;
+		filter: grayscale(1);
+		pointer-events: none;
+		transition: filter 0.2s ease;
+	}
+
+	// Override text colors.
+	.ppcp--method-title {
+		color: $color-gray-700 !important;
+	}
+
+	.ppcp--method-description p {
+		color: $color-gray-500 !important;
+	}
+
+	.ppcp--method-disabled-message {
+		opacity: 0;
+		transform: translateY(-5px);
+		transition: opacity 0.2s ease, transform 0.2s ease;
+	}
+
+	// Style all buttons and toggle controls.
+	.components-button,
+	.components-form-toggle {
+		opacity: 0.5;
+	}
+
+	// Hover state - only blur the inner content.
+	&:hover {
+		.ppcp--method-inner {
+			filter: blur(2px) grayscale(1);
+		}
+
+		.ppcp--method-disabled-message {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+}
+
+// Disabled overlay.
+.ppcp--method-disabled-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba($color-white, 0.4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 8;
+	border-radius: var(--container-border-radius);
+	pointer-events: auto;
+	opacity: 0;
+	transition: opacity 0.2s ease;
+}
+
+.ppcp--method-item--disabled:hover .ppcp--method-disabled-overlay {
+	opacity: 1;
+}
+
+.ppcp--method-disabled-message {
+	padding: 14px 18px;
+	text-align: center;
+	@include font(13, 20, 500);
+	color: $color-text-tertiary;
+	position: relative;
+	z-index: 9;
+	border: none;
+
+	a {
+		text-decoration: none;
+	}
+}
+
+/* Warning message */
+.ppcp--method-warning {
+	position: relative;
+	display: inline-flex;
+	cursor: help;
+
+	svg {
+		fill: currentColor;
+		color: $color-warning;
+	}
+
+	/* Add invisible bridge to prevent gap between icon and popover */
+	&:before {
+		content: '';
+		position: absolute;
+		bottom: 100%;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 30px;
+		height: 15px;
+		background-color: transparent;
+	}
+
+	// Popover bubble
+	.ppcp--method-warning-message {
+		position: absolute;
+		bottom: calc(100% + 15px);
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 250px;
+		padding: 16px;
+		background-color: $color-white;
+		border: 1px solid $color-gray-200;
+		border-radius: 4px;
+		z-index: 9;
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 0.2s ease, visibility 0.2s;
+		pointer-events: none;
+
+		&:after {
+			content: '';
+			position: absolute;
+			top: 100%;
+			left: 50%;
+			margin-left: -6px;
+			width: 12px;
+			height: 12px;
+			background: $color-white;
+			border-right: 1px solid $color-gray-200;
+			border-bottom: 1px solid $color-gray-200;
+			box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.01);
+			transform: rotate(45deg);
+			margin-top: -6px;
+		}
+
+		a {
+			text-decoration: none;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+
+		.ppcp--method-notice-list {
+			margin-bottom: 0;
+		}
+
+		.highlight {
+			font-weight: 700;
+			background: inherit;
+			color: inherit;
+		}
+
+		code {
+			font-size: 12px;
+		}
+
+		ul {
+			list-style: inside;
+		}
+	}
+
+	&:hover .ppcp--method-warning-message,
+	& .ppcp--method-warning-message:hover {
+		opacity: 1;
+		visibility: visible;
+		pointer-events: auto;
+	}
+}
+
+// For RTL support
+html[dir="rtl"] .ppcp--method-warning {
+	&:before {
+		left: auto;
+		right: 50%;
+		transform: translateX(50%);
+	}
+
+	.ppcp--method-warning-message {
+		left: auto;
+		right: 50%;
+		transform: translateX(50%);
+
+		&:after {
+			left: auto;
+			right: 50%;
+			margin-right: -6px;
+			margin-left: 0;
 		}
 	}
 }

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
@@ -22,6 +23,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class GooglepayModule
@@ -246,6 +248,51 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				return $features;
 			}
+		);
+
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+
+				$funding_source = $request['funding_source'] ?? '';
+				if ( $payment_method !== GooglePayGateway::ID && $funding_source !== 'googlepay' ) {
+					return $data;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
+				assert( $experience_context_builder instanceof ExperienceContextBuilder );
+
+				$payment_source_data = array(
+					'experience_context' => $experience_context_builder
+						->with_endpoint_return_urls()
+						->build()->to_array(),
+				);
+
+				$three_d_secure_contingency =
+					$settings->has( '3d_secure_contingency' )
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+						: '';
+
+				if (
+					$three_d_secure_contingency === 'SCA_ALWAYS'
+					|| $three_d_secure_contingency === 'SCA_WHEN_REQUIRED'
+				) {
+					$payment_source_data['attributes'] = array(
+						'verification' => array(
+							'method' => $three_d_secure_contingency,
+						),
+					);
+				}
+
+				$data['payment_source'] = array( 'google_pay' => $payment_source_data );
+
+				return $data;
+			},
+			10,
+			3
 		);
 
 		return true;

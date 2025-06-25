@@ -101,7 +101,7 @@ $fast-transition-duration: 0.5s;
 }
 
 // 3. Express Payment Block
-.wp-block-woocommerce-checkout-express-payment-block {
+.wc-block-components-express-payment--checkout, .wp-block-woocommerce-checkout-express-payment-block {
 	transition: opacity $transition-duration ease-in,
 	scale $transition-duration ease-in,
 	display $transition-duration ease-in;

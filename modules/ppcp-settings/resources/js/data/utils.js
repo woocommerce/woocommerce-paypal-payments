@@ -1,5 +1,16 @@
+/**
+ * Utility functions for store management and hooks.
+ *
+ * Provides core functionality for creating reducers, managing state updates,
+ * and implementing custom React hooks for store interaction.
+ *
+ * @file
+ */
+
 import { useDispatch, useSelect } from '@wordpress/data';
 import { useCallback } from '@wordpress/element';
+
+import { STORE_NAME as TRACKING_STORE } from '../data/tracking/constants';
 
 /**
  * Updates an object with new values, filtering based on allowed keys.
@@ -74,7 +85,11 @@ export const createReducer = (
 
 	return function reducer( state = initialState, action ) {
 		if ( Object.hasOwnProperty.call( handlers, action.type ) ) {
-			return handlers[ action.type ]( state, action.payload ?? {} );
+			return handlers[ action.type ](
+				state,
+				action.payload ?? {},
+				action
+			);
 		}
 
 		return state;
@@ -82,6 +97,8 @@ export const createReducer = (
 };
 
 /**
+ * Creates custom React hooks for accessing store state.
+ *
  * Returns an object with two hooks:
  * - useTransient( prop )
  * - usePersistent( prop )
@@ -89,13 +106,13 @@ export const createReducer = (
  * Both hooks have a similar syntax to the native "useState( prop )" hook, but provide access to
  * a transient or persistent property in the relevant Redux store.
  *
- * Sample:
- *
+ * @example
  * const { useTransient } = createHooksForStore( STORE_NAME );
  * const [ isReady, setIsReady ] = useTransient( 'isReady' );
+ * setIsReady( true, 'user' ); // Optional source tracking
  *
  * @param {string} storeName Store name.
- * @return {{useTransient, usePersistent}} Store hooks.
+ * @return {{useTransient: Function, usePersistent: Function}} Store hooks.
  */
 export const createHooksForStore = ( storeName ) => {
 	const createHook = ( selector, dispatcher ) => ( key ) => {
@@ -119,17 +136,32 @@ export const createHooksForStore = ( storeName ) => {
 		);
 
 		const actions = useDispatch( storeName );
+		const trackingActions = useDispatch( TRACKING_STORE );
 
 		const setValue = useCallback(
-			( newValue ) => {
-				if ( ! actions?.[ dispatcher ] ) {
-					throw new Error(
-						`Please create the action "${ dispatcher }" for store "${ storeName }"`
+			( newValue, source = null ) => {
+				try {
+					// Record field source before updating the store.
+					if ( source && trackingActions?.updateSources ) {
+						trackingActions.updateSources( storeName, key, source );
+					}
+
+					// Update the store state (triggers subscription manager).
+					if ( ! actions?.[ dispatcher ] ) {
+						throw new Error(
+							`Please create the action "${ dispatcher }" for store "${ storeName }"`
+						);
+					}
+
+					actions[ dispatcher ]( key, newValue );
+				} catch ( error ) {
+					console.error(
+						`Error updating ${ key } in ${ storeName }:`,
+						error
 					);
 				}
-				actions[ dispatcher ]( key, newValue );
 			},
-			[ actions, key ]
+			[ actions, key, trackingActions ]
 		);
 
 		return [ value, setValue ];

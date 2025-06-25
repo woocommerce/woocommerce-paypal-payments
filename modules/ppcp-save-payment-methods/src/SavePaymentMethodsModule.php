@@ -115,87 +115,67 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 					function ( array $data, string $payment_method, array $request_data ) use ( $c ): array {
 						$settings = $c->get( 'wcgateway.settings' );
 						assert( $settings instanceof Settings );
+
+						$new_attributes = array(
+							'vault' => array(
+								'store_in_vault' => 'ON_SUCCESS',
+							),
+						);
+
+						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+						if ( ! $target_customer_id ) {
+							$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
+						}
+						if ( $target_customer_id ) {
+							$new_attributes['customer'] = array(
+								'id' => $target_customer_id,
+							);
+						}
+
+						$funding_source = (string) ( $request_data['funding_source'] ?? '' );
+
 						if ( $payment_method === CreditCardGateway::ID ) {
 							if ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) ) {
 								return $data;
 							}
 
 							$save_payment_method = $request_data['save_payment_method'] ?? false;
-							if ( $save_payment_method ) {
-								$data['payment_source'] = array(
-									'card' => array(
-										'attributes' => array(
-											'vault' => array(
-												'store_in_vault' => 'ON_SUCCESS',
-											),
-										),
-									),
-								);
-
-								$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-								if ( ! $target_customer_id ) {
-									$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
-								}
-
-								if ( $target_customer_id ) {
-									$data['payment_source']['card']['attributes']['customer'] = array(
-										'id' => $target_customer_id,
-									);
-								}
+							if ( ! $save_payment_method ) {
+								return $data;
 							}
-						}
-
-						if ( $payment_method === PayPalGateway::ID ) {
+						} elseif ( $payment_method === PayPalGateway::ID ) {
 							if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
 								return $data;
 							}
 
-							$funding_source = $request_data['funding_source'] ?? null;
-
-							if ( $funding_source && $funding_source === 'venmo' ) {
-								$data['payment_source'] = array(
-									'venmo' => array(
-										'attributes' => array(
-											'vault' => array(
-												'store_in_vault' => 'ON_SUCCESS',
-												'usage_type' => 'MERCHANT',
-												'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
-											),
-										),
-									),
-								);
-							} elseif ( $funding_source && $funding_source === 'apple_pay' ) {
-								$data['payment_source'] = array(
-									'apple_pay' => array(
-										'stored_credential' => array(
-											'payment_initiator' => 'CUSTOMER',
-											'payment_type' => 'RECURRING',
-										),
-										'attributes' => array(
-											'vault' => array(
-												'store_in_vault' => 'ON_SUCCESS',
-											),
-										),
-									),
-								);
-							} else {
-								$data['payment_source'] = array(
-									'paypal' => array(
-										'attributes' => array(
-											'vault' => array(
-												'store_in_vault' => 'ON_SUCCESS',
-												'usage_type' => 'MERCHANT',
-												'permit_multiple_payment_tokens' => apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false ),
-											),
-										),
-									),
-								);
+							if ( ! in_array( $funding_source, array( 'paypal', 'venmo' ), true ) ) {
+								return $data;
 							}
+
+							$new_attributes['vault']['usage_type']                     = 'MERCHANT';
+							$new_attributes['vault']['permit_multiple_payment_tokens'] = apply_filters( 'woocommerce_paypal_payments_permit_multiple_payment_tokens', false );
+						} else {
+							return $data;
 						}
+
+						$payment_source = (array) ( $data['payment_source'] ?? array() );
+						$key            = array_key_first( $payment_source );
+						if ( ! is_string( $key ) || empty( $key ) ) {
+							$key = $payment_method;
+							if ( $payment_method === PayPalGateway::ID && $funding_source ) {
+								$key = $funding_source;
+							}
+							$payment_source[ $key ] = array();
+						}
+						$payment_source[ $key ]               = (array) $payment_source[ $key ];
+						$attributes                           = (array) ( $payment_source[ $key ]['attributes'] ?? array() );
+						$payment_source[ $key ]['attributes'] = array_merge( $attributes, $new_attributes );
+
+						$data['payment_source'] = $payment_source;
 
 						return $data;
 					},
-					10,
+					20,
 					3
 				);
 

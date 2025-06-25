@@ -11,7 +11,17 @@ const EMPTY_OBJ = Object.freeze( {} );
 const EMPTY_ARR = Object.freeze( [] );
 
 const getState = ( state ) => state || EMPTY_OBJ;
+const getArray = ( value ) => {
+	if ( Array.isArray( value ) ) {
+		return value;
+	}
+	if ( value ) {
+		return Object.values( value );
+	}
+	return EMPTY_ARR;
+};
 
+// TODO: Implement a persistentData resolver!
 export const persistentData = ( state ) => {
 	return getState( state ).data || EMPTY_OBJ;
 };
@@ -23,15 +33,15 @@ export const transientData = ( state ) => {
 
 export const getTodos = ( state ) => {
 	const todos = state?.todos || persistentData( state ).todos;
-	return todos || EMPTY_ARR;
+	return getArray( todos );
 };
 
 export const getDismissedTodos = ( state ) => {
 	const dismissed =
 		state?.dismissedTodos || persistentData( state ).dismissedTodos;
-	return dismissed || EMPTY_ARR;
+	return getArray( dismissed );
 };
 
 export const getCompletedTodos = ( state ) => {
-	return state?.completedTodos || EMPTY_ARR; // Only look at root state, not persistent data
+	return getArray( state?.completedTodos ); // Only look at root state, not persistent data
 };

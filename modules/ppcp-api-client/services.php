@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
@@ -45,7 +46,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
@@ -72,7 +72,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -80,12 +79,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 
 return array(
 	'api.host'                                       => static function( ContainerInterface $container ) : string {
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		if ( $environment->is_sandbox() ) {
@@ -252,7 +253,6 @@ return array(
 		assert( $settings instanceof Settings );
 
 		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
@@ -261,7 +261,6 @@ return array(
 			$patch_collection_factory,
 			$intent,
 			$logger,
-			$application_context_repository,
 			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
 			$container->get( 'wcgateway.fraudnet' ),
@@ -313,11 +312,6 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.repository.application-context'             => static function( ContainerInterface $container ) : ApplicationContextRepository {
-
-		$settings = $container->get( 'wcgateway.settings' );
-		return new ApplicationContextRepository( $settings );
-	},
 	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ) : PartnerReferralsData {
 
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
@@ -337,8 +331,21 @@ return array(
 			$container->get( 'api.endpoint.order' )
 		);
 	},
-	'api.factory.application-context'                => static function ( ContainerInterface $container ) : ApplicationContextFactory {
-		return new ApplicationContextFactory();
+	'api.factory.contact-preference'                 => static function ( ContainerInterface $container ): ContactPreferenceFactory {
+		if ( $container->has( 'settings.data.settings' ) ) {
+			$settings = $container->get( 'settings.data.settings' );
+			assert( $settings instanceof SettingsModel );
+
+			$contact_module_active = $settings->get_enable_contact_module();
+		} else {
+			// #legacy-ui: Auto-enable the feature; can be disabled via eligibility hook.
+			$contact_module_active = true;
+		}
+
+		return new ContactPreferenceFactory(
+			$contact_module_active,
+			$container->get( 'settings.merchant-details' )
+		);
 	},
 	'api.factory.payment-token'                      => static function ( ContainerInterface $container ) : PaymentTokenFactory {
 		return new PaymentTokenFactory();
@@ -438,13 +445,9 @@ return array(
 	'api.factory.order'                              => static function ( ContainerInterface $container ): OrderFactory {
 		$purchase_unit_factory          = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory                  = $container->get( 'api.factory.payer' );
-		$application_context_repository = $container->get( 'api.repository.application-context' );
-		$application_context_factory    = $container->get( 'api.factory.application-context' );
 		return new OrderFactory(
 			$purchase_unit_factory,
-			$payer_factory,
-			$application_context_repository,
-			$application_context_factory
+			$payer_factory
 		);
 	},
 	'api.factory.payments'                           => static function ( ContainerInterface $container ): PaymentsFactory {
@@ -671,6 +674,7 @@ return array(
 				'FR' => $default_currencies,
 				'DE' => $default_currencies,
 				'GR' => $default_currencies,
+				'HK' => $default_currencies,
 				'HU' => $default_currencies,
 				'IE' => $default_currencies,
 				'IT' => $default_currencies,
@@ -688,12 +692,18 @@ return array(
 				'PT' => $default_currencies,
 				'RO' => $default_currencies,
 				'SK' => $default_currencies,
+				'SG' => $default_currencies,
 				'SI' => $default_currencies,
 				'ES' => $default_currencies,
 				'SE' => $default_currencies,
 				'GB' => $default_currencies,
 				'US' => $default_currencies,
 				'NO' => $default_currencies,
+				'YT' => $default_currencies,
+				'RE' => $default_currencies,
+				'GP' => $default_currencies,
+				'GF' => $default_currencies,
+				'MQ' => $default_currencies,
 			)
 		);
 	},
@@ -736,6 +746,7 @@ return array(
 				'FR' => $mastercard_visa_amex,
 				'GB' => $mastercard_visa_amex,
 				'GR' => $mastercard_visa_amex,
+				'HK' => $mastercard_visa_amex,
 				'HU' => $mastercard_visa_amex,
 				'IE' => $mastercard_visa_amex,
 				'IT' => $mastercard_visa_amex,
@@ -765,6 +776,7 @@ return array(
 				'SE' => $mastercard_visa_amex,
 				'SI' => $mastercard_visa_amex,
 				'SK' => $mastercard_visa_amex,
+				'SG' => $mastercard_visa_amex,
 				'JP' => array(
 					'mastercard' => array(),
 					'visa'       => array(),
@@ -959,5 +971,15 @@ return array(
 		}
 
 		return CONNECT_WOO_URL;
+	},
+	'api.helper.partner-attribution'                 => static function ( ContainerInterface $container ) : PartnerAttribution {
+		return new PartnerAttribution(
+			'ppcp_bn_code',
+			array(
+				InstallationPathEnum::CORE_PROFILER    => 'WooPPCP_Ecom_PS_CoreProfiler',
+				InstallationPathEnum::PAYMENT_SETTINGS => 'WooPPCP_Ecom_PS_CoreProfiler',
+			),
+			PPCP_PAYPAL_BN_CODE
+		);
 	},
 );

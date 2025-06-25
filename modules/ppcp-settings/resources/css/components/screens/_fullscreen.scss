@@ -2,6 +2,12 @@ body:has(.ppcp-r-container--settings),
 body:has(.ppcp-r-container--onboarding) {
 	background-color: var(--ppcp-color-app-bg) !important;
 
+	// WC 9.9+.
+	#mainform,
+	#wpcontent {
+		background-color: var(--ppcp-color-app-bg) !important;
+	}
+
 	.woocommerce-layout,
 	#woocommerce-layout__primary {
 		padding: 0 !important;

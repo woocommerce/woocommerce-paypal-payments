@@ -14,6 +14,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
+use WooCommerce\PayPalCommerce\Settings\Service\SettingsDataManager;
 
 /**
  * REST controller for authenticating and connecting to a PayPal merchant account.
@@ -41,6 +42,13 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	private AuthenticationManager $authentication_manager;
 
 	/**
+	 * Settings data manager service.
+	 *
+	 * @var SettingsDataManager
+	 */
+	private SettingsDataManager $data_manager;
+
+	/**
 	 * Defines the JSON response format (when connection was successful).
 	 *
 	 * @var array
@@ -58,9 +66,12 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 * Constructor.
 	 *
 	 * @param AuthenticationManager $authentication_manager The authentication manager.
+	 * @param SettingsDataManager   $data_manager           Settings data manager, to reset
+	 *                                                      settings.
 	 */
-	public function __construct( AuthenticationManager $authentication_manager ) {
+	public function __construct( AuthenticationManager $authentication_manager, SettingsDataManager $data_manager ) {
 		$this->authentication_manager = $authentication_manager;
+		$this->data_manager           = $data_manager;
 	}
 
 	/**
@@ -76,7 +87,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		 * }
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base . '/direct',
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
@@ -114,7 +125,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		 * }
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base . '/oauth',
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
@@ -144,7 +155,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		 * POST /wp-json/wc/v3/wc_paypal/authenticate/disconnect
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base . '/disconnect',
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
@@ -175,7 +186,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		}
 
 		$account  = $this->authentication_manager->get_account_details();
-		$response = $this->sanitize_for_javascript( $this->response_map, $account );
+		$response = $this->sanitize_for_javascript( $account, $this->response_map );
 
 		return $this->return_success( $response );
 	}
@@ -209,10 +220,18 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	/**
 	 * Disconnect the merchant and clear the authentication details.
 	 *
+	 * @param WP_REST_Request $request Full data about the request.
+	 *
 	 * @return WP_REST_Response
 	 */
-	public function disconnect() : WP_REST_Response {
+	public function disconnect( WP_REST_Request $request ) : WP_REST_Response {
+		$reset_settings = $request->get_param( 'reset' );
+
 		$this->authentication_manager->disconnect();
+
+		if ( $reset_settings ) {
+			$this->data_manager->reset_all_settings();
+		}
 
 		return $this->return_success( 'OK' );
 	}

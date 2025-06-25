@@ -54,7 +54,7 @@ class Renderer {
 
 		const enabledSeparateGateways = Object.fromEntries(
 			Object.entries( settings.separate_buttons ).filter(
-				( [ s, data ] ) => document.querySelector( data.wrapper )
+				( [ , data ] ) => document.querySelector( data.wrapper )
 			)
 		);
 		const hasEnabledSeparateGateways =
@@ -65,15 +65,16 @@ class Renderer {
 				this.renderButtons(
 					settings.button.wrapper,
 					settings.button.style,
-					contextConfig,
-					hasEnabledSeparateGateways
+					contextConfig
 				);
 			}
 		} else {
+			const allFundingSources = paypal.getFundingSources();
+			const separateFunding = allFundingSources.filter(
+				( s ) => ! ( s in enabledSeparateGateways )
+			);
 			// render each button separately
-			for ( const fundingSource of paypal
-				.getFundingSources()
-				.filter( ( s ) => ! ( s in enabledSeparateGateways ) ) ) {
+			for ( const fundingSource of separateFunding ) {
 				const style = normalizeStyleForFundingSource(
 					settings.button.style,
 					fundingSource
@@ -83,7 +84,6 @@ class Renderer {
 					settings.button.wrapper,
 					style,
 					contextConfig,
-					hasEnabledSeparateGateways,
 					fundingSource
 				);
 			}
@@ -103,26 +103,15 @@ class Renderer {
 				data.wrapper,
 				data.style,
 				contextConfig,
-				hasEnabledSeparateGateways,
 				fundingSource
 			);
 		}
 	}
 
-	renderButtons(
-		wrapper,
-		style,
-		contextConfig,
-		hasEnabledSeparateGateways,
-		fundingSource = null
-	) {
+	renderButtons( wrapper, style, contextConfig, fundingSource = null ) {
 		if (
 			! document.querySelector( wrapper ) ||
-			this.isAlreadyRendered(
-				wrapper,
-				fundingSource,
-				hasEnabledSeparateGateways
-			)
+			this.isAlreadyRendered( wrapper, fundingSource )
 		) {
 			// Try to render registered buttons again in case they were removed from the DOM by an external source.
 			widgetBuilder.renderButtons( [ wrapper, fundingSource ] );
@@ -144,10 +133,7 @@ class Renderer {
 						this.onSmartButtonClick( data, actions );
 					}
 
-					venmoButtonClicked = false;
-					if ( data.fundingSource === 'venmo' ) {
-						venmoButtonClicked = true;
-					}
+					venmoButtonClicked = data.fundingSource === 'venmo';
 				},
 				onInit: ( data, actions ) => {
 					if ( this.onSmartButtonsInit ) {
@@ -158,32 +144,35 @@ class Renderer {
 			};
 
 			// Check the condition and add the handler if needed
-			if ( this.shouldEnableShippingCallback() ) {
+			if (
+				this.shouldEnableShippingCallback() &&
+				! this.defaultSettings.server_side_shipping_callback.enabled
+			) {
 				options.onShippingOptionsChange = ( data, actions ) => {
 					const shippingOptionsChange =
-					! this.isVenmoButtonClickedWhenVaultingIsEnabled(
-						venmoButtonClicked
-					)
-						? handleShippingOptionsChange(
-								data,
-								actions,
-								this.defaultSettings
-						  )
-						: null;
+						! this.isVenmoButtonClickedWhenVaultingIsEnabled(
+							venmoButtonClicked
+						)
+							? handleShippingOptionsChange(
+									data,
+									actions,
+									this.defaultSettings
+							  )
+							: null;
 
 					return shippingOptionsChange;
 				};
 				options.onShippingAddressChange = ( data, actions ) => {
 					const shippingAddressChange =
-					! this.isVenmoButtonClickedWhenVaultingIsEnabled(
-						venmoButtonClicked
-					)
-						? handleShippingAddressChange(
-								data,
-								actions,
-								this.defaultSettings
-						  )
-						: null;
+						! this.isVenmoButtonClickedWhenVaultingIsEnabled(
+							venmoButtonClicked
+						)
+							? handleShippingAddressChange(
+									data,
+									actions,
+									this.defaultSettings
+							  )
+							: null;
 
 					return shippingAddressChange;
 				};
@@ -228,12 +217,11 @@ class Renderer {
 				}
 			);
 
-		this.renderedSources.add( wrapper + ( fundingSource ?? '' ) );
+		this.renderedSources.add(
+			wrapper + ( fundingSource ? fundingSource : '' )
+		);
 
-		if (
-			typeof paypal !== 'undefined' &&
-			typeof paypal.Buttons !== 'undefined'
-		) {
+		if ( window.paypal?.Buttons ) {
 			widgetBuilder.registerButtons(
 				[ wrapper, fundingSource ],
 				buttonsOptions()
@@ -246,15 +234,16 @@ class Renderer {
 		return venmoButtonClicked && this.defaultSettings.vaultingEnabled;
 	};
 
-    shouldEnableShippingCallback = () => {
+	shouldEnableShippingCallback = () => {
 		const needShipping =
 			this.defaultSettings.needShipping ||
 			this.defaultSettings.context === 'product';
+
 		return (
 			this.defaultSettings.should_handle_shipping_in_paypal &&
 			needShipping
 		);
-    };
+	};
 
 	isAlreadyRendered( wrapper, fundingSource ) {
 		return this.renderedSources.has( wrapper + ( fundingSource ?? '' ) );
@@ -272,6 +261,7 @@ class Renderer {
 		this.onButtonsInitListeners[ wrapper ] = reset
 			? []
 			: this.onButtonsInitListeners[ wrapper ] || [];
+
 		this.onButtonsInitListeners[ wrapper ].push( handler );
 	}
 
@@ -283,12 +273,11 @@ class Renderer {
 
 		if ( this.onButtonsInitListeners[ wrapper ] ) {
 			for ( const handler of this.onButtonsInitListeners[ wrapper ] ) {
-				if ( typeof handler === 'function' ) {
-					handler( {
-						wrapper,
-						...this.buttonsOptions[ wrapper ],
-					} );
+				if ( typeof handler !== 'function' ) {
+					continue;
 				}
+
+				handler( { wrapper, ...this.buttonsOptions[ wrapper ] } );
 			}
 		}
 	}
@@ -297,10 +286,11 @@ class Renderer {
 		if ( ! this.buttonsOptions[ wrapper ] ) {
 			return;
 		}
+
 		try {
 			this.buttonsOptions[ wrapper ].actions.disable();
 		} catch ( err ) {
-			console.log( 'Failed to disable buttons: ' + err );
+			console.warn( 'Failed to disable buttons: ' + err );
 		}
 	}
 
@@ -308,10 +298,11 @@ class Renderer {
 		if ( ! this.buttonsOptions[ wrapper ] ) {
 			return;
 		}
+
 		try {
 			this.buttonsOptions[ wrapper ].actions.enable();
 		} catch ( err ) {
-			console.log( 'Failed to enable buttons: ' + err );
+			console.warn( 'Failed to enable buttons: ' + err );
 		}
 	}
 }

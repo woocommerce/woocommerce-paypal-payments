@@ -16,6 +16,8 @@ use WooCommerce\PayPalCommerce\Settings\Service\DataSanitizer;
  * Class SettingsModel
  *
  * Handles the storage and retrieval of PayPal Commerce settings in WordPress options table.
+ *
+ * DI Service: 'settings.data.settings'
  */
 class SettingsModel extends AbstractDataModel {
 
@@ -41,6 +43,13 @@ class SettingsModel extends AbstractDataModel {
 	public const LANDING_PAGE_OPTIONS = array( 'any', 'login', 'guest_checkout' );
 
 	/**
+	 * Valid options for 3D Secure.
+	 *
+	 * @var array
+	 */
+	public const THREE_D_SECURE_OPTIONS = array( 'no-3d-secure', 'only-required-3d-secure', 'always-3d-secure' );
+
+	/**
 	 * Data sanitizer service.
 	 *
 	 * @var DataSanitizer
@@ -48,13 +57,23 @@ class SettingsModel extends AbstractDataModel {
 	protected DataSanitizer $sanitizer;
 
 	/**
+	 * Invoice prefix.
+	 *
+	 * @var string
+	 */
+	private string $invoice_prefix;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DataSanitizer $sanitizer Data sanitizer service.
+	 * @param string        $invoice_prefix Invoice prefix.
 	 * @throws RuntimeException If the OPTION_KEY is not defined in the child class.
 	 */
-	public function __construct( DataSanitizer $sanitizer ) {
-		$this->sanitizer = $sanitizer;
+	public function __construct( DataSanitizer $sanitizer, string $invoice_prefix ) {
+		$this->sanitizer      = $sanitizer;
+		$this->invoice_prefix = $invoice_prefix;
+
 		parent::__construct();
 	}
 
@@ -66,22 +85,25 @@ class SettingsModel extends AbstractDataModel {
 	protected function get_defaults() : array {
 		return array(
 			// Free-form string values.
-			'invoice_prefix'         => '',
+			'invoice_prefix'         => $this->invoice_prefix,
 			'brand_name'             => '',
 			'soft_descriptor'        => '',
 
 			// Enum-type string values.
-			'subtotal_adjustment'    => 'skip_details', // Options: [correction|no_details].
+			'subtotal_adjustment'    => 'correction', // Options: [correction|no_details].
 			'landing_page'           => 'any',          // Options: [any|login|guest_checkout].
-			'button_language'        => '',             // empty or a 2-letter language code.
+			'button_language'        => '',             // empty or a language locale code.
+			'three_d_secure'         => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
 
 			// Boolean flags.
 			'authorize_only'         => false,
 			'capture_virtual_orders' => false,
 			'save_paypal_and_venmo'  => false,
+			'enable_contact_module'  => true,
 			'save_card_details'      => false,
 			'enable_pay_now'         => false,
 			'enable_logging'         => false,
+			'stay_updated'           => true,
 
 			// Array of string values.
 			'disabled_cards'         => array(),
@@ -111,8 +133,8 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The brand name.
 	 */
-	public function get_brand_name() : string {
-		return $this->data['brand_name'];
+	public function get_brand_name(): string {
+		return ! empty( $this->data['brand_name'] ) ? $this->data['brand_name'] : get_bloginfo( 'name' );
 	}
 
 	/**
@@ -139,7 +161,10 @@ class SettingsModel extends AbstractDataModel {
 	 * @param string $descriptor The soft descriptor to set.
 	 */
 	public function set_soft_descriptor( string $descriptor ) : void {
-		$this->data['soft_descriptor'] = $this->sanitizer->sanitize_text( $descriptor );
+		$descriptor = $this->sanitizer->sanitize_text( $descriptor );
+		$descriptor = preg_replace( '/[^a-zA-Z0-9\-*. ]/', '', $descriptor ) ?? '';
+
+		$this->data['soft_descriptor'] = substr( $descriptor, 0, 22 );
 	}
 
 	/**
@@ -197,6 +222,24 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
+	 * Gets the 3D Secure setting.
+	 *
+	 * @return string The 3D Secure setting.
+	 */
+	public function get_three_d_secure() : string {
+		return $this->data['three_d_secure'];
+	}
+
+	/**
+	 * Sets the 3D Secure setting.
+	 *
+	 * @param string $setting The 3D Secure setting to set.
+	 */
+	public function set_three_d_secure( string $setting ) : void {
+		$this->data['three_d_secure'] = $this->sanitizer->sanitize_enum( $setting, self::THREE_D_SECURE_OPTIONS );
+	}
+
+	/**
 	 * Gets the authorize only setting.
 	 *
 	 * @return bool True if authorize only is enabled, false otherwise.
@@ -248,6 +291,24 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_save_paypal_and_venmo( bool $save ) : void {
 		$this->data['save_paypal_and_venmo'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Gets the custom-shipping-contact flag ("Contact Module").
+	 *
+	 * @return bool True if the contact module feature is enabled, false otherwise.
+	 */
+	public function get_enable_contact_module() : bool {
+		return $this->data['enable_contact_module'];
+	}
+
+	/**
+	 * Sets the custom-shipping-contact flag ("Contact Module").
+	 *
+	 * @param bool $save Whether to use the contact module feature.
+	 */
+	public function set_enable_contact_module( bool $save ) : void {
+		$this->data['enable_contact_module'] = $this->sanitizer->sanitize_bool( $save );
 	}
 
 	/**

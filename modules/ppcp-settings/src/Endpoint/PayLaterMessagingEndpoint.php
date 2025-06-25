@@ -63,7 +63,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 		 * GET wc/v3/wc_paypal/pay_later_messaging
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -76,7 +76,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 		 * POST wc/v3/wc_paypal/pay_later_messaging
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,

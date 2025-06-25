@@ -26,11 +26,22 @@ const defaultTransient = Object.freeze( {
 		email: '',
 		clientId: '',
 		clientSecret: '',
+		sellerType: 'unknown',
 	} ),
 
 	wooSettings: Object.freeze( {
 		storeCountry: '',
 		storeCurrency: '',
+
+		/**
+		 * The "branded-only" experience is determined on server-side, based on the installation path.
+		 *
+		 * When true, the plugin must only display "PayPal's own brand" payment options
+		 * i.e. no card payments or Apple Pay/Google Pay.
+		 *
+		 * @type {boolean}
+		 */
+		ownBrandOnly: false,
 	} ),
 
 	features: Object.freeze( {
@@ -106,11 +117,16 @@ const commonReducer = createReducer( defaultTransient, defaultPersistent, {
 		return changeTransient( state, { activities: newActivities } );
 	},
 
-	[ ACTION_TYPES.DO_REFRESH_MERCHANT ]: ( state ) => ( {
+	// Instantly reset the merchant data and features before refreshing the details.
+	[ ACTION_TYPES.RESET_MERCHANT ]: ( state ) => ( {
 		...state,
 		merchant: Object.freeze( { ...defaultTransient.merchant } ),
 		features: Object.freeze( { ...defaultTransient.features } ),
 	} ),
+
+	[ ACTION_TYPES.SET_MERCHANT ]: ( state, payload ) => {
+		return changePersistent( state, { merchant: payload.merchant } );
+	},
 
 	[ ACTION_TYPES.HYDRATE ]: ( state, payload ) => {
 		const newState = changePersistent( state, payload.data );

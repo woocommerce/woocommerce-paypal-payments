@@ -1,5 +1,7 @@
-const Action = ( { children } ) => (
-	<div className="ppcp--action">{ children }</div>
+const Action = ( { id, children } ) => (
+	<div className="ppcp--action" { ...( id ? { id } : {} ) }>
+		{ children }
+	</div>
 );
 
 export default Action;

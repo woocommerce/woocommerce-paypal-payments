@@ -16,7 +16,7 @@ const StepCompleteSetup = () => {
 					'woocommerce-paypal-payments'
 				) }
 			/>
-			<div className="ppcp-r-inner-container">
+			<div className="ppcp-r-inner-container ppcp--wide">
 				<div className="ppcp-r-onboarding-header__description">
 					<ConnectionButton
 						title={ __(

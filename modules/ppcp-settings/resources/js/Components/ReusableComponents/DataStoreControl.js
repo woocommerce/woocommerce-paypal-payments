@@ -18,6 +18,7 @@ const DataStoreControl = React.forwardRef(
 			control: ControlComponent,
 			value: externalValue,
 			onChange,
+			onConfirm = null,
 			delay = 300,
 			...props
 		},
@@ -25,7 +26,9 @@ const DataStoreControl = React.forwardRef(
 	) => {
 		const [ internalValue, setInternalValue ] = useState( externalValue );
 		const onChangeRef = useRef( onChange );
+		const onConfirmRef = useRef( onConfirm );
 		onChangeRef.current = onChange;
+		onConfirmRef.current = onConfirm;
 
 		const debouncedUpdate = useRef(
 			debounce( ( value ) => {
@@ -36,7 +39,7 @@ const DataStoreControl = React.forwardRef(
 		useEffect( () => {
 			setInternalValue( externalValue );
 			debouncedUpdate?.cancel();
-		}, [ externalValue ] );
+		}, [ debouncedUpdate, externalValue ] );
 
 		useEffect( () => {
 			return () => debouncedUpdate?.cancel();
@@ -50,12 +53,25 @@ const DataStoreControl = React.forwardRef(
 			[ debouncedUpdate ]
 		);
 
+		const handleKeyDown = useCallback(
+			( event ) => {
+				if ( onConfirmRef.current && event.key === 'Enter' ) {
+					event.preventDefault();
+					debouncedUpdate.flush();
+					onConfirmRef.current();
+					return false;
+				}
+			},
+			[ debouncedUpdate ]
+		);
+
 		return (
 			<ControlComponent
 				ref={ ref }
 				{ ...props }
 				value={ internalValue }
 				onChange={ handleChange }
+				onKeyDown={ handleKeyDown }
 			/>
 		);
 	}

@@ -1,5 +1,5 @@
 import { __ } from '@wordpress/i18n';
-
+import { useSelect } from '@wordpress/data';
 import {
 	ControlRadioGroup,
 	ControlToggleButton,
@@ -9,11 +9,14 @@ import {
 import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 import Accordion from '../../../../../ReusableComponents/AccordionSection';
 import { SettingsHooks } from '../../../../../../data';
+import SoftDescriptorInput from '../../../../../ReusableComponents/Controls/SoftdescriptorInput';
 
-const PaypalSettings = () => {
+const PaypalSettings = ( { hasContactModule } ) => {
 	const {
 		savePaypalAndVenmo,
 		setSavePaypalAndVenmo,
+		contactModule,
+		setContactModule,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
 		brandName,
@@ -25,6 +28,9 @@ const PaypalSettings = () => {
 		buttonLanguage,
 		setButtonLanguage,
 	} = SettingsHooks.useSettings();
+	const siteData = useSelect( ( select ) => select( 'core' ).getSite(), [] );
+	const siteTitle = siteData?.title;
+	const buttonLanguageChoices = window.ppcpSettings.buttonLanguageChoices;
 
 	return (
 		<Accordion
@@ -67,6 +73,21 @@ const PaypalSettings = () => {
 				/>
 			</SettingsBlock>
 
+			<SettingsBlock visible={ hasContactModule }>
+				<ControlToggleButton
+					label={ __(
+						'Contact selection on payment',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						'Allow customers to choose an alternative email and phone number from their PayPal contacts during payment. Order confirmations and tracking updates are sent to the selected contacts instead of checkout details. Perfect for gift orders.',
+						'woocommerce-paypal-payments'
+					) }
+					value={ contactModule }
+					onChange={ setContactModule }
+				/>
+			</SettingsBlock>
+
 			<SettingsBlock
 				title={ __( 'Brand name', 'woocommerce-paypal-payments' ) }
 				description={ __(
@@ -77,10 +98,10 @@ const PaypalSettings = () => {
 				<ControlTextInput
 					value={ brandName }
 					onChange={ setBrandName }
-					placeholder={ __(
-						'Brand name',
-						'woocommerce-paypal-payments'
-					) }
+					placeholder={
+						siteTitle ||
+						__( 'Brand name', 'woocommerce-paypal-payments' )
+					}
 				/>
 			</SettingsBlock>
 
@@ -91,7 +112,7 @@ const PaypalSettings = () => {
 					'woocommerce-paypal-payments'
 				) }
 			>
-				<ControlTextInput
+				<SoftDescriptorInput
 					value={ softDescriptor }
 					onChange={ setSoftDescriptor }
 					placeholder={ __(
@@ -126,7 +147,7 @@ const PaypalSettings = () => {
 				) }
 			>
 				<ControlSelect
-					options={ languagesExample }
+					options={ buttonLanguageChoices }
 					value={ buttonLanguage }
 					onChange={ setButtonLanguage }
 					placeholder={ __(
@@ -138,13 +159,6 @@ const PaypalSettings = () => {
 		</Accordion>
 	);
 };
-
-const languagesExample = [
-	{ value: 'en', label: 'English' },
-	{ value: 'de', label: 'German' },
-	{ value: 'es', label: 'Spanish' },
-	{ value: 'it', label: 'Italian' },
-];
 
 const subtotalAdjustmentChoices = [
 	{

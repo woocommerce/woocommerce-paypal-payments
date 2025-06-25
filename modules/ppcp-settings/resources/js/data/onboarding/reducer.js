@@ -16,6 +16,7 @@ const defaultTransient = Object.freeze( {
 	isReady: false,
 	manualClientId: '',
 	manualClientSecret: '',
+	connectionButtonClicked: false,
 
 	// Read only values, provided by the server.
 	flags: Object.freeze( {
@@ -23,6 +24,9 @@ const defaultTransient = Object.freeze( {
 		canUseVaulting: false,
 		canUseCardPayments: false,
 		canUseSubscriptions: false,
+		shouldSkipPaymentMethods: false,
+		canUseFastlane: false,
+		canUsePayLater: false,
 	} ),
 } );
 
@@ -32,6 +36,8 @@ const defaultPersistent = Object.freeze( {
 	isCasualSeller: null, // null value will uncheck both options in the UI.
 	areOptionalPaymentMethodsEnabled: null,
 	products: [],
+	gatewaysSynced: false,
+	gatewaysRefreshed: false,
 } );
 
 // Reducer logic.
@@ -73,6 +79,14 @@ const onboardingReducer = createReducer( defaultTransient, defaultPersistent, {
 		}
 
 		return newState;
+	},
+
+	[ ACTION_TYPES.SYNC_GATEWAYS ]: ( state ) => {
+		return changePersistent( state, { gatewaysSynced: true } );
+	},
+
+	[ ACTION_TYPES.REFRESH_GATEWAYS ]: ( state ) => {
+		return changePersistent( state, { gatewaysRefreshed: true } );
 	},
 } );
 

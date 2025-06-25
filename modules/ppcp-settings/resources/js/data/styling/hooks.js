@@ -7,7 +7,7 @@
  * @file
  */
 
-import { useCallback } from '@wordpress/element';
+import { useCallback, useMemo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 
 import { createHooksForStore } from '../utils';
@@ -20,13 +20,37 @@ import {
 	STYLING_PAYMENT_METHODS,
 	STYLING_SHAPES,
 } from './configuration';
+import { persistentData } from './selectors';
+
+/**
+ * Single source of truth for access Redux details.
+ *
+ * This hook returns a stable API to access actions, selectors and special hooks to generate
+ * getter- and setters for transient or persistent properties.
+ *
+ * @return {{select, dispatch, useTransient, usePersistent}} Store data API.
+ */
+const useStoreData = () => {
+	const select = useSelect( ( selectors ) => selectors( STORE_NAME ), [] );
+	const dispatch = useDispatch( STORE_NAME );
+	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
+
+	return useMemo(
+		() => ( {
+			select,
+			dispatch,
+			useTransient,
+			usePersistent,
+		} ),
+		[ select, dispatch, useTransient, usePersistent ]
+	);
+};
 
 const useHooks = () => {
-	const { useTransient } = createHooksForStore( STORE_NAME );
-	const { persist, setPersistent } = useDispatch( STORE_NAME );
+	const { useTransient, dispatch } = useStoreData();
+	const { setPersistent } = dispatch;
 
 	// Transient accessors.
-	const [ isReady ] = useTransient( 'isReady' );
 	const [ location, setLocation ] = useTransient( 'location' );
 
 	// Persistent accessors.
@@ -61,8 +85,6 @@ const useHooks = () => {
 	);
 
 	return {
-		persist,
-		isReady,
 		location,
 		setLocation,
 		getLocationProp,
@@ -71,8 +93,16 @@ const useHooks = () => {
 };
 
 export const useStore = () => {
-	const { persist, isReady } = useHooks();
-	return { persist, isReady };
+	const { select, dispatch, useTransient } = useStoreData();
+	const { persist, refresh } = dispatch;
+	const [ isReady ] = useTransient( 'isReady' );
+
+	// Load persistent data from REST if not done yet.
+	if ( ! isReady ) {
+		select.persistentData();
+	}
+
+	return { persist, refresh, isReady };
 };
 
 export const useStylingLocation = () => {

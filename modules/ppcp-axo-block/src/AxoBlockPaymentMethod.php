@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class AxoBlockPaymentMethod
@@ -61,9 +61,9 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * The DCC gateway settings.
 	 *
-	 * @var DCCGatewayConfiguration
+	 * @var CardPaymentsConfiguration
 	 */
-	protected DCCGatewayConfiguration $dcc_configuration;
+	protected CardPaymentsConfiguration $dcc_configuration;
 
 	/**
 	 * The environment object.
@@ -101,7 +101,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param WC_Payment_Gateway            $gateway Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
 	 * @param Settings                      $settings The settings.
-	 * @param DCCGatewayConfiguration       $dcc_configuration The DCC gateway settings.
+	 * @param CardPaymentsConfiguration     $dcc_configuration The DCC gateway settings.
 	 * @param Environment                   $environment The environment object.
 	 * @param string                        $wcgateway_module_url The WcGateway module URL.
 	 * @param array                         $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
@@ -113,7 +113,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	WC_Payment_Gateway $gateway,
 	$smart_button,
 	Settings $settings,
-	DCCGatewayConfiguration $dcc_configuration,
+	CardPaymentsConfiguration $dcc_configuration,
 	Environment $environment,
 	string $wcgateway_module_url,
 	array $payment_method_selected_map,

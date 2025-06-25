@@ -1,14 +1,14 @@
 import { createReduxStore, register } from '@wordpress/data';
-import { controls as wpControls } from '@wordpress/data-controls';
 
 import { STORE_NAME } from './constants';
 import reducer from './reducer';
 import * as selectors from './selectors';
 import * as actions from './actions';
 import * as hooks from './hooks';
-import { resolvers } from './resolvers';
-import { controls } from './controls';
+import * as resolvers from './resolvers';
 import { initTodoSync } from '../sync/todo-state-sync';
+import { initPaymentDependencySync } from '../sync/payment-methods-sync';
+import { initSettingBasedPaymentMethodsSync } from '../sync/setting-based-payment-methods-sync';
 
 /**
  * Initializes and registers the settings store with WordPress data layer.
@@ -19,7 +19,6 @@ import { initTodoSync } from '../sync/todo-state-sync';
 export const initStore = () => {
 	const store = createReduxStore( STORE_NAME, {
 		reducer,
-		controls: { ...wpControls, ...controls },
 		actions,
 		selectors,
 		resolvers,
@@ -27,8 +26,12 @@ export const initStore = () => {
 
 	register( store );
 
-	// Initialize todo sync after store registration. Potentially should be moved elsewhere.
+	// Initialize todo sync after store registration.
 	initTodoSync();
+
+	// Initialize payment method dependency sync.
+	initPaymentDependencySync();
+	initSettingBasedPaymentMethodsSync();
 
 	return Boolean( wp.data.select( STORE_NAME ) );
 };

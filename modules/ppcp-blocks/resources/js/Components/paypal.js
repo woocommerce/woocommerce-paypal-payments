@@ -67,27 +67,6 @@ export const PayPalComponent = ( {
 		? `${ config.id }-${ fundingSource }`
 		: config.id;
 
-	/**
-	 * The block cart displays express checkout buttons. Those buttons are handled by the
-	 * PAYPAL_GATEWAY_ID method on the server ("PayPal Smart Buttons").
-	 *
-	 * A possible bug in WooCommerce does not use the correct payment method ID for the express
-	 * payment buttons inside the cart, but sends the ID of the _first_ active payment method.
-	 *
-	 * This function uses an internal WooCommerce dispatcher method to set the correct method ID.
-	 */
-	const enforcePaymentMethodForCart = () => {
-		// Do nothing, unless we're handling block cart express payment buttons.
-		if ( 'cart-block' !== config.scriptData.context ) {
-			return;
-		}
-
-		// Set the active payment method to PAYPAL_GATEWAY_ID.
-		wp.data
-			.dispatch( 'wc/store/payment' )
-			.__internalSetActivePaymentMethod( PAYPAL_GATEWAY_ID, {} );
-	};
-
 	useEffect( () => {
 		// fill the form if in continuation (for product or mini-cart buttons)
 		if ( continuationFilled || ! config.scriptData.continuation?.order ) {
@@ -119,7 +98,7 @@ export const PayPalComponent = ( {
 
 		// this useEffect should run only once, but adding this in case of some kind of full re-rendering
 		setContinuationFilled( true );
-	}, [ shippingData, continuationFilled ] );
+	}, [ shippingData.needsShipping, continuationFilled ] );
 
 	const getCheckoutRedirectUrl = () => {
 		const checkoutUrl = new URL( config.scriptData.redirect );
@@ -339,7 +318,6 @@ export const PayPalComponent = ( {
 						shouldskipFinalConfirmation,
 						getCheckoutRedirectUrl,
 						setGotoContinuationOnError,
-						enforcePaymentMethodForCart,
 						onSubmit,
 						onError,
 						onClose
@@ -374,6 +352,10 @@ export const PayPalComponent = ( {
 	);
 
 	const getOnShippingOptionsChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -386,6 +368,10 @@ export const PayPalComponent = ( {
 	};
 
 	const getOnShippingAddressChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -439,7 +425,6 @@ export const PayPalComponent = ( {
 						shouldskipFinalConfirmation,
 						getCheckoutRedirectUrl,
 						setGotoContinuationOnError,
-						enforcePaymentMethodForCart,
 						onSubmit,
 						onError,
 						onClose
@@ -476,7 +461,6 @@ export const PayPalComponent = ( {
 					shouldskipFinalConfirmation,
 					getCheckoutRedirectUrl,
 					setGotoContinuationOnError,
-					enforcePaymentMethodForCart,
 					onSubmit,
 					onError,
 					onClose

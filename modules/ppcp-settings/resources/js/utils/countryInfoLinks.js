@@ -24,7 +24,7 @@ export const learnMoreLinks = {
 			'https://www.paypal.com/uk/business/paypal-business-fees',
 		PayPalCheckout:
 			'https://www.paypal.com/uk/business/accept-payments/checkout',
-		PayLater:
+		PayInThree:
 			'https://www.paypal.com/uk/business/accept-payments/checkout/installments',
 	},
 	FR: {

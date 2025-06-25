@@ -87,7 +87,7 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 		 * POST /wp-json/wc/v3/wc_paypal/refresh-features
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,

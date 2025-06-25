@@ -16,11 +16,19 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsAppli
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
+	// @deprecated - use `save-payment-methods.eligibility.check` instead.
 	'save-payment-methods.eligible'                      => static function ( ContainerInterface $container ): bool {
+		$eligibility_check = $container->get( 'save-payment-methods.eligibility.check' );
+
+		return $eligibility_check();
+	},
+	'save-payment-methods.eligibility.check'             => static function ( ContainerInterface $container ): callable {
 		$save_payment_methods_applies = $container->get( 'save-payment-methods.helpers.save-payment-methods-applies' );
 		assert( $save_payment_methods_applies instanceof SavePaymentMethodsApplies );
 
-		return $save_payment_methods_applies->for_country();
+		return static function () use ( $save_payment_methods_applies ) : bool {
+			return $save_payment_methods_applies->for_country() && $save_payment_methods_applies->for_merchant();
+		};
 	},
 	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ) : SavePaymentMethodsApplies {
 		return new SavePaymentMethodsApplies(
@@ -70,6 +78,11 @@ return array(
 				'SE',
 				'GB',
 				'US',
+				'YT',
+				'RE',
+				'GP',
+				'GF',
+				'MQ',
 			)
 		);
 	},

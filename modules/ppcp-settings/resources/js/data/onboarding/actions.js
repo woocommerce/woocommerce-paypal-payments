@@ -7,10 +7,10 @@
  * @file
  */
 
-import { select } from '@wordpress/data';
+import apiFetch from '@wordpress/api-fetch';
 
 import ACTION_TYPES from './action-types';
-import { STORE_NAME } from './constants';
+import { REST_PERSIST_PATH } from './constants';
 
 /**
  * @typedef {Object} Action An action object that is handled by a reducer or control.
@@ -69,12 +69,74 @@ export const setPersistent = ( prop, value ) => ( {
 export const setIsReady = ( isReady ) => setTransient( 'isReady', isReady );
 
 /**
- * Side effect. Triggers the persistence of onboarding data to the server.
+ * Thunk action creator. Triggers the persistence of onboarding data to the server.
  *
+ * @return {Function} The thunk function.
+ */
+export function persist() {
+	return async ( { select } ) => {
+		try {
+			await apiFetch( {
+				path: REST_PERSIST_PATH,
+				method: 'POST',
+				data: select.persistentData(),
+			} );
+		} catch ( e ) {
+			// We catch errors here, as the onboarding module is not handled by the persistAll hook.
+			console.error( 'Error saving progress.', e );
+		}
+	};
+}
+
+/**
+ * Thunk action creator. Forces a data refresh from the REST API, replacing the current Redux values.
+ *
+ * @return {Function} The thunk function.
+ */
+export function refresh() {
+	return ( { dispatch, select } ) => {
+		dispatch.invalidateResolutionForStore();
+
+		select.persistentData();
+	};
+}
+
+/**
+ * Persistent. Updates the gateway synced status.
+ *
+ * @param {boolean} synced The sync status to set
  * @return {Action} The action.
  */
-export const persist = function* () {
-	const data = yield select( STORE_NAME ).persistentData();
+export const updateGatewaysSynced = ( synced = true ) =>
+	setPersistent( 'gatewaysSynced', synced );
 
-	yield { type: ACTION_TYPES.DO_PERSIST_DATA, data };
-};
+/**
+ * Persistent. Updates the gateway refreshed status.
+ *
+ * @param {boolean} refreshed The refreshed status to set
+ * @return {Action} The action.
+ */
+export const updateGatewaysRefreshed = ( refreshed = true ) =>
+	setPersistent( 'gatewaysRefreshed', refreshed );
+
+/**
+ * Action creator to sync payment gateways.
+ * This will both update the state and persist it.
+ *
+ * @return {Function} The thunk function.
+ */
+export function syncGateways() {
+	return async ( { dispatch } ) => {
+		dispatch( setPersistent( 'gatewaysSynced', true ) );
+		await dispatch.persist();
+		return { success: true };
+	};
+}
+
+export function refreshGateways() {
+	return async ( { dispatch } ) => {
+		dispatch( setPersistent( 'gatewaysRefreshed', true ) );
+		await dispatch.persist();
+		return { success: true };
+	};
+}

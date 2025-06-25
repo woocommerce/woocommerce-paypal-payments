@@ -60,7 +60,7 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 		 * }
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
@@ -82,6 +82,16 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 							return array_map( 'sanitize_text_field', $products );
 						},
 					),
+					'options'    => array(
+						'requires'          => false,
+						'type'              => 'array',
+						'items'             => array(
+							'type' => 'bool',
+						),
+						'sanitize_callback' => function ( $flags ) {
+							return array_map( array( $this, 'to_boolean' ), $flags );
+						},
+					),
 				),
 			)
 		);
@@ -97,9 +107,10 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 	public function get_login_url( WP_REST_Request $request ) : WP_REST_Response {
 		$use_sandbox = $request->get_param( 'useSandbox' );
 		$products    = $request->get_param( 'products' );
+		$flags       = (array) $request->get_param( 'options' );
 
 		try {
-			$url = $this->url_generator->generate( $products, $use_sandbox );
+			$url = $this->url_generator->generate( $products, $flags, $use_sandbox );
 
 			return $this->return_success( $url );
 		} catch ( \Exception $e ) {

@@ -24,3 +24,9 @@ export const PRODUCT_TYPES = {
 	PHYSICAL: 'physical',
 	SUBSCRIPTIONS: 'subscriptions',
 };
+
+export const PAYPAL_PRODUCTS = {
+	ACDC: 'PPCP',
+	BCDC: 'EXPRESS_CHECKOUT',
+	VAULTING: 'ADVANCED_VAULTING',
+};

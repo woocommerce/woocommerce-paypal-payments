@@ -5,15 +5,15 @@ import BadgeBox from '../../../../ReusableComponents/BadgeBox';
 
 const PayPalCheckout = ( {
 	learnMore = 'https://www.paypal.com/us/business/accept-payments/checkout',
+	description,
 } ) => {
+	const title = __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
+
 	return (
 		<BadgeBox
-			title={ __( 'PayPal Checkout', 'woocommerce-paypal-payments' ) }
+			title={ title }
 			textBadge={ <PricingTitleBadge item="checkout" /> }
-			description={ __(
-				'Our all-in-one checkout solution lets you offer PayPal, Venmo, Pay Later options, and more to help maximise conversion',
-				'woocommerce-paypal-payments'
-			) }
+			description={ description }
 			learnMoreLink={ learnMore }
 		/>
 	);

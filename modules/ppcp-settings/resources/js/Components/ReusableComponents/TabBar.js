@@ -30,8 +30,16 @@ const TabBar = ( { tabs, activePanel, setActivePanel } ) => {
 			initialTabName={ activePanel }
 			onSelect={ updateActivePanel }
 			tabs={ tabs }
+			orientation="horizontal"
+			selectOnMove={ false }
 		>
-			{ () => '' }
+			{ ( tab ) => (
+				<div
+					className={ `ppcp-r-tabpanel-content ppcp-r-tabpanel-${ tab.name }` }
+				>
+					{ tab.render ? tab.render() : '' }
+				</div>
+			) }
 		</TabPanel>
 	);
 };

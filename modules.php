@@ -91,9 +91,12 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
 	}
 
+	$show_new_ux    = '1' === get_option( 'woocommerce-ppcp-is-new-merchant' );
+	$preview_new_ux = '1' === getenv( 'PCP_SETTINGS_ENABLED' );
+
 	if ( apply_filters(
 		'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
-		getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
+		$show_new_ux || $preview_new_ux
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-settings/module.php" )();
 	}

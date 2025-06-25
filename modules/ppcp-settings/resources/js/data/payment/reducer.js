@@ -19,6 +19,7 @@ const defaultTransient = Object.freeze( {
 
 // Persistent: Values that are loaded from the DB.
 const defaultPersistent = Object.freeze( {
+	// Payment methods.
 	'ppcp-gateway': {},
 	venmo: {},
 	'pay-later': {},
@@ -37,10 +38,13 @@ const defaultPersistent = Object.freeze( {
 	'ppcp-multibanco': {},
 	'ppcp-pay-upon-invoice-gateway': {},
 	'ppcp-oxxo-gateway': {},
+
+	// Custom payment method properties.
 	paypalShowLogo: false,
 	threeDSecure: 'no-3d-secure',
 	fastlaneCardholderName: false,
 	fastlaneDisplayWatermark: false,
+	__meta: false,
 } );
 
 // Reducer logic.
@@ -66,7 +70,6 @@ const reducer = createReducer( defaultTransient, defaultPersistent, {
 		}
 
 		return changePersistent( state, {
-			...state,
 			[ methodId ]: { ...oldProps, ...payload.props },
 		} );
 	},
@@ -85,6 +88,56 @@ const reducer = createReducer( defaultTransient, defaultPersistent, {
 
 	[ ACTION_TYPES.HYDRATE ]: ( state, payload ) =>
 		changePersistent( state, payload.data ),
+
+	[ ACTION_TYPES.SET_DISABLED_BY_DEPENDENCY ]: ( state, payload ) => {
+		const { methodId } = payload;
+		const method = state.data[ methodId ];
+
+		if ( ! method ) {
+			return state;
+		}
+
+		// Create a new state with the method disabled due to dependency
+		const updatedData = {
+			...state.data,
+			[ methodId ]: {
+				...method,
+				enabled: false,
+				_disabledByDependency: true,
+				_originalState: method.enabled,
+			},
+		};
+
+		return {
+			...state,
+			data: updatedData,
+		};
+	},
+
+	[ ACTION_TYPES.RESTORE_DEPENDENCY_STATE ]: ( state, payload ) => {
+		const { methodId } = payload;
+		const method = state.data[ methodId ];
+
+		if ( ! method || ! method._disabledByDependency ) {
+			return state;
+		}
+
+		// Restore the method to its original state
+		const updatedData = {
+			...state.data,
+			[ methodId ]: {
+				...method,
+				enabled: method._originalState === true,
+				_disabledByDependency: false,
+				_originalState: undefined,
+			},
+		};
+
+		return {
+			...state,
+			data: updatedData,
+		};
+	},
 } );
 
 export default reducer;

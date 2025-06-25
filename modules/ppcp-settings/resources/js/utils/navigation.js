@@ -22,11 +22,14 @@ export const getQuery = () =>
 /**
  * Updates the query parameters of the current page.
  *
- * @param {Object} query Object of params to be updated.
+ * @param {Object}  query           Object of params to be updated.
+ * @param {boolean} [replace=false] Whether to add the query vars (false) or replace previous query vars with the new details (true).
  * @throws {TypeError} If the query is not an object.
  */
-export const updateQueryString = ( query ) =>
-	pushHistory( getNewPath( query ) );
+export const updateQueryString = ( query, replace = false ) => {
+	const newQuery = replace ? query : { ...getQuery(), ...query };
+	return pushHistory( getNewPath( newQuery ) );
+};
 
 /**
  * Return a URL with set query parameters.
@@ -36,4 +39,42 @@ export const updateQueryString = ( query ) =>
  * @return {string} Updated URL merging query params into existing params.
  */
 export const getNewPath = ( query, basePath = getPath() ) =>
-	addQueryArgs( basePath, { ...getQuery(), ...query } );
+	addQueryArgs( basePath, query );
+
+/**
+ * Filter an object to only include specified keys.
+ *
+ * @param {Object}   obj         The object to filter.
+ * @param {string[]} allowedKeys An array of allowed key names.
+ * @return {Object} A new object with only the allowed keys.
+ */
+export const filterObjectKeys = ( obj, allowedKeys ) => {
+	return Object.keys( obj ).reduce( ( acc, key ) => {
+		if ( allowedKeys.includes( key ) ) {
+			acc[ key ] = obj[ key ];
+		}
+		return acc;
+	}, {} );
+};
+
+/**
+ * Clean the browser URL by removing unsupported query parameters.
+ *
+ * @param {string[]} supportedArgs An array of supported query parameter names.
+ * @return {boolean} Returns true if the URL was modified (cleaned), false if nothing changed.
+ */
+export const cleanUrlQueryParams = ( supportedArgs ) => {
+	const currentQuery = getQuery();
+	const cleanedQuery = filterObjectKeys( currentQuery, supportedArgs );
+
+	const isUrlClean =
+		Object.keys( cleanedQuery ).length ===
+		Object.keys( currentQuery ).length;
+
+	if ( isUrlClean ) {
+		return false;
+	}
+
+	updateQueryString( cleanedQuery, true );
+	return true;
+};

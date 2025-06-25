@@ -9,9 +9,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use WooCommerce\PayPalCommerce\Compat\SettingsMapHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\Compat\Settings\SettingsMapHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class Settings
@@ -120,7 +120,10 @@ class Settings implements ContainerInterface {
 	 * @return bool
 	 */
 	public function has( string $id ) {
-		if ( $this->settings_map_helper->has_mapped_key( $id ) ) {
+		if (
+			$this->settings_map_helper->has_mapped_key( $id )
+			&& ! is_null( $this->settings_map_helper->mapped_value( $id ) )
+		) {
 			return true;
 		}
 
@@ -156,7 +159,7 @@ class Settings implements ContainerInterface {
 		if ( $this->settings ) {
 			return false;
 		}
-		$this->settings = get_option( self::KEY, array() );
+		$this->settings = (array) get_option( self::KEY, array() );
 
 		$defaults = array(
 			'title'                                    => __( 'PayPal', 'woocommerce-paypal-payments' ),

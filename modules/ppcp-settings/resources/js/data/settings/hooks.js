@@ -6,17 +6,51 @@
  *
  * @file
  */
-import { useDispatch } from '@wordpress/data';
+import { useDispatch, useSelect } from '@wordpress/data';
 
 import { STORE_NAME } from './constants';
 import { createHooksForStore } from '../utils';
+import { useMemo } from '@wordpress/element';
 
-const useHooks = () => {
+/**
+ * Single source of truth for access Redux details.
+ *
+ * This hook returns a stable API to access actions, selectors and special hooks to generate
+ * getter- and setters for transient or persistent properties.
+ *
+ * @return {{select, dispatch, useTransient, usePersistent}} Store data API.
+ */
+const useStoreData = () => {
+	const select = useSelect( ( selectors ) => selectors( STORE_NAME ), [] );
+	const dispatch = useDispatch( STORE_NAME );
 	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
-	const { persist } = useDispatch( STORE_NAME );
 
-	// Read-only flags and derived state.
+	return useMemo(
+		() => ( {
+			select,
+			dispatch,
+			useTransient,
+			usePersistent,
+		} ),
+		[ select, dispatch, useTransient, usePersistent ]
+	);
+};
+
+export const useStore = () => {
+	const { select, dispatch, useTransient } = useStoreData();
+	const { persist, refresh } = dispatch;
 	const [ isReady ] = useTransient( 'isReady' );
+
+	// Load persistent data from REST if not done yet.
+	if ( ! isReady ) {
+		select.persistentData();
+	}
+
+	return { persist, refresh, isReady };
+};
+
+export const useSettings = () => {
+	const { usePersistent } = useStoreData();
 
 	// Persistent accessors.
 	const [ invoicePrefix, setInvoicePrefix ] =
@@ -37,81 +71,21 @@ const useHooks = () => {
 		usePersistent( 'captureVirtualOrders' );
 	const [ savePaypalAndVenmo, setSavePaypalAndVenmo ] =
 		usePersistent( 'savePaypalAndVenmo' );
+	const [ contactModule, setContactModule ] = usePersistent(
+		'enableContactModule'
+	);
 	const [ saveCardDetails, setSaveCardDetails ] =
 		usePersistent( 'saveCardDetails' );
 	const [ payNowExperience, setPayNowExperience ] =
 		usePersistent( 'enablePayNow' );
 	const [ logging, setLogging ] = usePersistent( 'enableLogging' );
+	const [ stayUpdated, setStayUpdated ] = usePersistent( 'stayUpdated' );
 
 	const [ disabledCards, setDisabledCards ] =
 		usePersistent( 'disabledCards' );
 
-	return {
-		persist,
-		isReady,
-		invoicePrefix,
-		setInvoicePrefix,
-		authorizeOnly,
-		setAuthorizeOnly,
-		captureVirtualOnlyOrders,
-		setCaptureVirtualOnlyOrders,
-		savePaypalAndVenmo,
-		setSavePaypalAndVenmo,
-		saveCardDetails,
-		setSaveCardDetails,
-		payNowExperience,
-		setPayNowExperience,
-		logging,
-		setLogging,
-		subtotalAdjustment,
-		setSubtotalAdjustment,
-		brandName,
-		setBrandName,
-		softDescriptor,
-		setSoftDescriptor,
-		landingPage,
-		setLandingPage,
-		buttonLanguage,
-		setButtonLanguage,
-		disabledCards,
-		setDisabledCards,
-	};
-};
+	const [ threeDSecure, setThreeDSecure ] = usePersistent( 'threeDSecure' );
 
-export const useStore = () => {
-	const { persist, isReady } = useHooks();
-	return { persist, isReady };
-};
-
-export const useSettings = () => {
-	const {
-		invoicePrefix,
-		setInvoicePrefix,
-		authorizeOnly,
-		setAuthorizeOnly,
-		captureVirtualOnlyOrders,
-		setCaptureVirtualOnlyOrders,
-		savePaypalAndVenmo,
-		setSavePaypalAndVenmo,
-		saveCardDetails,
-		setSaveCardDetails,
-		payNowExperience,
-		setPayNowExperience,
-		logging,
-		setLogging,
-		subtotalAdjustment,
-		setSubtotalAdjustment,
-		brandName,
-		setBrandName,
-		softDescriptor,
-		setSoftDescriptor,
-		landingPage,
-		setLandingPage,
-		buttonLanguage,
-		setButtonLanguage,
-		disabledCards,
-		setDisabledCards,
-	} = useHooks();
 
 	return {
 		invoicePrefix,
@@ -122,12 +96,16 @@ export const useSettings = () => {
 		setCaptureVirtualOnlyOrders,
 		savePaypalAndVenmo,
 		setSavePaypalAndVenmo,
+		contactModule,
+		setContactModule,
 		saveCardDetails,
 		setSaveCardDetails,
 		payNowExperience,
 		setPayNowExperience,
 		logging,
 		setLogging,
+		stayUpdated,
+		setStayUpdated,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
 		brandName,
@@ -140,5 +118,7 @@ export const useSettings = () => {
 		setButtonLanguage,
 		disabledCards,
 		setDisabledCards,
+		threeDSecure,
+		setThreeDSecure,
 	};
 };

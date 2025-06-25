@@ -21,6 +21,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 use WP_REST_Server;
 use WP_REST_Response;
 use WP_REST_Request;
+use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 
 /**
  * Class CompleteOnClickEndpoint
@@ -37,6 +38,22 @@ class CompleteOnClickEndpoint extends RestEndpoint {
 	protected $rest_base = 'complete-onclick';
 
 	/**
+	 * The todos model instance.
+	 *
+	 * @var TodosModel
+	 */
+	protected TodosModel $todos;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param TodosModel $todos The todos model instance.
+	 */
+	public function __construct( TodosModel $todos ) {
+		$this->todos = $todos;
+	}
+
+	/**
 	 * Registers the routes for the complete-onclick endpoint.
 	 *
 	 * Sets up the REST API route for handling todo completion via POST requests.
@@ -45,7 +62,7 @@ class CompleteOnClickEndpoint extends RestEndpoint {
 	 */
 	public function register_routes(): void {
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,
@@ -71,26 +88,22 @@ class CompleteOnClickEndpoint extends RestEndpoint {
 			return $this->return_error( __( 'Todo ID is required.', 'woocommerce-paypal-payments' ) );
 		}
 
-		$settings = get_option( 'ppcp-settings', array() );
+		try {
+			$todos_data      = $this->todos->get_todos_data();
+			$completed_todos = $todos_data['completedOnClickTodos'];
 
-		if ( ! isset( $settings['completedOnClickTodos'] ) ) {
-			$settings['completedOnClickTodos'] = array();
-		}
-
-		if ( ! in_array( $todo_id, $settings['completedOnClickTodos'], true ) ) {
-			$settings['completedOnClickTodos'][] = $todo_id;
-			$update_result                       = update_option( 'ppcp-settings', $settings );
-
-			if ( ! $update_result ) {
-				return $this->return_error( __( 'Failed to mark todo as completed on click.', 'woocommerce-paypal-payments' ) );
+			if ( ! in_array( $todo_id, $completed_todos, true ) ) {
+				$this->todos->update_completed_onclick_todos( array_merge( $completed_todos, array( $todo_id ) ) );
 			}
-		}
 
-		return $this->return_success(
-			array(
-				'message' => __( 'Todo marked as completed on click successfully.', 'woocommerce-paypal-payments' ),
-				'todoId'  => $todo_id,
-			)
-		);
+			return $this->return_success(
+				array(
+					'message' => __( 'Todo marked as completed on click successfully.', 'woocommerce-paypal-payments' ),
+					'todoId'  => $todo_id,
+				)
+			);
+		} catch ( \Exception $e ) {
+			return $this->return_error( __( 'Failed to mark todo as completed on click.', 'woocommerce-paypal-payments' ) );
+		}
 	}
 }

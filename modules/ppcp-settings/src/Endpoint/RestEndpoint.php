@@ -18,10 +18,8 @@ use WP_REST_Response;
 abstract class RestEndpoint extends WC_REST_Controller {
 	/**
 	 * Endpoint namespace.
-	 *
-	 * @var string
 	 */
-	protected $namespace = 'wc/v3/wc_paypal';
+	protected const NAMESPACE = 'wc/v3/wc_paypal';
 
 	/**
 	 * Verify access.

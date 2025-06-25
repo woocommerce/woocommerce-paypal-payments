@@ -5,11 +5,19 @@ import TitleBadge, {
 	TITLE_BADGE_POSITIVE,
 } from '../../../../../ReusableComponents/TitleBadge';
 
-const ConnectionStatusBadge = ( { isActive, isSandbox } ) => {
+const ConnectionStatusBadge = ( { isActive, isSandbox, isBusinessSeller } ) => {
 	if ( isActive ) {
-		const label = isSandbox
-			? __( 'Sandbox Mode', 'woocommerce-paypal-payments' )
-			: __( 'Active', 'woocommerce-paypal-payments' );
+		let label;
+
+		if ( isBusinessSeller ) {
+			label = isSandbox
+				? __( 'Business | Sandbox', 'woocommerce-paypal-payments' )
+				: __( 'Business | Live', 'woocommerce-paypal-payments' );
+		} else {
+			label = isSandbox
+				? __( 'Sandbox', 'woocommerce-paypal-payments' )
+				: __( 'Active', 'woocommerce-paypal-payments' );
+		}
 
 		return <TitleBadge type={ TITLE_BADGE_POSITIVE } text={ label } />;
 	}

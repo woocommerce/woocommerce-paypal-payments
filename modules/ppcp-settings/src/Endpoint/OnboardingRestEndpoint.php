@@ -41,24 +41,32 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 * @var array
 	 */
 	private array $field_map = array(
-		'completed'                            => array(
+		'completed'            => array(
 			'js_name'  => 'completed',
 			'sanitize' => 'to_boolean',
 		),
-		'step'                                 => array(
+		'step'                 => array(
 			'js_name'  => 'step',
 			'sanitize' => 'to_number',
 		),
-		'is_casual_seller'                     => array(
+		'is_casual_seller'     => array(
 			'js_name'  => 'isCasualSeller',
 			'sanitize' => 'to_boolean',
 		),
-		'are_optional_payment_methods_enabled' => array(
+		'accept_card_payments' => array(
 			'js_name'  => 'areOptionalPaymentMethodsEnabled',
 			'sanitize' => 'to_boolean',
 		),
-		'products'                             => array(
+		'products'             => array(
 			'js_name' => 'products',
+		),
+		'gateways_synced'      => array(
+			'js_name'  => 'gatewaysSynced',
+			'sanitize' => 'to_boolean',
+		),
+		'gateways_refreshed'   => array(
+			'js_name'  => 'gatewaysRefreshed',
+			'sanitize' => 'to_boolean',
 		),
 	);
 
@@ -68,17 +76,26 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 * @var array
 	 */
 	private array $flag_map = array(
-		'can_use_casual_selling' => array(
+		'can_use_casual_selling'      => array(
 			'js_name' => 'canUseCasualSelling',
 		),
-		'can_use_vaulting'       => array(
+		'can_use_vaulting'            => array(
 			'js_name' => 'canUseVaulting',
 		),
-		'can_use_card_payments'  => array(
+		'can_use_card_payments'       => array(
 			'js_name' => 'canUseCardPayments',
 		),
-		'can_use_subscriptions'  => array(
+		'can_use_subscriptions'       => array(
 			'js_name' => 'canUseSubscriptions',
+		),
+		'should_skip_payment_methods' => array(
+			'js_name' => 'shouldSkipPaymentMethods',
+		),
+		'can_use_fastlane'            => array(
+			'js_name' => 'canUseFastlane',
+		),
+		'can_use_pay_later'           => array(
+			'js_name' => 'canUsePayLater',
 		),
 	);
 
@@ -101,7 +118,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 		 * GET /wp-json/wc/v3/wc_paypal/onboarding
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::READABLE,
@@ -117,7 +134,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 		 * }
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				'methods'             => WP_REST_Server::EDITABLE,

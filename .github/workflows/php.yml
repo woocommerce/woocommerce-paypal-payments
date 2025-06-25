@@ -14,7 +14,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Setup PHP
-      uses: shivammathur/setup-php@v2
+      uses: shivammathur/setup-php@0f7f1d08e3e32076e51cae65eb0b0c871405b16e # v2.34.1
       with:
         php-version: ${{ matrix.php-versions }}
 
@@ -22,7 +22,7 @@ jobs:
       run: composer validate
 
     - name: Install dependencies
-      uses: ramsey/composer-install@v1
+      uses: ramsey/composer-install@a7320a0581dcd0432930c48a0e7ced67e6ec17e8 # v1.3.0
       with:
         composer-options: "--prefer-dist"
 

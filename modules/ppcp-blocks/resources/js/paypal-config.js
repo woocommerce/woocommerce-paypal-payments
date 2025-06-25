@@ -61,7 +61,6 @@ export const handleApprove = async (
 	shouldskipFinalConfirmation,
 	getCheckoutRedirectUrl,
 	setGotoContinuationOnError,
-	enforcePaymentMethodForCart,
 	onSubmit,
 	onError,
 	onClose
@@ -132,7 +131,6 @@ export const handleApprove = async (
 			location.href = getCheckoutRedirectUrl();
 		} else {
 			setGotoContinuationOnError( true );
-			enforcePaymentMethodForCart();
 			onSubmit();
 		}
 	} catch ( err ) {
@@ -171,7 +169,6 @@ export const handleApproveSubscription = async (
 	shouldskipFinalConfirmation,
 	getCheckoutRedirectUrl,
 	setGotoContinuationOnError,
-	enforcePaymentMethodForCart,
 	onSubmit,
 	onError,
 	onClose
@@ -242,7 +239,6 @@ export const handleApproveSubscription = async (
 			location.href = getCheckoutRedirectUrl();
 		} else {
 			setGotoContinuationOnError( true );
-			enforcePaymentMethodForCart();
 			onSubmit();
 		}
 	} catch ( err ) {

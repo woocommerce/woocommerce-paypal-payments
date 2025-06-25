@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
@@ -90,13 +89,6 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $checkout_helper;
 
 	/**
-	 * The onboarding state.
-	 *
-	 * @var State
-	 */
-	protected $state;
-
-	/**
 	 * The refund processor.
 	 *
 	 * @var RefundProcessor
@@ -121,7 +113,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param LoggerInterface             $logger The logger.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
-	 * @param State                       $state The onboarding state.
+	 * @param bool                        $is_connected Whether the onboarding was completed.
 	 * @param RefundProcessor             $refund_processor The refund processor.
 	 * @param string                      $module_url The module URL.
 	 */
@@ -134,7 +126,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		LoggerInterface $logger,
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
-		State $state,
+		bool $is_connected,
 		RefundProcessor $refund_processor,
 		string $module_url
 	) {
@@ -169,8 +161,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->module_url               = $module_url;
 		$this->icon                     = apply_filters( 'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon', esc_url( $this->module_url ) . 'assets/images/ratepay.svg' );
 
-		$this->state = $state;
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
+		if ( $is_connected ) {
 			$this->supports = array( 'refunds' );
 		}
 		$this->refund_processor = $refund_processor;

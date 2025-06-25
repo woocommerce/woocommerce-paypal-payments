@@ -31,10 +31,4 @@ export default {
 	 * to set up the initial state with data from the server.
 	 */
 	HYDRATE: 'ppcp/settings/HYDRATE',
-
-	/**
-	 * Triggers the persistence of store data to the server.
-	 * Used when changes need to be saved to the backend.
-	 */
-	DO_PERSIST_DATA: 'ppcp/settings/DO_PERSIST_DATA',
 };

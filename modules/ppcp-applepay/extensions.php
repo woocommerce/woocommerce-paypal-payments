@@ -42,7 +42,7 @@ return array(
 		assert( $display_manager instanceof DisplayManager );
 
 		// Domain registration.
-		$env = $container->get( 'onboarding.environment' );
+		$env = $container->get( 'settings.environment' );
 		assert( $env instanceof Environment );
 
 		$domain_registration_url = 'https://www.paypal.com/uccservicing/apm/applepay';

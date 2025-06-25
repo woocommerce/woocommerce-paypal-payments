@@ -103,7 +103,7 @@
 
 	&__dismiss {
 		position: absolute;
-		right: 0;
+		right: 2px;
 		top: 50%;
 		transform: translateY(-50%);
 		background-color: transparent;
@@ -226,30 +226,91 @@
 	}
 }
 
-// Payment Methods
-.ppcp-r-payment-methods {
-	display: flex;
-	flex-direction: column;
-	gap: 48px;
-}
+.ppcp-r-settings {
+	.ppcp-highlight {
+		position: relative;
+		z-index: 1;
 
-.ppcp-highlight {
-	animation: ppcp-highlight-fade 2s cubic-bezier(0.4, 0, 0.2, 1);
-	border: 1px solid $color-blueberry;
-	border-radius: var(--container-border-radius);
-	position: relative;
-	z-index: 1;
-}
+		&::before {
+			content: '';
+			position: absolute;
+			top: -8px;
+			left: -12px;
+			right: -12px;
+			bottom: -8px;
+			border: 1px solid $color-blueberry;
+			border-radius: 4px;
+			z-index: -1;
+			pointer-events: none;
+			animation: ppcp-setting-highlight-bg 2s cubic-bezier(0.4, 0, 0.2, 1);
+			animation-fill-mode: forwards;
+		}
 
-@keyframes ppcp-highlight-fade {
-	0%, 20% {
-		background-color: rgba($color-blueberry, 0.08);
-		border-color: $color-blueberry;
-		border-width: 1px;
+		&::after {
+			content: '';
+			position: absolute;
+			top: -8px;
+			left: -12px;
+			width: 4px;
+			bottom: -8px;
+			background-color: $color-blueberry;
+			border-top-left-radius: 4px;
+			border-bottom-left-radius: 4px;
+			z-index: -1;
+			pointer-events: none;
+			animation: ppcp-setting-highlight-accent 2s cubic-bezier(0.4, 0, 0.2, 1);
+			animation-fill-mode: forwards;
+		}
 	}
-	100% {
-		background-color: transparent;
-		border-color: $color-gray-300;
-		border-width: 1px;
+
+	@keyframes ppcp-setting-highlight-bg {
+		0%, 15% {
+			background-color: rgba($color-blueberry, 0.08);
+			border-color: $color-blueberry;
+		}
+		70% {
+			background-color: transparent;
+			border-color: transparent;
+		}
+		100% {
+			background-color: transparent;
+			border-color: transparent;
+		}
+	}
+
+	@keyframes ppcp-setting-highlight-accent {
+		0%, 15% {
+			opacity: 1;
+		}
+		70% {
+			opacity: 0;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+
+	.ppcp-r-settings-section {
+		.ppcp--setting-row {
+			position: relative;
+			padding: 12px;
+			margin: 0 -12px;
+			transition: background-color 0.2s ease;
+
+			&:hover {
+				background-color: rgba($color-gray-100, 0.5);
+			}
+		}
+	}
+
+	// RTL support
+	html[dir="rtl"] {
+		.ppcp-highlight {
+			&::after {
+				left: auto;
+				right: -12px;
+				border-radius: 0 4px 4px 0;
+			}
+		}
 	}
 }

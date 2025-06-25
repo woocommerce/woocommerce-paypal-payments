@@ -1,12 +1,18 @@
 import { __ } from '@wordpress/i18n';
-
 import Accordion from '../../../../../ReusableComponents/AccordionSection';
 import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import { ControlSelect } from '../../../../../ReusableComponents/Controls';
+import {
+	ControlSelect,
+	ControlRadioGroup,
+} from '../../../../../ReusableComponents/Controls';
 import { SettingsHooks } from '../../../../../../data';
 
 const OtherSettings = () => {
-	const { disabledCards, setDisabledCards } = SettingsHooks.useSettings();
+	const { disabledCards, setDisabledCards, threeDSecure, setThreeDSecure } =
+		SettingsHooks.useSettings();
+
+	const disabledCardChoices = window.ppcpSettings.disabledCardsChoices;
+	const threeDSecureOptions = window.ppcpSettings.threeDSecureOptions;
 
 	return (
 		<Accordion
@@ -25,7 +31,7 @@ const OtherSettings = () => {
 					'woocommerce-paypal-payments'
 				) }
 				description={ __(
-					"If left blank, PayPal and other buttons will present in the user's detected language. Enter a language here to force all buttons to display in that language.",
+					'By default, all possible credit cards will be accepted. Card types added here will be rejected at checkout.',
 					'woocommerce-paypal-payments'
 				) }
 			>
@@ -34,6 +40,23 @@ const OtherSettings = () => {
 					value={ disabledCards }
 					onChange={ setDisabledCards }
 					isMulti={ true }
+					placeholder={ __(
+						'Show all cards',
+						'woocommerce-paypal-payments'
+					) }
+				/>
+			</SettingsBlock>
+			<SettingsBlock
+				title={ __( '3D Secure', 'woocommerce-paypal-payments' ) }
+				description={ __(
+					'Authenticate cardholders through their card issuers to reduce fraud and improve transaction security. Successful 3D Secure authentication can shift liability for fraudulent chargebacks to the card issuer.',
+					'woocommerce-paypal-payments'
+				) }
+			>
+				<ControlRadioGroup
+					options={ threeDSecureOptions }
+					value={ threeDSecure }
+					onChange={ setThreeDSecure }
 				/>
 			</SettingsBlock>
 		</Accordion>
@@ -41,21 +64,3 @@ const OtherSettings = () => {
 };
 
 export default OtherSettings;
-
-const disabledCardChoices = [
-	{ value: '', label: __( 'Select', 'woocommerce-paypal-payments' ) },
-	{
-		value: 'mastercard',
-		label: __( 'Mastercard', 'woocommerce-paypal-payments' ),
-	},
-	{ value: 'visa', label: __( 'Visa', 'woocommerce-paypal-payments' ) },
-	{
-		value: 'amex',
-		label: __( 'American Express', 'woocommerce-paypal-payments' ),
-	},
-	{ value: 'jcb', label: __( 'JCB', 'woocommerce-paypal-payments' ) },
-	{
-		value: 'diners-club',
-		label: __( 'Diners Club', 'woocommerce-paypal-payments' ),
-	},
-];

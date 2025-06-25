@@ -14,15 +14,11 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
 
 /**
  * Class AxoBlockModule
@@ -74,6 +70,10 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 				add_filter(
 					'woocommerce_paypal_payments_localized_script_data',
 					function( array $localized_script_data ) use ( $c ) {
+						if ( ! $c->has( 'axo.available' ) || ! $c->get( 'axo.available' ) ) {
+							return $localized_script_data;
+						}
+
 						$module = $this;
 						$api    = $c->get( 'api.sdk-client-token' );
 						assert( $api instanceof SdkClientToken );
@@ -107,11 +107,9 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				/*
-				 * Only register the method if we are not in the admin
-				 * (to avoid two Debit & Credit Cards gateways in the
-				 * checkout block in the editor: one from ACDC one from Axo).
+				 * Only register the method if we are not in the admin or the customer is not logged in.
 				 */
-				if ( ! is_admin() ) {
+				if ( ! is_user_logged_in() ) {
 					$payment_method_registry->register( $c->get( 'axoblock.method' ) );
 				}
 			}
@@ -190,7 +188,7 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 			return;
 		}
 
-		$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
+		$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
 		if ( ! $dcc_configuration->use_fastlane() ) {
 			return;
 		}

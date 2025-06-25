@@ -1,8 +1,15 @@
 import { ToggleControl } from '@wordpress/components';
 import { Action, Description } from '../Elements';
 
-const ControlToggleButton = ( { label, description, value, onChange } ) => (
-	<Action>
+const ControlToggleButton = ( {
+	id = '',
+	label,
+	description,
+	value,
+	onChange,
+	disabled = false,
+} ) => (
+	<Action id={ id }>
 		<ToggleControl
 			className="ppcp--control-toggle"
 			__nextHasNoMarginBottom
@@ -12,6 +19,7 @@ const ControlToggleButton = ( { label, description, value, onChange } ) => (
 			help={
 				description ? <Description>{ description }</Description> : null
 			}
+			disabled={ disabled }
 		/>
 	</Action>
 );

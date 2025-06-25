@@ -41,7 +41,7 @@
     "autoload-dev": {
         "psr-4": {
             "WooCommerce\\PayPalCommerce\\": "tests/PHPUnit/",
-            "WooCommerce\\PayPalCommerce\\Tests\\E2e\\": "tests/e2e/PHPUnit/"
+            "WooCommerce\\PayPalCommerce\\Tests\\Integration\\": "tests/integration/PHPUnit/"
         }
     },
     "minimum-stability": "dev",

@@ -19,19 +19,24 @@ use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
-	// If GooglePay can be configured.
+	// @deprecated - use `googlepay.eligibility.check` instead.
 	'googlepay.eligible'                        => static function ( ContainerInterface $container ): bool {
+		$eligibility_check = $container->get( 'googlepay.eligibility.check' );
+
+		return $eligibility_check();
+	},
+	'googlepay.eligibility.check'               => static function ( ContainerInterface $container ): callable {
 		$apm_applies = $container->get( 'googlepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country() && $apm_applies->for_currency();
+		return static function () use ( $apm_applies ) : bool {
+			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
+		};
 	},
-
 	'googlepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
 			$container->get( 'googlepay.supported-countries' ),
@@ -106,6 +111,7 @@ return array(
 				'FR', // France
 				'DE', // Germany
 				'GR', // Greece
+				'HK', // Hong Kong
 				'HU', // Hungary
 				'IE', // Ireland
 				'IT', // Italy
@@ -119,12 +125,18 @@ return array(
 				'PL', // Poland
 				'PT', // Portugal
 				'RO', // Romania
+				'SG', // Singapore
 				'SK', // Slovakia
 				'SI', // Slovenia
 				'ES', // Spain
 				'SE', // Sweden
 				'US', // United States
 				'GB', // United Kingdom
+				'YT', // Mayotte
+				'RE', // Reunion
+				'GP', // Guadelope
+				'GF', // French Guiana
+				'MQ', // Martinique
 			)
 			// phpcs:enable Squiz.Commenting.InlineComment
 		);
@@ -148,6 +160,7 @@ return array(
 				'CZK', // Czech Koruna
 				'DKK', // Danish Krone
 				'EUR', // Euro
+				'HKD', // Hong Kong Dollar
 				'GBP', // British Pound Sterling
 				'HUF', // Hungarian Forint
 				'ILS', // Israeli New Shekel
@@ -157,6 +170,7 @@ return array(
 				'NZD', // New Zealand Dollar
 				'PHP', // Philippine Peso
 				'PLN', // Polish Zloty
+				'SGD', // Singapur-Dollar
 				'SEK', // Swedish Krona
 				'THB', // Thai Baht
 				'TWD', // New Taiwan Dollar
@@ -174,7 +188,7 @@ return array(
 			$container->get( 'session.handler' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
@@ -221,15 +235,15 @@ return array(
 	},
 
 	'googlepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return '';
 		}
 
 		$product_status = $container->get( 'googlepay.helpers.apm-product-status' );
 		assert( $product_status instanceof ApmProductStatus );
 
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		$enabled = $product_status->is_active();

@@ -103,12 +103,8 @@ class OnboardingRenderer {
 			'displayMode' => 'minibrowser',
 		);
 
-		$data = $this->partner_referrals_data
-			->with_products( $products )
-			->data();
-
 		$environment = $is_production ? 'production' : 'sandbox';
-		$product     = 'PPCP' === $data['products'][0] ? 'ppcp' : 'express_checkout';
+		$product     = strtolower( $products[0] ?? 'express_checkout' );
 		$cache_key   = $environment . '-' . $product;
 
 		$onboarding_url = new OnboardingUrl( $this->cache, $cache_key, get_current_user_id() );
@@ -122,8 +118,7 @@ class OnboardingRenderer {
 
 		$onboarding_url->init();
 
-		$data = $this->partner_referrals_data
-			->append_onboarding_token( $data, $onboarding_url->token() ?: '' );
+		$data = $this->partner_referrals_data->data( $products, $onboarding_url->token() ?: '' );
 
 		$url = $is_production ? $this->production_partner_referrals->signup_link( $data ) : $this->sandbox_partner_referrals->signup_link( $data );
 		$url = add_query_arg( $args, $url );

@@ -236,10 +236,10 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 					( element.style.display = ! isExpress ? '' : 'none' )
 			);
 
-		const screemImg = document.querySelector(
+		const screenImg = document.querySelector(
 			'#ppcp-onboarding-cards-screen-img'
 		);
-		if ( screemImg ) {
+		if ( screenImg ) {
 			const currentRb =
 				Array.from(
 					document.querySelectorAll(
@@ -248,7 +248,7 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 				).filter( ( rb ) => rb.checked )[ 0 ] ?? null;
 
 			const imgUrl = currentRb.getAttribute( 'data-screen-url' );
-			screemImg.src = imgUrl;
+			screenImg.src = imgUrl;
 		}
 	};
 
@@ -326,9 +326,9 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 
 		isDisconnecting = true;
 
-        const saveButton = document.querySelector( '.woocommerce-save-button' );
-        saveButton.removeAttribute( 'disabled' );
-        saveButton.click();
+		const saveButton = document.querySelector( '.woocommerce-save-button' );
+		saveButton.removeAttribute( 'disabled' );
+		saveButton.click();
 	};
 
 	// Prevent the message about unsaved checkbox/radiobutton when reloading the page.
@@ -345,9 +345,11 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 
 	const sandboxSwitchElement = document.querySelector( '#ppcp-sandbox_on' );
 
-    sandboxSwitchElement?.addEventListener( 'click', () => {
-        document.querySelector( '.woocommerce-save-button' )?.removeAttribute( 'disabled' );
-    });
+	sandboxSwitchElement?.addEventListener( 'click', () => {
+		document
+			.querySelector( '.woocommerce-save-button' )
+			?.removeAttribute( 'disabled' );
+	} );
 
 	const validate = () => {
 		const selectors = sandboxSwitchElement.checked
@@ -389,7 +391,8 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 
 	const isSandboxInBackend =
 		PayPalCommerceGatewayOnboarding.current_env === 'sandbox';
-	if ( sandboxSwitchElement.checked !== isSandboxInBackend ) {
+
+	if ( sandboxSwitchElement?.checked !== isSandboxInBackend ) {
 		sandboxSwitchElement.checked = isSandboxInBackend;
 	}
 

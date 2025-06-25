@@ -11,7 +11,7 @@ const PricingDescription = () => {
 		return null;
 	}
 
-	const lastDate = 'October 25th, 2024'; // TODO -- needs to be the last plugin update date.
+	const lastDate = 'February 1st, 2025'; // TODO -- needs to be the last plugin update date.
 	const countryLinks = learnMoreLinks[ storeCountry ] || learnMoreLinks.US;
 
 	const label = sprintf(

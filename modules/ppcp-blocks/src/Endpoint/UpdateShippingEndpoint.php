@@ -23,7 +23,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
  */
 class UpdateShippingEndpoint implements EndpointInterface {
 	const ENDPOINT              = 'ppc-update-shipping';
-	const WC_STORE_API_ENDPOINT = '/wp-json/wc/store/cart/';
+	const WC_STORE_API_ENDPOINT = '/wp-json/wc/store/v1/cart/';
 
 	/**
 	 * The Request Data Helper.

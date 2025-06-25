@@ -52,8 +52,9 @@ class OnboardingModule implements ServiceModule, ExtendingModule, ExecutableModu
 					apply_filters(
 					// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 						'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
-						getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
-					) && ! SettingsModule::should_use_the_old_ui()
+						'1' === get_option( 'woocommerce-ppcp-is-new-merchant' )
+						|| getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
+					)
 				) {
 					return;
 				}

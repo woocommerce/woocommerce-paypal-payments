@@ -103,6 +103,11 @@ $margin_bottom: 48px;
 
 		.components-tab-panel__tabs-item {
 			height: var(--subnavigation-height);
+
+			&:focus-visible:not(:disabled),
+			&[data-focus-visible="true"]:focus:not(:disabled) {
+				outline: none;
+			}
 		}
 	}
 
@@ -130,6 +135,35 @@ $margin_bottom: 48px;
 					margin-left: 4px;
 				}
 			}
+		}
+	}
+
+	.ppcp-r-navbar-notice {
+		// Theming.
+		background: var(--navbar-notice-background);
+		color: var(--navbar-notice-color);
+
+		// Animation.
+		transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+		opacity: 0;
+		transform: translateY(-10px);
+
+		&.ppcp--animating {
+			opacity: 1;
+			transform: translateY(0);
+		}
+
+		// Styling.
+		position: absolute;
+		top: 48px;
+		right: 0;
+		white-space: nowrap;
+		padding: 6px 12px;
+		border-radius: 3px;
+
+		&.ppcp--success {
+			--navbar-notice-background: var(--color-success-background);
+			--navbar-notice-color: var(--color-success-text);
 		}
 	}
 }

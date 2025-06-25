@@ -1,26 +1,30 @@
 import { __ } from '@wordpress/i18n';
-import { Button, Modal } from '@wordpress/components';
+import { Button, Modal, ToggleControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 
 import { CommonHooks } from '../../../../../../data';
+import { useToggleState } from '../../../../../../hooks/useToggleState';
 import { HStack } from '../../../../../ReusableComponents/Stack';
+import { useNavigation } from '../../../../../../hooks/useNavigation';
 
 const DisconnectButton = () => {
-	const [ isOpen, setIsOpen ] = useState( false );
+	const { isOpen, setIsOpen } = useToggleState( 'disconnect-merchant' );
+	const [ resetFlag, setResetFlag ] = useState( false );
 	const { disconnectMerchant } = CommonHooks.useDisconnectMerchant();
+	const { goToPluginSettings } = useNavigation();
 
 	const handleOpen = useCallback( () => {
 		setIsOpen( true );
-	}, [] );
+	}, [ setIsOpen ] );
 
 	const handleCancel = useCallback( () => {
 		setIsOpen( false );
-	}, [] );
+	}, [ setIsOpen ] );
 
 	const handleConfirm = useCallback( async () => {
-		await disconnectMerchant();
-		window.location.reload();
-	}, [ disconnectMerchant ] );
+		await disconnectMerchant( resetFlag );
+		goToPluginSettings();
+	}, [ disconnectMerchant, resetFlag ] );
 
 	const confirmationTitle = __(
 		'Disconnect from PayPal?',
@@ -39,6 +43,7 @@ const DisconnectButton = () => {
 
 			{ isOpen && (
 				<Modal
+					className="ppcp--modal-disconnect"
 					size="small"
 					title={ confirmationTitle }
 					onRequestClose={ handleCancel }
@@ -49,13 +54,34 @@ const DisconnectButton = () => {
 							'woocommerce-paypal-payments'
 						) }
 					</p>
-					<HStack>
+					<ToggleControl
+						__nextHasNoMarginBottom
+						className="ppcp--toggle-danger"
+						checked={ resetFlag }
+						onChange={ setResetFlag }
+						label={ __(
+							'Start over',
+							'woocommerce-paypal-payments'
+						) }
+						help={
+							resetFlag
+								? __(
+										'Attention: The plugin is reset to its initial state!',
+										'woocommerce-paypal-payments'
+								  )
+								: __(
+										'Disconnect, but preserve all settings',
+										'woocommerce-paypal-payments'
+								  )
+						}
+					/>
+					<HStack className="ppcp--action-buttons">
 						<Button variant="tertiary" onClick={ handleCancel }>
 							{ __( 'Cancel', 'woocommerce-paypal-payments' ) }
 						</Button>
 						<Button
 							variant="primary"
-							isDestructive={ true }
+							isDestructive={ resetFlag }
 							onClick={ handleConfirm }
 						>
 							{ __(

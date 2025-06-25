@@ -11,7 +11,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
@@ -30,7 +29,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 	private $testee;
 	private $pui_helper;
 	private $checkout_helper;
-	private $state;
+	private $is_connected;
 	private $refund_processor;
 
 	public function setUp(): void
@@ -45,9 +44,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$this->transaction_url_provider = Mockery::mock(TransactionUrlProvider::class);
 		$this->pui_helper = Mockery::mock(PayUponInvoiceHelper::class);
 		$this->checkout_helper = Mockery::mock(CheckoutHelper::class);
-
-		$this->state = Mockery::mock(State::class);
-		$this->state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
+		$this->is_connected = true;
 
 		$this->refund_processor = Mockery::mock(RefundProcessor::class);
 
@@ -63,7 +60,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 			$this->logger,
 			$this->pui_helper,
 			$this->checkout_helper,
-			$this->state,
+			$this->is_connected,
 			$this->refund_processor,
 			''
 		);

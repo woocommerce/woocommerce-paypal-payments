@@ -24,16 +24,25 @@ class SubscriptionHelperTest extends TestCase
 				]
 			);
 
+
+
+		$token = Mockery::mock( \WC_Payment_Token::class);
+		$token->shouldReceive('get_token')->andReturn('token12345');
+
+		$tokens = Mockery::mock( 'overload:' . \WC_Payment_Tokens::class );
+		$tokens->shouldReceive('get')->andReturn( $token );
+
 		$wc_order = Mockery::mock(WC_Order::class);
 		$wc_order->shouldReceive('get_status')->andReturn('processing');
 		$wc_order->shouldReceive('get_transaction_id')->andReturn('ABC123');
 		$wc_order->shouldReceive('get_payment_method')->andReturn(CreditCardGateway::ID);
+		$wc_order->shouldReceive('get_payment_tokens')->andReturn(['token12345']);
 
 		when('wc_get_order')->justReturn($wc_order);
 
 		$this->assertSame(
 			'ABC123',
-			(new SubscriptionHelper())->previous_transaction($subscription)
+			(new SubscriptionHelper())->previous_transaction($subscription, 'token12345')
 		);
 	}
 }

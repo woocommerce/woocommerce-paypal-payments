@@ -3,13 +3,6 @@
  */
 
 .ppcp-r-app.loading {
-	height: 400px;
-	width: 400px;
-	position: absolute;
-	left: 50%;
-	transform: translate(-50%, 0);
-	text-align: center;
-
 	.ppcp-r-spinner-overlay {
 		display: flex;
 		flex-direction: column;

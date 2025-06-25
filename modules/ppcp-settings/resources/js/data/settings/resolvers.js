@@ -8,50 +8,30 @@
  * @file
  */
 
-import { dispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { apiFetch } from '@wordpress/data-controls';
-import { STORE_NAME, REST_HYDRATE_PATH } from './constants';
+import apiFetch from '@wordpress/api-fetch';
 
-export const resolvers = {
-	/**
-	 * Retrieve PayPal settings from the site's REST API.
-	 * Hydrates the store with the retrieved data and marks it as ready.
-	 *
-	 * @generator
-	 * @yield {Object} API fetch and dispatch actions
-	 */
-	*persistentData() {
+import { REST_HYDRATE_PATH } from './constants';
+
+/**
+ * Retrieve settings from the site's REST API.
+ */
+export function persistentData() {
+	return async ( { dispatch, registry } ) => {
 		try {
-			// Fetch settings data from REST API
-			const result = yield apiFetch( {
-				path: REST_HYDRATE_PATH,
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json',
-					Accept: 'application/json',
-				},
-			} );
+			const result = await apiFetch( { path: REST_HYDRATE_PATH } );
 
-			// Update store with retrieved data
-			yield dispatch( STORE_NAME ).hydrate( result );
-			// Mark store as ready for use
-			yield dispatch( STORE_NAME ).setIsReady( true );
+			await dispatch.hydrate( result );
+			await dispatch.setIsReady( true );
 		} catch ( e ) {
-			// Log detailed error information for debugging
-			console.error( 'Full error details:', {
-				error: e,
-				path: REST_HYDRATE_PATH,
-				store: STORE_NAME,
-			} );
-
-			// Display user-friendly error notice
-			yield dispatch( 'core/notices' ).createErrorNotice(
-				__(
-					'Error retrieving PayPal settings details.',
-					'woocommerce-paypal-payments'
-				)
-			);
+			await registry
+				.dispatch( 'core/notices' )
+				.createErrorNotice(
+					__(
+						'Error retrieving PayPal Settings details.',
+						'woocommerce-paypal-payments'
+					)
+				);
 		}
-	},
-};
+	};
+}

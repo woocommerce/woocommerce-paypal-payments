@@ -8,27 +8,33 @@
  * @file
  */
 
-import { dispatch } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { apiFetch } from '@wordpress/data-controls';
-import { STORE_NAME, REST_PATH } from './constants';
+import apiFetch from '@wordpress/api-fetch';
 
-export const resolvers = {
-	*getTodos() {
+import { REST_PATH } from './constants';
+
+/**
+ * Retrieve settings from the site's REST API.
+ */
+export function getTodos() {
+	return async ( { dispatch, registry } ) => {
 		try {
-			const response = yield apiFetch( { path: REST_PATH } );
+			const response = await apiFetch( { path: REST_PATH } );
 
 			const { todos = [], dismissedTodos = [] } = response?.data || {};
 
-			yield dispatch( STORE_NAME ).setTodos( todos );
-			yield dispatch( STORE_NAME ).setDismissedTodos( dismissedTodos );
-			yield dispatch( STORE_NAME ).setIsReady( true );
+			await dispatch.setTodos( todos );
+			await dispatch.setDismissedTodos( dismissedTodos );
+			await dispatch.setIsReady( true );
 		} catch ( e ) {
-			console.error( 'Resolver error:', e );
-			yield dispatch( STORE_NAME ).setIsReady( false );
-			yield dispatch( 'core/notices' ).createErrorNotice(
-				__( 'Error retrieving todos.', 'woocommerce-paypal-payments' )
-			);
+			await registry
+				.dispatch( 'core/notices' )
+				.createErrorNotice(
+					__(
+						'Error retrieving todos.',
+						'woocommerce-paypal-payments'
+					)
+				);
 		}
-	},
-};
+	};
+}

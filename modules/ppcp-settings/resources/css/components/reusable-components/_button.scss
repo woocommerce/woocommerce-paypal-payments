@@ -70,6 +70,15 @@ button.components-button, a.components-button {
 
 		--button-disabled-color: #{$color-gray-100};
 		--button-disabled-background: #{$color-gray-500};
+
+		&:hover:not(:disabled) {
+			background: #{$color-blue};
+		}
+
+
+		&:not(.components-tab-panel__tabs-item):focus-visible:not(:disabled) {
+			outline: 2px solid #{$color-gray-500};
+		}
 	}
 
 	&.is-secondary {
@@ -86,7 +95,7 @@ button.components-button, a.components-button {
 		--button-color: #{$color-blueberry};
 		--button-hover-color: #{$color-gradient-dark};
 
-		&:focus:not(:disabled) {
+		&:focus-visible:not(:disabled) {
 			border: none;
 			box-shadow: none;
 		}
@@ -94,6 +103,16 @@ button.components-button, a.components-button {
 
 	&.small-button {
 		@include small-button;
+	}
+
+	&:focus:not(:disabled) {
+		outline: none;
+	}
+
+	&:focus-visible:not(:disabled),
+	&:not(.components-tab-panel__tabs-item):focus-visible:not(:disabled)
+	&[data-focus-visible="true"] {
+		outline: 2px solid #{$color-blueberry};
 	}
 }
 

@@ -9,7 +9,13 @@ const OptionSelector = ( {
 } ) => (
 	<div className="ppcp-r-select-box-wrapper">
 		{ options.map(
-			( { value: itemValue, title, description, contents } ) => {
+			( {
+				value: itemValue,
+				title,
+				description,
+				contents,
+				isDisabled = false,
+			} ) => {
 				let isSelected;
 
 				if ( Array.isArray( value ) ) {
@@ -27,6 +33,7 @@ const OptionSelector = ( {
 						onChange={ onChange }
 						isMulti={ multiSelect }
 						isSelected={ isSelected }
+						isDisabled={ isDisabled }
 					>
 						{ contents }
 					</OptionItem>
@@ -46,12 +53,13 @@ const OptionItem = ( {
 	isMulti,
 	isSelected,
 	children,
+	isDisabled = false,
 } ) => {
 	const boxClassName = classNames( 'ppcp-r-select-box', {
 		'ppcp--selected': isSelected,
 		'ppcp--multiselect': isMulti,
+		'ppcp--no-title': ! itemTitle,
 	} );
-
 	return (
 		// eslint-disable-next-line jsx-a11y/label-has-associated-control -- label has a nested input control.
 		<label className={ boxClassName }>
@@ -60,11 +68,14 @@ const OptionItem = ( {
 				isRadio={ ! isMulti }
 				onChange={ onChange }
 				isSelected={ isSelected }
+				isDisabled={ isDisabled }
 			/>
 
 			<div className="ppcp--box-content">
 				<div className="ppcp--box-content-inner">
-					<span className="ppcp--box-title">{ itemTitle }</span>
+					{ itemTitle && (
+						<span className="ppcp--box-title">{ itemTitle }</span>
+					) }
 					<div className="ppcp--box-description">
 						{ itemDescription }
 					</div>
@@ -77,7 +88,7 @@ const OptionItem = ( {
 	);
 };
 
-const InputField = ( { value, onChange, isRadio, isSelected } ) => {
+const InputField = ( { value, onChange, isRadio, isSelected, isDisabled } ) => {
 	if ( isRadio ) {
 		return (
 			<PayPalRdb
@@ -93,6 +104,7 @@ const InputField = ( { value, onChange, isRadio, isSelected } ) => {
 			value={ value }
 			onChange={ onChange }
 			checked={ isSelected }
+			disabled={ isDisabled }
 		/>
 	);
 };

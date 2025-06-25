@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use WC_Order;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -18,7 +16,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
@@ -142,9 +139,10 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 				);
 
 				try {
-					$webhooks = $container->get( 'webhook.status.registered-webhooks' );
-					$state    = $container->get( 'onboarding.state' );
-					if ( empty( $webhooks ) && $state->current_state() >= State::STATE_ONBOARDED ) {
+					$webhooks     = $container->get( 'webhook.status.registered-webhooks' );
+					$is_connected = $container->get( 'settings.flag.is-connected' );
+
+					if ( empty( $webhooks ) && $is_connected ) {
 						$registrar = $container->get( 'webhook.registrar' );
 						assert( $registrar instanceof WebhookRegistrar );
 						$registrar->register();

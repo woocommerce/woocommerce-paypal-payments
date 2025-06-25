@@ -11,9 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
-use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * Class UnsupportedCurrencyAdminNotice
@@ -21,11 +18,11 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 class UnsupportedCurrencyAdminNotice {
 
 	/**
-	 * The state.
+	 * Whether the merchant completed onboarding.
 	 *
-	 * @var State
+	 * @var bool
 	 */
-	private $state;
+	private bool $is_connected;
 
 	/**
 	 * The supported currencies.
@@ -58,20 +55,20 @@ class UnsupportedCurrencyAdminNotice {
 	/**
 	 * UnsupportedCurrencyAdminNotice constructor.
 	 *
-	 * @param State          $state The state.
+	 * @param bool           $is_connected Whether the merchant completed onboarding.
 	 * @param CurrencyGetter $shop_currency The shop currency.
 	 * @param array          $supported_currencies The supported currencies.
 	 * @param bool           $is_wc_gateways_list_page Indicates if we're on the WooCommerce gateways list page.
 	 * @param bool           $is_ppcp_settings_page Indicates if we're on a PPCP Settings page.
 	 */
 	public function __construct(
-		State $state,
+		bool $is_connected,
 		CurrencyGetter $shop_currency,
 		array $supported_currencies,
 		bool $is_wc_gateways_list_page,
 		bool $is_ppcp_settings_page
 	) {
-		$this->state                    = $state;
+		$this->is_connected             = $is_connected;
 		$this->shop_currency            = $shop_currency;
 		$this->supported_currencies     = $supported_currencies;
 		$this->is_wc_gateways_list_page = $is_wc_gateways_list_page;
@@ -110,7 +107,7 @@ class UnsupportedCurrencyAdminNotice {
 	 * @return bool
 	 */
 	protected function should_display(): bool {
-		return $this->state->current_state() === State::STATE_ONBOARDED
+		return $this->is_connected
 			&& ! $this->currency_supported()
 			&& ( $this->is_wc_gateways_list_page || $this->is_ppcp_settings_page );
 	}

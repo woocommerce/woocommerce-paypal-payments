@@ -1,74 +1,101 @@
 <?php
 /**
- * PayPal Commerce Todos Model
+ * Todos details class
  *
  * @package WooCommerce\PayPalCommerce\Settings\Data
  */
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
-
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class TodosModel
  *
- * Handles the storage and retrieval of task completion states in WordPress options table.
- * Provides methods to get and update completion states with proper type casting.
+ * Handles todos data persistence and state management.
  */
-class TodosModel {
-	/**
-	 * WordPress option name for storing the completion states.
-	 *
-	 * @var string
-	 */
-	protected const OPTION_NAME = 'ppcp_todos';
+class TodosModel extends AbstractDataModel {
 
 	/**
-	 * Retrieves the formatted completion states from WordPress options.
-	 *
-	 * Loads the raw completion states from wp_options table and formats them into a
-	 * standardized array structure with proper type casting.
-	 *
-	 * @return array The formatted completion states array.
+	 * Option key for WordPress storage.
 	 */
-	public function get() : array {
-		$completion_states = get_option( self::OPTION_NAME, array() );
+	protected const OPTION_KEY = 'ppcp-settings';
 
-		return array_map(
-		/**
-		 * Ensures the task completion states are boolean values.
-		 *
-		 * @param mixed $state value to sanitize, as stored in the DB.
-		 */
-			static fn( $state ) => (bool) $state,
-			$completion_states
+	/**
+	 * Returns the default structure for settings data.
+	 *
+	 * @return array
+	 */
+	protected function get_defaults(): array {
+		return array(
+			'dismissedTodos'        => array(),
+			'completedOnClickTodos' => array(),
 		);
 	}
 
 	/**
-	 * Updates the completion states in WordPress options.
+	 * Gets the dismissed todos.
 	 *
-	 * Converts the provided data array and saves it to wp_options table.
-	 * Throws an exception if update fails.
-	 *
-	 * @param array $states Array of task IDs and their completion states.
-	 * @return void
-	 * @throws RuntimeException When the completion states update fails.
+	 * @return array
 	 */
-	public function update( array $states ) : void {
-		$completion_states = array_map(
-			static function ( $state ) {
-				return (bool) $state;
-			},
-			$states
+	public function get_dismissed_todos(): array {
+		return $this->data['dismissedTodos'] ?? array();
+	}
+
+	/**
+	 * Gets the completed onclick todos.
+	 *
+	 * @return array
+	 */
+	public function get_completed_onclick_todos(): array {
+		return $this->data['completedOnClickTodos'] ?? array();
+	}
+
+	/**
+	 * Updates dismissed todos.
+	 *
+	 * @param array $todo_ids Array of todo IDs to mark as dismissed.
+	 */
+	public function update_dismissed_todos( array $todo_ids ): void {
+		$this->data['dismissedTodos'] = array_unique( $todo_ids );
+		$this->save();
+	}
+
+	/**
+	 * Updates completed onclick todos.
+	 *
+	 * @param array $todo_ids Array of todo IDs to mark as completed.
+	 */
+	public function update_completed_onclick_todos( array $todo_ids ): void {
+		$this->data['completedOnClickTodos'] = array_unique( $todo_ids );
+		$this->save();
+	}
+
+	/**
+	 * Resets dismissed todos.
+	 */
+	public function reset_dismissed_todos(): void {
+		$this->data['dismissedTodos'] = array();
+		$this->save();
+	}
+
+	/**
+	 * Resets completed onclick todos.
+	 */
+	public function reset_completed_onclick_todos(): void {
+		$this->data['completedOnClickTodos'] = array();
+		$this->save();
+	}
+
+	/**
+	 * Gets current todos data including dismissed and completed states.
+	 *
+	 * @return array The todos data array.
+	 */
+	public function get_todos_data(): array {
+		return array(
+			'dismissedTodos'        => $this->get_dismissed_todos(),
+			'completedOnClickTodos' => $this->get_completed_onclick_todos(),
 		);
-
-		$result = update_option( self::OPTION_NAME, $completion_states );
-
-		if ( ! $result ) {
-			throw new RuntimeException( 'Failed to update todo completion states' );
-		}
 	}
 }

@@ -79,7 +79,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 		 * POST /wp-json/wc/v3/wc_paypal/webhooks
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
 				array(
@@ -100,7 +100,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 		 * POST /wp-json/wc/v3/wc_paypal/webhooks/simulate
 		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base . '/simulate',
 			array(
 				array(

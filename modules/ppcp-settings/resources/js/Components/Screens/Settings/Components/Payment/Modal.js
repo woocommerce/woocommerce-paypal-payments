@@ -12,12 +12,8 @@ import { PaymentHooks } from '../../../../../data';
 
 const Modal = ( { method, setModalIsVisible, onSave } ) => {
 	const { all: paymentMethods } = PaymentHooks.usePaymentMethods();
-	const {
-		paypalShowLogo,
-		threeDSecure,
-		fastlaneCardholderName,
-		fastlaneDisplayWatermark,
-	} = PaymentHooks.usePaymentMethodsModal();
+	const { paypalShowLogo, fastlaneCardholderName, fastlaneDisplayWatermark } =
+		PaymentHooks.usePaymentMethodsModal();
 
 	const [ settings, setSettings ] = useState( () => {
 		if ( ! method?.id ) {
@@ -44,7 +40,6 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 		} );
 
 		initialSettings.paypalShowLogo = paypalShowLogo;
-		initialSettings.threeDSecure = threeDSecure;
 		initialSettings.fastlaneCardholderName = fastlaneCardholderName;
 		initialSettings.fastlaneDisplayWatermark = fastlaneDisplayWatermark;
 
@@ -100,14 +95,16 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 			case 'radio':
 				return (
 					<>
-						<strong className="ppcp-r-modal__content-title">
-							{ field.label }
-						</strong>
-						{ field.description && (
-							<p className="ppcp-r-modal__description">
-								{ field.description }
-							</p>
-						) }
+						<div className="ppcp-r-modal__field-row">
+							<strong className="ppcp-r-modal__content-title">
+								{ field.label }
+							</strong>
+							{ field.description && (
+								<span className="ppcp-r-modal__field-description">
+									{ field.description }
+								</span>
+							) }
+						</div>
 						<div className="ppcp-r-modal__field-row">
 							<RadioControl
 								selected={ settings[ key ] }

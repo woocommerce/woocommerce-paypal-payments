@@ -6,13 +6,10 @@
 
 export default {
 	// Transient data.
-	SET_TRANSIENT: 'STYLE:SET_TRANSIENT',
+	SET_TRANSIENT: 'ppcp/style/SET_TRANSIENT',
 
 	// Persistent data.
-	SET_PERSISTENT: 'STYLE:SET_PERSISTENT',
-	RESET: 'STYLE:RESET',
-	HYDRATE: 'STYLE:HYDRATE',
-
-	// Controls - always start with "DO_".
-	DO_PERSIST_DATA: 'STYLE:DO_PERSIST_DATA',
+	SET_PERSISTENT: 'ppcp/style/SET_PERSISTENT',
+	RESET: 'ppcp/style/RESET',
+	HYDRATE: 'ppcp/style/HYDRATE',
 };

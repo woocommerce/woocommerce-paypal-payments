@@ -28,7 +28,7 @@ return array(
 		$endpoint              = $container->get( 'api.endpoint.order' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
-		$environment           = $container->get( 'onboarding.environment' );
+		$environment           = $container->get( 'settings.environment' );
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$funding_source_renderer       = $container->get( 'wcgateway.funding-source.renderer' );
@@ -46,7 +46,8 @@ return array(
 			$container->get( 'wc-subscriptions.helpers.real-time-account-updater' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'api.endpoint.payment-tokens' ),
-			$container->get( 'vaulting.wc-payment-tokens' )
+			$container->get( 'vaulting.wc-payment-tokens' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'wc-subscriptions.repository.payment-token'          => static function ( ContainerInterface $container ): PaymentTokenRepository {

@@ -4,14 +4,39 @@ import { Button } from '@wordpress/components';
 import PaymentMethodIcons from '../../../ReusableComponents/PaymentMethodIcons';
 import { Separator } from '../../../ReusableComponents/Elements';
 import Accordion from '../../../ReusableComponents/AccordionSection';
-import { CommonHooks } from '../../../../data';
+import { CommonHooks, OnboardingHooks } from '../../../../data';
 import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
 import OnboardingHeader from '../Components/OnboardingHeader';
 import WelcomeDocs from '../Components/WelcomeDocs';
 import AdvancedOptionsForm from '../Components/AdvancedOptionsForm';
+import { usePaymentConfig } from '../hooks/usePaymentConfig';
 
 const StepWelcome = ( { setStep, currentStep } ) => {
-	const { storeCountry } = CommonHooks.useWooSettings();
+	const { storeCountry, ownBrandOnly } = CommonHooks.useWooSettings();
+	const { canUseCardPayments, canUseFastlane } = OnboardingHooks.useFlags();
+
+	const { icons } = usePaymentConfig(
+		storeCountry,
+		canUseCardPayments,
+		canUseFastlane,
+		ownBrandOnly
+	);
+
+	const onboardingHeaderDescription =
+		canUseCardPayments && ! ownBrandOnly && 'MX' !== storeCountry
+			? __(
+					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, all major credit/debit cards, Apple Pay, Google Pay, and more.',
+					'woocommerce-paypal-payments'
+			  )
+			: __(
+					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, and more.',
+					'woocommerce-paypal-payments'
+			  );
+
+	const handleActivatePayPal = () => {
+		const nextStep = currentStep + 1;
+		setStep( nextStep, 'user' );
+	};
 
 	return (
 		<div className="ppcp-r-page-welcome">
@@ -20,17 +45,14 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					'Welcome to PayPal Payments',
 					'woocommerce-paypal-payments'
 				) }
-				description={ __(
-					'Your all-in-one integration for PayPal checkout solutions that enable buyers to pay via PayPal, Pay Later, all major credit/debit cards, Apple Pay, Google Pay, and more.',
-					'woocommerce-paypal-payments'
-				) }
+				description={ onboardingHeaderDescription }
 			/>
 			<div className="ppcp-r-inner-container">
 				<WelcomeFeatures />
-				<PaymentMethodIcons icons="all" />
+				<PaymentMethodIcons icons={ icons } />
 				<p className="ppcp-r-button__description">
 					{ __(
-						`Click the button below to be guided through connecting your existing PayPal account or creating a new one.You will be able to choose the payment options that are right for your store.`,
+						'Click the button below to be guided through connecting your existing PayPal account or creating a new one. You will be able to choose the payment options that are right for your store.',
 						'woocommerce-paypal-payments'
 					) }
 				</p>
@@ -38,7 +60,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 					<Button
 						className="ppcp-r-button-activate-paypal"
 						variant="primary"
-						onClick={ () => setStep( currentStep + 1 ) }
+						onClick={ handleActivatePayPal }
 					>
 						{ __(
 							'Activate PayPal Payments',
@@ -49,10 +71,10 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 			</div>
 			<Separator className="ppcp-r-page-welcome-mode-separator" />
 			<WelcomeDocs
-				useAcdc={ true }
-				isFastlane={ true }
-				isPayLater={ true }
+				useAcdc={ canUseCardPayments }
+				isFastlane={ canUseFastlane }
 				storeCountry={ storeCountry }
+				ownBrandOnly={ ownBrandOnly }
 			/>
 			<Separator text={ __( 'or', 'woocommerce-paypal-payments' ) } />
 			<Accordion

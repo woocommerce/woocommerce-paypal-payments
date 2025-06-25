@@ -1,39 +1,49 @@
 import { ToggleControl, Icon, Button } from '@wordpress/components';
 import { cog } from '@wordpress/icons';
-import { useEffect } from '@wordpress/element';
-import { useActiveHighlight } from '../../../data/common/hooks';
 
 import SettingsBlock from '../SettingsBlock';
 import PaymentMethodIcon from '../PaymentMethodIcon';
+import WarningMessages from '../../../Components/Screens/Settings/Components/Payment/WarningMessages';
 
 const PaymentMethodItemBlock = ( {
 	paymentMethod,
 	onTriggerModal,
 	onSelect,
 	isSelected,
+	isDisabled,
+	disabledMessage,
+	warningMessages,
 } ) => {
-	const { activeHighlight, setActiveHighlight } = useActiveHighlight();
-	const isHighlighted = activeHighlight === paymentMethod.id;
+	const hasWarning =
+		warningMessages && Object.keys( warningMessages ).length > 0;
 
-	// Reset the active highlight after 2 seconds
-	useEffect( () => {
-		if ( isHighlighted ) {
-			const timer = setTimeout( () => {
-				setActiveHighlight( null );
-			}, 2000 );
-
-			return () => clearTimeout( timer );
-		}
-	}, [ isHighlighted, setActiveHighlight ] );
+	// Determine class names based on states
+	const methodItemClasses = [
+		'ppcp--method-item',
+		isDisabled ? 'ppcp--method-item--disabled' : '',
+		hasWarning && ! isDisabled ? 'ppcp--method-item--warning' : '',
+	]
+		.filter( Boolean )
+		.join( ' ' );
 
 	return (
 		<SettingsBlock
 			id={ paymentMethod.id }
-			className={ `ppcp--method-item ${
-				isHighlighted ? 'ppcp-highlight' : ''
-			}` }
+			className={ methodItemClasses }
 			separatorAndGap={ false }
+			aria-disabled={ isDisabled ? 'true' : 'false' }
 		>
+			{ isDisabled && (
+				<div
+					className="ppcp--method-disabled-overlay"
+					role="alert"
+					aria-live="polite"
+				>
+					<p className="ppcp--method-disabled-message" tabIndex="0">
+						{ disabledMessage }
+					</p>
+				</div>
+			) }
 			<div className="ppcp--method-inner">
 				<div className="ppcp--method-title-wrapper">
 					{ paymentMethod?.icon && (
@@ -50,15 +60,26 @@ const PaymentMethodItemBlock = ( {
 					{ paymentMethod.itemDescription }
 				</p>
 				<div className="ppcp--method-footer">
-					<ToggleControl
-						__nextHasNoMarginBottom
-						checked={ isSelected }
-						onChange={ onSelect }
-					/>
+					<div className="ppcp--method-toggle-wrapper">
+						<ToggleControl
+							__nextHasNoMarginBottom
+							checked={ isSelected }
+							onChange={ onSelect }
+							disabled={ isDisabled }
+							aria-label={ `Enable ${ paymentMethod.itemTitle }` }
+						/>
+						{ hasWarning && ! isDisabled && isSelected && (
+							<WarningMessages
+								warningMessages={ warningMessages }
+							/>
+						) }
+					</div>
 					{ paymentMethod?.fields && onTriggerModal && (
 						<Button
 							className="ppcp--method-settings"
+							disabled={ isDisabled }
 							onClick={ onTriggerModal }
+							aria-label={ `Configure ${ paymentMethod.itemTitle } settings` }
 						>
 							<Icon icon={ cog } />
 						</Button>

@@ -1,4 +1,5 @@
 import { __ } from '@wordpress/i18n';
+import { useEffect } from 'react';
 
 import { ControlToggleButton } from '../../../../../ReusableComponents/Controls';
 import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
@@ -11,6 +12,12 @@ const OrderIntent = () => {
 		captureVirtualOnlyOrders,
 		setCaptureVirtualOnlyOrders,
 	} = SettingsHooks.useSettings();
+
+	useEffect( () => {
+		if ( ! authorizeOnly && captureVirtualOnlyOrders ) {
+			setCaptureVirtualOnlyOrders( false );
+		}
+	}, [ authorizeOnly ] );
 
 	return (
 		<SettingsBlock
@@ -34,6 +41,7 @@ const OrderIntent = () => {
 				) }
 				onChange={ setCaptureVirtualOnlyOrders }
 				value={ captureVirtualOnlyOrders }
+				disabled={ ! authorizeOnly }
 			/>
 		</SettingsBlock>
 	);

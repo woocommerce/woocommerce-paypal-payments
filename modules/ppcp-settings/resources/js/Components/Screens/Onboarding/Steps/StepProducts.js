@@ -1,4 +1,4 @@
-import { __ } from '@wordpress/i18n';
+import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 
 import { OptionSelector } from '../../../ReusableComponents/Fields';
@@ -10,33 +10,76 @@ const StepProducts = () => {
 	const { canUseSubscriptions } = OnboardingHooks.useFlags();
 	const [ optionState, setOptionState ] = useState( null );
 	const [ productChoices, setProductChoices ] = useState( [] );
+	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
 	useEffect( () => {
+		const productChoicesFull = [
+			{
+				value: PRODUCT_TYPES.VIRTUAL,
+				title: __( 'Virtual', 'woocommerce-paypal-payments' ),
+				description: __(
+					'Items do not require shipping.',
+					'woocommerce-paypal-payments'
+				),
+				contents: <DetailsVirtual />,
+			},
+			{
+				value: PRODUCT_TYPES.PHYSICAL,
+				title: __( 'Physical Goods', 'woocommerce-paypal-payments' ),
+				description: __(
+					'Items require shipping.',
+					'woocommerce-paypal-payments'
+				),
+				contents: <DetailsPhysical />,
+			},
+			{
+				value: PRODUCT_TYPES.SUBSCRIPTIONS,
+				title: __( 'Subscriptions', 'woocommerce-paypal-payments' ),
+				description: __(
+					'Recurring payments for either physical goods or services.',
+					'woocommerce-paypal-payments'
+				),
+				isDisabled: isCasualSeller,
+				contents: (
+					/*
+					 * Note: The link should be only displayed if the subscriptions plugin is not installed.
+					 * But when the plugin is not active, this option is completely hidden;
+					 * This means: In the current configuration, we never show the link.
+					 */
+					<DetailsSubscriptions
+						showLink={ false }
+						showNotice={ isCasualSeller }
+					/>
+				),
+			},
+		];
+
 		const initChoices = () => {
-			if ( optionState === canUseSubscriptions ) {
-				return;
-			}
-
-			let choices = productChoicesFull;
-
-			// Remove subscription details, if not available.
-			if ( ! canUseSubscriptions ) {
-				choices = choices.filter(
-					( { value } ) => value !== PRODUCT_TYPES.SUBSCRIPTIONS
-				);
-				setProducts(
-					products.filter(
-						( value ) => value !== PRODUCT_TYPES.SUBSCRIPTIONS
-					)
-				);
-			}
+			const choices = productChoicesFull.map( ( choice ) => {
+				if (
+					choice.value === PRODUCT_TYPES.SUBSCRIPTIONS &&
+					! canUseSubscriptions
+				) {
+					return {
+						...choice,
+						isDisabled: true,
+						contents: (
+							<DetailsSubscriptions
+								showLink={ true }
+								showNotice={ isCasualSeller }
+							/>
+						),
+					};
+				}
+				return choice;
+			} );
 
 			setProductChoices( choices );
 			setOptionState( canUseSubscriptions );
 		};
 
 		initChoices();
-	}, [ canUseSubscriptions, optionState, products, setProducts ] );
+	}, [ canUseSubscriptions, isCasualSeller ] );
 
 	const handleChange = ( key, checked ) => {
 		const getNewValue = () => {
@@ -46,7 +89,7 @@ const StepProducts = () => {
 			return products.filter( ( val ) => val !== key );
 		};
 
-		setProducts( getNewValue() );
+		setProducts( getNewValue(), 'user' );
 	};
 
 	return (
@@ -87,41 +130,29 @@ const DetailsPhysical = () => (
 	</ul>
 );
 
-const DetailsSubscriptions = () => (
-	<a
-		target="__blank"
-		href="https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq"
-	>
-		{ __( 'WooCommerce Subscriptions', 'woocommerce-paypal-payments' ) }
-	</a>
+const DetailsSubscriptions = ( { showLink, showNotice } ) => (
+	<>
+		{ showLink && (
+			<p
+				dangerouslySetInnerHTML={ {
+					__html: sprintf(
+						/* translators: %s is the URL to the WooCommerce Subscriptions product page */
+						__(
+							'* To use subscriptions, you must have <a target="_blank" href="%s">WooCommerce Subscriptions</a> enabled.',
+							'woocommerce-paypal-payments'
+						),
+						'https://woocommerce.com/products/woocommerce-subscriptions/'
+					),
+				} }
+			/>
+		) }
+		{ showNotice && (
+			<p>
+				{ __(
+					'* Business account is required for subscriptions.',
+					'woocommerce-paypal-payments'
+				) }
+			</p>
+		) }
+	</>
 );
-
-const productChoicesFull = [
-	{
-		value: PRODUCT_TYPES.VIRTUAL,
-		title: __( 'Virtual', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Items do not require shipping.',
-			'woocommerce-paypal-payments'
-		),
-		contents: <DetailsVirtual />,
-	},
-	{
-		value: PRODUCT_TYPES.PHYSICAL,
-		title: __( 'Physical Goods', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Items require shipping.',
-			'woocommerce-paypal-payments'
-		),
-		contents: <DetailsPhysical />,
-	},
-	{
-		value: PRODUCT_TYPES.SUBSCRIPTIONS,
-		title: __( 'Subscriptions', 'woocommerce-paypal-payments' ),
-		description: __(
-			'Recurring payments for either physical goods or services.',
-			'woocommerce-paypal-payments'
-		),
-		contents: <DetailsSubscriptions />,
-	},
-];

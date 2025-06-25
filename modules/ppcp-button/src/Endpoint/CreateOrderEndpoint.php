@@ -15,13 +15,15 @@ use stdClass;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -35,6 +37,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
 
 /**
  * Class CreateOrderEndpoint
@@ -65,6 +68,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @var ShippingPreferenceFactory
 	 */
 	private $shipping_preference_factory;
+
+	/**
+	 * The contact_preference factors.
+	 */
+	private ContactPreferenceFactory $contact_preference_factory;
+
+	/**
+	 * The ExperienceContextBuilder.
+	 */
+	private ExperienceContextBuilder $experience_context_builder;
 
 	/**
 	 * The order endpoint.
@@ -151,6 +164,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $handle_shipping_in_paypal;
 
 	/**
+	 * Whether the server-side shipping callback is enabled (feature flag).
+	 */
+	private bool $server_side_shipping_callback_enabled;
+
+	/**
 	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 *
 	 * @var string[]
@@ -177,6 +195,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param RequestData               $request_data The RequestData object.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The PurchaseUnit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping_preference factory.
+	 * @param ContactPreferenceFactory  $contact_preference_factory The contact_preference factory.
+	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
 	 * @param OrderEndpoint             $order_endpoint The OrderEndpoint object.
 	 * @param PayerFactory              $payer_factory The PayerFactory object.
 	 * @param SessionHandler            $session_handler The SessionHandler object.
@@ -187,6 +207,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param bool                      $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param string[]                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param bool                      $handle_shipping_in_paypal If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
+	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
 	 * @param string[]                  $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param LoggerInterface           $logger The logger.
 	 */
@@ -194,6 +215,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		RequestData $request_data,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
+		ContactPreferenceFactory $contact_preference_factory,
+		ExperienceContextBuilder $experience_context_builder,
 		OrderEndpoint $order_endpoint,
 		PayerFactory $payer_factory,
 		SessionHandler $session_handler,
@@ -204,6 +227,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
 		bool $handle_shipping_in_paypal,
+		bool $server_side_shipping_callback_enabled,
 		array $funding_sources_without_redirect,
 		LoggerInterface $logger
 	) {
@@ -211,6 +235,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->request_data                     = $request_data;
 		$this->purchase_unit_factory            = $purchase_unit_factory;
 		$this->shipping_preference_factory      = $shipping_preference_factory;
+		$this->contact_preference_factory       = $contact_preference_factory;
+		$this->experience_context_builder       = $experience_context_builder;
 		$this->api_endpoint                     = $order_endpoint;
 		$this->payer_factory                    = $payer_factory;
 		$this->session_handler                  = $session_handler;
@@ -221,6 +247,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->early_validation_enabled         = $early_validation_enabled;
 		$this->pay_now_contexts                 = $pay_now_contexts;
 		$this->handle_shipping_in_paypal        = $handle_shipping_in_paypal;
+		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
 		$this->funding_sources_without_redirect = $funding_sources_without_redirect;
 		$this->logger                           = $logger;
 	}
@@ -383,50 +410,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 	}
 
 	/**
-	 * Once the checkout has been validated we execute this method.
-	 *
-	 * @param array     $data The data.
-	 * @param \WP_Error $errors The errors, which occurred.
-	 *
-	 * @return array
-	 * @throws Exception On Error.
-	 */
-	public function after_checkout_validation( array $data, \WP_Error $errors ): array {
-		if ( ! $errors->errors ) {
-			try {
-				$order = $this->create_paypal_order();
-			} catch ( Exception $exception ) {
-				$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
-				throw $exception;
-			}
-
-			/**
-			 * In case we are onboarded and everything is fine with the \WC_Order
-			 * we want this order to be created. We will intercept it and leave it
-			 * in the "Pending payment" status though, which than later will change
-			 * during the "onApprove"-JS callback or the webhook listener.
-			 */
-			if ( ! $this->early_order_handler->should_create_early_order() ) {
-				wp_send_json_success( $this->make_response( $order ) );
-			}
-			$this->early_order_handler->register_for_order( $order );
-			return $data;
-		}
-
-		$this->logger->error( 'Checkout validation failed: ' . $errors->get_error_message() );
-
-		wp_send_json_error(
-			array(
-				'name'    => '',
-				'message' => $errors->get_error_message(),
-				'code'    => (int) $errors->get_error_code(),
-				'details' => array(),
-			)
-		);
-		return $data;
-	}
-
-	/**
 	 * Creates the order in the PayPal, uses data from WC order if provided.
 	 *
 	 * @param \WC_Order|null $wc_order WC order to get data from.
@@ -454,16 +437,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 		);
 
 		$action = in_array( $this->parsed_request_data['context'], $this->pay_now_contexts, true ) ?
-			ApplicationContext::USER_ACTION_PAY_NOW : ApplicationContext::USER_ACTION_CONTINUE;
+			ExperienceContext::USER_ACTION_PAY_NOW : ExperienceContext::USER_ACTION_CONTINUE;
 
 		if ( 'card' === $funding_source ) {
 			if ( CardBillingMode::MINIMAL_INPUT === $this->card_billing_data_mode ) {
-				if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
+				if ( ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
 					if ( $payer ) {
 						$payer->set_address( null );
 					}
 				}
-				if ( ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
+				if ( ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
 					if ( $payer ) {
 						$payer->set_name( null );
 					}
@@ -475,16 +458,40 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
+		if ( 'venmo' === $funding_source ) {
+			$payment_source_key = 'venmo';
+		} else {
+			$payment_source_key = 'paypal';
+		}
+
+		$contact_preference = $this->contact_preference_factory->from_state(
+			$payment_source_key
+		);
+
+		$experience_context = $this->experience_context_builder
+			->with_default_paypal_config( $shipping_preference, $action )
+			->with_contact_preference( $contact_preference );
+
+		if ( $this->server_side_shipping_callback_enabled
+			&& $shipping_preference === ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
+			$experience_context = $experience_context->with_shipping_callback();
+		}
+
+		$payment_source = new PaymentSource(
+			$payment_source_key,
+			(object) array(
+				'experience_context' => $experience_context->build()->to_array(),
+			)
+		);
+
 		try {
 			return $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
 				$payer,
-				null,
-				'',
-				$action,
 				$payment_method,
-				$data
+				$data,
+				$payment_source
 			);
 		} catch ( PayPalApiException $exception ) {
 			// Looks like currently there is no proper way to validate the shipping address for PayPal,
@@ -505,7 +512,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null
+					$payment_method,
+					$data,
+					$payment_source
 				);
 			}
 
