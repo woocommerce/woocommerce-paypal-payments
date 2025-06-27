@@ -18,7 +18,11 @@ export class PayPalPopup {
 	loginWithPasswordInsteadLink = () =>
 		this.popup.getByRole( 'link', {
 			name: 'Log in with a password instead',
-		} );
+		} )
+	loginWithYourPasswordLink = () =>
+		this.popup.getByRole('link', { name: 'Login with password' });
+	tryAnotherWayLink = () =>
+		this.popup.getByRole( 'link', { name: 'Try another way', } );
 	loginInput = () => this.popup.locator( '[name="login_email"]' );
 	passwordInput = () => this.popup.locator( '[name="login_password"]' );
 	nextButton = () => this.popup.locator( '#btnNext' );
@@ -29,7 +33,8 @@ export class PayPalPopup {
 			.or( this.popup.getByTestId( 'submit-button-initial' ) )
 			.or( this.popup.getByTestId( 'consentButton' ) )
 			.or( this.popup.getByRole( 'button', { name: 'Continue' } ) )
-			.or( this.popup.locator( '#confirmButtonTop' ) );
+			.or( this.popup.locator( '#confirmButtonTop' ) )
+			.or( this.popup.locator( '#one-time-cta' ) );
 	payLaterSwitcher = () => this.popup.getByTestId( 'paylater-tab' );
 	payLaterRadio = () =>
 		this.popup.locator( 'label[for^="credit-offer"]' ).first();
@@ -38,41 +43,65 @@ export class PayPalPopup {
 	cancelLink = () => this.popup.locator( '#cancelLink' );
 	loadSpinnerContainer = () => this.popup.locator( '#preloaderSpinner' );
 
-	// Actions
 
+	// Actions
+	
+	/**
+	 *  Log in to PayPal
+	 * 
+	 * @param email 
+	 * @param password 
+	 */
 	login = async ( email, password ) => {
-		await this.popup.waitForLoadState();
-		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
-		// Sometimes the phone may be requested
-		if (
-			! ( await this.loginInput().isEditable() ) &&
-			await this.loginWithPasswordInsteadLink().isVisible()
-		) {
-			await this.loginWithPasswordInsteadLink().click();
-		}
+		await this.tryLoginWithPasswordInstead();
 
 		await this.loginInput().fill( email );
+		
+		await this.tryLoginWithPasswordInstead();
 
-		// Sometimes we get a popup with email and password fields at the same screen
-		if ( await this.nextButton().isVisible() ) {
-			await this.nextButton().click();
-			await this.popup.waitForLoadState();
-		}
+		await this.tryClickNext();
 
-		// Sometimes the phone may be requested
-		if (
-			! ( await this.passwordInput().isEditable() ) &&
-			this.loginWithPasswordInsteadLink().isVisible()
-		) {
-			this.loginWithPasswordInsteadLink().click();
-			await this.popup.waitForLoadState();
-		}
+		await this.tryAnotherWay();
 
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
 	};
 
-	clickSubmitButton = async () => {
+	/**
+	 * Tries to click "Login with password instead" button if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryLoginWithPasswordInstead = async () => {
+		try {
+			await this.loginWithPasswordInsteadLink().waitFor({ state: 'visible', timeout: 4000 });
+			await this.loginWithPasswordInsteadLink().click();
+		} catch {}
+	};
+
+	/**
+	 * Tries to click "Next" button if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryClickNext = async () => {
+		try {
+			await this.nextButton().waitFor({ state: 'visible', timeout: 4000 });
+			await this.nextButton().click();
+		} catch {}
+	};
+
+	/**
+	 * Tries to click "Try another way" and "Login with your password" buttons if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryAnotherWay = async () => {
+		try {
+			await this.tryAnotherWayLink().waitFor({ state: 'visible', timeout: 4000 });
+			await this.tryAnotherWayLink().click();
+			await this.loginWithYourPasswordLink().click();
+		} catch {}
+	};
+
+	trySubmitPayment = async () => {
 		await this.popup.waitForLoadState();
 		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
 
@@ -96,7 +125,7 @@ export class PayPalPopup {
 			// Optional: wait for spinner to disappear
 			try {
 				await expect( this.loadSpinnerContainer() ).toBeVisible( { timeout: 1000 } );
-				await expect( this.loadSpinnerContainer() ).not.toBeVisible( { timeout: 5000 } );
+				await expect( this.loadSpinnerContainer() ).not.toBeVisible( { timeout: 4000 } );
 			} catch {
 				// Spinner didn't appear, continue
 			}
@@ -106,7 +135,7 @@ export class PayPalPopup {
 	completePayment = async () => {
 		await Promise.all( [
 			this.popup.waitForEvent( 'close' ),
-			this.clickSubmitButton(),
+			this.trySubmitPayment(),
 		] );
 	};
 
