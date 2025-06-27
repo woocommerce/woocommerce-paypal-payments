@@ -79,7 +79,7 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 			case 'paypal':
 				await this.payPalUi.payPalGateway().click();
 				const popup = await this.payPalUi.openPayPalPupup();
-				await popup.savePayPalPaymentMethod( payPalAccount );
+				await popup.completePayPalPayment( payPalAccount );
 				break;
 
 			case 'acdc':

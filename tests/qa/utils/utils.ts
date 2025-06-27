@@ -24,6 +24,7 @@ import {
 	ShopOrder,
 } from '../resources';
 import { getCustomerStorageStateName } from './helpers';
+import urls from './urls';
 
 export class Utils {
 	requestUtils: RequestUtils;
@@ -156,6 +157,53 @@ export class Utils {
 	};
 
 	/**
+	 * Checks if the product type is "subscription", connected to PayPal
+	 * 
+	 * @param product 
+	 */
+	isPayPalSubscription = (
+		product: WooCommerce.CreateProduct
+	): boolean => {
+		if ( product.type !== 'subscription' ) {
+			return false;
+		}
+
+		const payPalMeta = product.meta_data.find(
+			( meta ) => meta.key === '_ppcp_enable_subscription_product'
+		);
+
+		if ( ! payPalMeta ) {
+			return false;
+		}
+
+		return payPalMeta.value === 'yes';
+	}
+
+	/**
+	 * Connects existing Subscription product to PayPal plan
+	 * 
+	 * @param subscriptionId
+	 */
+	connectPayPalSubscriptionProduct = async ( subscriptionId: number ) => {
+		const url = urls.admin.post.edit + subscriptionId;
+		const wpnonce = await this.requestUtils.getPageNonce( url );
+		const wcsnonce = await this.requestUtils.getRegexMatchValueOnPage(
+			url,
+			/<input[^>]*id="_wcsnonce"[^>]*value="([^"]*)"/
+		);
+		const formData = {
+			_wpnonce: wpnonce,
+			_wcsnonce: wcsnonce,
+			_ppcp_enable_subscription_product: 'yes',
+			_ppcp_subscription_plan_name: 'test',
+			post_ID: subscriptionId,
+			action: 'editpost',
+		};
+		const response = await this.requestUtils.submitPageForm( url, formData );
+		return response.ok();
+	}
+
+	/**
 	 * Configures store according to the data provided:
 	 *
 	 * wpDebugging: Is WP Debugging plugin activated
@@ -245,6 +293,9 @@ export class Utils {
 					const createdProduct = await this.wooCommerceUtils.createProduct(
 						product
 					);
+					if( this.isPayPalSubscription( product ) ) {
+						await this.connectPayPalSubscriptionProduct( createdProduct.id );
+					}
 					// Create cart items { id: 123 }
 					cartItems[ product.slug ] = { id: createdProduct.id };
 				} )

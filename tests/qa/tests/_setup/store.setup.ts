@@ -193,8 +193,6 @@ configureEnv( {
 		products: [
 			products.subscription10,
 			products.subscriptionFreeTrial,
-			products.subscriptionPayPal,
-			products.subscriptionPayPalFreeTrial,
 		],
 	},
 	pcp: {
@@ -208,4 +206,33 @@ configureEnv( {
 			}
 		},
 	}
+} );
+
+setup( 'setup:pcp:usa:paypal:subscription;', async ( { utils, pcpApi } ) => {
+	await utils.configureStore( {
+		...storeConfigUsa,
+		classicPages: false,
+		subscription: true,
+	} );
+	await utils.installAndActivatePcp();
+	await pcpApi.resetDb();
+	await pcpApi.connectMerchant(
+		merchants.usa.client_id,
+		merchants.usa.client_secret,
+		{
+			isCasualSeller: false,
+			areOptionalPaymentMethodsEnabled: true,
+			products: [ 'physical', 'virtual', 'subscriptions' ],
+		},
+	);
+	await pcpApi.updatePcpSettings( {
+		savePaypalAndVenmo: false,
+		saveCardDetails: false,
+	} );
+	await utils.configureStore( {
+		products: [
+			products.subscriptionPayPal,
+			products.subscriptionPayPalFreeTrial,
+		],
+	} );
 } );
