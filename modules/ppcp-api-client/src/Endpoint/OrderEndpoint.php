@@ -585,9 +585,6 @@ class OrderEndpoint {
 		$data = array(
 			'payment_source'         => $payment_source,
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
-			'application_context'    => array(
-				'locale' => 'es-MX',
-			),
 		);
 
 		$args = array(

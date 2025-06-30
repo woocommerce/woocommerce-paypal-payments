@@ -192,15 +192,19 @@ class OXXOGateway extends WC_Payment_Gateway {
 				'country_code'       => $wc_order->get_billing_country(),
 				'experience_context' => $this->experience_context_builder
 					->with_default_paypal_config( $shipping_preference )
-					->build()->to_array(),
+					->build()
+					->with_locale( 'en-MX' )
+					->to_array(),
 			);
 
 			$order = $this->order_endpoint->create(
 				array( $purchase_unit ),
 				$shipping_preference,
 				null,
-				'',
-				array(),
+				self::ID,
+				array(
+					'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
+				),
 				new PaymentSource(
 					'oxxo',
 					(object) $payment_source_data

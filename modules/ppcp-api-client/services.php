@@ -783,6 +783,11 @@ return array(
 					'amex'       => array( 'JPY' ),
 					'jcb'        => array( 'JPY' ),
 				),
+				'YT' => $mastercard_visa_amex, // Mayotte.
+				'RE' => $mastercard_visa_amex, // Reunion.
+				'GP' => $mastercard_visa_amex, // Guadelope.
+				'GF' => $mastercard_visa_amex, // French Guiana.
+				'MQ' => $mastercard_visa_amex, // Martinique.
 			)
 		);
 	},

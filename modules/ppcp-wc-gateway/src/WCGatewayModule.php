@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ShippingCallbackEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
@@ -585,6 +586,25 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$endpoint->register();
 			}
+		);
+
+		// Add processing instruction request data for OXXO payment.
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+				if ( $payment_method !== OXXOGateway::ID ) {
+					return $data;
+				}
+
+				$processing_instruction = $request['processing_instruction'] ?? '';
+				if ( $processing_instruction ) {
+					$data['processing_instruction'] = $processing_instruction;
+				}
+
+				return $data;
+			},
+			10,
+			3
 		);
 
 		return true;

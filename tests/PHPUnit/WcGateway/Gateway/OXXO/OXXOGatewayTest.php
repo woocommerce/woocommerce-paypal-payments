@@ -70,6 +70,10 @@ private $testee;
 			->shouldReceive('build')
 			->andReturn($experienceContext);
 		$experienceContext
+			->shouldReceive('with_locale')
+			->with('en-MX')
+			->andReturn($experienceContext);
+		$experienceContext
 			->shouldReceive('to_array')
 			->andReturn(['foo' => 'bar']);
 	}
@@ -114,7 +118,14 @@ private $testee;
 
 		$this->orderEndpoint
 			->shouldReceive('create')
-			->with([$purchaseUnit], $shippingPreference, null, '', [], Mockery::any())
+			->with(
+				[$purchaseUnit],
+				$shippingPreference,
+				null,
+				OXXOGateway::ID,
+				['processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL'],
+				Mockery::any()
+			)
 			->andReturn($order);
 
 		$this->wcOrder
