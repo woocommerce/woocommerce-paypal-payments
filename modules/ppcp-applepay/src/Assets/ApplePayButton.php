@@ -1018,6 +1018,10 @@ class ApplePayButton implements ButtonInterface {
 	 * @return void
 	 */
 	public function enqueue(): void {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
 		wp_register_script(
 			'wc-ppcp-applepay',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',

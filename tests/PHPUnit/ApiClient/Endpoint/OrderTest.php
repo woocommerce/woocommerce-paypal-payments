@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
@@ -29,17 +28,12 @@ class OrderTest extends TestCase
         $payer
             ->expects('to_array')->andReturn(['payer']);
         $intent = 'AUTHORIZE';
-        $applicationContext = Mockery::mock(ApplicationContext::class);
-        $applicationContext
-            ->expects('to_array')
-            ->andReturn(['applicationContext']);
         $paymentSource = Mockery::mock(PaymentSource::class);
 
         $testee = new Order(
             $id,
             [$unit],
             $status,
-            $applicationContext,
             $paymentSource,
             $payer,
             $intent,
@@ -65,7 +59,6 @@ class OrderTest extends TestCase
             'create_time' => $createTime->format($this->dateFormat),
             'update_time' => $updateTime->format($this->dateFormat),
             'payer' => ['payer'],
-            'application_context' => ['applicationContext']
         ];
         $this->assertEquals($expected, $testee->to_array());
     }

@@ -16,6 +16,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Class PartnerReferrals
+ *
+ * @see https://developer.paypal.com/docs/api/partner-referrals/v2/
  */
 class PartnerReferrals {
 

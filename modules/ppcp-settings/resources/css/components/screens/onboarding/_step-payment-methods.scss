@@ -1,0 +1,36 @@
+.ppcp-r-page-optional-payment-methods {
+	.ppcp-r-select-box:first-child {
+		.ppcp-r-select-box__title {
+			margin-bottom: 20px;
+		}
+	}
+}
+
+.ppcp-r-optional-payment-methods__wrapper {
+	.ppcp-r-badge-box {
+		margin: 0 0 24px 0;
+
+		&:last-child {
+			margin: 0;
+		}
+	}
+
+	.ppcp-r-badge-box__description {
+		margin: 12px 0 0 0;
+	}
+}
+
+.ppcp-r-optional-payment-methods__description {
+	@include font(14, 22, 400);
+	margin: 32px 0 0 0;
+	text-align: center;
+	font-style: italic;
+
+	a {
+		color: $color-gray-700;
+	}
+}
+
+.ppcp-r-optional-payment-methods__separator {
+	margin: 0 0 24px 0;
+}

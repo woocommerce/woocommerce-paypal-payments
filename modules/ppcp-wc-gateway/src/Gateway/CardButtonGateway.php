@@ -13,9 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -70,13 +68,6 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @var RefundProcessor
 	 */
 	private $refund_processor;
-
-	/**
-	 * The state.
-	 *
-	 * @var State
-	 */
-	protected $state;
 
 	/**
 	 * Service able to provide transaction url for an order.
@@ -142,7 +133,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @param ContainerInterface      $config The settings.
 	 * @param SessionHandler          $session_handler The Session Handler.
 	 * @param RefundProcessor         $refund_processor The Refund Processor.
-	 * @param State                   $state The state.
+	 * @param bool                    $is_connected Whether onboarding was completed.
 	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
 	 * @param bool                    $default_enabled Whether the gateway should be enabled by default.
@@ -158,7 +149,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		ContainerInterface $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state,
+		bool $is_connected,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
 		bool $default_enabled,
@@ -174,12 +165,11 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->config                      = $config;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
-		$this->state                       = $state;
 		$this->transaction_url_provider    = $transaction_url_provider;
 		$this->subscription_helper         = $subscription_helper;
 		$this->default_enabled             = $default_enabled;
 		$this->environment                 = $environment;
-		$this->onboarded                   = $state->current_state() === State::STATE_ONBOARDED;
+		$this->onboarded                   = $is_connected;
 		$this->payment_token_repository    = $payment_token_repository;
 		$this->logger                      = $logger;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
@@ -295,7 +285,18 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 
 		try {
 			try {
-				$this->order_processor->process( $wc_order );
+				/**
+				 * This filter controls if the method 'process()' from OrderProcessor will be called.
+				 * So you can implement your own for example on subscriptions
+				 *
+				 * - true bool controls execution of 'OrderProcessor::process()'
+				 * - $this \WC_Payment_Gateway
+				 * - $wc_order \WC_Order
+				 */
+				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+				if ( $process ) {
+					$this->order_processor->process( $wc_order );
+				}
 
 				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 
@@ -361,5 +362,20 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 */
 	protected function settings_renderer(): SettingsRenderer {
 		return $this->settings_renderer;
+	}
+
+	/**
+	 * Determines if the Gateway is available for use.
+	 *
+	 * @return bool
+	 */
+	public function is_available(): bool {
+		$is_available = parent::is_available();
+
+		if ( $is_available && $this->is_free_trial_cart() ) {
+			$is_available = false;
+		}
+
+		return $is_available;
 	}
 }

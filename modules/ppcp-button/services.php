@@ -35,9 +35,9 @@ use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 return array(
 	'button.client_id'                            => static function ( ContainerInterface $container ): string {
@@ -48,7 +48,7 @@ return array(
 			return $client_id;
 		}
 
-		$env = $container->get( 'onboarding.environment' );
+		$env = $container->get( 'settings.environment' );
 		/**
 		 * The environment.
 		 *
@@ -108,15 +108,24 @@ return array(
 		assert( $settings_status instanceof SettingsStatus );
 
 		if ( in_array( $context, array( 'checkout', 'pay-now' ), true ) ) {
-			if ( $container->get( 'wcgateway.use-place-order-button' )
-				|| ! $settings_status->is_smart_button_enabled_for_location( $context )
-			) {
+			$redirect_to_pay = $container->get( 'wcgateway.use-place-order-button' );
+			if ( $redirect_to_pay ) {
+				// No smart buttons, redirect the current page to PayPal for payment.
+				return new DisabledSmartButton();
+			}
+
+			$no_smart_buttons  = ! $settings_status->is_smart_button_enabled_for_location( $context );
+			$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+			assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+			if ( $no_smart_buttons && ! $dcc_configuration->is_enabled() ) {
+				// Smart buttons disabled, and also not using advanced card payments.
 				return new DisabledSmartButton();
 			}
 		}
 
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return new DisabledSmartButton();
 		}
 
@@ -132,7 +141,7 @@ return array(
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
-		$environment         = $container->get( 'onboarding.environment' );
+		$environment         = $container->get( 'settings.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
@@ -158,7 +167,10 @@ return array(
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
-			$container->get( 'button.helper.disabled-funding-sources' )
+			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
+			$container->get( 'button.helper.disabled-funding-sources' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'api.helper.partner-attribution' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
@@ -216,6 +228,8 @@ return array(
 			$request_data,
 			$purchase_unit_factory,
 			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'api.factory.contact-preference' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
 			$order_endpoint,
 			$payer_factory,
 			$session_handler,
@@ -226,16 +240,17 @@ return array(
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
+			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$logger
 		);
 	},
 	'button.helper.early-order-handler'           => static function ( ContainerInterface $container ) : EarlyOrderHandler {
-
-		$state          = $container->get( 'onboarding.state' );
-		$order_processor = $container->get( 'wcgateway.order-processor' );
-		$session_handler = $container->get( 'session.handler' );
-		return new EarlyOrderHandler( $state, $order_processor, $session_handler );
+		return new EarlyOrderHandler(
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'session.handler' )
+		);
 	},
 	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data         = $container->get( 'button.request-data' );
@@ -334,7 +349,9 @@ return array(
 	'button.helper.disabled-funding-sources'      => static function ( ContainerInterface $container ): DisabledFundingSources {
 		return new DisabledFundingSources(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.all-funding-sources' )
+			$container->get( 'wcgateway.all-funding-sources' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'api.shop.country' )
 		);
 	},
 	'button.is-logged-in'                         => static function ( ContainerInterface $container ): bool {

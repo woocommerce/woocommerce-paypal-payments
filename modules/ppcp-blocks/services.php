@@ -28,13 +28,6 @@ return array(
 		);
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
-		/**
-		 * Cart instance; might be null, esp. in customizer or in Block Editor.
-		 *
-		 * @var null|WC_Cart $cart
-		 */
-		$cart = WC()->cart;
-
 		return new PayPalPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -53,7 +46,6 @@ return array(
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'wcgateway.place-order-button-description' ),
 			$container->get( 'wcgateway.all-funding-sources' ),
-			$cart && $cart->needs_shipping()
 		);
 	},
 	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {

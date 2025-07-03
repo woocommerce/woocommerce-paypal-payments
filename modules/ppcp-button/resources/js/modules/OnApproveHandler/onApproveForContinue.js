@@ -1,3 +1,18 @@
+const initiateRedirect = ( successUrl ) => {
+	/**
+	 * Notice how this step initiates a redirect to a new page using a plain
+	 * URL as new location. This process does not send any details about the
+	 * approved order or billed customer.
+	 *
+	 * The redirect will start after a short delay, giving the calling method
+	 * time to process the return value of the `await onApprove()` call.
+	 */
+
+	setTimeout( () => {
+		window.location.href = successUrl;
+	}, 200 );
+};
+
 const onApprove = ( context, errorHandler ) => {
 	return ( data, actions ) => {
 		const canCreateOrder =
@@ -28,24 +43,13 @@ const onApprove = ( context, errorHandler ) => {
 			.then( ( approveData ) => {
 				if ( ! approveData.success ) {
 					errorHandler.genericError();
-					return actions.restart().catch( ( err ) => {
+					return actions.restart().catch( () => {
 						errorHandler.genericError();
 					} );
 				}
 
 				const orderReceivedUrl = approveData.data?.order_received_url;
-
-				/**
-				 * Notice how this step initiates a redirect to a new page using a plain
-				 * URL as new location. This process does not send any details about the
-				 * approved order or billed customer.
-				 * Also, due to the redirect starting _instantly_ there should be no other
-				 * logic scheduled after calling `await onApprove()`;
-				 */
-
-				window.location.href = orderReceivedUrl
-					? orderReceivedUrl
-					: context.config.redirect;
+				initiateRedirect( orderReceivedUrl || context.config.redirect );
 			} );
 	};
 };

@@ -11,13 +11,14 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -180,6 +181,47 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 			},
 			10,
 			2
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_rest_common_merchant_features',
+			function( array $features ) use ( $c ): array {
+				$product_status = $c->get( 'applepay.apple-product-status' );
+				assert( $product_status instanceof AppleProductStatus );
+
+				$apple_pay_enabled = $product_status->is_active();
+
+				$features['apple_pay'] = array(
+					'enabled' => $apple_pay_enabled,
+				);
+
+				return $features;
+			}
+		);
+
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+
+				if ( $payment_method !== ApplePayGateway::ID ) {
+					return $data;
+				}
+
+				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
+				assert( $experience_context_builder instanceof ExperienceContextBuilder );
+
+				$data['payment_source'] = array(
+					'apple_pay' => array(
+						'experience_context' => $experience_context_builder
+							->with_endpoint_return_urls()
+							->build()->to_array(),
+					),
+				);
+
+				return $data;
+			},
+			10,
+			3
 		);
 
 		return true;
@@ -352,10 +394,10 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		if ( ! $button->is_enabled() ) {
 			return;
 		}
-		$env = $c->get( 'onboarding.environment' );
+		$env = $c->get( 'settings.environment' );
 		assert( $env instanceof Environment );
-		$is_sandobx = $env->current_environment_is( Environment::SANDBOX );
-		$this->load_domain_association_file( $is_sandobx );
+		$is_sandbox = $env->current_environment_is( Environment::SANDBOX );
+		$this->load_domain_association_file( $is_sandbox );
 	}
 
 	/**

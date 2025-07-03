@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 
 /**
  * Class OrderFactory
@@ -36,38 +35,18 @@ class OrderFactory {
 	private $payer_factory;
 
 	/**
-	 * The ApplicationContext repository.
-	 *
-	 * @var ApplicationContextRepository
-	 */
-	private $application_context_repository;
-
-	/**
-	 * The ApplicationContext factory.
-	 *
-	 * @var ApplicationContextFactory
-	 */
-	private $application_context_factory;
-
-	/**
 	 * OrderFactory constructor.
 	 *
-	 * @param PurchaseUnitFactory          $purchase_unit_factory The PurchaseUnit factory.
-	 * @param PayerFactory                 $payer_factory The Payer factory.
-	 * @param ApplicationContextRepository $application_context_repository The Application Context repository.
-	 * @param ApplicationContextFactory    $application_context_factory The Application Context factory.
+	 * @param PurchaseUnitFactory $purchase_unit_factory The PurchaseUnit factory.
+	 * @param PayerFactory        $payer_factory The Payer factory.
 	 */
 	public function __construct(
 		PurchaseUnitFactory $purchase_unit_factory,
-		PayerFactory $payer_factory,
-		ApplicationContextRepository $application_context_repository,
-		ApplicationContextFactory $application_context_factory
+		PayerFactory $payer_factory
 	) {
 
-		$this->purchase_unit_factory          = $purchase_unit_factory;
-		$this->payer_factory                  = $payer_factory;
-		$this->application_context_repository = $application_context_repository;
-		$this->application_context_factory    = $application_context_factory;
+		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->payer_factory         = $payer_factory;
 	}
 
 	/**
@@ -85,7 +64,6 @@ class OrderFactory {
 			$order->id(),
 			$purchase_units,
 			$order->status(),
-			$order->application_context(),
 			$order->payment_source(),
 			$order->payer(),
 			$order->intent(),
@@ -131,17 +109,14 @@ class OrderFactory {
 			$order_data->purchase_units
 		);
 
-		$create_time         = ( isset( $order_data->create_time ) ) ?
+		$create_time = ( isset( $order_data->create_time ) ) ?
 			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->create_time )
 			: null;
-		$update_time         = ( isset( $order_data->update_time ) ) ?
+		$update_time = ( isset( $order_data->update_time ) ) ?
 			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->update_time )
 			: null;
-		$payer               = ( isset( $order_data->payer ) ) ?
+		$payer       = ( isset( $order_data->payer ) ) ?
 			$this->payer_factory->from_paypal_response( $order_data->payer )
-			: null;
-		$application_context = ( isset( $order_data->application_context ) ) ?
-			$this->application_context_factory->from_paypal_response( $order_data->application_context )
 			: null;
 
 		$payment_source = null;
@@ -165,7 +140,6 @@ class OrderFactory {
 			$order_data->id,
 			$purchase_units,
 			new OrderStatus( $order_data->status ),
-			$application_context,
 			$payment_source,
 			$payer,
 			$order_data->intent,

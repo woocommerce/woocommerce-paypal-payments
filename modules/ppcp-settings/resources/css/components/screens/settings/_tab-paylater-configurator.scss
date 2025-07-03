@@ -1,0 +1,169 @@
+.ppcp-r-paylater-configurator {
+	display: flex;
+	border-radius: var(--container-border-radius);
+	overflow: hidden;
+	font-family: "PayPalPro", sans-serif;
+	-webkit-font-smoothing: antialiased;
+	width: 1200px;
+
+	// Reset box-sizing for the preview container.
+	.etu8a6w3 * {
+		box-sizing: unset;
+	}
+
+	.css-1snxoyf.eolpigi0 {
+		margin: 0;
+	}
+
+	.css-1f9aeda {
+		width: 100%;
+	}
+
+	.css-1adsww8 {
+		padding: 0;
+	}
+
+	#configurator-eligibleContainer.css-4nclxm.e1vy3g880 {
+		width: 100%;
+		max-width: 100%;
+
+		#configurator-controlPanelContainer.css-5urmrq.e1vy3g880 {
+			width: 374px;
+			padding-right: 48px;
+		}
+
+		#configurator-previewSectionContainer.css-vojyxx.e1vy3g880 {
+			width: calc(100% - 374px);
+
+			.css-7xkxom, .css-8tvj6u {
+				height: auto;
+				width: 1.2rem;
+			}
+
+			.css-10nkerk.ej6n7t60 {
+				align-items: flex-start;
+			}
+
+			.css-1sgwra0-svg-size_sm {
+				height: 1.2rem;
+				width: 1.2rem;
+			}
+
+			.css-1vc34jy-handler {
+				height: 1.7em;
+				width: 1.5rem;
+			}
+
+			.css-8vwtr6-state {
+				height: 1.5rem;
+				width: 3rem;
+			}
+		}
+
+		.css-1s8clkf.etu8a6w2 {
+			width: 374px;
+		}
+	}
+
+	&__subheader, #configurator-controlPanelSubHeader {
+		color: var(--color-text-teriary);
+		margin: 0 0 18px 0;
+		@include font(13, 20, 400);
+	}
+
+	&__header, #configurator-controlPanelHeader, #configurator-previewSectionSubHeaderText.css-14ujlqd-text_body, .css-16jt5za-text_body {
+		@include font(13, 20, 600);
+		color: var(--color-text-title);
+		font-family: "PayPalPro", sans-serif;
+		-webkit-font-smoothing: antialiased;
+	}
+	&__header,
+	#configurator-controlPanelHeader {
+		margin-bottom: 12px;
+	}
+
+
+	#configurator-previewSectionSubHeaderText.css-14ujlqd-text_body,
+	.css-16jt5za-text_body {
+		color: var(--color-text-teriary);
+	}
+
+	.css-1yo2lxy-text_body_strong {
+		color: var(--color-text-description);
+		margin: 0;
+		text-transform: none;
+	}
+
+	.css-rok10q, .css-dfgbdq-text_body_strong {
+		margin: 0 0 12px 0;
+		padding: 0;
+		width: 100%;
+	}
+
+	&__publish-button {
+		display: none;
+	}
+
+	.css-udzaps {
+		padding: 0px;
+	}
+
+	.css-104jwuk,
+	.css-dpyjrq-text_body,
+	.css-1oxdnb3-dropdown_menu_button-text_field_value_sm-active,
+	.css-1wvwydd-dropdown_menu_button-text_field_value_sm-active-active,
+	.css-16jt5za-text_body,
+	.css-1caaugt-links_base-text_body_strong,
+	.css-dpyjrq-text_body,
+	&__subheader,
+	#configurator-controlPanelSubHeader,
+	.css-1yo2lxy-text_body_strong{
+		@include font(13, 20, 400);
+		font-family: "PayPalPro", sans-serif;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.css-1k9r7mv-text_body, .css-ra9ecy-text_body_strong {
+		font-family: "PayPalPro", sans-serif;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.css-1hs85tj {
+		display: none;
+	}
+
+	.css-4nclxm.e1vy3g880 {
+		width: 100%;
+		padding: 0 0 48px 0;
+
+		.css-11hsg2u.e1vy3g880 {
+			width: 100%;
+		}
+	}
+
+	.css-n4cwz8 {
+		margin-top: 48px;
+	}
+
+	.css-1ce6bcu-container {
+		width: 3rem;
+		height: 1.8rem;
+	}
+
+	#configurator-previewSectionSubHeaderText {
+		margin-right: 10px;
+	}
+
+	.css-zcyvrz.ej6n7t60 {
+		margin-bottom: 5px;
+
+		.css-3xbhoy-svg-size_md-icon {
+			width: 1.5rem;
+			height: 1.5rem;
+		}
+
+		.css-7i5kpm-icon-button_base-size_xl-size_sm-secondary {
+			padding: 0.5rem;
+		}
+	}
+}

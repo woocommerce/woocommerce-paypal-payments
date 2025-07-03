@@ -106,7 +106,7 @@ class PartnersEndpoint {
 	 * Returns the current seller status.
 	 *
 	 * @return SellerStatus
-	 * @throws RuntimeException When request could not be fullfilled.
+	 * @throws RuntimeException When request could not be fulfilled.
 	 */
 	public function seller_status() : SellerStatus {
 		$url      = trailingslashit( $this->host ) . 'v1/customer/partners/' . $this->partner_id . '/merchant-integrations/' . $this->merchant_id;
@@ -160,7 +160,7 @@ class PartnersEndpoint {
 
 		$this->failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
 
-		$status = $this->seller_status_factory->from_paypal_reponse( $json );
+		$status = $this->seller_status_factory->from_paypal_response( $json );
 		return $status;
 	}
 }

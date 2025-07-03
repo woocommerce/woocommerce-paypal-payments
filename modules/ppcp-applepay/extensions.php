@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
@@ -42,7 +42,7 @@ return array(
 		assert( $display_manager instanceof DisplayManager );
 
 		// Domain registration.
-		$env = $container->get( 'onboarding.environment' );
+		$env = $container->get( 'settings.environment' );
 		assert( $env instanceof Environment );
 
 		$domain_registration_url = 'https://www.paypal.com/uccservicing/apm/applepay';

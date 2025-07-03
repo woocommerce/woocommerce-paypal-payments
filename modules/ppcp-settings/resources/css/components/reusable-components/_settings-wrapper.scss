@@ -1,64 +1,15 @@
-.ppcp-r {
-	&-container {
-		max-width: var(--max-container-width, none);
-		margin-left: auto;
-		margin-right: auto;
-	}
+.ppcp-r-container {
+	max-width: var(--max-container-width, none);
+	margin: 0 auto 0 35px;
+}
 
-	&-inner-container {
-		margin-left: auto;
-		margin-right: auto;
-		padding: 0 16px 48px;
-		box-sizing: content-box;
+.ppcp-r-inner-container {
+	margin-left: auto;
+	margin-right: auto;
+	padding: 0 16px 48px;
+	box-sizing: content-box;
 
-		@media screen and (max-width: 480px) {
-			padding-bottom: 36px;
-		}
-	}
-
-	&-settings-card {
-		@media screen and (min-width: 960px) {
-			display: flex;
-			gap: 48px;
-		}
-
-		@media screen and (max-width: 480px) {
-			padding: 24px;
-		}
-
-		&__header {
-			display: flex;
-			gap: 18px;
-			padding-bottom: 18px;
-			border-bottom: 2px solid $color-gray-700;
-			margin-bottom: 32px;
-
-			@media screen and (min-width: 960px) {
-				width: 280px;
-				flex-shrink: 0;
-				border-bottom: none;
-				margin-bottom: 0;
-				padding-bottom: 0;
-			}
-		}
-
-		&__content {
-			@media screen and (min-width: 960px) {
-				flex: 1;
-			}
-		}
-
-		&__title {
-			@include font(16, 24, 600);
-			color: $color-blueberry;
-			margin: 0 0 4px 0;
-			display: block;
-		}
-
-		&__description {
-			@include font(14, 20, 400);
-			color: $color-gray-800;
-			margin: 0;
-		}
+	@media screen and (max-width: 480px) {
+		padding-bottom: 36px;
 	}
 }

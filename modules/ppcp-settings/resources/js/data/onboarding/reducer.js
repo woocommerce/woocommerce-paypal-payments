@@ -7,55 +7,86 @@
  * @file
  */
 
-import { createReducer, createSetters } from '../utils';
+import { createReducer, createReducerSetters } from '../utils';
 import ACTION_TYPES from './action-types';
 
 // Store structure.
 
-const defaultTransient = {
+const defaultTransient = Object.freeze( {
 	isReady: false,
+	manualClientId: '',
+	manualClientSecret: '',
+	connectionButtonClicked: false,
 
 	// Read only values, provided by the server.
-	flags: {
+	flags: Object.freeze( {
 		canUseCasualSelling: false,
 		canUseVaulting: false,
 		canUseCardPayments: false,
-	},
-};
+		canUseSubscriptions: false,
+		shouldSkipPaymentMethods: false,
+		canUseFastlane: false,
+		canUsePayLater: false,
+	} ),
+} );
 
-const defaultPersistent = {
+const defaultPersistent = Object.freeze( {
 	completed: false,
 	step: 0,
 	isCasualSeller: null, // null value will uncheck both options in the UI.
+	areOptionalPaymentMethodsEnabled: null,
 	products: [],
-};
+	gatewaysSynced: false,
+	gatewaysRefreshed: false,
+} );
 
 // Reducer logic.
 
-const [ setTransient, setPersistent ] = createSetters(
+const [ changeTransient, changePersistent ] = createReducerSetters(
 	defaultTransient,
 	defaultPersistent
 );
 
 const onboardingReducer = createReducer( defaultTransient, defaultPersistent, {
 	[ ACTION_TYPES.SET_TRANSIENT ]: ( state, payload ) =>
-		setTransient( state, payload ),
+		changeTransient( state, payload ),
 
 	[ ACTION_TYPES.SET_PERSISTENT ]: ( state, payload ) =>
-		setPersistent( state, payload ),
+		changePersistent( state, payload ),
 
-	[ ACTION_TYPES.RESET ]: ( state ) =>
-		setPersistent( state, defaultPersistent ),
+	[ ACTION_TYPES.RESET ]: ( state ) => {
+		const cleanState = changeTransient(
+			changePersistent( state, defaultPersistent ),
+			defaultTransient
+		);
+
+		// Keep "read-only" details and initialization flags.
+		cleanState.flags = { ...state.flags };
+		cleanState.isReady = true;
+
+		return cleanState;
+	},
 
 	[ ACTION_TYPES.HYDRATE ]: ( state, payload ) => {
-		const newState = setPersistent( state, payload.data );
+		const newState = changePersistent( state, payload.data );
 
-		// Flags are not updated by `setPersistent()`.
+		// Flags are not updated by `changePersistent()`.
 		if ( payload.flags ) {
-			newState.flags = { ...newState.flags, ...payload.flags };
+			newState.flags = Object.freeze( {
+				...newState.flags,
+				...payload.flags,
+			} );
 		}
 
 		return newState;
+	},
+
+	[ ACTION_TYPES.SYNC_GATEWAYS ]: ( state ) => {
+		return changePersistent( state, { gatewaysSynced: true } );
+	},
+
+	[ ACTION_TYPES.REFRESH_GATEWAYS ]: ( state ) => {
+		return changePersistent( state, { gatewaysRefreshed: true } );
 	},
 } );
 

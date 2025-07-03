@@ -81,22 +81,23 @@ const GooglePayComponent = ( { isEditing, buttonAttributes } ) => {
 };
 
 const features = [ 'products' ];
-
-registerExpressPaymentMethod( {
-	name: buttonData.id,
-	title: `PayPal - ${ buttonData.title }`,
-	description: __(
-		'Eligible users will see the PayPal button.',
-		'woocommerce-paypal-payments'
-	),
-	gatewayId: 'ppcp-gateway',
-	label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
-	content: <GooglePayComponent isEditing={ false } />,
-	edit: <GooglePayComponent isEditing={ true } />,
-	ariaLabel: buttonData.title,
-	canMakePayment: () => buttonData.enabled,
-	supports: {
-		features,
-		style: [ 'height', 'borderRadius' ],
-	},
-} );
+if ( buttonConfig?.is_enabled ) {
+	registerExpressPaymentMethod( {
+		name: buttonData.id,
+		title: `PayPal - ${ buttonData.title }`,
+		description: __(
+			'Eligible users will see the PayPal button.',
+			'woocommerce-paypal-payments'
+		),
+		gatewayId: 'ppcp-gateway',
+		label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
+		content: <GooglePayComponent isEditing={ false } />,
+		edit: <GooglePayComponent isEditing={ true } />,
+		ariaLabel: buttonData.title,
+		canMakePayment: () => buttonData.enabled,
+		supports: {
+			features,
+			style: [ 'height', 'borderRadius' ],
+		},
+	} );
+}

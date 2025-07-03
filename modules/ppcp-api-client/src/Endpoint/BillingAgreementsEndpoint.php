@@ -135,12 +135,12 @@ class BillingAgreementsEndpoint {
 				);
 			} finally {
 				$this->is_request_logging_enabled = true;
-				set_transient( 'ppcp_reference_transaction_enabled', true, MONTH_IN_SECONDS );
 			}
 
+			set_transient( 'ppcp_reference_transaction_enabled', true, MONTH_IN_SECONDS );
 			return true;
 		} catch ( Exception $exception ) {
-			delete_transient( 'ppcp_reference_transaction_enabled' );
+			set_transient( 'ppcp_reference_transaction_enabled', false, HOUR_IN_SECONDS );
 			return false;
 		}
 	}

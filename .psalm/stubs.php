@@ -95,6 +95,45 @@ function as_schedule_single_action( $timestamp, $hook, $args = array(), $group =
 }
 
 /**
+ * Retrieves the number of times a filter has been applied during the current request.
+ *
+ * @since 6.1.0
+ *
+ * @global int[] $wp_filters Stores the number of times each filter was triggered.
+ *
+ * @param string $hook_name The name of the filter hook.
+ * @return int The number of times the filter hook has been applied.
+ */
+function did_filter( $hook_name ) {
+	return 0;
+}
+
+/**
+ * Returns whether or not a filter hook is currently being processed.
+ *
+ * The function current_filter() only returns the most recent filter being executed.
+ * did_filter() returns the number of times a filter has been applied during
+ * the current request.
+ *
+ * This function allows detection for any filter currently being executed
+ * (regardless of whether it's the most recent filter to fire, in the case of
+ * hooks called from hook callbacks) to be verified.
+ *
+ * @since 3.9.0
+ *
+ * @see current_filter()
+ * @see did_filter()
+ * @global string[] $wp_current_filter Current filter.
+ *
+ * @param string|null $hook_name Optional. Filter hook to check. Defaults to null,
+ *                               which checks if any filter is currently being run.
+ * @return bool Whether the filter is currently in the stack.
+ */
+function doing_filter( $hook_name = null ) {
+	return false;
+}
+
+/**
  * HTML API: WP_HTML_Tag_Processor class
  */
 // phpcs:disable

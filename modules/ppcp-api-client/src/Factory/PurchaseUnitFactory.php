@@ -127,7 +127,7 @@ class PurchaseUnitFactory {
 		$description     = '';
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
-		$soft_descriptor = $this->soft_descriptor;
+		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 
 		$purchase_unit = new PurchaseUnit(
 			$amount,
@@ -197,7 +197,7 @@ class PurchaseUnitFactory {
 			}
 		}
 		$invoice_id      = '';
-		$soft_descriptor = $this->soft_descriptor;
+		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$purchase_unit   = new PurchaseUnit(
 			$amount,
 			$items,
@@ -233,7 +233,7 @@ class PurchaseUnitFactory {
 		$description     = ( isset( $data->description ) ) ? $data->description : '';
 		$custom_id       = ( isset( $data->custom_id ) ) ? $data->custom_id : '';
 		$invoice_id      = ( isset( $data->invoice_id ) ) ? $data->invoice_id : '';
-		$soft_descriptor = ( isset( $data->soft_descriptor ) ) ? $data->soft_descriptor : $this->soft_descriptor;
+		$soft_descriptor = $this->sanitize_soft_descriptor( $data->soft_descriptor ?? $this->soft_descriptor );
 		$items           = array();
 		if ( isset( $data->items ) && is_array( $data->items ) ) {
 			$items = array_map(
@@ -315,5 +315,23 @@ class PurchaseUnitFactory {
 		if ( $this->sanitizer instanceof PurchaseUnitSanitizer ) {
 			$purchase_unit->set_sanitizer( $this->sanitizer );
 		}
+	}
+
+	/**
+	 * Sanitizes a soft descriptor, ensuring it is limited to 22 chars.
+	 *
+	 * The soft descriptor in the DB is escaped using `wp_kses_post()` which
+	 * escapes certain characters via `wp_kses_normalize_entities()`. This
+	 * helper method reverts those normalized entities back to UTF characters.
+	 *
+	 * @param string $soft_descriptor Soft descriptor to sanitize.
+	 *
+	 * @return string The sanitized soft descriptor.
+	 */
+	private function sanitize_soft_descriptor( string $soft_descriptor ) : string {
+		$decoded   = html_entity_decode( $soft_descriptor, ENT_QUOTES, 'UTF-8' );
+		$sanitized = preg_replace( '/[^a-zA-Z0-9 *\-.]/', '', $decoded ) ?: '';
+
+		return substr( $sanitized, 0, 22 ) ?: '';
 	}
 }

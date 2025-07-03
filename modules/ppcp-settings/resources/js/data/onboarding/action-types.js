@@ -6,13 +6,14 @@
 
 export default {
 	// Transient data.
-	SET_TRANSIENT: 'ONBOARDING:SET_TRANSIENT',
+	SET_TRANSIENT: 'ppcp/onboarding/SET_TRANSIENT',
 
 	// Persistent data.
-	SET_PERSISTENT: 'ONBOARDING:SET_PERSISTENT',
-	RESET: 'ONBOARDING:RESET',
-	HYDRATE: 'ONBOARDING:HYDRATE',
+	SET_PERSISTENT: 'ppcp/onboarding/SET_PERSISTENT',
+	RESET: 'ppcp/onboarding/RESET',
+	HYDRATE: 'ppcp/onboarding/HYDRATE',
 
-	// Controls - always start with "DO_".
-	DO_PERSIST_DATA: 'ONBOARDING:DO_PERSIST_DATA',
+	// Gateway sync flag.
+	SYNC_GATEWAYS: 'ppcp/onboarding/SYNC_GATEWAYS',
+	REFRESH_GATEWAYS: 'ppcp/onboarding/REFRESH_GATEWAYS',
 };

@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use WC_Order;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -18,7 +16,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
@@ -56,8 +53,6 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): bool {
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
 
 		add_action(
 			'rest_api_init',
@@ -127,38 +122,36 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 			}
 		);
 
-		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		if ( Settings::CONNECTION_TAB_ID === $page_id ) {
-			$asset_loader = $container->get( 'webhook.status.assets' );
-			assert( $asset_loader instanceof WebhooksStatusPageAssets );
-			add_action(
-				'init',
-				array( $asset_loader, 'register' )
-			);
-			add_action(
-				'admin_enqueue_scripts',
-				array( $asset_loader, 'enqueue' )
-			);
-
-			try {
-				$webhooks = $container->get( 'webhook.status.registered-webhooks' );
-				$state    = $container->get( 'onboarding.state' );
-				if ( empty( $webhooks ) && $state->current_state() >= State::STATE_ONBOARDED ) {
-					$registrar = $container->get( 'webhook.registrar' );
-					assert( $registrar instanceof WebhookRegistrar );
-
-					// Looks like we cannot call rest_url too early.
-					add_action(
-						'init',
-						function () use ( $registrar ) {
-							$registrar->register();
-						}
-					);
+		add_action(
+			'init',
+			function () use ( $container ) {
+				$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+				if ( Settings::CONNECTION_TAB_ID !== $page_id ) {
+					return;
 				}
-			} catch ( Exception $exception ) {
-				$logger->error( 'Failed to load webhooks list: ' . $exception->getMessage() );
+
+				$asset_loader = $container->get( 'webhook.status.assets' );
+				assert( $asset_loader instanceof WebhooksStatusPageAssets );
+				$asset_loader->register();
+				add_action(
+					'admin_enqueue_scripts',
+					array( $asset_loader, 'enqueue' )
+				);
+
+				try {
+					$webhooks     = $container->get( 'webhook.status.registered-webhooks' );
+					$is_connected = $container->get( 'settings.flag.is-connected' );
+
+					if ( empty( $webhooks ) && $is_connected ) {
+						$registrar = $container->get( 'webhook.registrar' );
+						assert( $registrar instanceof WebhookRegistrar );
+						$registrar->register();
+					}
+				} catch ( Exception $exception ) {
+					$container->get( 'woocommerce.logger.woocommerce' )->error( 'Failed to load webhooks list: ' . $exception->getMessage() );
+				}
 			}
-		}
+		);
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',

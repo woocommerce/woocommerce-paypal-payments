@@ -13,20 +13,17 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSourceCard;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use function Brain\Monkey\Functions\expect;
-use function Brain\Monkey\Functions\when;
 
 class VaultedCreditCardHandlerTest extends TestCase
 {
@@ -82,6 +79,8 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$token = Mockery::mock(PaymentToken::class);
 		$tokenId = 'abc123';
 		$token->shouldReceive('id')->andReturn($tokenId);
+		$requestPaymentSource = Mockery::mock(PaymentSource::class);
+		$token->shouldReceive('to_payment_source')->andReturn($requestPaymentSource);
 		$this->paymentTokenRepository->shouldReceive('all_for_user_id')
 			->andReturn([$token]);
 
@@ -122,9 +121,10 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$capture->shouldReceive('status')->andReturn($captureStatus);
 		$payments->shouldReceive('captures')->andReturn([$capture]);
 		$purchaseUnit->shouldReceive('payments')->andReturn($payments);
+		$purchaseUnit->shouldReceive('shipping')->andReturn(null);
 
 		$this->orderEndpoint->shouldReceive('create')
-			->with([$purchaseUnit], 'some_preference', $payer, $token)
+			->with([$purchaseUnit], 'some_preference', $payer, '', array(), $requestPaymentSource)
 			->andReturn($order);
 
 		$this->environment->shouldReceive('current_environment_is')->andReturn(true);

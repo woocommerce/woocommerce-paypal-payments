@@ -1,0 +1,10 @@
+.ppcp-r-busy-wrapper {
+	position: relative;
+
+	&.ppcp--is-loading {
+		pointer-events: none;
+		user-select: none;
+
+		--spinner-overlay-color: #fff4;
+	}
+}

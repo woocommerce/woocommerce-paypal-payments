@@ -3,14 +3,15 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     2.9.4
- * Author:      WooCommerce
- * Author URI:  https://woocommerce.com/
+ * Version:     3.0.7
+ * Author:      PayPal
+ * Author URI:  https://paypal.com/
  * License:     GPL-2.0
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
- * WC requires at least: 6.9
- * WC tested up to: 9.3
+ * Requires at least: 6.5
+ * WC requires at least: 9.6
+ * WC tested up to: 9.9
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -26,7 +27,7 @@ define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
 define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
 define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2024-11-05' );
+define( 'PAYPAL_INTEGRATION_DATE', '2025-06-25' );
 define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
@@ -90,32 +91,28 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		'plugins_loaded',
 		function () {
 			init();
+			add_action(
+				'init',
+				function () {
+					$current_plugin_version   = (string) PPCP::container()->get( 'ppcp.plugin' )->getVersion();
+					$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
+					if ( $installed_plugin_version !== $current_plugin_version ) {
+						/**
+						 * The hook fired when the plugin is installed or updated.
+						 */
+						do_action( 'woocommerce_paypal_payments_gateway_migrate', $installed_plugin_version );
 
-			if ( ! function_exists( 'get_plugin_data' ) ) {
-				/**
-				 * Skip check for WP files.
-				 *
-				 * @psalm-suppress MissingFile
-				 */
-				require_once ABSPATH . 'wp-admin/includes/plugin.php';
-			}
-			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php', false );
-			$plugin_version           = $plugin_data['Version'] ?? null;
-			$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
-			if ( $installed_plugin_version !== $plugin_version ) {
-				/**
-				 * The hook fired when the plugin is installed or updated.
-				 */
-				do_action( 'woocommerce_paypal_payments_gateway_migrate', $installed_plugin_version );
-
-				if ( $installed_plugin_version ) {
-					/**
-					 * The hook fired when the plugin is updated.
-					 */
-					do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
-				}
-				update_option( 'woocommerce-ppcp-version', $plugin_version );
-			}
+						if ( $installed_plugin_version ) {
+							/**
+							 * The hook fired when the plugin is updated.
+							 */
+							do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
+						}
+						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
+					}
+				},
+				-1
+			);
 		}
 	);
 	register_activation_hook(
@@ -145,7 +142,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * Add "Settings" link to Plugins screen.
 		 *
 		 * @param array $links
-		 * @retun array
+		 * @return array
 		 */
 		function( $links ) {
 			if ( ! is_woocommerce_activated() ) {
@@ -172,7 +169,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 *
 		 * @param array $links
 		 * @param string $file
-		 * @retun array
+		 * @return array
 		 */
 		function( $links, $file ) {
 			if ( plugin_basename( __FILE__ ) !== $file ) {
@@ -232,4 +229,21 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		return class_exists( 'woocommerce' );
 	}
 
+	add_action(
+		'woocommerce_paypal_payments_gateway_migrate',
+		/**
+		 * Set new merchant flag on plugin install.
+		 *
+		 * When installing the plugin for the first time, we direct the user to
+		 * the new UI without a data migration, and fully hide the #legacy-ui.
+		 *
+		 * @param string|false $version String with previous installed plugin version.
+		 *                              Boolean false on first installation on a new site.
+		 */
+		static function ( $version ) {
+			if ( ! $version ) {
+				update_option( 'woocommerce-ppcp-is-new-merchant', '1' );
+			}
+		}
+	);
 } )();

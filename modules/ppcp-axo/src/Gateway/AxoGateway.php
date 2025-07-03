@@ -14,12 +14,11 @@ use Exception;
 use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewaySettingsRendererTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -29,7 +28,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\ProcessPaymentTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class AXOGateway.
@@ -56,9 +55,9 @@ class AxoGateway extends WC_Payment_Gateway {
 	/**
 	 * Gateway configuration object, providing relevant settings.
 	 *
-	 * @var DCCGatewayConfiguration
+	 * @var CardPaymentsConfiguration
 	 */
-	protected DCCGatewayConfiguration $dcc_configuration;
+	protected CardPaymentsConfiguration $dcc_configuration;
 
 	/**
 	 * The WcGateway module URL.
@@ -133,24 +132,24 @@ class AxoGateway extends WC_Payment_Gateway {
 	/**
 	 * AXOGateway constructor.
 	 *
-	 * @param SettingsRenderer          $settings_renderer The settings renderer.
-	 * @param ContainerInterface        $ppcp_settings The settings.
-	 * @param DCCGatewayConfiguration   $dcc_configuration The DCC Gateway configuration.
-	 * @param string                    $wcgateway_module_url The WcGateway module URL.
-	 * @param SessionHandler            $session_handler The Session Handler.
-	 * @param OrderProcessor            $order_processor The Order processor.
-	 * @param array                     $card_icons      The card icons.
-	 * @param OrderEndpoint             $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
+	 * @param SettingsRenderer          $settings_renderer           The settings renderer.
+	 * @param ContainerInterface        $ppcp_settings               The settings.
+	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway configuration.
+	 * @param string                    $wcgateway_module_url        The WcGateway module URL.
+	 * @param SessionHandler            $session_handler             The Session Handler.
+	 * @param OrderProcessor            $order_processor             The Order processor.
+	 * @param array                     $card_icons                  The card icons.
+	 * @param OrderEndpoint             $order_endpoint              The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory       The purchase unit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
-	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
-	 * @param Environment               $environment The environment.
-	 * @param LoggerInterface           $logger The logger.
+	 * @param TransactionUrlProvider    $transaction_url_provider    The transaction url provider.
+	 * @param Environment               $environment                 The environment.
+	 * @param LoggerInterface           $logger                      The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		ContainerInterface $ppcp_settings,
-		DCCGatewayConfiguration $dcc_configuration,
+		CardPaymentsConfiguration $dcc_configuration,
 		string $wcgateway_module_url,
 		SessionHandler $session_handler,
 		OrderProcessor $order_processor,
@@ -175,12 +174,13 @@ class AxoGateway extends WC_Payment_Gateway {
 		$this->method_title       = __( 'Fastlane Debit & Credit Cards', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Fastlane accelerates the checkout experience for guest shoppers and autofills their details so they can pay in seconds. When enabled, Fastlane is presented as the default payment method for guests.', 'woocommerce-paypal-payments' );
 
-		$is_axo_enabled = $this->dcc_configuration->use_fastlane();
-		$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
+		if ( apply_filters( 'woocommerce_paypal_payments_axo_gateway_should_update_enabled', true ) ) {
+			$is_axo_enabled = $this->dcc_configuration->use_fastlane();
+			$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
+		}
 
-		$this->title = $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) );
-
-		$this->description = __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' );
+		$this->title       = apply_filters( 'woocommerce_paypal_payments_axo_gateway_title', $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) ), $this );
+		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ), $this );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -253,7 +253,18 @@ class AxoGateway extends WC_Payment_Gateway {
 
 			$order = $this->create_paypal_order( $wc_order, $token );
 
-			$this->order_processor->process_captured_and_authorized( $wc_order, $order );
+			/**
+			 * This filter controls if the method 'process()' from OrderProcessor will be called.
+			 * So you can implement your own for example on subscriptions
+			 *
+			 * - true bool controls execution of 'OrderProcessor::process()'
+			 * - $this \WC_Payment_Gateway
+			 * - $wc_order \WC_Order
+			 */
+			$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+			if ( $process ) {
+				$this->order_processor->process_captured_and_authorized( $wc_order, $order );
+			}
 		} catch ( Exception $exception ) {
 			return $this->handle_payment_failure( $wc_order, $exception );
 		}
@@ -295,9 +306,6 @@ class AxoGateway extends WC_Payment_Gateway {
 			array( $purchase_unit ),
 			$shipping_preference,
 			null,
-			null,
-			'',
-			ApplicationContext::USER_ACTION_CONTINUE,
 			'',
 			array(),
 			$payment_source

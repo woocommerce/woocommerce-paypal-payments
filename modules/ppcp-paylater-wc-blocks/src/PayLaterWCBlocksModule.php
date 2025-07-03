@@ -99,12 +99,11 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 			return true;
 		}
 
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
 		add_action(
 			'init',
-			function () use ( $c, $settings ): void {
+			function () use ( $c ): void {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
@@ -186,47 +185,52 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 			2
 		);
 
-		/**
-		 * Cannot return false for this path.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		if ( function_exists( 'register_block_type' ) ) {
-			register_block_type(
-				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
-				array(
-					'render_callback' => function ( array $attributes ) use ( $c ) {
-						return PayLaterWCBlocksUtils::render_paylater_block(
-							$attributes['blockId'] ?? 'woocommerce-paypal-payments/cart-paylater-messages',
-							$attributes['ppcpId'] ?? 'ppcp-cart-paylater-messages',
-							'cart',
-							$c
-						);
-					},
-				)
-			);
-		}
+		add_action(
+			'init',
+			function () use ( $c ): void {
+				if ( ! function_exists( 'register_block_type' ) ) {
+					return;
+				}
 
-		/**
-		 * Cannot return false for this path.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		if ( function_exists( 'register_block_type' ) ) {
-			register_block_type(
-				dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
-				array(
-					'render_callback' => function ( array $attributes ) use ( $c ) {
-						return PayLaterWCBlocksUtils::render_paylater_block(
-							$attributes['blockId'] ?? 'woocommerce-paypal-payments/checkout-paylater-messages',
-							$attributes['ppcpId'] ?? 'ppcp-checkout-paylater-messages',
-							'checkout',
-							$c
-						);
-					},
-				)
-			);
-		}
+				/**
+				 * Cannot return false for this path.
+				 *
+				 * @psalm-suppress PossiblyFalseArgument
+				 */
+				register_block_type(
+					dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
+					array(
+						'render_callback' => function ( array $attributes ) use ( $c ) {
+							return PayLaterWCBlocksUtils::render_paylater_block(
+								$attributes['blockId'] ?? 'woocommerce-paypal-payments/cart-paylater-messages',
+								$attributes['ppcpId'] ?? 'ppcp-cart-paylater-messages',
+								'cart',
+								$c
+							);
+						},
+					)
+				);
+
+				/**
+				 * Cannot return false for this path.
+				 *
+				 * @psalm-suppress PossiblyFalseArgument
+				 */
+				register_block_type(
+					dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
+					array(
+						'render_callback' => function ( array $attributes ) use ( $c ) {
+							return PayLaterWCBlocksUtils::render_paylater_block(
+								$attributes['blockId'] ?? 'woocommerce-paypal-payments/checkout-paylater-messages',
+								$attributes['ppcpId'] ?? 'ppcp-checkout-paylater-messages',
+								'checkout',
+								$c
+							);
+						},
+					)
+				);
+			}
+		);
 
 		// This is a fallback for the default Cart block that haven't been saved with the inserted Pay Later messaging block.
 		add_filter(
@@ -271,7 +275,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 		if ( self::is_under_cart_totals_placement_enabled() ) {
 			add_action(
 				'enqueue_block_editor_assets',
-				function () use ( $c, $settings ): void {
+				function () use ( $c ): void {
 					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
 					$path   = $c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block-inserter.js';
 

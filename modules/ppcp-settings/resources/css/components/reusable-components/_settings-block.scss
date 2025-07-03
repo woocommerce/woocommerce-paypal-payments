@@ -1,0 +1,52 @@
+/*
+ Styles the `SettingsBlock` and all its derived components.
+ */
+.ppcp-r-settings-block {
+	display: flex;
+	flex-direction: column;
+	gap: var(--block-item-gap, 16px);
+
+	&.ppcp-r-settings-block__feature {
+		.ppcp--title {
+			@include font(13, 20, 600);
+			color: var(--color-text-main);
+			text-transform: none;
+		}
+
+		.ppcp-r-settings-block__feature__description {
+			@include font(13, 20, 400);
+			color: var(--color-text-description);
+		}
+	}
+
+	+ .ppcp-r-settings-block:not(.ppcp--no-gap) {
+		margin-top: var(--block-separator-gap, 32px);
+		padding-top: var(--block-separator-gap, 32px);
+		border-top: var(--block-separator-size, 1px) solid var(--block-separator-color);
+	}
+
+	&.ppcp--pull-right {
+		float: right;
+	}
+}
+
+.ppcp-r-settings-block {
+	&--order-intent,
+	&--save-payment-methods {
+		@include vertical-layout-event-gap(24px);
+
+		> .ppcp-r-settings-block__content {
+			@include vertical-layout-event-gap(24px);
+		}
+	}
+}
+
+.ppcp-r-accordion {
+	--accordion-width: 100%;
+	--accordion-toggler-gap: 0;
+	--accordion-text-align: left;
+
+	.ppcp--title-wrapper {
+		justify-content: space-between;
+	}
+}

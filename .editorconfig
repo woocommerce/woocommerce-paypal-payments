@@ -17,3 +17,7 @@ indent_style = space
 
 [*.yml]
 indent_size = 2
+
+[*.php]
+ij_php_variable_naming_style = snake_case
+ij_php_getters_setters_naming_style = snake_case

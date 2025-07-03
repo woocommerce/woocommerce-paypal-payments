@@ -1,66 +1,66 @@
-import { useEffect } from '@wordpress/element';
 import { Icon } from '@wordpress/components';
 import { chevronDown, chevronUp } from '@wordpress/icons';
-
-import { useState } from 'react';
+import classNames from 'classnames';
+import { useToggleState } from '../../hooks/useToggleState';
+import {
+	Content,
+	Description,
+	Header,
+	Title,
+	Action,
+	TitleWrapper,
+} from './Elements';
 
 const Accordion = ( {
 	title,
-	initiallyOpen = null,
-	className = '',
 	id = '',
-	children,
+	noCaps = false,
+	initiallyOpen = null,
+	description = '',
+	children = null,
+	className = '',
 } ) => {
-	const determineInitialState = () => {
-		if ( id && initiallyOpen === null ) {
-			return window.location.hash === `#${ id }`;
-		}
-		return !! initiallyOpen;
-	};
-
-	const [ isOpen, setIsOpen ] = useState( determineInitialState );
-
-	useEffect( () => {
-		const handleHashChange = () => {
-			if ( id && window.location.hash === `#${ id }` ) {
-				setIsOpen( true );
-			}
-		};
-
-		window.addEventListener( 'hashchange', handleHashChange );
-
-		return () => {
-			window.removeEventListener( 'hashchange', handleHashChange );
-		};
-	}, [ id ] );
-
-	const toggleOpen = ( ev ) => {
-		setIsOpen( ! isOpen );
-		ev?.preventDefault();
-		return false;
-	};
-
-	const wrapperClasses = [ 'ppcp-r-accordion' ];
-	if ( className ) {
-		wrapperClasses.push( className );
-	}
-	if ( isOpen ) {
-		wrapperClasses.push( 'ppcp--is-open' );
-	}
+	const { isOpen, toggleOpen } = useToggleState( id, initiallyOpen );
+	const contentId = id
+		? `${ id }-content`
+		: `accordion-${ title.replace( /\s+/g, '-' ).toLowerCase() }-content`;
 
 	return (
-		<div className={ wrapperClasses.join( ' ' ) } id={ id }>
+		<div
+			className={ classNames( 'ppcp-r-accordion', className, {
+				'ppcp--is-open': isOpen,
+			} ) }
+			id={ id || undefined }
+		>
 			<button
-				onClick={ toggleOpen }
-				className="ppcp-r-accordion--title"
 				type="button"
+				className="ppcp--toggler"
+				onClick={ toggleOpen }
+				aria-expanded={ isOpen }
+				aria-controls={ contentId }
 			>
-				<span>{ title }</span>
-				<Icon icon={ isOpen ? chevronUp : chevronDown } />
+				<Header>
+					<TitleWrapper>
+						<Title noCaps={ noCaps }>{ title }</Title>
+						<Action>
+							<Icon icon={ isOpen ? chevronUp : chevronDown } />
+						</Action>
+					</TitleWrapper>
+					{ description && (
+						<Description>{ description }</Description>
+					) }
+				</Header>
 			</button>
-			{ isOpen && (
-				<div className="ppcp-r-accordion--content">{ children }</div>
-			) }
+			<div
+				className={ classNames( 'ppcp--accordion-content', {
+					'ppcp--is-open': isOpen,
+				} ) }
+				id={ contentId }
+				aria-hidden={ ! isOpen }
+				inert={ isOpen ? undefined : '' }
+			>
+				<Content asCard={ false }>{ children }</Content>
+			</div>
 		</div>
 	);
 };

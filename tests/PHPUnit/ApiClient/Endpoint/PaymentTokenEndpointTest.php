@@ -141,7 +141,10 @@ class PaymentTokenEndpointTest extends TestCase
         $this->sut->for_user($id);
     }
 
-    public function testDeleteToken()
+	/**
+	 * @doesNotPerformAssertions
+	 */
+	public function testDeleteToken()
     {
         $paymentToken = Mockery::mock(PaymentToken::class);
 	    $paymentToken->shouldReceive('id')

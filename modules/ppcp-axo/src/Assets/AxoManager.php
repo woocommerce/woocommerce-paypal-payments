@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Axo\Assets;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -99,12 +99,6 @@ class AxoManager {
 	 * @var array
 	 */
 	private array $supported_country_card_type_matrix;
-	/**
-	 * The list of WooCommerce enabled shipping locations.
-	 *
-	 * @var array
-	 */
-	private array $enabled_shipping_locations;
 
 	/**
 	 * AxoManager constructor.
@@ -120,7 +114,6 @@ class AxoManager {
 	 * @param LoggerInterface $logger The logger.
 	 * @param string          $wcgateway_module_url The WcGateway module URL.
 	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
-	 * @param array           $enabled_shipping_locations The list of WooCommerce enabled shipping locations.
 	 */
 	public function __construct(
 		string $module_url,
@@ -133,8 +126,7 @@ class AxoManager {
 		CurrencyGetter $currency,
 		LoggerInterface $logger,
 		string $wcgateway_module_url,
-		array $supported_country_card_type_matrix,
-		array $enabled_shipping_locations
+		array $supported_country_card_type_matrix
 	) {
 
 		$this->module_url                         = $module_url;
@@ -147,7 +139,6 @@ class AxoManager {
 		$this->currency                           = $currency;
 		$this->logger                             = $logger;
 		$this->wcgateway_module_url               = $wcgateway_module_url;
-		$this->enabled_shipping_locations         = $enabled_shipping_locations;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
@@ -203,7 +194,7 @@ class AxoManager {
 				return $data; } )( $this->insights_data ),
 			'allowed_cards'              => $this->supported_country_card_type_matrix,
 			'disable_cards'              => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
-			'enabled_shipping_locations' => $this->enabled_shipping_locations,
+			'enabled_shipping_locations' => apply_filters( 'woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array() ),
 			'style_options'              => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',

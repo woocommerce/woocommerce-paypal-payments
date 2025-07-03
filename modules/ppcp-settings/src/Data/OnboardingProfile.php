@@ -42,19 +42,31 @@ class OnboardingProfile extends AbstractDataModel {
 	 * @param bool $can_use_casual_selling Whether casual selling is enabled in the store's country.
 	 * @param bool $can_use_vaulting       Whether vaulting is enabled in the store's country.
 	 * @param bool $can_use_card_payments  Whether credit card payments are possible.
+	 * @param bool $can_use_subscriptions  Whether WC Subscriptions plugin is active.
+	 * @param bool $should_skip_payment_methods  Whether it should skip payment methods screen.
+	 * @param bool $can_use_fastlane  Whether it can use Fastlane or not.
+	 * @param bool $can_use_pay_later  Whether it can use Pay Later or not.
 	 *
 	 * @throws RuntimeException If the OPTION_KEY is not defined in the child class.
 	 */
 	public function __construct(
 		bool $can_use_casual_selling = false,
 		bool $can_use_vaulting = false,
-		bool $can_use_card_payments = false
+		bool $can_use_card_payments = false,
+		bool $can_use_subscriptions = false,
+		bool $should_skip_payment_methods = false,
+		bool $can_use_fastlane = false,
+		bool $can_use_pay_later = false
 	) {
 		parent::__construct();
 
-		$this->flags['can_use_casual_selling'] = $can_use_casual_selling;
-		$this->flags['can_use_vaulting']       = $can_use_vaulting;
-		$this->flags['can_use_card_payments']  = $can_use_card_payments;
+		$this->flags['can_use_casual_selling']      = $can_use_casual_selling;
+		$this->flags['can_use_vaulting']            = $can_use_vaulting;
+		$this->flags['can_use_card_payments']       = $can_use_card_payments;
+		$this->flags['can_use_subscriptions']       = $can_use_subscriptions;
+		$this->flags['should_skip_payment_methods'] = $should_skip_payment_methods;
+		$this->flags['can_use_fastlane']            = $can_use_fastlane;
+		$this->flags['can_use_pay_later']           = $can_use_pay_later;
 	}
 
 	/**
@@ -62,12 +74,16 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	protected function get_defaults() : array {
+	protected function get_defaults(): array {
 		return array(
-			'completed'        => false,
-			'step'             => 0,
-			'is_casual_seller' => null,
-			'products'         => array(),
+			'completed'            => false,
+			'step'                 => 0,
+			'is_casual_seller'     => null,
+			'accept_card_payments' => null,
+			'products'             => array(),
+			'setup_done'           => false,
+			'gateways_synced'      => false,
+			'gateways_refreshed'   => false,
 		);
 	}
 
@@ -85,10 +101,10 @@ class OnboardingProfile extends AbstractDataModel {
 	/**
 	 * Sets the 'completed' flag.
 	 *
-	 * @param bool $step Whether the onboarding process has been completed.
+	 * @param bool $state Whether the onboarding process has been completed.
 	 */
-	public function set_completed( bool $step ) : void {
-		$this->data['completed'] = $step;
+	public function set_completed( bool $state ) : void {
+		$this->data['completed'] = $state;
 	}
 
 	/**
@@ -128,6 +144,24 @@ class OnboardingProfile extends AbstractDataModel {
 	}
 
 	/**
+	 * Whether the merchant wants to accept card payments via the PayPal plugin.
+	 *
+	 * @return bool
+	 */
+	public function get_accept_card_payments() : bool {
+		return (bool) $this->data['accept_card_payments'];
+	}
+
+	/**
+	 * Sets the "accept card payments" flag.
+	 *
+	 * @param bool|null $accept_cards Whether to accept card payments via the PayPal plugin.
+	 */
+	public function set_accept_card_payments( ?bool $accept_cards ) : void {
+		$this->data['accept_card_payments'] = $accept_cards;
+	}
+
+	/**
 	 * Gets the active product types for this store.
 	 *
 	 * @return string[]
@@ -152,5 +186,64 @@ class OnboardingProfile extends AbstractDataModel {
 	 */
 	public function get_flags() : array {
 		return $this->flags;
+	}
+
+	/**
+	 * Gets the 'setup_done' flag.
+	 *
+	 * @return bool
+	 */
+	public function is_setup_done() : bool {
+		return (bool) $this->data['setup_done'];
+	}
+
+	/**
+	 * Sets the 'setup_done' flag.
+	 *
+	 * @param bool $done Whether the onboarding process has been setup_done.
+	 */
+	public function set_setup_done( bool $done ) : void {
+		$this->data['setup_done'] = $done;
+	}
+
+	/**
+	 * Get whether gateways have been synced.
+	 *
+	 * @return bool
+	 */
+	public function is_gateways_synced(): bool {
+		return $this->data['gateways_synced'] ?? false;
+	}
+
+	/**
+	 * Set whether gateways have been synced.
+	 *
+	 * @param bool $synced Whether gateways have been synced.
+	 */
+	public function set_gateways_synced( bool $synced ): void {
+		$this->data['gateways_synced'] = $synced;
+
+		// If enabling the flag, trigger the action.
+		if ( $synced ) {
+			do_action( 'woocommerce_paypal_payments_sync_gateways' );
+		}
+	}
+
+	/**
+	 * Get whether gateways have been refreshed.
+	 *
+	 * @return bool
+	 */
+	public function is_gateways_refreshed(): bool {
+		return $this->data['gateways_refreshed'] ?? false;
+	}
+
+	/**
+	 * Set whether gateways have been refreshed.
+	 *
+	 * @param bool $refreshed Whether gateways have been refreshed.
+	 */
+	public function set_gateways_refreshed( bool $refreshed ): void {
+		$this->data['gateways_refreshed'] = $refreshed;
 	}
 }

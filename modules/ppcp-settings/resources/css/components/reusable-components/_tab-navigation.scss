@@ -1,22 +1,17 @@
 .ppcp-r-tabs {
 	--wp-components-color-accent: #{$color-blueberry};
-	--wp-admin-border-width-focus: 3px;
+	--wp-admin-border-width-focus: 2px;
 
-	max-width: var(--max-container-width);
-	margin: 0 auto;
 	transition: max-width 0.2s;
+	margin-top: 10px;
+	width: 100%;
 
 	.components-tab-panel__tabs {
-		box-shadow: 0 -1px 0 0 $color-gray-400 inset;
-		margin-bottom: 48px;
-		gap: 12px;
+		gap: 0;
 		overflow: auto;
+
 		.components-button {
 			padding: 16px 20px;
-
-			&.is-active {
-				background-color: #fff4;
-			}
 		}
 	}
 }

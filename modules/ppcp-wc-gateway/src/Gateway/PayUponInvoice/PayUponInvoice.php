@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -62,11 +61,11 @@ class PayUponInvoice {
 	protected $pui_helper;
 
 	/**
-	 * The onboarding state.
+	 * Whether onboarding was completed and the merchant is connected to PayPal.
 	 *
-	 * @var State
+	 * @var bool
 	 */
-	protected $state;
+	protected bool $is_connected;
 
 	/**
 	 * Current PayPal settings page id.
@@ -102,7 +101,7 @@ class PayUponInvoice {
 	 * @param PayUponInvoiceOrderEndpoint $pui_order_endpoint The PUI order endpoint.
 	 * @param LoggerInterface             $logger The logger.
 	 * @param Settings                    $settings The settings.
-	 * @param State                       $state The onboarding state.
+	 * @param bool                        $is_connected Whether onboarding was completed.
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
@@ -113,7 +112,7 @@ class PayUponInvoice {
 		PayUponInvoiceOrderEndpoint $pui_order_endpoint,
 		LoggerInterface $logger,
 		Settings $settings,
-		State $state,
+		bool $is_connected,
 		string $current_ppcp_settings_page_id,
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
@@ -123,7 +122,7 @@ class PayUponInvoice {
 		$this->pui_order_endpoint            = $pui_order_endpoint;
 		$this->logger                        = $logger;
 		$this->settings                      = $settings;
-		$this->state                         = $state;
+		$this->is_connected                  = $is_connected;
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
 		$this->pui_helper                    = $pui_helper;
@@ -437,7 +436,7 @@ class PayUponInvoice {
 			function ( $methods ) {
 				if (
 					! is_array( $methods )
-					|| State::STATE_ONBOARDED !== $this->state->current_state()
+					|| ! $this->is_connected
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					|| ! ( is_checkout() || isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' )
 				) {
@@ -445,7 +444,7 @@ class PayUponInvoice {
 				}
 
 				if (
-					! $this->pui_product_status->pui_is_active()
+					! $this->pui_product_status->is_active()
 					|| ! $this->pui_helper->is_checkout_ready_for_pui()
 				) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
@@ -478,7 +477,7 @@ class PayUponInvoice {
 			function() {
 				if (
 				PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
-				&& $this->pui_product_status->pui_is_active()
+				&& $this->pui_product_status->is_active()
 				) {
 					$error_messages = array();
 					$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];

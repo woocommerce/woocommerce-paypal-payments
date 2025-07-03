@@ -18,10 +18,8 @@ use WP_REST_Response;
 abstract class RestEndpoint extends WC_REST_Controller {
 	/**
 	 * Endpoint namespace.
-	 *
-	 * @var string
 	 */
-	protected $namespace = 'wc/v3/wc_paypal';
+	protected const NAMESPACE = 'wc/v3/wc_paypal';
 
 	/**
 	 * Verify access.
@@ -81,7 +79,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Sanitizes parameters based on a field mapping.
+	 * Sanitizes and renames input parameters, based on a field mapping.
 	 *
 	 * This method iterates through a field map, applying sanitization methods
 	 * to the corresponding values in the input parameters array.
@@ -99,6 +97,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 			$source_key    = $details['js_name'] ?? '';
 			$sanitation_cb = $details['sanitize'] ?? null;
 
+			// Skip missing values, skip "null" values, skip "read_only" values.
 			if (
 				! $source_key
 				|| ! isset( $params[ $source_key ] )
@@ -111,10 +110,13 @@ abstract class RestEndpoint extends WC_REST_Controller {
 
 			if ( null === $sanitation_cb ) {
 				$sanitized[ $key ] = $value;
-			} elseif ( is_string( $sanitation_cb ) && method_exists( $this, $sanitation_cb ) ) {
+				continue;
+			}
+
+			if ( is_string( $sanitation_cb ) && method_exists( $this, $sanitation_cb ) ) {
 				$sanitized[ $key ] = $this->{$sanitation_cb}( $value );
 			} elseif ( is_callable( $sanitation_cb ) ) {
-				$sanitized[ $key ] = $sanitation_cb( $value );
+				$sanitized[ $key ] = $sanitation_cb( $value, $key );
 			}
 		}
 
@@ -122,7 +124,7 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Sanitizes data for JavaScript based on a field mapping.
+	 * Sanitizes and renames data for JavaScript, based on a field mapping.
 	 *
 	 * This method transforms the input data array according to the provided field map,
 	 * renaming keys to their JavaScript equivalents as specified in the mapping.
@@ -151,24 +153,26 @@ abstract class RestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Convert a value to a boolean.
+	 * Sanitation callback: Convert a value to a boolean.
 	 *
-	 * @param mixed $value The value to convert.
+	 * @param mixed $value The value to sanitize.
 	 *
-	 * @return bool|null The boolean value, or null if not set.
+	 * @return bool The boolean value.
+	 * @todo Switch to the DataSanitizer class.
 	 */
-	protected function to_boolean( $value ) : ?bool {
-		return $value !== null ? (bool) $value : null;
+	public function to_boolean( $value ) : bool {
+		return (bool) $value;
 	}
 
 	/**
-	 * Convert a value to a number.
+	 * Sanitation callback: Convert a value to a number.
 	 *
-	 * @param mixed $value The value to convert.
+	 * @param mixed $value The value to sanitize.
 	 *
-	 * @return int|float|null The numeric value, or null if not set.
+	 * @return int The numeric value.
+	 * @todo Switch to the DataSanitizer class.
 	 */
-	protected function to_number( $value ) {
-		return $value !== null ? ( is_numeric( $value ) ? $value + 0 : null ) : null;
+	public function to_number( $value ) : int {
+		return (int) $value;
 	}
 }

@@ -1,5 +1,141 @@
 *** Changelog ***
 
+= 3.0.7 - 2025-07-01 =
+* Enhancement - Remove `application_context` in favor of `experience_context` object #3431
+ **NOTE**: If you were modifying the `application_context` object programmatically, you may need to update your code to utilize `experience_context` for your customizations. 
+* Enhancement - Add Contact Module feature
+* Enhancement - Add WooCommerce Tracks integration
+* Enhancement - Onboarding notification for Firefox browser #3433
+* Enhancement - Reset BN code on plugin uninstall #3471
+* Enhancement - Add "Stay updated with PayPal" option in the old and new settings UI #3430
+* Enhancement - Add French Territories to the supported ACDC countries list #3438
+* Enhancement - Auto-enable logging during onboarding #3369
+* Fix - DUPLICATE_INVOICE_ID in Sandbox due to missing invoice prefix #3435
+* Fix - Subscription product could not be unlinked from PayPal Subscription #3429
+* Fix - PayPal button greyed out on single product page for variable products with >2 attributes #3395
+* Fix - APMs automatically enabled despite selecting "No, ..." during onboarding #3362
+* Fix - Ditch items logic does not work when using saved card payment #3476
+* Fix - billing-agreements endpoint called too frequently when not enabled for Reference Transactions #3459
+
+= 3.0.6 - 2025-05-27 =
+* Enhancement - Implement 3D secure check for Google Pay #3163
+* Enhancement - Add options for "Disable Credit Cards" and "Language" #3226
+* Enhancement - Improve the loading experience for the new UI #3269
+* Enhancement - Enhance the accessibility of the new Settings UI #3294
+* Enhancement - Add capture pre-conditions for card payment source #3300
+* Enhancement - Enable all/Disable all toggle next to Alternative Payment methods on Payment Methods tab #3321
+* Enhancement - Add installment notifications for Mexico store locations #3404, #3405
+* Fix - Various issues for Mexico store locations during onboarding & plugin configuration #3403
+* Fix - APFS plugin triggers incorrect renewal date for simple products as subscriptions #3272
+* Fix - PayPal Smart Button incompatible with WooCommerce Subscription Switching #3291
+* Fix - Fastlane gateway visible on Pay for Order page #3293
+* Fix - Pay Later Messaging configurator preview alignment #3305
+* Fix - Product editing screen for variable products unresponsive (PayPal Subscriptions API error) #3311
+* Fix - Update selector for hiding express checkout #3318
+* Fix - 'Ignoring unknown key' console warnings when modifying payment gateway state #3322
+* Fix - Ratepay Payment Option Not Available for Unassembled Product Bundles #3325
+* Fix - "Disable Specific credit cards" shows "Select" as a possible value #3342
+* Fix - Stripe not visible at checkout when PayPal Subscriptions API is enabled #3343
+* Fix - Ensure correct ACDC behavior for non-ACDC countries (e.g., Vietnam) #3351
+* Fix - ACDC payments for Subscriptions failing at checkout for new users #3355
+* Fix - BCDC not enabled by default when cards selected during onboarding #3366
+* Fix - Block checkout - Address form missing after payment on Product and Cart pages #3371
+* Fix - Payments with Debit & Credit Cards failing #3376
+* Fix - PayPalGateway::process_payment on completed order leads to order failure #3374
+* Fix - New settings UI background color impacted by WooCommerce 9.9+ #3407
+* Fix - Can not save payments if subscriptions is not selected when onboarding #3408
+
+= 3.0.5 - 2025-04-23 =
+* Fix - Onboarding screen blank when WooPayments plugin is active #3312
+
+= 3.0.3 - 2025-04-08 =
+* Fix - BN code was set before the installation path was initialized #3309
+* Fix - Things to do next referenced Apple Pay while in branded-only mode #3308
+* Fix - Disabled payment methods were not hidden in reactified WooCommerce Payments settings tab #3290
+
+= 3.0.2 - 2025-04-03 =
+* Enhancement - Check the branded-only flag when settings-UI is loaded the first time #3278
+* Enhancement - Implement a Cache-Flush API #3276
+* Enhancement - Disable the mini-cart location by default #3284
+* Enhancement - Remove branded-only flag when uninstalling PayPal Payments #3295
+* Fix - Welcome screen lists "all major credit/debit cards, Apple Pay, Google Pay," in branded-only mode #3281
+* Fix - Correct heading in onboarding step 4 in branded-only mode #3282
+* Fix - Hide the payment methods screen for personal user in branded-only mode #3286
+* Fix - Enabling Save PayPal does not disable Pay Later messaging #3288
+* Fix - Settings UI: Fix Feature button links #3285
+* Fix - Create mapping for the 3d_secure_contingency setting #3262
+* Fix - Enable Fastlane Watermark by default in new settings UI #3296
+* Fix - Payment method screen is referencing credit cards, digital wallets in branded-only mode #3297
+
+= 3.0.1 - 2025-03-26 =
+* Enhancement - Include Fastlane meta on homepage #3151
+* Enhancement - Include Branded-only plugin configuration for certain installation paths
+* Enhancement - Include UI status in system report #3248
+* Enhancement - Minor enhancements in new UI scrolling & highlighting behavior #3240
+* Fix - "Warning: Class 'WooCommerce\PayPalCommerce\Vendor\Stringable' not found" after 3.0.0 update #3235
+* Fix - ACDC does not work on the Classic Checkout when using the new UI #3219
+* Fix - "Send only" country banner not displayed in the new UI #3236
+* Fix - Typo in welcome screen #3258
+* Fix - onboarding.js file from old UI enqueued in new UI #3263
+* Fix - Onboarding in new UI with personal account does not hide all ineligible features #3254
+* Fix - ACDC not defaulting on for eligible merchants after onboarding with Expanded Checkout selection #3250
+* Fix - “Failed to fetch onboarding URL” error when onboarding with Subscriptions selected from non-Vault region #3242
+* Fix - Fastlane SDK token requested when Fastlane is disabled #3009
+* Fix - Subscription renewal payment via ACDC may fail in some cases due to 3D Secure #3098
+* Fix - Error: _load_textdomain_just_in_time Called Incorrectly when running docker compose #3172
+* Fix - Shipping callback not loading for guest users in some scenarios #3169
+* Fix - Phone number not saved in WC order when using Pay Now experience #3160
+* Fix - Phone number not pre-populated on Checkout block in continuation mode #3160
+* Fix - "Unfortunately, your credit card details are not valid" shown with actually valid card during checkout with invalid postcode. #3067
+* Fix - Incorrect Subscription Cancellation Handling with PayPal Subscriptions #3046
+* Tweak - Added PayPal as contributor #3259
+
+= 3.0.0 - 2025-03-17 =
+* Enhancement - Redesigned settings UI for new users #2908
+* Enhancement - Enable Fastlane by default on new store setups when eligible #3199
+* Enhancement - Enable support for advanced card payments and features for Hong Kong & Singapore #3089
+* Fix - Dependency conflict with more recent psr/log versions on PHP8+ #2993
+* Fix - PayPal Checkout Gateway subscription migration layer not renewing subscriptions #2699
+* Fix - Fatal error when gateway settings initialized too early by third-party plugin #2766
+* Fix - Next Payment date for Subscriptions not updating when processing a PayPal Subscriptions renewal order #2959
+* Fix - Changing the subscription payment method to ACDC triggers error #2891
+* Fix - Standard Card button not appearing in standalone gateway for free trial subscription products #2935
+* Fix - Validation error when using Trustly payment method #3031
+* Fix - Error in continuation mode due to wrong gateway selection on Checkout block #2996
+* Fix - Error in error in PayLaterConfigurator #2989
+* Tweak - Removed currency requirement for Vault v3 #2919
+* Tweak - Update plugin author from WooCommerce to PayPal
+
+= 2.9.6 - 2025-01-06 =
+* Fix - NOT_ENABLED_TO_VAULT_PAYMENT_SOURCE on PayPal transactions when using ACDC Vaulting without PayPal Vault approval #2955
+* Fix - Express buttons for Free Trial Subscription products on Block Cart/Checkout trigger CANNOT_BE_ZERO_OR_NEGATIVE error #2872
+* Fix - String translations not applied to Card Fields on Block Checkout #2934
+* Fix - Fastlane component included in script when Fastlane is disabled #2911
+* Fix - Zero amount line items may trigger CANNOT_BE_ZERO_OR_NEGATIVE error after rounding error #2906
+* Fix - “Save changes” is grey and unclickable when switching from Sandbox to Live #2895
+* Fix - plugin queries variations when button/messaging is disabled on single product page #2896
+* Fix - Use get_id instead of get_order_number on setting custom_id (author @0verscore) #2930
+* Enhancement - Improve fraud response order notes for Advanced Card Processing transactions #2905
+* Tweak - Update the minimum plugin requirements to WordPress 6.5 & WooCommerce 9.2 #2920
+
+= 2.9.5 - 2024-12-10 =
+* Fix - Early translation loading triggers `Function _load_textdomain_just_in_time was called incorrectly.` notice #2816
+* Fix - ACDC card fields not loading and payment not successful when Classic Checkout Smart Button Location disabled #2852
+* Fix - ACDC gateway does not appear for guests when is Fastlane enabled and a subscription product is in the cart #2745
+* Fix - "Voide authorization" button does not appear for Apple Pay/Google Pay orders when payment buttons are separated #2752
+* Fix - Additional payment tokens saved with new customer_id #2820
+* Fix - Vaulted payment method may not be displayed in PayPal button for return buyer #2809
+* Fix - Conflict with EasyShip plugin due to shipping methods loading too early #2845
+* Fix - Restore accidentally removed ACDC currencies #2838
+* Enhancement - Native gateway icon for PayPal & Pay upon Invoice gateways #2712
+* Enhancement - Allow disabling specific card types for Fastlane #2704
+* Enhancement - Fastlane Insights SDK implementation for block Checkout #2737
+* Enhancement - Hide split local APMs in Payments settings tab when PayPal is not enabled #2703
+* Enhancement - Do not load split local APMs on Checkout when PayPal is not enabled #2792
+* Enhancement - Add support for Button Options in the Block Checkout for Apple Pay & Google Pay buttons #2797 #2772
+* Enhancement - Disable “Add payment method” button while saving ACDC payment #2794
+* Enhancement - Sanitize soft_descriptor field #2846 #2854
+
 = 2.9.4 - 2024-11-11 =
 * Fix - Apple Pay button preview missing in Standard payment and Advanced Processing tabs #2755
 * Fix - Set "Sold individually" only for subscription connected to PayPal #2710
@@ -113,7 +249,7 @@
 * Fix - Shipping methods during callback not updated correctly #2421
 * Fix - Preserve subscription renewal processing when switching Subscriptions Mode or disabling gateway #2394
 * Fix - Remove shipping callback for Venmo express button #2374
-* Fix - Google Pay: Fix issuse with data.paymentSource being undefined #2390
+* Fix - Google Pay: Fix issue with data.paymentSource being undefined #2390
 * Fix - Loading of non-Order as a WC_Order causes warnings and potential data corruption #2343
 * Fix - Apple Pay and Google Pay buttons don't appear in PayPal Button stack on multi-step Checkout #2372
 * Fix - Apple Pay: Fix when shipping is disabled #2391

@@ -15,7 +15,14 @@ use WP_REST_Request;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 
 /**
- * REST controller that generates merchant login URLs.
+ * REST controller that generates merchant login URLs for PayPal.
+ *
+ * This endpoint is responsible solely for generating a URL that initiates
+ * the PayPal login flow. It does not handle the authentication itself.
+ *
+ * The generated URL is typically used to redirect merchants to PayPal's login page.
+ * After successful login, the authentication process is completed via the
+ * AuthenticationRestEndpoint.
  */
 class LoginLinkRestEndpoint extends RestEndpoint {
 	/**
@@ -23,51 +30,67 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 	 *
 	 * @var string
 	 */
-	protected string $rest_base = 'login_link';
+	protected $rest_base = 'login_link';
 
 	/**
-	 * Link generator list, with environment name as array key.
+	 * Login-URL generator.
 	 *
-	 * @var ConnectionUrlGenerator[]
+	 * @var ConnectionUrlGenerator
 	 */
-	protected array $url_generators;
+	protected ConnectionUrlGenerator $url_generator;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param ConnectionUrlGenerator[] $url_generators Array of environment-specific URL generators.
+	 * @param ConnectionUrlGenerator $url_generator Login-URL generator.
 	 */
-	public function __construct( array $url_generators ) {
-		$this->url_generators = $url_generators;
+	public function __construct( ConnectionUrlGenerator $url_generator ) {
+		$this->url_generator = $url_generator;
 	}
 
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() {
+	public function register_routes() : void {
+		/**
+		 * POST /wp-json/wc/v3/wc_paypal/login_link
+		 * {
+		 *     useSandbox
+		 *     products
+		 * }
+		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'get_login_url' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-					'args'                => array(
-						'environment' => array(
-							'required' => true,
-							'type'     => 'string',
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'get_login_url' ),
+				'permission_callback' => array( $this, 'check_permission' ),
+				'args'                => array(
+					'useSandbox' => array(
+						'default'           => 0,
+						'type'              => 'boolean',
+						'sanitize_callback' => array( $this, 'to_boolean' ),
+					),
+					'products'   => array(
+						'required'          => true,
+						'type'              => 'array',
+						'items'             => array(
+							'type' => 'string',
 						),
-						'products'    => array(
-							'required'          => true,
-							'type'              => 'array',
-							'items'             => array(
-								'type' => 'string',
-							),
-							'sanitize_callback' => function ( $products ) {
-								return array_map( 'sanitize_text_field', $products );
-							},
+						'sanitize_callback' => function ( $products ) {
+							return array_map( 'sanitize_text_field', $products );
+						},
+					),
+					'options'    => array(
+						'requires'          => false,
+						'type'              => 'array',
+						'items'             => array(
+							'type' => 'bool',
 						),
+						'sanitize_callback' => function ( $flags ) {
+							return array_map( array( $this, 'to_boolean' ), $flags );
+						},
 					),
 				),
 			)
@@ -82,20 +105,12 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 	 * @return WP_REST_Response The login URL or an error response.
 	 */
 	public function get_login_url( WP_REST_Request $request ) : WP_REST_Response {
-		$environment = $request->get_param( 'environment' );
+		$use_sandbox = $request->get_param( 'useSandbox' );
 		$products    = $request->get_param( 'products' );
-
-		if ( ! isset( $this->url_generators[ $environment ] ) ) {
-			return new WP_REST_Response(
-				array( 'error' => 'Invalid environment specified.' ),
-				400
-			);
-		}
-
-		$url_generator = $this->url_generators[ $environment ];
+		$flags       = (array) $request->get_param( 'options' );
 
 		try {
-			$url = $url_generator->generate( $products );
+			$url = $this->url_generator->generate( $products, $flags, $use_sandbox );
 
 			return $this->return_success( $url );
 		} catch ( \Exception $e ) {

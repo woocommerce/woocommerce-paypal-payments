@@ -12,24 +12,30 @@ namespace WooCommerce\PayPalCommerce\Axo;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
-use WooCommerce\PayPalCommerce\Axo\Helper\SettingsNoticeGenerator;
+use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 
 return array(
 
-	// If AXO can be configured.
+	// @deprecated - use `axo.eligibility.check` instead.
 	'axo.eligible'                           => static function ( ContainerInterface $container ): bool {
+		$eligibility_check = $container->get( 'axo.eligibility.check' );
+
+		return $eligibility_check();
+	},
+	'axo.eligibility.check'                  => static function ( ContainerInterface $container ): callable {
 		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country_currency();
+		return static function () use ( $apm_applies ) : bool {
+			return $apm_applies->for_country_currency() && $apm_applies->for_merchant();
+		};
 	},
-
 	'axo.helpers.apm-applies'                => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
@@ -38,13 +44,18 @@ return array(
 		);
 	},
 
-	'axo.helpers.settings-notice-generator'  => static function ( ContainerInterface $container ) : SettingsNoticeGenerator {
-		return new SettingsNoticeGenerator( $container->get( 'axo.fastlane-incompatible-plugin-names' ) );
+	'axo.helpers.compatibility-checker'      => static function ( ContainerInterface $container ) : CompatibilityChecker {
+		return new CompatibilityChecker(
+			$container->get( 'axo.fastlane-incompatible-plugin-names' ),
+			$container->get( 'wcgateway.configuration.card-configuration' )
+		);
 	},
 
 	// If AXO is configured and onboarded.
 	'axo.available'                          => static function ( ContainerInterface $container ): bool {
-		return true;
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		return $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' );
 	},
 
 	'axo.url'                                => static function ( ContainerInterface $container ): string {
@@ -64,14 +75,13 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'axo.insights' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency.getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.url' ),
-			$container->get( 'axo.supported-country-card-type-matrix' ),
-			$container->get( 'axo.shipping-wc-enabled-locations' )
+			$container->get( 'axo.supported-country-card-type-matrix' )
 		);
 	},
 
@@ -79,7 +89,7 @@ return array(
 		return new AxoGateway(
 			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.configuration.dcc' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.order-processor' ),
@@ -88,7 +98,7 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'onboarding.environment' ),
+			$container->get( 'settings.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -189,32 +199,43 @@ return array(
 		);
 	},
 	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ) : string {
-		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
-		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+		$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
+		assert( $compatibility_checker instanceof CompatibilityChecker );
 
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		return $settings_notice_generator->generate_settings_conflict_notice( $settings );
+		return $compatibility_checker->generate_settings_conflict_notice();
 	},
 
 	'axo.checkout-config-notice'             => static function ( ContainerInterface $container ) : string {
-		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
-		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+		$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
+		assert( $compatibility_checker instanceof CompatibilityChecker );
 
-		return $settings_notice_generator->generate_checkout_notice();
+		return $compatibility_checker->generate_checkout_notice();
+	},
+
+	'axo.checkout-config-notice.raw'         => static function ( ContainerInterface $container ) : string {
+		$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
+		assert( $compatibility_checker instanceof CompatibilityChecker );
+
+		return $compatibility_checker->generate_checkout_notice( true );
 	},
 
 	'axo.incompatible-plugins-notice'        => static function ( ContainerInterface $container ) : string {
-		$settings_notice_generator = $container->get( 'axo.helpers.settings-notice-generator' );
-		assert( $settings_notice_generator instanceof SettingsNoticeGenerator );
+		$settings_notice_generator = $container->get( 'axo.helpers.compatibility-checker' );
+		assert( $settings_notice_generator instanceof CompatibilityChecker );
 
 		return $settings_notice_generator->generate_incompatible_plugins_notice();
 	},
 
+	'axo.incompatible-plugins-notice.raw'    => static function ( ContainerInterface $container ) : string {
+		$settings_notice_generator = $container->get( 'axo.helpers.compatibility-checker' );
+		assert( $settings_notice_generator instanceof CompatibilityChecker );
+
+		return $settings_notice_generator->generate_incompatible_plugins_notice( true );
+	},
+
 	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ) : string {
-		$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
-		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+		$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+		assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 		if ( $dcc_configuration->use_fastlane() ) {
 			$fastlane_settings_url = admin_url(
@@ -329,33 +350,23 @@ return array(
 		);
 	},
 
-	'axo.shipping-wc-enabled-locations'      => static function ( ContainerInterface $container ): array {
+	'axo.shipping-wc-enabled-locations'      => static function ( ContainerInterface $container ) {
 		$default_zone = new \WC_Shipping_Zone( 0 );
 
-		$is_method_enabled = fn( \WC_Shipping_Method $method): bool => $method->enabled === 'yes';
-
-		$is_default_zone_enabled = ! empty(
-			array_filter(
-				$default_zone->get_shipping_methods(),
-				$is_method_enabled
-			)
-		);
-
-		if ( $is_default_zone_enabled ) {
+		if ( ! empty( $default_zone->get_shipping_methods( true ) ) ) {
 			return array();
 		}
 
 		$shipping_zones = \WC_Shipping_Zones::get_zones();
-
 		$get_zone_locations = fn( \WC_Shipping_Zone $zone): array =>
-		! empty( array_filter( $zone->get_shipping_methods(), $is_method_enabled ) )
+		! empty( $zone->get_shipping_methods( true ) )
 			? array_map(
 				fn( object $location): string => $location->code,
 				$zone->get_zone_locations()
 			)
 			: array();
 
-		$enabled_locations = array_unique(
+		return array_unique(
 			array_merge(
 				...array_map(
 					$get_zone_locations,
@@ -367,7 +378,5 @@ return array(
 				)
 			)
 		);
-
-		return $enabled_locations;
 	},
 );

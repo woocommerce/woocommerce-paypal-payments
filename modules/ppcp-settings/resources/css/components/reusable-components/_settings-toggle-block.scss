@@ -31,10 +31,4 @@
 	&__toggled-content {
 		margin-top: 24px;
 	}
-
-	&.ppcp--is-loading {
-		pointer-events: none;
-
-		--spinner-overlay-color: #fff4;
-	}
 }

@@ -7,13 +7,14 @@
         "build": "wp-scripts build --webpack-src-dir=resources/js --output-path=assets"
     },
     "devDependencies": {
-        "@woocommerce/navigation": "~8.1.0",
         "@wordpress/data": "^10.10.0",
         "@wordpress/data-controls": "^4.10.0",
-        "@wordpress/scripts": "^30.3.0"
+        "@wordpress/icons": "^10.14.0",
+        "@wordpress/scripts": "^30.3.0",
+        "classnames": "^2.5.1"
     },
     "dependencies": {
-        "@woocommerce/settings": "^1.0.0",
+        "@paypal/react-paypal-js": "^8.7.0",
         "react-select": "^5.8.3"
     }
 }

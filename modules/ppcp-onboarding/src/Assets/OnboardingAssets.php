@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Onboarding\Assets;
 
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 

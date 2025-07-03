@@ -81,12 +81,14 @@ export const paypalShippingToWc = ( shipping ) => {
 export const paypalPayerToWc = ( payer ) => {
 	const firstName = payer?.name?.given_name ?? '';
 	const lastName = payer?.name?.surname ?? '';
+    const phone = payer?.phone?.phone_number?.national_number ?? '';
 	const address = payer.address ? paypalAddressToWc( payer.address ) : {};
 	return {
 		...address,
 		first_name: firstName,
 		last_name: lastName,
 		email: payer.email_address,
+        phone: phone
 	};
 };
 

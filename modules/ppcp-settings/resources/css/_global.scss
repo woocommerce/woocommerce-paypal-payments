@@ -58,10 +58,6 @@ h1, h2, h3, h4 {
 	color: $color-black;
 }
 
-a:not(.button) {
-	color: $color-blueberry;
-}
-
 .components-form-toggle.is-checked > .components-form-toggle__track {
 	background-color: $color-blueberry;
 }

@@ -15,11 +15,12 @@ use RuntimeException;
 interface TaskRegistrarInterface {
 
 	/**
-	 * Registers the tasks inside "Things to do next" WC section.
+	 * Registers the tasks inside the section with given list ID.
 	 *
+	 * @param string $list_id The list ID.
 	 * @param Task[] $tasks The list of tasks.
 	 * @return void
 	 * @throws RuntimeException If problem registering.
 	 */
-	public function register( array $tasks ): void;
+	public function register( string $list_id, array $tasks ): void;
 }

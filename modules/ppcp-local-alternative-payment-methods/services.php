@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 return array(
 	'ppcp-local-apms.url'                       => static function ( ContainerInterface $container ): string {
@@ -67,12 +68,21 @@ return array(
 			),
 		);
 	},
+	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
+		return new LocalApmProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'api.helper.failure-registry' )
+		);
+	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
 		return new BancontactGateway(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.blik.wc-gateway'           => static function ( ContainerInterface $container ): BlikGateway {
@@ -80,7 +90,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.eps.wc-gateway'            => static function ( ContainerInterface $container ): EPSGateway {
@@ -88,7 +99,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.ideal.wc-gateway'          => static function ( ContainerInterface $container ): IDealGateway {
@@ -96,7 +108,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.mybank.wc-gateway'         => static function ( ContainerInterface $container ): MyBankGateway {
@@ -104,7 +117,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.p24.wc-gateway'            => static function ( ContainerInterface $container ): P24Gateway {
@@ -112,7 +126,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.trustly.wc-gateway'        => static function ( ContainerInterface $container ): TrustlyGateway {
@@ -120,7 +135,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.multibanco.wc-gateway'     => static function ( ContainerInterface $container ): MultibancoGateway {
@@ -128,7 +144,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.bancontact.payment-method' => static function( ContainerInterface $container ): BancontactPaymentMethod {

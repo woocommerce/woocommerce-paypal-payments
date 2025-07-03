@@ -66,4 +66,17 @@ class ApmApplies {
 		}
 		return in_array( $this->currency->get(), $this->allowed_country_currency_matrix[ $this->country ], true );
 	}
+
+	/**
+	 * Indicates, whether the current merchant is eligible for Fastlane. Always true,
+	 * but the filter allows other modules to disable Fastlane site-wide.
+	 *
+	 * @return bool
+	 */
+	public function for_merchant() : bool {
+		return apply_filters(
+			'woocommerce_paypal_payments_is_eligible_for_axo',
+			true
+		);
+	}
 }

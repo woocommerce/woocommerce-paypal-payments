@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
@@ -56,46 +57,50 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ) : bool {
-		$is_available = $c->get( 'paylater-configurator.is-available' );
-
-		if ( ! $is_available ) {
-			return true;
-		}
-
-		$current_page_id     = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
-		$is_wc_settings_page = $c->get( 'wcgateway.is-wc-settings-page' );
-		$messaging_locations = $c->get( 'paylater-configurator.messaging-locations' );
-
-		$this->add_paylater_update_notice( $messaging_locations, $is_wc_settings_page, $current_page_id );
-
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		add_action(
-			'wc_ajax_' . SaveConfig::ENDPOINT,
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'paylater-configurator.endpoint.save-config' );
-				assert( $endpoint instanceof SaveConfig );
-				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . GetConfig::ENDPOINT,
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'paylater-configurator.endpoint.get-config' );
-				assert( $endpoint instanceof GetConfig );
-				$endpoint->handle_request();
-			}
-		);
-
-		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
-			return true;
-		}
 
 		add_action(
 			'init',
-			static function () use ( $c, $settings ) {
+			static function () use ( $c ) {
+				$is_available = $c->get( 'paylater-configurator.is-available' );
+				if ( ! $is_available ) {
+					return;
+				}
+
+				$current_page_id     = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
+				$is_wc_settings_page = $c->get( 'wcgateway.is-wc-settings-page' );
+				$messaging_locations = $c->get( 'paylater-configurator.messaging-locations' );
+
+				self::add_paylater_update_notice(
+					$messaging_locations,
+					$is_wc_settings_page,
+					$current_page_id
+				);
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				add_action(
+					'wc_ajax_' . SaveConfig::ENDPOINT,
+					static function () use ( $c ) {
+						$endpoint = $c->get( 'paylater-configurator.endpoint.save-config' );
+						assert( $endpoint instanceof SaveConfig );
+						$endpoint->handle_request();
+					}
+				);
+
+				add_action(
+					'wc_ajax_' . GetConfig::ENDPOINT,
+					static function () use ( $c ) {
+						$endpoint = $c->get( 'paylater-configurator.endpoint.get-config' );
+						assert( $endpoint instanceof GetConfig );
+						$endpoint->handle_request();
+					}
+				);
+
+				if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
+					return;
+				}
+
 				wp_enqueue_script(
 					'ppcp-paylater-configurator-lib',
 					'https://www.paypalobjects.com/merchant-library/merchant-configurator.js',
@@ -122,7 +127,8 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
-				$bn_code = PPCP_PAYPAL_BN_CODE;
+				$partner_attribution = $c->get( 'api.helper.partner-attribution' );
+				assert( $partner_attribution instanceof PartnerAttribution );
 
 				wp_localize_script(
 					'ppcp-paylater-configurator',
@@ -141,7 +147,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 						'config'                 => $config_factory->from_settings( $settings ),
 						'merchantClientId'       => $settings->get( 'client_id' ),
 						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
-						'bnCode'                 => $bn_code,
+						'bnCode'                 => $partner_attribution->get_bn_code(),
 						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
 						'headerClassName'        => 'ppcp-paylater-configurator-header',
 						'subheaderClassName'     => 'ppcp-paylater-configurator-subheader',
@@ -159,13 +165,13 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 	 * The notice appears on any PayPal-Settings page, except for the Pay-Later settings page,
 	 * when no Pay-Later messaging is used yet.
 	 *
-	 * @param array  $message_locations PayLater messaging locations.
-	 * @param bool   $is_settings_page  Whether the current page is a WC settings page.
-	 * @param string $current_page_id   ID of current settings page tab.
+	 * @param array  $message_locations   PayLater messaging locations.
+	 * @param bool   $is_settings_page    Whether the current page is a WC settings page.
+	 * @param string $current_page_id     ID of current settings page tab.
 	 *
 	 * @return void
 	 */
-	private function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
+	private static function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
 		// The message must be registered on any WC-Settings page, except for the Pay Later page.
 		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
 			return;

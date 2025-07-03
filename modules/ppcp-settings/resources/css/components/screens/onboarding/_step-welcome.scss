@@ -16,21 +16,23 @@
 		text-align: center;
 	}
 
-	.ppcp-r-page-welcome-or-separator {
-		margin: 0 0 16px 0;
-	}
-
 	.components-base-control__field {
 		margin: 0 0 24px 0;
 	}
-	.ppcp-r-toggle-block__toggled-content > button{
-		@include small-button;
-		color: $color-white;
-		border: none;
+
+	.client-id-error {
+		@include font(11, 16, 450);
+		margin: -16px 0 24px;
+		color: var(--color-error);
 	}
 
 	.onboarding-advanced-options {
+		margin-top: 24px;
 		max-width: 800px;
+
+		.ppcp--toggler .ppcp--title-wrapper {
+			justify-content: center;
+		}
 	}
 }
 
@@ -66,6 +68,7 @@
 	@media screen and (max-width: 480px) {
 		flex-wrap: wrap;
 		row-gap: 8px;
+
 		&__col {
 			width: 100%;
 			text-align: center;
@@ -75,6 +78,7 @@
 				border-right: 0;
 				padding-right: 0;
 				padding-bottom: 8px;
+				margin: 0;
 			}
 		}
 	}

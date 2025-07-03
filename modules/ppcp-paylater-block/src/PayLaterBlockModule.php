@@ -71,12 +71,12 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 			return true;
 		}
 
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
 		add_action(
 			'init',
-			function () use ( $c, $settings ): void {
+			function () use ( $c ): void {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
 				$script_handle = 'ppcp-paylater-block';
 				wp_register_script(
 					$script_handle,

@@ -5,6 +5,8 @@
  * @package WooCommerce\PayPalCommerce
  */
 
+namespace WooCommerce\PayPalCommerce;
+
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties\PluginProperties;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;

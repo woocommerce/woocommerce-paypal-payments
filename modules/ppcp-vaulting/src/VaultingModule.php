@@ -13,6 +13,8 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Payment_Token;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -26,9 +28,18 @@ use WP_User_Query;
 
 /**
  * Class StatusReportModule
+ *
+ * @psalm-suppress MissingConstructor
  */
 class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule {
-	use ModuleClassNameIdTrait;
+	use ModuleClassNameIdTrait, ContextTrait;
+
+	/**
+	 * Session Handler
+	 *
+	 * @var SessionHandler
+	 */
+	protected SessionHandler $session_handler;
 
 	/**
 	 * {@inheritDoc}
@@ -51,10 +62,16 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 	 * @throws NotFoundException When service could not be found.
 	 */
 	public function run( ContainerInterface $container ): bool {
-		$listener = $container->get( 'vaulting.customer-approval-listener' );
-		assert( $listener instanceof CustomerApprovalListener );
 
-		$listener->listen();
+		add_action(
+			'woocommerce_init',
+			function() use ( $container ) {
+				$listener = $container->get( 'vaulting.customer-approval-listener' );
+				assert( $listener instanceof CustomerApprovalListener );
+
+				$listener->listen();
+			}
+		);
 
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		add_action(
@@ -97,6 +114,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			}
 		);
 
+		$this->session_handler = $container->get( 'session.handler' );
 		add_filter(
 			'woocommerce_get_customer_payment_tokens',
 			/**
@@ -118,9 +136,15 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 					&& ! $is_post // Don't check on POST so we have all payment methods on form submissions.
 				) {
 					foreach ( $tokens as $index => $token ) {
-						if ( $token instanceof PaymentTokenApplePay ) {
+						if ( $token instanceof PaymentTokenApplePay || $token instanceof PaymentTokenPayPal || $token instanceof PaymentTokenVenmo ) {
 							unset( $tokens[ $index ] );
 						}
+					}
+				}
+
+				if ( is_checkout() && ! $is_post && $this->is_paypal_continuation() ) {
+					foreach ( $tokens as $index => $token ) {
+						unset( $tokens[ $index ] );
 					}
 				}
 

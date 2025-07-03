@@ -22,6 +22,9 @@ class SettingsListenerTest extends ModularTestCase
 		parent::setUp();
 	}
 
+	/**
+	 * @doesNotPerformAssertions
+	 */
 	public function testListen()
 	{
 		$settings = Mockery::mock(Settings::class);

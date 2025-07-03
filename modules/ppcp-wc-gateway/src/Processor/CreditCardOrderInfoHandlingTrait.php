@@ -96,52 +96,35 @@ trait CreditCardOrderInfoHandlingTrait {
 			return;
 		}
 
-		$fraud_responses  = $fraud->to_array();
 		$card_brand       = $payment_source->properties()->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
 		$card_last_digits = $payment_source->properties()->last_digits ?? __( 'N/A', 'woocommerce-paypal-payments' );
 
-		$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
+		$response_order_note_title = __( 'PayPal Advanced Card Processing Verification:', 'woocommerce-paypal-payments' );
 		/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
-		$avs_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
-		$avs_response_order_note_result_format = '<ul class="ppcp_avs_result">
-                                                                <li>%1$s</li>
-                                                                <ul class="ppcp_avs_result_inner">
-                                                                    <li>%2$s</li>
-                                                                    <li>%3$s</li>
-                                                                </ul>
-                                                                <li>%4$s</li>
-                                                                <li>%5$s</li>
-                                                            </ul>';
-		$avs_response_order_note_result        = sprintf(
-			$avs_response_order_note_result_format,
-			/* translators: %s is fraud AVS code */
-			sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['avs_code'] ) ),
-			/* translators: %s is fraud AVS address match */
-			sprintf( __( 'Address Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['address_match'] ) ),
-			/* translators: %s is fraud AVS postal match */
-			sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) ),
-			/* translators: %s is card brand */
-			sprintf( __( 'Card Brand: %s', 'woocommerce-paypal-payments' ), esc_html( $card_brand ) ),
-			/* translators: %s card last digits */
-			sprintf( __( 'Card Last Digits: %s', 'woocommerce-paypal-payments' ), esc_html( $card_last_digits ) )
+		$response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
+		$response_order_note_result_format = '<ul class="ppcp_avs_cvv_result">
+            <li>%1$s</li>
+            <li>%2$s</li>
+            <li>%3$s</li>
+        </ul>';
+		$response_order_note_result        = sprintf(
+			$response_order_note_result_format,
+			/* translators: %1$s is card brand and %2$s card last 4 digits */
+			sprintf( __( 'Card: %1$s (%2$s)', 'woocommerce-paypal-payments' ), $card_brand, $card_last_digits ),
+			/* translators: %s is fraud AVS message */
+			sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), $fraud->get_avs_code_message() ),
+			/* translators: %s is fraud CVV message */
+			sprintf( __( 'CVV: %s', 'woocommerce-paypal-payments' ), $fraud->get_cvv2_code_message() ),
 		);
-		$avs_response_order_note = sprintf(
-			$avs_response_order_note_format,
-			esc_html( $avs_response_order_note_title ),
-			wp_kses_post( $avs_response_order_note_result )
+		$response_order_note = sprintf(
+			$response_order_note_format,
+			esc_html( $response_order_note_title ),
+			wp_kses_post( $response_order_note_result )
 		);
-		$wc_order->add_order_note( $avs_response_order_note );
-
-		$cvv_response_order_note_format = '<ul class="ppcp_cvv_result"><li>%1$s</li></ul>';
-		$cvv_response_order_note        = sprintf(
-			$cvv_response_order_note_format,
-			/* translators: %s is fraud CVV match */
-			sprintf( __( 'CVV2 Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['cvv_match'] ) )
-		);
-		$wc_order->add_order_note( $cvv_response_order_note );
+		$wc_order->add_order_note( $response_order_note );
 
 		$meta_details = array_merge(
-			$fraud_responses,
+			$fraud->to_array(),
 			array(
 				'card_brand'       => $card_brand,
 				'card_last_digits' => $card_last_digits,

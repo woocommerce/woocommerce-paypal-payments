@@ -14,17 +14,22 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\FactoryModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
+use Psr\Log\LoggerInterface;
 
 /**
  * Class ApiModule
  */
-class ApiModule implements ServiceModule, ExtendingModule, ExecutableModule {
+class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
@@ -32,6 +37,13 @@ class ApiModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function factories(): array {
+		return require __DIR__ . '/../factories.php';
 	}
 
 	/**
@@ -101,6 +113,63 @@ class ApiModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			},
 			10,
 			2
+		);
+
+		/**
+		 * Flushes the API client caches.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_flush_api_cache',
+			static function () use ( $c ) {
+				$caches = array(
+					'api.paypal-bearer-cache',
+					'api.client-credentials-cache',
+					'settings.service.signup-link-cache',
+				);
+
+				$logger = $c->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+				$logger->info( 'Flushing API caches...' );
+
+				foreach ( $caches as $cache_id ) {
+					$cache = $c->get( $cache_id );
+					assert( $cache instanceof Cache );
+
+					$cache->flush();
+				}
+			}
+		);
+
+		/**
+		 * Filters the request arguments to add the `'PayPal-Partner-Attribution-Id'` header.
+		 *
+		 * This ensures that all API requests include the appropriate BN code retrieved
+		 * from the `PartnerAttribution` helper. Using this approach avoids the need
+		 * for extensive refactoring of existing classes that use the `RequestTrait`.
+		 *
+		 * The filter is applied in {@see RequestTrait::request()} before making an API request.
+		 *
+		 * @see PartnerAttribution::get_bn_code() Retrieves the BN code dynamically.
+		 * @see RequestTrait::request() Where the filter `ppcp_request_args` is applied.
+		 */
+		add_filter(
+			'ppcp_request_args',
+			static function ( array $args ) use ( $c ) {
+				if ( isset( $args['headers']['PayPal-Partner-Attribution-Id'] ) ) {
+					return $args;
+				}
+
+				$partner_attribution = $c->get( 'api.helper.partner-attribution' );
+				assert( $partner_attribution instanceof PartnerAttribution );
+
+				if ( ! isset( $args['headers'] ) || ! is_array( $args['headers'] ) ) {
+					$args['headers'] = array();
+				}
+
+				$args['headers']['PayPal-Partner-Attribution-Id'] = $partner_attribution->get_bn_code();
+
+				return $args;
+			}
 		);
 
 		return true;

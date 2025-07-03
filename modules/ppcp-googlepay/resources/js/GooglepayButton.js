@@ -44,7 +44,6 @@ import moduleStorage from './Helper/GooglePayStorage';
  * @property {Function}            createButton         - The convenience method is used to generate a Google Pay payment button styled with the latest Google Pay branding for insertion into a webpage.
  * @property {Function}            isReadyToPay         - Use the isReadyToPay(isReadyToPayRequest) method to determine a user's ability to return a form of payment from the Google Pay API.
  * @property {(Object) => Promise} loadPaymentData      - This method presents a Google Pay payment sheet that allows selection of a payment method and optionally configured parameters
- * @property {Function}            onPaymentAuthorized  - This method is called when a payment is authorized in the payment sheet.
  * @property {Function}            onPaymentDataChanged - This method handles payment data changes in the payment sheet such as shipping address and shipping options.
  */
 
@@ -62,6 +61,21 @@ import moduleStorage from './Helper/GooglePayStorage';
  * @property {string} totalPriceLabel  - Optional. Custom label for the total price within the display items.
  * @property {string} checkoutOption   - Optional. Affects the submit button text displayed in the Google Pay payment sheet.
  */
+
+/**
+ * Indicates that the payment was approved by PayPal and can be processed.
+ */
+const ORDER_APPROVED = 'approved';
+
+/**
+ * We should not process this order, as it failed for some reason.
+ */
+const ORDER_FAILED = 'failed';
+
+/**
+ * The order is still pending, and we need to request 3DS details from the customer.
+ */
+const ORDER_INCOMPLETE = 'payerAction';
 
 function payerDataFromPaymentResponse( response ) {
 	const raw = response?.paymentMethodData?.info?.billingAddress;
@@ -190,7 +204,6 @@ class GooglepayButton extends PaymentButton {
 		);
 
 		this.init = this.init.bind( this );
-		this.onPaymentAuthorized = this.onPaymentAuthorized.bind( this );
 		this.onPaymentDataChanged = this.onPaymentDataChanged.bind( this );
 		this.onButtonClick = this.onButtonClick.bind( this );
 
@@ -411,8 +424,6 @@ class GooglepayButton extends PaymentButton {
 			return callbacks;
 		}
 
-		callbacks.onPaymentAuthorized = this.onPaymentAuthorized;
-
 		if ( this.requiresShipping ) {
 			callbacks.onPaymentDataChanged = this.onPaymentDataChanged;
 		}
@@ -536,10 +547,10 @@ class GooglepayButton extends PaymentButton {
 	/**
 	 * Show Google Pay payment sheet when Google Pay payment button is clicked
 	 */
-	onButtonClick() {
-		this.log( 'onButtonClick' );
+	async onButtonClick() {
+		this.logGroup( 'onButtonClick' );
 
-		const initiatePaymentRequest = () => {
+		const initiatePaymentRequest = async () => {
 			window.ppcpFundingSource = 'googlepay';
 			const paymentDataRequest = this.paymentDataRequest();
 
@@ -549,10 +560,19 @@ class GooglepayButton extends PaymentButton {
 				this.context
 			);
 
-			return this.paymentsClient.loadPaymentData( paymentDataRequest );
+			return this.paymentsClient
+				.loadPaymentData( paymentDataRequest )
+				.then( ( paymentData ) => {
+					this.log( 'loadPaymentData response:', paymentData );
+					return paymentData;
+				} )
+				.catch( ( error ) => {
+					this.error( 'loadPaymentData failed:', error );
+					throw error;
+				} );
 		};
 
-		const validateForm = () => {
+		const validateForm = async () => {
 			if ( 'function' !== typeof this.contextHandler.validateForm ) {
 				return Promise.resolve();
 			}
@@ -563,7 +583,7 @@ class GooglepayButton extends PaymentButton {
 			} );
 		};
 
-		const getTransactionInfo = () => {
+		const getTransactionInfo = async () => {
 			if ( 'function' !== typeof this.contextHandler.transactionInfo ) {
 				return Promise.resolve();
 			}
@@ -579,9 +599,18 @@ class GooglepayButton extends PaymentButton {
 				} );
 		};
 
-		validateForm()
+		const paymentData = await validateForm()
 			.then( getTransactionInfo )
 			.then( initiatePaymentRequest );
+
+		this.logGroup();
+
+		// If something failed above, stop here. Only continue if we have the paymentData.
+		if ( ! paymentData ) {
+			return;
+		}
+
+		return this.processPayment( paymentData );
 	}
 
 	paymentDataRequest() {
@@ -591,7 +620,7 @@ class GooglepayButton extends PaymentButton {
 		};
 
 		const useShippingCallback = this.requiresShipping;
-		const callbackIntents = [ 'PAYMENT_AUTHORIZATION' ];
+		const callbackIntents = [];
 
 		if ( useShippingCallback ) {
 			callbackIntents.push( 'SHIPPING_ADDRESS', 'SHIPPING_OPTION' );
@@ -791,25 +820,31 @@ class GooglepayButton extends PaymentButton {
 	// Payment process
 	//------------------------
 
-	onPaymentAuthorized( paymentData ) {
-		this.log( 'onPaymentAuthorized', paymentData );
-
-		return this.processPayment( paymentData );
-	}
-
 	async processPayment( paymentData ) {
 		this.logGroup( 'processPayment' );
 
+		let result;
+
 		const payer = payerDataFromPaymentResponse( paymentData );
+
+		const paymentResponse = ( state, intent = null, message = null ) => {
+			const response = {
+				transactionState: state,
+			};
+
+			if ( intent || message ) {
+				response.error = { intent, message };
+			}
+
+			this.log( 'processPaymentResponse', response );
+
+			return response;
+		};
 
 		const paymentError = ( reason ) => {
 			this.error( reason );
 
-			return this.processPaymentResponse(
-				'ERROR',
-				'PAYMENT_AUTHORIZATION',
-				reason
-			);
+			return paymentResponse( 'ERROR', 'PAYMENT_AUTHORIZATION', reason );
 		};
 
 		const checkPayPalApproval = async ( orderId ) => {
@@ -824,15 +859,41 @@ class GooglepayButton extends PaymentButton {
 
 			this.log( 'confirmOrder', confirmOrderResponse );
 
-			return 'APPROVED' === confirmOrderResponse?.status;
+			switch ( confirmOrderResponse?.status ) {
+				case 'APPROVED':
+					return ORDER_APPROVED;
+
+				case 'PAYER_ACTION_REQUIRED':
+					return ORDER_INCOMPLETE;
+
+				default:
+					return ORDER_FAILED;
+			}
+		};
+
+		/**
+		 * Initiates payer action and handles the 3DS contingency.
+		 *
+		 * @param {string} orderID
+		 */
+		const initiatePayerAction = ( orderID ) => {
+			this.log( 'initiatePayerAction', orderID );
+
+			return widgetBuilder.paypal
+				.Googlepay()
+				.initiatePayerAction( { orderId: orderID } );
 		};
 
 		/**
 		 * This approval mainly confirms that the orderID is valid.
 		 *
-		 * It's still needed because this handler redirects to the checkout page if the server-side
+		 * It's still needed because this handler REDIRECTS to the checkout page if the server-side
 		 * approval was successful.
 		 *
+		 * I.e. on success, the approveOrder handler initiates a browser navigation; this means
+		 * it should be the last action that happens in the payment process.
+		 *
+		 * @see onApproveForContinue.js
 		 * @param {string} orderID
 		 */
 		const approveOrderServerSide = async ( orderID ) => {
@@ -860,61 +921,40 @@ class GooglepayButton extends PaymentButton {
 			return isApproved;
 		};
 
-		const processPaymentPromise = async ( resolve ) => {
-			const id = await this.contextHandler.createOrder();
+		// Add billing data to session.
+		moduleStorage.setPayer( payer );
+		setPayerData( payer );
 
-			this.log( 'createOrder', id );
+		try {
+			const orderId = await this.contextHandler.createOrder();
+			this.log( 'createOrder', orderId );
 
-			const isApprovedByPayPal = await checkPayPalApproval( id );
+			const orderState = await checkPayPalApproval( orderId );
 
-			if ( ! isApprovedByPayPal ) {
-				resolve( paymentError( 'TRANSACTION FAILED' ) );
-
-				return;
-			}
-
-			// This must be the last step in the process, as it initiates a redirect.
-			const success = await approveOrderServerSide( id );
-
-			if ( success ) {
-				resolve( this.processPaymentResponse( 'SUCCESS' ) );
+			if ( ORDER_FAILED === orderState ) {
+				result = paymentError( 'TRANSACTION FAILED' );
 			} else {
-				resolve( paymentError( 'FAILED TO APPROVE' ) );
+				// This payment requires a 3DS verification before we can process the order.
+				if ( ORDER_INCOMPLETE === orderState ) {
+					const response = await initiatePayerAction( orderId );
+					this.log( '3DS verification completed', response );
+				}
+
+				const success = await approveOrderServerSide( orderId );
+
+				if ( success ) {
+					result = paymentResponse( 'SUCCESS' );
+				} else {
+					result = paymentError( 'FAILED TO APPROVE' );
+				}
 			}
-		};
-
-		const addBillingDataToSession = () => {
-			moduleStorage.setPayer( payer );
-			setPayerData( payer );
-		};
-
-		return new Promise( async ( resolve ) => {
-			try {
-				addBillingDataToSession();
-				await processPaymentPromise( resolve );
-			} catch ( err ) {
-				resolve( paymentError( err.message ) );
-			}
-
-			this.logGroup();
-		} );
-	}
-
-	processPaymentResponse( state, intent = null, message = null ) {
-		const response = {
-			transactionState: state,
-		};
-
-		if ( intent || message ) {
-			response.error = {
-				intent,
-				message,
-			};
+		} catch ( err ) {
+			result = paymentError( err.message );
 		}
 
-		this.log( 'processPaymentResponse', response );
+		this.logGroup();
 
-		return response;
+		return result;
 	}
 
 	/**

@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
+use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Entity\CartTotals;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -109,6 +110,24 @@ class AmountFactory {
 			$breakdown
 		);
 		return $amount;
+	}
+
+	/**
+	 *  Returns an Amount object based off a WooCommerce cart object from the Store API.
+	 */
+	public function from_store_api_cart( CartTotals $cart_totals ): Amount {
+		return new Amount(
+			$cart_totals->total_price()->to_paypal(),
+			new AmountBreakdown(
+				$cart_totals->total_items()->to_paypal(),
+				$cart_totals->total_shipping()->to_paypal(),
+				$cart_totals->total_tax()->to_paypal(),
+				null,
+				null,
+				null,
+				$cart_totals->total_discount()->to_paypal(),
+			)
+		);
 	}
 
 	/**

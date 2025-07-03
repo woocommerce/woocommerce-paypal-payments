@@ -46,11 +46,11 @@ class Plugin implements PluginInterface {
 	protected $base_name;
 
 	/**
-	 * The plugin title.
+	 * The plugin URI.
 	 *
 	 * @var string
 	 */
-	protected $title;
+	protected $plugin_uri;
 
 	/**
 	 * The plugin description.
@@ -87,7 +87,7 @@ class Plugin implements PluginInterface {
 	 * @param VersionInterface $version The plugin version.
 	 * @param string           $base_dir The path to the plugin base directory.
 	 * @param string           $base_name The plugin base name.
-	 * @param string           $title The plugin title.
+	 * @param string           $plugin_uri The plugin URI.
 	 * @param string           $description The plugin description.
 	 * @param string           $text_domain The text domain of this plugin.
 	 * @param VersionInterface $min_php_version The minimal version of PHP required by this plugin.
@@ -98,7 +98,7 @@ class Plugin implements PluginInterface {
 		VersionInterface $version,
 		string $base_dir,
 		string $base_name,
-		string $title,
+		string $plugin_uri,
 		string $description,
 		string $text_domain,
 		VersionInterface $min_php_version,
@@ -109,7 +109,7 @@ class Plugin implements PluginInterface {
 		$this->version         = $version;
 		$this->base_dir        = $base_dir;
 		$this->base_name       = $base_name;
-		$this->title           = $title;
+		$this->plugin_uri      = $plugin_uri;
 		$this->text_domain     = $text_domain;
 		$this->min_php_version = $min_php_version;
 		$this->min_wp_version  = $min_wp_version;
@@ -126,7 +126,27 @@ class Plugin implements PluginInterface {
 	 * The plugin description.
 	 */
 	public function getDescription(): string {
-		return $this->description;
+
+		$allowed_tags = array(
+			'abbr'    => array( 'title' => true ),
+			'acronym' => array( 'title' => true ),
+			'code'    => true,
+			'em'      => true,
+			'strong'  => true,
+			'a'       => array(
+				'href'  => true,
+				'title' => true,
+			),
+		);
+
+		// phpcs:disable
+		$text = \__( $this->description, $this->text_domain );
+
+		/**
+		 * @psalm-suppress InvalidArgument
+		 */
+		return wp_kses( $text, $allowed_tags );
+		// phpcs:enable
 	}
 
 	/**
@@ -158,10 +178,17 @@ class Plugin implements PluginInterface {
 	}
 
 	/**
+	 * The plugin URI.
+	 */
+	public function getUri(): string {
+		return esc_url( $this->plugin_uri );
+	}
+
+	/**
 	 * The plugin title.
 	 */
 	public function getTitle(): string {
-		return $this->title;
+		return '<a href="' . $this->getUri() . '">' . $this->getName() . '</a>';
 	}
 
 	/**

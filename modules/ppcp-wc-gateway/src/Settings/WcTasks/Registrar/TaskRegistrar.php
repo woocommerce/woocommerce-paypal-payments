@@ -21,9 +21,14 @@ class TaskRegistrar implements TaskRegistrarInterface {
 	 *
 	 * @throws RuntimeException If problem registering.
 	 */
-	public function register( array $tasks ): void {
+	public function register( string $list_id, array $tasks ): void {
+		$task_lists = TaskLists::get_lists();
+		if ( ! isset( $task_lists[ $list_id ] ) ) {
+			return;
+		}
+
 		foreach ( $tasks as $task ) {
-			$added_task = TaskLists::add_task( 'extended', $task );
+			$added_task = TaskLists::add_task( $list_id, $task );
 			if ( $added_task instanceof WP_Error ) {
 				throw new RuntimeException( $added_task->get_error_message() );
 			}

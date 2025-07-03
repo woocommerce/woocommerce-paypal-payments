@@ -1,0 +1,15 @@
+/**
+ * Global app-level styles
+ */
+
+.ppcp-r-app.loading {
+	.ppcp-r-spinner-overlay {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+
+	.ppcp-r-spinner-overlay__message {
+		transform: translate(0, 32px)
+	}
+}

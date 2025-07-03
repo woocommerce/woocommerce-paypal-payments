@@ -25,7 +25,7 @@ class SellerStatusFactory {
 	 *
 	 * @return SellerStatus
 	 */
-	public function from_paypal_reponse( \stdClass $json ) : SellerStatus {
+	public function from_paypal_response( \stdClass $json ) : SellerStatus {
 		$products = array_map(
 			function( $json ) : SellerStatusProduct {
 				$product = new SellerStatusProduct(
@@ -49,6 +49,6 @@ class SellerStatusFactory {
 			isset( $json->capabilities ) ? (array) $json->capabilities : array()
 		);
 
-		return new SellerStatus( $products, $capabilities );
+		return new SellerStatus( $products, $capabilities, $json->country ?? '' );
 	}
 }

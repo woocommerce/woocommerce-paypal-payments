@@ -5541,8 +5541,8 @@
     "aliases": [],
     "minimum-stability": "dev",
     "stability-flags": {
-        "php-stubs/wordpress-stubs": 0,
-        "php-stubs/woocommerce-stubs": 0
+        "php-stubs/woocommerce-stubs": 0,
+        "php-stubs/wordpress-stubs": 0
     },
     "prefer-stable": true,
     "prefer-lowest": false,
@@ -5550,7 +5550,7 @@
         "php": "^7.4 | ^8.0",
         "ext-json": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "7.4"
     },

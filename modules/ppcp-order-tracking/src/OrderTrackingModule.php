@@ -55,23 +55,21 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): bool {
-		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
-		assert( $endpoint instanceof OrderTrackingEndpoint );
 
-		add_action( 'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT, array( $endpoint, 'handle_request' ) );
+		add_action(
+			'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT,
+			function() use ( $c ) {
+				$c->get( 'order-tracking.endpoint.controller' )->handle_request();
+			}
+		);
 
 		$asset_loader = $c->get( 'order-tracking.assets' );
 		assert( $asset_loader instanceof OrderEditPageAssets );
 
-		$logger = $c->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
-		$bearer = $c->get( 'api.bearer' );
-
 		add_action(
 			'init',
-			function() use ( $asset_loader, $bearer ) {
-				if ( ! $this->is_tracking_enabled( $bearer ) ) {
+			function() use ( $asset_loader, $c ) {
+				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
 
@@ -80,17 +78,14 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 		);
 		add_action(
 			'init',
-			function() use ( $asset_loader, $bearer ) {
-				if ( ! $this->is_tracking_enabled( $bearer ) ) {
+			function() use ( $asset_loader, $c ) {
+				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
 
 				$asset_loader->enqueue();
 			}
 		);
-
-		$meta_box_renderer = $c->get( 'order-tracking.meta-box.renderer' );
-		assert( $meta_box_renderer instanceof MetaBoxRenderer );
 
 		add_action(
 			'add_meta_boxes',
@@ -103,8 +98,8 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( string $post_type, $post_or_order_object ) use ( $meta_box_renderer, $bearer ) {
-				if ( ! $this->is_tracking_enabled( $bearer ) ) {
+			function( string $post_type, $post_or_order_object ) use ( $c ) {
+				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
 
@@ -134,6 +129,9 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
 					? wc_get_page_screen_id( 'shop-order' )
 					: 'shop_order';
+
+				$meta_box_renderer = $c->get( 'order-tracking.meta-box.renderer' );
+				assert( $meta_box_renderer instanceof MetaBoxRenderer );
 
 				add_meta_box(
 					'ppcp_order-tracking',

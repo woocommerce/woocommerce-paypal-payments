@@ -15,7 +15,7 @@ class PreviewButtonManager {
 
 	/**
 	 * Resolves the promise.
-	 * Used by `this.boostrap()` to process enqueued initialization logic.
+	 * Used by `this.bootstrap()` to process enqueued initialization logic.
 	 */
 	#onInitResolver;
 

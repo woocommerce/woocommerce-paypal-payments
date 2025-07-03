@@ -40,8 +40,9 @@ class WidgetBuilder {
 
 	renderButtons( wrapper ) {
 		wrapper = this.sanitizeWrapper( wrapper );
+		const entryKey = this.toKey( wrapper );
 
-		if ( ! this.buttons.has( this.toKey( wrapper ) ) ) {
+		if ( ! this.buttons.has( entryKey ) ) {
 			return;
 		}
 
@@ -49,11 +50,11 @@ class WidgetBuilder {
 			return;
 		}
 
-		const entry = this.buttons.get( this.toKey( wrapper ) );
+		const entry = this.buttons.get( entryKey );
 		const btn = this.paypal.Buttons( entry.options );
 
 		if ( ! btn.isEligible() ) {
-			this.buttons.delete( this.toKey( wrapper ) );
+			this.buttons.delete( entryKey );
 			return;
 		}
 
@@ -67,7 +68,7 @@ class WidgetBuilder {
 	}
 
 	renderAllButtons() {
-		for ( const [ wrapper, entry ] of this.buttons ) {
+		for ( const [ wrapper ] of this.buttons ) {
 			this.renderButtons( wrapper );
 		}
 	}

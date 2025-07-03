@@ -143,10 +143,15 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			function( array $components ) {
-				$components[] = 'buttons';
+			function( array $components, string $context ) {
+				if ( str_ends_with( $context, '-block' ) ) {
+					$components[] = 'buttons';
+				}
+
 				return $components;
-			}
+			},
+			10,
+			2
 		);
 		return true;
 	}

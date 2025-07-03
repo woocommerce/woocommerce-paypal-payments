@@ -49,6 +49,8 @@ class RenewalHandler {
 	public function process( array $subscriptions, string $transaction_id ): void {
 		foreach ( $subscriptions as $subscription ) {
 			if ( $this->is_for_renewal_order( $subscription ) ) {
+				$subscription->update_status( 'on-hold' );
+
 				$renewal_order = wcs_create_renewal_order( $subscription );
 				if ( is_a( $renewal_order, WC_Order::class ) ) {
 					$this->logger->info(

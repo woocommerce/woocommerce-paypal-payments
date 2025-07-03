@@ -178,6 +178,11 @@ class PurchaseUnitSanitizer {
 					// Get a more intelligent adjustment mechanism.
 					$increment = ( new MoneyFormatter() )->minimum_increment( $item['unit_amount']['currency_code'] );
 
+					// not floor items that will be negative then.
+					if ( (float) $item['unit_amount']['value'] < $increment ) {
+						continue;
+					}
+
 					$this->purchase_unit['items'][ $index ]['unit_amount'] = ( new Money(
 						( (float) $item['unit_amount']['value'] ) - $increment,
 						$item['unit_amount']['currency_code']
