@@ -328,17 +328,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		add_action(
-			'wp_head',
-			function () use ( $c ) {
-				// Add meta tag to allow feature-detection of the site's AXO payment state.
-				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
-				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
-
-				$this->add_feature_detection_tag( $dcc_configuration->use_fastlane() );
-			}
-		);
-
-		add_action(
 			'wc_ajax_' . FrontendLoggerEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'axo.endpoint.frontend-logger' );
