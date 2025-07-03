@@ -266,9 +266,11 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						if ( $dcc_configuration->use_fastlane() ) {
 							// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 							echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
-						}
 
-						$this->add_feature_detection_tag( $dcc_configuration->use_fastlane() );
+							$this->add_feature_detection_tag( true );
+						} else {
+							$this->add_feature_detection_tag( false );
+						}
 					}
 				);
 
