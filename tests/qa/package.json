@@ -61,8 +61,5 @@
       "@wordpress/no-unsafe-wp-apis": "off",
       "no-console": "off"
     }
-  },
-  "workspaces": [
-    "playwright-utils"
-  ]
+  }
 }

@@ -80,8 +80,6 @@ export default defineConfig< BaseExtend >( {
 
 		...devices[ 'Desktop Chrome' ],
 
-		viewport: { width: 1280, height: 850 },
-
 		launchOptions: {
 			// Put your chromium-specific args here
 			args: [ '--disable-web-security' ],
