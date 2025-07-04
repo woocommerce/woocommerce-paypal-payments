@@ -42,7 +42,7 @@ return array(
 		/** @var Properties $properties */
 		$properties = $container->get( Package::PROPERTIES );
 
-		/** @psalm-suppress MissingClosureParamType */
+		/** @psalm-suppress UndefinedInterfaceMethod */
 		return $properties->pluginMainFile();
 	},
 );
