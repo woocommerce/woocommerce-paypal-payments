@@ -127,6 +127,7 @@ class ScriptDataHandler {
 			'woocommerce-paypal-payments',
 		);
 
+		/** @psalm-suppress UnresolvableInclude */
 		$style_asset_file = require dirname( realpath( __FILE__ ) ?: __FILE__, 3 ) . '/assets/style.asset.php';
 
 		wp_register_style(

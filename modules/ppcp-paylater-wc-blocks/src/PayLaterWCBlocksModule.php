@@ -192,8 +192,10 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 					return;
 				}
 
+				$path = realpath( __FILE__ ) ?: __FILE__;
+
 				register_block_type(
-					dirname( realpath( __FILE__ ) ?: __FILE__, 2 ) . '/resources/js/CartPayLaterMessagesBlock',
+					dirname( $path, 2 ) . '/resources/js/CartPayLaterMessagesBlock',
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							return PayLaterWCBlocksUtils::render_paylater_block(
