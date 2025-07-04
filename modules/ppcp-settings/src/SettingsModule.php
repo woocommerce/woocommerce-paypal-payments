@@ -105,7 +105,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$module_url = $container->get( 'settings.url' );
 
 					/** @psalm-suppress UnresolvableInclude */
-					$script_asset_file = require dirname( realpath( __FILE__ ) ?: __FILE__, 2 ) . '/assets/switchSettingsUi.asset.php';
+					$script_asset_file = require $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets/switchSettingsUi.asset.php';
 
 					wp_register_script(
 						'ppcp-switch-settings-ui',
