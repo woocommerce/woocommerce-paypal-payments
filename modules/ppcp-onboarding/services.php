@@ -123,7 +123,7 @@ return array(
 	},
 
 	'onboarding.url'                     => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'onboarding.endpoint.login-seller'   => static function ( ContainerInterface $container ) : LoginSellerEndpoint {

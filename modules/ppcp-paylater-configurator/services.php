@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paylater-configurator', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-paylater-configurator', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'paylater-configurator.factory.config'       => static function ( ContainerInterface $container ): ConfigFactory {
 		return new ConfigFactory();

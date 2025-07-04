@@ -87,7 +87,7 @@ return array(
 		);
 	},
 	'save-payment-methods.module.url'                    => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-save-payment-methods/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-save-payment-methods/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'save-payment-methods.endpoint.create-setup-token'   => static function ( ContainerInterface $container ): CreateSetupToken {
 		return new CreateSetupToken(

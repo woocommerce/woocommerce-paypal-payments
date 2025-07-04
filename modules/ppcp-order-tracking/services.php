@@ -43,7 +43,7 @@ return array(
 		);
 	},
 	'order-tracking.module.url'                       => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-order-tracking/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-order-tracking/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'order-tracking.meta-box.renderer'                => static function ( ContainerInterface $container ): MetaBoxRenderer {
 		return new MetaBoxRenderer(

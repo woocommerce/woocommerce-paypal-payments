@@ -174,7 +174,7 @@ return array(
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-button/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-button/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
 		$defaults = array( 'checkout', 'pay-now' );

@@ -30,7 +30,7 @@ return array(
 		);
 	},
 	'paypal-subscriptions.module.url'               => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paypal-subscriptions/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-paypal-subscriptions/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'paypal-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		return new RenewalHandler( $container->get( 'woocommerce.logger.woocommerce' ) );

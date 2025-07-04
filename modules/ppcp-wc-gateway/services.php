@@ -1351,13 +1351,13 @@ return array(
 		);
 	},
 	'wcgateway.url'                                        => static function ( ContainerInterface $container ): string {
-		return plugins_url( $container->get( 'wcgateway.relative-path' ), $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( $container->get( 'wcgateway.relative-path' ), $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'wcgateway.relative-path'                              => static function( ContainerInterface $container ): string {
 		return 'modules/ppcp-wc-gateway/';
 	},
 	'wcgateway.absolute-path'                              => static function( ContainerInterface $container ): string {
-		return plugin_dir_path( $container->get( 'ppcp.plugin-path' ) ) . $container->get( 'wcgateway.relative-path' );
+		return plugin_dir_path( $container->get( 'ppcp.path-to-plugin-main-file' ) ) . $container->get( 'wcgateway.relative-path' );
 	},
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );

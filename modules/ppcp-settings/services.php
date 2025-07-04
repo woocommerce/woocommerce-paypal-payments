@@ -75,7 +75,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 return array(
 	'settings.url'                                        => static function ( ContainerInterface $container ) : string {
-		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ) : OnboardingProfile {
 		$can_use_casual_selling = $container->get( 'settings.casual-selling.eligible' );
@@ -370,7 +370,8 @@ return array(
 		$merchant_id = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
+		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
+		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
 	},
 	'settings.ajax.switch_ui'                             => static function ( ContainerInterface $container ) : SwitchSettingsUiEndpoint {
 		return new SwitchSettingsUiEndpoint(

@@ -205,7 +205,7 @@ return array(
 	},
 
 	'googlepay.url'                             => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-googlepay/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-googlepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'googlepay.sdk_url'                         => static function ( ContainerInterface $container ): string {

@@ -220,6 +220,6 @@ return array(
 	},
 
 	'webhook.module-url'                      => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-webhooks/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-webhooks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 );

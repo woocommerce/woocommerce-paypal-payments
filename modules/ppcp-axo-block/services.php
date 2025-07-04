@@ -18,7 +18,7 @@ return array(
 		return true;
 	},
 	'axoblock.url'       => static function ( ContainerInterface $container ) : string {
-		return plugins_url( '/modules/ppcp-axo-block/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-axo-block/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'axoblock.method'    => static function ( ContainerInterface $container ) : AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(

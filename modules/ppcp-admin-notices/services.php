@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
 
 return array(
 	'admin-notices.url'                   => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-admin-notices/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-admin-notices/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'admin-notices.renderer'              => static function ( ContainerInterface $container ): RendererInterface {
 		return new Renderer(

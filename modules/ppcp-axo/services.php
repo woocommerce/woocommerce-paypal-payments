@@ -59,7 +59,7 @@ return array(
 	},
 
 	'axo.url'                                => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-axo/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-axo/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'axo.manager'                            => static function ( ContainerInterface $container ): AxoManager {

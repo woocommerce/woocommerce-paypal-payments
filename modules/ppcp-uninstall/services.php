@@ -79,7 +79,7 @@ return array(
 	},
 
 	'uninstall.module-url'                      => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'uninstall.clear-db-assets'                 => function( ContainerInterface $container ) : ClearDatabaseAssets {

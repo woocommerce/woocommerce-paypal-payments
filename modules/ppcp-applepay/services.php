@@ -136,7 +136,7 @@ return array(
 		return false;
 	},
 	'applepay.url'                             => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-applepay/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-applepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';

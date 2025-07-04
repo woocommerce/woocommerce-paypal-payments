@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductSta
 
 return array(
 	'ppcp-local-apms.url'                       => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-local-alternative-payment-methods/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-local-alternative-payment-methods/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'ppcp-local-apms.payment-methods'           => static function( ContainerInterface $container ): array {
 		return array(

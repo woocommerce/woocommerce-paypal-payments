@@ -101,7 +101,7 @@ return array(
 	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-compat/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-compat/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'compat.assets'                                  => function( ContainerInterface $container ) : CompatAssets {

@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	'paylater-wc-blocks.url'               => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paylater-wc-blocks/', $container->get( 'ppcp.plugin-path' ) );
+		return plugins_url( '/modules/ppcp-paylater-wc-blocks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'paylater-wc-blocks.cart-renderer'     => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
