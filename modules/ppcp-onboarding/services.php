@@ -123,10 +123,7 @@ return array(
 	},
 
 	'onboarding.url'                     => static function ( ContainerInterface $container ): string {
-		return plugins_url(
-			'/modules/ppcp-onboarding/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.plugin-path' ) );
 	},
 
 	'onboarding.endpoint.login-seller'   => static function ( ContainerInterface $container ) : LoginSellerEndpoint {

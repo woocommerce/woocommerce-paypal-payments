@@ -18,15 +18,7 @@ return array(
 		return true;
 	},
 	'axoblock.url'       => static function ( ContainerInterface $container ) : string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-axo-block/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-axo-block/', $container->get( 'ppcp.plugin-path' ) );
 	},
 	'axoblock.method'    => static function ( ContainerInterface $container ) : AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(

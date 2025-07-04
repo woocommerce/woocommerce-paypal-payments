@@ -30,15 +30,7 @@ return array(
 		);
 	},
 	'paypal-subscriptions.module.url'               => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-paypal-subscriptions/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-paypal-subscriptions/', $container->get( 'ppcp.plugin-path' ) );
 	},
 	'paypal-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		return new RenewalHandler( $container->get( 'woocommerce.logger.woocommerce' ) );

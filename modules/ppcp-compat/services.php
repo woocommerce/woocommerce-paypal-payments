@@ -101,15 +101,7 @@ return array(
 	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-compat/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-compat/', $container->get( 'ppcp.plugin-path' ) );
 	},
 
 	'compat.assets'                                  => function( ContainerInterface $container ) : CompatAssets {

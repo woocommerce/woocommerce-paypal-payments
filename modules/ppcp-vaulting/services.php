@@ -13,10 +13,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	'vaulting.module-url'                 => static function ( ContainerInterface $container ): string {
-		return plugins_url(
-			'/modules/ppcp-vaulting/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-vaulting/', $container->get( 'ppcp.plugin-path' ) );
 	},
 	'vaulting.repository.payment-token'   => static function ( ContainerInterface $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
