@@ -101,13 +101,8 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 					)
 				);
 
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
 				register_block_type(
-					dirname( realpath( __FILE__ ), 2 ),
+					dirname( realpath( __FILE__ ) ?: __FILE__, 2 ),
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							$renderer = $c->get( 'paylater-block.renderer' );

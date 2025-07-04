@@ -192,13 +192,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 					return;
 				}
 
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
 				register_block_type(
-					dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CartPayLaterMessagesBlock',
+					dirname( realpath( __FILE__ ) ?: __FILE__, 2 ) . '/resources/js/CartPayLaterMessagesBlock',
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							return PayLaterWCBlocksUtils::render_paylater_block(
@@ -211,13 +206,8 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 					)
 				);
 
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
 				register_block_type(
-					dirname( realpath( __FILE__ ), 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
+					dirname( $path, 2 ) . '/resources/js/CheckoutPayLaterMessagesBlock',
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							return PayLaterWCBlocksUtils::render_paylater_block(

@@ -109,7 +109,7 @@ class ScriptDataHandler {
 		 *
 		 * @psalm-suppress UnresolvableInclude
 		 */
-		$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 3 ) . '/assets/index.asset.php';
+		$script_asset_file = require dirname( realpath( __FILE__ ) ?: __FILE__, 3 ) . '/assets/index.asset.php';
 
 		$module_url = $this->settings_url;
 
@@ -127,12 +127,7 @@ class ScriptDataHandler {
 			'woocommerce-paypal-payments',
 		);
 
-		/**
-		 * Require resolves.
-		 *
-		 * @psalm-suppress UnresolvableInclude
-		 */
-		$style_asset_file = require dirname( realpath( __FILE__ ) ?: '', 3 ) . '/assets/style.asset.php';
+		$style_asset_file = require dirname( realpath( __FILE__ ) ?: __FILE__, 3 ) . '/assets/style.asset.php';
 
 		wp_register_style(
 			'ppcp-admin-settings',
