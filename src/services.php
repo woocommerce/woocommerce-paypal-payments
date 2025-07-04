@@ -30,4 +30,6 @@ return array(
 	'http.redirector'    => function( ContainerInterface $container ) : RedirectorInterface {
 		return new WpRedirector();
 	},
+	'ppcp.plugin-path'   => static fn(): string =>
+		dirname( realpath( __FILE__ ) ?: __FILE__, 2 ) . '/woocommerce-paypal-payments.php',
 );
