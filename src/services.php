@@ -42,6 +42,7 @@ return array(
 		/** @var Properties $properties */
 		$properties = $container->get( Package::PROPERTIES );
 
+		/** @psalm-suppress MissingClosureParamType */
 		return $properties->pluginMainFile();
 	},
 );
