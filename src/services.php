@@ -39,6 +39,9 @@ return array(
 		return $properties->basePath();
 	},
 	'ppcp.path-to-plugin-main-file' => function( ContainerInterface $container ) : string {
-		return $container->get( 'ppcp.path-to-plugin-folder' ) . '/woocommerce-paypal-payments.php';
+		/** @var Properties $properties */
+		$properties = $container->get( Package::PROPERTIES );
+
+		return $properties->pluginMainFile();
 	},
 );
