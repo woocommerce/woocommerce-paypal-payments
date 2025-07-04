@@ -132,11 +132,33 @@ export class PcpApi extends WooCommerceApiBase {
 		return response.ok();
 	}
 
+	isPayPalSubscription( subscription: WooCommerce.Subscription ): boolean {
+		return !! subscription?.meta_data?.some(
+			( meta ) => meta.key === 'ppcp_subscription'
+		);
+	}
+
+	getSubscriptionRenewalOrderIds = async ( subscriptionId: number ): Promise< number [] > => {
+		const subscription = await this.getSubscription( subscriptionId );
+
+		if( ! subscription ) {
+			console.error( `Subscription #${ subscriptionId } was not found.` );
+			return [];
+		}
+
+		const subscriptionMeta = subscription.meta_data.find(
+			( meta ) => meta.key === '_subscription_renewal_order_ids_cache'
+		);
+
+		return subscriptionMeta?.value || [];
+	}
+
 	getPayPalSubscriptionBillingId = async ( subscriptionId: number ) => {
 		const subscription = await this.getSubscription( subscriptionId );
 
 		if( ! subscription ) {
 			console.error( `Subscription #${ subscriptionId } was not found.` );
+			return 0;
 		}
 
 		const subscriptionMeta = subscription.meta_data.find(

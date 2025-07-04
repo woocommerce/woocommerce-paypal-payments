@@ -19,26 +19,4 @@ export class WooCommerceSubscriptionEdit extends WooCommerceSubscriptionEditBase
 	// Actions
 
 	// Assertions
-
-	/**
-	 * Asserts data on subscription page
-	 *
-	 * @param subscriptionId
-	 * @param data
-	 */
-	assertSubscriptionDetails = async (
-		subscriptionId: number,
-		data: WooCommerce.ShopOrder
-	) => {
-		const statusLabels = {
-			active: 'Active',
-		};
-		const status = statusLabels[ data.subscription.status ];
-
-		await this.visit( subscriptionId );
-		await expect( this.customerCombobox() ).toContainText(
-			data.customer.email
-		);
-		await expect( this.statusCombobox() ).toHaveText( status );
-	};
 }
