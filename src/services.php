@@ -10,10 +10,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Versions\StringVersionFactory;
-use Inpsyde\Modularity\Properties\Properties;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Http\WpRedirector;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties\Properties;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WpOop\WordPress\Plugin\PluginInterface;
 

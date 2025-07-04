@@ -64,6 +64,8 @@ class AliasingContainer implements ContainerInterface
      */
     public function has($key)
     {
+        $key = (string) $key;
+
         return $this->inner->has($this->getInnerKey($key));
     }
 

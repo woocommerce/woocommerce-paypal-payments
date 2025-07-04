@@ -55,6 +55,7 @@ class SimpleCacheContainer implements
      */
     public function has($id)
     {
+        $id = (string) $id;
         $storage = $this->storage;
 
         try {
@@ -77,7 +78,11 @@ class SimpleCacheContainer implements
         try {
             $storage->set($key, $value, $ttl);
         } catch (Exception $e) {
-            throw new ContainerException(sprintf('Could not set key "%1$s" with value "%2$s"', $key, $value), 0, $e);
+            throw new ContainerException(
+                sprintf('Could not set key "%1$s" with value "%2$s"', $key, (string) $value),
+                0,
+                $e
+            );
         }
     }
 
@@ -105,7 +110,7 @@ class SimpleCacheContainer implements
         try {
             $storage->clear();
         } catch (Exception $e) {
-            throw new ContainerException(sprintf('Could not clear container'), 0, $e);
+            throw new ContainerException('Could not clear container', 0, $e);
         }
     }
 }

@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module;
 
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+
+/**
+ * @phpstan-type Service callable(ContainerInterface $container): mixed
+ */
 interface ServiceModule extends Module
 {
-
     /**
      * Return application services' factories.
      *
@@ -15,7 +19,7 @@ interface ServiceModule extends Module
      * Services are "cached", so the given factory is called once the first time `get()` is called
      * in the container, and on subsequent `get()` the same instance is returned again and again.
      *
-     * @return array<string, callable(\WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface $container):mixed>
+     * @return array<string, Service>
      */
     public function services(): array;
 }

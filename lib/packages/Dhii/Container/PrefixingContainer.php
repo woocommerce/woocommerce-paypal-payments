@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\ContainerException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\NotFoundException;
+use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface as PsrContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
+use RuntimeException;
 
 /**
  * A container implementation that wraps around an inner container and prefixes its keys, requiring consumers to
@@ -89,11 +92,18 @@ class PrefixingContainer implements ContainerInterface
      */
     public function has($key)
     {
+        $key = (string) $key;
         if (!$this->isPrefixed($key) && $this->strict) {
             return false;
         }
 
-        return $this->inner->has($this->unprefix($key)) || (!$this->strict && $this->inner->has($key));
+        try {
+            $realKey = $this->unprefix($key);
+        } catch (Exception $e) {
+            throw new ContainerException(sprintf('Could not unprefix key "%1$s"', $key), 0, $e);
+        }
+
+        return $this->inner->has($realKey) || (!$this->strict && $this->inner->has($key));
     }
 
     /**
@@ -108,7 +118,7 @@ class PrefixingContainer implements ContainerInterface
     protected function unprefix(string $key): string
     {
         return $this->isPrefixed($key)
-            ? substr($key, strlen($this->prefix))
+            ? $this->substring($key, strlen($this->prefix))
             : $key;
     }
 
@@ -124,5 +134,36 @@ class PrefixingContainer implements ContainerInterface
     protected function isPrefixed(string $key): bool
     {
         return strlen($this->prefix) > 0 && strpos($key, $this->prefix) === 0;
+    }
+
+    /**
+     * Extracts a substring from the specified string.
+     *
+     * @see substr()
+     *
+     * @param string $string The string to extract from.
+     * @param int $offset The char position, at which to start extraction.
+     * @param int|null $length The char position, at which to end extraction; unlimited if `null`.
+     *
+     * @return string The extracted substring.
+     *
+     * @throws RuntimeException If unable to extract.
+     */
+    protected function substring(string $string, int $offset = 0, ?int $length = null): string
+    {
+        $length = $length ?? strlen($string) - $offset;
+        $substring = substr($string, $offset, $length);
+        if ($substring === false) {
+            throw new RuntimeException(
+                sprintf(
+                    'Could not extract substring starting at %1$d of length %2$s from string "%3$s"',
+                    $offset,
+                    $length ?: 'null',
+                    $string
+                )
+            );
+        }
+
+        return $substring;
     }
 }
