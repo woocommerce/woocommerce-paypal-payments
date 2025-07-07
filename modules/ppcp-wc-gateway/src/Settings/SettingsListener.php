@@ -13,13 +13,12 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -152,12 +151,7 @@ class SettingsListener {
 	 */
 	private $partner_merchant_id_sandbox;
 
-	/**
-	 * Billing Agreements endpoint.
-	 *
-	 * @var BillingAgreementsEndpoint
-	 */
-	private $billing_agreements_endpoint;
+	private ReferenceTransactionStatus $reference_transaction_status;
 
 	/**
 	 * The logger.
@@ -173,26 +167,29 @@ class SettingsListener {
 	 */
 	private $client_credentials_cache;
 
+	protected Cache $reference_transaction_status_cache;
+
 	/**
 	 * SettingsListener constructor.
 	 *
-	 * @param Settings                  $settings The settings.
-	 * @param array                     $setting_fields The setting fields.
-	 * @param WebhookRegistrar          $webhook_registrar The Webhook Registrar.
-	 * @param Cache                     $cache The Cache.
-	 * @param State                     $state The state.
-	 * @param Bearer                    $bearer The bearer.
-	 * @param string                    $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Cache                     $signup_link_cache The signup link cache.
-	 * @param array                     $signup_link_ids Signup link ids.
-	 * @param Cache                     $pui_status_cache The PUI status cache.
-	 * @param Cache                     $dcc_status_cache The DCC status cache.
-	 * @param RedirectorInterface       $redirector The HTTP redirector.
-	 * @param string                    $partner_merchant_id_production Partner merchant ID production.
-	 * @param string                    $partner_merchant_id_sandbox Partner merchant ID sandbox.
-	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint Billing Agreements endpoint.
-	 * @param ?LoggerInterface          $logger The logger.
-	 * @param Cache                     $client_credentials_cache The client credentials cache.
+	 * @param Settings                   $settings The settings.
+	 * @param array                      $setting_fields The setting fields.
+	 * @param WebhookRegistrar           $webhook_registrar The Webhook Registrar.
+	 * @param Cache                      $cache The Cache.
+	 * @param State                      $state The state.
+	 * @param Bearer                     $bearer The bearer.
+	 * @param string                     $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Cache                      $signup_link_cache The signup link cache.
+	 * @param array                      $signup_link_ids Signup link ids.
+	 * @param Cache                      $pui_status_cache The PUI status cache.
+	 * @param Cache                      $dcc_status_cache The DCC status cache.
+	 * @param RedirectorInterface        $redirector The HTTP redirector.
+	 * @param string                     $partner_merchant_id_production Partner merchant ID production.
+	 * @param string                     $partner_merchant_id_sandbox Partner merchant ID sandbox.
+	 * @param ReferenceTransactionStatus $reference_transaction_status
+	 * @param ?LoggerInterface           $logger The logger.
+	 * @param Cache                      $client_credentials_cache The client credentials cache.
+	 * @param Cache                      $reference_transaction_status_cache The client credentials cache.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -209,30 +206,32 @@ class SettingsListener {
 		RedirectorInterface $redirector,
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
-		BillingAgreementsEndpoint $billing_agreements_endpoint,
+		ReferenceTransactionStatus $reference_transaction_status,
 		LoggerInterface $logger = null,
-		Cache $client_credentials_cache
+		Cache $client_credentials_cache,
+		Cache $reference_transaction_status_cache
 	) {
 
 		// This is a legacy settings class, it's correctly relying on the `Status` class.
 
-		$this->settings                       = $settings;
-		$this->setting_fields                 = $setting_fields;
-		$this->webhook_registrar              = $webhook_registrar;
-		$this->cache                          = $cache;
-		$this->state                          = $state;
-		$this->bearer                         = $bearer;
-		$this->page_id                        = $page_id;
-		$this->signup_link_cache              = $signup_link_cache;
-		$this->signup_link_ids                = $signup_link_ids;
-		$this->pui_status_cache               = $pui_status_cache;
-		$this->dcc_status_cache               = $dcc_status_cache;
-		$this->redirector                     = $redirector;
-		$this->partner_merchant_id_production = $partner_merchant_id_production;
-		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
-		$this->billing_agreements_endpoint    = $billing_agreements_endpoint;
-		$this->logger                         = $logger ?: new NullLogger();
-		$this->client_credentials_cache       = $client_credentials_cache;
+		$this->settings                           = $settings;
+		$this->setting_fields                     = $setting_fields;
+		$this->webhook_registrar                  = $webhook_registrar;
+		$this->cache                              = $cache;
+		$this->state                              = $state;
+		$this->bearer                             = $bearer;
+		$this->page_id                            = $page_id;
+		$this->signup_link_cache                  = $signup_link_cache;
+		$this->signup_link_ids                    = $signup_link_ids;
+		$this->pui_status_cache                   = $pui_status_cache;
+		$this->dcc_status_cache                   = $dcc_status_cache;
+		$this->redirector                         = $redirector;
+		$this->partner_merchant_id_production     = $partner_merchant_id_production;
+		$this->partner_merchant_id_sandbox        = $partner_merchant_id_sandbox;
+		$this->reference_transaction_status       = $reference_transaction_status;
+		$this->logger                             = $logger ?: new NullLogger();
+		$this->client_credentials_cache           = $client_credentials_cache;
+		$this->reference_transaction_status_cache = $reference_transaction_status_cache;
 	}
 
 	/**
@@ -394,9 +393,7 @@ class SettingsListener {
 		$vault_enabled     = wc_clean( wp_unslash( $_POST['ppcp']['vault_enabled'] ?? '' ) );
 		$subscription_mode = wc_clean( wp_unslash( $_POST['ppcp']['subscriptions_mode'] ?? '' ) );
 
-		$reference_transaction_enabled = $this->billing_agreements_endpoint->reference_transaction_enabled();
-
-		if ( $reference_transaction_enabled !== true ) {
+		if ( ! $this->reference_transaction_status->reference_transaction_enabled() ) {
 			$this->settings->set( 'vault_enabled', false );
 
 			/**
@@ -413,7 +410,9 @@ class SettingsListener {
 			$this->settings->persist();
 		}
 
-		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled === true ) {
+		$reference_transaction_enabled = $this->reference_transaction_status->reference_transaction_enabled();
+
+		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' && $reference_transaction_enabled ) {
 			$this->settings->set( 'vault_enabled', true );
 			$this->settings->persist();
 		}
@@ -529,9 +528,8 @@ class SettingsListener {
 		 */
 		do_action( 'woocommerce_paypal_payments_on_listening_request' );
 
-		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
-		if ( $ppcp_reference_transaction_enabled ) {
-			delete_transient( 'ppcp_reference_transaction_enabled' );
+		if ( $this->reference_transaction_status_cache->has( ReferenceTransactionStatus::CACHE_KEY ) ) {
+			$this->reference_transaction_status_cache->delete( ReferenceTransactionStatus::CACHE_KEY );
 		}
 
 		$redirect_url = false;

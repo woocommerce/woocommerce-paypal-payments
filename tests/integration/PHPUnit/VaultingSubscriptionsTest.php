@@ -4,15 +4,15 @@ namespace WooCommerce\PayPalCommerce\Tests\Integration;
 
 use WC_Payment_Token;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * @group subscriptions
@@ -97,8 +97,8 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase
         add_filter('user_has_cap', $user_has_cap_callback, 10, 3);
 
         // Convert to Mockery mocks
-        $billing_agreements_endpoint_mock = \Mockery::mock(BillingAgreementsEndpoint::class);
-        $billing_agreements_endpoint_mock->shouldReceive('reference_transaction_enabled')
+        $reference_transaction_status = \Mockery::mock(ReferenceTransactionStatus::class);
+        $reference_transaction_status->shouldReceive('reference_transaction_enabled')
             ->andReturn(true);
 
         $state_mock = \Mockery::mock(State::class);
@@ -115,8 +115,8 @@ class VaultingSubscriptionsTest extends IntegrationMockedTestCase
 
         // Create and configure the SettingsListener
         $c = $this->bootstrapModule([
-            'api.endpoint.billing-agreements' => function () use ($billing_agreements_endpoint_mock) {
-                return $billing_agreements_endpoint_mock;
+            'api.endpoint.billing-agreements' => function () use ($reference_transaction_status) {
+                return $reference_transaction_status;
             },
             'onboarding.state' => function () use ($state_mock) {
                 return $state_mock;

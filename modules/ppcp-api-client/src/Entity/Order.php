@@ -70,6 +70,10 @@ class Order {
 	 * @var PaymentSource|null
 	 */
 	private $payment_source;
+	/**
+	 * @var mixed|null
+	 */
+	private $links;
 
 	/**
 	 * Order constructor.
@@ -93,7 +97,8 @@ class Order {
 		Payer $payer = null,
 		string $intent = 'CAPTURE',
 		\DateTime $create_time = null,
-		\DateTime $update_time = null
+		\DateTime $update_time = null,
+		$links = null
 	) {
 
 		$this->id             = $id;
@@ -104,6 +109,7 @@ class Order {
 		$this->create_time    = $create_time;
 		$this->update_time    = $update_time;
 		$this->payment_source = $payment_source;
+		$this->links          = $links;
 	}
 
 	/**
@@ -180,6 +186,15 @@ class Order {
 	}
 
 	/**
+	 * Returns the links.
+	 *
+	 * @return mixed|null
+	 */
+	public function links() {
+		return $this->links;
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
@@ -204,6 +219,10 @@ class Order {
 		}
 		if ( $this->update_time() ) {
 			$order['update_time'] = $this->update_time()->format( 'Y-m-d\TH:i:sO' );
+		}
+
+		if ( $this->links ) {
+			$order['links'] = $this->links();
 		}
 
 		return $order;

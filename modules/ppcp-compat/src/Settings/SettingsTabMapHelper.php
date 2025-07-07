@@ -28,7 +28,7 @@ class SettingsTabMapHelper {
 	 *
 	 * @var array<string, string>
 	 */
-	protected const THREE_D_SECURE_VALUES_MAP = array(
+	public const THREE_D_SECURE_VALUES_MAP = array(
 		'no-3d-secure'            => 'NO_3D_SECURE',
 		'only-required-3d-secure' => 'SCA_WHEN_REQUIRED',
 		'always-3d-secure'        => 'SCA_ALWAYS',
@@ -54,7 +54,7 @@ class SettingsTabMapHelper {
 			'blocks_final_review_enabled' => 'enable_pay_now',
 			'logging_enabled'             => 'enable_logging',
 			'vault_enabled'               => 'save_paypal_and_venmo',
-			'3d_secure_contingency'       => 'threeDSecure',
+			'3d_secure_contingency'       => 'three_d_secure',
 		);
 	}
 
@@ -96,7 +96,7 @@ class SettingsTabMapHelper {
 	 * @return string|null The mapped '3d_secure_contingency' setting value.
 	 */
 	protected function mapped_3d_secure_value( array $settings_model ): ?string {
-		$three_d_secure = $settings_model['threeDSecure'] ?? null;
+		$three_d_secure = $settings_model['three_d_secure'] ?? null;
 
 		if ( ! is_string( $three_d_secure ) ) {
 			return null;
