@@ -149,7 +149,7 @@ export class WooCommerceOrderEdit extends WooCommerceOrderEditBase {
 	) => {
 		await super.assertOrderDetails( orderId, orderData );
 
-		if ( ! pcpData ) {
+		if ( ! pcpData || Object.keys( pcpData ).length === 0 ) {
 			return;
 		}
 

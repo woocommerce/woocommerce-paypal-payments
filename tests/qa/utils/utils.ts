@@ -161,7 +161,7 @@ export class Utils {
 	 * 
 	 * @param product 
 	 */
-	isPayPalSubscription = (
+	isPayPalSubscriptionProduct = (
 		product: WooCommerce.CreateProduct
 	): boolean => {
 		if ( product.type !== 'subscription' ) {
@@ -293,7 +293,7 @@ export class Utils {
 					const createdProduct = await this.wooCommerceUtils.createProduct(
 						product
 					);
-					if( this.isPayPalSubscription( product ) ) {
+					if( this.isPayPalSubscriptionProduct( product ) ) {
 						await this.connectPayPalSubscriptionProduct( createdProduct.id );
 					}
 					// Create cart items { id: 123 }

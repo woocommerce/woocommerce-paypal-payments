@@ -98,16 +98,6 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 
 	5.2 For PayPal subsctiption: is not saved on customer's My Account and checkout pages.
 
-**_TODO:_** move following steps to separate tests (Subscription Renewal):
-
-6. Assert subscription on custommer's Subscriptions page.
-
-7. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
-
-8. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
-
-9. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, etc.).
-
 #### Approximate scenario for customer:
 
 1. Login as customer (use precreated storage state).
@@ -125,16 +115,6 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 	6.1 For vaulting subsctiption: is saved on customer's My Account and checkout pages.
 
 	6.2 For PayPal subsctiption: is not saved on customer's My Account and checkout pages.
-
-**_TODO:_** move following steps to separate tests (Subscription Renewal?):
-
-7. Assert subscription on custommer's Subscriptions page.
-
-8. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
-
-9. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
-
-10. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, etc.).
 
 ### Subscription order on other pages _TODO_
 
@@ -157,6 +137,7 @@ Approximate scenarios are similar to Checkout section.
 
 - PCP-0000 | Vaulting subscription - PayPal - Order renewal
 - PCP-0000 | Vaulting subscription - ACDC - Order renewal
+
 - PCP-0000 | Vaulting subscription - PayPal - Free trial order renewal
 - PCP-0000 | Vaulting subscription - ACDC - Free trial order renewal
 
@@ -165,14 +146,18 @@ Approximate scenarios are similar to Checkout section.
 
 #### Approximate scenario for renewal:
 
-1. Provide customer with active subscription order
+1. Create active subscription order for customer
 
-2. Trigger subscription renewal for the tested renewal type and payment method.
+2. **For non-free-trial and non-PayPal subscription** get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
 
-3. Assert subscription on custommer's Subscriptions page.
+3. Assert details on WooCommerce Order Edit page including Related Orders table(order status, PayPal fees, payout, related subscription and initial order, etc.).
 
-4. Get order and payment details via PayPal API and assert data has been transferred correctly (PayPal account or card number).
+4. Assert details on WooCommerce Subscription Edit page including Related Orders table (Subscription status, parent order, etc.).
 
-5. Assert details on WooCommerce Order Edit page (order status, PayPal fees, payout, related subscription and initial order, etc.).
+5. Trigger subscription renewal for the tested renewal type and payment method.
 
-6. Assert details on WooCommerce Subscription Edit page (Subscription status, parent order, renewal order, etc.).
+6. Assert details on WooCommerce Order Edit page including Related Orders table (order status, PayPal fees, payout, related subscription and initial order, etc.).
+
+7. Assert details on WooCommerce Subscription Edit page including Related Orders table (Subscription status, parent order, renewal order, etc.).
+
+8. Assert subscription on custommer's Subscriptions page including Related Orders table.
