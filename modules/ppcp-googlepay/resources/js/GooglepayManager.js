@@ -3,11 +3,19 @@ import GooglepayButton from './GooglepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
 class GooglepayManager {
-	constructor( namespace, buttonConfig, ppcpConfig, buttonAttributes = {} ) {
+	constructor(
+		namespace,
+		buttonConfig,
+		ppcpConfig,
+		buttonAttributes = {},
+		onClick = null
+	) {
 		this.namespace = namespace;
 		this.buttonConfig = buttonConfig;
 		this.ppcpConfig = ppcpConfig;
 		this.buttonAttributes = buttonAttributes;
+		this.onClick = onClick;
+
 		this.googlePayConfig = null;
 		this.transactionInfo = null;
 		this.contextHandler = null;
@@ -28,7 +36,8 @@ class GooglepayManager {
 				buttonConfig,
 				ppcpConfig,
 				this.contextHandler,
-				this.buttonAttributes
+				this.buttonAttributes,
+				this.onClick
 			);
 
 			this.buttons.push( button );

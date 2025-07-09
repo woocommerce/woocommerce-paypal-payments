@@ -198,12 +198,15 @@ class AmountFactory {
 	/**
 	 * Returns an Amount object based off a PayPal Response.
 	 *
-	 * @param \stdClass $data The JSON object.
+	 * @param mixed $data The JSON object.
 	 *
-	 * @return Amount
-	 * @throws RuntimeException When JSON object is malformed.
+	 * @return Amount|null
 	 */
-	public function from_paypal_response( \stdClass $data ): Amount {
+	public function from_paypal_response( $data ) {
+		if ( null === $data || ! $data instanceof \stdClass ) {
+			return null;
+		}
+
 		$money     = $this->money_factory->from_paypal_response( $data );
 		$breakdown = ( isset( $data->breakdown ) ) ? $this->break_down( $data->breakdown ) : null;
 		return new Amount( $money, $breakdown );

@@ -9,18 +9,18 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 /**
@@ -75,8 +75,8 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
 				assert( $last_webhook_storage instanceof WebhookEventStorage );
 
-				$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
-				assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
+				$reference_transaction_status = $c->get( 'api.reference-transaction-status' );
+				assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
 
 				/* @var Renderer $renderer The renderer. */
 				$renderer = $c->get( 'status-report.renderer' );
@@ -170,7 +170,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Reference Transactions',
 						'description'    => esc_html__( 'Whether Reference Transactions are enabled for the connected account', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$this->reference_transaction_enabled( $billing_agreements_endpoint )
+							$reference_transaction_status->reference_transaction_enabled()
 						),
 					),
 					array(
@@ -273,19 +273,6 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 
 		// Return the options value or if it's missing from options the settings value.
 		return $field_settings['options'][ $subscriptions_mode ] ?? $subscriptions_mode;
-	}
-
-	/**
-	 * Checks if reference transactions are enabled in account.
-	 *
-	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint The endpoint.
-	 */
-	private function reference_transaction_enabled( BillingAgreementsEndpoint $billing_agreements_endpoint ): bool {
-		try {
-			return $billing_agreements_endpoint->reference_transaction_enabled();
-		} catch ( RuntimeException $exception ) {
-			return false;
-		}
 	}
 
 	/**

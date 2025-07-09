@@ -29,6 +29,17 @@ use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
  */
 class ConnectionListener {
 	/**
+	 * Token processing states
+	 */
+	private const TOKEN_STATE_PROCESSING = 'processing';
+	private const TOKEN_STATE_PROCESSED  = 'processed';
+
+	/**
+	 * Transient key for storing token state.
+	 */
+	private const TOKEN_STATE_TRANSIENT = 'ppcp_auth_token_state';
+
+	/**
 	 * ID of the current settings page; empty if not on a PayPal settings page.
 	 *
 	 * @var string
@@ -133,34 +144,65 @@ class ConnectionListener {
 	 * @return void
 	 */
 	private function process_oauth_token( string $token ) : void {
-		// The request contains OAuth details: To avoid abuse we'll slow down the processing.
-		sleep( 2 );
-
 		if ( ! $token ) {
 			return;
 		}
 
+		$log_token = ( (string) substr( $token, 0, 2 ) ) . '...' . ( (string) substr( $token, - 6 ) );
+
 		if ( $this->was_token_processed( $token ) ) {
+			/*
+			 * Token already processed:
+			 * Do nothing as the DB already contains the full connection details.
+			 */
+			$this->logger->info( 'Token already processed, continuing silently', array( 'token' => $log_token ) );
+
 			return;
 		}
 
+		if ( $this->is_token_processing( $token ) ) {
+			/*
+			 * Authentication token is currently processed (in another request):
+			 * Briefly wait and then retry this request, basically waiting for
+			 * the above "was_processed" condition to become true.
+			 */
+			$this->logger->info( 'Token is currently being processed, waiting and retrying', array( 'token' => $log_token ) );
+			sleep( 1 );
+
+			// Get the current URL.
+			$current_url = add_query_arg( null, null );
+
+			// Add time to the query parameter to prevent browser cache issues.
+			$current_url = add_query_arg( 'retry', microtime( true ), $current_url );
+
+			wp_safe_redirect( $current_url );
+			exit;
+		}
+
 		if ( ! $this->url_manager->validate_token_and_delete( $token, $this->user_id ) ) {
+			$this->logger->error( 'Token validation failed', array( 'token' => $log_token ) );
+
 			return;
 		}
 
 		$data = $this->extract_data();
 		if ( ! $data ) {
+			$this->logger->error( 'Failed to extract merchant data from request' );
+
 			return;
 		}
 
 		$this->logger->info( 'Found OAuth merchant data in request', $data );
 
 		try {
-			$this->authentication_manager->finish_oauth_authentication( $data );
-			$this->mark_token_as_processed( $token );
+			$this->set_token_state( $token, self::TOKEN_STATE_PROCESSING );
+
+			$this->authentication_manager->handle_oauth_authentication( $data );
 		} catch ( \Exception $e ) {
 			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
 		}
+
+		$this->set_token_state( $token, self::TOKEN_STATE_PROCESSED );
 	}
 
 	/**
@@ -194,29 +236,57 @@ class ConnectionListener {
 	}
 
 	/**
-	 * Checks if the provided authentication token is new or has been used before.
+	 * Sets the state for a token.
 	 *
-	 * This check catches an issue where we receive the same authentication token twice,
-	 * which does not impact the login flow but creates noise in the logs.
-	 *
-	 * @param string $token The authentication token to check.
-	 * @return bool True if the token was already processed.
+	 * @param string $token The token to set state for.
+	 * @param string $state The state to set.
+	 * @return void
 	 */
-	private function was_token_processed( string $token ) : bool {
-		$prev_token = get_transient( 'ppcp_previous_auth_token' );
+	private function set_token_state( string $token, string $state ) : void {
+		$data = array(
+			'token' => $token,
+			'state' => $state,
+		);
 
-		return $prev_token && $prev_token === $token;
+		// 10 second expiration will block the page for max 10 seconds.
+		set_transient( self::TOKEN_STATE_TRANSIENT, $data, 10 );
 	}
 
 	/**
-	 * Stores the processed authentication token so we can prevent double-processing
-	 * of already verified token.
+	 * Gets the current state of a token.
 	 *
-	 * @param string $token The processed authentication token.
-	 * @return void
+	 * @param string $token The token to check.
+	 * @return string The current state of the token, or empty string if the token doesn't match.
 	 */
-	private function mark_token_as_processed( string $token ) : void {
-		set_transient( 'ppcp_previous_auth_token', $token, 60 );
+	private function get_token_state( string $token ) : string {
+		$data = get_transient( self::TOKEN_STATE_TRANSIENT );
+
+		if ( empty( $data ) || ! is_array( $data ) || empty( $data['token'] ) || empty( $data['state'] ) ) {
+			return '';
+		}
+
+		// Only return the state if the token matches.
+		return ( $data['token'] === $token ) ? $data['state'] : '';
+	}
+
+	/**
+	 * Checks if the token is currently being processed.
+	 *
+	 * @param string $token The token to check.
+	 * @return bool True if the token is currently being processed, false otherwise.
+	 */
+	private function is_token_processing( string $token ) : bool {
+		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSING;
+	}
+
+	/**
+	 * Checks if the token has been fully processed.
+	 *
+	 * @param string $token The token to check.
+	 * @return bool True if the token has been processed, false otherwise.
+	 */
+	private function was_token_processed( string $token ) : bool {
+		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSED;
 	}
 
 	/**

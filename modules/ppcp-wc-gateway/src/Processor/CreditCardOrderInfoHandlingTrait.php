@@ -13,6 +13,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\FraudProcessorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
+use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -24,7 +25,6 @@ trait CreditCardOrderInfoHandlingTrait {
 	 * Handles the 3DS details.
 	 *
 	 * Adds the order note with 3DS details.
-	 * Adds the order meta with 3DS details.
 	 *
 	 * @param Order    $order The PayPal order.
 	 * @param WC_Order $wc_order The WC order.
@@ -35,7 +35,7 @@ trait CreditCardOrderInfoHandlingTrait {
 	): void {
 
 		$payment_source = $order->payment_source();
-		if ( ! $payment_source || $payment_source->name() !== 'card' ) {
+		if ( ! $payment_source || ( $payment_source->name() !== 'card' && $payment_source->name() !== AxoGateway::ID ) ) {
 			return;
 		}
 

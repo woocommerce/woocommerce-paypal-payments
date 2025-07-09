@@ -68,7 +68,8 @@ class OrderFactory {
 			$order->payer(),
 			$order->intent(),
 			$order->create_time(),
-			$order->update_time()
+			$order->update_time(),
+			$order->links()
 		);
 	}
 
@@ -81,70 +82,155 @@ class OrderFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $order_data ): Order {
+		$this->validate_order_id( $order_data );
+
+		$purchase_units = $this->create_purchase_units( $order_data );
+		$status         = $this->create_order_status( $order_data );
+		$intent         = $this->get_intent( $order_data );
+		$timestamps     = $this->create_timestamps( $order_data );
+		$payer          = $this->create_payer( $order_data );
+		$payment_source = $this->create_payment_source( $order_data );
+		$links          = $order_data->links ?? null;
+
+		return new Order(
+			$order_data->id,
+			$purchase_units,
+			$status,
+			$payment_source,
+			$payer,
+			$intent,
+			$timestamps['create_time'],
+			$timestamps['update_time'],
+			$links
+		);
+	}
+
+	/**
+	 * Validates that the order data contains a required ID.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @throws RuntimeException When ID is missing.
+	 */
+	private function validate_order_id( \stdClass $order_data ): void {
 		if ( ! isset( $order_data->id ) ) {
 			throw new RuntimeException(
 				__( 'Order does not contain an id.', 'woocommerce-paypal-payments' )
 			);
 		}
+	}
+
+	/**
+	 * Creates purchase units from order data.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @return array Array of PurchaseUnit objects.
+	 */
+	private function create_purchase_units( \stdClass $order_data ): array {
 		if ( ! isset( $order_data->purchase_units ) || ! is_array( $order_data->purchase_units ) ) {
-			throw new RuntimeException(
-				__( 'Order does not contain items.', 'woocommerce-paypal-payments' )
-			);
-		}
-		if ( ! isset( $order_data->status ) ) {
-			throw new RuntimeException(
-				__( 'Order does not contain status.', 'woocommerce-paypal-payments' )
-			);
-		}
-		if ( ! isset( $order_data->intent ) ) {
-			throw new RuntimeException(
-				__( 'Order does not contain intent.', 'woocommerce-paypal-payments' )
-			);
+			return array();
 		}
 
-		$purchase_units = array_map(
-			function ( \stdClass $data ): PurchaseUnit {
-				return $this->purchase_unit_factory->from_paypal_response( $data );
-			},
-			$order_data->purchase_units
-		);
-
-		$create_time = ( isset( $order_data->create_time ) ) ?
-			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->create_time )
-			: null;
-		$update_time = ( isset( $order_data->update_time ) ) ?
-			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->update_time )
-			: null;
-		$payer       = ( isset( $order_data->payer ) ) ?
-			$this->payer_factory->from_paypal_response( $order_data->payer )
-			: null;
-
-		$payment_source = null;
-		if ( isset( $order_data->payment_source ) ) {
-			$json_encoded_payment_source = wp_json_encode( $order_data->payment_source );
-			if ( $json_encoded_payment_source ) {
-				$payment_source_as_array = json_decode( $json_encoded_payment_source, true );
-				if ( $payment_source_as_array ) {
-					$name = array_key_first( $payment_source_as_array );
-					if ( $name ) {
-						$payment_source = new PaymentSource(
-							$name,
-							$order_data->payment_source->$name
-						);
-					}
-				}
+		$purchase_units = array();
+		foreach ( $order_data->purchase_units as $data ) {
+			$purchase_unit = $this->purchase_unit_factory->from_paypal_response( $data );
+			if ( null !== $purchase_unit ) {
+				$purchase_units[] = $purchase_unit;
 			}
 		}
 
-		return new Order(
-			$order_data->id,
-			$purchase_units,
-			new OrderStatus( $order_data->status ),
-			$payment_source,
-			$payer,
-			$order_data->intent,
-			$create_time,
-			$update_time
+		return $purchase_units;
+	}
+
+	/**
+	 * Creates order status from order data.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @return OrderStatus
+	 */
+	private function create_order_status( \stdClass $order_data ): OrderStatus {
+		$status_value = $order_data->status ?? 'PAYER_ACTION_REQUIRED';
+		return new OrderStatus( $status_value );
+	}
+
+	/**
+	 * Gets the intent from order data.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @return string
+	 */
+	private function get_intent( \stdClass $order_data ): string {
+		return $order_data->intent ?? 'CAPTURE';
+	}
+
+	/**
+	 * Creates timestamps from order data.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @return array Array with 'create_time' and 'update_time' keys.
+	 */
+	private function create_timestamps( \stdClass $order_data ): array {
+		$create_time = isset( $order_data->create_time ) ?
+			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->create_time ) :
+			null;
+
+		$update_time = isset( $order_data->update_time ) ?
+			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->update_time ) :
+			null;
+
+		return array(
+			'create_time' => $create_time,
+			'update_time' => $update_time,
+		);
+	}
+
+	/**
+	 * Creates payer from order data.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @return mixed Payer object or null.
+	 */
+	private function create_payer( \stdClass $order_data ) {
+		return isset( $order_data->payer ) ?
+			$this->payer_factory->from_paypal_response( $order_data->payer ) :
+			null;
+	}
+
+	/**
+	 * Creates payment source from order data.
+	 *
+	 * @param \stdClass $order_data The order data.
+	 *
+	 * @return PaymentSource|null
+	 */
+	private function create_payment_source( \stdClass $order_data ): ?PaymentSource {
+		if ( ! isset( $order_data->payment_source ) ) {
+			return null;
+		}
+
+		$json_encoded_payment_source = wp_json_encode( $order_data->payment_source );
+		if ( ! $json_encoded_payment_source ) {
+			return null;
+		}
+
+		$payment_source_as_array = json_decode( $json_encoded_payment_source, true );
+		if ( ! $payment_source_as_array ) {
+			return null;
+		}
+
+		$source_name = array_key_first( $payment_source_as_array );
+		if ( ! $source_name ) {
+			return null;
+		}
+
+		return new PaymentSource(
+			$source_name,
+			$order_data->payment_source->$source_name
 		);
 	}
 }

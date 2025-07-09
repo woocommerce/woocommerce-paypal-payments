@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundStatusDetails;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class RefundFactory
@@ -62,6 +63,7 @@ class RefundFactory {
 	 * @param \stdClass $data The PayPal response.
 	 *
 	 * @return Refund
+	 * @throws RuntimeException When refund amount data is invalid.
 	 */
 	public function from_paypal_response( \stdClass $data ) : Refund {
 		$reason                   = $data->status_details->reason ?? null;
@@ -73,13 +75,18 @@ class RefundFactory {
 			$this->refund_payer_factory->from_paypal_response( $data->payer )
 			: null;
 
+		$amount = $this->amount_factory->from_paypal_response( $data->amount );
+		if ( null === $amount ) {
+			throw new RuntimeException( __( 'Invalid refund amount data.', 'woocommerce-paypal-payments' ) );
+		}
+
 		return new Refund(
 			(string) $data->id,
 			new RefundStatus(
 				(string) $data->status,
 				$reason ? new RefundStatusDetails( $reason ) : null
 			),
-			$this->amount_factory->from_paypal_response( $data->amount ),
+			$amount,
 			(string) ( $data->invoice_id ?? '' ),
 			(string) ( $data->custom_id ?? '' ),
 			$seller_payable_breakdown,
