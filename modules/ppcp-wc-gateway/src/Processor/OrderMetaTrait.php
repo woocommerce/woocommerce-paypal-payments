@@ -81,12 +81,16 @@ trait OrderMetaTrait {
 		$contact_email = $shipping_details->email_address();
 		$contact_phone = $shipping_details->phone_number();
 
+		$added = false;
+
 		if ( $contact_email && is_email( $contact_email ) ) {
 			$billing_email = $wc_order->get_billing_email();
 
 			if ( $billing_email && $billing_email !== $contact_email ) {
 				$wc_order->update_meta_data( PayPalGateway::CONTACT_EMAIL_META_KEY, $contact_email );
 				$wc_order->update_meta_data( PayPalGateway::ORIGINAL_EMAIL_META_KEY, $billing_email );
+
+				$added = true;
 			}
 		}
 
@@ -97,7 +101,13 @@ trait OrderMetaTrait {
 			if ( $billing_phone && $billing_phone !== $contact_phone_number ) {
 				$wc_order->update_meta_data( PayPalGateway::CONTACT_PHONE_META_KEY, $contact_phone_number );
 				$wc_order->update_meta_data( PayPalGateway::ORIGINAL_PHONE_META_KEY, $billing_phone );
+
+				$added = true;
 			}
+		}
+
+		if ( $added ) {
+			do_action( 'woocommerce_paypal_payments_contacts_added', $wc_order, $order );
 		}
 	}
 
