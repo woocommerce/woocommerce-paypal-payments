@@ -146,7 +146,7 @@ test.describe( 'Frontend UI', () => {
 				amount: '8.00',
 				excluded_product_ids: [ undefined ],
 			},
-			couponMessage: `Sorry, this coupon is not applicable to the products: ${ products.simple10.name }`,
+			couponMessage: `Sorry, coupon "fixed restricted 1177" is not applicable to the products: ${ products.simple10.name }`,
 		},
 		{
 			title: 'PCP-1184 | Frontend UI - Classic cart - PayPal buttons are displayed if product is excluded from percentage coupon @Critical',
@@ -158,7 +158,7 @@ test.describe( 'Frontend UI', () => {
 				excluded_product_ids: [ undefined ],
 			},
 			couponMessage:
-				'Sorry, this coupon is not applicable to selected products.',
+				'Sorry, coupon "percent restricted 1184" is not applicable to selected products.',
 		},
 	];
 
