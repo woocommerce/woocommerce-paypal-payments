@@ -1037,6 +1037,16 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$set_order_contacts( $wc_order );
 			}
 		);
+		// There is a race condition in express block checkout, the contacts set in woocommerce_paypal_payments_contacts_added
+		// may get reverted by another ajax WC request. So we set them again after that.
+		add_action(
+			'woocommerce_store_api_cart_update_order_from_request',
+			function ( WC_Order $wc_order ) use ( $set_order_contacts ): void {
+				// This hook fires for all methods, but we do not do anything if the meta is not set
+				// so probably no need to add additional checks.
+				$set_order_contacts( $wc_order );
+			}
+		);
 	}
 
 	/**
