@@ -340,7 +340,7 @@ class ApplePayButton extends PaymentButton {
 			return;
 		}
 
-		// Ensures transaction info is updated in Apple Pay session when cart or checkout update events are triggered.
+		// Ensures transaction info is updated when cart or checkout update events are triggered.
 		await this.contextHandler
 			.transactionInfo()
 			.then( ( transactionInfo ) => {
