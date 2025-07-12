@@ -13,7 +13,7 @@ export const payLaterCheckout = [
 		title: 'PCP-1650 | Transaction - Checkout - Pay Later - Order by customer @Critical',
 		payment: payLater,
 		...orders.byCustomer,
-		customer: customers.germany,
+		customer: customers.usa,
 	},
 	// {
 	// 	title: 'PCP-1651 | Transaction - Checkout - Pay Later - Order with free shipping',

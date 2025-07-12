@@ -17,6 +17,7 @@ const germanOrderData: WooCommerce.ShopOrder = {
 	customer: guests.germany,
 	payment: payUponInvoice,
 	orderStatus: 'on-hold',
+	currency: 'EUR',
 };
 
 export const payUponInvoiceClassicCheckoutGermany = [

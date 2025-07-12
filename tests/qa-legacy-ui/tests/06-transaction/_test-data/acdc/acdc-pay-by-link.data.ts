@@ -3,8 +3,8 @@
  */
 import { customers, guests, acdc, orders } from '../../../../resources';
 
-const customer = customers.germany;
-const guest = guests.germany;
+const customer = customers.usa;
+const guest = guests.usa;
 
 export const acdcPayByLink = [
 	{

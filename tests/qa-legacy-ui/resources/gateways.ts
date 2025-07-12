@@ -5,7 +5,7 @@ import { cards } from './cards';
 import { PcpPayment } from './types';
 import { payPalAccounts } from './paypal-accounts';
 
-const country = 'germany';
+const country = 'usa';
 
 export const payPal: PcpPayment = {
 	gatewayName: 'PayPal',

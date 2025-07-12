@@ -3,7 +3,7 @@
  */
 import { merchants, PcpConfig, PcpSettings } from '.';
 
-const country = 'germany';
+const country = 'usa';
 
 const standardPaymentsDefault: PcpSettings.StandardPayments = {
 	enableGateway: true, // Check "Enable/Disable" checkbox
@@ -12,6 +12,7 @@ const standardPaymentsDefault: PcpSettings.StandardPayments = {
 	standardCardButton: false, // Uncheck "Create gateway for Standard Card Button" checkbox
 	intent: 'Capture', // Set intent to "Capture"
 	customizeSmartButtonsPerLocation: true, // Check "Customize smart buttons per location" checkbox
+	singleProductButtonLayout: 'Vertical',
 };
 
 export const pcpConfigDefault: PcpConfig = {

@@ -13,7 +13,7 @@ export const payLaterClassicCheckout = [
 		title: 'PCP-2731 | Transaction - Classic checkout - Pay Later - Order by customer',
 		payment: payLater,
 		...orders.byCustomer,
-		costomer: customers.germany,
+		costomer: customers.usa,
 	},
 	// {
 	// 	title: 'PCP-1270 | Transaction - Classic checkout - Pay Later - Order with free shipping @Critical',
@@ -69,7 +69,7 @@ export const payLaterClassicCheckoutIntentAuthorized = [
 
 export const payLaterClassicCheckoutHorizontalButton = [
 	{
-		title: 'PCP-1200 | Transaction - Classic checkout - Pay Later - Horizontal button layout @Critical',
+		title: 'PCP-1200 | Transaction - Classic checkout - Pay Later - Horizontal button layout', // TODO: doesn`t make sense??
 		...orders.default,
 		payment: payLater,
 	},
