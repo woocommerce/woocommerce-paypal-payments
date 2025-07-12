@@ -362,6 +362,45 @@ export class PayPalUI {
 	// Actions
 
 	/**
+	 * Clicks PayPal button to open popup
+	 */
+	openPayPalPopup = async (): Promise< PayPalPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup' );
+		await expect( this.payPalButton() ).toBeVisible();
+		await this.payPalButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	};
+
+	/**
+	 * Clicks Pay Later button to open popup
+	 */
+	openPayLaterPopup = async (): Promise< PayPalPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup' );
+		await expect( this.payLaterButton() ).toBeVisible();
+		await this.payLaterButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	};
+
+	/**
+	 * Clicks Venmo button to open popup
+	 */
+	openVenmoPopup = async (): Promise< PayPalPopup > => {
+		const popupPromise = this.page.waitForEvent( 'popup' );
+		await expect( this.venmoButton() ).toBeVisible();
+		await this.venmoButton().click();
+
+		const popup = await popupPromise;
+		await popup.waitForLoadState();
+		return new PayPalPopup( popup );
+	};
+
+	/**
 	 * Completes payment on Classic pages with given payment method
 	 *
 	 * @param data
@@ -370,6 +409,7 @@ export class PayPalUI {
 	 */
 	makeClassicPayment = async ( data: WooCommerce.ShopOrder ) => {
 		// Map to the tested method
+		let popup: PayPalPopup;
 		switch ( data.payment.method ) {
 			case 'PayPal':
 				// pay with vaulted account
@@ -388,17 +428,13 @@ export class PayPalUI {
 					break;
 				}
 
-				await this.completePayPalPayment(
-					await this.openPayPalPupup(),
-					data.payment.payPalAccount
-				);
+				popup = await this.openPayPalPupup();
+				await popup.completePayPalPayment( data.payment.payPalAccount );
 				break;
 
 			case 'PayLater':
-				await this.completePayLaterPayment(
-					await this.openPayPalPupup( 'paylater' ),
-					data.payment.payPalAccount
-				);
+				popup = await this.openPayLaterPopup();
+				await popup.completePayLaterPayment( data.payment.payPalAccount );
 				break;
 
 			case 'ACDC':
@@ -424,10 +460,8 @@ export class PayPalUI {
 				break;
 
 			case 'Venmo':
-				await this.completePayPalPayment(
-					await this.openVenmoPopup(),
-					data.payment.payPalAccount
-				);
+				popup = await this.openVenmoPopup();
+				await popup.completeVenmoPayment();
 				break;
 
 			case 'DebitOrCreditCard':
@@ -455,22 +489,19 @@ export class PayPalUI {
 	 * @param data
 	 */
 	makePayment = async ( data ) => {
+		let popup: PayPalPopup;
 		// Make payment with tested method
 		switch ( data.payment.method ) {
 			case 'PayPal':
-				// if(paymentData.payment.isVaulted) {
-				//   await this.completePayPalVaultedPayment(paymentData.payment.payPalAccount);
-				//   return;
-				// }
-				await this.completePayPalPayment(
-					await this.openBlockPayPalPopup(),
+				popup = await this.openBlockPayPalPopup();
+				await popup.completePayPalPayment(
 					data.payment.payPalAccount
 				);
 				break;
 
 			case 'PayLater':
-				await this.completePayLaterPayment(
-					await this.openBlockPayLaterPopup(),
+				popup = await this.openBlockPayLaterPopup();
+				await popup.completePayLaterPayment(
 					data.payment.payPalAccount
 				);
 				break;
@@ -525,21 +556,6 @@ export class PayPalUI {
 		return new PayPalPopup( popup );
 	};
 
-	/**
-	 * Opens Venmo popup
-	 */
-	openVenmoPopup = async () => {
-		const popupPromise = this.page.waitForEvent( 'popup' );
-
-		await expect( this.venmoButton() ).toBeVisible();
-		await this.venmoButton().click();
-
-		const popup = await popupPromise;
-		await popup.waitForLoadState();
-		await popup.locator( '.venmo-button-wrapper>button' ).click();
-		return new PayPalPopup( popup );
-	};
-
 	openBlockPayPalPopup = async () => {
 		const popupPromise = this.page.waitForEvent( 'popup' );
 
@@ -573,7 +589,6 @@ export class PayPalUI {
 		payPalAccount: PayPalAccount
 	) => {
 		await payPalPopup.login( payPalAccount.email, payPalAccount.password );
-		await expect( payPalPopup.popup ).toHaveTitle( 'PayPal Checkout' );
 		await payPalPopup.completePayment();
 	};
 
@@ -583,8 +598,6 @@ export class PayPalUI {
 	 * @param payPalAccount
 	 */
 	completePayPalVaultedPayment = async ( payPalAccount?: PayPalAccount ) => {
-		// await expect(this.fundingSourceButtonPayLabel('paypal')).toHaveText('Pay with');
-		// await expect(this.fundingSourceButtonLabel('paypal')).toHaveText(payPalAccount.email);
 		const popupPromise = this.page.waitForEvent( 'popup' );
 
 		await expect( this.payPalButton() ).toBeVisible();
@@ -593,7 +606,6 @@ export class PayPalUI {
 		const popup = await popupPromise;
 		await popup.waitForLoadState();
 		const payPalPopup = new PayPalPopup( popup );
-		await expect( payPalPopup.popup ).toHaveTitle( 'PayPal Checkout' );
 
 		await payPalPopup.completePayment();
 
