@@ -25,11 +25,48 @@ import {
 	venmoClassicProductUsa,
 	venmoClassicCheckoutUsaExcludingTax,
 } from './_test-data/venmo';
-import { payPalClassicCart, payPalClassicCartExcludingTax, payPalClassicCartHorizontalButton, payPalClassicCartIntentAuthorized, payPalClassicCheckout, payPalClassicCheckoutExcludingTax, payPalClassicCheckoutHorizontalButton, payPalClassicCheckoutIntentAuthorized, payPalClassicCheckoutSpecificMerchant, payPalClassicProduct, payPalClassicProductVerticalButton, specificMerchant } from './_test-data/paypal';
-import { payLaterClassicCart, payLaterClassicCartExcludingTax, payLaterClassicCartHorizontalButton, payLaterClassicCartIntentAuthorized, payLaterClassicCheckout, payLaterClassicCheckoutExcludingTax, payLaterClassicCheckoutHorizontalButton, payLaterClassicCheckoutIntentAuthorized, payLaterClassicProduct, payLaterClassicProductVerticalButton } from './_test-data/pay-later';
-import { acdcClassicCheckout, acdcClassicCheckout3ds, acdcClassicCheckoutDebugging, acdcClassicCheckoutExcludingTax } from './_test-data/acdc';
-import { debitOrCreditCardClassicCheckout, debitOrCreditCardClassicCheckoutExcludingTax, debitOrCreditCardClassicCheckoutIntentAuthorized } from './_test-data/debit-or-credit-card';
-import { standardCardButtonClassicCheckout, standardCardButtonClassicCheckoutExcludingTax, standardCardButtonClassicCheckoutIntentAuthorized } from './_test-data/standard-card-button';
+import {
+	payPalClassicCart,
+	payPalClassicCartExcludingTax,
+	payPalClassicCartHorizontalButton,
+	payPalClassicCartIntentAuthorized,
+	payPalClassicCheckout,
+	payPalClassicCheckoutExcludingTax,
+	payPalClassicCheckoutHorizontalButton,
+	payPalClassicCheckoutIntentAuthorized,
+	payPalClassicCheckoutSpecificMerchant,
+	payPalClassicProduct,
+	payPalClassicProductVerticalButton,
+	specificMerchant,
+} from './_test-data/paypal';
+import {
+	payLaterClassicCart,
+	payLaterClassicCartExcludingTax,
+	payLaterClassicCartHorizontalButton,
+	payLaterClassicCartIntentAuthorized,
+	payLaterClassicCheckout,
+	payLaterClassicCheckoutExcludingTax,
+	payLaterClassicCheckoutHorizontalButton,
+	payLaterClassicCheckoutIntentAuthorized,
+	payLaterClassicProduct,
+	payLaterClassicProductVerticalButton,
+} from './_test-data/pay-later';
+import {
+	acdcClassicCheckout,
+	acdcClassicCheckout3ds,
+	acdcClassicCheckoutDebugging,
+	acdcClassicCheckoutExcludingTax,
+} from './_test-data/acdc';
+import {
+	debitOrCreditCardClassicCheckout,
+	debitOrCreditCardClassicCheckoutExcludingTax,
+	debitOrCreditCardClassicCheckoutIntentAuthorized,
+} from './_test-data/debit-or-credit-card';
+import {
+	standardCardButtonClassicCheckout,
+	standardCardButtonClassicCheckoutExcludingTax,
+	standardCardButtonClassicCheckoutIntentAuthorized,
+} from './_test-data/standard-card-button';
 
 test.beforeAll( async ( { utils } ) => {
 	test.setTimeout( 3 * 60 * 1000 );
@@ -43,7 +80,6 @@ test.beforeAll( async ( { utils } ) => {
 	await utils.pcpPaymentMethodIsEnabled( acdc.method );
 	// await utils.pcpPaymentMethodIsEnabled( venmo.method );
 } );
-
 
 transactionsOnClassicCart( payPalClassicCart );
 transactionsOnClassicCart( payLaterClassicCart );

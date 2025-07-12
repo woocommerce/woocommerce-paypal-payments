@@ -11,15 +11,15 @@ export class PayPalPopup {
 	}
 
 	// Locators
-	
+
 	loginWithPasswordInsteadLink = () =>
 		this.popup.getByRole( 'link', {
 			name: 'Log in with a password instead',
-		} )
+		} );
 	loginWithYourPasswordLink = () =>
-		this.popup.getByRole('link', { name: 'Login with password' });
+		this.popup.getByRole( 'link', { name: 'Login with password' } );
 	tryAnotherWayLink = () =>
-		this.popup.getByRole( 'link', { name: 'Try another way', } );
+		this.popup.getByRole( 'link', { name: 'Try another way' } );
 	loginInput = () => this.popup.locator( '[name="login_email"]' );
 	passwordInput = () => this.popup.locator( '[name="login_password"]' );
 	nextButton = () => this.popup.locator( '#btnNext' );
@@ -41,24 +41,25 @@ export class PayPalPopup {
 			.getByRole( 'link', { name: 'Erneut versuchen' } )
 			.or( this.popup.getByRole( 'link', { name: 'Try again' } ) );
 	payLaterIframe = () =>
-		this.popup.locator('iframe[title="CAP"]').contentFrame();
-	loanAgreementCheckbox = () => this.payLaterIframe().getByText(
-		'You have read and agree to the Loan Agreement'
-	);
-	agreeAndApplyButton = () => this.payLaterIframe().getByTestId('apply');
+		this.popup.locator( 'iframe[title="CAP"]' ).contentFrame();
+	loanAgreementCheckbox = () =>
+		this.payLaterIframe().getByText(
+			'You have read and agree to the Loan Agreement'
+		);
+	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
 	// Actions
-	
+
 	/**
 	 *  Log in to PayPal
-	 * 
-	 * @param email 
-	 * @param password 
+	 *
+	 * @param email
+	 * @param password
 	 */
 	login = async ( email, password ) => {
 		await this.tryLoginWithPasswordInstead();
 
 		await this.loginInput().fill( email );
-		
+
 		await this.tryLoginWithPasswordInstead();
 
 		await this.tryClickNext();
@@ -75,7 +76,10 @@ export class PayPalPopup {
 	 */
 	tryLoginWithPasswordInstead = async () => {
 		try {
-			await this.loginWithPasswordInsteadLink().waitFor({ state: 'visible', timeout: 4000 });
+			await this.loginWithPasswordInsteadLink().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
 			await this.loginWithPasswordInsteadLink().click();
 		} catch {}
 	};
@@ -86,7 +90,10 @@ export class PayPalPopup {
 	 */
 	tryClickNext = async () => {
 		try {
-			await this.nextButton().waitFor({ state: 'visible', timeout: 4000 });
+			await this.nextButton().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
 			await this.nextButton().click();
 		} catch {}
 	};
@@ -97,7 +104,10 @@ export class PayPalPopup {
 	 */
 	tryAnotherWay = async () => {
 		try {
-			await this.tryAnotherWayLink().waitFor({ state: 'visible', timeout: 4000 });
+			await this.tryAnotherWayLink().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
 			await this.tryAnotherWayLink().click();
 			await this.loginWithYourPasswordLink().click();
 		} catch {}
@@ -109,7 +119,7 @@ export class PayPalPopup {
 
 		while ( ! this.popup.isClosed() ) {
 			const submitButton = this.submitPaymentButton();
-			if ( ! await submitButton.isVisible() ) {
+			if ( ! ( await submitButton.isVisible() ) ) {
 				break; // No visible button, exit
 			}
 
@@ -117,7 +127,7 @@ export class PayPalPopup {
 			try {
 				await Promise.race( [
 					submitButton.click(),
-					this.popup.waitForEvent( 'close', { timeout: 30 * 1000 } ) // Short timeout to prevent hang
+					this.popup.waitForEvent( 'close', { timeout: 30 * 1000 } ), // Short timeout to prevent hang
 				] );
 			} catch ( error ) {
 				if ( this.popup.isClosed() ) break; // Exit cleanly if popup closed
@@ -126,8 +136,12 @@ export class PayPalPopup {
 
 			// Optional: wait for spinner to disappear
 			try {
-				await expect( this.loadSpinnerContainer() ).toBeVisible( { timeout: 1000 } );
-				await expect( this.loadSpinnerContainer() ).not.toBeVisible( { timeout: 4000 } );
+				await expect( this.loadSpinnerContainer() ).toBeVisible( {
+					timeout: 1000,
+				} );
+				await expect( this.loadSpinnerContainer() ).not.toBeVisible( {
+					timeout: 4000,
+				} );
 			} catch {
 				// Spinner didn't appear, continue
 			}

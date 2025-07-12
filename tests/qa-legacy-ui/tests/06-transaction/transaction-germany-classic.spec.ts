@@ -30,7 +30,7 @@ test.describe( 'Excluding Tax', () => {
 	test.beforeAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
-	
+
 	transactionsOnClassicCheckout(
 		payUponInvoiceClassicCheckoutGermanyExcludingTax
 	);

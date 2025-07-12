@@ -434,7 +434,9 @@ export class PayPalUI {
 
 			case 'PayLater':
 				popup = await this.openPayLaterPopup();
-				await popup.completePayLaterPayment( data.payment.payPalAccount );
+				await popup.completePayLaterPayment(
+					data.payment.payPalAccount
+				);
 				break;
 
 			case 'ACDC':
@@ -494,9 +496,7 @@ export class PayPalUI {
 		switch ( data.payment.method ) {
 			case 'PayPal':
 				popup = await this.openBlockPayPalPopup();
-				await popup.completePayPalPayment(
-					data.payment.payPalAccount
-				);
+				await popup.completePayPalPayment( data.payment.payPalAccount );
 				break;
 
 			case 'PayLater':
