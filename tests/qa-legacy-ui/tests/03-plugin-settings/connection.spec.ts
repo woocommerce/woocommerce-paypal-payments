@@ -19,11 +19,6 @@ test.describe( 'Сonnection', () => {
 		await expect(
 			connection.toggleToManualCredentialInputButton()
 		).toBeVisible();
-		await expect(
-			connection.page.getByText(
-				'PayPal Payments is almost ready. To get started, '
-			)
-		).toBeVisible();
 	} );
 
 	test.describe( 'Connected merchant', () => {

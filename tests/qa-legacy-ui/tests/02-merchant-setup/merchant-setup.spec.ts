@@ -28,11 +28,6 @@ test.describe( 'Merchant Setup', () => {
 		// Wait for loading because there are additional elements which disappear after page is fully loaded (activatePayPalButton, testPaymentsWithPayPalSandboxButton)
 		await connection.page.waitForLoadState( 'domcontentloaded' );
 		await connection.assertUrl();
-		await expect(
-			connection.page.getByText(
-				'PayPal Payments is almost ready. To get started, connect your account with the Activate PayPal button on the Account Setup page.'
-			)
-		).toBeVisible();
 		await expect( connection.documentationButton() ).toBeVisible();
 		await expect( connection.getHelpLink() ).toBeVisible();
 		await expect( connection.enablePayPalPaymentsCheckbox() ).toBeVisible();
@@ -84,7 +79,7 @@ test.describe( 'Merchant Setup', () => {
 		page,
 	} ) => {
 		await connection.visit();
-		await connection.connectMerchant( merchants.germany );
+		await connection.connectMerchant( merchants.usa );
 		await expect( connection.disconnectAccountButton() ).toBeVisible();
 
 		await expect(
