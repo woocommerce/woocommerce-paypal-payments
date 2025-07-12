@@ -509,23 +509,6 @@ export class PayPalUI {
 	};
 
 	/**
-	 * Adds payment method on My Account/Payment Methods page
-	 *
-	 * @param payment
-	 */
-	savePaymentMethod = async ( payment: PcpPayment ) => {
-		switch ( payment.method ) {
-			case 'PayPal':
-				await this.addPayPalPaymentMethod( payment.payPalAccount );
-				break;
-
-			case 'ACDC':
-				await this.addCardPaymentMethod( payment );
-				break;
-		}
-	};
-
-	/**
 	 * Opens PayPal popup
 	 *
 	 * @param fundingSource
@@ -610,34 +593,6 @@ export class PayPalUI {
 		await payPalPopup.completePayment();
 
 		await this.page.waitForLoadState();
-	};
-
-	/**
-	 * Completes payment with Pay Later
-	 *
-	 * @param payPalPopup
-	 * @param payPalAccount = { "email": "...", "password": "..." }
-	 */
-	completePayLaterPayment = async (
-		payPalPopup: PayPalPopup,
-		payPalAccount: PayPalAccount
-	) => {
-		await payPalPopup.login( payPalAccount.email, payPalAccount.password );
-		// PayPal change: following elements are not displayed any more
-		await expect( payPalPopup.payLaterSwitcher() ).toHaveAttribute(
-			'aria-selected',
-			'true'
-		);
-		await expect( payPalPopup.submitPaymentButton() ).toBeVisible();
-		await expect( payPalPopup.payLaterRadio() ).toBeVisible();
-		await expect( payPalPopup.payLaterSwitcher() ).toBeEnabled();
-		await payPalPopup.payLaterRadio().check();
-		await payPalPopup.submitPaymentButton().click();
-		await payPalPopup.popup.waitForTimeout( 2500 ); // timeout to avoid PayPal error
-		if ( await payPalPopup.tryAgainButton().isVisible() ) {
-			await payPalPopup.tryAgainButton().click();
-		}
-		await payPalPopup.completePayment();
 	};
 
 	// In the following request Playwright replaces Auth header with Basic Auth from .env,
@@ -835,25 +790,6 @@ export class PayPalUI {
 		await this.page.keyboard.type( birthDate );
 		await this.payUponInvoicePhoneInput().fill( phone );
 		await this.submitOrder();
-	};
-
-	/**
-	 * Adds PayPal as customer's saved payment method (Vaulting)
-	 *
-	 * @param payPalAccount = { "email": "...", "password": "..." }
-	 */
-	addPayPalPaymentMethod = async ( payPalAccount: PayPalAccount ) => {
-		await expect( this.payPalGateway() ).toBeVisible();
-		await this.payPalGateway().click();
-		const payPal = await this.openPayPalPupup();
-		await expect( payPal.popup ).toHaveTitle(
-			'Log in to your PayPal account'
-		);
-		await payPal.login( payPalAccount.email, payPalAccount.password );
-		await expect( payPal.popup ).toHaveTitle(
-			'PayPal Checkout - Review your payment'
-		);
-		await payPal.savePaymentMethodAndContinue();
 	};
 
 	addCardPaymentMethod = async ( payment: PcpPayment ) => {

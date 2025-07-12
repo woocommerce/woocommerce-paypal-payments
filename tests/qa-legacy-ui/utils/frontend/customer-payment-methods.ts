@@ -41,18 +41,5 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 		}
 	};
 
-	/**
-	 * Adds payment method on My Account/Payment Methods page
-	 *
-	 * @param payment
-	 */
-	savePaymentMethod = async ( payment: PcpPayment ) => {
-		if ( ! ( await this.isSavedPaymentMethod( payment ) ) ) {
-			await this.addPaymentMethodButton().click();
-			await this.page.waitForLoadState();
-			await this.ppui.savePaymentMethod( payment );
-		}
-	};
-
 	// Assertions
 }

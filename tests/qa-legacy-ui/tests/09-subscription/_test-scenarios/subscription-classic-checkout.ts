@@ -44,7 +44,6 @@ export const subscriptiontransactionsOnClassicCheckout = ( tests ) => {
 			} ) => {
 				// Make initial order to save payment method
 				// TODO: currently can't be moved to beforeAll to preserve PayPal session
-				// await customerPaymentMethods.savePaymentMethod(payPal); // doesn't work yet
 				if (
 					! ( await customerPaymentMethods.isSavedPaymentMethod(
 						initOrder.payment
