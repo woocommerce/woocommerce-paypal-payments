@@ -1023,7 +1023,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			$email = $wc_order->get_meta( PayPalGateway::CONTACT_EMAIL_META_KEY );
 			$phone = $wc_order->get_meta( PayPalGateway::CONTACT_PHONE_META_KEY );
 
-			if ( $email && is_string( $email ) ) {
+			if ( $email && is_email( $email ) ) {
 				$wc_order->set_billing_email( $email );
 			}
 			if ( $phone && is_string( $phone ) ) {
