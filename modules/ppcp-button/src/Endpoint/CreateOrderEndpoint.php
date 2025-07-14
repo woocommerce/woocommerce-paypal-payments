@@ -254,8 +254,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->pay_now_contexts                      = $pay_now_contexts;
 		$this->handle_shipping_in_paypal             = $handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
-		$this->funding_sources_without_redirect = $funding_sources_without_redirect;
-		$this->logger                           = $logger;
+		$this->funding_sources_without_redirect      = $funding_sources_without_redirect;
+		$this->logger                                = $logger;
 	}
 
 	/**
