@@ -20,6 +20,9 @@ class Spinner {
 	unblock() {
 		jQuery( this.target ).unblock();
 	}
-}
 
+	static fullPage() {
+		return new Spinner( window );
+	}
+}
 export default Spinner;
