@@ -240,6 +240,20 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 
 3. `.env` file is configured as per step 2 of [this section](#project-configuration) (simply copy-paste it from `PCP .env` vault of 1Password).
 
+4. (Optional) For DDEV setup add `IGNORE_HTTPS_ERRORS=true` to `.env` and remove the Basic Auth credentials:
+
+	```bash
+	# playwright-utils config
+	IGNORE_HTTPS_ERRORS=true
+	WP_BASE_URL='https://woocommerce-paypal-payments.ddev.site'
+	WP_USERNAME=admin
+	WP_PASSWORD=admin
+	WP_BASIC_AUTH_USER=
+	WP_BASIC_AUTH_PASS=
+	STORAGE_STATE_PATH='./storage-states'
+	STORAGE_STATE_PATH_ADMIN='./storage-states/admin.json'
+	```
+
 ### Reset SSE env
 
 > Note: see [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) don in Confluence (will be deprecated in 2025).

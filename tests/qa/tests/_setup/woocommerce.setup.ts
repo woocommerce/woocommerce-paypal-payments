@@ -50,6 +50,13 @@ setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
 	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 } );
 
+setup( 'Setup Deactivate Disable new UI plugin', async ( { requestUtils } ) => {
+	const pluginSlug = 'disable-new-ui';
+	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
+		await requestUtils.deactivatePlugin( pluginSlug );
+	}
+} );
+
 setup(
 	'Setup Disable WooCommerce Setup Wizard Plugin (active)',
 	async ( { requestUtils, plugins } ) => {
@@ -97,13 +104,6 @@ setup( 'Setup theme', async ( { requestUtils } ) => {
 	await requestUtils.activateTheme( slug );
 } );
 
-setup(
-	'Setup WooCommerce Live site visibility',
-	async ( { wooCommerceUtils } ) => {
-		await wooCommerceUtils.setSiteVisibility();
-	}
-);
-
 setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {
 		const apiKeys = await wooCommerceUtils.createApiKeys();
@@ -116,12 +116,12 @@ setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	}
 } );
 
-setup( 'Setup Block and Classic pages', async ( { wooCommerceUtils } ) => {
-	await wooCommerceUtils.publishBlockCartPage();
-	await wooCommerceUtils.publishBlockCheckoutPage();
-	await wooCommerceUtils.publishClassicCartPage();
-	await wooCommerceUtils.publishClassicCheckoutPage();
-} );
+setup(
+	'Setup WooCommerce Live site visibility',
+	async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setSiteVisibility();
+	}
+);
 
 setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 	const disabled = { enabled: 'no' };
@@ -217,9 +217,9 @@ setup( 'Setup products', async ( { wooCommerceUtils } ) => {
 	process.env.PRODUCTS = JSON.stringify( cartItems );
 } );
 
-setup( 'Setup Deactivate Disable new UI plugin', async ( { requestUtils } ) => {
-	const pluginSlug = 'disable-new-ui';
-	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
-		await requestUtils.deactivatePlugin( pluginSlug );
-	}
+setup( 'Setup Block and Classic pages', async ( { wooCommerceUtils } ) => {
+	await wooCommerceUtils.publishBlockCartPage();
+	await wooCommerceUtils.publishBlockCheckoutPage();
+	await wooCommerceUtils.publishClassicCartPage();
+	await wooCommerceUtils.publishClassicCheckoutPage();
 } );
