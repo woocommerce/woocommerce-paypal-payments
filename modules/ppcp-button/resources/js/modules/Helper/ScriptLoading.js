@@ -1,10 +1,7 @@
-import dataClientIdAttributeHandler from '../DataClientIdAttributeHandler';
 import { loadScript } from '@paypal/paypal-js';
 import widgetBuilder from '../Renderer/WidgetBuilder';
 import merge from 'deepmerge';
 import { keysToCamelCase } from './Utils';
-import { getCurrentPaymentMethod } from './CheckoutMethodState';
-import { v4 as uuidv4 } from 'uuid';
 
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 const scriptOptionsMap = {};
