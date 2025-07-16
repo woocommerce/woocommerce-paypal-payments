@@ -48,14 +48,6 @@ export const loadPayPalScript = async ( namespace, config ) => {
 		'data-namespace': namespace,
 	};
 
-	const dataClientIdResult = await handleDataClientIdAttribute(
-		scriptOptions,
-		config
-	);
-	if ( dataClientIdResult ) {
-		return dataClientIdResult;
-	}
-
 	const scriptPromise = new Promise( ( resolve, reject ) => {
 		loadScript( scriptOptions )
 			.then( ( script ) => {

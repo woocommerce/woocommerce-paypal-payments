@@ -275,19 +275,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				);
 
 				add_filter(
-					'woocommerce_paypal_payments_localized_script_data',
-					function( array $localized_script_data ) use ( $c ) {
-						$api = $c->get( 'api.sdk-client-token' );
-						assert( $api instanceof SdkClientToken );
-
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						assert( $logger instanceof LoggerInterface );
-
-						return $this->add_sdk_client_token_to_script_data( $api, $logger, $localized_script_data );
-					}
-				);
-
-				add_filter(
 					'ppcp_onboarding_dcc_table_rows',
 					/**
 					 * Param types removed to avoid third-party issues.
@@ -368,37 +355,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		return true;
-	}
-
-	/**
-	 * Adds id token to localized script data.
-	 *
-	 * @param SdkClientToken  $api User id token api.
-	 * @param LoggerInterface $logger The logger.
-	 * @param array           $localized_script_data The localized script data.
-	 * @return array
-	 */
-	private function add_sdk_client_token_to_script_data(
-		SdkClientToken $api,
-		LoggerInterface $logger,
-		array $localized_script_data
-	): array {
-		try {
-			$sdk_client_token             = $api->sdk_client_token();
-			$localized_script_data['axo'] = array(
-				'sdk_client_token' => $sdk_client_token,
-			);
-
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
-				$error = $exception->get_details( $error );
-			}
-
-			$logger->error( $error );
-		}
-
-		return $localized_script_data;
 	}
 
 	/**

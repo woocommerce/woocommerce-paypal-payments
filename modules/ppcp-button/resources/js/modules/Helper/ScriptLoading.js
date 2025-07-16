@@ -72,28 +72,6 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
 	}
 
-	// Axo SDK options
-	const sdkClientToken = config?.axo?.sdk_client_token;
-	const uuid = uuidv4().replace( /-/g, '' );
-	if ( sdkClientToken && config?.user?.is_logged !== true ) {
-		scriptOptions[ 'data-sdk-client-token' ] = sdkClientToken;
-		scriptOptions[ 'data-client-metadata-id' ] = uuid;
-	}
-
-	// Load PayPal script for special case with data-client-token
-	if (
-		config.data_client_id?.set_attribute &&
-		config.vault_v3_enabled !== '1'
-	) {
-		dataClientIdAttributeHandler(
-			scriptOptions,
-			config.data_client_id,
-			callback,
-			errorCallback
-		);
-		return;
-	}
-
 	// Adds data-user-id-token to script options.
 	const userIdToken = config?.save_payment_methods?.id_token;
 	if ( userIdToken && config?.user?.is_logged === true ) {
