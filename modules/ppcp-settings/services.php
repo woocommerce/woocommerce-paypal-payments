@@ -417,7 +417,8 @@ $services = array(
 	'settings.data.definition.todos'                      => static function ( ContainerInterface $container ) : TodosDefinition {
 		return new TodosDefinition(
 			$container->get( 'settings.service.todos_eligibilities' ),
-			$container->get( 'settings.data.general' )
+			$container->get( 'settings.data.general' ),
+			$container->get( 'settings.data.todos' )
 		);
 	},
 	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ) : PaymentMethodsDefinition {
