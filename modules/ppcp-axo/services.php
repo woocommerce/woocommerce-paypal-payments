@@ -292,7 +292,8 @@ return array(
 	'axo.endpoint.script-attributes'         => static function ( ContainerInterface $container ): AxoScriptAttributes {
 		return new AxoScriptAttributes(
 			$container->get( 'button.request-data' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get('api.sdk-client-token')
 		);
 	},
 
