@@ -1,5 +1,4 @@
 import merge from 'deepmerge';
-import { v4 as uuidv4 } from 'uuid';
 import { keysToCamelCase } from './Utils';
 
 const processUserIdToken = ( config ) => {

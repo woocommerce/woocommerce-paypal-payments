@@ -2,7 +2,7 @@ import AxoManager from './AxoManager';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import { log } from './Helper/Debug';
 
-( function ( { axoConfig, ppcpConfig, jQuery } ) {
+( function ( { axoConfig, ppcpConfig } ) {
 	const namespace = 'ppcpPaypalClassicAxo';
 	const bootstrap = () => {
 		new AxoManager( namespace, axoConfig, ppcpConfig );
@@ -14,8 +14,13 @@ import { log } from './Helper/Debug';
 			return;
 		}
 
-		// Load PayPal
-		loadPayPalScript( namespace, ppcpConfig )
+		loadPayPalScript( namespace, {
+			...ppcpConfig,
+			script_attributes: {
+				...ppcpConfig.script_attributes,
+				'data-sdk-client-token': 'abc123',
+			},
+		} )
 			.then( () => {
 				bootstrap();
 			} )
@@ -26,5 +31,4 @@ import { log } from './Helper/Debug';
 } )( {
 	axoConfig: window.wc_ppcp_axo,
 	ppcpConfig: window.PayPalCommerceGateway,
-	jQuery: window.jQuery,
 } );

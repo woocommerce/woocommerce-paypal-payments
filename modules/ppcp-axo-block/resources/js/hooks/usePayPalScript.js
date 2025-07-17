@@ -28,7 +28,13 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 		const loadScript = async () => {
 			if ( ! isPayPalLoaded && isConfigLoaded ) {
 				try {
-					await loadPayPalScript( namespace, ppcpConfig );
+					await loadPayPalScript( namespace, {
+						...ppcpConfig,
+						script_attributes: {
+							...ppcpConfig.script_attributes,
+							'data-sdk-client-token': 'abc123',
+						},
+					} );
 					setIsPayPalLoaded( true );
 				} catch ( error ) {
 					log(
