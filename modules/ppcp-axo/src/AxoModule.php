@@ -9,11 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
-use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
@@ -317,10 +315,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		add_action(
-			'wc_ajax_' . FrontendLoggerEndpoint::ENDPOINT,
+			'wc_ajax_' . FrontendLogger::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'axo.endpoint.frontend-logger' );
-				assert( $endpoint instanceof FrontendLoggerEndpoint );
+				assert( $endpoint instanceof FrontendLogger );
 
 				$endpoint->handle_request();
 			}
@@ -351,6 +349,16 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				unset( $methods[ AxoGateway::ID ] );
 
 				return $methods;
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . AxoScriptAttributes::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'axo.endpoint.script-attributes' );
+				assert( $endpoint instanceof AxoScriptAttributes );
+
+				$endpoint->handle_request();
 			}
 		);
 

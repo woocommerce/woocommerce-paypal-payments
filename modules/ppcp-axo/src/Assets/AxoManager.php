@@ -11,7 +11,8 @@ namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
-use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -225,8 +226,12 @@ class AxoManager {
 			'module_url'                 => untrailingslashit( $this->module_url ),
 			'ajax'                       => array(
 				'frontend_logger' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLogger::nonce() ),
+				),
+				'axo_script_attributes' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( AxoScriptAttributes::ENDPOINT ),
+					'nonce'    => wp_create_nonce( AxoScriptAttributes::nonce() ),
 				),
 			),
 			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',

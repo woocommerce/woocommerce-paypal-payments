@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\AxoBlock;
 
 use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
-use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -258,8 +258,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			'module_url'                 => untrailingslashit( $this->module_url ),
 			'ajax'                       => array(
 				'frontend_logger' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLogger::nonce() ),
 				),
 			),
 			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',

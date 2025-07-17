@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo;
 
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
@@ -280,8 +282,15 @@ return array(
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
 
-	'axo.endpoint.frontend-logger'           => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
-		return new FrontendLoggerEndpoint(
+	'axo.endpoint.frontend-logger'           => static function ( ContainerInterface $container ): FrontendLogger {
+		return new FrontendLogger(
+			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'axo.endpoint.script-attributes'         => static function ( ContainerInterface $container ): AxoScriptAttributes {
+		return new AxoScriptAttributes(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
