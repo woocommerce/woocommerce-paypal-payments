@@ -89,6 +89,8 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			$this->initialize_wc_bookings_compat_layer( $c );
 		}
 
+		$this->initialize_blueprint_compat_layer( $c );
+
 		add_action( 'woocommerce_paypal_payments_gateway_migrate', static fn() => delete_transient( 'ppcp_has_ppec_subscriptions' ) );
 
 		$this->legacy_ui_card_payment_mapping( $c );
@@ -549,6 +551,17 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Sets up the WooCommerce Blueprint compatibility layer.
+	 *
+	 * @param ContainerInterface $container The Container.
+	 * @return void
+	 */
+	private function initialize_blueprint_compat_layer( ContainerInterface $container ): void {
+			$blueprint_bootstrap = $container->get( 'compat.blueprint.bootstrap' );
+			$blueprint_bootstrap->init();
 	}
 
 	/**

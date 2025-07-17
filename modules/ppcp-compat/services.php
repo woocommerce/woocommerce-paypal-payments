@@ -18,6 +18,9 @@ use WooCommerce\PayPalCommerce\Compat\Settings\SettingsTabMapHelper;
 use WooCommerce\PayPalCommerce\Compat\Settings\StylingSettingsMapHelper;
 use WooCommerce\PayPalCommerce\Compat\Settings\SubscriptionSettingsMapHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsExporter;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalSettingsImporter;
+use WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint\PayPalBlueprintBootstrap;
 
 return array(
 
@@ -214,5 +217,19 @@ return array(
 	},
 	'compat.settings.payment_methods_map_helper'     => static function (): PaymentMethodSettingsMapHelper {
 		return new PaymentMethodSettingsMapHelper();
+	},
+	'compat.blueprint.paypal_settings_exporter' => static function( ContainerInterface $container ) : PayPalSettingsExporter {
+		return new PayPalSettingsExporter();
+	},
+
+	'compat.blueprint.paypal_settings_importer' => static function( ContainerInterface $container ) : PayPalSettingsImporter {
+		return new PayPalSettingsImporter();
+	},
+
+	'compat.blueprint.bootstrap' => static function( ContainerInterface $container ) : PayPalBlueprintBootstrap {
+		return new PayPalBlueprintBootstrap(
+			$container->get( 'compat.blueprint.paypal_settings_exporter' ),
+			$container->get( 'compat.blueprint.paypal_settings_importer' )
+		);
 	},
 );
