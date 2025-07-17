@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -86,6 +87,9 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 
 				$subscription_mode_options = $c->get( 'wcgateway.settings.fields.subscriptions_mode_options' );
 
+				/* @var GeneralSettings $general_settings General plugin settings. */
+				$general_settings = $c->get( 'settings.data.general' );
+
 				// Feature flag convention.
 				// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 				$items = array(
@@ -96,6 +100,12 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'value'          => $this->bool_to_html(
 							$this->onboarded( $bearer, $is_connected )
 						),
+					),
+					array(
+						'label'          => esc_html__( 'Branded only', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Branded only',
+						'description'    => esc_html__( 'Whether the plugin is in Branded only mode or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html( $general_settings->own_brand_only() ),
 					),
 					array(
 						'label'          => esc_html__( 'New UI active', 'woocommerce-paypal-payments' ),
