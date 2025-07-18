@@ -44,7 +44,6 @@ class AxoScriptAttributes implements EndpointInterface {
 		wp_send_json_success(
 			array(
 				'sdk_client_token'   => $token,
-				'client_metadata_id' => str_replace('-', '', wp_generate_uuid4()),
 			)
 		);
 

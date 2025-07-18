@@ -35,7 +35,6 @@ import { log } from './Helper/Debug';
 			script_attributes: {
 				...ppcpConfig.script_attributes,
 				'data-sdk-client-token': json.data.sdk_client_token,
-				'data-client-metadata-id': json.data.client_metadata_id,
 			},
 		} )
 			.then( () => {
