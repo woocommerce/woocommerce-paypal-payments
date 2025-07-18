@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
@@ -24,7 +25,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WC_Payment_Gateways;
@@ -209,7 +209,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						if ( $this->should_render_fastlane( $c ) && $smart_button->should_load_ppcp_script() ) {
+						$axo_applies = $c->get( 'axo.applies' );
+						assert( $axo_applies instanceof AxoApplies );
+
+						if ( $axo_applies->should_render_fastlane() && $smart_button->should_load_ppcp_script() ) {
 							$manager->enqueue();
 						}
 					}
@@ -374,30 +377,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	private function hide_credit_card_when_using_fastlane( array $methods, ContainerInterface $c ): bool {
 		return $this->should_render_fastlane( $c ) && isset( $methods[ CreditCardGateway::ID ] );
-	}
-
-	/**
-	 * Condition to evaluate if Fastlane should be rendered.
-	 *
-	 * Fastlane should only render on the classic checkout, when Fastlane is enabled in the settings and also only for guest customers.
-	 *
-	 * @param ContainerInterface $c The container.
-	 * @return bool
-	 */
-	private function should_render_fastlane( ContainerInterface $c ): bool {
-
-		$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
-		assert( $dcc_configuration instanceof CardPaymentsConfiguration );
-
-		$subscription_helper = $c->get( 'wc-subscriptions.helper' );
-		assert( $subscription_helper instanceof SubscriptionHelper );
-
-		return ! is_user_logged_in()
-			&& CartCheckoutDetector::has_classic_checkout()
-			&& $dcc_configuration->use_fastlane()
-			&& ! $this->is_excluded_endpoint()
-			&& is_checkout()
-			&& ! $subscription_helper->cart_contains_subscription();
 	}
 
 	/**

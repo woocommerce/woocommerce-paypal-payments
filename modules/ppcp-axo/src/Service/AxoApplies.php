@@ -1,21 +1,24 @@
 <?php
 /**
- * ApmApplies helper.
+ * AxoApplies helper.
  * Checks if AXO is available for a given country and currency.
  *
- * @package WooCommerce\PayPalCommerce\Axo\Helper
+ * @package WooCommerce\PayPalCommerce\Axo\Service
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Axo\Helper;
+namespace WooCommerce\PayPalCommerce\Axo\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
- * Class ApmApplies
+ * Class AxoApplies
  */
-class ApmApplies {
+class AxoApplies {
 
 	/**
 	 * The matrix which countries and currency combinations can be used for AXO.
@@ -38,6 +41,9 @@ class ApmApplies {
 	 */
 	private $country;
 
+	private CardPaymentsConfiguration $dcc_configuration;
+	private SubscriptionHelper $subscription_helper;
+
 	/**
 	 * DccApplies constructor.
 	 *
@@ -48,11 +54,15 @@ class ApmApplies {
 	public function __construct(
 		array $allowed_country_currency_matrix,
 		CurrencyGetter $currency,
-		string $country
+		string $country,
+		CardPaymentsConfiguration $dcc_configuration,
+		SubscriptionHelper $subscription_helper
 	) {
 		$this->allowed_country_currency_matrix = $allowed_country_currency_matrix;
 		$this->currency                        = $currency;
 		$this->country                         = $country;
+		$this->dcc_configuration               = $dcc_configuration;
+		$this->subscription_helper             = $subscription_helper;
 	}
 
 	/**
@@ -78,5 +88,29 @@ class ApmApplies {
 			'woocommerce_paypal_payments_is_eligible_for_axo',
 			true
 		);
+	}
+
+	/**
+	 * Checks if Fastlane should be rendered.
+	 *
+	 * @return bool
+	 */
+	public function should_render_fastlane(): bool {
+		return ! is_user_logged_in()
+			   && CartCheckoutDetector::has_classic_checkout()
+			   && $this->dcc_configuration->use_fastlane()
+			   && ! $this->is_excluded_endpoint()
+			   && is_checkout()
+			   && ! $this->subscription_helper->cart_contains_subscription();
+	}
+
+	/**
+	 * Condition to evaluate if the current endpoint is excluded.
+	 *
+	 * @return bool
+	 */
+	private function is_excluded_endpoint(): bool {
+		// Exclude the Order Pay and Order Received endpoints.
+		return is_wc_endpoint_url( 'order-pay' ) || is_wc_endpoint_url( 'order-received' );
 	}
 }

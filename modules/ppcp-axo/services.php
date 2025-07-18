@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
-use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
+use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -31,18 +31,20 @@ return array(
 		return $eligibility_check();
 	},
 	'axo.eligibility.check'                  => static function ( ContainerInterface $container ): callable {
-		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
-		assert( $apm_applies instanceof ApmApplies );
+		$apm_applies = $container->get( 'axo.helpers.axo-applies' );
+		assert( $apm_applies instanceof AxoApplies );
 
 		return static function () use ( $apm_applies ) : bool {
 			return $apm_applies->for_country_currency() && $apm_applies->for_merchant();
 		};
 	},
-	'axo.helpers.apm-applies'                => static function ( ContainerInterface $container ) : ApmApplies {
-		return new ApmApplies(
+	'axo.helpers.axo-applies'                => static function ( ContainerInterface $container ) : AxoApplies {
+		return new AxoApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.shop.country' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 
@@ -293,7 +295,9 @@ return array(
 		return new AxoScriptAttributes(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.sdk-client-token' )
+			$container->get( 'api.sdk-client-token' ),
+			$container->get( 'axo.helpers.axo-applies' ),
+			$container->get( 'axo.eligible' )
 		);
 	},
 
