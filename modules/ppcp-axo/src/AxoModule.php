@@ -209,7 +209,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						$axo_applies = $c->get( 'axo.applies' );
+						$axo_applies = $c->get( 'axo.service.axo-applies' );
 						assert( $axo_applies instanceof AxoApplies );
 
 						if ( $axo_applies->should_render_fastlane() && $smart_button->should_load_ppcp_script() ) {
@@ -222,7 +222,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				add_action(
 					$manager->checkout_button_renderer_hook(),
 					function () use ( $c, $manager ) {
-						if ( $this->should_render_fastlane( $c ) ) {
+						$axo_applies = $c->get( 'axo.service.axo-applies' );
+						assert( $axo_applies instanceof AxoApplies );
+
+						if ( $axo_applies->should_render_fastlane( $c ) ) {
 							$manager->render_checkout_button();
 						}
 					}
@@ -304,8 +307,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				add_action(
 					'template_redirect',
 					function () use ( $c ) {
+						$axo_applies = $c->get( 'axo.service.axo-applies' );
+						assert( $axo_applies instanceof AxoApplies );
 
-						if ( $this->should_render_fastlane( $c ) ) {
+						if ( $axo_applies->should_render_fastlane() ) {
 							WC()->session->set( 'chosen_payment_method', AxoGateway::ID );
 						}
 					}
@@ -376,7 +381,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return bool
 	 */
 	private function hide_credit_card_when_using_fastlane( array $methods, ContainerInterface $c ): bool {
-		return $this->should_render_fastlane( $c ) && isset( $methods[ CreditCardGateway::ID ] );
+		$axo_applies = $c->get( 'axo.service.axo-applies' );
+		assert( $axo_applies instanceof AxoApplies );
+
+		return $axo_applies->should_render_fastlane() && isset( $methods[ CreditCardGateway::ID ] );
 	}
 
 	/**
@@ -386,8 +394,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return void
 	 */
 	private function add_checkout_loader_markup( ContainerInterface $c ): void {
+		$axo_applies = $c->get( 'axo.service.axo-applies' );
+		assert( $axo_applies instanceof AxoApplies );
 
-		if ( $this->should_render_fastlane( $c ) ) {
+		if ( $axo_applies->should_render_fastlane() ) {
 			add_action(
 				'woocommerce_checkout_before_customer_details',
 				function () {

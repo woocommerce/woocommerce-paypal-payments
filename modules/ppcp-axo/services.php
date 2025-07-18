@@ -31,14 +31,14 @@ return array(
 		return $eligibility_check();
 	},
 	'axo.eligibility.check'                  => static function ( ContainerInterface $container ): callable {
-		$apm_applies = $container->get( 'axo.helpers.axo-applies' );
-		assert( $apm_applies instanceof AxoApplies );
+		$axo_applies = $container->get( 'axo.service.axo-applies' );
+		assert( $axo_applies instanceof AxoApplies );
 
-		return static function () use ( $apm_applies ) : bool {
-			return $apm_applies->for_country_currency() && $apm_applies->for_merchant();
+		return static function () use ( $axo_applies ) : bool {
+			return $axo_applies->for_country_currency() && $axo_applies->for_merchant();
 		};
 	},
-	'axo.helpers.axo-applies'                => static function ( ContainerInterface $container ) : AxoApplies {
+	'axo.service.axo-applies'                => static function ( ContainerInterface $container ) : AxoApplies {
 		return new AxoApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
@@ -296,7 +296,6 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.sdk-client-token' ),
-			$container->get( 'axo.helpers.axo-applies' ),
 			$container->get( 'axo.eligible' )
 		);
 	},

@@ -21,20 +21,17 @@ class AxoScriptAttributes implements EndpointInterface {
 	private RequestData $request_data;
 	private LoggerInterface $logger;
 	private SdkClientToken $sdk_client_token;
-	private AxoApplies $axo_applies;
 	private bool $axo_eligible;
 
 	public function __construct(
 		RequestData $request_data,
 		LoggerInterface $logger,
 		SdkClientToken $sdk_client_token,
-		AxoApplies $axo_applies,
 		bool $axo_eligible
 	) {
 		$this->request_data     = $request_data;
 		$this->logger           = $logger;
 		$this->sdk_client_token = $sdk_client_token;
-		$this->axo_applies      = $axo_applies;
 		$this->axo_eligible     = $axo_eligible;
 	}
 
@@ -47,8 +44,6 @@ class AxoScriptAttributes implements EndpointInterface {
 
 		if (
 			! $this->axo_eligible
-			|| ! $this->axo_applies->should_render_fastlane()
-			|| $this->is_paypal_continuation()
 		) {
 			wp_send_json_error( 'Failed to load axo script attributes.' );
 			return false;
