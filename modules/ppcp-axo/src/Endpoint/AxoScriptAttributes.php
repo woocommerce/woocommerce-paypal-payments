@@ -5,7 +5,6 @@ namespace WooCommerce\PayPalCommerce\Axo\Endpoint;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
@@ -44,6 +43,8 @@ class AxoScriptAttributes implements EndpointInterface {
 
 		if (
 			! $this->axo_eligible
+			|| is_user_logged_in()
+			|| $this->is_paypal_continuation()
 		) {
 			wp_send_json_error( 'Failed to load axo script attributes.' );
 			return false;
