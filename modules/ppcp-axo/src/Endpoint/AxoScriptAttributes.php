@@ -8,6 +8,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 
+/**
+ * Handles the request for the PayPal Axo script attributes.
+ */
 class AxoScriptAttributes implements EndpointInterface {
 
 	const ENDPOINT = 'ppc-axo-script-attributes';
@@ -21,8 +24,8 @@ class AxoScriptAttributes implements EndpointInterface {
 		LoggerInterface $logger,
 		SdkClientToken $sdk_client_token
 	) {
-		$this->request_data = $request_data;
-		$this->logger       = $logger;
+		$this->request_data     = $request_data;
+		$this->logger           = $logger;
 		$this->sdk_client_token = $sdk_client_token;
 	}
 
@@ -35,15 +38,15 @@ class AxoScriptAttributes implements EndpointInterface {
 
 		try {
 			$token = $this->sdk_client_token->sdk_client_token();
-		} catch (PayPalApiException $exception) {
-			$this->logger->error($exception->getMessage());
-			wp_send_json_error($exception->getMessage());
+		} catch ( PayPalApiException $exception ) {
+			$this->logger->error( $exception->getMessage() );
+			wp_send_json_error( $exception->getMessage() );
 			return false;
 		}
 
 		wp_send_json_success(
 			array(
-				'sdk_client_token'   => $token,
+				'sdk_client_token' => $token,
 			)
 		);
 

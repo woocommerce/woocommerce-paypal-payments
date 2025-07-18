@@ -293,7 +293,7 @@ return array(
 		return new AxoScriptAttributes(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get('api.sdk-client-token')
+			$container->get( 'api.sdk-client-token' )
 		);
 	},
 
