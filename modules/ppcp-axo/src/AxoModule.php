@@ -225,7 +225,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						$axo_applies = $c->get( 'axo.service.axo-applies' );
 						assert( $axo_applies instanceof AxoApplies );
 
-						if ( $axo_applies->should_render_fastlane( $c ) ) {
+						if ( $axo_applies->should_render_fastlane() ) {
 							$manager->render_checkout_button();
 						}
 					}
