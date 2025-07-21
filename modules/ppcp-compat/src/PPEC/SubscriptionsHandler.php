@@ -125,9 +125,22 @@ class SubscriptionsHandler {
 	public function use_billing_agreement_as_token( $token, $customer, $order ) {
 		if ( PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() && wcs_order_contains_renewal( $order ) ) {
 			$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
-
 			if ( $billing_agreement_id ) {
-				$token = new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
+				return new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
+			}
+
+			$subscriptions = wcs_get_subscriptions_for_renewal_order( $order );
+			if ( ! empty( $subscriptions ) ) {
+				$subscription = reset( $subscriptions ); // Get first subscription.
+				$parent_order = $subscription->get_parent();
+
+				if ( $parent_order ) {
+					$billing_agreement_id = $parent_order->get_meta( '_ppec_billing_agreement_id', true );
+
+					if ( $billing_agreement_id ) {
+						return new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
+					}
+				}
 			}
 		}
 

@@ -94,28 +94,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->legacy_ui_card_payment_mapping( $c );
 
-		// Short-circuit RenewalHandler::get_token_for_customer() to use a Billing Agreement ID for PPEC orders.
-		add_filter('woocommerce_paypal_payments_subscriptions_get_token_for_customer', function ($token, $customer, $order ) {
-			if ( PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() && wcs_order_contains_renewal( $order ) ) {
-				$subscriptions = wcs_get_subscriptions_for_renewal_order($order);
-
-				if (!empty($subscriptions)) {
-					$subscription = reset($subscriptions); // Get first subscription.
-					$parent_order = $subscription->get_parent();
-
-					if ($parent_order) {
-						$billing_agreement_id = $parent_order->get_meta('_ppec_billing_agreement_id', true);
-
-						if ($billing_agreement_id) {
-							$token = new PaymentToken($billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT');
-						}
-					}
-				}
-			}
-
-			return $token;
-		}, 10, 3);
-
 		return true;
 	}
 
