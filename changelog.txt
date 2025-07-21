@@ -12,7 +12,7 @@
 * Fix - PayPal Subscription transaction failed in various scenarios #3515
 * Fix - Rounding differences potentially lead to order failure (author @luzat) #3373
 * Fix - Google Pay payment on block checkout may fail when ACDC is default payment selection #3506
-* Fix - Product Prices Disappear in some cases when WooCommerce Subscriptions active #3519
+* Fix - Product Prices Disappear in some cases when WooCommerce Subscriptions is active #3519
 
 = 3.0.7 - 2025-07-01 =
 * Enhancement - Remove `application_context` in favor of `experience_context` object #3431
