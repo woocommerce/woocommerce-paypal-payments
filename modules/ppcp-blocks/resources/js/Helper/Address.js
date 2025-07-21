@@ -115,7 +115,7 @@ export const paypalSubscriberToWc = ( subscriber ) => {
  * @return {Object}
  */
 export const paypalOrderToWcShippingAddress = ( order ) => {
-	const shipping = order.purchase_units?.[ 0 ]?.shipping;
+	const shipping = order?.purchase_units?.[ 0 ]?.shipping;
 	if ( ! shipping ) {
 		return {};
 	}
