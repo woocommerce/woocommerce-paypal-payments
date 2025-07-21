@@ -436,7 +436,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return bool
 	 */
 	private function is_excluded_endpoint(): bool {
-		// Exclude the Order Pay and Order Received endpoints.
 		return is_wc_endpoint_url( 'order-pay' ) || is_wc_endpoint_url( 'order-received' );
 	}
 

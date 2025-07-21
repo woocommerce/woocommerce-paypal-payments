@@ -15,9 +15,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
-/**
- * Class AxoApplies
- */
 class AxoApplies {
 
 	/**
@@ -110,7 +107,6 @@ class AxoApplies {
 	 * @return bool
 	 */
 	private function is_excluded_endpoint(): bool {
-		// Exclude the Order Pay and Order Received endpoints.
 		return is_wc_endpoint_url( 'order-pay' ) || is_wc_endpoint_url( 'order-received' );
 	}
 }

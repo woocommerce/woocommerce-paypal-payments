@@ -20,8 +20,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
  */
 class CartScriptParamsEndpoint implements EndpointInterface {
 
-
-	const ENDPOINT = 'ppc-cart-script-params';
+	public const ENDPOINT = 'ppc-cart-script-params';
 
 	/**
 	 * The SmartButton.
