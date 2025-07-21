@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.0.7
+Stable tag: 3.0.8
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -155,6 +155,20 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 3.0.8 - XXXX-XX-XX =
+* Enhancement - Migration from Legacy Settings to New Settings as opt-in via banner & button #3491
+* Enhancement - Replace call to `billing-agreements/agreement-tokens` with checking the capabilities for Reference Transactions #3495
+* Enhancement - Add Fastlane 3D Secure support #3493
+* Enhancement - Improved PHP 8.4 compatibility #3534
+* Fix - `INVALID_REQUEST` error due to wrong `landing_page` value after upgrade to 3.0.7 #3521
+* Fix - Incorrect Amount via Express Payment for WooCommerce Product Bundles #3516
+* Fix - Onboarding failed via "Connect to PayPal" in new UI due to race condition #3385
+* Fix - Fatal error when PayPal Payments is active without WooCommerce #3502
+* Fix - PayPal Subscription transaction failed in various scenarios #3515
+* Fix - Rounding differences potentially lead to order failure (author @luzat) #3373
+* Fix - Google Pay payment on block checkout may fail when ACDC is default payment selection #3506
+* Fix - Product Prices Disappear in some cases when WooCommerce Subscriptions is active #3519
 
 = 3.0.7 - 2025-07-01 =
 * Enhancement - Remove `application_context` in favor of `experience_context` object #3431
