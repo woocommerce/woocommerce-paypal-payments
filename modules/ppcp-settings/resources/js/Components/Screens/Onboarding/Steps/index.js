@@ -64,10 +64,19 @@ export const getSteps = ( flags ) => {
 		// Casual selling: Unlock the "Personal Account" choice.
 		( step ) => flags.canUseCasualSelling || step.id !== 'business',
 		// Skip payment methods screen.
-		( step ) =>
-			step.id !== 'methods' ||
-			( ! flags.shouldSkipPaymentMethods &&
-				! ( ownBrandOnly && isCasualSeller ) ),
+		( step ) => {
+			if ( step.id !== 'methods' ) {
+				return true;
+			}
+
+			const isBrandedBCDC = ownBrandOnly && ! flags.canUseCardPayments;
+			const shouldSkip =
+				flags.shouldSkipPaymentMethods ||
+				isCasualSeller ||
+				isBrandedBCDC;
+
+			return ! shouldSkip;
+		},
 	] );
 
 	const totalStepsCount = steps.length;
