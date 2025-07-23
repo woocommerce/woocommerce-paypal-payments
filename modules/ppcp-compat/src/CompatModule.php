@@ -10,12 +10,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
-use stdClass;
 use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
