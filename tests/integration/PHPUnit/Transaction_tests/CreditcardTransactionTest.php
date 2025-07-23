@@ -181,4 +181,67 @@ class CreditcardTransactionTest extends IntegrationMockedTestCase
 		unset($_POST['ppcp-credit-card-gateway-card-expiry']);
 		unset($_POST['ppcp-credit-card-gateway-card-cvc']);
 	}
+
+	/**
+	 * Tests payment processing with a saved/vaulted credit card.
+	 *
+	 * GIVEN a WooCommerce order
+	 * AND a saved credit card token for the customer
+	 * AND the saved card ID in POST data
+	 * WHEN the payment is processed through the credit card gateway
+	 * THEN the payment should be successfully captured using the vaulted card
+	 * AND the order status should change to processing
+	 * AND a transaction ID should be set on the order
+	 */
+	public function testProcessPaymentVaultedCard()
+	{
+		$mockOrderEndpoint = $this->mockOrderEndpoint('CAPTURE', false, true);
+		$order = $this->getConfiguredOrder(
+			$this->customer_id,
+			'ppcp-credit-card-gateway',
+			['simple'],
+			[],
+			false
+		);
+		$paypal_order_id = 'TEST-PAYPAL-ORDER-' . uniqid();
+
+		$_POST['paypal_order_id'] = $paypal_order_id;
+		$order->update_meta_data('_paypal_order_id', $paypal_order_id);
+		$order->save();
+
+		$paymentToken = $this->setupPaymentToken($this->customer_id, 'ppcp-credit-card-gateway');
+
+		// Set the saved card in POST data (simulating frontend selection)
+		$_POST['saved_credit_card'] = $paymentToken->get_token();
+
+		$sessionHandler = \Mockery::mock(\WooCommerce\PayPalCommerce\Session\SessionHandler::class);
+		$sessionHandler->shouldReceive('order')->andReturn(null);
+		$sessionHandler->shouldReceive('destroy_session_data')->once();
+
+		$additionalServices = [
+			'session.handler' => function() use ($sessionHandler) {
+				return $sessionHandler;
+			},
+			'api.endpoint.payment-tokens' => function() {
+				return $this->mockPaymentTokensEndpoint;
+			}
+		];
+
+		$c = $this->setupTestContainer($mockOrderEndpoint, $additionalServices);
+		$gateway = $c->get('wcgateway.credit-card-gateway');
+
+		$result = $gateway->process_payment($order->get_id());
+
+		// Assertions
+		$this->assertEquals('success', $result['result']);
+		$this->assertArrayHasKey('redirect', $result);
+
+		// Verify order status changed
+		$order = wc_get_order($order->get_id()); // Refresh order
+		$this->assertEquals('processing', $order->get_status());
+		$this->assertNotEmpty($order->get_transaction_id());
+
+		// Clean up POST data
+		unset($_POST['saved_credit_card']);
+	}
 }
