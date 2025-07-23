@@ -105,7 +105,8 @@ registerExpressPaymentMethod( {
 	content: <ApplePayComponent isEditing={ false } />,
 	edit: <ApplePayComponent isEditing={ true } />,
 	ariaLabel: buttonData.title,
-	canMakePayment: () => buttonData.enabled,
+	canMakePayment: () =>
+		buttonData.enabled && window.ApplePaySession?.canMakePayments(),
 	supports: {
 		features,
 		style: [ 'height', 'borderRadius' ],
