@@ -475,26 +475,26 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payment_source_key
 		);
 
+		$return_url = $this->return_url_factory->from_context(
+			$this->parsed_request_data['context'],
+			$this->parsed_request_data
+		);
+
 		$experience_context = $this->experience_context_builder
 			->with_default_paypal_config( $shipping_preference, $action )
-			->with_contact_preference( $contact_preference );
+			->with_contact_preference( $contact_preference )
+			->with_custom_return_url( $return_url )
+			->with_custom_cancel_url( $return_url );
 
 		if ( $this->server_side_shipping_callback_enabled
 			&& $shipping_preference === ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
 			$experience_context = $experience_context->with_shipping_callback();
 		}
 
-		$return_url = $this->return_url_factory->from_context(
-			$this->parsed_request_data['context'],
-			$this->parsed_request_data
-		);
-
 		$payment_source = new PaymentSource(
 			$payment_source_key,
 			(object) array(
 				'experience_context' => $experience_context
-					->with_custom_return_url( $return_url )
-					->with_custom_cancel_url( $return_url )
 					->build()
 					->to_array(),
 			)
