@@ -1,9 +1,4 @@
 <?php
-/**
- * Factory for determining the appropriate return URL based on context.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Factory
- */
 
 declare(strict_types=1);
 
@@ -12,11 +7,15 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
- * Class ReturnUrlFactory
+ * Factory for determining the appropriate return URL based on context.
  */
 class ReturnUrlFactory {
 
 	/**
+	 * @param string               $context The context, like in ContextTrait.
+	 * @param array<string, mixed> $request_data The request parameters, if exist.
+	 * 'order_id`, 'purchase_units' etc.
+	 *
 	 * @throws RuntimeException When required data is missing for the context.
 	 */
 	public function from_context( string $context, array $request_data = array() ): string {
