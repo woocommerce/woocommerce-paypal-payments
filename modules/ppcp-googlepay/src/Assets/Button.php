@@ -135,7 +135,7 @@ class Button implements ButtonInterface {
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
 		$this->logger              = $logger;
-		$this->new_settings = $new_settings;
+		$this->new_settings        = $new_settings;
 	}
 
 	/**
@@ -546,11 +546,11 @@ class Button implements ButtonInterface {
 	 * Check if new settings model exist and if so check enable pay now setting,
 	 * if none of the above is true, check legacy settings for shipping enabled.
 	 *
-	 * @return bool
-	 * @throws NotFoundException
+	 * @return bool Whether shipping should be used or not.
+	 * @throws NotFoundException If the settings are not found.
 	 */
 	private function should_use_shipping(): bool {
-		if(! is_null($this->new_settings) && $this->new_settings->get_enable_pay_now() === true) {
+		if ( ! is_null( $this->new_settings ) && $this->new_settings->get_enable_pay_now() === true ) {
 			return true;
 		}
 
