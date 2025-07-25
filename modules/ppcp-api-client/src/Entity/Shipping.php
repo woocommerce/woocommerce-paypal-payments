@@ -48,15 +48,15 @@ class Shipping {
 	/**
 	 * Shipping constructor.
 	 *
-	 * @param string           $name          The name.
-	 * @param Address          $address       The address.
+	 * @param string|null      $name          The name.
+	 * @param Address|null     $address       The address.
 	 * @param string|null      $email_address Contact email.
 	 * @param Phone|null       $phone_number  Contact phone.
 	 * @param ShippingOption[] $options       Shipping methods.
 	 */
 	public function __construct(
-		string $name,
-		Address $address,
+		string $name = null,
+		Address $address = null,
 		?string $email_address = null,
 		?Phone $phone_number = null,
 		array $options = array()
@@ -73,7 +73,7 @@ class Shipping {
 	 *
 	 * @return string
 	 */
-	public function name(): string {
+	public function name(): ?string {
 		return $this->name;
 	}
 
@@ -82,7 +82,7 @@ class Shipping {
 	 *
 	 * @return Address
 	 */
-	public function address(): Address {
+	public function address(): ?Address {
 		return $this->address;
 	}
 
@@ -119,19 +119,26 @@ class Shipping {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$result = array(
-			'name'    => array(
-				'full_name' => $this->name(),
-			),
-			'address' => $this->address()->to_array(),
-		);
+		$result = array();
+
+		$name = $this->name();
+		if ( $name ) {
+			$result['name'] = array(
+				'full_name' => $name,
+			);
+		}
+
+		$address = $this->address();
+		if ( $address ) {
+			$this->address()->to_array();
+		}
 
 		$contact_email = $this->email_address();
-		$contact_phone = $this->phone_number();
-
 		if ( $contact_email ) {
 			$result['email_address'] = $contact_email;
 		}
+
+		$contact_phone = $this->phone_number();
 		if ( $contact_phone ) {
 			$result['phone_number'] = $contact_phone->to_array();
 		}

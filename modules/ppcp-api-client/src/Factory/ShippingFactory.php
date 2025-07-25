@@ -96,30 +96,30 @@ class ShippingFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $data ): Shipping {
-		if ( ! isset( $data->name->full_name ) ) {
-			throw new RuntimeException( 'No name was given for shipping.' );
+		$name = $data->name->full_name ?? null;
+
+		$address = null;
+		if ( isset( $data->address ) ) {
+			$address = $this->address_factory->from_paypal_response( $data->address );
 		}
-		if ( ! isset( $data->address ) ) {
-			throw new RuntimeException( 'No address was given for shipping.' );
-		}
-		$contact_phone = null;
+
 		$contact_email = null;
-		$address       = $this->address_factory->from_paypal_response( $data->address );
+		if ( isset( $data->email_address ) ) {
+			$contact_email = $data->email_address;
+		}
+
+		$contact_phone = null;
+		if ( isset( $data->phone_number->national_number ) ) {
+			$contact_phone = new Phone( $data->phone_number->national_number );
+		}
 
 		$options = array_map(
 			array( $this->shipping_option_factory, 'from_paypal_response' ),
 			$data->options ?? array()
 		);
 
-		if ( isset( $data->phone_number->national_number ) ) {
-			$contact_phone = new Phone( $data->phone_number->national_number );
-		}
-		if ( isset( $data->email_address ) ) {
-			$contact_email = $data->email_address;
-		}
-
 		return new Shipping(
-			$data->name->full_name,
+			$name,
 			$address,
 			$contact_email,
 			$contact_phone,

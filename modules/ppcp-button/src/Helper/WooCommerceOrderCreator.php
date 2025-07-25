@@ -237,17 +237,18 @@ class WooCommerceOrderCreator {
 
 		if ( $shipping ) {
 			$address = $shipping->address();
-
-			$shipping_address = array(
-				'first_name' => $shipping->name(),
-				'last_name'  => '',
-				'address_1'  => $address->address_line_1(),
-				'address_2'  => $address->address_line_2(),
-				'city'       => $address->admin_area_2(),
-				'state'      => $address->admin_area_1(),
-				'postcode'   => $address->postal_code(),
-				'country'    => $address->country_code(),
-			);
+			if ( $address ) {
+				$shipping_address = array(
+					'first_name' => $shipping->name(),
+					'last_name'  => '',
+					'address_1'  => $address->address_line_1(),
+					'address_2'  => $address->address_line_2(),
+					'city'       => $address->admin_area_2(),
+					'state'      => $address->admin_area_1(),
+					'postcode'   => $address->postal_code(),
+					'country'    => $address->country_code(),
+				);
+			}
 
 			$shipping_options = $shipping->options()[0] ?? '';
 		}
