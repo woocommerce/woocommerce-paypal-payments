@@ -71,7 +71,7 @@ class Shipping {
 	/**
 	 * Returns the name.
 	 *
-	 * @return string
+	 * @return null|string
 	 */
 	public function name(): ?string {
 		return $this->name;
@@ -80,7 +80,7 @@ class Shipping {
 	/**
 	 * Returns the shipping address.
 	 *
-	 * @return Address
+	 * @return null|Address
 	 */
 	public function address(): ?Address {
 		return $this->address;
@@ -151,6 +151,7 @@ class Shipping {
 				$this->options
 			);
 		}
+
 		return $result;
 	}
 }
