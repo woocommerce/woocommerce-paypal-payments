@@ -130,7 +130,7 @@ class Shipping {
 
 		$address = $this->address();
 		if ( $address ) {
-			$this->address()->to_array();
+			$result['address'] = $this->address()->to_array();
 		}
 
 		$contact_email = $this->email_address();
