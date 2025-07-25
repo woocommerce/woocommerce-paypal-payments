@@ -319,7 +319,7 @@ class StylingSettingsMapHelper {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $button_name, $current_context ) {
+			static function ( $methods ) use ( $button_name, $current_context ): array {
 				if ( $current_context !== 'classic_checkout' ) {
 					return $methods;
 				}
