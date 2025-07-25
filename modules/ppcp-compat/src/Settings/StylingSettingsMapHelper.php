@@ -305,7 +305,6 @@ class StylingSettingsMapHelper {
 			}
 		}
 
-
 		/**
 		 * Filters the available payment gateways to remove the specified gateway (e.g., Google Pay or Apple Pay)
 		 * when the button is disabled for the current location (e.g., classic checkout) in the styling settings.
