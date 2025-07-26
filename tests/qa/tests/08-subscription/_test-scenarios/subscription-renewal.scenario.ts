@@ -11,7 +11,9 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils } ) => {
+		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+			await wooCommerceApi.deleteAllSubscriptions();
+			await wooCommerceApi.deleteAllOrders();
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -97,7 +99,6 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				else {
 					await pcpApi.triggerVaultingSubscriptionRenewal( subscriptionId );
 				}
-
 				const renewalOrderIds = await pcpApi.getSubscriptionRenewalOrderIds( subscriptionId );
 				await expect( renewalOrderIds ).toHaveLength( 1 );
 
@@ -149,7 +150,9 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils } ) => {
+		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+			await wooCommerceApi.deleteAllSubscriptions();
+			await wooCommerceApi.deleteAllOrders();
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -222,7 +225,6 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				else {
 					await pcpApi.triggerVaultingSubscriptionRenewal( subscriptionId );
 				}
-
 				const renewalOrderIds = await pcpApi.getSubscriptionRenewalOrderIds( subscriptionId );
 				await expect( renewalOrderIds ).toHaveLength( 1 );
 

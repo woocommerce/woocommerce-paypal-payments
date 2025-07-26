@@ -36,13 +36,19 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	} );
 } );
 
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllOrders();
+} );
+
 const savePaymentMethodData = [
 	{
-		testKey: 'PCP-0000',
+		// https://inpsyde.atlassian.net/browse/PCP-4499
+		testKey: 'PCP-4499',
 		payment: payPal,
 	},
 	{
-		testKey: 'PCP-0000',
+		// https://inpsyde.atlassian.net/browse/PCP-4500
+		testKey: 'PCP-4500',
 		payment: acdc,
 	},
 ];
@@ -84,11 +90,13 @@ for ( const testData of savePaymentMethodData ) {
 
 const deletePaymentMethodData = [
 	{
-		testKey: 'PCP-0000',
+		// https://inpsyde.atlassian.net/browse/PCP-1732
+		testKey: 'PCP-1732',
 		payment: payPal,
 	},
 	{
-		testKey: 'PCP-0000',
+		// https://inpsyde.atlassian.net/browse/PCP-1371
+		testKey: 'PCP-1371',
 		payment: acdc,
 	},
 ];

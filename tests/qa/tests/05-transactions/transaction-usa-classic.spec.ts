@@ -8,6 +8,7 @@ import {
 	gateways,
 	taxSettings,
 	wpDebuggingPlugin,
+	customers,
 } from '../../resources';
 import {
 	transactionsOnClassicCart,
@@ -38,6 +39,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		classicPages: true,
+		customer: customers.usa,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -51,6 +53,10 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
+} );
+
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 transactionsOnClassicCheckout( payPalClassicCheckout );
@@ -110,25 +116,25 @@ test.describe( () => {
 } );
 
 /**
- * Fastlane is eligible only for USA/USD
+ * Fastlane
+ * Eligible only for USA/USD
+ * NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
+ * https://inpsyde.atlassian.net/browse/PCP-4625
+ * https://inpsyde.atlassian.net/browse/PCP-4623
  */
-// NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
-// https://inpsyde.atlassian.net/browse/PCP-4625
-// https://inpsyde.atlassian.net/browse/PCP-4623
 
-// Fastlane
-// test.describe( () => {
-// 	test.beforeAll( async ( { pcpApi } ) => {
-// 		await pcpApi.updatePcpPaymentMethods( {
-// 			[ fastlane.id ]: { id: fastlane.id, enabled: true },
-// 		} );
-// 	} );
+test.describe( () => {
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( {
+			[ fastlane.id ]: { id: fastlane.id, enabled: true },
+		} );
+	} );
 
-// 	transactionsOnClassicCheckout( fastlaneClassicCheckout );
+	transactionsOnClassicCheckout( fastlaneClassicCheckout );
 
-// 	test.afterAll( async ( { pcpApi } ) => {
-// 		await pcpApi.updatePcpPaymentMethods( {
-// 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
-// 		} );
-// 	} );
-// } );
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( {
+			[ fastlane.id ]: { id: fastlane.id, enabled: false },
+		} );
+	} );
+} );

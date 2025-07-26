@@ -26,7 +26,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		classicPages: false,
 		subscription: true,
 		products: [
-			products.subscription10,
+			products.subscription100,
 			products.subscriptionFreeTrial,
 		],
 	} );
@@ -41,6 +41,11 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 			products: [ 'physical', 'virtual', 'subscriptions' ],
 		},
 	);
+} );
+
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllSubscriptions();
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testData of vaultingGuest ) {

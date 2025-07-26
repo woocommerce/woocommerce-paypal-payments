@@ -16,14 +16,14 @@ const {
 	payPalFreeTrialRenewal,
 } = subscriptionRenewal;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		wpDebugging: false,
 		classicPages: false,
 		subscription: true,
 		products: [
-			products.subscription10,
+			products.subscription100,
 			products.subscriptionFreeTrial,
 		],
 	} );
@@ -40,6 +40,11 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllSubscriptions();
+	await wooCommerceApi.deleteAllOrders();
+} );
+
 for ( const testData of vaultingRenewal ) {
 	testSubscriptionRenewal( testData );
 }
@@ -49,7 +54,7 @@ for ( const testData of vaultingFreeTrialRenewal ) {
 }
 
 test.describe( 'PayPal Subscription', () => {
-	test.beforeAll( async ( { utils, pcpApi } ) => {
+	test.beforeAll( async ( { utils, pcpApi, requestUtils } ) => {
 		await pcpApi.updatePcpSettings( {
 			savePaypalAndVenmo: false,
 			saveCardDetails: false,
@@ -60,6 +65,15 @@ test.describe( 'PayPal Subscription', () => {
 				products.subscriptionPayPalFreeTrial,
 			],
 		} );
+		await requestUtils.activatePlugin(
+			'disable-webhook-verification'
+		);
+	} );
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin(
+			'disable-webhook-verification'
+		);
 	} );
 
 	for ( const testData of payPalRenewal ) {

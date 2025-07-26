@@ -32,6 +32,10 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	} );
 } );
 
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllOrders();
+} );
+
 for ( const testData of savePaymentMethodData ) {
 	testSavePaymentMethod( testData );
 }
