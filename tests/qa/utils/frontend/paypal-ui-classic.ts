@@ -305,6 +305,9 @@ export class PayPalUiClassic extends PayPalUi {
 		this.page.locator(
 			'li.payment_method_ppcp-axo-gateway label[for="payment_method_ppcp-axo-gateway"]'
 		);
+	
+	usingVaultedPayPalAccountText = ( payPalEmail: string ) =>
+		this.page.getByText( `Using ${ payPalEmail } PayPal.` )
 
 	// Actions
 
@@ -382,7 +385,7 @@ export class PayPalUiClassic extends PayPalUi {
 		const paypal = new PayPalPopup( popup );
 
 		await expect(
-			paypal.popup.getByText( 'Successful Payment', { exact: true } )
+			paypal.page.getByText( 'Successful Payment', { exact: true } )
 		).toBeVisible();
 
 		await popup.close();
@@ -456,17 +459,48 @@ export class PayPalUiClassic extends PayPalUi {
 	 * @param payment
 	 */
 	assertVaultedPaymentMethodIsDisplayed = async ( payment: Pcp.Payment ) => {
-		switch ( payment.gateway.shortcut ) {
+		const { gateway, payPalAccount, card } = payment;
+		switch ( gateway.shortcut ) {
 			case 'paypal':
 				await this.payPalGateway().click();
-				await expect( this.payPalButton() ).toContainText( 'Pay Now' );
-				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
+				await expect(
+					this.payPalButtonMoreOptions().or(
+						// Case on classic checkout
+						this.usingVaultedPayPalAccountText( payPalAccount?.email )
+					)
+				).toBeVisible();
 				break;
 
 			case 'acdc':
 				await this.acdcGateway().click();
 				await expect(
-					this.acdcSavedCard( payment.card )
+					this.acdcSavedCard( card )
+				).toBeVisible();
+				break;
+		}
+	};
+
+	/**
+	 * Asserts the saved payment method is visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsDisplayedOnClassicCheckout = async ( payment: Pcp.Payment ) => {
+		const { gateway, payPalAccount, card } = payment;
+		switch ( gateway.shortcut ) {
+			case 'paypal':
+				await this.payPalGateway().click();
+				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
+				await expect(
+					this.usingVaultedPayPalAccountText( payPalAccount?.email )
+				).toBeVisible();
+				break;
+
+			case 'acdc':
+				await this.acdcGateway().click();
+				await expect(
+					this.acdcSavedCard( card )
 				).toBeVisible();
 				break;
 		}
@@ -488,6 +522,9 @@ export class PayPalUiClassic extends PayPalUi {
 				);
 				await expect(
 					this.payPalButtonMoreOptions()
+				).not.toBeVisible();
+				await expect(
+					this.usingVaultedPayPalAccountText( payment.payPalAccount?.email )
 				).not.toBeVisible();
 				break;
 
