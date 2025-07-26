@@ -10,6 +10,7 @@ import {
  */
 import { Pcp } from '../resources';
 import urls from './urls';
+import { generateRandomString } from './helpers';
 
 /**
  * Class for REST API interactions with PCP Settings.
@@ -40,6 +41,8 @@ export class PcpApi extends WooCommerceApiBase {
 		// Preset onboarding options
 		await this.wcRequest( 'post', 'wc_paypal/onboarding', {
 			...onboardingOptions,
+			gatewaysRefreshed: true,
+			gatewaysSynced: true,
 			_locale: 'user',
 		} );
 		// Merchant connection request
@@ -53,6 +56,9 @@ export class PcpApi extends WooCommerceApiBase {
 				_locale: 'user',
 			}
 		);
+		await this.updatePcpSettings( {
+			invoicePrefix: `${ generateRandomString( 8 ) }-`
+		} );
 		return response;
 	};
 
@@ -138,19 +144,46 @@ export class PcpApi extends WooCommerceApiBase {
 		);
 	}
 
+	/**
+	 * Get's renewal order IDs
+	 * Utilizes the retry mechanism because after the renewal there appeared to be a delay
+	 * 
+	 * @param subscriptionId
+	 */
 	getSubscriptionRenewalOrderIds = async ( subscriptionId: number ): Promise< number [] > => {
-		const subscription = await this.getSubscription( subscriptionId );
+		let subscription = await this.getSubscription( subscriptionId );
 
 		if( ! subscription ) {
 			console.error( `Subscription #${ subscriptionId } was not found.` );
 			return [];
 		}
 
-		const subscriptionMeta = subscription.meta_data.find(
-			( meta ) => meta.key === '_subscription_renewal_order_ids_cache'
-		);
+		const MAX_RETRY_COUNT = 6;
+		const RETRY_INTERVAL_MS = 1000;
 
-		return subscriptionMeta?.value || [];
+		let retryCount = 0;
+		let subscriptionMeta;
+
+		do {
+			subscriptionMeta = subscription.meta_data.find(
+				( meta ) => meta.key === '_subscription_renewal_order_ids_cache'
+			);
+
+			if( subscriptionMeta?.value?.length ) {
+				return subscriptionMeta.value;
+			}
+
+			// Add a delay before making the getSubscription call
+			await new Promise( ( resolve ) =>
+				setTimeout( resolve, RETRY_INTERVAL_MS )
+			);
+
+			subscription = await this.getSubscription( subscriptionId );
+			retryCount++;
+		} while ( retryCount < MAX_RETRY_COUNT );
+
+		console.error( `_subscription_renewal_order_ids_cache was not found in ${ MAX_RETRY_COUNT } sec.` );
+		return [];
 	}
 
 	getPayPalSubscriptionBillingId = async ( subscriptionId: number ) => {
