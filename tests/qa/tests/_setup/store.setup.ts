@@ -191,7 +191,7 @@ configureEnv( {
 		...storeConfigUsa,
 		subscription: true,
 		products: [
-			products.subscription10,
+			products.subscription100,
 			products.subscriptionFreeTrial,
 		],
 	},

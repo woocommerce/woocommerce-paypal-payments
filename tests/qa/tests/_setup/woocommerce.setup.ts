@@ -17,6 +17,7 @@ import {
 	disableNoncePlugin,
 	subscriptionsPlugin,
 	disableWcSetupWizard,
+	disableWebhookVerifivationPlugin,
 } from '../../resources';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
@@ -50,11 +51,21 @@ setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
 	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 } );
 
-setup( 'Setup Deactivate Disable new UI plugin', async ( { requestUtils } ) => {
+setup( 'Setup Disable new UI plugin (inactive)', async ( { requestUtils } ) => {
 	const pluginSlug = 'disable-new-ui';
 	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
 		await requestUtils.deactivatePlugin( pluginSlug );
 	}
+} );
+
+setup( 'Setup Disable Webhook Verification plugin (inactive)', async ( { plugins, requestUtils } ) => {
+	const plugin = disableWebhookVerifivationPlugin;
+	if (
+		! ( await requestUtils.isPluginInstalled( plugin.slug ) )
+	) {
+		await plugins.installPluginFromFile( plugin.zipFilePath );
+	}
+	await requestUtils.deactivatePlugin( plugin.slug );
 } );
 
 setup(
@@ -176,8 +187,8 @@ setup( 'Setup WooCommerce taxes (included)', async ( { wooCommerceUtils } ) => {
 	await wooCommerceUtils.setTaxes( taxSettings.including );
 } );
 
-setup( 'Setup Registered Customer', async ( { wooCommerceUtils } ) => {
-	await wooCommerceUtils.createCustomer( customers[country] );
+setup( 'Setup Registered Customer', async ( { utils } ) => {
+	await utils.restoreCustomer( customers[ country ] );
 } );
 
 setup( 'Setup Delete Previous Orders', async ( { wooCommerceApi } ) => {

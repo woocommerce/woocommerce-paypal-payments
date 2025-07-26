@@ -27,3 +27,4 @@ export { default as subscriptionsPlugin } from './woocommerce-subscriptions-plug
 export { default as wpDebuggingPlugin } from './wp-debugging-plugin.json';
 export { default as disableWcSetupWizard } from './disable-wc-setup-wizard-plugin.json';
 export { default as disableGutenbergWelcomeGuide } from './disable-gutenberg-welcome-guide-plugin.json';
+export { default as disableWebhookVerifivationPlugin } from './disable-webhook-verification-plugin.json';

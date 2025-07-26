@@ -10,7 +10,7 @@ export const storeConfigDefault = {
 	wpDebugging: false, // WP Debugging plugin is deactivated
 	subscription: false, // WC Subscription plugin is deactivated
 	settings: shopSettings[ country ], // WC general settings
-	customer: customers[ country ], // registered customer
+	// customer: customers[ country ], // registered customer
 };
 
 export const storeConfigClassic = {
@@ -21,20 +21,20 @@ export const storeConfigClassic = {
 export const storeConfigGermany = {
 	...storeConfigDefault,
 	settings: shopSettings.germany, // WC general settings
-	customer: customers.germany,
+	// customer: customers.germany,
 };
 
 export const storeConfigUsa = {
 	...storeConfigDefault,
 	wpDebugging: true,
 	settings: shopSettings.usa,
-	customer: customers.usa,
+	// customer: customers.usa,
 };
 
 export const storeConfigMexico = {
 	...storeConfigDefault,
 	settings: shopSettings.mexico,
-	customer: customers.mexico,
+	// customer: customers.mexico,
 };
 
 const storeConfigSubscription = {

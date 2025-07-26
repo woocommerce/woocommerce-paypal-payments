@@ -15,7 +15,7 @@ const vaultingRenewal: ShopOrder[] = [
 		payment: payments.payPal,
 		merchant, 
 		customer,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 		currency,
 	},
 	{
@@ -25,7 +25,7 @@ const vaultingRenewal: ShopOrder[] = [
 		payment: payments.acdc,
 		merchant, 
 		customer,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 		currency,
 	},
 ];

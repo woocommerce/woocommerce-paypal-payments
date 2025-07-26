@@ -15,7 +15,7 @@ const vaultingGuest: ShopOrder[] = [
 		payment: payments.payPal,
 		merchant, 
 		customer: guest,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2944
@@ -33,7 +33,7 @@ const vaultingGuest: ShopOrder[] = [
 		payment: payments.acdc,
 		merchant, 
 		customer: guest,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2947
@@ -54,7 +54,7 @@ const vaultingCustomer: ShopOrder[] = [
 		payment: payments.payPal,
 		merchant, 
 		customer,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2945
@@ -72,7 +72,7 @@ const vaultingCustomer: ShopOrder[] = [
 		payment: payments.acdc,
 		merchant, 
 		customer,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-2948
