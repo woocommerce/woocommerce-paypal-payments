@@ -50,7 +50,6 @@ $fast-transition-duration: 0.5s;
 		position: relative;
 		box-sizing: border-box;
 		aspect-ratio: 1.586;
-		font-family: monospace;
 		margin: 1em 0;
 		border-radius: 10px;
 		width: 100%;
@@ -70,6 +69,7 @@ $fast-transition-duration: 0.5s;
 			text-shadow: 0 -1px 1px #fff, 0 1px 1px rgba(0, 0, 0, .2666666667);
 			color: #666;
 			text-align: center;
+			font-family: monospace;
 		}
 
 		&-logo {
@@ -81,8 +81,8 @@ $fast-transition-duration: 0.5s;
 
 		&-expiry {
 			text-align: right;
-			font-size: 12px;
-			padding-right: 33px;
+			font-size: 14px;
+			padding-right: 32px;
 		}
 
 		&-name {
@@ -90,6 +90,7 @@ $fast-transition-duration: 0.5s;
 			position: absolute;
 			left: 24px;
 			bottom: 20px;
+			line-height: 1em;
 		}
 	}
 
