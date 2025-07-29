@@ -4,11 +4,18 @@ import {
 } from '../Helper/CheckoutMethodState';
 import Spinner from '../Helper/Spinner';
 
+import resumeFlowHelper from '../Helper/ResumeFlowHelper';
+
 const onApprove = ( context, errorHandler ) => {
 	return ( data, actions ) => {
 		const spinner = Spinner.fullPage();
 		spinner.block();
 		errorHandler.clear();
+		// Pay Now submits via form (not AJAX), so we can't detect payment errors.
+		// Preemptively remove hash params to prevent reload issues.
+		if ( resumeFlowHelper.isResumeFlow() ) {
+			resumeFlowHelper.cleanHashParams();
+		}
 
 		return fetch( context.config.ajax.approve_order.endpoint, {
 			method: 'POST',
