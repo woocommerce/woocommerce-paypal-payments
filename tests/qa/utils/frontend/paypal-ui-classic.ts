@@ -491,10 +491,12 @@ export class PayPalUiClassic extends PayPalUi {
 		switch ( gateway.shortcut ) {
 			case 'paypal':
 				await this.payPalGateway().click();
-				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
-				await expect(
-					this.usingVaultedPayPalAccountText( payPalAccount?.email )
-				).toBeVisible();
+				await expect( this.payPalButton() ).toContainText( 'Pay Now' );
+				// For some time instead of vaulted PayPal button it is displayed:
+				// "Proceed to PayPal" button with text "Using <payPalEmail> PayPal."
+				// await expect(
+				// 	this.usingVaultedPayPalAccountText( payPalAccount?.email )
+				// ).toBeVisible();
 				break;
 
 			case 'acdc':
