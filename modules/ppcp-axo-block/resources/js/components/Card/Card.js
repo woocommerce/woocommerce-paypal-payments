@@ -59,15 +59,6 @@ const Card = ( { fastlaneSdk, showWatermark = true } ) => {
 						</div>
 					</div>
 				</div>
-				<div className="wc-block-checkout-axo-block-card__watermark">
-					{ showWatermark && (
-						<Watermark
-							fastlaneSdk={ fastlaneSdk }
-							name="wc-block-checkout-axo-card-watermark"
-							includeAdditionalInfo={ false }
-						/>
-					) }
-				</div>
 			</div>
 		</div>
 	);
