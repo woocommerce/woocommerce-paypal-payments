@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { merchants, products, storeConfigUsa } from '../../resources';
+import { disableWebhookVerifivationPlugin, merchants, products, storeConfigUsa } from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
 	testFreeTrialSubscriptionRenewal,
@@ -66,13 +66,13 @@ test.describe( 'PayPal Subscription', () => {
 			],
 		} );
 		await requestUtils.activatePlugin(
-			'disable-webhook-verification'
+			disableWebhookVerifivationPlugin.slug
 		);
 	} );
 
 	test.afterAll( async ( { requestUtils } ) => {
 		await requestUtils.deactivatePlugin(
-			'disable-webhook-verification'
+			disableWebhookVerifivationPlugin.slug
 		);
 	} );
 
