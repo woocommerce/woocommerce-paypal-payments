@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
  * Factory for determining the appropriate return URL based on context.
  */
 class ReturnUrlFactory {
+	public const PCP_QUERY_ARG = 'pcp-return';
 
 	/**
 	 * @param string               $context The context, like in ContextTrait.
@@ -19,6 +20,13 @@ class ReturnUrlFactory {
 	 * @throws RuntimeException When required data is missing for the context.
 	 */
 	public function from_context( string $context, array $request_data = array() ): string {
+		return add_query_arg(
+			array( self::PCP_QUERY_ARG => 'button' ),
+			$this->wc_url_from_context( $context, $request_data )
+		);
+	}
+
+	protected function wc_url_from_context( string $context, array $request_data = array() ): string {
 		switch ( $context ) {
 			case 'cart':
 			case 'cart-block':

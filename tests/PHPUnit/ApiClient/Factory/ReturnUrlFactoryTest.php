@@ -16,6 +16,16 @@ class ReturnUrlFactoryTest extends TestCase
     {
         parent::setUp();
         $this->testee = new ReturnUrlFactory();
+
+		when('add_query_arg')->alias(function (array $args, string $url): string {
+			$query_parts = [];
+			foreach ($args as $key => $value) {
+				$query_parts[] = $key . '=' . $value;
+			}
+			return $url .
+				(strpos($url, '?') === false ? '?' : '&') .
+				implode('&', $query_parts);
+		});
     }
 
 	/**
@@ -27,7 +37,7 @@ class ReturnUrlFactoryTest extends TestCase
 
 		$result = $this->testee->from_context($context);
 
-		$this->assertEquals('https://example.com/cart', $result);
+		$this->assertEquals('https://example.com/cart?pcp-return=button', $result);
 	}
 
     public function testFromContextProductReturnsProductUrl()
@@ -46,7 +56,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('product', $request_data);
 
-        $this->assertEquals('https://example.com/product/123', $result);
+        $this->assertEquals('https://example.com/product/123?pcp-return=button', $result);
     }
 
     public function testFromContextProductThrowsExceptionWhenNoUrl()
@@ -80,7 +90,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('pay-now', $request_data);
 
-        $this->assertEquals('https://example.com/checkout/pay/123?key=abc', $result);
+        $this->assertEquals('https://example.com/checkout/pay/123?key=abc&pcp-return=button', $result);
     }
 
     public function testFromContextPayNowThrowsExceptionWhenOrderNotFound()
@@ -100,7 +110,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('checkout');
 
-        $this->assertEquals('https://example.com/checkout', $result);
+        $this->assertEquals('https://example.com/checkout?pcp-return=button', $result);
     }
 
     public function testFromContextDefaultReturnsCheckoutUrl()
@@ -109,7 +119,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('unknown-context');
 
-        $this->assertEquals('https://example.com/checkout', $result);
+        $this->assertEquals('https://example.com/checkout?pcp-return=button', $result);
     }
 
 	public function cartContextProvider(): array
