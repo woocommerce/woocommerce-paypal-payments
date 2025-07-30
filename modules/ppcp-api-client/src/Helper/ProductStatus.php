@@ -114,7 +114,7 @@ abstract class ProductStatus {
 	 * @param Settings|null $settings See description in {@see self::clear()}.
 	 * @return void
 	 */
-	abstract protected function clear_state( Settings $settings = null ) : void;
+	abstract protected function clear_state( ?Settings $settings = null ) : void;
 
 	/**
 	 * Whether the merchant has access to the feature.
@@ -199,7 +199,7 @@ abstract class ProductStatus {
 	 * @param Settings|null $settings The settings object.
 	 * @return void
 	 */
-	public function clear( Settings $settings = null ) : void {
+	public function clear( ?Settings $settings = null ) : void {
 		$this->is_eligible         = null;
 		$this->has_request_failure = false;
 

@@ -9,46 +9,33 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ClientCredentials;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
-use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundPayerFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerPayableBreakdownFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\ActivationDetector;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\FraudProcessorResponseFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
@@ -57,31 +44,46 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundPayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerPayableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerReceivableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'api.host'                                       => static function( ContainerInterface $container ) : string {
@@ -273,13 +275,10 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.billing-agreements'                => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
-		return new BillingAgreementsEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
+	'api.reference-transaction-status'               => static fn ( ContainerInterface $container ): ReferenceTransactionStatus => new ReferenceTransactionStatus(
+		$container->get( 'api.endpoint.partners' ),
+		$container->get( 'api.reference-transaction-status-cache' )
+	),
 	'api.endpoint.catalog-products'                  => static function ( ContainerInterface $container ): CatalogProducts {
 		return new CatalogProducts(
 			$container->get( 'api.host' ),
@@ -328,6 +327,22 @@ return array(
 	'api.repository.order'                           => static function( ContainerInterface $container ): OrderRepository {
 		return new OrderRepository(
 			$container->get( 'api.endpoint.order' )
+		);
+	},
+	'api.factory.contact-preference'                 => static function ( ContainerInterface $container ): ContactPreferenceFactory {
+		if ( $container->has( 'settings.data.settings' ) ) {
+			$settings = $container->get( 'settings.data.settings' );
+			assert( $settings instanceof SettingsModel );
+
+			$contact_module_active = $settings->get_enable_contact_module();
+		} else {
+			// #legacy-ui: Auto-enable the feature; can be disabled via eligibility hook.
+			$contact_module_active = true;
+		}
+
+		return new ContactPreferenceFactory(
+			$contact_module_active,
+			$container->get( 'settings.merchant-details' )
 		);
 	},
 	'api.factory.payment-token'                      => static function ( ContainerInterface $container ) : PaymentTokenFactory {
@@ -395,6 +410,9 @@ return array(
 			$container->get( 'api.factory.address' ),
 			$container->get( 'api.factory.shipping-option' )
 		);
+	},
+	'api.factory.return-url'                         => static function ( ContainerInterface $container ): ReturnUrlFactory {
+		return new ReturnUrlFactory();
 	},
 	'api.factory.shipping-preference'                => static function ( ContainerInterface $container ): ShippingPreferenceFactory {
 		return new ShippingPreferenceFactory();
@@ -682,6 +700,11 @@ return array(
 				'GB' => $default_currencies,
 				'US' => $default_currencies,
 				'NO' => $default_currencies,
+				'YT' => $default_currencies,
+				'RE' => $default_currencies,
+				'GP' => $default_currencies,
+				'GF' => $default_currencies,
+				'MQ' => $default_currencies,
 			)
 		);
 	},
@@ -761,6 +784,11 @@ return array(
 					'amex'       => array( 'JPY' ),
 					'jcb'        => array( 'JPY' ),
 				),
+				'YT' => $mastercard_visa_amex, // Mayotte.
+				'RE' => $mastercard_visa_amex, // Reunion.
+				'GP' => $mastercard_visa_amex, // Guadelope.
+				'GF' => $mastercard_visa_amex, // French Guiana.
+				'MQ' => $mastercard_visa_amex, // Martinique.
 			)
 		);
 	},
@@ -847,6 +875,9 @@ return array(
 	},
 	'api.user-id-token-cache'                        => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-id-token-cache' );
+	},
+	'api.reference-transaction-status-cache'         => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-reference-transaction-status-cache' );
 	},
 	'api.user-id-token'                              => static function( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(

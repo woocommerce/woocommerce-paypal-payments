@@ -176,10 +176,10 @@ class OrderEndpoint {
 	public function create(
 		array $items,
 		string $shipping_preference,
-		Payer $payer = null,
+		?Payer $payer = null,
 		string $payment_method = '',
 		array $request_data = array(),
-		PaymentSource $payment_source = null
+		?PaymentSource $payment_source = null
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
@@ -444,9 +444,7 @@ class OrderEndpoint {
 		}
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
-			);
+			$error = new RuntimeException( 'Could not retrieve order.' );
 			$this->logger->warning( $error->getMessage() );
 
 			throw $error;
@@ -456,7 +454,7 @@ class OrderEndpoint {
 
 		if ( 404 === $status_code || empty( $response['body'] ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' ),
+				'Could not retrieve order.',
 				404
 			);
 			$this->logger->warning(
@@ -585,9 +583,6 @@ class OrderEndpoint {
 		$data = array(
 			'payment_source'         => $payment_source,
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
-			'application_context'    => array(
-				'locale' => 'es-MX',
-			),
 		);
 
 		$args = array(

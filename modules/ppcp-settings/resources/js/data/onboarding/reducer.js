@@ -16,6 +16,7 @@ const defaultTransient = Object.freeze( {
 	isReady: false,
 	manualClientId: '',
 	manualClientSecret: '',
+	connectionButtonClicked: false,
 
 	// Read only values, provided by the server.
 	flags: Object.freeze( {

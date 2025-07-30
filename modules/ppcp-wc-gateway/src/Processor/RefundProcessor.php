@@ -107,7 +107,7 @@ class RefundProcessor {
 	 *
 	 * @phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing
 	 */
-	public function process( WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
+	public function process( WC_Order $wc_order, ?float $amount = null, string $reason = '' ) : bool {
 		try {
 			$payment_gateways = WC()->payment_gateways()->payment_gateways();
 			if ( ! isset( $payment_gateways[ $wc_order->get_payment_method() ] ) || ! $payment_gateways[ $wc_order->get_payment_method() ]->supports( 'refunds' ) ) {

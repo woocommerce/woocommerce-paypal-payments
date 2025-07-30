@@ -60,7 +60,7 @@ trait ProcessPaymentTrait {
 	 * @param string|null   $url The redirect URL.
 	 * @return array The data that can be returned by the gateway process_payment method.
 	 */
-	protected function handle_payment_success( ?WC_Order $wc_order, string $url = null ): array {
+	protected function handle_payment_success( ?WC_Order $wc_order, ?string $url = null ): array {
 		if ( ! $url ) {
 			$url = $this->get_return_url( $wc_order );
 		}

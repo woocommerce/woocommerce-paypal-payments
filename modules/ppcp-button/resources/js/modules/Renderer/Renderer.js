@@ -144,7 +144,10 @@ class Renderer {
 			};
 
 			// Check the condition and add the handler if needed
-			if ( this.shouldEnableShippingCallback() ) {
+			if (
+				this.shouldEnableShippingCallback() &&
+				! this.defaultSettings.server_side_shipping_callback.enabled
+			) {
 				options.onShippingOptionsChange = ( data, actions ) => {
 					const shippingOptionsChange =
 						! this.isVenmoButtonClickedWhenVaultingIsEnabled(
@@ -173,6 +176,10 @@ class Renderer {
 
 					return shippingAddressChange;
 				};
+			}
+
+			if ( this.shouldEnableAppSwitch() ) {
+				options.appSwitchWhenAvailable = true;
 			}
 
 			return options;
@@ -239,6 +246,15 @@ class Renderer {
 		return (
 			this.defaultSettings.should_handle_shipping_in_paypal &&
 			needShipping
+		);
+	};
+
+	shouldEnableAppSwitch = () => {
+		// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
+		return (
+			this.defaultSettings.appswitch.enabled &&
+			! this.defaultSettings.final_review_enabled &&
+			this.defaultSettings.server_side_shipping_callback.enabled
 		);
 	};
 

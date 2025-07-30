@@ -20,6 +20,7 @@ import {
 	handleApproveSubscription,
 	onApproveSavePayment,
 } from '../paypal-config';
+import { useRef } from 'react';
 
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
@@ -51,6 +52,8 @@ export const PayPalComponent = ( {
 		useState( false );
 
 	const [ paypalScriptLoaded, setPaypalScriptLoaded ] = useState( false );
+
+	const paypalButtonRef = useRef( null );
 
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
@@ -137,6 +140,16 @@ export const PayPalComponent = ( {
 		window.ppcpFundingSource = data.fundingSource;
 
 		onClick();
+	};
+
+	const handleButtonInit = () => {
+		if ( fundingSource === 'paypal' ) {
+			const buttonInstance = paypalButtonRef.current?.state?.parent;
+
+			if ( buttonInstance?.hasReturned?.() ) {
+				buttonInstance.resume();
+			}
+		}
 	};
 
 	const shouldHandleShippingInPayPal = () => {
@@ -352,6 +365,10 @@ export const PayPalComponent = ( {
 	);
 
 	const getOnShippingOptionsChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -364,6 +381,10 @@ export const PayPalComponent = ( {
 	};
 
 	const getOnShippingAddressChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -375,6 +396,15 @@ export const PayPalComponent = ( {
 
 			return shippingAddressChange;
 		};
+	};
+
+	const shouldEnableAppSwitch = () => {
+		// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
+		return (
+			config.scriptData.appswitch.enabled &&
+			! config.scriptData.final_review_enabled &&
+			config.scriptData.server_side_shipping_callback.enabled
+		);
 	};
 
 	if (
@@ -434,8 +464,11 @@ export const PayPalComponent = ( {
 
 	return (
 		<PayPalButton
+			ref={ paypalButtonRef }
+			appSwitchWhenAvailable={ shouldEnableAppSwitch() }
 			fundingSource={ fundingSource }
 			style={ style }
+			onInit={ handleButtonInit }
 			onClick={ handleClick }
 			onCancel={ onClose }
 			onError={ onClose }

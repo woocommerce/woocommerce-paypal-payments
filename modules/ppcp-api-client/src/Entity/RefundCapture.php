@@ -54,7 +54,7 @@ class RefundCapture {
 		Capture $capture,
 		string $invoice_id,
 		string $note_to_payer = '',
-		Amount $amount = null
+		?Amount $amount = null
 	) {
 		$this->capture       = $capture;
 		$this->invoice_id    = $invoice_id;

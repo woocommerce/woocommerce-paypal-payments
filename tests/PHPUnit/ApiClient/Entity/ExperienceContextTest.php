@@ -19,7 +19,12 @@ class ExperienceContextTest extends TestCase
 			->with_landing_page('NO_PREFERENCE')
 			->with_shipping_preference('NO_SHIPPING')
 			->with_user_action('CONTINUE')
-			->with_payment_method_preference('UNRESTRICTED');
+			->with_payment_method_preference('UNRESTRICTED')
+			->with_contact_preference('NO_CONTACT_INFO')
+			->with_order_update_callback_config(new CallbackConfig(
+				[CallbackConfig::EVENT_SHIPPING_ADDRESS, CallbackConfig::EVENT_SHIPPING_OPTIONS],
+				'example.com/callback',
+			));
 
 		$this->assertEmpty($empty->to_array());
 
@@ -32,6 +37,11 @@ class ExperienceContextTest extends TestCase
 			'shipping_preference' => 'NO_SHIPPING',
 			'user_action' => 'CONTINUE',
 			'payment_method_preference' => 'UNRESTRICTED',
+			'contact_preference' => 'NO_CONTACT_INFO',
+			'order_update_callback_config' => [
+				'callback_events' => [CallbackConfig::EVENT_SHIPPING_ADDRESS, CallbackConfig::EVENT_SHIPPING_OPTIONS],
+				'callback_url' => 'example.com/callback',
+			]
 		], $result->to_array());
     }
 }

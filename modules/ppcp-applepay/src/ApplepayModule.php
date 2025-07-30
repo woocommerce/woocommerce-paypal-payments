@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
@@ -54,7 +55,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( Settings $settings = null ) use ( $c ): void {
+			function( ?Settings $settings = null ) use ( $c ): void {
 				$apm_status = $c->get( 'applepay.apple-product-status' );
 				assert( $apm_status instanceof AppleProductStatus );
 				$apm_status->clear( $settings );
@@ -198,6 +199,31 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 			}
 		);
 
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+
+				if ( $payment_method !== ApplePayGateway::ID ) {
+					return $data;
+				}
+
+				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
+				assert( $experience_context_builder instanceof ExperienceContextBuilder );
+
+				$data['payment_source'] = array(
+					'apple_pay' => array(
+						'experience_context' => $experience_context_builder
+							->with_endpoint_return_urls()
+							->build()->to_array(),
+					),
+				);
+
+				return $data;
+			},
+			10,
+			3
+		);
+
 		return true;
 	}
 
@@ -215,7 +241,8 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 			$validation_string = $this->validation_string( $is_sandbox );
 			nocache_headers();
 			header( 'Content-Type: text/plain', true, 200 );
-			echo $validation_string;// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $validation_string;
 			exit;
 		}
 	}

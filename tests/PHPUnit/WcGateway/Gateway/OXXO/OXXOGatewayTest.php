@@ -9,7 +9,6 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
@@ -71,6 +70,10 @@ private $testee;
 			->shouldReceive('build')
 			->andReturn($experienceContext);
 		$experienceContext
+			->shouldReceive('with_locale')
+			->with('en-MX')
+			->andReturn($experienceContext);
+		$experienceContext
 			->shouldReceive('to_array')
 			->andReturn(['foo' => 'bar']);
 	}
@@ -111,10 +114,18 @@ private $testee;
 		$order->shouldReceive('intent');
 		$order->shouldReceive('payment_source');
 		$order->shouldReceive('payer');
+		$order->shouldReceive('purchase_units')->andReturn([]);
 
 		$this->orderEndpoint
 			->shouldReceive('create')
-			->with([$purchaseUnit], $shippingPreference, null, '', [], Mockery::any())
+			->with(
+				[$purchaseUnit],
+				$shippingPreference,
+				null,
+				OXXOGateway::ID,
+				['processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL'],
+				Mockery::any()
+			)
 			->andReturn($order);
 
 		$this->wcOrder

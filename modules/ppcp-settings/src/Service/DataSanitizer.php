@@ -23,7 +23,7 @@ class DataSanitizer {
 	 * @param ?string $location Name of the location.
 	 * @return LocationStylingDTO Styling data.
 	 */
-	public function sanitize_location_style( $data, string $location = null ) : LocationStylingDTO {
+	public function sanitize_location_style( $data, ?string $location = null ) : LocationStylingDTO {
 		if ( $data instanceof LocationStylingDTO ) {
 			if ( $location ) {
 				$data->location = $location;

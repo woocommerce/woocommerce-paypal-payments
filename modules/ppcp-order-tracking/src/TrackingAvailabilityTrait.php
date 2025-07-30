@@ -24,7 +24,8 @@ trait TrackingAvailabilityTrait {
 	 * @return bool
 	 */
 	protected function is_tracking_enabled( Bearer $bearer ): bool {
-		$post_id = (int) wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$post_id = (int) wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) );
 		if ( ! $post_id ) {
 			return false;
 		}

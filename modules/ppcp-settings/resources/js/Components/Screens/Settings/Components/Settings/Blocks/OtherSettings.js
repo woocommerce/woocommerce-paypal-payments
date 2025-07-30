@@ -1,13 +1,19 @@
 import { __ } from '@wordpress/i18n';
-
 import Accordion from '../../../../../ReusableComponents/AccordionSection';
 import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import { ControlSelect } from '../../../../../ReusableComponents/Controls';
+import {
+	ControlSelect,
+	ControlRadioGroup,
+} from '../../../../../ReusableComponents/Controls';
 import { SettingsHooks } from '../../../../../../data';
 
 const OtherSettings = () => {
-	const { disabledCards, setDisabledCards } = SettingsHooks.useSettings();
+	const { disabledCards, setDisabledCards, threeDSecure, setThreeDSecure } =
+		SettingsHooks.useSettings();
+
 	const disabledCardChoices = window.ppcpSettings.disabledCardsChoices;
+	const threeDSecureOptions = window.ppcpSettings.threeDSecureOptions;
+
 	return (
 		<Accordion
 			title={ __(
@@ -38,6 +44,19 @@ const OtherSettings = () => {
 						'Show all cards',
 						'woocommerce-paypal-payments'
 					) }
+				/>
+			</SettingsBlock>
+			<SettingsBlock
+				title={ __( '3D Secure', 'woocommerce-paypal-payments' ) }
+				description={ __(
+					'Authenticate cardholders through their card issuers to reduce fraud and improve transaction security. Successful 3D Secure authentication can shift liability for fraudulent chargebacks to the card issuer.',
+					'woocommerce-paypal-payments'
+				) }
+			>
+				<ControlRadioGroup
+					options={ threeDSecureOptions }
+					value={ threeDSecure }
+					onChange={ setThreeDSecure }
 				/>
 			</SettingsBlock>
 		</Accordion>

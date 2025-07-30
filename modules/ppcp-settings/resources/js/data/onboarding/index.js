@@ -7,6 +7,9 @@ import * as actions from './actions';
 import * as hooks from './hooks';
 import * as resolvers from './resolvers';
 
+import { addStoreToFunnel } from '../../services/tracking';
+import { ONBOARDING_FUNNEL_ID } from '../../services/tracking/init';
+
 /**
  * Initializes and registers the settings store with WordPress data layer.
  * Combines custom controls with WordPress data controls.
@@ -22,6 +25,8 @@ export const initStore = () => {
 	} );
 
 	register( store );
+
+	addStoreToFunnel( STORE_NAME, ONBOARDING_FUNNEL_ID );
 
 	return Boolean( wp.data.select( STORE_NAME ) );
 };

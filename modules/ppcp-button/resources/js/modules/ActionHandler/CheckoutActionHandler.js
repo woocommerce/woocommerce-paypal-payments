@@ -3,6 +3,7 @@ import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
 import { payerData } from '../Helper/PayerData';
 import { getCurrentPaymentMethod } from '../Helper/CheckoutMethodState';
 import validateCheckoutForm from '../Helper/CheckoutFormValidation';
+import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
 
 class CheckoutActionHandler {
 	constructor( config, errorHandler, spinner ) {
@@ -170,6 +171,13 @@ class CheckoutActionHandler {
 				}
 
 				this.errorHandler.genericError();
+
+				if ( ResumeFlowHelper.isResumeFlow() ) {
+					ResumeFlowHelper.cleanHashParams();
+					jQuery( this.config.button.wrapper ).trigger(
+						'ppcp-reload-buttons'
+					);
+				}
 			},
 		};
 	}

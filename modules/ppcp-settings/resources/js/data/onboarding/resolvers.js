@@ -18,8 +18,8 @@ export function persistentData() {
 		try {
 			const result = await apiFetch( { path: REST_HYDRATE_PATH } );
 
-			await dispatch.hydrate( result );
-			await dispatch.setIsReady( true );
+			await dispatch.hydrate( result, 'system' );
+			await dispatch.setIsReady( true, 'system' );
 		} catch ( e ) {
 			await registry
 				.dispatch( 'core/notices' )

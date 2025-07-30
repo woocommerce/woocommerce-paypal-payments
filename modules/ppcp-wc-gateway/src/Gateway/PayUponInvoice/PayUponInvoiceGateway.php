@@ -247,9 +247,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:disable WordPress.Security.NonceVerification
 		$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
 		if ( 'true' === $pay_for_order ) {
 			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {
@@ -261,7 +260,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		}
 
 		$phone_number = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( $phone_number ) {
 			$wc_order->set_billing_phone( $phone_number );
 			$wc_order->save();

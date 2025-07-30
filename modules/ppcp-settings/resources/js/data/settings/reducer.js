@@ -34,11 +34,13 @@ const defaultPersistent = Object.freeze( {
 	subtotalAdjustment: 'no_details', // [correction|no_details] Handling for subtotal mismatches
 	landingPage: 'any', // [any|login|guest_checkout] PayPal checkout landing page
 	buttonLanguage: '', // Language for PayPal buttons
+	threeDSecure: 'only-required-3d-secure', // [no-3d-secure|only-required-3d-secure|always-3d-secure] 3D Secure settings
 
 	// Boolean flags.
 	authorizeOnly: false, // Whether to only authorize payments initially
 	captureVirtualOrders: false, // Auto-capture virtual-only orders
 	savePaypalAndVenmo: false, // Enable PayPal & Venmo vaulting
+	enableContactModule: false, // Enable the "Custom Shipping Contact" feature
 	saveCardDetails: false, // Enable card vaulting
 	enablePayNow: false, // Enable Pay Now experience
 	enableLogging: false, // Enable debug logging

@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\CardFields;
 use DomainException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\CardFields\Service\CardCaptureValidator;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -150,6 +151,15 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
+				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
+				assert( $experience_context_builder instanceof ExperienceContextBuilder );
+
+				$payment_source_data = array(
+					'experience_context' => $experience_context_builder
+						->with_endpoint_return_urls()
+						->build()->to_array(),
+				);
+
 				$three_d_secure_contingency =
 					$settings->has( '3d_secure_contingency' )
 						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
@@ -159,14 +169,14 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 					$three_d_secure_contingency === 'SCA_ALWAYS'
 					|| $three_d_secure_contingency === 'SCA_WHEN_REQUIRED'
 				) {
-					$data['payment_source']['card'] = array(
-						'attributes' => array(
-							'verification' => array(
-								'method' => $three_d_secure_contingency,
-							),
+					$payment_source_data['attributes'] = array(
+						'verification' => array(
+							'method' => $three_d_secure_contingency,
 						),
 					);
 				}
+
+				$data['payment_source'] = array( 'card' => $payment_source_data );
 
 				return $data;
 			},

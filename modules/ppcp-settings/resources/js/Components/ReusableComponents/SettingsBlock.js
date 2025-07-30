@@ -10,7 +10,12 @@ const SettingsBlock = ( {
 	description,
 	horizontalLayout = false,
 	separatorAndGap = true,
+	visible = true,
 } ) => {
+	if ( ! visible ) {
+		return null;
+	}
+
 	const blockClassName = classNames( 'ppcp-r-settings-block', className, {
 		'ppcp--no-gap': ! separatorAndGap,
 		'ppcp--horizontal': horizontalLayout,

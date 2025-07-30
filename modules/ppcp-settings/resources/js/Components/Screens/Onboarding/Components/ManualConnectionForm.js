@@ -17,6 +17,7 @@ import {
 	useSandboxConnection,
 } from '../../../../hooks/useHandleConnections';
 import { OnboardingHooks } from '../../../../data';
+import { useManualConnection } from '../../../../data/common/hooks';
 
 const FORM_ERRORS = {
 	noClientId: __(
@@ -43,13 +44,18 @@ const ManualConnectionForm = () => {
 		manualClientSecret,
 		setManualClientSecret,
 	} = OnboardingHooks.useManualConnectionForm();
-	const {
-		handleDirectAuthentication,
-		isManualConnectionMode,
-		setManualConnectionMode,
-	} = useDirectAuthentication();
+
+	const { handleDirectAuthentication } = useDirectAuthentication();
+
+	const { isManualConnectionMode, setManualConnectionMode } =
+		useManualConnection();
+
 	const refClientId = useRef( null );
 	const refClientSecret = useRef( null );
+
+	const handleToggle = ( isEnabled ) => {
+		setManualConnectionMode( isEnabled, 'user' );
+	};
 
 	// Form data validation and sanitation.
 	const getManualConnectionDetails = useCallback( () => {
@@ -148,7 +154,7 @@ const ManualConnectionForm = () => {
 				) }
 				description={ advancedUsersDescription }
 				isToggled={ !! isManualConnectionMode }
-				setToggled={ setManualConnectionMode }
+				setToggled={ handleToggle }
 			>
 				<DataStoreControl
 					__nextHasNoMarginBottom

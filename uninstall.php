@@ -96,6 +96,8 @@ function clear_plugin_branding( ContainerInterface $container ) : void {
 	 */
 	delete_option( 'woocommerce_paypal_branded' );
 
+	delete_option( 'ppcp_bn_code' );
+
 	try {
 		$general_settings = $container->get( 'settings.data.general' );
 		assert( $general_settings instanceof GeneralSettings );

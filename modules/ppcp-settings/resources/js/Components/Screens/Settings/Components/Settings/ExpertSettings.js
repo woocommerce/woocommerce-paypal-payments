@@ -8,7 +8,7 @@ import Troubleshooting from './Blocks/Troubleshooting';
 import PaypalSettings from './Blocks/PaypalSettings';
 import OtherSettings from './Blocks/OtherSettings';
 
-const ExpertSettings = ( { ownBradOnly } ) => {
+const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
 	return (
 		<SettingsCard
 			icon="icon-settings-expert.svg"
@@ -33,7 +33,7 @@ const ExpertSettings = ( { ownBradOnly } ) => {
 				</Content>
 
 				<Content>
-					<PaypalSettings />
+					<PaypalSettings hasContactModule={ hasContactModule } />
 				</Content>
 
 				{ ownBradOnly || (

@@ -21,3 +21,6 @@ define('WP_ROOT_DIR', $wpRootDir);
 $_SERVER['HTTP_HOST'] = ''; // just to avoid a warning
 
 require_once WP_ROOT_DIR . '/wp-load.php';
+// Ensure the TestCase class is loaded
+require_once __DIR__ . '/TestCase.php';
+require_once __DIR__ . '/IntegrationMockedTestCase.php';

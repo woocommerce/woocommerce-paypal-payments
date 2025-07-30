@@ -74,6 +74,10 @@ class SettingsRestEndpoint extends RestEndpoint {
 			'js_name'  => 'savePaypalAndVenmo',
 			'sanitize' => 'to_boolean',
 		),
+		'enable_contact_module'  => array(
+			'js_name'  => 'enableContactModule',
+			'sanitize' => 'to_boolean',
+		),
 		'save_card_details'      => array(
 			'js_name'  => 'saveCardDetails',
 			'sanitize' => 'to_boolean',
@@ -92,6 +96,10 @@ class SettingsRestEndpoint extends RestEndpoint {
 		),
 		'disabled_cards'         => array(
 			'js_name' => 'disabledCards',
+		),
+		'three_d_secure'         => array(
+			'js_name'  => 'threeDSecure',
+			'sanitize' => 'sanitize_text_field',
 		),
 	);
 

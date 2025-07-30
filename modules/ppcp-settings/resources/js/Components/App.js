@@ -8,6 +8,8 @@ import OnboardingScreen from './Screens/Onboarding';
 import SettingsScreen from './Screens/Settings';
 import { getQuery, cleanUrlQueryParams } from '../utils/navigation';
 
+import { initializeTracking } from '../services/tracking';
+
 const SettingsApp = () => {
 	const { isReady: onboardingIsReady, completed: onboardingCompleted } =
 		OnboardingHooks.useSteps();
@@ -15,6 +17,10 @@ const SettingsApp = () => {
 	const {
 		merchant: { isSendOnlyCountry },
 	} = CommonHooks.useMerchantInfo();
+
+	useEffect( () => {
+		initializeTracking();
+	}, [] );
 
 	// Disable the "Changes you made might not be saved" browser warning.
 	useEffect( () => {

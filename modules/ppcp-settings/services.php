@@ -52,6 +52,11 @@ use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -71,8 +76,9 @@ use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
-return array(
+$services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ) : string {
 		/**
 		 * The path cannot be false.
@@ -120,8 +126,12 @@ return array(
 		return new PaymentSettings();
 	},
 	'settings.data.settings'                              => static function ( ContainerInterface $container ) : SettingsModel {
+		$environment = $container->get( 'settings.environment' );
+		assert( $environment instanceof Environment );
+
 		return new SettingsModel(
-			$container->get( 'settings.service.sanitizer' )
+			$container->get( 'settings.service.sanitizer' ),
+			$environment->is_sandbox() ? $container->get( 'wcgateway.settings.invoice-prefix-random' ) : $container->get( 'wcgateway.settings.invoice-prefix' )
 		);
 	},
 	'settings.data.paylater-messaging'                    => static function ( ContainerInterface $container ) : array {
@@ -142,20 +152,6 @@ return array(
 			'read' => $pay_later_config,
 			'save' => $save_config,
 		);
-	},
-	/**
-	 * Merchant connection details, which includes the connection status
-	 * (onboarding/connected) and connection-aware environment checks.
-	 * This is the preferred solution to check environment and connection state.
-	 */
-	'settings.connection-state'                           => static function ( ContainerInterface $container ) : ConnectionState {
-		$data = $container->get( 'settings.data.general' );
-		assert( $data instanceof GeneralSettings );
-
-		$is_connected = $data->is_merchant_connected();
-		$environment  = new Environment( $data->is_sandbox_merchant() );
-
-		return new ConnectionState( $is_connected, $environment );
 	},
 	/**
 	 * Returns details about the connected environment (production/sandbox).
@@ -375,14 +371,38 @@ return array(
 		$partner_attribution = $container->get( 'api.helper.partner-attribution' );
 		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
 	},
-	'settings.ajax.switch_ui'                             => static function ( ContainerInterface $container ) : SwitchSettingsUiEndpoint {
-		return new SwitchSettingsUiEndpoint(
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'button.request-data' ),
-			$container->get( 'settings.data.onboarding' ),
-			$container->get( 'api.merchant_id' ) !== ''
-		);
-	},
+	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
+		$c->get( 'settings.service.data-migration.general-settings' ),
+		$c->get( 'settings.service.data-migration.settings-tab' ),
+		$c->get( 'settings.service.data-migration.styling' ),
+		$c->get( 'settings.service.data-migration.payment-settings' ),
+	),
+	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.settings' ),
+		$c->get( 'compat.settings.settings_tab_map_helper' ),
+	),
+	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.styling' ),
+	),
+	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.payment' ),
+		$c->get( 'ppcp-local-apms.payment-methods' ),
+	),
+	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.general' ),
+		$c->get( 'api.endpoint.partners' ),
+	),
+	'settings.ajax.switch_ui'                             => static fn ( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
+		$c->get( 'woocommerce.logger.woocommerce' ),
+		$c->get( 'button.request-data' ),
+		$c->get( 'settings.data.onboarding' ),
+		$c->get( 'settings.service.data-migration' ),
+		$c->get( 'api.merchant_id' ) !== ''
+	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ) : TodosRestEndpoint {
 		return new TodosRestEndpoint(
 			$container->get( 'settings.data.todos' ),
@@ -600,6 +620,7 @@ return array(
 		assert( $messages_apply instanceof MessagesApply );
 		$pay_later_eligible = $messages_apply->for_country();
 
+		// TODO: Variable "merchant_country" contains "shop-country". Which is correct?
 		$merchant_country = $container->get( 'api.shop.country' );
 		$ineligible_countries = array( 'RU', 'BR', 'JP' );
 		$apm_eligible = ! in_array( $merchant_country, $ineligible_countries, true );
@@ -659,4 +680,34 @@ return array(
 			$container->get( 'settings.data.general' )
 		);
 	},
+	'settings.merchant-details'                           => static function ( ContainerInterface $container ) : MerchantDetails {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$merchant_country = $data->get_merchant_country();
+		$woo_data         = $data->get_woo_settings();
+
+		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
+
+		return new MerchantDetails( $merchant_country, $woo_data['country'], $eligibility_checks );
+	},
 );
+
+if ( ! SettingsModule::should_use_the_old_ui() ) {
+	/**
+	 * Merchant connection details, which includes the connection status
+	 * (onboarding/connected) and connection-aware environment checks.
+	 * This is the preferred solution to check environment and connection state.
+	 */
+	$services['settings.connection-state'] = static function ( ContainerInterface $container ) : ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
+	};
+}
+
+return $services;

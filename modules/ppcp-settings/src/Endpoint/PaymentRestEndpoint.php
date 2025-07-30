@@ -77,10 +77,6 @@ class PaymentRestEndpoint extends RestEndpoint {
 			'js_name'  => 'paypalShowLogo',
 			'sanitize' => 'to_boolean',
 		),
-		'three_d_secure'             => array(
-			'js_name'  => 'threeDSecure',
-			'sanitize' => 'sanitize_text_field',
-		),
 		'fastlane_cardholder_name'   => array(
 			'js_name'  => 'fastlaneCardholderName',
 			'sanitize' => 'to_boolean',
@@ -207,7 +203,6 @@ class PaymentRestEndpoint extends RestEndpoint {
 		}
 
 		$gateway_settings['paypalShowLogo']           = $this->payment_settings->get_paypal_show_logo();
-		$gateway_settings['threeDSecure']             = $this->payment_settings->get_three_d_secure();
 		$gateway_settings['fastlaneCardholderName']   = $this->payment_settings->get_fastlane_cardholder_name();
 		$gateway_settings['fastlaneDisplayWatermark'] = $this->payment_settings->get_fastlane_display_watermark();
 

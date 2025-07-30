@@ -99,7 +99,9 @@ return array(
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'settings.environment' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
+			$container->get( 'settings.data.settings' )
 		);
 	},
 
@@ -156,46 +158,63 @@ return array(
 	 * The matrix which countries and currency combinations can be used for AXO.
 	 */
 	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ) : array {
+		$matrix = array(
+			'US' => array(
+				'AUD',
+				'CAD',
+				'EUR',
+				'GBP',
+				'JPY',
+				'USD',
+			),
+		);
+
+		if ( $container->get( 'axo.uk.enabled' ) ) {
+			$matrix['GB'] = array( 'GBP' );
+		}
+
 		/**
 		 * Returns which countries and currency combinations can be used for AXO.
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_axo_supported_country_currency_matrix',
-			array(
-				'US' => array(
-					'AUD',
-					'CAD',
-					'EUR',
-					'GBP',
-					'JPY',
-					'USD',
-				),
-			)
+			$matrix
 		);
 	},
 	/**
 	 * The matrix which countries and card type combinations can be used for AXO.
 	 */
 	'axo.supported-country-card-type-matrix' => static function ( ContainerInterface $container ) : array {
+		$matrix = array(
+			'US' => array(
+				'VISA',
+				'MASTERCARD',
+				'AMEX',
+				'DISCOVER',
+			),
+			'CA' => array(
+				'VISA',
+				'MASTERCARD',
+				'AMEX',
+				'DISCOVER',
+			),
+		);
+
+		if ( $container->get( 'axo.uk.enabled' ) ) {
+			$matrix['GB'] = array(
+				'VISA',
+				'MASTERCARD',
+				'AMEX',
+				'DISCOVER',
+			);
+		}
+
 		/**
 		 * Returns which countries and card type combinations can be used for AXO.
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_axo_supported_country_card_type_matrix',
-			array(
-				'US' => array(
-					'VISA',
-					'MASTERCARD',
-					'AMEX',
-					'DISCOVER',
-				),
-				'CA' => array(
-					'VISA',
-					'MASTERCARD',
-					'AMEX',
-					'DISCOVER',
-				),
-			)
+			$matrix
 		);
 	},
 	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ) : string {
@@ -378,5 +397,18 @@ return array(
 				)
 			)
 		);
+	},
+	'axo.uk.enabled'                         => static function ( ContainerInterface $container ): bool {
+		// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		/**
+		 * Filter to determine if Fastlane UK with 3D Secure should be enabled.
+		 *
+		 * @param bool $enabled Whether Fastlane UK is enabled.
+		 */
+		return apply_filters(
+			'woocommerce.feature-flags.woocommerce_paypal_payments.axo_uk_enabled',
+			getenv( 'PCP_AXO_UK_ENABLED' ) !== '0'
+		);
+		// phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
 	},
 );

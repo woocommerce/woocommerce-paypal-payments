@@ -76,7 +76,8 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
 			}
 
-			$include_shipping = (bool) wc_clean( wp_unslash( $_GET['shipping'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$include_shipping = (bool) wc_clean( wp_unslash( $_GET['shipping'] ?? '' ) );
 
 			$script_data = $this->smart_button->script_data();
 			if ( ! $script_data ) {
@@ -155,7 +156,9 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 				'description' => html_entity_decode(
 					wp_strip_all_tags(
 						wc_price( (float) $rate->get_cost(), array( 'currency' => get_woocommerce_currency() ) )
-					)
+					),
+					ENT_QUOTES,
+					'UTF-8'
 				),
 			);
 		}
