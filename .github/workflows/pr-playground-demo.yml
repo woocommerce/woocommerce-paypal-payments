@@ -1,0 +1,79 @@
+name: PR Playground Demo
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_run:
+    workflows: ["PR Playground Demo"]
+    types:
+      - completed
+
+# Cancels all previous workflow runs for pull requests that have not completed.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
+# Disable permissions for all available scopes by default.
+permissions: {}
+
+jobs:
+  create_archive:
+    runs-on: ubuntu-latest
+    # Only run for the main repository, not forks
+    if: github.repository == 'woocommerce/woocommerce-paypal-payments' && github.event_name == 'pull_request'
+    outputs:
+      artifact_name: ${{ steps.version.outputs.artifact_name }}
+      plugin_version: ${{ steps.version.outputs.plugin_version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set plugin version and artifact name
+        id: version
+        run: |
+          BASE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)
+          VERSUFFIX="${GITHUB_RUN_ID}-g$(git rev-parse --short HEAD)"
+          PR_VERSION="${BASE_VERSION}-pr${{ github.event.pull_request.number }}-${VERSUFFIX}"
+          ARTIFACT_NAME="woocommerce-paypal-payments-${PR_VERSION}"
+          echo "plugin_version=$PR_VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+      - name: Build plugin archive
+        uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@a9af34f34e95cbe18703198c7e972e97ebcd7473
+        with:
+          PHP_VERSION: 7.4
+          NODE_VERSION: 22
+          PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
+          PLUGIN_VERSION: ${{ steps.version.outputs.plugin_version }}
+          PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
+          ARCHIVE_NAME: ${{ steps.version.outputs.artifact_name }}
+          COMPILE_ASSETS_ARGS: "-vv --env=root"
+
+      # Store PR number for the workflow_run job
+      - name: Save PR number
+        run: |
+          mkdir -p ./pr
+          echo "${{ github.event.number }}" > ./pr/NR
+          echo "${{ steps.version.outputs.plugin_version }}" > ./pr/VERSION
+          echo "${{ steps.version.outputs.artifact_name }}" > ./pr/ARTIFACT
+
+      - name: Upload PR number
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-details
+          path: pr/
+
+  # Placeholder for playground_demo job - will be implemented in Task 2
+  # playground_demo:
+  #   name: Comment on PR with Playground details
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     issues: write
+  #     pull-requests: write
+  #   if: >
+  #     github.repository == 'woocommerce/woocommerce-paypal-payments' &&
+  #     github.event_name == 'workflow_run' &&
+  #     github.event.workflow_run.event == 'pull_request' &&
+  #     github.event.workflow_run.conclusion == 'success'
+  #   steps:
+  #     - name: Placeholder
+  #       run: echo "Playground demo job will be implemented in Task 2"
