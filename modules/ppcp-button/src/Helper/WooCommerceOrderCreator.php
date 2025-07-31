@@ -24,6 +24,8 @@ use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\Button\Session\CartData;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -56,32 +58,33 @@ class WooCommerceOrderCreator {
 	 */
 	protected $subscription_helper;
 
-	/**
-	 * WooCommerceOrderCreator constructor.
-	 *
-	 * @param FundingSourceRenderer $funding_source_renderer The funding source renderer.
-	 * @param SessionHandler        $session_handler The session handler.
-	 * @param SubscriptionHelper    $subscription_helper The subscription helper.
-	 */
+	protected CartDataFactory $cart_data_factory;
+
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
 		SessionHandler $session_handler,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		CartDataFactory $cart_data_factory
 	) {
 		$this->funding_source_renderer = $funding_source_renderer;
 		$this->session_handler         = $session_handler;
 		$this->subscription_helper     = $subscription_helper;
+		$this->cart_data_factory       = $cart_data_factory;
 	}
 
 	/**
 	 * Creates WC order based on given PayPal order.
 	 *
-	 * @param Order   $order The PayPal order.
-	 * @param WC_Cart $wc_cart The Cart.
-	 * @return WC_Order The WC order.
+	 * @param Order            $order The PayPal order.
+	 * @param WC_Cart|CartData $cart The WC cart (converted into CartData).
 	 * @throws RuntimeException If problem creating.
 	 */
-	public function create_from_paypal_order( Order $order, WC_Cart $wc_cart ): WC_Order {
+	public function create_from_paypal_order( Order $order, $cart ): WC_Order {
+		$cart_data = $cart;
+		if ( $cart_data instanceof WC_Cart ) {
+			$cart_data = $this->cart_data_factory->from_current_cart( $cart_data );
+		}
+
 		$wc_order = wc_create_order();
 
 		if ( ! $wc_order instanceof WC_Order ) {
@@ -95,9 +98,9 @@ class WooCommerceOrderCreator {
 
 			$this->configure_payment_source( $wc_order );
 			$this->configure_customer( $wc_order );
-			$this->configure_line_items( $wc_order, $wc_cart, $payer, $shipping );
-			$this->configure_addresses( $wc_order, $payer, $shipping, $wc_cart );
-			$this->configure_coupons( $wc_order, $wc_cart->get_applied_coupons() );
+			$this->configure_line_items( $wc_order, $cart_data, $payer, $shipping );
+			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping() );
+			$this->configure_coupons( $wc_order, $cart_data->coupons() );
 
 			$wc_order->calculate_totals();
 			$wc_order->save();
@@ -106,7 +109,7 @@ class WooCommerceOrderCreator {
 			throw new RuntimeException( 'Failed to create WooCommerce order: ' . $exception->getMessage() );
 		}
 
-		do_action( 'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created', $wc_order, $wc_cart );
+		do_action( 'woocommerce_paypal_payments_woocommerce_order_created_from_cart', $wc_order, $cart_data );
 
 		return $wc_order;
 	}
@@ -114,17 +117,10 @@ class WooCommerceOrderCreator {
 	/**
 	 * Configures the line items.
 	 *
-	 * @param WC_Order      $wc_order The WC order.
-	 * @param WC_Cart       $wc_cart The Cart.
-	 * @param Payer|null    $payer The payer.
-	 * @param Shipping|null $shipping The shipping.
-	 * @return void
 	 * @psalm-suppress InvalidScalarArgument
 	 */
-	protected function configure_line_items( WC_Order $wc_order, WC_Cart $wc_cart, ?Payer $payer, ?Shipping $shipping ): void {
-		$cart_contents = $wc_cart->get_cart();
-
-		foreach ( $cart_contents as $cart_item ) {
+	protected function configure_line_items( WC_Order $wc_order, CartData $cart_data, ?Payer $payer, ?Shipping $shipping ): void {
+		foreach ( $cart_data->items() as $cart_item ) {
 			$product_id           = $cart_item['product_id'] ?? 0;
 			$variation_id         = $cart_item['variation_id'] ?? 0;
 			$quantity             = $cart_item['quantity'] ?? 0;
@@ -173,9 +169,9 @@ class WooCommerceOrderCreator {
 				$item->set_total( $subscription_total );
 
 				$subscription->add_product( $product );
-				$this->configure_addresses( $subscription, $payer, $shipping, $wc_cart );
+				$this->configure_addresses( $subscription, $payer, $shipping, $cart_data->needs_shipping() );
 				$this->configure_payment_source( $subscription );
-				$this->configure_coupons( $subscription, $wc_cart->get_applied_coupons() );
+				$this->configure_coupons( $subscription, $cart_data->coupons() );
 
 				$dates = array(
 					'trial_end'    => WC_Subscriptions_Product::get_trial_expiration_date( $product_id ),
@@ -195,15 +191,10 @@ class WooCommerceOrderCreator {
 	/**
 	 * Configures the shipping & billing addresses for WC order from given payer.
 	 *
-	 * @param WC_Order      $wc_order The WC order.
-	 * @param Payer|null    $payer The payer.
-	 * @param Shipping|null $shipping The shipping.
-	 * @param WC_Cart       $wc_cart The Cart.
-	 * @return void
 	 * @throws WC_Data_Exception|RuntimeException When failing to configure shipping.
 	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
-	protected function configure_addresses( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, WC_Cart $wc_cart ): void {
+	protected function configure_addresses( WC_Order $wc_order, ?Payer $payer, ?Shipping $shipping, bool $needs_shipping ): void {
 		$shipping_address = null;
 		$billing_address  = null;
 		$shipping_options = null;
@@ -252,7 +243,7 @@ class WooCommerceOrderCreator {
 			$shipping_options = $shipping->options()[0] ?? '';
 		}
 
-		if ( $wc_cart->needs_shipping() && empty( $shipping_options ) ) {
+		if ( $needs_shipping && empty( $shipping_options ) ) {
 			throw new RuntimeException( 'No shipping method has been selected.' );
 		}
 
