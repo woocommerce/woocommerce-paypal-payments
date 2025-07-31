@@ -1,3 +1,8 @@
+import {
+	getCurrentPaymentMethod,
+	PaymentMethods,
+} from '../Helper/CheckoutMethodState';
+
 const onApprove = ( context, errorHandler, spinner ) => {
 	return ( data, actions ) => {
 		spinner.block();
@@ -34,6 +39,13 @@ const onApprove = ( context, errorHandler, spinner ) => {
 					}
 					throw new Error( data.data.message );
 				}
+
+				if ( ! getCurrentPaymentMethod().startsWith( 'ppcp-' ) ) {
+					jQuery(
+						`input[name="payment_method"][value="${ PaymentMethods.PAYPAL }"]`
+					).prop( 'checked', true );
+				}
+
 				document.querySelector( '#place_order' ).click();
 			} );
 	};
