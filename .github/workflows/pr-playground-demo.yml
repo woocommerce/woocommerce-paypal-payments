@@ -62,18 +62,96 @@ jobs:
           name: pr-details
           path: pr/
 
-  # Placeholder for playground_demo job - will be implemented in Task 2
-  # playground_demo:
-  #   name: Comment on PR with Playground details
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     issues: write
-  #     pull-requests: write
-  #   if: >
-  #     github.repository == 'woocommerce/woocommerce-paypal-payments' &&
-  #     github.event_name == 'workflow_run' &&
-  #     github.event.workflow_run.event == 'pull_request' &&
-  #     github.event.workflow_run.conclusion == 'success'
-  #   steps:
-  #     - name: Placeholder
-  #       run: echo "Playground demo job will be implemented in Task 2"
+  playground_demo:
+    name: Comment on PR with Playground details
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    # Only run on workflow_run events from successful builds, and only for the main repo
+    if: >
+      github.repository == 'woocommerce/woocommerce-paypal-payments' &&
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download PR details artifact
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: ${{ github.event.workflow_run.id }},
+            });
+
+            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+              return artifact.name === 'pr-details'
+            })[0];
+
+            if (!matchArtifact) {
+              core.setFailed('No pr-details artifact found!');
+              return;
+            }
+
+            const download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
+            });
+
+            const fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/pr-details.zip', Buffer.from(download.data));
+
+      - name: Unzip PR details
+        run: unzip pr-details.zip
+
+      - name: Comment on PR with WordPress Playground link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const issue_number = Number(fs.readFileSync('./NR'));
+            const plugin_version = fs.readFileSync('./VERSION', 'utf8').trim();
+            const artifact_name = fs.readFileSync('./ARTIFACT', 'utf8').trim();
+
+            // Check for existing comment to avoid duplicates
+            const commentInfo = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+            };
+
+            const comments = (await github.rest.issues.listComments(commentInfo)).data;
+
+            for (const currentComment of comments) {
+              if (currentComment.user.type === 'Bot' && currentComment.body.includes('Test using WordPress Playground')) {
+                return;
+              }
+            }
+
+            // Load the comment script
+            const script = require('./.github/scripts/playground-comment.js');
+
+            // Set environment variables for the script
+            process.env.PLUGIN_VERSION = plugin_version;
+            process.env.ARTIFACT_NAME = artifact_name;
+
+            // Create a mock context for the script
+            const mockContext = {
+              ...context,
+              issue: { number: issue_number },
+              runId: ${{ github.event.workflow_run.id }},
+              payload: {
+                pull_request: {
+                  head: {
+                    sha: '${{ github.event.workflow_run.head_sha }}'
+                  }
+                }
+              }
+            };
+
+            await script.run({ github, context: mockContext, core });
