@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.0.9 - XXXX-XX-XX =
+= 3.0.9 - 2025-07-31 =
 * Fix - Payment via "Proceed to PayPal" may result in a redirect loop #3570
 
 = 3.0.8 - 2025-07-28 =
