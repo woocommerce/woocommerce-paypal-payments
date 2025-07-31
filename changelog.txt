@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 3.0.9 - XXXX-XX-XX =
+* Fix - Payment via "Proceed to PayPal" may result in a redirect loop #3570
+
 = 3.0.8 - 2025-07-28 =
 * Enhancement - Migration from Legacy Settings to New Settings as opt-in via banner & button #3491
 * Enhancement - Replace call to `billing-agreements/agreement-tokens` with checking the capabilities for Reference Transactions #3495
