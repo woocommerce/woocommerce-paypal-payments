@@ -1,13 +1,21 @@
 const generateWordpressPlaygroundBlueprint = (runId, prNumber, artifactName) => {
     const defaultSchema = {
-        landingPage: '/wp-admin/admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway',
+        landingPage: '/wp-admin/admin.php?page=wc-settings&tab=advanced&section=blueprint&activate-multi=true',
+
         preferredVersions: {
             php: '8.0',
             wp: 'latest',
         },
+
         phpExtensionBundles: ['kitchen-sink'],
-        features: { networking: true },
+
+        // Enable networking for API calls and external connections
+        features: {
+            networking: true
+        },
+
         steps: [
+            // Step 1: Install and activate WooCommerce
             {
                 step: 'installPlugin',
                 pluginData: {
@@ -18,6 +26,8 @@ const generateWordpressPlaygroundBlueprint = (runId, prNumber, artifactName) => 
                     activate: true
                 }
             },
+
+            // Step 2: Install PayPal Payments plugin from PR artifact
             {
                 step: 'installPlugin',
                 pluginZipFile: {
@@ -28,6 +38,8 @@ const generateWordpressPlaygroundBlueprint = (runId, prNumber, artifactName) => 
                     activate: true,
                 },
             },
+
+            // Step 3: Skip WooCommerce onboarding wizard
             {
                 step: 'setSiteOptions',
                 options: {
@@ -36,14 +48,19 @@ const generateWordpressPlaygroundBlueprint = (runId, prNumber, artifactName) => 
                     },
                 },
             },
+
+            // Step 4: Set up admin user login
             {
                 step: 'login',
                 username: 'admin',
                 password: 'password',
             },
         ],
+
+        // Initialize empty plugins array (can be extended later)
         plugins: [],
     };
+
     return defaultSchema;
 };
 
