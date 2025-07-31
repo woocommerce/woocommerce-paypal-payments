@@ -122,6 +122,15 @@ class ReturnUrlFactoryTest extends TestCase
         $this->assertEquals('https://example.com/checkout?pcp-return=button', $result);
     }
 
+	public function testFromContextReturnsCartUrlWithCustomArgs()
+	{
+		when('wc_get_cart_url')->justReturn('https://example.com/cart');
+
+		$result = $this->testee->from_context('cart', [], ['session' => '123']);
+
+		$this->assertEquals('https://example.com/cart?pcp-return=button&session=123', $result);
+	}
+
 	public function cartContextProvider(): array
 	{
 		return [

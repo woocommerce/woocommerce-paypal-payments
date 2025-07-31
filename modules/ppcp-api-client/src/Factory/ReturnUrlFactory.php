@@ -13,15 +13,23 @@ class ReturnUrlFactory {
 	public const PCP_QUERY_ARG = 'pcp-return';
 
 	/**
-	 * @param string               $context The context, like in ContextTrait.
-	 * @param array<string, mixed> $request_data The request parameters, if exist.
-	 * 'order_id`, 'purchase_units' etc.
+	 * @param string                $context The context, like in ContextTrait.
+	 * @param array<string, mixed>  $request_data The request parameters, if exist.
+	 *  'order_id`, 'purchase_units' etc.
+	 * @param array<string, string> $custom_query_args Additional query args to add into the URL.
 	 *
 	 * @throws RuntimeException When required data is missing for the context.
 	 */
-	public function from_context( string $context, array $request_data = array() ): string {
+	public function from_context(
+		string $context,
+		array $request_data = array(),
+		array $custom_query_args = array()
+	): string {
 		return add_query_arg(
-			array( self::PCP_QUERY_ARG => 'button' ),
+			array_merge(
+				array( self::PCP_QUERY_ARG => 'button' ),
+				$custom_query_args
+			),
 			$this->wc_url_from_context( $context, $request_data )
 		);
 	}
