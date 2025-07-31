@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
@@ -22,6 +24,8 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -97,6 +101,8 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		$this->register_ajax_endpoints( $c );
+
+		$this->register_appswitch_crossbrowser_handler( $c );
 
 		return true;
 	}
@@ -225,6 +231,77 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$endpoint = $container->get( 'button.endpoint.get-order' );
 				assert( $endpoint instanceof GetOrderEndpoint );
 				$endpoint->handle_request();
+			}
+		);
+	}
+
+	private function register_appswitch_crossbrowser_handler( ContainerInterface $container ): void {
+		if ( ! $container->get( 'wcgateway.appswitch-enabled' ) ) {
+			return;
+		}
+
+		// After returning from cross-browser AppSwitch (started in non-default browser, then redirected to the default one)
+		// we need to retrieve the saved cart and PayPal order, create a WC order and redirect to Pay for order.
+		add_action(
+			'wp',
+			static function () use ( $container ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! isset( $_GET[ ReturnUrlFactory::PCP_QUERY_ARG ] ) ) {
+					return;
+				}
+
+				if ( is_checkout_pay_page() ) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! isset( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) ) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.NonceVerification
+				$cart_key = wc_clean( wp_unslash( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) );
+				if ( ! is_string( $cart_key ) ) {
+					return;
+				}
+
+				$card_data_storage = $container->get( 'button.session.storage.card-data.transient' );
+				assert( $card_data_storage instanceof CartDataTransientStorage );
+
+				$cart_data = $card_data_storage->get( $cart_key );
+				if ( ! $cart_data ) {
+					return;
+				}
+
+				// Delete the data to avoid accidentally triggering it again, duplicating orders etc.
+				$card_data_storage->remove( $cart_data );
+
+				if ( ! WC()->cart ) {
+					return;
+				}
+				// The current cart is the same, so we don't need to do anything (probably not cross-browser).
+				if ( WC()->cart->get_cart_hash() === $cart_data->cart_hash() ) {
+					return;
+				}
+
+				$paypal_order_id = $cart_data->paypal_order_id();
+				if ( empty( $paypal_order_id ) ) {
+					return;
+				}
+
+				$order_endpoint = $container->get( 'api.endpoint.order' );
+				assert( $order_endpoint instanceof OrderEndpoint );
+
+				$paypal_order = $order_endpoint->order( $paypal_order_id );
+
+				$wc_order_creator = $container->get( 'button.helper.wc-order-creator' );
+				assert( $wc_order_creator instanceof WooCommerceOrderCreator );
+
+				$wc_order = $wc_order_creator->create_from_paypal_order( $paypal_order, $cart_data );
+
+				// Redirect via JS because we need to keep the # parameters which are not accessible on the server side.
+				// phpcs:ignore WordPress.Security.EscapeOutput
+				echo "<script>location.href = '" . $wc_order->get_checkout_payment_url() . "' + location.hash;</script>";
 			}
 		);
 	}
