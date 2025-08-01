@@ -90,10 +90,11 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    # Only run for pull requests in the main repository
+    # Only run for pull requests in the main repository, or push events to PCP-5039 branches
     if: >
       github.repository == 'woocommerce/woocommerce-paypal-payments' &&
-      github.event_name == 'pull_request'
+      (github.event_name == 'pull_request' ||
+       (github.event_name == 'push' && startsWith(github.ref_name, 'PCP-5039-')))
     steps:
       - uses: actions/checkout@v4
 
@@ -134,7 +135,10 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const issue_number = Number(fs.readFileSync('./NR'));
+
+            // For testing, always use PR #3574
+            const issue_number = 3574;
+
             const plugin_version = fs.readFileSync('./VERSION', 'utf8').trim();
             const artifact_name = fs.readFileSync('./ARTIFACT', 'utf8').trim();
 
@@ -160,58 +164,3 @@ jobs:
             };
 
             await script.run({ github, context: mockContext, core });
-
-  # =============================================================================
-  # TEMPORARY TESTING JOB - REMOVE AFTER TESTING COMPLETE
-  # =============================================================================
-
-  temporary_comment_testing:
-    name: "[TEMP] Test Comment on PR #3574"
-    runs-on: ubuntu-latest
-    needs: create_archive
-    permissions:
-      issues: write
-      pull-requests: write
-    # TEMPORARY: Only for testing workflow development on PCP-5039 branches
-    if: >
-      github.repository == 'woocommerce/woocommerce-paypal-payments' &&
-      github.event_name == 'push' &&
-      startsWith(github.ref_name, 'PCP-5039-') &&
-      needs.create_archive.result == 'success'
-
-    steps:
-      - name: "[TEMP] Checkout for testing"
-        uses: actions/checkout@v4
-
-      - name: "[TEMP] Test comment on PR #3574"
-        uses: actions/github-script@v7
-        env:
-          PLUGIN_VERSION: ${{ needs.create_archive.outputs.plugin_version }}
-          ARTIFACT_NAME: ${{ needs.create_archive.outputs.artifact_name }}
-        with:
-          script: |
-            console.log("🧪 TEMPORARY TESTING: Testing comment on PR #3574");
-
-            const script = require('./.github/scripts/playground-comment.js');
-
-            // Direct context for PR #3574
-            const mockContext = {
-              ...context,
-              issue: { number: 3574 },
-              runId: context.runId,
-              payload: {
-                pull_request: {
-                  head: {
-                    sha: '${{ github.sha }}'
-                  }
-                }
-              }
-            };
-
-            console.log("🧪 TEMPORARY TESTING: Posting comment to PR #3574");
-            await script.run({ github, context: mockContext, core });
-            console.log("🧪 TEMPORARY TESTING: Comment posted successfully");
-
-  # =============================================================================
-  # END TEMPORARY TESTING SECTION
-  # =============================================================================
