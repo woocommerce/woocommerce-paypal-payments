@@ -12,10 +12,12 @@ on:
     branches:
       - "PCP-5039-*"
     paths:
-      - "src/**"
-      - "assets/**"
-      - "package.json"
-      - "composer.json"
+      - 'src/**'
+      - 'assets/**'
+      - 'package.json'
+      - 'composer.json'
+      - '.github/workflows/pr-playground-demo.yml'
+      - '.github/scripts/playground-comment.js'
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
