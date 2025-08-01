@@ -34,15 +34,7 @@ class CartDataTransientStorage {
 			return null;
 		}
 
-		$cart_data = new CartData(
-			$data['items'] ?? array(),
-			$data['coupons'] ?? array(),
-			(bool) ( $data['needs_shipping'] ?? false ),
-			$data['cart_hash'] ?? ''
-		);
-		$cart_data->set_paypal_order_id( $data['paypal_order_id'] ?? null );
-		$cart_data->set_key( $key );
-		return $cart_data;
+		return CartData::from_array( $data, $key );
 	}
 
 	public function remove( CartData $cart_data ): void {

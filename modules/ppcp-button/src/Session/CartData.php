@@ -59,13 +59,6 @@ class CartData {
 	}
 
 	/**
-	 * Sets the key that can be used for identifying the instance in storage.
-	 */
-	public function set_key( ?string $key ): void {
-		$this->key = $key;
-	}
-
-	/**
 	 * The cart items like in $cart->get_cart_for_session() or $cart->get_cart().
 	 *
 	 * @return array<string, array<string, mixed>>
@@ -105,5 +98,17 @@ class CartData {
 			'cart_hash'       => $this->cart_hash,
 			'paypal_order_id' => $this->paypal_order_id,
 		);
+	}
+
+	public static function from_array( array $data, ?string $key = null ): CartData {
+		$cart_data                  = new CartData(
+			$data['items'] ?? array(),
+			$data['coupons'] ?? array(),
+			(bool) ( $data['needs_shipping'] ?? false ),
+			$data['cart_hash'] ?? ''
+		);
+		$cart_data->paypal_order_id = $data['paypal_order_id'] ?? null;
+		$cart_data->key             = $key;
+		return $cart_data;
 	}
 }
