@@ -78,8 +78,13 @@ async function run({ github, context, core }) {
             return;
         }
 
-        // Comments are only added after the first successful build.
-        // The caller should check for existing comments before calling this function.
+        // Check for existing playground comment to update instead of creating duplicate
+        const comments = await github.rest.issues.listComments(commentInfo);
+
+        const existingComment = comments.data.find(comment =>
+            comment.user.type === 'Bot' &&
+            comment.body.includes('Test using WordPress Playground')
+        );
 
         const defaultSchema = generateWordpressPlaygroundBlueprint(
             context.runId,
@@ -111,19 +116,36 @@ The changes in this pull request can be previewed and tested using a [WordPress 
 
 > 💡 The demo environment resets each time you refresh. Perfect for testing!
 >
-> ⚠️ This URL is valid for 30 days from when this comment was last updated. You can refresh it by pushing a new commit.
+> 🔄 This link updates automatically with each new commit to the PR.
+>
+> ⚠️ This URL is valid for 30 days from when this comment was last updated.
 
 ---
-<sub>🤖 Auto-generated for commit ${context.payload.pull_request.head.sha}</sub>`;
+<sub>🤖 Auto-generated for commit ${context.payload.pull_request.head.sha} • Last updated: ${new Date().toISOString()}</sub>`;
 
-        // Create the comment
-        commentInfo.body = body;
-        await github.rest.issues.createComment(commentInfo);
+        if (existingComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+            });
 
-        core.info('Successfully created playground comment on PR');
+            core.info(`Successfully updated existing playground comment #${existingComment.id} on PR #${context.issue.number}`);
+        } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+                ...commentInfo,
+                body: body
+            });
+
+            core.info(`Successfully created new playground comment on PR #${context.issue.number}`);
+        }
 
     } catch (error) {
-        core.setFailed(`Failed to create playground comment: ${error.message}`);
+        core.setFailed(`Failed to create/update playground comment: ${error.message}`);
+        core.error(`Error details: ${error.stack}`);
     }
 }
 
