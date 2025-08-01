@@ -4,22 +4,18 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'src/**'
-      - 'assets/**'
-      - 'package.json'
-      - 'composer.json'
-  workflow_run:
-    workflows: ["PR Playground Demo"]
-    types:
-      - completed
+      - "src/**"
+      - "assets/**"
+      - "package.json"
+      - "composer.json"
   push:
     branches:
-      - 'PCP-5039-*'
+      - "PCP-5039-*"
     paths:
-      - 'src/**'
-      - 'assets/**'
-      - 'package.json'
-      - 'composer.json'
+      - "src/**"
+      - "assets/**"
+      - "package.json"
+      - "composer.json"
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
@@ -90,15 +86,14 @@ jobs:
   playground_demo:
     name: Comment on PR with Playground details
     runs-on: ubuntu-latest
+    needs: create_archive
     permissions:
       issues: write
       pull-requests: write
-    # Only run on workflow_run events from successful builds, and only for the main repo
+    # Only run for pull requests in the main repository
     if: >
       github.repository == 'woocommerce/woocommerce-paypal-payments' &&
-      github.event_name == 'workflow_run' &&
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
@@ -109,7 +104,7 @@ jobs:
             const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              run_id: ${{ github.event.workflow_run.id }},
+              run_id: context.runId,
             });
 
             const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
@@ -150,15 +145,15 @@ jobs:
             process.env.PLUGIN_VERSION = plugin_version;
             process.env.ARTIFACT_NAME = artifact_name;
 
-            // Create a mock context for the script
+            // Create context for the script
             const mockContext = {
               ...context,
               issue: { number: issue_number },
-              runId: ${{ github.event.workflow_run.id }},
+              runId: context.runId,
               payload: {
                 pull_request: {
                   head: {
-                    sha: '${{ github.event.workflow_run.head_sha }}'
+                    sha: context.sha
                   }
                 }
               }
