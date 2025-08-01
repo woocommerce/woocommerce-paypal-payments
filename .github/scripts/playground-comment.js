@@ -49,7 +49,15 @@ const generateWordpressPlaygroundBlueprint = (runId, prNumber, artifactName) => 
                 },
             },
 
-            // Step 4: Set up admin user login
+            // Step 4: Enable Coming Soon mode
+            {
+                step: 'setSiteOptions',
+                options: {
+                    woocommerce_coming_soon: 'yes',
+                },
+            },
+
+            // Step 5: Set up admin user login
             {
                 step: 'login',
                 username: 'admin',
