@@ -3,6 +3,11 @@ name: PR Playground Demo
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'src/**'
+      - 'assets/**'
+      - 'package.json'
+      - 'composer.json'
   workflow_run:
     workflows: ["PR Playground Demo"]
     types:
