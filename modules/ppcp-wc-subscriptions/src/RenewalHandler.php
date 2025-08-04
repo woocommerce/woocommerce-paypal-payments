@@ -516,7 +516,7 @@ class RenewalHandler {
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
-			$order = $this->order_endpoint->authorize( $order );
+			// No authorize call needed - vault tokens auto-authorize during order creation.
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 		}
 
