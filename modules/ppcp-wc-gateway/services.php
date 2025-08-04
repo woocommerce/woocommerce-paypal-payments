@@ -2159,7 +2159,7 @@ return array(
 	},
 
 	'wcgateway.settings.inbox-note-registrar'              => static function( ContainerInterface $container ): InboxNoteRegistrar {
-		return new InboxNoteRegistrar( $container->get( 'wcgateway.settings.inbox-notes' ) );
+		return new InboxNoteRegistrar( $container->get( 'wcgateway.settings.inbox-notes' ), $container->get( 'ppcp.plugin' ) );
 	},
 
 	/**

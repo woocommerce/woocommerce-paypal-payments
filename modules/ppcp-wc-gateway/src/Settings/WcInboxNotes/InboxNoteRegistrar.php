@@ -9,6 +9,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use Automattic\WooCommerce\Admin\Notes\Notes;
+use WpOop\WordPress\Plugin\PluginInterface;
 
 /**
  * Registers inbox notes in the WooCommerce Admin inbox section.
@@ -19,9 +20,11 @@ class InboxNoteRegistrar {
 	 * @var InboxNoteInterface[]
 	 */
 	protected array $inbox_notes;
+	protected PluginInterface $plugin;
 
-	public function __construct( array $inbox_notes ) {
+	public function __construct( array $inbox_notes, PluginInterface $plugin ) {
 		$this->inbox_notes = $inbox_notes;
+		$this->plugin      = $plugin;
 	}
 
 	public function register(): void {
@@ -37,7 +40,7 @@ class InboxNoteRegistrar {
 			$note->set_content( $inbox_note->content() );
 			$note->set_type( $inbox_note->type() );
 			$note->set_name( $inbox_note_name );
-			$note->set_source( 'your-plugin-name' );
+			$note->set_source( $this->plugin->getBaseName() );
 			$note->set_status( $inbox_note->status() );
 
 			$inbox_note_action = $inbox_note->action();
