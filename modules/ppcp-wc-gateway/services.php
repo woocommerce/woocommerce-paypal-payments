@@ -2093,7 +2093,7 @@ return array(
 			array(
 				'id'           => 'ppcp-working-capital-task',
 				'title'        => __( 'Start your PayPal Working Capital application', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
 				'redirect_url' => 'http://example.com/',
 			),
 		);
