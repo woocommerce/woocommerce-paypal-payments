@@ -55,6 +55,7 @@ class SettingsTabMapHelper {
 			'logging_enabled'             => 'enable_logging',
 			'vault_enabled'               => 'save_paypal_and_venmo',
 			'3d_secure_contingency'       => 'three_d_secure',
+			'stay_updated'                => 'stay_updated',
 		);
 	}
 
