@@ -89,6 +89,7 @@ class DelegatingContainer implements ContainerInterface
     public function has($id)
     {
         $services = $this->provider->getFactories();
+        $id = (string) $id;
 
         return array_key_exists($id, $services);
     }

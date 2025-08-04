@@ -59,14 +59,7 @@ return array(
 	},
 
 	'axo.url'                                => static function ( ContainerInterface $container ): string {
-		$path = realpath( __FILE__ );
-		if ( false === $path ) {
-			return '';
-		}
-		return plugins_url(
-			'/modules/ppcp-axo/',
-			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-axo/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'axo.manager'                            => static function ( ContainerInterface $container ): AxoManager {

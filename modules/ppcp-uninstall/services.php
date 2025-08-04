@@ -79,15 +79,7 @@ return array(
 	},
 
 	'uninstall.module-url'                      => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-uninstall/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'uninstall.clear-db-assets'                 => function( ContainerInterface $container ) : ClearDatabaseAssets {

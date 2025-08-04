@@ -80,15 +80,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 $services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ) : string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-settings/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ) : OnboardingProfile {
 		$can_use_casual_selling = $container->get( 'settings.casual-selling.eligible' );
@@ -369,7 +361,8 @@ $services = array(
 		$merchant_id = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
+		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
+		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
