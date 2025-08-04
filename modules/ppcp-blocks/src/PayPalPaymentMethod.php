@@ -260,7 +260,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 					'src' => $this->gateway->icon,
 				),
 			),
-			'description'                 => $this->gateway->description,
+			'description'                 => $this->gateway->get_description(),
 			'smartButtonsEnabled'         => $smart_buttons_enabled,
 			'placeOrderEnabled'           => $place_order_enabled,
 			'fundingSource'               => $this->session_handler->funding_source(),

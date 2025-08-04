@@ -531,6 +531,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			2
 		);
 
+		add_filter(
+			'woocommerce_paypal_payments_paypal_gateway_icon',
+			function ( string $icon_url ) use ( $container ) {
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				// If "Show logo" is disabled, return an empty string to hide the icon.
+				return $payment_settings->get_paypal_show_logo() ? $icon_url : '';
+			}
+		);
+
 		add_filter( 'woocommerce_paypal_payments_card_button_gateway_should_register_gateway', '__return_true' );
 
 		add_filter(
