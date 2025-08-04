@@ -115,7 +115,7 @@ export const paypalSubscriberToWc = ( subscriber ) => {
  * @return {Object}
  */
 export const paypalOrderToWcShippingAddress = ( order ) => {
-	const shipping = order.purchase_units?.[ 0 ]?.shipping;
+	const shipping = order?.purchase_units?.[ 0 ]?.shipping;
 	if ( ! shipping ) {
 		return {};
 	}
@@ -145,7 +145,7 @@ export const paypalOrderToWcShippingAddress = ( order ) => {
 export const paypalOrderToWcAddresses = ( order ) => {
 	const shippingAddress = paypalOrderToWcShippingAddress( order );
 	let billingAddress = shippingAddress;
-	if ( order.payer ) {
+	if ( order?.payer ) {
 		billingAddress = paypalPayerToWc( order.payer );
 		// no billing address, such as if billing address retrieval is not allowed in the merchant account
 		if ( ! billingAddress.address_line_1 ) {
