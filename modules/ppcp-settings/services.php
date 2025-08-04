@@ -522,9 +522,16 @@ $services = array(
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
 
-		$settings     = $container->get( 'wcgateway.settings' );
+		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
-		$stay_updated = $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
+		$is_working_capital_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+		);
+
+		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $container->get( 'settings.data.settings' )->get_stay_updated();
 
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
@@ -571,7 +578,7 @@ $services = array(
 			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
 			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
-			$container->get( 'api.shop.country' ) === 'US' && $stay_updated // Enable Working Capital.
+			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ) : FeaturesRestEndpoint {
