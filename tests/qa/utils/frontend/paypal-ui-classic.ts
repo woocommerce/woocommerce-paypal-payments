@@ -492,8 +492,8 @@ export class PayPalUiClassic extends PayPalUi {
 			case 'paypal':
 				await this.payPalGateway().click();
 				await expect( this.payPalButton() ).toContainText( 'Pay Now' );
-				// For some time instead of vaulted PayPal button it is displayed:
-				// "Proceed to PayPal" button with text "Using <payPalEmail> PayPal."
+				// Sometimes instead of vaulted PayPal button following is displayed:
+				// "Proceed to PayPal" button with text "Using <PayPal-user-email> PayPal."
 				// await expect(
 				// 	this.usingVaultedPayPalAccountText( payPalAccount?.email )
 				// ).toBeVisible();
