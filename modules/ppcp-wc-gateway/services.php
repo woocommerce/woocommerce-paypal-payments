@@ -2074,11 +2074,18 @@ return array(
 	},
 
 	'wcgateway.settings.wc-tasks.working-capital-config'   => static function( ContainerInterface $container ): array {
-		$settings     = $container->get( 'wcgateway.settings' );
+		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
-		$stay_updated = $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
-		if ( $container->get( 'api.shop.country' ) !== 'US' || ! $stay_updated ) {
+		$is_working_capital_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+		);
+
+		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
+		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
 			return array();
 		}
 
