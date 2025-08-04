@@ -522,6 +522,10 @@ $services = array(
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
 
+		$settings     = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		$stay_updated = $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
 		 * Each parameter determines whether a specific feature should be shown in the Things To Do list.
@@ -566,7 +570,8 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['google_pay'],                                       // Add Google Pay to your account.
 			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
-			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country() // Enable Installments for Mexico.
+			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
+			$container->get( 'api.shop.country' ) === 'US' && $stay_updated // Enable Working Capital.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ) : FeaturesRestEndpoint {
