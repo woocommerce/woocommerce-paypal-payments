@@ -2075,7 +2075,8 @@ return array(
 
 	'wcgateway.settings.wc-tasks.working-capital-config'   => static function( ContainerInterface $container ): array {
 		$settings     = $container->get( 'wcgateway.settings' );
-		$stay_updated = $settings->has( 'stay_updated' ) ? $settings->get( 'stay_updated' ) : false;
+		assert( $settings instanceof Settings );
+		$stay_updated = $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
 
 		if ( $container->get( 'api.shop.country' ) !== 'US' || ! $stay_updated ) {
 			return array();
