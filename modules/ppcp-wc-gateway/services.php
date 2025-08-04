@@ -2068,10 +2068,29 @@ return array(
 		return array();
 	},
 
+	'wcgateway.settings.wc-tasks.working-capital-config'   => static function( ContainerInterface $container ): array {
+		$settings     = $container->get( 'wcgateway.settings' );
+		$stay_updated = $settings->has( 'stay_updated' ) ? $settings->get( 'stay_updated' ) : false;
+
+		if ( $container->get( 'api.shop.country' ) !== 'US' || ! $stay_updated ) {
+			return array();
+		}
+
+		return array(
+			array(
+				'id'           => 'ppcp-working-capital-task',
+				'title'        => __( 'Start you PayPal Working Capital application', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
+				'redirect_url' => 'http://example.com/',
+			),
+		);
+	},
+
 	'wcgateway.settings.wc-tasks.task-config-services'     => static function(): array {
 		return array(
 			'wcgateway.settings.wc-tasks.pay-later-task-config',
 			'wcgateway.settings.wc-tasks.connect-task-config',
+			'wcgateway.settings.wc-tasks.working-capital-config',
 		);
 	},
 
