@@ -334,11 +334,21 @@ class ApplePayButton extends PaymentButton {
 		this.checkEligibility();
 	}
 
-	reinit() {
+	async reinit() {
 		// Missing (invalid) configuration indicates, that the first `init()` call did not happen yet.
 		if ( ! this.validateConfiguration( true ) ) {
 			return;
 		}
+
+		// Ensures transaction info is updated when cart or checkout update events are triggered.
+		await this.contextHandler
+			.transactionInfo()
+			.then( ( transactionInfo ) => {
+				this.transactionInfo = transactionInfo;
+			} )
+			.catch( ( error ) => {
+				console.error( 'Failed to get transaction info:', error );
+			} );
 
 		super.reinit();
 
