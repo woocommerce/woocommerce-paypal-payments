@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -82,6 +83,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteAction;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteFactory;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactoryInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrar;
@@ -2139,6 +2144,41 @@ return array(
 		}
 
 		return $simple_redirect_tasks;
+	},
+
+	'wcgateway.settings.inbox-note-factory'                => static function(): InboxNoteFactory {
+		return new InboxNoteFactory();
+	},
+
+	'wcgateway.settings.inbox-note-registrar'              => static function( ContainerInterface $container ): InboxNoteRegistrar {
+		return new InboxNoteRegistrar( $container->get( 'wcgateway.settings.inbox-notes' ) );
+	},
+
+	/**
+	 * Retrieves the list of inbox note instances.
+	 *
+	 * @returns InboxNoteInterface[]
+	 */
+	'wcgateway.settings.inbox-notes'                    => static function( ContainerInterface $container ): array {
+		$inbox_note_factory = $container->get( 'wcgateway.settings.inbox-note-factory' );
+		assert( $inbox_note_factory instanceof InboxNoteFactory );
+
+		return array(
+			$inbox_note_factory->create_note(
+				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
+				__( 'Fast funds with payments that flex with your PayPal sales The PayPal Working Capital business loan is primarily based on your PayPal account history. Apply for $1,000-$200,000 (and up to $300,000 for repeat borrowers) with no credit check.† If approved, loans are funded in minutes.', 'woocommerce-paypal-payments' ),
+				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
+				'ppcp-working-capital-inbox-note',
+				Note::E_WC_ADMIN_NOTE_UNACTIONED,
+				new InboxNoteAction(
+					'apply_now',
+					__( 'Apply now', 'woocommerce-paypal-payments' ),
+					'http://example.com/',
+					Note::E_WC_ADMIN_NOTE_UNACTIONED,
+					true
+				)
+			),
+		);
 	},
 
 	'wcgateway.void-button.assets'                         => function( ContainerInterface $container ) : VoidButtonAssets {
