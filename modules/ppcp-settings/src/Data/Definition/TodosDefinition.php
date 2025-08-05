@@ -256,7 +256,7 @@ class TodosDefinition {
 	 * @return bool True if the migration is marked as done, false otherwise.
 	 */
 	protected function is_settings_migration_done(): bool {
-		return 'yes' === get_option( SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE );
+		return '1' === get_option( SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE );
 	}
 
 	/**

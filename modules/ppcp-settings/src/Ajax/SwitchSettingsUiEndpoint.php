@@ -72,7 +72,7 @@ class SwitchSettingsUiEndpoint {
 
 			$this->settings_data_migration->migrate();
 
-			update_option( self::OPTION_NAME_MIGRATION_IS_DONE, 'yes' );
+			update_option( self::OPTION_NAME_MIGRATION_IS_DONE, true );
 			wp_send_json_success();
 		} catch ( Exception $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 500 );
