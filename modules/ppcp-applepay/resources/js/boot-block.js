@@ -94,21 +94,23 @@ if (
 	features.push( 'subscriptions' );
 }
 
-registerExpressPaymentMethod( {
-	name: buttonData.id,
-	title: `PayPal - ${ buttonData.title }`,
-	description: __(
-		'Eligible users will see the PayPal button.',
-		'woocommerce-paypal-payments'
-	),
-	label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
-	content: <ApplePayComponent isEditing={ false } />,
-	edit: <ApplePayComponent isEditing={ true } />,
-	ariaLabel: buttonData.title,
-	canMakePayment: () =>
-		buttonData.enabled && window.ApplePaySession?.canMakePayments(),
-	supports: {
-		features,
-		style: [ 'height', 'borderRadius' ],
-	},
-} );
+if ( buttonConfig?.is_enabled ) {
+	registerExpressPaymentMethod( {
+		name: buttonData.id,
+		title: `PayPal - ${ buttonData.title }`,
+		description: __(
+			'Eligible users will see the PayPal button.',
+			'woocommerce-paypal-payments'
+		),
+		label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
+		content: <ApplePayComponent isEditing={ false } />,
+		edit: <ApplePayComponent isEditing={ true } />,
+		ariaLabel: buttonData.title,
+		canMakePayment: () =>
+			buttonData.enabled && window.ApplePaySession?.canMakePayments(),
+		supports: {
+			features,
+			style: [ 'height', 'borderRadius' ],
+		},
+	} );
+}
