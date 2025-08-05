@@ -36,6 +36,7 @@ return array(
 			WebhookRegistrar::KEY,
 			'ppcp_payment_tokens_migration_initialized',
 			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
+			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
 		);
 	},
 
