@@ -27,7 +27,7 @@ export const paypalAddressToWc = ( address ) => {
 		admin_area_2: 'city',
 		postal_code: 'postcode',
 	};
-	if ( address.city ) {
+	if ( address?.city ) {
 		// address not from API, such as onShippingChange
 		map = {
 			country_code: 'country',
@@ -38,7 +38,7 @@ export const paypalAddressToWc = ( address ) => {
 	}
 	const result = {};
 	Object.entries( map ).forEach( ( [ paypalKey, wcKey ] ) => {
-		if ( address[ paypalKey ] ) {
+		if ( address?.[ paypalKey ] ) {
 			result[ wcKey ] = address[ paypalKey ];
 		}
 	} );

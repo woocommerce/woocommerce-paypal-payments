@@ -2265,4 +2265,12 @@ return array(
 			getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) === '1'
 		);
 	},
+
+	'wcgateway.appswitch-enabled'                          => static function( ContainerInterface $container ) : bool {
+		return apply_filters(
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+			'woocommerce.feature-flags.woocommerce_paypal_payments.appswitch_enabled',
+			getenv( 'PCP_APPSWITCH_ENABLED' ) === '1'
+		);
+	},
 );

@@ -169,6 +169,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
 			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
+			$container->get( 'wcgateway.appswitch-enabled' ),
 			$container->get( 'button.helper.disabled-funding-sources' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'api.helper.partner-attribution' ),

@@ -120,7 +120,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 */
 			add_filter(
 				Repository::NOTICES_FILTER,
-				static function ( array $notices ): array {
+				static function ( array $notices ) use ( $container ): array {
+					if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
+						return $notices;
+					}
+
 					$message = sprintf(
 					// translators: %1$s is the URL for the startup guide.
 						__(

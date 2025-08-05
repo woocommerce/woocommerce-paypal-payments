@@ -260,6 +260,11 @@ class SmartButton implements SmartButtonInterface {
 	private bool $server_side_shipping_callback_enabled;
 
 	/**
+	 * Whether the AppSwitch is enabled (feature flag).
+	 */
+	private bool $appswitch_enabled;
+
+	/**
 	 * Whether the final review is enabled in blocks settings.
 	 */
 	private bool $final_review_enabled;
@@ -291,6 +296,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param LoggerInterface           $logger                            The logger.
 	 * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
 	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
+	 * @param bool                      $appswitch_enabled                 Whether the AppSwitch is enabled (feature flag).
 	 * @param DisabledFundingSources    $disabled_funding_sources          List of funding sources to be disabled.
 	 * @param CardPaymentsConfiguration $dcc_configuration                 The DCC Gateway Configuration.
 	 * @param PartnerAttribution        $partner_attribution The PayPal Partner Attribution Helper.
@@ -321,6 +327,7 @@ class SmartButton implements SmartButtonInterface {
 		LoggerInterface $logger,
 		bool $should_handle_shipping_in_paypal,
 		bool $server_side_shipping_callback_enabled,
+		bool $appswitch_enabled,
 		DisabledFundingSources $disabled_funding_sources,
 		CardPaymentsConfiguration $dcc_configuration,
 		PartnerAttribution $partner_attribution,
@@ -350,6 +357,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->payment_tokens_endpoint               = $payment_tokens_endpoint;
 		$this->should_handle_shipping_in_paypal      = $should_handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
+		$this->appswitch_enabled                     = $appswitch_enabled;
 		$this->disabled_funding_sources              = $disabled_funding_sources;
 		$this->dcc_configuration                     = $dcc_configuration;
 		$this->partner_attribution                   = $partner_attribution;
@@ -1364,6 +1372,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
 			'server_side_shipping_callback'           => array(
 				'enabled' => $this->server_side_shipping_callback_enabled,
+			),
+			'appswitch'                               => array(
+				'enabled' => $this->appswitch_enabled,
 			),
 			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),

@@ -401,6 +401,7 @@ export const PayPalComponent = ( {
 	const shouldEnableAppSwitch = () => {
 		// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
 		return (
+			config.scriptData.appswitch.enabled &&
 			! config.scriptData.final_review_enabled &&
 			config.scriptData.server_side_shipping_callback.enabled
 		);
