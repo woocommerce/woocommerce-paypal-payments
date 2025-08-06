@@ -17,33 +17,33 @@ class Shipping {
 	/**
 	 * The name.
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	private $name;
+	private ?string $name;
 
 	/**
 	 * The address.
 	 *
-	 * @var Address
+	 * @var Address|null
 	 */
-	private $address;
+	private ?Address $address;
 
 	/**
 	 * Custom contact email address, usually added via the Contact Module.
 	 */
-	private ?string $email_address = null;
+	private ?string $email_address;
 
 	/**
 	 * Custom contact phone number, usually added via the Contact Module.
 	 */
-	private ?Phone $phone_number = null;
+	private ?Phone $phone_number;
 
 	/**
 	 * Shipping methods.
 	 *
 	 * @var ShippingOption[]
 	 */
-	private $options;
+	private array $options;
 
 	/**
 	 * Shipping constructor.
@@ -130,7 +130,7 @@ class Shipping {
 
 		$address = $this->address();
 		if ( $address ) {
-			$result['address'] = $this->address()->to_array();
+			$result['address'] = $address->to_array();
 		}
 
 		$contact_email = $this->email_address();
