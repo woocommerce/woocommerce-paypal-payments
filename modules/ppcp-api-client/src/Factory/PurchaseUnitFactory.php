@@ -348,7 +348,7 @@ class PurchaseUnitFactory {
 	 *
 	 * @return bool
 	 */
-	public function should_disable_shipping( array $items, ?Address $shipping_address ): bool {
+	private function should_disable_shipping( array $items, ?Address $shipping_address ): bool {
 		return ! $this->shipping_needed( ... array_values( $items ) ) ||
 			   ! $shipping_address ||
 			   empty( $shipping_address->country_code() ) ||
