@@ -27,6 +27,7 @@ trait StringTranslatingTrait
      */
     protected function __(string $string, array $args = array(), $context = null): string
     {
+        $context = (string) $context;
         $string = $this->_translate($string, $context);
         array_unshift($args, $string);
         return call_user_func_array('sprintf', $args);

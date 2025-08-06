@@ -61,6 +61,8 @@ class FlashContainer implements
      */
     public function has($key)
     {
+        $key = (string) $key;
+
         return array_key_exists($key, $this->flashData);
     }
 

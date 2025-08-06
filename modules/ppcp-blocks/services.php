@@ -17,15 +17,7 @@ use WC_Cart;
 
 return array(
 	'blocks.url'                           => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-blocks/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-blocks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
 		return new PayPalPaymentMethod(

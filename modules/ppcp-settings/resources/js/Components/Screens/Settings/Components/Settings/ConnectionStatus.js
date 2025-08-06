@@ -37,17 +37,23 @@ const ConnectionStatus = () => {
 				title={ __( 'Merchant ID', 'woocommerce-paypal-payments' ) }
 				className="ppcp--no-gap"
 			>
-				<ControlStaticValue value={ merchant.id } />
+				<ControlStaticValue value={ merchant.id } showCopy={ true } />
 			</SettingsBlock>
 			<SettingsBlock
 				title={ __( 'Email address', 'woocommerce-paypal-payments' ) }
 			>
-				<ControlStaticValue value={ merchant.email } />
+				<ControlStaticValue
+					value={ merchant.email }
+					showCopy={ true }
+				/>
 			</SettingsBlock>
 			<SettingsBlock
 				title={ __( 'Client ID', 'woocommerce-paypal-payments' ) }
 			>
-				<ControlStaticValue value={ merchant.clientId } />
+				<ControlStaticValue
+					value={ merchant.clientId }
+					showCopy={ true }
+				/>
 			</SettingsBlock>
 		</SettingsCard>
 	);

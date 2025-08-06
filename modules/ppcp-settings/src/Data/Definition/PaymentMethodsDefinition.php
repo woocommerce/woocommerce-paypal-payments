@@ -136,7 +136,7 @@ class PaymentMethodsDefinition {
 		$gateway = $this->wc_gateways[ $gateway_id ] ?? null;
 
 		$gateway_title       = $gateway ? $gateway->get_title() : $title;
-		$gateway_description = $gateway ? $gateway->get_description() : $description;
+		$gateway_description = $gateway->settings['description'] ?? $description;
 		$enabled             = $this->settings->is_method_enabled( $gateway_id );
 		$config              = array(
 			'id'              => $gateway_id,
@@ -159,7 +159,7 @@ class PaymentMethodsDefinition {
 					),
 					'checkoutPageDescription' => array(
 						'type'    => 'text',
-						'default' => $gateway ? $gateway->get_description() : '',
+						'default' => $gateway_description,
 						'label'   => __( 'Checkout page description', 'woocommerce-paypal-payments' ),
 					),
 				),

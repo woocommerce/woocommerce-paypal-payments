@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.0.8
+Stable tag: 3.0.9
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -156,7 +156,10 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.0.8 - XXXX-XX-XX =
+= 3.0.9 - 2025-07-31 =
+* Fix - Payment via "Proceed to PayPal" may result in a redirect loop #3570
+
+= 3.0.8 - 2025-07-28 =
 * Enhancement - Migration from Legacy Settings to New Settings as opt-in via banner & button #3491
 * Enhancement - Replace call to `billing-agreements/agreement-tokens` with checking the capabilities for Reference Transactions #3495
 * Enhancement - Add Fastlane 3D Secure support #3493
@@ -172,7 +175,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 = 3.0.7 - 2025-07-01 =
 * Enhancement - Remove `application_context` in favor of `experience_context` object #3431
- **NOTE**: If you were modifying the `application_context` object programmatically, you may need to update your code to utilize `experience_context` for your customizations. 
+ **NOTE**: If you were modifying the `application_context` object programmatically, you may need to update your code to utilize `experience_context` for your customizations.
 * Enhancement - Add Contact Module feature
 * Enhancement - Add WooCommerce Tracks integration
 * Enhancement - Onboarding notification for Firefox browser #3433
