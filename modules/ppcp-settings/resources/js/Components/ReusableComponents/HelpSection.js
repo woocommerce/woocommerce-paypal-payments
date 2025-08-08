@@ -1,12 +1,9 @@
 import { __ } from '@wordpress/i18n';
-import { FeatureSettingsBlock } from '../../../../../ReusableComponents/SettingsBlocks';
-import {
-	Content,
-	ContentWrapper,
-} from '../../../../../ReusableComponents/Elements';
-import SettingsCard from '../../../../../ReusableComponents/SettingsCard';
+import { FeatureSettingsBlock } from './SettingsBlocks';
+import { Content, ContentWrapper } from './Elements';
+import SettingsCard from './SettingsCard';
 
-const Help = () => {
+const HelpSection = () => {
 	return (
 		<SettingsCard
 			className="ppcp-r-tab-overview-help"
@@ -69,4 +66,4 @@ const Help = () => {
 	);
 };
 
-export default Help;
+export default HelpSection;
