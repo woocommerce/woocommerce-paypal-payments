@@ -62,6 +62,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
 
 /**
@@ -95,6 +96,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
 		$this->register_wc_tasks( $c );
+		$this->register_woo_inbox_notes( $c );
 		$this->register_void_button( $c );
 
 		if ( ! $c->get( 'wcgateway.settings.admin-settings-enabled' ) ) {
@@ -952,6 +954,41 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$task_registrar->register( 'extended', $simple_redirect_tasks );
 				} catch ( Exception $exception ) {
 					$logger->error( "Failed to create a task in the 'Things to do next' section of WC. " . $exception->getMessage() );
+				}
+			},
+		);
+	}
+
+	/**
+	 * Registers inbox notes in the WooCommerce Admin inbox section.
+	 */
+	protected function register_woo_inbox_notes( ContainerInterface $container ): void {
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$is_working_capital_feature_flag_enabled = apply_filters(
+				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+					'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+					getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+				);
+
+				$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
+				if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+					return;
+				}
+
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+				try {
+					$inbox_note_registrar = $container->get( 'wcgateway.settings.inbox-note-registrar' );
+					assert( $inbox_note_registrar instanceof InboxNoteRegistrar );
+					$inbox_note_registrar->register();
+				} catch ( Exception $exception ) {
+					$logger->error( 'Failed to add note to the WooCommerce inbox section. ' . $exception->getMessage() );
 				}
 			},
 		);
