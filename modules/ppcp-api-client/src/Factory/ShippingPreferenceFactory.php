@@ -33,6 +33,29 @@ class ShippingPreferenceFactory {
 		?WC_Cart $cart = null,
 		string $funding_source = ''
 	): string {
+		/**
+		 *  If you are using this filter to set 'NO_SHIPPING', you may also want to disable sending
+		 *  shipping fields completely.
+		 *
+		 * @see PurchaseUnitFactory::shipping_needed() for
+		 *  the woocommerce_paypal_payments_shipping_needed filter.
+		 *
+		 * @see ExperienceContext for SHIPPING_PREFERENCE_* constants.
+		 * @see https://developer.paypal.com/serversdk/php/models/enumerations/shipping-preference/
+		 */
+		$shipping_preference = apply_filters(
+			'woocommerce_paypal_payments_shipping_preference',
+			null,
+			$purchase_unit,
+			$context,
+			$cart,
+			$funding_source
+		);
+
+		if ( is_string( $shipping_preference ) ) {
+			return $shipping_preference;
+		}
+
 		$contains_physical_goods = $purchase_unit->contains_physical_goods();
 		if ( ! $contains_physical_goods ) {
 			return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
