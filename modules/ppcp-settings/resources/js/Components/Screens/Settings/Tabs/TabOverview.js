@@ -1,7 +1,6 @@
 import { __ } from '@wordpress/i18n';
 import Todos from '../Components/Overview/Todos/Todos';
 import Features from '../Components/Overview/Features/Features';
-import Help from '../../../ReusableComponents/HelpSection';
 import { TodosHooks, CommonHooks, FeaturesHooks } from '../../../../data';
 import SpinnerOverlay from '../../../ReusableComponents/SpinnerOverlay';
 import usePaymentGatewaySync from '../../../../hooks/usePaymentGatewaySync';
@@ -37,7 +36,6 @@ const TabOverview = () => {
 		>
 			<Todos />
 			<Features />
-			<Help />
 		</div>
 	);
 };
