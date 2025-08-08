@@ -250,7 +250,7 @@ class PurchaseUnitFactory {
 		}
 		$shipping = null;
 		try {
-			if ( isset( $data->shipping ) ) {
+			if ( isset( $data->shipping ) && ! empty( (array) $data->shipping ) ) {
 				$shipping = $this->shipping_factory->from_paypal_response( $data->shipping );
 			}
 		} catch ( RuntimeException $error ) {
