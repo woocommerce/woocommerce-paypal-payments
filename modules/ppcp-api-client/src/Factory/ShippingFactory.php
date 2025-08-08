@@ -98,20 +98,15 @@ class ShippingFactory {
 	public function from_paypal_response( \stdClass $data ): Shipping {
 		$name = $data->name->full_name ?? null;
 
-		$address = null;
-		if ( isset( $data->address ) ) {
-			$address = $this->address_factory->from_paypal_response( $data->address );
-		}
+		$address = isset( $data->address )
+			? $this->address_factory->from_paypal_response( $data->address )
+			: null;
 
-		$contact_email = null;
-		if ( isset( $data->email_address ) ) {
-			$contact_email = $data->email_address;
-		}
+		$contact_email = $data->email_address ?? null;
 
-		$contact_phone = null;
-		if ( isset( $data->phone_number->national_number ) ) {
-			$contact_phone = new Phone( $data->phone_number->national_number );
-		}
+		$contact_phone = isset( $data->phone_number->national_number )
+			? new Phone( $data->phone_number->national_number )
+			: null;
 
 		$options = array_map(
 			array( $this->shipping_option_factory, 'from_paypal_response' ),
