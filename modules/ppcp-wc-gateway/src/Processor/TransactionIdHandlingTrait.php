@@ -31,7 +31,7 @@ trait TransactionIdHandlingTrait {
 	public function update_transaction_id(
 		string $transaction_id,
 		WC_Order $wc_order,
-		LoggerInterface $logger = null
+		?LoggerInterface $logger = null
 	): bool {
 		try {
 			$wc_order->set_transaction_id( $transaction_id );

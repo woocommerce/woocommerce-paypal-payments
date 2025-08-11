@@ -40,14 +40,10 @@ class WebhookEventFactory {
 	 */
 	public function from_paypal_response( $data ): WebhookEvent {
 		if ( ! isset( $data->id ) ) {
-			throw new RuntimeException(
-				__( 'ID for webhook event not found.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'ID for webhook event not found.' );
 		}
 		if ( ! isset( $data->event_type ) ) {
-			throw new RuntimeException(
-				__( 'Event type for webhook event not found.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'Event type for webhook event not found.' );
 		}
 
 		$create_time = ( isset( $data->create_time ) ) ?

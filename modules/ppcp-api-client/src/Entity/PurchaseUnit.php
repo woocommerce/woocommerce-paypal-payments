@@ -109,13 +109,13 @@ class PurchaseUnit {
 	public function __construct(
 		Amount $amount,
 		array $items = array(),
-		Shipping $shipping = null,
+		?Shipping $shipping = null,
 		string $reference_id = 'default',
 		string $description = '',
 		string $custom_id = '',
 		string $invoice_id = '',
 		string $soft_descriptor = '',
-		Payments $payments = null
+		?Payments $payments = null
 	) {
 
 		$this->amount       = $amount;

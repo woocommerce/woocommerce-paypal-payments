@@ -20,6 +20,7 @@ import {
 	handleApproveSubscription,
 	onApproveSavePayment,
 } from '../paypal-config';
+import { useRef } from 'react';
 
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
@@ -51,6 +52,8 @@ export const PayPalComponent = ( {
 		useState( false );
 
 	const [ paypalScriptLoaded, setPaypalScriptLoaded ] = useState( false );
+
+	const paypalButtonRef = useRef( null );
 
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
@@ -137,6 +140,16 @@ export const PayPalComponent = ( {
 		window.ppcpFundingSource = data.fundingSource;
 
 		onClick();
+	};
+
+	const handleButtonInit = () => {
+		if ( fundingSource === 'paypal' ) {
+			const buttonInstance = paypalButtonRef.current?.state?.parent;
+
+			if ( buttonInstance?.hasReturned?.() ) {
+				buttonInstance.resume();
+			}
+		}
 	};
 
 	const shouldHandleShippingInPayPal = () => {
@@ -252,7 +265,10 @@ export const PayPalComponent = ( {
 				};
 			}
 
-			const addresses = paypalOrderToWcAddresses( paypalOrder );
+			let addresses = {};
+			if ( paypalOrder.purchase_units?.[ 0 ]?.shipping?.address ) {
+				addresses = paypalOrderToWcAddresses( paypalOrder );
+			}
 
 			return {
 				type: responseTypes.SUCCESS,
@@ -385,6 +401,15 @@ export const PayPalComponent = ( {
 		};
 	};
 
+	const shouldEnableAppSwitch = () => {
+		// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
+		return (
+			config.scriptData.appswitch.enabled &&
+			! config.scriptData.final_review_enabled &&
+			config.scriptData.server_side_shipping_callback.enabled
+		);
+	};
+
 	if (
 		cartHasSubscriptionProducts( config.scriptData ) &&
 		config.scriptData.is_free_trial_cart
@@ -442,8 +467,11 @@ export const PayPalComponent = ( {
 
 	return (
 		<PayPalButton
+			ref={ paypalButtonRef }
+			appSwitchWhenAvailable={ shouldEnableAppSwitch() }
 			fundingSource={ fundingSource }
 			style={ style }
+			onInit={ handleButtonInit }
 			onClick={ handleClick }
 			onCancel={ onClose }
 			onError={ onClose }

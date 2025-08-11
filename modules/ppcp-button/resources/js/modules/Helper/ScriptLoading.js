@@ -1,10 +1,7 @@
-import dataClientIdAttributeHandler from '../DataClientIdAttributeHandler';
 import { loadScript } from '@paypal/paypal-js';
 import widgetBuilder from '../Renderer/WidgetBuilder';
 import merge from 'deepmerge';
 import { keysToCamelCase } from './Utils';
-import { getCurrentPaymentMethod } from './CheckoutMethodState';
-import { v4 as uuidv4 } from 'uuid';
 
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 const scriptOptionsMap = {};
@@ -70,28 +67,6 @@ export const loadPaypalScript = ( config, onLoaded, onError = null ) => {
 	let scriptOptions = keysToCamelCase( config.url_params );
 	if ( config.script_attributes ) {
 		scriptOptions = merge( scriptOptions, config.script_attributes );
-	}
-
-	// Axo SDK options
-	const sdkClientToken = config?.axo?.sdk_client_token;
-	const uuid = uuidv4().replace( /-/g, '' );
-	if ( sdkClientToken && config?.user?.is_logged !== true ) {
-		scriptOptions[ 'data-sdk-client-token' ] = sdkClientToken;
-		scriptOptions[ 'data-client-metadata-id' ] = uuid;
-	}
-
-	// Load PayPal script for special case with data-client-token
-	if (
-		config.data_client_id?.set_attribute &&
-		config.vault_v3_enabled !== '1'
-	) {
-		dataClientIdAttributeHandler(
-			scriptOptions,
-			config.data_client_id,
-			callback,
-			errorCallback
-		);
-		return;
 	}
 
 	// Adds data-user-id-token to script options.

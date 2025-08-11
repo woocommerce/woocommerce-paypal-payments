@@ -180,7 +180,18 @@ document.addEventListener( 'DOMContentLoaded', () => {
 			}
 		} );
 
-		jQuery( '.wc_input_subscription_price' ).trigger( 'change' );
+		const $productType = jQuery( '#product-type' );
+		const $subscriptionInput = jQuery( '.wc_input_subscription_price' );
+
+		if (
+			$productType.length &&
+			$subscriptionInput.length &&
+			[ 'subscription', 'variable-subscription' ].includes(
+				$productType.val()
+			)
+		) {
+			$subscriptionInput.trigger( 'change' );
+		}
 
 		const variationProductIds = [
 			PayPalCommerceGatewayPayPalSubscriptionProducts.product_id,

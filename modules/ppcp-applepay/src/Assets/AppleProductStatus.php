@@ -101,7 +101,7 @@ class AppleProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function clear_state( Settings $settings = null ) : void {
+	protected function clear_state( ?Settings $settings = null ) : void {
 		if ( null === $settings ) {
 			$settings = $this->settings;
 		}

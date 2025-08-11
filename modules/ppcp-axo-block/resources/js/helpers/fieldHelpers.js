@@ -121,7 +121,7 @@ export const populateWooFields = (
 		address_1: address.addressLine1,
 		address_2: address.addressLine2 || '',
 		city: address.adminArea2,
-		state: address.adminArea1,
+		state: address.adminArea1 || '',
 		postcode: address.postalCode,
 		country: address.countryCode,
 		phone: phoneNumber.nationalNumber,

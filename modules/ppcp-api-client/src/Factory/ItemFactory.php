@@ -179,19 +179,13 @@ class ItemFactory {
 	 */
 	public function from_paypal_response( \stdClass $data ): Item {
 		if ( ! isset( $data->name ) ) {
-			throw new RuntimeException(
-				__( 'No name for item given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No name for item given' );
 		}
 		if ( ! isset( $data->quantity ) || ! is_numeric( $data->quantity ) ) {
-			throw new RuntimeException(
-				__( 'No quantity for item given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No quantity for item given' );
 		}
 		if ( ! isset( $data->unit_amount->value ) || ! isset( $data->unit_amount->currency_code ) ) {
-			throw new RuntimeException(
-				__( 'No money values for item given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No money values for item given' );
 		}
 
 		$unit_amount = new Money( (float) $data->unit_amount->value, $data->unit_amount->currency_code );

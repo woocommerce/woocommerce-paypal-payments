@@ -27,8 +27,38 @@ const usePayPalScript = ( namespace, ppcpConfig, isConfigLoaded ) => {
 	useEffect( () => {
 		const loadScript = async () => {
 			if ( ! isPayPalLoaded && isConfigLoaded ) {
+				const axoConfig = window.wc_ppcp_axo;
+
 				try {
-					await loadPayPalScript( namespace, ppcpConfig );
+					const res = await fetch(
+						axoConfig.ajax.axo_script_attributes.endpoint,
+						{
+							method: 'POST',
+							credentials: 'same-origin',
+							body: JSON.stringify( {
+								nonce: axoConfig.ajax.axo_script_attributes
+									.nonce,
+							} ),
+						}
+					);
+
+					const json = await res.json();
+					if ( ! json.success ) {
+						log(
+							`Failed to load axo script attributes: ${ json.data.message }`,
+							'error'
+						);
+
+						return;
+					}
+
+					await loadPayPalScript( namespace, {
+						...ppcpConfig,
+						script_attributes: {
+							...ppcpConfig.script_attributes,
+							'data-sdk-client-token': json.data.sdk_client_token,
+						},
+					} );
 					setIsPayPalLoaded( true );
 				} catch ( error ) {
 					log(

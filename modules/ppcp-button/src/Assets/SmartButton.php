@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
@@ -259,6 +260,16 @@ class SmartButton implements SmartButtonInterface {
 	private bool $server_side_shipping_callback_enabled;
 
 	/**
+	 * Whether the AppSwitch is enabled (feature flag).
+	 */
+	private bool $appswitch_enabled;
+
+	/**
+	 * Whether the final review is enabled in blocks settings.
+	 */
+	private bool $final_review_enabled;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                    $module_url                        The URL to the module.
@@ -285,9 +296,11 @@ class SmartButton implements SmartButtonInterface {
 	 * @param LoggerInterface           $logger                            The logger.
 	 * @param bool                      $should_handle_shipping_in_paypal  Whether the shipping should be handled in PayPal.
 	 * @param bool                      $server_side_shipping_callback_enabled Whether the server-side shipping callback is enabled (feature flag).
+	 * @param bool                      $appswitch_enabled                 Whether the AppSwitch is enabled (feature flag).
 	 * @param DisabledFundingSources    $disabled_funding_sources          List of funding sources to be disabled.
 	 * @param CardPaymentsConfiguration $dcc_configuration                 The DCC Gateway Configuration.
 	 * @param PartnerAttribution        $partner_attribution The PayPal Partner Attribution Helper.
+	 * @param bool                      $final_review_enabled              Whether the final review is enabled in blocks settings.
 	 */
 	public function __construct(
 		string $module_url,
@@ -314,9 +327,11 @@ class SmartButton implements SmartButtonInterface {
 		LoggerInterface $logger,
 		bool $should_handle_shipping_in_paypal,
 		bool $server_side_shipping_callback_enabled,
+		bool $appswitch_enabled,
 		DisabledFundingSources $disabled_funding_sources,
 		CardPaymentsConfiguration $dcc_configuration,
-		PartnerAttribution $partner_attribution
+		PartnerAttribution $partner_attribution,
+		bool $final_review_enabled
 	) {
 		$this->module_url                            = $module_url;
 		$this->version                               = $version;
@@ -342,9 +357,11 @@ class SmartButton implements SmartButtonInterface {
 		$this->payment_tokens_endpoint               = $payment_tokens_endpoint;
 		$this->should_handle_shipping_in_paypal      = $should_handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
+		$this->appswitch_enabled                     = $appswitch_enabled;
 		$this->disabled_funding_sources              = $disabled_funding_sources;
 		$this->dcc_configuration                     = $dcc_configuration;
 		$this->partner_attribution                   = $partner_attribution;
+		$this->final_review_enabled                  = $final_review_enabled;
 	}
 
 	/**
@@ -801,7 +818,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @param string      $gateway_id The gateway ID, like 'ppcp-gateway'.
 	 * @param string|null $action_name The action name to be called.
 	 */
-	public function button_renderer( string $gateway_id, string $action_name = null ) {
+	public function button_renderer( string $gateway_id, ?string $action_name = null ) {
 
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
@@ -1181,6 +1198,10 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
+				'get_order'                      => array(
+					'endpoint' => \WC_AJAX::get_endpoint( GetOrderEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( GetOrderEndpoint::nonce() ),
+				),
 				'approve_subscription'           => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveSubscriptionEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveSubscriptionEndpoint::nonce() ),
@@ -1352,10 +1373,14 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'server_side_shipping_callback'           => array(
 				'enabled' => $this->server_side_shipping_callback_enabled,
 			),
+			'appswitch'                               => array(
+				'enabled' => $this->appswitch_enabled,
+			),
 			'needShipping'                            => $this->need_shipping(),
 			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
 			'productType'                             => null,
 			'manualRenewalEnabled'                    => $this->subscription_helper->accept_manual_renewals(),
+			'final_review_enabled'                    => $this->final_review_enabled,
 		);
 
 		if ( is_product() ) {
@@ -1912,8 +1937,10 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$variations = $product->get_available_variations( 'objects' );
 			$in_stock   = $this->has_in_stock_variation( $variations );
 		}
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$enable_button = ! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock &&
 			! ( ( $product->is_type( 'subscription' ) || $product->is_type( 'variable-subscription' ) ) && ! empty( $_GET['switch-subscription'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		/**
 		 * Allows to filter if PayPal buttons/messages can be rendered for the given product.
@@ -1952,7 +1979,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @param array       $context_data The context data for this filter.
 	 * @return bool
 	 */
-	public function is_button_disabled( string $context = null, array $context_data = array() ): bool {
+	public function is_button_disabled( ?string $context = null, array $context_data = array() ): bool {
 		if ( null === $context ) {
 			$context = $this->context();
 		}

@@ -64,7 +64,11 @@ class WidgetBuilder {
 			return;
 		}
 
-		btn.render( target );
+		if ( btn.hasReturned() ) {
+			btn.resume();
+		} else {
+			btn.render( target );
+		}
 	}
 
 	renderAllButtons() {

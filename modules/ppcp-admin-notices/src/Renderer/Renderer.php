@@ -80,7 +80,7 @@ class Renderer implements RendererInterface {
 
 			printf(
 				'<div class="notice notice-%s %s" %s%s><p>%s</p></div>',
-				$message->type(),
+				esc_attr( $message->type() ),
 				( $message->is_dismissible() ) ? 'is-dismissible' : '',
 				( $message->wrapper() ? sprintf( 'data-ppcp-wrapper="%s"', esc_attr( $message->wrapper() ) ) : '' ),
 				// Use `empty()` in condition, to avoid false phpcs warning.

@@ -59,19 +59,13 @@ class WebhookFactory {
 	 */
 	public function from_paypal_response( $data ): Webhook {
 		if ( ! isset( $data->id ) ) {
-			throw new RuntimeException(
-				__( 'No id for webhook given.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No id for webhook given.' );
 		}
 		if ( ! isset( $data->url ) ) {
-			throw new RuntimeException(
-				__( 'No URL for webhook given.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No URL for webhook given.' );
 		}
 		if ( ! isset( $data->event_types ) ) {
-			throw new RuntimeException(
-				__( 'No event types for webhook given.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No event types for webhook given.' );
 		}
 
 		return new Webhook(

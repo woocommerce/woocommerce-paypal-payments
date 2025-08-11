@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+use DateTime;
+
 /**
  * Class Payer
  * The customer who sends the money.
@@ -39,7 +41,7 @@ class Payer {
 	/**
 	 * The birth date.
 	 *
-	 * @var \DateTime|null
+	 * @var DateTime|null
 	 */
 	private $birthdate;
 
@@ -71,7 +73,7 @@ class Payer {
 	 * @param string             $email_address The email.
 	 * @param string             $payer_id The payer id.
 	 * @param Address|null       $address The address.
-	 * @param \DateTime|null     $birthdate The birth date.
+	 * @param DateTime|null      $birthdate The birth date.
 	 * @param PhoneWithType|null $phone The phone.
 	 * @param PayerTaxInfo|null  $tax_info The tax info.
 	 */
@@ -79,10 +81,10 @@ class Payer {
 		?PayerName $name,
 		string $email_address,
 		string $payer_id,
-		Address $address = null,
-		\DateTime $birthdate = null,
-		PhoneWithType $phone = null,
-		PayerTaxInfo $tax_info = null
+		?Address $address = null,
+		?DateTime $birthdate = null,
+		?PhoneWithType $phone = null,
+		?PayerTaxInfo $tax_info = null
 	) {
 
 		$this->name          = $name;
@@ -133,7 +135,7 @@ class Payer {
 	/**
 	 * Returns the birth date.
 	 *
-	 * @return \DateTime|null
+	 * @return DateTime|null
 	 */
 	public function birthdate() {
 		return $this->birthdate;

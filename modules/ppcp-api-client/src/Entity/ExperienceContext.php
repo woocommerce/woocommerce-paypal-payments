@@ -175,6 +175,10 @@ class ExperienceContext {
 	 * @param string|null $new_value The value to set.
 	 */
 	public function with_landing_page( ?string $new_value ): ExperienceContext {
+		if ( $new_value && strtoupper( $new_value ) === 'BILLING' ) {
+			$new_value = self::LANDING_PAGE_GUEST_CHECKOUT;
+		}
+
 		$obj = clone $this;
 
 		$obj->landing_page = $new_value;

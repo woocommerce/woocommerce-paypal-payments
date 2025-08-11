@@ -54,7 +54,12 @@ class PartnerReferralsData {
 	 * @param bool     $use_card_payments If the merchant wants to process credit card payments.
 	 * @return array
 	 */
-	public function data( array $products = array(), string $onboarding_token = '', bool $use_subscriptions = null, bool $use_card_payments = true ) : array {
+	public function data(
+		array $products = array(),
+		string $onboarding_token = '',
+		?bool $use_subscriptions = null,
+		bool $use_card_payments = true
+	) : array {
 		$in_acdc_country = $this->dcc_applies->for_country_currency();
 
 		if ( ! $products ) {

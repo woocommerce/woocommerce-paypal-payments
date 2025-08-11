@@ -289,7 +289,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$data_settings    = get_option( 'woocommerce-ppcp-data-settings' ) ?: array();
 
 				// Skip if payment settings don't have the setting but data settings do.
-				if ( ! isset( $payment_settings['three_d_secure'] ) && isset( $data_settings['three_d_secure'] ) ) {
+				if ( ! isset( $payment_settings['three_d_secure'] ) || isset( $data_settings['three_d_secure'] ) ) {
 					return;
 				}
 

@@ -9,18 +9,20 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 /**
@@ -75,8 +77,8 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
 				assert( $last_webhook_storage instanceof WebhookEventStorage );
 
-				$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
-				assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
+				$reference_transaction_status = $c->get( 'api.reference-transaction-status' );
+				assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
 
 				/* @var Renderer $renderer The renderer. */
 				$renderer = $c->get( 'status-report.renderer' );
@@ -85,6 +87,11 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 
 				$subscription_mode_options = $c->get( 'wcgateway.settings.fields.subscriptions_mode_options' );
 
+				/* @var GeneralSettings $general_settings General plugin settings. */
+				$general_settings = $c->get( 'settings.data.general' );
+
+				// Feature flag convention.
+				// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 				$items = array(
 					array(
 						'label'          => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
@@ -95,15 +102,16 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						),
 					),
 					array(
+						'label'          => esc_html__( 'Branded only', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Branded only',
+						'description'    => esc_html__( 'Whether the plugin is in Branded only mode or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html( $general_settings->own_brand_only() ),
+					),
+					array(
 						'label'          => esc_html__( 'New UI active', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'New UI active',
 						'description'    => esc_html__( 'Indicates whether the new Settings UI is enabled.', 'woocommerce-paypal-payments' ),
-						'value'          => $this->bool_to_html(
-							apply_filters(
-								'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
-								'1' === get_option( 'woocommerce-ppcp-is-new-merchant' ) || getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
-							)
-						),
+						'value'          => $this->bool_to_html( ! SettingsModule::should_use_the_old_ui() ),
 					),
 					array(
 						'label'          => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
@@ -170,7 +178,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Reference Transactions',
 						'description'    => esc_html__( 'Whether Reference Transactions are enabled for the connected account', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$this->reference_transaction_enabled( $billing_agreements_endpoint )
+							$reference_transaction_status->reference_transaction_enabled()
 						),
 					),
 					array(
@@ -273,19 +281,6 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 
 		// Return the options value or if it's missing from options the settings value.
 		return $field_settings['options'][ $subscriptions_mode ] ?? $subscriptions_mode;
-	}
-
-	/**
-	 * Checks if reference transactions are enabled in account.
-	 *
-	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint The endpoint.
-	 */
-	private function reference_transaction_enabled( BillingAgreementsEndpoint $billing_agreements_endpoint ): bool {
-		try {
-			return $billing_agreements_endpoint->reference_transaction_enabled();
-		} catch ( RuntimeException $exception ) {
-			return false;
-		}
 	}
 
 	/**

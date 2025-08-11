@@ -28,6 +28,7 @@ class OrderFactoryTest extends TestCase
         $order->expects('create_time')->andReturn($createTime);
         $order->expects('update_time')->andReturn($updateTime);
         $order->expects('payment_source')->andReturnNull();
+		$order->expects('links')->andReturnNull();
         $wcOrder = Mockery::mock(\WC_Order::class);
         $purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
@@ -89,6 +90,11 @@ class OrderFactoryTest extends TestCase
         } else {
             $this->assertEquals($orderData->update_time, $order->update_time()->format(\DateTime::ISO8601));
         }
+		if ( isset($orderData->links) ) {
+			$this->assertEquals($orderData->links, $order->links());
+		} else {
+			$this->assertNull($order->links());
+		}
     }
 
     public function dataForTestFromPayPalResponseTest() : array
@@ -135,6 +141,20 @@ class OrderFactoryTest extends TestCase
                     'update_time' => '2005-09-15T15:52:01+0000',
                 ],
             ],
+			'with_links' => [
+				(object) [
+					'id' => 'id',
+					'purchase_units' => [new \stdClass(), new \stdClass()],
+					'status' => OrderStatus::PAYER_ACTION_REQUIRED,
+					'intent' => 'CAPTURE',
+					'create_time' => '2005-08-15T15:52:01+0000',
+					'update_time' => '2005-09-15T15:52:01+0000',
+					'payer' => new \stdClass(),
+					'links' => [
+						(object) ['rel' => 'payer-action', 'href' => 'https://example.com/3ds']
+					],
+				],
+			],
         ];
     }
 
@@ -178,13 +198,6 @@ class OrderFactoryTest extends TestCase
                     'id' => '',
                     'purchase_units' => 1,
                     'status' => '',
-                    'intent' => '',
-                ],
-            ],
-            'no_status' => [
-                (object) [
-                    'id' => '',
-                    'purchase_units' => [],
                     'intent' => '',
                 ],
             ],

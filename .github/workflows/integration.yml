@@ -12,7 +12,7 @@ jobs:
 
     name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
     steps:
-    - uses: ddev/github-action-setup-ddev@v1
+    - uses: ddev/github-action-setup-ddev@1c7ef18595da42355373cb6d9417a6f44d758b93 # v1.10.1
       with:
         autostart: false
 

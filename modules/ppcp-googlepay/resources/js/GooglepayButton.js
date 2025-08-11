@@ -189,7 +189,8 @@ class GooglepayButton extends PaymentButton {
 		buttonConfig,
 		ppcpConfig,
 		contextHandler,
-		buttonAttributes
+		buttonAttributes,
+		onClick = null
 	) {
 		// Disable debug output in the browser console:
 		// buttonConfig.is_debug = false;
@@ -200,12 +201,14 @@ class GooglepayButton extends PaymentButton {
 			buttonConfig,
 			ppcpConfig,
 			contextHandler,
-			buttonAttributes
+			buttonAttributes,
+			onClick
 		);
 
 		this.init = this.init.bind( this );
 		this.onPaymentDataChanged = this.onPaymentDataChanged.bind( this );
 		this.onButtonClick = this.onButtonClick.bind( this );
+		this.onClick = onClick;
 
 		this.log( 'Create instance' );
 	}
@@ -552,6 +555,10 @@ class GooglepayButton extends PaymentButton {
 
 		const initiatePaymentRequest = async () => {
 			window.ppcpFundingSource = 'googlepay';
+
+			// Sets paymentMethodId from registerExpressPaymentMethod as active payment method.
+			this.onClick?.();
+
 			const paymentDataRequest = this.paymentDataRequest();
 
 			this.log(

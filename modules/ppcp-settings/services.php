@@ -52,6 +52,11 @@ use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
@@ -73,17 +78,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
-return array(
+$services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ) : string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-settings/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ) : OnboardingProfile {
 		$can_use_casual_selling = $container->get( 'settings.casual-selling.eligible' );
@@ -147,20 +144,6 @@ return array(
 			'read' => $pay_later_config,
 			'save' => $save_config,
 		);
-	},
-	/**
-	 * Merchant connection details, which includes the connection status
-	 * (onboarding/connected) and connection-aware environment checks.
-	 * This is the preferred solution to check environment and connection state.
-	 */
-	'settings.connection-state'                           => static function ( ContainerInterface $container ) : ConnectionState {
-		$data = $container->get( 'settings.data.general' );
-		assert( $data instanceof GeneralSettings );
-
-		$is_connected = $data->is_merchant_connected();
-		$environment  = new Environment( $data->is_sandbox_merchant() );
-
-		return new ConnectionState( $is_connected, $environment );
 	},
 	/**
 	 * Returns details about the connected environment (production/sandbox).
@@ -378,16 +361,41 @@ return array(
 		$merchant_id = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
+		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
+		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
 	},
-	'settings.ajax.switch_ui'                             => static function ( ContainerInterface $container ) : SwitchSettingsUiEndpoint {
-		return new SwitchSettingsUiEndpoint(
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'button.request-data' ),
-			$container->get( 'settings.data.onboarding' ),
-			$container->get( 'api.merchant_id' ) !== ''
-		);
-	},
+	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
+		$c->get( 'settings.service.data-migration.general-settings' ),
+		$c->get( 'settings.service.data-migration.settings-tab' ),
+		$c->get( 'settings.service.data-migration.styling' ),
+		$c->get( 'settings.service.data-migration.payment-settings' ),
+	),
+	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.settings' ),
+		$c->get( 'compat.settings.settings_tab_map_helper' ),
+	),
+	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.styling' ),
+	),
+	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.payment' ),
+		$c->get( 'ppcp-local-apms.payment-methods' ),
+	),
+	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
+		$c->get( 'wcgateway.settings' ),
+		$c->get( 'settings.data.general' ),
+		$c->get( 'api.endpoint.partners' ),
+	),
+	'settings.ajax.switch_ui'                             => static fn ( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
+		$c->get( 'woocommerce.logger.woocommerce' ),
+		$c->get( 'button.request-data' ),
+		$c->get( 'settings.data.onboarding' ),
+		$c->get( 'settings.service.data-migration' ),
+		$c->get( 'api.merchant_id' ) !== ''
+	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ) : TodosRestEndpoint {
 		return new TodosRestEndpoint(
 			$container->get( 'settings.data.todos' ),
@@ -402,7 +410,8 @@ return array(
 	'settings.data.definition.todos'                      => static function ( ContainerInterface $container ) : TodosDefinition {
 		return new TodosDefinition(
 			$container->get( 'settings.service.todos_eligibilities' ),
-			$container->get( 'settings.data.general' )
+			$container->get( 'settings.data.general' ),
+			$container->get( 'settings.data.todos' )
 		);
 	},
 	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ) : PaymentMethodsDefinition {
@@ -507,6 +516,17 @@ return array(
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
 
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$is_working_capital_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+		);
+
+		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $container->get( 'settings.data.settings' )->get_stay_updated();
+
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
 		 * Each parameter determines whether a specific feature should be shown in the Things To Do list.
@@ -551,7 +571,8 @@ return array(
 			$container->get( 'googlepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['google_pay'],                                       // Add Google Pay to your account.
 			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
-			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country() // Enable Installments for Mexico.
+			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
+			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ) : FeaturesRestEndpoint {
@@ -677,3 +698,22 @@ return array(
 		return new MerchantDetails( $merchant_country, $woo_data['country'], $eligibility_checks );
 	},
 );
+
+if ( ! SettingsModule::should_use_the_old_ui() ) {
+	/**
+	 * Merchant connection details, which includes the connection status
+	 * (onboarding/connected) and connection-aware environment checks.
+	 * This is the preferred solution to check environment and connection state.
+	 */
+	$services['settings.connection-state'] = static function ( ContainerInterface $container ) : ConnectionState {
+		$data = $container->get( 'settings.data.general' );
+		assert( $data instanceof GeneralSettings );
+
+		$is_connected = $data->is_merchant_connected();
+		$environment  = new Environment( $data->is_sandbox_merchant() );
+
+		return new ConnectionState( $is_connected, $environment );
+	};
+}
+
+return $services;

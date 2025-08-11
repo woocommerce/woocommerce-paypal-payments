@@ -352,6 +352,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Return the gateway's description.
+	 *
+	 * @return string
+	 */
+	public function get_description() {
+		$gateway_settings = get_option( $this->get_option_key(), array() );
+
+		if ( array_key_exists( 'description', $gateway_settings ) ) {
+			return $gateway_settings['description'];
+		}
+
+		return $this->description;
+	}
+
+	/**
 	 * Whether the Gateway needs to be setup.
 	 *
 	 * @return bool

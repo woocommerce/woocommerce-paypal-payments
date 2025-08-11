@@ -2,6 +2,7 @@ import {
 	paypalOrderToWcAddresses,
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
+import ResumeFlowHelper from '../../../ppcp-button/resources/js/modules/Helper/ResumeFlowHelper';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
@@ -66,9 +67,40 @@ export const handleApprove = async (
 	onClose
 ) => {
 	try {
-		const order = await actions.order.get();
+		let order;
 
-		if ( order ) {
+		// actions.order.get is not available on the AppSwitch flow.
+		if ( ! ResumeFlowHelper.isResumeFlow() ) {
+			order = await actions.order.get();
+		} else {
+			const res = await fetch(
+				config.scriptData.ajax.get_order.endpoint,
+				{
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify( {
+						nonce: config.scriptData.ajax.get_order.nonce,
+						order_id: data.orderID,
+					} ),
+				}
+			);
+
+			const json = await res.json();
+
+			if ( ! json.success ) {
+				throw new Error(
+					json.data?.message || config.scriptData.labels.error.generic
+				);
+			}
+
+			order = json.data;
+		}
+
+		const shippingAddress = order.purchase_units?.[ 0 ]?.shipping?.address;
+		if ( shippingAddress ) {
 			const addresses = paypalOrderToWcAddresses( order );
 
 			const promises = [

@@ -20,7 +20,7 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const GooglePayComponent = ( { isEditing, buttonAttributes } ) => {
+const GooglePayComponent = ( { isEditing, buttonAttributes, onClick } ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
 	const [ manager, setManager ] = useState( null );
@@ -49,7 +49,8 @@ const GooglePayComponent = ( { isEditing, buttonAttributes } ) => {
 				namespace,
 				buttonConfig,
 				ppcpConfig,
-				buttonAttributes
+				buttonAttributes,
+				onClick
 			);
 			setManager( newManager );
 		}
@@ -90,6 +91,7 @@ if ( buttonConfig?.is_enabled ) {
 			'woocommerce-paypal-payments'
 		),
 		gatewayId: 'ppcp-gateway',
+		paymentMethodId: 'ppcp-gateway',
 		label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
 		content: <GooglePayComponent isEditing={ false } />,
 		edit: <GooglePayComponent isEditing={ true } />,

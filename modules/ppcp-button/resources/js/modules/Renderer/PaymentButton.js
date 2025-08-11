@@ -216,12 +216,13 @@ export default class PaymentButton {
 	/**
 	 * Factory method to create a new PaymentButton while limiting a single instance per context.
 	 *
-	 * @param {string}  context          - Button context name.
-	 * @param {unknown} externalHandler  - Handler object.
-	 * @param {Object}  buttonConfig     - Payment button specific configuration.
-	 * @param {Object}  ppcpConfig       - Plugin wide configuration object.
-	 * @param {unknown} contextHandler   - Handler object.
-	 * @param {Object}  buttonAttributes - Button attributes.
+	 * @param {string}   context          - Button context name.
+	 * @param {unknown}  externalHandler  - Handler object.
+	 * @param {Object}   buttonConfig     - Payment button specific configuration.
+	 * @param {Object}   ppcpConfig       - Plugin wide configuration object.
+	 * @param {unknown}  contextHandler   - Handler object.
+	 * @param {Object}   buttonAttributes - Button attributes.
+	 * @param {Function} onClick          - Event from content component registered in registerExpressPaymentMethod.
 	 * @return {PaymentButton} The button instance.
 	 */
 	static createButton(
@@ -230,7 +231,8 @@ export default class PaymentButton {
 		buttonConfig,
 		ppcpConfig,
 		contextHandler,
-		buttonAttributes
+		buttonAttributes,
+		onClick = null
 	) {
 		const buttonInstances = getInstances();
 		const instanceKey = `${ this.methodId }.${ context }`;
@@ -242,7 +244,8 @@ export default class PaymentButton {
 				buttonConfig,
 				ppcpConfig,
 				contextHandler,
-				buttonAttributes
+				buttonAttributes,
+				onClick
 			);
 
 			buttonInstances.set( instanceKey, button );
@@ -286,12 +289,13 @@ export default class PaymentButton {
 	 * to avoid multiple button instances handling the same context.
 	 *
 	 * @private
-	 * @param {string} context          - Button context name.
-	 * @param {Object} externalHandler  - Handler object.
-	 * @param {Object} buttonConfig     - Payment button specific configuration.
-	 * @param {Object} ppcpConfig       - Plugin wide configuration object.
-	 * @param {Object} contextHandler   - Handler object.
-	 * @param {Object} buttonAttributes - Button attributes.
+	 * @param {string}   context          - Button context name.
+	 * @param {Object}   externalHandler  - Handler object.
+	 * @param {Object}   buttonConfig     - Payment button specific configuration.
+	 * @param {Object}   ppcpConfig       - Plugin wide configuration object.
+	 * @param {Object}   contextHandler   - Handler object.
+	 * @param {Object}   buttonAttributes - Button attributes.
+	 * @param {Function} onClick          - Event from content component registered in registerExpressPaymentMethod.
 	 */
 	constructor(
 		context,
@@ -299,7 +303,8 @@ export default class PaymentButton {
 		buttonConfig = {},
 		ppcpConfig = {},
 		contextHandler = null,
-		buttonAttributes = {}
+		buttonAttributes = {},
+		onClick = null
 	) {
 		if ( this.methodId === PaymentButton.methodId ) {
 			throw new Error( 'Cannot initialize the PaymentButton base class' );
@@ -318,6 +323,7 @@ export default class PaymentButton {
 		this.#externalHandler = externalHandler;
 		this.#contextHandler = contextHandler;
 		this.#buttonAttributes = buttonAttributes;
+		this.onClick = onClick;
 
 		this.#logger = new ConsoleLogger( methodName, context );
 

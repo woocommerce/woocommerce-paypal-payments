@@ -78,7 +78,7 @@ class EarlyOrderHandler {
 	 *
 	 * @return int|null
 	 */
-	public function determine_wc_order_id( int $value = null ) {
+	public function determine_wc_order_id( ?int $value = null ) {
 
 		if ( ! isset( $_REQUEST['ppcp-resume-order'] ) ) {
 			return $value;

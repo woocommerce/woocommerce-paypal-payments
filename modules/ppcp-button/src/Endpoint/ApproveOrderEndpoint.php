@@ -173,9 +173,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		try {
 			$data = $this->request_data->read_request( self::nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
-				throw new RuntimeException(
-					__( 'No order id given', 'woocommerce-paypal-payments' )
-				);
+				throw new RuntimeException( 'No order id given' );
 			}
 
 			$order = $this->api_endpoint->order( $data['order_id'] );

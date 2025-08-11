@@ -33,7 +33,7 @@ trait OrderMetaTrait {
 		WC_Order $wc_order,
 		Order $order,
 		Environment $environment,
-		OrderTransient $order_transient = null
+		?OrderTransient $order_transient = null
 	): void {
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );

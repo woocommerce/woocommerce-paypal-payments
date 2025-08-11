@@ -32,6 +32,8 @@ class ModularTestCase extends TestCase
         when('WC')->justReturn((object) [
         	'session' => null,
 		]);
+	    when('is_admin')->justReturn(true);
+	    when('sanitize_key')->returnArg();
 
 		global $wpdb;
 		$wpdb = \Mockery::mock(\stdClass::class);

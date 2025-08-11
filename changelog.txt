@@ -1,5 +1,39 @@
 *** Changelog ***
 
+= 3.0.9 - 2025-07-31 =
+* Fix - Payment via "Proceed to PayPal" may result in a redirect loop #3570
+
+= 3.0.8 - 2025-07-28 =
+* Enhancement - Migration from Legacy Settings to New Settings as opt-in via banner & button #3491
+* Enhancement - Replace call to `billing-agreements/agreement-tokens` with checking the capabilities for Reference Transactions #3495
+* Enhancement - Add Fastlane 3D Secure support #3493
+* Enhancement - Improved PHP 8.4 compatibility #3534
+* Fix - `INVALID_REQUEST` error due to wrong `landing_page` value after upgrade to 3.0.7 #3521
+* Fix - Incorrect Amount via Express Payment for WooCommerce Product Bundles #3516
+* Fix - Onboarding failed via "Connect to PayPal" in new UI due to race condition #3385
+* Fix - Fatal error when PayPal Payments is active without WooCommerce #3502
+* Fix - PayPal Subscription transaction failed in various scenarios #3515
+* Fix - Rounding differences potentially lead to order failure (author @luzat) #3373
+* Fix - Google Pay payment on block checkout may fail when ACDC is default payment selection #3506
+* Fix - Product Prices Disappear in some cases when WooCommerce Subscriptions is active #3519
+
+= 3.0.7 - 2025-07-01 =
+* Enhancement - Remove `application_context` in favor of `experience_context` object #3431
+ **NOTE**: If you were modifying the `application_context` object programmatically, you may need to update your code to utilize `experience_context` for your customizations.
+* Enhancement - Add Contact Module feature
+* Enhancement - Add WooCommerce Tracks integration
+* Enhancement - Onboarding notification for Firefox browser #3433
+* Enhancement - Reset BN code on plugin uninstall #3471
+* Enhancement - Add "Stay updated with PayPal" option in the old and new settings UI #3430
+* Enhancement - Add French Territories to the supported ACDC countries list #3438
+* Enhancement - Auto-enable logging during onboarding #3369
+* Fix - DUPLICATE_INVOICE_ID in Sandbox due to missing invoice prefix #3435
+* Fix - Subscription product could not be unlinked from PayPal Subscription #3429
+* Fix - PayPal button greyed out on single product page for variable products with >2 attributes #3395
+* Fix - APMs automatically enabled despite selecting "No, ..." during onboarding #3362
+* Fix - Ditch items logic does not work when using saved card payment #3476
+* Fix - billing-agreements endpoint called too frequently when not enabled for Reference Transactions #3459
+
 = 3.0.6 - 2025-05-27 =
 * Enhancement - Implement 3D secure check for Google Pay #3163
 * Enhancement - Add options for "Disable Credit Cards" and "Language" #3226

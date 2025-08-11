@@ -62,8 +62,7 @@ class AuthorizationStatus {
 		if ( ! in_array( $status, self::VALID_STATUS, true ) ) {
 			throw new RuntimeException(
 				sprintf(
-					// translators: %s is the current status.
-					__( '%s is not a valid status', 'woocommerce-paypal-payments' ),
+					'%s is not a valid status',
 					$status
 				)
 			);
