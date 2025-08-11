@@ -10,8 +10,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo;
 
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
-use WooCommerce\PayPalCommerce\Axo\Helper\ApmApplies;
+use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -29,18 +31,20 @@ return array(
 		return $eligibility_check();
 	},
 	'axo.eligibility.check'                  => static function ( ContainerInterface $container ): callable {
-		$apm_applies = $container->get( 'axo.helpers.apm-applies' );
-		assert( $apm_applies instanceof ApmApplies );
+		$axo_applies = $container->get( 'axo.service.axo-applies' );
+		assert( $axo_applies instanceof AxoApplies );
 
-		return static function () use ( $apm_applies ) : bool {
-			return $apm_applies->for_country_currency() && $apm_applies->for_merchant();
+		return static function () use ( $axo_applies ) : bool {
+			return $axo_applies->for_country_currency() && $axo_applies->for_merchant();
 		};
 	},
-	'axo.helpers.apm-applies'                => static function ( ContainerInterface $container ) : ApmApplies {
-		return new ApmApplies(
+	'axo.service.axo-applies'                => static function ( ContainerInterface $container ) : AxoApplies {
+		return new AxoApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.shop.country' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 
@@ -59,14 +63,7 @@ return array(
 	},
 
 	'axo.url'                                => static function ( ContainerInterface $container ): string {
-		$path = realpath( __FILE__ );
-		if ( false === $path ) {
-			return '';
-		}
-		return plugins_url(
-			'/modules/ppcp-axo/',
-			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-axo/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'axo.manager'                            => static function ( ContainerInterface $container ): AxoManager {
@@ -280,10 +277,19 @@ return array(
 		return '<div class="ppcp-notice ppcp-notice-warning"><p>' . $notice_content . '</p></div>';
 	},
 
-	'axo.endpoint.frontend-logger'           => static function ( ContainerInterface $container ): FrontendLoggerEndpoint {
-		return new FrontendLoggerEndpoint(
+	'axo.endpoint.frontend-logger'           => static function ( ContainerInterface $container ): FrontendLogger {
+		return new FrontendLogger(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'axo.endpoint.script-attributes'         => static function ( ContainerInterface $container ): AxoScriptAttributes {
+		return new AxoScriptAttributes(
+			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.sdk-client-token' ),
+			$container->get( 'axo.eligible' )
 		);
 	},
 

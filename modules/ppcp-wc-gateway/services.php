@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -82,6 +83,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteAction;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteFactory;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Factory\SimpleRedirectTaskFactoryInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrar;
@@ -1353,19 +1358,13 @@ return array(
 		);
 	},
 	'wcgateway.url'                                        => static function ( ContainerInterface $container ): string {
-		return plugins_url(
-			$container->get( 'wcgateway.relative-path' ),
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( $container->get( 'wcgateway.relative-path' ), $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'wcgateway.relative-path'                              => static function( ContainerInterface $container ): string {
 		return 'modules/ppcp-wc-gateway/';
 	},
 	'wcgateway.absolute-path'                              => static function( ContainerInterface $container ): string {
-		return plugin_dir_path(
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		) .
-			$container->get( 'wcgateway.relative-path' );
+		return plugin_dir_path( $container->get( 'ppcp.path-to-plugin-main-file' ) ) . $container->get( 'wcgateway.relative-path' );
 	},
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
@@ -2068,10 +2067,37 @@ return array(
 		return array();
 	},
 
+	'wcgateway.settings.wc-tasks.working-capital-config'   => static function( ContainerInterface $container ): array {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$is_working_capital_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+		);
+
+		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
+		if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+			return array();
+		}
+
+		return array(
+			array(
+				'id'           => 'ppcp-working-capital-task',
+				'title'        => __( 'Start your PayPal Working Capital application', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
+				'redirect_url' => 'http://example.com/',
+			),
+		);
+	},
+
 	'wcgateway.settings.wc-tasks.task-config-services'     => static function(): array {
 		return array(
 			'wcgateway.settings.wc-tasks.pay-later-task-config',
 			'wcgateway.settings.wc-tasks.connect-task-config',
+			'wcgateway.settings.wc-tasks.working-capital-config',
 		);
 	},
 
@@ -2120,6 +2146,41 @@ return array(
 		}
 
 		return $simple_redirect_tasks;
+	},
+
+	'wcgateway.settings.inbox-note-factory'                => static function(): InboxNoteFactory {
+		return new InboxNoteFactory();
+	},
+
+	'wcgateway.settings.inbox-note-registrar'              => static function( ContainerInterface $container ): InboxNoteRegistrar {
+		return new InboxNoteRegistrar( $container->get( 'wcgateway.settings.inbox-notes' ), $container->get( 'ppcp.plugin' ) );
+	},
+
+	/**
+	 * Retrieves the list of inbox note instances.
+	 *
+	 * @returns InboxNoteInterface[]
+	 */
+	'wcgateway.settings.inbox-notes'                    => static function( ContainerInterface $container ): array {
+		$inbox_note_factory = $container->get( 'wcgateway.settings.inbox-note-factory' );
+		assert( $inbox_note_factory instanceof InboxNoteFactory );
+
+		return array(
+			$inbox_note_factory->create_note(
+				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
+				__( 'Fast funds with payments that flex with your PayPal sales The PayPal Working Capital business loan is primarily based on your PayPal account history. Apply for $1,000-$200,000 (and up to $300,000 for repeat borrowers) with no credit check.† If approved, loans are funded in minutes.', 'woocommerce-paypal-payments' ),
+				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
+				'ppcp-working-capital-inbox-note',
+				Note::E_WC_ADMIN_NOTE_UNACTIONED,
+				new InboxNoteAction(
+					'apply_now',
+					__( 'Apply now', 'woocommerce-paypal-payments' ),
+					'http://example.com/',
+					Note::E_WC_ADMIN_NOTE_UNACTIONED,
+					true
+				)
+			),
+		);
 	},
 
 	'wcgateway.void-button.assets'                         => function( ContainerInterface $container ) : VoidButtonAssets {

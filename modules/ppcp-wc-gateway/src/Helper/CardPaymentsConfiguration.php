@@ -330,7 +330,7 @@ class CardPaymentsConfiguration {
 	 * @return bool
 	 */
 	public function is_bcdc_enabled() : bool {
-		if ( 'MX' === $this->store_country ) {
+		if ( 'MX' === $this->store_country || ! $this->use_acdc() ) {
 			$bcdc_setting = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
 			$enabled      = $bcdc_setting['enabled'] ?? '';
 

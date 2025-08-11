@@ -80,15 +80,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 $services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ) : string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-settings/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ) : OnboardingProfile {
 		$can_use_casual_selling = $container->get( 'settings.casual-selling.eligible' );
@@ -369,7 +361,8 @@ $services = array(
 		$merchant_id = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
+		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
+		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
@@ -417,7 +410,8 @@ $services = array(
 	'settings.data.definition.todos'                      => static function ( ContainerInterface $container ) : TodosDefinition {
 		return new TodosDefinition(
 			$container->get( 'settings.service.todos_eligibilities' ),
-			$container->get( 'settings.data.general' )
+			$container->get( 'settings.data.general' ),
+			$container->get( 'settings.data.todos' )
 		);
 	},
 	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ) : PaymentMethodsDefinition {
@@ -522,6 +516,17 @@ $services = array(
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
 
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$is_working_capital_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+		);
+
+		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $container->get( 'settings.data.settings' )->get_stay_updated();
+
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
 		 * Each parameter determines whether a specific feature should be shown in the Things To Do list.
@@ -566,7 +571,8 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['google_pay'],                                       // Add Google Pay to your account.
 			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
-			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country() // Enable Installments for Mexico.
+			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
+			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ) : FeaturesRestEndpoint {

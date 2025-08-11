@@ -265,7 +265,10 @@ export const PayPalComponent = ( {
 				};
 			}
 
-			const addresses = paypalOrderToWcAddresses( paypalOrder );
+			let addresses = {};
+			if ( paypalOrder.purchase_units?.[ 0 ]?.shipping?.address ) {
+				addresses = paypalOrderToWcAddresses( paypalOrder );
+			}
 
 			return {
 				type: responseTypes.SUCCESS,

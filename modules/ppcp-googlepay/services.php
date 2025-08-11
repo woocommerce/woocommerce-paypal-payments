@@ -206,14 +206,7 @@ return array(
 	},
 
 	'googlepay.url'                             => static function ( ContainerInterface $container ): string {
-		$path = realpath( __FILE__ );
-		if ( false === $path ) {
-			return '';
-		}
-		return plugins_url(
-			'/modules/ppcp-googlepay/',
-			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-googlepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'googlepay.sdk_url'                         => static function ( ContainerInterface $container ): string {

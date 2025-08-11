@@ -159,7 +159,7 @@ class DisabledFundingSources {
 			return $disable_funding;
 		}
 
-		if ( ! is_checkout() || $this->dcc_configuration->use_acdc() ) {
+		if ( ! is_checkout() || $this->dcc_configuration->use_acdc() || ! $this->dcc_configuration->is_bcdc_enabled() ) {
 			// Non-checkout pages, or ACDC capability: Don't load card button.
 			$disable_funding[] = 'card';
 		}

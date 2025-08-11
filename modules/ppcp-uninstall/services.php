@@ -36,6 +36,7 @@ return array(
 			WebhookRegistrar::KEY,
 			'ppcp_payment_tokens_migration_initialized',
 			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
+			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
 		);
 	},
 
@@ -79,15 +80,7 @@ return array(
 	},
 
 	'uninstall.module-url'                      => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-uninstall/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'uninstall.clear-db-assets'                 => function( ContainerInterface $container ) : ClearDatabaseAssets {
