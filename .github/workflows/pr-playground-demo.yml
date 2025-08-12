@@ -6,6 +6,7 @@ on:
     paths:
       - "src/**"
       - "assets/**"
+      - "modules/**"
       - "package.json"
       - "composer.json"
   push:
