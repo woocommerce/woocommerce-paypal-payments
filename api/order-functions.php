@@ -19,14 +19,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
-use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use \WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
  * Returns the PayPal order.
@@ -190,8 +188,12 @@ function ppcp_create_order_tracking( WC_Order $wc_order, string $tracking_number
 	assert( $endpoint instanceof OrderTrackingEndpoint );
 
 	$paypal_order = ppcp_get_paypal_order( $wc_order );
-	$capture_id   = TransactionIdHandlingTrait::get_paypal_order_transaction_id( $paypal_order );
-	$wc_order_id  = $wc_order->get_id();
+	$capture_id   = $endpoint->get_paypal_order_transaction_id( $paypal_order );
+	if ( is_null( $capture_id ) ) {
+		throw new RuntimeException( 'Could not retrieve transaction ID from PayPal order' );
+	}
+
+	$wc_order_id = $wc_order->get_id();
 
 	$ppcp_shipment = $shipment_factory->create_shipment(
 		$wc_order_id,

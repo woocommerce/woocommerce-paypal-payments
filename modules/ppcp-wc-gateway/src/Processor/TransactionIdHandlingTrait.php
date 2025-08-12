@@ -67,7 +67,7 @@ trait TransactionIdHandlingTrait {
 	 *
 	 * @return string|null
 	 */
-	public static function get_paypal_order_transaction_id( Order $order ): ?string {
+	public function get_paypal_order_transaction_id( Order $order ): ?string {
 		$purchase_unit = $order->purchase_units()[0] ?? null;
 		if ( ! $purchase_unit ) {
 			return null;
