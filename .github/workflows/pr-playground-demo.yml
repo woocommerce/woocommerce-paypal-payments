@@ -9,15 +9,11 @@ on:
       - "package.json"
       - "composer.json"
   push:
-    branches:
-      - "PCP-5039-*"
     paths:
       - "src/**"
       - "assets/**"
       - "package.json"
       - "composer.json"
-      - ".github/workflows/pr-playground-demo.yml"
-      - ".github/scripts/playground-comment.js"
 
 # Cancels all previous workflow runs for pull requests that have not completed.
 concurrency:
@@ -30,11 +26,8 @@ permissions: {}
 jobs:
   prepare_version:
     runs-on: ubuntu-latest
-    # Only run for the main repository, not forks, and allow push events on PCP-5039 branches
-    if: >
-      github.repository == 'woocommerce/woocommerce-paypal-payments' &&
-      (github.event_name == 'pull_request' ||
-       (github.event_name == 'push' && startsWith(github.ref_name, 'PCP-5039-')))
+    # Only run for the main repository, not forks
+    if: github.repository == 'woocommerce/woocommerce-paypal-payments' && github.event_name == 'pull_request'
     outputs:
       artifact_name: ${{ steps.version.outputs.artifact_name }}
       plugin_version: ${{ steps.version.outputs.plugin_version }}
@@ -46,7 +39,7 @@ jobs:
         run: |
           BASE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)
           VERSUFFIX="${GITHUB_RUN_ID}-g$(git rev-parse --short HEAD)"
-          PR_VERSION="${BASE_VERSION}-pr${{ github.event.pull_request.number || '0' }}-${VERSUFFIX}"
+          PR_VERSION="${BASE_VERSION}-pr${{ github.event.pull_request.number }}-${VERSUFFIX}"
           ARTIFACT_NAME="woocommerce-paypal-payments-${PR_VERSION}"
           echo "plugin_version=$PR_VERSION" >> $GITHUB_OUTPUT
           echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
@@ -75,7 +68,7 @@ jobs:
       - name: Save PR details
         run: |
           mkdir -p ./pr
-          echo "${{ github.event.pull_request.number || '0' }}" > ./pr/NR
+          echo "${{ github.event.pull_request.number }}" > ./pr/NR
           echo "${{ needs.prepare_version.outputs.plugin_version }}" > ./pr/VERSION
           echo "${{ needs.prepare_version.outputs.artifact_name }}" > ./pr/ARTIFACT
 
@@ -92,11 +85,8 @@ jobs:
     permissions:
       issues: write
       pull-requests: write
-    # Only run for pull requests in the main repository, or push events to PCP-5039 branches
-    if: >
-      github.repository == 'woocommerce/woocommerce-paypal-payments' &&
-      (github.event_name == 'pull_request' ||
-       (github.event_name == 'push' && startsWith(github.ref_name, 'PCP-5039-')))
+    # Only run for pull requests in the main repository
+    if: github.repository == 'woocommerce/woocommerce-paypal-payments' && github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v4
 
@@ -138,9 +128,7 @@ jobs:
           script: |
             const fs = require('fs');
 
-            // For testing, always use PR #3574
-            const issue_number = 3574;
-
+            const pr_number = fs.readFileSync('./NR', 'utf8').trim();
             const plugin_version = fs.readFileSync('./VERSION', 'utf8').trim();
             const artifact_name = fs.readFileSync('./ARTIFACT', 'utf8').trim();
 
@@ -151,22 +139,11 @@ jobs:
             process.env.PLUGIN_VERSION = plugin_version;
             process.env.ARTIFACT_NAME = artifact_name;
 
-            // Create context for the script
-            const mockContext = {
+            const updatedContext = {
               ...context,
-              repo: {
-                owner: context.repo.owner,
-                repo: context.repo.repo
-              },
-              issue: { number: issue_number },
-              runId: context.runId,
-              payload: {
-                pull_request: {
-                  head: {
-                    sha: context.sha
-                  }
-                }
+              issue: {
+                number: parseInt(pr_number, 10)
               }
             };
 
-            await script.run({ github, context: mockContext, core });
+            await script.run({ github, context: updatedContext, core });
