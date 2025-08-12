@@ -142,10 +142,21 @@ jobs:
             process.env.ARTIFACT_NAME = artifact_name;
 
             const updatedContext = {
-              ...context,
+              repo: {
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              },
               issue: {
-                ...context.issue,
                 number: parseInt(pr_number, 10)
+              },
+              runId: context.runId,
+              payload: {
+                pull_request: {
+                  number: parseInt(pr_number, 10),
+                  head: {
+                    sha: context.sha
+                  }
+                }
               }
             };
 
