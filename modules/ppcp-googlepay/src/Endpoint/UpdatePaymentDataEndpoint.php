@@ -145,7 +145,9 @@ class UpdatePaymentDataEndpoint {
 				'description' => html_entity_decode(
 					wp_strip_all_tags(
 						wc_price( (float) $rate->get_cost(), array( 'currency' => get_woocommerce_currency() ) )
-					)
+					),
+					ENT_QUOTES,
+					'UTF-8'
 				),
 				'cost'        => $rate->get_cost(),
 			);

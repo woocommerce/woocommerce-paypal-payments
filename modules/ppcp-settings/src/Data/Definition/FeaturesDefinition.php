@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
@@ -43,20 +44,30 @@ class FeaturesDefinition {
 	protected array $merchant_capabilities;
 
 	/**
+	 * The plugin settings.
+	 *
+	 * @var SettingsModel
+	 */
+	protected SettingsModel $plugin_settings;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param FeaturesEligibilityService $eligibilities The features eligibility service.
 	 * @param GeneralSettings            $settings The general settings service.
 	 * @param array                      $merchant_capabilities The merchant capabilities.
+	 * @param SettingsModel              $plugin_settings The plugin settings.
 	 */
 	public function __construct(
 		FeaturesEligibilityService $eligibilities,
 		GeneralSettings $settings,
-		array $merchant_capabilities
+		array $merchant_capabilities,
+		SettingsModel $plugin_settings
 	) {
 		$this->eligibilities         = $eligibilities;
 		$this->settings              = $settings;
 		$this->merchant_capabilities = $merchant_capabilities;
+		$this->plugin_settings       = $plugin_settings;
 	}
 
 	/**
@@ -82,7 +93,7 @@ class FeaturesDefinition {
 	 * @return array[] The array of all available features.
 	 */
 	public function all_available_features(): array {
-		$paylater_countries = array(
+		$paylater_countries    = array(
 			'UK',
 			'ES',
 			'IT',
@@ -91,8 +102,9 @@ class FeaturesDefinition {
 			'DE',
 			'AU',
 		);
-		$store_country      = $this->settings->get_woo_settings()['country'];
-		$country_location   = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
+		$store_country         = $this->settings->get_woo_settings()['country'];
+		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
+		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
 
 		return array(
 			'save_paypal_and_venmo'           => array(
@@ -104,8 +116,9 @@ class FeaturesDefinition {
 						'type'     => 'secondary',
 						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
 						'action'   => array(
-							'type' => 'tab',
-							'tab'  => 'settings',
+							'type'    => 'tab',
+							'tab'     => 'settings',
+							'section' => 'ppcp-save-paypal-and-venmo',
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
@@ -137,11 +150,10 @@ class FeaturesDefinition {
 						'type'     => 'secondary',
 						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
 						'action'   => array(
-							'type'      => 'tab',
-							'tab'       => 'payment_methods',
-							'section'   => 'ppcp-credit-card-gateway',
-							'highlight' => 'ppcp-credit-card-gateway',
-							'modal'     => 'ppcp-credit-card-gateway',
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-credit-card-gateway',
+							'modal'   => 'ppcp-credit-card-gateway',
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
@@ -176,7 +188,7 @@ class FeaturesDefinition {
 							'type'      => 'tab',
 							'tab'       => 'payment_methods',
 							'section'   => 'ppcp-alternative-payments-card',
-							'highlight' => 'ppcp-alternative-payments-card',
+							'highlight' => false,
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
@@ -205,11 +217,10 @@ class FeaturesDefinition {
 						'type'     => 'secondary',
 						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
 						'action'   => array(
-							'type'      => 'tab',
-							'tab'       => 'payment_methods',
-							'section'   => 'ppcp-card-payments-card',
-							'highlight' => 'ppcp-googlepay',
-							'modal'     => 'ppcp-googlepay',
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-googlepay',
+							'modal'   => 'ppcp-googlepay',
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
@@ -244,11 +255,10 @@ class FeaturesDefinition {
 						'type'     => 'secondary',
 						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
 						'action'   => array(
-							'type'      => 'tab',
-							'tab'       => 'payment_methods',
-							'section'   => 'ppcp-card-payments-card',
-							'highlight' => 'ppcp-applepay',
-							'modal'     => 'ppcp-applepay',
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-applepay',
+							'modal'   => 'ppcp-applepay',
 						),
 						'showWhen' => 'enabled',
 						'class'    => 'small-button',
@@ -287,7 +297,7 @@ class FeaturesDefinition {
 					'Let customers know they can buy now and pay later with PayPal. Adding this messaging can boost conversion rates and increase cart sizes by 39%¹, with no extra cost to you—plus, you get paid up front.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities['pay_later'],
+				'enabled'     => $this->merchant_capabilities['pay_later'] && ! $save_paypal_and_venmo,
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -304,6 +314,34 @@ class FeaturesDefinition {
 						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
 						'url'   => "https://www.paypal.com/$country_location/business/accept-payments/checkout/installments",
 						'class' => 'small-button',
+					),
+				),
+			),
+			'installments'                    => array(
+				'title'       => __( 'Installments', 'woocommerce-paypal-payments' ),
+				'description' =>
+					__( 'Allow your customers to pay in installments without interest while you receive the full payment.*', 'woocommerce-paypal-payments' ) .
+					'<p>' . __( 'Activate your Installments without interest with PayPal.', 'woocommerce-paypal-payments' ) . '</p>' .
+					'<p>' . sprintf(
+					/* translators: %s: Link to terms and conditions */
+						__( '*You will receive the full payment minus the applicable PayPal fee. See %s.', 'woocommerce-paypal-payments' ),
+						'<a href="https://www.paypal.com/mx/webapps/mpp/merchant-fees">' . __( 'terms and conditions', 'woocommerce-paypal-payments' ) . '</a>'
+					) . '</p>',
+				'enabled'     => $this->merchant_capabilities['installments'],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'url'      => 'https://www.paypal.com/businessmanage/preferences/installmentplan',
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'url'      => 'https://www.paypal.com/businessmanage/preferences/installmentplan',
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
 					),
 				),
 			),

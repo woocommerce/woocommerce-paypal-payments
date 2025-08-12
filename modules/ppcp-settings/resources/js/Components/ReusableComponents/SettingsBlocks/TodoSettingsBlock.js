@@ -43,19 +43,23 @@ const TodoSettingsBlock = ( {
 	};
 
 	const handleClick = async ( todo ) => {
-		if ( todo.action.type === 'tab' ) {
-			const tabId = TAB_IDS[ todo.action.tab.toUpperCase() ];
-			await selectTab( tabId, todo.action.section );
-		} else if ( todo.action.type === 'external' ) {
-			window.open( todo.action.url, '_blank' );
+		const { action } = todo;
+		const highlight = Boolean( action.highlight );
+
+		// Handle different action types.
+		if ( action.type === 'tab' ) {
+			const tabId = TAB_IDS[ action.tab.toUpperCase() ];
+			await selectTab( tabId, action.section, highlight );
+		} else if ( action.type === 'external' ) {
+			window.open( action.url, '_blank' );
 		}
 
-		if ( todo.action.completeOnClick === true ) {
+		if ( action.completeOnClick ) {
 			await completeOnClick( todo.id );
 		}
 
-		if ( todo.action.modal ) {
-			setActiveModal( todo.action.modal );
+		if ( action.modal ) {
+			setActiveModal( action.modal );
 		}
 	};
 

@@ -15,11 +15,11 @@ use WC_Payment_Tokens;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -149,6 +149,11 @@ class RenewalHandler {
 	private $wc_payment_tokens;
 
 	/**
+	 * The ExperienceContextBuilder.
+	 */
+	private ExperienceContextBuilder $experience_context_builder;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface              $logger The logger.
@@ -165,6 +170,7 @@ class RenewalHandler {
 	 * @param SubscriptionHelper           $subscription_helper Subscription helper.
 	 * @param PaymentTokensEndpoint        $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param WooCommercePaymentTokens     $wc_payment_tokens WooCommerce payments tokens factory.
+	 * @param ExperienceContextBuilder     $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -180,7 +186,8 @@ class RenewalHandler {
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
 		SubscriptionHelper $subscription_helper,
 		PaymentTokensEndpoint $payment_tokens_endpoint,
-		WooCommercePaymentTokens $wc_payment_tokens
+		WooCommercePaymentTokens $wc_payment_tokens,
+		ExperienceContextBuilder $experience_context_builder
 	) {
 
 		$this->logger                           = $logger;
@@ -197,6 +204,7 @@ class RenewalHandler {
 		$this->subscription_helper              = $subscription_helper;
 		$this->payment_tokens_endpoint          = $payment_tokens_endpoint;
 		$this->wc_payment_tokens                = $wc_payment_tokens;
+		$this->experience_context_builder       = $experience_context_builder;
 	}
 
 	/**
@@ -335,6 +343,7 @@ class RenewalHandler {
 			$last_token = end( $wc_tokens );
 			if ( $last_token ) {
 				$payment_source = $this->card_payment_source( $last_token->get_token(), $wc_order );
+				$wc_order->add_payment_token( $last_token );
 			}
 		}
 
@@ -343,9 +352,6 @@ class RenewalHandler {
 				array( $purchase_unit ),
 				$shipping_preference,
 				$payer,
-				null,
-				'',
-				ApplicationContext::USER_ACTION_CONTINUE,
 				'',
 				array(),
 				$payment_source
@@ -387,9 +393,6 @@ class RenewalHandler {
 					array( $purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null,
-					'',
-					ApplicationContext::USER_ACTION_CONTINUE,
 					'',
 					array(),
 					$payment_source
@@ -412,7 +415,9 @@ class RenewalHandler {
 					array( $purchase_unit ),
 					$shipping_preference,
 					$payer,
-					$token
+					'',
+					array(),
+					$token->to_payment_source()
 				);
 
 				$this->handle_paypal_order( $wc_order, $order );
@@ -511,7 +516,7 @@ class RenewalHandler {
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
-			$order = $this->order_endpoint->authorize( $order );
+			// No authorize call needed - vault tokens auto-authorize during order creation.
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 		}
 
@@ -542,20 +547,23 @@ class RenewalHandler {
 	 */
 	private function card_payment_source( string $token, WC_Order $wc_order ): PaymentSource {
 		$properties = array(
-			'vault_id' => $token,
+			'vault_id'           => $token,
+			'stored_credential'  => array(
+				'payment_initiator' => 'MERCHANT',
+				'payment_type'      => 'RECURRING',
+				'usage'             => 'SUBSEQUENT',
+			),
+			'experience_context' => $this->experience_context_builder
+				->with_endpoint_return_urls()
+				->build()->to_array(),
 		);
 
 		$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
 		$subscription  = end( $subscriptions );
 		if ( $subscription ) {
-			$transaction = $this->subscription_helper->previous_transaction( $subscription );
+			$transaction = $this->subscription_helper->previous_transaction( $subscription, $token );
 			if ( $transaction ) {
-				$properties['stored_credential'] = array(
-					'payment_initiator'              => 'MERCHANT',
-					'payment_type'                   => 'RECURRING',
-					'usage'                          => 'SUBSEQUENT',
-					'previous_transaction_reference' => $transaction,
-				);
+				$properties['stored_credential']['previous_transaction_reference'] = $transaction;
 			}
 		}
 

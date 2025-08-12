@@ -33,10 +33,16 @@ export const flags = ( state ) => {
  * This selector does not return state-values, but uses the state to derive the products-array
  * that should be returned.
  *
- * @param {{}} state
+ * @param {{}}      state
+ * @param {boolean} ownBrandOnly
+ * @param {string}  storeCountry
  * @return {{products:string[], options:{}}} The ISU products, based on choices made in the onboarding wizard.
  */
-export const determineProductsAndCaps = ( state ) => {
+export const determineProductsAndCaps = (
+	state,
+	ownBrandOnly,
+	storeCountry
+) => {
 	/**
 	 * An array of product-names that are used to build an onboarding URL via the
 	 * PartnerReferrals API. To avoid confusion with the "products" property from the
@@ -58,8 +64,12 @@ export const determineProductsAndCaps = ( state ) => {
 	const { isCasualSeller, areOptionalPaymentMethodsEnabled, products } =
 		persistentData( state );
 	const { canUseVaulting, canUseCardPayments } = flags( state );
+	const isBrandedCasualSeller = isCasualSeller && ownBrandOnly;
+
 	const cardPaymentsEligibleAndSelected =
-		canUseCardPayments && areOptionalPaymentMethodsEnabled;
+		canUseCardPayments &&
+		areOptionalPaymentMethodsEnabled &&
+		! isBrandedCasualSeller;
 
 	if ( ! cardPaymentsEligibleAndSelected ) {
 		/**
@@ -67,7 +77,15 @@ export const determineProductsAndCaps = ( state ) => {
 		 * The store uses the Express-checkout product.
 		 */
 		apiModules.push( PAYPAL_PRODUCTS.BCDC );
-	} else if ( isCasualSeller ) {
+
+		if ( products?.includes( PRODUCT_TYPES.SUBSCRIPTIONS ) ) {
+			options.useSubscriptions = true;
+		}
+
+		if ( canUseVaulting ) {
+			apiModules.push( PAYPAL_PRODUCTS.VAULTING );
+		}
+	} else if ( isCasualSeller || 'MX' === storeCountry ) {
 		/**
 		 * Branch 2: Merchant has no business.
 		 * The store uses the Express-checkout product.

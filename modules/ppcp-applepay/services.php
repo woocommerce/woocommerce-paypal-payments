@@ -23,11 +23,19 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
+	// @deprecated - use `applepay.eligibility.check` instead.
 	'applepay.eligible'                        => static function ( ContainerInterface $container ): bool {
+		$eligibility_check = $container->get( 'applepay.eligibility.check' );
+
+		return $eligibility_check();
+	},
+	'applepay.eligibility.check'               => static function ( ContainerInterface $container ): callable {
 		$apm_applies = $container->get( 'applepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country() && $apm_applies->for_currency();
+		return static function () use ( $apm_applies ) : bool {
+			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
+		};
 	},
 	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
 		return new ApmApplies(
@@ -128,14 +136,7 @@ return array(
 		return false;
 	},
 	'applepay.url'                             => static function ( ContainerInterface $container ): string {
-		$path = realpath( __FILE__ );
-		if ( false === $path ) {
-			return '';
-		}
-		return plugins_url(
-			'/modules/ppcp-applepay/',
-			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-applepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
@@ -211,6 +212,11 @@ return array(
 				'SE', // Sweden
 				'US', // United States
 				'GB', // United Kingdom
+				'YT', // Mayotte
+				'RE', // Reunion
+				'GP', // Guadelope
+				'GF', // French Guiana
+				'MQ', // Martinique
 			)
 			// phpcs:enable Squiz.Commenting.InlineComment
 		);

@@ -50,11 +50,6 @@ const useHooks = () => {
 	// Transient accessors.
 	const [ activeModal, setActiveModal ] = useTransient( 'activeModal' );
 
-	// Persistent accessors.
-	const [ isManualConnectionMode, setManualConnectionMode ] = usePersistent(
-		'useManualConnection'
-	);
-
 	// Read-only properties.
 	const wooSettings = select.wooSettings();
 	const features = select.features();
@@ -68,10 +63,6 @@ const useHooks = () => {
 	return {
 		activeModal,
 		setActiveModal,
-		isManualConnectionMode,
-		setManualConnectionMode: ( state ) => {
-			return savePersistent( setManualConnectionMode, state );
-		},
 		authenticateWithCredentials,
 		authenticateWithOAuth,
 		wooSettings,
@@ -98,32 +89,45 @@ export const useStore = () => {
 export const useSandbox = () => {
 	const { dispatch, usePersistent } = useStoreData();
 	const [ isSandboxMode, setSandboxMode ] = usePersistent( 'useSandbox' );
-	const { sandboxOnboardingUrl, persist } = dispatch;
+	const { onboardingUrl } = dispatch;
 
 	return {
 		isSandboxMode,
-		setSandboxMode: ( state ) => {
-			setSandboxMode( state );
-			return persist();
+		setSandboxMode: ( state, source ) => {
+			setSandboxMode( state, source );
+			return dispatch.persist();
 		},
-		sandboxOnboardingUrl,
+		onboardingUrl,
+	};
+};
+
+export const useManualConnection = () => {
+	const { dispatch, usePersistent } = useStoreData();
+	const [ isManualConnectionMode, setManualConnectionMode ] = usePersistent(
+		'useManualConnection'
+	);
+
+	return {
+		isManualConnectionMode,
+		setManualConnectionMode: ( state, source ) => {
+			setManualConnectionMode( state, source );
+			return dispatch.persist();
+		},
 	};
 };
 
 export const useProduction = () => {
 	const { dispatch } = useStoreData();
-	const { productionOnboardingUrl } = dispatch;
+	const { onboardingUrl } = dispatch;
 
-	return { productionOnboardingUrl };
+	return { onboardingUrl };
 };
 
 export const useAuthentication = () => {
-	const {
-		isManualConnectionMode,
-		setManualConnectionMode,
-		authenticateWithCredentials,
-		authenticateWithOAuth,
-	} = useHooks();
+	const { authenticateWithCredentials, authenticateWithOAuth } = useHooks();
+
+	const { isManualConnectionMode, setManualConnectionMode } =
+		useManualConnection();
 
 	return {
 		isManualConnectionMode,
@@ -212,6 +216,7 @@ export const useMerchant = () => {
 			clientSecret: merchant.clientSecret ?? '',
 			isBusinessSeller: 'business' === merchant.sellerType,
 			isCasualSeller: 'personal' === merchant.sellerType,
+			isSendOnlyCountry: merchant.isSendOnlyCountry ?? false,
 		} ),
 		// the merchant object is stable, so a new memo is only generated when a merchant prop changes.
 		[ merchant ]

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
@@ -35,11 +36,11 @@ class PaymentMethodSettingsMapHelper {
 	/**
 	 * Retrieves the value of a mapped key from the new settings.
 	 *
-	 * @param string $old_key The key from the legacy settings.
+	 * @param string                 $old_key The key from the legacy settings.
+	 * @param AbstractDataModel|null $payment_settings The payment settings model.
 	 * @return mixed The value of the mapped setting, (null if not found).
 	 */
-	public function mapped_value( string $old_key ): ?bool {
-
+	public function mapped_value( string $old_key, ?AbstractDataModel $payment_settings ) {
 		$payment_method = $this->map()[ $old_key ] ?? false;
 
 		if ( ! $payment_method ) {

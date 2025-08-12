@@ -28,23 +28,23 @@ const ACTIVITIES = {
 };
 
 export const useHandleOnboardingButton = ( isSandbox ) => {
-	const { sandboxOnboardingUrl } = CommonHooks.useSandbox();
-	const { productionOnboardingUrl } = CommonHooks.useProduction();
-	const { products, options } = OnboardingHooks.useDetermineProducts();
+	const { onboardingUrl } = isSandbox
+		? CommonHooks.useSandbox()
+		: CommonHooks.useProduction();
+	const { ownBrandOnly, storeCountry } = CommonHooks.useWooSettings();
+	const { products, options } = OnboardingHooks.useDetermineProducts(
+		ownBrandOnly,
+		storeCountry
+	);
 	const { startActivity } = CommonHooks.useBusyState();
 	const { authenticateWithOAuth } = CommonHooks.useAuthentication();
-	const [ onboardingUrl, setOnboardingUrl ] = useState( '' );
+	const [ onboardingUrlState, setOnboardingUrl ] = useState( '' );
 	const [ scriptLoaded, setScriptLoaded ] = useState( false );
 	const timerRef = useRef( null );
 
 	useEffect( () => {
 		const fetchOnboardingUrl = async () => {
-			let res;
-			if ( isSandbox ) {
-				res = await sandboxOnboardingUrl();
-			} else {
-				res = await productionOnboardingUrl( products, options );
-			}
+			const res = await onboardingUrl( products, options, isSandbox );
 
 			if ( res.success && res.data ) {
 				setOnboardingUrl( res.data );
@@ -54,7 +54,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 		};
 
 		fetchOnboardingUrl();
-	}, [ isSandbox, productionOnboardingUrl, products, sandboxOnboardingUrl ] );
+	}, [ isSandbox, products, options, onboardingUrl ] );
 
 	useEffect( () => {
 		/**
@@ -62,7 +62,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 		 * When no buttons are present, a JS error is displayed; i.e. we should load this script
 		 * only when the button is ready (with a valid href and data-attributes).
 		 */
-		if ( ! onboardingUrl ) {
+		if ( ! onboardingUrlState ) {
 			return;
 		}
 
@@ -97,7 +97,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 				}
 			} );
 		};
-	}, [ onboardingUrl ] );
+	}, [ onboardingUrlState ] );
 
 	const setCompleteHandler = useCallback(
 		( environment ) => {
@@ -119,7 +119,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 				await authenticateWithOAuth(
 					sharedId,
 					authCode,
-					'sandbox' === environment
+					environment === 'sandbox'
 				);
 			};
 
@@ -148,7 +148,7 @@ export const useHandleOnboardingButton = ( isSandbox ) => {
 	}, [] );
 
 	return {
-		onboardingUrl,
+		onboardingUrl: onboardingUrlState,
 		scriptLoaded,
 		setCompleteHandler,
 		removeCompleteHandler,

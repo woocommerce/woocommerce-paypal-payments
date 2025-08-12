@@ -111,12 +111,7 @@
 			margin: 0;
 		}
 	}
-
 	// Custom styles.
-	.components-form-toggle.is-checked > .components-form-toggle__track {
-		background-color: $color-blueberry;
-	}
-
 	.ppcp-r-vertical-text-control {
 		.components-base-control__field {
 			display: flex;
@@ -126,3 +121,74 @@
 		}
 	}
 }
+
+.ppcp-r-app, .ppcp-r-modal__container {
+	// Form toggle styling.
+	.components-form-toggle {
+	  &.is-checked {
+		> .components-form-toggle__track {
+		  background-color: $color-blueberry;
+		}
+		.components-form-toggle__track {
+		  border-color: $color-blueberry;
+		}
+	  }
+	  .components-form-toggle__input {
+		&:focus {
+		  + .components-form-toggle__track {
+			box-shadow: none;
+		  }
+		}
+		&:focus-visible + .components-form-toggle__track {
+		  box-shadow: 0 0 0 var(--wp-admin-border-width-focus) #fff,
+					 0 0 0 calc(var(--wp-admin-border-width-focus)*2) $color-blueberry;
+		}
+	  }
+	}
+
+	// Form inputs.
+	.components-text-control__input {
+	  &:focus,
+	  &[type="color"]:focus,
+	  &[type="date"]:focus,
+	  &[type="datetime-local"]:focus,
+	  &[type="datetime"]:focus,
+	  &[type="email"]:focus,
+	  &[type="month"]:focus,
+	  &[type="number"]:focus,
+	  &[type="password"]:focus,
+	  &[type="tel"]:focus,
+	  &[type="text"]:focus,
+	  &[type="time"]:focus,
+	  &[type="url"]:focus,
+	  &[type="week"]:focus {
+		border-color: $color-blueberry;
+	  }
+	}
+
+	// Radio inputs.
+	.components-radio-control__input[type="radio"] {
+	  &:checked {
+		background-color: $color-blueberry;
+		border-color: $color-blueberry;
+	  }
+	  &:focus {
+		box-shadow: none;
+	  }
+	  &:focus-visible {
+		box-shadow: 0 0 0 var(--wp-admin-border-width-focus) #fff,
+				   0 0 0 calc(var(--wp-admin-border-width-focus)*2) $color-blueberry;
+	  }
+	}
+
+	// Checkbox inputs.
+	.components-checkbox-control__input[type="checkbox"] {
+	  &:focus {
+		box-shadow: none;
+	  }
+	  &:focus-visible {
+		box-shadow: 0 0 0 var(--wp-admin-border-width-focus) #fff,
+				   0 0 0 calc(var(--wp-admin-border-width-focus)*2) $color-blueberry;
+	  }
+	}
+  }

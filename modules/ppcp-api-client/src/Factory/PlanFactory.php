@@ -57,24 +57,16 @@ class PlanFactory {
 	 */
 	public function from_paypal_response( stdClass $data ): Plan {
 		if ( ! isset( $data->id ) ) {
-			throw new RuntimeException(
-				__( 'No id for given plan', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No id for given plan' );
 		}
 		if ( ! isset( $data->name ) ) {
-			throw new RuntimeException(
-				__( 'No name for plan given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No name for plan given' );
 		}
 		if ( ! isset( $data->product_id ) ) {
-			throw new RuntimeException(
-				__( 'No product id for given plan', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No product id for given plan' );
 		}
 		if ( ! isset( $data->billing_cycles ) ) {
-			throw new RuntimeException(
-				__( 'No billing cycles for given plan', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No billing cycles for given plan' );
 		}
 
 		$billing_cycles = array();

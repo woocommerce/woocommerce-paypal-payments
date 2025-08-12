@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
@@ -126,7 +127,8 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 				$config_factory = $c->get( 'paylater-configurator.factory.config' );
 				assert( $config_factory instanceof ConfigFactory );
 
-				$bn_code = PPCP_PAYPAL_BN_CODE;
+				$partner_attribution = $c->get( 'api.helper.partner-attribution' );
+				assert( $partner_attribution instanceof PartnerAttribution );
 
 				wp_localize_script(
 					'ppcp-paylater-configurator',
@@ -145,7 +147,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 						'config'                 => $config_factory->from_settings( $settings ),
 						'merchantClientId'       => $settings->get( 'client_id' ),
 						'partnerClientId'        => $c->get( 'api.partner_merchant_id' ),
-						'bnCode'                 => $bn_code,
+						'bnCode'                 => $partner_attribution->get_bn_code(),
 						'publishButtonClassName' => 'ppcp-paylater-configurator-publishButton',
 						'headerClassName'        => 'ppcp-paylater-configurator-header',
 						'subheaderClassName'     => 'ppcp-paylater-configurator-subheader',

@@ -114,13 +114,13 @@ class Item {
 		Money $unit_amount,
 		int $quantity,
 		string $description = '',
-		Money $tax = null,
+		?Money $tax = null,
 		string $sku = '',
 		string $category = 'PHYSICAL_GOODS',
 		string $url = '',
 		string $image_url = '',
 		float $tax_rate = 0,
-		string $cart_item_key = null
+		?string $cart_item_key = null
 	) {
 
 		$this->name          = $name;

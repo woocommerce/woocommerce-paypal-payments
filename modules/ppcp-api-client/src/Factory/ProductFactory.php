@@ -28,14 +28,10 @@ class ProductFactory {
 	 */
 	public function from_paypal_response( stdClass $data ): Product {
 		if ( ! isset( $data->id ) ) {
-			throw new RuntimeException(
-				__( 'No id for product given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No id for product given' );
 		}
 		if ( ! isset( $data->name ) ) {
-			throw new RuntimeException(
-				__( 'No name for product given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No name for product given' );
 		}
 
 		return new Product(

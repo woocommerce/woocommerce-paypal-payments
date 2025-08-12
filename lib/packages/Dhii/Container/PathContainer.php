@@ -127,6 +127,8 @@ class PathContainer implements ContainerInterface
      */
     public function has($key)
     {
+        $key = (string) $key;
+
         /**
          * @psalm-suppress InvalidCatch
          * The base interface does not extend Throwable, but in fact everything that is possible

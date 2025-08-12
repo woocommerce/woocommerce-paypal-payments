@@ -1,19 +1,31 @@
 .ppcp-r-paylater-configurator {
 	display: flex;
-	border: 1px solid var(--color-separators);
 	border-radius: var(--container-border-radius);
 	overflow: hidden;
 	font-family: "PayPalPro", sans-serif;
 	-webkit-font-smoothing: antialiased;
+	width: 1200px;
+
+	// Reset box-sizing for the preview container.
+	.etu8a6w3 * {
+		box-sizing: unset;
+	}
 
 	.css-1snxoyf.eolpigi0 {
 		margin: 0;
 	}
 
+	.css-1f9aeda {
+		width: 100%;
+	}
+
+	.css-1adsww8 {
+		padding: 0;
+	}
+
 	#configurator-eligibleContainer.css-4nclxm.e1vy3g880 {
 		width: 100%;
 		max-width: 100%;
-		padding: 16px 0px 16px 16px;
 
 		#configurator-controlPanelContainer.css-5urmrq.e1vy3g880 {
 			width: 374px;
@@ -43,7 +55,7 @@
 			}
 
 			.css-8vwtr6-state {
-				height: 1.4rem;
+				height: 1.5rem;
 				width: 3rem;
 			}
 		}
@@ -54,16 +66,26 @@
 	}
 
 	&__subheader, #configurator-controlPanelSubHeader {
-		color: var(--color-text-description);
+		color: var(--color-text-teriary);
 		margin: 0 0 18px 0;
+		@include font(13, 20, 400);
 	}
 
 	&__header, #configurator-controlPanelHeader, #configurator-previewSectionSubHeaderText.css-14ujlqd-text_body, .css-16jt5za-text_body {
-		@include font(16, 20, 600);
+		@include font(13, 20, 600);
 		color: var(--color-text-title);
-		margin-bottom: 6px;
 		font-family: "PayPalPro", sans-serif;
 		-webkit-font-smoothing: antialiased;
+	}
+	&__header,
+	#configurator-controlPanelHeader {
+		margin-bottom: 12px;
+	}
+
+
+	#configurator-previewSectionSubHeaderText.css-14ujlqd-text_body,
+	.css-16jt5za-text_body {
+		color: var(--color-text-teriary);
 	}
 
 	.css-1yo2lxy-text_body_strong {
@@ -73,8 +95,9 @@
 	}
 
 	.css-rok10q, .css-dfgbdq-text_body_strong {
-		margin-top: 0;
-		margin-bottom: 0;
+		margin: 0 0 12px 0;
+		padding: 0;
+		width: 100%;
 	}
 
 	&__publish-button {
@@ -109,9 +132,9 @@
 		display: none;
 	}
 
-	.css-4nclxm.e1vy3g880,  {
+	.css-4nclxm.e1vy3g880 {
 		width: 100%;
-		padding: 48px 8px;
+		padding: 0 0 48px 0;
 
 		.css-11hsg2u.e1vy3g880 {
 			width: 100%;
@@ -119,7 +142,7 @@
 	}
 
 	.css-n4cwz8 {
-		margin-top: 20px;
+		margin-top: 48px;
 	}
 
 	.css-1ce6bcu-container {

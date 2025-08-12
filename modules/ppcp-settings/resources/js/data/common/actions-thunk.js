@@ -41,45 +41,25 @@ export function refresh() {
 }
 
 /**
- * Side effect. Fetches the ISU-login URL for a sandbox account.
- *
- * @return {Function} The thunk function.
- */
-export function sandboxOnboardingUrl() {
-	return async () => {
-		try {
-			return apiFetch( {
-				path: REST_CONNECTION_URL_PATH,
-				method: 'POST',
-				data: {
-					useSandbox: true,
-					products: [ 'EXPRESS_CHECKOUT' ],
-				},
-			} );
-		} catch ( e ) {
-			return {
-				success: false,
-				error: e,
-			};
-		}
-	};
-}
-
-/**
- * Side effect. Fetches the ISU-login URL for a production account.
+ * Side effect. Fetches the ISU-login URL for an account.
  *
  * @param {string[]} [products=[]] Which products/features to display in the ISU popup.
  * @param {Object}   [options={}]  Options to customize the onboarding workflow.
+ * @param            isSandbox     True if is sandbox, otherwise false.
  * @return {Function} The thunk function.
  */
-export function productionOnboardingUrl( products = [], options = {} ) {
+export function onboardingUrl(
+	products = [],
+	options = {},
+	isSandbox = false
+) {
 	return async () => {
 		try {
 			return apiFetch( {
 				path: REST_CONNECTION_URL_PATH,
 				method: 'POST',
 				data: {
-					useSandbox: false,
+					useSandbox: isSandbox,
 					products,
 					options,
 				},

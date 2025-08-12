@@ -14,6 +14,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
  *
  * Manages the merchants' connection status details and provides inspection
  * methods to describe the current state.
+ *
+ * DI service: 'settings.connection-state'
  */
 class ConnectionState {
 	/**

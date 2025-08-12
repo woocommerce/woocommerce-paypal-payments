@@ -100,3 +100,43 @@ export function refresh() {
 		select.persistentData();
 	};
 }
+
+/**
+ * Persistent. Updates the gateway synced status.
+ *
+ * @param {boolean} synced The sync status to set
+ * @return {Action} The action.
+ */
+export const updateGatewaysSynced = ( synced = true ) =>
+	setPersistent( 'gatewaysSynced', synced );
+
+/**
+ * Persistent. Updates the gateway refreshed status.
+ *
+ * @param {boolean} refreshed The refreshed status to set
+ * @return {Action} The action.
+ */
+export const updateGatewaysRefreshed = ( refreshed = true ) =>
+	setPersistent( 'gatewaysRefreshed', refreshed );
+
+/**
+ * Action creator to sync payment gateways.
+ * This will both update the state and persist it.
+ *
+ * @return {Function} The thunk function.
+ */
+export function syncGateways() {
+	return async ( { dispatch } ) => {
+		dispatch( setPersistent( 'gatewaysSynced', true ) );
+		await dispatch.persist();
+		return { success: true };
+	};
+}
+
+export function refreshGateways() {
+	return async ( { dispatch } ) => {
+		dispatch( setPersistent( 'gatewaysRefreshed', true ) );
+		await dispatch.persist();
+		return { success: true };
+	};
+}

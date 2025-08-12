@@ -45,24 +45,19 @@ const Card = ( { fastlaneSdk, showWatermark = true } ) => {
 			<div className="wc-block-checkout-axo-block-card__inner">
 				<div className="wc-block-checkout-axo-block-card__content">
 					<div className="wc-block-checkout-axo-block-card__meta">
-						<span className="wc-block-checkout-axo-block-card__meta-digits">
+						<div className="wc-block-checkout-axo-block-card__meta-logo">
+							{ cardLogo }
+						</div>
+						<div className="wc-block-checkout-axo-block-card__meta-digits">
 							{ `**** **** **** ${ lastDigits }` }
-						</span>
-						{ cardLogo }
+						</div>
+						<div className="wc-block-checkout-axo-block-card__meta-expiry">
+							{ formattedExpiry }
+						</div>
+						<div className="wc-block-checkout-axo-block-card__meta-name">
+							{ name }
+						</div>
 					</div>
-					<div className="wc-block-checkout-axo-block-card__meta">
-						<span>{ name }</span>
-						<span>{ formattedExpiry }</span>{ ' ' }
-					</div>
-				</div>
-				<div className="wc-block-checkout-axo-block-card__watermark">
-					{ showWatermark && (
-						<Watermark
-							fastlaneSdk={ fastlaneSdk }
-							name="wc-block-checkout-axo-card-watermark"
-							includeAdditionalInfo={ false }
-						/>
-					) }
 				</div>
 			</div>
 		</div>

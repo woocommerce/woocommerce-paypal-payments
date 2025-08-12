@@ -214,7 +214,7 @@ class SettingsMapHelper {
 				: $this->settings_tab_map_helper->mapped_value( $old_key, $this->model_cache[ $model_id ] );
 
 			case $model instanceof PaymentSettings:
-				return $this->payment_method_settings_map_helper->mapped_value( $old_key );
+				return $this->payment_method_settings_map_helper->mapped_value( $old_key, $this->get_payment_settings_model() );
 
 			default:
 				return $this->model_cache[ $model_id ][ $new_key ] ?? null;

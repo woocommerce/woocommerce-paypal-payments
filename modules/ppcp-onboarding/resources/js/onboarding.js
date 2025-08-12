@@ -236,10 +236,10 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 					( element.style.display = ! isExpress ? '' : 'none' )
 			);
 
-		const screemImg = document.querySelector(
+		const screenImg = document.querySelector(
 			'#ppcp-onboarding-cards-screen-img'
 		);
-		if ( screemImg ) {
+		if ( screenImg ) {
 			const currentRb =
 				Array.from(
 					document.querySelectorAll(
@@ -248,7 +248,7 @@ window.ppcp_onboarding_productionCallback = function ( ...args ) {
 				).filter( ( rb ) => rb.checked )[ 0 ] ?? null;
 
 			const imgUrl = currentRb.getAttribute( 'data-screen-url' );
-			screemImg.src = imgUrl;
+			screenImg.src = imgUrl;
 		}
 	};
 

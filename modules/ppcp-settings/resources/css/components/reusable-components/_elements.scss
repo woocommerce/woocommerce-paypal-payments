@@ -69,3 +69,23 @@
 		margin-top: var(--block-action-gap, 16px);
 	}
 }
+
+.ppcp--notice {
+	display: block;
+	padding: 10px;
+	margin: 10px 0;
+	line-height: 1.5714285714;
+	font-size: 0.8125rem;
+	background: var(--notice-background);
+	color: var(--notice-text);
+
+	&.type--info {
+		--notice-background: var(--color-success-background);
+		--notice-text: var(--color-success-text);
+	}
+
+	&.type--error {
+		--notice-background: var(--color-failure-background);
+		--notice-text: var(--color-failure-text);
+	}
+}

@@ -10,8 +10,17 @@ const OnboardingScreen = () => {
 	const Steps = getSteps( flags );
 	const currentStep = getCurrentStep( step, Steps );
 
-	const handleNext = () => setStep( currentStep.nextStep );
-	const handlePrev = () => setStep( currentStep.prevStep );
+	if ( ! currentStep?.StepComponent ) {
+		console.error( 'Invalid Onboarding State', {
+			step,
+			flags,
+			Steps,
+			currentStep,
+		} );
+	}
+
+	const handleNext = () => setStep( currentStep.nextStep, 'user' );
+	const handlePrev = () => setStep( currentStep.prevStep, 'user' );
 
 	return (
 		<>

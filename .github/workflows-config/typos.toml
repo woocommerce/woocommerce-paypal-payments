@@ -1,0 +1,76 @@
+[default]
+check-comments = true
+check-docs = true
+check-filenames = true
+binary = false
+ignore-non-words = false
+
+type = ["de", "en"]
+locale = "en"
+
+# Ignore API keys and two character IDs like 'FO' or "FO"
+extend-ignore-re = [
+	"\\b[0-9A-Za-z+/_-]{50,}(=|==)?\\b",
+	"'[A-Za-z0-9]{2}'",
+	"\"[A-Za-z0-9]{2}\"",
+]
+
+# Known good words
+[default.extend-words]
+paypal = "paypal"
+PayPal = "PayPal"
+woocommerce = "woocommerce"
+Automattic = "Automattic"
+automattic = "automattic"
+Sie = "Sie"
+sie = "sie"
+oder = "oder"
+als = "als"
+
+# Define known typos to catch
+[default.extend-corrections]
+Fatslane = "Fastlane"
+Fastalne = "Fastlane"
+Faslane = "Fastlane"
+Fastlain = "Fastlane"
+Fasltane = "Fastlane"
+Fastlan = "Fastlane"
+Fastlanne = "Fastlane"
+Fatstlane = "Fastlane"
+Fstlane = "Fastlane"
+
+# Explicit identifier corrections
+[default.extend-identifiers]
+"Fatslane" = "Fastlane"
+"Fastalne" = "Fastlane"
+"Faslane" = "Fastlane"
+"Fastlain" = "Fastlane"
+"Fasltane" = "Fastlane"
+"Fastlan" = "Fastlane"
+"Fastlanne" = "Fastlane"
+"Fatstlane" = "Fastlane"
+"Fstlane" = "Fastlane"
+
+# Type-specific configurations
+[type.php]
+check-comments = true
+check-docs = true
+
+[type.js]
+extend-glob = []
+binary = false
+check-filename = true
+check-file = true
+unicode = true
+ignore-hex = true
+identifier-leading-digits = false
+
+[files]
+extend-exclude = [
+	"vendor/*",
+	"node_modules/*",
+	"*.min.js",
+	"*.min.css",
+	"modules/ppcp-order-tracking/*",
+	"/tests/*"
+]

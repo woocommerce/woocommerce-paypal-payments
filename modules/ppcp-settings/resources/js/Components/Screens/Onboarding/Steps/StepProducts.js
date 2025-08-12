@@ -13,6 +13,47 @@ const StepProducts = () => {
 	const { isCasualSeller } = OnboardingHooks.useBusiness();
 
 	useEffect( () => {
+		const productChoicesFull = [
+			{
+				value: PRODUCT_TYPES.VIRTUAL,
+				title: __( 'Virtual', 'woocommerce-paypal-payments' ),
+				description: __(
+					'Items do not require shipping.',
+					'woocommerce-paypal-payments'
+				),
+				contents: <DetailsVirtual />,
+			},
+			{
+				value: PRODUCT_TYPES.PHYSICAL,
+				title: __( 'Physical Goods', 'woocommerce-paypal-payments' ),
+				description: __(
+					'Items require shipping.',
+					'woocommerce-paypal-payments'
+				),
+				contents: <DetailsPhysical />,
+			},
+			{
+				value: PRODUCT_TYPES.SUBSCRIPTIONS,
+				title: __( 'Subscriptions', 'woocommerce-paypal-payments' ),
+				description: __(
+					'Recurring payments for either physical goods or services.',
+					'woocommerce-paypal-payments'
+				),
+				isDisabled: isCasualSeller,
+				contents: (
+					/*
+					 * Note: The link should be only displayed if the subscriptions plugin is not installed.
+					 * But when the plugin is not active, this option is completely hidden;
+					 * This means: In the current configuration, we never show the link.
+					 */
+					<DetailsSubscriptions
+						showLink={ false }
+						showNotice={ isCasualSeller }
+					/>
+				),
+			},
+		];
+
 		const initChoices = () => {
 			const choices = productChoicesFull.map( ( choice ) => {
 				if (
@@ -38,7 +79,7 @@ const StepProducts = () => {
 		};
 
 		initChoices();
-	}, [ canUseSubscriptions, optionState, products, setProducts ] );
+	}, [ canUseSubscriptions, isCasualSeller ] );
 
 	const handleChange = ( key, checked ) => {
 		const getNewValue = () => {
@@ -48,48 +89,9 @@ const StepProducts = () => {
 			return products.filter( ( val ) => val !== key );
 		};
 
-		setProducts( getNewValue() );
+		setProducts( getNewValue(), 'user' );
 	};
-	const productChoicesFull = [
-		{
-			value: PRODUCT_TYPES.VIRTUAL,
-			title: __( 'Virtual', 'woocommerce-paypal-payments' ),
-			description: __(
-				'Items do not require shipping.',
-				'woocommerce-paypal-payments'
-			),
-			contents: <DetailsVirtual />,
-		},
-		{
-			value: PRODUCT_TYPES.PHYSICAL,
-			title: __( 'Physical Goods', 'woocommerce-paypal-payments' ),
-			description: __(
-				'Items require shipping.',
-				'woocommerce-paypal-payments'
-			),
-			contents: <DetailsPhysical />,
-		},
-		{
-			value: PRODUCT_TYPES.SUBSCRIPTIONS,
-			title: __( 'Subscriptions', 'woocommerce-paypal-payments' ),
-			description: __(
-				'Recurring payments for either physical goods or services.',
-				'woocommerce-paypal-payments'
-			),
-			isDisabled: isCasualSeller,
-			contents: (
-				/*
-				 * Note: The link should be only displayed if the subscriptions plugin is not installed.
-				 * But when the plugin is not active, this option is completely hidden;
-				 * This means: In the current configuration, we never show the link.
-				 */
-				<DetailsSubscriptions
-					showLink={ false }
-					showNotice={ isCasualSeller }
-				/>
-			),
-		},
-	];
+
 	return (
 		<div className="ppcp-r-page-products">
 			<OnboardingHeader

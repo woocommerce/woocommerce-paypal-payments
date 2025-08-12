@@ -5,14 +5,15 @@
  * @package WooCommerce\PayPalCommerce\Button\Helper
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 
 /**
  * Class DisabledFundingSources
@@ -26,84 +27,198 @@ class DisabledFundingSources {
 	 *
 	 * @var Settings
 	 */
-	private $settings;
+	private Settings $settings;
 
 	/**
 	 * All existing funding sources.
 	 *
 	 * @var array
 	 */
-	private $all_funding_sources;
+	private array $all_funding_sources;
+
+	/**
+	 * Provides details about the DCC configuration.
+	 *
+	 * @var CardPaymentsConfiguration
+	 */
+	private CardPaymentsConfiguration $dcc_configuration;
+
+	/**
+	 * Merchant Country
+	 *
+	 * @var string
+	 */
+	private string $merchant_country;
 
 	/**
 	 * DisabledFundingSources constructor.
 	 *
-	 * @param Settings $settings The settings.
-	 * @param array    $all_funding_sources All existing funding sources.
+	 * @param Settings                  $settings            The settings.
+	 * @param array                     $all_funding_sources All existing funding sources.
+	 * @param CardPaymentsConfiguration $dcc_configuration   DCC gateway configuration.
+	 * @param string                    $merchant_country     Merchant country.
 	 */
-	public function __construct( Settings $settings, array $all_funding_sources ) {
+	public function __construct( Settings $settings, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
 		$this->settings            = $settings;
 		$this->all_funding_sources = $all_funding_sources;
+		$this->dcc_configuration   = $dcc_configuration;
+		$this->merchant_country    = $merchant_country;
 	}
 
 	/**
 	 * Returns the list of funding sources to be disabled.
 	 *
 	 * @param string $context The context.
-	 * @return array|int[]|mixed|string[]
-	 * @throws NotFoundException When the setting is not found.
+	 * @return string[] List of disabled sources
 	 */
-	public function sources( string $context ) {
-		$disable_funding = $this->settings->has( 'disable_funding' )
-			? $this->settings->get( 'disable_funding' )
-			: array();
+	public function sources( string $context ) : array {
+		$block_contexts = array( 'checkout-block', 'cart-block' );
+		$flags          = array(
+			'context'          => $context,
+			'is_block_context' => in_array( $context, $block_contexts, true ),
+			'is_free_trial'    => $this->is_free_trial_cart(),
+		);
 
-		$is_dcc_enabled = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' );
+		// Free trials have a shorter, special funding-source rule.
+		if ( $flags['is_free_trial'] ) {
+			$disable_funding = $this->get_sources_for_free_trial();
 
-		if (
-			! is_checkout()
-			|| ( $is_dcc_enabled && in_array( $context, array( 'checkout-block', 'cart-block' ), true ) )
-		) {
-			$disable_funding[] = 'card';
+			return $this->sanitize_and_filter_sources( $disable_funding, $flags );
 		}
 
-		$available_gateways       = WC()->payment_gateways->get_available_payment_gateways();
-		$is_separate_card_enabled = isset( $available_gateways[ CardButtonGateway::ID ] );
+		$disable_funding = $this->get_sources_from_settings();
 
-		if (
-			(
-				is_checkout()
-				&& ! in_array( $context, array( 'checkout-block', 'cart-block' ), true )
-			)
-			&& (
-				$is_dcc_enabled
-				|| $is_separate_card_enabled
-			)
-		) {
-			$key = array_search( 'card', $disable_funding, true );
-			if ( false !== $key ) {
-				unset( $disable_funding[ $key ] );
-			}
+		// Apply rules based on context and payment methods.
+		$disable_funding = $this->apply_context_rules( $disable_funding );
+
+		// Apply special rules for block checkout.
+		if ( $flags['is_block_context'] ) {
+			$disable_funding = $this->apply_block_checkout_rules( $disable_funding );
 		}
 
-		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
-			$disable_funding = array_merge(
+		return $this->sanitize_and_filter_sources( $disable_funding, $flags );
+	}
+
+	/**
+	 * Gets disabled funding sources from settings.
+	 *
+	 * @return array
+	 */
+	private function get_sources_from_settings() : array {
+		try {
+			// Settings field present in the legacy UI.
+			$disabled_funding = $this->settings->get( 'disable_funding' );
+		} catch ( NotFoundException $exception ) {
+			$disabled_funding = array();
+		}
+
+		/**
+		 * Filters the list of disabled funding methods. In the legacy UI, this
+		 * list was accessible via a settings field.
+		 *
+		 * This filter allows merchants to programmatically disable funding sources
+		 * in the new UI.
+		 */
+		return (array) apply_filters(
+			'woocommerce_paypal_payments_disabled_funding',
+			$disabled_funding
+		);
+	}
+
+	/**
+	 * Gets disabled funding sources for free trial carts.
+	 *
+	 * Rule: Carts that include a free trial product can ONLY use the
+	 * funding source "card" - all other sources are disabled.
+	 *
+	 * @return array
+	 */
+	private function get_sources_for_free_trial() : array {
+		// Disable all sources.
+		$disable_funding = array_keys( $this->all_funding_sources );
+
+		if ( is_checkout() && $this->dcc_configuration->is_bcdc_enabled() ) {
+			// If BCDC is used, re-enable card payments.
+			$disable_funding = array_filter(
 				$disable_funding,
-				array_diff(
-					array_keys( $this->all_funding_sources ),
-					array( 'venmo', 'paylater', 'paypal', 'card' )
-				)
+				static fn( string $funding_source ) => $funding_source !== 'card'
 			);
 		}
 
-		if ( $this->is_free_trial_cart() ) {
-			$all_sources = array_keys( $this->all_funding_sources );
-			if ( $is_dcc_enabled || $is_separate_card_enabled ) {
-				$all_sources = array_diff( $all_sources, array( 'card' ) );
-			}
-			$disable_funding = $all_sources;
+		return $disable_funding;
+	}
+
+	/**
+	 * Applies rules based on context and payment methods.
+	 *
+	 * @param array $disable_funding The current disabled funding sources.
+	 * @return array
+	 */
+	private function apply_context_rules( array $disable_funding ) : array {
+		if ( 'MX' === $this->merchant_country && $this->dcc_configuration->is_bcdc_enabled() && CartCheckoutDetector::has_classic_checkout() && is_checkout() ) {
+			return $disable_funding;
 		}
 
-		return apply_filters( 'woocommerce_paypal_payments_disabled_funding_sources', $disable_funding );
+		if ( ! is_checkout() || $this->dcc_configuration->use_acdc() || ! $this->dcc_configuration->is_bcdc_enabled() ) {
+			// Non-checkout pages, or ACDC capability: Don't load card button.
+			$disable_funding[] = 'card';
+		}
+
+		return $disable_funding;
+	}
+
+	/**
+	 * Applies special rules for block checkout.
+	 *
+	 * @param array $disable_funding The current disabled funding sources.
+	 * @return array
+	 */
+	private function apply_block_checkout_rules( array $disable_funding ) : array {
+		/**
+		 * Block checkout only supports the following funding methods:
+		 * - PayPal
+		 * - PayLater
+		 * - Venmo
+		 * - ACDC ("card", conditionally)
+		 */
+		$allowed_in_blocks = array( 'venmo', 'paylater', 'paypal', 'card' );
+
+		return array_merge(
+			$disable_funding,
+			array_diff( array_keys( $this->all_funding_sources ), $allowed_in_blocks )
+		);
+	}
+
+	/**
+	 * Filters the disabled "funding-sources" list and returns a sanitized array.
+	 *
+	 * @param array $disable_funding The disabled funding sources.
+	 * @param array $flags           Decision flags.
+	 * @return string[]
+	 */
+	private function sanitize_and_filter_sources( array $disable_funding, array $flags ) : array {
+		/**
+		 * Filters the final list of disabled funding sources.
+		 *
+		 * @param array $disable_funding The filter value, funding sources to be disabled.
+		 * @param array $flags           Decision flags to provide more context to filters.
+		 */
+		$disable_funding = apply_filters(
+			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
+			$disable_funding,
+			array(
+				'context'          => (string) ( $flags['context'] ?? '' ),
+				'is_block_context' => (bool) ( $flags['is_block_context'] ?? false ),
+				'is_free_trial'    => (bool) ( $flags['is_free_trial'] ?? false ),
+			)
+		);
+
+		// Make sure "paypal" is never disabled in the funding-sources.
+		$disable_funding = array_filter(
+			$disable_funding,
+			static fn( string $funding_source ) => $funding_source !== 'paypal'
+		);
+
+		return array_unique( $disable_funding );
 	}
 }

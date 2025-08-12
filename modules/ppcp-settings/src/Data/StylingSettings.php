@@ -56,7 +56,7 @@ class StylingSettings extends AbstractDataModel {
 			'cart'             => new LocationStylingDTO( 'cart' ),
 			'classic_checkout' => new LocationStylingDTO( 'classic_checkout' ),
 			'express_checkout' => new LocationStylingDTO( 'express_checkout' ),
-			'mini_cart'        => new LocationStylingDTO( 'mini_cart' ),
+			'mini_cart'        => new LocationStylingDTO( 'mini_cart', false ),
 			'product'          => new LocationStylingDTO( 'product' ),
 		);
 	}

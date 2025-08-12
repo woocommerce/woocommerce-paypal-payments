@@ -180,11 +180,22 @@ class ApplePayGateway extends WC_Payment_Gateway {
 			);
 		}
 
-		do_action( 'woocommerce_paypal_payments_before_process_order', $wc_order );
+		do_action_deprecated( 'woocommerce_paypal_payments_before_process_order', array( $wc_order ), '3.0.1', 'woocommerce_paypal_payments_before_order_process', __( 'Usage of this action is deprecated. Please use the filter woocommerce_paypal_payments_before_order_process instead.', 'woocommerce-paypal-payments' ) );
 
 		try {
 			try {
-				$this->order_processor->process( $wc_order );
+				/**
+				 * This filter controls if the method 'process()' from OrderProcessor will be called.
+				 * So you can implement your own for example on subscriptions
+				 *
+				 * - true bool controls execution of 'OrderProcessor::process()'
+				 * - $this \WC_Payment_Gateway
+				 * - $wc_order \WC_Order
+				 */
+				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+				if ( $process ) {
+					$this->order_processor->process( $wc_order );
+				}
 
 				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 

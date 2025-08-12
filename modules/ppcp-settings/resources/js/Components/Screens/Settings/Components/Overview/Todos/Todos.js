@@ -33,7 +33,10 @@ const Todos = () => {
 					'Dismissed items restored successfully.',
 					'woocommerce-paypal-payments'
 				),
-				{ icon: NOTIFICATION_SUCCESS }
+				{
+					icon: NOTIFICATION_SUCCESS,
+					speak: true,
+				}
 			);
 		} finally {
 			setIsResetting( false );

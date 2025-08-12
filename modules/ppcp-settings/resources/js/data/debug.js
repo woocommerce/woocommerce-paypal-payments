@@ -5,6 +5,9 @@ import {
 	SettingsStoreName,
 	StylingStoreName,
 	TodosStoreName,
+	PayLaterMessagingStoreName,
+	FeaturesStoreName,
+	TrackingStoreName,
 } from './index';
 
 export const addDebugTools = ( context, modules ) => {
@@ -80,6 +83,9 @@ export const addDebugTools = ( context, modules ) => {
 		stores.push( SettingsStoreName );
 		stores.push( StylingStoreName );
 		stores.push( TodosStoreName );
+		stores.push( PayLaterMessagingStoreName );
+		stores.push( FeaturesStoreName );
+		stores.push( TrackingStoreName );
 
 		// Only reset the onboarding store when the wizard is not completed.
 		if ( ! completed ) {
@@ -119,6 +125,9 @@ export const addDebugTools = ( context, modules ) => {
 		stores.push( StylingStoreName );
 		stores.push( TodosStoreName );
 		stores.push( OnboardingStoreName );
+		stores.push( PayLaterMessagingStoreName );
+		stores.push( FeaturesStoreName );
+		stores.push( TrackingStoreName );
 
 		stores.forEach( ( storeName ) => {
 			const store = wp.data.dispatch( storeName );
@@ -166,6 +175,16 @@ export const addDebugTools = ( context, modules ) => {
 
 		onboarding.setPersistent( 'completed', ! state );
 		onboarding.persist();
+	};
+
+	/**
+	 * Sets a cookie to simulate the branded-only experience.
+	 * @param {boolean} value - Whether to simulate branded-only experience.
+	 */
+	debugApi.simulateBrandedOnly = ( value ) => {
+		const expirationDate = new Date( Date.now() + 3600000 ).toUTCString();
+		document.cookie = `simulate-branded-only=${ value }; expires=${ expirationDate }; path=/`;
+		window.location.reload();
 	};
 
 	// Expose original debug API.

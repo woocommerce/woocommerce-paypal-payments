@@ -8,10 +8,7 @@ import Troubleshooting from './Blocks/Troubleshooting';
 import PaypalSettings from './Blocks/PaypalSettings';
 import OtherSettings from './Blocks/OtherSettings';
 
-const ExpertSettings = () => {
-	const settings = {}; // dummy object
-	const updateFormValue = () => {}; // dummy function
-
+const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
 	return (
 		<SettingsCard
 			icon="icon-settings-expert.svg"
@@ -22,39 +19,29 @@ const ExpertSettings = () => {
 				'woocommerce-paypal-payments'
 			) }
 			actionProps={ {
-				callback: updateFormValue,
 				key: 'payNowExperience',
 			} }
 			contentContainer={ false }
 		>
 			<ContentWrapper>
 				{ /*<Content>
-					<ConnectionDetails
-						updateFormValue={ updateFormValue }
-						settings={ settings }
-					/>
+					<ConnectionDetails />
 				</Content>*/ }
 
 				<Content>
-					<Troubleshooting
-						updateFormValue={ updateFormValue }
-						settings={ settings }
-					/>
+					<Troubleshooting />
 				</Content>
 
 				<Content>
-					<PaypalSettings
-						updateFormValue={ updateFormValue }
-						settings={ settings }
-					/>
+					<PaypalSettings hasContactModule={ hasContactModule } />
 				</Content>
 
-				<Content>
-					<OtherSettings
-						updateFormValue={ updateFormValue }
-						settings={ settings }
-					/>
-				</Content>
+				{ ownBradOnly || (
+					// The "other settings" accordion is only relevant in white-label mode.
+					<Content>
+						<OtherSettings />
+					</Content>
+				) }
 			</ContentWrapper>
 		</SettingsCard>
 	);

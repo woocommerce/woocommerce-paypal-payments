@@ -20,6 +20,7 @@ import {
 	handleApproveSubscription,
 	onApproveSavePayment,
 } from '../paypal-config';
+import { useRef } from 'react';
 
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
@@ -52,6 +53,8 @@ export const PayPalComponent = ( {
 
 	const [ paypalScriptLoaded, setPaypalScriptLoaded ] = useState( false );
 
+	const paypalButtonRef = useRef( null );
+
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
 			// for editor, since canMakePayment was not called
@@ -66,27 +69,6 @@ export const PayPalComponent = ( {
 	const methodId = fundingSource
 		? `${ config.id }-${ fundingSource }`
 		: config.id;
-
-	/**
-	 * The block cart displays express checkout buttons. Those buttons are handled by the
-	 * PAYPAL_GATEWAY_ID method on the server ("PayPal Smart Buttons").
-	 *
-	 * A possible bug in WooCommerce does not use the correct payment method ID for the express
-	 * payment buttons inside the cart, but sends the ID of the _first_ active payment method.
-	 *
-	 * This function uses an internal WooCommerce dispatcher method to set the correct method ID.
-	 */
-	const enforcePaymentMethodForCart = () => {
-		// Do nothing, unless we're handling block cart express payment buttons.
-		if ( 'cart-block' !== config.scriptData.context ) {
-			return;
-		}
-
-		// Set the active payment method to PAYPAL_GATEWAY_ID.
-		wp.data
-			.dispatch( 'wc/store/payment' )
-			.__internalSetActivePaymentMethod( PAYPAL_GATEWAY_ID, {} );
-	};
 
 	useEffect( () => {
 		// fill the form if in continuation (for product or mini-cart buttons)
@@ -119,7 +101,7 @@ export const PayPalComponent = ( {
 
 		// this useEffect should run only once, but adding this in case of some kind of full re-rendering
 		setContinuationFilled( true );
-	}, [ shippingData, continuationFilled ] );
+	}, [ shippingData.needsShipping, continuationFilled ] );
 
 	const getCheckoutRedirectUrl = () => {
 		const checkoutUrl = new URL( config.scriptData.redirect );
@@ -158,6 +140,16 @@ export const PayPalComponent = ( {
 		window.ppcpFundingSource = data.fundingSource;
 
 		onClick();
+	};
+
+	const handleButtonInit = () => {
+		if ( fundingSource === 'paypal' ) {
+			const buttonInstance = paypalButtonRef.current?.state?.parent;
+
+			if ( buttonInstance?.hasReturned?.() ) {
+				buttonInstance.resume();
+			}
+		}
 	};
 
 	const shouldHandleShippingInPayPal = () => {
@@ -273,7 +265,10 @@ export const PayPalComponent = ( {
 				};
 			}
 
-			const addresses = paypalOrderToWcAddresses( paypalOrder );
+			let addresses = {};
+			if ( paypalOrder.purchase_units?.[ 0 ]?.shipping?.address ) {
+				addresses = paypalOrderToWcAddresses( paypalOrder );
+			}
 
 			return {
 				type: responseTypes.SUCCESS,
@@ -339,7 +334,6 @@ export const PayPalComponent = ( {
 						shouldskipFinalConfirmation,
 						getCheckoutRedirectUrl,
 						setGotoContinuationOnError,
-						enforcePaymentMethodForCart,
 						onSubmit,
 						onError,
 						onClose
@@ -374,6 +368,10 @@ export const PayPalComponent = ( {
 	);
 
 	const getOnShippingOptionsChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -386,6 +384,10 @@ export const PayPalComponent = ( {
 	};
 
 	const getOnShippingAddressChange = ( fundingSource ) => {
+		if ( config.scriptData.server_side_shipping_callback.enabled ) {
+			return null;
+		}
+
 		if ( fundingSource === 'venmo' ) {
 			return null;
 		}
@@ -397,6 +399,15 @@ export const PayPalComponent = ( {
 
 			return shippingAddressChange;
 		};
+	};
+
+	const shouldEnableAppSwitch = () => {
+		// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
+		return (
+			config.scriptData.appswitch.enabled &&
+			! config.scriptData.final_review_enabled &&
+			config.scriptData.server_side_shipping_callback.enabled
+		);
 	};
 
 	if (
@@ -439,7 +450,6 @@ export const PayPalComponent = ( {
 						shouldskipFinalConfirmation,
 						getCheckoutRedirectUrl,
 						setGotoContinuationOnError,
-						enforcePaymentMethodForCart,
 						onSubmit,
 						onError,
 						onClose
@@ -457,8 +467,11 @@ export const PayPalComponent = ( {
 
 	return (
 		<PayPalButton
+			ref={ paypalButtonRef }
+			appSwitchWhenAvailable={ shouldEnableAppSwitch() }
 			fundingSource={ fundingSource }
 			style={ style }
+			onInit={ handleButtonInit }
 			onClick={ handleClick }
 			onCancel={ onClose }
 			onError={ onClose }
@@ -476,7 +489,6 @@ export const PayPalComponent = ( {
 					shouldskipFinalConfirmation,
 					getCheckoutRedirectUrl,
 					setGotoContinuationOnError,
-					enforcePaymentMethodForCart,
 					onSubmit,
 					onError,
 					onClose

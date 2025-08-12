@@ -137,10 +137,6 @@ class PayUponInvoice {
 	 */
 	public function init(): void {
 		if ( $this->pui_helper->is_pui_gateway_enabled() ) {
-			/*
-			 * TODO new-ux: Check if we still support this setting, or if it's always enabled.
-			 *              If fraudnet is not configurable in new UI, we can ignore this.
-			 */
 			$this->settings->set( 'fraudnet_enabled', true );
 			$this->settings->persist();
 		}

@@ -17,24 +17,9 @@ use WC_Cart;
 
 return array(
 	'blocks.url'                           => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-blocks/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-blocks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
-		/**
-		 * Cart instance; might be null, esp. in customizer or in Block Editor.
-		 *
-		 * @var null|WC_Cart $cart
-		 */
-		$cart = WC()->cart;
-
 		return new PayPalPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -53,7 +38,6 @@ return array(
 			$container->get( 'wcgateway.place-order-button-text' ),
 			$container->get( 'wcgateway.place-order-button-description' ),
 			$container->get( 'wcgateway.all-funding-sources' ),
-			$cart && $cart->needs_shipping()
 		);
 	},
 	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {

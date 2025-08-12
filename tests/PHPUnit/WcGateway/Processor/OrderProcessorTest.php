@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -22,13 +23,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ReadOnlyContainer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Mockery;
-use function Brain\Monkey\Functions\when;
 
 class OrderProcessorTest extends TestCase
 {
@@ -58,6 +57,8 @@ class OrderProcessorTest extends TestCase
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnit->shouldReceive('payments')
             ->andReturn($payments);
+	    $purchaseUnit->shouldReceive('shipping')
+		    ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_items')->andReturn([]);
@@ -73,7 +74,11 @@ class OrderProcessorTest extends TestCase
         $orderStatus
             ->shouldReceive('is')
             ->with(OrderStatus::COMPLETED)
-            ->andReturn(true);
+            ->andReturn(false);
+	    $orderStatus
+		    ->shouldReceive('is')
+		    ->with(OrderStatus::COMPLETED)
+		    ->andReturn(true);
 
         $orderId = 'abc';
         $orderIntent = 'AUTHORIZE';
@@ -82,6 +87,9 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->expects('id')
             ->andReturn($orderId);
+	    $currentOrder
+		    ->expects('id')
+		    ->andReturn($orderId);
         $currentOrder
             ->shouldReceive('intent')
             ->andReturn($orderIntent);
@@ -106,6 +114,9 @@ class OrderProcessorTest extends TestCase
             ->andReturn($currentOrder);
 
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
+
+	    $orderEndpoint->shouldReceive('order')->andReturn($currentOrder);
+
         $orderEndpoint
             ->expects('patch_order_with')
             ->with($currentOrder, $currentOrder)
@@ -150,7 +161,8 @@ class OrderProcessorTest extends TestCase
 			$order_helper,
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
-			Mockery::mock(ShippingPreferenceFactory::class)
+			Mockery::mock(ShippingPreferenceFactory::class),
+			Mockery::mock(ExperienceContextBuilder::class)
         );
 
         $wcOrder
@@ -201,6 +213,8 @@ class OrderProcessorTest extends TestCase
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnit->shouldReceive('payments')
             ->andReturn($payments);
+        $purchaseUnit->shouldReceive('shipping')
+	        ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_items')->andReturn([]);
@@ -209,6 +223,10 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('is')
             ->with(OrderStatus::APPROVED)
             ->andReturn(true);
+	    $orderStatus
+		    ->shouldReceive('is')
+		    ->with(OrderStatus::COMPLETED)
+		    ->andReturn(false);
         $orderStatus
             ->shouldReceive('is')
             ->with(OrderStatus::COMPLETED)
@@ -219,6 +237,9 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->expects('id')
             ->andReturn($orderId);
+	    $currentOrder
+		    ->expects('id')
+		    ->andReturn($orderId);
         $currentOrder
             ->shouldReceive('intent')
             ->andReturn($orderIntent);
@@ -242,7 +263,11 @@ class OrderProcessorTest extends TestCase
         $sessionHandler
             ->expects('order')
             ->andReturn($currentOrder);
+
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
+
+	    $orderEndpoint->shouldReceive('order')->andReturn($currentOrder);
+
         $orderEndpoint
             ->expects('patch_order_with')
             ->with($currentOrder, $currentOrder)
@@ -281,7 +306,8 @@ class OrderProcessorTest extends TestCase
 			$order_helper,
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
-			Mockery::mock(ShippingPreferenceFactory::class)
+			Mockery::mock(ShippingPreferenceFactory::class),
+			Mockery::mock(ExperienceContextBuilder::class)
         );
 
         $wcOrder
@@ -324,15 +350,23 @@ class OrderProcessorTest extends TestCase
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
         $purchaseUnit->shouldReceive('payments')
-            ->andReturn($payments);
+            ->andReturn($payments);;
+	    $purchaseUnit->shouldReceive('shipping')
+		    ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
+
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
+
         $wcOrder->shouldReceive('set_transaction_id')
             ->with($transactionId);
 
         $orderStatus = Mockery::mock(OrderStatus::class);
+	    $orderStatus
+		    ->shouldReceive('is')
+		    ->with(OrderStatus::COMPLETED)
+		    ->andReturn(false);
         $orderStatus
             ->expects('is')
             ->with(OrderStatus::APPROVED)
@@ -347,6 +381,9 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->expects('id')
             ->andReturn($orderId);
+	    $currentOrder
+		    ->expects('id')
+		    ->andReturn($orderId);
         $currentOrder
             ->shouldReceive('intent')
             ->andReturn($orderIntent);
@@ -370,7 +407,10 @@ class OrderProcessorTest extends TestCase
         $sessionHandler
             ->expects('order')
             ->andReturn($currentOrder);
+
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
+	    $orderEndpoint->shouldReceive('order')->andReturn($currentOrder);
+
         $orderFactory = Mockery::mock(OrderFactory::class);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
         $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
@@ -394,7 +434,8 @@ class OrderProcessorTest extends TestCase
 			$order_helper,
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
-			Mockery::mock(ShippingPreferenceFactory::class)
+			Mockery::mock(ShippingPreferenceFactory::class),
+			Mockery::mock(ExperienceContextBuilder::class)
         );
 
         $wcOrder

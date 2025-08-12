@@ -4,7 +4,7 @@ import TabOverview from './TabOverview';
 import TabPaymentMethods from './TabPaymentMethods';
 import TabSettings from './TabSettings';
 import TabStyling from './TabStyling';
-import TabPayLaterMessaging from '../../Overview/TabPayLaterMessaging';
+import TabPayLaterMessaging from './TabPayLaterMessaging';
 
 /**
  * List of all default settings tabs.

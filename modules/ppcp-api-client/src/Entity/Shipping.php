@@ -17,53 +17,91 @@ class Shipping {
 	/**
 	 * The name.
 	 *
-	 * @var string
+	 * @var string|null
 	 */
-	private $name;
+	private ?string $name;
 
 	/**
 	 * The address.
 	 *
-	 * @var Address
+	 * @var Address|null
 	 */
-	private $address;
+	private ?Address $address;
+
+	/**
+	 * Custom contact email address, usually added via the Contact Module.
+	 */
+	private ?string $email_address;
+
+	/**
+	 * Custom contact phone number, usually added via the Contact Module.
+	 */
+	private ?Phone $phone_number;
 
 	/**
 	 * Shipping methods.
 	 *
 	 * @var ShippingOption[]
 	 */
-	private $options;
+	private array $options;
 
 	/**
 	 * Shipping constructor.
 	 *
-	 * @param string           $name The name.
-	 * @param Address          $address The address.
-	 * @param ShippingOption[] $options Shipping methods.
+	 * @param string|null      $name          The name.
+	 * @param Address|null     $address       The address.
+	 * @param string|null      $email_address Contact email.
+	 * @param Phone|null       $phone_number  Contact phone.
+	 * @param ShippingOption[] $options       Shipping methods.
 	 */
-	public function __construct( string $name, Address $address, array $options = array() ) {
-		$this->name    = $name;
-		$this->address = $address;
-		$this->options = $options;
+	public function __construct(
+		string $name = null,
+		Address $address = null,
+		?string $email_address = null,
+		?Phone $phone_number = null,
+		array $options = array()
+	) {
+		$this->name          = $name;
+		$this->address       = $address;
+		$this->email_address = $email_address;
+		$this->phone_number  = $phone_number;
+		$this->options       = $options;
 	}
 
 	/**
 	 * Returns the name.
 	 *
-	 * @return string
+	 * @return null|string
 	 */
-	public function name(): string {
+	public function name(): ?string {
 		return $this->name;
 	}
 
 	/**
 	 * Returns the shipping address.
 	 *
-	 * @return Address
+	 * @return null|Address
 	 */
-	public function address(): Address {
+	public function address(): ?Address {
 		return $this->address;
+	}
+
+	/**
+	 * Returns the contact email address, or null.
+	 *
+	 * @return null|string
+	 */
+	public function email_address() : ?string {
+		return $this->email_address;
+	}
+
+	/**
+	 * Returns the contact phone number, or null.
+	 *
+	 * @return null|Phone
+	 */
+	public function phone_number() : ?Phone {
+		return $this->phone_number;
 	}
 
 	/**
@@ -81,12 +119,30 @@ class Shipping {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$result = array(
-			'name'    => array(
-				'full_name' => $this->name(),
-			),
-			'address' => $this->address()->to_array(),
-		);
+		$result = array();
+
+		$name = $this->name();
+		if ( $name ) {
+			$result['name'] = array(
+				'full_name' => $name,
+			);
+		}
+
+		$address = $this->address();
+		if ( $address ) {
+			$result['address'] = $address->to_array();
+		}
+
+		$contact_email = $this->email_address();
+		if ( $contact_email ) {
+			$result['email_address'] = $contact_email;
+		}
+
+		$contact_phone = $this->phone_number();
+		if ( $contact_phone ) {
+			$result['phone_number'] = $contact_phone->to_array();
+		}
+
 		if ( $this->options ) {
 			$result['options'] = array_map(
 				function ( ShippingOption $opt ): array {
@@ -95,6 +151,7 @@ class Shipping {
 				$this->options
 			);
 		}
+
 		return $result;
 	}
 }

@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
+use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Entity\CartTotals;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -112,6 +113,24 @@ class AmountFactory {
 	}
 
 	/**
+	 *  Returns an Amount object based off a WooCommerce cart object from the Store API.
+	 */
+	public function from_store_api_cart( CartTotals $cart_totals ): Amount {
+		return new Amount(
+			$cart_totals->total_price()->to_paypal(),
+			new AmountBreakdown(
+				$cart_totals->total_items()->to_paypal(),
+				$cart_totals->total_shipping()->to_paypal(),
+				$cart_totals->total_tax()->to_paypal(),
+				null,
+				null,
+				null,
+				$cart_totals->total_discount()->to_paypal(),
+			)
+		);
+	}
+
+	/**
 	 * Returns an Amount object based off a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
@@ -179,12 +198,15 @@ class AmountFactory {
 	/**
 	 * Returns an Amount object based off a PayPal Response.
 	 *
-	 * @param \stdClass $data The JSON object.
+	 * @param mixed $data The JSON object.
 	 *
-	 * @return Amount
-	 * @throws RuntimeException When JSON object is malformed.
+	 * @return Amount|null
 	 */
-	public function from_paypal_response( \stdClass $data ): Amount {
+	public function from_paypal_response( $data ) {
+		if ( null === $data || ! $data instanceof \stdClass ) {
+			return null;
+		}
+
 		$money     = $this->money_factory->from_paypal_response( $data );
 		$breakdown = ( isset( $data->breakdown ) ) ? $this->break_down( $data->breakdown ) : null;
 		return new Amount( $money, $breakdown );
@@ -223,8 +245,7 @@ class AmountFactory {
 			if ( ! isset( $item->value ) || ! is_numeric( $item->value ) ) {
 				throw new RuntimeException(
 					sprintf(
-					// translators: %s is the current breakdown key.
-						__( 'No value given for breakdown %s', 'woocommerce-paypal-payments' ),
+						'No value given for breakdown %s',
 						$key
 					)
 				);
@@ -232,8 +253,7 @@ class AmountFactory {
 			if ( ! isset( $item->currency_code ) ) {
 				throw new RuntimeException(
 					sprintf(
-					// translators: %s is the current breakdown key.
-						__( 'No currency given for breakdown %s', 'woocommerce-paypal-payments' ),
+						'No currency given for breakdown %s',
 						$key
 					)
 				);

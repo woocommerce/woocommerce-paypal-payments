@@ -81,7 +81,7 @@ class PurchaseUnitSanitizer {
 	 * @param string|null $mode The mismatch handling mode, ditch or extra_line.
 	 * @param string|null $extra_line_name The name of the extra line.
 	 */
-	public function __construct( string $mode = null, string $extra_line_name = null ) {
+	public function __construct( ?string $mode = null, ?string $extra_line_name = null ) {
 
 		if ( ! in_array( $mode, self::VALID_MODES, true ) ) {
 			$mode = self::MODE_DITCH;
@@ -193,10 +193,16 @@ class PurchaseUnitSanitizer {
 			$item_mismatch = $this->calculate_item_mismatch();
 
 			if ( $item_mismatch > 0 ) {
+				// Use appropriate category to preserve purely digital or physical goods baskets.
+				$rounding_item_category = $this->determine_rounding_item_category();
+
 				// Add extra line item with roundings.
-				$line_name                      = $this->extra_line_name;
-				$roundings_money                = new Money( $item_mismatch, $this->currency_code() );
-				$this->purchase_unit['items'][] = ( new Item( $line_name, $roundings_money, 1 ) )->to_array();
+				$line_name       = $this->extra_line_name;
+				$roundings_money = new Money( $item_mismatch, $this->currency_code() );
+
+				$this->purchase_unit['items'][] = (
+						new Item( $line_name, $roundings_money, 1, '', null, '', $rounding_item_category )
+					)->to_array();
 
 				$this->set_last_message(
 					__( 'Item amount mismatch. Extra line added.', 'woocommerce-paypal-payments' )
@@ -215,6 +221,24 @@ class PurchaseUnitSanitizer {
 				);
 			}
 		}
+	}
+
+	/**
+	 * Determines the appropriate category for rounding items based on existing items.
+	 *
+	 * @return string The category (Item::DIGITAL_GOODS or Item::PHYSICAL_GOODS)
+	 */
+	private function determine_rounding_item_category(): string {
+		// Check if all items are digital goods.
+		foreach ( $this->items() as $item ) {
+			$category = $item['category'] ?? Item::PHYSICAL_GOODS;
+			if ( $category !== Item::DIGITAL_GOODS ) {
+				return Item::PHYSICAL_GOODS;
+			}
+		}
+
+		// All items are digital goods.
+		return Item::DIGITAL_GOODS;
 	}
 
 	/**

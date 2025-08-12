@@ -3,7 +3,8 @@ import { FeatureSettingsBlock } from '../../../../../ReusableComponents/Settings
 import { Content } from '../../../../../ReusableComponents/Elements';
 import { TITLE_BADGE_POSITIVE } from '../../../../../ReusableComponents/TitleBadge';
 import { selectTab, TAB_IDS } from '../../../../../../utils/tabSelector';
-import { setActiveModal } from '../../../../../../data/common/actions';
+import { useDispatch } from '@wordpress/data';
+import { STORE_NAME as COMMON_STORE_NAME } from '../../../../../../data/common';
 
 const FeatureItem = ( {
 	isBusy,
@@ -14,6 +15,7 @@ const FeatureItem = ( {
 	enabled,
 	notes,
 } ) => {
+	const { setActiveModal } = useDispatch( COMMON_STORE_NAME );
 	const getButtonUrl = ( button ) => {
 		if ( button.urls ) {
 			return isSandbox ? button.urls.sandbox : button.urls.live;
@@ -30,9 +32,14 @@ const FeatureItem = ( {
 	);
 	const handleClick = async ( feature ) => {
 		if ( feature.action?.type === 'tab' ) {
+			const highlight =
+				feature.action?.highlight === undefined
+					? true
+					: Boolean( feature.action.highlight );
 			const tabId = TAB_IDS[ feature.action.tab.toUpperCase() ];
-			await selectTab( tabId, feature.action.section );
+			await selectTab( tabId, feature.action.section, highlight );
 		}
+
 		if ( feature.action?.modal ) {
 			setActiveModal( feature.action.modal );
 		}

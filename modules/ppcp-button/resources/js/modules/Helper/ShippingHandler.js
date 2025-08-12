@@ -21,8 +21,8 @@ export const handleShippingOptionsChange = async ( data, actions, config ) => {
 					credentials: 'same-origin',
 					headers: {
 						'Content-Type': 'application/json',
-						'X-WC-Store-API-Nonce':
-							config.ajax.update_customer_shipping.wp_rest_nonce,
+                        'Nonce':
+                            config.ajax.update_customer_shipping.wp_rest_nonce,
 					},
 					body: JSON.stringify( {
 						rate_id: shippingOptionId,
@@ -106,9 +106,9 @@ export const handleShippingAddressChange = async ( data, actions, config ) => {
 						credentials: 'same-origin',
 						headers: {
 							'Content-Type': 'application/json',
-							'X-WC-Store-API-Nonce':
-								config.ajax.update_customer_shipping
-									.wp_rest_nonce,
+                            'Nonce':
+                            config.ajax.update_customer_shipping
+                                .wp_rest_nonce,
 						},
 						body: JSON.stringify( {
 							shipping_address: cartData.shipping_address,

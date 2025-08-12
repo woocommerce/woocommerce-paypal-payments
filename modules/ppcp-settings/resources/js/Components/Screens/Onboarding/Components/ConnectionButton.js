@@ -1,21 +1,25 @@
 import { Button } from '@wordpress/components';
-import { useEffect } from '@wordpress/element';
+import { useEffect, useCallback } from '@wordpress/element';
+import { __ } from '@wordpress/i18n';
 import classNames from 'classnames';
 import { OpenSignup } from '../../../ReusableComponents/Icons';
 import { useHandleOnboardingButton } from '../../../../hooks/useHandleConnections';
+import { OnboardingHooks } from '../../../../data/onboarding/hooks';
 import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
+import { Notice } from '../../../ReusableComponents/Elements';
 
 /**
  * Button component that outputs a placeholder button when no onboardingUrl is present yet - the
  * placeholder button looks identical to the working button, but has no href, target, or
  * custom connection attributes.
  *
- * @param {Object}  props
- * @param {string}  props.className
- * @param {string}  props.variant
- * @param {boolean} props.showIcon
- * @param {?string} props.href
- * @param {Element} props.children
+ * @param {Object}   props
+ * @param {string}   props.className
+ * @param {string}   props.variant
+ * @param {boolean}  props.showIcon
+ * @param {?string}  props.href
+ * @param {Element}  props.children
+ * @param {Function} props.onClick
  */
 const ButtonOrPlaceholder = ( {
 	className,
@@ -23,11 +27,13 @@ const ButtonOrPlaceholder = ( {
 	showIcon,
 	href,
 	children,
+	onClick,
 } ) => {
 	const buttonProps = {
 		className,
 		variant,
 		icon: showIcon ? OpenSignup : null,
+		onClick,
 	};
 
 	if ( href ) {
@@ -52,11 +58,27 @@ const ConnectionButton = ( {
 		setCompleteHandler,
 		removeCompleteHandler,
 	} = useHandleOnboardingButton( isSandbox );
+
+	const { connectionButtonClicked, setConnectionButtonClicked } =
+		OnboardingHooks.useConnectionButton();
+
 	const buttonClassName = classNames( 'ppcp-r-connection-button', className, {
 		'ppcp--mode-sandbox': isSandbox,
 		'ppcp--mode-live': ! isSandbox,
+		'ppcp--button-clicked': connectionButtonClicked,
 	} );
 	const environment = isSandbox ? 'sandbox' : 'production';
+
+	const handleButtonClick = useCallback( () => {
+		setConnectionButtonClicked( true );
+	}, [ setConnectionButtonClicked ] );
+
+	// Reset button clicked state when onboardingUrl becomes available.
+	useEffect( () => {
+		if ( onboardingUrl && connectionButtonClicked ) {
+			setConnectionButtonClicked( false );
+		}
+	}, [ onboardingUrl, connectionButtonClicked, setConnectionButtonClicked ] );
 
 	useEffect( () => {
 		if ( scriptLoaded && onboardingUrl ) {
@@ -82,6 +104,7 @@ const ConnectionButton = ( {
 				variant={ variant }
 				showIcon={ showIcon }
 				href={ onboardingUrl }
+				onClick={ handleButtonClick }
 			>
 				<span className="button-title">{ title }</span>
 			</ButtonOrPlaceholder>

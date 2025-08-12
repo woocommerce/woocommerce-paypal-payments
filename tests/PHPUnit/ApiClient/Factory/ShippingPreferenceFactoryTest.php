@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use Mockery;
 use WC_Cart;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -43,63 +43,63 @@ class ShippingPreferenceFactoryTest extends TestCase
 			'checkout',
 			$this->createCart(true),
 			'',
-			ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
+			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 		];
 		yield [
 			$this->createPurchaseUnit(false, Mockery::mock(Shipping::class)),
 			'checkout',
 			$this->createCart(false),
 			'',
-			ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
 		yield [
 			$this->createPurchaseUnit(true, null),
 			'checkout',
 			$this->createCart(true),
 			'',
-			ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
 		yield [
 			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
 			'checkout',
 			$this->createCart(true),
 			'card',
-			ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
+			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 		];
 		yield [
 			$this->createPurchaseUnit(true, null),
 			'product',
 			null,
 			'',
-			ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
 		];
 		yield [
 			$this->createPurchaseUnit(true, null),
 			'pay-now',
 			null,
 			'venmo',
-			ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
 		];
 		yield [
 			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
 			'pay-now',
 			null,
 			'venmo',
-			ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
 		];
 		yield [
 			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
 			'pay-now',
 			null,
 			'card',
-			ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
+			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 		];
 		yield [
 			$this->createPurchaseUnit(true, null),
 			'pay-now',
 			null,
 			'card',
-			ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
     }
 

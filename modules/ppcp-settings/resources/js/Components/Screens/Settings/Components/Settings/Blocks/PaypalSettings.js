@@ -11,10 +11,12 @@ import Accordion from '../../../../../ReusableComponents/AccordionSection';
 import { SettingsHooks } from '../../../../../../data';
 import SoftDescriptorInput from '../../../../../ReusableComponents/Controls/SoftdescriptorInput';
 
-const PaypalSettings = () => {
+const PaypalSettings = ( { hasContactModule } ) => {
 	const {
 		savePaypalAndVenmo,
 		setSavePaypalAndVenmo,
+		contactModule,
+		setContactModule,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
 		brandName,
@@ -28,6 +30,8 @@ const PaypalSettings = () => {
 	} = SettingsHooks.useSettings();
 	const siteData = useSelect( ( select ) => select( 'core' ).getSite(), [] );
 	const siteTitle = siteData?.title;
+	const buttonLanguageChoices = window.ppcpSettings.buttonLanguageChoices;
+
 	return (
 		<Accordion
 			className="ppcp--paypal-settings"
@@ -66,6 +70,21 @@ const PaypalSettings = () => {
 					) }
 					value={ savePaypalAndVenmo }
 					onChange={ setSavePaypalAndVenmo }
+				/>
+			</SettingsBlock>
+
+			<SettingsBlock visible={ hasContactModule }>
+				<ControlToggleButton
+					label={ __(
+						'Contact selection on payment',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						'Allow customers to choose an alternative email and phone number from their PayPal contacts during payment. Order confirmations and tracking updates are sent to the selected contacts instead of checkout details. Perfect for gift orders.',
+						'woocommerce-paypal-payments'
+					) }
+					value={ contactModule }
+					onChange={ setContactModule }
 				/>
 			</SettingsBlock>
 
@@ -128,7 +147,7 @@ const PaypalSettings = () => {
 				) }
 			>
 				<ControlSelect
-					options={ languagesExample }
+					options={ buttonLanguageChoices }
 					value={ buttonLanguage }
 					onChange={ setButtonLanguage }
 					placeholder={ __(
@@ -140,13 +159,6 @@ const PaypalSettings = () => {
 		</Accordion>
 	);
 };
-
-const languagesExample = [
-	{ value: 'en_US', label: 'English' },
-	{ value: 'de_DE', label: 'German' },
-	{ value: 'es_ES', label: 'Spanish' },
-	{ value: 'it_IT', label: 'Italian' },
-];
 
 const subtotalAdjustmentChoices = [
 	{

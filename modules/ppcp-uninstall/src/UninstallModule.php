@@ -100,6 +100,8 @@ class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$clear_db->clear_scheduled_actions( $scheduled_action_names );
 					$clear_db->clear_actions( $action_names );
 
+					update_option( 'woocommerce-ppcp-is-new-merchant', '1' );
+
 					wp_send_json_success();
 					return true;
 				} catch ( Exception $error ) {

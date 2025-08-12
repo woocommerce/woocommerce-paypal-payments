@@ -14,21 +14,12 @@ use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\GetConfig;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
-		/**
-		 * The return value must not contain a trailing slash.
-		 *
-		 * Cannot return false for this path.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-paylater-configurator',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-paylater-configurator', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'paylater-configurator.factory.config'       => static function ( ContainerInterface $container ): ConfigFactory {
 		return new ConfigFactory();
@@ -54,9 +45,15 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
+		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+		assert( $dcc_product_status instanceof DCCProductStatus );
+
+		$card_fields_eligible = $container->get( 'card-fields.eligible' );
+
 		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
 
-		return ! $vault_enabled && $messages_apply->for_country();
+		// Pay Later Messaging is available if vaulting is not enabled, the shop country is supported, and is eligible for ACDC.
+		return ! $vault_enabled && $messages_apply->for_country() && $dcc_product_status->is_active() && $card_fields_eligible;
 	},
 	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ) : array {
 		// Get an array of locations that display the Pay-Later message.

@@ -19,8 +19,6 @@ use WC_Subscriptions;
 use WC_Subscriptions_Product;
 use WCS_Manual_Renewal_Manager;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WP_Query;
 
 /**
@@ -51,7 +49,11 @@ class SubscriptionHelper {
 			return false;
 		}
 		$cart = WC()->cart;
-		if ( ! $cart || $cart->is_empty() ) {
+		/**
+		 * Don't use `$cart->is_empty()` for checking for an empty cart.
+		 * This is maybe called so early that it can corrupt it because it loads it than from session
+		 */
+		if ( ! $cart || empty( $cart->cart_contents ) ) {
 			return false;
 		}
 
@@ -288,30 +290,36 @@ class SubscriptionHelper {
 	 * Returns previous order transaction from the given subscription.
 	 *
 	 * @param WC_Subscription $subscription WooCommerce Subscription.
+	 * @param string          $vault_token_id Vault token id.
 	 * @return string
 	 */
-	public function previous_transaction( WC_Subscription $subscription ): string {
+	public function previous_transaction( WC_Subscription $subscription, string $vault_token_id ): string {
 		$orders = $subscription->get_related_orders( 'ids', array( 'parent', 'renewal' ) );
-		if ( ! $orders ) {
+		if ( ! $orders || ! $vault_token_id ) {
 			return '';
 		}
 
-		// Sort orders by key descending.
-		krsort( $orders );
-
-		// Removes first order (the current processing order).
-		unset( $orders[ array_key_first( $orders ) ] );
+		// Sort orders by oder ID descending.
+		rsort( $orders );
+		$current_order = wc_get_order( array_shift( $orders ) );
+		if ( ! $current_order instanceof WC_Order ) {
+			return '';
+		}
 
 		foreach ( $orders as $order_id ) {
 			$order = wc_get_order( $order_id );
 			if (
 				is_a( $order, WC_Order::class )
 				&& in_array( $order->get_status(), array( 'processing', 'completed' ), true )
-				&& in_array( $order->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID ), true )
+				&& $current_order->get_payment_method() === $order->get_payment_method()
 			) {
 				$transaction_id = $order->get_transaction_id();
-				if ( $transaction_id ) {
-					return $transaction_id;
+				$tokens         = $order->get_payment_tokens();
+				foreach ( $tokens as $token ) {
+					$wc_token = \WC_Payment_Tokens::get( $token );
+					if ( $transaction_id && $wc_token instanceof \WC_Payment_Token && $wc_token->get_token() === $vault_token_id ) {
+						return $transaction_id;
+					}
 				}
 			}
 		}

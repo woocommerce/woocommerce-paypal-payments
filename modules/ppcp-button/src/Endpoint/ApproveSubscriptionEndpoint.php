@@ -111,9 +111,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 	public function handle_request(): bool {
 		$data = $this->request_data->read_request( $this->nonce() );
 		if ( ! isset( $data['order_id'] ) ) {
-			throw new RuntimeException(
-				__( 'No order id given', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No order id given' );
 		}
 
 		$order = $this->order_endpoint->order( $data['order_id'] );

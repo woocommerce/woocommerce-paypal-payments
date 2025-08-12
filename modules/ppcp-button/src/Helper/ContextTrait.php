@@ -301,8 +301,9 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	private function is_subscription_change_payment_method_page(): bool {
-		if ( isset( $_GET['change_payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-			return wcs_is_subscription( wc_clean( wp_unslash( $_GET['change_payment_method'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( isset( $_GET['change_payment_method'] ) ) {
+			return wcs_is_subscription( wc_clean( wp_unslash( $_GET['change_payment_method'] ) ) );
 		}
 
 		return false;
@@ -325,12 +326,14 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	protected function is_wc_settings_payments_tab(): bool {
-		if ( ! is_admin() || isset( $_GET['section'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+		// phpcs:disable WordPress.Security.NonceVerification
+		if ( ! is_admin() || isset( $_GET['section'] ) ) {
 			return false;
 		}
 
-		$page = wc_clean( wp_unslash( $_GET['page'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
-		$tab  = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		$page = wc_clean( wp_unslash( $_GET['page'] ?? '' ) );
+		$tab  = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) );
+		// phpcs:enable WordPress.Security.NonceVerification
 
 		return $page === 'wc-settings' && $tab === 'checkout';
 	}

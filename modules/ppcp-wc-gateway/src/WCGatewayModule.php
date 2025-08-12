@@ -12,54 +12,58 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Throwable;
+use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
-use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
-use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
-use WC_Order;
-use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\FraudNetAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\SettingsPageAssets;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\VoidButtonAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ShippingCallbackEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\VoidOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes\InboxNoteRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\WcTasks\Registrar\TaskRegistrarInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 /**
  * Class WcGatewayModule
@@ -92,6 +96,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
 		$this->register_wc_tasks( $c );
+		$this->register_woo_inbox_notes( $c );
 		$this->register_void_button( $c );
 
 		if ( ! $c->get( 'wcgateway.settings.admin-settings-enabled' ) ) {
@@ -195,8 +200,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
-				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				$assets = new SettingsPageAssets(
 					$c->get( 'wcgateway.url' ),
@@ -211,7 +216,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$c->get( 'wcgateway.settings.funding-sources' ),
 					$c->get( 'wcgateway.is-ppcp-settings-page' ),
 					$dcc_configuration->is_enabled(),
-					$c->get( 'api.endpoint.billing-agreements' ),
+					$c->get( 'api.reference-transaction-status' ),
 					$c->get( 'wcgateway.is-ppcp-settings-payment-methods-page' )
 				);
 				$assets->register_assets();
@@ -458,16 +463,21 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		);
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			\WP_CLI::add_command(
-				'pcp settings',
-				$c->get( 'wcgateway.cli.settings.command' )
+			add_action(
+				'init',
+				function() use ( $c ) {
+					\WP_CLI::add_command(
+						'pcp settings',
+						$c->get( 'wcgateway.cli.settings.command' )
+					);
+				}
 			);
 		}
 
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( Settings $settings = null ) use ( $c ): void {
+			function( ?Settings $settings = null ) use ( $c ): void {
 
 				// Clear DCC Product status.
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
@@ -481,8 +491,12 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$pui_product_status->clear( $settings );
 				}
 
+				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );
+				assert( $reference_transaction_status_cache instanceof Cache );
 				// Clear Reference Transaction status.
-				delete_transient( 'ppcp_reference_transaction_enabled' );
+				if ( $reference_transaction_status_cache->has( ReferenceTransactionStatus::CACHE_KEY ) ) {
+					$reference_transaction_status_cache->delete( ReferenceTransactionStatus::CACHE_KEY );
+				}
 			}
 		);
 
@@ -493,44 +507,17 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		 */
 		add_filter(
 			'woocommerce_admin_billing_fields',
-			function ( $fields ) {
-				global $theorder;
+			fn( $fields ) => $this->insert_custom_fields_into_order_details( $fields )
+		);
 
-				if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
-					return $fields;
-				}
-
-				if ( ! is_array( $fields ) ) {
-					return $fields;
-				}
-
-				if ( ! $theorder instanceof WC_Order ) {
-					return $fields;
-				}
-
-				$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
-
-				if ( ! $email ) {
-					return $fields;
-				}
-
-				// Is payment source is paypal exclude all non paypal funding sources.
-				$payment_source           = $theorder->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ?: '';
-				$is_paypal_funding_source = ( strpos( $theorder->get_payment_method_title(), '(via PayPal)' ) === false );
-
-				if ( $payment_source === 'paypal' && ! $is_paypal_funding_source ) {
-					return $fields;
-				}
-
-				$fields['paypal_email'] = array(
-					'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
-					'value'             => $email,
-					'wrapper_class'     => 'form-field-wide',
-					'custom_attributes' => array( 'disabled' => 'disabled' ),
-				);
-
-				return $fields;
-			}
+		/**
+		 * Param types removed to avoid third-party issues.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_action(
+			'woocommerce_admin_order_data_after_shipping_address',
+			fn( $order ) => $this->display_original_contact_in_order_details( $order )
 		);
 
 		add_action(
@@ -555,8 +542,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $features;
 				}
 
-				$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
-				assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
+				$reference_transaction_status = $c->get( 'api.reference-transaction-status' );
+				assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
 
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
@@ -564,8 +551,14 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$apms_product_status = $c->get( 'ppcp-local-apms.product-status' );
 				assert( $apms_product_status instanceof LocalApmProductStatus );
 
+				$installments_product_status = $c->get( 'wcgateway.installments-product-status' );
+				assert( $installments_product_status instanceof InstallmentsProductStatus );
+
+				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
+				assert( is_callable( $contact_module_check ) );
+
 				$features['save_paypal_and_venmo'] = array(
-					'enabled' => $billing_agreements_endpoint->reference_transaction_enabled(),
+					'enabled' => $reference_transaction_status->reference_transaction_enabled(),
 				);
 
 				$features['advanced_credit_and_debit_cards'] = array(
@@ -579,8 +572,45 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// When local APMs are available, then PayLater messaging is also available.
 				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
 
+				$features['installments'] = array(
+					'enabled' => $installments_product_status->is_active(),
+				);
+
+				$features['contact_module'] = array(
+					'enabled' => $contact_module_check(),
+				);
+
 				return $features;
 			}
+		);
+
+		add_action(
+			'rest_api_init',
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'wcgateway.shipping.callback.endpoint' );
+				assert( $endpoint instanceof ShippingCallbackEndpoint );
+
+				$endpoint->register();
+			}
+		);
+
+		// Add processing instruction request data for OXXO payment.
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+				if ( $payment_method !== OXXOGateway::ID ) {
+					return $data;
+				}
+
+				$processing_instruction = $request['processing_instruction'] ?? '';
+				if ( $processing_instruction ) {
+					$data['processing_instruction'] = $processing_instruction;
+				}
+
+				return $data;
+			},
+			10,
+			3
 		);
 
 		return true;
@@ -614,8 +644,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $methods;
 				}
 
-				$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
-				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				$standard_card_button = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
 
@@ -930,6 +960,41 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	}
 
 	/**
+	 * Registers inbox notes in the WooCommerce Admin inbox section.
+	 */
+	protected function register_woo_inbox_notes( ContainerInterface $container ): void {
+		add_action(
+			'admin_init',
+			static function () use ( $container ): void {
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$is_working_capital_feature_flag_enabled = apply_filters(
+				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+					'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+					getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+				);
+
+				$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
+				if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
+					return;
+				}
+
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+				try {
+					$inbox_note_registrar = $container->get( 'wcgateway.settings.inbox-note-registrar' );
+					assert( $inbox_note_registrar instanceof InboxNoteRegistrar );
+					$inbox_note_registrar->register();
+				} catch ( Exception $exception ) {
+					$logger->error( 'Failed to add note to the WooCommerce inbox section. ' . $exception->getMessage() );
+				}
+			},
+		);
+	}
+
+	/**
 	 * Registers the assets and ajax endpoint for the void button.
 	 *
 	 * @param ContainerInterface $container The container.
@@ -956,5 +1021,124 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$endpoint->handle_request();
 			}
 		);
+	}
+
+	/**
+	 * Checks, if the provided argument is a WC_Order which was paid directly by PayPal.
+	 *
+	 * Only considers direct PayPal payments, and returns false for orders that were paid "via"
+	 * PayPal, like wallets (Google Pay, ...) or local APMs.
+	 *
+	 * @param WC_Order|mixed $order The order to verify.
+	 * @return bool True, if it's a valid order that was paid via PayPal.
+	 */
+	private function is_order_paid_by_paypal( $order ) : bool {
+		if ( ! $order instanceof WC_Order ) {
+			return false;
+		}
+
+		if ( ! $order->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ) {
+			return false;
+		}
+
+		if ( 'paypal' !== $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) ) {
+			return false;
+		}
+
+		return false === strpos( $order->get_payment_method_title(), '(via PayPal)' );
+	}
+
+	/**
+	 * Inserts custom fields into the order-detail view.
+	 *
+	 * @param mixed $fields The field-list provided by WooCommerce, should be an array.
+	 * @return array|mixed The filtered field list.
+	 *
+	 * @psalm-suppress MissingClosureParamType
+	 */
+	private function insert_custom_fields_into_order_details( $fields ) {
+		global $theorder;
+
+		if ( ! is_array( $fields ) ) {
+			return $fields;
+		}
+
+		if ( ! $this->is_order_paid_by_paypal( $theorder ) ) {
+			return $fields;
+		}
+
+		/**
+		 * We use this filter to de-customize the order details - 'billing' and 'shipping' section.
+		 */
+		if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_paypal_email', true ) ) {
+			return $fields;
+		}
+
+		$email = $theorder->get_meta( PayPalGateway::ORDER_PAYER_EMAIL_META_KEY ) ?: '';
+
+		$fields['paypal_email'] = array(
+			'label'             => __( 'PayPal email address', 'woocommerce-paypal-payments' ),
+			'value'             => $email,
+			'wrapper_class'     => 'form-field-wide',
+			'custom_attributes' => array( 'disabled' => 'disabled' ),
+		);
+
+		return $fields;
+	}
+
+	/**
+	 * Displays a custom section in the order details page with the original contact details entered
+	 * during checkout.
+	 *
+	 * When the Contact module is active, those contact details are replaced with details provided
+	 * by PayPal; this section shows the (unused) details which the user originally entered.
+	 *
+	 * @param WC_Order|mixed $order The order which is rendered.
+	 * @return void
+	 */
+	private function display_original_contact_in_order_details( $order ) : void {
+		if ( ! $this->is_order_paid_by_paypal( $order ) ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'woocommerce_paypal_payments_order_details_show_original_contact', true ) ) {
+			return;
+		}
+
+		assert( $order instanceof WC_Order );
+		$contact_email = $order->get_meta( PayPalGateway::ORIGINAL_EMAIL_META_KEY );
+		$contact_phone = $order->get_meta( PayPalGateway::ORIGINAL_PHONE_META_KEY );
+
+		if ( ! $contact_email && ! $contact_phone ) {
+			return;
+		}
+
+		?>
+		<div class="ppcp-original-contact-data address" style="clear:both">
+			<h3>
+				<?php esc_html_e( 'Other', 'woocommerce-paypal-payments' ); ?>
+				<span
+					class="woocommerce-help-tip alignright" tabindex="0"
+					data-tip="<?php esc_attr_e( 'The customer entered these contact details during checkout, but provided different details in the PayPal popup. These details are kept for reference only.', 'woocommerce-paypal-payments' ); ?>"
+				></span>
+			</h3>
+			<?php if ( ! empty( $contact_email ) ) : ?>
+				<p>
+					<strong>
+						<?php esc_html_e( 'Email address', 'woocommerce-paypal-payments' ); ?>:
+					</strong>
+					<a href="<?php echo esc_url( 'mailto:' . $contact_email ); ?>"><?php echo esc_html( $contact_email ); ?></a>
+				</p>
+			<?php endif; ?>
+			<?php if ( ! empty( $contact_phone ) ) : ?>
+				<p>
+					<strong>
+						<?php esc_html_e( 'Phone', 'woocommerce-paypal-payments' ); ?>:
+					</strong>
+					<?php echo wc_make_phone_clickable( $contact_phone ); ?>
+				</p>
+			<?php endif; ?>
+		</div>
+		<?php
 	}
 }

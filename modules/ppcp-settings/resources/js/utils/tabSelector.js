@@ -15,18 +15,19 @@ import { scrollAndHighlight } from './scrollAndHighlight';
  *
  * TODO: Once the TabPanel gets migrated to Tabs (TabPanel v2) we need to remove this in favor of programmatic tab switching: https://github.com/WordPress/gutenberg/issues/52997
  *
- * @param {string} tabId        - The ID of the tab to select
- * @param {string} [scrollToId] - Optional ID of the element to scroll to
+ * @param {string}  tabId        - The ID of the tab to select
+ * @param {string}  [scrollToId] - Optional ID of the element to scroll to
+ * @param {boolean} highlight    - Whether to highlight the element after scrolling to it
  * @return {Promise}           - Resolves when tab switch and scroll are complete
  */
-export const selectTab = ( tabId, scrollToId ) => {
+export const selectTab = ( tabId, scrollToId, highlight = false ) => {
 	return new Promise( ( resolve ) => {
 		const tab = document.getElementById( tabId );
 		if ( tab ) {
 			tab.click();
 			setTimeout( () => {
 				const targetId = scrollToId || 'ppcp-settings-container';
-				scrollAndHighlight( targetId, false ).then( resolve );
+				scrollAndHighlight( targetId, highlight ).then( resolve );
 			}, 100 );
 		} else {
 			console.error(

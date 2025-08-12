@@ -1,7 +1,7 @@
-import MiniCartBootstap from './modules/ContextBootstrap/MiniCartBootstap';
-import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBootstap';
-import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
-import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
+import MiniCartBootstrap from './modules/ContextBootstrap/MiniCartBootstrap';
+import SingleProductBootstrap from './modules/ContextBootstrap/SingleProductBootstrap';
+import CartBootstrap from './modules/ContextBootstrap/CartBootstrap';
+import CheckoutBootstrap from './modules/ContextBootstrap/CheckoutBootstrap';
 import PayNowBootstrap from './modules/ContextBootstrap/PayNowBootstrap';
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
@@ -23,7 +23,7 @@ import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from './modules/Helper/FormValidator';
 import { loadPaypalScript } from './modules/Helper/ScriptLoading';
 import buttonModuleWatcher from './modules/ButtonModuleWatcher';
-import MessagesBootstrap from './modules/ContextBootstrap/MessagesBootstap';
+import MessagesBootstrap from './modules/ContextBootstrap/MessagesBootstrap';
 import { apmButtonsInit } from './modules/Helper/ApmButtons';
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
@@ -246,7 +246,7 @@ const bootstrap = () => {
 	);
 
 	if ( PayPalCommerceGateway.mini_cart_buttons_enabled === '1' ) {
-		const miniCartBootstrap = new MiniCartBootstap(
+		const miniCartBootstrap = new MiniCartBootstrap(
 			PayPalCommerceGateway,
 			renderer,
 			errorHandler
@@ -264,7 +264,7 @@ const bootstrap = () => {
 		( PayPalCommerceGateway.single_product_buttons_enabled === '1' ||
 			hasMessages() )
 	) {
-		const singleProductBootstrap = new SingleProductBootstap(
+		const singleProductBootstrap = new SingleProductBootstrap(
 			PayPalCommerceGateway,
 			renderer,
 			errorHandler
@@ -289,17 +289,17 @@ const bootstrap = () => {
 	}
 
 	if ( context === 'checkout' ) {
-		const checkoutBootstap = new CheckoutBootstap(
+		const checkoutBootstrap = new CheckoutBootstrap(
 			PayPalCommerceGateway,
 			renderer,
 			spinner,
 			errorHandler
 		);
 
-		checkoutBootstap.init();
+		checkoutBootstrap.init();
 		buttonModuleWatcher.registerContextBootstrap(
 			'checkout',
-			checkoutBootstap
+			checkoutBootstrap
 		);
 	}
 

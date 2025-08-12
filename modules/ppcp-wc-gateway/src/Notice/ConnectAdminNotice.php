@@ -69,12 +69,22 @@ class ConnectAdminNotice {
 		$message = sprintf(
 			/* translators: %1$s the gateway name. */
 			__(
-				'PayPal Payments is almost ready. To get started, connect your account with the <b>Activate PayPal</b> button <a href="%1$s">on the Account Setup page</a>.',
+				'PayPal Payments is almost ready. To get started, connect your account with the <b>Activate PayPal Payments</b> button <a href="%1$s">on the Account Setup page</a>.',
 				'woocommerce-paypal-payments'
 			),
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )
 		);
 		return new Message( $message, 'warning' );
+	}
+
+	/**
+	 * Returns whether the current page is plugins.php.
+	 *
+	 * @return bool
+	 */
+	private function is_current_page_plugins_page(): bool {
+		global $pagenow;
+		return isset( $pagenow ) && $pagenow === 'plugins.php';
 	}
 
 	/**
@@ -87,6 +97,8 @@ class ConnectAdminNotice {
 	 * @return bool
 	 */
 	protected function should_display(): bool {
-		return ! $this->is_connected && ! $this->is_current_country_send_only;
+		return $this->is_current_page_plugins_page()
+			&& ! $this->is_connected
+			&& ! $this->is_current_country_send_only;
 	}
 }

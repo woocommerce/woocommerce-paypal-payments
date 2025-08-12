@@ -8,7 +8,7 @@ export default {
 	// Transient data
 	SET_TRANSIENT: 'ppcp/features/SET_TRANSIENT',
 
-	// Persistant data
+	// Persistent data
 	SET_FEATURES: 'ppcp/features/SET_FEATURES',
 	HYDRATE: 'ppcp/features/HYDRATE',
 };

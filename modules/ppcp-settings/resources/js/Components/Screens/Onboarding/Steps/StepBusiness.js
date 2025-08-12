@@ -26,7 +26,10 @@ const StepBusiness = ( {} ) => {
 			return;
 		}
 
-		setIsCasualSeller( BUSINESS_TYPES.CASUAL_SELLER === businessChoice );
+		setIsCasualSeller(
+			BUSINESS_TYPES.CASUAL_SELLER === businessChoice,
+			'user'
+		);
 	}, [ businessChoice, setIsCasualSeller ] );
 
 	const { canUseSubscriptions } = OnboardingHooks.useFlags();

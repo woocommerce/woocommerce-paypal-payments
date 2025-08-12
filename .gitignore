@@ -3,14 +3,16 @@
 /.idea/
 node_modules
 .phpunit.result.cache
+phpunit.xml.dist.bak
 yarn-error.log
 modules/*/vendor/*
 modules/*/assets/*
 !modules/ppcp-wc-gateway/assets/images
 *.zip
 .env
-.env.e2e
+.env.integration
 auth.json
 .DS_Store
 tests/.DS_Store
 .composer_compiled_assets
+

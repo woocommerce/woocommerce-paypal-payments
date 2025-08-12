@@ -44,20 +44,24 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
 
-	const ID                            = 'ppcp-gateway';
-	const INTENT_META_KEY               = '_ppcp_paypal_intent';
-	const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
-	const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
-	const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
-	const ORDER_PAYER_EMAIL_META_KEY    = '_ppcp_paypal_payer_email';
-	const FEES_META_KEY                 = '_ppcp_paypal_fees';
-	const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
-	const REFUNDS_META_KEY              = '_ppcp_refunds';
-	const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
-	const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
+	public const ID                            = 'ppcp-gateway';
+	public const INTENT_META_KEY               = '_ppcp_paypal_intent';
+	public const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
+	public const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
+	public const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
+	public const ORDER_PAYER_EMAIL_META_KEY    = '_ppcp_paypal_payer_email';
+	public const FEES_META_KEY                 = '_ppcp_paypal_fees';
+	public const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
+	public const REFUNDS_META_KEY              = '_ppcp_refunds';
+	public const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
+	public const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
+
+	// Used by the Contact Module integration to store the original details.
+	public const ORIGINAL_EMAIL_META_KEY = '_ppcp_paypal_billing_email';
+	public const ORIGINAL_PHONE_META_KEY = '_ppcp_paypal_billing_phone';
 
 	/**
-	 * List of payment sources wich we are expected to store the payer email in the WC Order metadata.
+	 * List of payment sources for which we are expected to store the payer email in the WC Order metadata.
 	 */
 	const PAYMENT_SOURCES_WITH_PAYER_EMAIL = array( 'paypal', 'paylater', 'venmo' );
 
@@ -348,6 +352,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Return the gateway's description.
+	 *
+	 * @return string
+	 */
+	public function get_description() {
+		$gateway_settings = get_option( $this->get_option_key(), array() );
+
+		if ( array_key_exists( 'description', $gateway_settings ) ) {
+			return $gateway_settings['description'];
+		}
+
+		return $this->description;
+	}
+
+	/**
 	 * Whether the Gateway needs to be setup.
 	 *
 	 * @return bool
@@ -614,30 +633,19 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			$paypal_subscription_id = WC()->session->get( 'ppcp_subscription_id' ) ?? '';
-			if ( $paypal_subscription_id ) {
-				$order = $this->session_handler->order();
-				$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-				$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order_id ) : array();
-				foreach ( $subscriptions as $subscription ) {
-					$subscription->update_meta_data( 'ppcp_subscription', $paypal_subscription_id );
-					$subscription->save();
-
-					$subscription->add_order_note( "PayPal subscription {$paypal_subscription_id} added." );
-				}
-
-				$transaction_id = $this->get_paypal_order_transaction_id( $order );
-				if ( $transaction_id ) {
-					$this->update_transaction_id( $transaction_id, $wc_order );
-				}
-
-				$wc_order->payment_complete();
-
-				return $this->handle_payment_success( $wc_order );
-			}
 			try {
-				$this->order_processor->process( $wc_order );
+				/**
+				 * This filter controls if the method 'process()' from OrderProcessor will be called.
+				 * So you can implement your own for example on subscriptions
+				 *
+				 * - true bool controls execution of 'OrderProcessor::process()'
+				 * - $this \WC_Payment_Gateway
+				 * - $wc_order \WC_Order
+				 */
+				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+				if ( $process ) {
+					$this->order_processor->process( $wc_order );
+				}
 
 				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 

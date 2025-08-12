@@ -11,12 +11,13 @@ namespace WooCommerce\PayPalCommerce\AxoBlock;
 
 use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
-use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class AxoBlockPaymentMethod
@@ -61,9 +62,9 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * The DCC gateway settings.
 	 *
-	 * @var DCCGatewayConfiguration
+	 * @var CardPaymentsConfiguration
 	 */
-	protected DCCGatewayConfiguration $dcc_configuration;
+	protected CardPaymentsConfiguration $dcc_configuration;
 
 	/**
 	 * The environment object.
@@ -101,7 +102,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param WC_Payment_Gateway            $gateway Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
 	 * @param Settings                      $settings The settings.
-	 * @param DCCGatewayConfiguration       $dcc_configuration The DCC gateway settings.
+	 * @param CardPaymentsConfiguration     $dcc_configuration The DCC gateway settings.
 	 * @param Environment                   $environment The environment object.
 	 * @param string                        $wcgateway_module_url The WcGateway module URL.
 	 * @param array                         $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
@@ -113,7 +114,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	WC_Payment_Gateway $gateway,
 	$smart_button,
 	Settings $settings,
-	DCCGatewayConfiguration $dcc_configuration,
+	CardPaymentsConfiguration $dcc_configuration,
 	Environment $environment,
 	string $wcgateway_module_url,
 	array $payment_method_selected_map,
@@ -257,9 +258,13 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
 			'module_url'                 => untrailingslashit( $this->module_url ),
 			'ajax'                       => array(
-				'frontend_logger' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+				'frontend_logger'       => array(
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLogger::nonce() ),
+				),
+				'axo_script_attributes' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( AxoScriptAttributes::ENDPOINT ),
+					'nonce'    => wp_create_nonce( AxoScriptAttributes::nonce() ),
 				),
 			),
 			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',

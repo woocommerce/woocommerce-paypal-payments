@@ -18,15 +18,7 @@ return array(
 		return true;
 	},
 	'axoblock.url'       => static function ( ContainerInterface $container ) : string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-axo-block/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-axo-block/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'axoblock.method'    => static function ( ContainerInterface $container ) : AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(
@@ -35,7 +27,7 @@ return array(
 			$container->get( 'axo.gateway' ),
 			fn(): SmartButtonInterface => $container->get( 'button.smart-button' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.configuration.dcc' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'axo.payment_method_selected_map' ),

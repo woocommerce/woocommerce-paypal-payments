@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Settings\DTO\ConfigurationFlagsDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -171,6 +172,19 @@ class SettingsDataManager {
 
 		$this->onboarding_profile->set_setup_done( true );
 		$this->onboarding_profile->save();
+
+		/**
+		 * Fires after the core merchant configuration was applied.
+		 *
+		 * This action indicates that a merchant completed the onboarding wizard.
+		 * The flags contain several choices which the merchant took during the
+		 * onboarding wizard, and provide additional context on which defaults
+		 * should be applied for the new merchant.
+		 *
+		 * Other modules or integrations can use this hook to initialize
+		 * additional plugin settings on first merchant login.
+		 */
+		do_action( 'woocommerce_paypal_payments_apply_default_configuration', $flags );
 	}
 
 	/**
@@ -180,9 +194,6 @@ class SettingsDataManager {
 	 * @return void
 	 */
 	protected function apply_configuration( ConfigurationFlagsDTO $flags ) : void {
-		// Apply defaults for the "Payment Methods" tab.
-		$this->toggle_payment_gateways( $flags );
-
 		// Apply defaults for the "Settings" tab.
 		$this->apply_payment_settings( $flags );
 
@@ -191,6 +202,23 @@ class SettingsDataManager {
 
 		// Assign defaults for the "Pay Later Messaging" tab.
 		$this->apply_pay_later_messaging( $flags );
+	}
+
+	/**
+	 * Synchronize gateway settings with merchant onboarding choices.
+	 *
+	 * @return void
+	 */
+	public function sync_gateway_settings() : void {
+		$flags = new ConfigurationFlagsDTO();
+
+		$profile_data = $this->onboarding_profile->to_array();
+
+		$flags->is_business_seller = ! ( $profile_data['is_casual_seller'] ?? false );
+		$flags->use_card_payments  = $profile_data['accept_card_payments'] ?? false;
+		$flags->use_subscriptions  = in_array( ProductChoicesEnum::SUBSCRIPTIONS, $profile_data['products'] ?? array(), true );
+
+		$this->toggle_payment_gateways( $flags );
 	}
 
 	/**
@@ -207,6 +235,9 @@ class SettingsDataManager {
 		$methods_apm    = $this->methods_definition->group_apms();
 		$all_methods    = array_merge( $methods_paypal, $methods_cards, $methods_apm );
 
+		// Enable the Fastlane watermark by default.
+		$this->payment_methods->set_fastlane_display_watermark( true );
+
 		foreach ( $all_methods as $method ) {
 			$this->payment_methods->toggle_method_state( $method['id'], false );
 		}
@@ -214,9 +245,8 @@ class SettingsDataManager {
 		// Always enable PayPal, Venmo and Pay Later.
 		$this->payment_methods->toggle_method_state( PayPalGateway::ID, true );
 		$this->payment_methods->toggle_method_state( 'venmo', true );
-		$this->payment_methods->toggle_method_state( 'pay-later', true );
 
-		if ( $flags->is_business_seller && $flags->use_card_payments ) {
+		if ( ! $flags->is_business_seller && $flags->use_card_payments ) {
 			// Use BCDC for casual sellers.
 			$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
 		}
@@ -229,13 +259,33 @@ class SettingsDataManager {
 				// Apple Pay and Google Pay depend on the ACDC gateway.
 				$this->payment_methods->toggle_method_state( ApplePayGateway::ID, true );
 				$this->payment_methods->toggle_method_state( GooglePayGateway::ID, true );
-			}
 
-			// Enable all APM methods.
-			foreach ( $methods_apm as $method ) {
-				$this->payment_methods->toggle_method_state( $method['id'], true );
+				// Enable Pay Later for business sellers if subscriptions were not selected.
+				// Selecting subscriptions automatically enables the "Save PayPal and Venmo" option, which is incompatible with Pay Later.
+				if ( ! $flags->use_subscriptions ) {
+					$this->payment_methods->toggle_method_state( 'pay-later', true );
+				}
+
+				// Enable BCDC for business sellers without ACDC.
+				$this->payment_methods->toggle_method_state( CardButtonGateway::ID, true );
 			}
+			/**
+			 * Allow plugins to modify apm payment gateway states before saving.
+			 *
+			 * @param PaymentSettings $payment_methods The payment methods object.
+			 * @param PaymentSettings $methods_apm List of APM methods.
+			 * @param ConfigurationFlagsDTO $flags Configuration flags that determine which gateways to enable.
+			 */
+			do_action( 'woocommerce_paypal_payments_toggle_payment_gateways_apms', $this->payment_methods, $methods_apm, $flags );
 		}
+
+		/**
+		 * Allow plugins to modify payment gateway states before saving.
+		 *
+		 * @param PaymentSettings $payment_methods The payment methods object.
+		 * @param ConfigurationFlagsDTO $flags Configuration flags that determine which gateways to enable.
+		 */
+		do_action( 'woocommerce_paypal_payments_toggle_payment_gateways', $this->payment_methods, $flags );
 
 		$this->payment_methods->save();
 	}
@@ -253,12 +303,7 @@ class SettingsDataManager {
 
 		if ( $flags->is_business_seller && $flags->use_subscriptions ) {
 			$this->payment_settings->set_save_paypal_and_venmo( true );
-
-			if ( $flags->use_card_payments ) {
-				$this->payment_settings->set_save_card_details( true );
-			} else {
-				$this->payment_settings->set_save_card_details( false );
-			}
+			$this->payment_settings->set_save_card_details( true );
 		}
 
 		$this->payment_settings->save();
@@ -298,7 +343,7 @@ class SettingsDataManager {
 			'cart'             => new LocationStylingDTO( 'cart', true, $methods_full ),
 			'classic_checkout' => new LocationStylingDTO( 'classic_checkout', true, $methods_full ),
 			'express_checkout' => new LocationStylingDTO( 'express_checkout', true, $methods_full ),
-			'mini_cart'        => new LocationStylingDTO( 'mini_cart', true, $methods_full ),
+			'mini_cart'        => new LocationStylingDTO( 'mini_cart', false, $methods_full ),
 			'product'          => new LocationStylingDTO( 'product', true, $methods_own ),
 		);
 

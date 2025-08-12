@@ -32,20 +32,20 @@ return array(
 	'prefix'                  => 'WooCommerce\\PayPalCommerce\\Vendor',
 	'finders'                 => $finders,
 	'patchers'                => array(),
-	'exclude-files'           => array(), // list<string>.
+	'exclude-files'           => array( 'vendor/symfony/polyfill-php80/Resources/stubs/Stringable.php' ), // list<string>.
 	'exclude-namespaces'      => array(
 		'/^(?!Psr).*/', // Exclude all namespaces except those starting with "Psr".
 	), // list<string|regex>.
 	'exclude-constants'       => array(), // list<string|regex>.
-	'exclude-classes'         => array(),     // list<string|regex>.
+	'exclude-classes'         => array(), // list<string|regex>.
 	'exclude-functions'       => array(), // list<string|regex>.
 
 	'expose-global-constants' => false,   // bool.
-	'expose-global-classes'   => false,     // bool.
+	'expose-global-classes'   => false,   // bool.
 	'expose-global-functions' => false,   // bool.
 
 	'expose-namespaces'       => array(), // list<string|regex>.
-	'expose-constants'        => array(),  // list<string|regex>.
-	'expose-classes'          => array(),    // list<string|regex>.
-	'expose-functions'        => array(),  // list<string|regex>.
+	'expose-constants'        => array(), // list<string|regex>.
+	'expose-classes'          => array(), // list<string|regex>.
+	'expose-functions'        => array(), // list<string|regex>.
 );

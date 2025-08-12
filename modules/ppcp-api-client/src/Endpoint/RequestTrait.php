@@ -41,9 +41,6 @@ trait RequestTrait {
 		 * added here.
 		 */
 		$args = apply_filters( 'ppcp_request_args', $args, $url );
-		if ( ! isset( $args['headers']['PayPal-Partner-Attribution-Id'] ) ) {
-			$args['headers']['PayPal-Partner-Attribution-Id'] = PPCP_PAYPAL_BN_CODE;
-		}
 
 		$response = wp_remote_get( $url, $args );
 		if ( $this->is_request_logging_enabled ) {

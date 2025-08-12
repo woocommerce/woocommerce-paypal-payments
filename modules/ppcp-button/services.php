@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
@@ -37,7 +38,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 return array(
 	'button.client_id'                            => static function ( ContainerInterface $container ): string {
@@ -115,8 +116,8 @@ return array(
 			}
 
 			$no_smart_buttons  = ! $settings_status->is_smart_button_enabled_for_location( $context );
-			$dcc_configuration = $container->get( 'wcgateway.configuration.dcc' );
-			assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+			$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+			assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 			if ( $no_smart_buttons && ! $dcc_configuration->is_enabled() ) {
 				// Smart buttons disabled, and also not using advanced card payments.
@@ -167,14 +168,16 @@ return array(
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
-			$container->get( 'button.helper.disabled-funding-sources' )
+			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
+			$container->get( 'wcgateway.appswitch-enabled' ),
+			$container->get( 'button.helper.disabled-funding-sources' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'api.helper.partner-attribution' ),
+			$container->get( 'blocks.settings.final_review_enabled' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
-		return plugins_url(
-			'/modules/ppcp-button/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-button/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
 		$defaults = array( 'checkout', 'pay-now' );
@@ -225,6 +228,9 @@ return array(
 			$request_data,
 			$purchase_unit_factory,
 			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'api.factory.return-url' ),
+			$container->get( 'api.factory.contact-preference' ),
+			$container->get( 'wcgateway.builder.experience-context' ),
 			$order_endpoint,
 			$payer_factory,
 			$session_handler,
@@ -235,6 +241,7 @@ return array(
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
+			$container->get( 'wcgateway.server-side-shipping-callback-enabled' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$logger
 		);
@@ -324,6 +331,16 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'button.endpoint.get-order'                   => static function ( ContainerInterface $container ): GetOrderEndpoint {
+		$request_data   = $container->get( 'button.request-data' );
+		$order_endpoint = $container->get( 'api.endpoint.order' );
+		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
+		return new GetOrderEndpoint(
+			$request_data,
+			$order_endpoint,
+			$logger
+		);
+	},
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
 		$data_store = \WC_Data_Store::load( 'product' );
 		return new CartProductsHelper( $data_store );
@@ -343,7 +360,9 @@ return array(
 	'button.helper.disabled-funding-sources'      => static function ( ContainerInterface $container ): DisabledFundingSources {
 		return new DisabledFundingSources(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.all-funding-sources' )
+			$container->get( 'wcgateway.all-funding-sources' ),
+			$container->get( 'wcgateway.configuration.card-configuration' ),
+			$container->get( 'api.shop.country' )
 		);
 	},
 	'button.is-logged-in'                         => static function ( ContainerInterface $container ): bool {

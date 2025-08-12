@@ -38,7 +38,6 @@ class PaymentSettings extends AbstractDataModel {
 	protected function get_defaults() : array {
 		return array(
 			'paypal_show_logo'           => false,
-			'three_d_secure'             => 'no-3d-secure',
 			'fastlane_cardholder_name'   => false,
 			'fastlane_display_watermark' => false,
 			'venmo_enabled'              => false,
@@ -159,15 +158,6 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Get 3DSecure.
-	 *
-	 * @return string
-	 */
-	public function get_three_d_secure() : string {
-		return $this->data['three_d_secure'];
-	}
-
-	/**
 	 * Get Fastlane cardholder name.
 	 *
 	 * @return bool
@@ -211,16 +201,6 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	public function set_paypal_show_logo( bool $value ) : void {
 		$this->data['paypal_show_logo'] = $value;
-	}
-
-	/**
-	 * Set 3DSecure.
-	 *
-	 * @param string $value The value.
-	 * @return void
-	 */
-	public function set_three_d_secure( string $value ) : void {
-		$this->data['three_d_secure'] = $value;
 	}
 
 	/**

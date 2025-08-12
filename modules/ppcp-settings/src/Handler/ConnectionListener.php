@@ -29,6 +29,17 @@ use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
  */
 class ConnectionListener {
 	/**
+	 * Token processing states
+	 */
+	private const TOKEN_STATE_PROCESSING = 'processing';
+	private const TOKEN_STATE_PROCESSED  = 'processed';
+
+	/**
+	 * Transient key for storing token state.
+	 */
+	private const TOKEN_STATE_TRANSIENT = 'ppcp_auth_token_state';
+
+	/**
 	 * ID of the current settings page; empty if not on a PayPal settings page.
 	 *
 	 * @var string
@@ -67,9 +78,18 @@ class ConnectionListener {
 	/**
 	 * ID of the current user, set by the process() method.
 	 *
+	 * Default value is 0 (guest), until the real ID is provided to process().
+	 *
 	 * @var int
 	 */
-	private int $user_id;
+	private int $user_id = 0;
+
+	/**
+	 * The request details (usually the GET data) which were provided.
+	 *
+	 * @var array
+	 */
+	private array $request_data = array();
 
 	/**
 	 * Prepare the instance.
@@ -85,16 +105,13 @@ class ConnectionListener {
 		OnboardingUrlManager $url_manager,
 		AuthenticationManager $authentication_manager,
 		RedirectorInterface $redirector,
-		LoggerInterface $logger = null
+		?LoggerInterface $logger = null
 	) {
 		$this->settings_page_id       = $settings_page_id;
 		$this->url_manager            = $url_manager;
 		$this->authentication_manager = $authentication_manager;
 		$this->redirector             = $redirector;
 		$this->logger                 = $logger ?: new NullLogger();
-
-		// Initialize as "guest", the real ID is provided via process().
-		$this->user_id = 0;
 	}
 
 	/**
@@ -106,42 +123,95 @@ class ConnectionListener {
 	 * @throws RuntimeException If the merchant ID does not match the ID previously set via OAuth.
 	 */
 	public function process( int $user_id, array $request ) : void {
-		$this->user_id = $user_id;
+		$this->user_id      = $user_id;
+		$this->request_data = $request;
 
-		if ( ! $this->is_valid_request( $request ) ) {
+		if ( ! $this->is_valid_request() ) {
 			return;
 		}
 
-		$token = $this->get_token_from_request( $request );
+		$token = $this->get_token_from_request();
+
+		$this->process_oauth_token( $token );
+
+		$this->redirect_after_authentication();
+	}
+
+	/**
+	 * Processes the OAuth token from the request.
+	 *
+	 * @param string $token The OAuth token extracted from the request.
+	 * @return void
+	 */
+	private function process_oauth_token( string $token ) : void {
+		if ( ! $token ) {
+			return;
+		}
+
+		$log_token = ( (string) substr( $token, 0, 2 ) ) . '...' . ( (string) substr( $token, - 6 ) );
+
+		if ( $this->was_token_processed( $token ) ) {
+			/*
+			 * Token already processed:
+			 * Do nothing as the DB already contains the full connection details.
+			 */
+			$this->logger->info( 'Token already processed, continuing silently', array( 'token' => $log_token ) );
+
+			return;
+		}
+
+		if ( $this->is_token_processing( $token ) ) {
+			/*
+			 * Authentication token is currently processed (in another request):
+			 * Briefly wait and then retry this request, basically waiting for
+			 * the above "was_processed" condition to become true.
+			 */
+			$this->logger->info( 'Token is currently being processed, waiting and retrying', array( 'token' => $log_token ) );
+			sleep( 1 );
+
+			// Get the current URL.
+			$current_url = add_query_arg( null, null );
+
+			// Add time to the query parameter to prevent browser cache issues.
+			$current_url = add_query_arg( 'retry', microtime( true ), $current_url );
+
+			wp_safe_redirect( $current_url );
+			exit;
+		}
+
 		if ( ! $this->url_manager->validate_token_and_delete( $token, $this->user_id ) ) {
+			$this->logger->error( 'Token validation failed', array( 'token' => $log_token ) );
+
 			return;
 		}
 
-		$data = $this->extract_data( $request );
+		$data = $this->extract_data();
 		if ( ! $data ) {
+			$this->logger->error( 'Failed to extract merchant data from request' );
+
 			return;
 		}
 
 		$this->logger->info( 'Found OAuth merchant data in request', $data );
 
 		try {
-			$this->authentication_manager->finish_oauth_authentication( $data );
+			$this->set_token_state( $token, self::TOKEN_STATE_PROCESSING );
+
+			$this->authentication_manager->handle_oauth_authentication( $data );
 		} catch ( \Exception $e ) {
 			$this->logger->error( 'Failed to complete authentication: ' . $e->getMessage() );
 		}
 
-		$this->redirect_after_authentication();
+		$this->set_token_state( $token, self::TOKEN_STATE_PROCESSED );
 	}
 
 	/**
 	 * Determine, if the request details contain connection data that should be
 	 * extracted and stored.
 	 *
-	 * @param array $request Request details to verify.
-	 *
 	 * @return bool True, if the request contains valid connection details.
 	 */
-	private function is_valid_request( array $request ) : bool {
+	private function is_valid_request() : bool {
 		if ( $this->user_id < 1 || ! $this->settings_page_id ) {
 			return false;
 		}
@@ -157,7 +227,7 @@ class ConnectionListener {
 		);
 
 		foreach ( $required_params as $param ) {
-			if ( empty( $request[ $param ] ) ) {
+			if ( empty( $this->request_data[ $param ] ) ) {
 				return false;
 			}
 		}
@@ -166,19 +236,71 @@ class ConnectionListener {
 	}
 
 	/**
-	 * Extract the merchant details (ID & email) from the request details.
+	 * Sets the state for a token.
 	 *
-	 * @param array $request The full request details.
+	 * @param string $token The token to set state for.
+	 * @param string $state The state to set.
+	 * @return void
+	 */
+	private function set_token_state( string $token, string $state ) : void {
+		$data = array(
+			'token' => $token,
+			'state' => $state,
+		);
+
+		// 10 second expiration will block the page for max 10 seconds.
+		set_transient( self::TOKEN_STATE_TRANSIENT, $data, 10 );
+	}
+
+	/**
+	 * Gets the current state of a token.
+	 *
+	 * @param string $token The token to check.
+	 * @return string The current state of the token, or empty string if the token doesn't match.
+	 */
+	private function get_token_state( string $token ) : string {
+		$data = get_transient( self::TOKEN_STATE_TRANSIENT );
+
+		if ( empty( $data ) || ! is_array( $data ) || empty( $data['token'] ) || empty( $data['state'] ) ) {
+			return '';
+		}
+
+		// Only return the state if the token matches.
+		return ( $data['token'] === $token ) ? $data['state'] : '';
+	}
+
+	/**
+	 * Checks if the token is currently being processed.
+	 *
+	 * @param string $token The token to check.
+	 * @return bool True if the token is currently being processed, false otherwise.
+	 */
+	private function is_token_processing( string $token ) : bool {
+		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSING;
+	}
+
+	/**
+	 * Checks if the token has been fully processed.
+	 *
+	 * @param string $token The token to check.
+	 * @return bool True if the token has been processed, false otherwise.
+	 */
+	private function was_token_processed( string $token ) : bool {
+		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSED;
+	}
+
+	/**
+	 * Extract the merchant details (ID & email) from the request details.
 	 *
 	 * @return array Structured array with 'is_sandbox', 'merchant_id', and 'merchant_email' keys,
 	 *               or an empty array on failure.
 	 */
-	private function extract_data( array $request ) : array {
+	private function extract_data() : array {
 		$this->logger->info( 'Extracting connection data from request...' );
 
-		$merchant_id    = $this->get_merchant_id_from_request( $request );
-		$merchant_email = $this->get_merchant_email_from_request( $request );
-		$seller_type    = $this->get_seller_type_from_request( $request );
+		$merchant_id    = $this->get_merchant_id_from_request( $this->request_data );
+		$merchant_email = $this->get_merchant_email_from_request( $this->request_data );
+		$seller_type    = $this->get_seller_type_from_request( $this->request_data );
 
 		if ( ! $merchant_id || ! $merchant_email ) {
 			return array();
@@ -200,17 +322,16 @@ class ConnectionListener {
 		$redirect_url = $this->get_onboarding_redirect_url();
 
 		$this->redirector->redirect( $redirect_url );
+		exit;
 	}
 
 	/**
 	 * Returns the sanitized connection token from the incoming request.
 	 *
-	 * @param array $request Full request details.
-	 *
 	 * @return string The sanitized token, or an empty string.
 	 */
-	private function get_token_from_request( array $request ) : string {
-		return $this->sanitize_string( $request['ppcpToken'] ?? '' );
+	private function get_token_from_request() : string {
+		return $this->sanitize_string( $this->request_data['ppcpToken'] ?? '' );
 	}
 
 	/**

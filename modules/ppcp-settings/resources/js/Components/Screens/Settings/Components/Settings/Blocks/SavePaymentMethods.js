@@ -5,7 +5,7 @@ import { ControlToggleButton } from '../../../../../ReusableComponents/Controls'
 import { SettingsHooks } from '../../../../../../data';
 import { useMerchantInfo } from '../../../../../../data/common/hooks';
 
-const SavePaymentMethods = () => {
+const SavePaymentMethods = ( { ownBradOnly } ) => {
 	const {
 		savePaypalAndVenmo,
 		setSavePaypalAndVenmo,
@@ -50,18 +50,21 @@ const SavePaymentMethods = () => {
 				disabled={ ! features.save_paypal_and_venmo.enabled }
 			/>
 
-			<ControlToggleButton
-				label={ __(
-					'Save Credit and Debit Cards',
-					'woocommerce-paypal-payments'
-				) }
-				description={ __(
-					"Securely store your customer's credit card.",
-					'woocommerce-paypal-payments'
-				) }
-				onChange={ setSaveCardDetails }
-				value={ saveCardDetails }
-			/>
+			{ ownBradOnly || (
+				// Credit card settings are only available in "white label" mode.
+				<ControlToggleButton
+					label={ __(
+						'Save Credit and Debit Cards',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						"Securely store your customer's credit card.",
+						'woocommerce-paypal-payments'
+					) }
+					onChange={ setSaveCardDetails }
+					value={ saveCardDetails }
+				/>
+			) }
 		</SettingsBlock>
 	);
 };

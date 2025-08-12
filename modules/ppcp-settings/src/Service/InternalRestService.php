@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use Throwable;
+use RuntimeException;
 use Psr\Log\LoggerInterface;
 use WP_Http_Cookie;
 
@@ -48,13 +49,14 @@ class InternalRestService {
 	 *
 	 * @param string $endpoint The endpoint for which the token is generated.
 	 * @return mixed The REST response.
+	 * @throws RuntimeException In case the remote request fails, an exception is thrown.
 	 */
 	public function get_response( string $endpoint ) {
 		$rest_url     = rest_url( $endpoint );
 		$rest_nonce   = wp_create_nonce( 'wp_rest' );
 		$auth_cookies = $this->build_authentication_cookie();
 
-		$this->logger->info( "Calling internal REST endpoint: $rest_url" );
+		$this->logger->info( "Calling internal REST endpoint [$rest_url]" );
 
 		$response = wp_remote_request(
 			$rest_url,
@@ -67,11 +69,14 @@ class InternalRestService {
 				'cookies' => $auth_cookies,
 			)
 		);
+		$this->logger->debug( "Finished internal REST call [$rest_url]" );
 
 		if ( is_wp_error( $response ) ) {
-			$this->logger->error( 'Internal REST error', array( 'response' => $response ) );
+			// Error: The wp_remote_request() call failed (timeout or similar).
+			$error = new RuntimeException( 'Internal REST error' );
+			$this->logger->error( $error->getMessage(), array( 'response' => $response ) );
 
-			return array();
+			throw $error;
 		}
 
 		$body = wp_remote_retrieve_body( $response );
@@ -79,26 +84,22 @@ class InternalRestService {
 		try {
 			$json = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
 		} catch ( Throwable $exception ) {
+			// Error: The returned body-string is not valid JSON.
+			$error = new RuntimeException( 'Internal REST error: Invalid JSON response' );
 			$this->logger->error(
-				'Internal REST error: Invalid JSON response',
+				$error->getMessage(),
 				array(
 					'error'         => $exception->getMessage(),
 					'response_body' => $body,
 				)
 			);
 
-			return array();
+			throw $error;
 		}
 
-		if ( ! $json || empty( $json['success'] ) ) {
-			$this->logger->error( 'Internal REST error: Invalid response', array( 'json' => $json ) );
+		$this->logger->info( 'Internal REST success!', array( 'json' => $json ) );
 
-			return array();
-		}
-
-		$this->logger->info( 'Internal REST success', array( 'data' => $json['data'] ) );
-
-		return $json['data'];
+		return $json;
 	}
 
 	/**

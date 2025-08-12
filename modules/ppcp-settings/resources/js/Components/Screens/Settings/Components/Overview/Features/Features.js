@@ -6,7 +6,10 @@ import FeatureItem from './FeatureItem';
 import FeatureDescription from './FeatureDescription';
 import { ContentWrapper } from '../../../../../ReusableComponents/Elements';
 import SettingsCard from '../../../../../ReusableComponents/SettingsCard';
-import { useMerchantInfo } from '../../../../../../data/common/hooks';
+import {
+	useMerchantInfo,
+	useWooSettings,
+} from '../../../../../../data/common/hooks';
 import { STORE_NAME as COMMON_STORE_NAME } from '../../../../../../data/common';
 import {
 	NOTIFICATION_ERROR,
@@ -17,6 +20,7 @@ import { useFeatures } from '../../../../../../data/features/hooks';
 const Features = () => {
 	const [ isRefreshing, setIsRefreshing ] = useState( false );
 	const { merchant } = useMerchantInfo();
+	const { storeCountry } = useWooSettings();
 	const { features, fetchFeatures } = useFeatures();
 	const { refreshFeatureStatuses } = useDispatch( COMMON_STORE_NAME );
 	const { createSuccessNotice, createErrorNotice } =
@@ -25,6 +29,13 @@ const Features = () => {
 	if ( ! features || features.length === 0 ) {
 		return null;
 	}
+
+	// Filter out ACDC for Mexico (when disabled).
+	const filteredFeatures = features.filter(
+		( feature ) =>
+			feature.id !== 'advanced_credit_and_debit_cards' ||
+			storeCountry !== 'MX'
+	);
 
 	const refreshHandler = async () => {
 		setIsRefreshing( true );
@@ -43,7 +54,10 @@ const Features = () => {
 						'Features refreshed successfully.',
 						'woocommerce-paypal-payments'
 					),
-					{ icon: NOTIFICATION_SUCCESS }
+					{
+						icon: NOTIFICATION_SUCCESS,
+						speak: true,
+					}
 				);
 			} else {
 				throw new Error(
@@ -58,7 +72,10 @@ const Features = () => {
 					error.message ||
 						__( 'Unknown error', 'woocommerce-paypal-payments' )
 				),
-				{ icon: NOTIFICATION_ERROR }
+				{
+					icon: NOTIFICATION_ERROR,
+					speak: true,
+				}
 			);
 		} finally {
 			setIsRefreshing( false );
@@ -76,9 +93,11 @@ const Features = () => {
 				/>
 			}
 			contentContainer={ false }
+			aria-live="polite"
+			aria-busy={ isRefreshing }
 		>
 			<ContentWrapper>
-				{ features.map( ( { id, enabled, ...feature } ) => (
+				{ filteredFeatures.map( ( { id, enabled, ...feature } ) => (
 					<FeatureItem
 						key={ id }
 						isBusy={ isRefreshing }

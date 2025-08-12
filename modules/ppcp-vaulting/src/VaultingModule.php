@@ -207,6 +207,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 						return;
 					}
 
+					// phpcs:ignore WordPress.Security.NonceVerification
 					$wpnonce         = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
 					$token_id_string = (string) $token_id;
 					$action          = 'delete-payment-method-' . $token_id_string;

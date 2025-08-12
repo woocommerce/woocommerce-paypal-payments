@@ -8,6 +8,10 @@ import ConnectionButton from './ConnectionButton';
 const SandboxConnectionForm = () => {
 	const { isSandboxMode, setSandboxMode } = useSandboxConnection();
 
+	const handleToggle = ( isEnabled ) => {
+		setSandboxMode( isEnabled, 'user' );
+	};
+
 	return (
 		<BusyStateWrapper>
 			<SettingsToggleBlock
@@ -20,7 +24,7 @@ const SandboxConnectionForm = () => {
 					'woocommerce-paypal-payments'
 				) }
 				isToggled={ !! isSandboxMode }
-				setToggled={ setSandboxMode }
+				setToggled={ handleToggle }
 			>
 				<ConnectionButton
 					title={ __(

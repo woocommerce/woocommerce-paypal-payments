@@ -61,8 +61,10 @@ export const initPaymentDependencySync = () => {
 							( [ key, method ] ) =>
 								key !== '__meta' &&
 								method &&
-								method.depends_on &&
-								method.depends_on.includes( changedId )
+								method.depends_on_payment_methods &&
+								method.depends_on_payment_methods.includes(
+									changedId
+								)
 						)
 						.map( ( [ key ] ) => key );
 
@@ -115,11 +117,11 @@ const handleRestoreDependents = ( dependentIds, methods ) => {
 
 const checkAllDependenciesSatisfied = ( methodId, methods ) => {
 	const method = methods[ methodId ];
-	if ( ! method || ! method.depends_on ) {
+	if ( ! method || ! method.depends_on_payment_methods ) {
 		return true;
 	}
 
-	return ! method.depends_on.some( ( parentId ) => {
+	return ! method.depends_on_payment_methods.some( ( parentId ) => {
 		const parent = methods[ parentId ];
 		return ! parent || parent.enabled === false;
 	} );

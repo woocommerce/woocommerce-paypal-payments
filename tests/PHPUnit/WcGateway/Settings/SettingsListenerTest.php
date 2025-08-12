@@ -2,14 +2,14 @@
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use Mockery;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use WooCommerce\PayPalCommerce\ModularTestCase;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
@@ -43,10 +43,11 @@ class SettingsListenerTest extends ModularTestCase
 		$signup_link_ids = array();
         $pui_status_cache = Mockery::mock(Cache::class);
         $dcc_status_cache = Mockery::mock(Cache::class);
-		$billing_agreement_endpoint = Mockery::mock(BillingAgreementsEndpoint::class);
+		$reference_transaction_status = Mockery::mock(ReferenceTransactionStatus::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$logger = Mockery::mock(LoggerInterface::class);
 		$client_credentials_cache = Mockery::mock(Cache::class);
+		$reference_transaction_status_cache = Mockery::mock(Cache::class);
 
 		$testee = new SettingsListener(
 			$settings,
@@ -63,9 +64,10 @@ class SettingsListenerTest extends ModularTestCase
 			new RedirectorStub(),
 			'',
 			'',
-			$billing_agreement_endpoint,
+			$reference_transaction_status,
 			$logger,
-			$client_credentials_cache
+			$client_credentials_cache,
+			$reference_transaction_status_cache
 		);
 
 		$_GET['section'] = PayPalGateway::ID;
@@ -99,6 +101,8 @@ class SettingsListenerTest extends ModularTestCase
             ->andReturn(false);
         $dcc_status_cache->shouldReceive('has')
             ->andReturn(false);
+		$reference_transaction_status_cache->shouldReceive('has')
+			->andReturn(false);
 		$client_credentials_cache->shouldReceive('has')->andReturn(true);
 		$client_credentials_cache->shouldReceive('delete');
 

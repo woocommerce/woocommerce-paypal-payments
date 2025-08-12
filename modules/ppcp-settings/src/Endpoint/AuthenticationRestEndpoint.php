@@ -204,17 +204,9 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 		$auth_code   = $request->get_param( 'authCode' );
 		$use_sandbox = $request->get_param( 'useSandbox' );
 
-		try {
-			$this->authentication_manager->validate_id_and_auth_code( $shared_id, $auth_code );
-			$this->authentication_manager->authenticate_via_oauth( $use_sandbox, $shared_id, $auth_code );
-		} catch ( Exception $exception ) {
-			return $this->return_error( $exception->getMessage() );
-		}
+		$this->authentication_manager->remember_oauth_connection_details( $shared_id, $auth_code, $use_sandbox );
 
-		$account  = $this->authentication_manager->get_account_details();
-		$response = $this->sanitize_for_javascript( $this->response_map, $account );
-
-		return $this->return_success( $response );
+		return $this->return_success( true );
 	}
 
 	/**

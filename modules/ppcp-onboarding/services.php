@@ -19,6 +19,9 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingSendOnlyNoticeRendere
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 return array(
 	'api.paypal-host'                    => function( ContainerInterface $container ) : string {
@@ -48,27 +51,64 @@ return array(
 		return new State( $settings );
 	},
 	/**
-	 * Checks if the onboarding process is completed and the merchant API can be used.
-	 * This service is overwritten by the ppcp-settings module, when it's active.
+	 * Merchant connection details, which includes the connection status
+	 * (onboarding/connected) and connection-aware environment checks.
+	 * This is the preferred solution to check environment and connection state.
 	 */
-	'settings.flag.is-connected'         => static function ( ContainerInterface $container ) : bool {
+	'settings.connection-state'          => static function ( ContainerInterface $container ) : ConnectionState {
 		$state = $container->get( 'onboarding.state' );
 		assert( $state instanceof State );
 
-		return $state->current_state() >= State::STATE_ONBOARDED;
-	},
-	'settings.flag.is-sandbox'           => static function ( ContainerInterface $container ) : bool {
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		return $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' );
-	},
-	'settings.environment'               => function ( ContainerInterface $container ) : Environment {
-		return new Environment(
-			$container->get( 'settings.flag.is-sandbox' )
-		);
-	},
+		$is_sandbox   = $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' );
+		$is_connected = $state->current_state() >= State::STATE_ONBOARDED;
+		$environment  = new Environment( $is_sandbox );
 
+		return new ConnectionState( $is_connected, $environment );
+	},
+	/**
+	 * Checks if the onboarding process is completed and the merchant API can be used.
+	 * This service only resolves the connection status once per request.
+	 *
+	 * @deprecated Use 'settings.connection-state' instead.
+	 */
+	'settings.flag.is-connected'         => static function ( ContainerInterface $container ) : bool {
+		$state = $container->get( 'settings.connection-state' );
+		assert( $state instanceof ConnectionState );
+
+		return $state->is_connected();
+	},
+	/**
+	 * Determines whether the merchant is connected to a sandbox account.
+	 * This service only resolves the sandbox flag once per request.
+	 *
+	 * @deprecated Use 'settings.connection-state' instead.
+	 */
+	'settings.flag.is-sandbox'           => static function ( ContainerInterface $container ) : bool {
+		$state = $container->get( 'settings.connection-state' );
+		assert( $state instanceof ConnectionState );
+
+		return $state->is_sandbox();
+	},
+	/**
+	 * Returns details about the connected environment (production/sandbox).
+	 *
+	 * @deprecated Directly use 'settings.connection-state' instead of this.
+	 */
+	'settings.environment'               => function ( ContainerInterface $container ) : Environment {
+		$state = $container->get( 'settings.connection-state' );
+		assert( $state instanceof ConnectionState );
+
+		return $state->get_environment();
+	},
+	'settings.merchant-details'          => static function ( ContainerInterface $container ) : MerchantDetails {
+		$woo_country        = $container->get( 'api.shop.country' );
+		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
+
+		return new MerchantDetails( $woo_country, $woo_country, $eligibility_checks );
+	},
 	'onboarding.assets'                  => function( ContainerInterface $container ) : OnboardingAssets {
 		$state                 = $container->get( 'onboarding.state' );
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
@@ -83,10 +123,7 @@ return array(
 	},
 
 	'onboarding.url'                     => static function ( ContainerInterface $container ): string {
-		return plugins_url(
-			'/modules/ppcp-onboarding/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'onboarding.endpoint.login-seller'   => static function ( ContainerInterface $container ) : LoginSellerEndpoint {

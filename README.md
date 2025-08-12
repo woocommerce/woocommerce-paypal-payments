@@ -1,12 +1,54 @@
+<!-- WooCommerce logo -->
+<p align="center">
+  <a href="https://woocommerce.com/products/woocommerce-paypal-payments/">
+    <img src="https://woocommerce.com/wp-content/themes/woo/images/logo-woocommerce@2x.png"
+         alt="WooCommerce logo">
+  </a>
+</p>
+
+<!-- PayPal logo -->
+<p align="center">
+  <a href="https://woocommerce.com/products/woocommerce-paypal-payments/">
+    <img src="https://paypal.inpsyde.com/wp-content/uploads/sites/43/2025/05/PayPal-Logo-RGB-Black.png"
+         alt="PayPal logo" height="130">
+  </a>
+</p>
+
+[![License](https://img.shields.io/github/license/woocommerce/woocommerce-paypal-payments 'License')](https://github.com/woocommerce/woocommerce-paypal-payments/blob/trunk/LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/woocommerce/woocommerce-paypal-payments)](https://github.com/woocommerce/woocommerce-paypal-payments/releases)
+[![GitHub Release Date](https://img.shields.io/github/release-date/woocommerce/woocommerce-paypal-payments)](https://github.com/woocommerce/woocommerce-paypal-payments/releases)
+[![WordPress.org downloads](https://img.shields.io/wordpress/plugin/dt/woocommerce-paypal-payments.svg 'WordPress.org downloads')](https://wordpress.org/plugins/woocommerce-paypal-payments/advanced/#plugin-download-history-stats)
+[![Build Status](https://github.com/woocommerce/woocommerce-paypal-payments/actions/workflows/php.yml/badge.svg?branch=trunk 'Build Status')](https://github.com/woocommerce/woocommerce-paypal-payments/blob/trunk/.github/workflows/php.yml)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/woocommerce/woocommerce-paypal-payments)
+
 # WooCommerce PayPal Payments
 
 PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
 
+## Features  
+  
+- **Multiple Payment Options**: PayPal, credit/debit cards, Pay Later, digital wallets (Apple Pay, Google Pay), and localized payment methods  
+- **Subscription Support**: Supports WooCommerce Subscriptions with PayPal Vaulting and PayPal Subscriptions  
+- **Customizable Experience**: Flexible button placement and styling options  
+- **Enhanced Security**: PCI compliance, 3D Secure, and fraud protection tools  
+- **Global Compliance**: Meets international standards (PSD2, SCA)  
+  
+## Documentation  
+  
+Visit our [official documentation](https://woocommerce.com/document/woocommerce-paypal-payments/) for detailed guides and setup instructions.
+
 ## Dependencies
 
 * PHP >= 7.4
-* WordPress >= 6.3
-* WooCommerce >= 6.9
+* WordPress >= 6.5
+* WooCommerce >= 9.6
+
+## Quick Installation  
+  
+1. Go to **Plugins > Add New** in your WordPress admin  
+2. Search for "WooCommerce PayPal Payments"  
+3. Click "Install Now" and then "Activate"  
+4. Go to **WooCommerce > Settings > Payments** to configure PayPal Payments
 
 ## Development
 
@@ -58,7 +100,7 @@ To set up the DDEV environment, follow these steps:
 3. `$ ddev orchestrate` to install WP/WC.
 4. Open https://wc-pp.ddev.site
 
-Use `$ ddev orchestrate -f` for reinstalattion (will destroy all site data).
+Use `$ ddev orchestrate -f` for reinstallation (will destroy all site data).
 You may also need `$ ddev restart` to apply the config changes.
 
 ### Running tests and other tasks in the DDEV environment
