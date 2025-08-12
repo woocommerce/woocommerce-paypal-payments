@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -107,5 +108,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' )
 		);
+	},
+	'save-payment-methods.service.payment-method-tokens-checker' => static function ( ContainerInterface $container ): PaymentMethodTokensChecker {
+		return new PaymentMethodTokensChecker( $container->get( 'api.endpoint.payment-tokens' ) );
 	},
 );
