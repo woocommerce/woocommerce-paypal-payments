@@ -3,7 +3,6 @@ import {
 	paypalSubscriptionToWcAddresses,
 } from './Helper/Address';
 import ResumeFlowHelper from '../../../ppcp-button/resources/js/modules/Helper/ResumeFlowHelper';
-import Spinner from '../../../ppcp-button/resources/js/modules/Helper/Spinner';
 
 export const createOrder = async ( data, config, onError, onClose ) => {
 	try {
@@ -65,11 +64,10 @@ export const handleApprove = async (
 	setGotoContinuationOnError,
 	onSubmit,
 	onError,
-	onClose
+	onClose,
+	setIsFullPageSpinnerActive
 ) => {
-	// Block the entire page during approval process
-	const spinner = Spinner.fullPage();
-	spinner.block();
+	setIsFullPageSpinnerActive( true );
 
 	try {
 		let order;
@@ -173,13 +171,13 @@ export const handleApprove = async (
 	} catch ( err ) {
 		console.error( err );
 
+		setIsFullPageSpinnerActive( false );
+
 		onError( err.message );
 
 		onClose();
 
 		throw err;
-	} finally {
-		spinner.unblock();
 	}
 };
 

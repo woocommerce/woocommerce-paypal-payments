@@ -14,6 +14,7 @@ class Spinner {
 				background: '#fff',
 				opacity: 0.6,
 			},
+			baseZ: 10000,
 		} );
 	}
 
