@@ -144,6 +144,7 @@ jobs:
             const updatedContext = {
               ...context,
               issue: {
+                ...context.issue,
                 number: parseInt(pr_number, 10)
               }
             };
