@@ -2161,7 +2161,7 @@ return array(
 	 *
 	 * @returns InboxNoteInterface[]
 	 */
-	'wcgateway.settings.inbox-notes'                    => static function( ContainerInterface $container ): array {
+	'wcgateway.settings.inbox-notes'                       => static function( ContainerInterface $container ): array {
 		$inbox_note_factory = $container->get( 'wcgateway.settings.inbox-note-factory' );
 		assert( $inbox_note_factory instanceof InboxNoteFactory );
 
