@@ -432,9 +432,9 @@ return array(
 	'axo.au.enabled'                         => static function ( ContainerInterface $container ): bool {
 		// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 		/**
-		 * Filter to determine if Fastlane Australia should be enabled.
+		 * Filter to determine if Fastlane AU should be enabled.
 		 *
-		 * @param bool $enabled Whether Fastlane Australia is enabled.
+		 * @param bool $enabled Whether Fastlane AU is enabled.
 		 */
 		return apply_filters(
 			'woocommerce.feature-flags.woocommerce_paypal_payments.axo_au_enabled',
