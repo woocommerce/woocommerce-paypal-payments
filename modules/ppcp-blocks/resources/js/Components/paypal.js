@@ -316,7 +316,6 @@ export const PayPalComponent = ( {
 		}
 		const unsubscribe = onCheckoutFail( ( { processingResponse } ) => {
 			console.error( processingResponse );
-			setIsFullPageSpinnerActive( false );
 			if ( onClose ) {
 				onClose();
 			}
