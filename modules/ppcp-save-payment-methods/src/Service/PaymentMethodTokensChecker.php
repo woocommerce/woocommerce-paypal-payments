@@ -11,9 +11,6 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 
-/**
- * Class PaymentMethodTokensChecker.
- */
 class PaymentMethodTokensChecker {
 
 	/**
@@ -23,11 +20,6 @@ class PaymentMethodTokensChecker {
 	 */
 	private PaymentTokensEndpoint $payment_method_tokens_endpoint;
 
-	/**
-	 * PaymentMethodTokensChecker constructor.
-	 *
-	 * @param PaymentTokensEndpoint $payment_method_tokens_endpoint Payment method tokens endpoint.
-	 */
 	public function __construct( PaymentTokensEndpoint $payment_method_tokens_endpoint ) {
 		$this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
 	}

@@ -340,6 +340,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 					}
 				);
 
+				// Do not display PayPal button if the user already has a PayPal payment token.
 				add_action(
 					'woocommerce_add_payment_method_form_bottom',
 					function () use ( $c ) {
@@ -347,7 +348,6 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							return;
 						}
 
-						// Do not display PayPal button if the user already has a PayPal payment token.
 						$payment_method_tokens_checked = $c->get( 'save-payment-methods.service.payment-method-tokens-checker' );
 						assert( $payment_method_tokens_checked instanceof PaymentMethodTokensChecker );
 						$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
