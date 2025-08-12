@@ -432,7 +432,7 @@ return array(
 	'axo.au.enabled'                         => static function ( ContainerInterface $container ): bool {
 		// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 		/**
-		 * Filter to determine if Fastlane Australia with 3D Secure should be enabled.
+		 * Filter to determine if Fastlane Australia should be enabled.
 		 *
 		 * @param bool $enabled Whether Fastlane Australia is enabled.
 		 */
