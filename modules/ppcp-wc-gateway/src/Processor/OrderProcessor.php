@@ -213,7 +213,7 @@ class OrderProcessor {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			// phpcs:ignore WordPress.Security.NonceVerification
-			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( $_POST['paypal_order_id'] ?? '' );
+			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
 			if ( is_string( $order_id ) && $order_id ) {
 				try {
 					$order = $this->order_endpoint->order( $order_id );
@@ -221,7 +221,7 @@ class OrderProcessor {
 					throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
 				}
 			} else {
-				$is_paypal_return = isset( $_GET['wc-ajax']) && wc_clean( $_GET['wc-ajax'] ) === 'ppc-return-url';
+				$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 				if ( $is_paypal_return ) {
 					$this->logger->warning(
