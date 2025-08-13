@@ -5,17 +5,26 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties;
 
 /**
- * Class LibraryProperties
- *
- * @package WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties
+ * @phpstan-type ComposerAuthor array{
+ *      name: string,
+ *      email?: string,
+ *      homepage?: string,
+ *      role?: string,
+ * }
+ * @phpstan-type ComposerData array{
+ *      name: string,
+ *      version?: string,
+ *      require?: array<string, string>,
+ *      require-dev?: array<string, string>,
+ *      description?: string,
+ *      keywords?: string[],
+ *      authors?: ComposerAuthor[],
+ *      extra?: array{modularity?: array<string, string>},
+ * }
  */
 class LibraryProperties extends BaseProperties
 {
-    /**
-     * Allowed configuration in composer.json "extra.modularity".
-     *
-     * @var array
-     */
+    /** Allowed configuration in composer.json "extra.modularity" */
     public const EXTRA_KEYS = [
         self::PROP_DOMAIN_PATH,
         self::PROP_NAME,
@@ -31,32 +40,33 @@ class LibraryProperties extends BaseProperties
      *
      * @return LibraryProperties
      *
-     * @throws \Exception
-     * @psalm-suppress MixedArrayAccess
+     * phpcs:disable SlevomatCodingStandard.Complexity
      */
     public static function new(string $composerJsonFile, ?string $baseUrl = null): LibraryProperties
     {
-        if (!\is_file($composerJsonFile) || !\is_readable($composerJsonFile)) {
-            throw new \Exception("File {$composerJsonFile} does not exist or is not readable.");
-        }
+        // phpcs:enable SlevomatCodingStandard.Complexity
 
-        $content = (string) file_get_contents($composerJsonFile);
-        /** @var array $composerJsonData */
-        $composerJsonData = json_decode($content, true);
+        $composerJsonData = self::readComposerJsonData($composerJsonFile);
 
         $properties = Properties::DEFAULT_PROPERTIES;
         $properties[self::PROP_DESCRIPTION] = $composerJsonData['description'] ?? '';
         $properties[self::PROP_TAGS] = $composerJsonData['keywords'] ?? [];
 
         $authors = $composerJsonData['authors'] ?? [];
+        if (!is_array($authors)) {
+            $authors = [];
+        }
         $names = [];
-        foreach ((array) $authors as $author) {
-            $name = $author['name'] ?? null;
-            if ($name && is_string($name)) {
+        foreach ($authors as $author) {
+            if (!is_array($author)) {
+                continue;
+            }
+            $name = $author['name'] ?? '';
+            if (($name !== '') && is_string($name)) {
                 $names[] = $name;
             }
-            $url = $author['homepage'] ?? null;
-            if ($url && !$properties['authorUri'] && is_string($url)) {
+            $url = $author['homepage'] ?? '';
+            if (($url !== '') && ($properties[self::PROP_AUTHOR_URI] === '') && is_string($url)) {
                 $properties[self::PROP_AUTHOR_URI] = $url;
             }
         }
@@ -66,6 +76,9 @@ class LibraryProperties extends BaseProperties
 
         // Custom settings which can be stored in composer.json "extra.modularity"
         $extra = $composerJsonData['extra']['modularity'] ?? [];
+        if (!is_array($extra)) {
+            $extra = [];
+        }
         foreach (self::EXTRA_KEYS as $key) {
             $properties[$key] = $extra[$key] ?? '';
         }
@@ -74,39 +87,50 @@ class LibraryProperties extends BaseProperties
         $properties[self::PROP_REQUIRES_PHP] = self::extractPhpVersion($composerJsonData);
 
         // composer.json might have "version" in root
-        $version = $composerJsonData['version'] ?? null;
-        if ($version && is_string($version)) {
+        $version = $composerJsonData['version'] ?? '';
+        if (($version !== '') && is_string($version)) {
             $properties[self::PROP_VERSION] = $version;
         }
 
         [$baseName, $name] = static::buildNames($composerJsonData);
         $basePath = dirname($composerJsonFile);
-        if (empty($properties[self::PROP_NAME])) {
+        if (($properties[self::PROP_NAME] === '') || !is_string($properties[self::PROP_NAME])) {
             $properties[self::PROP_NAME] = $name;
         }
 
-        return new self(
-            $baseName,
-            $basePath,
-            $baseUrl,
-            $properties
-        );
+        return new self($baseName, $basePath, $baseUrl, $properties);
     }
 
     /**
-     * @param array $composerJsonData
+     * @param string $url
+     *
+     * @return static
+     */
+    public function withBaseUrl(string $url): LibraryProperties
+    {
+        if ($this->baseUrl !== null) {
+            throw new \Exception(sprintf('%s::$baseUrl property is not overridable.', __CLASS__));
+        }
+
+        $this->baseUrl = trailingslashit($url);
+
+        return $this;
+    }
+
+    /**
+     * @param ComposerData $composerJsonData
      *
      * @return array{string, string}
      */
-    private static function buildNames(array $composerJsonData): array
+    protected static function buildNames(array $composerJsonData): array
     {
         $composerName = (string) ($composerJsonData['name'] ?? '');
         $packageNamePieces = explode('/', $composerName, 2);
         $basename = implode('-', $packageNamePieces);
-        // "inpsyde/foo-bar-baz" => "Inpsyde Foo Bar Baz"
+        // From "syde/foo-bar-baz" to  "Syde Foo Bar Baz"
         $name = mb_convert_case(
             str_replace(['-', '_', '.'], ' ', implode(' ', $packageNamePieces)),
-            MB_CASE_TITLE
+            MB_CASE_TITLE,
         );
 
         return [$basename, $name];
@@ -122,88 +146,111 @@ class LibraryProperties extends BaseProperties
      * `5.6 || >= 7.1` returns `5.6`
      * `>= 7.1 < 8`    returns `7.1`
      *
-     * @param array $composerData
+     * @param ComposerData $composerData
      * @param string $key
      *
-     * @return string|null
+     * @return string
      */
-    private static function extractPhpVersion(array $composerData, string $key = 'require'): ?string
-    {
+    protected static function extractPhpVersion(
+        array $composerData,
+        string $key = 'require'
+    ): string {
+
         $nextKey = ($key === 'require')
             ? 'require-dev'
             : null;
-        $base = (array) ($composerData[$key] ?? []);
-        $requirement = $base['php'] ?? null;
-        $version = ($requirement && is_string($requirement))
+        $base = $composerData[$key] ?? null;
+        $requirement = is_array($base)
+            ? ($base['php'] ?? '')
+            : '';
+        $version = (($requirement !== '') && is_string($requirement))
             ? trim($requirement)
-            : null;
-        if (!$version) {
-            return $nextKey
+            : '';
+        if ($version === '') {
+            return ($nextKey !== null)
                 ? static::extractPhpVersion($composerData, $nextKey)
-                : null;
+                : '';
         }
-
-        static $matcher;
-        $matcher or $matcher = static function (string $version): ?string {
-            $version = trim($version);
-            if (!$version) {
-                return null;
-            }
-
-            // versions range like `>= 7.2.4 < 8`
-            if (preg_match('{>=?([\s0-9\.]+)<}', $version, $matches)) {
-                return trim($matches[1], " \t\n\r\0\x0B.");
-            }
-
-            // aliases like `dev-src#abcde as 7.4`
-            if (preg_match('{as\s*([\s0-9\.]+)}', $version, $matches)) {
-                return trim($matches[1], " \t\n\r\0\x0B.");
-            }
-
-            // Basic requirements like 7.2, >=7.2, ^7.2, ~7.2
-            if (preg_match('{^(?:[>=\s~\^]+)?([0-9\.]+)}', $version, $matches)) {
-                return trim($matches[1], " \t\n\r\0\x0B.");
-            }
-
-            return null;
-        };
 
         // support for simpler requirements like `7.3`, `>=7.4` or alternative like `5.6 || >=7`
 
         $alternatives = explode('||', $version);
+        /** @var non-empty-string|null $found */
         $found = null;
         foreach ($alternatives as $alternative) {
-            /** @var callable(string):?string $matcher */
-            $itemFound = $matcher($alternative);
-            if ($itemFound && (!$found || version_compare($itemFound, $found, '<'))) {
+            $itemFound = static::parseVersion($alternative);
+            if (
+                ($itemFound !== '')
+                && (($found === null) || version_compare($itemFound, $found, '<'))
+            ) {
                 $found = $itemFound;
             }
         }
 
-        if ($found) {
+        if ($found !== null) {
             return $found;
         }
 
-        return $nextKey
+        return ($nextKey !== null)
             ? static::extractPhpVersion($composerData, $nextKey)
-            : null;
+            : '';
     }
 
     /**
-     * @param string $url
+     * @param string $version
      *
-     * @return static
-     *
-     * @throws \Exception
+     * @return string
      */
-    public function withBaseUrl(string $url): LibraryProperties
+    protected static function parseVersion(string $version): string
     {
-        if ($this->baseUrl !== null) {
-            throw new \Exception(sprintf('%s::$baseUrl property is not overridable.', __CLASS__));
+        $version = trim($version);
+        if ($version === '') {
+            return '';
         }
 
-        $this->baseUrl = trailingslashit($url);
+        // versions range like `>= 7.2.4 < 8`
+        if (preg_match('{>=?([\s0-9\.]+)<}', $version, $matches)) {
+            return trim($matches[1], " \t\n\r\0\x0B.");
+        }
 
-        return $this;
+        // aliases like `dev-src#abcde as 7.4`
+        if (preg_match('{as\s*([\s0-9\.]+)}', $version, $matches)) {
+            return trim($matches[1], " \t\n\r\0\x0B.");
+        }
+
+        // Basic requirements like 7.2, >=7.2, ^7.2, ~7.2
+        if (preg_match('{^(?:[>=\s~\^]+)?([0-9\.]+)}', $version, $matches)) {
+            return trim($matches[1], " \t\n\r\0\x0B.");
+        }
+
+        return '';
+    }
+
+    /**
+     * @param string $composerJsonFile
+     *
+     * @return ComposerData
+     * @throws \Exception
+     */
+    private static function readComposerJsonData(string $composerJsonFile): array
+    {
+        if (!\is_file($composerJsonFile) || !\is_readable($composerJsonFile)) {
+            throw new \Exception(
+                esc_html("File {$composerJsonFile} does not exist or is not readable."),
+            );
+        }
+
+        $content = (string) file_get_contents($composerJsonFile);
+
+        /** @var ComposerData $composerJsonData */
+        $composerJsonData = json_decode($content, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new \Exception(
+                esc_html("Error reading file {$composerJsonFile}: " . json_last_error_msg()),
+            );
+        }
+
+        return $composerJsonData;
     }
 }
