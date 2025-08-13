@@ -99,7 +99,7 @@ export const handleApprove = async (
 			order = json.data;
 		}
 
-		const shippingAddress = order.purchase_units?.[ 0 ]?.shipping?.address;
+		const shippingAddress = order?.purchase_units?.[ 0 ]?.shipping?.address;
 		if ( shippingAddress ) {
 			const addresses = paypalOrderToWcAddresses( order );
 
