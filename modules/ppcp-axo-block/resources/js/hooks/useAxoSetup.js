@@ -11,6 +11,7 @@ import { snapshotFields } from '../helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
 import useShippingAddressChange from './useShippingAddressChange';
 import useCardChange from './useCardChange';
+import useSessionRestoration from './useSessionRestoration';
 
 /**
  * Custom hook to set up AXO functionality.
@@ -63,6 +64,9 @@ const useAxoSetup = (
 	// Set up phone sync handler
 	usePhoneSyncHandler( paymentComponent );
 
+	// Set up session restoration
+	useSessionRestoration( fastlaneSdk );
+
 	// Initialize class toggles on mount
 	useEffect( () => {
 		initializeClassToggles();
@@ -104,6 +108,7 @@ const useAxoSetup = (
 		setShippingAddress,
 		setCardDetails,
 		paymentComponent,
+		setCardChangeHandler,
 	] );
 
 	return paypalLoaded;
