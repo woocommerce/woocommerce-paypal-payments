@@ -107,7 +107,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				'woocommerce_paypal_payments_inside_settings_page_header',
 				static fn() : string => sprintf(
 					'<button type="button" class="button button-settings-switch-ui" aria-describedby="switch-ui-desc">%s</button><span id="switch-ui-desc" class="screen-reader-text">%s</span>',
-					esc_html__( 'Switch to new settings UI', 'woocommerce-paypal-payments' ),
+					esc_html__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
 					esc_html__( 'This action will permanently switch to the new settings interface and cannot be undone', 'woocommerce-paypal-payments' )
 				)
 			);
