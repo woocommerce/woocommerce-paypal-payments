@@ -393,7 +393,7 @@ class OrderTrackingEndpoint {
 			'carrier_name_other' => $data['carrier_name_other'] ?? '',
 		);
 
-		if ( ! empty( $data['items'] ) ) {
+		if ( ! empty( $data['items'] ) && is_numeric( reset( $data['items'] ) ) ) {
 			$tracking_info['items'] = array_map( 'intval', $data['items'] );
 		}
 
