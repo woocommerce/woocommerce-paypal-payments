@@ -34,7 +34,7 @@ use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
  *     status: SupportedStatuses,
  *     tracking_number: string,
  *     carrier: string,
- *     items?: list<int>,
+ *     items?: array,
  *     carrier_name_other?: string,
  * }
  * Class OrderTrackingEndpoint
