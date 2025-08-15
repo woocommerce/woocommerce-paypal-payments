@@ -165,6 +165,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 								'Are you sure you want to switch to the new settings interface?This action cannot be undone.',
 								'woocommerce-paypal-payments'
 							),
+							'settingsUrl'    => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						)
 					);
 
