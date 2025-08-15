@@ -60,6 +60,8 @@ class AxoManager {
 		this.fastlane = new Fastlane( namespace );
 		this.$ = jQuery;
 
+		this.hasProcessedSessionRestore = false;
+
 		this.status = {
 			active: false,
 			validEmail: false,
@@ -529,7 +531,15 @@ class AxoManager {
 		log(
 			`this.lastEmailCheckedIdentity: ${ this.lastEmailCheckedIdentity }`
 		);
-		if (
+
+		const urlParams = new URLSearchParams( window.location.search );
+		const hasErrorParam = urlParams.get( 'ppcp_fastlane_error' ) === '1';
+
+		if ( hasErrorParam ) {
+			log(
+				'Payment failure detected, session restoration will be attempted'
+			);
+		} else if (
 			this.emailInput &&
 			this.lastEmailCheckedIdentity !== this.emailInput.value
 		) {
@@ -662,6 +672,8 @@ class AxoManager {
 		await this.renderWatermark();
 		this.renderEmailSubmitButton();
 		this.watchEmail();
+
+		await this.restoreSessionAfterFailure();
 	}
 
 	async connect() {
@@ -1382,6 +1394,94 @@ class AxoManager {
 		this.$( '#billing_email_field input' ).on( 'focus', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'input', reEnableInput );
 		this.$( '#billing_email_field input' ).on( 'click', reEnableInput );
+	}
+
+	async restoreSessionAfterFailure() {
+		if ( ! this.fastlane || this.hasProcessedSessionRestore ) {
+			return;
+		}
+
+		const urlParams = new URLSearchParams( window.location.search );
+		const hasErrorParam = urlParams.get( 'ppcp_fastlane_error' ) === '1';
+
+		if ( ! hasErrorParam ) {
+			return;
+		}
+
+		urlParams.delete( 'ppcp_fastlane_error' );
+		const newUrl = new URL( window.location );
+		newUrl.search = urlParams.toString();
+		window.history.replaceState( {}, '', newUrl );
+
+		this.hasProcessedSessionRestore = true;
+
+		try {
+			if ( this.emailInput?.value ) {
+				log(
+					`Restoring Fastlane session for email: ${ this.emailInput.value }`
+				);
+
+				const lookupResult =
+					await this.fastlane.identity.lookupCustomerByEmail(
+						this.emailInput.value
+					);
+
+				if ( lookupResult?.customerContextId ) {
+					const authenticatedCustomerResult =
+						await this.fastlane.identity.triggerAuthenticationFlow(
+							lookupResult.customerContextId
+						);
+
+					if (
+						authenticatedCustomerResult?.authenticationState ===
+						'succeeded'
+					) {
+						const { profileData } = authenticatedCustomerResult;
+
+						if ( profileData?.shippingAddress ) {
+							this.setShipping( profileData.shippingAddress );
+						}
+
+						if ( profileData?.card ) {
+							this.setCard( profileData.card );
+							this.setStatus( 'hasCard', true );
+
+							const cardBillingAddress =
+								profileData.card?.paymentSource?.card
+									?.billingAddress;
+							if ( cardBillingAddress ) {
+								const billingData = {
+									address: cardBillingAddress,
+								};
+
+								const phoneNumber =
+									profileData.shippingAddress?.phoneNumber
+										?.nationalNumber;
+								if ( phoneNumber ) {
+									billingData.phoneNumber = phoneNumber;
+								}
+
+								this.setBilling( billingData );
+							}
+						}
+
+						this.setStatus( 'validEmail', true );
+						this.setStatus( 'hasProfile', true );
+
+						this.hideGatewaySelection = true;
+						this.$( '.wc_payment_methods label' ).hide();
+						this.$( '.wc_payment_methods input' ).hide();
+
+						await this.renderWatermark( false );
+
+						log( 'Fastlane session successfully restored' );
+					}
+				}
+			}
+		} catch ( error ) {
+			log( 'Failed to restore Fastlane session', 'warn' );
+			console.warn( 'Fastlane session restoration error:', error );
+		}
 	}
 }
 
