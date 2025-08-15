@@ -20,7 +20,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	}
 
 	const handleClick = ( event ) => {
-		console.log( 'here' );
 		event.preventDefault();
 
 		const confirmed = confirm( config.confirmMessage );
