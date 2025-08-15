@@ -16,5 +16,6 @@ interface InboxNoteInterface {
 	public function type(): string;
 	public function name(): string;
 	public function status(): string;
+	public function is_enabled(): bool;
 	public function action(): InboxNoteActionInterface;
 }
