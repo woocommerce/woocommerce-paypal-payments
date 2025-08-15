@@ -1,11 +1,7 @@
 document.addEventListener( 'DOMContentLoaded', () => {
 	const config = ppcpSwitchSettingsUi;
-	const button = document.querySelector(
-		'.button.button-settings-switch-ui'
-	);
-	const link = document.querySelector( 'a.settings-switch-ui' );
 
-	if ( typeof config === 'undefined' || ( ! button && ! link ) ) {
+	if ( typeof config === 'undefined' ) {
 		return;
 	}
 
@@ -34,18 +30,21 @@ document.addEventListener( 'DOMContentLoaded', () => {
 				return response.json();
 			} )
 			.then( ( data ) => {
-				window.location.reload();
+				window.location.href = config.settingsUrl;
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error:', error );
 			} );
 	};
 
-	if ( button ) {
-		button.addEventListener( 'click', handleClick );
-	}
-
-	if ( link ) {
-		link.addEventListener( 'click', handleClick );
-	}
+	document.addEventListener( 'click', ( event ) => {
+		if (
+			event.target.closest( '.button.button-settings-switch-ui' ) ||
+			event.target.closest( 'a.settings-switch-ui' ) ||
+			event.target.closest( 'a[name="settings-switch-ui"]' ) ||
+			event.target.closest( '.woocommerce-inbox-note__action-button' )
+		) {
+			handleClick( event );
+		}
+	} );
 } );
