@@ -7,14 +7,6 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		'.ppcp-notice-wrapper:not(.inline) a.settings-switch-ui'
 	);
 
-	console.log( 'Config:', config );
-	console.log( 'Button found:', button );
-	console.log( 'Link found:', link );
-	console.log(
-		'All links with settings-switch-ui:',
-		document.querySelectorAll( '.settings-switch-ui' )
-	);
-
 	if ( typeof config === 'undefined' || ( ! button && ! link ) ) {
 		return;
 	}
