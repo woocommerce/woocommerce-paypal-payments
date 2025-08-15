@@ -29,6 +29,11 @@ class InboxNoteRegistrar {
 
 	public function register(): void {
 		foreach ( $this->inbox_notes as $inbox_note ) {
+			if ( ! $inbox_note->is_enabled() ) {
+				$this->unregister( $inbox_note->name() );
+				continue;
+			}
+
 			$inbox_note_name = $inbox_note->name();
 
 			if ( Notes::get_note_by_name( $inbox_note_name ) ) {
@@ -54,6 +59,19 @@ class InboxNoteRegistrar {
 			);
 
 			$note->save();
+		}
+	}
+
+	public function unregister( string $inbox_note_name ): void {
+		$data_store        = Notes::load_data_store();
+		$existing_note_ids = $data_store->get_notes_with_name( $inbox_note_name );
+
+		foreach ( $existing_note_ids as $note_id ) {
+			$note = Notes::get_note( $note_id );
+
+			if ( $note ) {
+				$data_store->delete( $note );
+			}
 		}
 	}
 }
