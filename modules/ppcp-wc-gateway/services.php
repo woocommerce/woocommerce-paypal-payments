@@ -2161,9 +2161,30 @@ return array(
 	 *
 	 * @returns InboxNoteInterface[]
 	 */
-	'wcgateway.settings.inbox-notes'                    => static function( ContainerInterface $container ): array {
+	'wcgateway.settings.inbox-notes'                       => static function( ContainerInterface $container ): array {
 		$inbox_note_factory = $container->get( 'wcgateway.settings.inbox-note-factory' );
 		assert( $inbox_note_factory instanceof InboxNoteFactory );
+
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		$is_working_capital_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
+			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
+		);
+
+		$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
+
+		$message = sprintf(
+		// translators: %1$s is the URL for the startup guide.
+			__(
+				'We\'ve redesigned the settings for better performance and usability. Starting late October, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.',
+				'woocommerce-paypal-payments'
+			),
+			'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
+		);
+
 
 		return array(
 			$inbox_note_factory->create_note(
@@ -2172,10 +2193,26 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
+				$is_working_capital_feature_flag_enabled && $is_working_capital_eligible,
 				new InboxNoteAction(
 					'apply_now',
 					__( 'Apply now', 'woocommerce-paypal-payments' ),
 					'http://example.com/',
+					Note::E_WC_ADMIN_NOTE_UNACTIONED,
+					true
+				)
+			),
+			$inbox_note_factory->create_note(
+				__( '📢 Important: New PayPal Payments settings UI becoming default in October!', 'woocommerce-paypal-payments' ),
+				$message,
+				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
+				'ppcp-settings-migration-inbox-note',
+				Note::E_WC_ADMIN_NOTE_UNACTIONED,
+				SettingsModule::should_use_the_old_ui(),
+				new InboxNoteAction(
+					'switch_to_new_settings',
+					__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
 				)
