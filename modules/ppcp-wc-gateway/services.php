@@ -2185,7 +2185,6 @@ return array(
 			'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
 		);
 
-
 		return array(
 			$inbox_note_factory->create_note(
 				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
