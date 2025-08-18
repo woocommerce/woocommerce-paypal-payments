@@ -3,7 +3,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	const button = document.querySelector(
 		'.button.button-settings-switch-ui'
 	);
-	const link = document.querySelector( 'a.settings-switch-ui' );
+	const link = document.querySelector(
+		'.ppcp-notice-wrapper:not(.inline) a.settings-switch-ui'
+	);
 
 	if ( typeof config === 'undefined' || ( ! button && ! link ) ) {
 		return;
@@ -45,7 +47,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
 		button.addEventListener( 'click', handleClick );
 	}
 
-	if ( link ) {
-		link.addEventListener( 'click', handleClick );
-	}
+	document.addEventListener( 'click', ( event ) => {
+		const linkElement = event.target.closest( 'a.settings-switch-ui' );
+		if ( linkElement ) {
+			handleClick( event );
+		}
+	} );
 } );

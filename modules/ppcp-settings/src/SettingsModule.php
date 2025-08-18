@@ -107,7 +107,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				'woocommerce_paypal_payments_inside_settings_page_header',
 				static fn() : string => sprintf(
 					'<button type="button" class="button button-settings-switch-ui" aria-describedby="switch-ui-desc">%s</button><span id="switch-ui-desc" class="screen-reader-text">%s</span>',
-					esc_html__( 'Switch to new settings UI', 'woocommerce-paypal-payments' ),
+					esc_html__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
 					esc_html__( 'This action will permanently switch to the new settings interface and cannot be undone', 'woocommerce-paypal-payments' )
 				)
 			);
@@ -128,7 +128,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$message = sprintf(
 					// translators: %1$s is the URL for the startup guide.
 						__(
-							'🎉 <strong>Discover the new PayPal Payments settings!</strong> Enjoy a cleaner, faster interface. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.',
+							'<strong>📢 Important: New PayPal Payments settings UI becoming default in October!</strong><br>We\'ve redesigned the settings for better performance and usability. Starting late October, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.',
 							'woocommerce-paypal-payments'
 						),
 						'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
