@@ -2200,7 +2200,6 @@ return array(
 			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' )
 			: admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=pay-later-messaging' );
 
-
 		$message = sprintf(
 		// translators: %1$s is the URL for the startup guide.
 			__(
