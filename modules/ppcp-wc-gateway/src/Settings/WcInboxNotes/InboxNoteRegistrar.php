@@ -34,7 +34,8 @@ class InboxNoteRegistrar {
 
 			if ( ! $inbox_note->is_enabled() ) {
 				if ( $existing_note instanceof Note ) {
-					Notes::delete_note( $existing_note );
+					$data_store = Notes::load_data_store();
+					$data_store->delete( $existing_note );
 				}
 				continue;
 			}
