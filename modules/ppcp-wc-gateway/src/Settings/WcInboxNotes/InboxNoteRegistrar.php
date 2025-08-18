@@ -79,6 +79,7 @@ class InboxNoteRegistrar {
 			$note = Notes::get_note( $note_id );
 
 			if ( $note ) {
+				/** @psalm-suppress PossiblyInvalidArgument */
 				$data_store->delete( $note );
 			}
 		}
