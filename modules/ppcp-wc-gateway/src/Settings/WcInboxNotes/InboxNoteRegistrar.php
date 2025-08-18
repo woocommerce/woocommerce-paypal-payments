@@ -9,6 +9,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use Automattic\WooCommerce\Admin\Notes\Notes;
+use Automattic\WooCommerce\Admin\Notes\NotesUnavailableException;
+use Exception;
 use WpOop\WordPress\Plugin\PluginInterface;
 
 /**
@@ -30,7 +32,11 @@ class InboxNoteRegistrar {
 	public function register(): void {
 		foreach ( $this->inbox_notes as $inbox_note ) {
 			if ( ! $inbox_note->is_enabled() ) {
-				$this->unregister( $inbox_note->name() );
+				try {
+					$this->unregister( $inbox_note->name() );
+				} catch ( Exception $exeption ) {
+					continue;
+				}
 				continue;
 			}
 
@@ -62,6 +68,9 @@ class InboxNoteRegistrar {
 		}
 	}
 
+	/**
+	 * @throws NotesUnavailableException If unable to unregister the note.
+	 */
 	public function unregister( string $inbox_note_name ): void {
 		$data_store        = Notes::load_data_store();
 		$existing_note_ids = $data_store->get_notes_with_name( $inbox_note_name );
