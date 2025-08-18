@@ -9,8 +9,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings\WcInboxNotes;
 
 use Automattic\WooCommerce\Admin\Notes\Note;
 use Automattic\WooCommerce\Admin\Notes\Notes;
-use Automattic\WooCommerce\Admin\Notes\NotesUnavailableException;
-use Exception;
 use WpOop\WordPress\Plugin\PluginInterface;
 
 /**
@@ -31,18 +29,17 @@ class InboxNoteRegistrar {
 
 	public function register(): void {
 		foreach ( $this->inbox_notes as $inbox_note ) {
+			$inbox_note_name = $inbox_note->name();
+			$existing_note   = Notes::get_note_by_name( $inbox_note_name );
+
 			if ( ! $inbox_note->is_enabled() ) {
-				try {
-					$this->unregister( $inbox_note->name() );
-				} catch ( Exception $exeption ) {
-					continue;
+				if ( $existing_note instanceof Note ) {
+					Notes::delete_note( $existing_note );
 				}
 				continue;
 			}
 
-			$inbox_note_name = $inbox_note->name();
-
-			if ( Notes::get_note_by_name( $inbox_note_name ) ) {
+			if ( $existing_note ) {
 				continue;
 			}
 
@@ -65,23 +62,6 @@ class InboxNoteRegistrar {
 			);
 
 			$note->save();
-		}
-	}
-
-	/**
-	 * @throws NotesUnavailableException If unable to unregister the note.
-	 */
-	public function unregister( string $inbox_note_name ): void {
-		$data_store        = Notes::load_data_store();
-		$existing_note_ids = $data_store->get_notes_with_name( $inbox_note_name );
-
-		foreach ( $existing_note_ids as $note_id ) {
-			$note = Notes::get_note( $note_id );
-
-			if ( $note ) {
-				/** @psalm-suppress PossiblyInvalidArgument */
-				$data_store->delete( $note );
-			}
 		}
 	}
 }
