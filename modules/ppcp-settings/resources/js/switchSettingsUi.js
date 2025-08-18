@@ -42,7 +42,9 @@ document.addEventListener( 'DOMContentLoaded', () => {
 			event.target.closest( '.button.button-settings-switch-ui' ) ||
 			event.target.closest( 'a.settings-switch-ui' ) ||
 			event.target.closest( 'a[name="settings-switch-ui"]' ) ||
-			event.target.closest( '.woocommerce-inbox-note__action-button' )
+			event.target
+				.closest( '.woocommerce-inbox-note__action-button' )
+				.textContent.includes( 'Switch to New Settings' )
 		) {
 			handleClick( event );
 		}
