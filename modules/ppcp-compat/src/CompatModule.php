@@ -146,7 +146,10 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
 
 				$settings->set( 'pay_later_messaging_enabled', true );
-				$settings->set( 'pay_later_messaging_locations', array_merge( $selected_locations, array( 'product', 'cart', 'checkout' ) ) );
+				$settings->set(
+					'pay_later_messaging_locations',
+					array_unique( array_merge( $selected_locations, array( 'product', 'cart', 'checkout' ) ) )
+				);
 
 				$settings->persist();
 			}
