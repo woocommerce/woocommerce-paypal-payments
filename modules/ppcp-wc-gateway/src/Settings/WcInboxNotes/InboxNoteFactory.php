@@ -18,8 +18,9 @@ class InboxNoteFactory {
 		string $type,
 		string $name,
 		string $status,
+		bool $is_enabled,
 		InboxNoteActionInterface $action
 	): InboxNoteInterface {
-		return new InboxNote( $title, $content, $type, $name, $status, $action );
+		return new InboxNote( $title, $content, $type, $name, $status, $is_enabled, $action );
 	}
 }

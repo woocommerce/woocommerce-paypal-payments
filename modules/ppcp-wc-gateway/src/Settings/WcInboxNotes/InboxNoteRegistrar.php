@@ -30,8 +30,17 @@ class InboxNoteRegistrar {
 	public function register(): void {
 		foreach ( $this->inbox_notes as $inbox_note ) {
 			$inbox_note_name = $inbox_note->name();
+			$existing_note   = Notes::get_note_by_name( $inbox_note_name );
 
-			if ( Notes::get_note_by_name( $inbox_note_name ) ) {
+			if ( ! $inbox_note->is_enabled() ) {
+				if ( $existing_note instanceof Note ) {
+					$data_store = Notes::load_data_store();
+					$data_store->delete( $existing_note );
+				}
+				continue;
+			}
+
+			if ( $existing_note ) {
 				continue;
 			}
 

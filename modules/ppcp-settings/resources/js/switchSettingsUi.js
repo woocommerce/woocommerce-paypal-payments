@@ -1,13 +1,7 @@
 document.addEventListener( 'DOMContentLoaded', () => {
 	const config = ppcpSwitchSettingsUi;
-	const button = document.querySelector(
-		'.button.button-settings-switch-ui'
-	);
-	const link = document.querySelector(
-		'.ppcp-notice-wrapper:not(.inline) a.settings-switch-ui'
-	);
 
-	if ( typeof config === 'undefined' || ( ! button && ! link ) ) {
+	if ( typeof config === 'undefined' ) {
 		return;
 	}
 
@@ -36,20 +30,24 @@ document.addEventListener( 'DOMContentLoaded', () => {
 				return response.json();
 			} )
 			.then( ( data ) => {
-				window.location.reload();
+				window.location.href = config.settingsUrl;
 			} )
 			.catch( ( error ) => {
 				console.error( 'Error:', error );
 			} );
 	};
 
-	if ( button ) {
-		button.addEventListener( 'click', handleClick );
-	}
-
 	document.addEventListener( 'click', ( event ) => {
-		const linkElement = event.target.closest( 'a.settings-switch-ui' );
-		if ( linkElement ) {
+		if (
+			event.target.closest( '.button.button-settings-switch-ui' ) ||
+			event.target.closest(
+				'.ppcp-notice-wrapper:not(.inline) a.settings-switch-ui'
+			) ||
+			event.target.closest( 'a[name="settings-switch-ui"]' ) ||
+			event.target
+				.closest( '.woocommerce-inbox-note__action-button' )
+				?.textContent.includes( 'Switch to New Settings' )
+		) {
 			handleClick( event );
 		}
 	} );

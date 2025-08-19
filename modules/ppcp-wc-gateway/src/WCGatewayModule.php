@@ -966,26 +966,13 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_action(
 			'admin_init',
 			static function () use ( $container ): void {
-				$settings = $container->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				$is_working_capital_feature_flag_enabled = apply_filters(
-				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-					'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
-					getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
-				);
-
-				$is_working_capital_eligible = $container->get( 'api.shop.country' ) === 'US' && $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
-
-				if ( ! $is_working_capital_feature_flag_enabled || ! $is_working_capital_eligible ) {
-					return;
-				}
-
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
+
+				$inbox_note_registrar = $container->get( 'wcgateway.settings.inbox-note-registrar' );
+				assert( $inbox_note_registrar instanceof InboxNoteRegistrar );
+
 				try {
-					$inbox_note_registrar = $container->get( 'wcgateway.settings.inbox-note-registrar' );
-					assert( $inbox_note_registrar instanceof InboxNoteRegistrar );
 					$inbox_note_registrar->register();
 				} catch ( Exception $exception ) {
 					$logger->error( 'Failed to add note to the WooCommerce inbox section. ' . $exception->getMessage() );
