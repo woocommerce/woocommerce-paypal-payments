@@ -170,6 +170,10 @@ return array(
 			$matrix['GB'] = array( 'GBP' );
 		}
 
+		if ( $container->get( 'axo.au.enabled' ) ) {
+			$matrix['AU'] = array( 'AUD' );
+		}
+
 		/**
 		 * Returns which countries and currency combinations can be used for AXO.
 		 */
@@ -203,6 +207,14 @@ return array(
 				'MASTERCARD',
 				'AMEX',
 				'DISCOVER',
+			);
+		}
+
+		if ( $container->get( 'axo.au.enabled' ) ) {
+			$matrix['AU'] = array(
+				'VISA',
+				'MASTERCARD',
+				'AMEX',
 			);
 		}
 
@@ -414,6 +426,19 @@ return array(
 		return apply_filters(
 			'woocommerce.feature-flags.woocommerce_paypal_payments.axo_uk_enabled',
 			getenv( 'PCP_AXO_UK_ENABLED' ) !== '0'
+		);
+		// phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
+	},
+	'axo.au.enabled'                         => static function ( ContainerInterface $container ): bool {
+		// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		/**
+		 * Filter to determine if Fastlane AU should be enabled.
+		 *
+		 * @param bool $enabled Whether Fastlane AU is enabled.
+		 */
+		return apply_filters(
+			'woocommerce.feature-flags.woocommerce_paypal_payments.axo_au_enabled',
+			getenv( 'PCP_AXO_AU_ENABLED' ) !== '0'
 		);
 		// phpcs:enable WordPress.NamingConventions.ValidHookName.UseUnderscores
 	},
