@@ -412,11 +412,14 @@ export class PayPalUI {
 		let popup: PayPalPopup;
 		switch ( data.payment.method ) {
 			case 'PayPal':
+				if( await this.payPalGateway().isVisible() ) {
+					await this.payPalGateway().click();
+				}
 				// pay with vaulted account
 				if ( data.payment.isVaulted ) {
-					await this.completePayPalVaultedPayment(
-						data.payment.payPalAccount
-					);
+					await expect( this.payPalButton() ).toBeVisible();
+					await this.assertVaultedPaymentMethodIsDisplayed( data.payment );
+					await this.payPalButton().click();
 					break;
 				}
 				// pay with account other than vaulted
@@ -433,6 +436,9 @@ export class PayPalUI {
 				break;
 
 			case 'PayLater':
+				if( await this.payPalGateway().isVisible() ) {
+					await this.payPalGateway().click();
+				}
 				popup = await this.openPayLaterPopup();
 				await popup.completePayLaterPayment(
 					data.payment.payPalAccount
@@ -803,6 +809,26 @@ export class PayPalUI {
 	};
 
 	// Assertions
+
+	/**
+	 * Asserts the saved payment method is visible
+	 *
+	 * @param payment
+	 */
+	assertVaultedPaymentMethodIsDisplayed = async ( payment ) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
+				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				break;
+
+			// case 'acdc':
+			// 	await expect(
+			// 		this.acdcSavedCard( payment.card )
+			// 	).toBeVisible();
+			// 	break;
+		}
+	};
 
 	assertPayPalButtonVisibility = async ( isVisible: boolean ) => {
 		await expect( this.payPalButton() ).toBeVisible( {

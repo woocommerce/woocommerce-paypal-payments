@@ -347,6 +347,18 @@ export class StandardPayments extends PcpSettingsPage {
 			await this.sendCheckoutBillingDataCombobox().click();
 			await this.dropdownOption( data.sendCheckoutBillingData ).click();
 		}
+
+		if ( data.disableAlternativePaymentMethods?.length ) {
+			await this.disableAlternativePaymentMethods(
+				data.disableAlternativePaymentMethods
+			);
+		}
+
+		if ( data.enableAlternativePaymentMethods?.length ) {
+			await this.enableAlternativePaymentMethods(
+				data.enableAlternativePaymentMethods
+			);
+		}
 		// Add other settings here
 
 		await this.saveChanges();

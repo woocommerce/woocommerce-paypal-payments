@@ -29,8 +29,9 @@ export class Cart extends CartBase {
 			}
 		}
 
+		// Is blocked for block cart by WooCommerce
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( tested.shipping.settings.title );
+		// await this.selectShippingMethod( tested.shipping.settings.title );
 
 		// Make payment with tested method
 		await this.ppui.makePayment( {

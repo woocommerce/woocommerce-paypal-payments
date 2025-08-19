@@ -52,10 +52,10 @@ export const testRefund = ( tests ) => {
 				).toBeVisible();
 				await expect(
 					wooCommerceOrderEdit.totalAmountAlreadyRefunded()
-				).toHaveText( `-${ formatMoney( 0 ) }` );
+				).toHaveText( `-${ formatMoney( 0, tested.currency ) }` );
 				await expect(
 					wooCommerceOrderEdit.totalAvailableToRefund()
-				).toHaveText( formatMoney( Number( refundAvailable ) ) );
+				).toHaveText( formatMoney( Number( refundAvailable ), tested.currency ) );
 
 				await wooCommerceOrderEdit.makePayPalRefund( refundAmount );
 				await wooCommerceOrderEdit.assertUrl( order.id );
@@ -63,7 +63,7 @@ export const testRefund = ( tests ) => {
 					wooCommerceOrderEdit.refundNumber()
 				).toContainText( `Refund #` );
 				await expect( wooCommerceOrderEdit.refundAmount() ).toHaveText(
-					`-${ formatMoney( Number( refundAmount ) ) }`
+					`-${ formatMoney( Number( refundAmount ), tested.currency ) }`
 				);
 
 				order = await wooCommerceApi.getOrder( order.id );
@@ -121,6 +121,7 @@ export const testRefund = ( tests ) => {
 							payPalPayment.seller_receivable_breakdown.paypal_fee
 								.value
 						),
+					currency: tested.currency,
 				} );
 			}
 		);

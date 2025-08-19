@@ -32,9 +32,10 @@ test.describe( 'Merchant Setup', () => {
 		await expect( connection.getHelpLink() ).toBeVisible();
 		await expect( connection.enablePayPalPaymentsCheckbox() ).toBeVisible();
 		await expect( connection.acceptCardsCheckbox() ).toBeVisible();
-		await expect(
-			connection.onboardPayUponInvoiceCheckbox()
-		).toBeVisible();
+		// // Only for german merchant:
+		// await expect(
+		// 	connection.onboardPayUponInvoiceCheckbox()
+		// ).toBeVisible();
 		await expect( connection.activatePayPalButton() ).toBeVisible();
 		await expect(
 			connection.testPaymentsWithPayPalSandboxButton()

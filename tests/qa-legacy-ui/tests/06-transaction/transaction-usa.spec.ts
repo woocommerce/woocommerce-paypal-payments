@@ -46,13 +46,16 @@ import {
 } from './_test-data/pay-later';
 import { acdcPayByLink } from './_test-data/acdc';
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, standardPayments } ) => {
 	test.setTimeout( 3 * 60 * 1000 );
 	await utils.configureStore( storeConfigUsa );
 	await utils.configurePcp( pcpConfigUsa );
 	await utils.pcpPaymentMethodIsEnabled( payPal.method );
 	await utils.pcpPaymentMethodIsEnabled( payLater.method );
 	await utils.pcpPaymentMethodIsEnabled( acdc.method );
+	await standardPayments.setup( {
+		disableAlternativePaymentMethods: [ 'Venmo' ],
+	} );
 } );
 
 transactionsOnCart( payPalCart );

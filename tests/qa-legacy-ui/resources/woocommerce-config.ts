@@ -20,6 +20,7 @@ export const storeConfigClassic = {
 
 export const storeConfigGermany = {
 	...storeConfigDefault,
+	settings: shopSettings.germany, // WC general settings
 	customer: customers.germany,
 };
 

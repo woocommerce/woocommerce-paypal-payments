@@ -69,7 +69,7 @@ export const payLaterClassicCheckoutIntentAuthorized = [
 
 export const payLaterClassicCheckoutHorizontalButton = [
 	{
-		title: 'PCP-1200 | Transaction - Classic checkout - Pay Later - Horizontal button layout', // TODO: doesn`t make sense??
+		title: 'PCP-1200 | Transaction - Classic checkout - Pay Later - Horizontal button layout @Critical',
 		...orders.default,
 		payment: payLater,
 	},

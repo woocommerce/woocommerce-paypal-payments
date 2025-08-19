@@ -157,6 +157,7 @@ export class Connection extends PcpSettingsPage {
 		}
 
 		await this.toggleToManualCredentialInputButton().click();
+		await this.page.waitForTimeout( 500 );
 		await this.sandboxCheckbox().check();
 		await this.sandboxEmailAddressInput().fill( merchant.email );
 		await this.sandboxMerchantIdInput().fill( merchant.account_id );

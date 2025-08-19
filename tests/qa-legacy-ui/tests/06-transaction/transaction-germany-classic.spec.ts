@@ -9,6 +9,7 @@ import {
 	payUponInvoice,
 	pcpConfigGermany,
 	storeConfigClassic,
+	storeConfigGermany,
 	taxSettings,
 } from '../../resources';
 import {
@@ -19,7 +20,10 @@ import { transactionsOnClassicCheckout } from './_test-scenarios';
 
 test.beforeAll( async ( { utils } ) => {
 	test.setTimeout( 2 * 60 * 1000 );
-	await utils.configureStore( storeConfigClassic );
+	await utils.configureStore( {
+		...storeConfigGermany,
+		classicPages: true,
+	} );
 	await utils.configurePcp( pcpConfigGermany );
 	await utils.pcpPaymentMethodIsEnabled( payUponInvoice.method );
 } );

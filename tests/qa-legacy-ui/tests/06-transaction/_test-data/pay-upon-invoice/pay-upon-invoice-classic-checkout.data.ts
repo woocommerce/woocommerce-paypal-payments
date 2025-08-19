@@ -22,6 +22,7 @@ const germanOrderData: WooCommerce.ShopOrder = {
 
 export const payUponInvoiceClassicCheckoutGermany = [
 	{
+		// FAIL: PayPal order status Expected: "PENDING_APPROVAL", Received: "COMPLETED"
 		title: 'PCP-1216 | Transaction - Germany - Classic checkout - Pay upon Invoice - Default order @Critical',
 		...orders.default,
 		...germanOrderData,

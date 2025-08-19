@@ -68,7 +68,7 @@ import {
 	standardCardButtonClassicCheckoutIntentAuthorized,
 } from './_test-data/standard-card-button';
 
-test.beforeAll( async ( { utils } ) => {
+test.beforeAll( async ( { utils, standardPayments } ) => {
 	test.setTimeout( 3 * 60 * 1000 );
 	await utils.configureStore( {
 		...storeConfigUsa,
@@ -78,7 +78,9 @@ test.beforeAll( async ( { utils } ) => {
 	await utils.pcpPaymentMethodIsEnabled( payPal.method );
 	await utils.pcpPaymentMethodIsEnabled( payLater.method );
 	await utils.pcpPaymentMethodIsEnabled( acdc.method );
-	// await utils.pcpPaymentMethodIsEnabled( venmo.method );
+	await standardPayments.setup( {
+		disableAlternativePaymentMethods: [ 'Venmo' ],
+	} );
 } );
 
 transactionsOnClassicCart( payPalClassicCart );
@@ -91,9 +93,21 @@ transactionsOnClassicCheckout( acdcClassicCheckout );
 transactionsOnClassicProduct( payPalClassicProduct );
 transactionsOnClassicProduct( payLaterClassicProduct );
 
-// transactionsOnClassicCart( venmoClassicCartUsa );
-// transactionsOnClassicCheckout( venmoClassicCheckoutUsa );
-// transactionsOnClassicProduct( venmoClassicProductUsa );
+// test.describe( 'Venmo', () => {
+// 	test.beforeAll( async ( { utils } ) => {
+// 		await utils.pcpPaymentMethodIsEnabled( venmo.method );
+// 	} );
+
+// 	transactionsOnClassicCart( venmoClassicCartUsa );
+// 	transactionsOnClassicCheckout( venmoClassicCheckoutUsa );
+// 	transactionsOnClassicProduct( venmoClassicProductUsa );
+
+// 	test.afterAll( async ( { standardPayments } ) => {
+// 		await standardPayments.setup( {
+// 			disableAlternativePaymentMethods: [ 'Venmo' ],
+// 		} );
+// 	} );
+// } );
 
 test.describe( 'ACDC 3DS', () => {
 	test.beforeAll( async ( { utils } ) => {
