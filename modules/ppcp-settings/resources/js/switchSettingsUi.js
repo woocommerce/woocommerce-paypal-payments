@@ -40,7 +40,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	document.addEventListener( 'click', ( event ) => {
 		if (
 			event.target.closest( '.button.button-settings-switch-ui' ) ||
-			event.target.closest( 'a.settings-switch-ui' ) ||
+			event.target.closest( '.ppcp-notice-wrapper:not(.inline) a.settings-switch-ui' ) ||
 			event.target.closest( 'a[name="settings-switch-ui"]' ) ||
 			event.target.closest( '.woocommerce-inbox-note__action-button' )
 		) {

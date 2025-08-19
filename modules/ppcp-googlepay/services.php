@@ -190,7 +190,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->has( 'settings.data.settings' ) ? $container->get( 'settings.data.settings' ) : null
 		);
 	},
 
