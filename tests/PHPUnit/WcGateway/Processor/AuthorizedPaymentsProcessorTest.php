@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
 use Mockery\MockInterface;
+use PHPUnit\Framework\MockObject\MockObject;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
@@ -45,6 +46,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	private $config;
 	private $captureId = '123qwe';
 	private $testee;
+	private $subscription_helper;
+	private $amount_factory;
 
 	public function setUp(): void {
 		parent::setUp();
