@@ -5,7 +5,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
 use Mockery\MockInterface;
-use PHPUnit\Framework\MockObject\MockObject;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
