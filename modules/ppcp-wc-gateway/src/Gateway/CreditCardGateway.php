@@ -187,6 +187,62 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $logger;
 
 	/**
+	 * ID of the class extending the settings API. Used in option names.
+	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Supported features such as 'default_credit_card_form', 'refunds'.
+	 *
+	 * @var array
+	 */
+	public $supports;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title;
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description;
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields;
+
+	/**
+	 * Yes or no based on whether the method is enabled.
+	 *
+	 * @var string
+	 */
+	public $enabled;
+
+	/**
 	 * CreditCardGateway constructor.
 	 *
 	 * @param SettingsRenderer          $settings_renderer           The Settings Renderer.
