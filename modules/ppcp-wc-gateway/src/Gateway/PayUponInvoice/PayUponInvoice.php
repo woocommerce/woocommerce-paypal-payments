@@ -438,7 +438,7 @@ class PayUponInvoice {
 					! is_array( $methods )
 					|| ! $this->is_connected
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					|| ! ( is_checkout() || isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' )
+					|| ! ( is_checkout() || ( isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' ) )
 				) {
 					return $methods;
 				}
