@@ -198,21 +198,21 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 *
 	 * @var array
 	 */
-	public $supports;
+	public $supports = array( 'products' );
 
 	/**
 	 * Gateway title.
 	 *
 	 * @var string
 	 */
-	public $method_title;
+	public $method_title = '';
 
 	/**
 	 * Gateway description.
 	 *
 	 * @var string
 	 */
-	public $method_description;
+	public $method_description = '';
 
 	/**
 	 * Payment method title for the frontend.
@@ -233,14 +233,14 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 *
 	 * @var array
 	 */
-	public $form_fields;
+	public $form_fields = array();
 
 	/**
 	 * Yes or no based on whether the method is enabled.
 	 *
 	 * @var string
 	 */
-	public $enabled;
+	public $enabled = 'yes';
 
 	/**
 	 * CreditCardGateway constructor.

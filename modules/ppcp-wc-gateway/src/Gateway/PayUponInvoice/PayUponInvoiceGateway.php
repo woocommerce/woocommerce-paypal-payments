@@ -114,14 +114,14 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 *
 	 * @var string
 	 */
-	public $method_title;
+	public $method_title = '';
 
 	/**
 	 * Gateway description.
 	 *
 	 * @var string
 	 */
-	public $method_description;
+	public $method_description = '';
 
 	/**
 	 * Payment method title for the frontend.
@@ -142,7 +142,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 *
 	 * @var array
 	 */
-	public $form_fields;
+	public $form_fields = array();
 
 	/**
 	 * Icon for the gateway.
@@ -156,7 +156,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 *
 	 * @var array
 	 */
-	public $supports;
+	public $supports = array( 'products' );
 
 	/**
 	 * PayUponInvoiceGateway constructor.
