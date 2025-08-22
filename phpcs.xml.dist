@@ -12,7 +12,6 @@
 		<exclude name="WordPress.WP.GetMetaSingle.Missing" />
 		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.Found" />
 		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed" />
-		<exclude name="Generic.CodeAnalysis.RequireExplicitBooleanOperatorPrecedence.MissingParentheses" />
 		<exclude name="Universal.Operators.DisallowShortTernary.Found" />
 		<exclude name="Universal.CodeAnalysis.NoEchoSprintf.Found" />
 		<exclude name="Universal.NamingConventions.NoReservedKeywordParameterNames.arrayFound" />
