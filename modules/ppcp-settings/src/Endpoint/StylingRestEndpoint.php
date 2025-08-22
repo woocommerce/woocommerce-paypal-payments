@@ -102,7 +102,7 @@ class StylingRestEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET wc/v3/wc_paypal/styling
 		 */
@@ -138,7 +138,7 @@ class StylingRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The current styling details.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		$js_data = $this->sanitize_for_javascript(
 			$this->settings->to_array(),
 			$this->field_map
@@ -156,7 +156,7 @@ class StylingRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The updated styling details.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$wp_data = $this->sanitize_for_wordpress(
 			$request->get_params(),
 			$this->field_map

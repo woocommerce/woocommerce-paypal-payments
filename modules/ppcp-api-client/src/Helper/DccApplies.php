@@ -94,7 +94,7 @@ class DccApplies {
 	 *
 	 * @return array
 	 */
-	public function valid_cards() : array {
+	public function valid_cards(): array {
 		$cards = array();
 		if ( ! isset( $this->country_card_matrix[ $this->country ] ) ) {
 			return $cards;
@@ -122,7 +122,7 @@ class DccApplies {
 	 *
 	 * @return bool
 	 */
-	public function can_process_card( string $card ) : bool {
+	public function can_process_card( string $card ): bool {
 		if ( ! isset( $this->country_card_matrix[ $this->country ] ) ) {
 			return false;
 		}

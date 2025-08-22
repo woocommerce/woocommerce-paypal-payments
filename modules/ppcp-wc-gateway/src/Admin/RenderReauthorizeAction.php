@@ -37,7 +37,7 @@ class RenderReauthorizeAction {
 	 *
 	 * @return array
 	 */
-	public function render( array $order_actions, \WC_Order $wc_order ) : array {
+	public function render( array $order_actions, \WC_Order $wc_order ): array {
 
 		if ( ! $this->should_render_for_order( $wc_order ) ) {
 			return $order_actions;
@@ -57,7 +57,7 @@ class RenderReauthorizeAction {
 	 *
 	 * @return bool
 	 */
-	private function should_render_for_order( \WC_Order $order ) : bool {
+	private function should_render_for_order( \WC_Order $order ): bool {
 		$status               = $order->get_status();
 		$not_allowed_statuses = array( 'refunded', 'cancelled', 'failed' );
 		return $this->column->should_render_for_order( $order ) &&

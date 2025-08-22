@@ -62,7 +62,7 @@ class Message {
 	 *
 	 * @return string
 	 */
-	public function message() : string {
+	public function message(): string {
 		return $this->message;
 	}
 
@@ -71,7 +71,7 @@ class Message {
 	 *
 	 * @return string
 	 */
-	public function type() : string {
+	public function type(): string {
 		return $this->type;
 	}
 
@@ -80,7 +80,7 @@ class Message {
 	 *
 	 * @return bool
 	 */
-	public function is_dismissible() : bool {
+	public function is_dismissible(): bool {
 		return $this->dismissible;
 	}
 
@@ -89,7 +89,7 @@ class Message {
 	 *
 	 * @return string
 	 */
-	public function wrapper() : string {
+	public function wrapper(): string {
 		return $this->wrapper;
 	}
 
@@ -98,7 +98,7 @@ class Message {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		return array(
 			'type'        => $this->type,
 			'message'     => $this->message,
@@ -114,7 +114,7 @@ class Message {
 	 *
 	 * @return Message
 	 */
-	public static function from_array( array $data ) : Message {
+	public static function from_array( array $data ): Message {
 		return new Message(
 			(string) ( $data['message'] ?? '' ),
 			(string) ( $data['type'] ?? '' ),

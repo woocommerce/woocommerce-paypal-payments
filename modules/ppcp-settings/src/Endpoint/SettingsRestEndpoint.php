@@ -115,7 +115,7 @@ class SettingsRestEndpoint extends RestEndpoint {
 	/**
 	 * Registers the REST API routes for settings management.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET wc/v3/wc_paypal/settings
 		 * POST wc/v3/wc_paypal/settings
@@ -143,7 +143,7 @@ class SettingsRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The response containing settings data or error details.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		$js_data = $this->sanitize_for_javascript(
 			$this->settings->to_array(),
 			$this->field_map
@@ -158,7 +158,7 @@ class SettingsRestEndpoint extends RestEndpoint {
 	 * @param WP_REST_Request $request The request instance containing new settings.
 	 * @return WP_REST_Response The response containing updated settings or error details.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$wp_data = $this->sanitize_for_wordpress(
 			$request->get_params(),
 			$this->field_map

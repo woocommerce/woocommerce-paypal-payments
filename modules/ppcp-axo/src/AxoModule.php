@@ -168,7 +168,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$listener->filter_settings(
 					$dcc_configuration->use_fastlane(),
 					'smart_button_locations',
-					function( array $existing_setting_value ) {
+					function ( array $existing_setting_value ) {
 						$axo_forced_locations = array( 'cart-block', 'cart' );
 						return array_unique( array_merge( $existing_setting_value, $axo_forced_locations ) );
 					}
@@ -248,7 +248,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				 */
 				add_filter(
 					'woocommerce_paypal_payments_sdk_components_hook',
-					function( $components ) use ( $c ) {
+					function ( $components ) use ( $c ) {
 						$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
 						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 

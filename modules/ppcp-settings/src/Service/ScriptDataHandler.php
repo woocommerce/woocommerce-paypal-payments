@@ -206,7 +206,7 @@ class ScriptDataHandler {
 		);
 
 		$transformed_button_choices = array_map(
-			function( $key, $value ) {
+			function ( $key, $value ) {
 				return array(
 					'value' => $key,
 					'label' => $value,

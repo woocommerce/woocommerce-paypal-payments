@@ -28,21 +28,21 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	/**
 	 * {@inheritDoc}
 	 */
-	public function services() : array {
+	public function services(): array {
 		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function extensions() : array {
+	public function extensions(): array {
 		return require __DIR__ . '/../extensions.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ) : bool {
+	public function run( ContainerInterface $c ): bool {
 		add_action( 'after_setup_theme', fn() => $this->run_with_translations( $c ) );
 
 		return true;
@@ -56,7 +56,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	 * @param ContainerInterface $c The DI container.
 	 * @return void
 	 */
-	private function run_with_translations( ContainerInterface $c ) : void {
+	private function run_with_translations( ContainerInterface $c ): void {
 		// When Local APMs are disabled, none of the following hooks are needed.
 		if ( ! $this->should_add_local_apm_gateways( $c ) ) {
 			return;
@@ -131,7 +131,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 		 */
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 				foreach ( $payment_methods as $key => $value ) {
 					$payment_method_registry->register( $c->get( 'ppcp-local-apms.' . $key . '.payment-method' ) );
@@ -159,7 +159,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $order_id ) use ( $c ) {
+			function ( $order_id ) use ( $c ) {
 				$order = wc_get_order( $order_id );
 				if ( ! $order instanceof WC_Order ) {
 					return;
@@ -191,7 +191,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 
 		add_action(
 			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
-			function( WC_Order $wc_order, string $order_id ) use ( $c ) {
+			function ( WC_Order $wc_order, string $order_id ) use ( $c ) {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 				if (
 				! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods )
@@ -232,7 +232,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	 * @param ContainerInterface $container Container.
 	 * @return bool
 	 */
-	private function should_add_local_apm_gateways( ContainerInterface $container ) : bool {
+	private function should_add_local_apm_gateways( ContainerInterface $container ): bool {
 		// APMs are only available after merchant onboarding is completed.
 		$is_connected = $container->get( 'settings.flag.is-connected' );
 		if ( ! $is_connected ) {

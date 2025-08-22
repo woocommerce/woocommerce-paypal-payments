@@ -91,7 +91,7 @@ class Shipping {
 	 *
 	 * @return null|string
 	 */
-	public function email_address() : ?string {
+	public function email_address(): ?string {
 		return $this->email_address;
 	}
 
@@ -100,7 +100,7 @@ class Shipping {
 	 *
 	 * @return null|Phone
 	 */
-	public function phone_number() : ?Phone {
+	public function phone_number(): ?Phone {
 		return $this->phone_number;
 	}
 

@@ -71,7 +71,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 	 * @param string         $location The location to check.
 	 * @return bool true if the placement is enabled, otherwise false.
 	 */
-	public static function is_placement_enabled( SettingsStatus $settings_status, string $location ) : bool {
+	public static function is_placement_enabled( SettingsStatus $settings_status, string $location ): bool {
 		return self::is_block_enabled( $settings_status, $location );
 	}
 
@@ -80,7 +80,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 	 *
 	 * @return bool true if the under cart totals placement is enabled, otherwise false.
 	 */
-	public function is_under_cart_totals_placement_enabled() : bool {
+	public function is_under_cart_totals_placement_enabled(): bool {
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_wc_blocks_cart_under_totals_enabled',

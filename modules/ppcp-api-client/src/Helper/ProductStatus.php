@@ -93,7 +93,7 @@ abstract class ProductStatus {
 	 * @throws RuntimeException When the check failed.
 	 * @throws NotFoundException When a relevant service or setting was not found.
 	 */
-	abstract protected function check_local_state() : ?bool;
+	abstract protected function check_local_state(): ?bool;
 
 	/**
 	 * Inspects the API response of the SellerStatus to determine feature eligibility.
@@ -105,7 +105,7 @@ abstract class ProductStatus {
 	 * @return bool
 	 * @throws RuntimeException When the check failed.
 	 */
-	abstract protected function check_active_state( SellerStatus $seller_status ) : bool;
+	abstract protected function check_active_state( SellerStatus $seller_status ): bool;
 
 	/**
 	 * Clears the eligibility status from the local cache/DB to enforce a new
@@ -114,14 +114,14 @@ abstract class ProductStatus {
 	 * @param Settings|null $settings See description in {@see self::clear()}.
 	 * @return void
 	 */
-	abstract protected function clear_state( ?Settings $settings = null ) : void;
+	abstract protected function clear_state( ?Settings $settings = null ): void;
 
 	/**
 	 * Whether the merchant has access to the feature.
 	 *
 	 * @return bool
 	 */
-	public function is_active() : bool {
+	public function is_active(): bool {
 		if ( null !== $this->is_eligible ) {
 			return $this->is_eligible;
 		}
@@ -158,7 +158,7 @@ abstract class ProductStatus {
 	 * @return SellerStatus
 	 * @throws RuntimeException When the check failed.
 	 */
-	protected function get_seller_status_object() : SellerStatus {
+	protected function get_seller_status_object(): SellerStatus {
 		if ( null === self::$seller_status ) {
 			// Check API failure registry to prevent multiple failed API requests.
 			if ( $this->api_failure_registry->has_failure_in_timeframe( FailureRegistry::SELLER_STATUS_KEY, MINUTE_IN_SECONDS ) ) {
@@ -177,7 +177,7 @@ abstract class ProductStatus {
 	 *
 	 * @return bool True, if we can use the merchant API endpoints.
 	 */
-	public function is_onboarded() : bool {
+	public function is_onboarded(): bool {
 		return $this->is_connected;
 	}
 
@@ -186,7 +186,7 @@ abstract class ProductStatus {
 	 *
 	 * @return bool
 	 */
-	public function has_request_failure() : bool {
+	public function has_request_failure(): bool {
 		return $this->has_request_failure;
 	}
 
@@ -199,7 +199,7 @@ abstract class ProductStatus {
 	 * @param Settings|null $settings The settings object.
 	 * @return void
 	 */
-	public function clear( ?Settings $settings = null ) : void {
+	public function clear( ?Settings $settings = null ): void {
 		$this->is_eligible         = null;
 		$this->has_request_failure = false;
 

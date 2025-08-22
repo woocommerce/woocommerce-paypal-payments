@@ -80,7 +80,7 @@ trait ProcessPaymentTrait {
 	 * @param Throwable $exception The exception to format.
 	 * @return string
 	 */
-	protected function format_exception( Throwable $exception ) : string {
+	protected function format_exception( Throwable $exception ): string {
 		$message = $exception->getMessage();
 		if ( is_a( $exception, PayPalApiException::class ) ) {
 			$message = $exception->get_details( $message );

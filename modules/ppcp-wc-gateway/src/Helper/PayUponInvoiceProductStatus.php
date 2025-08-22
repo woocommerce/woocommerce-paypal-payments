@@ -65,7 +65,7 @@ class PayUponInvoiceProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_local_state() : ?bool {
+	protected function check_local_state(): ?bool {
 		if ( $this->cache->has( self::PUI_STATUS_CACHE_KEY ) ) {
 			return wc_string_to_bool( $this->cache->get( self::PUI_STATUS_CACHE_KEY ) );
 		}
@@ -78,7 +78,7 @@ class PayUponInvoiceProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_active_state( SellerStatus $seller_status ) : bool {
+	protected function check_active_state( SellerStatus $seller_status ): bool {
 		foreach ( $seller_status->products() as $product ) {
 			if ( $product->name() !== 'PAYMENT_METHODS' ) {
 				continue;
@@ -111,7 +111,7 @@ class PayUponInvoiceProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function clear_state( ?Settings $settings = null ) : void {
+	protected function clear_state( ?Settings $settings = null ): void {
 		if ( null === $settings ) {
 			$settings = $this->settings;
 		}

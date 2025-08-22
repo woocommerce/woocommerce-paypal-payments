@@ -46,7 +46,7 @@ class HeaderRenderer {
 	 *
 	 * @return bool
 	 */
-	public function should_render() : bool {
+	public function should_render(): bool {
 		return ! empty( $this->page_id );
 	}
 

@@ -74,7 +74,7 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 				 */
 				add_filter(
 					'woocommerce_paypal_payments_sdk_components_hook',
-					function( $components ) use ( $c ) {
+					function ( $components ) use ( $c ) {
 						if ( ! $c->has( 'axo.available' ) || ! $c->get( 'axo.available' ) ) {
 							return $components;
 						}
@@ -87,7 +87,7 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				/*
 				 * Only register the method if we are not in the admin or the customer is not logged in.
 				 */

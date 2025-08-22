@@ -23,7 +23,7 @@ class ShippingCallbackUrlFactory {
 	/**
 	 * Creates the callback URL.
 	 */
-	public function create() : string {
+	public function create(): string {
 		$cart_response = $this->cart_endpoint->get_cart();
 
 		$url = $this->shipping_callback_endpoint->url();

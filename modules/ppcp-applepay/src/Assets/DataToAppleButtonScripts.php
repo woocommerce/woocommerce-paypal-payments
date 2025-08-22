@@ -49,7 +49,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	public function apple_pay_script_data() : array {
+	public function apple_pay_script_data(): array {
 		if ( is_product() ) {
 			return $this->data_for_product_page();
 		}
@@ -62,7 +62,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	public function apple_pay_script_data_for_admin() : array {
+	public function apple_pay_script_data_for_admin(): array {
 		return $this->data_for_admin_page();
 	}
 
@@ -73,7 +73,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	private function get_apple_pay_data( array $product = array() ) : array {
+	private function get_apple_pay_data( array $product = array() ): array {
 		// true: Use Apple Pay as distinct gateway.
 		// false: integrate it with the smart buttons.
 		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
@@ -132,7 +132,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return bool
 	 */
-	protected function check_if_need_shipping( WC_Product $product ) : bool {
+	protected function check_if_need_shipping( WC_Product $product ): bool {
 		if (
 			! wc_shipping_enabled()
 			|| 0 === wc_get_shipping_method_count(
@@ -154,7 +154,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	protected function data_for_product_page() : array {
+	protected function data_for_product_page(): array {
 		$product = wc_get_product( get_the_id() );
 		if ( ! $product ) {
 			return array();
@@ -185,7 +185,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	protected function data_for_cart_page() : array {
+	protected function data_for_cart_page(): array {
 		$cart = WC()->cart;
 		if ( ! $cart ) {
 			return array();
@@ -206,7 +206,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return array
 	 */
-	protected function data_for_admin_page() : array {
+	protected function data_for_admin_page(): array {
 		$data = $this->get_apple_pay_data(
 			array(
 				'needShipping' => false,

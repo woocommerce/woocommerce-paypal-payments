@@ -25,7 +25,7 @@ class ActivationDetector {
 	 *
 	 * @return string The installation path.
 	 */
-	public function detect_activation_path() : string {
+	public function detect_activation_path(): string {
 		/**
 		 * Get the custom attachment detail which was added by WooCommerce
 		 *

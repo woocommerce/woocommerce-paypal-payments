@@ -67,7 +67,7 @@ class RefundCapture {
 	 *
 	 * @return Capture
 	 */
-	public function for_capture() : Capture {
+	public function for_capture(): Capture {
 		return $this->capture;
 	}
 
@@ -76,7 +76,7 @@ class RefundCapture {
 	 *
 	 * @return string
 	 */
-	public function invoice_id() : string {
+	public function invoice_id(): string {
 		return $this->invoice_id;
 	}
 
@@ -85,7 +85,7 @@ class RefundCapture {
 	 *
 	 * @return string
 	 */
-	public function note_to_payer() : string {
+	public function note_to_payer(): string {
 		return $this->note_to_payer;
 	}
 
@@ -103,7 +103,7 @@ class RefundCapture {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$data = array(
 			'invoice_id' => $this->invoice_id(),
 		);

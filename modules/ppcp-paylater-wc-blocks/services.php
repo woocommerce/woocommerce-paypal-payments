@@ -47,4 +47,3 @@ return array(
 		);
 	},
 );
-

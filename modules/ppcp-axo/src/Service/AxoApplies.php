@@ -80,7 +80,7 @@ class AxoApplies {
 	 *
 	 * @return bool
 	 */
-	public function for_merchant() : bool {
+	public function for_merchant(): bool {
 		return apply_filters(
 			'woocommerce_paypal_payments_is_eligible_for_axo',
 			true
@@ -94,11 +94,11 @@ class AxoApplies {
 	 */
 	public function should_render_fastlane(): bool {
 		return ! is_user_logged_in()
-			   && CartCheckoutDetector::has_classic_checkout()
-			   && $this->dcc_configuration->use_fastlane()
-			   && ! $this->is_excluded_endpoint()
-			   && is_checkout()
-			   && ! $this->subscription_helper->cart_contains_subscription();
+				&& CartCheckoutDetector::has_classic_checkout()
+				&& $this->dcc_configuration->use_fastlane()
+				&& ! $this->is_excluded_endpoint()
+				&& is_checkout()
+				&& ! $this->subscription_helper->cart_contains_subscription();
 	}
 
 	/**

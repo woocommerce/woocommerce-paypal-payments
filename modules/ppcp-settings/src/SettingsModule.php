@@ -65,7 +65,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	/**
 	 * Returns whether the old settings UI should be loaded.
 	 */
-	public static function should_use_the_old_ui() : bool {
+	public static function should_use_the_old_ui(): bool {
 		/**
 		 * Determine if the new Settings UI is disabled via feature flag.
 		 *
@@ -94,18 +94,18 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function services() : array {
+	public function services(): array {
 		return require __DIR__ . '/../services.php';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ) : bool {
+	public function run( ContainerInterface $container ): bool {
 		if ( self::should_use_the_old_ui() ) {
 			add_filter(
 				'woocommerce_paypal_payments_inside_settings_page_header',
-				static fn() : string => sprintf(
+				static fn(): string => sprintf(
 					'<button type="button" class="button button-settings-switch-ui" aria-describedby="switch-ui-desc">%s</button><span id="switch-ui-desc" class="screen-reader-text">%s</span>',
 					esc_html__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
 					esc_html__( 'This action will permanently switch to the new settings interface and cannot be undone', 'woocommerce-paypal-payments' )
@@ -228,7 +228,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'admin_enqueue_scripts',
-			function ( string $hook_suffix ) use ( $container ) : void {
+			function ( string $hook_suffix ) use ( $container ): void {
 				$script_data_handler = $container->get( 'settings.service.script-data-handler' );
 				$script_data_handler->localize_scripts( $hook_suffix );
 			}
@@ -236,7 +236,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_admin_options_wrapper',
-			function () use ( $container ) : void {
+			function () use ( $container ): void {
 				global $hide_save_button;
 				$hide_save_button = true;
 
@@ -249,7 +249,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'rest_api_init',
-			static function () use ( $container ) : void {
+			static function () use ( $container ): void {
 				$endpoints = array(
 					'onboarding'             => $container->get( 'settings.rest.onboarding' ),
 					'common'                 => $container->get( 'settings.rest.common' ),
@@ -274,7 +274,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'admin_init',
-			static function () use ( $container ) : void {
+			static function () use ( $container ): void {
 				$connection_handler = $container->get( 'settings.handler.connection-listener' );
 				assert( $connection_handler instanceof ConnectionListener );
 
@@ -285,7 +285,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_merchant_disconnected',
-			static function () use ( $container ) : void {
+			static function () use ( $container ): void {
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 				$logger->info( 'Merchant disconnected, reset onboarding' );
@@ -310,7 +310,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_paypal_payments_authenticated_merchant',
-			static function () use ( $container ) : void {
+			static function () use ( $container ): void {
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 				$logger->info( 'Merchant connected, complete onboarding and set defaults.' );
@@ -341,7 +341,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_filter(
 			'woocommerce_paypal_payments_payment_methods',
-			function ( array $payment_methods ) use ( $container ) : array {
+			function ( array $payment_methods ) use ( $container ): array {
 				$all_payment_methods = $payment_methods;
 
 				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
@@ -426,7 +426,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $methods ) use ( $container ) : array {
+			function ( $methods ) use ( $container ): array {
 				$is_onboarded = $container->get( 'api.merchant_id' ) !== '';
 				if ( ! is_array( $methods ) || ! $is_onboarded ) {
 					return $methods;
@@ -464,7 +464,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 */
 		add_action(
 			'woocommerce_admin_field_payment_gateways',
-			function () use ( $container ) : void {
+			function () use ( $container ): void {
 				$all_gateway_ids  = $container->get( 'settings.config.all-gateway-ids' );
 				$payment_gateways = WC()->payment_gateways->payment_gateways;
 
@@ -493,7 +493,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $methods ) use ( $container ) : array {
+			static function ( $methods ) use ( $container ): array {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}
@@ -684,7 +684,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		// Do not render Pay Later messaging if the "Save PayPal and Venmo" setting is enabled.
 		add_filter(
 			'woocommerce_paypal_payments_should_render_pay_later_messaging',
-			static function() use ( $container ): bool {
+			static function () use ( $container ): bool {
 				$settings_model = $container->get( 'settings.data.settings' );
 				assert( $settings_model instanceof SettingsModel );
 
@@ -695,7 +695,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		// Migration code to update BN code of merchants that are on whitelabel mode (own_brand_only false) to use the whitelabel BN code (direct).
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function() use ( $container ) {
+			static function () use ( $container ) {
 				$general_settings = $container->get( 'settings.data.general' );
 				assert( $general_settings instanceof GeneralSettings );
 
@@ -720,7 +720,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * @param ContainerInterface $container The DI container provider.
 	 * @return void
 	 */
-	protected function apply_branded_only_limitations( ContainerInterface $container ) : void {
+	protected function apply_branded_only_limitations( ContainerInterface $container ): void {
 		$settings = $container->get( 'settings.data.general' );
 		assert( $settings instanceof GeneralSettings );
 
@@ -753,7 +753,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * @param ContainerInterface $container The DI container provider.
 	 * @return void
 	 */
-	protected function initialize_branded_only( ContainerInterface $container ) : void {
+	protected function initialize_branded_only( ContainerInterface $container ): void {
 		$path_repository = $container->get( 'settings.service.branded-experience.path-repository' );
 		assert( $path_repository instanceof PathRepository );
 
@@ -773,7 +773,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 *
 	 * @return void
 	 */
-	protected function render_header() : void {
+	protected function render_header(): void {
 		echo '<h2>' . esc_html__( 'PayPal', 'woocommerce-paypal-payments' );
 		wc_back_link( __( 'Return to payments', 'woocommerce-paypal-payments' ), admin_url( 'admin.php?page=wc-settings&tab=checkout' ) );
 		echo '</h2>';
@@ -784,7 +784,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 *
 	 * @return void
 	 */
-	protected function render_content() : void {
+	protected function render_content(): void {
 		echo '<div id="ppcp-settings-container"></div>';
 	}
 
@@ -794,7 +794,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * @param string $gateway_name The gateway name.
 	 * @return bool True if the payment gateway with the given name is enabled, otherwise false.
 	 */
-	protected function is_gateway_enabled( string $gateway_name ) : bool {
+	protected function is_gateway_enabled( string $gateway_name ): bool {
 		$gateway_settings = get_option( "woocommerce_{$gateway_name}_settings", array() );
 		$gateway_enabled  = $gateway_settings['enabled'] ?? false;
 

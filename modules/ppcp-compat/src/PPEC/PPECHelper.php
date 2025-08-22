@@ -117,5 +117,4 @@ class PPECHelper {
 			&& self::site_has_ppec_subscriptions()
 			&& apply_filters( 'woocommerce_paypal_payments_process_legacy_subscriptions', true );
 	}
-
 }

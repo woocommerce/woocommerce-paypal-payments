@@ -181,5 +181,4 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 
 		unset( $this->cart );
 	}
-
 }

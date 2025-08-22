@@ -161,4 +161,3 @@ class UpdateSignupLinksEndpoint implements EndpointInterface {
 		return true;
 	}
 }
-

@@ -18,7 +18,7 @@ return array(
 			$container->get( 'api.endpoint.billing-plans' )
 		);
 	},
-	'paypal-subscriptions.api-handler'              => static function( ContainerInterface $container ): SubscriptionsApiHandler {
+	'paypal-subscriptions.api-handler'              => static function ( ContainerInterface $container ): SubscriptionsApiHandler {
 		return new SubscriptionsApiHandler(
 			$container->get( 'api.endpoint.catalog-products' ),
 			$container->get( 'api.factory.product' ),

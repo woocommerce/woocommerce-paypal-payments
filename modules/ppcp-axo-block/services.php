@@ -14,13 +14,13 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	// If AXO Block is configured and onboarded.
-	'axoblock.available' => static function ( ContainerInterface $container ) : bool {
+	'axoblock.available' => static function ( ContainerInterface $container ): bool {
 		return true;
 	},
-	'axoblock.url'       => static function ( ContainerInterface $container ) : string {
+	'axoblock.url'       => static function ( ContainerInterface $container ): string {
 		return plugins_url( '/modules/ppcp-axo-block/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
-	'axoblock.method'    => static function ( ContainerInterface $container ) : AxoBlockPaymentMethod {
+	'axoblock.method'    => static function ( ContainerInterface $container ): AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(
 			$container->get( 'axoblock.url' ),
 			$container->get( 'ppcp.asset-version' ),

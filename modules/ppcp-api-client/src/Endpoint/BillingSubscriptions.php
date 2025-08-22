@@ -65,7 +65,7 @@ class BillingSubscriptions {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function suspend( string $id ):void {
+	public function suspend( string $id ): void {
 		$data = array(
 			'reason' => sprintf( 'Suspended by %s.', is_admin() ? 'merchant' : 'customer' ),
 		);
@@ -214,6 +214,4 @@ class BillingSubscriptions {
 
 		return $json;
 	}
-
-
 }

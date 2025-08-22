@@ -109,16 +109,16 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
-	string $module_url,
-	string $version,
-	WC_Payment_Gateway $gateway,
-	$smart_button,
-	Settings $settings,
-	CardPaymentsConfiguration $dcc_configuration,
-	Environment $environment,
-	string $wcgateway_module_url,
-	array $payment_method_selected_map,
-	array $supported_country_card_type_matrix
+		string $module_url,
+		string $version,
+		WC_Payment_Gateway $gateway,
+		$smart_button,
+		Settings $settings,
+		CardPaymentsConfiguration $dcc_configuration,
+		Environment $environment,
+		string $wcgateway_module_url,
+		array $payment_method_selected_map,
+		array $supported_country_card_type_matrix
 	) {
 		$this->name                               = AxoGateway::ID;
 		$this->module_url                         = $module_url;
@@ -141,14 +141,14 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function is_active() : bool {
+	public function is_active(): bool {
 		return $this->gateway->is_available();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_payment_method_script_handles() : array {
+	public function get_payment_method_script_handles(): array {
 		$script_path       = 'assets/js/index.js';
 		$script_asset_path = trailingslashit( $this->module_url ) . 'assets/js/index.asset.php';
 		$script_asset      = file_exists( $script_asset_path )
@@ -199,7 +199,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 *
 	 * @return array
 	 */
-	private function script_data() : array {
+	private function script_data(): array {
 		if ( is_admin() ) {
 			return array();
 		}

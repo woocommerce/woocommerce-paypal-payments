@@ -100,7 +100,7 @@ class PayPalBearer implements Bearer {
 	 * @throws RuntimeException When request fails.
 	 * @return Token
 	 */
-	public function bearer() : Token {
+	public function bearer(): Token {
 		try {
 			$bearer = Token::from_json( (string) $this->cache->get( self::CACHE_KEY ) );
 
@@ -115,7 +115,7 @@ class PayPalBearer implements Bearer {
 	 *
 	 * @return string The client ID from settings, or the key defined via constructor.
 	 */
-	private function get_key() : string {
+	private function get_key(): string {
 		if (
 			$this->settings
 			&& $this->settings->has( 'client_id' )
@@ -132,7 +132,7 @@ class PayPalBearer implements Bearer {
 	 *
 	 * @return string The client secret from settings, or the value defined via constructor.
 	 */
-	private function get_secret() : string {
+	private function get_secret(): string {
 		if (
 			$this->settings
 			&& $this->settings->has( 'client_secret' )
@@ -150,7 +150,7 @@ class PayPalBearer implements Bearer {
 	 * @throws RuntimeException When request fails.
 	 * @return Token
 	 */
-	private function newBearer() : Token {
+	private function newBearer(): Token {
 		$key    = $this->get_key();
 		$secret = $this->get_secret();
 		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';

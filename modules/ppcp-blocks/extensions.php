@@ -29,7 +29,7 @@ return array(
 	},
 
 	'wcgateway.settings.fields'                        => function ( array $fields, ContainerInterface $container ): array {
-		$insert_after = function( array $array, string $key, array $new ): array {
+		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
 			$pos = false === $index ? count( $array ) : $index + 1;

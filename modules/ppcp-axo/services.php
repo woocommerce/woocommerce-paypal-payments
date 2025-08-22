@@ -34,11 +34,11 @@ return array(
 		$axo_applies = $container->get( 'axo.service.axo-applies' );
 		assert( $axo_applies instanceof AxoApplies );
 
-		return static function () use ( $axo_applies ) : bool {
+		return static function () use ( $axo_applies ): bool {
 			return $axo_applies->for_country_currency() && $axo_applies->for_merchant();
 		};
 	},
-	'axo.service.axo-applies'                => static function ( ContainerInterface $container ) : AxoApplies {
+	'axo.service.axo-applies'                => static function ( ContainerInterface $container ): AxoApplies {
 		return new AxoApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
@@ -48,7 +48,7 @@ return array(
 		);
 	},
 
-	'axo.helpers.compatibility-checker'      => static function ( ContainerInterface $container ) : CompatibilityChecker {
+	'axo.helpers.compatibility-checker'      => static function ( ContainerInterface $container ): CompatibilityChecker {
 		return new CompatibilityChecker(
 			$container->get( 'axo.fastlane-incompatible-plugin-names' ),
 			$container->get( 'wcgateway.configuration.card-configuration' )
@@ -154,7 +154,7 @@ return array(
 	/**
 	 * The matrix which countries and currency combinations can be used for AXO.
 	 */
-	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ) : array {
+	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ): array {
 		$matrix = array(
 			'US' => array(
 				'AUD',
@@ -185,7 +185,7 @@ return array(
 	/**
 	 * The matrix which countries and card type combinations can be used for AXO.
 	 */
-	'axo.supported-country-card-type-matrix' => static function ( ContainerInterface $container ) : array {
+	'axo.supported-country-card-type-matrix' => static function ( ContainerInterface $container ): array {
 		$matrix = array(
 			'US' => array(
 				'VISA',
@@ -226,42 +226,42 @@ return array(
 			$matrix
 		);
 	},
-	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ) : string {
+	'axo.settings-conflict-notice'           => static function ( ContainerInterface $container ): string {
 		$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
 		assert( $compatibility_checker instanceof CompatibilityChecker );
 
 		return $compatibility_checker->generate_settings_conflict_notice();
 	},
 
-	'axo.checkout-config-notice'             => static function ( ContainerInterface $container ) : string {
+	'axo.checkout-config-notice'             => static function ( ContainerInterface $container ): string {
 		$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
 		assert( $compatibility_checker instanceof CompatibilityChecker );
 
 		return $compatibility_checker->generate_checkout_notice();
 	},
 
-	'axo.checkout-config-notice.raw'         => static function ( ContainerInterface $container ) : string {
+	'axo.checkout-config-notice.raw'         => static function ( ContainerInterface $container ): string {
 		$compatibility_checker = $container->get( 'axo.helpers.compatibility-checker' );
 		assert( $compatibility_checker instanceof CompatibilityChecker );
 
 		return $compatibility_checker->generate_checkout_notice( true );
 	},
 
-	'axo.incompatible-plugins-notice'        => static function ( ContainerInterface $container ) : string {
+	'axo.incompatible-plugins-notice'        => static function ( ContainerInterface $container ): string {
 		$settings_notice_generator = $container->get( 'axo.helpers.compatibility-checker' );
 		assert( $settings_notice_generator instanceof CompatibilityChecker );
 
 		return $settings_notice_generator->generate_incompatible_plugins_notice();
 	},
 
-	'axo.incompatible-plugins-notice.raw'    => static function ( ContainerInterface $container ) : string {
+	'axo.incompatible-plugins-notice.raw'    => static function ( ContainerInterface $container ): string {
 		$settings_notice_generator = $container->get( 'axo.helpers.compatibility-checker' );
 		assert( $settings_notice_generator instanceof CompatibilityChecker );
 
 		return $settings_notice_generator->generate_incompatible_plugins_notice( true );
 	},
 
-	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ) : string {
+	'axo.smart-button-location-notice'       => static function ( ContainerInterface $container ): string {
 		$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
 		assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
@@ -310,7 +310,7 @@ return array(
 	 *
 	 * @returns array<array{name: string, is_active: bool}>
 	 */
-	'axo.fastlane-incompatible-plugins'      => static function () : array {
+	'axo.fastlane-incompatible-plugins'      => static function (): array {
 		/**
 		 * Filters the list of Fastlane incompatible plugins.
 		 */
@@ -365,12 +365,12 @@ return array(
 		);
 	},
 
-	'axo.fastlane-incompatible-plugin-names' => static function ( ContainerInterface $container ) : array {
+	'axo.fastlane-incompatible-plugin-names' => static function ( ContainerInterface $container ): array {
 		$incompatible_plugins = $container->get( 'axo.fastlane-incompatible-plugins' );
 
 		$active_plugins_list = array_filter(
 			$incompatible_plugins,
-			function( array $plugin ): bool {
+			function ( array $plugin ): bool {
 				return (bool) $plugin['is_active'];
 			}
 		);
@@ -395,10 +395,10 @@ return array(
 		}
 
 		$shipping_zones = \WC_Shipping_Zones::get_zones();
-		$get_zone_locations = fn( \WC_Shipping_Zone $zone): array =>
+		$get_zone_locations = fn( \WC_Shipping_Zone $zone ): array =>
 		! empty( $zone->get_shipping_methods( true ) )
 			? array_map(
-				fn( object $location): string => $location->code,
+				fn( object $location ): string => $location->code,
 				$zone->get_zone_locations()
 			)
 			: array();
@@ -408,7 +408,7 @@ return array(
 				...array_map(
 					$get_zone_locations,
 					array_map(
-						fn( $zone): \WC_Shipping_Zone =>
+						fn( $zone ): \WC_Shipping_Zone =>
 						$zone instanceof \WC_Shipping_Zone ? $zone : new \WC_Shipping_Zone( $zone['id'] ),
 						$shipping_zones
 					)

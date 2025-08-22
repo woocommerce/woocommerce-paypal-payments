@@ -77,7 +77,7 @@ trait OrderMetaTrait {
 	 * @param Order    $order    The PayPal order which provides the details.
 	 * @return void
 	 */
-	private function add_contact_details_to_wc_order( WC_Order $wc_order, Order $order ) : void {
+	private function add_contact_details_to_wc_order( WC_Order $wc_order, Order $order ): void {
 		$shipping_details = $this->get_shipping_details( $order );
 
 		if ( ! $shipping_details ) {
@@ -115,7 +115,7 @@ trait OrderMetaTrait {
 	 * @param Order $order The PayPal order that contains potential shipping information.
 	 * @return ?Shipping The shipping details, or null if none present.
 	 */
-	private function get_shipping_details( Order $order ) : ?Shipping {
+	private function get_shipping_details( Order $order ): ?Shipping {
 		foreach ( $order->purchase_units() as $unit ) {
 			$shipping = $unit->shipping();
 			if ( $shipping ) {

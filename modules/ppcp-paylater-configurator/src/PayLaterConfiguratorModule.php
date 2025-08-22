@@ -56,7 +56,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ) : bool {
+	public function run( ContainerInterface $c ): bool {
 
 		add_action(
 			'init',
@@ -171,7 +171,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 	 *
 	 * @return void
 	 */
-	private static function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ) : void {
+	private static function add_paylater_update_notice( array $message_locations, bool $is_settings_page, string $current_page_id ): void {
 		// The message must be registered on any WC-Settings page, except for the Pay Later page.
 		if ( ! $is_settings_page || Settings::PAY_LATER_TAB_ID === $current_page_id ) {
 			return;
@@ -192,7 +192,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			static function ( $notices ) : array {
+			static function ( $notices ): array {
 				$settings_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' );
 
 				$message = sprintf(

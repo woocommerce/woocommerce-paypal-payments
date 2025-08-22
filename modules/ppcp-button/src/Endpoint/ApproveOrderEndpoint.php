@@ -159,7 +159,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 *
 	 * @return string
 	 */
-	public static function nonce() : string {
+	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
 
@@ -169,7 +169,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @return bool
 	 * @throws RuntimeException When order not found or handling failed.
 	 */
-	public function handle_request() : bool {
+	public function handle_request(): bool {
 		try {
 			$data = $this->request_data->read_request( self::nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
@@ -266,7 +266,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 *
 	 * @return void
 	 */
-	protected function toggle_final_review_enabled_setting() : void {
+	protected function toggle_final_review_enabled_setting(): void {
 		// TODO new-ux: This flag must also be updated in the new settings.
 		$final_review_enabled_setting = $this->settings->has( 'blocks_final_review_enabled' ) && $this->settings->get( 'blocks_final_review_enabled' );
 		$this->settings->set( 'blocks_final_review_enabled', ! $final_review_enabled_setting );
@@ -285,7 +285,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @param Order $order The PayPal order to inspect.
 	 * @throws RuntimeException When the 3DS check was rejected.
 	 */
-	protected function verify_three_d_secure( Order $order ) : void {
+	protected function verify_three_d_secure( Order $order ): void {
 		$payment_source = $order->payment_source();
 
 		if ( ! $payment_source ) {

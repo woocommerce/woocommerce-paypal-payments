@@ -61,7 +61,7 @@ class ThreeDSecure {
 	 *
 	 * @return int
 	 */
-	public function proceed_with_order( Order $order ) : int {
+	public function proceed_with_order( Order $order ): int {
 
 		do_action( 'woocommerce_paypal_payments_three_d_secure_before_check', $order );
 
@@ -120,7 +120,7 @@ class ThreeDSecure {
 	 * @param Order $order    The PayPal Order object.
 	 * @return int
 	 */
-	public function return_decision( int $decision, Order $order ) : int {
+	public function return_decision( int $decision, Order $order ): int {
 		$decision = apply_filters( 'woocommerce_paypal_payments_three_d_secure_decision', $decision, $order );
 		do_action( 'woocommerce_paypal_payments_three_d_secure_after_check', $order, $decision );
 
@@ -134,7 +134,7 @@ class ThreeDSecure {
 	 *
 	 * @return int
 	 */
-	private function no_liability_shift( AuthResult $result ) : int {
+	private function no_liability_shift( AuthResult $result ): int {
 		$enrollment     = $result->enrollment_status();
 		$authentication = $result->authentication_result();
 

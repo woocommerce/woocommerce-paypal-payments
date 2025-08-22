@@ -95,7 +95,7 @@ class Renderer implements RendererInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function enqueue_admin() : void {
+	public function enqueue_admin(): void {
 		if ( ! $this->can_mute_message ) {
 			return;
 		}
@@ -129,7 +129,7 @@ class Renderer implements RendererInterface {
 	 *
 	 * @return array
 	 */
-	protected function script_data_for_admin() : array {
+	protected function script_data_for_admin(): array {
 		$ajax_url = admin_url( 'admin-ajax.php' );
 
 		return array(

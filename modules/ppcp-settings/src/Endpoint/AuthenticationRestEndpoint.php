@@ -77,7 +77,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * POST /wp-json/wc/v3/wc_paypal/authenticate/direct
 		 * {
@@ -173,7 +173,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 */
-	public function connect_direct( WP_REST_Request $request ) : WP_REST_Response {
+	public function connect_direct( WP_REST_Request $request ): WP_REST_Response {
 		$client_id     = $request->get_param( 'clientId' );
 		$client_secret = $request->get_param( 'clientSecret' );
 		$use_sandbox   = $request->get_param( 'useSandbox' );
@@ -199,7 +199,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 *
 	 * @param WP_REST_Request $request Full data about the request.
 	 */
-	public function connect_oauth( WP_REST_Request $request ) : WP_REST_Response {
+	public function connect_oauth( WP_REST_Request $request ): WP_REST_Response {
 		$shared_id   = $request->get_param( 'sharedId' );
 		$auth_code   = $request->get_param( 'authCode' );
 		$use_sandbox = $request->get_param( 'useSandbox' );
@@ -216,7 +216,7 @@ class AuthenticationRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function disconnect( WP_REST_Request $request ) : WP_REST_Response {
+	public function disconnect( WP_REST_Request $request ): WP_REST_Response {
 		$reset_settings = $request->get_param( 'reset' );
 
 		$this->authentication_manager->disconnect();
