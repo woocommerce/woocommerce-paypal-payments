@@ -260,7 +260,7 @@ class SubscriptionsApiHandler {
 				1
 			) )->to_array();
 
-			$sequence++;
+			++$sequence;
 		}
 
 		$interval        = $product->get_meta( '_subscription_period' );
