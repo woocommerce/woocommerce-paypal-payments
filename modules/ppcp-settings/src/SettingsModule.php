@@ -199,26 +199,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				&& update_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes' )
 		);
 
-		/**
-		 * This hook is fired when the plugin is installed or updated.
-		 */
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
-			function () use ( $container ) {
-				$path_repository = $container->get( 'settings.service.branded-experience.path-repository' );
-				assert( $path_repository instanceof PathRepository );
-
-				$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-				assert( $partner_attribution instanceof PartnerAttribution );
-
-				$general_settings = $container->get( 'settings.data.general' );
-				assert( $general_settings instanceof GeneralSettings );
-
-				$path_repository->persist();
-				$partner_attribution->initialize_bn_code( $general_settings->get_installation_path() );
-			}
-		);
-
 		// Suppress WooCommerce Settings UI elements via CSS to improve the loading experience.
 		$loading_screen_service = $container->get( 'settings.services.loading-screen-service' );
 		assert( $loading_screen_service instanceof LoadingScreenService );
