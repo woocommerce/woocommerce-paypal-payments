@@ -103,6 +103,62 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	private $module_url;
 
 	/**
+	 * ID of the class extending the settings API. Used in option names.
+	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
+	 * Supported features such as 'default_credit_card_form', 'refunds'.
+	 *
+	 * @var array
+	 */
+	public $supports = array( 'products' );
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.

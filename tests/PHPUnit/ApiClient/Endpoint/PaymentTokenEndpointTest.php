@@ -30,6 +30,7 @@ class PaymentTokenEndpointTest extends TestCase
     private $customer_repository;
 	private $request_id_repository;
     private $sut;
+	private $logger;
 
     public function setUp(): void
     {

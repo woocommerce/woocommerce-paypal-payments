@@ -74,6 +74,8 @@ class ModularTestCase extends TestCase
 		$module = new class ($overriddenServices) implements ServiceModule, ExecutableModule {
 			use ModuleClassNameIdTrait;
 
+			private $services;
+
 			public function __construct(array $services) {
 				$this->services = $services;
 			}
