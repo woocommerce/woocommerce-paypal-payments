@@ -1911,7 +1911,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
 	protected function is_cart_price_total_zero(): bool {
-        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+        // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual
 		return WC()->cart && WC()->cart->get_total( 'numeric' ) == 0;
 	}
 
