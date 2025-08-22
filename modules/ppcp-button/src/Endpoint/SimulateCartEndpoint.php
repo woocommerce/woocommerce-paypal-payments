@@ -172,11 +172,9 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 			// Removes shutdown actions to prevent persisting session, transients and save cookies.
 			remove_all_actions( 'shutdown' );
 			unset( WC()->cart );
-		} else {
+		} elseif ( null !== $this->real_cart ) {
 			// Restores cart, may lead to race conditions.
-			if ( null !== $this->real_cart ) {
-				WC()->cart = $this->real_cart;
-			}
+			WC()->cart = $this->real_cart;
 		}
 
 		unset( $this->cart );
