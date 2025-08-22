@@ -45,6 +45,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	private $config;
 	private $captureId = '123qwe';
 	private $testee;
+	private $subscription_helper;
+	private $amount_factory;
 
 	public function setUp(): void {
 		parent::setUp();

@@ -55,8 +55,8 @@ class Shipping {
 	 * @param ShippingOption[] $options       Shipping methods.
 	 */
 	public function __construct(
-		string $name = null,
-		Address $address = null,
+		?string $name = null,
+		?Address $address = null,
 		?string $email_address = null,
 		?Phone $phone_number = null,
 		array $options = array()
