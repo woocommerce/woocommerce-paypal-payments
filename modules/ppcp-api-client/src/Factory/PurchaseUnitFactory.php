@@ -175,6 +175,7 @@ class PurchaseUnitFactory {
 
 		$shipping = null;
 		$customer = \WC()->customer;
+		/** @psalm-suppress RedundantConditionGivenDocblockType False positive. Ignored because $customer can be null as well. */
 		if ( $this->shipping_needed( ...array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
 			$shipping         = $this->shipping_factory->from_wc_customer( \WC()->customer, $with_shipping_options );
 			$shipping_address = $shipping->address();
