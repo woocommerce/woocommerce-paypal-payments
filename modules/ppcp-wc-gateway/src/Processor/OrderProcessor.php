@@ -221,12 +221,16 @@ class OrderProcessor {
 					throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
 				}
 			} else {
-				$this->logger->warning(
-					sprintf(
-						'No PayPal order ID found in order #%d meta.',
-						$wc_order->get_id()
-					)
-				);
+				$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+				if ( $is_paypal_return ) {
+					$this->logger->warning(
+						sprintf(
+							'No PayPal order ID found for WooCommerce order #%d.',
+							$wc_order->get_id()
+						)
+					);
+				}
 
 				throw new PayPalOrderMissingException(
 					esc_attr__(

@@ -84,6 +84,18 @@ class ChangeCartEndpointTest extends TestCase
             ->with(ChangeCartEndpoint::nonce())
             ->andReturn($data);
 
+        // Mock WC session for shipping data preservation
+        $session = Mockery::mock(\WC_Session::class);
+        $session->shouldReceive('get')
+            ->with('chosen_shipping_methods')
+            ->andReturn(null);
+        $session->shouldReceive('set')
+            ->with('chosen_shipping_methods', Mockery::any());
+
+        $wc = Mockery::mock();
+        $wc->session = $session;
+        expect('WC')->andReturn($wc);
+
 		$pu = Mockery::mock(PurchaseUnit::class);
 		$pu
 			->shouldReceive('to_array')

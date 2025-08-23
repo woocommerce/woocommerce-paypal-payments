@@ -27,7 +27,7 @@ export const paypalAddressToWc = ( address ) => {
 		admin_area_2: 'city',
 		postal_code: 'postcode',
 	};
-	if ( address.city ) {
+	if ( address?.city ) {
 		// address not from API, such as onShippingChange
 		map = {
 			country_code: 'country',
@@ -38,7 +38,7 @@ export const paypalAddressToWc = ( address ) => {
 	}
 	const result = {};
 	Object.entries( map ).forEach( ( [ paypalKey, wcKey ] ) => {
-		if ( address[ paypalKey ] ) {
+		if ( address?.[ paypalKey ] ) {
 			result[ wcKey ] = address[ paypalKey ];
 		}
 	} );
@@ -115,7 +115,7 @@ export const paypalSubscriberToWc = ( subscriber ) => {
  * @return {Object}
  */
 export const paypalOrderToWcShippingAddress = ( order ) => {
-	const shipping = order.purchase_units?.[ 0 ]?.shipping;
+	const shipping = order?.purchase_units?.[ 0 ]?.shipping;
 	if ( ! shipping ) {
 		return {};
 	}
@@ -145,7 +145,7 @@ export const paypalOrderToWcShippingAddress = ( order ) => {
 export const paypalOrderToWcAddresses = ( order ) => {
 	const shippingAddress = paypalOrderToWcShippingAddress( order );
 	let billingAddress = shippingAddress;
-	if ( order.payer ) {
+	if ( order?.payer ) {
 		billingAddress = paypalPayerToWc( order.payer );
 		// no billing address, such as if billing address retrieval is not allowed in the merchant account
 		if ( ! billingAddress.address_line_1 ) {

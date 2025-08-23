@@ -190,7 +190,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->has( 'settings.data.settings' ) ? $container->get( 'settings.data.settings' ) : null
 		);
 	},
 
@@ -205,14 +206,7 @@ return array(
 	},
 
 	'googlepay.url'                             => static function ( ContainerInterface $container ): string {
-		$path = realpath( __FILE__ );
-		if ( false === $path ) {
-			return '';
-		}
-		return plugins_url(
-			'/modules/ppcp-googlepay/',
-			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-googlepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'googlepay.sdk_url'                         => static function ( ContainerInterface $container ): string {

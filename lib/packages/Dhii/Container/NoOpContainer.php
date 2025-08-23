@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableMapInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\ContainerException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\NotFoundException;
 use IteratorAggregate;
+use Traversable;
 
 /**
  * A container that does nothing.
@@ -92,7 +93,7 @@ class NoOpContainer implements
     /**
      * @inheritDoc
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         return new ArrayIterator([]);
     }

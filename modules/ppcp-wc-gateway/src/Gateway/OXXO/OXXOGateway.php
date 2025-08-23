@@ -87,6 +87,55 @@ class OXXOGateway extends WC_Payment_Gateway {
 	protected ExperienceContextBuilder $experience_context_builder;
 
 	/**
+	 * ID of the class extending the settings API. Used in option names.
+	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
 	 * OXXOGateway constructor.
 	 *
 	 * @param OrderEndpoint             $order_endpoint The order endpoint.

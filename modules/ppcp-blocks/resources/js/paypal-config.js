@@ -99,31 +99,34 @@ export const handleApprove = async (
 			order = json.data;
 		}
 
-		const addresses = paypalOrderToWcAddresses( order );
+		const shippingAddress = order?.purchase_units?.[ 0 ]?.shipping?.address;
+		if ( shippingAddress ) {
+			const addresses = paypalOrderToWcAddresses( order );
 
-		const promises = [
-			// save address on server
-			wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
-				billing_address: addresses.billingAddress,
-				shipping_address: addresses.shippingAddress,
-			} ),
-		];
-		if ( shouldHandleShippingInPayPal() ) {
-			// set address in UI
-			promises.push(
-				wp.data
-					.dispatch( 'wc/store/cart' )
-					.setBillingAddress( addresses.billingAddress )
-			);
-			if ( shippingData.needsShipping ) {
+			const promises = [
+				// save address on server
+				wp.data.dispatch( 'wc/store/cart' ).updateCustomerData( {
+					billing_address: addresses.billingAddress,
+					shipping_address: addresses.shippingAddress,
+				} ),
+			];
+			if ( shouldHandleShippingInPayPal() ) {
+				// set address in UI
 				promises.push(
 					wp.data
 						.dispatch( 'wc/store/cart' )
-						.setShippingAddress( addresses.shippingAddress )
+						.setBillingAddress( addresses.billingAddress )
 				);
+				if ( shippingData.needsShipping ) {
+					promises.push(
+						wp.data
+							.dispatch( 'wc/store/cart' )
+							.setShippingAddress( addresses.shippingAddress )
+					);
+				}
 			}
+			await Promise.all( promises );
 		}
-		await Promise.all( promises );
 
 		setPaypalOrder( order );
 

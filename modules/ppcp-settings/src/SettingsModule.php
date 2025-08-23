@@ -107,7 +107,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				'woocommerce_paypal_payments_inside_settings_page_header',
 				static fn() : string => sprintf(
 					'<button type="button" class="button button-settings-switch-ui" aria-describedby="switch-ui-desc">%s</button><span id="switch-ui-desc" class="screen-reader-text">%s</span>',
-					esc_html__( 'Switch to new settings UI', 'woocommerce-paypal-payments' ),
+					esc_html__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
 					esc_html__( 'This action will permanently switch to the new settings interface and cannot be undone', 'woocommerce-paypal-payments' )
 				)
 			);
@@ -128,7 +128,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$message = sprintf(
 					// translators: %1$s is the URL for the startup guide.
 						__(
-							'🎉 <strong>Discover the new PayPal Payments settings!</strong> Enjoy a cleaner, faster interface. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.',
+							'<strong>📢 Important: New PayPal Payments settings UI becoming default in October!</strong><br>We\'ve redesigned the settings for better performance and usability. Starting late October, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.',
 							'woocommerce-paypal-payments'
 						),
 						'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
@@ -144,12 +144,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				static function () use ( $container ) {
 					$module_url = $container->get( 'settings.url' );
 
-					/**
-					 * Require resolves.
-					 *
-					 * @psalm-suppress UnresolvableInclude
-					 */
-					$script_asset_file = require dirname( realpath( __FILE__ ) ?: '', 2 ) . '/assets/switchSettingsUi.asset.php';
+					/** @psalm-suppress UnresolvableInclude */
+					$script_asset_file = require $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets/switchSettingsUi.asset.php';
 
 					wp_register_script(
 						'ppcp-switch-settings-ui',
@@ -169,6 +165,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 								'Are you sure you want to switch to the new settings interface?This action cannot be undone.',
 								'woocommerce-paypal-payments'
 							),
+							'settingsUrl'    => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 						)
 					);
 
@@ -200,26 +197,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			static fn() => ! get_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI )
 				&& update_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes' )
-		);
-
-		/**
-		 * This hook is fired when the plugin is installed or updated.
-		 */
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
-			function () use ( $container ) {
-				$path_repository = $container->get( 'settings.service.branded-experience.path-repository' );
-				assert( $path_repository instanceof PathRepository );
-
-				$partner_attribution = $container->get( 'api.helper.partner-attribution' );
-				assert( $partner_attribution instanceof PartnerAttribution );
-
-				$general_settings = $container->get( 'settings.data.general' );
-				assert( $general_settings instanceof GeneralSettings );
-
-				$path_repository->persist();
-				$partner_attribution->initialize_bn_code( $general_settings->get_installation_path() );
-			}
 		);
 
 		// Suppress WooCommerce Settings UI elements via CSS to improve the loading experience.
@@ -529,6 +506,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			},
 			10,
 			2
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_paypal_gateway_icon',
+			function ( string $icon_url ) use ( $container ) {
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
+				// If "Show logo" is disabled, return an empty string to hide the icon.
+				return $payment_settings->get_paypal_show_logo() ? $icon_url : '';
+			}
 		);
 
 		add_filter( 'woocommerce_paypal_payments_card_button_gateway_should_register_gateway', '__return_true' );

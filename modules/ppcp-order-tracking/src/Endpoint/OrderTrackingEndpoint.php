@@ -34,7 +34,7 @@ use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
  *     status: SupportedStatuses,
  *     tracking_number: string,
  *     carrier: string,
- *     items?: list<int>,
+ *     items?: array,
  *     carrier_name_other?: string,
  * }
  * Class OrderTrackingEndpoint
@@ -393,7 +393,7 @@ class OrderTrackingEndpoint {
 			'carrier_name_other' => $data['carrier_name_other'] ?? '',
 		);
 
-		if ( ! empty( $data['items'] ) ) {
+		if ( ! empty( $data['items'] ) && is_numeric( reset( $data['items'] ) ) ) {
 			$tracking_info['items'] = array_map( 'intval', $data['items'] );
 		}
 

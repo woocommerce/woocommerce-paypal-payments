@@ -305,26 +305,28 @@ class StylingSettingsMapHelper {
 			}
 		}
 
-		if ( $current_context === 'classic_checkout' ) {
+		/**
+		 * Filters the available payment gateways to remove the specified gateway (e.g., Google Pay or Apple Pay)
+		 * when the button is disabled for the current location (e.g., classic checkout) in the styling settings.
+		 * This is necessary because WooCommerce automatically includes the gateway when it is enabled,
+		 * even if the button is hidden via settings.
+		 */
+		add_filter(
+			'woocommerce_available_payment_gateways',
 			/**
-			 * Outputs an inline CSS style that hides the Google Pay gateway (on Classic Checkout)
-			 * In case if the button is disabled from the styling settings but the gateway itself is enabled.
+			 * Param types removed to avoid third-party issues.
 			 *
-			 * @return void
+			 * @psalm-suppress MissingClosureParamType
 			 */
-			add_action(
-				'woocommerce_paypal_payments_checkout_button_render',
-				static function (): void {
-					?>
-					<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
-						.wc_payment_method.payment_method_ppcp-googlepay {
-							display: none;
-						}
-					</style>
-					<?php
+			static function ( $methods ) use ( $button_name, $current_context ): array {
+				if ( $current_context !== 'classic_checkout' ) {
+					return $methods;
 				}
-			);
-		}
+
+				unset( $methods[ $button_name ] );
+				return $methods;
+			}
+		);
 
 		return 0;
 	}
