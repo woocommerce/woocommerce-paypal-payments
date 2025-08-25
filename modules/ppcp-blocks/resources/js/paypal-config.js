@@ -64,8 +64,11 @@ export const handleApprove = async (
 	setGotoContinuationOnError,
 	onSubmit,
 	onError,
-	onClose
+	onClose,
+	setIsFullPageSpinnerActive
 ) => {
+	setIsFullPageSpinnerActive( true );
+
 	try {
 		let order;
 
@@ -167,6 +170,8 @@ export const handleApprove = async (
 		}
 	} catch ( err ) {
 		console.error( err );
+
+		setIsFullPageSpinnerActive( false );
 
 		onError( err.message );
 
