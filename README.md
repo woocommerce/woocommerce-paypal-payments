@@ -54,7 +54,7 @@ Visit our [official documentation](https://woocommerce.com/document/woocommerce-
 
 ### Setup using DDEV (recommended)
 
-You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository which includes WP, WC and all developments tools.
+You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository. Which includes WordPress, WooCommerce and all development tools.
 
 To set up the DDEV environment, follow these steps:
 
@@ -101,7 +101,7 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 ### Building a release package
 
 If you want to build a release package
-(that can be used for deploying a new version on wordpress.org or manual installation on a WP website via ZIP uploading),
+(that can be used for deploying a new version on wordpress.org or manual installation on a WordPress website via ZIP uploading),
 follow these steps:
 
 1. Clone the repository and `cd` into it.
@@ -131,7 +131,7 @@ For testing webhooks locally, follow these steps to set up ngrok:
 0. Install [ngrok](https://ngrok.com/).
 
 1.
-  - If using DDEV, run our wrapper Bash script which will start `ddev share` and replace the URLs in the WP database:
+  - If using DDEV, run our wrapper Bash script which will start `ddev share` and replace the URLs in the WordPress database:
     ```
     $ .ddev/bin/share
     ```
