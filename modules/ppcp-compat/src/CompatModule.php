@@ -78,7 +78,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
-		$this->set_elementor_checkout_context();
 
 		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
 		if ( $is_nyp_active ) {
@@ -433,31 +432,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		$theme  = wp_get_theme();
 		$parent = $theme->parent();
 		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
-	}
-
-	/**
-	 * Sets the context for the Elementor checkout page.
-	 *
-	 * @return void
-	 */
-	protected function set_elementor_checkout_context(): void {
-		add_action(
-			'wp',
-			function () {
-				$page_id = get_the_ID();
-				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
-					return;
-				}
-
-				add_filter(
-					'woocommerce_paypal_payments_context',
-					function ( string $context ): string {
-						// Default context.
-						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
-					}
-				);
-			}
-		);
 	}
 
 	/**
