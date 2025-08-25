@@ -52,21 +52,51 @@ Visit our [official documentation](https://woocommerce.com/document/woocommerce-
 
 ## Development
 
-### Install dependencies & build
+### Setup using DDEV (recommended)
+
+You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository which includes WP, WC and all developments tools.
+
+To set up the DDEV environment, follow these steps:
+
+0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
+1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the [`.ddev/config.yml`](.ddev/config.yaml) file if needed.
+2. `$ ddev setup` to setup and orchestrate the plugin, WooCommerce and WordPress
+3. Open https://woocommerce-paypal-payments.ddev.site 
+
+Use `$ ddev reset` for reinstallation (will destroy all site data).
+You may also need `$ ddev restart` to apply the config changes.
+
+#### Running tests and other tasks in the DDEV environment
+
+Tests and code style:
+- `$ yarn ddev:unit-tests`
+- `$ yarn ddev:lint`
+- `$ yarn ddev:fix-lint`
+- `$ yarn ddev:lint-js`
+
+See [package.json](/package.json) for other useful commands.
+
+For debugging, see [the DDEV docs](https://ddev.readthedocs.io/en/stable/users/step-debugging/).
+Enable xdebug via `$ ddev xdebug enable`, and press `Start Listening for PHP Debug Connections` in PHPStorm.
+After creating the server in the PHPStorm dialog, you need to set the local project path for the server plugin path.
+Check [this article](https://docs.ddev.com/en/stable/users/debugging-profiling/step-debugging/#phpstorm-debugging-setup) for a detailed guide.
+
+## Setup in other environments
+
+#### Install dependencies & build
 
 - `$ composer install`
 - `$ yarn install`
 
 Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
 
-### Unit tests and code style
+#### Unit tests and code style
 
-1. `$ composer install`
-2. `$ ./vendor/bin/phpunit`
-3. `$ ./vendor/bin/phpcs`
-4. `$ ./vendor/bin/psalm`
-5. `$ wp-scripts lint-js`
-6. `$ yarn run test:unit-js` - Ensure node version is `18` or above
+1. `$ ./vendor/bin/phpunit`
+2. `$ ./vendor/bin/phpcs`
+3. `$ ./vendor/bin/psalm`
+4. `$ yarn run lint-js`
+5. `$ yarn run test:unit-js` - Ensure node version is `18` or above
 
 ### Building a release package
 
@@ -87,38 +117,6 @@ or if using the DDEV setup:
 ```
 $ yarn run ddev:build-package
 ```
-
-## Setup
-
-You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository which includes WP, WC and all developments tools.
-
-To set up the DDEV environment, follow these steps:
-
-0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
-1. Edit the configuration in the [`.ddev/config.yml`](.ddev/config.yaml) file if needed.
-2. `$ ddev start`
-3. `$ ddev orchestrate` to install WP/WC.
-4. Open https://wc-pp.ddev.site
-
-Use `$ ddev orchestrate -f` for reinstallation (will destroy all site data).
-You may also need `$ ddev restart` to apply the config changes.
-
-### Running tests and other tasks in the DDEV environment
-
-Tests and code style:
-- `$ yarn ddev:test`
-- `$ yarn ddev:lint`
-- `$ yarn ddev:fix-lint`
-- `$ yarn ddev:lint-js`
-
-See [package.json](/package.json) for other useful commands.
-
-For debugging, see [the DDEV docs](https://ddev.readthedocs.io/en/stable/users/step-debugging/).
-Enable xdebug via `$ ddev xdebug`, and press `Start Listening for PHP Debug Connections` in PHPStorm.
-After creating the server in the PHPStorm dialog, you need to set the local project path for the server plugin path.
-It should look [like this](https://i.imgur.com/ofsF1Mc.png).
-
-See [tests/playwright](tests/playwright) for e2e (browser-based) tests.
 
 ## Test account setup
 
