@@ -55,7 +55,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_init',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$this->initialize_ppec_compat_layer( $c );
 				$this->initialize_tracking_compat_layer( $c );
 			}
@@ -63,7 +63,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'init',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$asset_loader = $c->get( 'compat.assets' );
 				assert( $asset_loader instanceof CompatAssets );
 
@@ -117,7 +117,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		 */
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function() use ( $c ) {
+			static function () use ( $c ) {
 				if ( ! apply_filters(
 				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 					'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
@@ -176,7 +176,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// Inbox note inviting merchant to disable PayPal Express Checkout.
 		add_action(
 			'woocommerce_init',
-			function() {
+			function () {
 				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
 					PPEC\DeactivateNote::init();
 				}
@@ -377,7 +377,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function fix_page_builders(): void {
 		add_action(
 			'init',
-			function() {
+			function () {
 				if (
 					$this->is_block_theme_active()
 					|| $this->is_elementor_pro_active()
@@ -386,7 +386,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				) {
 					add_filter(
 						'woocommerce_paypal_payments_single_product_renderer_hook',
-						function(): string {
+						function (): string {
 							return 'woocommerce_after_add_to_cart_form';
 						},
 						5
@@ -443,7 +443,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function set_elementor_checkout_context(): void {
 		add_action(
 			'wp',
-			function() {
+			function () {
 				$page_id = get_the_ID();
 				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
 					return;
@@ -473,7 +473,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// Siteground SG Optimize.
 		add_filter(
 			'sgo_js_minify_exclude',
-			function( array $scripts ) use ( $ppcp_script_names ) {
+			function ( array $scripts ) use ( $ppcp_script_names ) {
 				return array_merge( $scripts, $ppcp_script_names );
 			}
 		);
@@ -481,7 +481,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// LiteSpeed Cache.
 		add_filter(
 			'litespeed_optimize_js_excludes',
-			function( array $excluded_js ) use ( $ppcp_script_file_names ) {
+			function ( array $excluded_js ) use ( $ppcp_script_file_names ) {
 				return array_merge( $excluded_js, $ppcp_script_file_names );
 			}
 		);
@@ -498,7 +498,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 * @return bool Whether to do tag minification.
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( bool $do_tag_minification, string $script_tag, $file ) {
+			function ( bool $do_tag_minification, string $script_tag, $file ) {
 				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
 					return false;
 				}
@@ -517,7 +517,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function initialize_nyp_compat_layer(): void {
 		add_filter(
 			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
-			static function( string $total, array $cart_item ) {
+			static function ( string $total, array $cart_item ) {
 				if ( ! isset( $cart_item['nyp'] ) ) {
 					return $total;
 				}
@@ -596,7 +596,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @param ContainerInterface $container DI container instance.
 	 * @return void
 	 */
-	protected function legacy_ui_card_payment_mapping( ContainerInterface $container ) : void {
+	protected function legacy_ui_card_payment_mapping( ContainerInterface $container ): void {
 		$new_ui = $container->get( 'wcgateway.settings.admin-settings-enabled' );
 		if ( $new_ui ) {
 			return;
@@ -604,7 +604,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_filter(
 			'woocommerce_paypal_payments_is_acdc_active',
-			static function ( bool $is_acdc ) use ( $container ) : bool {
+			static function ( bool $is_acdc ) use ( $container ): bool {
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 

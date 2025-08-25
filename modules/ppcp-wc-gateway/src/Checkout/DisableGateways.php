@@ -120,7 +120,7 @@ class DisableGateways {
 	 *
 	 * @return bool
 	 */
-	private function disable_all_gateways() : bool {
+	private function disable_all_gateways(): bool {
 		if ( is_null( WC()->payment_gateways ) ) {
 			return false;
 		}

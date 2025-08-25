@@ -138,7 +138,7 @@ class SettingsDataManager {
 	 *
 	 * @return void
 	 */
-	public function reset_all_settings() : void {
+	public function reset_all_settings(): void {
 		/**
 		 * Broadcast the settings-reset event to allow other modules to perform
 		 * cleanup tasks, if needed.
@@ -163,7 +163,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags The configuration flags.
 	 * @return void
 	 */
-	public function set_defaults_for_new_merchant( ConfigurationFlagsDTO $flags ) : void {
+	public function set_defaults_for_new_merchant( ConfigurationFlagsDTO $flags ): void {
 		if ( $this->onboarding_profile->is_setup_done() ) {
 			return;
 		}
@@ -193,7 +193,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags The configuration flags.
 	 * @return void
 	 */
-	protected function apply_configuration( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_configuration( ConfigurationFlagsDTO $flags ): void {
 		// Apply defaults for the "Settings" tab.
 		$this->apply_payment_settings( $flags );
 
@@ -209,7 +209,7 @@ class SettingsDataManager {
 	 *
 	 * @return void
 	 */
-	public function sync_gateway_settings() : void {
+	public function sync_gateway_settings(): void {
 		$flags = new ConfigurationFlagsDTO();
 
 		$profile_data = $this->onboarding_profile->to_array();
@@ -228,7 +228,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function toggle_payment_gateways( ConfigurationFlagsDTO $flags ) : void {
+	protected function toggle_payment_gateways( ConfigurationFlagsDTO $flags ): void {
 		// First, disable all payment methods.
 		$methods_paypal = $this->methods_definition->group_paypal_methods();
 		$methods_cards  = $this->methods_definition->group_card_methods();
@@ -297,7 +297,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function apply_payment_settings( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_payment_settings( ConfigurationFlagsDTO $flags ): void {
 		// Enable Pay-Now experience for all merchants.
 		$this->payment_settings->set_enable_pay_now( true );
 
@@ -315,7 +315,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function apply_location_styles( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_location_styles( ConfigurationFlagsDTO $flags ): void {
 		$methods_full = array(
 			PayPalGateway::ID,
 			'venmo',
@@ -358,7 +358,7 @@ class SettingsDataManager {
 	 * @param ConfigurationFlagsDTO $flags Shop configuration flags.
 	 * @return void
 	 */
-	protected function apply_pay_later_messaging( ConfigurationFlagsDTO $flags ) : void {
+	protected function apply_pay_later_messaging( ConfigurationFlagsDTO $flags ): void {
 		$config = $this->paylater_messaging['read'];
 
 		$config['cart']['status']     = 'enabled';

@@ -303,5 +303,4 @@ class TodosDefinition {
 
 		return true;
 	}
-
 }

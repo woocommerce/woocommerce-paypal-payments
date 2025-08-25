@@ -361,7 +361,6 @@ class ApplePayDataObjectHttp {
 			}
 			$this->$key = $value;
 		}
-
 	}
 
 	/**
@@ -509,7 +508,7 @@ class ApplePayDataObjectHttp {
 	 * @param array $data The data.
 	 * @return void
 	 */
-	protected function update_simplified_contact( array $data ) : void {
+	protected function update_simplified_contact( array $data ): void {
 		$simplified_contact_info  = array_map( 'sanitize_text_field', $data );
 		$this->simplified_contact = $this->simplified_address(
 			$simplified_contact_info
@@ -727,7 +726,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @return bool
 	 */
-	public function is_nonce_valid():bool {
+	public function is_nonce_valid(): bool {
 		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $nonce ) {
 			return false;

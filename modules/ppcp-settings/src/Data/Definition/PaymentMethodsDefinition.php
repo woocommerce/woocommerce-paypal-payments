@@ -85,7 +85,7 @@ class PaymentMethodsDefinition {
 	 *
 	 * @return array
 	 */
-	public function get_definitions() : array {
+	public function get_definitions(): array {
 		// Refresh the WooCommerce gateway details before we build the definitions.
 		$this->wc_gateways = WC()->payment_gateways()->payment_gateways();
 		$all_methods       = array_merge(
@@ -132,7 +132,7 @@ class PaymentMethodsDefinition {
 		string $icon,
 		$fields = array(),
 		array $warning_messages = array()
-	) : array {
+	): array {
 		$gateway = $this->wc_gateways[ $gateway_id ] ?? null;
 
 		$gateway_title       = $gateway ? $gateway->get_title() : $title;
@@ -177,7 +177,7 @@ class PaymentMethodsDefinition {
 	 *
 	 * @return array
 	 */
-	public function group_paypal_methods() : array {
+	public function group_paypal_methods(): array {
 		$group = array(
 			array(
 				'id'          => PayPalGateway::ID,
@@ -231,7 +231,7 @@ class PaymentMethodsDefinition {
 	 *
 	 * @return array
 	 */
-	public function group_card_methods() : array {
+	public function group_card_methods(): array {
 		$group = array();
 
 		if ( ! $this->general_settings->own_brand_only() ) {
@@ -290,7 +290,7 @@ class PaymentMethodsDefinition {
 	 *
 	 * @return array List of payment method definitions.
 	 */
-	public function group_apms() : array {
+	public function group_apms(): array {
 		$group = array(
 			array(
 				'id'          => BancontactGateway::ID,

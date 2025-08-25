@@ -171,7 +171,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *
 	 * @return array
 	 */
-	public function process_payment( $order_id ) : array {
+	public function process_payment( $order_id ): array {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, WC_Order::class ) ) {
 			return $this->handle_payment_failure(
@@ -234,7 +234,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *
 	 * @return boolean True or false based on success, or a WP_Error object.
 	 */
-	public function process_refund( $order_id, $amount = null, $reason = '' ) : bool {
+	public function process_refund( $order_id, $amount = null, $reason = '' ): bool {
 		$order = wc_get_order( $order_id );
 		if ( ! is_a( $order, WC_Order::class ) ) {
 			return false;
@@ -250,7 +250,7 @@ class ApplePayGateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_transaction_url( $order ) : string {
+	public function get_transaction_url( $order ): string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );

@@ -33,11 +33,11 @@ return array(
 		$apm_applies = $container->get( 'applepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return static function () use ( $apm_applies ) : bool {
+		return static function () use ( $apm_applies ): bool {
 			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
 		};
 	},
-	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
+	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ): ApmApplies {
 		return new ApmApplies(
 			$container->get( 'applepay.supported-countries' ),
 			$container->get( 'applepay.supported-currencies' ),
@@ -45,7 +45,7 @@ return array(
 			$container->get( 'api.shop.country' )
 		);
 	},
-	'applepay.status-cache'                    => static function( ContainerInterface $container ): Cache {
+	'applepay.status-cache'                    => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-apple-status-cache' );
 	},
 
@@ -82,7 +82,7 @@ return array(
 	},
 
 	'applepay.apple-product-status'            => SingletonDecorator::make(
-		static function( ContainerInterface $container ): AppleProductStatus {
+		static function ( ContainerInterface $container ): AppleProductStatus {
 			return new AppleProductStatus(
 				$container->get( 'wcgateway.settings' ),
 				$container->get( 'api.endpoint.partners' ),
@@ -169,7 +169,7 @@ return array(
 	/**
 	 * The list of which countries can be used for ApplePay.
 	 */
-	'applepay.supported-countries'             => static function ( ContainerInterface $container ) : array {
+	'applepay.supported-countries'             => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which countries can be used for ApplePay.
 		 */
@@ -225,7 +225,7 @@ return array(
 	/**
 	 * The list of which currencies can be used for ApplePay.
 	 */
-	'applepay.supported-currencies'            => static function ( ContainerInterface $container ) : array {
+	'applepay.supported-currencies'            => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which currencies can be used for ApplePay.
 		 */

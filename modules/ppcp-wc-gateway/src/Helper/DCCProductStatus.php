@@ -76,7 +76,7 @@ class DCCProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_local_state() : ?bool {
+	protected function check_local_state(): ?bool {
 		if ( $this->cache->has( self::DCC_STATUS_CACHE_KEY ) ) {
 			return wc_string_to_bool( $this->cache->get( self::DCC_STATUS_CACHE_KEY ) );
 		}
@@ -89,7 +89,7 @@ class DCCProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_active_state( SellerStatus $seller_status ) : bool {
+	protected function check_active_state( SellerStatus $seller_status ): bool {
 		foreach ( $seller_status->products() as $product ) {
 			if ( ! in_array(
 				$product->vetting_status(),

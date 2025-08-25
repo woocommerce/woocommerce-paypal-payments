@@ -113,7 +113,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET /wp-json/wc/v3/wc_paypal/onboarding
 		 */
@@ -149,7 +149,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The current state of the onboarding wizard.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		$js_data = $this->sanitize_for_javascript(
 			$this->profile->to_array(),
 			$this->field_map
@@ -175,7 +175,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The updated state of the onboarding wizard.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$wp_data = $this->sanitize_for_wordpress(
 			$request->get_params(),
 			$this->field_map

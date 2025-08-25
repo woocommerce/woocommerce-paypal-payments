@@ -30,7 +30,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
  */
 class CardButtonGateway extends \WC_Payment_Gateway {
 
-	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait;
+	use ProcessPaymentTrait;
+	use FreeTrialHandlerTrait;
+	use GatewaySettingsRendererTrait;
 
 	const ID = 'ppcp-card-button-gateway';
 

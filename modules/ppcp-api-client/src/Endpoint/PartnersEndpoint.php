@@ -108,7 +108,7 @@ class PartnersEndpoint {
 	 * @return SellerStatus
 	 * @throws RuntimeException When request could not be fulfilled.
 	 */
-	public function seller_status() : SellerStatus {
+	public function seller_status(): SellerStatus {
 		$url      = trailingslashit( $this->host ) . 'v1/customer/partners/' . $this->partner_id . '/merchant-integrations/' . $this->merchant_id;
 		$bearer   = $this->bearer->bearer();
 		$args     = array(

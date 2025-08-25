@@ -132,7 +132,7 @@ class SettingsRenderer {
 	 *
 	 * @return array
 	 */
-	public function messages() : array {
+	public function messages(): array {
 
 		$messages = array();
 
@@ -507,7 +507,7 @@ $data_rows_html
 	 *
 	 * @param array $config The configuration array.
 	 */
-	private function render_preview_block( array $config ) : void {
+	private function render_preview_block( array $config ): void {
 		$id      = $config['preview']['id'] ?? '';
 		$type    = $config['preview']['type'] ?? 'button';
 		$message = $config['preview']['message'] ?? __( 'Button Styling Preview', 'woocommerce-paypal-payments' );

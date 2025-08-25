@@ -74,7 +74,7 @@ class PaymentTokensMigration {
 	 *
 	 * @param int $id WooCommerce customer id.
 	 */
-	public function migrate_payment_tokens_for_user( int $id ):void {
+	public function migrate_payment_tokens_for_user( int $id ): void {
 		$tokens       = $this->payment_token_repository->all_for_user_id( $id );
 		$total_tokens = count( $tokens );
 		$this->logger->info( 'Migrating ' . (string) $total_tokens . ' tokens for user ' . (string) $id );

@@ -48,7 +48,7 @@ class ContactPreferenceFactory {
 	 * @param string $payment_source_key Name of the payment_source.
 	 * @return string|null
 	 */
-	public function from_state( string $payment_source_key ) : ?string {
+	public function from_state( string $payment_source_key ): ?string {
 		$payment_sources_with_contact = array( 'paypal', 'venmo' );
 
 		/**

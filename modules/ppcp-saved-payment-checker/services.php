@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\SavedPaymentChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'saved-payment-checker.payment-token-checker' => function( ContainerInterface $container ) : PaymentTokenChecker {
+	'saved-payment-checker.payment-token-checker' => function ( ContainerInterface $container ): PaymentTokenChecker {
 		return new PaymentTokenChecker(
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'api.repository.order' ),

@@ -90,5 +90,4 @@ trait TransactionIdHandlingTrait {
 
 		return null;
 	}
-
 }

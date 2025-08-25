@@ -122,7 +122,7 @@ class ConnectionListener {
 	 *
 	 * @throws RuntimeException If the merchant ID does not match the ID previously set via OAuth.
 	 */
-	public function process( int $user_id, array $request ) : void {
+	public function process( int $user_id, array $request ): void {
 		$this->user_id      = $user_id;
 		$this->request_data = $request;
 
@@ -143,7 +143,7 @@ class ConnectionListener {
 	 * @param string $token The OAuth token extracted from the request.
 	 * @return void
 	 */
-	private function process_oauth_token( string $token ) : void {
+	private function process_oauth_token( string $token ): void {
 		if ( ! $token ) {
 			return;
 		}
@@ -211,7 +211,7 @@ class ConnectionListener {
 	 *
 	 * @return bool True, if the request contains valid connection details.
 	 */
-	private function is_valid_request() : bool {
+	private function is_valid_request(): bool {
 		if ( $this->user_id < 1 || ! $this->settings_page_id ) {
 			return false;
 		}
@@ -242,7 +242,7 @@ class ConnectionListener {
 	 * @param string $state The state to set.
 	 * @return void
 	 */
-	private function set_token_state( string $token, string $state ) : void {
+	private function set_token_state( string $token, string $state ): void {
 		$data = array(
 			'token' => $token,
 			'state' => $state,
@@ -258,7 +258,7 @@ class ConnectionListener {
 	 * @param string $token The token to check.
 	 * @return string The current state of the token, or empty string if the token doesn't match.
 	 */
-	private function get_token_state( string $token ) : string {
+	private function get_token_state( string $token ): string {
 		$data = get_transient( self::TOKEN_STATE_TRANSIENT );
 
 		if ( empty( $data ) || ! is_array( $data ) || empty( $data['token'] ) || empty( $data['state'] ) ) {
@@ -275,7 +275,7 @@ class ConnectionListener {
 	 * @param string $token The token to check.
 	 * @return bool True if the token is currently being processed, false otherwise.
 	 */
-	private function is_token_processing( string $token ) : bool {
+	private function is_token_processing( string $token ): bool {
 		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSING;
 	}
 
@@ -285,7 +285,7 @@ class ConnectionListener {
 	 * @param string $token The token to check.
 	 * @return bool True if the token has been processed, false otherwise.
 	 */
-	private function was_token_processed( string $token ) : bool {
+	private function was_token_processed( string $token ): bool {
 		return $this->get_token_state( $token ) === self::TOKEN_STATE_PROCESSED;
 	}
 
@@ -295,7 +295,7 @@ class ConnectionListener {
 	 * @return array Structured array with 'is_sandbox', 'merchant_id', and 'merchant_email' keys,
 	 *               or an empty array on failure.
 	 */
-	private function extract_data() : array {
+	private function extract_data(): array {
 		$this->logger->info( 'Extracting connection data from request...' );
 
 		$merchant_id    = $this->get_merchant_id_from_request( $this->request_data );
@@ -318,7 +318,7 @@ class ConnectionListener {
 	 *
 	 * @return void
 	 */
-	private function redirect_after_authentication() : void {
+	private function redirect_after_authentication(): void {
 		$redirect_url = $this->get_onboarding_redirect_url();
 
 		$this->redirector->redirect( $redirect_url );
@@ -330,7 +330,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized token, or an empty string.
 	 */
-	private function get_token_from_request() : string {
+	private function get_token_from_request(): string {
 		return $this->sanitize_string( $this->request_data['ppcpToken'] ?? '' );
 	}
 
@@ -341,7 +341,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized merchant ID, or an empty string.
 	 */
-	private function get_merchant_id_from_request( array $request ) : string {
+	private function get_merchant_id_from_request( array $request ): string {
 		return $this->sanitize_string( $request['merchantIdInPayPal'] ?? '' );
 	}
 
@@ -356,7 +356,7 @@ class ConnectionListener {
 	 *
 	 * @return string The sanitized merchant email, or an empty string.
 	 */
-	private function get_merchant_email_from_request( array $request ) : string {
+	private function get_merchant_email_from_request( array $request ): string {
 		return $this->sanitize_merchant_email( $request['merchantId'] ?? '' );
 	}
 
@@ -371,7 +371,7 @@ class ConnectionListener {
 	 *
 	 * @return string A valid SellerTypeEnum value.
 	 */
-	private function get_seller_type_from_request( array $request ) : string {
+	private function get_seller_type_from_request( array $request ): string {
 		$account_status = $request['accountStatus'] ?? '';
 
 		if ( 'BUSINESS_ACCOUNT' === $account_status ) {
@@ -401,7 +401,7 @@ class ConnectionListener {
 	 *
 	 * @return string Sanitized value.
 	 */
-	private function sanitize_string( string $value ) : string {
+	private function sanitize_string( string $value ): string {
 		return trim( sanitize_text_field( wp_unslash( $value ) ) );
 	}
 
@@ -412,7 +412,7 @@ class ConnectionListener {
 	 *
 	 * @return string Sanitized email address.
 	 */
-	private function sanitize_merchant_email( string $email ) : string {
+	private function sanitize_merchant_email( string $email ): string {
 		return sanitize_text_field( str_replace( ' ', '+', $email ) );
 	}
 
@@ -421,7 +421,7 @@ class ConnectionListener {
 	 *
 	 * @return string
 	 */
-	private function get_onboarding_redirect_url() : string {
+	private function get_onboarding_redirect_url(): string {
 		/**
 		 * The URL opened at the end of onboarding after saving the merchant ID/email.
 		 */

@@ -70,7 +70,7 @@ class YithShipmentIntegration implements Integration {
 
 		add_action(
 			'woocommerce_process_shop_order_meta',
-			function( int $order_id ) {
+			function ( int $order_id ) {
 				try {
 					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ywot_tracking', true ) ) {
 						return;

@@ -37,7 +37,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 return array(
 
-	'webhook.registrar'                       => function( ContainerInterface $container ) : WebhookRegistrar {
+	'webhook.registrar'                       => function ( ContainerInterface $container ): WebhookRegistrar {
 		$factory      = $container->get( 'api.factory.webhook' );
 		$endpoint     = $container->get( 'api.endpoint.webhook' );
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
@@ -51,7 +51,7 @@ return array(
 			$logger
 		);
 	},
-	'webhook.endpoint.controller'             => function( ContainerInterface $container ) : IncomingWebhookEndpoint {
+	'webhook.endpoint.controller'             => function ( ContainerInterface $container ): IncomingWebhookEndpoint {
 		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
 		$webhook  = $container->get( 'webhook.current' );
 		$handler          = $container->get( 'webhook.endpoint.handler' );
@@ -69,10 +69,10 @@ return array(
 			$webhook_event_factory,
 			$simulation,
 			$last_webhook_storage,
-			... $handler
+			...$handler
 		);
 	},
-	'webhook.endpoint.handler'                => function( ContainerInterface $container ) : array {
+	'webhook.endpoint.handler'                => function ( ContainerInterface $container ): array {
 		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
@@ -106,7 +106,7 @@ return array(
 		);
 	},
 
-	'webhook.current'                         => function( ContainerInterface $container ) : ?Webhook {
+	'webhook.current'                         => function ( ContainerInterface $container ): ?Webhook {
 		$data = (array) get_option( WebhookRegistrar::KEY, array() );
 		if ( empty( $data ) ) {
 			return null;
@@ -125,11 +125,11 @@ return array(
 		}
 	},
 
-	'webhook.is-registered'                   => function( ContainerInterface $container ) : bool {
+	'webhook.is-registered'                   => function ( ContainerInterface $container ): bool {
 		return $container->get( 'webhook.current' ) !== null;
 	},
 
-	'webhook.status.registered-webhooks-data' => function( ContainerInterface $container ) : array {
+	'webhook.status.registered-webhooks-data' => function ( ContainerInterface $container ): array {
 		$empty_placeholder = __( 'No webhooks found.', 'woocommerce-paypal-payments' );
 
 		$webhooks = array();
@@ -166,7 +166,7 @@ return array(
 		);
 	},
 
-	'webhook.status.simulation'               => function( ContainerInterface $container ) : WebhookSimulation {
+	'webhook.status.simulation'               => function ( ContainerInterface $container ): WebhookSimulation {
 		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
 		$webhook  = $container->get( 'webhook.current' );
 		return new WebhookSimulation(
@@ -177,7 +177,7 @@ return array(
 		);
 	},
 
-	'webhook.status.assets'                   => function( ContainerInterface $container ) : WebhooksStatusPageAssets {
+	'webhook.status.assets'                   => function ( ContainerInterface $container ): WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
 			$container->get( 'webhook.module-url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -185,7 +185,7 @@ return array(
 		);
 	},
 
-	'webhook.endpoint.resubscribe'            => static function ( ContainerInterface $container ) : ResubscribeEndpoint {
+	'webhook.endpoint.resubscribe'            => static function ( ContainerInterface $container ): ResubscribeEndpoint {
 		$registrar = $container->get( 'webhook.registrar' );
 		$request_data            = $container->get( 'button.request-data' );
 
@@ -195,7 +195,7 @@ return array(
 		);
 	},
 
-	'webhook.endpoint.simulate'               => static function ( ContainerInterface $container ) : SimulateEndpoint {
+	'webhook.endpoint.simulate'               => static function ( ContainerInterface $container ): SimulateEndpoint {
 		$simulation = $container->get( 'webhook.status.simulation' );
 		$request_data = $container->get( 'button.request-data' );
 
@@ -204,7 +204,7 @@ return array(
 			$request_data
 		);
 	},
-	'webhook.endpoint.simulation-state'       => static function ( ContainerInterface $container ) : SimulationStateEndpoint {
+	'webhook.endpoint.simulation-state'       => static function ( ContainerInterface $container ): SimulationStateEndpoint {
 		$simulation = $container->get( 'webhook.status.simulation' );
 
 		return new SimulationStateEndpoint(

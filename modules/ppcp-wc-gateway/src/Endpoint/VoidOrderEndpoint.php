@@ -195,4 +195,3 @@ class VoidOrderEndpoint {
 		$wc_order->set_status( 'refunded' );
 	}
 }
-

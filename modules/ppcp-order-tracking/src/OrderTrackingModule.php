@@ -30,7 +30,8 @@ use function WooCommerce\PayPalCommerce\Api\ppcp_get_paypal_order;
  */
 class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-	use TrackingAvailabilityTrait, TransactionIdHandlingTrait;
+	use TrackingAvailabilityTrait;
+	use TransactionIdHandlingTrait;
 
 	public const PPCP_TRACKING_INFO_META_NAME = '_ppcp_paypal_tracking_info_meta_name';
 
@@ -58,7 +59,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 
 		add_action(
 			'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT,
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$c->get( 'order-tracking.endpoint.controller' )->handle_request();
 			}
 		);
@@ -68,7 +69,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 
 		add_action(
 			'init',
-			function() use ( $asset_loader, $c ) {
+			function () use ( $asset_loader, $c ) {
 				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
@@ -78,7 +79,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 		);
 		add_action(
 			'init',
-			function() use ( $asset_loader, $c ) {
+			function () use ( $asset_loader, $c ) {
 				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}
@@ -98,7 +99,7 @@ class OrderTrackingModule implements ServiceModule, ExtendingModule, ExecutableM
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( string $post_type, $post_or_order_object ) use ( $c ) {
+			function ( string $post_type, $post_or_order_object ) use ( $c ) {
 				if ( ! $this->is_tracking_enabled( $c->get( 'api.bearer' ) ) ) {
 					return;
 				}

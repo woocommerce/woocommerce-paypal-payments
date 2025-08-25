@@ -73,7 +73,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET /wp-json/wc/v3/wc_paypal/webhooks
 		 * POST /wp-json/wc/v3/wc_paypal/webhooks
@@ -122,7 +122,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_webhooks() : WP_REST_Response {
+	public function get_webhooks(): WP_REST_Response {
 		$webhooks = $this->get_webhook_data();
 		if ( ! $webhooks ) {
 			return $this->return_error( 'No webhooks found.' );
@@ -151,7 +151,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function resubscribe_webhooks() : WP_REST_Response {
+	public function resubscribe_webhooks(): WP_REST_Response {
 		if ( ! $this->webhook_registrar->register() ) {
 			return $this->return_error( 'Webhook subscription failed.' );
 		}
@@ -164,7 +164,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function simulate_webhooks_start() : WP_REST_Response {
+	public function simulate_webhooks_start(): WP_REST_Response {
 		try {
 			$this->webhook_simulation->start();
 
@@ -179,7 +179,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function check_simulated_webhook_state() : WP_REST_Response {
+	public function check_simulated_webhook_state(): WP_REST_Response {
 		try {
 			$state = $this->webhook_simulation->get_state();
 
@@ -198,7 +198,7 @@ class WebhookSettingsEndpoint extends RestEndpoint {
 	 *
 	 * @return Webhook|null The webhook data instance, or null.
 	 */
-	private function get_webhook_data() : ?Webhook {
+	private function get_webhook_data(): ?Webhook {
 		try {
 			$api_response = $this->webhook_endpoint->list();
 

@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 return array(
-	'uninstall.ppcp-all-option-names'           => function( ContainerInterface $container ) : array {
+	'uninstall.ppcp-all-option-names'           => function ( ContainerInterface $container ): array {
 		return array(
 			$container->get( 'webhook.last-webhook-storage.key' ),
 			'woocommerce_ppcp-is_pay_later_settings_migrated',
@@ -40,7 +40,7 @@ return array(
 		);
 	},
 
-	'uninstall.ppcp-all-scheduled-action-names' => function( ContainerInterface $container ) : array {
+	'uninstall.ppcp-all-scheduled-action-names' => function ( ContainerInterface $container ): array {
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
 			'woocommerce_paypal_payments_check_saved_payment',
@@ -48,17 +48,17 @@ return array(
 		);
 	},
 
-	'uninstall.ppcp-all-action-names'           => function( ContainerInterface $container ) : array {
+	'uninstall.ppcp-all-action-names'           => function ( ContainerInterface $container ): array {
 		return array(
 			'woocommerce_paypal_payments_uninstall',
 		);
 	},
 
-	'uninstall.clear-db-endpoint'               => function( ContainerInterface $container ) : string {
+	'uninstall.clear-db-endpoint'               => function ( ContainerInterface $container ): string {
 		return 'ppcp-clear-db';
 	},
 
-	'uninstall.clear-database-script-data'      => function( ContainerInterface $container ) : array {
+	'uninstall.clear-database-script-data'      => function ( ContainerInterface $container ): array {
 		return array(
 			'clearDb' => array(
 				'endpoint'            => \WC_AJAX::get_endpoint( $container->get( 'uninstall.clear-db-endpoint' ) ),
@@ -83,7 +83,7 @@ return array(
 		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
-	'uninstall.clear-db-assets'                 => function( ContainerInterface $container ) : ClearDatabaseAssets {
+	'uninstall.clear-db-assets'                 => function ( ContainerInterface $container ): ClearDatabaseAssets {
 		return new ClearDatabaseAssets(
 			$container->get( 'uninstall.module-url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -92,7 +92,7 @@ return array(
 		);
 	},
 
-	'uninstall.clear-db'                        => function( ContainerInterface $container ) : ClearDatabaseInterface {
+	'uninstall.clear-db'                        => function ( ContainerInterface $container ): ClearDatabaseInterface {
 		return new ClearDatabase();
 	},
 );

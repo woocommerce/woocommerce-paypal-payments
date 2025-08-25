@@ -38,7 +38,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class OrderProcessor {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
+	use OrderMetaTrait;
+	use PaymentsStatusHandlingTrait;
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The environment.

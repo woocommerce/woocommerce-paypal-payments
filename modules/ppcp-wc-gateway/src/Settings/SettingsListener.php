@@ -277,7 +277,7 @@ class SettingsListener {
 					sleep( $this->onboarding_retry_delay );
 				}
 
-				$retry_count++;
+				++$retry_count;
 				$this->logger->info( 'Retrying onboarding return URL, retry nr: ' . ( (string) $retry_count ) );
 				$redirect_url = add_query_arg( 'ppcpRetry', $retry_count );
 				$this->redirector->redirect( $redirect_url );
@@ -569,7 +569,7 @@ class SettingsListener {
 	 *
 	 * @return array
 	 */
-	private function read_active_credentials_from_settings( array $settings ) : array {
+	private function read_active_credentials_from_settings( array $settings ): array {
 		if ( ! isset( $settings['client_id_sandbox'] ) && ! isset( $settings['client_id_production'] ) ) {
 			return $settings;
 		}
@@ -713,7 +713,7 @@ class SettingsListener {
 	 *
 	 * @return bool
 	 */
-	private function is_valid_site_request() : bool {
+	private function is_valid_site_request(): bool {
 
 		if ( empty( $this->page_id ) ) {
 			return false;

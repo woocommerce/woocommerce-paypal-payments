@@ -86,7 +86,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'api.host'                                       => static function( ContainerInterface $container ) : string {
+	'api.host'                                       => static function ( ContainerInterface $container ): string {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
@@ -96,25 +96,25 @@ return array(
 
 		return (string) $container->get( 'api.production-host' );
 	},
-	'api.paypal-host'                                => function( ContainerInterface $container ) : string {
+	'api.paypal-host'                                => function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
 	},
 	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php.
-	'api.paypal-website-url'                         => function( ContainerInterface $container ) : string {
+	'api.paypal-website-url'                         => function ( ContainerInterface $container ): string {
 		return PAYPAL_URL;
 	},
-	'api.factory.paypal-checkout-url'                => function( ContainerInterface $container ) : callable {
+	'api.factory.paypal-checkout-url'                => function ( ContainerInterface $container ): callable {
 		return function ( string $id ) use ( $container ): string {
 			return $container->get( 'api.paypal-website-url' ) . '/checkoutnow?token=' . $id;
 		};
 	},
-	'api.partner_merchant_id'                        => static function () : string {
+	'api.partner_merchant_id'                        => static function (): string {
 		return '';
 	},
-	'api.merchant_email'                             => function () : string {
+	'api.merchant_email'                             => function (): string {
 		return '';
 	},
-	'api.merchant_id'                                => function () : string {
+	'api.merchant_id'                                => function (): string {
 		return '';
 	},
 	'api.key'                                        => static function (): string {
@@ -142,7 +142,7 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
-	'api.endpoint.partners'                          => static function ( ContainerInterface $container ) : PartnersEndpoint {
+	'api.endpoint.partners'                          => static function ( ContainerInterface $container ): PartnersEndpoint {
 		return new PartnersEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -153,10 +153,10 @@ return array(
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
-	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ) : SellerStatusFactory {
+	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
 	},
-	'api.endpoint.payment-token'                     => static function ( ContainerInterface $container ) : PaymentTokenEndpoint {
+	'api.endpoint.payment-token'                     => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
 		return new PaymentTokenEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -166,14 +166,14 @@ return array(
 			$container->get( 'api.repository.customer' )
 		);
 	},
-	'api.endpoint.payment-tokens'                    => static function( ContainerInterface $container ) : PaymentTokensEndpoint {
+	'api.endpoint.payment-tokens'                    => static function ( ContainerInterface $container ): PaymentTokensEndpoint {
 		return new PaymentTokensEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.webhook'                           => static function ( ContainerInterface $container ) : WebhookEndpoint {
+	'api.endpoint.webhook'                           => static function ( ContainerInterface $container ): WebhookEndpoint {
 
 		return new WebhookEndpoint(
 			$container->get( 'api.host' ),
@@ -183,7 +183,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.partner-referrals'                 => static function ( ContainerInterface $container ) : PartnerReferrals {
+	'api.endpoint.partner-referrals'                 => static function ( ContainerInterface $container ): PartnerReferrals {
 
 		return new PartnerReferrals(
 			$container->get( 'api.host' ),
@@ -191,7 +191,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.partner-referrals-sandbox'         => static function ( ContainerInterface $container ) : PartnerReferrals {
+	'api.endpoint.partner-referrals-sandbox'         => static function ( ContainerInterface $container ): PartnerReferrals {
 
 		return new PartnerReferrals(
 			CONNECT_WOO_SANDBOX_URL,
@@ -199,7 +199,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.partner-referrals-production'      => static function ( ContainerInterface $container ) : PartnerReferrals {
+	'api.endpoint.partner-referrals-production'      => static function ( ContainerInterface $container ): PartnerReferrals {
 
 		return new PartnerReferrals(
 			CONNECT_WOO_URL,
@@ -207,7 +207,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.identity-token'                    => static function ( ContainerInterface $container ) : IdentityToken {
+	'api.endpoint.identity-token'                    => static function ( ContainerInterface $container ): IdentityToken {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$settings = $container->get( 'wcgateway.settings' );
 		$customer_repository = $container->get( 'api.repository.customer' );
@@ -232,7 +232,7 @@ return array(
 			$logger
 		);
 	},
-	'api.endpoint.login-seller'                      => static function ( ContainerInterface $container ) : LoginSeller {
+	'api.endpoint.login-seller'                      => static function ( ContainerInterface $container ): LoginSeller {
 
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new LoginSeller(
@@ -287,7 +287,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.billing-plans'                     => static function( ContainerInterface $container ): BillingPlans {
+	'api.endpoint.billing-plans'                     => static function ( ContainerInterface $container ): BillingPlans {
 		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -296,21 +296,21 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.billing-subscriptions'             => static function( ContainerInterface $container ): BillingSubscriptions {
+	'api.endpoint.billing-subscriptions'             => static function ( ContainerInterface $container ): BillingSubscriptions {
 		return new BillingSubscriptions(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.payment-method-tokens'             => static function( ContainerInterface $container ): PaymentMethodTokensEndpoint {
+	'api.endpoint.payment-method-tokens'             => static function ( ContainerInterface $container ): PaymentMethodTokensEndpoint {
 		return new PaymentMethodTokensEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ) : PartnerReferralsData {
+	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ): PartnerReferralsData {
 
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
 		return new PartnerReferralsData( $dcc_applies );
@@ -320,11 +320,11 @@ return array(
 		$merchant_id    = $container->get( 'api.merchant_id' );
 		return new PayeeRepository( $merchant_email, $merchant_id );
 	},
-	'api.repository.customer'                        => static function( ContainerInterface $container ): CustomerRepository {
+	'api.repository.customer'                        => static function ( ContainerInterface $container ): CustomerRepository {
 		$prefix           = $container->get( 'api.prefix' );
 		return new CustomerRepository( $prefix );
 	},
-	'api.repository.order'                           => static function( ContainerInterface $container ): OrderRepository {
+	'api.repository.order'                           => static function ( ContainerInterface $container ): OrderRepository {
 		return new OrderRepository(
 			$container->get( 'api.endpoint.order' )
 		);
@@ -345,10 +345,10 @@ return array(
 			$container->get( 'settings.merchant-details' )
 		);
 	},
-	'api.factory.payment-token'                      => static function ( ContainerInterface $container ) : PaymentTokenFactory {
+	'api.factory.payment-token'                      => static function ( ContainerInterface $container ): PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
-	'api.factory.payment-token-action-links'         => static function ( ContainerInterface $container ) : PaymentTokenActionLinksFactory {
+	'api.factory.payment-token-action-links'         => static function ( ContainerInterface $container ): PaymentTokenActionLinksFactory {
 		return new PaymentTokenActionLinksFactory();
 	},
 	'api.factory.webhook'                            => static function ( ContainerInterface $container ): WebhookFactory {
@@ -485,25 +485,25 @@ return array(
 	'api.factory.fraud-processor-response'           => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
 		return new FraudProcessorResponseFactory();
 	},
-	'api.factory.product'                            => static function( ContainerInterface $container ): ProductFactory {
+	'api.factory.product'                            => static function ( ContainerInterface $container ): ProductFactory {
 		return new ProductFactory();
 	},
-	'api.factory.billing-cycle'                      => static function( ContainerInterface $container ): BillingCycleFactory {
+	'api.factory.billing-cycle'                      => static function ( ContainerInterface $container ): BillingCycleFactory {
 		return new BillingCycleFactory( $container->get( 'api.shop.currency.getter' ) );
 	},
-	'api.factory.payment-preferences'                => static function( ContainerInterface $container ):PaymentPreferencesFactory {
+	'api.factory.payment-preferences'                => static function ( ContainerInterface $container ): PaymentPreferencesFactory {
 		return new PaymentPreferencesFactory( $container->get( 'api.shop.currency.getter' ) );
 	},
-	'api.factory.plan'                               => static function( ContainerInterface $container ): PlanFactory {
+	'api.factory.plan'                               => static function ( ContainerInterface $container ): PlanFactory {
 		return new PlanFactory(
 			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.payment-preferences' )
 		);
 	},
-	'api.factory.card-authentication-result-factory' => static function( ContainerInterface $container ): CardAuthenticationResultFactory {
+	'api.factory.card-authentication-result-factory' => static function ( ContainerInterface $container ): CardAuthenticationResultFactory {
 		return new CardAuthenticationResultFactory();
 	},
-	'api.helpers.dccapplies'                         => static function ( ContainerInterface $container ) : DccApplies {
+	'api.helpers.dccapplies'                         => static function ( ContainerInterface $container ): DccApplies {
 		return new DccApplies(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
 			$container->get( 'api.dcc-supported-country-card-matrix' ),
@@ -512,21 +512,21 @@ return array(
 		);
 	},
 
-	'api.shop.currency.getter'                       => static function ( ContainerInterface $container ) : CurrencyGetter {
+	'api.shop.currency.getter'                       => static function ( ContainerInterface $container ): CurrencyGetter {
 		return new CurrencyGetter();
 	},
-	'api.shop.country'                               => static function ( ContainerInterface $container ) : string {
+	'api.shop.country'                               => static function ( ContainerInterface $container ): string {
 		$location = wc_get_base_location();
 		return $location['country'];
 	},
-	'api.shop.is-psd2-country'                       => static function ( ContainerInterface $container ) : bool {
+	'api.shop.is-psd2-country'                       => static function ( ContainerInterface $container ): bool {
 		return in_array(
 			$container->get( 'api.shop.country' ),
 			$container->get( 'api.psd2-countries' ),
 			true
 		);
 	},
-	'api.shop.is-currency-supported'                 => static function ( ContainerInterface $container ) : bool {
+	'api.shop.is-currency-supported'                 => static function ( ContainerInterface $container ): bool {
 		return in_array(
 			$container->get( 'api.shop.currency.getter' )->get(),
 			$container->get( 'api.supported-currencies' ),
@@ -593,7 +593,7 @@ return array(
 	 *
 	 * From https://developer.paypal.com/docs/reports/reference/paypal-supported-currencies/
 	 */
-	'api.supported-currencies'                       => static function ( ContainerInterface $container ) : array {
+	'api.supported-currencies'                       => static function ( ContainerInterface $container ): array {
 		return array(
 			'AUD',
 			'BRL',
@@ -626,7 +626,7 @@ return array(
 	/**
 	 * The matrix which countries and currency combinations can be used for DCC.
 	 */
-	'api.dcc-supported-country-currency-matrix'      => static function ( ContainerInterface $container ) : array {
+	'api.dcc-supported-country-currency-matrix'      => static function ( ContainerInterface $container ): array {
 		$default_currencies = apply_filters(
 			'woocommerce_paypal_payments_supported_currencies',
 			array(
@@ -712,7 +712,7 @@ return array(
 	/**
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
 	 */
-	'api.dcc-supported-country-card-matrix'          => static function ( ContainerInterface $container ) : array {
+	'api.dcc-supported-country-card-matrix'          => static function ( ContainerInterface $container ): array {
 		$mastercard_visa_amex = array(
 			'mastercard' => array(),
 			'visa'       => array(),
@@ -793,7 +793,7 @@ return array(
 		);
 	},
 
-	'api.psd2-countries'                             => static function ( ContainerInterface $container ) : array {
+	'api.psd2-countries'                             => static function ( ContainerInterface $container ): array {
 		return array(
 			'AT',
 			'BE',
@@ -826,7 +826,7 @@ return array(
 		);
 	},
 
-	'api.paylater-countries'                         => static function ( ContainerInterface $container ) : array {
+	'api.paylater-countries'                         => static function ( ContainerInterface $container ): array {
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_paylater_countries',
 			array(
@@ -840,20 +840,20 @@ return array(
 			)
 		);
 	},
-	'api.order-helper'                               => static function( ContainerInterface $container ): OrderHelper {
+	'api.order-helper'                               => static function ( ContainerInterface $container ): OrderHelper {
 		return new OrderHelper();
 	},
-	'api.helper.order-transient'                     => static function( ContainerInterface $container ): OrderTransient {
+	'api.helper.order-transient'                     => static function ( ContainerInterface $container ): OrderTransient {
 		$cache                   = $container->get( 'api.paypal-bearer-cache' );
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
-	'api.helper.failure-registry'                    => static function( ContainerInterface $container ): FailureRegistry {
+	'api.helper.failure-registry'                    => static function ( ContainerInterface $container ): FailureRegistry {
 		$cache = new Cache( 'ppcp-paypal-api-status-cache' );
 		return new FailureRegistry( $cache );
 	},
 	'api.helper.purchase-unit-sanitizer'             => SingletonDecorator::make(
-		static function( ContainerInterface $container ): PurchaseUnitSanitizer {
+		static function ( ContainerInterface $container ): PurchaseUnitSanitizer {
 			$settings  = $container->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
 
@@ -862,24 +862,24 @@ return array(
 			return new PurchaseUnitSanitizer( $behavior, $line_name );
 		}
 	),
-	'api.client-credentials'                         => static function( ContainerInterface $container ): ClientCredentials {
+	'api.client-credentials'                         => static function ( ContainerInterface $container ): ClientCredentials {
 		return new ClientCredentials(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
-	'api.paypal-bearer-cache'                        => static function( ContainerInterface $container ): Cache {
+	'api.paypal-bearer-cache'                        => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-bearer' );
 	},
-	'api.client-credentials-cache'                   => static function( ContainerInterface $container ): Cache {
+	'api.client-credentials-cache'                   => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-client-credentials-cache' );
 	},
-	'api.user-id-token-cache'                        => static function( ContainerInterface $container ): Cache {
+	'api.user-id-token-cache'                        => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-id-token-cache' );
 	},
-	'api.reference-transaction-status-cache'         => static function( ContainerInterface $container ): Cache {
+	'api.reference-transaction-status-cache'         => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-reference-transaction-status-cache' );
 	},
-	'api.user-id-token'                              => static function( ContainerInterface $container ): UserIdToken {
+	'api.user-id-token'                              => static function ( ContainerInterface $container ): UserIdToken {
 		return new UserIdToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -887,7 +887,7 @@ return array(
 			$container->get( 'api.user-id-token-cache' )
 		);
 	},
-	'api.sdk-client-token'                           => static function( ContainerInterface $container ): SdkClientToken {
+	'api.sdk-client-token'                           => static function ( ContainerInterface $container ): SdkClientToken {
 		return new SdkClientToken(
 			$container->get( 'api.host' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -895,39 +895,39 @@ return array(
 			$container->get( 'api.client-credentials-cache' )
 		);
 	},
-	'api.paypal-host-production'                     => static function( ContainerInterface $container ) : string {
+	'api.paypal-host-production'                     => static function ( ContainerInterface $container ): string {
 		return PAYPAL_API_URL;
 	},
-	'api.paypal-host-sandbox'                        => static function( ContainerInterface $container ) : string {
+	'api.paypal-host-sandbox'                        => static function ( ContainerInterface $container ): string {
 		return PAYPAL_SANDBOX_API_URL;
 	},
-	'api.paypal-website-url-production'              => static function( ContainerInterface $container ) : string {
+	'api.paypal-website-url-production'              => static function ( ContainerInterface $container ): string {
 		return PAYPAL_URL;
 	},
-	'api.paypal-website-url-sandbox'                 => static function( ContainerInterface $container ) : string {
+	'api.paypal-website-url-sandbox'                 => static function ( ContainerInterface $container ): string {
 		return PAYPAL_SANDBOX_URL;
 	},
-	'api.partner_merchant_id-production'             => static function( ContainerInterface $container ) : string {
+	'api.partner_merchant_id-production'             => static function ( ContainerInterface $container ): string {
 		return CONNECT_WOO_MERCHANT_ID;
 	},
-	'api.partner_merchant_id-sandbox'                => static function( ContainerInterface $container ) : string {
+	'api.partner_merchant_id-sandbox'                => static function ( ContainerInterface $container ): string {
 		return CONNECT_WOO_SANDBOX_MERCHANT_ID;
 	},
-	'api.endpoint.login-seller-production'           => static function ( ContainerInterface $container ) : LoginSeller {
+	'api.endpoint.login-seller-production'           => static function ( ContainerInterface $container ): LoginSeller {
 		return new LoginSeller(
 			$container->get( 'api.paypal-host-production' ),
 			$container->get( 'api.partner_merchant_id-production' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.login-seller-sandbox'              => static function ( ContainerInterface $container ) : LoginSeller {
+	'api.endpoint.login-seller-sandbox'              => static function ( ContainerInterface $container ): LoginSeller {
 		return new LoginSeller(
 			$container->get( 'api.paypal-host-sandbox' ),
 			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.env.paypal-host'                            => static function ( ContainerInterface $container ) : EnvironmentConfig {
+	'api.env.paypal-host'                            => static function ( ContainerInterface $container ): EnvironmentConfig {
 		/**
 		 * Environment specific API host names.
 		 *
@@ -939,7 +939,7 @@ return array(
 			$container->get( 'api.paypal-host-sandbox' )
 		);
 	},
-	'api.env.endpoint.login-seller'                  => static function ( ContainerInterface $container ) : EnvironmentConfig {
+	'api.env.endpoint.login-seller'                  => static function ( ContainerInterface $container ): EnvironmentConfig {
 		/**
 		 * Environment specific LoginSeller API instances.
 		 *
@@ -951,7 +951,7 @@ return array(
 			$container->get( 'api.endpoint.login-seller-sandbox' )
 		);
 	},
-	'api.env.endpoint.partner-referrals'             => static function ( ContainerInterface $container ) : EnvironmentConfig {
+	'api.env.endpoint.partner-referrals'             => static function ( ContainerInterface $container ): EnvironmentConfig {
 		/**
 		 * Environment specific PartnerReferrals API instances.
 		 *
@@ -981,7 +981,7 @@ return array(
 
 		return CONNECT_WOO_URL;
 	},
-	'api.helper.partner-attribution'                 => static function ( ContainerInterface $container ) : PartnerAttribution {
+	'api.helper.partner-attribution'                 => static function ( ContainerInterface $container ): PartnerAttribution {
 		return new PartnerAttribution(
 			'ppcp_bn_code',
 			array(

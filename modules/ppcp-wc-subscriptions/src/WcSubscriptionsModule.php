@@ -187,7 +187,7 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $methods ) use ( $c ) {
+			function ( $methods ) use ( $c ) {
 				if ( ! is_array( $methods ) ) {
 					return $methods;
 				}

@@ -60,7 +60,7 @@ class OnboardingUrlManager {
 	 *
 	 * @return OnboardingUrl
 	 */
-	public function get( string $cache_key_prefix, int $user_id ) : OnboardingUrl {
+	public function get( string $cache_key_prefix, int $user_id ): OnboardingUrl {
 		return new OnboardingUrl( $this->cache, $cache_key_prefix, $user_id );
 	}
 
@@ -73,7 +73,7 @@ class OnboardingUrlManager {
 	 *
 	 * @return bool True, if the token is valid. False otherwise.
 	 */
-	public function validate_token_and_delete( string $token, int $user_id ) : bool {
+	public function validate_token_and_delete( string $token, int $user_id ): bool {
 		if ( $user_id < 1 || strlen( $token ) < 10 ) {
 			return false;
 		}

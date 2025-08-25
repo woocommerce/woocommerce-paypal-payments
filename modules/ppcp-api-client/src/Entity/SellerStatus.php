@@ -68,7 +68,7 @@ class SellerStatus {
 	 *
 	 * @return SellerStatusProduct[]
 	 */
-	public function products() : array {
+	public function products(): array {
 		return $this->products;
 	}
 
@@ -77,7 +77,7 @@ class SellerStatus {
 	 *
 	 * @return SellerStatusCapability[]
 	 */
-	public function capabilities() : array {
+	public function capabilities(): array {
 		return $this->capabilities;
 	}
 
@@ -86,7 +86,7 @@ class SellerStatus {
 	 *
 	 * @return string
 	 */
-	public function country() : string {
+	public function country(): string {
 		return $this->country;
 	}
 
@@ -95,16 +95,16 @@ class SellerStatus {
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$products = array_map(
-			function( SellerStatusProduct $product ) : array {
+			function ( SellerStatusProduct $product ): array {
 				return $product->to_array();
 			},
 			$this->products()
 		);
 
 		$capabilities = array_map(
-			function( SellerStatusCapability $capability ) : array {
+			function ( SellerStatusCapability $capability ): array {
 				return $capability->to_array();
 			},
 			$this->capabilities()

@@ -72,7 +72,7 @@ class ShipmentTrackingIntegration implements Integration {
 
 		add_action(
 			'wp_ajax_wc_shipment_tracking_save_form',
-			function() {
+			function () {
 				try {
 					check_ajax_referer( 'create-tracking-item', 'security', true );
 
@@ -110,7 +110,7 @@ class ShipmentTrackingIntegration implements Integration {
 		 */
 		add_filter(
 			'woocommerce_rest_prepare_order_shipment_tracking',
-			function( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ): WP_REST_Response {
+			function ( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ): WP_REST_Response {
 				try {
 					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
 						return $response;

@@ -141,7 +141,7 @@ class Plan {
 	 *
 	 * @return array
 	 */
-	public function to_array():array {
+	public function to_array(): array {
 		return array(
 			'id'                  => $this->id(),
 			'name'                => $this->name(),

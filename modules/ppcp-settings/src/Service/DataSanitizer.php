@@ -23,7 +23,7 @@ class DataSanitizer {
 	 * @param ?string $location Name of the location.
 	 * @return LocationStylingDTO Styling data.
 	 */
-	public function sanitize_location_style( $data, ?string $location = null ) : LocationStylingDTO {
+	public function sanitize_location_style( $data, ?string $location = null ): LocationStylingDTO {
 		if ( $data instanceof LocationStylingDTO ) {
 			if ( $location ) {
 				$data->location = $location;
@@ -74,7 +74,7 @@ class DataSanitizer {
 	 * @param string $default Default value.
 	 * @return string Sanitized string.
 	 */
-	public function sanitize_text( $value, string $default = '' ) : string {
+	public function sanitize_text( $value, string $default = '' ): string {
 		return sanitize_text_field( $value ?? $default );
 	}
 
@@ -89,7 +89,7 @@ class DataSanitizer {
 	 * @param string   $default      Default value.
 	 * @return string Sanitized string.
 	 */
-	public function sanitize_enum( $value, array $valid_values, string $default = '' ) : string {
+	public function sanitize_enum( $value, array $valid_values, string $default = '' ): string {
 		if ( empty( $valid_values ) ) {
 			return $default;
 		}
@@ -114,7 +114,7 @@ class DataSanitizer {
 	 * @param mixed $value Value to sanitize.
 	 * @return bool Sanitized boolean.
 	 */
-	public function sanitize_bool( $value ) : bool {
+	public function sanitize_bool( $value ): bool {
 		return filter_var( $value, FILTER_VALIDATE_BOOLEAN );
 	}
 
@@ -127,7 +127,7 @@ class DataSanitizer {
 	 * @param mixed $value Value to sanitize.
 	 * @return int Sanitized integer.
 	 */
-	public function sanitize_int( $value ) : int {
+	public function sanitize_int( $value ): int {
 		return (int) filter_var( $value, FILTER_VALIDATE_INT );
 	}
 
@@ -138,7 +138,7 @@ class DataSanitizer {
 	 * @param callable   $sanitize_callback Callback to sanitize each item in the array.
 	 * @return array Array with sanitized items.
 	 */
-	public function sanitize_array( ?array $array, callable $sanitize_callback ) : array {
+	public function sanitize_array( ?array $array, callable $sanitize_callback ): array {
 		if ( ! is_array( $array ) ) {
 			return array();
 		}
@@ -153,7 +153,7 @@ class DataSanitizer {
 	 * @param string[] $valid_values List of allowed values.
 	 * @return string|null Matching value if found, null otherwise.
 	 */
-	private function find_enum_value( string $value, array $valid_values ) : ?string {
+	private function find_enum_value( string $value, array $valid_values ): ?string {
 		foreach ( $valid_values as $valid_value ) {
 			// Compare both strings case-insensitive and binary safe.
 			// Note: This function is safe for ASCII but can fail for unicode-characters.

@@ -71,7 +71,7 @@ class DisabledFundingSources {
 	 * @param string $context The context.
 	 * @return string[] List of disabled sources
 	 */
-	public function sources( string $context ) : array {
+	public function sources( string $context ): array {
 		$block_contexts = array( 'checkout-block', 'cart-block' );
 		$flags          = array(
 			'context'          => $context,
@@ -104,7 +104,7 @@ class DisabledFundingSources {
 	 *
 	 * @return array
 	 */
-	private function get_sources_from_settings() : array {
+	private function get_sources_from_settings(): array {
 		try {
 			// Settings field present in the legacy UI.
 			$disabled_funding = $this->settings->get( 'disable_funding' );
@@ -133,7 +133,7 @@ class DisabledFundingSources {
 	 *
 	 * @return array
 	 */
-	private function get_sources_for_free_trial() : array {
+	private function get_sources_for_free_trial(): array {
 		// Disable all sources.
 		$disable_funding = array_keys( $this->all_funding_sources );
 
@@ -154,7 +154,7 @@ class DisabledFundingSources {
 	 * @param array $disable_funding The current disabled funding sources.
 	 * @return array
 	 */
-	private function apply_context_rules( array $disable_funding ) : array {
+	private function apply_context_rules( array $disable_funding ): array {
 		if ( 'MX' === $this->merchant_country && $this->dcc_configuration->is_bcdc_enabled() && CartCheckoutDetector::has_classic_checkout() && is_checkout() ) {
 			return $disable_funding;
 		}
@@ -173,7 +173,7 @@ class DisabledFundingSources {
 	 * @param array $disable_funding The current disabled funding sources.
 	 * @return array
 	 */
-	private function apply_block_checkout_rules( array $disable_funding ) : array {
+	private function apply_block_checkout_rules( array $disable_funding ): array {
 		/**
 		 * Block checkout only supports the following funding methods:
 		 * - PayPal
@@ -196,7 +196,7 @@ class DisabledFundingSources {
 	 * @param array $flags           Decision flags.
 	 * @return string[]
 	 */
-	private function sanitize_and_filter_sources( array $disable_funding, array $flags ) : array {
+	private function sanitize_and_filter_sources( array $disable_funding, array $flags ): array {
 		/**
 		 * Filters the final list of disabled funding sources.
 		 *

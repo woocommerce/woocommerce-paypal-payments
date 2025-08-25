@@ -25,5 +25,4 @@ class PropertiesDictionary {
 			'no'  => __( 'No', 'woocommerce-paypal-payments' ),
 		);
 	}
-
 }

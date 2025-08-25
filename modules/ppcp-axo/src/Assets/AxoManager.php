@@ -190,7 +190,7 @@ class AxoManager {
 				'email' => 'render',
 			),
 			// The amount is not available when setting the insights data, so we need to merge it here.
-			'insights'                   => ( function( array $data ): array {
+			'insights'                   => ( function ( array $data ): array {
 				$data['amount']['value'] = WC()->cart->get_total( 'numeric' );
 				return $data; } )( $this->insights_data ),
 			'allowed_cards'              => $this->supported_country_card_type_matrix,
@@ -270,5 +270,4 @@ class AxoManager {
 			esc_html( $label )
 		);
 	}
-
 }

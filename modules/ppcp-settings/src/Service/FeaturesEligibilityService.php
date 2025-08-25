@@ -100,7 +100,7 @@ class FeaturesEligibilityService {
 	 *
 	 * @return array<string, callable>
 	 */
-	public function get_eligibility_checks() : array {
+	public function get_eligibility_checks(): array {
 		return array(
 			'save_paypal_and_venmo'           => fn() => $this->is_save_paypal_eligible,
 			'advanced_credit_and_debit_cards' => $this->check_acdc_eligible,

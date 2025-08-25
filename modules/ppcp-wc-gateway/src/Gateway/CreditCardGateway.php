@@ -42,7 +42,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
+	use ProcessPaymentTrait;
+	use GatewaySettingsRendererTrait;
+	use TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
+	use FreeTrialHandlerTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -431,7 +435,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 *
 	 * @return bool
 	 */
-	public function is_available() : bool {
+	public function is_available(): bool {
 		return $this->is_enabled();
 	}
 

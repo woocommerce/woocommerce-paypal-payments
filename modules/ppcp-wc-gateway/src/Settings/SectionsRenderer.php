@@ -99,7 +99,7 @@ class SectionsRenderer {
 	 *
 	 * @return bool
 	 */
-	public function should_render() : bool {
+	public function should_render(): bool {
 		return $this->page_id && $this->is_connected;
 	}
 
