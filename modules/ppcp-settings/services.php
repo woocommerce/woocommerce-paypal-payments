@@ -519,13 +519,25 @@ $services = array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
+		$settings_model = $container->get( 'settings.data.settings' );
+		assert( $settings_model instanceof SettingsModel );
+
+		$messages_apply = $container->get( 'button.helper.messages-apply' );
+		assert( $messages_apply instanceof MessagesApply );
+
 		$is_working_capital_feature_flag_enabled = apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.working_capital_enabled',
 			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
 		);
 
-		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $container->get( 'settings.data.settings' )->get_stay_updated();
+		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $settings_model->get_stay_updated();
+
+		$is_paylater_messaging_force_enabled_feature_flag_enabled = apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
+			true
+		);
 
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
@@ -551,6 +563,9 @@ $services = array(
 		 * @param bool $is_google_pay_eligible              - Show if merchant is eligible (ACDC) but doesn't have Google Pay on PayPal.
 		 * @param bool $is_enable_apple_pay_eligible        - Show if merchant has Apple Pay capability but hasn't enabled the gateway.
 		 * @param bool $is_enable_google_pay_eligible       - Show if merchant has Google Pay capability but hasn't enabled the gateway.
+		 * @param bool $is_enable_installments_eligible     - Show if merchant has installments capability and merchant country is MX.
+		 * @param bool $is_working_capital_eligible         - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
+		 * @param bool $is_pay_later_messaging_auto_enabled - Show if feature flag is enabled, Pay later messaging is enabled for the merchant country and "Stay Updated" is turned On.
 		 */
 		return new TodosEligibilityService(
 			$container->get( 'axo.eligible' ) && $capabilities['acdc'] && ! $gateways['axo'],                  // Enable Fastlane.
@@ -572,7 +587,8 @@ $services = array(
 			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
 			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
-			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
+			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
+			$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $settings_model->get_stay_updated() // Pay later messaging auto enabled.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
