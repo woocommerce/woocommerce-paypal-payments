@@ -362,6 +362,44 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		/**
+		 * By default, WC asks to log in when opening a non-guest order received page as a guest,
+		 * so we disable this for cross-browser AppSwitch.
+		 *
+		 * @param bool $result
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_order_received_verify_known_shoppers',
+			static function( $result ) {
+				if ( ! is_order_received_page() ) {
+					return $result;
+				}
+
+				$wc_order = null;
+			    // phpcs:disable WordPress.Security.NonceVerification
+				if ( isset( $_GET['key'] ) && is_string( $_GET['key'] ) ) {
+					$wc_order_key = sanitize_text_field( wp_unslash( $_GET['key'] ) );
+					// phpcs:enable WordPress.Security.NonceVerification
+
+					$wc_order_id = wc_get_order_id_by_order_key( $wc_order_key );
+
+					$wc_order = wc_get_order( $wc_order_id );
+				}
+
+				if ( ! $wc_order instanceof WC_Order ) {
+					return $result;
+				}
+
+				if ( ! wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) ) ) {
+					return $result;
+				}
+
+				return false;
+			}
+		);
+
+		/**
 		 * Disabling the email prompt on Pay for order page for guests.
 		 * Should not affect anything in most cases because it is skipped for just created orders (< 10 min).
 		 *
