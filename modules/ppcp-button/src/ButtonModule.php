@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
@@ -31,6 +32,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class ButtonModule
@@ -299,10 +301,64 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 				$wc_order = $wc_order_creator->create_from_paypal_order( $paypal_order, $cart_data );
 
+				$wc_order->update_meta_data( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY, wc_bool_to_string( true ) );
+				$wc_order->save();
+
 				// Redirect via JS because we need to keep the # parameters which are not accessible on the server side.
 				// phpcs:ignore WordPress.Security.EscapeOutput
 				echo "<script>location.href = '" . $wc_order->get_checkout_payment_url() . "' + location.hash;</script>";
 			}
+		);
+
+		/**
+		 * By default, WC asks to log in when opening a non-guest Pay for order page as a guest,
+		 * so we disable this for cross-browser AppSwitch.
+		 *
+		 * @param array<string, bool> $allcaps Array of key/value pairs where keys represent a capability name
+		 *                           and boolean values represent whether the user has that capability.
+		 * @param string[] $caps Required primitive capabilities for the requested capability.
+		 * @param array $args {
+		 *      Arguments that accompany the requested capability check.
+		 *
+		 * @type string    $0 Requested capability.
+		 * @type int       $1 Concerned user ID.
+		 * @type mixed  ...$2 Optional second and further parameters, typically object ID.
+		 *  }
+		 *
+		 * @returns array<string, bool>
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'user_has_cap',
+			static function ( $allcaps, $cap, $args ) {
+				if ( ! in_array( 'pay_for_order', $cap, true ) ) {
+					return $allcaps;
+				}
+
+				$wc_order_id = $args[2] ?? null;
+				if ( ! is_int( $wc_order_id ) ) {
+					return $allcaps;
+				}
+
+				$wc_order = wc_get_order( $wc_order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return $allcaps;
+				}
+
+				if ( ! wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) ) ) {
+					return $allcaps;
+				}
+
+				return array_merge(
+					$allcaps,
+					array(
+						'pay_for_order' => true,
+					)
+				);
+			},
+			10,
+			3
 		);
 	}
 }

@@ -60,6 +60,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public const ORIGINAL_EMAIL_META_KEY = '_ppcp_paypal_billing_email';
 	public const ORIGINAL_PHONE_META_KEY = '_ppcp_paypal_billing_phone';
 
+	public const CROSS_BROWSER_APPSWITCH_META_KEY = '_ppcp_cross_browser_appswitch';
+
 	/**
 	 * List of payment sources for which we are expected to store the payer email in the WC Order metadata.
 	 */
