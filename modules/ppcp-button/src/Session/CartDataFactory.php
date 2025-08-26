@@ -28,6 +28,7 @@ class CartDataFactory {
 			$cart->get_cart_for_session(),
 			$cart->get_applied_coupons(),
 			$cart->needs_shipping(),
+			get_current_user_id(),
 			$cart->get_cart_hash()
 		);
 	}

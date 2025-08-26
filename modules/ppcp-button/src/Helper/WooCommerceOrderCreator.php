@@ -97,7 +97,7 @@ class WooCommerceOrderCreator {
 			$shipping       = ! empty( $purchase_units ) ? $purchase_units[0]->shipping() : null;
 
 			$this->configure_payment_source( $wc_order );
-			$this->configure_customer( $wc_order );
+			$this->configure_customer( $wc_order, $cart_data );
 			$this->configure_line_items( $wc_order, $cart_data, $payer, $shipping );
 			$this->configure_addresses( $wc_order, $payer, $shipping, $cart_data->needs_shipping() );
 			$this->configure_coupons( $wc_order, $cart_data->coupons() );
@@ -293,15 +293,18 @@ class WooCommerceOrderCreator {
 
 	/**
 	 * Configures the customer ID.
-	 *
-	 * @param WC_Order $wc_order The WC order.
-	 * @return void
 	 */
-	protected function configure_customer( WC_Order $wc_order ): void {
+	protected function configure_customer( WC_Order $wc_order, CartData $cart_data ): void {
 		$current_user = wp_get_current_user();
 
 		if ( $current_user->ID !== 0 ) {
 			$wc_order->set_customer_id( $current_user->ID );
+			return;
+		}
+
+		$saved_user_id = $cart_data->user_id();
+		if ( $saved_user_id !== 0 ) {
+			$wc_order->set_customer_id( $saved_user_id );
 		}
 	}
 
