@@ -237,6 +237,10 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 	}
 
+	private static function is_cross_browser_order( WC_Order $wc_order ): bool {
+		return wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) );
+	}
+
 	private function register_appswitch_crossbrowser_handler( ContainerInterface $container ): void {
 		if ( ! $container->get( 'wcgateway.appswitch-enabled' ) ) {
 			return;
@@ -346,7 +350,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return $allcaps;
 				}
 
-				if ( ! wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) ) ) {
+				if ( ! self::is_cross_browser_order( $wc_order ) ) {
 					return $allcaps;
 				}
 
@@ -391,7 +395,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return $result;
 				}
 
-				if ( ! wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) ) ) {
+				if ( ! self::is_cross_browser_order( $wc_order ) ) {
 					return $result;
 				}
 
@@ -420,7 +424,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return $email_verification_required;
 				}
 
-				if ( ! wc_string_to_bool( $order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) ) ) {
+				if ( ! self::is_cross_browser_order( $order ) ) {
 					return $email_verification_required;
 				}
 
