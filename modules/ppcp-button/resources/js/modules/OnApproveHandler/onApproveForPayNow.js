@@ -2,9 +2,11 @@ import {
 	getCurrentPaymentMethod,
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
+import Spinner from '../Helper/Spinner';
 
-const onApprove = ( context, errorHandler, spinner ) => {
+const onApprove = ( context, errorHandler ) => {
 	return ( data, actions ) => {
+		const spinner = Spinner.fullPage();
 		spinner.block();
 		errorHandler.clear();
 
@@ -24,7 +26,6 @@ const onApprove = ( context, errorHandler, spinner ) => {
 				return res.json();
 			} )
 			.then( ( data ) => {
-				spinner.unblock();
 				if ( ! data.success ) {
 					if ( data.data.code === 100 ) {
 						errorHandler.message( data.data.message );
@@ -49,6 +50,9 @@ const onApprove = ( context, errorHandler, spinner ) => {
 				}
 
 				document.querySelector( '#place_order' ).click();
+			} )
+			.finally( () => {
+				spinner.unblock();
 			} );
 	};
 };
