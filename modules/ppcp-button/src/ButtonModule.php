@@ -360,5 +360,36 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			10,
 			3
 		);
+
+		/**
+		 * Disabling the email prompt on Pay for order page for guests.
+		 * Should not affect anything in most cases because it is skipped for just created orders (< 10 min).
+		 *
+		 * @param bool $email_verification_required
+		 * @param WC_Order $order
+		 *
+		 * @returns bool
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_order_email_verification_required',
+			static function (
+			$email_verification_required,
+			$order
+			) {
+				if ( ! $order instanceof WC_Order ) {
+					return $email_verification_required;
+				}
+
+				if ( ! wc_string_to_bool( $order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) ) ) {
+					return $email_verification_required;
+				}
+
+				return false;
+			},
+			10,
+			2
+		);
 	}
 }
