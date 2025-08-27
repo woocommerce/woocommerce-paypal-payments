@@ -42,6 +42,10 @@ class ShippingPreferenceFactory {
 		$needs_shipping            = $cart && $cart->needs_shipping();
 		$shipping_address_is_fixed = $needs_shipping && 'checkout' === $context;
 
+		if ( ! $needs_shipping ) {
+			return ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+		}
+
 		if ( $shipping_address_is_fixed ) {
 			// Checkout + no address given? Probably something weird happened, like no form validation?
 			if ( ! $has_shipping ) {
