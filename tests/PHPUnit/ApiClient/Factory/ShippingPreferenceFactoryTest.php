@@ -6,10 +6,13 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use Mockery;
 use WC_Cart;
 use WC_Order;
+use WC_Order_Item_Product;
+use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\TestCase;
+use function Brain\Monkey\Functions\when;
 
 class ShippingPreferenceFactoryTest extends TestCase
 {
@@ -18,6 +21,9 @@ class ShippingPreferenceFactoryTest extends TestCase
 	public function setUp(): void
 	{
 		parent::setUp();
+
+		when('wc_shipping_enabled')->justReturn(true);
+		when('wc_get_shipping_method_count')->justReturn(2);
 
 		$this->testee = new ShippingPreferenceFactory();
 	}
@@ -128,8 +134,14 @@ class ShippingPreferenceFactoryTest extends TestCase
 	}
 
 	private function createWcOrder(bool $needsShipping): WC_Order {
+		$product = Mockery::mock(WC_Product::class);
+		$product->shouldReceive('needs_shipping')->andReturn($needsShipping);
+
+		$item = Mockery::mock(WC_Order_Item_Product::class);
+		$item->shouldReceive('get_product')->andReturn($product);
+
 		$wcOrder = Mockery::mock(WC_Order::class);
-		$wcOrder->shouldReceive('needs_shipping')->andReturn($needsShipping);
+		$wcOrder->shouldReceive('get_items')->andReturn([$item]);
 		return $wcOrder;
 	}
 }

@@ -11,6 +11,8 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WC_Cart;
 use WC_Order;
+use WC_Order_Item_Product;
+use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 
@@ -41,7 +43,7 @@ class ShippingPreferenceFactory {
 		}
 
 		$has_shipping              = null !== $purchase_unit->shipping();
-		$needs_shipping            = ( $wc_order && $wc_order->needs_shipping() ) || ( $cart && $cart->needs_shipping() );
+		$needs_shipping            = ( $wc_order && $this->wc_order_needs_shipping( $wc_order ) ) || ( $cart && $cart->needs_shipping() );
 		$shipping_address_is_fixed = $needs_shipping && in_array( $context, array( 'checkout', 'pay-now' ), true );
 
 		if ( ! $needs_shipping ) {
@@ -66,5 +68,27 @@ class ShippingPreferenceFactory {
 		}
 
 		return ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE;
+	}
+
+	protected function wc_order_needs_shipping( WC_Order $wc_order ): bool {
+		// WC 9.9.0+.
+		if ( method_exists( $wc_order, 'needs_shipping' ) ) {
+			return $wc_order->needs_shipping();
+		}
+
+		if ( ! wc_shipping_enabled() || wc_get_shipping_method_count( true ) === 0 ) {
+			return false;
+		}
+
+		foreach ( $wc_order->get_items() as $item ) {
+			if ( $item instanceof WC_Order_Item_Product ) {
+				$product = $item->get_product();
+				if ( $product instanceof WC_Product && $product->needs_shipping() ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 }
