@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use Mockery;
 use WC_Cart;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -29,9 +30,10 @@ class ShippingPreferenceFactoryTest extends TestCase
 		string $context,
 		?WC_Cart $cart,
 		string $funding_source,
+		?WC_Order $wc_order,
 		string $expected_result
 	) {
-		$result = $this->testee->from_state($purchase_unit, $context, $cart, $funding_source);
+		$result = $this->testee->from_state($purchase_unit, $context, $cart, $funding_source, $wc_order);
 
 		self::assertEquals($expected_result, $result);
     }
@@ -43,6 +45,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			'checkout',
 			$this->createCart(true),
 			'',
+			null,
 			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 		];
 		yield [
@@ -50,6 +53,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			'checkout',
 			$this->createCart(false),
 			'',
+			null,
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
 		yield [
@@ -57,6 +61,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			'checkout',
 			$this->createCart(true),
 			'',
+			null,
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
 		yield [
@@ -64,6 +69,7 @@ class ShippingPreferenceFactoryTest extends TestCase
 			'checkout',
 			$this->createCart(true),
 			'card',
+			null,
 			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 		];
 		yield [
@@ -71,34 +77,39 @@ class ShippingPreferenceFactoryTest extends TestCase
 			'product',
 			null,
 			'',
-			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+			null,
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING
 		];
 		yield [
 			$this->createPurchaseUnit(true, null),
 			'pay-now',
 			null,
 			'venmo',
-			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+			$this->createWcOrder(false),
+			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING
 		];
 		yield [
 			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
 			'pay-now',
 			null,
 			'venmo',
-			ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE,
+			$this->createWcOrder(true),
+			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS
 		];
 		yield [
 			$this->createPurchaseUnit(true, Mockery::mock(Shipping::class)),
 			'pay-now',
 			null,
 			'card',
-			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
+			$this->createWcOrder(true),
+			ExperienceContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS
 		];
 		yield [
 			$this->createPurchaseUnit(true, null),
 			'pay-now',
 			null,
 			'card',
+			$this->createWcOrder(false),
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 		];
     }
@@ -114,5 +125,11 @@ class ShippingPreferenceFactoryTest extends TestCase
 		$cart = Mockery::mock(WC_Cart::class);
 		$cart->shouldReceive('needs_shipping')->andReturn($needsShipping);
 		return $cart;
+	}
+
+	private function createWcOrder(bool $needsShipping): WC_Order {
+		$wcOrder = Mockery::mock(WC_Order::class);
+		$wcOrder->shouldReceive('needs_shipping')->andReturn($needsShipping);
+		return $wcOrder;
 	}
 }
