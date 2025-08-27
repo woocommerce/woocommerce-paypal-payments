@@ -69,7 +69,7 @@ WooCommerce inbox notes have several restrictions:
 ### Character Limit
 - Content is automatically truncated at **320 characters** with "..."
 - No expansion option available in the UI
-- Reference: [WooCommerce Developer Blog](https://developer.woocommerce.com/2021/11/10/introducing-a-320-character-limit-to-inbox-notes/)
+- Reference: [WooCommerce Developer Blog ↗](https://developer.woocommerce.com/2021/11/10/introducing-a-320-character-limit-to-inbox-notes/)
 
 ### HTML Restrictions
 Only basic HTML tags are allowed:
