@@ -128,6 +128,10 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return $tokens;
 				}
 
+				if ( isset( $_GET['change_payment_method'] ) && is_wc_endpoint_url( 'order-pay' ) ) {
+					return $tokens;
+				}
+
 				$is_post = isset( $_SERVER['REQUEST_METHOD'] ) && $_SERVER['REQUEST_METHOD'] === 'POST';
 
 				// Exclude ApplePay tokens from payment pages.
