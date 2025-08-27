@@ -535,7 +535,8 @@ return array(
 			$container->get( 'wcgateway.helper.dcc-product-status' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.shop.country' ),
+			$container->get( 'axo.eligibility.check' )
 		);
 	},
 	'wcgateway.settings.listener'                          => static function ( ContainerInterface $container ): SettingsListener {
