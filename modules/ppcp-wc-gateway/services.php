@@ -2241,22 +2241,22 @@ return array(
 				)
 			),
 			$inbox_note_factory->create_note(
-				__( 'Pay Later messaging now optimizing conversions', 'woocommerce-paypal-payments' ),
+				__( 'PayPal Pay Later Messaging now enabled', 'woocommerce-paypal-payments' ),
 				sprintf(
 				// translators: %1$s is the URL for Pay Later messaging documentation.
 					__(
-						'PayPal Pay Later messages are now displaying on your store through your <a href="%1$s">Stay Updated</a> preference, helping customers see flexible payment options. Merchants typically see 20-40% higher conversion rates with these purchase incentives. The messages appear contextually near prices, not as ads. You control this completely—disable anytime if your conversion metrics don\'t improve.',
+						'PayPal Pay Later messaging was included in the 3.1 version release and has now been enabled on your store based on your <a href="%1$s">STAY UPDATED</a> preference.<br>This feature displays the payment option earlier in the shopping experience to drive customer engagement and can be fully customized or disabled through the PayPal admin panel.',
 						'woocommerce-paypal-payments'
 					),
 					$stay_updated_field_link
 				),
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
-				'ppcp-settings-paylater-messaging-force-enabled-inbox-note',
+				'ppcp-settings-paylater-messaging-force-enabled-indbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
 				$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $stay_updated,
 				new InboxNoteAction(
 					'review_pay_later_settings',
-					__( 'Review Pay Later settings', 'woocommerce-paypal-payments' ),
+					__( 'REVIEW PAY LATER SETTINGS', 'woocommerce-paypal-payments' ),
 					$paylater_messaging_tab_link,
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
