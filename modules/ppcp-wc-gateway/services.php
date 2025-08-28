@@ -2251,7 +2251,7 @@ return array(
 					$stay_updated_field_link
 				),
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
-				'ppcp-settings-paylater-messaging-force-enabled-indbox-note',
+				'ppcp-settings-paylater-messaging-force-enabled-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
 				$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $stay_updated,
 				new InboxNoteAction(
