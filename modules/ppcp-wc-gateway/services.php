@@ -2256,7 +2256,7 @@ return array(
 				$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $stay_updated,
 				new InboxNoteAction(
 					'review_pay_later_settings',
-					__( 'REVIEW PAY LATER SETTINGS', 'woocommerce-paypal-payments' ),
+					__( 'Review Pay Later settings', 'woocommerce-paypal-payments' ),
 					$paylater_messaging_tab_link,
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
