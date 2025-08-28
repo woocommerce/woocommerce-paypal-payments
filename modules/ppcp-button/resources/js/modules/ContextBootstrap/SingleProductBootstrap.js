@@ -243,15 +243,6 @@ class SingleProductBootstrap {
 			this.form(),
 			this.errorHandler
 		);
-		if (
-			! this.gateway.vaultingEnabled &&
-			[ 'subscription', 'variable-subscription' ].includes(
-				this.gateway.productType
-			) &&
-			this.gateway.manualRenewalEnabled !== '1'
-		) {
-			return;
-		}
 
 		if (
 			PayPalCommerceGateway.data_client_id.has_subscriptions &&
@@ -285,6 +276,16 @@ class SingleProductBootstrap {
 			);
 
 			this.subscriptionButtonsLoaded = true;
+			return;
+		}
+
+		if (
+			! this.gateway.vaultingEnabled &&
+			[ 'subscription', 'variable-subscription' ].includes(
+				this.gateway.productType
+			) &&
+			this.gateway.manualRenewalEnabled !== '1'
+		) {
 			return;
 		}
 
