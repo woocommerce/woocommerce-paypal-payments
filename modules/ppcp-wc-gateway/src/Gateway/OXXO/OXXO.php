@@ -130,7 +130,7 @@ class OXXO {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $message, $order ) {
+			function ( $message, $order ) {
 				if ( ! is_string( $message ) || ! $order instanceof WC_Order ) {
 					return $message;
 				}
@@ -177,7 +177,7 @@ class OXXO {
 
 		add_filter(
 			'ppcp_payment_capture_reversed_webhook_update_status_note',
-			function( string $note, WC_Order $wc_order, string $event_type ): string {
+			function ( string $note, WC_Order $wc_order, string $event_type ): string {
 				if ( $wc_order->get_payment_method() === OXXOGateway::ID && $event_type === 'PAYMENT.CAPTURE.DENIED' ) {
 					$note = __( 'OXXO voucher has expired or the buyer didn\'t complete the payment successfully.', 'woocommerce-paypal-payments' );
 				}
@@ -190,7 +190,7 @@ class OXXO {
 
 		add_action(
 			'add_meta_boxes',
-			function( string $post_type ) {
+			function ( string $post_type ) {
 				/**
 				 * Class and function exist in WooCommerce.
 				 *
@@ -211,7 +211,7 @@ class OXXO {
 							add_meta_box(
 								'ppcp_oxxo_payer_action',
 								__( 'OXXO Voucher/Ticket', 'woocommerce-paypal-payments' ),
-								function() use ( $payer_action ) {
+								function () use ( $payer_action ) {
 									echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">' . esc_html__( 'See OXXO voucher', 'woocommerce-paypal-payments' ) . '</a></p>';
 								},
 								$screen,
@@ -226,7 +226,7 @@ class OXXO {
 
 		add_action(
 			'woocommerce_order_details_before_order_table_items',
-			function( WC_Order $order ) {
+			function ( WC_Order $order ) {
 				if ( $order->get_payment_method() === OXXOGateway::ID ) {
 					$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
 					if ( $payer_action ) {

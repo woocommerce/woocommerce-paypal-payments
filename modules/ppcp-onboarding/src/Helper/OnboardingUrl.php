@@ -396,5 +396,4 @@ class OnboardingUrl {
 			$this->previous_cache_ttl
 		);
 	}
-
 }

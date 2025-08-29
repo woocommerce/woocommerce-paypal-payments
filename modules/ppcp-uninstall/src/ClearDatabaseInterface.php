@@ -36,5 +36,4 @@ interface ClearDatabaseInterface {
 	 * @throws RuntimeException If problem clearing.
 	 */
 	public function clear_actions( array $action_names ): void;
-
 }

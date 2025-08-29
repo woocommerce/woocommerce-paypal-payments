@@ -21,7 +21,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 
-	'compat.ppec.mock-gateway'                       => static function( $container ) {
+	'compat.ppec.mock-gateway'                       => static function ( $container ) {
 		$settings = $container->get( 'wcgateway.settings' );
 		$title    = $settings->has( 'title' ) ? $settings->get( 'title' ) : __( 'PayPal', 'woocommerce-paypal-payments' );
 		$title    = sprintf(
@@ -40,13 +40,13 @@ return array(
 		return new PPEC\SubscriptionsHandler( $ppcp_renewal_handler, $gateway );
 	},
 
-	'compat.ppec.settings_importer'                  => static function( ContainerInterface $container ) : PPEC\SettingsImporter {
+	'compat.ppec.settings_importer'                  => static function ( ContainerInterface $container ): PPEC\SettingsImporter {
 		$settings = $container->get( 'wcgateway.settings' );
 
 		return new PPEC\SettingsImporter( $settings );
 	},
 
-	'compat.plugin-script-names'                     => static function( ContainerInterface $container ) : array {
+	'compat.plugin-script-names'                     => static function ( ContainerInterface $container ): array {
 		return array(
 			'ppcp-smart-button',
 			'ppcp-oxxo',
@@ -61,7 +61,7 @@ return array(
 		);
 	},
 
-	'compat.plugin-script-file-names'                => static function( ContainerInterface $container ) : array {
+	'compat.plugin-script-file-names'                => static function ( ContainerInterface $container ): array {
 		return array(
 			'button.js',
 			'gateway-settings.js',
@@ -104,7 +104,7 @@ return array(
 		return plugins_url( '/modules/ppcp-compat/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
-	'compat.assets'                                  => function( ContainerInterface $container ) : CompatAssets {
+	'compat.assets'                                  => function ( ContainerInterface $container ): CompatAssets {
 		return new CompatAssets(
 			$container->get( 'compat.module.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -120,7 +120,7 @@ return array(
 	 *
 	 * @returns SettingsMap[]
 	 */
-	'compat.setting.new-to-old-map'                  => static function( ContainerInterface $container ) : array {
+	'compat.setting.new-to-old-map'                  => static function ( ContainerInterface $container ): array {
 		$are_new_settings_enabled = $container->get( 'wcgateway.settings.admin-settings-enabled' );
 		if ( ! $are_new_settings_enabled ) {
 			return array();
@@ -184,7 +184,7 @@ return array(
 			),
 		);
 	},
-	'compat.settings.settings_map_helper'            => static function( ContainerInterface $container ) : SettingsMapHelper {
+	'compat.settings.settings_map_helper'            => static function ( ContainerInterface $container ): SettingsMapHelper {
 		return new SettingsMapHelper(
 			$container->get( 'compat.setting.new-to-old-map' ),
 			$container->get( 'compat.settings.styling_map_helper' ),
@@ -195,19 +195,19 @@ return array(
 			$container->get( 'wcgateway.settings.admin-settings-enabled' )
 		);
 	},
-	'compat.settings.styling_map_helper'             => static function() : StylingSettingsMapHelper {
+	'compat.settings.styling_map_helper'             => static function (): StylingSettingsMapHelper {
 		return new StylingSettingsMapHelper();
 	},
-	'compat.settings.settings_tab_map_helper'        => static function() : SettingsTabMapHelper {
+	'compat.settings.settings_tab_map_helper'        => static function (): SettingsTabMapHelper {
 		return new SettingsTabMapHelper();
 	},
-	'compat.settings.subscription_map_helper'        => static function( ContainerInterface $container ) : SubscriptionSettingsMapHelper {
+	'compat.settings.subscription_map_helper'        => static function ( ContainerInterface $container ): SubscriptionSettingsMapHelper {
 		return new SubscriptionSettingsMapHelper( $container->get( 'wc-subscriptions.helper' ) );
 	},
-	'compat.settings.general_map_helper'             => static function() : GeneralSettingsMapHelper {
+	'compat.settings.general_map_helper'             => static function (): GeneralSettingsMapHelper {
 		return new GeneralSettingsMapHelper();
 	},
-	'compat.settings.payment_methods_map_helper'     => static function() : PaymentMethodSettingsMapHelper {
+	'compat.settings.payment_methods_map_helper'     => static function (): PaymentMethodSettingsMapHelper {
 		return new PaymentMethodSettingsMapHelper();
 	},
 );

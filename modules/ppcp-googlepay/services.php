@@ -33,11 +33,11 @@ return array(
 		$apm_applies = $container->get( 'googlepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return static function () use ( $apm_applies ) : bool {
+		return static function () use ( $apm_applies ): bool {
 			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
 		};
 	},
-	'googlepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
+	'googlepay.helpers.apm-applies'             => static function ( ContainerInterface $container ): ApmApplies {
 		return new ApmApplies(
 			$container->get( 'googlepay.supported-countries' ),
 			$container->get( 'googlepay.supported-currencies' ),
@@ -76,7 +76,7 @@ return array(
 	},
 
 	'googlepay.helpers.apm-product-status'      => SingletonDecorator::make(
-		static function( ContainerInterface $container ): ApmProductStatus {
+		static function ( ContainerInterface $container ): ApmProductStatus {
 			return new ApmProductStatus(
 				$container->get( 'wcgateway.settings' ),
 				$container->get( 'api.endpoint.partners' ),
@@ -89,7 +89,7 @@ return array(
 	/**
 	 * The list of which countries can be used for GooglePay.
 	 */
-	'googlepay.supported-countries'             => static function ( ContainerInterface $container ) : array {
+	'googlepay.supported-countries'             => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which countries can be used for GooglePay.
 		 */
@@ -145,7 +145,7 @@ return array(
 	/**
 	 * The list of which currencies can be used for GooglePay.
 	 */
-	'googlepay.supported-currencies'            => static function ( ContainerInterface $container ) : array {
+	'googlepay.supported-currencies'            => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which currencies can be used for GooglePay.
 		 */

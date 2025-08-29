@@ -203,7 +203,7 @@ class PaymentsEndpoint {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function reauthorize( string $authorization_id, ?Money $amount = null ) : string {
+	public function reauthorize( string $authorization_id, ?Money $amount = null ): string {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization_id . '/reauthorize';
 
@@ -249,7 +249,7 @@ class PaymentsEndpoint {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function refund( RefundCapture $refund ) : string {
+	public function refund( RefundCapture $refund ): string {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/captures/' . $refund->for_capture()->id() . '/refund';
 		$args   = array(
@@ -289,7 +289,7 @@ class PaymentsEndpoint {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function void( Authorization $authorization ) : void {
+	public function void( Authorization $authorization ): void {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization->id() . '/void';
 		$args   = array(

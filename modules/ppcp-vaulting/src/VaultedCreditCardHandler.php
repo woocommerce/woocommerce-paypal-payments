@@ -31,7 +31,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  */
 class VaultedCreditCardHandler {
 
-	use OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
+	use OrderMetaTrait;
+	use TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The subscription helper.

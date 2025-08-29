@@ -82,7 +82,7 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * POST /wp-json/wc/v3/wc_paypal/refresh-features
 		 */
@@ -103,7 +103,7 @@ class RefreshFeatureStatusEndpoint extends RestEndpoint {
 	 * @param WP_REST_Request $request Full data about the request.
 	 * @return WP_REST_Response
 	 */
-	public function refresh_status( WP_REST_Request $request ) : WP_REST_Response {
+	public function refresh_status( WP_REST_Request $request ): WP_REST_Response {
 		$now               = time();
 		$last_request_time = $this->cache->get( self::CACHE_KEY ) ?: 0;
 		$seconds_missing   = $last_request_time + self::TIMEOUT - $now;

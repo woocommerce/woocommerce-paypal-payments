@@ -18,7 +18,7 @@ return array(
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
-		$insert_after = function( array $array, string $key, array $new ): array {
+		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
 			$pos = false === $index ? count( $array ) : $index + 1;

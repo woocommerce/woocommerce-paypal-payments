@@ -53,7 +53,7 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			static function( array $components ) use ( $c ) {
+			static function ( array $components ) use ( $c ) {
 				$dcc_config = $c->get( 'wcgateway.configuration.card-configuration' );
 				assert( $dcc_config instanceof CardPaymentsConfiguration );
 
@@ -104,7 +104,7 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 			 * @psalm-suppress MissingClosureReturnType
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $default_fields, $id ) use ( $c ) {
+			function ( $default_fields, $id ) use ( $c ) {
 				if ( ! $c->get( 'wcgateway.configuration.card-configuration' )->is_enabled() ) {
 					return $default_fields;
 				}
@@ -139,7 +139,7 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data, string $payment_method ) use ( $c ): array {
+			function ( array $data, string $payment_method ) use ( $c ): array {
 				if ( ! $c->get( 'wcgateway.configuration.card-configuration' )->is_enabled() ) {
 					return $data;
 				}
@@ -187,7 +187,7 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 		// Validates if an order with card payment source can be captured.
 		add_action(
 			'woocommerce_paypal_payments_before_capture_order',
-			function( Order $order ) use ( $c ) {
+			function ( Order $order ) use ( $c ) {
 				$validator = $c->get( 'card-fields.service.card-capture-validator' );
 				assert( $validator instanceof CardCaptureValidator );
 

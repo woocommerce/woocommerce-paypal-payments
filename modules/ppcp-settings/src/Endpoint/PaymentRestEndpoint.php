@@ -109,7 +109,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 	 *
 	 * @return array[]
 	 */
-	protected function gateways() : array {
+	protected function gateways(): array {
 		$methods = $this->payment_methods_definition->get_definitions();
 
 		// Add dependency information to the methods.
@@ -119,7 +119,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET wc/v3/wc_paypal/payment
 		 */
@@ -159,7 +159,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The current payment methods details.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		$gateway_settings    = array();
 		$all_payment_methods = $this->gateways();
 
@@ -216,7 +216,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The updated payment methods details.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$request_data = $request->get_params();
 		$all_methods  = $this->gateways();
 

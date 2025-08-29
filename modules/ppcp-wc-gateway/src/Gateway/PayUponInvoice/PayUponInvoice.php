@@ -248,7 +248,7 @@ class PayUponInvoice {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( WC_Order $order, bool $sent_to_admin, bool $plain_text, $email ) {
+			function ( WC_Order $order, bool $sent_to_admin, bool $plain_text, $email ) {
 				if (
 					! $sent_to_admin
 					&& PayUponInvoiceGateway::ID === $order->get_payment_method()
@@ -317,7 +317,7 @@ class PayUponInvoice {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $description, $id ): string {
+			function ( $description, $id ): string {
 				if ( ! is_string( $description ) || ! is_string( $id ) ) {
 					return $description;
 				}
@@ -389,7 +389,7 @@ class PayUponInvoice {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $fields, WP_Error $errors ) {
+			function ( $fields, WP_Error $errors ) {
 				if ( ! is_array( $fields ) ) {
 					return;
 				}
@@ -438,7 +438,7 @@ class PayUponInvoice {
 					! is_array( $methods )
 					|| ! $this->is_connected
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					|| ! ( is_checkout() || isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' )
+					|| ! ( is_checkout() || ( isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' ) )
 				) {
 					return $methods;
 				}
@@ -474,7 +474,7 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_settings_checkout',
-			function() {
+			function () {
 				if (
 				PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
 				&& $this->pui_product_status->is_active()
@@ -496,7 +496,7 @@ class PayUponInvoice {
 						<div class="notice notice-error">
 							<?php
 							array_map(
-								static function( $message ) {
+								static function ( $message ) {
 									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 									echo '<p>' . $message . '</p>';
 								},
@@ -525,7 +525,7 @@ class PayUponInvoice {
 
 		add_action(
 			'add_meta_boxes',
-			function( string $post_type ) {
+			function ( string $post_type ) {
 				/**
 				 * Class and function exist in WooCommerce.
 				 *
@@ -546,7 +546,7 @@ class PayUponInvoice {
 							add_meta_box(
 								'ppcp_pui_ratepay_payment_instructions',
 								__( 'RatePay payment instructions', 'woocommerce-paypal-payments' ),
-								function() use ( $instructions ) {
+								function () use ( $instructions ) {
 									$payment_reference   = $instructions[0] ?? '';
 									$bic                 = $instructions[1]->bic ?? '';
 									$bank_name           = $instructions[1]->bank_name ?? '';

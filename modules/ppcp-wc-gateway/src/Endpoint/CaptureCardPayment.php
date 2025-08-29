@@ -198,4 +198,3 @@ class CaptureCardPayment {
 		return $decoded_response;
 	}
 }
-

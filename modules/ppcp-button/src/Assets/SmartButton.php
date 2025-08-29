@@ -63,7 +63,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  */
 class SmartButton implements SmartButtonInterface {
 
-	use FreeTrialHandlerTrait, ContextTrait;
+	use FreeTrialHandlerTrait;
+	use ContextTrait;
 
 	/**
 	 * The Settings status helper.
@@ -438,7 +439,7 @@ class SmartButton implements SmartButtonInterface {
 		$subscription_helper = $this->subscription_helper;
 		add_filter(
 			'woocommerce_credit_card_form_fields',
-			function ( array $default_fields, $id ) use ( $subscription_helper ) : array {
+			function ( array $default_fields, $id ) use ( $subscription_helper ): array {
 				if (
 					CreditCardGateway::ID === $id
 					&& is_user_logged_in()
@@ -671,7 +672,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$enabled_on_cart = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
-				function() use ( $enabled_on_cart ) {
+				function () use ( $enabled_on_cart ) {
 					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() || isset( reset( WC()->cart->cart_contents )['subscription_switch'] ) ) {
 						return;
 					}
@@ -700,7 +701,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	/**
 	 * Determines whether the button component should be loaded.
 	 */
-	public function should_load_buttons() : bool {
+	public function should_load_buttons(): bool {
 		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
 		if ( ! $pcp_gateway_enabled ) {
 			return false;
@@ -726,7 +727,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	/**
 	 * Determines whether the Pay Later messages component should be loaded.
 	 */
-	public function should_load_messages() : bool {
+	public function should_load_messages(): bool {
 		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
 		if ( ! $pcp_gateway_enabled ) {
 			return false;
@@ -768,7 +769,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	/**
 	 * Whether DCC fields can be rendered.
 	 */
-	public function can_render_dcc() : bool {
+	public function can_render_dcc(): bool {
 		return $this->dcc_configuration->is_acdc_enabled()
 			&& in_array(
 				$this->context(),
@@ -1142,7 +1143,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 *
 	 * @return bool True, if any cart item requires shipping.
 	 */
-	private function need_shipping() : bool {
+	private function need_shipping(): bool {
 		/**
 		 * Cart instance; might be null, esp. in customizer or in Block Editor.
 		 *
@@ -1599,7 +1600,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 *
 	 * @return array
 	 */
-	private function bn_codes() : array {
+	private function bn_codes(): array {
 
 		$bn_code = $this->partner_attribution->get_bn_code();
 
@@ -1910,7 +1911,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
 	protected function is_cart_price_total_zero(): bool {
-        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+        // phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual
 		return WC()->cart && WC()->cart->get_total( 'numeric' ) == 0;
 	}
 
@@ -1928,7 +1929,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		$in_stock = $product->is_in_stock();
 
-		if ( ! $in_stock && $product->is_type( 'variable' ) ) {
+		if ( $product->is_type( 'variable' ) ) {
 			/**
 			 * The method is defined in WC_Product_Variable class.
 			 *
@@ -2045,7 +2046,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	public function is_pay_later_button_enabled_for_location( string $location, array $context_data = array() ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
-
 	}
 
 	/**
@@ -2178,7 +2178,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			},
 			11
 		);
-
 	}
 
 	/**

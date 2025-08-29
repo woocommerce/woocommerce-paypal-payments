@@ -35,7 +35,7 @@ class PaymentSettings extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	protected function get_defaults() : array {
+	protected function get_defaults(): array {
 		return array(
 			'paypal_show_logo'           => false,
 			'fastlane_cardholder_name'   => false,
@@ -48,7 +48,7 @@ class PaymentSettings extends AbstractDataModel {
 	/**
 	 * Saves the model data to WordPress options.
 	 */
-	public function save() : void {
+	public function save(): void {
 		parent::save();
 
 		foreach ( $this->unsaved_gateways as $gateway ) {
@@ -68,7 +68,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param string $method_id  ID of the payment method.
 	 * @param bool   $is_enabled Whether to enable the method.
 	 */
-	public function toggle_method_state( string $method_id, bool $is_enabled ) : void {
+	public function toggle_method_state( string $method_id, bool $is_enabled ): void {
 		switch ( $method_id ) {
 			case 'venmo':
 				$this->set_venmo_enabled( $is_enabled );
@@ -95,7 +95,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param string $method_id ID of the payment method.
 	 * @return bool True, if the method is enabled. False if it's disabled or not existing.
 	 */
-	public function is_method_enabled( string $method_id ) : bool {
+	public function is_method_enabled( string $method_id ): bool {
 		switch ( $method_id ) {
 			case 'venmo':
 				return $this->get_venmo_enabled();
@@ -121,7 +121,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param string $title     The new title.
 	 * @return void
 	 */
-	public function set_method_title( string $method_id, string $title ) : void {
+	public function set_method_title( string $method_id, string $title ): void {
 		$gateway = $this->get_gateway( $method_id );
 
 		if ( $gateway ) {
@@ -138,7 +138,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param string $description The new description.
 	 * @return void
 	 */
-	public function set_method_description( string $method_id, string $description ) : void {
+	public function set_method_description( string $method_id, string $description ): void {
 		$gateway = $this->get_gateway( $method_id );
 
 		if ( $gateway ) {
@@ -153,7 +153,7 @@ class PaymentSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_paypal_show_logo() : bool {
+	public function get_paypal_show_logo(): bool {
 		return (bool) $this->data['paypal_show_logo'];
 	}
 
@@ -162,7 +162,7 @@ class PaymentSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_fastlane_cardholder_name() : bool {
+	public function get_fastlane_cardholder_name(): bool {
 		return (bool) $this->data['fastlane_cardholder_name'];
 	}
 
@@ -171,7 +171,7 @@ class PaymentSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_fastlane_display_watermark() : bool {
+	public function get_fastlane_display_watermark(): bool {
 		return (bool) $this->data['fastlane_display_watermark'];
 	}
 
@@ -180,7 +180,7 @@ class PaymentSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_venmo_enabled() : bool {
+	public function get_venmo_enabled(): bool {
 		return (bool) $this->data['venmo_enabled'];
 	}
 
@@ -189,7 +189,7 @@ class PaymentSettings extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_paylater_enabled() : bool {
+	public function get_paylater_enabled(): bool {
 		return (bool) $this->data['paylater_enabled'];
 	}
 
@@ -199,7 +199,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param bool $value The value.
 	 * @return void
 	 */
-	public function set_paypal_show_logo( bool $value ) : void {
+	public function set_paypal_show_logo( bool $value ): void {
 		$this->data['paypal_show_logo'] = $value;
 	}
 
@@ -209,7 +209,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param bool $value The value.
 	 * @return void
 	 */
-	public function set_fastlane_cardholder_name( bool $value ) : void {
+	public function set_fastlane_cardholder_name( bool $value ): void {
 		$this->data['fastlane_cardholder_name'] = $value;
 	}
 
@@ -219,7 +219,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param bool $value The value.
 	 * @return void
 	 */
-	public function set_fastlane_display_watermark( bool $value ) : void {
+	public function set_fastlane_display_watermark( bool $value ): void {
 		$this->data['fastlane_display_watermark'] = $value;
 	}
 
@@ -229,7 +229,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param bool $value The value.
 	 * @return void
 	 */
-	public function set_venmo_enabled( bool $value ) : void {
+	public function set_venmo_enabled( bool $value ): void {
 		$this->data['venmo_enabled'] = $value;
 	}
 
@@ -239,7 +239,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param bool $value The value.
 	 * @return void
 	 */
-	public function set_paylater_enabled( bool $value ) : void {
+	public function set_paylater_enabled( bool $value ): void {
 		$this->data['paylater_enabled'] = $value;
 	}
 
@@ -249,7 +249,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param string $method_id ID of the payment method.
 	 * @return WC_Payment_Gateway|null
 	 */
-	private function get_gateway( string $method_id ) : ?WC_Payment_Gateway {
+	private function get_gateway( string $method_id ): ?WC_Payment_Gateway {
 		if ( isset( $this->unsaved_gateways[ $method_id ] ) ) {
 			return $this->unsaved_gateways[ $method_id ];
 		}
@@ -272,7 +272,7 @@ class PaymentSettings extends AbstractDataModel {
 	 * @param WC_Payment_Gateway $gateway The gateway object.
 	 * @return void
 	 */
-	private function modified_gateway( WC_Payment_Gateway $gateway ) : void {
+	private function modified_gateway( WC_Payment_Gateway $gateway ): void {
 		$this->unsaved_gateways[ $gateway->id ] = $gateway;
 	}
 }

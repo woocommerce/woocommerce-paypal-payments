@@ -297,5 +297,4 @@ class DisplayRule {
 	public function json(): string {
 		return wp_json_encode( $this->to_array() ) ?: '';
 	}
-
 }

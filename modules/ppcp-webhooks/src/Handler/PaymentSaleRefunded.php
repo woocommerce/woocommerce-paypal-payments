@@ -22,7 +22,9 @@ use WP_REST_Response;
  */
 class PaymentSaleRefunded implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RefundMetaTrait, RequestHandlerTrait;
+	use TransactionIdHandlingTrait;
+	use RefundMetaTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -67,7 +69,6 @@ class PaymentSaleRefunded implements RequestHandler {
 	 */
 	public function responsible_for_request( WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
-
 	}
 
 	/**

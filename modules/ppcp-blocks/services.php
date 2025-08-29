@@ -40,7 +40,7 @@ return array(
 			$container->get( 'wcgateway.all-funding-sources' ),
 		);
 	},
-	'blocks.advanced-card-method'          => static function( ContainerInterface $container ): AdvancedCardPaymentMethod {
+	'blocks.advanced-card-method'          => static function ( ContainerInterface $container ): AdvancedCardPaymentMethod {
 		return new AdvancedCardPaymentMethod(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -69,7 +69,7 @@ return array(
 		);
 	},
 
-	'blocks.add-place-order-method'        => function ( ContainerInterface $container ) : bool {
+	'blocks.add-place-order-method'        => function ( ContainerInterface $container ): bool {
 		/**
 		 * Whether to create a non-express method with the standard "Place order" button redirecting to PayPal.
 		 */

@@ -121,7 +121,7 @@ class AuthenticationManager {
 	 *
 	 * @return array
 	 */
-	public function get_account_details() : array {
+	public function get_account_details(): array {
 		return array(
 			'is_sandbox'     => $this->common_settings->is_sandbox_merchant(),
 			'is_connected'   => $this->common_settings->is_merchant_connected(),
@@ -135,7 +135,7 @@ class AuthenticationManager {
 	 *
 	 * @return void
 	 */
-	public function disconnect() : void {
+	public function disconnect(): void {
 		$this->logger->info( 'Disconnecting merchant from PayPal...' );
 
 		$this->common_settings->reset_merchant_data();
@@ -175,7 +175,7 @@ class AuthenticationManager {
 	 * @return void
 	 * @throws RuntimeException When invalid client ID or secret provided.
 	 */
-	public function validate_id_and_secret( string $client_id, string $client_secret ) : void {
+	public function validate_id_and_secret( string $client_id, string $client_secret ): void {
 		if ( empty( $client_id ) ) {
 			throw new RuntimeException( 'No client ID provided.' );
 		}
@@ -202,7 +202,7 @@ class AuthenticationManager {
 	 * @return void
 	 * @throws RuntimeException When failed to retrieve payee.
 	 */
-	public function authenticate_via_direct_api( bool $use_sandbox, string $client_id, string $client_secret ) : void {
+	public function authenticate_via_direct_api( bool $use_sandbox, string $client_id, string $client_secret ): void {
 		$this->logger->info(
 			'Attempting manual connection to PayPal...',
 			array(
@@ -236,7 +236,7 @@ class AuthenticationManager {
 	 * @param bool   $use_sandbox Whether it's a sandbox or production account.
 	 * @return void
 	 */
-	public function remember_oauth_connection_details( string $shared_id, string $auth_code, bool $use_sandbox ) : void {
+	public function remember_oauth_connection_details( string $shared_id, string $auth_code, bool $use_sandbox ): void {
 		$this->logger->info(
 			'Storing one-time OAuth credentials...',
 			array(
@@ -260,7 +260,7 @@ class AuthenticationManager {
 	 *
 	 * @return void
 	 */
-	private function remove_oauth_connection_details() : void {
+	private function remove_oauth_connection_details(): void {
 		delete_option( self::OAUTH_OPTION_NAME );
 	}
 
@@ -270,7 +270,7 @@ class AuthenticationManager {
 	 * @return OAuthConnectionDTO The stored oauth credentials.
 	 * @throws RuntimeException When no stored credentials are found, or they have expired.
 	 */
-	private function retrieve_oauth_connection_details() : OAuthConnectionDTO {
+	private function retrieve_oauth_connection_details(): OAuthConnectionDTO {
 		$oauth_data = get_option( self::OAUTH_OPTION_NAME );
 
 		if ( ! $oauth_data instanceof OAuthConnectionDTO ) {
@@ -300,7 +300,7 @@ class AuthenticationManager {
 	 * @return void
 	 * @throws RuntimeException When invalid shared ID or auth provided.
 	 */
-	private function validate_id_and_auth_code( string $shared_id, string $auth_code ) : void {
+	private function validate_id_and_auth_code( string $shared_id, string $auth_code ): void {
 		if ( empty( $shared_id ) ) {
 			throw new RuntimeException( 'No onboarding ID provided.' );
 		}
@@ -322,7 +322,7 @@ class AuthenticationManager {
 	 * @return MerchantConnectionDTO A DTO containing the connection details.
 	 * @throws RuntimeException When failed to retrieve payee.
 	 */
-	private function authenticate_via_oauth( bool $use_sandbox, string $shared_id, string $auth_code ) : MerchantConnectionDTO {
+	private function authenticate_via_oauth( bool $use_sandbox, string $shared_id, string $auth_code ): MerchantConnectionDTO {
 		$this->logger->info(
 			'Attempting OAuth login to PayPal...',
 			array(
@@ -363,7 +363,7 @@ class AuthenticationManager {
 	 *
 	 * @throws RuntimeException Missing or invalid credentials.
 	 */
-	public function handle_oauth_authentication( array $request_data ) : void {
+	public function handle_oauth_authentication( array $request_data ): void {
 		$merchant_id    = $request_data['merchant_id'] ?? '';
 		$merchant_email = $request_data['merchant_email'] ?? '';
 		$seller_type    = $request_data['seller_type'] ?? '';
@@ -422,7 +422,7 @@ class AuthenticationManager {
 		string $client_id,
 		string $client_secret,
 		bool $use_sandbox
-	) : array {
+	): array {
 		$host = $this->connection_host->get_value( $use_sandbox );
 
 		$bearer = new PayPalBearer(
@@ -495,7 +495,7 @@ class AuthenticationManager {
 	 * @return array
 	 * @throws RuntimeException When failed to fetch credentials.
 	 */
-	private function get_credentials( string $shared_id, string $auth_code, bool $use_sandbox ) : array {
+	private function get_credentials( string $shared_id, string $auth_code, bool $use_sandbox ): array {
 		$login_handler = $this->login_endpoint->get_value( $use_sandbox );
 		$nonce         = $this->referrals_data->nonce();
 
@@ -516,7 +516,7 @@ class AuthenticationManager {
 	 *
 	 * @return void
 	 */
-	private function enrich_merchant_details() : void {
+	private function enrich_merchant_details(): void {
 		if ( ! $this->common_settings->is_merchant_connected() ) {
 			return;
 		}
@@ -563,7 +563,7 @@ class AuthenticationManager {
 	 * @param mixed  $details Optional. Additional details to log.
 	 * @return void
 	 */
-	private function enrichment_failed( string $reason, $details = null ) : void {
+	private function enrichment_failed( string $reason, $details = null ): void {
 		$this->logger->warning(
 			'Failed to enrich merchant details: ' . $reason,
 			array(
@@ -581,7 +581,7 @@ class AuthenticationManager {
 	 * @param MerchantConnectionDTO $connection Connection details to persist.
 	 * @return void
 	 */
-	private function update_connection_details( MerchantConnectionDTO $connection ) : void {
+	private function update_connection_details( MerchantConnectionDTO $connection ): void {
 		$this->logger->info(
 			'Updating connection details',
 			(array) $connection

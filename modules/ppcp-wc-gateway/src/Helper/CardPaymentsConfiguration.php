@@ -166,7 +166,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return void
 	 */
-	public function refresh() : void {
+	public function refresh(): void {
 		$this->is_resolved = false;
 	}
 
@@ -175,7 +175,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return void
 	 */
-	private function ensure_resolved_values() : void {
+	private function ensure_resolved_values(): void {
 		if ( $this->is_resolved ) {
 			return;
 		}
@@ -188,7 +188,7 @@ class CardPaymentsConfiguration {
 	/**
 	 * Refreshes the internal gateway configuration based on the current settings.
 	 */
-	private function resolve() : void {
+	private function resolve(): void {
 		$show_on_card_options = array_keys( PropertiesDictionary::cardholder_name_options() );
 		$show_on_card_value   = null;
 
@@ -285,7 +285,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function use_acdc() : bool {
+	public function use_acdc(): bool {
 		$this->ensure_resolved_values();
 
 		return $this->use_acdc;
@@ -299,7 +299,7 @@ class CardPaymentsConfiguration {
 	 * @internal Use "is_acdc_enabled()" or "is_bcdc_enabled()" instead.
 	 * @return bool
 	 */
-	public function is_enabled() : bool {
+	public function is_enabled(): bool {
 		$this->ensure_resolved_values();
 
 		return $this->is_enabled;
@@ -317,7 +317,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function is_acdc_enabled() : bool {
+	public function is_acdc_enabled(): bool {
 		return $this->is_enabled() && $this->use_acdc();
 	}
 
@@ -329,7 +329,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function is_bcdc_enabled() : bool {
+	public function is_bcdc_enabled(): bool {
 		if ( 'MX' === $this->store_country || ! $this->use_acdc() ) {
 			$bcdc_setting = get_option( 'woocommerce_ppcp-card-button-gateway_settings' );
 			$enabled      = $bcdc_setting['enabled'] ?? '';
@@ -348,7 +348,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool
 	 */
-	public function use_fastlane() : bool {
+	public function use_fastlane(): bool {
 		return $this->is_acdc_enabled() && $this->use_fastlane;
 	}
 
@@ -359,7 +359,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return string Display title of the gateway.
 	 */
-	public function gateway_title( string $fallback = '' ) : string {
+	public function gateway_title( string $fallback = '' ): string {
 		$this->ensure_resolved_values();
 		if ( $this->gateway_title ) {
 			return $this->gateway_title;
@@ -375,7 +375,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return string Display description of the gateway.
 	 */
-	public function gateway_description( string $fallback = '' ) : string {
+	public function gateway_description( string $fallback = '' ): string {
 		$this->ensure_resolved_values();
 		if ( $this->gateway_description ) {
 			return $this->gateway_description;
@@ -395,7 +395,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return string ['yes'|'no']
 	 */
-	public function show_name_on_card() : string {
+	public function show_name_on_card(): string {
 		$this->ensure_resolved_values();
 
 		return $this->show_name_on_card;
@@ -409,7 +409,7 @@ class CardPaymentsConfiguration {
 	 *
 	 * @return bool True means, the default watermark is displayed to customers.
 	 */
-	public function show_fastlane_watermark() : bool {
+	public function show_fastlane_watermark(): bool {
 		$this->ensure_resolved_values();
 
 		return ! $this->hide_fastlane_watermark;

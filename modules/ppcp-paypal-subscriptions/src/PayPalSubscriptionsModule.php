@@ -157,7 +157,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $product_id ) use ( $c ) {
+			function ( $product_id ) use ( $c ) {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
@@ -250,7 +250,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $variation_id ) use ( $c ) {
+			function ( $variation_id ) use ( $c ) {
 				// phpcs:ignore WordPress.Security.NonceVerification
 				$wcsnonce_save_variations = wc_clean( wp_unslash( $_POST['_wcsnonce_save_variations'] ?? '' ) );
 
@@ -285,7 +285,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $id ) use ( $c ) {
+			function ( $id ) use ( $c ) {
 				$subscription = wcs_get_subscription( $id );
 				if ( $subscription === false ) {
 					return;
@@ -309,7 +309,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 		 */
 		add_action(
 			'woocommerce_subscription_status_updated',
-			function( WC_Subscription $subscription ) use ( $c ) {
+			function ( WC_Subscription $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( ! $subscription_id ) {
 					return;
@@ -329,7 +329,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $subscription ) use ( $c ) {
+			function ( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					$environment = $c->get( 'settings.environment' );
@@ -353,7 +353,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $query, $query_vars ): array {
+			function ( $query, $query_vars ): array {
 				if ( ! empty( $query_vars['ppcp_subscription'] ) ) {
 					$query['meta_query'][] = array(
 						'key'   => 'ppcp_subscription',
@@ -374,7 +374,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $subscription ) use ( $c ) {
+			function ( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
@@ -402,7 +402,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $subscription ) use ( $c ) {
+			function ( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
 					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
@@ -425,7 +425,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_action(
 			'woocommerce_product_options_general_product_data',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				if ( wcs_is_manual_renewal_enabled() ) {
 					return;
 				}
@@ -465,7 +465,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $loop, $variation_data, $variation ) use ( $c ) {
+			function ( $loop, $variation_data, $variation ) use ( $c ) {
 				if ( wcs_is_manual_renewal_enabled() ) {
 					return;
 				}
@@ -499,7 +499,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $hook ) use ( $c ) {
+			function ( $hook ) use ( $c ) {
 				if ( ! is_string( $hook ) || wcs_is_manual_renewal_enabled() ) {
 					return;
 				}
@@ -551,7 +551,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_action(
 			'wc_ajax_' . DeactivatePlanEndpoint::ENDPOINT,
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$c->get( 'paypal-subscriptions.deactivate-plan-endpoint' )->handle_request();
 			}
 		);
@@ -563,7 +563,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( string $post_type, $post_or_order_object ) use ( $c ) {
+			function ( string $post_type, $post_or_order_object ) use ( $c ) {
 				if ( ! function_exists( 'wcs_get_subscription' ) ) {
 					return;
 				}
@@ -594,7 +594,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 				add_meta_box(
 					'ppcp_paypal_subscription',
 					__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
-					function() use ( $subscription_id, $host ) {
+					function () use ( $subscription_id, $host ) {
 						$url = trailingslashit( $host ) . 'billing/subscriptions/' . $subscription_id;
 						echo '<p>' . esc_html__( 'This subscription is linked to a PayPal Subscription, Cancel it to unlink.', 'woocommerce-paypal-payments' ) . '</p>';
 						echo '<p><strong>' . esc_html__( 'Subscription:', 'woocommerce-paypal-payments' ) . '</strong> <a href="' . esc_url( $url ) . '" target="_blank">' . esc_attr( $subscription_id ) . '</a></p>';
@@ -602,7 +602,6 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					$post_type,
 					'side'
 				);
-
 			},
 			30,
 			2

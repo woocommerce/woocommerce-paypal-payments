@@ -27,17 +27,17 @@ return array(
 		$save_payment_methods_applies = $container->get( 'save-payment-methods.helpers.save-payment-methods-applies' );
 		assert( $save_payment_methods_applies instanceof SavePaymentMethodsApplies );
 
-		return static function () use ( $save_payment_methods_applies ) : bool {
+		return static function () use ( $save_payment_methods_applies ): bool {
 			return $save_payment_methods_applies->for_country() && $save_payment_methods_applies->for_merchant();
 		};
 	},
-	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ) : SavePaymentMethodsApplies {
+	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ): SavePaymentMethodsApplies {
 		return new SavePaymentMethodsApplies(
 			$container->get( 'save-payment-methods.supported-countries' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
-	'save-payment-methods.supported-countries'           => static function ( ContainerInterface $container ) : array {
+	'save-payment-methods.supported-countries'           => static function ( ContainerInterface $container ): array {
 		if ( has_filter( 'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix' ) ) {
 			_deprecated_hook( 'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix', '3.0.0', 'woocommerce_paypal_payments_save_payment_methods_supported_countries', esc_attr__( 'Please use the new Hook to filter countries for saved payments in PayPal Payments.', 'woocommerce-paypal-payments' ) );
 		}

@@ -82,7 +82,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	protected function get_defaults() : array {
+	protected function get_defaults(): array {
 		return array(
 			// Free-form string values.
 			'invoice_prefix'         => $this->invoice_prefix,
@@ -115,7 +115,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The invoice prefix.
 	 */
-	public function get_invoice_prefix() : string {
+	public function get_invoice_prefix(): string {
 		return $this->data['invoice_prefix'];
 	}
 
@@ -124,7 +124,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $prefix The invoice prefix to set.
 	 */
-	public function set_invoice_prefix( string $prefix ) : void {
+	public function set_invoice_prefix( string $prefix ): void {
 		$this->data['invoice_prefix'] = $this->sanitizer->sanitize_text( $prefix );
 	}
 
@@ -142,7 +142,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $name The brand name to set.
 	 */
-	public function set_brand_name( string $name ) : void {
+	public function set_brand_name( string $name ): void {
 		$this->data['brand_name'] = $this->sanitizer->sanitize_text( $name );
 	}
 
@@ -151,7 +151,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The soft descriptor.
 	 */
-	public function get_soft_descriptor() : string {
+	public function get_soft_descriptor(): string {
 		return $this->data['soft_descriptor'];
 	}
 
@@ -160,7 +160,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $descriptor The soft descriptor to set.
 	 */
-	public function set_soft_descriptor( string $descriptor ) : void {
+	public function set_soft_descriptor( string $descriptor ): void {
 		$descriptor = $this->sanitizer->sanitize_text( $descriptor );
 		$descriptor = preg_replace( '/[^a-zA-Z0-9\-*. ]/', '', $descriptor ) ?? '';
 
@@ -172,7 +172,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The subtotal adjustment setting.
 	 */
-	public function get_subtotal_adjustment() : string {
+	public function get_subtotal_adjustment(): string {
 		return $this->data['subtotal_adjustment'];
 	}
 
@@ -181,7 +181,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $adjustment The subtotal adjustment to set.
 	 */
-	public function set_subtotal_adjustment( string $adjustment ) : void {
+	public function set_subtotal_adjustment( string $adjustment ): void {
 		$this->data['subtotal_adjustment'] = $this->sanitizer->sanitize_enum( $adjustment, self::SUBTOTAL_ADJUSTMENT_OPTIONS );
 	}
 
@@ -190,7 +190,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The landing page setting.
 	 */
-	public function get_landing_page() : string {
+	public function get_landing_page(): string {
 		return $this->data['landing_page'];
 	}
 
@@ -199,7 +199,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $page The landing page to set.
 	 */
-	public function set_landing_page( string $page ) : void {
+	public function set_landing_page( string $page ): void {
 		$this->data['landing_page'] = $this->sanitizer->sanitize_enum( $page, self::LANDING_PAGE_OPTIONS );
 	}
 
@@ -208,7 +208,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The button language.
 	 */
-	public function get_button_language() : string {
+	public function get_button_language(): string {
 		return $this->data['button_language'];
 	}
 
@@ -217,7 +217,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $language The button language to set.
 	 */
-	public function set_button_language( string $language ) : void {
+	public function set_button_language( string $language ): void {
 		$this->data['button_language'] = $this->sanitizer->sanitize_text( $language );
 	}
 
@@ -226,7 +226,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return string The 3D Secure setting.
 	 */
-	public function get_three_d_secure() : string {
+	public function get_three_d_secure(): string {
 		return $this->data['three_d_secure'];
 	}
 
@@ -256,7 +256,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param string $setting The 3D Secure setting to set.
 	 */
-	public function set_three_d_secure( string $setting ) : void {
+	public function set_three_d_secure( string $setting ): void {
 		$this->data['three_d_secure'] = $this->sanitizer->sanitize_enum( $setting, self::THREE_D_SECURE_OPTIONS );
 	}
 
@@ -265,7 +265,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if authorize only is enabled, false otherwise.
 	 */
-	public function get_authorize_only() : bool {
+	public function get_authorize_only(): bool {
 		return $this->data['authorize_only'];
 	}
 
@@ -274,7 +274,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $authorize Whether to enable authorize only.
 	 */
-	public function set_authorize_only( bool $authorize ) : void {
+	public function set_authorize_only( bool $authorize ): void {
 		$this->data['authorize_only'] = $this->sanitizer->sanitize_bool( $authorize );
 	}
 
@@ -283,7 +283,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if capturing virtual orders is enabled, false otherwise.
 	 */
-	public function get_capture_virtual_orders() : bool {
+	public function get_capture_virtual_orders(): bool {
 		return $this->data['capture_virtual_orders'];
 	}
 
@@ -292,7 +292,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $capture Whether to capture virtual orders.
 	 */
-	public function set_capture_virtual_orders( bool $capture ) : void {
+	public function set_capture_virtual_orders( bool $capture ): void {
 		$this->data['capture_virtual_orders'] = $this->sanitizer->sanitize_bool( $capture );
 	}
 
@@ -301,7 +301,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if saving PayPal and Venmo is enabled, false otherwise.
 	 */
-	public function get_save_paypal_and_venmo() : bool {
+	public function get_save_paypal_and_venmo(): bool {
 		return $this->data['save_paypal_and_venmo'];
 	}
 
@@ -310,7 +310,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $save Whether to save PayPal and Venmo.
 	 */
-	public function set_save_paypal_and_venmo( bool $save ) : void {
+	public function set_save_paypal_and_venmo( bool $save ): void {
 		$this->data['save_paypal_and_venmo'] = $this->sanitizer->sanitize_bool( $save );
 	}
 
@@ -319,7 +319,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if the contact module feature is enabled, false otherwise.
 	 */
-	public function get_enable_contact_module() : bool {
+	public function get_enable_contact_module(): bool {
 		return $this->data['enable_contact_module'];
 	}
 
@@ -328,7 +328,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $save Whether to use the contact module feature.
 	 */
-	public function set_enable_contact_module( bool $save ) : void {
+	public function set_enable_contact_module( bool $save ): void {
 		$this->data['enable_contact_module'] = $this->sanitizer->sanitize_bool( $save );
 	}
 
@@ -337,7 +337,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if saving card details is enabled, false otherwise.
 	 */
-	public function get_save_card_details() : bool {
+	public function get_save_card_details(): bool {
 		return $this->data['save_card_details'];
 	}
 
@@ -346,7 +346,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $save Whether to save card details.
 	 */
-	public function set_save_card_details( bool $save ) : void {
+	public function set_save_card_details( bool $save ): void {
 		$this->data['save_card_details'] = $this->sanitizer->sanitize_bool( $save );
 	}
 
@@ -355,7 +355,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if Pay Now is enabled, false otherwise.
 	 */
-	public function get_enable_pay_now() : bool {
+	public function get_enable_pay_now(): bool {
 		return $this->data['enable_pay_now'];
 	}
 
@@ -364,7 +364,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $enable Whether to enable Pay Now.
 	 */
-	public function set_enable_pay_now( bool $enable ) : void {
+	public function set_enable_pay_now( bool $enable ): void {
 		$this->data['enable_pay_now'] = $this->sanitizer->sanitize_bool( $enable );
 	}
 
@@ -373,7 +373,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if logging is enabled, false otherwise.
 	 */
-	public function get_enable_logging() : bool {
+	public function get_enable_logging(): bool {
 		return $this->data['enable_logging'];
 	}
 
@@ -382,7 +382,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $enable Whether to enable logging.
 	 */
-	public function set_enable_logging( bool $enable ) : void {
+	public function set_enable_logging( bool $enable ): void {
 		$this->data['enable_logging'] = $this->sanitizer->sanitize_bool( $enable );
 	}
 
@@ -391,7 +391,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return array The array of disabled cards.
 	 */
-	public function get_disabled_cards() : array {
+	public function get_disabled_cards(): array {
 		return $this->data['disabled_cards'];
 	}
 
@@ -400,7 +400,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param array $cards The array of cards to disable.
 	 */
-	public function set_disabled_cards( array $cards ) : void {
+	public function set_disabled_cards( array $cards ): void {
 		$this->data['disabled_cards'] = array_map(
 			array( $this->sanitizer, 'sanitize_text' ),
 			$cards
@@ -412,7 +412,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @return bool True if Stay Updated is enabled, false otherwise.
 	 */
-	public function get_stay_updated() : bool {
+	public function get_stay_updated(): bool {
 		return $this->data['stay_updated'];
 	}
 
@@ -421,7 +421,7 @@ class SettingsModel extends AbstractDataModel {
 	 *
 	 * @param bool $save Whether to save the Stay Updated.
 	 */
-	public function set_stay_updated( bool $save ) : void {
+	public function set_stay_updated( bool $save ): void {
 		$this->data['stay_updated'] = $this->sanitizer->sanitize_bool( $save );
 	}
 }

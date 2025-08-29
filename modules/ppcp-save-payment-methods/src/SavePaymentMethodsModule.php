@@ -66,7 +66,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
@@ -391,7 +391,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 				add_action(
 					'woocommerce_paypal_payments_before_delete_payment_token',
-					function( string $token_id ) use ( $c ) {
+					function ( string $token_id ) use ( $c ) {
 						try {
 							$endpoint = $c->get( 'api.endpoint.payment-tokens' );
 							assert( $endpoint instanceof PaymentTokensEndpoint );
@@ -413,7 +413,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 				add_filter(
 					'woocommerce_paypal_payments_credit_card_gateway_supports',
-					function( array $supports ) use ( $c ): array {
+					function ( array $supports ) use ( $c ): array {
 						$settings = $c->get( 'wcgateway.settings' );
 						assert( $settings instanceof ContainerInterface );
 
@@ -428,7 +428,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 				add_filter(
 					'woocommerce_paypal_payments_save_payment_methods_eligible',
-					function() {
+					function () {
 						return true;
 					}
 				);

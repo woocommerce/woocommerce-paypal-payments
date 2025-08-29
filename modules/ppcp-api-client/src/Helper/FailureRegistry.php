@@ -90,5 +90,4 @@ class FailureRegistry {
 	private function cache_key( string $key ): string {
 		return implode( '_', array( self::CACHE_KEY, $key ) );
 	}
-
 }

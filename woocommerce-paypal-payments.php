@@ -208,7 +208,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * @param array $links
 		 * @return array
 		 */
-		function( $links ) {
+		function ( $links ) {
 			if ( ! is_woocommerce_activated() ) {
 				return $links;
 			}
@@ -235,7 +235,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 		 * @param string $file
 		 * @return array
 		 */
-		function( $links, $file ) {
+		function ( $links, $file ) {
 			if ( plugin_basename( __FILE__ ) !== $file ) {
 				return $links;
 			}
@@ -272,7 +272,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 
 	add_action(
 		'before_woocommerce_init',
-		function() {
+		function () {
 			if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
 				/**
 				 * Skip WC class check.

@@ -294,5 +294,4 @@ class OnboardingRESTController {
 
 		return $link;
 	}
-
 }

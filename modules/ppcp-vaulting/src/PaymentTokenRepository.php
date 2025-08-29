@@ -105,7 +105,7 @@ class PaymentTokenRepository {
 	 */
 	private function token_contains_source( array $tokens, string $source_type ): bool {
 		foreach ( $tokens as $token ) {
-			if ( isset( $token->source()->card ) && 'card' === $source_type || isset( $token->source()->paypal ) && 'paypal' === $source_type ) {
+			if ( ( isset( $token->source()->card ) && 'card' === $source_type ) || ( isset( $token->source()->paypal ) && 'paypal' === $source_type ) ) {
 				return true;
 			}
 		}

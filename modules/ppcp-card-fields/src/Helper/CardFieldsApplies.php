@@ -57,7 +57,7 @@ class CardFieldsApplies {
 	 *
 	 * @return bool
 	 */
-	public function for_merchant() : bool {
+	public function for_merchant(): bool {
 		return apply_filters(
 			'woocommerce_paypal_payments_is_eligible_for_card_fields',
 			true

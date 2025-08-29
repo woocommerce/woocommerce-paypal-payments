@@ -214,7 +214,7 @@ class ExperienceContextBuilder {
 	 *
 	 * @param string|null $preference The new preference to apply.
 	 */
-	public function with_contact_preference( ?string $preference = null ) : ExperienceContextBuilder {
+	public function with_contact_preference( ?string $preference = null ): ExperienceContextBuilder {
 		$builder = clone $this;
 
 		$builder->experience_context = $builder->experience_context

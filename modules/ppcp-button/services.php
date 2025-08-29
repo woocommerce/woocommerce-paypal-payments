@@ -250,7 +250,7 @@ return array(
 			$logger
 		);
 	},
-	'button.helper.early-order-handler'           => static function ( ContainerInterface $container ) : EarlyOrderHandler {
+	'button.helper.early-order-handler'           => static function ( ContainerInterface $container ): EarlyOrderHandler {
 		return new EarlyOrderHandler(
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.order-processor' ),
@@ -283,7 +283,7 @@ return array(
 			$logger
 		);
 	},
-	'button.endpoint.approve-subscription'        => static function( ContainerInterface $container ): ApproveSubscriptionEndpoint {
+	'button.endpoint.approve-subscription'        => static function ( ContainerInterface $container ): ApproveSubscriptionEndpoint {
 		return new ApproveSubscriptionEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),
@@ -305,7 +305,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'button.endpoint.data-client-id'              => static function( ContainerInterface $container ) : DataClientIdEndpoint {
+	'button.endpoint.data-client-id'              => static function ( ContainerInterface $container ): DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
 		$identity_token = $container->get( 'api.endpoint.identity-token' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
@@ -315,7 +315,7 @@ return array(
 			$logger
 		);
 	},
-	'button.endpoint.vault-paypal'                => static function( ContainerInterface $container ) : StartPayPalVaultingEndpoint {
+	'button.endpoint.vault-paypal'                => static function ( ContainerInterface $container ): StartPayPalVaultingEndpoint {
 		return new StartPayPalVaultingEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-token' ),

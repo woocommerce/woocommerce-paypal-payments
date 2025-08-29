@@ -40,7 +40,9 @@ use DomainException;
  * Class AXOGateway.
  */
 class AxoGateway extends WC_Payment_Gateway {
-	use OrderMetaTrait, GatewaySettingsRendererTrait, ProcessPaymentTrait;
+	use OrderMetaTrait;
+	use GatewaySettingsRendererTrait;
+	use ProcessPaymentTrait;
 
 	const ID = 'ppcp-axo-gateway';
 
@@ -351,7 +353,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return array
 	 */
-	protected function process_3ds_return( WC_Order $wc_order, string $token ) : array {
+	protected function process_3ds_return( WC_Order $wc_order, string $token ): array {
 		try {
 			$paypal_order = $this->order_endpoint->order( $token );
 
@@ -424,7 +426,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 * @param Order $order The PayPal order.
 	 * @return string The payer action URL or an empty string if not found.
 	 */
-	private function get_payer_action_url( Order $order ) : string {
+	private function get_payer_action_url( Order $order ): string {
 		$links = $order->links();
 
 		if ( ! $links ) {
@@ -448,7 +450,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return Order The PayPal order.
 	 */
-	protected function create_paypal_order( WC_Order $wc_order, string $payment_token ) : Order {
+	protected function create_paypal_order( WC_Order $wc_order, string $payment_token ): Order {
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		$shipping_preference = $this->shipping_preference_factory->from_state(
@@ -559,7 +561,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return string
 	 */
-	public function get_transaction_url( $order ) : string {
+	public function get_transaction_url( $order ): string {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
@@ -593,7 +595,7 @@ class AxoGateway extends WC_Payment_Gateway {
 	 *
 	 * @return SettingsRenderer
 	 */
-	protected function settings_renderer() : SettingsRenderer {
+	protected function settings_renderer(): SettingsRenderer {
 		return $this->settings_renderer;
 	}
 }

@@ -56,5 +56,4 @@ class DisplayManager {
 		$this->rules[ $key ] = $rule;
 		return $rule;
 	}
-
 }

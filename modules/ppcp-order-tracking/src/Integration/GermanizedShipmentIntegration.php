@@ -72,7 +72,7 @@ class GermanizedShipmentIntegration implements Integration {
 
 		add_action(
 			'woocommerce_gzd_shipment_status_shipped',
-			function( int $shipment_id, Shipment $shipment ) {
+			function ( int $shipment_id, Shipment $shipment ) {
 				try {
 					if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
 						return;

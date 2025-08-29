@@ -66,7 +66,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 		);
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data ) use ( $c ) {
+			function ( array $data ) use ( $c ) {
 
 				foreach ( ( $data['purchase_units'] ?? array() ) as $purchase_unit_index => $purchase_unit ) {
 					foreach ( ( $purchase_unit['items'] ?? array() ) as $item_index => $item ) {
