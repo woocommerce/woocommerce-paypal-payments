@@ -4,7 +4,7 @@ This document provides a comprehensive overview of the WooCommerce PayPal Paymen
 
 ## Overview
 
-The WooCommerce PayPal Payments plugin is built using a modular architecture powered by the **Inpsyde Modularity framework**. This design provides:
+The WooCommerce PayPal Payments plugin is built using a modular architecture powered by the [Syde Modularity](https://github.com/inpsyde/modularity) framework. This design provides:
 
 - **Modular Structure**: Each feature is contained within its own module with clear boundaries
 - **Dependency Injection**: PSR-11 container for service management and dependency resolution
@@ -16,7 +16,7 @@ The WooCommerce PayPal Payments plugin is built using a modular architecture pow
 
 ### Main Plugin File
 
-The plugin initialization begins in `woocommerce-paypal-payments.php:40-45`, which:
+The plugin initialization begins in `woocommerce-paypal-payments.php`, which:
 - Loads the Composer autoloader
 - Checks for class existence to prevent conflicts
 - Contains plugin metadata and constants definitions
@@ -52,7 +52,7 @@ return function (
 
 ### PPCP Container
 
-The global `PPCP` class (`src/PPCP.php:18`) provides access to the dependency injection container:
+The global `PPCP` class (`src/PPCP.php`) provides access to the dependency injection container:
 
 ```php
 class PPCP {
@@ -73,7 +73,7 @@ This allows modules to access services via `PPCP::container()->get('service.id')
 
 ### Module Definition
 
-Modules are defined in `modules.php:17-37` with both core and conditional modules:
+Modules are defined in `modules.php` with both core and conditional modules:
 
 ```php
 $modules = array(
@@ -87,7 +87,7 @@ $modules = array(
 
 ### Feature-Flag Controlled Modules
 
-Conditional modules are loaded based on environment variables and filters (`modules.php:40-95`):
+Conditional modules are loaded based on environment variables and filters (`modules.php`):
 
 ```php
 if ( apply_filters(
@@ -127,7 +127,7 @@ modules/ppcp-example/
 
 ### Module Interface Implementation
 
-Most modules implement the Inpsyde Modularity interfaces (`modules/ppcp-api-client/src/ApiModule.php:32`):
+Most modules implement the Inpsyde Modularity interfaces (`modules/ppcp-api-client/src/ApiModule.php`):
 
 ```php
 class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
