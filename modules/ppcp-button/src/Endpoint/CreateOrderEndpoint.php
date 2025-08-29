@@ -440,7 +440,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->purchase_unit,
 			$this->parsed_request_data['context'],
 			WC()->cart,
-			$funding_source
+			$funding_source,
+			$wc_order
 		);
 
 		$action = in_array( $this->parsed_request_data['context'], $this->pay_now_contexts, true ) ?
