@@ -157,6 +157,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 == Changelog ==
 
 = 3.1.0 - xxxx-xx-xx =
+* Enhancement - Fastlane now available for British & Australian merchants #3589
 * Enhancement - Pay Later messaging now auto-enabled for eligible merchants based on the STAY UPDATED preference. Review the Pay Later settings to customize or disable. #3600
 * Enhancement - Add buttons to copy merchant credentials in the Settings tab #3561
 * Enhancement - Skip "Payment Methods" step for branded-only + BCDC and casual sellers #3547
