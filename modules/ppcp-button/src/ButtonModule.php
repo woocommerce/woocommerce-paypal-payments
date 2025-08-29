@@ -375,7 +375,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		 */
 		add_filter(
 			'woocommerce_order_received_verify_known_shoppers',
-			static function( $result ) {
+			static function ( $result ) {
 				if ( ! is_order_received_page() ) {
 					return $result;
 				}
@@ -417,8 +417,8 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_filter(
 			'woocommerce_order_email_verification_required',
 			static function (
-			$email_verification_required,
-			$order
+				$email_verification_required,
+				$order
 			) {
 				if ( ! $order instanceof WC_Order ) {
 					return $email_verification_required;
