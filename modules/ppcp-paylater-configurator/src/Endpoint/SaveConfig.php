@@ -94,7 +94,8 @@ class SaveConfig {
 	 *
 	 * @param array $config The configurator config.
 	 */
-	private function save_config( array $config ): void {
+	public function save_config( array $config ): void {
+		// TODO new-ux: We should convert this to a new AbstractDataModel class in the settings folder!
 		$this->settings->set( 'pay_later_enable_styling_per_messaging_location', true );
 		$this->settings->set( 'pay_later_messaging_enabled', true );
 

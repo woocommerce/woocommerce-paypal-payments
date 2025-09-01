@@ -8,8 +8,8 @@
 }
 
 @mixin hide-input-field() {
-	width: 100%;
-	height: 100%;
+	width: auto;
+	height: auto;
 	position: absolute;
 	left: 0;
 	top: 0;
@@ -42,4 +42,15 @@
 @mixin horizontal-layout-even-gap($gap:0) {
 	display: flex;
 	gap: $gap;
+}
+
+@mixin disabled-state($control-type) {
+	.components-#{$control-type}-control.ppcp--is-disabled {
+		.components-#{$control-type}-control__input,
+		.components-#{$control-type}-control__label,
+		.components-base-control__help {
+			opacity: 0.3;
+			cursor: default;
+		}
+	}
 }

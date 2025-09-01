@@ -7,16 +7,20 @@
  * @file
  */
 
-import { select } from '@wordpress/data';
-
 import ACTION_TYPES from './action-types';
-import { STORE_NAME } from './constants';
 
 /**
  * @typedef {Object} Action An action object that is handled by a reducer or control.
  * @property {string}  type    - The action type.
  * @property {Object?} payload - Optional payload for the action.
  */
+
+/**
+ * Special. Resets all values in the onboarding store to initial defaults.
+ *
+ * @return {Action} The action.
+ */
+export const reset = () => ( { type: ACTION_TYPES.RESET } );
 
 /**
  * Persistent. Set the full onboarding details, usually during app initialization.
@@ -30,37 +34,45 @@ export const hydrate = ( payload ) => ( {
 } );
 
 /**
+ * Generic transient-data updater.
+ *
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
+ * @return {Action} The action.
+ */
+export const setTransient = ( prop, value ) => ( {
+	type: ACTION_TYPES.SET_TRANSIENT,
+	payload: { [ prop ]: value },
+} );
+
+/**
+ * Generic persistent-data updater.
+ *
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
+ * @return {Action} The action.
+ */
+export const setPersistent = ( prop, value ) => ( {
+	type: ACTION_TYPES.SET_PERSISTENT,
+	payload: { [ prop ]: value },
+} );
+
+/**
  * Transient. Marks the onboarding details as "ready", i.e., fully initialized.
  *
  * @param {boolean} isReady
  * @return {Action} The action.
  */
-export const setIsReady = ( isReady ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isReady },
-} );
+export const setIsReady = ( isReady ) => setTransient( 'isReady', isReady );
 
 /**
- * Transient. Changes the "saving" flag.
+ * Transient. Sets the active settings tab.
  *
- * @param {boolean} isSaving
+ * @param {string} activeModal
  * @return {Action} The action.
  */
-export const setIsSaving = ( isSaving ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isSaving },
-} );
-
-/**
- * Transient. Changes the "manual connection is busy" flag.
- *
- * @param {boolean} isBusy
- * @return {Action} The action.
- */
-export const setIsBusy = ( isBusy ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isBusy },
-} );
+export const setActiveModal = ( activeModal ) =>
+	setTransient( 'activeModal', activeModal );
 
 /**
  * Persistent. Sets the sandbox mode on or off.
@@ -68,10 +80,8 @@ export const setIsBusy = ( isBusy ) => ( {
  * @param {boolean} useSandbox
  * @return {Action} The action.
  */
-export const setSandboxMode = ( useSandbox ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { useSandbox },
-} );
+export const setSandboxMode = ( useSandbox ) =>
+	setPersistent( 'useSandbox', useSandbox );
 
 /**
  * Persistent. Toggles the "Manual Connection" mode on or off.
@@ -79,76 +89,66 @@ export const setSandboxMode = ( useSandbox ) => ( {
  * @param {boolean} useManualConnection
  * @return {Action} The action.
  */
-export const setManualConnectionMode = ( useManualConnection ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { useManualConnection },
+export const setManualConnectionMode = ( useManualConnection ) =>
+	setPersistent( 'useManualConnection', useManualConnection );
+
+/**
+ * Persistent. Changes the "webhooks" value.
+ *
+ * @param {string} webhooks
+ * @return {Action} The action.
+ */
+export const setWebhooks = ( webhooks ) =>
+	setPersistent( 'webhooks', webhooks );
+
+/**
+ * Replace merchant details in the store.
+ *
+ * @param {Object} merchant - The new merchant details.
+ * @return {Action} The action.
+ */
+export const setMerchant = ( merchant ) => ( {
+	type: ACTION_TYPES.SET_MERCHANT,
+	payload: { merchant },
 } );
 
 /**
- * Persistent. Changes the "client ID" value.
+ * Reset merchant details in the store.
  *
- * @param {string} clientId
  * @return {Action} The action.
  */
-export const setClientId = ( clientId ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { clientId },
-} );
+export const resetMerchant = () => ( { type: ACTION_TYPES.RESET_MERCHANT } );
+
+// Activity control - see useBusyState() hook.
 
 /**
- * Persistent. Changes the "client secret" value.
+ * Transient (Activity): Marks the start of an async activity
+ * Think of it as "setIsBusy(true)"
  *
- * @param {string} clientSecret
- * @return {Action} The action.
+ * @param {string}  id          Internal ID/key of the action, used to stop it again.
+ * @param {?string} description Optional, description for logging/debugging
+ * @return {?Action} The action.
  */
-export const setClientSecret = ( clientSecret ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { clientSecret },
-} );
+export const startActivity = ( id, description = null ) => {
+	if ( ! id || 'string' !== typeof id ) {
+		console.warn( 'Activity ID must be a non-empty string' );
+		return null;
+	}
 
-/**
- * Side effect. Saves the persistent details to the WP database.
- *
- * @return {Action} The action.
- */
-export const persist = function* () {
-	const data = yield select( STORE_NAME ).persistentData();
-
-	yield { type: ACTION_TYPES.DO_PERSIST_DATA, data };
-};
-
-/**
- * Side effect. Initiates the sandbox login ISU.
- *
- * @return {Action} The action.
- */
-export const connectViaSandbox = function* () {
-	yield setIsBusy( true );
-
-	const result = yield { type: ACTION_TYPES.DO_SANDBOX_LOGIN };
-	yield setIsBusy( false );
-
-	return result;
-};
-
-/**
- * Side effect. Initiates a manual connection attempt using the provided client ID and secret.
- *
- * @return {Action} The action.
- */
-export const connectViaIdAndSecret = function* () {
-	const { clientId, clientSecret, useSandbox } =
-		yield select( STORE_NAME ).persistentData();
-
-	yield setIsBusy( true );
-
-	const result = yield {
-		type: ACTION_TYPES.DO_MANUAL_CONNECTION,
-		clientId,
-		clientSecret,
-		useSandbox,
+	return {
+		type: ACTION_TYPES.START_ACTIVITY,
+		payload: { id, description },
 	};
-	yield setIsBusy( false );
-
-	return result;
 };
+
+/**
+ * Transient (Activity): Marks the end of an async activity.
+ * Think of it as "setIsBusy(false)"
+ *
+ * @param {string} id Internal ID/key of the action, used to stop it again.
+ * @return {Action} The action.
+ */
+export const stopActivity = ( id ) => ( {
+	type: ACTION_TYPES.STOP_ACTIVITY,
+	payload: { id },
+} );

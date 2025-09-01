@@ -26,5 +26,5 @@ interface RendererInterface {
 	 *
 	 * @return void
 	 */
-	public function enqueue_admin() : void;
+	public function enqueue_admin(): void;
 }

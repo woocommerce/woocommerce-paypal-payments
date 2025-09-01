@@ -33,7 +33,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
  */
 class AuthorizedPaymentsProcessor {
 
-	use PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
+	use TransactionIdHandlingTrait;
 
 	const SUCCESSFUL        = 'SUCCESSFUL';
 	const ALREADY_CAPTURED  = 'ALREADY_CAPTURED';
@@ -474,5 +475,4 @@ class AuthorizedPaymentsProcessor {
 			}
 		);
 	}
-
 }

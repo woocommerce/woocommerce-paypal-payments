@@ -41,24 +41,32 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 * @var array
 	 */
 	private array $field_map = array(
-		'completed'        => array(
+		'completed'            => array(
 			'js_name'  => 'completed',
 			'sanitize' => 'to_boolean',
 		),
-		'step'             => array(
+		'step'                 => array(
 			'js_name'  => 'step',
 			'sanitize' => 'to_number',
 		),
-		'is_casual_seller' => array(
+		'is_casual_seller'     => array(
 			'js_name'  => 'isCasualSeller',
 			'sanitize' => 'to_boolean',
 		),
-		'are_optional_payment_methods_enabled' => array(
+		'accept_card_payments' => array(
 			'js_name'  => 'areOptionalPaymentMethodsEnabled',
 			'sanitize' => 'to_boolean',
 		),
-		'products'         => array(
+		'products'             => array(
 			'js_name' => 'products',
+		),
+		'gateways_synced'      => array(
+			'js_name'  => 'gatewaysSynced',
+			'sanitize' => 'to_boolean',
+		),
+		'gateways_refreshed'   => array(
+			'js_name'  => 'gatewaysRefreshed',
+			'sanitize' => 'to_boolean',
 		),
 	);
 
@@ -68,14 +76,26 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 * @var array
 	 */
 	private array $flag_map = array(
-		'can_use_casual_selling' => array(
+		'can_use_casual_selling'      => array(
 			'js_name' => 'canUseCasualSelling',
 		),
-		'can_use_vaulting'       => array(
+		'can_use_vaulting'            => array(
 			'js_name' => 'canUseVaulting',
 		),
-		'can_use_card_payments'  => array(
+		'can_use_card_payments'       => array(
 			'js_name' => 'canUseCardPayments',
+		),
+		'can_use_subscriptions'       => array(
+			'js_name' => 'canUseSubscriptions',
+		),
+		'should_skip_payment_methods' => array(
+			'js_name' => 'shouldSkipPaymentMethods',
+		),
+		'can_use_fastlane'            => array(
+			'js_name' => 'canUseFastlane',
+		),
+		'can_use_pay_later'           => array(
+			'js_name' => 'canUsePayLater',
 		),
 	);
 
@@ -87,34 +107,39 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	public function __construct( OnboardingProfile $profile ) {
 		$this->profile = $profile;
 
-		$this->field_map['products']['sanitize'] = fn( $list ) => array_map( 'sanitize_text_field', $list );
+		$this->field_map['products']['sanitize'] = static fn( $list ) => array_map( 'sanitize_text_field', $list );
 	}
 
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() {
+	public function register_routes(): void {
+		/**
+		 * GET /wp-json/wc/v3/wc_paypal/onboarding
+		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
-				array(
-					'methods'             => WP_REST_Server::READABLE,
-					'callback'            => array( $this, 'get_details' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
+				'methods'             => WP_REST_Server::READABLE,
+				'callback'            => array( $this, 'get_details' ),
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
 
+		/**
+		 * POST /wp-json/wc/v3/wc_paypal/onboarding
+		 * {
+		 *     // Fields mentioned in $field_map[]['js_name']
+		 * }
+		 */
 		register_rest_route(
-			$this->namespace,
+			static::NAMESPACE,
 			'/' . $this->rest_base,
 			array(
-				array(
-					'methods'             => WP_REST_Server::EDITABLE,
-					'callback'            => array( $this, 'update_details' ),
-					'permission_callback' => array( $this, 'check_permission' ),
-				),
+				'methods'             => WP_REST_Server::EDITABLE,
+				'callback'            => array( $this, 'update_details' ),
+				'permission_callback' => array( $this, 'check_permission' ),
 			)
 		);
 	}
@@ -124,7 +149,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The current state of the onboarding wizard.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		$js_data = $this->sanitize_for_javascript(
 			$this->profile->to_array(),
 			$this->field_map
@@ -150,7 +175,7 @@ class OnboardingRestEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The updated state of the onboarding wizard.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$wp_data = $this->sanitize_for_wordpress(
 			$request->get_params(),
 			$this->field_map

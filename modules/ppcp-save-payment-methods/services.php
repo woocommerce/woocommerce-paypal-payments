@@ -13,95 +13,82 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
+	// @deprecated - use `save-payment-methods.eligibility.check` instead.
 	'save-payment-methods.eligible'                      => static function ( ContainerInterface $container ): bool {
+		$eligibility_check = $container->get( 'save-payment-methods.eligibility.check' );
+
+		return $eligibility_check();
+	},
+	'save-payment-methods.eligibility.check'             => static function ( ContainerInterface $container ): callable {
 		$save_payment_methods_applies = $container->get( 'save-payment-methods.helpers.save-payment-methods-applies' );
 		assert( $save_payment_methods_applies instanceof SavePaymentMethodsApplies );
 
-		return $save_payment_methods_applies->for_country_currency();
+		return static function () use ( $save_payment_methods_applies ): bool {
+			return $save_payment_methods_applies->for_country() && $save_payment_methods_applies->for_merchant();
+		};
 	},
-	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ) : SavePaymentMethodsApplies {
+	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ): SavePaymentMethodsApplies {
 		return new SavePaymentMethodsApplies(
-			$container->get( 'save-payment-methods.supported-country-currency-matrix' ),
-			$container->get( 'api.shop.currency.getter' ),
+			$container->get( 'save-payment-methods.supported-countries' ),
 			$container->get( 'api.shop.country' )
 		);
 	},
-	'save-payment-methods.supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
-		$default_currencies = array(
-			'AUD',
-			'BRL',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HUF',
-			'ILS',
-			'JPY',
-			'MXN',
-			'NOK',
-			'NZD',
-			'PHP',
-			'PLN',
-			'SEK',
-			'THB',
-			'TWD',
-			'USD',
-		);
+	'save-payment-methods.supported-countries'           => static function ( ContainerInterface $container ): array {
+		if ( has_filter( 'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix' ) ) {
+			_deprecated_hook( 'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix', '3.0.0', 'woocommerce_paypal_payments_save_payment_methods_supported_countries', esc_attr__( 'Please use the new Hook to filter countries for saved payments in PayPal Payments.', 'woocommerce-paypal-payments' ) );
+		}
 
 		return apply_filters(
-			'woocommerce_paypal_payments_save_payment_methods_supported_country_currency_matrix',
+			'woocommerce_paypal_payments_save_payment_methods_supported_countries',
 			array(
-				'AU' => $default_currencies,
-				'AT' => $default_currencies,
-				'BE' => $default_currencies,
-				'BG' => $default_currencies,
-				'CA' => $default_currencies,
-				'CN' => $default_currencies,
-				'CY' => $default_currencies,
-				'CZ' => $default_currencies,
-				'DK' => $default_currencies,
-				'EE' => $default_currencies,
-				'FI' => $default_currencies,
-				'FR' => $default_currencies,
-				'DE' => $default_currencies,
-				'GR' => $default_currencies,
-				'HU' => $default_currencies,
-				'IE' => $default_currencies,
-				'IT' => $default_currencies,
-				'LV' => $default_currencies,
-				'LI' => $default_currencies,
-				'LT' => $default_currencies,
-				'LU' => $default_currencies,
-				'MT' => $default_currencies,
-				'NO' => $default_currencies,
-				'NL' => $default_currencies,
-				'PL' => $default_currencies,
-				'PT' => $default_currencies,
-				'RO' => $default_currencies,
-				'SK' => $default_currencies,
-				'SI' => $default_currencies,
-				'ES' => $default_currencies,
-				'SE' => $default_currencies,
-				'GB' => $default_currencies,
-				'US' => $default_currencies,
+				'AU',
+				'AT',
+				'BE',
+				'BG',
+				'CA',
+				'CN',
+				'CY',
+				'CZ',
+				'DK',
+				'EE',
+				'FI',
+				'FR',
+				'DE',
+				'HK',
+				'HU',
+				'IE',
+				'IT',
+				'LV',
+				'LI',
+				'LT',
+				'LU',
+				'MT',
+				'NO',
+				'NL',
+				'PL',
+				'PT',
+				'RO',
+				'SG',
+				'SK',
+				'SI',
+				'ES',
+				'SE',
+				'GB',
+				'US',
+				'YT',
+				'RE',
+				'GP',
+				'GF',
+				'MQ',
 			)
 		);
 	},
 	'save-payment-methods.module.url'                    => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-save-payment-methods/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-save-payment-methods/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'save-payment-methods.endpoint.create-setup-token'   => static function ( ContainerInterface $container ): CreateSetupToken {
 		return new CreateSetupToken(
@@ -121,5 +108,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-method-tokens' )
 		);
+	},
+	'save-payment-methods.service.payment-method-tokens-checker' => static function ( ContainerInterface $container ): PaymentMethodTokensChecker {
+		return new PaymentMethodTokensChecker( $container->get( 'api.endpoint.payment-tokens' ) );
 	},
 );

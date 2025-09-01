@@ -20,7 +20,7 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 	window.PayPalCommerceGateway = ppcpConfig;
 }
 
-const GooglePayComponent = ( { isEditing, buttonAttributes } ) => {
+const GooglePayComponent = ( { isEditing, buttonAttributes, onClick } ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ googlePayLoaded, setGooglePayLoaded ] = useState( false );
 	const [ manager, setManager ] = useState( null );
@@ -49,7 +49,8 @@ const GooglePayComponent = ( { isEditing, buttonAttributes } ) => {
 				namespace,
 				buttonConfig,
 				ppcpConfig,
-				buttonAttributes
+				buttonAttributes,
+				onClick
 			);
 			setManager( newManager );
 		}
@@ -81,22 +82,24 @@ const GooglePayComponent = ( { isEditing, buttonAttributes } ) => {
 };
 
 const features = [ 'products' ];
-
-registerExpressPaymentMethod( {
-	name: buttonData.id,
-	title: `PayPal - ${ buttonData.title }`,
-	description: __(
-		'Eligible users will see the PayPal button.',
-		'woocommerce-paypal-payments'
-	),
-	gatewayId: 'ppcp-gateway',
-	label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
-	content: <GooglePayComponent isEditing={ false } />,
-	edit: <GooglePayComponent isEditing={ true } />,
-	ariaLabel: buttonData.title,
-	canMakePayment: () => buttonData.enabled,
-	supports: {
-		features,
-		style: [ 'height', 'borderRadius' ],
-	},
-} );
+if ( buttonConfig?.is_enabled ) {
+	registerExpressPaymentMethod( {
+		name: buttonData.id,
+		title: `PayPal - ${ buttonData.title }`,
+		description: __(
+			'Eligible users will see the PayPal button.',
+			'woocommerce-paypal-payments'
+		),
+		gatewayId: 'ppcp-gateway',
+		paymentMethodId: 'ppcp-gateway',
+		label: <div dangerouslySetInnerHTML={ { __html: buttonData.title } } />,
+		content: <GooglePayComponent isEditing={ false } />,
+		edit: <GooglePayComponent isEditing={ true } />,
+		ariaLabel: buttonData.title,
+		canMakePayment: () => buttonData.enabled,
+		supports: {
+			features,
+			style: [ 'height', 'borderRadius' ],
+		},
+	} );
+}

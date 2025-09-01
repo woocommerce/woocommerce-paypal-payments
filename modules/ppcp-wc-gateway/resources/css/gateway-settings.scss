@@ -8,7 +8,7 @@
 	}
 }
 
-.ppcp-preview {
+.ppcp-preview:not(.ppcp-r-styling__preview) {
 	width: var(--box-width, 100%);
 	padding: 15px;
 	border: 1px solid lightgray;

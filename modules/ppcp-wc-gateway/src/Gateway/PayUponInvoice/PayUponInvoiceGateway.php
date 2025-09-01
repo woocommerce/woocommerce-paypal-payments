@@ -16,8 +16,7 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
@@ -90,13 +89,6 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $checkout_helper;
 
 	/**
-	 * The onboarding state.
-	 *
-	 * @var State
-	 */
-	protected $state;
-
-	/**
 	 * The refund processor.
 	 *
 	 * @var RefundProcessor
@@ -111,6 +103,62 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	private $module_url;
 
 	/**
+	 * ID of the class extending the settings API. Used in option names.
+	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
+	 * Supported features such as 'default_credit_card_form', 'refunds'.
+	 *
+	 * @var array
+	 */
+	public $supports = array( 'products' );
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
@@ -121,7 +169,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param LoggerInterface             $logger The logger.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
-	 * @param State                       $state The onboarding state.
+	 * @param bool                        $is_connected Whether the onboarding was completed.
 	 * @param RefundProcessor             $refund_processor The refund processor.
 	 * @param string                      $module_url The module URL.
 	 */
@@ -134,7 +182,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		LoggerInterface $logger,
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
-		State $state,
+		bool $is_connected,
 		RefundProcessor $refund_processor,
 		string $module_url
 	) {
@@ -169,8 +217,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->module_url               = $module_url;
 		$this->icon                     = apply_filters( 'woocommerce_paypal_payments_pay_upon_invoice_gateway_icon', esc_url( $this->module_url ) . 'assets/images/ratepay.svg' );
 
-		$this->state = $state;
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
+		if ( $is_connected ) {
 			$this->supports = array( 'refunds' );
 		}
 		$this->refund_processor = $refund_processor;
@@ -256,9 +303,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		// phpcs:disable WordPress.Security.NonceVerification
+		$birth_date    = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
 		if ( 'true' === $pay_for_order ) {
 			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {
@@ -270,7 +316,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		}
 
 		$phone_number = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification
 		if ( $phone_number ) {
 			$wc_order->set_billing_phone( $phone_number );
 			$wc_order->save();

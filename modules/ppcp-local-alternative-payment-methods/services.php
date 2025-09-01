@@ -10,20 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 return array(
 	'ppcp-local-apms.url'                       => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-local-alternative-payment-methods/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-local-alternative-payment-methods/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
-	'ppcp-local-apms.payment-methods'           => static function( ContainerInterface $container ): array {
+	'ppcp-local-apms.payment-methods'           => static function ( ContainerInterface $container ): array {
 		return array(
 			'bancontact' => array(
 				'id'         => BancontactGateway::ID,
@@ -67,12 +60,21 @@ return array(
 			),
 		);
 	},
+	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
+		return new LocalApmProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'api.helper.failure-registry' )
+		);
+	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
 		return new BancontactGateway(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.blik.wc-gateway'           => static function ( ContainerInterface $container ): BlikGateway {
@@ -80,7 +82,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.eps.wc-gateway'            => static function ( ContainerInterface $container ): EPSGateway {
@@ -88,7 +91,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.ideal.wc-gateway'          => static function ( ContainerInterface $container ): IDealGateway {
@@ -96,7 +100,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.mybank.wc-gateway'         => static function ( ContainerInterface $container ): MyBankGateway {
@@ -104,7 +109,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.p24.wc-gateway'            => static function ( ContainerInterface $container ): P24Gateway {
@@ -112,7 +118,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.trustly.wc-gateway'        => static function ( ContainerInterface $container ): TrustlyGateway {
@@ -120,7 +127,8 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.multibanco.wc-gateway'     => static function ( ContainerInterface $container ): MultibancoGateway {
@@ -128,59 +136,60 @@ return array(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.transaction-url-provider' )
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
-	'ppcp-local-apms.bancontact.payment-method' => static function( ContainerInterface $container ): BancontactPaymentMethod {
+	'ppcp-local-apms.bancontact.payment-method' => static function ( ContainerInterface $container ): BancontactPaymentMethod {
 		return new BancontactPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.bancontact.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.blik.payment-method'       => static function( ContainerInterface $container ): BlikPaymentMethod {
+	'ppcp-local-apms.blik.payment-method'       => static function ( ContainerInterface $container ): BlikPaymentMethod {
 		return new BlikPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.blik.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.eps.payment-method'        => static function( ContainerInterface $container ): EPSPaymentMethod {
+	'ppcp-local-apms.eps.payment-method'        => static function ( ContainerInterface $container ): EPSPaymentMethod {
 		return new EPSPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.eps.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.ideal.payment-method'      => static function( ContainerInterface $container ): IDealPaymentMethod {
+	'ppcp-local-apms.ideal.payment-method'      => static function ( ContainerInterface $container ): IDealPaymentMethod {
 		return new IDealPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.ideal.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.mybank.payment-method'     => static function( ContainerInterface $container ): MyBankPaymentMethod {
+	'ppcp-local-apms.mybank.payment-method'     => static function ( ContainerInterface $container ): MyBankPaymentMethod {
 		return new MyBankPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.mybank.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.p24.payment-method'        => static function( ContainerInterface $container ): P24PaymentMethod {
+	'ppcp-local-apms.p24.payment-method'        => static function ( ContainerInterface $container ): P24PaymentMethod {
 		return new P24PaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.p24.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.trustly.payment-method'    => static function( ContainerInterface $container ): TrustlyPaymentMethod {
+	'ppcp-local-apms.trustly.payment-method'    => static function ( ContainerInterface $container ): TrustlyPaymentMethod {
 		return new TrustlyPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.trustly.wc-gateway' )
 		);
 	},
-	'ppcp-local-apms.multibanco.payment-method' => static function( ContainerInterface $container ): MultibancoPaymentMethod {
+	'ppcp-local-apms.multibanco.payment-method' => static function ( ContainerInterface $container ): MultibancoPaymentMethod {
 		return new MultibancoPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),

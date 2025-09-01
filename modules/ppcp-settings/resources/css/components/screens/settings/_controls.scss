@@ -1,0 +1,65 @@
+.ppcp--static-value {
+	@include font(13, 26, 400);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+
+	&.ppcp--static-value-with-copy {
+		display: inline-flex;
+		align-items: flex-start;
+		gap: 6px;
+		overflow: visible;
+
+		.ppcp--static-value-text {
+			flex: 1;
+			min-width: 0;
+			white-space: normal;
+			word-break: break-all;
+			overflow-wrap: break-word;
+			max-width: 37ch;
+		}
+	}
+
+	&:not(.ppcp--static-value-with-copy) {
+		overflow: hidden;
+	}
+}
+
+.ppcp-copy-button {
+	display: flex;
+	border: none;
+	background: transparent;
+	color: $color-gray-700;
+	cursor: pointer;
+	transition: color 0.2s ease;
+	flex-shrink: 0;
+
+	&:hover:not(:disabled) {
+		color: $color-blueberry;
+	}
+
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+
+	svg {
+		fill: currentColor;
+	}
+}
+
+// Fix the checkbox layout (add gap between checkbox and label).
+.components-checkbox-control > .components-base-control__field > .components-flex {
+	flex-direction: row;
+	gap: 12px;
+}
+
+// Fix layout for radio groups inside a horizontal flex-stack.
+.components-flex.components-h-stack > .components-radio-control {
+	width: 100%;
+
+	.components-radio-control__group-wrapper {
+		justify-content: flex-start;
+		flex-direction: row;
+		gap: 12px;
+	}
+}

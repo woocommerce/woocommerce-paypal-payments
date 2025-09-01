@@ -1,0 +1,26 @@
+body:has(.ppcp-r-container--settings),
+body:has(.ppcp-r-container--onboarding) {
+	background-color: var(--ppcp-color-app-bg) !important;
+
+	// WC 9.9+.
+	#mainform,
+	#wpcontent {
+		background-color: var(--ppcp-color-app-bg) !important;
+	}
+
+	.woocommerce-layout,
+	#woocommerce-layout__primary {
+		padding: 0 !important;
+	}
+
+	.notice,
+	.nav-tab-wrapper.woo-nav-tab-wrapper,
+	.woocommerce-layout__header,
+	.wrap.woocommerce form > h2,
+	#mainform .subsubsub,
+	#mainform .subsubsub + br.clear,
+	#screen-meta-links {
+		display: none !important;
+		visibility: hidden;
+	}
+}

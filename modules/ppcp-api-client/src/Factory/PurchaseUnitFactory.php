@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 
 /**
  * Class PurchaseUnitFactory
@@ -88,7 +89,7 @@ class PurchaseUnitFactory {
 		PaymentsFactory $payments_factory,
 		string $prefix = 'WC-',
 		string $soft_descriptor = '',
-		PurchaseUnitSanitizer $sanitizer = null
+		?PurchaseUnitSanitizer $sanitizer = null
 	) {
 
 		$this->amount_factory   = $amount_factory;
@@ -108,26 +109,25 @@ class PurchaseUnitFactory {
 	 * @return PurchaseUnit
 	 */
 	public function from_wc_order( \WC_Order $order ): PurchaseUnit {
-		$amount   = $this->amount_factory->from_wc_order( $order );
-		$items    = array_filter(
+		$amount = $this->amount_factory->from_wc_order( $order );
+		$items  = array_filter(
 			$this->item_factory->from_wc_order( $order ),
 			function ( Item $item ): bool {
 				return $item->unit_amount()->value() >= 0;
 			}
 		);
-		$shipping = $this->shipping_factory->from_wc_order( $order );
-		if (
-			! $this->shipping_needed( ... array_values( $items ) ) ||
-			empty( $shipping->address()->country_code() ) ||
-			( ! $shipping->address()->postal_code() && ! $this->country_without_postal_code( $shipping->address()->country_code() ) )
-		) {
+
+		$shipping         = $this->shipping_factory->from_wc_order( $order );
+		$shipping_address = $shipping->address();
+		if ( $this->should_disable_shipping( $items, $shipping_address ) ) {
 			$shipping = null;
 		}
+
 		$reference_id    = 'default';
 		$description     = '';
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
-		$soft_descriptor = $this->soft_descriptor;
+		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 
 		$purchase_unit = new PurchaseUnit(
 			$amount,
@@ -175,11 +175,14 @@ class PurchaseUnitFactory {
 
 		$shipping = null;
 		$customer = \WC()->customer;
-		if ( $this->shipping_needed( ... array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
-			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer, $with_shipping_options );
+		/** @psalm-suppress RedundantConditionGivenDocblockType False positive. Ignored because $customer can be null as well. */
+		if ( $this->shipping_needed( ...array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
+			$shipping         = $this->shipping_factory->from_wc_customer( \WC()->customer, $with_shipping_options );
+			$shipping_address = $shipping->address();
 			if (
-				2 !== strlen( $shipping->address()->country_code() ) ||
-				( ! $shipping->address()->postal_code() && ! $this->country_without_postal_code( $shipping->address()->country_code() ) )
+				! $shipping_address ||
+				2 !== strlen( $shipping_address->country_code() ) ||
+				( ! $shipping_address->postal_code() && ! $this->country_without_postal_code( $shipping_address->country_code() ) )
 			) {
 				$shipping = null;
 			}
@@ -197,7 +200,7 @@ class PurchaseUnitFactory {
 			}
 		}
 		$invoice_id      = '';
-		$soft_descriptor = $this->soft_descriptor;
+		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
 		$purchase_unit   = new PurchaseUnit(
 			$amount,
 			$items,
@@ -219,21 +222,24 @@ class PurchaseUnitFactory {
 	 *
 	 * @param \stdClass $data The JSON object.
 	 *
-	 * @return PurchaseUnit
+	 * @return ?PurchaseUnit
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response( \stdClass $data ): PurchaseUnit {
+	public function from_paypal_response( \stdClass $data ): ?PurchaseUnit {
 		if ( ! isset( $data->reference_id ) || ! is_string( $data->reference_id ) ) {
-			throw new RuntimeException(
-				__( 'No reference ID given.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( 'No reference ID given.' );
 		}
 
-		$amount          = $this->amount_factory->from_paypal_response( $data->amount );
+		$amount_data = $data->amount ?? null;
+		$amount      = $this->amount_factory->from_paypal_response( $amount_data );
+		if ( null === $amount ) {
+			return null;
+		}
+
 		$description     = ( isset( $data->description ) ) ? $data->description : '';
 		$custom_id       = ( isset( $data->custom_id ) ) ? $data->custom_id : '';
 		$invoice_id      = ( isset( $data->invoice_id ) ) ? $data->invoice_id : '';
-		$soft_descriptor = ( isset( $data->soft_descriptor ) ) ? $data->soft_descriptor : $this->soft_descriptor;
+		$soft_descriptor = $this->sanitize_soft_descriptor( $data->soft_descriptor ?? $this->soft_descriptor );
 		$items           = array();
 		if ( isset( $data->items ) && is_array( $data->items ) ) {
 			$items = array_map(
@@ -245,11 +251,11 @@ class PurchaseUnitFactory {
 		}
 		$shipping = null;
 		try {
-			if ( isset( $data->shipping ) ) {
+			if ( isset( $data->shipping ) && ! empty( (array) $data->shipping ) ) {
 				$shipping = $this->shipping_factory->from_paypal_response( $data->shipping );
 			}
 		} catch ( RuntimeException $error ) {
-			;
+			$shipping = null;
 		}
 		$payments = null;
 		try {
@@ -257,7 +263,7 @@ class PurchaseUnitFactory {
 				$payments = $this->payments_factory->from_paypal_response( $data->payments );
 			}
 		} catch ( RuntimeException $error ) {
-			;
+			$payments = null;
 		}
 
 		$purchase_unit = new PurchaseUnit(
@@ -315,5 +321,38 @@ class PurchaseUnitFactory {
 		if ( $this->sanitizer instanceof PurchaseUnitSanitizer ) {
 			$purchase_unit->set_sanitizer( $this->sanitizer );
 		}
+	}
+
+	/**
+	 * Sanitizes a soft descriptor, ensuring it is limited to 22 chars.
+	 *
+	 * The soft descriptor in the DB is escaped using `wp_kses_post()` which
+	 * escapes certain characters via `wp_kses_normalize_entities()`. This
+	 * helper method reverts those normalized entities back to UTF characters.
+	 *
+	 * @param string $soft_descriptor Soft descriptor to sanitize.
+	 *
+	 * @return string The sanitized soft descriptor.
+	 */
+	private function sanitize_soft_descriptor( string $soft_descriptor ): string {
+		$decoded   = html_entity_decode( $soft_descriptor, ENT_QUOTES, 'UTF-8' );
+		$sanitized = preg_replace( '/[^a-zA-Z0-9 *\-.]/', '', $decoded ) ?: '';
+
+		return substr( $sanitized, 0, 22 ) ?: '';
+	}
+
+	/**
+	 * Determines whether shipping should be disabled for a purchase unit.
+	 *
+	 * @param array        $items Purchase unit items.
+	 * @param Address|null $shipping_address The shipping address to validate.
+	 *
+	 * @return bool
+	 */
+	private function should_disable_shipping( array $items, ?Address $shipping_address ): bool {
+		return ! $this->shipping_needed( ...array_values( $items ) ) ||
+				! $shipping_address ||
+				empty( $shipping_address->country_code() ) ||
+				( ! $shipping_address->postal_code() && ! $this->country_without_postal_code( $shipping_address->country_code() ) );
 	}
 }

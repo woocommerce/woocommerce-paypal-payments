@@ -19,18 +19,25 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
+	// @deprecated - use `applepay.eligibility.check` instead.
 	'applepay.eligible'                        => static function ( ContainerInterface $container ): bool {
+		$eligibility_check = $container->get( 'applepay.eligibility.check' );
+
+		return $eligibility_check();
+	},
+	'applepay.eligibility.check'               => static function ( ContainerInterface $container ): callable {
 		$apm_applies = $container->get( 'applepay.helpers.apm-applies' );
 		assert( $apm_applies instanceof ApmApplies );
 
-		return $apm_applies->for_country() && $apm_applies->for_currency();
+		return static function () use ( $apm_applies ): bool {
+			return $apm_applies->for_country() && $apm_applies->for_currency() && $apm_applies->for_merchant();
+		};
 	},
-	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ) : ApmApplies {
+	'applepay.helpers.apm-applies'             => static function ( ContainerInterface $container ): ApmApplies {
 		return new ApmApplies(
 			$container->get( 'applepay.supported-countries' ),
 			$container->get( 'applepay.supported-currencies' ),
@@ -38,7 +45,7 @@ return array(
 			$container->get( 'api.shop.country' )
 		);
 	},
-	'applepay.status-cache'                    => static function( ContainerInterface $container ): Cache {
+	'applepay.status-cache'                    => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-apple-status-cache' );
 	},
 
@@ -75,11 +82,11 @@ return array(
 	},
 
 	'applepay.apple-product-status'            => SingletonDecorator::make(
-		static function( ContainerInterface $container ): AppleProductStatus {
+		static function ( ContainerInterface $container ): AppleProductStatus {
 			return new AppleProductStatus(
 				$container->get( 'wcgateway.settings' ),
 				$container->get( 'api.endpoint.partners' ),
-				$container->get( 'onboarding.state' ),
+				$container->get( 'settings.flag.is-connected' ),
 				$container->get( 'api.helper.failure-registry' )
 			);
 		}
@@ -129,14 +136,7 @@ return array(
 		return false;
 	},
 	'applepay.url'                             => static function ( ContainerInterface $container ): string {
-		$path = realpath( __FILE__ );
-		if ( false === $path ) {
-			return '';
-		}
-		return plugins_url(
-			'/modules/ppcp-applepay/',
-			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-applepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
@@ -169,7 +169,7 @@ return array(
 	/**
 	 * The list of which countries can be used for ApplePay.
 	 */
-	'applepay.supported-countries'             => static function ( ContainerInterface $container ) : array {
+	'applepay.supported-countries'             => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which countries can be used for ApplePay.
 		 */
@@ -191,6 +191,7 @@ return array(
 				'FR', // France
 				'DE', // Germany
 				'GR', // Greece
+				'HK', // Hong Kong
 				'HU', // Hungary
 				'IE', // Ireland
 				'IT', // Italy
@@ -204,12 +205,18 @@ return array(
 				'PL', // Poland
 				'PT', // Portugal
 				'RO', // Romania
+				'SG', // Singapore
 				'SK', // Slovakia
 				'SI', // Slovenia
 				'ES', // Spain
 				'SE', // Sweden
 				'US', // United States
 				'GB', // United Kingdom
+				'YT', // Mayotte
+				'RE', // Reunion
+				'GP', // Guadelope
+				'GF', // French Guiana
+				'MQ', // Martinique
 			)
 			// phpcs:enable Squiz.Commenting.InlineComment
 		);
@@ -218,7 +225,7 @@ return array(
 	/**
 	 * The list of which currencies can be used for ApplePay.
 	 */
-	'applepay.supported-currencies'            => static function ( ContainerInterface $container ) : array {
+	'applepay.supported-currencies'            => static function ( ContainerInterface $container ): array {
 		/**
 		 * Returns which currencies can be used for ApplePay.
 		 */
@@ -233,6 +240,7 @@ return array(
 				'CZK', // Czech Koruna
 				'DKK', // Danish Krone
 				'EUR', // Euro
+				'HKD', // Hong Kong Dollar
 				'GBP', // British Pound Sterling
 				'HUF', // Hungarian Forint
 				'ILS', // Israeli New Shekel
@@ -242,6 +250,7 @@ return array(
 				'NZD', // New Zealand Dollar
 				'PHP', // Philippine Peso
 				'PLN', // Polish Zloty
+				'SGD', // Singapur-Dollar
 				'SEK', // Swedish Krona
 				'THB', // Thai Baht
 				'TWD', // New Taiwan Dollar
@@ -260,15 +269,15 @@ return array(
 	},
 
 	'applepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+		if ( ! $is_connected ) {
 			return '';
 		}
 
 		$product_status = $container->get( 'applepay.apple-product-status' );
 		assert( $product_status instanceof AppleProductStatus );
 
-		$environment = $container->get( 'onboarding.environment' );
+		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
 		$enabled = $product_status->is_active();
@@ -308,5 +317,4 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-
 );

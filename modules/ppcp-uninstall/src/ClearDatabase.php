@@ -17,7 +17,7 @@ class ClearDatabase implements ClearDatabaseInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function delete_options( array $option_names ):void {
+	public function delete_options( array $option_names ): void {
 		foreach ( $option_names as $option_name ) {
 			delete_option( $option_name );
 		}
@@ -26,7 +26,7 @@ class ClearDatabase implements ClearDatabaseInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function clear_scheduled_actions( array $action_names ):void {
+	public function clear_scheduled_actions( array $action_names ): void {
 		foreach ( $action_names as $action_name ) {
 			as_unschedule_action( $action_name );
 		}

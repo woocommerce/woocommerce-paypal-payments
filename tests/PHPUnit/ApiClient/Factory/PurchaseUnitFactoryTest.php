@@ -162,7 +162,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $shipping = Mockery::mock(Shipping::class);
         $shipping
             ->expects('address')
-            ->times(3)
             ->andReturn($address);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shippingFactory

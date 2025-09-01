@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
-use Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -51,17 +53,28 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	public function run( ContainerInterface $c ): bool {
 
-		$this->initialize_ppec_compat_layer( $c );
-		$this->initialize_tracking_compat_layer( $c );
+		add_action(
+			'woocommerce_init',
+			function () use ( $c ) {
+				$this->initialize_ppec_compat_layer( $c );
+				$this->initialize_tracking_compat_layer( $c );
+			}
+		);
 
-		$asset_loader = $c->get( 'compat.assets' );
-		assert( $asset_loader instanceof CompatAssets );
+		add_action(
+			'init',
+			function () use ( $c ) {
+				$asset_loader = $c->get( 'compat.assets' );
+				assert( $asset_loader instanceof CompatAssets );
 
-		add_action( 'init', array( $asset_loader, 'register' ) );
-		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
+				$asset_loader->register();
+				add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
+			}
+		);
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
+		$this->migrate_three_d_secure_setting();
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
@@ -72,12 +85,75 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			$this->initialize_nyp_compat_layer();
 		}
 
-		$logger = $c->get( 'woocommerce.logger.woocommerce' );
-
 		$is_wc_bookings_active = $c->get( 'compat.wc_bookings.is_supported_plugin_version_active' );
 		if ( $is_wc_bookings_active ) {
-			$this->initialize_wc_bookings_compat_layer( $logger );
+			$this->initialize_wc_bookings_compat_layer( $c );
 		}
+
+		add_action( 'woocommerce_paypal_payments_gateway_migrate', static fn() => delete_transient( 'ppcp_has_ppec_subscriptions' ) );
+
+		$this->legacy_ui_card_payment_mapping( $c );
+
+		/**
+		 * Automatically enable Pay Later messaging for eligible stores during plugin update.
+		 *
+		 * This action runs during plugin updates to automatically enable Pay Later messaging for stores
+		 * that meet the following criteria:
+		 * - Feature flag 'paylater_messaging_force_enabled' is enabled (default: true, can be disabled via filter)
+		 * - Pay Later messaging is available for the store's country
+		 * - The "Stay updated" checkbox is enabled (checked in either old or new UI)
+		 *
+		 * The "Stay updated" setting is retrieved differently based on the UI version:
+		 * - Legacy UI: Retrieved from wcgateway.settings
+		 * - New UI: Retrieved from settings.data.settings model
+		 *
+		 * When all conditions are met, this will:
+		 * - Enable Pay Later messaging
+		 * - Add default messaging locations (product, cart, checkout) to existing selections
+		 *
+		 * @todo Remove this auto-enablement logic after the next release
+		 *
+		 * @hook woocommerce_paypal_payments_gateway_migrate_on_update
+		 */
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function () use ( $c ) {
+				if ( ! apply_filters(
+				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+					'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
+					true
+				) ) {
+					return;
+				}
+
+				$messages_apply = $c->get( 'button.helper.messages-apply' );
+				assert( $messages_apply instanceof MessagesApply );
+
+				$settings_model = $c->get( 'settings.data.settings' );
+				assert( $settings_model instanceof SettingsModel );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$stay_updated = SettingsModule::should_use_the_old_ui()
+					? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
+					: $settings_model->get_stay_updated();
+
+				if ( ! $messages_apply->for_country() || ! $stay_updated ) {
+					return;
+				}
+
+				$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
+
+				$settings->set( 'pay_later_messaging_enabled', true );
+				$settings->set(
+					'pay_later_messaging_locations',
+					array_unique( array_merge( $selected_locations, array( 'product', 'cart', 'checkout' ) ) )
+				);
+
+				$settings->persist();
+			}
+		);
 
 		return true;
 	}
@@ -100,7 +176,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// Inbox note inviting merchant to disable PayPal Express Checkout.
 		add_action(
 			'woocommerce_init',
-			function() {
+			function () {
 				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
 					PPEC\DeactivateNote::init();
 				}
@@ -263,6 +339,35 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 	}
 
+
+	/**
+	 * Migrates the old Three D Secure setting located in PaymentSettings to the new location in SettingsModel.
+	 *
+	 * The migration will be done on plugin update if it hasn't already done.
+	 */
+	protected function migrate_three_d_secure_setting(): void {
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			function () {
+				$payment_settings = get_option( 'woocommerce-ppcp-data-payment' ) ?: array();
+				$data_settings    = get_option( 'woocommerce-ppcp-data-settings' ) ?: array();
+
+				// Skip if payment settings don't have the setting but data settings do.
+				if ( ! isset( $payment_settings['three_d_secure'] ) || isset( $data_settings['three_d_secure'] ) ) {
+					return;
+				}
+
+				// Move the setting.
+				$data_settings['three_d_secure'] = $payment_settings['three_d_secure'];
+				unset( $payment_settings['three_d_secure'] );
+
+				// Save both.
+				update_option( 'woocommerce-ppcp-data-settings', $data_settings );
+				update_option( 'woocommerce-ppcp-data-payment', $payment_settings );
+			}
+		);
+	}
+
 	/**
 	 * Changes the button rendering place for page builders
 	 * that do not work well with our default places.
@@ -272,7 +377,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function fix_page_builders(): void {
 		add_action(
 			'init',
-			function() {
+			function () {
 				if (
 					$this->is_block_theme_active()
 					|| $this->is_elementor_pro_active()
@@ -281,7 +386,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				) {
 					add_filter(
 						'woocommerce_paypal_payments_single_product_renderer_hook',
-						function(): string {
+						function (): string {
 							return 'woocommerce_after_add_to_cart_form';
 						},
 						5
@@ -338,7 +443,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function set_elementor_checkout_context(): void {
 		add_action(
 			'wp',
-			function() {
+			function () {
 				$page_id = get_the_ID();
 				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
 					return;
@@ -368,7 +473,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// Siteground SG Optimize.
 		add_filter(
 			'sgo_js_minify_exclude',
-			function( array $scripts ) use ( $ppcp_script_names ) {
+			function ( array $scripts ) use ( $ppcp_script_names ) {
 				return array_merge( $scripts, $ppcp_script_names );
 			}
 		);
@@ -376,7 +481,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		// LiteSpeed Cache.
 		add_filter(
 			'litespeed_optimize_js_excludes',
-			function( array $excluded_js ) use ( $ppcp_script_file_names ) {
+			function ( array $excluded_js ) use ( $ppcp_script_file_names ) {
 				return array_merge( $excluded_js, $ppcp_script_file_names );
 			}
 		);
@@ -393,7 +498,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 * @return bool Whether to do tag minification.
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( bool $do_tag_minification, string $script_tag, $file ) {
+			function ( bool $do_tag_minification, string $script_tag, $file ) {
 				if ( $file && strpos( $file, 'ppcp' ) !== false ) {
 					return false;
 				}
@@ -412,7 +517,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	protected function initialize_nyp_compat_layer(): void {
 		add_filter(
 			'woocommerce_paypal_payments_shipping_callback_cart_line_item_total',
-			static function( string $total, array $cart_item ) {
+			static function ( string $total, array $cart_item ) {
 				if ( ! isset( $cart_item['nyp'] ) ) {
 					return $total;
 				}
@@ -427,13 +532,13 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	/**
 	 * Sets up the compatibility layer for WooCommerce Bookings plugin.
 	 *
-	 * @param LoggerInterface $logger The logger.
+	 * @param ContainerInterface $container The logger.
 	 * @return void
 	 */
-	protected function initialize_wc_bookings_compat_layer( LoggerInterface $logger ): void {
+	protected function initialize_wc_bookings_compat_layer( ContainerInterface $container ): void {
 		add_action(
 			'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created',
-			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $logger ): void {
+			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $container ): void {
 				try {
 					$cart_contents = $wc_cart->get_cart();
 					foreach ( $cart_contents as $cart_item ) {
@@ -474,11 +579,41 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 						}
 					}
 				} catch ( Exception $exception ) {
-					$logger->warning( 'Failed to create booking for WooCommerce Bookings plugin: ' . $exception->getMessage() );
+					$container->get( 'woocommerce.logger.woocommerce' )->warning( 'Failed to create booking for WooCommerce Bookings plugin: ' . $exception->getMessage() );
 				}
 			},
 			10,
 			2
+		);
+	}
+
+	/**
+	 * Responsible to keep the credit card payment configuration backwards
+	 * compatible with the legacy UI.
+	 *
+	 * This method can be removed with the #legacy-ui code.
+	 *
+	 * @param ContainerInterface $container DI container instance.
+	 * @return void
+	 */
+	protected function legacy_ui_card_payment_mapping( ContainerInterface $container ): void {
+		$new_ui = $container->get( 'wcgateway.settings.admin-settings-enabled' );
+		if ( $new_ui ) {
+			return;
+		}
+
+		add_filter(
+			'woocommerce_paypal_payments_is_acdc_active',
+			static function ( bool $is_acdc ) use ( $container ): bool {
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				try {
+					return (bool) $settings->get( 'dcc_enabled' );
+				} catch ( NotFoundException $exception ) {
+					return $is_acdc;
+				}
+			}
 		);
 	}
 }

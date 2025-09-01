@@ -26,7 +26,8 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
  * Class ApplePayButton
  */
 class ApplePayButton implements ButtonInterface {
-	use RequestHandlerTrait, ContextTrait;
+	use RequestHandlerTrait;
+	use ContextTrait;
 
 	/**
 	 * The settings.
@@ -222,7 +223,6 @@ class ApplePayButton implements ButtonInterface {
 		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . ' data-onboarding-option="ppcp-onboarding-apple"> ' .
 			__( 'Onboard with ApplePay', 'woocommerce-paypal-payments' ) . '
 		</label></li>';
-
 	}
 
 	/**
@@ -445,7 +445,7 @@ class ApplePayButton implements ButtonInterface {
 			} else {
 				add_filter(
 					'woocommerce_payment_successful_result',
-					function ( array $result ) use ( $cart, $cart_item_key ) : array {
+					function ( array $result ) use ( $cart, $cart_item_key ): array {
 						$this->clear_current_cart( $cart, $cart_item_key );
 						$this->reload_cart( $cart );
 						return $result;
@@ -917,7 +917,7 @@ class ApplePayButton implements ButtonInterface {
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			function( array $components ) {
+			function ( array $components ) {
 				$components[] = 'applepay';
 				return $components;
 			}
@@ -1018,6 +1018,10 @@ class ApplePayButton implements ButtonInterface {
 	 * @return void
 	 */
 	public function enqueue(): void {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
 		wp_register_script(
 			'wc-ppcp-applepay',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',

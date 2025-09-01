@@ -1,0 +1,24 @@
+.ppcp-r-app {
+	.components-flex {
+		display: flex;
+		-webkit-box-align: stretch;
+		align-items: stretch;
+		-webkit-box-pack: center;
+	}
+
+	.components-flex.components-h-stack,
+	.ppcp--horizontal {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.ppcp--horizontal {
+		justify-content: space-between;
+	}
+
+	.components-flex.components-v-stack {
+		flex-direction: column;
+		justify-content: center;
+		align-items: flex-start;
+	}
+}

@@ -56,16 +56,19 @@ class FilePathPluginFactory implements FilePathPluginFactoryInterface {
 			);
 		}
 
-		if ( ! function_exists( 'get_plugin_data' ) ) {
-			/**
-			 * Skip check for WP files.
-			 *
-			 * @psalm-suppress MissingFile
-			 */
-			require_once ABSPATH . 'wp-admin/includes/plugin.php';
-		}
+		$default_headers = array(
+			'Name'            => 'Plugin Name',
+			'PluginURI'       => 'Plugin URI',
+			'Version'         => 'Version',
+			'Description'     => 'Description',
+			'TextDomain'      => 'Text Domain',
+			'RequiresWP'      => 'Requires at least',
+			'RequiresPHP'     => 'Requires PHP',
+			'RequiresPlugins' => 'Requires Plugins',
+		);
 
-		$plugin_data = get_plugin_data( $filePath, false );
+		$plugin_data = \get_file_data( $filePath, $default_headers, 'plugin' );
+
 		if ( empty( $plugin_data ) ) {
 			throw new UnexpectedValueException(
 				sprintf(
@@ -82,7 +85,7 @@ class FilePathPluginFactory implements FilePathPluginFactoryInterface {
 				'Title'       => '',
 				'Description' => '',
 				'TextDomain'  => '',
-				'RequiresWP'  => '6.3',
+				'RequiresWP'  => '6.5',
 				'RequiresPHP' => '7.4',
 			),
 			$plugin_data
@@ -98,7 +101,7 @@ class FilePathPluginFactory implements FilePathPluginFactoryInterface {
 			$this->create_version( $plugin_data['Version'] ),
 			$base_dir,
 			$base_name,
-			$plugin_data['Title'],
+			$plugin_data['PluginURI'],
 			$plugin_data['Description'],
 			$text_domain,
 			$this->create_version( $plugin_data['RequiresPHP'] ),

@@ -23,7 +23,7 @@ class PatchCollectionFactory {
 	/**
 	 * Creates a Patch Collection by comparing two orders.
 	 *
-	 * @param Order $from The inital order.
+	 * @param Order $from The initial order.
 	 * @param Order $to The target order.
 	 *
 	 * @return PatchCollection
@@ -53,7 +53,7 @@ class PatchCollectionFactory {
 					$from,
 					static function ( PurchaseUnit $unit ) use ( $purchase_unit_to ): bool {
 						// Loose comparison needed to compare two objects.
-						// phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+						// phpcs:ignore Universal.Operators.StrictComparisons.LooseEqual
 						return $unit == $purchase_unit_to;
 					}
 				)

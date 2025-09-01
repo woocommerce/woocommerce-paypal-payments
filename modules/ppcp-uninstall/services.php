@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Uninstall;
 
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\SwitchSettingsUiEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Uninstall\Assets\ClearDatabaseAssets;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 return array(
-	'uninstall.ppcp-all-option-names'           => function( ContainerInterface $container ) : array {
+	'uninstall.ppcp-all-option-names'           => function ( ContainerInterface $container ): array {
 		return array(
 			$container->get( 'webhook.last-webhook-storage.key' ),
 			'woocommerce_ppcp-is_pay_later_settings_migrated',
@@ -36,10 +36,11 @@ return array(
 			WebhookRegistrar::KEY,
 			'ppcp_payment_tokens_migration_initialized',
 			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
+			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
 		);
 	},
 
-	'uninstall.ppcp-all-scheduled-action-names' => function( ContainerInterface $container ) : array {
+	'uninstall.ppcp-all-scheduled-action-names' => function ( ContainerInterface $container ): array {
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
 			'woocommerce_paypal_payments_check_saved_payment',
@@ -47,17 +48,17 @@ return array(
 		);
 	},
 
-	'uninstall.ppcp-all-action-names'           => function( ContainerInterface $container ) : array {
+	'uninstall.ppcp-all-action-names'           => function ( ContainerInterface $container ): array {
 		return array(
 			'woocommerce_paypal_payments_uninstall',
 		);
 	},
 
-	'uninstall.clear-db-endpoint'               => function( ContainerInterface $container ) : string {
+	'uninstall.clear-db-endpoint'               => function ( ContainerInterface $container ): string {
 		return 'ppcp-clear-db';
 	},
 
-	'uninstall.clear-database-script-data'      => function( ContainerInterface $container ) : array {
+	'uninstall.clear-database-script-data'      => function ( ContainerInterface $container ): array {
 		return array(
 			'clearDb' => array(
 				'endpoint'            => \WC_AJAX::get_endpoint( $container->get( 'uninstall.clear-db-endpoint' ) ),
@@ -79,18 +80,10 @@ return array(
 	},
 
 	'uninstall.module-url'                      => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-uninstall/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
+		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
-	'uninstall.clear-db-assets'                 => function( ContainerInterface $container ) : ClearDatabaseAssets {
+	'uninstall.clear-db-assets'                 => function ( ContainerInterface $container ): ClearDatabaseAssets {
 		return new ClearDatabaseAssets(
 			$container->get( 'uninstall.module-url' ),
 			$container->get( 'ppcp.asset-version' ),
@@ -99,7 +92,7 @@ return array(
 		);
 	},
 
-	'uninstall.clear-db'                        => function( ContainerInterface $container ) : ClearDatabaseInterface {
+	'uninstall.clear-db'                        => function ( ContainerInterface $container ): ClearDatabaseInterface {
 		return new ClearDatabase();
 	},
 );

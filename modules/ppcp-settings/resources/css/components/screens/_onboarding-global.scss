@@ -1,8 +1,0 @@
-body:has(.ppcp-r-container--onboarding) {
-	background-color: #fff !important;
-
-	.notice, .nav-tab-wrapper.woo-nav-tab-wrapper, .woocommerce-layout__header, .wrap.woocommerce form > h2, #screen-meta-links {
-		display: none !important;
-		visibility: hidden;
-	}
-}

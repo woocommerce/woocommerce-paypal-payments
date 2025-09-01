@@ -10,16 +10,16 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'webhook.status.registered-webhooks' => function( ContainerInterface $container ) : array {
+	'webhook.status.registered-webhooks' => function ( ContainerInterface $container ): array {
 		$endpoint = $container->get( 'api.endpoint.webhook' );
 		assert( $endpoint instanceof WebhookEndpoint );
 
-		$state = $container->get( 'onboarding.state' );
-		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
+		$is_connected = $container->get( 'settings.flag.is-connected' );
+
+		if ( $is_connected ) {
 			return $endpoint->list();
 		}
 

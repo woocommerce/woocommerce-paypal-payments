@@ -43,31 +43,27 @@ class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): bool {
-		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		if ( Settings::CONNECTION_TAB_ID === $page_id ) {
-			$this->registerClearDatabaseAssets( $container->get( 'uninstall.clear-db-assets' ) );
-		}
+		add_action(
+			'init',
+			static function () use ( $container ) {
+				$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+				if ( Settings::CONNECTION_TAB_ID === $page_id ) {
+					$container->get( 'uninstall.clear-db-assets' )->register();
+					add_action( 'admin_enqueue_scripts', array( $container->get( 'uninstall.clear-db-assets' ), 'enqueue' ) );
+				}
 
-		$request_data           = $container->get( 'button.request-data' );
-		$clear_db               = $container->get( 'uninstall.clear-db' );
-		$clear_db_endpoint      = $container->get( 'uninstall.clear-db-endpoint' );
-		$option_names           = $container->get( 'uninstall.ppcp-all-option-names' );
-		$scheduled_action_names = $container->get( 'uninstall.ppcp-all-scheduled-action-names' );
-		$action_names           = $container->get( 'uninstall.ppcp-all-action-names' );
+				$request_data           = $container->get( 'button.request-data' );
+				$clear_db               = $container->get( 'uninstall.clear-db' );
+				$clear_db_endpoint      = $container->get( 'uninstall.clear-db-endpoint' );
+				$option_names           = $container->get( 'uninstall.ppcp-all-option-names' );
+				$scheduled_action_names = $container->get( 'uninstall.ppcp-all-scheduled-action-names' );
+				$action_names           = $container->get( 'uninstall.ppcp-all-action-names' );
 
-		$this->handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names, $action_names );
+				self::handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names, $action_names );
+			}
+		);
 
 		return true;
-	}
-
-	/**
-	 * Registers the assets for clear database functionality.
-	 *
-	 * @param ClearDatabaseAssets $asset_loader The clear database functionality asset loader.
-	 */
-	protected function registerClearDatabaseAssets( ClearDatabaseAssets $asset_loader ): void {
-		add_action( 'init', array( $asset_loader, 'register' ) );
-		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 	}
 
 	/**
@@ -80,7 +76,7 @@ class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 * @param string[]               $scheduled_action_names The list of scheduled action names.
 	 * @param string[]               $action_names The list of action names.
 	 */
-	protected function handleClearDbAjaxRequest(
+	protected static function handleClearDbAjaxRequest(
 		RequestData $request_data,
 		ClearDatabaseInterface $clear_db,
 		string $nonce,
@@ -103,6 +99,8 @@ class UninstallModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$clear_db->delete_options( $option_names );
 					$clear_db->clear_scheduled_actions( $scheduled_action_names );
 					$clear_db->clear_actions( $action_names );
+
+					update_option( 'woocommerce-ppcp-is-new-merchant', '1' );
 
 					wp_send_json_success();
 					return true;

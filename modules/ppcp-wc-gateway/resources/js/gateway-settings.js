@@ -11,6 +11,7 @@ import {
 	isVisible,
 } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
+import { PaymentContext } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
 document.addEventListener( 'DOMContentLoaded', () => {
 	function disableAll( nodeList ) {
@@ -134,11 +135,17 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
 	function createButtonPreview( settingsCallback ) {
 		const render = ( settings ) => {
-			const wrapperSelector =
-				Object.values( settings.separate_buttons ).length > 0
-					? Object.values( settings.separate_buttons )[ 0 ].wrapper
-					: settings.button.wrapper;
+			const previewSettings = {
+				context: PaymentContext.Preview,
+				...settings,
+			};
+
+			const { button, separate_buttons } = previewSettings;
+			const wrapperSelector = (
+				Object.values( separate_buttons )[ 0 ] ?? button
+			)?.wrapper;
 			const wrapper = document.querySelector( wrapperSelector );
+
 			if ( ! wrapper ) {
 				return;
 			}
@@ -146,7 +153,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
 			const renderer = new Renderer(
 				null,
-				settings,
+				previewSettings,
 				( data, actions ) => actions.reject(),
 				null
 			);
@@ -155,7 +162,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 				renderer.render( {} );
 				jQuery( document ).trigger(
 					'ppcp_paypal_render_preview',
-					settings
+					previewSettings
 				);
 			} catch ( err ) {
 				console.error( err );

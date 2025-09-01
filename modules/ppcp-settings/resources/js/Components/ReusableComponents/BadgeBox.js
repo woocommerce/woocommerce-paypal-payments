@@ -1,55 +1,77 @@
-import data from '../../utils/data';
-import TitleBadge, { TITLE_BADGE_INFO } from './TitleBadge';
-import { __ } from '@wordpress/i18n';
+import { LearnMore } from './Elements';
+import { PPIcon } from './Icons';
 
-const BadgeBox = ( props ) => {
-	const titleSize =
-		props.titleType && props.titleType === BADGE_BOX_TITLE_BIG
-			? BADGE_BOX_TITLE_BIG
-			: BADGE_BOX_TITLE_SMALL;
+const ImageBadge = ( { images } ) => {
+	if ( ! images || ! images.length ) {
+		return null;
+	}
 
-	const titleTextClassName =
-		'ppcp-r-badge-box__title-text ' +
-		`ppcp-r-badge-box__title-text--${ titleSize }`;
-
-	const titleBaseClassName = 'ppcp-r-badge-box__title';
-	const titleClassName = props.imageBadge
-		? `${ titleBaseClassName } ppcp-r-badge-box__title--has-image-badge`
-		: titleBaseClassName;
 	return (
-		<div className="ppcp-r-badge-box">
-			<span className={ titleClassName }>
-				<span className={ titleTextClassName }>{ props.title }</span>
-
-				{ props.imageBadge && (
-					<span className="ppcp-r-badge-box__title-image-badge">
-						{ props.imageBadge.map( ( badge ) =>
-							data().getImage( badge )
-						) }
-					</span>
-				) }
-
-				{ props.textBadge && (
-					<TitleBadge
-						type={ TITLE_BADGE_INFO }
-						text={ props.textBadge }
+		<BadgeContent>
+			<span className="ppcp-r-badge-box__title-image-badge">
+				{ images.map( ( badge, index ) => (
+					<PPIcon
+						key={ `badge-${ index }` }
+						imageName={ badge }
+						className="ppcp-r-badge-box__image"
 					/>
-				) }
+				) ) }
 			</span>
-			<div className="ppcp-r-badge-box__description">
-				{ props?.description && (
-					<p
-						className="ppcp-r-badge-box__description"
-						dangerouslySetInnerHTML={ {
-							__html: props.description,
-						} }
-					></p>
-				) }
-			</div>
+		</BadgeContent>
+	);
+};
+
+// If `children` is not empty, the `children` prop is output and wrapped in spaces.
+const BadgeContent = ( { children } ) => {
+	if ( ! children ) {
+		return null;
+	}
+	return <> { children } </>;
+};
+
+const BadgeDescription = ( { description, learnMoreLink } ) => {
+	if ( ! description && ! learnMoreLink ) {
+		return null;
+	}
+
+	return (
+		<div className="ppcp-r-badge-box__description">
+			<p className="ppcp-r-badge-box__description">
+				{ description }
+				<LearnMore url={ learnMoreLink } />
+			</p>
 		</div>
 	);
 };
 
-export const BADGE_BOX_TITLE_BIG = 'big';
-export const BADGE_BOX_TITLE_SMALL = 'small';
+const BadgeBox = ( {
+	title,
+	textBadge,
+	imageBadge = [],
+	description = '',
+	learnMoreLink = '',
+} ) => {
+	const titleTextClassName = 'ppcp-r-badge-box__title-text';
+	const titleBaseClassName = 'ppcp-r-badge-box__title';
+	const titleClassName = imageBadge.length
+		? `${ titleBaseClassName } ppcp-r-badge-box__title--has-image-badge`
+		: titleBaseClassName;
+
+	return (
+		<div className="ppcp-r-badge-box">
+			<span className={ titleClassName }>
+				<span className={ titleTextClassName }>{ title }</span>
+
+				<ImageBadge images={ imageBadge } />
+				<BadgeContent>{ textBadge }</BadgeContent>
+			</span>
+
+			<BadgeDescription
+				description={ description }
+				learnMoreLink={ learnMoreLink }
+			/>
+		</div>
+	);
+};
+
 export default BadgeBox;

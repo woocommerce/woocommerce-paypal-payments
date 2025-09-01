@@ -41,7 +41,7 @@ class Amount {
 	 * @param Money                $money The money.
 	 * @param AmountBreakdown|null $breakdown The breakdown.
 	 */
-	public function __construct( Money $money, AmountBreakdown $breakdown = null ) {
+	public function __construct( Money $money, ?AmountBreakdown $breakdown = null ) {
 		$this->money     = $money;
 		$this->breakdown = $breakdown;
 	}

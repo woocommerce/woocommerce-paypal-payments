@@ -5,6 +5,8 @@
  * @package WooCommerce\PayPalCommerce
  */
 
+namespace WooCommerce\PayPalCommerce;
+
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties\PluginProperties;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -30,7 +32,7 @@ return function (
 	$modules = apply_filters( 'woocommerce_paypal_payments_modules', $modules );
 
 	// Initialize plugin.
-	$properties = PluginProperties::new( __FILE__ );
+	$properties = PluginProperties::new( "$root_dir/woocommerce-paypal-payments.php" );
 	$bootstrap  = Package::new( $properties );
 
 	foreach ( $modules as $module ) {

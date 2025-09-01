@@ -9,12 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
-use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
@@ -26,11 +25,10 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WC_Payment_Gateways;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCGatewayConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class AxoModule
@@ -98,8 +96,8 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return $methods;
 				}
 
-				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
-				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				if ( ! $dcc_configuration->is_enabled() ) {
 					return $methods;
@@ -164,13 +162,13 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$listener = $c->get( 'wcgateway.settings.listener' );
 				assert( $listener instanceof SettingsListener );
 
-				$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
-				assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+				$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				$listener->filter_settings(
 					$dcc_configuration->use_fastlane(),
 					'smart_button_locations',
-					function( array $existing_setting_value ) {
+					function ( array $existing_setting_value ) {
 						$axo_forced_locations = array( 'cart-block', 'cart' );
 						return array_unique( array_merge( $existing_setting_value, $axo_forced_locations ) );
 					}
@@ -181,8 +179,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action(
 			'wp_loaded',
 			function () use ( $c ) {
-				$module = $this;
-
 				$this->session_handler = $c->get( 'session.handler' );
 
 				$settings = $c->get( 'wcgateway.settings' );
@@ -208,12 +204,15 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				// Enqueue frontend scripts.
 				add_action(
 					'wp_enqueue_scripts',
-					static function () use ( $c, $manager, $module ) {
+					function () use ( $c, $manager ) {
 
 						$smart_button = $c->get( 'button.smart-button' );
 						assert( $smart_button instanceof SmartButtonInterface );
 
-						if ( $module->should_render_fastlane( $c ) && $smart_button->should_load_ppcp_script() ) {
+						$axo_applies = $c->get( 'axo.service.axo-applies' );
+						assert( $axo_applies instanceof AxoApplies );
+
+						if ( $axo_applies->should_render_fastlane() && $smart_button->should_load_ppcp_script() ) {
 							$manager->enqueue();
 						}
 					}
@@ -222,10 +221,23 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				// Render submit button.
 				add_action(
 					$manager->checkout_button_renderer_hook(),
-					static function () use ( $c, $manager, $module ) {
-						if ( $module->should_render_fastlane( $c ) ) {
+					function () use ( $c, $manager ) {
+						$axo_applies = $c->get( 'axo.service.axo-applies' );
+						assert( $axo_applies instanceof AxoApplies );
+
+						if ( $axo_applies->should_render_fastlane() ) {
 							$manager->render_checkout_button();
 						}
+					}
+				);
+
+				/**
+				 * Late loading locations because of trouble with some shipping plugins
+				 */
+				add_filter(
+					'woocommerce_paypal_payments_axo_shipping_wc_enabled_locations',
+					function ( array $locations ) use ( $c ): array {
+						return array_merge( $locations, $c->get( 'axo.shipping-wc-enabled-locations' ) );
 					}
 				);
 
@@ -236,7 +248,13 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				 */
 				add_filter(
 					'woocommerce_paypal_payments_sdk_components_hook',
-					function( $components ) {
+					function ( $components ) use ( $c ) {
+						$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+						if ( ! $dcc_configuration->use_fastlane() ) {
+							return $components;
+						}
 						$components[] = 'fastlane';
 						return $components;
 					}
@@ -245,27 +263,18 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				add_action(
 					'wp_head',
 					function () use ( $c ) {
-						// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
-						echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
-
 						// Add meta tag to allow feature-detection of the site's AXO payment state.
-						$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
-						assert( $dcc_configuration instanceof DCCGatewayConfiguration );
+						$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
-						$this->add_feature_detection_tag( $dcc_configuration->use_fastlane() );
-					}
-				);
+						if ( $dcc_configuration->use_fastlane() ) {
+							// phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+							echo '<script async src="https://www.paypalobjects.com/insights/v1/paypal-insights.sandbox.min.js"></script>';
 
-				add_filter(
-					'woocommerce_paypal_payments_localized_script_data',
-					function( array $localized_script_data ) use ( $c, $module ) {
-						$api = $c->get( 'api.sdk-client-token' );
-						assert( $api instanceof SdkClientToken );
-
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						assert( $logger instanceof LoggerInterface );
-
-						return $module->add_sdk_client_token_to_script_data( $api, $logger, $localized_script_data );
+							$this->add_feature_detection_tag( true );
+						} else {
+							$this->add_feature_detection_tag( false );
+						}
 					}
 				);
 
@@ -298,8 +307,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				add_action(
 					'template_redirect',
 					function () use ( $c ) {
+						$axo_applies = $c->get( 'axo.service.axo-applies' );
+						assert( $axo_applies instanceof AxoApplies );
 
-						if ( $this->should_render_fastlane( $c ) ) {
+						if ( $axo_applies->should_render_fastlane() ) {
 							WC()->session->set( 'chosen_payment_method', AxoGateway::ID );
 						}
 					}
@@ -312,10 +323,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		add_action(
-			'wc_ajax_' . FrontendLoggerEndpoint::ENDPOINT,
+			'wc_ajax_' . FrontendLogger::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'axo.endpoint.frontend-logger' );
-				assert( $endpoint instanceof FrontendLoggerEndpoint );
+				assert( $endpoint instanceof FrontendLogger );
 
 				$endpoint->handle_request();
 			}
@@ -329,38 +340,37 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
-		return true;
-	}
+		// Remove Fastlane on the Pay for Order page.
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			static function ( $methods ) {
+				if ( ! is_array( $methods ) || ! is_wc_endpoint_url( 'order-pay' ) ) {
+					return $methods;
+				}
 
-	/**
-	 * Adds id token to localized script data.
-	 *
-	 * @param SdkClientToken  $api User id token api.
-	 * @param LoggerInterface $logger The logger.
-	 * @param array           $localized_script_data The localized script data.
-	 * @return array
-	 */
-	private function add_sdk_client_token_to_script_data(
-		SdkClientToken $api,
-		LoggerInterface $logger,
-		array $localized_script_data
-	): array {
-		try {
-			$sdk_client_token             = $api->sdk_client_token();
-			$localized_script_data['axo'] = array(
-				'sdk_client_token' => $sdk_client_token,
-			);
+				// Remove Fastlane if present.
+				unset( $methods[ AxoGateway::ID ] );
 
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
-				$error = $exception->get_details( $error );
+				return $methods;
 			}
+		);
 
-			$logger->error( $error );
-		}
+		add_action(
+			'wc_ajax_' . AxoScriptAttributes::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'axo.endpoint.script-attributes' );
+				assert( $endpoint instanceof AxoScriptAttributes );
 
-		return $localized_script_data;
+				$endpoint->handle_request();
+			}
+		);
+
+		return true;
 	}
 
 	/**
@@ -371,30 +381,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return bool
 	 */
 	private function hide_credit_card_when_using_fastlane( array $methods, ContainerInterface $c ): bool {
-		return $this->should_render_fastlane( $c ) && isset( $methods[ CreditCardGateway::ID ] );
-	}
+		$axo_applies = $c->get( 'axo.service.axo-applies' );
+		assert( $axo_applies instanceof AxoApplies );
 
-	/**
-	 * Condition to evaluate if Fastlane should be rendered.
-	 *
-	 * Fastlane should only render on the classic checkout, when Fastlane is enabled in the settings and also only for guest customers.
-	 *
-	 * @param ContainerInterface $c The container.
-	 * @return bool
-	 */
-	private function should_render_fastlane( ContainerInterface $c ): bool {
-		$dcc_configuration = $c->get( 'wcgateway.configuration.dcc' );
-		assert( $dcc_configuration instanceof DCCGatewayConfiguration );
-
-		$subscription_helper = $c->get( 'wc-subscriptions.helper' );
-		assert( $subscription_helper instanceof SubscriptionHelper );
-
-		return ! is_user_logged_in()
-			&& CartCheckoutDetector::has_classic_checkout()
-			&& $dcc_configuration->use_fastlane()
-			&& ! $this->is_excluded_endpoint()
-			&& is_checkout()
-			&& ! $subscription_helper->cart_contains_subscription();
+		return $axo_applies->should_render_fastlane() && isset( $methods[ CreditCardGateway::ID ] );
 	}
 
 	/**
@@ -404,8 +394,10 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return void
 	 */
 	private function add_checkout_loader_markup( ContainerInterface $c ): void {
+		$axo_applies = $c->get( 'axo.service.axo-applies' );
+		assert( $axo_applies instanceof AxoApplies );
 
-		if ( $this->should_render_fastlane( $c ) ) {
+		if ( $axo_applies->should_render_fastlane() ) {
 			add_action(
 				'woocommerce_checkout_before_customer_details',
 				function () {
@@ -444,7 +436,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return bool
 	 */
 	private function is_excluded_endpoint(): bool {
-		// Exclude the Order Pay and Order Received endpoints.
 		return is_wc_endpoint_url( 'order-pay' ) || is_wc_endpoint_url( 'order-received' );
 	}
 
@@ -455,7 +446,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return void
 	 */
 	private function add_feature_detection_tag( bool $axo_enabled ) {
-		$show_tag = is_checkout() || is_cart() || is_shop();
+		$show_tag = is_home() || is_checkout() || is_cart() || is_shop();
 
 		if ( ! $show_tag ) {
 			return;

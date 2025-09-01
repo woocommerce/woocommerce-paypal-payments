@@ -1,7 +1,6 @@
 import { registerPlugin } from '@wordpress/plugins';
 import { useEffect, useCallback, useState, useRef } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import { PAYMENT_STORE_KEY } from '@woocommerce/block-data';
 import PayPalInsights from '../../../../ppcp-axo/resources/js/Insights/PayPalInsights';
 import { STORE_NAME } from '../stores/axoStore';
 import usePayPalCommerceGateway from '../hooks/usePayPalCommerceGateway';
@@ -149,6 +148,7 @@ const usePaymentMethodTracking = ( axoConfig, eventTracking ) => {
 	const isInitialMount = useRef( true );
 
 	const activePaymentMethod = useSelect( ( select ) => {
+		const { PAYMENT_STORE_KEY } = window.wc.wcBlocksData;
 		return select( PAYMENT_STORE_KEY )?.getActivePaymentMethod();
 	}, [] );
 

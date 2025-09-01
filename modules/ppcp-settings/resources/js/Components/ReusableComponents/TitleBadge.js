@@ -1,11 +1,13 @@
 const TitleBadge = ( { text, type } ) => {
 	const className = 'ppcp-r-title-badge ' + `ppcp-r-title-badge--${ type }`;
-	return <span
-        className={ className }
-        dangerouslySetInnerHTML={{
-            __html: text,
-        }}
-    ></span>;
+	return (
+		<span
+			className={ className }
+			dangerouslySetInnerHTML={ {
+				__html: text,
+			} }
+		></span>
+	);
 };
 
 export const TITLE_BADGE_POSITIVE = 'positive';

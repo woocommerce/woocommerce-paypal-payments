@@ -86,7 +86,7 @@ class Authorization {
 	 *
 	 * @return FraudProcessorResponse|null
 	 */
-	public function fraud_processor_response() : ?FraudProcessorResponse {
+	public function fraud_processor_response(): ?FraudProcessorResponse {
 		return $this->fraud_processor_response;
 	}
 

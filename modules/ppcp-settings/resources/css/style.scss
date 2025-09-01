@@ -3,29 +3,12 @@
 
 #ppcp-settings-container {
 	@import './global';
-	@import './components/reusable-components/onboarding-header';
-	@import './components/reusable-components/button';
-	@import './components/reusable-components/settings-toggle-block';
-	@import './components/reusable-components/separator';
-	@import './components/reusable-components/payment-method-icons';
-	@import "./components/reusable-components/payment-method-item";
-	@import './components/reusable-components/settings-wrapper';
-	@import './components/reusable-components/select-box';
-	@import './components/reusable-components/tab-navigation';
-	@import './components/reusable-components/navigation';
-	@import './components/reusable-components/fields';
-	@import './components/reusable-components/title-badge';
-	@import './components/reusable-components/accordion-section';
-	@import './components/reusable-components/badge-box';
-	@import './components/reusable-components/spinner-overlay';
-	@import './components/reusable-components/welcome-docs';
+	@import './components/reusable';
 	@import './components/screens/onboarding';
 	@import './components/screens/settings';
-	@import './components/screens/overview/tab-overview';
-	@import './components/screens/overview/tab-payment-methods';
-	@import './components/screens/overview/tab-settings';
+	@import './components/app';
 }
 
 @import './components/reusable-components/payment-method-modal';
-@import './components/screens/onboarding-global';
-@import './components/screens/settings-global';
+@import './components/screens/fullscreen';
+@import './components/screens/modals';

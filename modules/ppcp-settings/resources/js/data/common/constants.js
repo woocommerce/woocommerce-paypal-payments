@@ -8,13 +8,22 @@
 export const STORE_NAME = 'wc/paypal/common';
 
 /**
- * REST path to hydrate data of this module by loading data from the WP DB..
+ * REST path to hydrate data of this module by loading data from the WP DB.
  *
  * Used by resolvers.
  *
  * @type {string}
  */
 export const REST_HYDRATE_PATH = '/wc/v3/wc_paypal/common';
+
+/**
+ * REST path to fetch merchant details from the WordPress DB.
+ *
+ * Used by controls.
+ *
+ * @type {string}
+ */
+export const REST_HYDRATE_MERCHANT_PATH = '/wc/v3/wc_paypal/common/merchant';
 
 /**
  * REST path to persist data of this module to the WP DB.
@@ -26,21 +35,74 @@ export const REST_HYDRATE_PATH = '/wc/v3/wc_paypal/common';
 export const REST_PERSIST_PATH = '/wc/v3/wc_paypal/common';
 
 /**
- * REST path to perform the manual connection check, using client ID and secret,
+ * REST path to perform the manual connection authentication, using client ID and secret.
  *
  * Used by: Controls
- * See: ConnectManualRestEndpoint.php
+ * See: AuthenticateRestEndpoint.php
  *
  * @type {string}
  */
-export const REST_MANUAL_CONNECTION_PATH = '/wc/v3/wc_paypal/connect_manual';
+export const REST_DIRECT_AUTHENTICATION_PATH =
+	'/wc/v3/wc_paypal/authenticate/direct';
 
 /**
- * REST path to generate an ISU URL for the sandbox-login.
+ * REST path to perform the OAuth authentication check, using shared ID and authCode.
+ *
+ * Used by: Controls
+ * See: AuthenticateRestEndpoint.php
+ *
+ * @type {string}
+ */
+export const REST_OAUTH_AUTHENTICATION_PATH =
+	'/wc/v3/wc_paypal/authenticate/oauth';
+
+/**
+ * REST path to disconnect the current merchant from PayPal.
+ *
+ * Used by: Controls
+ * See: AuthenticateRestEndpoint.php
+ *
+ * @type {string}
+ */
+export const REST_DISCONNECT_MERCHANT_PATH =
+	'/wc/v3/wc_paypal/authenticate/disconnect';
+
+/**
+ * REST path to generate an ISU URL for the PayPal-login.
  *
  * Used by: Controls
  * See: LoginLinkRestEndpoint.php
  *
  * @type {string}
  */
-export const REST_SANDBOX_CONNECTION_PATH = '/wc/v3/wc_paypal/login_link';
+export const REST_CONNECTION_URL_PATH = '/wc/v3/wc_paypal/login_link';
+
+/**
+ * REST path to fetch webhooks data or resubscribe webhooks.
+ *
+ * Used by: Controls
+ * See: WebhookSettingsEndpoint.php
+ *
+ * @type {string}
+ */
+export const REST_WEBHOOKS = '/wc/v3/wc_paypal/webhooks';
+
+/**
+ * REST path to start webhook simulation and observe the state.
+ *
+ * Used by: Controls
+ * See: WebhookSettingsEndpoint.php
+ *
+ * @type {string}
+ */
+export const REST_WEBHOOKS_SIMULATE = '/wc/v3/wc_paypal/webhooks/simulate';
+
+/**
+ * REST path to refresh the feature status.
+ *
+ * Used by: Controls
+ * See: RefreshFeatureStatusEndpoint.php
+ *
+ * @type {string}
+ */
+export const REST_REFRESH_FEATURES_PATH = '/wc/v3/wc_paypal/refresh-features';

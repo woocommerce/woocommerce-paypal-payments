@@ -5,6 +5,7 @@ import { payerData } from '../Helper/PayerData';
 import { PaymentMethods } from '../Helper/CheckoutMethodState';
 import CartHelper from '../Helper/CartHelper';
 import FormHelper from '../Helper/FormHelper';
+import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
 
 class SingleProductActionHandler {
 	constructor( config, updateCart, formElement, errorHandler ) {
@@ -64,6 +65,13 @@ class SingleProductActionHandler {
 			},
 			onError: ( err ) => {
 				console.error( err );
+
+				if ( ResumeFlowHelper.isResumeFlow() ) {
+					ResumeFlowHelper.cleanHashParams();
+					jQuery( this.config.button.wrapper ).trigger(
+						'ppcp-reload-buttons'
+					);
+				}
 			},
 		};
 	}
@@ -83,9 +91,16 @@ class SingleProductActionHandler {
 				if ( this.isBookingProduct() && error.message ) {
 					this.errorHandler.clear();
 					this.errorHandler.message( error.message );
-					return;
+				} else {
+					this.errorHandler.genericError();
 				}
-				this.errorHandler.genericError();
+
+				if ( ResumeFlowHelper.isResumeFlow() ) {
+					ResumeFlowHelper.cleanHashParams();
+					jQuery( this.config.button.wrapper ).trigger(
+						'ppcp-reload-buttons'
+					);
+				}
 			},
 			onCancel: () => {
 				// Could be used for every product type,

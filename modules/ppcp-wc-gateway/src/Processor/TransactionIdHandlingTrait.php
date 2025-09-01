@@ -28,10 +28,10 @@ trait TransactionIdHandlingTrait {
 	 *
 	 * @return bool
 	 */
-	protected function update_transaction_id(
+	public function update_transaction_id(
 		string $transaction_id,
 		WC_Order $wc_order,
-		LoggerInterface $logger = null
+		?LoggerInterface $logger = null
 	): bool {
 		try {
 			$wc_order->set_transaction_id( $transaction_id );
@@ -67,7 +67,7 @@ trait TransactionIdHandlingTrait {
 	 *
 	 * @return string|null
 	 */
-	protected function get_paypal_order_transaction_id( Order $order ): ?string {
+	public function get_paypal_order_transaction_id( Order $order ): ?string {
 		$purchase_unit = $order->purchase_units()[0] ?? null;
 		if ( ! $purchase_unit ) {
 			return null;
@@ -90,5 +90,4 @@ trait TransactionIdHandlingTrait {
 
 		return null;
 	}
-
 }

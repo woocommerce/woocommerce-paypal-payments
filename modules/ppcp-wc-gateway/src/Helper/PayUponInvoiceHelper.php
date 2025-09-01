@@ -109,7 +109,15 @@ class PayUponInvoiceHelper {
 					$product_id = $item['variation_id'];
 				}
 				$product = wc_get_product( $product_id );
-				if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
+				if ( $product
+					/**
+					 * Allows filtering product validation for PUI.
+					 */
+					&& ! apply_filters(
+						'woocommerce_paypal_payments_is_valid_product_for_pui',
+						$this->checkout_helper->is_physical_product( $product ),
+						$product
+					) ) {
 					return false;
 				}
 			}

@@ -31,6 +31,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('wc_string_to_bool')->alias(function ($string) {
 			return is_bool( $string ) ? $string : ( 'yes' === strtolower( $string ) || 1 === $string || 'true' === strtolower( $string ) || '1' === $string );
 		});
+		when('get_file_data')->justReturn(['Version' => '1.0','PluginURI' => 'https://github.com/woocommerce/woocommerce-paypal-payments']);
 		when('get_plugin_data')->justReturn(['Version' => '1.0']);
 		when('plugin_basename')->justReturn('woocommerce-paypal-payments/woocommerce-paypal-payments.php');
 		when('get_transient')->returnArg();

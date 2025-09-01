@@ -14,9 +14,6 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -70,20 +67,6 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 		add_action(
 			'wp_loaded',
 			function () use ( $c ) {
-				add_filter(
-					'woocommerce_paypal_payments_localized_script_data',
-					function( array $localized_script_data ) use ( $c ) {
-						$module = $this;
-						$api    = $c->get( 'api.sdk-client-token' );
-						assert( $api instanceof SdkClientToken );
-
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						assert( $logger instanceof LoggerInterface );
-
-						return $module->add_sdk_client_token_to_script_data( $api, $logger, $localized_script_data );
-					}
-				);
-
 				/**
 				 * Param types removed to avoid third-party issues.
 				 *
@@ -91,7 +74,10 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 				 */
 				add_filter(
 					'woocommerce_paypal_payments_sdk_components_hook',
-					function( $components ) {
+					function ( $components ) use ( $c ) {
+						if ( ! $c->has( 'axo.available' ) || ! $c->get( 'axo.available' ) ) {
+							return $components;
+						}
 						$components[] = 'fastlane';
 						return $components;
 					}
@@ -101,13 +87,11 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				/*
-				 * Only register the method if we are not in the admin
-				 * (to avoid two Debit & Credit Cards gateways in the
-				 * checkout block in the editor: one from ACDC one from Axo).
+				 * Only register the method if we are not in the admin or the customer is not logged in.
 				 */
-				if ( ! is_admin() ) {
+				if ( ! is_user_logged_in() ) {
 					$payment_method_registry->register( $c->get( 'axoblock.method' ) );
 				}
 			}
@@ -134,7 +118,6 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 			}
 		);
 
-		// Enqueue the PayPal Insights script.
 		add_action(
 			'wp_enqueue_scripts',
 			function () use ( $c ) {
@@ -146,37 +129,6 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 	}
 
 	/**
-	 * Adds id token to localized script data.
-	 *
-	 * @param SdkClientToken  $api User id token api.
-	 * @param LoggerInterface $logger The logger.
-	 * @param array           $localized_script_data The localized script data.
-	 * @return array
-	 */
-	private function add_sdk_client_token_to_script_data(
-		SdkClientToken $api,
-		LoggerInterface $logger,
-		array $localized_script_data
-	): array {
-		try {
-			$sdk_client_token             = $api->sdk_client_token();
-			$localized_script_data['axo'] = array(
-				'sdk_client_token' => $sdk_client_token,
-			);
-
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-			if ( is_a( $exception, PayPalApiException::class ) ) {
-				$error = $exception->get_details( $error );
-			}
-
-			$logger->error( $error );
-		}
-
-		return $localized_script_data;
-	}
-
-	/**
 	 * Enqueues PayPal Insights analytics script for the Checkout block.
 	 *
 	 * @param ContainerInterface $c The service container.
@@ -184,6 +136,11 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 	 */
 	private function enqueue_paypal_insights_script( ContainerInterface $c ): void {
 		if ( ! has_block( 'woocommerce/checkout' ) || WC()->cart->is_empty() ) {
+			return;
+		}
+
+		$dcc_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+		if ( ! $dcc_configuration->use_fastlane() ) {
 			return;
 		}
 

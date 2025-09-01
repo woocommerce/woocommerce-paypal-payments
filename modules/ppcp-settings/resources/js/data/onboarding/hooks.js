@@ -9,77 +9,117 @@
 
 import { useSelect, useDispatch } from '@wordpress/data';
 
-import { PRODUCT_TYPES } from '../constants';
+import { createHooksForStore } from '../utils';
+import { PRODUCT_TYPES } from './configuration';
 import { STORE_NAME } from './constants';
 
-const useTransient = ( key ) =>
-	useSelect(
-		( select ) => select( STORE_NAME ).transientData()?.[ key ],
-		[ key ]
-	);
-
-const usePersistent = ( key ) =>
-	useSelect(
-		( select ) => select( STORE_NAME ).persistentData()?.[ key ],
-		[ key ]
-	);
-
 const useHooks = () => {
-	const {
-		persist,
-		setStep,
-		setCompleted,
-		setIsCasualSeller,
-		setAreOptionalPaymentMethodsEnabled,
-		setProducts,
-	} = useDispatch( STORE_NAME );
+	const { useTransient, usePersistent } = createHooksForStore( STORE_NAME );
+	const dispatchActions = useDispatch( STORE_NAME );
 
-	// Read-only flags.
+	// Read-only flags and derived state.
 	const flags = useSelect( ( select ) => select( STORE_NAME ).flags(), [] );
 
 	// Transient accessors.
-	const isReady = useTransient( 'isReady' );
+	const [ isReady ] = useTransient( 'isReady' );
+	const [ manualClientId, setManualClientId ] =
+		useTransient( 'manualClientId' );
+	const [ manualClientSecret, setManualClientSecret ] =
+		useTransient( 'manualClientSecret' );
+	const [ connectionButtonClicked, setConnectionButtonClicked ] =
+		useTransient( 'connectionButtonClicked' );
 
 	// Persistent accessors.
-	const step = usePersistent( 'step' );
-	const completed = usePersistent( 'completed' );
-	const isCasualSeller = usePersistent( 'isCasualSeller' );
-	const areOptionalPaymentMethodsEnabled = usePersistent(
+	const [ step, setStep ] = usePersistent( 'step' );
+	const [ completed, setCompleted ] = usePersistent( 'completed' );
+	const [ isCasualSeller, setIsCasualSeller ] =
+		usePersistent( 'isCasualSeller' );
+	const [ optionalMethods, setOptionalMethods ] = usePersistent(
 		'areOptionalPaymentMethodsEnabled'
 	);
-	const products = usePersistent( 'products' );
+	const [ products, setProducts ] = usePersistent( 'products' );
+	const [ gatewaysSynced, setGatewaysSynced ] =
+		usePersistent( 'gatewaysSynced' );
+	const [ gatewaysRefreshed, setGatewaysRefreshed ] =
+		usePersistent( 'gatewaysRefreshed' );
 
-	const savePersistent = async ( setter, value ) => {
-		setter( value );
-		await persist();
+	const savePersistent = async ( setter, value, source ) => {
+		setter( value, source );
+		await dispatchActions.persist();
+	};
+
+	const saveTransient = ( setter, value, source ) => {
+		setter( value, source );
 	};
 
 	return {
 		flags,
 		isReady,
 		step,
-		setStep: ( value ) => {
-			return savePersistent( setStep, value );
+		setStep: ( value, source ) => {
+			return savePersistent( setStep, value, source );
 		},
 		completed,
-		setCompleted: ( state ) => {
-			return savePersistent( setCompleted, state );
+		setCompleted: ( state, source ) => {
+			return savePersistent( setCompleted, state, source );
 		},
 		isCasualSeller,
-		setIsCasualSeller: ( value ) => {
-			return savePersistent( setIsCasualSeller, value );
+		setIsCasualSeller: ( value, source ) => {
+			return savePersistent( setIsCasualSeller, value, source );
 		},
-		areOptionalPaymentMethodsEnabled,
-		setAreOptionalPaymentMethodsEnabled: ( value ) => {
-			return savePersistent( setAreOptionalPaymentMethodsEnabled, value );
+		manualClientId,
+		setManualClientId: ( value ) => {
+			return savePersistent( setManualClientId, value );
+		},
+		manualClientSecret,
+		setManualClientSecret: ( value ) => {
+			return savePersistent( setManualClientSecret, value );
+		},
+		optionalMethods,
+		setOptionalMethods: ( value, source ) => {
+			return savePersistent( setOptionalMethods, value, source );
 		},
 		products,
-		setProducts: ( activeProducts ) => {
+		setProducts: ( activeProducts, source ) => {
 			const validProducts = activeProducts.filter( ( item ) =>
 				Object.values( PRODUCT_TYPES ).includes( item )
 			);
-			return savePersistent( setProducts, validProducts );
+			return savePersistent( setProducts, validProducts, source );
 		},
+		gatewaysSynced,
+		setGatewaysSynced: ( value ) => {
+			return savePersistent( setGatewaysSynced, value, undefined );
+		},
+		syncGateways: async () => {
+			return await dispatchActions.syncGateways( undefined );
+		},
+		gatewaysRefreshed,
+		setGatewaysRefreshed: ( value ) => {
+			return savePersistent( setGatewaysRefreshed, value, undefined );
+		},
+		refreshGateways: async () => {
+			return await dispatchActions.refreshGateways( undefined );
+		},
+		connectionButtonClicked,
+		setConnectionButtonClicked: ( value ) => {
+			return saveTransient( setConnectionButtonClicked, value, 'user' );
+		},
+	};
+};
+
+export const useManualConnectionForm = () => {
+	const {
+		manualClientId,
+		setManualClientId,
+		manualClientSecret,
+		setManualClientSecret,
+	} = useHooks();
+
+	return {
+		manualClientId,
+		setManualClientId,
+		manualClientSecret,
+		setManualClientSecret,
 	};
 };
 
@@ -96,14 +136,11 @@ export const useProducts = () => {
 };
 
 export const useOptionalPaymentMethods = () => {
-	const {
-		areOptionalPaymentMethodsEnabled,
-		setAreOptionalPaymentMethodsEnabled,
-	} = useHooks();
+	const { optionalMethods, setOptionalMethods } = useHooks();
 
 	return {
-		areOptionalPaymentMethodsEnabled,
-		setAreOptionalPaymentMethodsEnabled,
+		optionalMethods,
+		setOptionalMethods,
 	};
 };
 
@@ -112,4 +149,66 @@ export const useSteps = () => {
 		useHooks();
 
 	return { flags, isReady, step, setStep, completed, setCompleted };
+};
+
+export const useNavigationState = () => {
+	const products = useProducts();
+	const business = useBusiness();
+	const methods = useOptionalPaymentMethods();
+
+	return {
+		products,
+		business,
+		methods,
+	};
+};
+
+export const useDetermineProducts = ( ownBrandOnly, storeCountry ) => {
+	return useSelect(
+		( select ) => {
+			return select( STORE_NAME ).determineProductsAndCaps(
+				ownBrandOnly,
+				storeCountry
+			);
+		},
+		[ ownBrandOnly, storeCountry ]
+	);
+};
+
+export const useFlags = () => {
+	const { flags } = useHooks();
+	return flags;
+};
+
+export const useGatewaySync = () => {
+	const { gatewaysSynced, syncGateways } = useHooks();
+	return { gatewaysSynced, syncGateways };
+};
+
+export const useGatewayRefresh = () => {
+	const { gatewaysRefreshed, refreshGateways } = useHooks();
+	return { gatewaysRefreshed, refreshGateways };
+};
+
+export const useConnectionButton = () => {
+	const { connectionButtonClicked, setConnectionButtonClicked } = useHooks();
+
+	return {
+		connectionButtonClicked,
+		setConnectionButtonClicked,
+	};
+};
+
+export const OnboardingHooks = {
+	useManualConnectionForm,
+	useBusiness,
+	useProducts,
+	useOptionalPaymentMethods,
+	useSteps,
+	useNavigationState,
+	useDetermineProducts,
+	useFlags,
+	useGatewaySync,
+	useGatewayRefresh,
+	useConnectionButton,
 };

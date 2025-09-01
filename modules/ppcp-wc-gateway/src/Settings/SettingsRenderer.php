@@ -114,6 +114,8 @@ class SettingsRenderer {
 		string $api_shop_country
 	) {
 
+		// This is a legacy settings class, it's correctly relying on the `Status` class.
+
 		$this->settings           = $settings;
 		$this->state              = $state;
 		$this->fields             = $fields;
@@ -130,7 +132,7 @@ class SettingsRenderer {
 	 *
 	 * @return array
 	 */
-	public function messages() : array {
+	public function messages(): array {
 
 		$messages = array();
 
@@ -465,7 +467,7 @@ $data_rows_html
 			if ( $this->dcc_applies->for_country_currency() ) {
 				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
 					$this->render_dcc_onboarding_info();
-				} elseif ( ! $this->dcc_product_status->dcc_is_active() ) {
+				} elseif ( ! $this->dcc_product_status->is_active() ) {
 					$this->render_dcc_not_active_yet();
 				}
 			} else {
@@ -505,7 +507,7 @@ $data_rows_html
 	 *
 	 * @param array $config The configuration array.
 	 */
-	private function render_preview_block( array $config ) : void {
+	private function render_preview_block( array $config ): void {
 		$id      = $config['preview']['id'] ?? '';
 		$type    = $config['preview']['type'] ?? 'button';
 		$message = $config['preview']['message'] ?? __( 'Button Styling Preview', 'woocommerce-paypal-payments' );

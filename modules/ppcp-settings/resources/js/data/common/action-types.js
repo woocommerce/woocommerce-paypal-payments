@@ -6,14 +6,16 @@
 
 export default {
 	// Transient data.
-	SET_TRANSIENT: 'COMMON:SET_TRANSIENT',
+	SET_TRANSIENT: 'ppcp/common/SET_TRANSIENT',
 
 	// Persistent data.
-	SET_PERSISTENT: 'COMMON:SET_PERSISTENT',
-	HYDRATE: 'COMMON:HYDRATE',
+	SET_PERSISTENT: 'ppcp/common/SET_PERSISTENT',
+	RESET: 'ppcp/common/RESET',
+	HYDRATE: 'ppcp/common/HYDRATE',
+	SET_MERCHANT: 'ppcp/common/SET_MERCHANT',
+	RESET_MERCHANT: 'ppcp/common/RESET_MERCHANT',
 
-	// Controls - always start with "DO_".
-	DO_PERSIST_DATA: 'COMMON:DO_PERSIST_DATA',
-	DO_MANUAL_CONNECTION: 'COMMON:DO_MANUAL_CONNECTION',
-	DO_SANDBOX_LOGIN: 'COMMON:DO_SANDBOX_LOGIN',
+	// Activity management (advanced solution that replaces the isBusy state).
+	START_ACTIVITY: 'ppcp/common/START_ACTIVITY',
+	STOP_ACTIVITY: 'ppcp/common/STOP_ACTIVITY',
 };

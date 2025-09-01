@@ -56,9 +56,9 @@ class CardFieldsRenderer {
 			onApprove( data ) {
 				return contextConfig.onApprove( data );
 			},
-			onError( error ) {
-				console.error( error );
-				this.spinner.unblock();
+			onError: ( error ) => {
+                console.error( error );
+                this.spinner.unblock();
 			},
 		} );
 
@@ -105,11 +105,13 @@ class CardFieldsRenderer {
 				}
 
 				cardFields.submit().catch( ( error ) => {
-					this.spinner.unblock();
-					console.error( error );
-					this.errorHandler.message(
-						this.defaultConfig.hosted_fields.labels.fields_not_valid
-					);
+                    this.spinner.unblock();
+                    if (!error.type || error.type !== 'create-order-error') {
+                        console.error( error );
+                        this.errorHandler.message(
+                            this.defaultConfig.hosted_fields.labels.fields_not_valid
+                        );
+                    }
 				} );
 			} );
 	}

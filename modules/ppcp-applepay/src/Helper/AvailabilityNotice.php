@@ -141,7 +141,6 @@ class AvailabilityNotice {
 		if ( ! $this->is_merchant_validated ) {
 			$this->add_merchant_not_validated_notice();
 		}
-
 	}
 
 	/**
@@ -287,5 +286,4 @@ class AvailabilityNotice {
 			}
 		);
 	}
-
 }

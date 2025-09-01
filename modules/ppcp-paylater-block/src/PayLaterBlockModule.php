@@ -71,12 +71,12 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 			return true;
 		}
 
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
 		add_action(
 			'init',
-			function () use ( $c, $settings ): void {
+			function () use ( $c ): void {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
 				$script_handle = 'ppcp-paylater-block';
 				wp_register_script(
 					$script_handle,
@@ -101,13 +101,8 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 					)
 				);
 
-				/**
-				 * Cannot return false for this path.
-				 *
-				 * @psalm-suppress PossiblyFalseArgument
-				 */
 				register_block_type(
-					dirname( realpath( __FILE__ ), 2 ),
+					$c->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-paylater-block/',
 					array(
 						'render_callback' => function ( array $attributes ) use ( $c ) {
 							$renderer = $c->get( 'paylater-block.renderer' );

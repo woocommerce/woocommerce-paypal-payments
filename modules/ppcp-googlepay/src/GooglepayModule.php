@@ -11,17 +11,20 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class GooglepayModule
@@ -51,7 +54,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( Settings $settings = null ) use ( $c ): void {
+			function ( ?Settings $settings = null ) use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
 				assert( $apm_status instanceof ApmProductStatus );
 				$apm_status->clear( $settings );
@@ -146,17 +149,19 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Registers buttons on blocks pages.
 				add_action(
 					'woocommerce_blocks_payment_method_type_registration',
-					function( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
-						if ( $button->is_enabled() ) {
-							$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
+					function ( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
+						if ( SettingsModule::should_use_the_old_ui() && ! $button->is_enabled() ) {
+							return;
 						}
+
+						$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
 					}
 				);
 
 				// Adds GooglePay component to the backend button preview settings.
 				add_action(
 					'woocommerce_paypal_payments_admin_gateway_settings',
-					function( array $settings ) use ( $c ): array {
+					function ( array $settings ) use ( $c ): array {
 						if ( is_array( $settings['components'] ) ) {
 							$settings['components'][] = 'googlepay';
 						}
@@ -173,7 +178,6 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 						$endpoint->handle_request();
 					}
 				);
-
 			},
 			1
 		);
@@ -220,7 +224,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_filter(
 			'woocommerce_paypal_payments_selected_button_locations',
-			function( array $locations, string $setting_name ): array {
+			function ( array $locations, string $setting_name ): array {
 				$gateway = WC()->payment_gateways()->payment_gateways()[ GooglePayGateway::ID ] ?? '';
 				if ( $gateway && $gateway->enabled === 'yes' && $setting_name === 'smart_button_locations' ) {
 					$locations[] = 'checkout';
@@ -230,6 +234,67 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			},
 			10,
 			2
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_rest_common_merchant_features',
+			function ( array $features ) use ( $c ): array {
+				$product_status = $c->get( 'googlepay.helpers.apm-product-status' );
+				assert( $product_status instanceof ApmProductStatus );
+
+				$google_pay_enabled = $product_status->is_active();
+
+				$features['google_pay'] = array(
+					'enabled' => $google_pay_enabled,
+				);
+
+				return $features;
+			}
+		);
+
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
+
+				$funding_source = $request['funding_source'] ?? '';
+				if ( $payment_method !== GooglePayGateway::ID && $funding_source !== 'googlepay' ) {
+					return $data;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
+				assert( $experience_context_builder instanceof ExperienceContextBuilder );
+
+				$payment_source_data = array(
+					'experience_context' => $experience_context_builder
+						->with_endpoint_return_urls()
+						->build()->to_array(),
+				);
+
+				$three_d_secure_contingency =
+					$settings->has( '3d_secure_contingency' )
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+						: '';
+
+				if (
+					$three_d_secure_contingency === 'SCA_ALWAYS'
+					|| $three_d_secure_contingency === 'SCA_WHEN_REQUIRED'
+				) {
+					$payment_source_data['attributes'] = array(
+						'verification' => array(
+							'method' => $three_d_secure_contingency,
+						),
+					);
+				}
+
+				$data['payment_source'] = array( 'google_pay' => $payment_source_data );
+
+				return $data;
+			},
+			10,
+			3
 		);
 
 		return true;

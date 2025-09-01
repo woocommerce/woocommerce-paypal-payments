@@ -29,7 +29,7 @@ return array(
 	},
 
 	'wcgateway.settings.fields'                        => function ( array $fields, ContainerInterface $container ): array {
-		$insert_after = function( array $array, string $key, array $new ): array {
+		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
 			$pos = false === $index ? count( $array ) : $index + 1;
@@ -44,7 +44,13 @@ return array(
 			'woocommerce-paypal-payments'
 		);
 
-		if ( wc_terms_and_conditions_page_id() > 0 ) {
+		/**
+		 * Replace wc_terms_and_conditions_page_id() function to avoid errors when to avoid errors because of early loading.
+		 */
+		$wc_terms_and_conditions_page_id = apply_filters( 'woocommerce_get_terms_page_id', get_option( 'woocommerce_terms_page_id' ) );
+		$wc_terms_and_conditions_page_id = apply_filters( 'woocommerce_terms_and_conditions_page_id', 0 < $wc_terms_and_conditions_page_id ? absint( $wc_terms_and_conditions_page_id ) : 0 );
+
+		if ( $wc_terms_and_conditions_page_id > 0 ) {
 			$label .= __(
 				'<div class="ppcp-notice ppcp-notice-warning"><p><span class="highlight">Important:</span> Your store has a <a href="/wp-admin/admin.php?page=wc-settings&tab=advanced" target="_blank">Terms and Conditions</a> page configured. Buyers who use a PayPal express payment method will not be able to consent to the terms on the <code>Classic Checkout</code>, as the final checkout confirmation will be skipped.</p></div>',
 				'woocommerce-paypal-payments'

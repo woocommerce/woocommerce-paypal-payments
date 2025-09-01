@@ -18,8 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
@@ -43,22 +42,31 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class PayPalGateway extends \WC_Payment_Gateway {
 
-	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
+	use ProcessPaymentTrait;
+	use FreeTrialHandlerTrait;
+	use GatewaySettingsRendererTrait;
+	use OrderMetaTrait;
+	use TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
 
-	const ID                            = 'ppcp-gateway';
-	const INTENT_META_KEY               = '_ppcp_paypal_intent';
-	const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
-	const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
-	const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
-	const ORDER_PAYER_EMAIL_META_KEY    = '_ppcp_paypal_payer_email';
-	const FEES_META_KEY                 = '_ppcp_paypal_fees';
-	const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
-	const REFUNDS_META_KEY              = '_ppcp_refunds';
-	const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
-	const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
+	public const ID                            = 'ppcp-gateway';
+	public const INTENT_META_KEY               = '_ppcp_paypal_intent';
+	public const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
+	public const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
+	public const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
+	public const ORDER_PAYER_EMAIL_META_KEY    = '_ppcp_paypal_payer_email';
+	public const FEES_META_KEY                 = '_ppcp_paypal_fees';
+	public const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
+	public const REFUNDS_META_KEY              = '_ppcp_refunds';
+	public const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
+	public const FRAUD_RESULT_META_KEY         = '_ppcp_paypal_fraud_result';
+
+	// Used by the Contact Module integration to store the original details.
+	public const ORIGINAL_EMAIL_META_KEY = '_ppcp_paypal_billing_email';
+	public const ORIGINAL_PHONE_META_KEY = '_ppcp_paypal_billing_phone';
 
 	/**
-	 * List of payment sources wich we are expected to store the payer email in the WC Order metadata.
+	 * List of payment sources for which we are expected to store the payer email in the WC Order metadata.
 	 */
 	const PAYMENT_SOURCES_WITH_PAYER_EMAIL = array( 'paypal', 'paylater', 'venmo' );
 
@@ -105,13 +113,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $refund_processor;
 
 	/**
-	 * The state.
-	 *
-	 * @var State
-	 */
-	protected $state;
-
-	/**
 	 * Service able to provide transaction url for an order.
 	 *
 	 * @var TransactionUrlProvider
@@ -137,7 +138,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @var bool
 	 */
-	private $onboarded;
+	private bool $onboarded;
 
 	/**
 	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
@@ -217,6 +218,69 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $admin_settings_enabled;
 
 	/**
+	 * ID of the class extending the settings API. Used in option names.
+	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
+	 * Supported features such as 'default_credit_card_form', 'refunds'.
+	 *
+	 * @var array
+	 */
+	public $supports = array( 'products' );
+
+	/**
+	 * Set if the place order button should be renamed on selection.
+	 *
+	 * @var string
+	 */
+	public $order_button_text;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
@@ -225,7 +289,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param ContainerInterface       $config The settings.
 	 * @param SessionHandler           $session_handler The Session Handler.
 	 * @param RefundProcessor          $refund_processor The Refund Processor.
-	 * @param State                    $state The state.
+	 * @param bool                     $is_connected Whether onboarding was completed.
 	 * @param TransactionUrlProvider   $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper       $subscription_helper The subscription helper.
 	 * @param string                   $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
@@ -249,7 +313,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		ContainerInterface $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state,
+		bool $is_connected,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
 		string $page_id,
@@ -273,12 +337,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->config                      = $config;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
-		$this->state                       = $state;
 		$this->transaction_url_provider    = $transaction_url_provider;
 		$this->subscription_helper         = $subscription_helper;
 		$this->page_id                     = $page_id;
 		$this->environment                 = $environment;
-		$this->onboarded                   = $state->current_state() === State::STATE_ONBOARDED;
+		$this->onboarded                   = $is_connected;
 		$this->payment_token_repository    = $payment_token_repository;
 		$this->logger                      = $logger;
 		$this->api_shop_country            = $api_shop_country;
@@ -306,10 +369,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		$this->method_title       = $this->define_method_title();
 		$this->method_description = $this->define_method_description();
-		$this->title              = $this->config->has( 'title' ) ?
-			$this->config->get( 'title' ) : $this->method_title;
-		$this->description        = $this->config->has( 'description' ) ?
-			$this->config->get( 'description' ) : $this->method_description;
+		$this->title              = apply_filters( 'woocommerce_paypal_payments_gateway_title', $this->config->has( 'title' ) ? $this->config->get( 'title' ) : $this->method_title, $this );
+		$this->description        = apply_filters( 'woocommerce_paypal_payments_gateway_description', $this->config->has( 'description' ) ? $this->config->get( 'description' ) : $this->method_description, $this );
 
 		$funding_source = $this->session_handler->funding_source();
 		if ( $funding_source ) {
@@ -356,6 +417,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		return parent::get_title();
+	}
+
+	/**
+	 * Return the gateway's description.
+	 *
+	 * @return string
+	 */
+	public function get_description() {
+		$gateway_settings = get_option( $this->get_option_key(), array() );
+
+		if ( array_key_exists( 'description', $gateway_settings ) ) {
+			return $gateway_settings['description'];
+		}
+
+		return $this->description;
 	}
 
 	/**
@@ -457,10 +533,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	private function is_credit_card_tab() : bool {
+	private function is_credit_card_tab(): bool {
 		return is_admin()
 			&& CreditCardGateway::ID === $this->page_id;
-
 	}
 
 	/**
@@ -468,7 +543,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	private function is_pui_tab():bool {
+	private function is_pui_tab(): bool {
 		if ( 'DE' !== $this->api_shop_country ) {
 			return false;
 		}
@@ -481,7 +556,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool true if is connection tab, otherwise false
 	 */
-	protected function is_connection_tab() : bool {
+	protected function is_connection_tab(): bool {
 		return is_admin()
 			&& Settings::CONNECTION_TAB_ID === $this->page_id;
 	}
@@ -491,7 +566,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool true if is pay-later tab, otherwise false
 	 */
-	protected function is_pay_later_tab() : bool {
+	protected function is_pay_later_tab(): bool {
 		return is_admin()
 			&& Settings::PAY_LATER_TAB_ID === $this->page_id;
 	}
@@ -501,7 +576,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	private function is_paypal_tab() : bool {
+	private function is_paypal_tab(): bool {
 		return ! $this->is_credit_card_tab()
 			&& is_admin()
 			&& self::ID === $this->page_id;
@@ -625,30 +700,19 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			$paypal_subscription_id = WC()->session->get( 'ppcp_subscription_id' ) ?? '';
-			if ( $paypal_subscription_id ) {
-				$order = $this->session_handler->order();
-				$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-				$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order_id ) : array();
-				foreach ( $subscriptions as $subscription ) {
-					$subscription->update_meta_data( 'ppcp_subscription', $paypal_subscription_id );
-					$subscription->save();
-
-					$subscription->add_order_note( "PayPal subscription {$paypal_subscription_id} added." );
-				}
-
-				$transaction_id = $this->get_paypal_order_transaction_id( $order );
-				if ( $transaction_id ) {
-					$this->update_transaction_id( $transaction_id, $wc_order );
-				}
-
-				$wc_order->payment_complete();
-
-				return $this->handle_payment_success( $wc_order );
-			}
 			try {
-				$this->order_processor->process( $wc_order );
+				/**
+				 * This filter controls if the method 'process()' from OrderProcessor will be called.
+				 * So you can implement your own for example on subscriptions
+				 *
+				 * - true bool controls execution of 'OrderProcessor::process()'
+				 * - $this \WC_Payment_Gateway
+				 * - $wc_order \WC_Order
+				 */
+				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+				if ( $process ) {
+					$this->order_processor->process( $wc_order );
+				}
 
 				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 

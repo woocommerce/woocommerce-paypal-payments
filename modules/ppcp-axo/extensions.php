@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Axo;
 
 use WooCommerce\PayPalCommerce\Axo\Helper\NoticeRenderer;
-use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
@@ -19,7 +18,7 @@ return array(
 
 	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
-		$insert_after = function( array $array, string $key, array $new ): array {
+		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
 			$pos = false === $index ? count( $array ) : $index + 1;

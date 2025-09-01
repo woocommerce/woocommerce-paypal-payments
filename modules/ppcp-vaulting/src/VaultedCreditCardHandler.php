@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -31,7 +31,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  */
 class VaultedCreditCardHandler {
 
-	use OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
+	use OrderMetaTrait;
+	use TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The subscription helper.
@@ -167,7 +170,9 @@ class VaultedCreditCardHandler {
 				array( $purchase_unit ),
 				$shipping_preference,
 				$payer,
-				$selected_token
+				'',
+				array(),
+				$selected_token->to_payment_source()
 			);
 
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );

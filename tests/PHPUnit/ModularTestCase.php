@@ -32,6 +32,8 @@ class ModularTestCase extends TestCase
         when('WC')->justReturn((object) [
         	'session' => null,
 		]);
+	    when('is_admin')->justReturn(true);
+	    when('sanitize_key')->returnArg();
 
 		global $wpdb;
 		$wpdb = \Mockery::mock(\stdClass::class);
@@ -71,6 +73,8 @@ class ModularTestCase extends TestCase
 
 		$module = new class ($overriddenServices) implements ServiceModule, ExecutableModule {
 			use ModuleClassNameIdTrait;
+
+			private $services;
 
 			public function __construct(array $services) {
 				$this->services = $services;

@@ -80,7 +80,7 @@ class Renderer implements RendererInterface {
 
 			printf(
 				'<div class="notice notice-%s %s" %s%s><p>%s</p></div>',
-				$message->type(),
+				esc_attr( $message->type() ),
 				( $message->is_dismissible() ) ? 'is-dismissible' : '',
 				( $message->wrapper() ? sprintf( 'data-ppcp-wrapper="%s"', esc_attr( $message->wrapper() ) ) : '' ),
 				// Use `empty()` in condition, to avoid false phpcs warning.
@@ -95,7 +95,7 @@ class Renderer implements RendererInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function enqueue_admin() : void {
+	public function enqueue_admin(): void {
 		if ( ! $this->can_mute_message ) {
 			return;
 		}
@@ -129,7 +129,7 @@ class Renderer implements RendererInterface {
 	 *
 	 * @return array
 	 */
-	protected function script_data_for_admin() : array {
+	protected function script_data_for_admin(): array {
 		$ajax_url = admin_url( 'admin-ajax.php' );
 
 		return array(

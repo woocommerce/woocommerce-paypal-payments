@@ -1,6 +1,6 @@
 <?php
 /**
- * Handels the Webhook PAYMENT.CAPTURE.REFUNDED
+ * Handles the Webhook PAYMENT.CAPTURE.REFUNDED
  *
  * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
@@ -23,7 +23,9 @@ use WP_REST_Response;
  */
 class PaymentCaptureRefunded implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RefundMetaTrait, RequestHandlerTrait;
+	use TransactionIdHandlingTrait;
+	use RefundMetaTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.

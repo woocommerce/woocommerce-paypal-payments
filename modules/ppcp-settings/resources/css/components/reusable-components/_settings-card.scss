@@ -1,0 +1,112 @@
+// Configuration for this module.
+$width_container: 938px;
+$width_header: 280px;
+$width_gap: 24px;
+
+/*
+ Styles the `SettingsCard` layout component.
+
+ This is a 2-column row that displays a title + description on the
+ left side, and a "card" with settings content on the right side.
+ */
+.ppcp-r-settings-card {
+
+	// -- Theming
+
+	--card-width-header: 100%;
+	--card-width-content: 100%;
+	--card-gap: 0;
+	--card-layout: block;
+
+	@media screen and (min-width: 960px) {
+		--card-width-header: #{$width_header};
+		--card-width-content: #{$width_container - $width_header - $width_gap};
+		--card-gap: #{$width_gap};
+		--card-layout: flex;
+	}
+
+	// -- Styling
+
+	display: var(--card-layout);
+	gap: var(--card-gap);
+	margin: var(--card-gap-top, 0) 0 var(--card-gap) 0;
+
+	.ppcp-r-settings-card__header {
+		display: var(--card-layout);
+		width: var(--card-width-header);
+		flex: 0 0 var(--card-width-header);
+		gap: 18px;
+		padding-bottom: 18px;
+	}
+
+	.ppcp-r-settings-card__content-wrapper {
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	.ppcp--content {
+		flex: 1;
+
+		&.ppcp--is-card {
+			max-width: var(--card-width-content);
+			border: 1px solid var(--color-gray-200);
+			width: 100%;
+			border-radius: 4px;
+			padding: 24px;
+		}
+	}
+
+	.ppcp-r-settings-card__title {
+		@include font(13, 24, 600);
+		color: var(--color-text-main);
+		margin: 0 0 12px 0;
+		display: block;
+	}
+
+	.ppcp-r-settings-card__description {
+		@include font(13, 20, 400);
+		color: var(--color-text-teriary);
+		margin: 0;
+
+
+		p {
+			margin: 0 0 12px 0;
+		}
+
+		button {
+			padding: 0;
+			margin: 0;
+		}
+	}
+
+	+ .ppcp-r-settings-card {
+		margin-top: $card-vertical-gap;
+		padding-top: $card-vertical-gap;
+		border-top: 1px solid $color-gray-200;
+	}
+
+	.ppcp--card-actions {
+		transition: opacity 0.3s;
+
+		&.ppcp--dimmed {
+			opacity: 0.5;
+
+			&:hover {
+				opacity: 1;
+			}
+		}
+
+		.components-button.is-tertiary {
+			transition: color 0.3s, background 0.3s;
+
+			&:first-child {
+				padding-left: 0;
+			}
+
+			svg {
+				margin-right: 4px;
+			}
+		}
+	}
+}

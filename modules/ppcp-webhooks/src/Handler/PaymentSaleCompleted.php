@@ -65,7 +65,6 @@ class PaymentSaleCompleted implements RequestHandler {
 	 */
 	public function responsible_for_request( WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
-
 	}
 
 	/**

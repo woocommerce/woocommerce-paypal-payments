@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 
 /**
  * Class State
@@ -76,7 +77,7 @@ class State {
 	 *
 	 * @return int
 	 */
-	public function sandbox_state() : int {
+	public function sandbox_state(): int {
 
 		return $this->state_by_keys(
 			array(
@@ -93,7 +94,7 @@ class State {
 	 *
 	 * @return int
 	 */
-	public function production_state() : int {
+	public function production_state(): int {
 
 		return $this->state_by_keys(
 			array(
@@ -111,7 +112,7 @@ class State {
 	 * @param int $state An onboarding state to translate.
 	 * @return string A string representing the state: "start" or "onboarded".
 	 */
-	public static function get_state_name( int $state ) : string {
+	public static function get_state_name( int $state ): string {
 		switch ( $state ) {
 			case self::STATE_START:
 				return 'start';
@@ -129,7 +130,7 @@ class State {
 	 *
 	 * @return int
 	 */
-	private function state_by_keys( array $onboarded_keys ) : int {
+	private function state_by_keys( array $onboarded_keys ): int {
 		foreach ( $onboarded_keys as $key ) {
 			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
 				return self::STATE_START;

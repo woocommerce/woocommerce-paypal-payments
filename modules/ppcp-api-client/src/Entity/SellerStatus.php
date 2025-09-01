@@ -29,14 +29,22 @@ class SellerStatus {
 	private $capabilities;
 
 	/**
+	 * Merchant country on PayPal.
+	 *
+	 * @var string
+	 */
+	private string $country;
+
+	/**
 	 * SellerStatus constructor.
 	 *
 	 * @param SellerStatusProduct[]    $products The products.
 	 * @param SellerStatusCapability[] $capabilities The capabilities.
+	 * @param string                   $country Merchant country on PayPal.
 	 *
 	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
-	public function __construct( array $products, array $capabilities ) {
+	public function __construct( array $products, array $capabilities, string $country = '' ) {
 		foreach ( $products as $key => $product ) {
 			if ( is_a( $product, SellerStatusProduct::class ) ) {
 				continue;
@@ -52,6 +60,7 @@ class SellerStatus {
 
 		$this->products     = $products;
 		$this->capabilities = $capabilities;
+		$this->country      = $country;
 	}
 
 	/**
@@ -59,7 +68,7 @@ class SellerStatus {
 	 *
 	 * @return SellerStatusProduct[]
 	 */
-	public function products() : array {
+	public function products(): array {
 		return $this->products;
 	}
 
@@ -68,25 +77,34 @@ class SellerStatus {
 	 *
 	 * @return SellerStatusCapability[]
 	 */
-	public function capabilities() : array {
+	public function capabilities(): array {
 		return $this->capabilities;
 	}
 
 	/**
-	 * Returns the enitity as array.
+	 * Returns merchant's country on PayPal.
+	 *
+	 * @return string
+	 */
+	public function country(): string {
+		return $this->country;
+	}
+
+	/**
+	 * Returns the entity as array.
 	 *
 	 * @return array
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$products = array_map(
-			function( SellerStatusProduct $product ) : array {
+			function ( SellerStatusProduct $product ): array {
 				return $product->to_array();
 			},
 			$this->products()
 		);
 
 		$capabilities = array_map(
-			function( SellerStatusCapability $capability ) : array {
+			function ( SellerStatusCapability $capability ): array {
 				return $capability->to_array();
 			},
 			$this->capabilities()
@@ -95,6 +113,7 @@ class SellerStatus {
 		return array(
 			'products'     => $products,
 			'capabilities' => $capabilities,
+			'country'      => $this->country,
 		);
 	}
 }

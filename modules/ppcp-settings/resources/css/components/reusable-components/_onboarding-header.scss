@@ -31,5 +31,9 @@
 		@include font(14, 22, 400);
 		margin: 0 20%;
 		text-align: center;
+
+		@media screen and (max-width: 480px) {
+			margin: 0px;
+		}
 	}
 }

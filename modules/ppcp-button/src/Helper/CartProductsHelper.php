@@ -281,5 +281,4 @@ class CartProductsHelper {
 	public function cart_item_keys(): array {
 		return $this->cart_item_keys;
 	}
-
 }

@@ -68,7 +68,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'blocks.method' ) );
 
 				$settings = $c->get( 'wcgateway.settings' );
@@ -80,7 +80,7 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		woocommerce_store_api_register_payment_requirements(
 			array(
-				'data_callback' => function() use ( $c ): array {
+				'data_callback' => function () use ( $c ): array {
 					$smart_button = $c->get( 'button.smart-button' );
 					assert( $smart_button instanceof SmartButtonInterface );
 
@@ -143,10 +143,15 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			function( array $components ) {
-				$components[] = 'buttons';
+			function ( array $components, string $context ) {
+				if ( str_ends_with( $context, '-block' ) ) {
+					$components[] = 'buttons';
+				}
+
 				return $components;
-			}
+			},
+			10,
+			2
 		);
 		return true;
 	}

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+use DateTime;
+
 /**
  * Class Order
  */
@@ -25,7 +27,7 @@ class Order {
 	/**
 	 * The create time.
 	 *
-	 * @var \DateTime|null
+	 * @var DateTime|null
 	 */
 	private $create_time;
 
@@ -60,16 +62,9 @@ class Order {
 	/**
 	 * The update time.
 	 *
-	 * @var \DateTime|null
+	 * @var DateTime|null
 	 */
 	private $update_time;
-
-	/**
-	 * The application context.
-	 *
-	 * @var ApplicationContext|null
-	 */
-	private $application_context;
 
 	/**
 	 * The payment source.
@@ -77,43 +72,46 @@ class Order {
 	 * @var PaymentSource|null
 	 */
 	private $payment_source;
+	/**
+	 * @var mixed|null
+	 */
+	private $links;
 
 	/**
 	 * Order constructor.
 	 *
 	 * @see https://developer.paypal.com/docs/api/orders/v2/#orders-create-response
 	 *
-	 * @param string                  $id The ID.
-	 * @param PurchaseUnit[]          $purchase_units The purchase units.
-	 * @param OrderStatus             $order_status The order status.
-	 * @param ApplicationContext|null $application_context The application context.
-	 * @param PaymentSource|null      $payment_source The payment source.
-	 * @param Payer|null              $payer The payer.
-	 * @param string                  $intent The intent.
-	 * @param \DateTime|null          $create_time The create time.
-	 * @param \DateTime|null          $update_time The update time.
+	 * @param string             $id The ID.
+	 * @param PurchaseUnit[]     $purchase_units The purchase units.
+	 * @param OrderStatus        $order_status The order status.
+	 * @param PaymentSource|null $payment_source The payment source.
+	 * @param Payer|null         $payer The payer.
+	 * @param string             $intent The intent.
+	 * @param DateTime|null      $create_time The create time.
+	 * @param DateTime|null      $update_time The update time.
 	 */
 	public function __construct(
 		string $id,
 		array $purchase_units,
 		OrderStatus $order_status,
-		ApplicationContext $application_context = null,
-		PaymentSource $payment_source = null,
-		Payer $payer = null,
+		?PaymentSource $payment_source = null,
+		?Payer $payer = null,
 		string $intent = 'CAPTURE',
-		\DateTime $create_time = null,
-		\DateTime $update_time = null
+		?DateTime $create_time = null,
+		?DateTime $update_time = null,
+		$links = null
 	) {
 
-		$this->id                  = $id;
-		$this->application_context = $application_context;
-		$this->payer               = $payer;
-		$this->order_status        = $order_status;
-		$this->intent              = ( 'CAPTURE' === $intent ) ? 'CAPTURE' : 'AUTHORIZE';
-		$this->purchase_units      = $purchase_units;
-		$this->create_time         = $create_time;
-		$this->update_time         = $update_time;
-		$this->payment_source      = $payment_source;
+		$this->id             = $id;
+		$this->payer          = $payer;
+		$this->order_status   = $order_status;
+		$this->intent         = ( 'CAPTURE' === $intent ) ? 'CAPTURE' : 'AUTHORIZE';
+		$this->purchase_units = $purchase_units;
+		$this->create_time    = $create_time;
+		$this->update_time    = $update_time;
+		$this->payment_source = $payment_source;
+		$this->links          = $links;
 	}
 
 	/**
@@ -128,7 +126,7 @@ class Order {
 	/**
 	 * Returns the create time.
 	 *
-	 * @return \DateTime|null
+	 * @return DateTime|null
 	 */
 	public function create_time() {
 		return $this->create_time;
@@ -137,7 +135,7 @@ class Order {
 	/**
 	 * Returns the update time.
 	 *
-	 * @return \DateTime|null
+	 * @return DateTime|null
 	 */
 	public function update_time() {
 		return $this->update_time;
@@ -180,16 +178,6 @@ class Order {
 	}
 
 	/**
-	 * Returns the application context.
-	 *
-	 * @return ApplicationContext|null
-	 */
-	public function application_context() {
-
-		return $this->application_context;
-	}
-
-	/**
 	 * Returns the payment source.
 	 *
 	 * @return PaymentSource|null
@@ -197,6 +185,15 @@ class Order {
 	public function payment_source() {
 
 		return $this->payment_source;
+	}
+
+	/**
+	 * Returns the links.
+	 *
+	 * @return mixed|null
+	 */
+	public function links() {
+		return $this->links;
 	}
 
 	/**
@@ -225,8 +222,9 @@ class Order {
 		if ( $this->update_time() ) {
 			$order['update_time'] = $this->update_time()->format( 'Y-m-d\TH:i:sO' );
 		}
-		if ( $this->application_context() ) {
-			$order['application_context'] = $this->application_context()->to_array();
+
+		if ( $this->links ) {
+			$order['links'] = $this->links();
 		}
 
 		return $order;

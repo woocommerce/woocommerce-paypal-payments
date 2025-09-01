@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
@@ -127,7 +127,7 @@ class FraudNetAssets {
 	public function register_assets(): void {
 		add_action(
 			'wp_enqueue_scripts',
-			function() {
+			function () {
 				if ( $this->should_load_fraudnet_script() ) {
 					wp_enqueue_script(
 						'ppcp-fraudnet',
@@ -176,7 +176,7 @@ class FraudNetAssets {
 	 *
 	 * @return bool true if enabled, otherwise false.
 	 */
-	protected function are_buttons_enabled_for_context() : bool {
+	protected function are_buttons_enabled_for_context(): bool {
 		if ( ! in_array( PayPalGateway::ID, $this->enabled_ppcp_gateways(), true ) ) {
 			return false;
 		}

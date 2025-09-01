@@ -11,8 +11,9 @@ namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
-use WooCommerce\PayPalCommerce\Axo\FrontendLoggerEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
+use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -99,12 +100,6 @@ class AxoManager {
 	 * @var array
 	 */
 	private array $supported_country_card_type_matrix;
-	/**
-	 * The list of WooCommerce enabled shipping locations.
-	 *
-	 * @var array
-	 */
-	private array $enabled_shipping_locations;
 
 	/**
 	 * AxoManager constructor.
@@ -120,7 +115,6 @@ class AxoManager {
 	 * @param LoggerInterface $logger The logger.
 	 * @param string          $wcgateway_module_url The WcGateway module URL.
 	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
-	 * @param array           $enabled_shipping_locations The list of WooCommerce enabled shipping locations.
 	 */
 	public function __construct(
 		string $module_url,
@@ -133,8 +127,7 @@ class AxoManager {
 		CurrencyGetter $currency,
 		LoggerInterface $logger,
 		string $wcgateway_module_url,
-		array $supported_country_card_type_matrix,
-		array $enabled_shipping_locations
+		array $supported_country_card_type_matrix
 	) {
 
 		$this->module_url                         = $module_url;
@@ -147,7 +140,6 @@ class AxoManager {
 		$this->currency                           = $currency;
 		$this->logger                             = $logger;
 		$this->wcgateway_module_url               = $wcgateway_module_url;
-		$this->enabled_shipping_locations         = $enabled_shipping_locations;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
@@ -198,12 +190,12 @@ class AxoManager {
 				'email' => 'render',
 			),
 			// The amount is not available when setting the insights data, so we need to merge it here.
-			'insights'                   => ( function( array $data ): array {
+			'insights'                   => ( function ( array $data ): array {
 				$data['amount']['value'] = WC()->cart->get_total( 'numeric' );
 				return $data; } )( $this->insights_data ),
 			'allowed_cards'              => $this->supported_country_card_type_matrix,
 			'disable_cards'              => $this->settings->has( 'disable_cards' ) ? (array) $this->settings->get( 'disable_cards' ) : array(),
-			'enabled_shipping_locations' => $this->enabled_shipping_locations,
+			'enabled_shipping_locations' => apply_filters( 'woocommerce_paypal_payments_axo_shipping_wc_enabled_locations', array() ),
 			'style_options'              => array(
 				'root'  => array(
 					'backgroundColor' => $this->settings->has( 'axo_style_root_bg_color' ) ? $this->settings->get( 'axo_style_root_bg_color' ) : '',
@@ -233,9 +225,13 @@ class AxoManager {
 			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
 			'module_url'                 => untrailingslashit( $this->module_url ),
 			'ajax'                       => array(
-				'frontend_logger' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( FrontendLoggerEndpoint::ENDPOINT ),
-					'nonce'    => wp_create_nonce( FrontendLoggerEndpoint::nonce() ),
+				'frontend_logger'       => array(
+					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),
+					'nonce'    => wp_create_nonce( FrontendLogger::nonce() ),
+				),
+				'axo_script_attributes' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( AxoScriptAttributes::ENDPOINT ),
+					'nonce'    => wp_create_nonce( AxoScriptAttributes::nonce() ),
 				),
 			),
 			'logging_enabled'            => $this->settings->has( 'logging_enabled' ) ? $this->settings->get( 'logging_enabled' ) : '',
@@ -274,5 +270,4 @@ class AxoManager {
 			esc_html( $label )
 		);
 	}
-
 }

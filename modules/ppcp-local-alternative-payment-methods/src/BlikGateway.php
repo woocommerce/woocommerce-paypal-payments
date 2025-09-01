@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -53,18 +54,25 @@ class BlikGateway extends WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
+	 * The ExperienceContextBuilder.
+	 */
+	protected ExperienceContextBuilder $experience_context_builder;
+
+	/**
 	 * BlikGateway constructor.
 	 *
-	 * @param Orders                 $orders_endpoint PayPal Orders endpoint.
-	 * @param PurchaseUnitFactory    $purchase_unit_factory Purchase unit factory.
-	 * @param RefundProcessor        $refund_processor The Refund Processor.
-	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param Orders                   $orders_endpoint PayPal Orders endpoint.
+	 * @param PurchaseUnitFactory      $purchase_unit_factory Purchase unit factory.
+	 * @param RefundProcessor          $refund_processor The Refund Processor.
+	 * @param TransactionUrlProvider   $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param ExperienceContextBuilder $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
 		Orders $orders_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		RefundProcessor $refund_processor,
-		TransactionUrlProvider $transaction_url_provider
+		TransactionUrlProvider $transaction_url_provider,
+		ExperienceContextBuilder $experience_context_builder
 	) {
 		$this->id = self::ID;
 
@@ -86,10 +94,11 @@ class BlikGateway extends WC_Payment_Gateway {
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
-		$this->orders_endpoint          = $orders_endpoint;
-		$this->purchase_unit_factory    = $purchase_unit_factory;
-		$this->refund_processor         = $refund_processor;
-		$this->transaction_url_provider = $transaction_url_provider;
+		$this->orders_endpoint            = $orders_endpoint;
+		$this->purchase_unit_factory      = $purchase_unit_factory;
+		$this->refund_processor           = $refund_processor;
+		$this->transaction_url_provider   = $transaction_url_provider;
+		$this->experience_context_builder = $experience_context_builder;
 	}
 
 	/**
@@ -139,9 +148,14 @@ class BlikGateway extends WC_Payment_Gateway {
 			'intent'                 => 'CAPTURE',
 			'payment_source'         => array(
 				'blik' => array(
-					'country_code' => $wc_order->get_billing_country(),
-					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-					'email'        => $wc_order->get_billing_email(),
+					'country_code'       => $wc_order->get_billing_country(),
+					'name'               => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+					'email'              => $wc_order->get_billing_email(),
+					'experience_context' => $this->experience_context_builder
+						->with_order_return_urls( $wc_order )
+						->build()
+						->with_locale( 'en-PL' )
+						->to_array(),
 				),
 			),
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -155,11 +169,6 @@ class BlikGateway extends WC_Payment_Gateway {
 					'custom_id'    => $purchase_unit->custom_id(),
 					'invoice_id'   => $purchase_unit->invoice_id(),
 				),
-			),
-			'application_context'    => array(
-				'locale'     => 'en-PL',
-				'return_url' => $this->get_return_url( $wc_order ),
-				'cancel_url' => add_query_arg( 'cancelled', 'true', $this->get_return_url( $wc_order ) ),
 			),
 		);
 

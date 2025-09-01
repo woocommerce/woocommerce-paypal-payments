@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatusDetails;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class CaptureFactory
@@ -63,8 +64,9 @@ class CaptureFactory {
 	 * @param \stdClass $data The PayPal response.
 	 *
 	 * @return Capture
+	 * @throws RuntimeException When capture amount data is invalid.
 	 */
-	public function from_paypal_response( \stdClass $data ) : Capture {
+	public function from_paypal_response( \stdClass $data ): Capture {
 		$reason                      = $data->status_details->reason ?? null;
 		$seller_receivable_breakdown = isset( $data->seller_receivable_breakdown ) ?
 			$this->seller_receivable_breakdown_factory->from_paypal_response( $data->seller_receivable_breakdown )
@@ -74,13 +76,18 @@ class CaptureFactory {
 			$this->fraud_processor_response_factory->from_paypal_response( $data->processor_response )
 			: null;
 
+		$amount = $this->amount_factory->from_paypal_response( $data->amount );
+		if ( null === $amount ) {
+			throw new RuntimeException( 'Invalid capture amount data.' );
+		}
+
 		return new Capture(
 			(string) $data->id,
 			new CaptureStatus(
 				(string) $data->status,
 				$reason ? new CaptureStatusDetails( $reason ) : null
 			),
-			$this->amount_factory->from_paypal_response( $data->amount ),
+			$amount,
 			(bool) $data->final_capture,
 			(string) $data->seller_protection->status,
 			(string) $data->invoice_id,

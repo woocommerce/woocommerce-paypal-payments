@@ -5,22 +5,22 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * A value object capable of providing services.
  *
- * @package Dhii\Di
+ * @psalm-type Factory = callable(ContainerInterface): mixed
+ * @psalm-type Extension = callable(ContainerInterface, mixed): mixed
  */
 class ServiceProvider implements ServiceProviderInterface
 {
+    /** @var callable[] */
+    protected array $factories;
     /**
      * @var callable[]
      */
-    protected $factories;
-    /**
-     * @var callable[]
-     */
-    protected $extensions;
+    protected array $extensions;
 
     /**
      * @param callable[] $factories A map of service name to service factory.

@@ -45,5 +45,4 @@ class MockGateway extends \WC_Payment_Gateway {
 		// Hide mock gateway, except on admin.
 		return is_admin();
 	}
-
 }

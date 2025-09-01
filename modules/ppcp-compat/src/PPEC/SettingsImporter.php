@@ -231,5 +231,4 @@ class SettingsImporter {
 
 		return $result;
 	}
-
 }

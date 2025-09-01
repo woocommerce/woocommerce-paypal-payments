@@ -7,10 +7,10 @@
  * @file
  */
 
-import { select } from '@wordpress/data';
+import apiFetch from '@wordpress/api-fetch';
 
 import ACTION_TYPES from './action-types';
-import { STORE_NAME } from './constants';
+import { REST_PERSIST_PATH } from './constants';
 
 /**
  * @typedef {Object} Action An action object that is handled by a reducer or control.
@@ -37,80 +37,106 @@ export const hydrate = ( payload ) => ( {
 } );
 
 /**
+ * Generic transient-data updater.
+ *
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
+ * @return {Action} The action.
+ */
+export const setTransient = ( prop, value ) => ( {
+	type: ACTION_TYPES.SET_TRANSIENT,
+	payload: { [ prop ]: value },
+} );
+
+/**
+ * Generic persistent-data updater.
+ *
+ * @param {string} prop  Name of the property to update.
+ * @param {any}    value The new value of the property.
+ * @return {Action} The action.
+ */
+export const setPersistent = ( prop, value ) => ( {
+	type: ACTION_TYPES.SET_PERSISTENT,
+	payload: { [ prop ]: value },
+} );
+
+/**
  * Transient. Marks the onboarding details as "ready", i.e., fully initialized.
  *
  * @param {boolean} isReady
  * @return {Action} The action.
  */
-export const setIsReady = ( isReady ) => ( {
-	type: ACTION_TYPES.SET_TRANSIENT,
-	payload: { isReady },
-} );
+export const setIsReady = ( isReady ) => setTransient( 'isReady', isReady );
 
 /**
- * Persistent.Set the "onboarding completed" flag which shows or hides the wizard.
+ * Thunk action creator. Triggers the persistence of onboarding data to the server.
  *
- * @param {boolean} completed
- * @return {Action} The action.
+ * @return {Function} The thunk function.
  */
-export const setCompleted = ( completed ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { completed },
-} );
+export function persist() {
+	return async ( { select } ) => {
+		try {
+			await apiFetch( {
+				path: REST_PERSIST_PATH,
+				method: 'POST',
+				data: select.persistentData(),
+			} );
+		} catch ( e ) {
+			// We catch errors here, as the onboarding module is not handled by the persistAll hook.
+			console.error( 'Error saving progress.', e );
+		}
+	};
+}
 
 /**
- * Persistent. Sets the onboarding wizard to a new step.
+ * Thunk action creator. Forces a data refresh from the REST API, replacing the current Redux values.
  *
- * @param {number} step
- * @return {Action} The action.
+ * @return {Function} The thunk function.
  */
-export const setStep = ( step ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { step },
-} );
+export function refresh() {
+	return ( { dispatch, select } ) => {
+		dispatch.invalidateResolutionForStore();
+
+		select.persistentData();
+	};
+}
 
 /**
- * Persistent. Sets the "isCasualSeller" value.
+ * Persistent. Updates the gateway synced status.
  *
- * @param {boolean} isCasualSeller
+ * @param {boolean} synced The sync status to set
  * @return {Action} The action.
  */
-export const setIsCasualSeller = ( isCasualSeller ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { isCasualSeller },
-} );
+export const updateGatewaysSynced = ( synced = true ) =>
+	setPersistent( 'gatewaysSynced', synced );
 
 /**
- * Persistent. Sets the "areOptionalPaymentMethodsEnabled" value.
+ * Persistent. Updates the gateway refreshed status.
  *
- * @param {boolean} areOptionalPaymentMethodsEnabled
+ * @param {boolean} refreshed The refreshed status to set
  * @return {Action} The action.
  */
-export const setAreOptionalPaymentMethodsEnabled = (
-	areOptionalPaymentMethodsEnabled
-) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { areOptionalPaymentMethodsEnabled },
-} );
+export const updateGatewaysRefreshed = ( refreshed = true ) =>
+	setPersistent( 'gatewaysRefreshed', refreshed );
 
 /**
- * Persistent. Sets the "products" array.
+ * Action creator to sync payment gateways.
+ * This will both update the state and persist it.
  *
- * @param {string[]} products
- * @return {Action} The action.
+ * @return {Function} The thunk function.
  */
-export const setProducts = ( products ) => ( {
-	type: ACTION_TYPES.SET_PERSISTENT,
-	payload: { products },
-} );
+export function syncGateways() {
+	return async ( { dispatch } ) => {
+		dispatch( setPersistent( 'gatewaysSynced', true ) );
+		await dispatch.persist();
+		return { success: true };
+	};
+}
 
-/**
- * Side effect. Triggers the persistence of onboarding data to the server.
- *
- * @return {Action} The action.
- */
-export const persist = function* () {
-	const data = yield select( STORE_NAME ).persistentData();
-
-	yield { type: ACTION_TYPES.DO_PERSIST_DATA, data };
-};
+export function refreshGateways() {
+	return async ( { dispatch } ) => {
+		dispatch( setPersistent( 'gatewaysRefreshed', true ) );
+		await dispatch.persist();
+		return { success: true };
+	};
+}

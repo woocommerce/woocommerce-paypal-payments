@@ -46,7 +46,7 @@ class DisplayManager {
 	 * @param string|null $key The rule key.
 	 * @return DisplayRule
 	 */
-	public function rule( string $key = null ): DisplayRule {
+	public function rule( ?string $key = null ): DisplayRule {
 		if ( null === $key ) {
 			$key = '_rule_' . ( (string) count( $this->rules ) );
 		}
@@ -56,5 +56,4 @@ class DisplayManager {
 		$this->rules[ $key ] = $rule;
 		return $rule;
 	}
-
 }

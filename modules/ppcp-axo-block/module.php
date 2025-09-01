@@ -9,6 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
-return static function () : AxoBlockModule {
+return static function (): AxoBlockModule {
 	return new AxoBlockModule();
 };

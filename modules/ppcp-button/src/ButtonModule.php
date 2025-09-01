@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -214,6 +215,15 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'button.endpoint.cart-script-params' );
 				assert( $endpoint instanceof CartScriptParamsEndpoint );
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . GetOrderEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.get-order' );
+				assert( $endpoint instanceof GetOrderEndpoint );
 				$endpoint->handle_request();
 			}
 		);

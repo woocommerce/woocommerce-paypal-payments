@@ -1,4 +1,4 @@
-import MessagesBootstrap from '../../../../ppcp-button/resources/js/modules/ContextBootstrap/MessagesBootstap';
+import MessagesBootstrap from '../../../../ppcp-button/resources/js/modules/ContextBootstrap/MessagesBootstrap';
 import { debounce } from '../Helper/debounce';
 
 class BlockCheckoutMessagesBootstrap {

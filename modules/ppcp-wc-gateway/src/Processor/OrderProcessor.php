@@ -13,18 +13,19 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -37,7 +38,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class OrderProcessor {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
+	use OrderMetaTrait;
+	use PaymentsStatusHandlingTrait;
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The environment.
@@ -145,6 +148,11 @@ class OrderProcessor {
 	private $restore_order_data = array();
 
 	/**
+	 * The ExperienceContextBuilder.
+	 */
+	private ExperienceContextBuilder $experience_context_builder;
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -160,6 +168,7 @@ class OrderProcessor {
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The PurchaseUnit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
 	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
+	 * @param ExperienceContextBuilder    $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -174,7 +183,8 @@ class OrderProcessor {
 		OrderHelper $order_helper,
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
-		ShippingPreferenceFactory $shipping_preference_factory
+		ShippingPreferenceFactory $shipping_preference_factory,
+		ExperienceContextBuilder $experience_context_builder
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -190,6 +200,7 @@ class OrderProcessor {
 		$this->purchase_unit_factory         = $purchase_unit_factory;
 		$this->payer_factory                 = $payer_factory;
 		$this->shipping_preference_factory   = $shipping_preference_factory;
+		$this->experience_context_builder    = $experience_context_builder;
 	}
 
 	/**
@@ -212,12 +223,16 @@ class OrderProcessor {
 					throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
 				}
 			} else {
-				$this->logger->warning(
-					sprintf(
-						'No PayPal order ID found in order #%d meta.',
-						$wc_order->get_id()
-					)
-				);
+				$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+				if ( $is_paypal_return ) {
+					$this->logger->warning(
+						sprintf(
+							'No PayPal order ID found for WooCommerce order #%d.',
+							$wc_order->get_id()
+						)
+					);
+				}
 
 				throw new PayPalOrderMissingException(
 					esc_attr__(
@@ -226,6 +241,13 @@ class OrderProcessor {
 					)
 				);
 			}
+		}
+
+		// Do not continue if PayPal order status is completed.
+		$order = $this->order_endpoint->order( $order->id() );
+		if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
+			$this->logger->warning( 'Could not process PayPal completed order #' . $order->id() . ', Status: ' . $order->status()->name() );
+			return;
 		}
 
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
@@ -318,9 +340,16 @@ class OrderProcessor {
 			array( $pu ),
 			$shipping_preference,
 			$this->payer_factory->from_wc_order( $wc_order ),
-			null,
 			'',
-			ApplicationContext::USER_ACTION_PAY_NOW
+			array(),
+			new PaymentSource(
+				'paypal',
+				(object) array(
+					'experience_context' => $this->experience_context_builder
+						->with_default_paypal_config( $shipping_preference, ExperienceContext::USER_ACTION_PAY_NOW )
+						->build()->to_array(),
+				)
+			)
 		);
 
 		return $order;
@@ -403,7 +432,7 @@ class OrderProcessor {
 			$this->threed_secure->proceed_with_order( $order ),
 			array(
 				ThreeDSecure::NO_DECISION,
-				ThreeDSecure::PROCCEED,
+				ThreeDSecure::PROCEED,
 			),
 			true
 		);

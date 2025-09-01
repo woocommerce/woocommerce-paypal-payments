@@ -1,23 +1,17 @@
 import { ToggleControl } from '@wordpress/components';
 import { useRef } from '@wordpress/element';
 
-import SpinnerOverlay from './SpinnerOverlay';
-
 const SettingsToggleBlock = ( {
 	isToggled,
 	setToggled,
-	isLoading = false,
+	disabled = false,
 	...props
 } ) => {
 	const toggleRef = useRef( null );
 	const blockClasses = [ 'ppcp-r-toggle-block' ];
 
-	if ( isLoading ) {
-		blockClasses.push( 'ppcp--is-loading' );
-	}
-
 	const handleLabelClick = () => {
-		if ( ! toggleRef.current || isLoading ) {
+		if ( ! toggleRef.current || disabled ) {
 			return;
 		}
 
@@ -49,16 +43,16 @@ const SettingsToggleBlock = ( {
 				</div>
 				<div className="ppcp-r-toggle-block__switch">
 					<ToggleControl
+						__nextHasNoMarginBottom
 						ref={ toggleRef }
 						checked={ isToggled }
 						onChange={ ( newState ) => setToggled( newState ) }
-						disabled={ isLoading }
+						disabled={ disabled }
 					/>
 				</div>
 			</div>
 			{ props.children && isToggled && (
 				<div className="ppcp-r-toggle-block__toggled-content">
-					{ isLoading && <SpinnerOverlay /> }
 					{ props.children }
 				</div>
 			) }
