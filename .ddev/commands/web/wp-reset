@@ -25,7 +25,7 @@ reset-database() {
 
 	echo "Installing WordPress..."
 	wp core install \
-		--url=wp-test-site.ddev.site \
+		--url="${DDEV_PRIMARY_URL}" \
 		--title="${WP_TITLE}" \
 		--admin_user="${ADMIN_USER}" \
 		--admin_password="${ADMIN_PASS}" \
