@@ -10,7 +10,7 @@ show-help() {
 remove-plugins() {
 	echo "Deactivating all plugins..."
 	wp plugin deactivate --all --path=.ddev/wordpress
-	
+
 	echo "Deleting all plugins..."
 	wp plugin delete --all --path=.ddev/wordpress
 }
@@ -26,10 +26,10 @@ reset-database() {
 	echo "Installing WordPress..."
 	wp core install \
 		--url=wp-test-site.ddev.site \
-		--title="WooCommerce PayPal Payments" \
-		--admin_user=admin \
-		--admin_password=password \
-		--admin_email=test@ddev.site \
+		--title="${WP_TITLE}" \
+		--admin_user="${ADMIN_USER}" \
+		--admin_password="${ADMIN_PASS}" \
+		--admin_email="${ADMIN_EMAIL}" \
 		--path=.ddev/wordpress
 
 	echo "Database reset and WordPress installation completed!"
