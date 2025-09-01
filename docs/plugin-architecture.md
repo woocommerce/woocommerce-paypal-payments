@@ -17,9 +17,9 @@ The WooCommerce PayPal Payments plugin is built using a modular architecture pow
 ### Main Plugin File
 
 The plugin initialization begins in `woocommerce-paypal-payments.php`, which:
-- Loads the Composer autoloader
-- Checks for class existence to prevent conflicts
+- Loads the Composer autoloader if needed (e.g. may be already loaded in some tests)
 - Contains plugin metadata and constants definitions
+- It starts the bootstrap process, in `plugins_loaded` hook.
 
 ### Bootstrap System
 
@@ -37,7 +37,7 @@ return function (
     // Apply filters for customization
     $modules = apply_filters( 'woocommerce_paypal_payments_modules', $modules );
     
-    // Initialize plugin with Inpsyde Modularity
+    // Initialize plugin with Syde Modularity
     $properties = PluginProperties::new( "$root_dir/woocommerce-paypal-payments.php" );
     $bootstrap = Package::new( $properties );
     
@@ -67,7 +67,7 @@ class PPCP {
 }
 ```
 
-This allows modules to access services via `PPCP::container()->get('service.id')` after initialization.
+This allows third-party access services easily, such as in `api/order-functions.php`.
 
 ## Module System
 
@@ -127,7 +127,7 @@ modules/ppcp-example/
 
 ### Module Interface Implementation
 
-Most modules implement the Inpsyde Modularity interfaces (`modules/ppcp-api-client/src/ApiModule.php`):
+Most modules implement the Syde Modularity interfaces. For example in `modules/ppcp-api-client/src/ApiModule.php`:
 
 ```php
 class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, ExecutableModule {
@@ -160,6 +160,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 - **woocommerce-logging**: Logging infrastructure integration
 - **ppcp-api-client**: PayPal API integration, entities, and authentication
 - **ppcp-session**: Session management for payment flows
+- **ppcp-webhooks**: PayPal webhook handling
 
 ### Payment & Checkout Modules
 
@@ -172,7 +173,6 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 
 - **ppcp-settings**: New React-based admin settings interface
 - **ppcp-vaulting**: Saved payment methods functionality
-- **ppcp-webhooks**: PayPal webhook handling
 - **ppcp-onboarding**: Merchant onboarding flow
 
 ### Alternative Payment Methods
@@ -220,10 +220,10 @@ return array(
 Services can be accessed in multiple ways:
 
 ```php
-// In modules with container access
+// In our modules/services/extensions (also often passed to hook handlers via `use`)
 $service = $container->get( 'service.id' );
 
-// In WordPress hooks after plugin initialization
+// In third-party plugins etc. (if not adding a custom module via the `woocommerce_paypal_payments_modules` filter) 
 $service = PPCP::container()->get( 'service.id' );
 
 // Check for service availability
