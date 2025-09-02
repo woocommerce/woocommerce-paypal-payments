@@ -881,7 +881,7 @@ return (array) apply_filters(
 				'JERSEY_POST' => tr( 'Jersey Post', 'Name of carrier', 'woocommerce-paypal-payments' ),
 			),
 		),
-		'KOR'    => array(
+		'KR'     => array(
 			'name'  => tr( 'Korea', 'Name of carrier country', 'woocommerce-paypal-payments' ),
 			'items' => array(
 				'CELLO_SQUARE'     => tr( 'Cello Square', 'Name of carrier', 'woocommerce-paypal-payments' ),
@@ -900,8 +900,8 @@ return (array) apply_filters(
 				'TOLOS'            => tr( 'Tolos courier', 'Name of carrier', 'woocommerce-paypal-payments' ),
 			),
 		),
-		'LAO'    => array(
-			'name'  => tr( 'Lao People&#x27;s Democratic Republic (the)', 'Name of carrier country', 'woocommerce-paypal-payments' ),
+		'LA'     => array(
+			'name'  => tr( "Lao People's Democratic Republic (the)", 'Name of carrier country', 'woocommerce-paypal-payments' ),
 			'items' => array(
 				'LAO_POST' => tr( 'Lao Post', 'Name of carrier', 'woocommerce-paypal-payments' ),
 			),
@@ -1252,7 +1252,7 @@ return (array) apply_filters(
 				'TEAMEXPRESSLLC' => tr( 'Team Express Service LLC', 'Name of carrier', 'woocommerce-paypal-payments' ),
 			),
 		),
-		'GBR'    => array(
+		'GB'     => array(
 			'name'  => tr( 'United Kingdom', 'Name of carrier country', 'woocommerce-paypal-payments' ),
 			'items' => array(
 				'AMAZON'                  => tr( 'Amazon Shipping', 'Name of carrier', 'woocommerce-paypal-payments' ),
@@ -1309,7 +1309,7 @@ return (array) apply_filters(
 				'UK_YODEL'                => tr( 'Yodel (www.yodel.co.uk)', 'Name of carrier', 'woocommerce-paypal-payments' ),
 			),
 		),
-		'USA'    => array(
+		'US'     => array(
 			'name'  => tr( 'United States', 'Name of carrier country', 'woocommerce-paypal-payments' ),
 			'items' => array(
 				'3PE_EXPRESS'          => tr( '3PE Express', 'Name of carrier', 'woocommerce-paypal-payments' ),
