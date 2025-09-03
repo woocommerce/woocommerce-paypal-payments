@@ -470,15 +470,11 @@ class AxoManager {
 			'.woocommerce-billing-fields .form-row:visible'
 		);
 		const $billingHeaders = this.$( '.woocommerce-billing-fields h3' );
-		if ( this.billingView.isActive() ) {
-			if ( $billingFields.length ) {
-				$billingHeaders.show();
-			} else {
-				$billingHeaders.hide();
-			}
-		} else {
-			$billingHeaders.show();
-		}
+            if ( $billingFields.length ) {
+                $billingHeaders.show();
+            } else {
+                $billingHeaders.hide();
+            }
 	}
 
 	ensureShippingFieldsConsistency() {
@@ -486,15 +482,11 @@ class AxoManager {
 			'.woocommerce-shipping-fields .form-row:visible'
 		);
 		const $shippingHeaders = this.$( '.woocommerce-shipping-fields h3' );
-		if ( this.shippingView.isActive() ) {
-			if ( $shippingFields.length ) {
-				$shippingHeaders.show();
-			} else {
-				$shippingHeaders.hide();
-			}
-		} else {
-			$shippingHeaders.show();
-		}
+            if ( $shippingFields.length ) {
+                $shippingHeaders.show();
+            } else {
+                $shippingHeaders.hide();
+            }
 	}
 
 	showAxoEmailField() {
