@@ -264,12 +264,15 @@ class SingleProductBootstrap {
 			if ( this.subscriptionButtonsLoaded ) {
 				return;
 			}
+
 			loadPaypalJsScript(
 				{
 					clientId: PayPalCommerceGateway.client_id,
 					currency: PayPalCommerceGateway.currency,
 					intent: 'subscription',
 					vault: true,
+					disable_funding:
+						this.gateway.url_params[ 'disable-funding' ],
 				},
 				actionHandler.subscriptionsConfiguration( subscription_plan ),
 				this.gateway.button.wrapper
