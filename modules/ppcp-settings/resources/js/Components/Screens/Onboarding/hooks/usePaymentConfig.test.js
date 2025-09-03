@@ -1,70 +1,9 @@
 /* global describe, test, expect, jest */
 import { renderHook } from '@testing-library/react';
 import { usePaymentConfig } from './usePaymentConfig';
-import {
-	CardFields,
-	CreditDebitCards,
-	DigitalWallets,
-} from '../Components/PaymentOptions';
-
-jest.mock( '../../../../data/onboarding', () => ( {
-	hooks: {},
-	selectors: {},
-	STORE_NAME: 'test/store',
-	initStore: jest.fn().mockReturnValue( true ),
-} ) );
 
 jest.mock( '../../../../data', () => ( {
 	initStores: jest.fn(),
-} ) );
-
-jest.mock( '@wordpress/i18n', () => ( {
-	__: ( text ) => text,
-} ) );
-
-jest.mock( '@wordpress/element', () => ( {
-	useMemo: ( callback ) => callback(),
-	useEffect: ( callback ) => callback(),
-	useState: ( initialState ) => [ initialState, jest.fn() ],
-	createContext: () => ( {
-		Provider: ( { children } ) => children,
-		Consumer: ( { children } ) => children,
-	} ),
-	forwardRef: ( Component ) => Component,
-	Fragment: ( { children } ) => children,
-} ) );
-
-jest.mock( '@wordpress/data', () => ( {
-	useDispatch: () => ( {} ),
-	useSelect: () => ( {} ),
-	createReduxStore: () => ( {} ),
-	register: () => {},
-	select: () => ( {} ),
-} ) );
-
-jest.mock( '@wordpress/compose', () => ( {
-	createHigherOrderComponent: () => ( Component ) => Component,
-	withInstanceId: ( Component ) => Component,
-} ) );
-
-jest.mock( '@wordpress/components', () => ( {
-	Button: ( { children, ...props } ) => (
-		<button { ...props }>{ children }</button>
-	),
-} ) );
-
-jest.mock( '@wordpress/primitives', () => ( {
-	SVG: ( { children, ...props } ) => <svg { ...props }>{ children }</svg>,
-	Path: ( props ) => <path { ...props } />,
-} ) );
-
-jest.mock( '../../../../utils/countryInfoLinks', () => ( {
-	learnMoreLinks: {
-		US: { PayWithPayPal: 'https://example.com' },
-		GB: { PayWithPayPal: 'https://example.com' },
-		AU: { PayWithPayPal: 'https://example.com' },
-		MX: { PayWithPayPal: 'https://example.com' },
-	},
 } ) );
 
 const EXPECTED_PAYMENT_METHODS = [
