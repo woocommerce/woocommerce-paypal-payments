@@ -353,6 +353,7 @@ class PurchaseUnitFactory {
 		return ! $this->shipping_needed( ...array_values( $items ) ) ||
 				! $shipping_address ||
 				empty( $shipping_address->country_code() ) ||
+				empty( $shipping_address->address_line_1() ) ||
 				( ! $shipping_address->postal_code() && ! $this->country_without_postal_code( $shipping_address->country_code() ) );
 	}
 }
