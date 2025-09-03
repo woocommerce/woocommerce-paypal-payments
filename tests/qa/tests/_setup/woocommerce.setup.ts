@@ -58,15 +58,16 @@ setup( 'Setup Disable new UI plugin (inactive)', async ( { requestUtils } ) => {
 	}
 } );
 
-setup( 'Setup Disable Webhook Verification plugin (inactive)', async ( { plugins, requestUtils } ) => {
-	const plugin = disableWebhookVerifivationPlugin;
-	if (
-		! ( await requestUtils.isPluginInstalled( plugin.slug ) )
-	) {
-		await plugins.installPluginFromFile( plugin.zipFilePath );
+setup(
+	'Setup Disable Webhook Verification plugin (inactive)',
+	async ( { plugins, requestUtils } ) => {
+		const plugin = disableWebhookVerifivationPlugin;
+		if ( ! ( await requestUtils.isPluginInstalled( plugin.slug ) ) ) {
+			await plugins.installPluginFromFile( plugin.zipFilePath );
+		}
+		await requestUtils.deactivatePlugin( plugin.slug );
 	}
-	await requestUtils.deactivatePlugin( plugin.slug );
-} );
+);
 
 setup(
 	'Setup Disable WooCommerce Setup Wizard Plugin (active)',
@@ -176,7 +177,9 @@ setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 } );
 
 setup( 'Setup WooCommerce general settings', async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.updateGeneralSettings( shopSettings[country].general );
+	await wooCommerceApi.updateGeneralSettings(
+		shopSettings[ country ].general
+	);
 } );
 
 setup( 'Setup WooCommerce shipping', async ( { wooCommerceUtils } ) => {

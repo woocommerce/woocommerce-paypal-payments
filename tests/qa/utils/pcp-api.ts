@@ -57,7 +57,7 @@ export class PcpApi extends WooCommerceApiBase {
 			}
 		);
 		await this.updatePcpSettings( {
-			invoicePrefix: `${ generateRandomString( 8 ) }-`
+			invoicePrefix: `${ generateRandomString( 8 ) }-`,
 		} );
 		return response;
 	};
@@ -122,7 +122,7 @@ export class PcpApi extends WooCommerceApiBase {
 
 	/**
 	 * Triggers Vaulting Subscription Renewal process
-	 * 
+	 *
 	 * @param subscriptionId
 	 */
 	triggerVaultingSubscriptionRenewal = async ( subscriptionId: number ) => {
@@ -134,9 +134,12 @@ export class PcpApi extends WooCommerceApiBase {
 			action: 'edit_order',
 			wc_order_action: 'wcs_process_renewal',
 		};
-		const response = await this.requestUtils.submitPageForm( url, formData );
+		const response = await this.requestUtils.submitPageForm(
+			url,
+			formData
+		);
 		return response.ok();
-	}
+	};
 
 	isPayPalSubscription( subscription: WooCommerce.Subscription ): boolean {
 		return !! subscription?.meta_data?.some(
@@ -147,13 +150,15 @@ export class PcpApi extends WooCommerceApiBase {
 	/**
 	 * Get's renewal order IDs
 	 * Utilizes the retry mechanism because after the renewal there appeared to be a delay
-	 * 
+	 *
 	 * @param subscriptionId
 	 */
-	getSubscriptionRenewalOrderIds = async ( subscriptionId: number ): Promise< number [] > => {
+	getSubscriptionRenewalOrderIds = async (
+		subscriptionId: number
+	): Promise< number[] > => {
 		let subscription = await this.getSubscription( subscriptionId );
 
-		if( ! subscription ) {
+		if ( ! subscription ) {
 			console.error( `Subscription #${ subscriptionId } was not found.` );
 			return [];
 		}
@@ -169,7 +174,7 @@ export class PcpApi extends WooCommerceApiBase {
 				( meta ) => meta.key === '_subscription_renewal_order_ids_cache'
 			);
 
-			if( subscriptionMeta?.value?.length ) {
+			if ( subscriptionMeta?.value?.length ) {
 				return subscriptionMeta.value;
 			}
 
@@ -182,14 +187,16 @@ export class PcpApi extends WooCommerceApiBase {
 			retryCount++;
 		} while ( retryCount < MAX_RETRY_COUNT );
 
-		console.error( `_subscription_renewal_order_ids_cache was not found in ${ MAX_RETRY_COUNT } sec.` );
+		console.error(
+			`_subscription_renewal_order_ids_cache was not found in ${ MAX_RETRY_COUNT } sec.`
+		);
 		return [];
-	}
+	};
 
 	getPayPalSubscriptionBillingId = async ( subscriptionId: number ) => {
 		const subscription = await this.getSubscription( subscriptionId );
 
-		if( ! subscription ) {
+		if ( ! subscription ) {
 			console.error( `Subscription #${ subscriptionId } was not found.` );
 			return 0;
 		}
@@ -199,26 +206,30 @@ export class PcpApi extends WooCommerceApiBase {
 		);
 
 		return subscriptionMeta.value;
-	}
+	};
 
 	/**
 	 * Triggers PayPal Subscription Renewal process
-	 * 
+	 *
 	 * @param subscriptionId
 	 */
 	triggerPayPalSubscriptionRenewal = async ( subscriptionId: number ) => {
-		const billingId = await this.getPayPalSubscriptionBillingId( subscriptionId );
+		const billingId = await this.getPayPalSubscriptionBillingId(
+			subscriptionId
+		);
 		const response = await this.requestUtils.request.post(
-			urls.payPalWebhook, {
-			data: {
-				id: 'NOT-IMPORTANT',
-				event_type: 'PAYMENT.SALE.COMPLETED',
-				resource: {
-					billing_agreement_id: billingId,
+			urls.payPalWebhook,
+			{
+				data: {
 					id: 'NOT-IMPORTANT',
+					event_type: 'PAYMENT.SALE.COMPLETED',
+					resource: {
+						billing_agreement_id: billingId,
+						id: 'NOT-IMPORTANT',
+					},
 				},
-			},
-		} );
+			}
+		);
 		return response.ok();
-	}
+	};
 }

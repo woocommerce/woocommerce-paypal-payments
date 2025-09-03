@@ -17,7 +17,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				guest.email,
 				payment.payPalAccount?.email,
 			];
-			for( const email of previousEmails ) {
+			for ( const email of previousEmails ) {
 				await wooCommerceUtils.deleteCustomer( { email } );
 			}
 		} );
@@ -37,7 +37,8 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
@@ -59,11 +60,9 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				if ( payment.saveToAccount !== false ) {
-					await classicCheckout
-						.payPalUi
-						.assertVaultedPaymentMethodIsDisplayedOnClassicCheckout(
-							payment
-						);
+					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayedOnClassicCheckout(
+						payment
+					);
 				} else {
 					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsNotDisplayed(
 						payment
@@ -108,7 +107,8 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(

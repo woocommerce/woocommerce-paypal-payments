@@ -2,7 +2,12 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { disableWebhookVerifivationPlugin, merchants, products, storeConfigUsa } from '../../resources';
+import {
+	disableWebhookVerifivationPlugin,
+	merchants,
+	products,
+	storeConfigUsa,
+} from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
 	testFreeTrialSubscriptionRenewal,
@@ -22,10 +27,7 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 		wpDebugging: false,
 		classicPages: false,
 		subscription: true,
-		products: [
-			products.subscription100,
-			products.subscriptionFreeTrial,
-		],
+		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -36,7 +38,7 @@ test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 			isCasualSeller: false,
 			areOptionalPaymentMethodsEnabled: true,
 			products: [ 'physical', 'virtual', 'subscriptions' ],
-		},
+		}
 	);
 } );
 
@@ -83,4 +85,4 @@ test.describe( 'PayPal Subscription', () => {
 	for ( const testData of payPalFreeTrialRenewal ) {
 		testFreeTrialSubscriptionRenewal( testData );
 	}
-});
+} );

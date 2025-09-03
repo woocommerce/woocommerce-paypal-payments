@@ -19,9 +19,9 @@ const { payPal, venmo, acdc, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
-			...storeConfigUsa,
-			customer: customers.usa,
-		} );
+		...storeConfigUsa,
+		customer: customers.usa,
+	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
 	await pcpApi.connectMerchant(

@@ -5,8 +5,7 @@ import { urls } from '@inpsyde/playwright-utils/build';
 
 export default {
 	...urls.frontend,
-	payPalWebhook:
-		'/wp-json/paypal/v1/incoming',
+	payPalWebhook: '/wp-json/paypal/v1/incoming',
 	admin: {
 		...urls.admin,
 		pcp: {

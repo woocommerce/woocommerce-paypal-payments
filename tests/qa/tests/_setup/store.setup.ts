@@ -28,62 +28,65 @@ type EnvConfig = {
 		};
 		customer?: WooCommerce.CreateCustomer; // Add registered customer
 		products?: WooCommerce.CreateProducts[]; // Products to be created if not existing
-	},
+	};
 	pcp?: {
 		resetDb?: boolean;
 		onboarding?: {
 			merchant?: Pcp.Merchant;
-			onboardingOptions?: Pcp.Api.OnboardingOptions
+			onboardingOptions?: Pcp.Api.OnboardingOptions;
 		};
 		settings?: Pcp.Api.Settings;
 		paymentMethods?: Pcp.Api.PaymentMethods;
-	}
+	};
 };
 
 const configureEnv = ( data: EnvConfig ) => {
 	const { title, store, pcp } = data;
 
-	if( store ) {
+	if ( store ) {
 		setup( `${ title } Setup store settings`, async ( { utils } ) => {
 			await utils.configureStore( store );
 		} );
 	}
 
-	if( pcp ) {
+	if ( pcp ) {
 		setup( `${ title } Install/activate PCP`, async ( { utils } ) => {
 			await utils.installAndActivatePcp();
 		} );
 
-		if( pcp?.resetDb ) {
+		if ( pcp?.resetDb ) {
 			setup( `${ title } Reset PCP DB`, async ( { pcpApi } ) => {
 				await pcpApi.resetDb();
 			} );
 		}
 
-		if( pcp?.onboarding ) {
+		if ( pcp?.onboarding ) {
 			setup( `${ title } Onboarding`, async ( { pcpApi } ) => {
-			const { merchant, onboardingOptions } = pcp.onboarding;
+				const { merchant, onboardingOptions } = pcp.onboarding;
 				await pcpApi.connectMerchant(
 					merchant.client_id,
 					merchant.client_secret,
-					onboardingOptions,
+					onboardingOptions
 				);
 			} );
 		}
 
-		if( pcp?.settings ) {
+		if ( pcp?.settings ) {
 			setup( `${ title } Update PCP settings`, async ( { pcpApi } ) => {
 				await pcpApi.updatePcpSettings( pcp.settings );
 			} );
 		}
-			
-		if( pcp?.paymentMethods ) {
-			setup( `${ title } Update PCP payment methods`, async ( { pcpApi } ) => {
-				await pcpApi.updatePcpPaymentMethods( pcp.paymentMethods );
-			} );
+
+		if ( pcp?.paymentMethods ) {
+			setup(
+				`${ title } Update PCP payment methods`,
+				async ( { pcpApi } ) => {
+					await pcpApi.updatePcpPaymentMethods( pcp.paymentMethods );
+				}
+			);
 		}
 	}
-}
+};
 
 configureEnv( {
 	title: 'setup:checkout:block;',
@@ -118,8 +121,8 @@ configureEnv( {
 				id: 'ppcp-credit-card-gateway',
 				enabled: true,
 			},
-		}
-	}
+		},
+	},
 } );
 
 configureEnv( {
@@ -130,7 +133,7 @@ configureEnv( {
 		onboarding: {
 			merchant: merchants.germany,
 		},
-	}
+	},
 } );
 
 configureEnv( {
@@ -141,7 +144,7 @@ configureEnv( {
 		onboarding: {
 			merchant: merchants.mexico,
 		},
-	}
+	},
 } );
 
 configureEnv( {
@@ -154,13 +157,13 @@ configureEnv( {
 			onboardingOptions: {
 				isCasualSeller: false,
 				areOptionalPaymentMethodsEnabled: true,
-			}
+			},
 		},
 		settings: {
 			savePaypalAndVenmo: true,
 			saveCardDetails: true,
 		},
-	}
+	},
 } );
 
 configureEnv( {
@@ -176,13 +179,13 @@ configureEnv( {
 			onboardingOptions: {
 				isCasualSeller: false,
 				areOptionalPaymentMethodsEnabled: true,
-			}
+			},
 		},
 		settings: {
 			savePaypalAndVenmo: true,
 			saveCardDetails: true,
 		},
-	}
+	},
 } );
 
 configureEnv( {
@@ -190,10 +193,7 @@ configureEnv( {
 	store: {
 		...storeConfigUsa,
 		subscription: true,
-		products: [
-			products.subscription100,
-			products.subscriptionFreeTrial,
-		],
+		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	},
 	pcp: {
 		resetDb: true,
@@ -203,9 +203,9 @@ configureEnv( {
 				isCasualSeller: false,
 				areOptionalPaymentMethodsEnabled: true,
 				products: [ 'physical', 'virtual', 'subscriptions' ],
-			}
+			},
 		},
-	}
+	},
 } );
 
 setup( 'setup:pcp:usa:paypal:subscription;', async ( { utils, pcpApi } ) => {
@@ -223,7 +223,7 @@ setup( 'setup:pcp:usa:paypal:subscription;', async ( { utils, pcpApi } ) => {
 			isCasualSeller: false,
 			areOptionalPaymentMethodsEnabled: true,
 			products: [ 'physical', 'virtual', 'subscriptions' ],
-		},
+		}
 	);
 	await pcpApi.updatePcpSettings( {
 		savePaypalAndVenmo: false,

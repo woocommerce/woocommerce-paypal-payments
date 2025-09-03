@@ -18,11 +18,11 @@ export class PayPalPopup {
 	loginWithPasswordInsteadLink = () =>
 		this.page.getByRole( 'link', {
 			name: 'Log in with a password instead',
-		} )
+		} );
 	loginWithYourPasswordLink = () =>
-		this.page.getByRole('link', { name: 'Login with password' });
+		this.page.getByRole( 'link', { name: 'Login with password' } );
 	tryAnotherWayLink = () =>
-		this.page.getByRole( 'link', { name: 'Try another way', } );
+		this.page.getByRole( 'link', { name: 'Try another way' } );
 	loginInput = () => this.page.locator( '[name="login_email"]' );
 	passwordInput = () => this.page.locator( '[name="login_password"]' );
 	nextButton = () => this.page.locator( '#btnNext' );
@@ -43,20 +43,19 @@ export class PayPalPopup {
 	cancelLink = () => this.page.locator( '#cancelLink' );
 	loadSpinnerContainer = () => this.page.locator( '#preloaderSpinner' );
 
-
 	// Actions
-	
+
 	/**
 	 *  Log in to PayPal
-	 * 
-	 * @param email 
-	 * @param password 
+	 *
+	 * @param email
+	 * @param password
 	 */
 	login = async ( email, password ) => {
 		await this.tryLoginWithPasswordInstead();
 
 		await this.loginInput().fill( email );
-		
+
 		await this.tryLoginWithPasswordInstead();
 
 		await this.tryClickNext();
@@ -73,7 +72,10 @@ export class PayPalPopup {
 	 */
 	tryLoginWithPasswordInstead = async () => {
 		try {
-			await this.loginWithPasswordInsteadLink().waitFor({ state: 'visible', timeout: 4000 });
+			await this.loginWithPasswordInsteadLink().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
 			await this.loginWithPasswordInsteadLink().click();
 		} catch {}
 	};
@@ -84,7 +86,10 @@ export class PayPalPopup {
 	 */
 	tryClickNext = async () => {
 		try {
-			await this.nextButton().waitFor({ state: 'visible', timeout: 4000 });
+			await this.nextButton().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
 			await this.nextButton().click();
 		} catch {}
 	};
@@ -95,7 +100,10 @@ export class PayPalPopup {
 	 */
 	tryAnotherWay = async () => {
 		try {
-			await this.tryAnotherWayLink().waitFor({ state: 'visible', timeout: 4000 });
+			await this.tryAnotherWayLink().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
 			await this.tryAnotherWayLink().click();
 			await this.loginWithYourPasswordLink().click();
 		} catch {}
@@ -107,7 +115,7 @@ export class PayPalPopup {
 
 		while ( ! this.page.isClosed() ) {
 			const submitButton = this.submitPaymentButton();
-			if ( ! await submitButton.isVisible() ) {
+			if ( ! ( await submitButton.isVisible() ) ) {
 				break; // No visible button, exit
 			}
 
@@ -115,7 +123,7 @@ export class PayPalPopup {
 			try {
 				await Promise.race( [
 					submitButton.click(),
-					this.page.waitForEvent( 'close', { timeout: 30 * 1000 } ) // Short timeout to prevent hang
+					this.page.waitForEvent( 'close', { timeout: 30 * 1000 } ), // Short timeout to prevent hang
 				] );
 			} catch ( error ) {
 				if ( this.page.isClosed() ) break; // Exit cleanly if popup closed
@@ -124,8 +132,12 @@ export class PayPalPopup {
 
 			// Optional: wait for spinner to disappear
 			try {
-				await expect( this.loadSpinnerContainer() ).toBeVisible( { timeout: 1000 } );
-				await expect( this.loadSpinnerContainer() ).not.toBeVisible( { timeout: 4000 } );
+				await expect( this.loadSpinnerContainer() ).toBeVisible( {
+					timeout: 1000,
+				} );
+				await expect( this.loadSpinnerContainer() ).not.toBeVisible( {
+					timeout: 4000,
+				} );
 			} catch {
 				// Spinner didn't appear, continue
 			}

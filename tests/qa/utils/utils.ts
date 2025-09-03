@@ -67,9 +67,11 @@ export class Utils {
 	 */
 	restoreCustomer = async ( customer: WooCommerce.CreateCustomer ) => {
 		await this.wooCommerceUtils.deleteCustomer( customer );
-		if( customer.username ) {
-			const user = await this.requestUtils.getUserByName( customer.username );
-			if( user.length ) {
+		if ( customer.username ) {
+			const user = await this.requestUtils.getUserByName(
+				customer.username
+			);
+			if ( user.length ) {
 				await this.requestUtils.deleteUser( user[ 0 ].id );
 			}
 		}
@@ -164,8 +166,8 @@ export class Utils {
 
 	/**
 	 * Checks if the product type is "subscription", connected to PayPal
-	 * 
-	 * @param product 
+	 *
+	 * @param product
 	 */
 	isPayPalSubscriptionProduct = (
 		product: WooCommerce.CreateProduct
@@ -183,11 +185,11 @@ export class Utils {
 		}
 
 		return payPalMeta.value === 'yes';
-	}
+	};
 
 	/**
 	 * Connects existing Subscription product to PayPal plan
-	 * 
+	 *
 	 * @param subscriptionId
 	 */
 	connectPayPalSubscriptionProduct = async ( subscriptionId: number ) => {
@@ -205,9 +207,12 @@ export class Utils {
 			post_ID: subscriptionId,
 			action: 'editpost',
 		};
-		const response = await this.requestUtils.submitPageForm( url, formData );
+		const response = await this.requestUtils.submitPageForm(
+			url,
+			formData
+		);
 		return response.ok();
-	}
+	};
 
 	/**
 	 * Configures store according to the data provided:
@@ -228,6 +233,7 @@ export class Utils {
 	 * @param          data.taxes.options
 	 * @param          data.taxes.rates
 	 * @param          data.customer
+	 * @param          data.products
 	 */
 	configureStore = async ( data: {
 		wpDebugging?: boolean; // Is WP Debugging plugin activated
@@ -250,7 +256,7 @@ export class Utils {
 			customer,
 			products,
 		} = data;
-		
+
 		if ( subscription === true ) {
 			await this.requestUtils.activatePlugin( subscriptionsPlugin.slug );
 		}
@@ -291,16 +297,17 @@ export class Utils {
 			await this.restoreCustomer( customer );
 		}
 
-		if( products ) {
+		if ( products ) {
 			// create test products
 			const cartItems = {};
 			await Promise.all(
 				products.map( async ( product ) => {
-					const createdProduct = await this.wooCommerceUtils.createProduct(
-						product
-					);
-					if( this.isPayPalSubscriptionProduct( product ) ) {
-						await this.connectPayPalSubscriptionProduct( createdProduct.id );
+					const createdProduct =
+						await this.wooCommerceUtils.createProduct( product );
+					if ( this.isPayPalSubscriptionProduct( product ) ) {
+						await this.connectPayPalSubscriptionProduct(
+							createdProduct.id
+						);
 					}
 					// Create cart items { id: 123 }
 					cartItems[ product.slug ] = { id: createdProduct.id };
@@ -309,7 +316,7 @@ export class Utils {
 
 			// Parse existing PRODUCTS, if any
 			const existingProducts = process.env.PRODUCTS
-				? JSON.parse(process.env.PRODUCTS)
+				? JSON.parse( process.env.PRODUCTS )
 				: {};
 
 			// Merge created products with existing and store back as JSON string

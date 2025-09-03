@@ -11,9 +11,13 @@
 ### Transaction tests
 
 - Default order (type `ShopOrder`) by registered customer.
+
 - Payment details (type `Pcp.Payment`)
-	- Additional flag `saveToAccount: boolean`. Always true for PayPal (should be always saved if vaulting is enabled). For ACDC, depending on test case, can be true or false resulting in saved or not saved card for the customer.
-	- Additional flag `isVaulted: boolean` - to use vaulted payment method in `PayPalUi.makePayment` method.
+
+    - Additional flag `saveToAccount: boolean`. Always true for PayPal (should be always saved if vaulting is enabled). For ACDC, depending on test case, can be true or false resulting in saved or not saved card for the customer.
+
+    - Additional flag `isVaulted: boolean` - to use vaulted payment method in `PayPalUi.makePayment` method.
+
 - Registered customer (type `WooCommerce.CreateCustomer`)
 
 ## Preconditions
@@ -55,7 +59,7 @@ Approximate scenario for "Save payment method":
 - PCP-0000 | Vaulting - Transaction - Classic checkout - PayPal - Pay with saved payment method
 - PCP-0000 | Vaulting - Transaction - Classic checkout - ACDC - Pay with saved payment method
 
-#### Approximate scenario for "Save payment method":
+#### Approximate scenario for "Save payment method"
 
 1. Assert customer has no saved payment method.
 
@@ -63,7 +67,7 @@ Approximate scenario for "Save payment method":
 
 3. Assert payment method has been saved. Depends on specified `saveToAccount` flag.
 
-#### Approximate scenario for "Pay with saved payment method":
+#### Approximate scenario for "Pay with saved payment method"
 
 1. Save payment method via My Account.
 

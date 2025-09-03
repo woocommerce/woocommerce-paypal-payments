@@ -1,7 +1,10 @@
 /**
- * Internal dependencies
+ * External dependencies
  */
 import { countTotals } from '@inpsyde/playwright-utils/build';
+/**
+ * Internal dependencies
+ */
 import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
@@ -41,8 +44,11 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				const orderJson = await wooCommerceApi.getOrder( orderId );
 				const transactionId = orderJson.transaction_id;
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
-				const subscriptionJson = await wooCommerceApi.getSubscription( subscriptionId );
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
+				const subscriptionJson = await wooCommerceApi.getSubscription(
+					subscriptionId
+				);
 
 				const total = await countTotals( testOrder );
 
@@ -57,16 +63,24 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					id: subscriptionId,
 					relationship: 'Subscription',
 					status: 'Active',
-					total: total.order
+					total: total.order,
 				};
 
 				let pcpData = {};
 				// TODO: clarify expected paypal data
-				if( ! await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
+				if (
+					! ( await pcpApi.isPayPalSubscription( subscriptionJson ) )
+				) {
 					pcpData = {
 						transactionId,
-						payPalFee: await payPalApi.getFee( transactionId, testOrder ),
-						payPalPayout: await payPalApi.getPayout( transactionId, testOrder ),
+						payPalFee: await payPalApi.getFee(
+							transactionId,
+							testOrder
+						),
+						payPalPayout: await payPalApi.getPayout(
+							transactionId,
+							testOrder
+						),
 					};
 
 					await payPalApi.assertOrder( orderJson, testOrder );
@@ -80,64 +94,61 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				);
 				await wooCommerceOrderEdit.assertRelatedOrders(
 					[ relatedSubscription ],
-					currency,
+					currency
 				);
-				
+
 				await wooCommerceSubscriptionEdit.visit( subscriptionId );
 				await wooCommerceSubscriptionEdit.assertSubscriptionDetails(
 					testOrder
 				);
 				await wooCommerceSubscriptionEdit.assertRelatedOrders(
 					[ relatedParentOrder ],
-					currency,
+					currency
 				);
 
 				// Subscription renewal
-				if( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
-					await pcpApi.triggerPayPalSubscriptionRenewal( subscriptionId );
+				if ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
+					await pcpApi.triggerPayPalSubscriptionRenewal(
+						subscriptionId
+					);
+				} else {
+					await pcpApi.triggerVaultingSubscriptionRenewal(
+						subscriptionId
+					);
 				}
-				else {
-					await pcpApi.triggerVaultingSubscriptionRenewal( subscriptionId );
-				}
-				const renewalOrderIds = await pcpApi.getSubscriptionRenewalOrderIds( subscriptionId );
+				const renewalOrderIds =
+					await pcpApi.getSubscriptionRenewalOrderIds(
+						subscriptionId
+					);
 				await expect( renewalOrderIds ).toHaveLength( 1 );
 
-				let relatedRenewalOrders = [];
-				
-				for( const renewalOrderId of renewalOrderIds ) {
+				const relatedRenewalOrders = [];
+
+				for ( const renewalOrderId of renewalOrderIds ) {
 					relatedRenewalOrders.push( {
 						id: renewalOrderId,
 						relationship: 'Renewal Order',
 						status: 'Processing',
-						total: total.order
+						total: total.order,
 					} );
 				}
 
 				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertRelatedOrders(
-					[
-						relatedSubscription,
-						...relatedRenewalOrders,
-					],
-					currency,
+					[ relatedSubscription, ...relatedRenewalOrders ],
+					currency
 				);
 
 				await wooCommerceSubscriptionEdit.visit( subscriptionId );
 				await wooCommerceSubscriptionEdit.assertRelatedOrders(
-					[
-						relatedParentOrder,
-						...relatedRenewalOrders,
-					],
-					currency,
+					[ relatedParentOrder, ...relatedRenewalOrders ],
+					currency
 				);
-				
+
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertRelatedOrders(
-					[
-						relatedParentOrder,
-						...relatedRenewalOrders,
-					],
-					currency,
+					[ relatedParentOrder, ...relatedRenewalOrders ],
+					currency
 				);
 			}
 		);
@@ -176,8 +187,11 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
-				const subscriptionJson = await wooCommerceApi.getSubscription( subscriptionId );
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
+				const subscriptionJson = await wooCommerceApi.getSubscription(
+					subscriptionId
+				);
 
 				const freeTrialTotal = await countTotals( testOrder );
 				// Assert free-trial test order with 0 price and shipping
@@ -187,7 +201,10 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				);
 
 				// For free-trial subscription product set trial length = 0 so for renewal order it's not counted as 0 price
-				testOrder.products[ 0 ] = await setSubscriptionTrialLength( products[ 0 ], '0' );
+				testOrder.products[ 0 ] = await setSubscriptionTrialLength(
+					products[ 0 ],
+					'0'
+				);
 				// Count order totals for subscription and upcoming renewal orders
 				const total = await countTotals( testOrder );
 
@@ -202,68 +219,65 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 					id: subscriptionId,
 					relationship: 'Subscription',
 					status: 'Active',
-					total: total.order
+					total: total.order,
 				};
 				await wooCommerceOrderEdit.assertRelatedOrders(
 					[ relatedSubscription ],
-					currency,
+					currency
 				);
-				
+
 				await wooCommerceSubscriptionEdit.visit( subscriptionId );
 				await wooCommerceSubscriptionEdit.assertSubscriptionDetails(
 					testOrder
 				);
 				await wooCommerceSubscriptionEdit.assertRelatedOrders(
 					[ relatedParentOrder ],
-					currency,
+					currency
 				);
 
 				// Subscription renewal
-				if( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
-					await pcpApi.triggerPayPalSubscriptionRenewal( subscriptionId );
+				if ( await pcpApi.isPayPalSubscription( subscriptionJson ) ) {
+					await pcpApi.triggerPayPalSubscriptionRenewal(
+						subscriptionId
+					);
+				} else {
+					await pcpApi.triggerVaultingSubscriptionRenewal(
+						subscriptionId
+					);
 				}
-				else {
-					await pcpApi.triggerVaultingSubscriptionRenewal( subscriptionId );
-				}
-				const renewalOrderIds = await pcpApi.getSubscriptionRenewalOrderIds( subscriptionId );
+				const renewalOrderIds =
+					await pcpApi.getSubscriptionRenewalOrderIds(
+						subscriptionId
+					);
 				await expect( renewalOrderIds ).toHaveLength( 1 );
 
-				let relatedRenewalOrders = [];
-				
-				for( const renewalOrderId of renewalOrderIds ) {
+				const relatedRenewalOrders = [];
+
+				for ( const renewalOrderId of renewalOrderIds ) {
 					relatedRenewalOrders.push( {
 						id: renewalOrderId,
 						relationship: 'Renewal Order',
 						status: 'Processing',
-						total: total.order
+						total: total.order,
 					} );
 				}
 
 				await wooCommerceOrderEdit.visit( orderId );
 				await wooCommerceOrderEdit.assertRelatedOrders(
-					[
-						relatedSubscription,
-						...relatedRenewalOrders,
-					],
-					currency,
+					[ relatedSubscription, ...relatedRenewalOrders ],
+					currency
 				);
 
 				await wooCommerceSubscriptionEdit.visit( subscriptionId );
 				await wooCommerceSubscriptionEdit.assertRelatedOrders(
-					[
-						relatedParentOrder,
-						...relatedRenewalOrders,
-					],
-					currency,
+					[ relatedParentOrder, ...relatedRenewalOrders ],
+					currency
 				);
-				
+
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertRelatedOrders(
-					[
-						relatedParentOrder,
-						...relatedRenewalOrders,
-					],
-					currency,
+					[ relatedParentOrder, ...relatedRenewalOrders ],
+					currency
 				);
 			}
 		);
@@ -272,7 +286,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 
 const setSubscriptionTrialLength = (
 	product: WooCommerce.CreateProduct,
-	value = '0',
+	value = '0'
 ) => {
 	if ( ! product.meta_data ) {
 		return product;
@@ -280,10 +294,10 @@ const setSubscriptionTrialLength = (
 
 	return {
 		...product,
-		meta_data: product.meta_data.map( item => 
-		item.key === '_subscription_trial_length' 
-			? { ...item, value }
-			: item
-		)
+		meta_data: product.meta_data.map( ( item ) =>
+			item.key === '_subscription_trial_length'
+				? { ...item, value }
+				: item
+		),
 	};
-}
+};

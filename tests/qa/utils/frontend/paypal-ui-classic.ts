@@ -305,9 +305,9 @@ export class PayPalUiClassic extends PayPalUi {
 		this.page.locator(
 			'li.payment_method_ppcp-axo-gateway label[for="payment_method_ppcp-axo-gateway"]'
 		);
-	
+
 	usingVaultedPayPalAccountText = ( payPalEmail: string ) =>
-		this.page.getByText( `Using ${ payPalEmail } PayPal.` )
+		this.page.getByText( `Using ${ payPalEmail } PayPal.` );
 
 	// Actions
 
@@ -467,16 +467,16 @@ export class PayPalUiClassic extends PayPalUi {
 				await expect(
 					this.payPalButtonMoreOptions().or(
 						// Case on classic checkout
-						this.usingVaultedPayPalAccountText( payPalAccount?.email )
+						this.usingVaultedPayPalAccountText(
+							payPalAccount?.email
+						)
 					)
 				).toBeVisible();
 				break;
 
 			case 'acdc':
 				await this.acdcGateway().click();
-				await expect(
-					this.acdcSavedCard( card )
-				).toBeVisible();
+				await expect( this.acdcSavedCard( card ) ).toBeVisible();
 				break;
 		}
 	};
@@ -486,7 +486,9 @@ export class PayPalUiClassic extends PayPalUi {
 	 *
 	 * @param payment
 	 */
-	assertVaultedPaymentMethodIsDisplayedOnClassicCheckout = async ( payment: Pcp.Payment ) => {
+	assertVaultedPaymentMethodIsDisplayedOnClassicCheckout = async (
+		payment: Pcp.Payment
+	) => {
 		const { gateway, payPalAccount, card } = payment;
 		switch ( gateway.shortcut ) {
 			case 'paypal':
@@ -501,9 +503,7 @@ export class PayPalUiClassic extends PayPalUi {
 
 			case 'acdc':
 				await this.acdcGateway().click();
-				await expect(
-					this.acdcSavedCard( card )
-				).toBeVisible();
+				await expect( this.acdcSavedCard( card ) ).toBeVisible();
 				break;
 		}
 	};
@@ -526,7 +526,9 @@ export class PayPalUiClassic extends PayPalUi {
 					this.payPalButtonMoreOptions()
 				).not.toBeVisible();
 				await expect(
-					this.usingVaultedPayPalAccountText( payment.payPalAccount?.email )
+					this.usingVaultedPayPalAccountText(
+						payment.payPalAccount?.email
+					)
 				).not.toBeVisible();
 				break;
 

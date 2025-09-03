@@ -1,7 +1,15 @@
 /**
  * Internal dependencies
  */
-import { customers, guests, merchants, orders, payments, products, ShopOrder } from '../../../resources';
+import {
+	customers,
+	guests,
+	merchants,
+	orders,
+	payments,
+	products,
+	ShopOrder,
+} from '../../../resources';
 
 const guest = guests.usa;
 const customer = customers.usa;
@@ -13,7 +21,7 @@ const vaultingGuest: ShopOrder[] = [
 		title: 'PCP-1498 | Vaulting subscription - Transaction - Classic checkout - PayPal - Order by guest',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer: guest,
 		products: [ products.subscription100 ],
 	},
@@ -22,7 +30,7 @@ const vaultingGuest: ShopOrder[] = [
 		title: 'PCP-2944 | Vaulting subscription - Transaction - Classic checkout - PayPal - Free trial order by guest',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
 	},
@@ -31,7 +39,7 @@ const vaultingGuest: ShopOrder[] = [
 		title: 'PCP-2504 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by guest',
 		...orders.default,
 		payment: payments.acdc,
-		merchant, 
+		merchant,
 		customer: guest,
 		products: [ products.subscription100 ],
 	},
@@ -40,7 +48,7 @@ const vaultingGuest: ShopOrder[] = [
 		title: 'PCP-2947 | Vaulting subscription - Transaction - Classic checkout - ACDC - Free trial order by guest',
 		...orders.default,
 		payment: payments.acdc,
-		merchant, 
+		merchant,
 		customer: guest,
 		products: [ products.subscriptionFreeTrial ],
 	},
@@ -52,7 +60,7 @@ const vaultingCustomer: ShopOrder[] = [
 		title: 'PCP-2889 | Vaulting subscription - Transaction - Classic checkout - PayPal - Order by customer',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscription100 ],
 	},
@@ -61,7 +69,7 @@ const vaultingCustomer: ShopOrder[] = [
 		title: 'PCP-2945 | Vaulting subscription - Transaction - Classic checkout - PayPal - Free trial order by customer',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 	},
@@ -70,7 +78,7 @@ const vaultingCustomer: ShopOrder[] = [
 		title: 'PCP-4892 | Vaulting subscription - Transaction - Classic checkout - ACDC - Order by customer',
 		...orders.default,
 		payment: payments.acdc,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscription100 ],
 	},
@@ -79,7 +87,7 @@ const vaultingCustomer: ShopOrder[] = [
 		title: 'PCP-2948 | Vaulting subscription - Transaction - Classic checkout - ACDC - Free trial order by customer',
 		...orders.default,
 		payment: payments.acdc,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 	},
@@ -94,7 +102,7 @@ const payPalGuest: ShopOrder[] = [
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 		},
-		merchant, 
+		merchant,
 		customer: guest,
 		products: [ products.subscriptionPayPal ],
 	},
@@ -106,7 +114,7 @@ const payPalGuest: ShopOrder[] = [
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 		},
-		merchant, 
+		merchant,
 		customer: guest,
 		products: [ products.subscriptionPayPalFreeTrial ],
 	},
@@ -121,7 +129,7 @@ const payPalCustomer: ShopOrder[] = [
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 		},
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionPayPal ],
 	},
@@ -133,7 +141,7 @@ const payPalCustomer: ShopOrder[] = [
 			...payments.payPal,
 			saveToAccount: false, // with vaulting OFF - should not be saved as customers PM
 		},
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionPayPalFreeTrial ],
 	},

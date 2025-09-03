@@ -31,13 +31,10 @@ export class PayPalUi {
 
 	// "Place Order" or "Pay for order" or "Sign up now" button
 	placeOrderButton = () =>
-		this.page.getByRole( 'button', { name: 'Place order' } )
-			.or(
-				this.page.getByRole( 'button', { name: 'Pay for order' } )
-			)
-			.or(
-				this.page.getByRole( 'button', { name: 'Sign up now' } )
-			);
+		this.page
+			.getByRole( 'button', { name: 'Place order' } )
+			.or( this.page.getByRole( 'button', { name: 'Pay for order' } ) )
+			.or( this.page.getByRole( 'button', { name: 'Sign up now' } ) );
 
 	payPalButtonsBlockContainer = () =>
 		this.page.locator(

@@ -16,11 +16,11 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				guest.email,
 				payment.payPalAccount?.email,
 			];
-			for( const email of previousEmails ) {
+			for ( const email of previousEmails ) {
 				await wooCommerceUtils.deleteCustomer( { email } );
 			}
 		} );
-		
+
 		test(
 			title,
 			annotateVisitor( guest ),
@@ -36,7 +36,8 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await checkout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
@@ -105,7 +106,8 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await checkout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
