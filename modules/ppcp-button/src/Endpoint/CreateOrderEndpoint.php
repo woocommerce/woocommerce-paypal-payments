@@ -30,6 +30,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -49,6 +51,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	use FreeTrialHandlerTrait;
 
 	const ENDPOINT = 'ppc-create-order';
+
+	public const RETURN_URL_CART_QUERY_ARG = 'pcp-cart';
 
 	/**
 	 * The request data helper.
@@ -117,6 +121,10 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @var EarlyOrderHandler
 	 */
 	private $early_order_handler;
+
+	protected CartDataFactory $cart_data_factory;
+
+	protected CartDataTransientStorage $cart_data_transient_storage;
 
 	/**
 	 * Data from the request.
@@ -207,6 +215,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param SessionHandler            $session_handler The SessionHandler object.
 	 * @param Settings                  $settings The Settings object.
 	 * @param EarlyOrderHandler         $early_order_handler The EarlyOrderHandler object.
+	 * @param CartDataFactory           $cart_data_factory
+	 * @param CartDataTransientStorage  $cart_data_transient_storage
 	 * @param bool                      $registration_needed  Whether a new user must be registered during checkout.
 	 * @param string                    $card_billing_data_mode The value of card_billing_data_mode from the settings.
 	 * @param bool                      $early_validation_enabled Whether to execute WC validation of the checkout form.
@@ -228,6 +238,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		SessionHandler $session_handler,
 		Settings $settings,
 		EarlyOrderHandler $early_order_handler,
+		CartDataFactory $cart_data_factory,
+		CartDataTransientStorage $cart_data_transient_storage,
 		bool $registration_needed,
 		string $card_billing_data_mode,
 		bool $early_validation_enabled,
@@ -249,6 +261,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->session_handler                       = $session_handler;
 		$this->settings                              = $settings;
 		$this->early_order_handler                   = $early_order_handler;
+		$this->cart_data_factory                     = $cart_data_factory;
+		$this->cart_data_transient_storage           = $cart_data_transient_storage;
 		$this->registration_needed                   = $registration_needed;
 		$this->card_billing_data_mode                = $card_billing_data_mode;
 		$this->early_validation_enabled              = $early_validation_enabled;
@@ -476,33 +490,52 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payment_source_key
 		);
 
+		$custom_args = array();
+
+		$cart_data = null;
+		// Save the cart to be able to access it after cross-browser AppSwitch.
+		if ( 'pay-now' !== $data['context'] ) {
+			try {
+				$cart_data = $this->cart_data_factory->from_current_cart();
+				$cart_data->generate_key();
+
+				$key = $cart_data->key();
+				assert( ! empty( $key ) );
+
+				$custom_args[ self::RETURN_URL_CART_QUERY_ARG ] = $key;
+			} catch ( Throwable $exception ) {
+				$this->logger->error( 'Failed to serialize cart: ' . $exception->getMessage() );
+			}
+		}
+
+		$return_url = $this->return_url_factory->from_context(
+			$this->parsed_request_data['context'],
+			$this->parsed_request_data,
+			$custom_args
+		);
+
 		$experience_context = $this->experience_context_builder
 			->with_default_paypal_config( $shipping_preference, $action )
-			->with_contact_preference( $contact_preference );
+			->with_contact_preference( $contact_preference )
+			->with_custom_return_url( $return_url )
+			->with_custom_cancel_url( $return_url );
 
 		if ( $this->server_side_shipping_callback_enabled
 			&& $shipping_preference === ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
 			$experience_context = $experience_context->with_shipping_callback();
 		}
 
-		$return_url = $this->return_url_factory->from_context(
-			$this->parsed_request_data['context'],
-			$this->parsed_request_data
-		);
-
 		$payment_source = new PaymentSource(
 			$payment_source_key,
 			(object) array(
 				'experience_context' => $experience_context
-					->with_custom_return_url( $return_url )
-					->with_custom_cancel_url( $return_url )
 					->build()
 					->to_array(),
 			)
 		);
 
 		try {
-			return $this->api_endpoint->create(
+			$order = $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
 				$payer,
@@ -525,7 +558,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 				$this->purchase_unit->set_shipping( null );
 
-				return $this->api_endpoint->create(
+				$order = $this->api_endpoint->create(
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
@@ -533,10 +566,21 @@ class CreateOrderEndpoint implements EndpointInterface {
 					$data,
 					$payment_source
 				);
+			} else {
+				throw $exception;
 			}
-
-			throw $exception;
 		}
+
+		if ( $cart_data ) {
+			try {
+				$cart_data->set_paypal_order_id( $order->id() );
+				$this->cart_data_transient_storage->save( $cart_data );
+			} catch ( Throwable $exception ) {
+				$this->logger->error( 'Failed to save cart: ' . $exception->getMessage() );
+			}
+		}
+
+		return $order;
 	}
 
 	/**
