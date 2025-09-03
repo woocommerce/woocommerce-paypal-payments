@@ -4,7 +4,10 @@
     "moduleDirectories": [ "node_modules" ],
     "moduleNameMapper": {
         "^react$": "<rootDir>/node_modules/react",
-        "^react-dom$": "<rootDir>/node_modules/react-dom"
+        "^react-dom$": "<rootDir>/node_modules/react-dom",
+        "^@wordpress/components$": "<rootDir>/tests/__mocks__/wordpress-components.js",
+        "^@wordpress/element$": "<rootDir>/tests/__mocks__/wordpress-element.js",
+        "^@wordpress/i18n$": "<rootDir>/tests/__mocks__/wordpress-i18n.js"
     },
     "testPathIgnorePatterns": [
         "<rootDir>/tests/",

@@ -75,7 +75,7 @@ const COUNTRY_CONFIGS = {
 			{ name: 'Crypto', Component: Crypto },
 		],
 		extendedMethods: [
-			DEFAULT_CONFIG.extendedMethods,
+			...DEFAULT_CONFIG.extendedMethods,
 			{
 				name: 'Fastlane',
 				Component: Fastlane,
@@ -257,14 +257,6 @@ export const usePaymentConfig = (
 	ownBrandOnly
 ) => {
 	return useMemo( () => {
-		// eslint-disable-next-line no-console
-		console.log( '[Payment Config]', {
-			country,
-			canUseCardPayments,
-			hasFastlane,
-			ownBrandOnly,
-		} );
-
 		// Merge country-specific config with default.
 		const countryConfig = COUNTRY_CONFIGS[ country ] || {};
 		const config = { ...DEFAULT_CONFIG, ...countryConfig };
