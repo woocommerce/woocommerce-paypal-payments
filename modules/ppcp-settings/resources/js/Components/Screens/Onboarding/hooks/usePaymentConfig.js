@@ -75,30 +75,7 @@ const COUNTRY_CONFIGS = {
 			{ name: 'Crypto', Component: Crypto },
 		],
 		extendedMethods: [
-			{
-				name: 'CreditDebitCards',
-				Component: CreditDebitCards,
-				isOwnBrand: false,
-				isAcdc: false,
-			},
-			{
-				name: 'CardFields',
-				Component: CardFields,
-				isOwnBrand: false,
-				isAcdc: true,
-			},
-			{
-				name: 'DigitalWallets',
-				Component: DigitalWallets,
-				isOwnBrand: false,
-				isAcdc: true,
-			},
-			{
-				name: 'APMs',
-				Component: AlternativePaymentMethods,
-				isOwnBrand: true,
-				isAcdc: true,
-			},
+			DEFAULT_CONFIG.extendedMethods,
 			{
 				name: 'Fastlane',
 				Component: Fastlane,
@@ -112,6 +89,28 @@ const COUNTRY_CONFIGS = {
 		includedMethods: [
 			{ name: 'PayWithPayPal', Component: PayWithPayPal },
 			{ name: 'PayInThree', Component: PayInThree },
+		],
+		extendedMethods: [
+			...DEFAULT_CONFIG.extendedMethods,
+			{
+				name: 'Fastlane',
+				Component: Fastlane,
+				isOwnBrand: false,
+				isAcdc: true,
+				isFastlane: true,
+			},
+		],
+	},
+	AU: {
+		extendedMethods: [
+			...DEFAULT_CONFIG.extendedMethods,
+			{
+				name: 'Fastlane',
+				Component: Fastlane,
+				isOwnBrand: false,
+				isAcdc: true,
+				isFastlane: true,
+			},
 		],
 	},
 	MX: {
