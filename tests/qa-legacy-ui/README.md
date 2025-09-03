@@ -43,25 +43,27 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
 
 ## Setup @inpsyde/playwright-utils as a node package
 
-> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
+> See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
 
-1. Remove `"workspaces": [ "playwright-utils" ]` from `package.json`.
+1. Make sure you're logged in the [Syde npm package registry](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3112894465/GitHub+Package+Registry+for+npm).
 
-2. In the root of the tests (which is __qa__) run following command:
+2. Make sure that `"workspaces": [ "playwright-utils" ]` node isn't present in `./tests/qa/package.json`.
 
-```bash
-npm run setup:tests
-```
+3. In the terminal change directory to `./tests/qa` and run following command:
+
+	```bash
+	npm run setup:tests
+	```
 
 ## Setup @inpsyde/playwright-utils for local development
 
-> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#development).
+> See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#development).
 
-1. Add `"workspaces": [ "playwright-utils" ]` to `package.json`.
+1. Add `"workspaces": [ "playwright-utils" ]` to `./tests/qa/package.json`.
 
-2. Delete `@inpsyde/playwright-utils` from `/node_modules`.
+2. Delete `@inpsyde/playwright-utils` from `./tests/qa/node_modules`.
 
-3. In the root of the project (which is __qa__ in this case) run following command:
+3. In the terminal change directory to `./tests/qa` and run following command:
 
 	```bash
 	git clone https://github.com/inpsyde/playwright-utils.git
@@ -89,7 +91,7 @@ npm run setup:tests
 
 1. [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) - will be deprecated in Q1 of 2025.
 
-2. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`. The [`.env` content with actual test users' credentials](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=qrw2rcy27xpwiedd5gifyga2pa&i=iddsl6wdm62lwwqbzz474jodme&h=inpsyde.1password.eu) is in 1Password in Legacy UI section.
+2. Configure `.env` file following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables). See also `/tests/qa/.env.example`. The [`.env` content with actual test users' credentials](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu) is in 1Password in Legacy UI section.
 
 3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
