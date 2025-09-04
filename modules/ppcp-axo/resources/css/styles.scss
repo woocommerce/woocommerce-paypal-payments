@@ -121,27 +121,36 @@
 		background-color: #F8F9FA;
 		border: 2px solid #ECEEFE;
 		text-align: left;
-		padding: 10px 15px;
+		padding: 15px;
 		display: flex;
 		gap: 15px;
 
 		.ppcp-card-icon-wrapper {
-			align-self: center;
 			width: 60px;
+			align-self: center;
+			flex-grow: 1;
 			flex-shrink: 0;
+
+			img {
+				max-width: 100%;
+				display: block;
+				margin: 0!important;
+			}
 		}
 
 		.axo-card-meta-wrapper {
 			display: flex;
 			flex-wrap: wrap;
+			row-gap: .5em;
 		}
 
 		.axo-card-number {
-			font-size: 1.1em;
-			width: 100%;
+			font-size: 18px;
+			line-height: 1em;
 			color: #666;
 			font-family: monospace;
 			font-weight: bold;
+			width: 100%;
 		}
 
 		.axo-card-owner {
@@ -152,8 +161,15 @@
 				position: absolute;
 				right: 10px;
 				transform: translateX(50%);
-				color: #ECEEF2;
+				color: #6d6d6d;
 			}
+		}
+
+		.axo-card-owner,
+		.axo-card-expiry{
+			font-size: 16px;
+			color: #6d6d6d;
+			line-height: 1em;
 		}
 	}
 }

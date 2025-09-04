@@ -59,23 +59,30 @@ $fast-transition-duration: 0.5s;
 	&__meta {
 		width: 100%;
 		text-align: left;
-		padding: 10px 15px;
+		padding: 15px;
 		display: flex;
 		gap: 15px;
 
 		&-digits {
-			font-size: 1.1em;
-			width: 100%;
+			font-size: 18px;
+			line-height: 1em;
 			color: #666;
 			font-family: monospace;
 			font-weight: bold;
+			width: 100%;
 		}
 
 		&-logo {
-			align-self: center;
 			width: 60px;
+			align-self: center;
 			flex-grow: 1;
 			flex-shrink: 0;
+
+			img {
+				max-width: 100%;
+				display: block;
+				margin: 0;
+			}
 		}
 
 		&-name {
@@ -86,14 +93,22 @@ $fast-transition-duration: 0.5s;
 				position: absolute;
 				right: 10px;
 				transform: translateX(50%);
-				color: #ECEEF2;
+				color: #6d6d6d;
 			}
+		}
+
+		&-name,
+		&-expiry {
+			font-size: 16px;
+			line-height: 1em;
+			color: #6d6d6d;
 		}
 	}
 
 	&__meta-container {
 		display: flex;
 		flex-wrap: wrap;
+		row-gap: .5em;
 	}
 
 	&__edit {
