@@ -3,7 +3,7 @@
  */
 import { shopSettings, customers } from '.';
 
-const country = 'germany';
+const country = 'usa';
 
 export const storeConfigDefault = {
 	classicPages: false, // false = block cart and checkout (default), true = classic cart & checkout pages
@@ -20,6 +20,7 @@ export const storeConfigClassic = {
 
 export const storeConfigGermany = {
 	...storeConfigDefault,
+	settings: shopSettings.germany, // WC general settings
 	customer: customers.germany,
 };
 

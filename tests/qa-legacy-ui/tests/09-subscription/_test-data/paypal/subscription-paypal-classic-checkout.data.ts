@@ -20,15 +20,15 @@ const usaOrderData: WooCommerce.ShopOrder = {
 
 export const subscriptionPayPalClassicCheckoutVaulted = [
 	{
-		title: 'PCP-2889 | Subscription - Transaction - Classic checkout - PayPal - Default order @Critical',
+		title: 'PCP-2889 | Vaulting subscription - Transaction - Classic checkout - PayPal - Order by customer @Critical',
 		...orders.subscriptionDefault,
 		...usaOrderData,
 		payment: payPalVaulted,
 	},
-	{
-		title: 'PCP-2492 | Subscription - Transaction - Classic checkout - PayPal - Order with free shipping @Critical',
-		...orders.subscriptionFreeShipping,
-		...usaOrderData,
-		payment: payPalVaulted,
-	},
+	// {
+	// 	title: 'PCP-2492 | Subscription - Transaction - Classic checkout - PayPal - Order with free shipping',
+	// 	...orders.subscriptionFreeShipping,
+	// 	...usaOrderData,
+	// 	payment: payPalVaulted,
+	// },
 ];

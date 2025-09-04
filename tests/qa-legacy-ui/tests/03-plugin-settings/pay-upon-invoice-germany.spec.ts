@@ -189,7 +189,7 @@ test.describe( 'Pay Upon Invoice', () => {
 			classicCheckout,
 		} ) => {
 			await classicCheckout.visit();
-			await classicCheckout.fillCheckoutForm( customers.germany );
+			await classicCheckout.fillCheckoutForm( customers.usa );
 			await expect(
 				classicCheckout.ppui.payUponInvoiceGateway()
 			).toBeVisible();

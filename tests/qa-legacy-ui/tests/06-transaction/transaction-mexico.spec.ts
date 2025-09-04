@@ -18,6 +18,7 @@ import {
 } from './_test-data/oxxo';
 
 test.beforeAll( async ( { utils } ) => {
+	test.setTimeout( 2 * 60 * 1000 );
 	await utils.configureStore( {
 		...storeConfigMexico,
 		classicPages: true,

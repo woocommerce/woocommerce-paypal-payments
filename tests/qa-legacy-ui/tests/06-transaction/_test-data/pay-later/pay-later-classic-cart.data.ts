@@ -13,7 +13,7 @@ export const payLaterClassicCart = [
 		title: 'PCP-2881 | Transaction - Classic cart - Pay Later - Order by customer',
 		payment: payLater,
 		...orders.byCustomer,
-		customer: customers.germany,
+		customer: customers.usa,
 	},
 	// {
 	// 	title: 'PCP-2875 | Transaction - Classic cart - Pay Later - Order with free shipping',

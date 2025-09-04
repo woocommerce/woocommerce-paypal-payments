@@ -219,14 +219,8 @@ setup( 'Setup products', async ( { wooCommerceUtils } ) => {
 setup(
 	'Setup Disable new UI plugin (active)',
 	async ( { requestUtils, plugins } ) => {
-		if (
-			! ( await requestUtils.isPluginInstalled(
-				disableNewUi.slug
-			) )
-		) {
-			await plugins.installPluginFromFile(
-				disableNewUi.zipFilePath
-			);
+		if ( ! ( await requestUtils.isPluginInstalled( disableNewUi.slug ) ) ) {
+			await plugins.installPluginFromFile( disableNewUi.zipFilePath );
 		}
 		await requestUtils.activatePlugin( disableNewUi.slug );
 	}

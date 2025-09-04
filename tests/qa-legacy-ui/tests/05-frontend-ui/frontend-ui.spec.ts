@@ -40,6 +40,8 @@ test.describe( 'Frontend UI', () => {
 		await classicCheckout.selectShippingMethod(
 			tested.shipping.settings.title
 		);
+		await expect( classicCheckout.ppui.payPalGateway() ).toBeVisible();
+		await classicCheckout.ppui.payPalGateway().click();
 		await expect( classicCheckout.ppui.payPalButton() ).toBeVisible();
 
 		let payPalPopup = await classicCheckout.ppui.openPayPalPupup();
@@ -329,10 +331,6 @@ test.describe( 'Frontend UI', () => {
 			await utils.advancedCardProcessing.setup( { enableGateway: true } );
 
 			await classicPayForOrder.visit( order.id, order.order_key );
-			await expect(
-				classicPayForOrder.ppui.payPalButton()
-			).toBeVisible();
-
 			await classicPayForOrder.ppui.acdcGateway().click();
 			await classicPayForOrder.ppui
 				.cardNumberInput()

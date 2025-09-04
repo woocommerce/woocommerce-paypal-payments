@@ -11,63 +11,178 @@ export class PayPalPopup {
 	}
 
 	// Locators
+
 	loginWithPasswordInsteadLink = () =>
 		this.popup.getByRole( 'link', {
 			name: 'Log in with a password instead',
 		} );
+	loginWithYourPasswordLink = () =>
+		this.popup.getByRole( 'link', { name: 'Login with password' } );
+	tryAnotherWayLink = () =>
+		this.popup.getByRole( 'link', { name: 'Try another way' } );
 	loginInput = () => this.popup.locator( '[name="login_email"]' );
 	passwordInput = () => this.popup.locator( '[name="login_password"]' );
 	nextButton = () => this.popup.locator( '#btnNext' );
 	loginButton = () => this.popup.locator( '#btnLogin' );
-	submitPaymentButton = () => this.popup.locator( '#payment-submit-btn' );
-	payLaterSwitcher = () => this.popup.getByTestId( 'paylater-tab' );
-	payLaterRadio = () =>
-		this.popup.locator( 'label[for^="credit-offer"]' ).first();
-	// payLaterErrorButton = () =>
-	// 	this.popup
-	// 		.frameLocator( '[data-testId=""]' )
-	// 		.getByTestId( 'errorButton' );
+	submitPaymentButton = () =>
+		this.popup
+			.locator( '#payment-submit-btn' )
+			.or( this.popup.getByTestId( 'submit-button-initial' ) )
+			.or( this.popup.getByTestId( 'consentButton' ) )
+			.or( this.popup.getByRole( 'button', { name: 'Continue' } ) )
+			.or( this.popup.locator( '#confirmButtonTop' ) )
+			.or( this.popup.locator( '#one-time-cta' ) );
+	venmoButton = () => this.popup.locator( '.venmo-button-wrapper>button' );
+	saveAndContinueButton = () => this.popup.getByTestId( 'consentButton' );
+	cancelLink = () => this.popup.locator( '#cancelLink' );
+	loadSpinnerContainer = () => this.popup.locator( '#preloaderSpinner' );
 	tryAgainButton = () =>
 		this.popup
 			.getByRole( 'link', { name: 'Erneut versuchen' } )
 			.or( this.popup.getByRole( 'link', { name: 'Try again' } ) );
-	saveAndContinueButton = () => this.popup.getByTestId( 'consentButton' );
-	cancelLink = () => this.popup.locator( '#cancelLink' );
-
+	payLaterIframe = () =>
+		this.popup.locator( 'iframe[title="CAP"]' ).contentFrame();
+	loanAgreementCheckbox = () =>
+		this.payLaterIframe().getByText(
+			'You have read and agree to the Loan Agreement'
+		);
+	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
 	// Actions
 
+	/**
+	 *  Log in to PayPal
+	 *
+	 * @param email
+	 * @param password
+	 */
 	login = async ( email, password ) => {
-		await expect( this.popup ).toHaveTitle(
-			'Log in to your PayPal account'
-		);
-
-		if (
-			! ( await this.loginInput().isEditable() ) &&
-			this.loginWithPasswordInsteadLink().isVisible()
-		) {
-			this.loginWithPasswordInsteadLink().click();
-		}
+		await this.tryLoginWithPasswordInstead();
 
 		await this.loginInput().fill( email );
-		// Sometimes we get a popup with email and password fields at the same screen
-		if ( await this.nextButton().isVisible() ) {
-			await this.nextButton().click();
-		}
+
+		await this.tryLoginWithPasswordInstead();
+
+		await this.tryClickNext();
+
+		await this.tryAnotherWay();
+
 		await this.passwordInput().fill( password );
 		await this.loginButton().click();
+	};
+
+	/**
+	 * Tries to click "Login with password instead" button if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryLoginWithPasswordInstead = async () => {
+		try {
+			await this.loginWithPasswordInsteadLink().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
+			await this.loginWithPasswordInsteadLink().click();
+		} catch {}
+	};
+
+	/**
+	 * Tries to click "Next" button if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryClickNext = async () => {
+		try {
+			await this.nextButton().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
+			await this.nextButton().click();
+		} catch {}
+	};
+
+	/**
+	 * Tries to click "Try another way" and "Login with your password" buttons if displayed
+	 * Swallows the fail if no button appears
+	 */
+	tryAnotherWay = async () => {
+		try {
+			await this.tryAnotherWayLink().waitFor( {
+				state: 'visible',
+				timeout: 4000,
+			} );
+			await this.tryAnotherWayLink().click();
+			await this.loginWithYourPasswordLink().click();
+		} catch {}
+	};
+
+	trySubmitPayment = async () => {
+		await this.popup.waitForLoadState();
+		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
+
+		while ( ! this.popup.isClosed() ) {
+			const submitButton = this.submitPaymentButton();
+			if ( ! ( await submitButton.isVisible() ) ) {
+				break; // No visible button, exit
+			}
+
+			// Race click with popup closure
+			try {
+				await Promise.race( [
+					submitButton.click(),
+					this.popup.waitForEvent( 'close', { timeout: 30 * 1000 } ), // Short timeout to prevent hang
+				] );
+			} catch ( error ) {
+				if ( this.popup.isClosed() ) break; // Exit cleanly if popup closed
+				throw error; // Rethrow unexpected errors
+			}
+
+			// Optional: wait for spinner to disappear
+			try {
+				await expect( this.loadSpinnerContainer() ).toBeVisible( {
+					timeout: 1000,
+				} );
+				await expect( this.loadSpinnerContainer() ).not.toBeVisible( {
+					timeout: 4000,
+				} );
+			} catch {
+				// Spinner didn't appear, continue
+			}
+		}
 	};
 
 	completePayment = async () => {
 		await Promise.all( [
 			this.popup.waitForEvent( 'close' ),
-			this.submitPaymentButton().click(),
+			this.trySubmitPayment(),
 		] );
 	};
 
-	savePaymentMethodAndContinue = async () => {
-		await Promise.all( [
-			this.popup.waitForEvent( 'close' ),
-			this.saveAndContinueButton().click(),
-		] );
+	/**
+	 * Completes payment with PayPal
+	 *
+	 * @param payPalAccount
+	 */
+	completePayPalPayment = async ( payPalAccount ) => {
+		await this.login( payPalAccount.email, payPalAccount.password );
+		await this.completePayment();
+	};
+
+	/**
+	 * Completes payment with Pay Later
+	 *
+	 * @param payPalAccount = { "email": "...", "password": "..." }
+	 */
+	completePayLaterPayment = async ( payPalAccount ) => {
+		await this.login( payPalAccount.email, payPalAccount.password );
+		await this.submitPaymentButton().click();
+		await this.loanAgreementCheckbox().click();
+		await this.agreeAndApplyButton().click();
+		await this.completePayment();
+	};
+
+	/**
+	 * Completes payment with Venmo
+	 */
+	completeVenmoPayment = async () => {
+		await this.venmoButton().click();
+		await this.completePayment();
 	};
 }

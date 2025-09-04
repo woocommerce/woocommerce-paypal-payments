@@ -31,8 +31,11 @@ test.describe( 'Pay Later', async () => {
 	} );
 
 	test.describe( 'Display on frontend', () => {
-		test.beforeAll( async ( { payLater } ) => {
+		test.beforeAll( async ( { payLater, standardPayments } ) => {
 			await payLater.setup( { enableGateway: true } );
+			await standardPayments.visit();
+			await standardPayments.disableAlternativePaymentMethods( [ 'Venmo' ] );
+			await standardPayments.saveChanges();
 		} );
 
 		test.beforeEach( async ( { utils } ) => {

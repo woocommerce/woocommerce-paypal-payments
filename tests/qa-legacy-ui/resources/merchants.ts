@@ -19,7 +19,7 @@ const germany: PcpMerchant = {
 	password: process.env.MERCHANT_DE_PASS,
 };
 
-const usa: PcpMerchant = {	
+const usa: PcpMerchant = {
 	email: process.env.MERCHANT_USA_EMAIL,
 	client_id: process.env.MERCHANT_USA_CLIENT_ID,
 	client_secret: process.env.MERCHANT_USA_CLIENT_SECRET,

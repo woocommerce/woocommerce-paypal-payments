@@ -241,6 +241,9 @@ export class Utils {
 
 			case 'Venmo':
 				await this.activateWpDebuggingPlugin();
+				await this.standardPayments.setup( {
+					enableAlternativePaymentMethods: [ 'Venmo' ],
+				} );
 				break;
 
 			case 'ACDC':
