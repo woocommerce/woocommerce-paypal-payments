@@ -22,6 +22,8 @@ class CartData {
 
 	protected bool $needs_shipping;
 
+	protected int $user_id;
+
 	protected string $cart_hash;
 
 	protected ?string $paypal_order_id = null;
@@ -30,17 +32,20 @@ class CartData {
 	 * @param array<string, array<string, mixed>> $items The cart items like in $cart->get_cart_for_session() or $cart->get_cart().
 	 * @param string[]                            $coupons
 	 * @param bool                                $needs_shipping
+	 * @param int                                 $user_id
 	 * @param string                              $cart_hash
 	 */
 	public function __construct(
 		array $items,
 		array $coupons,
 		bool $needs_shipping,
+		int $user_id,
 		string $cart_hash
 	) {
 		$this->items          = $items;
 		$this->coupons        = $coupons;
 		$this->needs_shipping = $needs_shipping;
+		$this->user_id        = $user_id;
 		$this->cart_hash      = $cart_hash;
 	}
 
@@ -78,6 +83,10 @@ class CartData {
 		return $this->needs_shipping;
 	}
 
+	public function user_id(): int {
+		return $this->user_id;
+	}
+
 	public function cart_hash(): string {
 		return $this->cart_hash;
 	}
@@ -95,6 +104,7 @@ class CartData {
 			'items'           => $this->items,
 			'coupons'         => $this->coupons,
 			'needs_shipping'  => $this->needs_shipping,
+			'user_id'         => $this->user_id,
 			'cart_hash'       => $this->cart_hash,
 			'paypal_order_id' => $this->paypal_order_id,
 		);
@@ -105,6 +115,7 @@ class CartData {
 			$data['items'] ?? array(),
 			$data['coupons'] ?? array(),
 			(bool) ( $data['needs_shipping'] ?? false ),
+			(int) ( $data['user_id'] ?? 0 ),
 			$data['cart_hash'] ?? ''
 		);
 		$cart_data->paypal_order_id = $data['paypal_order_id'] ?? null;

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
@@ -31,6 +32,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class ButtonModule
@@ -235,6 +237,10 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 	}
 
+	private static function is_cross_browser_order( WC_Order $wc_order ): bool {
+		return wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) );
+	}
+
 	private function register_appswitch_crossbrowser_handler( ContainerInterface $container ): void {
 		if ( ! $container->get( 'wcgateway.appswitch-enabled' ) ) {
 			return;
@@ -299,10 +305,133 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 				$wc_order = $wc_order_creator->create_from_paypal_order( $paypal_order, $cart_data );
 
+				$wc_order->update_meta_data( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY, wc_bool_to_string( true ) );
+				$wc_order->save();
+
 				// Redirect via JS because we need to keep the # parameters which are not accessible on the server side.
 				// phpcs:ignore WordPress.Security.EscapeOutput
 				echo "<script>location.href = '" . $wc_order->get_checkout_payment_url() . "' + location.hash;</script>";
 			}
+		);
+
+		/**
+		 * By default, WC asks to log in when opening a non-guest Pay for order page as a guest,
+		 * so we disable this for cross-browser AppSwitch.
+		 *
+		 * @param array<string, bool> $allcaps Array of key/value pairs where keys represent a capability name
+		 *                           and boolean values represent whether the user has that capability.
+		 * @param string[] $caps Required primitive capabilities for the requested capability.
+		 * @param array $args {
+		 *      Arguments that accompany the requested capability check.
+		 *
+		 * @type string    $0 Requested capability.
+		 * @type int       $1 Concerned user ID.
+		 * @type mixed  ...$2 Optional second and further parameters, typically object ID.
+		 *  }
+		 *
+		 * @returns array<string, bool>
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'user_has_cap',
+			static function ( $allcaps, $cap, $args ) {
+				if ( ! in_array( 'pay_for_order', $cap, true ) ) {
+					return $allcaps;
+				}
+
+				$wc_order_id = $args[2] ?? null;
+				if ( ! is_int( $wc_order_id ) ) {
+					return $allcaps;
+				}
+
+				$wc_order = wc_get_order( $wc_order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return $allcaps;
+				}
+
+				if ( ! self::is_cross_browser_order( $wc_order ) ) {
+					return $allcaps;
+				}
+
+				return array_merge(
+					$allcaps,
+					array(
+						'pay_for_order' => true,
+					)
+				);
+			},
+			10,
+			3
+		);
+
+		/**
+		 * By default, WC asks to log in when opening a non-guest order received page as a guest,
+		 * so we disable this for cross-browser AppSwitch.
+		 *
+		 * @param bool $result
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_order_received_verify_known_shoppers',
+			static function ( $result ) {
+				if ( ! is_order_received_page() ) {
+					return $result;
+				}
+
+				$wc_order = null;
+			    // phpcs:disable WordPress.Security.NonceVerification
+				if ( isset( $_GET['key'] ) && is_string( $_GET['key'] ) ) {
+					$wc_order_key = sanitize_text_field( wp_unslash( $_GET['key'] ) );
+					// phpcs:enable WordPress.Security.NonceVerification
+
+					$wc_order_id = wc_get_order_id_by_order_key( $wc_order_key );
+
+					$wc_order = wc_get_order( $wc_order_id );
+				}
+
+				if ( ! $wc_order instanceof WC_Order ) {
+					return $result;
+				}
+
+				if ( ! self::is_cross_browser_order( $wc_order ) ) {
+					return $result;
+				}
+
+				return false;
+			}
+		);
+
+		/**
+		 * Disabling the email prompt on Pay for order page for guests.
+		 * Should not affect anything in most cases because it is skipped for just created orders (< 10 min).
+		 *
+		 * @param bool $email_verification_required
+		 * @param WC_Order $order
+		 *
+		 * @returns bool
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_order_email_verification_required',
+			static function (
+				$email_verification_required,
+				$order
+			) {
+				if ( ! $order instanceof WC_Order ) {
+					return $email_verification_required;
+				}
+
+				if ( ! self::is_cross_browser_order( $order ) ) {
+					return $email_verification_required;
+				}
+
+				return false;
+			},
+			10,
+			2
 		);
 	}
 }
