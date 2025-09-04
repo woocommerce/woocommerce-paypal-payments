@@ -94,10 +94,12 @@ export class CustomerPaymentMethods extends CustomerPaymentMethodsBase {
 					await this.page.waitForTimeout( 200 );
 				}
 				await this.payPalUi.acdcCardCvvInput().fill( card.card_cvv );
+				await this.page.waitForTimeout( 200 );
 				await this.addPaymentMethodButton().click();
-				await this.page.waitForLoadState();
 				break;
 		}
+		await this.page.waitForURL( this.url );
+		await this.assertIsSavedPaymentMethod( payment );
 	};
 
 	// Assertions

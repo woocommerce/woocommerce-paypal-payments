@@ -2,7 +2,12 @@
  * Internal dependencies
  */
 import { test } from '../../utils';
-import { merchants, products, storeConfigUsa } from '../../resources';
+import {
+	disableWebhookVerifivationPlugin,
+	merchants,
+	products,
+	storeConfigUsa,
+} from '../../resources';
 import { subscriptionRenewal } from './_test-data';
 import {
 	testFreeTrialSubscriptionRenewal,
@@ -16,16 +21,13 @@ const {
 	payPalFreeTrialRenewal,
 } = subscriptionRenewal;
 
-test.beforeAll( async ( { utils, pcpApi } ) => {
+test.beforeAll( async ( { utils, pcpApi, wooCommerceApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
 		wpDebugging: false,
 		classicPages: false,
 		subscription: true,
-		products: [
-			products.subscription10,
-			products.subscriptionFreeTrial,
-		],
+		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -36,8 +38,13 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 			isCasualSeller: false,
 			areOptionalPaymentMethodsEnabled: true,
 			products: [ 'physical', 'virtual', 'subscriptions' ],
-		},
+		}
 	);
+} );
+
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllSubscriptions();
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testData of vaultingRenewal ) {
@@ -49,7 +56,7 @@ for ( const testData of vaultingFreeTrialRenewal ) {
 }
 
 test.describe( 'PayPal Subscription', () => {
-	test.beforeAll( async ( { utils, pcpApi } ) => {
+	test.beforeAll( async ( { utils, pcpApi, requestUtils } ) => {
 		await pcpApi.updatePcpSettings( {
 			savePaypalAndVenmo: false,
 			saveCardDetails: false,
@@ -60,6 +67,15 @@ test.describe( 'PayPal Subscription', () => {
 				products.subscriptionPayPalFreeTrial,
 			],
 		} );
+		await requestUtils.activatePlugin(
+			disableWebhookVerifivationPlugin.slug
+		);
+	} );
+
+	test.afterAll( async ( { requestUtils } ) => {
+		await requestUtils.deactivatePlugin(
+			disableWebhookVerifivationPlugin.slug
+		);
 	} );
 
 	for ( const testData of payPalRenewal ) {
@@ -69,4 +85,4 @@ test.describe( 'PayPal Subscription', () => {
 	for ( const testData of payPalFreeTrialRenewal ) {
 		testFreeTrialSubscriptionRenewal( testData );
 	}
-});
+} );

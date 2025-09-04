@@ -9,11 +9,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Service;
 
-use JsonException;
 use Throwable;
+use JsonException;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
@@ -24,6 +22,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\Settings\DTO\OAuthConnectionDTO;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\PayPalCommerce\Settings\Enum\SellerTypeEnum;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
@@ -33,6 +32,12 @@ use WooCommerce\PayPalCommerce\Settings\Endpoint\CommonRestEndpoint;
  * Class that manages the connection to PayPal.
  */
 class AuthenticationManager {
+
+	/**
+	 * Option name used to store the OAuth connection details.
+	 */
+	private const OAUTH_OPTION_NAME = 'ppcp_oauth_connection_details';
+
 	/**
 	 * Data model that stores the connection details.
 	 *
@@ -221,6 +226,65 @@ class AuthenticationManager {
 		$this->update_connection_details( $connection );
 	}
 
+	/**
+	 * Stores the OAuth details in the DB.
+	 *
+	 * Those details are used in another request to complete the OAuth login process.
+	 *
+	 * @param string $shared_id   The shared onboarding ID.
+	 * @param string $auth_code   The authorization code.
+	 * @param bool   $use_sandbox Whether it's a sandbox or production account.
+	 * @return void
+	 */
+	public function remember_oauth_connection_details( string $shared_id, string $auth_code, bool $use_sandbox ) : void {
+		$this->logger->info(
+			'Storing one-time OAuth credentials...',
+			array(
+				'shared_id'   => $shared_id,
+				'auth_code'   => $auth_code,
+				'use_sandbox' => $use_sandbox,
+			)
+		);
+
+		$oauth_connection = new OAuthConnectionDTO(
+			$use_sandbox,
+			$shared_id,
+			$auth_code
+		);
+
+		update_option( self::OAUTH_OPTION_NAME, $oauth_connection, false );
+	}
+
+	/**
+	 * Remove the temporary oauth credentials from the DB.
+	 *
+	 * @return void
+	 */
+	private function remove_oauth_connection_details() : void {
+		delete_option( self::OAUTH_OPTION_NAME );
+	}
+
+	/**
+	 * Returns the previously remembered oauth details.
+	 *
+	 * @return OAuthConnectionDTO The stored oauth credentials.
+	 * @throws RuntimeException When no stored credentials are found, or they have expired.
+	 */
+	private function retrieve_oauth_connection_details() : OAuthConnectionDTO {
+		$oauth_data = get_option( self::OAUTH_OPTION_NAME );
+
+		if ( ! $oauth_data instanceof OAuthConnectionDTO ) {
+			throw new RuntimeException( 'No stored OAuth credentials found' );
+		}
+
+		// Check for expiration (credentials expire after 1 hour).
+		if ( time() - $oauth_data->timestamp > 3600 ) {
+			$this->remove_oauth_connection_details();
+			throw new RuntimeException( 'Stored OAuth credentials have expired' );
+		}
+
+		return $oauth_data;
+	}
 
 	/**
 	 * Checks if the provided ID and auth-code have a valid format.
@@ -236,7 +300,7 @@ class AuthenticationManager {
 	 * @return void
 	 * @throws RuntimeException When invalid shared ID or auth provided.
 	 */
-	public function validate_id_and_auth_code( string $shared_id, string $auth_code ) : void {
+	private function validate_id_and_auth_code( string $shared_id, string $auth_code ) : void {
 		if ( empty( $shared_id ) ) {
 			throw new RuntimeException( 'No onboarding ID provided.' );
 		}
@@ -255,10 +319,10 @@ class AuthenticationManager {
 	 * @param bool   $use_sandbox Whether to use the sandbox mode.
 	 * @param string $shared_id   The OAuth client ID.
 	 * @param string $auth_code   The OAuth authorization code.
-	 * @return void
+	 * @return MerchantConnectionDTO A DTO containing the connection details.
 	 * @throws RuntimeException When failed to retrieve payee.
 	 */
-	public function authenticate_via_oauth( bool $use_sandbox, string $shared_id, string $auth_code ) : void {
+	private function authenticate_via_oauth( bool $use_sandbox, string $shared_id, string $auth_code ) : MerchantConnectionDTO {
 		$this->logger->info(
 			'Attempting OAuth login to PayPal...',
 			array(
@@ -283,29 +347,44 @@ class AuthenticationManager {
 		$connection->client_secret = $credentials['client_secret'];
 		$connection->merchant_id   = $credentials['merchant_id'];
 
-		$this->update_connection_details( $connection );
+		return $connection;
 	}
 
 	/**
-	 * Verifies the merchant details in the final OAuth redirect and extracts
-	 * missing credentials from the URL.
+	 * Handles the full OAuth authentication flow.
+	 *
+	 * 1. Verify that the provided request contains required details.
+	 * 2. Retrieve the oauth-connection details and validate them.
+	 * 3. Convert the oauth-connection details into a permanent id/secret.
+	 * 4. Complete the authentication by storing all details in the DB.
 	 *
 	 * @param array $request_data Array of request parameters to process.
 	 * @return void
 	 *
 	 * @throws RuntimeException Missing or invalid credentials.
 	 */
-	public function finish_oauth_authentication( array $request_data ) : void {
+	public function handle_oauth_authentication( array $request_data ) : void {
 		$merchant_id    = $request_data['merchant_id'] ?? '';
 		$merchant_email = $request_data['merchant_email'] ?? '';
 		$seller_type    = $request_data['seller_type'] ?? '';
 
+		// 1. Verify the request details.
 		if ( empty( $merchant_id ) || empty( $merchant_email ) ) {
 			throw new RuntimeException( 'Missing merchant ID or email in request' );
 		}
 
-		$connection = $this->common_settings->get_merchant_data();
+		// 2. Retrieve and validate the oauth connection.
+		$oauth_connection = $this->retrieve_oauth_connection_details();
+		$this->validate_id_and_auth_code( $oauth_connection->shared_id, $oauth_connection->auth_token );
 
+		// 3. Trade oauth connection details to permanent client credentials.
+		$connection = $this->authenticate_via_oauth(
+			$oauth_connection->is_sandbox,
+			$oauth_connection->shared_id,
+			$oauth_connection->auth_token
+		);
+
+		// 4. Complete the authentication checks and persist details.
 		if ( $connection->merchant_id && $connection->merchant_id !== $merchant_id ) {
 			throw new RuntimeException( 'Unexpected merchant ID in request' );
 		}
@@ -316,6 +395,8 @@ class AuthenticationManager {
 		if ( SellerTypeEnum::is_valid( $seller_type ) ) {
 			$connection->seller_type = $seller_type;
 		}
+
+		$this->remove_oauth_connection_details();
 
 		$this->update_connection_details( $connection );
 	}

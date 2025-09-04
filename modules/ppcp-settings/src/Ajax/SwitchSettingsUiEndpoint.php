@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 
 /**
  * Class SwitchSettingsUiEndpoint
@@ -24,26 +25,10 @@ class SwitchSettingsUiEndpoint {
 	public const ENDPOINT                      = 'ppcp-settings-switch-ui';
 	public const OPTION_NAME_SHOULD_USE_OLD_UI = 'woocommerce_ppcp-settings-should-use-old-ui';
 
-	/**
-	 * The RequestData.
-	 *
-	 * @var RequestData
-	 */
 	protected RequestData $request_data;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
 	protected LoggerInterface $logger;
-
-	/**
-	 * The Onboarding profile.
-	 *
-	 * @var OnboardingProfile
-	 */
 	protected OnboardingProfile $onboarding_profile;
+	protected MigrationManager $settings_data_migration;
 
 	/**
 	 * True if the merchant is onboarded, otherwise false.
@@ -52,24 +37,18 @@ class SwitchSettingsUiEndpoint {
 	 */
 	protected bool $is_onboarded;
 
-	/**
-	 * SwitchSettingsUiEndpoint constructor.
-	 *
-	 * @param LoggerInterface   $logger The logger.
-	 * @param RequestData       $request_data The Request data.
-	 * @param OnboardingProfile $onboarding_profile The Onboarding profile.
-	 * @param bool              $is_onboarded True if the merchant is onboarded, otherwise false.
-	 */
 	public function __construct(
 		LoggerInterface $logger,
 		RequestData $request_data,
 		OnboardingProfile $onboarding_profile,
+		MigrationManager $settings_data_migration,
 		bool $is_onboarded
 	) {
-		$this->logger             = $logger;
-		$this->request_data       = $request_data;
-		$this->onboarding_profile = $onboarding_profile;
-		$this->is_onboarded       = $is_onboarded;
+		$this->logger                  = $logger;
+		$this->request_data            = $request_data;
+		$this->onboarding_profile      = $onboarding_profile;
+		$this->settings_data_migration = $settings_data_migration;
+		$this->is_onboarded            = $is_onboarded;
 	}
 
 	/**
@@ -85,11 +64,12 @@ class SwitchSettingsUiEndpoint {
 			$this->request_data->read_request( $this->nonce() );
 			update_option( self::OPTION_NAME_SHOULD_USE_OLD_UI, 'no' );
 
-			if ( $this->is_onboarded ) {
-				$this->onboarding_profile->set_completed( true );
-				$this->onboarding_profile->save();
-			}
+			$this->onboarding_profile->set_completed( true );
+			$this->onboarding_profile->set_gateways_refreshed( true );
+			$this->onboarding_profile->set_gateways_synced( true );
+			$this->onboarding_profile->save();
 
+			$this->settings_data_migration->migrate();
 			wp_send_json_success();
 		} catch ( Exception $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 500 );

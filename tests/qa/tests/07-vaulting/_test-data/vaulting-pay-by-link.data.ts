@@ -7,6 +7,7 @@ const customer = customers.usa;
 
 const savePaymentMethodData: ShopOrder[] = [
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - PayPal - Save payment method',
 		...orders.default,
 		payment: {
@@ -16,6 +17,7 @@ const savePaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - ACDC - Save payment method',
 		...orders.default,
 		payment: {
@@ -25,6 +27,7 @@ const savePaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - ACDC - Do not save payment method',
 		...orders.default,
 		payment: {
@@ -37,6 +40,7 @@ const savePaymentMethodData: ShopOrder[] = [
 
 const acdcAdditionalCardData: ShopOrder[] = [
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - ACDC - Pay with card other then saved and do not save it',
 		...orders.default,
 		payment: {
@@ -46,6 +50,7 @@ const acdcAdditionalCardData: ShopOrder[] = [
 		customer,
 	},
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - ACDC - Pay with card other then saved and save it',
 		...orders.default,
 		payment: {
@@ -58,6 +63,7 @@ const acdcAdditionalCardData: ShopOrder[] = [
 
 const vaultedPaymentMethodData: ShopOrder[] = [
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - PayPal - Pay with vaulted account',
 		...orders.default,
 		payment: {
@@ -67,6 +73,8 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
+		// Fails due to: https://inpsyde.atlassian.net/browse/PCP-4788
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Pay by link - ACDC - Pay with saved card',
 		...orders.default,
 		payment: {

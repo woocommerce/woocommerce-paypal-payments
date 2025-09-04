@@ -7,25 +7,28 @@
 - [Tests data](#tests-data)
 - [Preconditions](#preconditions)
 - [Main test scenarios](#main-test-scenarios)
-	- [Subscription order on checkout](#subscription-order-on-checkout)
-		- [Approximate scenario for guest](#approximate-scenario-for-guest)
-		- [Approximate scenario for customer](#approximate-scenario-for-customer)
-	- [Subscription order on other pages](#subscription-order-on-other-pages)
-	- [Subscription Renewal](#subscription-renewal)
-		- [Approximate scenario for renewal](#approximate-scenario-for-renewal)
+    - [Subscription order on checkout](#subscription-order-on-checkout)
+        - [Approximate scenario for guest](#approximate-scenario-for-guest)
+        - [Approximate scenario for customer](#approximate-scenario-for-customer)
+    - [Subscription order on other pages](#subscription-order-on-other-pages)
+    - [Subscription Renewal](#subscription-renewal)
+        - [Approximate scenario for renewal](#approximate-scenario-for-renewal)
 
 ## Overview
 
 WooCommerce Subscriptions plugin provides functionality for products of _subscription_ type. Once a subscription product is purchased it is expected to be automatically reordered after certain period of time (_renewal process_), using payment method provided for the initial order.
 
 There are 2 main types of _renewal process_:
+
 - **Vaulting subscription:** renewal using _vaulted_ payment method (default, by WooCommerce). Available for merchants with reference transactions.
+
 - **PayPal subscription:** renewal controlled by PayPal. Steps to enable:
-	- After onboarding with Subscriptions - turn off vaulting. Alternative (not available at the moment): onboard merchant without reference transactions.
-	- Create subscription products, connected to PayPal plan.
-	- Only for payments via PayPal.
+    - After onboarding with Subscriptions - turn off vaulting. Alternative (not available at the moment): onboard merchant without reference transactions.
+    - Create subscription products, connected to PayPal plan.
+    - Only for payments via PayPal.
 
 Additional cases:
+
 - Guest should be automatically registered as a customer after purchasing subscription product.
 - Should be possible to pay for the _free trial_ subscription product with 0 initial cost.
 
@@ -41,20 +44,20 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 ## Preconditions
 
 - Before all tests:
-	- Install WooCommerce Subscriptions plugin.
-	- Create subscription products:
-		- Simple subscription product (for _Vaulting subscription_ tests).
-		- Simple subscription product connected to PayPal plan (for _PayPal subscription_ tests).
-		- Simple subscription product with free trial (for _Vaulting subscription_ tests).
-		- Simple subscription product with free trial connected to PayPal plan (for _PayPal subscription_ tests).
+    - Install WooCommerce Subscriptions plugin.
+    - Create subscription products:
+        - Simple subscription product (for _Vaulting subscription_ tests).
+        - Simple subscription product connected to PayPal plan (for _PayPal subscription_ tests).
+        - Simple subscription product with free trial (for _Vaulting subscription_ tests).
+        - Simple subscription product with free trial connected to PayPal plan (for _PayPal subscription_ tests).
 
 - `beforeAll` hook (in the spec):
-	- Activate WooCommerce Subscriptions plugin.
-	- Setup store: USA, USD, default taxes, shipping, etc.
-	- Plugin settings
-		- Install/activate PCP
-		- Reset DB
-		- Connect tested merchant with subscription products, enabled APMs.
+    - Activate WooCommerce Subscriptions plugin.
+    - Setup store: USA, USD, default taxes, shipping, etc.
+    - Plugin settings
+        - Install/activate PCP
+        - Reset DB
+        - Connect tested merchant with subscription products, enabled APMs.
 
 - For tests with registered customer - additional `beforeAll` hook to recreate the customer before the test case and restore his storage state.
 
@@ -82,7 +85,7 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 - PCP-0000 | PayPal subscription - Transaction - Checkout - Order by customer
 - PCP-0000 | PayPal subscription - Transaction - Checkout - Free trial order by customer
 
-#### Approximate scenario for guest:
+#### Approximate scenario for guest
 
 1. As a guest make order of subscription product using tested payment method.
 
@@ -98,7 +101,7 @@ See also [Confluence page](https://inpsyde.atlassian.net/wiki/spaces/PPCP/pages/
 
 	5.2 For PayPal subsctiption: is not saved on customer's My Account and checkout pages.
 
-#### Approximate scenario for customer:
+#### Approximate scenario for customer
 
 1. Login as customer (use precreated storage state).
 
@@ -141,10 +144,10 @@ Approximate scenarios are similar to Checkout section.
 - PCP-0000 | Vaulting subscription - PayPal - Free trial order renewal
 - PCP-0000 | Vaulting subscription - ACDC - Free trial order renewal
 
-- PCP-0000 | PayPal subscription - Order renewal
+    - PCP-0000 | PayPal subscription - Order renewal
 - PCP-0000 | PayPal subscription - Free trial order renewal
 
-#### Approximate scenario for renewal:
+#### Approximate scenario for renewal
 
 1. Create active subscription order for customer
 

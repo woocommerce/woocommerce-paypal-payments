@@ -1,7 +1,14 @@
 /**
  * Internal dependencies
  */
-import { customers, merchants, orders, payments, products, ShopOrder } from '../../../resources';
+import {
+	customers,
+	merchants,
+	orders,
+	payments,
+	products,
+	ShopOrder,
+} from '../../../resources';
 
 const customer = customers.usa;
 const merchant = merchants.usa;
@@ -13,9 +20,9 @@ const vaultingRenewal: ShopOrder[] = [
 		title: 'PCP-2505 | Vaulting subscription - PayPal - Order renewal',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 		currency,
 	},
 	{
@@ -23,9 +30,9 @@ const vaultingRenewal: ShopOrder[] = [
 		title: 'PCP-2514 | Vaulting subscription - ACDC - Order renewal',
 		...orders.default,
 		payment: payments.acdc,
-		merchant, 
+		merchant,
 		customer,
-		products: [ products.subscription10 ],
+		products: [ products.subscription100 ],
 		currency,
 	},
 ];
@@ -36,7 +43,7 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 		title: 'PCP-4913 | Vaulting subscription - PayPal - Free trial order renewal',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 		currency,
@@ -46,7 +53,7 @@ const vaultingFreeTrialRenewal: ShopOrder[] = [
 		title: 'PCP-4914 | Vaulting subscription - ACDC - Free trial order renewal',
 		...orders.default,
 		payment: payments.acdc,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionFreeTrial ],
 		currency,
@@ -59,7 +66,7 @@ const payPalRenewal: ShopOrder[] = [
 		title: 'PCP-2048 | PayPal subscription - Order renewal',
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionPayPal ],
 		currency,
@@ -72,7 +79,7 @@ const payPalFreeTrialRenewal: ShopOrder[] = [
 		title: 'PCP-4915 | PayPal subscription - Free trial order renewal', //bug: https://inpsyde.atlassian.net/browse/PCP-4980
 		...orders.default,
 		payment: payments.payPal,
-		merchant, 
+		merchant,
 		customer,
 		products: [ products.subscriptionPayPalFreeTrial ],
 		currency,

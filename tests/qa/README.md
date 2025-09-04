@@ -85,25 +85,27 @@ Depends on [`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-u
 
 ## Installation of `node_modules`
 
-1. Remove `"workspaces": [ "playwright-utils" ]` from `package.json`.
+> See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
 
-2. In the test project (`./tests/qa/`) run following command:
+1. Make sure you're logged in the [Syde npm package registry](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3112894465/GitHub+Package+Registry+for+npm).
 
-```bash
-npm run setup:tests
-```
+2. Make sure that `"workspaces": [ "playwright-utils" ]` node isn't present in `./tests/qa/package.json`.
+
+3. In the terminal change directory to `./tests/qa` and run following command:
+
+	```bash
+	npm run setup:tests
+	```
 
 ## Installation of `playwright-utils` for local development
 
-> Note: skip this section if you're not going to update code in `playwright-utils`.
+> See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#development).
 
-> See also @inpsyde/playwright-utils [documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
+1. Add `"workspaces": [ "playwright-utils" ]` to `./tests/qa/package.json`.
 
-1. Add `"workspaces": [ "playwright-utils" ]` to `package.json`.
+2. Delete `@inpsyde/playwright-utils` from `./tests/qa/node_modules`.
 
-2. Delete `@inpsyde/playwright-utils` from `/node_modules`.
-
-3. In the test project directory (`./tests/qa/`) run following command:
+3. In the terminal change directory to `./tests/qa` and run following command:
 
 	```bash
 	git clone https://github.com/inpsyde/playwright-utils.git
@@ -136,7 +138,7 @@ npm run setup:tests
 
 	2.1 Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
 	
-	2.2 Set PayPal API keys and test credentials. See `.env.example`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=qrw2rcy27xpwiedd5gifyga2pa&i=iddsl6wdm62lwwqbzz474jodme&h=inpsyde.1password.eu).
+	2.2 Set PayPal API keys and test credentials. See `.env.example`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
 
 3. Configure `playwright.config.ts` of the project following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#playwright-configuration).
 
@@ -239,6 +241,20 @@ Local usage of _automated env setup scripts_ assumes that the following steps ar
 	> Note: for now the storage of .zip files is restricted in .gitignore. Please ask someone of QA to provide the content of `./tests/qa/resources/files` dir.
 
 3. `.env` file is configured as per step 2 of [this section](#project-configuration) (simply copy-paste it from `PCP .env` vault of 1Password).
+
+4. (Optional) For DDEV setup add `IGNORE_HTTPS_ERRORS=true` to `.env` and remove the Basic Auth credentials:
+
+	```bash
+	# playwright-utils config
+	IGNORE_HTTPS_ERRORS=true
+	WP_BASE_URL='https://woocommerce-paypal-payments.ddev.site'
+	WP_USERNAME=admin
+	WP_PASSWORD=admin
+	WP_BASIC_AUTH_USER=
+	WP_BASIC_AUTH_PASS=
+	STORAGE_STATE_PATH='./storage-states'
+	STORAGE_STATE_PATH_ADMIN='./storage-states/admin.json'
+	```
 
 ### Reset SSE env
 

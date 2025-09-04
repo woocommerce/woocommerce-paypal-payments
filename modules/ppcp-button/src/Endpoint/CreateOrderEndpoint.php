@@ -232,24 +232,24 @@ class CreateOrderEndpoint implements EndpointInterface {
 		LoggerInterface $logger
 	) {
 
-		$this->request_data                     = $request_data;
-		$this->purchase_unit_factory            = $purchase_unit_factory;
-		$this->shipping_preference_factory      = $shipping_preference_factory;
-		$this->contact_preference_factory       = $contact_preference_factory;
-		$this->experience_context_builder       = $experience_context_builder;
-		$this->api_endpoint                     = $order_endpoint;
-		$this->payer_factory                    = $payer_factory;
-		$this->session_handler                  = $session_handler;
-		$this->settings                         = $settings;
-		$this->early_order_handler              = $early_order_handler;
-		$this->registration_needed              = $registration_needed;
-		$this->card_billing_data_mode           = $card_billing_data_mode;
-		$this->early_validation_enabled         = $early_validation_enabled;
-		$this->pay_now_contexts                 = $pay_now_contexts;
-		$this->handle_shipping_in_paypal        = $handle_shipping_in_paypal;
+		$this->request_data                          = $request_data;
+		$this->purchase_unit_factory                 = $purchase_unit_factory;
+		$this->shipping_preference_factory           = $shipping_preference_factory;
+		$this->contact_preference_factory            = $contact_preference_factory;
+		$this->experience_context_builder            = $experience_context_builder;
+		$this->api_endpoint                          = $order_endpoint;
+		$this->payer_factory                         = $payer_factory;
+		$this->session_handler                       = $session_handler;
+		$this->settings                              = $settings;
+		$this->early_order_handler                   = $early_order_handler;
+		$this->registration_needed                   = $registration_needed;
+		$this->card_billing_data_mode                = $card_billing_data_mode;
+		$this->early_validation_enabled              = $early_validation_enabled;
+		$this->pay_now_contexts                      = $pay_now_contexts;
+		$this->handle_shipping_in_paypal             = $handle_shipping_in_paypal;
 		$this->server_side_shipping_callback_enabled = $server_side_shipping_callback_enabled;
-		$this->funding_sources_without_redirect = $funding_sources_without_redirect;
-		$this->logger                           = $logger;
+		$this->funding_sources_without_redirect      = $funding_sources_without_redirect;
+		$this->logger                                = $logger;
 	}
 
 	/**

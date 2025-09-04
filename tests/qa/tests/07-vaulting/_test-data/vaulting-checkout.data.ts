@@ -7,6 +7,8 @@ const customer = customers.usa;
 
 const savePaymentMethodData: ShopOrder[] = [
 	{
+		// FAIL: vaulted PayPal button is not displayed, "Saved token for ppcp-gateway" is displayed.
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Checkout - PayPal - Save payment method',
 		...orders.default,
 		payment: {
@@ -16,7 +18,8 @@ const savePaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		title: 'PCP-0000 | Vaulting - Transaction - Checkout - ACDC - Save payment method',
+		// https://inpsyde.atlassian.net/browse/PCP-3234
+		title: 'PCP-3234 | Vaulting - Transaction - Checkout - ACDC - Save payment method',
 		...orders.default,
 		payment: {
 			...payments.acdc,
@@ -25,6 +28,7 @@ const savePaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Checkout - ACDC - Do not save payment method',
 		...orders.default,
 		payment: {
@@ -37,6 +41,7 @@ const savePaymentMethodData: ShopOrder[] = [
 
 const acdcAdditionalCardData: ShopOrder[] = [
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Checkout - ACDC - Pay with card other then saved and do not save it',
 		...orders.default,
 		payment: {
@@ -46,6 +51,7 @@ const acdcAdditionalCardData: ShopOrder[] = [
 		customer,
 	},
 	{
+		// https://inpsyde.atlassian.net/browse/PCP-
 		title: 'PCP-0000 | Vaulting - Transaction - Checkout - ACDC - Pay with card other then saved and save it',
 		...orders.default,
 		payment: {
@@ -58,7 +64,9 @@ const acdcAdditionalCardData: ShopOrder[] = [
 
 const vaultedPaymentMethodData: ShopOrder[] = [
 	{
-		title: 'PCP-0000 | Vaulting - Transaction - Checkout - PayPal - Pay with vaulted account',
+		// FAIL: vaulted PayPal button is not displayed.
+		// https://inpsyde.atlassian.net/browse/PCP-2051
+		title: 'PCP-2051 | Vaulting - Transaction - Checkout - PayPal - Pay with vaulted account',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -67,7 +75,9 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		title: 'PCP-0000 | Vaulting - Transaction - Checkout - ACDC - Pay with saved card',
+		// FAIL: payment is not accepted. Errors in console.
+		// https://inpsyde.atlassian.net/browse/PCP-3235
+		title: 'PCP-3235 | Vaulting - Transaction - Checkout - ACDC - Pay with saved card',
 		...orders.default,
 		payment: {
 			...payments.acdc,

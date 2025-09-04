@@ -3,12 +3,21 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	const button = document.querySelector(
 		'.button.button-settings-switch-ui'
 	);
+	const link = document.querySelector( 'a.settings-switch-ui' );
 
-	if ( ! typeof config || ! button ) {
+	if ( typeof config === 'undefined' || ( ! button && ! link ) ) {
 		return;
 	}
 
-	button.addEventListener( 'click', () => {
+	const handleClick = ( event ) => {
+		event.preventDefault();
+
+		const confirmed = confirm( config.confirmMessage );
+
+		if ( ! confirmed ) {
+			return;
+		}
+
 		fetch( config.endpoint, {
 			method: 'POST',
 			headers: {
@@ -30,5 +39,13 @@ document.addEventListener( 'DOMContentLoaded', () => {
 			.catch( ( error ) => {
 				console.error( 'Error:', error );
 			} );
-	} );
+	};
+
+	if ( button ) {
+		button.addEventListener( 'click', handleClick );
+	}
+
+	if ( link ) {
+		link.addEventListener( 'click', handleClick );
+	}
 } );

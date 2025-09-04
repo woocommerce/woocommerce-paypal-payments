@@ -21,7 +21,7 @@ const {
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: true,
+		classicPages: false,
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -37,6 +37,10 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		savePaypalAndVenmo: true,
 		saveCardDetails: true,
 	} );
+} );
+
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testData of savePaymentMethodData ) {

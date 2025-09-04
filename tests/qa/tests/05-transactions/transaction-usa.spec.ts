@@ -7,6 +7,7 @@ import {
 	storeConfigUsa,
 	gateways,
 	taxSettings,
+	customers,
 } from '../../resources';
 import {
 	transactionsOnCheckout,
@@ -32,7 +33,10 @@ import { fastlaneCheckout } from './_test-data/fastlane';
 const { payPal, venmo, acdc, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
-	await utils.configureStore( storeConfigUsa );
+	await utils.configureStore( {
+		...storeConfigUsa,
+		customer: customers.usa,
+	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
 	await pcpApi.connectMerchant(
@@ -45,6 +49,10 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
 	} );
+} );
+
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 transactionsOnCheckout( payPalCheckout );
@@ -100,25 +108,24 @@ test.describe( () => {
 } );
 
 /**
- * Fastlane is eligible only for USA/USD
+ * Fastlane (only for USA)
+ * NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
+ * https://inpsyde.atlassian.net/browse/PCP-4625
+ * https://inpsyde.atlassian.net/browse/PCP-4623
  */
-// NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
-// https://inpsyde.atlassian.net/browse/PCP-4625
-// https://inpsyde.atlassian.net/browse/PCP-4623
 
-// Fastlane
-// test.describe( () => {
-// 	test.beforeAll( async ( { pcpApi } ) => {
-// 		await pcpApi.updatePcpPaymentMethods( {
-// 			[ fastlane.id ]: { id: fastlane.id, enabled: true },
-// 		} );
-// 	} );
+test.describe( () => {
+	test.beforeAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( {
+			[ fastlane.id ]: { id: fastlane.id, enabled: true },
+		} );
+	} );
 
-// 	transactionsOnCheckout( fastlaneCheckout );
+	transactionsOnCheckout( fastlaneCheckout );
 
-// 	test.afterAll( async ( { pcpApi } ) => {
-// 		await pcpApi.updatePcpPaymentMethods( {
-// 			[ fastlane.id ]: { id: fastlane.id, enabled: false },
-// 		} );
-// 	} );
-// } );
+	test.afterAll( async ( { pcpApi } ) => {
+		await pcpApi.updatePcpPaymentMethods( {
+			[ fastlane.id ]: { id: fastlane.id, enabled: false },
+		} );
+	} );
+} );

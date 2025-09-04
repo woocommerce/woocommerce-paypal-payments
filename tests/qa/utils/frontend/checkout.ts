@@ -55,12 +55,14 @@ export class Checkout extends CheckoutBase {
 		}
 
 		// Select shipping or initial + monthly shipment (for subscriptions) option:
-		const shippingRadio = this.shippingMethodRadio( shipping.settings.title );
+		const shippingRadio = this.shippingMethodRadio(
+			shipping.settings.title
+		);
 		const shippingRadioCount = await shippingRadio.count();
-		if( shippingRadioCount ) {
-			for( let i = 0; i < shippingRadioCount; i++ ) {
+		if ( shippingRadioCount ) {
+			for ( let i = 0; i < shippingRadioCount; i++ ) {
 				await shippingRadio.nth( i ).click();
-			} 	
+			}
 		}
 
 		// Make payment with tested method

@@ -17,6 +17,7 @@ import {
 	disableNoncePlugin,
 	subscriptionsPlugin,
 	disableWcSetupWizard,
+	disableWebhookVerifivationPlugin,
 } from '../../resources';
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
@@ -49,6 +50,24 @@ setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
 	}
 	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 } );
+
+setup( 'Setup Disable new UI plugin (inactive)', async ( { requestUtils } ) => {
+	const pluginSlug = 'disable-new-ui';
+	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
+		await requestUtils.deactivatePlugin( pluginSlug );
+	}
+} );
+
+setup(
+	'Setup Disable Webhook Verification plugin (inactive)',
+	async ( { plugins, requestUtils } ) => {
+		const plugin = disableWebhookVerifivationPlugin;
+		if ( ! ( await requestUtils.isPluginInstalled( plugin.slug ) ) ) {
+			await plugins.installPluginFromFile( plugin.zipFilePath );
+		}
+		await requestUtils.deactivatePlugin( plugin.slug );
+	}
+);
 
 setup(
 	'Setup Disable WooCommerce Setup Wizard Plugin (active)',
@@ -97,13 +116,6 @@ setup( 'Setup theme', async ( { requestUtils } ) => {
 	await requestUtils.activateTheme( slug );
 } );
 
-setup(
-	'Setup WooCommerce Live site visibility',
-	async ( { wooCommerceUtils } ) => {
-		await wooCommerceUtils.setSiteVisibility();
-	}
-);
-
 setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {
 		const apiKeys = await wooCommerceUtils.createApiKeys();
@@ -116,12 +128,12 @@ setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	}
 } );
 
-setup( 'Setup Block and Classic pages', async ( { wooCommerceUtils } ) => {
-	await wooCommerceUtils.publishBlockCartPage();
-	await wooCommerceUtils.publishBlockCheckoutPage();
-	await wooCommerceUtils.publishClassicCartPage();
-	await wooCommerceUtils.publishClassicCheckoutPage();
-} );
+setup(
+	'Setup WooCommerce Live site visibility',
+	async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setSiteVisibility();
+	}
+);
 
 setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 	const disabled = { enabled: 'no' };
@@ -165,7 +177,9 @@ setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 } );
 
 setup( 'Setup WooCommerce general settings', async ( { wooCommerceApi } ) => {
-	await wooCommerceApi.updateGeneralSettings( shopSettings[country].general );
+	await wooCommerceApi.updateGeneralSettings(
+		shopSettings[ country ].general
+	);
 } );
 
 setup( 'Setup WooCommerce shipping', async ( { wooCommerceUtils } ) => {
@@ -176,8 +190,8 @@ setup( 'Setup WooCommerce taxes (included)', async ( { wooCommerceUtils } ) => {
 	await wooCommerceUtils.setTaxes( taxSettings.including );
 } );
 
-setup( 'Setup Registered Customer', async ( { wooCommerceUtils } ) => {
-	await wooCommerceUtils.createCustomer( customers[country] );
+setup( 'Setup Registered Customer', async ( { utils } ) => {
+	await utils.restoreCustomer( customers[ country ] );
 } );
 
 setup( 'Setup Delete Previous Orders', async ( { wooCommerceApi } ) => {
@@ -217,9 +231,9 @@ setup( 'Setup products', async ( { wooCommerceUtils } ) => {
 	process.env.PRODUCTS = JSON.stringify( cartItems );
 } );
 
-setup( 'Setup Deactivate Disable new UI plugin', async ( { requestUtils } ) => {
-	const pluginSlug = 'disable-new-ui';
-	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
-		await requestUtils.deactivatePlugin( pluginSlug );
-	}
+setup( 'Setup Block and Classic pages', async ( { wooCommerceUtils } ) => {
+	await wooCommerceUtils.publishBlockCartPage();
+	await wooCommerceUtils.publishBlockCheckoutPage();
+	await wooCommerceUtils.publishClassicCartPage();
+	await wooCommerceUtils.publishClassicCheckoutPage();
 } );

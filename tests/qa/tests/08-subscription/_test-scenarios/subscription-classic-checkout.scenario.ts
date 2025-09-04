@@ -5,22 +5,26 @@ import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, payment, products, customer: guest } = testOrder;
 
 	test.describe( () => {
 		// Delete guest since he becomes registered customer in subscription tests
-		test.beforeAll( async ( { requestUtils, wooCommerceUtils } ) => {
-			await wooCommerceUtils.deleteCustomer( customer );
-			const userName = `${ customer.first_name } ${ customer.last_name }`;
-			const user = await requestUtils.getUserByName( userName );
-			if( user.length ) {
-				await requestUtils.deleteUser( user[ 0 ].id );
+		test.beforeAll( async ( { wooCommerceApi, wooCommerceUtils } ) => {
+			// Remove any stored subscriptions data related to tested guest and payPalAccount
+			await wooCommerceApi.deleteAllSubscriptions();
+			await wooCommerceApi.deleteAllOrders();
+			const previousEmails = [
+				guest.email,
+				payment.payPalAccount?.email,
+			];
+			for ( const email of previousEmails ) {
+				await wooCommerceUtils.deleteCustomer( { email } );
 			}
 		} );
 
 		test(
 			title,
-			annotateVisitor( customer ),
+			annotateVisitor( guest ),
 			async ( {
 				utils,
 				customerPaymentMethods,
@@ -33,7 +37,8 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
@@ -55,7 +60,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				if ( payment.saveToAccount !== false ) {
-					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
+					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayedOnClassicCheckout(
 						payment
 					);
 				} else {
@@ -74,7 +79,9 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
-		test.beforeAll( async ( { utils } ) => {
+		test.beforeAll( async ( { utils, wooCommerceApi } ) => {
+			await wooCommerceApi.deleteAllSubscriptions();
+			await wooCommerceApi.deleteAllOrders();
 			await utils.restoreCustomer( customer );
 		} );
 
@@ -100,7 +107,8 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
-				const subscriptionId = await orderReceived.getSubscriptionNumber();
+				const subscriptionId =
+					await orderReceived.getSubscriptionNumber();
 				await customerSubscriptions.visit( subscriptionId );
 				await customerSubscriptions.assertUrl( subscriptionId );
 				await expect(
@@ -122,7 +130,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
 				if ( payment.saveToAccount !== false ) {
-					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
+					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayedOnClassicCheckout(
 						payment
 					);
 				} else {

@@ -35,8 +35,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	};
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, shipping, customer, merchant } =
-			data;
+		const { payment, coupons, shipping, customer, merchant } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
 
 		await this.visit();
@@ -74,8 +73,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 	 * @param data
 	 */
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, shipping, customer } =
-			data;
+		const { payment, coupons, shipping, customer } = data;
 		await this.assertUrl();
 		await expect(
 			this.page.getByText(

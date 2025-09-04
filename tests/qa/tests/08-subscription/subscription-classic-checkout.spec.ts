@@ -4,31 +4,20 @@
 import { test } from '../../utils';
 import { merchants, products, storeConfigUsa } from '../../resources';
 import { subscriptionClassicCheckout } from './_test-data';
-import {
-	testSubscriptionClassicCheckout,
-} from './_test-scenarios';
+import { testSubscriptionClassicCheckout } from './_test-scenarios';
 
-const {
-	vaultingGuest,
-	vaultingCustomer,
-	payPalGuest,
-	payPalCustomer,
-} = subscriptionClassicCheckout;
+const { vaultingGuest, vaultingCustomer, payPalGuest, payPalCustomer } =
+	subscriptionClassicCheckout;
 
-const {
-	testSubscriptionOrderGuest,
-	testSubscriptionOrderCustomer,
-} = testSubscriptionClassicCheckout;
+const { testSubscriptionOrderGuest, testSubscriptionOrderCustomer } =
+	testSubscriptionClassicCheckout;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
 		...storeConfigUsa,
-		classicPages: false,
+		classicPages: true,
 		subscription: true,
-		products: [
-			products.subscription10,
-			products.subscriptionFreeTrial,
-		],
+		products: [ products.subscription100, products.subscriptionFreeTrial ],
 	} );
 	await utils.installAndActivatePcp();
 	await pcpApi.resetDb();
@@ -39,8 +28,13 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 			isCasualSeller: false,
 			areOptionalPaymentMethodsEnabled: true,
 			products: [ 'physical', 'virtual', 'subscriptions' ],
-		},
+		}
 	);
+} );
+
+test.afterAll( async ( { wooCommerceApi } ) => {
+	await wooCommerceApi.deleteAllSubscriptions();
+	await wooCommerceApi.deleteAllOrders();
 } );
 
 for ( const testData of vaultingGuest ) {
@@ -72,4 +66,4 @@ test.describe( 'PayPal Subscription', () => {
 	for ( const testData of payPalCustomer ) {
 		testSubscriptionOrderCustomer( testData );
 	}
-});
+} );

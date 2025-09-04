@@ -1,8 +1,8 @@
 *** Changelog ***
 
-= 3.0.7 - xxxx-xx-xx =
-* Enhancement - Deprecate `application_context` in favor of `experience_context` object #3431
- **NOTE**: If you were extending/modifying the `application_context` object programmatically, you may need to update your code to utilize `experience_context` for your customizations. 
+= 3.0.7 - 2025-07-01 =
+* Enhancement - Remove `application_context` in favor of `experience_context` object #3431
+ **NOTE**: If you were modifying the `application_context` object programmatically, you may need to update your code to utilize `experience_context` for your customizations. 
 * Enhancement - Add Contact Module feature
 * Enhancement - Add WooCommerce Tracks integration
 * Enhancement - Onboarding notification for Firefox browser #3433
@@ -15,6 +15,7 @@
 * Fix - PayPal button greyed out on single product page for variable products with >2 attributes #3395
 * Fix - APMs automatically enabled despite selecting "No, ..." during onboarding #3362
 * Fix - Ditch items logic does not work when using saved card payment #3476
+* Fix - billing-agreements endpoint called too frequently when not enabled for Reference Transactions #3459
 
 = 3.0.6 - 2025-05-27 =
 * Enhancement - Implement 3D secure check for Google Pay #3163

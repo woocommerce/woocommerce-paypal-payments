@@ -52,6 +52,7 @@ const fastlaneRyan: Pcp.Payment = {
 	gateway: gateways.fastlane,
 	fastlaneFlow: 'ryan',
 	fastlaneOtp: '111111',
+	card: cards.visa,
 };
 
 const debitOrCreditCard: Pcp.Payment = {
