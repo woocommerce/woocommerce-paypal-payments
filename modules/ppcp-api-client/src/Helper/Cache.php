@@ -48,7 +48,7 @@ class Cache {
 	 *
 	 * @return bool
 	 */
-	public function has( string $key ) : bool {
+	public function has( string $key ): bool {
 		$value = $this->get( $key );
 
 		return false !== $value;
@@ -59,7 +59,7 @@ class Cache {
 	 *
 	 * @param string $key The key.
 	 */
-	public function delete( string $key ) : void {
+	public function delete( string $key ): void {
 		delete_transient( $this->prefix . $key );
 	}
 
@@ -72,7 +72,7 @@ class Cache {
 	 *
 	 * @return bool
 	 */
-	public function set( string $key, $value, int $expiration = 0 ) : bool {
+	public function set( string $key, $value, int $expiration = 0 ): bool {
 		return (bool) set_transient( $this->prefix . $key, $value, $expiration );
 	}
 
@@ -81,7 +81,7 @@ class Cache {
 	 *
 	 * @return void
 	 */
-	public function flush() : void {
+	public function flush(): void {
 		global $wpdb;
 
 		// Get a list of all transients with the relevant "group prefix" from the DB.

@@ -54,7 +54,7 @@ class ApmProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_local_state() : ?bool {
+	protected function check_local_state(): ?bool {
 		$status_override = apply_filters( 'woocommerce_paypal_payments_google_pay_product_status', null );
 		if ( null !== $status_override ) {
 			return $status_override;
@@ -68,7 +68,7 @@ class ApmProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_active_state( SellerStatus $seller_status ) : bool {
+	protected function check_active_state( SellerStatus $seller_status ): bool {
 		// Check the seller status for the intended capability.
 		$has_capability = false;
 		foreach ( $seller_status->products() as $product ) {
@@ -101,7 +101,7 @@ class ApmProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function clear_state( ?Settings $settings = null ) : void {
+	protected function clear_state( ?Settings $settings = null ): void {
 		if ( null === $settings ) {
 			$settings = $this->settings;
 		}

@@ -48,7 +48,7 @@ class SavedPaymentCheckerModule implements ServiceModule, ExtendingModule, Execu
 		 */
 		add_filter(
 			'woocommerce_paypal_payments_order_intent',
-			function( string $intent ) use ( $c ) {
+			function ( string $intent ) use ( $c ) {
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
@@ -65,7 +65,7 @@ class SavedPaymentCheckerModule implements ServiceModule, ExtendingModule, Execu
 		 */
 		add_action(
 			'woocommerce_paypal_payments_before_handle_payment_success',
-			function( WC_Order $wc_order ) use ( $c ) {
+			function ( WC_Order $wc_order ) use ( $c ) {
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
@@ -98,7 +98,7 @@ class SavedPaymentCheckerModule implements ServiceModule, ExtendingModule, Execu
 		 */
 		add_action(
 			'woocommerce_email_before_order_table',
-			function( WC_Order $order ) use ( $c ) {
+			function ( WC_Order $order ) use ( $c ) {
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 				$logger = $c->get( 'woocommerce.logger.woocommerce' );
@@ -124,7 +124,7 @@ class SavedPaymentCheckerModule implements ServiceModule, ExtendingModule, Execu
 		 */
 		add_action(
 			'woocommerce_email_after_order_table',
-			function( WC_Order $order ) use ( $c ) {
+			function ( WC_Order $order ) use ( $c ) {
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 				$logger = $c->get( 'woocommerce.logger.woocommerce' );

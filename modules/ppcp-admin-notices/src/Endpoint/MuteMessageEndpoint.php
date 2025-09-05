@@ -53,7 +53,7 @@ class MuteMessageEndpoint {
 	 *
 	 * @return string
 	 */
-	public static function nonce() : string {
+	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
 
@@ -62,7 +62,7 @@ class MuteMessageEndpoint {
 	 *
 	 * @return void
 	 */
-	public function handle_request() : void {
+	public function handle_request(): void {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 		} catch ( RuntimeException $ex ) {

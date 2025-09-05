@@ -99,7 +99,7 @@ class SendOnlyCountryNotice {
 	 *
 	 * @return bool
 	 */
-	protected function is_ppcp_page():bool {
+	protected function is_ppcp_page(): bool {
 		return $this->is_ppcp_settings_page || $this->is_wc_gateways_list_page;
 	}
 }

@@ -40,7 +40,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => Settings::CONNECTION_TAB_ID,
 				'classes'      => array( 'ppcp-webhooks-table' ),
-				'value'        => function () use ( $container ) : array {
+				'value'        => function () use ( $container ): array {
 					return $container->get( 'webhook.status.registered-webhooks-data' );
 				},
 			),

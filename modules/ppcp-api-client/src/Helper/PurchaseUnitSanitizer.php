@@ -393,5 +393,4 @@ class PurchaseUnitSanitizer {
 	public function set_last_message( string $message ): void {
 		$this->last_message = $message;
 	}
-
 }

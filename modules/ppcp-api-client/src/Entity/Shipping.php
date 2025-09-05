@@ -55,8 +55,8 @@ class Shipping {
 	 * @param ShippingOption[] $options       Shipping methods.
 	 */
 	public function __construct(
-		string $name = null,
-		Address $address = null,
+		?string $name = null,
+		?Address $address = null,
 		?string $email_address = null,
 		?Phone $phone_number = null,
 		array $options = array()
@@ -91,7 +91,7 @@ class Shipping {
 	 *
 	 * @return null|string
 	 */
-	public function email_address() : ?string {
+	public function email_address(): ?string {
 		return $this->email_address;
 	}
 
@@ -100,7 +100,7 @@ class Shipping {
 	 *
 	 * @return null|Phone
 	 */
-	public function phone_number() : ?Phone {
+	public function phone_number(): ?Phone {
 		return $this->phone_number;
 	}
 

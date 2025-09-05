@@ -219,5 +219,4 @@ class UpdatePaymentDataEndpoint {
 			WC()->session->set( 'chosen_shipping_methods', array( $rate_id ) );
 		}
 	}
-
 }

@@ -42,7 +42,12 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class PayPalGateway extends \WC_Payment_Gateway {
 
-	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
+	use ProcessPaymentTrait;
+	use FreeTrialHandlerTrait;
+	use GatewaySettingsRendererTrait;
+	use OrderMetaTrait;
+	use TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
 
 	public const ID                            = 'ppcp-gateway';
 	public const INTENT_META_KEY               = '_ppcp_paypal_intent';
@@ -211,6 +216,69 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @var bool
 	 */
 	private $admin_settings_enabled;
+
+	/**
+	 * ID of the class extending the settings API. Used in option names.
+	 *
+	 * @var string
+	 */
+	public $id;
+
+	/**
+	 * Gateway title.
+	 *
+	 * @var string
+	 */
+	public $method_title = '';
+
+	/**
+	 * Gateway description.
+	 *
+	 * @var string
+	 */
+	public $method_description = '';
+
+	/**
+	 * Payment method title for the frontend.
+	 *
+	 * @var string
+	 */
+	public $title;
+
+	/**
+	 * Payment method description for the frontend.
+	 *
+	 * @var string
+	 */
+	public $description;
+
+	/**
+	 * Form option fields.
+	 *
+	 * @var array
+	 */
+	public $form_fields = array();
+
+	/**
+	 * Icon for the gateway.
+	 *
+	 * @var string
+	 */
+	public $icon;
+
+	/**
+	 * Supported features such as 'default_credit_card_form', 'refunds'.
+	 *
+	 * @var array
+	 */
+	public $supports = array( 'products' );
+
+	/**
+	 * Set if the place order button should be renamed on selection.
+	 *
+	 * @var string
+	 */
+	public $order_button_text;
 
 	/**
 	 * PayPalGateway constructor.
@@ -465,10 +533,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	private function is_credit_card_tab() : bool {
+	private function is_credit_card_tab(): bool {
 		return is_admin()
 			&& CreditCardGateway::ID === $this->page_id;
-
 	}
 
 	/**
@@ -476,7 +543,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	private function is_pui_tab():bool {
+	private function is_pui_tab(): bool {
 		if ( 'DE' !== $this->api_shop_country ) {
 			return false;
 		}
@@ -489,7 +556,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool true if is connection tab, otherwise false
 	 */
-	protected function is_connection_tab() : bool {
+	protected function is_connection_tab(): bool {
 		return is_admin()
 			&& Settings::CONNECTION_TAB_ID === $this->page_id;
 	}
@@ -499,7 +566,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool true if is pay-later tab, otherwise false
 	 */
-	protected function is_pay_later_tab() : bool {
+	protected function is_pay_later_tab(): bool {
 		return is_admin()
 			&& Settings::PAY_LATER_TAB_ID === $this->page_id;
 	}
@@ -509,7 +576,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return bool
 	 */
-	private function is_paypal_tab() : bool {
+	private function is_paypal_tab(): bool {
 		return ! $this->is_credit_card_tab()
 			&& is_admin()
 			&& self::ID === $this->page_id;

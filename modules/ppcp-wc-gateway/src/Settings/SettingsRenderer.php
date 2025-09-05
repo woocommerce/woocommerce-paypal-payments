@@ -90,6 +90,13 @@ class SettingsRenderer {
 	protected $page_id;
 
 	/**
+	 * A callable property used to check the eligibility for Fastlane.
+	 *
+	 * @var callable
+	 */
+	private $axo_eligibility_check;
+
+	/**
 	 * SettingsRenderer constructor.
 	 *
 	 * @param ContainerInterface $settings The Settings.
@@ -111,20 +118,22 @@ class SettingsRenderer {
 		DCCProductStatus $dcc_product_status,
 		SettingsStatus $settings_status,
 		string $page_id,
-		string $api_shop_country
+		string $api_shop_country,
+		callable $axo_eligibility_check
 	) {
 
 		// This is a legacy settings class, it's correctly relying on the `Status` class.
 
-		$this->settings           = $settings;
-		$this->state              = $state;
-		$this->fields             = $fields;
-		$this->dcc_applies        = $dcc_applies;
-		$this->messages_apply     = $messages_apply;
-		$this->dcc_product_status = $dcc_product_status;
-		$this->settings_status    = $settings_status;
-		$this->page_id            = $page_id;
-		$this->api_shop_country   = $api_shop_country;
+		$this->settings              = $settings;
+		$this->state                 = $state;
+		$this->fields                = $fields;
+		$this->dcc_applies           = $dcc_applies;
+		$this->messages_apply        = $messages_apply;
+		$this->dcc_product_status    = $dcc_product_status;
+		$this->settings_status       = $settings_status;
+		$this->page_id               = $page_id;
+		$this->api_shop_country      = $api_shop_country;
+		$this->axo_eligibility_check = $axo_eligibility_check;
 	}
 
 	/**
@@ -132,7 +141,7 @@ class SettingsRenderer {
 	 *
 	 * @return array
 	 */
-	public function messages() : array {
+	public function messages(): array {
 
 		$messages = array();
 
@@ -398,7 +407,7 @@ $data_rows_html
 			}
 			if (
 				in_array( 'axo', $config['requirements'], true )
-				&& $this->api_shop_country !== 'US'
+				&& ! ( $this->axo_eligibility_check )()
 			) {
 				continue;
 			}
@@ -507,7 +516,7 @@ $data_rows_html
 	 *
 	 * @param array $config The configuration array.
 	 */
-	private function render_preview_block( array $config ) : void {
+	private function render_preview_block( array $config ): void {
 		$id      = $config['preview']['id'] ?? '';
 		$type    = $config['preview']['type'] ?? 'button';
 		$message = $config['preview']['message'] ?? __( 'Button Styling Preview', 'woocommerce-paypal-payments' );

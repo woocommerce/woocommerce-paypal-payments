@@ -265,5 +265,4 @@ class SettingsPageAssets {
 			true
 		);
 	}
-
 }

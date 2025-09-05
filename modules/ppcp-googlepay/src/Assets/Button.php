@@ -275,7 +275,7 @@ class Button implements ButtonInterface {
 		 */
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			function( $components ) {
+			function ( $components ) {
 				$components[] = 'googlepay';
 				return $components;
 			}
@@ -369,7 +369,7 @@ class Button implements ButtonInterface {
 	 *
 	 * @return void
 	 */
-	protected function hide_gateway_until_eligible() : void {
+	protected function hide_gateway_until_eligible(): void {
 		?>
 		<style data-hide-gateway='<?php echo esc_attr( GooglePayGateway::ID ); ?>'>
 			.wc_payment_method.payment_method_ppcp-googlepay {

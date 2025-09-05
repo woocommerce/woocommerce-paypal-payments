@@ -348,7 +348,7 @@ class WebhookEndpoint {
 			if ( isset( $expected_headers[ $key ] ) ) {
 				$expected_headers[ $key ] = $header;
 			}
-		};
+		}
 
 		foreach ( $expected_headers as $key => $value ) {
 			if ( ! empty( $value ) ) {

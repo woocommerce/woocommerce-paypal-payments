@@ -58,7 +58,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	/**
 	 * Configure REST API routes.
 	 */
-	public function register_routes() : void {
+	public function register_routes(): void {
 		/**
 		 * GET wc/v3/wc_paypal/pay_later_messaging
 		 */
@@ -91,7 +91,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The current payment methods details.
 	 */
-	public function get_details() : WP_REST_Response {
+	public function get_details(): WP_REST_Response {
 		return $this->return_success( ( new ConfigFactory() )->from_settings( $this->settings ) );
 	}
 
@@ -102,7 +102,7 @@ class PayLaterMessagingEndpoint extends RestEndpoint {
 	 *
 	 * @return WP_REST_Response The updated Pay Later Messaging configuration details.
 	 */
-	public function update_details( WP_REST_Request $request ) : WP_REST_Response {
+	public function update_details( WP_REST_Request $request ): WP_REST_Response {
 		$this->save_config->save_config( $request->get_json_params() );
 
 		return $this->get_details();

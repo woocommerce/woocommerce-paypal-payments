@@ -120,7 +120,7 @@ class PaymentTokenChecker {
 	 * @param string $intent The intent from settings when order was created.
 	 * @return void
 	 */
-	public function check_and_update( int $order_id, int $customer_id, string $intent ):void {
+	public function check_and_update( int $order_id, int $customer_id, string $intent ): void {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, WC_Order::class ) ) {
 			return;

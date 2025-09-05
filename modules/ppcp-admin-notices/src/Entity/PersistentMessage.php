@@ -47,7 +47,7 @@ class PersistentMessage extends Message {
 	 *
 	 * @return string
 	 */
-	public function id( bool $with_db_prefix = false ) : string {
+	public function id( bool $with_db_prefix = false ): string {
 		if ( ! $this->message_id ) {
 			return '';
 		}
@@ -58,7 +58,7 @@ class PersistentMessage extends Message {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function to_array() : array {
+	public function to_array(): array {
 		$data       = parent::to_array();
 		$data['id'] = $this->message_id;
 
@@ -70,7 +70,7 @@ class PersistentMessage extends Message {
 	 *
 	 * @return PersistentMessage
 	 */
-	public static function from_array( array $data ) : Message {
+	public static function from_array( array $data ): Message {
 		return new PersistentMessage(
 			(string) ( $data['id'] ?? '' ),
 			(string) ( $data['message'] ?? '' ),
@@ -84,7 +84,7 @@ class PersistentMessage extends Message {
 	 *
 	 * @return bool
 	 */
-	public function is_muted() : bool {
+	public function is_muted(): bool {
 		$user_id = get_current_user_id();
 
 		if ( ! $this->message_id || ! $user_id ) {
@@ -99,7 +99,7 @@ class PersistentMessage extends Message {
 	 *
 	 * @return void
 	 */
-	public function mute() : void {
+	public function mute(): void {
 		$user_id = get_current_user_id();
 
 		if ( $this->message_id && $user_id && ! $this->is_muted() ) {
@@ -112,7 +112,7 @@ class PersistentMessage extends Message {
 	 *
 	 * @return void
 	 */
-	public static function clear_all() : void {
+	public static function clear_all(): void {
 		global $wpdb;
 
 		$wpdb->query(

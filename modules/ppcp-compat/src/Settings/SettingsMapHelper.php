@@ -125,7 +125,7 @@ class SettingsMapHelper {
 	 * @param SettingsMap[] $settings_map The settings map to validate.
 	 * @throws RuntimeException When an old key has multiple mappings.
 	 */
-	protected function validate_settings_map( array $settings_map ) : void {
+	protected function validate_settings_map( array $settings_map ): void {
 		$seen_keys = array();
 
 		foreach ( $settings_map as $settings_map_instance ) {
@@ -172,7 +172,7 @@ class SettingsMapHelper {
 	 *
 	 * @return bool True if the key exists in the new settings, false otherwise.
 	 */
-	public function has_mapped_key( string $old_key ) : bool {
+	public function has_mapped_key( string $old_key ): bool {
 		if ( ! $this->new_settings_module_enabled ) {
 			return false;
 		}
@@ -228,7 +228,7 @@ class SettingsMapHelper {
 	 *
 	 * @return void
 	 */
-	protected function ensure_map_initialized() : void {
+	protected function ensure_map_initialized(): void {
 		if ( $this->key_to_model === null ) {
 			$this->initialize_key_map();
 		}
@@ -242,7 +242,7 @@ class SettingsMapHelper {
 	 *
 	 * @return void
 	 */
-	protected function initialize_key_map() : void {
+	protected function initialize_key_map(): void {
 		$this->key_to_model = array();
 
 		foreach ( $this->settings_map as $settings_map_instance ) {
@@ -264,7 +264,7 @@ class SettingsMapHelper {
 	 *
 	 * @return AbstractDataModel|null
 	 */
-	protected function get_payment_settings_model() : ?AbstractDataModel {
+	protected function get_payment_settings_model(): ?AbstractDataModel {
 		foreach ( $this->settings_map as $settings_map_instance ) {
 			if ( $settings_map_instance->get_model() instanceof PaymentSettings ) {
 				return $settings_map_instance->get_model();

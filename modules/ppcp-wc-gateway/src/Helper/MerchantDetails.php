@@ -90,7 +90,7 @@ class MerchantDetails {
 	 *
 	 * @return string
 	 */
-	public function get_merchant_country() : string {
+	public function get_merchant_country(): string {
 		return $this->merchant_country;
 	}
 
@@ -100,7 +100,7 @@ class MerchantDetails {
 	 *
 	 * @return string
 	 */
-	public function get_shop_country() : string {
+	public function get_shop_country(): string {
 		return $this->store_country;
 	}
 
@@ -117,7 +117,7 @@ class MerchantDetails {
 	 * @param string $feature One of the public self::FEATURE_* values.
 	 * @return bool Whether the merchant can use the relevant feature.
 	 */
-	public function is_eligible_for( string $feature ) : bool {
+	public function is_eligible_for( string $feature ): bool {
 		if ( ! array_key_exists( $feature, $this->eligibility_checks ) ) {
 			return false;
 		}

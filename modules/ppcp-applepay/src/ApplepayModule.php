@@ -56,7 +56,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( ?Settings $settings = null ) use ( $c ): void {
+			function ( ?Settings $settings = null ) use ( $c ): void {
 				$apm_status = $c->get( 'applepay.apple-product-status' );
 				assert( $apm_status instanceof AppleProductStatus );
 				$apm_status->clear( $settings );
@@ -174,7 +174,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_filter(
 			'woocommerce_paypal_payments_selected_button_locations',
-			function( array $locations, string $setting_name ): array {
+			function ( array $locations, string $setting_name ): array {
 				$gateway = WC()->payment_gateways()->payment_gateways()[ ApplePayGateway::ID ] ?? '';
 				if ( $gateway && $gateway->enabled === 'yes' && $setting_name === 'smart_button_locations' ) {
 					$locations[] = 'checkout';
@@ -188,7 +188,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_filter(
 			'woocommerce_paypal_payments_rest_common_merchant_features',
-			function( array $features ) use ( $c ): array {
+			function ( array $features ) use ( $c ): array {
 				$product_status = $c->get( 'applepay.apple-product-status' );
 				assert( $product_status instanceof AppleProductStatus );
 
@@ -204,7 +204,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
 
 				if ( $payment_method !== ApplePayGateway::ID ) {
 					return $data;
@@ -294,7 +294,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'applepay.blocks-payment-method' ) );
 			}
 		);
@@ -329,7 +329,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 		// Adds ApplePay component to the backend button preview settings.
 		add_action(
 			'woocommerce_paypal_payments_admin_gateway_settings',
-			function( array $settings ) use ( $c ): array {
+			function ( array $settings ) use ( $c ): array {
 				if ( is_array( $settings['components'] ) ) {
 					$settings['components'][] = 'applepay';
 				}
@@ -412,7 +412,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 	 * @param bool $is_sandbox The environment for this merchant.
 	 * @return string
 	 */
-	public function validation_string( bool $is_sandbox ) : string {
+	public function validation_string( bool $is_sandbox ): string {
 		$sandbox_string = $this->sandbox_validation_string();
 		$live_string    = $this->live_validation_string();
 		return $is_sandbox ? $sandbox_string : $live_string;

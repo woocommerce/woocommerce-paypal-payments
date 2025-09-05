@@ -47,7 +47,7 @@ class OnboardingModule implements ServiceModule, ExtendingModule, ExecutableModu
 
 		add_action(
 			'admin_enqueue_scripts',
-			function() use ( $c ) {
+			function () use ( $c ) {
 				if (
 					apply_filters(
 					// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores

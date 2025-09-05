@@ -94,7 +94,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_completed() : bool {
+	public function get_completed(): bool {
 		return (bool) $this->data['completed'];
 	}
 
@@ -103,7 +103,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @param bool $state Whether the onboarding process has been completed.
 	 */
-	public function set_completed( bool $state ) : void {
+	public function set_completed( bool $state ): void {
 		$this->data['completed'] = $state;
 	}
 
@@ -112,7 +112,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return int
 	 */
-	public function get_step() : int {
+	public function get_step(): int {
 		return (int) $this->data['step'];
 	}
 
@@ -121,7 +121,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @param int $step The current onboarding step.
 	 */
-	public function set_step( int $step ) : void {
+	public function set_step( int $step ): void {
 		$this->data['step'] = $step;
 	}
 
@@ -130,7 +130,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return bool|null
 	 */
-	public function get_casual_seller() : ?bool {
+	public function get_casual_seller(): ?bool {
 		return $this->data['is_casual_seller'];
 	}
 
@@ -139,7 +139,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @param bool|null $casual_seller Whether the merchant uses a personal account for selling.
 	 */
-	public function set_casual_seller( ?bool $casual_seller ) : void {
+	public function set_casual_seller( ?bool $casual_seller ): void {
 		$this->data['is_casual_seller'] = $casual_seller;
 	}
 
@@ -148,7 +148,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function get_accept_card_payments() : bool {
+	public function get_accept_card_payments(): bool {
 		return (bool) $this->data['accept_card_payments'];
 	}
 
@@ -157,7 +157,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @param bool|null $accept_cards Whether to accept card payments via the PayPal plugin.
 	 */
-	public function set_accept_card_payments( ?bool $accept_cards ) : void {
+	public function set_accept_card_payments( ?bool $accept_cards ): void {
 		$this->data['accept_card_payments'] = $accept_cards;
 	}
 
@@ -166,7 +166,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return string[]
 	 */
-	public function get_products() : array {
+	public function get_products(): array {
 		return $this->data['products'];
 	}
 
@@ -175,7 +175,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @param string[] $products Any of ['virtual'|'physical'|'subscriptions'].
 	 */
-	public function set_products( array $products ) : void {
+	public function set_products( array $products ): void {
 		$this->data['products'] = $products;
 	}
 
@@ -184,7 +184,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	public function get_flags() : array {
+	public function get_flags(): array {
 		return $this->flags;
 	}
 
@@ -193,7 +193,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @return bool
 	 */
-	public function is_setup_done() : bool {
+	public function is_setup_done(): bool {
 		return (bool) $this->data['setup_done'];
 	}
 
@@ -202,7 +202,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 *
 	 * @param bool $done Whether the onboarding process has been setup_done.
 	 */
-	public function set_setup_done( bool $done ) : void {
+	public function set_setup_done( bool $done ): void {
 		$this->data['setup_done'] = $done;
 	}
 

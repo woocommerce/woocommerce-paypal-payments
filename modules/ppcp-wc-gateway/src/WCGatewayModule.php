@@ -325,7 +325,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function() use ( $c ) {
+			static function () use ( $c ) {
 				$dcc_status_cache = $c->get( 'dcc.status-cache' );
 				assert( $dcc_status_cache instanceof Cache );
 				$pui_status_cache = $c->get( 'pui.status-cache' );
@@ -465,7 +465,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			add_action(
 				'init',
-				function() use ( $c ) {
+				function () use ( $c ) {
 					\WP_CLI::add_command(
 						'pcp settings',
 						$c->get( 'wcgateway.cli.settings.command' )
@@ -477,7 +477,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( ?Settings $settings = null ) use ( $c ): void {
+			function ( ?Settings $settings = null ) use ( $c ): void {
 
 				// Clear DCC Product status.
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
@@ -522,7 +522,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
-			function( string $installed_plugin_version ) use ( $c ) {
+			function ( string $installed_plugin_version ) use ( $c ) {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
@@ -535,7 +535,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_filter(
 			'woocommerce_paypal_payments_rest_common_merchant_features',
-			static function ( array $features ) use ( $c ) : array {
+			static function ( array $features ) use ( $c ): array {
 				$is_connected = $c->get( 'settings.flag.is-connected' );
 
 				if ( ! $is_connected ) {
@@ -597,7 +597,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Add processing instruction request data for OXXO payment.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
 				if ( $payment_method !== OXXOGateway::ID ) {
 					return $data;
 				}
@@ -1019,7 +1019,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 * @param WC_Order|mixed $order The order to verify.
 	 * @return bool True, if it's a valid order that was paid via PayPal.
 	 */
-	private function is_order_paid_by_paypal( $order ) : bool {
+	private function is_order_paid_by_paypal( $order ): bool {
 		if ( ! $order instanceof WC_Order ) {
 			return false;
 		}
@@ -1083,7 +1083,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	 * @param WC_Order|mixed $order The order which is rendered.
 	 * @return void
 	 */
-	private function display_original_contact_in_order_details( $order ) : void {
+	private function display_original_contact_in_order_details( $order ): void {
 		if ( ! $this->is_order_paid_by_paypal( $order ) ) {
 			return;
 		}

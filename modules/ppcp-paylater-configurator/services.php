@@ -37,7 +37,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'paylater-configurator.is-available'         => static function ( ContainerInterface $container ) : bool {
+	'paylater-configurator.is-available'         => static function ( ContainerInterface $container ): bool {
 		// Test, if Pay-Later is available; depends on the shop country and Vaulting status.
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		assert( $messages_apply instanceof MessagesApply );
@@ -55,7 +55,7 @@ return array(
 		// Pay Later Messaging is available if vaulting is not enabled, the shop country is supported, and is eligible for ACDC.
 		return ! $vault_enabled && $messages_apply->for_country() && $dcc_product_status->is_active() && $card_fields_eligible;
 	},
-	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ) : array {
+	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ): array {
 		// Get an array of locations that display the Pay-Later message.
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );

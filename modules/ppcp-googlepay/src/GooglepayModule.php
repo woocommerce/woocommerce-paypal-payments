@@ -54,7 +54,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( ?Settings $settings = null ) use ( $c ): void {
+			function ( ?Settings $settings = null ) use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
 				assert( $apm_status instanceof ApmProductStatus );
 				$apm_status->clear( $settings );
@@ -149,7 +149,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Registers buttons on blocks pages.
 				add_action(
 					'woocommerce_blocks_payment_method_type_registration',
-					function( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
+					function ( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
 						if ( SettingsModule::should_use_the_old_ui() && ! $button->is_enabled() ) {
 							return;
 						}
@@ -161,7 +161,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// Adds GooglePay component to the backend button preview settings.
 				add_action(
 					'woocommerce_paypal_payments_admin_gateway_settings',
-					function( array $settings ) use ( $c ): array {
+					function ( array $settings ) use ( $c ): array {
 						if ( is_array( $settings['components'] ) ) {
 							$settings['components'][] = 'googlepay';
 						}
@@ -178,7 +178,6 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 						$endpoint->handle_request();
 					}
 				);
-
 			},
 			1
 		);
@@ -225,7 +224,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_filter(
 			'woocommerce_paypal_payments_selected_button_locations',
-			function( array $locations, string $setting_name ): array {
+			function ( array $locations, string $setting_name ): array {
 				$gateway = WC()->payment_gateways()->payment_gateways()[ GooglePayGateway::ID ] ?? '';
 				if ( $gateway && $gateway->enabled === 'yes' && $setting_name === 'smart_button_locations' ) {
 					$locations[] = 'checkout';
@@ -255,7 +254,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			static function ( array $data, string $payment_method, array $request ) use ( $c ) : array {
+			static function ( array $data, string $payment_method, array $request ) use ( $c ): array {
 
 				$funding_source = $request['funding_source'] ?? '';
 				if ( $payment_method !== GooglePayGateway::ID && $funding_source !== 'googlepay' ) {

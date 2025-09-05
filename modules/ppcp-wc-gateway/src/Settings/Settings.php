@@ -155,7 +155,7 @@ class Settings implements ContainerInterface {
 	 *
 	 * @return bool
 	 */
-	private function load() : bool {
+	private function load(): bool {
 		if ( $this->settings ) {
 			return false;
 		}

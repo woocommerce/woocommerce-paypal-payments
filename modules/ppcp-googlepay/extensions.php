@@ -31,7 +31,7 @@ return array(
 		$is_available = $container->get( 'googlepay.available' );
 		$is_referral  = $container->get( 'googlepay.is_referral' );
 
-		$insert_after = function( array $array, string $key, array $new ): array {
+		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
 			$pos = false === $index ? count( $array ) : $index + 1;

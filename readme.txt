@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.0.9
+Stable tag: 3.1.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -155,6 +155,31 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 3.1.0 - 2025-09-02 =
+* Enhancement - Fastlane now available for British & Australian merchants #3589
+* Enhancement - Pay Later messaging now auto-enabled for eligible merchants based on the STAY UPDATED preference. Review the Pay Later settings to customize or disable. #3600
+* Enhancement - Add buttons to copy merchant credentials in the Settings tab #3561
+* Enhancement - Skip "Payment Methods" step for branded-only + BCDC and casual sellers #3547
+* Enhancement - Add "Things to do next" item after settings migration #3536
+* Enhancement - Phase 2: Settings Migration - Add Woo Inbox item #3599
+* Enhancement - Create an API function for adding tracking info #3588
+* Enhancement - Add polling mechanism for renderer wrapper to prevent race condition for Pay Later messaging #3577
+* Enhancement - Status report entry for "New UI active" and "Branded only" #3539
+* Fix - Apple Pay does not update shipping method or address changes on Classic Checkout #3524
+* Fix - Prevent early is_enabled() check for Google Pay button in new UI #3566
+* Fix - Subscriptions migrated from PPEC plugin to PayPal Payments fails on renewal #3549
+* Fix - Google Pay transaction from block pages #3542
+* Fix - Remove redundant authorize call in subscription renewal handler #3543
+* Fix - Empty description handling and logo display for PayPal gateway not working as expected #3527
+* Fix - When Apple Pay is enabled, empty space for Apple Pay button is showing on all pages if buyer is not eligible #3550
+* Fix - Undefined properties error in checkout block #3551
+* Fix - Make the state address data optional to fix non US-CA compatibility for Fastlane #3535
+* Fix - Disable the card button if BCDC is disabled #3532
+* Fix - Remove data-sdk-client-token field when not needed #3540
+* Fix - "No PayPal order ID found in order meta" logged after using "Proceed to PayPal" on block checkout #3189
+* Fix - Use is_acdc_enabled() to prevent ACDC interference with BCDC in non-ACDC countries #3594
+* Fix - Remove the specified gateway when the button is disabled #3556
 
 = 3.0.9 - 2025-07-31 =
 * Fix - Payment via "Proceed to PayPal" may result in a redirect loop #3570

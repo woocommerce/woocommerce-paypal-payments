@@ -32,7 +32,8 @@ use WP_User_Query;
  * @psalm-suppress MissingConstructor
  */
 class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule {
-	use ModuleClassNameIdTrait, ContextTrait;
+	use ModuleClassNameIdTrait;
+	use ContextTrait;
 
 	/**
 	 * Session Handler
@@ -65,7 +66,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_action(
 			'woocommerce_init',
-			function() use ( $container ) {
+			function () use ( $container ) {
 				$listener = $container->get( 'vaulting.customer-approval-listener' );
 				assert( $listener instanceof CustomerApprovalListener );
 
@@ -76,7 +77,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		add_action(
 			'woocommerce_created_customer',
-			function( int $customer_id ) use ( $subscription_helper, $container ) {
+			function ( int $customer_id ) use ( $subscription_helper, $container ) {
 				if ( $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' ) ) {
 					return;
 				}
@@ -123,7 +124,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 * @psalm-suppress MissingClosureParamType
 			 * @psalm-suppress MissingClosureReturnType
 			 */
-			function( $tokens, $customer_id, $gateway_id ) {
+			function ( $tokens, $customer_id, $gateway_id ) {
 				if ( ! is_array( $tokens ) ) {
 					return $tokens;
 				}
@@ -161,7 +162,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $item, $payment_token ) {
+			function ( $item, $payment_token ) {
 				if ( ! is_array( $item ) || ! is_a( $payment_token, WC_Payment_Token::class ) ) {
 					return $item;
 				}
@@ -189,7 +190,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_action(
 			'wp',
-			function() use ( $container ) {
+			function () use ( $container ) {
 				if ( $container->get( 'vaulting.vault-v3-enabled' ) ) {
 					return;
 				}
@@ -256,7 +257,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 		 */
 		add_action(
 			'pcp_migrate_payment_tokens',
-			function() use ( $container ) {
+			function () use ( $container ) {
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 
@@ -266,7 +267,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 		add_action(
 			'woocommerce_paypal_payments_payment_tokens_migration',
-			function( int $customer_id ) use ( $container ) {
+			function ( int $customer_id ) use ( $container ) {
 				$migration = $container->get( 'vaulting.payment-tokens-migration' );
 				assert( $migration instanceof PaymentTokensMigration );
 
@@ -281,7 +282,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $methods ) {
+			function ( $methods ) {
 				global $wp;
 
 				if ( ! is_array( $methods ) ) {

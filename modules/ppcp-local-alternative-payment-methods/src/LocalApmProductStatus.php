@@ -52,7 +52,7 @@ class LocalApmProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_local_state() : ?bool {
+	protected function check_local_state(): ?bool {
 		if ( $this->settings->has( self::SETTINGS_KEY ) && ( $this->settings->get( self::SETTINGS_KEY ) ) ) {
 			return wc_string_to_bool( $this->settings->get( self::SETTINGS_KEY ) );
 		}
@@ -61,7 +61,7 @@ class LocalApmProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function check_active_state( SellerStatus $seller_status ) : bool {
+	protected function check_active_state( SellerStatus $seller_status ): bool {
 		$has_capability = false;
 
 		foreach ( $seller_status->capabilities() as $capability ) {
@@ -86,7 +86,7 @@ class LocalApmProductStatus extends ProductStatus {
 	}
 
 	/** {@inheritDoc} */
-	protected function clear_state( ?Settings $settings = null ) : void {
+	protected function clear_state( ?Settings $settings = null ): void {
 		if ( null === $settings ) {
 			$settings = $this->settings;
 		}

@@ -87,7 +87,7 @@ class ConnectionUrlGenerator {
 	 *
 	 * @return string The generated PayPal onboarding URL.
 	 */
-	public function generate( array $products = array(), array $flags = array(), bool $use_sandbox = false ) : string {
+	public function generate( array $products = array(), array $flags = array(), bool $use_sandbox = false ): string {
 		$cache_key      = $this->cache_key( $products, $flags, $use_sandbox );
 		$user_id        = get_current_user_id();
 		$onboarding_url = $this->url_manager->get( $cache_key, $user_id );
@@ -123,7 +123,7 @@ class ConnectionUrlGenerator {
 	 *
 	 * @return string The cache key, defining the product list and environment.
 	 */
-	protected function cache_key( array $products, array $flags, bool $for_sandbox ) : string {
+	protected function cache_key( array $products, array $flags, bool $for_sandbox ): string {
 		$environment = $for_sandbox ? 'sandbox' : 'production';
 
 		// Sort products alphabetically, to improve cache implementation.
@@ -145,7 +145,7 @@ class ConnectionUrlGenerator {
 	 *
 	 * @return string The cached URL, or an empty string if no URL is found.
 	 */
-	protected function try_get_from_cache( OnboardingUrl $onboarding_url, string $cache_key ) : string {
+	protected function try_get_from_cache( OnboardingUrl $onboarding_url, string $cache_key ): string {
 		try {
 			if ( $onboarding_url->load() ) {
 				$this->logger->debug( 'Loaded onboarding URL from cache: ' . $cache_key );
@@ -179,7 +179,7 @@ class ConnectionUrlGenerator {
 	 *
 	 * @return string The generated URL or an empty string on failure.
 	 */
-	protected function generate_new_url( bool $for_sandbox, array $products, array $flags, OnboardingUrl $onboarding_url, string $cache_key ) : string {
+	protected function generate_new_url( bool $for_sandbox, array $products, array $flags, OnboardingUrl $onboarding_url, string $cache_key ): string {
 		$query_args = array( 'displayMode' => 'minibrowser' );
 		$onboarding_url->init();
 
@@ -214,7 +214,7 @@ class ConnectionUrlGenerator {
 	 *
 	 * @return array The prepared referral data.
 	 */
-	protected function prepare_referral_data( array $products, array $flags, string $onboarding_token ) : array {
+	protected function prepare_referral_data( array $products, array $flags, string $onboarding_token ): array {
 		return $this->referrals_data->data(
 			$products,
 			$onboarding_token,
@@ -229,7 +229,7 @@ class ConnectionUrlGenerator {
 	 * @param OnboardingUrl $onboarding_url The OnboardingUrl object.
 	 * @param string        $url            The URL to persist.
 	 */
-	protected function persist_url( OnboardingUrl $onboarding_url, string $url ) : void {
+	protected function persist_url( OnboardingUrl $onboarding_url, string $url ): void {
 		$onboarding_url->set( $url );
 		$onboarding_url->persist();
 	}

@@ -353,7 +353,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				if (
 					! $this->early_order_handler->should_create_early_order()
 					|| $this->registration_needed
-					|| isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
+					|| ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) ) {
 					wp_send_json_success( $this->make_response( $order ) );
 				}
 

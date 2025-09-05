@@ -22,16 +22,16 @@ use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 
 return array(
-	'order-tracking.assets'                           => function( ContainerInterface $container ) : OrderEditPageAssets {
+	'order-tracking.assets'                           => function ( ContainerInterface $container ): OrderEditPageAssets {
 		return new OrderEditPageAssets(
 			$container->get( 'order-tracking.module.url' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},
-	'order-tracking.shipment.factory'                 => static function ( ContainerInterface $container ) : ShipmentFactoryInterface {
+	'order-tracking.shipment.factory'                 => static function ( ContainerInterface $container ): ShipmentFactoryInterface {
 		return new ShipmentFactory();
 	},
-	'order-tracking.endpoint.controller'              => static function ( ContainerInterface $container ) : OrderTrackingEndpoint {
+	'order-tracking.endpoint.controller'              => static function ( ContainerInterface $container ): OrderTrackingEndpoint {
 		return new OrderTrackingEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),

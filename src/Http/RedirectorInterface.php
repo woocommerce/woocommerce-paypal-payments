@@ -18,5 +18,5 @@ interface RedirectorInterface {
 	 *
 	 * @param string $location The URL to redirect to.
 	 */
-	public function redirect( string $location): void;
+	public function redirect( string $location ): void;
 }

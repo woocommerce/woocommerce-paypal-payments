@@ -40,7 +40,7 @@ class PartnerReferralsData {
 	 *
 	 * @return string
 	 */
-	public function nonce() : string {
+	public function nonce(): string {
 		return 'a1233wtergfsdt4365tzrshgfbaewa36AGa1233wtergfsdt4365tzrshgfbaewa36AG';
 	}
 
@@ -59,7 +59,7 @@ class PartnerReferralsData {
 		string $onboarding_token = '',
 		?bool $use_subscriptions = null,
 		bool $use_card_payments = true
-	) : array {
+	): array {
 		$in_acdc_country = $this->dcc_applies->for_country_currency();
 
 		if ( ! $products ) {

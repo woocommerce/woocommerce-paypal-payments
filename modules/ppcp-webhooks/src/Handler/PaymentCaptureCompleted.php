@@ -22,7 +22,8 @@ use WP_REST_Response;
  */
 class PaymentCaptureCompleted implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RequestHandlerTrait;
+	use TransactionIdHandlingTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.

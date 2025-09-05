@@ -51,7 +51,7 @@ class StylingSettings extends AbstractDataModel {
 	 *
 	 * @return array
 	 */
-	protected function get_defaults() : array {
+	protected function get_defaults(): array {
 		return array(
 			'cart'             => new LocationStylingDTO( 'cart' ),
 			'classic_checkout' => new LocationStylingDTO( 'classic_checkout' ),
@@ -66,7 +66,7 @@ class StylingSettings extends AbstractDataModel {
 	 *
 	 * @return LocationStylingDTO
 	 */
-	public function get_cart() : LocationStylingDTO {
+	public function get_cart(): LocationStylingDTO {
 		return $this->data['cart'];
 	}
 
@@ -76,7 +76,7 @@ class StylingSettings extends AbstractDataModel {
 	 * @param mixed $styles The new styling details.
 	 * @return void
 	 */
-	public function set_cart( $styles ) : void {
+	public function set_cart( $styles ): void {
 		$this->data['cart'] = $this->sanitizer->sanitize_location_style( $styles );
 	}
 
@@ -85,7 +85,7 @@ class StylingSettings extends AbstractDataModel {
 	 *
 	 * @return LocationStylingDTO
 	 */
-	public function get_classic_checkout() : LocationStylingDTO {
+	public function get_classic_checkout(): LocationStylingDTO {
 		return $this->data['classic_checkout'];
 	}
 
@@ -95,7 +95,7 @@ class StylingSettings extends AbstractDataModel {
 	 * @param mixed $styles The new styling details.
 	 * @return void
 	 */
-	public function set_classic_checkout( $styles ) : void {
+	public function set_classic_checkout( $styles ): void {
 		$this->data['classic_checkout'] = $this->sanitizer->sanitize_location_style( $styles );
 	}
 
@@ -104,7 +104,7 @@ class StylingSettings extends AbstractDataModel {
 	 *
 	 * @return LocationStylingDTO
 	 */
-	public function get_express_checkout() : LocationStylingDTO {
+	public function get_express_checkout(): LocationStylingDTO {
 		return $this->data['express_checkout'];
 	}
 
@@ -114,7 +114,7 @@ class StylingSettings extends AbstractDataModel {
 	 * @param mixed $styles The new styling details.
 	 * @return void
 	 */
-	public function set_express_checkout( $styles ) : void {
+	public function set_express_checkout( $styles ): void {
 		$this->data['express_checkout'] = $this->sanitizer->sanitize_location_style( $styles );
 	}
 
@@ -123,7 +123,7 @@ class StylingSettings extends AbstractDataModel {
 	 *
 	 * @return LocationStylingDTO
 	 */
-	public function get_mini_cart() : LocationStylingDTO {
+	public function get_mini_cart(): LocationStylingDTO {
 		return $this->data['mini_cart'];
 	}
 
@@ -133,7 +133,7 @@ class StylingSettings extends AbstractDataModel {
 	 * @param mixed $styles The new styling details.
 	 * @return void
 	 */
-	public function set_mini_cart( $styles ) : void {
+	public function set_mini_cart( $styles ): void {
 		$this->data['mini_cart'] = $this->sanitizer->sanitize_location_style( $styles );
 	}
 
@@ -142,7 +142,7 @@ class StylingSettings extends AbstractDataModel {
 	 *
 	 * @return LocationStylingDTO
 	 */
-	public function get_product() : LocationStylingDTO {
+	public function get_product(): LocationStylingDTO {
 		return $this->data['product'];
 	}
 
@@ -152,7 +152,7 @@ class StylingSettings extends AbstractDataModel {
 	 * @param mixed $styles The new styling details.
 	 * @return void
 	 */
-	public function set_product( $styles ) : void {
+	public function set_product( $styles ): void {
 		$this->data['product'] = $this->sanitizer->sanitize_location_style( $styles );
 	}
 }
