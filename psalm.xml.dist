@@ -97,7 +97,12 @@
         <InvalidScope errorLevel="error"/>
         <InvalidStaticInvocation errorLevel="error"/>
         <MissingConstructor errorLevel="error"/>
-        <MissingDependency errorLevel="error"/>
+        <MissingDependency errorLevel="error">
+            <errorLevel type="suppress">
+                <directory name="modules/ppcp-compat/src/WooCommerceBlueprint" />
+                <file name="modules/ppcp-compat/services.php" />
+            </errorLevel>
+        </MissingDependency>
         <MissingFile errorLevel="error"/>
         <MixedArgument errorLevel="error"/>
         <MoreSpecificImplementedParamType errorLevel="error"/>
@@ -125,6 +130,18 @@
         <MissingClosureReturnType errorLevel="error"/>
         <MissingPropertyType errorLevel="error"/>
         <UndefinedConstant errorLevel="error"/>
+
+        <UndefinedClass>
+            <errorLevel type="suppress">
+                <directory name="modules/ppcp-compat/src/WooCommerceBlueprint" />
+            </errorLevel>
+        </UndefinedClass>
+
+        <PropertyNotSetInConstructor>
+            <errorLevel type="suppress">
+                <directory name="modules/ppcp-compat/src/WooCommerceBlueprint" />
+            </errorLevel>
+        </PropertyNotSetInConstructor>
 
         <AssignmentToVoid errorLevel="info"/>
         <DeprecatedClass errorLevel="info"/>
