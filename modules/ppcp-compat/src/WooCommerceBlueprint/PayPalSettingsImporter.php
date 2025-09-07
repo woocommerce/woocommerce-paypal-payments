@@ -1,6 +1,6 @@
 <?php
 /**
- * PayPal Settings Blueprint Importer
+ * PayPal Settings Blueprint Importer.
  *
  * @package WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint
  */
@@ -14,62 +14,86 @@ use Automattic\WooCommerce\Blueprint\StepProcessorResult;
 use Automattic\WooCommerce\Blueprint\Steps\SetSiteOptions;
 
 /**
- * PayPal Settings Importer
+ * PayPal Settings Importer.
  */
 class PayPalSettingsImporter implements StepProcessor {
 
 	/**
-	 * Process PayPal settings import
+	 * Sentinel value to detect if option doesn't exist.
+	 */
+	private const OPTION_NOT_FOUND = '__PAYPAL_OPTION_NOT_FOUND__';
+
+	/**
+	 * PayPal option patterns for efficient matching.
+	 *
+	 * @var array<string>
+	 */
+	private const PAYPAL_PATTERNS = array(
+		'ppcp',
+		'paypal',
+		'venmo',
+		'pay-later',
+	);
+
+	/**
+	 * Process PayPal settings import.
 	 *
 	 * @param object $schema Schema object.
 	 * @return StepProcessorResult
 	 */
 	public function process( $schema ): StepProcessorResult {
+		$result = StepProcessorResult::success( SetSiteOptions::get_step_name() );
+
 		if ( ! isset( $schema->options ) || ! is_object( $schema->options ) ) {
-			return StepProcessorResult::error(
-				'setSiteOptions',
-				'Invalid PayPal options data'
-			);
+			$result->add_error( 'Invalid PayPal options data' );
+			return $result;
+		}
+
+		// Validate that the object can be meaningfully converted to array.
+		if ( ! $this->is_valid_options_object( $schema->options ) ) {
+			$result->add_error( 'PayPal options data is not in the expected format' );
+			return $result;
 		}
 
 		$options        = (array) $schema->options;
 		$imported_count = 0;
-		$errors         = [];
 
 		foreach ( $options as $option_name => $option_value ) {
-			// Validate option name is PayPal related.
-			if ( ! $this->is_paypal_option( $option_name ) ) {
-				$errors[] = "Skipped non-PayPal option: {$option_name}";
+			// Validate option name first (before using it in any operations).
+			if ( ! $this->is_valid_option_name( $option_name ) ) {
+				$result->add_error( 'Invalid option name provided' );
 				continue;
 			}
 
-			// Update the option.
-			$result = update_option( $option_name, $option_value );
-			if ( $result ) {
+			// Validate option value early.
+			if ( ! $this->is_valid_option_value( $option_value ) ) {
+				$sanitized_name = sanitize_text_field( (string) $option_name );
+				$result->add_warn( "Skipped option with invalid value: {$sanitized_name}" );
+				continue;
+			}
+
+			// Check if this is a PayPal-related option.
+			if ( ! $this->is_paypal_option( $option_name ) ) {
+				$sanitized_name = sanitize_text_field( $option_name );
+				$result->add_warn( "Skipped non-PayPal option: {$sanitized_name}" );
+				continue;
+			}
+
+			// Attempt to update the option with proper error handling.
+			if ( $this->update_option_safely( $option_name, $option_value ) ) {
 				$imported_count++;
 			} else {
-				// Check if option already exists with same value.
-				if ( get_option( $option_name ) === $option_value ) {
-					$imported_count++;
-				} else {
-					$errors[] = "Failed to update option: {$option_name}";
-				}
+				$sanitized_name = sanitize_text_field( $option_name );
+				$result->add_error( "Failed to update option: {$sanitized_name}" );
 			}
 		}
 
-		if ( ! empty( $errors ) ) {
-			$message = "Imported {$imported_count} PayPal options with warnings: " . implode( ', ', $errors );
-			return StepProcessorResult::warning( 'setSiteOptions', $message );
-		}
-
-		return StepProcessorResult::success(
-			'setSiteOptions',
-			"Successfully imported {$imported_count} PayPal options"
-		);
+		$result->add_info( "Successfully imported {$imported_count} PayPal options" );
+		return $result;
 	}
 
 	/**
-	 * Get step class
+	 * Get step class.
 	 *
 	 * @return string
 	 */
@@ -78,7 +102,7 @@ class PayPalSettingsImporter implements StepProcessor {
 	}
 
 	/**
-	 * Check capabilities
+	 * Check capabilities.
 	 *
 	 * @param object $schema Schema object.
 	 * @return bool
@@ -88,15 +112,96 @@ class PayPalSettingsImporter implements StepProcessor {
 	}
 
 	/**
-	 * Check if option is PayPal related
+	 * Validate that the options object can be meaningfully converted to array.
+	 *
+	 * @param object $options The options object.
+	 * @return bool
+	 */
+	private function is_valid_options_object( object $options ): bool {
+		// Check if it's a stdClass or similar object that can be cast to array.
+		return $options instanceof \stdClass || method_exists( $options, '__toString' ) || is_iterable( $options );
+	}
+
+	/**
+	 * Validate option name.
+	 *
+	 * @param mixed $option_name The option name to validate.
+	 * @return bool
+	 */
+	private function is_valid_option_name( $option_name ): bool {
+		return is_string( $option_name ) && ! empty( trim( $option_name ) ) && strlen( $option_name ) <= 191;
+	}
+
+	/**
+	 * Validate option value for WordPress options.
+	 *
+	 * @param mixed $option_value The option value to validate.
+	 * @return bool
+	 */
+	private function is_valid_option_value( $option_value ): bool {
+		// WordPress options should be scalar, array, or object (but not resources or closures).
+		if ( is_resource( $option_value ) || is_callable( $option_value ) ) {
+			return false;
+		}
+
+		if ( null === $option_value ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if option is PayPal related using efficient pattern matching.
 	 *
 	 * @param string $option_name Option name.
 	 * @return bool
 	 */
 	private function is_paypal_option( string $option_name ): bool {
-		return false !== strpos( $option_name, 'ppcp' ) ||
-			false !== strpos( $option_name, 'paypal' ) ||
-			false !== strpos( $option_name, 'venmo' ) ||
-			false !== strpos( $option_name, 'pay-later' );
+		$lowercase_name = strtolower( $option_name );
+
+		foreach ( self::PAYPAL_PATTERNS as $pattern ) {
+			if ( str_contains( $lowercase_name, $pattern ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Safely update an option with proper comparison for existing values.
+	 *
+	 * @param string $option_name  Option name.
+	 * @param mixed  $option_value Option value.
+	 * @return bool
+	 */
+	private function update_option_safely( string $option_name, $option_value ): bool {
+		// Get the current value with a sentinel to distinguish between false and non-existent.
+		$current_value = get_option( $option_name, self::OPTION_NOT_FOUND );
+
+		// If the values are already equal, consider it a success.
+		if ( self::OPTION_NOT_FOUND !== $current_value && $this->values_are_equal( $current_value, $option_value ) ) {
+			return true;
+		}
+
+		return update_option( $option_name, $option_value );
+	}
+
+	/**
+	 * Compare two values for equality, handling complex data types properly.
+	 *
+	 * @param mixed $value1 First value.
+	 * @param mixed $value2 Second value.
+	 * @return bool
+	 */
+	private function values_are_equal( $value1, $value2 ): bool {
+		// For arrays and objects, serialize for comparison to handle deep equality.
+		if ( ( is_array( $value1 ) || is_object( $value1 ) ) && ( is_array( $value2 ) || is_object( $value2 ) ) ) {
+			return serialize( $value1 ) === serialize( $value2 );
+		}
+
+		// For scalar values, use strict comparison.
+		return $value1 === $value2;
 	}
 }

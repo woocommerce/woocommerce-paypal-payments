@@ -222,11 +222,11 @@ return array(
 		return new PayPalSettingsExporter();
 	},
 
-	'compat.blueprint.paypal_settings_importer' => static function( ContainerInterface $container ) : PayPalSettingsImporter {
+	'compat.blueprint.paypal_settings_importer'      => static function( ContainerInterface $container ) : PayPalSettingsImporter {
 		return new PayPalSettingsImporter();
 	},
 
-	'compat.blueprint.bootstrap' => static function( ContainerInterface $container ) : PayPalBlueprintBootstrap {
+	'compat.blueprint.bootstrap'                     => static function( ContainerInterface $container ) : PayPalBlueprintBootstrap {
 		return new PayPalBlueprintBootstrap(
 			$container->get( 'compat.blueprint.paypal_settings_exporter' ),
 			$container->get( 'compat.blueprint.paypal_settings_importer' )

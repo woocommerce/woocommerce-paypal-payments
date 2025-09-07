@@ -1,6 +1,6 @@
 <?php
 /**
- * PayPal Settings Blueprint Step
+ * PayPal Settings Blueprint Step.
  *
  * @package WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint
  */
@@ -12,19 +12,19 @@ namespace WooCommerce\PayPalCommerce\Compat\WooCommerceBlueprint;
 use Automattic\WooCommerce\Blueprint\Steps\Step;
 
 /**
- * PayPal Settings Step (for custom import handling if needed)
+ * PayPal Settings Step (for custom import handling if needed).
  */
 class PayPalSettingsStep extends Step {
 
 	/**
-	 * PayPal options data
+	 * PayPal options data.
 	 *
 	 * @var array<string, mixed>
 	 */
 	private array $paypal_options;
 
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
 	 * @param array<string, mixed> $paypal_options PayPal options data.
 	 */
@@ -33,7 +33,7 @@ class PayPalSettingsStep extends Step {
 	}
 
 	/**
-	 * Get step name
+	 * Get step name.
 	 *
 	 * @return string
 	 */
@@ -42,37 +42,37 @@ class PayPalSettingsStep extends Step {
 	}
 
 	/**
-	 * Get schema
+	 * Get schema.
 	 *
 	 * @param int $version Schema version.
 	 * @return array<string, mixed>
 	 */
 	public static function get_schema( int $version = 1 ): array {
-		return [
+		return array(
 			'type'       => 'object',
-			'properties' => [
-				'step'    => [
+			'properties' => array(
+				'step'    => array(
 					'type' => 'string',
-					'enum' => [ static::get_step_name() ],
-				],
-				'options' => [
+					'enum' => array( static::get_step_name() ),
+				),
+				'options' => array(
 					'type'                 => 'object',
 					'additionalProperties' => true,
-				],
-			],
-			'required'   => [ 'step', 'options' ],
-		];
+				),
+			),
+			'required'   => array( 'step', 'options' ),
+		);
 	}
 
 	/**
-	 * Prepare JSON array
+	 * Prepare JSON array.
 	 *
 	 * @return array<string, mixed>
 	 */
 	public function prepare_json_array(): array {
-		return [
+		return array(
 			'step'    => static::get_step_name(),
 			'options' => $this->paypal_options,
-		];
+		);
 	}
 }
