@@ -55,18 +55,21 @@ class CardView {
                                     alt="${ data.value( 'brand' ) }"
                                 >
                             </div>
-                            <div class="axo-card-number">${
-								data.value( 'lastDigits' )
-									? '**** **** **** ' +
-									  data.value( 'lastDigits' )
-									: ''
-							}</div>
-                            <div class="axo-card-expiry">${ expiry[ 1 ] }/${
-								expiry[ 0 ]
-							}</div>
-                            <div class="axo-card-owner">${ data.value(
-								'name'
-							) }</div>
+                            <div class="axo-card-meta-wrapper">
+                             <div class="axo-card-number">${
+									data.value( 'lastDigits' )
+										? '•••• ' + data.value( 'lastDigits' )
+										: ''
+								}</div>
+                             <div class="axo-card-owner">${ data.value(
+									'name'
+								) }</div>
+                             <div class="axo-card-expiry">${ expiry[ 1 ] }/${
+									expiry[ 0 ]
+								}</div>
+
+                    </div>
+
                         </div>
                         ${ selectOtherPaymentMethod() }
                     </div>
