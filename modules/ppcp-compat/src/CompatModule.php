@@ -560,8 +560,13 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 * @return void
 	 */
 	private function initialize_blueprint_compat_layer( ContainerInterface $container ): void {
-			$blueprint_bootstrap = $container->get( 'compat.blueprint.bootstrap' );
-			$blueprint_bootstrap->init();
+		$is_blueprint_available = $container->get( 'compat.blueprint.is_available' );
+		if ( ! $is_blueprint_available ) {
+			return;
+		}
+
+		$blueprint_bootstrap = $container->get( 'compat.blueprint.bootstrap' );
+		$blueprint_bootstrap->init();
 	}
 
 	/**
