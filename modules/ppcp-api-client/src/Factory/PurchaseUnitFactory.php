@@ -292,6 +292,23 @@ class PurchaseUnitFactory {
 	 */
 	private function shipping_needed( Item ...$items ): bool {
 
+		/**
+		 * If you are returning false from this filter, do not forget to also set
+		 * shipping_preference to 'NO_SHIPPING', otherwise PayPal will return an error.
+		 *
+		 * @see ShippingPreferenceFactory::from_state() for
+		 *      the 'woocommerce_paypal_payments_shipping_preference' filter.
+		 */
+		$shipping_needed = apply_filters(
+			'woocommerce_paypal_payments_shipping_needed',
+			null,
+			$items
+		);
+
+		if ( is_bool( $shipping_needed ) ) {
+			return $shipping_needed;
+		}
+
 		foreach ( $items as $item ) {
 			if ( $item->category() !== Item::DIGITAL_GOODS ) {
 				return true;
