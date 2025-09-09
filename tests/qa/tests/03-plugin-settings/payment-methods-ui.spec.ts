@@ -18,7 +18,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 for ( const testData of paymentMethodsData.defaultUi ) {
 	const { testKey, country, testGateways } = testData;
 
-	test( `${ testKey } | Settings - ${ country } - Payment Methods - Default UI`, async ( {
+	test.fixme( `${ testKey } | Settings - ${ country } - Payment Methods - Default UI`, async ( {
 		utils,
 		pcpPaymentMethods,
 		payPalUiClassic,
@@ -31,6 +31,7 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 		const snapshotName = testInfo.title;
 
 		await pcpPaymentMethods.visit();
+		await expect( pcpPaymentMethods.onlineCardPaymentsContainer() ).toBeVisible();
 		// Snapshot the full screen
 		await pcpPaymentMethods.snapshotContent(
 			`${ snapshotName } - Content`

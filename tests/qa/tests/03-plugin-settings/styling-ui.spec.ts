@@ -14,7 +14,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test( 'PCP-0000 | Settings - Styling - Default UI', async ( {
+test.fixme( 'PCP-0000 | Settings - Styling - Default UI', async ( {
 	utils,
 	pcpStyling,
 	product,

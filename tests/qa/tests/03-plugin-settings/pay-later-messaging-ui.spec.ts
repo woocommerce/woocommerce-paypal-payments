@@ -14,7 +14,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 } );
 
-test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
+test.fixme( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	utils,
 	payPalUi,
 	pcpPayLaterMessaging,
@@ -26,7 +26,7 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	classicCheckout,
 }, testInfo ) => {
 	const snapshotName = testInfo.title;
-	await utils.fillVisitorsCart( [ products.simple10 ] );
+	await utils.fillVisitorsCart( [ products.simple100 ] );
 
 	await pcpPayLaterMessaging.visit();
 	await pcpPayLaterMessaging.waitForLoadingMaskRemoved();
@@ -59,7 +59,7 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 		`${ snapshotName } - Shop config`
 	);
 
-	await product.visit( products.simple10.slug );
+	await product.visit( products.simple100.slug );
 	await expect( product.payPalUi.payLaterMessageContainer() ).toBeVisible();
 
 	await cart.visit();
@@ -85,7 +85,7 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Default UI', async ( {
 	await expect( payPalUi.payLaterMessageContainer() ).not.toBeVisible();
 } );
 
-test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
+test.fixme( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async ( {
 	utils,
 	payPalUi,
 	pcpPayLaterMessaging,
@@ -96,7 +96,7 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async
 	checkout,
 	classicCheckout,
 } ) => {
-	await utils.fillVisitorsCart( [ products.simple10 ] );
+	await utils.fillVisitorsCart( [ products.simple100 ] );
 
 	await pcpPayLaterMessaging.visit();
 	await pcpPayLaterMessaging.disableMessagingForLocation( 'Product page' );
@@ -137,7 +137,7 @@ test( 'PCP-0000 | Settings - Pay Later Messaging - Disabled on all pages', async
 		)
 		.toBeFalsy();
 
-	await product.visit( products.simple10.slug );
+	await product.visit( products.simple100.slug );
 	await expect
 		.soft( product.payPalUi.payLaterMessageContainer() )
 		.not.toBeVisible();

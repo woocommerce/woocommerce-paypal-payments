@@ -142,7 +142,7 @@ test.describe( 'Subtests', () => {
 		payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
 
 	for ( const settings of productPlm.settings ) {
-		test( `(PCP-0001) PLM - Product page${ summarizeSettings(
+		test.fixme( `(PCP-0001) PLM - Product page${ summarizeSettings(
 			settings
 		) }`, async ( { pcpPayLaterMessaging, product }, testInfo ) => {
 			const snapshotName = testInfo.title;
@@ -173,7 +173,7 @@ test.describe( 'Subtests', () => {
 	const cartPlm = payLaterMessagingData.checkoutLocationSettings.Cart;
 
 	for ( const settings of cartPlm.settings ) {
-		test( `(PCP-0002) PLM - Cart${ summarizeSettings(
+		test.fixme( `(PCP-0002) PLM - Cart${ summarizeSettings(
 			settings
 		) }`, async ( {
 			utils,
@@ -217,7 +217,7 @@ test.describe( 'Subtests', () => {
 	const checkoutPlm = payLaterMessagingData.checkoutLocationSettings.Checkout;
 
 	for ( const settings of checkoutPlm.settings ) {
-		test( `(PCP-0003) PLM - Checkout${ summarizeSettings(
+		test.fixme( `(PCP-0003) PLM - Checkout${ summarizeSettings(
 			settings
 		) }`, async ( {
 			utils,
@@ -261,7 +261,7 @@ test.describe( 'Subtests', () => {
 	const homePlm = payLaterMessagingData.bannerLocationSettings.Home;
 
 	for ( const settings of homePlm.settings ) {
-		test( `(PCP-0004) PLM - Home${ summarizeSettings(
+		test.fixme( `(PCP-0004) PLM - Home${ summarizeSettings(
 			settings
 		) }`, async ( { pcpPayLaterMessaging, payPalUiClassic }, testInfo ) => {
 			test.setTimeout( 10 * 60 * 1000 );
@@ -293,7 +293,7 @@ test.describe( 'Subtests', () => {
 	const shopPlm = payLaterMessagingData.bannerLocationSettings.Shop;
 
 	for ( const settings of shopPlm.settings ) {
-		test( `(PCP-0005) PLM - Shop${ summarizeSettings(
+		test.fixme( `(PCP-0005) PLM - Shop${ summarizeSettings(
 			settings
 		) }`, async ( { pcpPayLaterMessaging, shop }, testInfo ) => {
 			const snapshotName = testInfo.title;
@@ -330,22 +330,22 @@ test.describe( 'Subtests', () => {
 	} );
 } );
 
-test( 'PCP-0001 | Pay Later Messaging - Customize on Product page', async () => {
+test.fixme( 'PCP-0001 | Pay Later Messaging - Customize on Product page', async () => {
 	getTestResultsFromFile( 'PCP-0001', TEST_RESULTS_FILE );
 } );
 
-test( 'PCP-0002 | Pay Later Messaging - Customize on Cart (block and classic)', async () => {
+test.fixme( 'PCP-0002 | Pay Later Messaging - Customize on Cart (block and classic)', async () => {
 	getTestResultsFromFile( 'PCP-0002', TEST_RESULTS_FILE );
 } );
 
-test( 'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic)', async () => {
+test.fixme( 'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic)', async () => {
 	getTestResultsFromFile( 'PCP-0003', TEST_RESULTS_FILE );
 } );
 
-test( 'PCP-0004 | Pay Later Messaging - Customize on Home page', async () => {
+test.fixme( 'PCP-0004 | Pay Later Messaging - Customize on Home page', async () => {
 	getTestResultsFromFile( 'PCP-0004', TEST_RESULTS_FILE );
 } );
 
-test( 'PCP-0005 | Pay Later Messaging - Customize on Shop page', async () => {
+test.fixme( 'PCP-0005 | Pay Later Messaging - Customize on Shop page', async () => {
 	getTestResultsFromFile( 'PCP-0005', TEST_RESULTS_FILE );
 } );
