@@ -9,8 +9,6 @@
  * 2. Copy the array generated in carriers_data.php and paste it into the $carriers array in the PayPal Payments plugin.
  * 3. Apply the linter using yarn run ddev:fix-lint to format the array.
  * 4. Check the changes
- *
- * @package
  */
 
 const { chromium } = require( 'playwright' );
