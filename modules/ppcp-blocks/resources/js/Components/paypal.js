@@ -322,6 +322,15 @@ export const PayPalComponent = ( {
 			if ( config.scriptData.continuation ) {
 				return true;
 			}
+
+			// Don't redirect for trial vaulting subscriptions
+			if (
+				cartHasSubscriptionProducts( config.scriptData ) &&
+				config.scriptData.is_free_trial_cart
+			) {
+				return true;
+			}
+
 			if ( shouldskipFinalConfirmation() ) {
 				location.href = getCheckoutRedirectUrl();
 			}
