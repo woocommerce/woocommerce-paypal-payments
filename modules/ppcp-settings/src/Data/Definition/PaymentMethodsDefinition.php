@@ -150,16 +150,23 @@ class PaymentMethodsDefinition {
 		);
 
 		if ( is_array( $fields ) ) {
-			$config['fields'] = array_merge(
-				array(
-					'checkoutPageTitle'       => array(
-						'type'    => 'text',
-						'default' => $gateway_title,
-						'label'   => __( 'Checkout page title', 'woocommerce-paypal-payments' ),
-					),
+			$base_fields = array(
+				'checkoutPageTitle' => array(
+					'type'    => 'text',
+					'default' => $gateway_title,
+					'label'   => __( 'Checkout page title', 'woocommerce-paypal-payments' ),
 				),
-				$fields
 			);
+
+			if ( CreditCardGateway::ID !== $gateway_id ) {
+				$base_fields['checkoutPageDescription'] = array(
+					'type'    => 'text',
+					'default' => $gateway_description,
+					'label'   => __( 'Checkout page description', 'woocommerce-paypal-payments' ),
+				);
+			}
+
+			$config['fields'] = array_merge( $base_fields, $fields );
 		}
 
 		return $config;
