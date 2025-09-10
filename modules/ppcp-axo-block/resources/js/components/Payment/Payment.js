@@ -97,14 +97,12 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 	 * @return {JSX.Element} The appropriate component based on the current state
 	 */
 	const renderPaymentComponent = () => {
+		const axoConfig = wc.wcSettings.getSetting( 'ppcp-axo-gateway_data' );
 		// Case 1: Guest user without completed email lookup
 		if ( isGuest && ! isEmailLookupCompleted ) {
 			return (
 				<div id="ppcp-axo-block-radio-content">
-					{ __(
-						'Enter your email address above to continue.',
-						'woocommerce-paypal-payments'
-					) }
+					{ axoConfig.description }
 				</div>
 			);
 		}
