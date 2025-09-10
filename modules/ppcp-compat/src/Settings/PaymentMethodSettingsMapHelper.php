@@ -29,9 +29,10 @@ class PaymentMethodSettingsMapHelper {
 	 */
 	public function map(): array {
 		return array(
-			'dcc_enabled'      => CreditCardGateway::ID,
-			'axo_enabled'      => AxoGateway::ID,
-			'axo_name_on_card' => 'cardholder_name',
+			'dcc_enabled'       => CreditCardGateway::ID,
+			'axo_enabled'       => AxoGateway::ID,
+			'axo_name_on_card'  => 'cardholder_name',
+			'dcc_gateway_title' => '',
 		);
 	}
 
@@ -45,15 +46,19 @@ class PaymentMethodSettingsMapHelper {
 	public function mapped_value( string $old_key, ?AbstractDataModel $payment_settings ) {
 		$new_key = $this->map()[ $old_key ] ?? false;
 
-		if ( ! $new_key || ! $payment_settings instanceof PaymentSettings ) {
+		if ( ! $payment_settings instanceof PaymentSettings ) {
 			return null;
 		}
 
-		if ( $old_key === 'axo_name_on_card' ) {
-			return $payment_settings->get_cardholder_name();
+		switch ( $old_key ) {
+			case 'axo_name_on_card':
+				return $payment_settings->get_cardholder_name();
+			case 'dcc_gateway_title':
+				$axo_gateway_settings = get_option( "woocommerce_ppcp-axo-gateway_settings", array() );
+				return $axo_gateway_settings['title'] ?? null;
+			default:
+				return $this->is_gateway_enabled( $new_key );
 		}
-
-		return $this->is_gateway_enabled( $new_key );
 	}
 
 	/**
