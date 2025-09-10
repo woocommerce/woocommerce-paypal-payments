@@ -27,6 +27,8 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 		[]
 	);
 
+	const axoConfig = window.wc_ppcp_axo;
+
 	/**
 	 * Loads and renders the Fastlane card fields component when necessary.
 	 * This function is called for:
@@ -42,7 +44,13 @@ export const Payment = ( { fastlaneSdk, onPaymentLoad } ) => {
 		) {
 			try {
 				const paymentComponent =
-					await fastlaneSdk.FastlaneCardComponent( {} );
+					await fastlaneSdk.FastlaneCardComponent( {
+						fields: {
+							cardholderName: {
+								enabled: axoConfig.name_on_card === 'yes',
+							},
+						},
+					} );
 				// Check if the container exists before rendering
 				const cardContainer =
 					document.querySelector( '#fastlane-card' );
