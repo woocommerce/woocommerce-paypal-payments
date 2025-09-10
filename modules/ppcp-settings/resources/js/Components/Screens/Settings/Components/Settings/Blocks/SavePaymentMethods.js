@@ -5,7 +5,7 @@ import { ControlToggleButton } from '../../../../../ReusableComponents/Controls'
 import { SettingsHooks } from '../../../../../../data';
 import { useMerchantInfo } from '../../../../../../data/common/hooks';
 
-const SavePaymentMethods = ( { ownBradOnly } ) => {
+const SavePaymentMethods = ( { ownBrandOnly } ) => {
 	const {
 		savePaypalAndVenmo,
 		setSavePaypalAndVenmo,
@@ -14,6 +14,10 @@ const SavePaymentMethods = ( { ownBradOnly } ) => {
 	} = SettingsHooks.useSettings();
 
 	const { features } = useMerchantInfo();
+
+	if ( ownBrandOnly && ! features.save_paypal_and_venmo.enabled ) {
+		return null;
+	}
 
 	return (
 		<SettingsBlock
@@ -50,9 +54,10 @@ const SavePaymentMethods = ( { ownBradOnly } ) => {
 				disabled={ ! features.save_paypal_and_venmo.enabled }
 			/>
 
-			{ ownBradOnly || (
+			{ ownBrandOnly || (
 				// Credit card settings are only available in "white label" mode.
 				<ControlToggleButton
+					id="ppcp-save-card-details"
 					label={ __(
 						'Save Credit and Debit Cards',
 						'woocommerce-paypal-payments'

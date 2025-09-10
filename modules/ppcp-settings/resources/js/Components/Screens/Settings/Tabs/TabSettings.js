@@ -16,7 +16,7 @@ const TabSettings = () => {
 	return (
 		<div className="ppcp-r-settings">
 			<ConnectionStatus />
-			<CommonSettings ownBradOnly={ ownBrandOnly } />
+			<CommonSettings />
 			<ExpertSettings
 				ownBradOnly={ ownBrandOnly }
 				hasContactModule={ features?.contact_module?.enabled }
