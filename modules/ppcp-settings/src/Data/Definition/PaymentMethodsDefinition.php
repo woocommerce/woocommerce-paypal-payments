@@ -157,11 +157,6 @@ class PaymentMethodsDefinition {
 						'default' => $gateway_title,
 						'label'   => __( 'Checkout page title', 'woocommerce-paypal-payments' ),
 					),
-					'checkoutPageDescription' => array(
-						'type'    => 'text',
-						'default' => $gateway_description,
-						'label'   => __( 'Checkout page description', 'woocommerce-paypal-payments' ),
-					),
 				),
 				$fields
 			);
