@@ -240,7 +240,16 @@ class PaymentMethodsDefinition {
 				'title'       => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 				'description' => __( "Present custom credit and debit card fields to your payers so they can pay with credit and debit cards using your site's branding.", 'woocommerce-paypal-payments' ),
 				'icon'        => 'payment-method-advanced-cards',
-				'fields'      => array(),
+				'fields'      => array(
+					'cardholderName'   => array(
+						'type'    => 'toggle',
+						'default' => $this->settings->get_cardholder_name(),
+						'label'   => __(
+							'Display cardholder name',
+							'woocommerce-paypal-payments'
+						),
+					),
+				),
 			);
 			$group[] = array(
 				'id'              => AxoGateway::ID,
@@ -248,14 +257,6 @@ class PaymentMethodsDefinition {
 				'description'     => __( "Tap into the scale and trust of PayPal's customer network to recognize shoppers and make guest checkout more seamless than ever.", 'woocommerce-paypal-payments' ),
 				'icon'            => 'payment-method-fastlane',
 				'fields'          => array(
-					'fastlaneCardholderName'   => array(
-						'type'    => 'toggle',
-						'default' => $this->settings->get_fastlane_cardholder_name(),
-						'label'   => __(
-							'Display cardholder name',
-							'woocommerce-paypal-payments'
-						),
-					),
 					'fastlaneDisplayWatermark' => array(
 						'type'    => 'toggle',
 						'default' => $this->settings->get_fastlane_display_watermark(),
