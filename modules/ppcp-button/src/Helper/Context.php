@@ -241,7 +241,7 @@ class Context {
 	 *
 	 * @return bool
 	 */
-	private function is_paypal_continuation(): bool {
+	public function is_paypal_continuation(): bool {
 		/**
 		 * Cannot guarantee that initialized in all places where this trait is used,
 		 * the Psalm checks seem to work weird and sometimes ignore missing property.
@@ -328,7 +328,7 @@ class Context {
 	 *
 	 * @return bool
 	 */
-	protected function is_wc_settings_payments_tab(): bool {
+	public function is_wc_settings_payments_tab(): bool {
 		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! is_admin() || isset( $_GET['section'] ) ) {
 			return false;
