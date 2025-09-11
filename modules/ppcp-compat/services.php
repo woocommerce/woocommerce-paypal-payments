@@ -195,8 +195,9 @@ return array(
 			$container->get( 'wcgateway.settings.admin-settings-enabled' )
 		);
 	},
-	'compat.settings.styling_map_helper'             => static function (): StylingSettingsMapHelper {
-		return new StylingSettingsMapHelper();
+	'compat.settings.styling_map_helper'             => static function ( ContainerInterface $container ): StylingSettingsMapHelper {
+		$context = $container->get( 'button.helper.context' );
+		return new StylingSettingsMapHelper( $context );
 	},
 	'compat.settings.settings_tab_map_helper'        => static function (): SettingsTabMapHelper {
 		return new SettingsTabMapHelper();

@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
 use RuntimeException;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -25,7 +25,11 @@ use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
  */
 class StylingSettingsMapHelper {
 
-	use ContextTrait;
+	protected Context $context;
+
+	public function __construct( Context $context ) {
+		$this->context = $context;
+	}
 
 	protected const BUTTON_NAMES = array( GooglePayGateway::ID, ApplePayGateway::ID );
 
@@ -240,7 +244,7 @@ class StylingSettingsMapHelper {
 
 		$disabled_funding         = array();
 		$locations_to_context_map = $this->current_context_to_new_button_location_map();
-		$current_context          = $locations_to_context_map[ $this->context() ] ?? '';
+		$current_context          = $locations_to_context_map[ $this->context->context() ] ?? '';
 		assert( $payment_settings instanceof PaymentSettings );
 
 		foreach ( $styling_models as $model ) {
@@ -268,7 +272,7 @@ class StylingSettingsMapHelper {
 		}
 
 		$locations_to_context_map = $this->current_context_to_new_button_location_map();
-		$current_context          = $locations_to_context_map[ $this->context() ] ?? '';
+		$current_context          = $locations_to_context_map[ $this->context->context() ] ?? '';
 
 		foreach ( $styling_models as $model ) {
 			if ( $model->enabled && $model->location === $current_context ) {
@@ -295,7 +299,7 @@ class StylingSettingsMapHelper {
 		}
 
 		$locations_to_context_map = $this->current_context_to_new_button_location_map();
-		$current_context          = $locations_to_context_map[ $this->context() ] ?? '';
+		$current_context          = $locations_to_context_map[ $this->context->context() ] ?? '';
 
 		foreach ( $styling_models as $model ) {
 			if ( $model->enabled && $model->location === $current_context ) {
