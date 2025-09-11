@@ -24,8 +24,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class FraudNetAssets {
 
-	use ContextTrait;
-
 	/**
 	 * The URL of this module.
 	 *
