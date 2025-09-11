@@ -62,7 +62,7 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 			} ),
 		[ onPaymentSetup, cardFieldsForm ]
 	);
-	console.log( config );
+
 	return (
 		<>
 			<PayPalScriptProvider
