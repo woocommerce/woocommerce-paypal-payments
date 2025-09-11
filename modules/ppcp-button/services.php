@@ -245,6 +245,8 @@ return array(
 		$wc_order_creator     = $container->get( 'button.helper.wc-order-creator' );
 		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
+		$context              = $container->get( 'button.helper.context' );
+
 		return new ApproveOrderEndpoint(
 			$request_data,
 			$order_endpoint,
@@ -256,7 +258,8 @@ return array(
 			$final_review_enabled,
 			$gateway,
 			$wc_order_creator,
-			$logger
+			$logger,
+			$context
 		);
 	},
 	'button.endpoint.approve-subscription'        => static function ( ContainerInterface $container ): ApproveSubscriptionEndpoint {
