@@ -19,14 +19,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 
 /**
  * Class ApplePayButton
  */
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
-	use ContextTrait;
 
 	/**
 	 * The settings.
