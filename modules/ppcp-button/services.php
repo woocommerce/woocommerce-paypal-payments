@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
@@ -292,6 +293,10 @@ return array(
 			$container->get( 'button.helper.wc-order-creator' ),
 			$container->get( 'wcgateway.paypal-gateway' )
 		);
+	},
+	'button.helper.context'                       => static function ( ContainerInterface $container ): Context {
+		$session_handler = $container->get( 'session.handler' );
+		return new Context( $session_handler );
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
 		return new CheckoutFormSaver(
