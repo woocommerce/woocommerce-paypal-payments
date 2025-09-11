@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
-use WC_Order;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
