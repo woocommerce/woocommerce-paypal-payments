@@ -81,13 +81,6 @@ class Button implements ButtonInterface {
 	private $logger;
 
 	/**
-	 * Session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
 	 * The Subscription Helper.
 	 *
 	 * @var SubscriptionHelper
@@ -105,7 +98,6 @@ class Button implements ButtonInterface {
 	 * @param string             $module_url The URL to the module.
 	 * @param string             $sdk_url The URL to the SDK.
 	 * @param string             $version The assets version.
-	 * @param SessionHandler     $session_handler The Session handler.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
 	 * @param Settings           $settings The legacy settings.
 	 * @param Environment        $environment The environment object.
@@ -117,7 +109,6 @@ class Button implements ButtonInterface {
 		string $module_url,
 		string $sdk_url,
 		string $version,
-		SessionHandler $session_handler,
 		SubscriptionHelper $subscription_helper,
 		Settings $settings,
 		Environment $environment,
@@ -129,7 +120,6 @@ class Button implements ButtonInterface {
 		$this->module_url          = $module_url;
 		$this->sdk_url             = $sdk_url;
 		$this->version             = $version;
-		$this->session_handler     = $session_handler;
 		$this->subscription_helper = $subscription_helper;
 		$this->settings            = $settings;
 		$this->environment         = $environment;
