@@ -57,7 +57,7 @@ class PaymentMethodSettingsMapHelper {
 				$axo_gateway_settings = get_option( "woocommerce_ppcp-axo-gateway_settings", array() );
 				return $axo_gateway_settings['title'] ?? null;
 			default:
-				return $this->is_gateway_enabled( $new_key );
+				return $new_key ? $this->is_gateway_enabled( $new_key ) : null;
 		}
 	}
 
