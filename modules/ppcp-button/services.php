@@ -79,31 +79,8 @@ return array(
 	},
 	// This service may not work correctly when called too early.
 	'button.context'                              => static function ( ContainerInterface $container ): string {
-		$obj = new class() {
-			use ContextTrait;
-
-			/**
-			 * Session handler.
-			 *
-			 * @var SessionHandler
-			 */
-			protected $session_handler;
-
-			/** Constructor. */
-			public function __construct() {
-				// phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.ThisFoundInStatic
-				$this->session_handler = new SessionHandler();
-			}
-
-			/**
-			 * Wrapper for a non-public function.
-			 */
-			public function get_context(): string {
-				// phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.ThisFoundInStatic
-				return $this->context();
-			}
-		};
-		return $obj->get_context();
+		$context = $container->get( 'button.helper.context' );
+		return $context->get_context();
 	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$context = $container->get( 'button.context' );
