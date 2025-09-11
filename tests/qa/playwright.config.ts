@@ -43,7 +43,7 @@ export default defineConfig< BaseExtend >( {
 		  ]
 		: [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
+				[ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{
@@ -86,6 +86,14 @@ export default defineConfig< BaseExtend >( {
 			// Put your chromium-specific args here
 			args: [ '--disable-web-security' ],
 		},
+
+		// Used for Kinsta, to clear cache
+		// sshConfig: {
+		// 	login: process.env.SSH_LOGIN,
+		// 	host: process.env.SSH_HOST,
+		// 	port: process.env.SSH_PORT,
+		// 	path: process.env.SSH_PATH,
+		// },
 	},
 
 	projects: [
