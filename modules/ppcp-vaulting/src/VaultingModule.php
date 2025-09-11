@@ -124,7 +124,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 * @psalm-suppress MissingClosureParamType
 			 * @psalm-suppress MissingClosureReturnType
 			 */
-			function ( $tokens, $customer_id, $gateway_id ) {
+			function ( $tokens ) {
 				if ( ! is_array( $tokens ) ) {
 					return $tokens;
 				}
@@ -150,9 +150,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 				}
 
 				return $tokens;
-			},
-			10,
-			3
+			}
 		);
 
 		add_filter(
