@@ -13,12 +13,11 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -29,8 +28,12 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class Button implements ButtonInterface {
 
-	use ContextTrait;
-
+	/**
+	 * Context data provider.
+	 *
+	 * @var Context $context
+	 */
+	private Context $context;
 	/**
 	 * The URL to the module.
 	 *
@@ -103,6 +106,7 @@ class Button implements ButtonInterface {
 	 * @param Environment        $environment The environment object.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 * @param LoggerInterface    $logger The logger.
+	 * @param Context            $context Context data provider.
 	 * @param SettingsModel|null $new_settings The new settings model.
 	 */
 	public function __construct(
@@ -114,6 +118,7 @@ class Button implements ButtonInterface {
 		Environment $environment,
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
+		Context $context,
 		SettingsModel $new_settings = null
 	) {
 
@@ -126,6 +131,7 @@ class Button implements ButtonInterface {
 		$this->settings_status     = $settings_status;
 		$this->logger              = $logger;
 		$this->new_settings        = $new_settings;
+		$this->context             = $context;
 	}
 
 	/**
@@ -450,7 +456,7 @@ class Button implements ButtonInterface {
 		$use_shipping_form = $this->should_use_shipping();
 
 		// On the product page, only show the shipping form for physical products.
-		$context = $this->context();
+		$context = $this->context->context();
 		if ( $use_shipping_form && 'product' === $context ) {
 			$product = wc_get_product();
 
