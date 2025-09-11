@@ -303,7 +303,7 @@ class Context {
 	 *
 	 * @return bool
 	 */
-	private function is_subscription_change_payment_method_page(): bool {
+	public function is_subscription_change_payment_method_page(): bool {
 		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['change_payment_method'] ) ) {
 			return wcs_is_subscription( wc_clean( wp_unslash( $_GET['change_payment_method'] ) ) );
