@@ -4,7 +4,6 @@ node_modules
 playwright-utils
 playwright-report*
 playwright/.cache
-snapshots
 storage-states
 test-results
 package-lock.json
