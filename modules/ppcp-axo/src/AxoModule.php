@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -37,7 +37,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  */
 class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-	use ContextTrait;
 
 	/**
 	 * The session handler for ContextTrait.
@@ -86,7 +85,11 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 				// Add the gateway in admin area.
 				if ( is_admin() ) {
-					if ( ! $this->is_wc_settings_payments_tab() ) {
+					/**
+					 * @var Context $context
+					 */
+					$context = $c->get( 'button.helpers.context' );
+					if ( ! $context->is_wc_settings_payments_tab() ) {
 						$methods[] = $gateway;
 					}
 					return $methods;
@@ -189,10 +192,14 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$subscription_helper = $c->get( 'wc-subscriptions.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );
 
+				/**
+				 * @var Context $context
+				 */
+				$context = $c->get( 'button.helpers.context' );
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $is_paypal_enabled
 					|| ! $c->get( 'axo.eligible' )
-					|| $this->is_paypal_continuation()
+					|| $context->is_paypal_continuation()
 					|| $subscription_helper->cart_contains_subscription()
 				) {
 					return;
