@@ -20,7 +20,7 @@ class Context {
 	 *
 	 * @return void
 	 */
-	protected function init_context(): void {
+	public function init_context(): void {
 		if ( ! apply_filters( 'woocommerce_paypal_payments_block_classic_compat', true ) ) {
 			return;
 		}
@@ -84,7 +84,7 @@ class Context {
 	/**
 	 * Checks WC is_checkout() + WC checkout ajax requests.
 	 */
-	private function is_checkout(): bool {
+	public function is_checkout(): bool {
 		if ( is_checkout() ) {
 			return true;
 		}
@@ -219,7 +219,7 @@ class Context {
 	 *
 	 * @return string
 	 */
-	protected function location(): string {
+	public function location(): string {
 		$context = $this->context();
 		if ( $context !== 'mini-cart' ) {
 			return $context;
@@ -315,7 +315,7 @@ class Context {
 	/**
 	 * Checks if it is the block editor page.
 	 */
-	protected function is_block_editor(): bool {
+	public function is_block_editor(): bool {
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return false;
 		}
