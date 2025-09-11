@@ -158,7 +158,7 @@ class Context {
 	 *
 	 * @return string
 	 */
-	protected function context(): string {
+	public function context(): string {
 		// Default context.
 		$context = 'mini-cart';
 
