@@ -1951,7 +1951,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.gateway-repository' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'wcgateway.is-fraudnet-enabled' )
+			$container->get( 'wcgateway.is-fraudnet-enabled' ),
+			$container->get( 'button.helper.context' ),
 		);
 	},
 	'wcgateway.cli.settings.command'                       => function ( ContainerInterface $container ): SettingsCommand {

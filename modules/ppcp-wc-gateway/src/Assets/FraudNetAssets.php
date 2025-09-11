@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -89,6 +89,8 @@ class FraudNetAssets {
 	 */
 	protected $is_fraudnet_enabled;
 
+	protected Context $context;
+
 	/**
 	 * Assets constructor.
 	 *
@@ -109,7 +111,8 @@ class FraudNetAssets {
 		Settings $settings,
 		GatewayRepository $gateway_repository,
 		SessionHandler $session_handler,
-		bool $is_fraudnet_enabled
+		bool $is_fraudnet_enabled,
+		Context $context
 	) {
 		$this->module_url          = $module_url;
 		$this->version             = $version;
@@ -119,6 +122,7 @@ class FraudNetAssets {
 		$this->gateway_repository  = $gateway_repository;
 		$this->session_handler     = $session_handler;
 		$this->is_fraudnet_enabled = $is_fraudnet_enabled;
+		$this->context             = $context;
 	}
 
 	/**
@@ -164,7 +168,7 @@ class FraudNetAssets {
 		$is_pui_gateway_enabled           = in_array( PayUponInvoiceGateway::ID, $this->enabled_ppcp_gateways(), true );
 		$is_only_standard_gateway_enabled = $this->enabled_ppcp_gateways() === array( PayPalGateway::ID );
 
-		if ( $this->context() !== 'checkout' || $is_only_standard_gateway_enabled ) {
+		if ( $this->context->context() !== 'checkout' || $is_only_standard_gateway_enabled ) {
 			return $this->is_fraudnet_enabled && $this->are_buttons_enabled_for_context();
 		}
 
@@ -186,15 +190,15 @@ class FraudNetAssets {
 			return false;
 		}
 
-		if ( $this->context() === 'pay-now' ) {
+		if ( $this->context->context() === 'pay-now' ) {
 			return true;
 		}
 
-		if ( $this->context() === 'product' ) {
+		if ( $this->context->context() === 'product' ) {
 			return in_array( 'product', $button_locations, true ) || in_array( 'mini-cart', $button_locations, true );
 		}
 
-		return in_array( $this->context(), $button_locations, true );
+		return in_array( $this->context->context(), $button_locations, true );
 	}
 
 	/**
