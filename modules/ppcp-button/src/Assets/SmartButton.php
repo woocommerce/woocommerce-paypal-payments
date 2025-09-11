@@ -35,7 +35,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -63,7 +63,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 class SmartButton implements SmartButtonInterface {
 
 	use FreeTrialHandlerTrait;
-	use ContextTrait;
 
 	/**
 	 * The Settings status helper.
@@ -71,6 +70,13 @@ class SmartButton implements SmartButtonInterface {
 	 * @var SettingsStatus
 	 */
 	protected $settings_status;
+
+	/**
+	 * Context helper: what page is it, is this a continuation mode, etc.
+	 *
+	 * @var Context
+	 */
+	protected Context $context;
 
 	/**
 	 * The URL to the module.
@@ -322,7 +328,8 @@ class SmartButton implements SmartButtonInterface {
 		DisabledFundingSources $disabled_funding_sources,
 		CardPaymentsConfiguration $dcc_configuration,
 		PartnerAttribution $partner_attribution,
-		bool $final_review_enabled
+		bool $final_review_enabled,
+		Context $context
 	) {
 		$this->module_url                            = $module_url;
 		$this->version                               = $version;
@@ -352,6 +359,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->dcc_configuration                     = $dcc_configuration;
 		$this->partner_attribution                   = $partner_attribution;
 		$this->final_review_enabled                  = $final_review_enabled;
+		$this->context                               = $context;
 	}
 
 	/**
@@ -360,7 +368,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	public function render_wrapper(): bool {
-		$this->init_context();
+		$this->context->init_context();
 
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
 			$this->render_button_wrapper_registrar();
@@ -489,7 +497,7 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		$location = $this->location();
+		$location = $this->context->location();
 
 		if ( ! $this->settings_status->is_pay_later_messaging_enabled_for_location( $location ) ) {
 			return false;
@@ -696,10 +704,10 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return false;
 		}
 
-		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
+		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context->context() );
 		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
-		switch ( $this->context() ) {
+		switch ( $this->context->context() ) {
 			case 'checkout':
 			case 'cart':
 			case 'pay-now':
@@ -709,7 +717,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			case 'product':
 				return $smart_button_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:
-				return $smart_button_enabled_for_mini_cart || $this->is_block_editor();
+				return $smart_button_enabled_for_mini_cart || $this->context->is_block_editor();
 		}
 	}
 
@@ -730,7 +738,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return false;
 		}
 
-		$location = $this->location();
+		$location = $this->context->location();
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 
@@ -761,7 +769,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	public function can_render_dcc(): bool {
 		return $this->dcc_configuration->is_acdc_enabled()
 			&& in_array(
-				$this->context(),
+				$this->context->context(),
 				apply_filters( 'woocommerce_paypal_payments_can_render_dcc_contexts', array( 'checkout', 'pay-now', 'add-payment-method' ) ),
 				true
 			);
@@ -853,7 +861,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	public function message_renderer( $block_params = array() ): void {
 		$product = wc_get_product();
 
-		$location      = $this->location();
+		$location      = $this->context->location();
 		$location_hook = $this->location_to_hook( $location );
 
 		if (
@@ -934,7 +942,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return array();
 		}
 
-		$location = $this->location();
+		$location = $this->context->location();
 
 		switch ( $location ) {
 			case 'checkout':
@@ -995,7 +1003,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		return array(
 			'wrapper'   => '.ppcp-messages',
-			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
+			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context->context() ),
 			'block'     => array(
 				'enabled' => PayLaterBlockModule::is_block_enabled( $this->settings_status ),
 			),
@@ -1030,7 +1038,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		 * The WC filter returning the WC order button text.
 		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
 		 */
-		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
+		$label = 'checkout' === $this->context->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 		// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
 
 		printf(
@@ -1152,7 +1160,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$is_free_trial_cart = $this->is_free_trial_cart();
 		$is_acdc_enabled    = $this->dcc_configuration->is_acdc_enabled();
 
-		$url_params = $this->url_params();
+		$url_params      = $this->url_params();
+		$current_context = $this->context->context();
 
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
@@ -1170,7 +1179,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'paypal_subscriptions_enabled' => $this->paypal_subscriptions_enabled(),
 			),
 			'redirect'                                => wc_get_checkout_url(),
-			'context'                                 => $this->context(),
+			'context'                                 => $current_context,
 			'ajax'                                    => array(
 				'simulate_cart'                  => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
@@ -1270,13 +1279,13 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				),
 				'style'                 => $this->normalize_style(
 					array(
-						'layout'  => $this->style_for_context( 'layout', $this->context() ),
-						'color'   => $this->style_for_context( 'color', $this->context() ),
-						'shape'   => $this->style_for_context( 'shape', $this->context() ),
-						'label'   => $this->style_for_context( 'label', $this->context() ),
-						'tagline' => $this->style_for_context( 'tagline', $this->context() ),
-						'height'  => in_array( $this->context(), array( 'cart-block', 'checkout-block' ), true )
-							? $this->normalize_height( $this->style_for_context( 'height', $this->context(), 48 ), 40, 55 )
+						'layout'  => $this->style_for_context( 'layout', $current_context ),
+						'color'   => $this->style_for_context( 'color', $current_context ),
+						'shape'   => $this->style_for_context( 'shape', $current_context ),
+						'label'   => $this->style_for_context( 'label', $current_context ),
+						'tagline' => $this->style_for_context( 'tagline', $current_context ),
+						'height'  => in_array( $current_context, array( 'cart-block', 'checkout-block' ), true )
+							? $this->normalize_height( $this->style_for_context( 'height', $current_context, 48 ), 40, 55 )
 							: null,
 					)
 				),
@@ -1349,7 +1358,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'enabled'    => apply_filters( 'woocommerce_paypal_payments_simulate_cart_enabled', true ),
 				'throttling' => apply_filters( 'woocommerce_paypal_payments_simulate_cart_throttling', 5000 ),
 			),
-			'order_id'                                => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
+			'order_id'                                => 'pay-now' === $current_context ? $this->get_order_pay_id() : 0,
 			'single_product_buttons_enabled'          => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'               => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled'       => $this->basic_checkout_validation_enabled,
@@ -1359,7 +1368,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'is_logged'                  => is_user_logged_in(),
 				'has_wc_card_payment_tokens' => $this->user_has_wc_card_payment_tokens( get_current_user_id() ),
 			),
-			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->is_checkout(),
+			'should_handle_shipping_in_paypal'        => $this->should_handle_shipping_in_paypal && ! $this->context->is_checkout(),
 			'server_side_shipping_callback'           => array(
 				'enabled' => $this->server_side_shipping_callback_enabled,
 			),
@@ -1380,11 +1389,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			}
 		}
 
-		if ( 'pay-now' === $this->context() ) {
+		if ( 'pay-now' === $current_context ) {
 			$localize['pay_now'] = $this->pay_now_script_data();
 		}
 
-		if ( $this->is_paypal_continuation() ) {
+		if ( $this->context->is_paypal_continuation() ) {
 			$order = $this->session_handler->order();
 			assert( $order !== null );
 
@@ -1444,7 +1453,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return array
 	 */
 	private function url_params(): array {
-		$context = $this->context();
+		$current_context = $this->context->context();
 		try {
 			$intent = $this->intent();
 		} catch ( NotFoundException $exception ) {
@@ -1458,7 +1467,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
-			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
+			'commit'           => in_array( $current_context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
 		);
 
@@ -1480,7 +1489,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$params['buyer-country'] = WC()->customer->get_billing_country();
 		}
 
-		if ( 'pay-now' === $this->context() ) {
+		if ( 'pay-now' === $current_context ) {
 			$wc_order_id = $this->get_order_pay_id();
 			if ( $wc_order_id ) {
 				$wc_order = wc_get_order( $wc_order_id );
@@ -1493,11 +1502,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			}
 		}
 
-		$disabled_funding_sources = $this->disabled_funding_sources->sources( $context );
+		$disabled_funding_sources = $this->disabled_funding_sources->sources( $current_context );
 
 		$enable_funding = array( 'venmo' );
 
-		if ( $this->is_pay_later_button_enabled_for_location( $context ) ) {
+		if ( $this->is_pay_later_button_enabled_for_location( $current_context ) ) {
 			$enable_funding[] = 'paylater';
 		} else {
 			$disabled_funding_sources[] = 'paylater';
@@ -1532,7 +1541,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 */
 	private function attributes(): array {
 		$attributes = array(
-			'data-partner-attribution-id' => $this->bn_code_for_context( $this->context() ),
+			'data-partner-attribution-id' => $this->bn_code_for_context( $this->context->context() ),
 		);
 
 		$page_type_attribute = $this->page_type_attribute();
@@ -1553,7 +1562,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return 'search-results';
 		}
 
-		switch ( $this->location() ) {
+		switch ( $this->context->location() ) {
 			case 'product':
 				return 'product-details';
 			case 'shop':
@@ -1634,7 +1643,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			(array) apply_filters(
 				'woocommerce_paypal_payments_sdk_components_hook',
 				$components,
-				$this->context()
+				$this->context->context()
 			)
 		);
 	}
@@ -1971,7 +1980,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 */
 	public function is_button_disabled( ?string $context = null, array $context_data = array() ): bool {
 		if ( null === $context ) {
-			$context = $this->context();
+			$context = $this->context->context();
 		}
 
 		if ( 'product' === $context ) {
@@ -2161,9 +2170,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					if ( is_product() ) {
 						return false;
 					}
-					return in_array( $this->context(), array( 'cart', 'checkout', 'cart-block', 'checkout-block' ), true );
+					return in_array( $this->context->context(), array( 'cart', 'checkout', 'cart-block', 'checkout-block' ), true );
 				}
-				return in_array( $this->context(), array( 'cart-block', 'checkout-block' ), true ) ? true : $value;
+				return in_array( $this->context->context(), array( 'cart-block', 'checkout-block' ), true ) ? true : $value;
 			},
 			11
 		);

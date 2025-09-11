@@ -152,7 +152,8 @@ return array(
 			$container->get( 'button.helper.disabled-funding-sources' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'api.helper.partner-attribution' ),
-			$container->get( 'blocks.settings.final_review_enabled' )
+			$container->get( 'blocks.settings.final_review_enabled' ),
+			$container->get( 'button.helper.context' ),
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
