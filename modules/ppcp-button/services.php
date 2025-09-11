@@ -78,7 +78,7 @@ return array(
 	// This service may not work correctly when called too early.
 	'button.context'                              => static function ( ContainerInterface $container ): string {
 		$context = $container->get( 'button.helper.context' );
-		return $context->get_context();
+		return $context->context();
 	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$context = $container->get( 'button.context' );
