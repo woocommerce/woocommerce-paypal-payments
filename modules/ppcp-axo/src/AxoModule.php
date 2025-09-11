@@ -88,7 +88,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					/**
 					 * @var Context $context
 					 */
-					$context = $c->get( 'button.helpers.context' );
+					$context = $c->get( 'button.helper.context' );
 					if ( ! $context->is_wc_settings_payments_tab() ) {
 						$methods[] = $gateway;
 					}
@@ -195,7 +195,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				/**
 				 * @var Context $context
 				 */
-				$context = $c->get( 'button.helpers.context' );
+				$context = $c->get( 'button.helper.context' );
 				// Check if the module is applicable, correct country, currency, ... etc.
 				if ( ! $is_paypal_enabled
 					|| ! $c->get( 'axo.eligible' )
