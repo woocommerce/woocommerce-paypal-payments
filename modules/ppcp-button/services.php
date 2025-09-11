@@ -139,7 +139,6 @@ return array(
 			$payment_token_repository,
 			$settings_status,
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),

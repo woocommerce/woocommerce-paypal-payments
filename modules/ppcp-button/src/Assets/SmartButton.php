@@ -157,13 +157,6 @@ class SmartButton implements SmartButtonInterface {
 	private CurrencyGetter $currency;
 
 	/**
-	 * All existing funding sources.
-	 *
-	 * @var array
-	 */
-	private $all_funding_sources;
-
-	/**
 	 * Whether the basic JS validation of the form iss enabled.
 	 *
 	 * @var bool
@@ -286,7 +279,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param PaymentTokenRepository    $payment_token_repository          The payment token repository.
 	 * @param SettingsStatus            $settings_status                   The Settings status helper.
 	 * @param CurrencyGetter            $currency                          The getter of the 3-letter currency code of the shop.
-	 * @param array                     $all_funding_sources               All existing funding sources.
 	 * @param bool                      $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                      $early_validation_enabled          Whether to execute WC validation of the checkout form.
 	 * @param array                     $pay_now_contexts                  The contexts that should have the Pay Now button.
@@ -317,7 +309,6 @@ class SmartButton implements SmartButtonInterface {
 		PaymentTokenRepository $payment_token_repository,
 		SettingsStatus $settings_status,
 		CurrencyGetter $currency,
-		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
@@ -347,7 +338,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->payment_token_repository              = $payment_token_repository;
 		$this->settings_status                       = $settings_status;
 		$this->currency                              = $currency;
-		$this->all_funding_sources                   = $all_funding_sources;
 		$this->basic_checkout_validation_enabled     = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled              = $early_validation_enabled;
 		$this->pay_now_contexts                      = $pay_now_contexts;
