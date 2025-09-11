@@ -52,20 +52,17 @@ class DisableGateways {
 	/**
 	 * DisableGateways constructor.
 	 *
-	 * @param SessionHandler     $session_handler The Session Handler.
 	 * @param ContainerInterface $settings The Settings.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
 	 */
 	public function __construct(
-		SessionHandler $session_handler,
 		ContainerInterface $settings,
 		SettingsStatus $settings_status,
 		SubscriptionHelper $subscription_helper,
 		Context $context
 	) {
 
-		$this->session_handler     = $session_handler;
 		$this->settings            = $settings;
 		$this->settings_status     = $settings_status;
 		$this->subscription_helper = $subscription_helper;

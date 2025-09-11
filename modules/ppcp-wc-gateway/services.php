@@ -233,12 +233,11 @@ return array(
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
-		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$context = $container->get( 'button.helper.context' );
-		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper, $context );
+		return new DisableGateways( $settings, $settings_status, $subscription_helper, $context );
 	},
 
 	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
