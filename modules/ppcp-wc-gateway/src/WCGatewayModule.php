@@ -549,6 +549,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
+				$dcc_applies = $c->get( 'api.helpers.dccapplies' );
+
 				$apms_product_status = $c->get( 'ppcp-local-apms.product-status' );
 				assert( $apms_product_status instanceof LocalApmProductStatus );
 
@@ -563,7 +565,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				$features['advanced_credit_and_debit_cards'] = array(
-					'enabled' => $dcc_product_status->is_active(),
+					'enabled' => $dcc_product_status->is_active() && $dcc_applies->for_country_currency(),
 				);
 
 				$features['alternative_payment_methods'] = array(
