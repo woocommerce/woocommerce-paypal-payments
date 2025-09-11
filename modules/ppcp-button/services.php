@@ -269,7 +269,8 @@ return array(
 			$container->get( 'session.handler' ),
 			$container->get( 'blocks.settings.final_review_enabled' ),
 			$container->get( 'button.helper.wc-order-creator' ),
-			$container->get( 'wcgateway.paypal-gateway' )
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 	'button.helper.context'                       => static function ( ContainerInterface $container ): Context {
