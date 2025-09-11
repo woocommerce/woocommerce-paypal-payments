@@ -26,7 +26,8 @@ return array(
 	'session.cancellation.controller' => function ( ContainerInterface $container ): CancelController {
 		return new CancelController(
 			$container->get( 'session.handler' ),
-			$container->get( 'session.cancellation.view' )
+			$container->get( 'session.cancellation.view' ),
+			$container->get( 'button.helper.context' )
 		);
 	},
 );
