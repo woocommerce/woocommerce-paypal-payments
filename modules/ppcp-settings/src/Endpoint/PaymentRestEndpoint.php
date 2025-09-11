@@ -77,7 +77,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 			'js_name'  => 'paypalShowLogo',
 			'sanitize' => 'to_boolean',
 		),
-		'cardholder_name'   => array(
+		'cardholder_name'            => array(
 			'js_name'  => 'cardholderName',
 			'sanitize' => 'to_boolean',
 		),

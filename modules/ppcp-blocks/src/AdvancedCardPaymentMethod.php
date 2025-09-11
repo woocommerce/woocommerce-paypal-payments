@@ -59,8 +59,12 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	protected CardPaymentsConfiguration $dcc_configuration;
 
 	/**
+	 * @param string                        $module_url
 	 * @param string                        $version The assets version.
+	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
+	 * @param Settings                      $settings
+	 * @param CardPaymentsConfiguration     $card_payments_configuration
 	 */
 	public function __construct(
 		string $module_url,

@@ -54,7 +54,7 @@ class PaymentMethodSettingsMapHelper {
 			case 'axo_name_on_card':
 				return $payment_settings->get_cardholder_name();
 			case 'dcc_gateway_title':
-				$axo_gateway_settings = get_option( "woocommerce_ppcp-axo-gateway_settings", array() );
+				$axo_gateway_settings = get_option( 'woocommerce_ppcp-axo-gateway_settings', array() );
 				return $axo_gateway_settings['title'] ?? null;
 			default:
 				return $new_key ? $this->is_gateway_enabled( $new_key ) : null;
