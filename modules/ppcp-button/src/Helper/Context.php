@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionStatus;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
@@ -268,8 +270,14 @@ class Context {
 			return false;
 		}
 
+		try {
+			$subscription_status = $this->subscription_status->get_status( $subscription_id );
+		} catch ( RuntimeException | PayPalApiException $exception ) {
+			$subscription_status = '';
+		}
+
 		if ( $subscription_id &&
-			'ACTIVE' !== $this->subscription_status->get_status( $subscription_id )
+			'ACTIVE' !== $subscription_status
 		) {
 			return false;
 		}
