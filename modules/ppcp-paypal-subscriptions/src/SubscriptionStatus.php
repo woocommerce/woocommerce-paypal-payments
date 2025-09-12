@@ -134,7 +134,6 @@ class SubscriptionStatus {
 	 * @return string Current subscription status.
 	 *
 	 * @throws RuntimeException If the request fails.
-	 * @throws PayPalApiException If the request fails.
 	 */
 	public function get_status( string $subscription_id ): string {
 		static $subscription_status = null;
