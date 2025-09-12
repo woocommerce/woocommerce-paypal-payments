@@ -25,10 +25,13 @@ use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
  */
 class StylingSettingsMapHelper {
 
-	protected Context $context;
+	/**
+	 * @var callable $context
+	 */
+	protected $context_provider;
 
-	public function __construct( Context $context ) {
-		$this->context = $context;
+	public function __construct( callable $context_provider ) {
+		$this->context_provider = $context_provider;
 	}
 
 	protected const BUTTON_NAMES = array( GooglePayGateway::ID, ApplePayGateway::ID );
@@ -244,7 +247,7 @@ class StylingSettingsMapHelper {
 
 		$disabled_funding         = array();
 		$locations_to_context_map = $this->current_context_to_new_button_location_map();
-		$current_context          = $locations_to_context_map[ $this->context->context() ] ?? '';
+		$current_context          = $locations_to_context_map[ ( $this->context_provider )() ] ?? '';
 		assert( $payment_settings instanceof PaymentSettings );
 
 		foreach ( $styling_models as $model ) {
@@ -272,7 +275,7 @@ class StylingSettingsMapHelper {
 		}
 
 		$locations_to_context_map = $this->current_context_to_new_button_location_map();
-		$current_context          = $locations_to_context_map[ $this->context->context() ] ?? '';
+		$current_context          = $locations_to_context_map[ ( $this->context_provider )() ] ?? '';
 
 		foreach ( $styling_models as $model ) {
 			if ( $model->enabled && $model->location === $current_context ) {
@@ -299,7 +302,7 @@ class StylingSettingsMapHelper {
 		}
 
 		$locations_to_context_map = $this->current_context_to_new_button_location_map();
-		$current_context          = $locations_to_context_map[ $this->context->context() ] ?? '';
+		$current_context          = $locations_to_context_map[ ( $this->context_provider )() ] ?? '';
 
 		foreach ( $styling_models as $model ) {
 			if ( $model->enabled && $model->location === $current_context ) {

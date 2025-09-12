@@ -196,8 +196,12 @@ return array(
 		);
 	},
 	'compat.settings.styling_map_helper'             => static function ( ContainerInterface $container ): StylingSettingsMapHelper {
-		$context = $container->get( 'button.helper.context' );
-		return new StylingSettingsMapHelper( $context );
+		$context_provider = static function () use ( $container ): string {
+			$context = $container->get( 'button.helper.context' );
+
+			return $context->context();
+		};
+		return new StylingSettingsMapHelper( $context_provider );
 	},
 	'compat.settings.settings_tab_map_helper'        => static function (): SettingsTabMapHelper {
 		return new SettingsTabMapHelper();
