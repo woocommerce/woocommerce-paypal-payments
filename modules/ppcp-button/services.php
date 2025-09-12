@@ -275,7 +275,9 @@ return array(
 	},
 	'button.helper.context'                       => static function ( ContainerInterface $container ): Context {
 		$session_handler = $container->get( 'session.handler' );
-		return new Context( $session_handler );
+		$subscription_status = $container->get( 'paypal-subscriptions.status' );
+
+		return new Context( $session_handler, $subscription_status );
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
 		return new CheckoutFormSaver(

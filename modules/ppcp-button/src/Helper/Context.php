@@ -4,15 +4,21 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionStatus;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 class Context {
 
 	protected SessionHandler $session_handler;
+	protected SubscriptionStatus $subscription_status;
 
-	public function __construct( SessionHandler &$session_handler ) {
+	public function __construct(
+		SessionHandler $session_handler,
+		SubscriptionStatus $subscription_status
+	) {
 
-		$this->session_handler = $session_handler;
+		$this->session_handler     = $session_handler;
+		$this->subscription_status = $subscription_status;
 	}
 
 	/**
@@ -252,8 +258,17 @@ class Context {
 			return false;
 		}
 
+		$subscription_id = wc()->session->get( 'ppcp_subscription_id' );
+
 		if ( ! $order->status()->is( OrderStatus::APPROVED )
 			&& ! $order->status()->is( OrderStatus::COMPLETED )
+			&& ! $subscription_id
+		) {
+			return false;
+		}
+
+		if ( $subscription_id &&
+			'ACTIVE' !== $this->subscription_status->get_status( $subscription_id )
 		) {
 			return false;
 		}
