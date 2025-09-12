@@ -140,10 +140,12 @@ class SubscriptionStatus {
 		static $subscription_status = null;
 
 		if ( null === $subscription_status ) {
-			$subscription        = $this->subscriptions_endpoint->subscription( $subscription_id );
-			$subscription_status = isset( $subscription->status ) ?
-				(string) $subscription->status :
-				'';
+			$subscription = $this->subscriptions_endpoint->subscription( $subscription_id );
+
+			if ( ! isset( $subscription->status ) ) {
+				throw new RuntimeException( 'Status not found in subscription data' );
+			}
+			$subscription_status = (string) $subscription->status;
 		}
 
 		return $subscription_status;
