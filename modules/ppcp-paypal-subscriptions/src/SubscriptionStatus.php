@@ -141,7 +141,9 @@ class SubscriptionStatus {
 
 		if ( null === $subscription_status ) {
 			$subscription        = $this->subscriptions_endpoint->subscription( $subscription_id );
-			$subscription_status = (string) $subscription->status ?? '';
+			$subscription_status = isset( $subscription->status ) ?
+				(string) $subscription->status :
+				'';
 		}
 
 		return $subscription_status;

@@ -258,6 +258,7 @@ class Context {
 			return false;
 		}
 
+		/** @var string $subscription_id */
 		$subscription_id = wc()->session->get( 'ppcp_subscription_id' );
 
 		if ( ! $order->status()->is( OrderStatus::APPROVED )
