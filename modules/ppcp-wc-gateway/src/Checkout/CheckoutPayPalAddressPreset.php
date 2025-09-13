@@ -98,13 +98,23 @@ class CheckoutPayPalAddressPreset {
 			'billing_phone' => 'national_number',
 		);
 
-		if ( array_key_exists( $field_id, $address_map ) && $shipping ) {
-			return $shipping->address()->{$address_map[ $field_id ]}() ? $shipping->address()->{$address_map[ $field_id ]}() : null;
-		}
+        if ( array_key_exists( $field_id, $address_map ) && $shipping ) {
+            $address = $shipping->address();
+            if ( ! $address ) {
+                return null;
+            }
+            $method = $address_map[ $field_id ];
+            return $address->{$method}() ? $address->{$method}() : null;
+        }
 
-		if ( array_key_exists( $field_id, $payer_name_map ) && $payer ) {
-			return $payer->name()->{$payer_name_map[ $field_id ]}() ? $payer->name()->{$payer_name_map[ $field_id ]}() : null;
-		}
+        if ( array_key_exists( $field_id, $payer_name_map ) && $payer ) {
+            $name = $payer->name();
+            if ( ! $name ) {
+                return null;
+            }
+            $method = $payer_name_map[ $field_id ];
+            return $name->{$method}() ? $name->{$method}() : null;
+        }
 
 		if ( array_key_exists( $field_id, $payer_map ) && $payer ) {
 			return $payer->{$payer_map[ $field_id ]}() ? $payer->{$payer_map[ $field_id ]}() : null;
