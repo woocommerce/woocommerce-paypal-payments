@@ -116,7 +116,7 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_paypal_payments_before_order_process',
-			function ( bool $process, \WC_Payment_Gateway $gateway, \WC_Order $wc_order ) use ( $c ) {
+			function ( bool $process, $gateway, \WC_Order $wc_order ) use ( $c ) {
 				if ( ! $gateway instanceof PayPalGateway || $gateway::ID !== 'ppcp-gateway' ) {
 					return $process;
 				}
