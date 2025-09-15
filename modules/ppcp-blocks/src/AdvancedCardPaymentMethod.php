@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class AdvancedCardPaymentMethod
  */
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
-	protected CardPaymentsConfiguration $card_payments_configuration;
 
 	/**
 	 * The URL of this module.
@@ -56,7 +55,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	protected $plugin_settings;
 
-	protected CardPaymentsConfiguration $dcc_configuration;
+	protected CardPaymentsConfiguration $card_payments_configuration;
 
 	/**
 	 * @param string                        $module_url
