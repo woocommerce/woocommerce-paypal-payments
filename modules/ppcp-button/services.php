@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -236,6 +238,8 @@ return array(
 			$session_handler,
 			$settings,
 			$early_order_handler,
+			$container->get( 'button.session.factory.card-data' ),
+			$container->get( 'button.session.storage.card-data.transient' ),
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
@@ -407,7 +411,15 @@ return array(
 		return new WooCommerceOrderCreator(
 			$container->get( 'wcgateway.funding-source.renderer' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'wc-subscriptions.helper' )
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'button.session.factory.card-data' )
 		);
+	},
+
+	'button.session.factory.card-data'            => static function ( ContainerInterface $container ): CartDataFactory {
+		return new CartDataFactory();
+	},
+	'button.session.storage.card-data.transient'  => static function ( ContainerInterface $container ): CartDataTransientStorage {
+		return new CartDataTransientStorage();
 	},
 );

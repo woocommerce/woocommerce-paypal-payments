@@ -13,9 +13,10 @@ use Exception;
 use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
+use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -78,7 +79,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
-		$this->set_elementor_checkout_context();
 
 		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
 		if ( $is_nyp_active ) {
@@ -436,31 +436,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	}
 
 	/**
-	 * Sets the context for the Elementor checkout page.
-	 *
-	 * @return void
-	 */
-	protected function set_elementor_checkout_context(): void {
-		add_action(
-			'wp',
-			function () {
-				$page_id = get_the_ID();
-				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
-					return;
-				}
-
-				add_filter(
-					'woocommerce_paypal_payments_context',
-					function ( string $context ): string {
-						// Default context.
-						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
-					}
-				);
-			}
-		);
-	}
-
-	/**
 	 * Excludes PayPal scripts from being minified by cache plugins.
 	 *
 	 * @param ContainerInterface $c The Container.
@@ -537,11 +512,10 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	protected function initialize_wc_bookings_compat_layer( ContainerInterface $container ): void {
 		add_action(
-			'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created',
-			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $container ): void {
+			'woocommerce_paypal_payments_woocommerce_order_created_from_cart',
+			static function ( WC_Order $wc_order, CartData $cart_data ) use ( $container ): void {
 				try {
-					$cart_contents = $wc_cart->get_cart();
-					foreach ( $cart_contents as $cart_item ) {
+					foreach ( $cart_data->items() as $cart_item ) {
 						if ( empty( $cart_item['booking'] ) ) {
 							continue;
 						}

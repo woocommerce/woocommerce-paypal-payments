@@ -8,6 +8,7 @@ import SimulateCart from '../Helper/SimulateCart';
 import { strRemoveWord, strAddWord, throttle } from '../Helper/Utils';
 import merge from 'deepmerge';
 import { debounce } from '../../../../../ppcp-blocks/resources/js/Helper/debounce';
+import ResumeFlowHelper from '../Helper/ResumeFlowHelper';
 
 class SingleProductBootstrap {
 	constructor( gateway, renderer, errorHandler ) {
@@ -53,7 +54,10 @@ class SingleProductBootstrap {
 			return;
 		}
 
-		this.render();
+		// Avoid re-rendering during the resume flow to prevent duplicate onApprove callbacks.
+		if ( ! ResumeFlowHelper.isResumeFlow() ) {
+			this.render();
+		}
 
 		this.renderer.enableSmartButtons( this.gateway.button.wrapper );
 		show( this.gateway.button.wrapper );
@@ -243,15 +247,6 @@ class SingleProductBootstrap {
 			this.form(),
 			this.errorHandler
 		);
-		if (
-			! this.gateway.vaultingEnabled &&
-			[ 'subscription', 'variable-subscription' ].includes(
-				this.gateway.productType
-			) &&
-			this.gateway.manualRenewalEnabled !== '1'
-		) {
-			return;
-		}
 
 		if (
 			PayPalCommerceGateway.data_client_id.has_subscriptions &&
@@ -273,18 +268,31 @@ class SingleProductBootstrap {
 			if ( this.subscriptionButtonsLoaded ) {
 				return;
 			}
+
 			loadPaypalJsScript(
 				{
 					clientId: PayPalCommerceGateway.client_id,
 					currency: PayPalCommerceGateway.currency,
 					intent: 'subscription',
 					vault: true,
+					disable_funding:
+						this.gateway.url_params[ 'disable-funding' ],
 				},
 				actionHandler.subscriptionsConfiguration( subscription_plan ),
 				this.gateway.button.wrapper
 			);
 
 			this.subscriptionButtonsLoaded = true;
+			return;
+		}
+
+		if (
+			! this.gateway.vaultingEnabled &&
+			[ 'subscription', 'variable-subscription' ].includes(
+				this.gateway.productType
+			) &&
+			this.gateway.manualRenewalEnabled !== '1'
+		) {
 			return;
 		}
 

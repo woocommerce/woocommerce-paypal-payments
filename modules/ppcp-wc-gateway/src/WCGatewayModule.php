@@ -93,6 +93,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 	public function run( ContainerInterface $c ): bool {
 		$this->register_payment_gateways( $c );
 		$this->register_order_functionality( $c );
+		$this->register_contact_handlers();
 		$this->register_columns( $c );
 		$this->register_checkout_paypal_address_preset( $c );
 		$this->register_wc_tasks( $c );
@@ -1033,6 +1034,43 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		}
 
 		return false === strpos( $order->get_payment_method_title(), '(via PayPal)' );
+	}
+
+	/**
+	 * Overwrite WC order email/phone.
+	 *
+	 * The contact module can provide a custom email and phone number.
+	 * These two properties are intended to be treated as primary contact details.
+	 */
+	private function register_contact_handlers(): void {
+		$set_order_contacts = function ( WC_Order $wc_order ): void {
+			$email = $wc_order->get_meta( PayPalGateway::CONTACT_EMAIL_META_KEY );
+			$phone = $wc_order->get_meta( PayPalGateway::CONTACT_PHONE_META_KEY );
+
+			if ( $email && is_email( $email ) ) {
+				$wc_order->set_billing_email( $email );
+			}
+			if ( $phone && is_string( $phone ) ) {
+				$wc_order->set_billing_phone( $phone );
+			}
+		};
+
+		add_action(
+			'woocommerce_paypal_payments_contacts_added',
+			function ( WC_Order $wc_order ) use ( $set_order_contacts ): void {
+				$set_order_contacts( $wc_order );
+			}
+		);
+		// There is a race condition in express block checkout, the contacts set in woocommerce_paypal_payments_contacts_added
+		// may get reverted by another ajax WC request. So we set them again after that.
+		add_action(
+			'woocommerce_store_api_cart_update_order_from_request',
+			function ( WC_Order $wc_order ) use ( $set_order_contacts ): void {
+				// This hook fires for all methods, but we do not do anything if the meta is not set
+				// so probably no need to add additional checks.
+				$set_order_contacts( $wc_order );
+			}
+		);
 	}
 
 	/**

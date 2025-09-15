@@ -1,3 +1,5 @@
+import Spinner from '../Helper/Spinner';
+
 const initiateRedirect = ( successUrl ) => {
 	/**
 	 * Notice how this step initiates a redirect to a new page using a plain
@@ -15,6 +17,10 @@ const initiateRedirect = ( successUrl ) => {
 
 const onApprove = ( context, errorHandler ) => {
 	return ( data, actions ) => {
+		// Block the entire page during approval process
+		const spinner = Spinner.fullPage();
+		spinner.block();
+
 		const canCreateOrder =
 			! context.config.vaultingEnabled || data.paymentSource !== 'venmo';
 
@@ -50,6 +56,9 @@ const onApprove = ( context, errorHandler ) => {
 
 				const orderReceivedUrl = approveData.data?.order_received_url;
 				initiateRedirect( orderReceivedUrl || context.config.redirect );
+			} )
+			.finally( () => {
+				spinner.unblock();
 			} );
 	};
 };
