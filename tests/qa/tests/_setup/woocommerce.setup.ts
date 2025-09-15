@@ -27,9 +27,8 @@ const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 setup( 'Clear SSE cache', async ( { cli } ) => {
 	await cli.clearSseCache();
 } );
-*/
 
-setup( 'Setup Permalinks', async ( { requestUtils } ) => {
+ setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 	await requestUtils.setPermalinks( '/%postname%/' );
 } );
 
@@ -122,6 +121,8 @@ setup( 'Setup theme', async ( { requestUtils } ) => {
 	}
 	await requestUtils.activateTheme( slug );
 } );
+
+*/
 
 setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	if ( ! ( await wooCommerceUtils.apiKeysExist() ) ) {
