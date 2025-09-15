@@ -116,6 +116,11 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 
 		add_filter(
 			'woocommerce_paypal_payments_before_order_process',
+			/**
+			 * WC_Payment_Gateway $gateway type removed.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( bool $process, $gateway, \WC_Order $wc_order ) use ( $c ) {
 				if ( ! $gateway instanceof PayPalGateway || $gateway::ID !== 'ppcp-gateway' ) {
 					return $process;
