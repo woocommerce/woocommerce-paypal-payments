@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WooCommerceMobile;
 
+use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -32,7 +33,7 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule {
      * {@inheritdoc}
      */
     public function extensions(): array {
-        return array();
+        return require __DIR__ . '/extensions.php';
     }
 
     /**
@@ -44,6 +45,17 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule {
         add_action(
             'rest_api_init',
             static function () use ( $container ) {
+                // Test endpoint first
+                register_rest_route(
+                    'wc/v3',
+                    '/paypal/test',
+                    array(
+                        'methods' => 'GET',
+                        'callback' => function() { return array('status' => 'mobile module loaded'); },
+                        'permission_callback' => '__return_true',
+                    )
+                );
+
                 // Payment capture endpoint
                 $capture_endpoint = $container->get( 'woocommerce-mobile.capture-paypal-payment-endpoint' );
                 $capture_endpoint->register_routes();
