@@ -299,7 +299,7 @@ class Context {
 	 *
 	 * @return bool
 	 */
-	private function is_add_payment_method_page(): bool {
+	public function is_add_payment_method_page(): bool {
 		/**
 		 * Needed for WordPress `query_vars`.
 		 *

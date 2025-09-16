@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
@@ -250,6 +251,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 					'wp_enqueue_scripts',
 					function () use ( $c ) {
 						$context = $c->get( 'button.helper.context' );
+						assert( $context instanceof Context );
 						if ( ! is_user_logged_in() || ! ( $context->is_add_payment_method_page() || $context->is_subscription_change_payment_method_page() ) ) {
 							return;
 						}
