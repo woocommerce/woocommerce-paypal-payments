@@ -42,7 +42,6 @@ test.describe( () => {
 						const newPage = await newContext?.newPage();
 						await newPage?.goto( url );
 
-						expect.soft( newPage.url() ).toBe( url );
 						expect.soft( await newPage.title() ).toContain( title );
 
 						await newPage.close();

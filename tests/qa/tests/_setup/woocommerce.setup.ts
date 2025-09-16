@@ -27,8 +27,13 @@ const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 setup( 'Clear SSE cache', async ( { cli } ) => {
 	await cli.clearSseCache();
 } );
+ **/
 
- setup( 'Setup Permalinks', async ( { requestUtils } ) => {
+/**
+ * Migrated to e2e-snippets and wp-env
+ * @see ../../bin/test-env-setup.sh
+ *
+setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 	await requestUtils.setPermalinks( '/%postname%/' );
 } );
 
@@ -122,6 +127,13 @@ setup( 'Setup theme', async ( { requestUtils } ) => {
 	await requestUtils.activateTheme( slug );
 } );
 
+ setup(
+	'Setup WooCommerce Live site visibility',
+	async ( { wooCommerceUtils } ) => {
+		await wooCommerceUtils.setSiteVisibility();
+	}
+);
+
 */
 
 setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
@@ -136,12 +148,6 @@ setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	}
 } );
 
-setup(
-	'Setup WooCommerce Live site visibility',
-	async ( { wooCommerceUtils } ) => {
-		await wooCommerceUtils.setSiteVisibility();
-	}
-);
 
 setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 	const disabled = { enabled: 'no' };

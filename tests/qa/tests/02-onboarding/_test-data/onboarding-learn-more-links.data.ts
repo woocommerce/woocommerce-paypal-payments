@@ -8,23 +8,23 @@ export const learnMoreLinksByCountry = {
 				title: 'PayPal Checkout: Custom Checkout Integration | PayPal US',
 			},
 			{
-				url: 'https://www.paypal.com/us/business/accept-payments/installment-payments',
+				url: 'https://www.paypal.com/us/business/accept-payments/checkout/installments',
 				title: 'Installment Payments with PayPal Pay Later | PayPal US',
 			},
 			{
-				url: 'https://www.paypal.com/us/business/accept-payments/accept-venmo',
-				title: 'Venmo for Businesses | Accept Venmo Payments | PayPal US',
+				url: 'https://www.paypal.com/us/enterprise/payment-processing/accept-venmo',
+				title: 'Venmo for Business | Accept Venmo Payments | PayPal US',
 			},
 			{
 				url: 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
-				title: 'Buy and Sell Cryptocurrency | Hold Cryptocurrency | PayPal US',
+				title: 'Buy and Sell Crypto | Cryptocurrency Wallet | PayPal US',
 			},
 			{
-				url: 'https://www.paypal.com/us/business/accept-payments/checkout#expanded-checkout',
+				url: 'https://www.paypal.com/us/business/accept-payments/checkout/integration#expanded-checkout',
 				title: 'PayPal Checkout: Custom Checkout Integration | PayPal US',
 			},
 			{
-				url: 'https://www.paypal.com/us/business/accept-payments/guest-checkout',
+				url: 'https://www.paypal.com/us/enterprise/payment-processing/guest-checkout',
 				title: 'Guest Checkout for Your Business with Fastlane | PayPal US',
 			},
 			{

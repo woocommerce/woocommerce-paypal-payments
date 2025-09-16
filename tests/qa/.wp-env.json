@@ -2,17 +2,14 @@
     "phpVersion": "8.0",
     "plugins": [
         "https://downloads.wordpress.org/plugin/wp-debugging.2.12.2.zip",
-        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/disable-new-ui.zip",
-        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/disable-nonce.zip",
-        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/disable-wc-setup-wizard.zip",
-        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/disable-webhook-verification.zip",
-        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/woocommerce-subscriptions.zip"
+        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/woocommerce-subscriptions.zip",
+        "./resources/e2e-snippets"
     ],
     "mappings": {
         "wp-cli.yml": "./wp-cli.yml"
     },
     "lifecycleScripts": {
         "afterStart": "./bin/test-env-setup.sh",
-        "afterClean": "./bin/test-env-setup.sh"
+        "afterClean": "./bin/test-env-clean.sh"
     }
 }
