@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WooCommerceMobile;
 
 use Exception;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -18,9 +19,16 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 /**
  * Class WooCommerceMobileModule
  */
-class WooCommerceMobileModule implements ServiceModule, ExtendingModule {
+class WooCommerceMobileModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
     use ModuleClassNameIdTrait;
+
+    /**
+     * Constructor for debugging
+     */
+    public function __construct() {
+        error_log('PayPal Mobile Module: constructor called');
+    }
 
     /**
      * {@inheritdoc}
@@ -41,10 +49,14 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule {
      */
     public function run( ContainerInterface $container ): bool {
 
+        // Debug: Log that mobile module is running
+        error_log('PayPal Mobile Module: run() method called');
+
         // Register the REST API endpoints for mobile integration
         add_action(
             'rest_api_init',
             static function () use ( $container ) {
+                error_log('PayPal Mobile Module: rest_api_init action fired');
                 // Test endpoint first
                 register_rest_route(
                     'wc/v3',
