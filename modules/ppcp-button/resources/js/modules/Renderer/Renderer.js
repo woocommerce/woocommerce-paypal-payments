@@ -8,7 +8,6 @@ import {
 	handleShippingAddressChange,
 } from '../Helper/ShippingHandler.js';
 import { PaymentContext } from '../Helper/CheckoutMethodState';
-import {reusableBlock} from "@wordpress/icons";
 
 class Renderer {
 	constructor(
