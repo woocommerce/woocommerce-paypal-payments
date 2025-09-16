@@ -23,7 +23,7 @@ return array(
 
     'woocommerce-mobile.get-plugin-credentials-endpoint' => static function ( ContainerInterface $container ): GetPluginCredentialsEndpoint {
         return new GetPluginCredentialsEndpoint(
-            $container->get( 'wcgateway.settings.general' )
+            $container->get( 'settings.data.general' )
         );
     },
 

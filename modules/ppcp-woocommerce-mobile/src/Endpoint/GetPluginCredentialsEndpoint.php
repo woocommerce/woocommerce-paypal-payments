@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint;
 
+use Exception;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WP_REST_Request;
 use WP_REST_Response;

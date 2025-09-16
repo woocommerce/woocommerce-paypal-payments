@@ -57,3 +57,7 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule {
         return true;
     }
 }
+
+return static function (): WooCommerceMobileModule {
+    return new WooCommerceMobileModule();
+};
