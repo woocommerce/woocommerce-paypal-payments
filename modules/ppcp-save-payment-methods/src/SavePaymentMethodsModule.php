@@ -251,7 +251,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 					'wp_enqueue_scripts',
 					function () use ( $c ) {
 						$context = $c->get( 'button.helper.context' );
-						assert($context instanceof Context);
+						assert( $context instanceof Context );
 						if ( ! is_user_logged_in() || ! ( $context->is_add_payment_method_page() || $context->is_subscription_change_payment_method_page() ) ) {
 							return;
 						}
