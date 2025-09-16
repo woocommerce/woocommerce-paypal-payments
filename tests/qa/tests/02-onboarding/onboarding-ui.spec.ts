@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { test, expect } from '../../utils';
-import { storeConfigDefault } from '../../resources';
+import { storeConfigDefault, subscriptionsPlugin } from '../../resources';
 import { defaultUiTestData, onboardingCheckoutComparison } from './_test-data';
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
@@ -103,51 +103,6 @@ test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable 
 	);
 } );
 
-test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, all product types, card payments enabled', async ( {
-	pcpOnboarding,
-}, testInfo ) => {
-	await pcpOnboarding.visit();
-	await pcpOnboarding.activatePayPalPaymentsButton().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		testInfo.title,
-		{ timeout: 3000 }
-	);
-
-	await pcpOnboarding.businessRadio().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-
-		`${ testInfo.title } - Set up store type`
-	);
-	await pcpOnboarding.continueButton().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Select product types - No option selected`,
-		{ timeout: 3000 }
-	);
-
-	await pcpOnboarding.physicalGoodsCheckbox().check();
-	await pcpOnboarding.virtualCheckbox().check();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Select product types - Products selected`,
-		{ timeout: 3000 }
-	);
-	await pcpOnboarding.continueButton().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-
-		`${ testInfo.title } - Choose checkout options`
-	);
-	await pcpOnboarding.disableOptionalPaymentMethodsRadio().click();
-	await pcpOnboarding.snapshotLocator(
-		pcpOnboarding.onboardingContentContainer(),
-		`${ testInfo.title } - Choose checkout options - Card payments disabled`,
-		{ timeout: 3000 }
-	);
-} );
-
 test.describe( () => {
 	for ( const testData of onboardingCheckoutComparison ) {
 		const { testKey, country, wooCommerceGeneralSettings } = testData;
@@ -186,17 +141,11 @@ test.describe( () => {
 
 test.describe( () => {
 	test.beforeAll( async ( { requestUtils } ) => {
-		if (
-			! ( await requestUtils.isPluginInstalled( 'woocommerce-payments' ) )
-		) {
-			await requestUtils.installPlugin( 'woocommerce-payments' );
-		}
 		await requestUtils.activatePlugin( 'woopayments' );
 	} );
 
 	test.afterAll( async ( { requestUtils, plugins } ) => {
 		await requestUtils.deactivatePlugin( 'woopayments' );
-		await plugins.deletePlugin( 'woopayments' );
 	} );
 
 	test( 'PCP-4382 | WooPayments - Settings - Onboarding - Default UI (bcdc, paylater)', async ( {

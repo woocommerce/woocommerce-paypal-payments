@@ -148,6 +148,22 @@ setup( 'Setup WooCommerce API keys', async ( { wooCommerceUtils } ) => {
 	}
 } );
 
+setup(
+	'Setup WC Subscriptions plugin',
+	async ( { requestUtils, plugins } ) => {
+		if (
+			! ( await requestUtils.isPluginInstalled(
+				subscriptionsPlugin.slug
+			) )
+		) {
+			await plugins.installPluginFromFile(
+				subscriptionsPlugin.zipFilePath
+			);
+		}
+		await requestUtils.deactivatePlugin( subscriptionsPlugin.slug );
+	}
+);
+
 
 setup( 'Setup WooCommerce email settings', async ( { wooCommerceApi } ) => {
 	const disabled = { enabled: 'no' };

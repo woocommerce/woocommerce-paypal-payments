@@ -24,7 +24,7 @@ for ( const testData of badgeTestsData ) {
 
 	test.describe( 'Subtests', () => {
 		for ( const currency of currencies ) {
-			test.fixme( `(${ testKey }) Settings - ${ country } - ${ currency } - Onboarding - Badge values`, async ( {
+			test( `(${ testKey }) Settings - ${ country } - ${ currency } - Onboarding - Badge values`, async ( {
 				wooCommerceApi,
 				pcpOnboarding,
 			}, testInfo ) => {
@@ -77,7 +77,7 @@ for ( const testData of badgeTestsData ) {
 		} );
 	} );
 
-	test.fixme( `${ testKey } | Settings - ${ country } - Onboarding - Badge values`, async () => {
+	test( `${ testKey } | Settings - ${ country } - Onboarding - Badge values`, async () => {
 		getTestResultsFromFile( testKey, TEST_RESULTS_FILE );
 	} );
 }

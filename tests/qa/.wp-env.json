@@ -2,7 +2,6 @@
     "phpVersion": "8.0",
     "plugins": [
         "https://downloads.wordpress.org/plugin/wp-debugging.2.12.2.zip",
-        "https://github.com/woocommerce/woocommerce-paypal-payments/raw/refs/heads/qa/tests/qa/resources/files/woocommerce-subscriptions.zip",
         "./resources/e2e-snippets"
     ],
     "mappings": {

@@ -87,6 +87,8 @@ export default defineConfig< BaseExtend >( {
 			args: [ '--disable-web-security' ],
 		},
 
+		viewport: { width: 1024, height: 768 },
+
 		// Used for Kinsta, to clear cache
 		// sshConfig: {
 		// 	login: process.env.SSH_LOGIN,

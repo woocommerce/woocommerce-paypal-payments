@@ -53,11 +53,11 @@ export const learnMoreLinksByCountry = {
 		links: [
 			{
 				url: 'https://www.paypal.com/uk/business/accept-payments/checkout',
-				title: 'PayPal Checkout | Custom Online Checkout | PayPal UK',
+				title: 'PayPal Checkout | Online Checkout Solutions | PayPal UK',
 			},
 			{
 				url: 'https://www.paypal.com/uk/business/accept-payments/checkout/installments',
-				title: 'Instalment Payments | Offer Pay in 3 | PayPal UK',
+				title: 'Accept Instalment Payments | Pay in 3 for Business | PayPal UK',
 			},
 			{
 				url: 'https://www.paypal.com/uk/business/paypal-business-fees',
@@ -71,11 +71,11 @@ export const learnMoreLinksByCountry = {
 		links: [
 			{
 				url: 'https://www.paypal.com/fr/business/accept-payments/checkout',
-				title: 'Checkout | Paiement en ligne personnalisé | PayPal FR',
+				title: 'PayPal Checkout | Solutions de commande en ligne | PayPal FR',
 			},
 			{
 				url: 'https://www.paypal.com/fr/business/accept-payments/checkout/installments',
-				title: 'Paiement en 4X PayPal | Offer 4X PayPal | PayPal FR',
+				title: 'Acceptez les Paiements Échelonnés | Paiement en 4X pour Entreprises | PayPal FR | PayPal FR',
 			},
 			{
 				url: 'https://www.paypal.com/fr/business/paypal-business-fees',
@@ -125,11 +125,11 @@ export const learnMoreLinksByCountry = {
 		links: [
 			{
 				url: 'https://www.paypal.com/de/business/accept-payments/checkout',
-				title: 'PayPal Checkout | Benutzerdefinierter Online-Checkout | PayPal DE',
+				title: 'PayPal Checkout | Online Checkout Lösung | PayPal DE',
 			},
 			{
 				url: 'https://www.paypal.com/de/business/accept-payments/checkout/installments',
-				title: 'Ratenzahlung | Angebot später bezahlen | PayPal DE',
+				title: 'Ratenzahlung | Später Bezahlen | PayPal DE',
 			},
 			{
 				url: 'https://www.paypal.com/de/business/paypal-business-fees',

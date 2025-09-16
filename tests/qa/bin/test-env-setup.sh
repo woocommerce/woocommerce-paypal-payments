@@ -6,8 +6,8 @@ wp-env run tests-cli wp theme activate storefront
 echo -e 'Install WooCommerce \n'
 wp-env run tests-cli -- wp plugin install woocommerce --activate
 
-echo -e 'Activate WooCommerce Subscriptions \n'
-wp-env run tests-cli -- wp plugin activate woocommerce-subscriptions
+echo -e 'Install WooCommerce Payments \n'
+wp-env run tests-cli -- wp plugin install woocommerce-payments
 
 echo -e 'Update URL structure \n'
 wp-env run tests-cli -- wp rewrite structure '/%postname%/' --hard
