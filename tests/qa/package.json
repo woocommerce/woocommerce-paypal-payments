@@ -33,11 +33,11 @@
         "@wordpress/scripts": "^25.0.0"
     },
     "scripts": {
-        "setup:all": "npm run setup:plugin && npm run setup:tests && npm run setup:env",
+        "setup:all": "npm run setup:tests && npm run setup:plugin && npm run setup:env",
         "setup:tests": "npm install && npx playwright install",
         "setup:env": "wp-env clean all && wp-env start --update",
         "setup:reset": "wp-env stop && wp-env destroy",
-        "setup:plugin": "wp dist-archive ../.. ./resources/files/woocommerce-paypal-payments.zip --plugin-dirname=woocommerce-paypal-payments",
+        "setup:plugin": "cd ../.. && npm run build && mv woocommerce-paypal-payments.zip tests/qa/resources/files",
         "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
         "wp-env": "wp-env",
         "lint:md": "wp-scripts lint-md-docs ./**/*.md README.md",
@@ -45,7 +45,6 @@
         "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
         "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
         "tests:all": "npx playwright test --workers=1 --project \"all\"",
-        "tests:critical": "npx playwright test --workers=1 --project \"@Critical\"",
         "setup:store:default": "npx playwright test woocommerce.setup",
         "setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
         "setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
