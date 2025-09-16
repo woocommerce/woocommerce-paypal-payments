@@ -33,7 +33,8 @@
         "@wordpress/scripts": "^25.0.0"
     },
     "scripts": {
-        "setup:all": "npm run setup:tests && npm run setup:plugin && npm run setup:env",
+
+        "setup:all": "npm install && npm run setup:plugin && npm run setup:env && npm run setup:tests",
         "setup:tests": "npm install && npx playwright install",
         "setup:env": " wp-env start --update",
         "setup:reset": "wp-env stop && wp-env destroy",
