@@ -95,12 +95,25 @@ class CapturePayPalPaymentEndpoint {
             );
         }
 
-        // Verify the order is in a state that can be captured
-        if ( ! in_array( $order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+        // Do not process refunded orders
+        if ( 0 < $order->get_total_refunded() ) {
             return new WP_Error(
-                'woocommerce_rest_order_invalid_status',
-                __( 'Order cannot be captured in its current status.', 'woocommerce-paypal-payments' ),
+                'woocommerce_rest_refunded_order_uncapturable',
+                __( 'Payment cannot be captured for partially or fully refunded orders.', 'woocommerce-paypal-payments' ),
                 array( 'status' => 400 )
+            );
+        }
+
+        // Check for already processed orders (exclude list approach like WooPayments/Stripe)
+        $uncapturable_statuses = array( 'completed', 'processing', 'cancelled', 'refunded' );
+        if ( in_array( $order->get_status(), $uncapturable_statuses, true ) ) {
+            return new WP_Error(
+                'woocommerce_rest_order_uncapturable',
+                sprintf(
+                    __( 'Payment cannot be captured for orders with status: %s', 'woocommerce-paypal-payments' ),
+                    $order->get_status()
+                ),
+                array( 'status' => 409 )
             );
         }
 
