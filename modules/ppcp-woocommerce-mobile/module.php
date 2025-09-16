@@ -23,12 +23,6 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule, Executa
 
     use ModuleClassNameIdTrait;
 
-    /**
-     * Constructor for debugging
-     */
-    public function __construct() {
-        error_log('PayPal Mobile Module: constructor called');
-    }
 
     /**
      * {@inheritdoc}
@@ -49,25 +43,10 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule, Executa
      */
     public function run( ContainerInterface $container ): bool {
 
-        // Debug: Log that mobile module is running
-        error_log('PayPal Mobile Module: run() method called');
-
         // Register the REST API endpoints for mobile integration
         add_action(
             'rest_api_init',
             static function () use ( $container ) {
-                error_log('PayPal Mobile Module: rest_api_init action fired');
-                // Test endpoint first
-                register_rest_route(
-                    'wc/v3',
-                    '/paypal/test',
-                    array(
-                        'methods' => 'GET',
-                        'callback' => function() { return array('status' => 'mobile module loaded'); },
-                        'permission_callback' => '__return_true',
-                    )
-                );
-
                 // Payment capture endpoint
                 $capture_endpoint = $container->get( 'woocommerce-mobile.capture-paypal-payment-endpoint' );
                 $capture_endpoint->register_routes();
