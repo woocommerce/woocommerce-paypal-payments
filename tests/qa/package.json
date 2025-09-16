@@ -35,7 +35,7 @@
     "scripts": {
         "setup:all": "npm run setup:tests && npm run setup:plugin && npm run setup:env",
         "setup:tests": "npm install && npx playwright install",
-        "setup:env": "wp-env clean all && wp-env start --update",
+        "setup:env": " wp-env start --update",
         "setup:reset": "wp-env stop && wp-env destroy",
         "setup:plugin": "cd ../.. && npm run build && mv woocommerce-paypal-payments.zip tests/qa/resources/files",
         "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
