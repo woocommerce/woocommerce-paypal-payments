@@ -8,6 +8,7 @@ import {
 	handleShippingAddressChange,
 } from '../Helper/ShippingHandler.js';
 import { PaymentContext } from '../Helper/CheckoutMethodState';
+import {reusableBlock} from "@wordpress/icons";
 
 class Renderer {
 	constructor(
@@ -129,11 +130,13 @@ class Renderer {
 				style,
 				...contextConfig,
 				onClick: ( data, actions ) => {
+                    let result;
 					if ( this.onSmartButtonClick ) {
-						this.onSmartButtonClick( data, actions );
+						result = this.onSmartButtonClick( data, actions );
 					}
 
 					venmoButtonClicked = data.fundingSource === 'venmo';
+                    return result;
 				},
 				onInit: ( data, actions ) => {
 					if ( this.onSmartButtonsInit ) {
