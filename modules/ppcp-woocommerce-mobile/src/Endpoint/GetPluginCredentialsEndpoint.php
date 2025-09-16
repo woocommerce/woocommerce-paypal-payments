@@ -100,8 +100,8 @@ class GetPluginCredentialsEndpoint {
      * @return bool|WP_Error
      */
     public function check_permissions( WP_REST_Request $request ) {
-        // Use the same permission check as WooCommerce orders endpoint
-        if ( ! wc_rest_check_manager_permissions( 'orders', 'edit' ) ) {
+        // Use the same permission check as WooCommerce orders endpoint  
+        if ( ! wc_rest_check_manager_permissions( 'orders', 'read' ) ) {
             return new WP_Error(
                 'woocommerce_rest_cannot_view',
                 __( 'Sorry, you are not allowed to access PayPal credentials.', 'woocommerce-paypal-payments' ),

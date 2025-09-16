@@ -231,8 +231,8 @@ class CapturePayPalPaymentEndpoint {
      * @return bool|WP_Error
      */
     public function check_permissions( WP_REST_Request $request ) {
-        // Use the same permission check as WooCommerce orders endpoint
-        if ( ! wc_rest_check_manager_permissions( 'orders', 'edit' ) ) {
+        // Check if user has general WooCommerce management permissions
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
             return new WP_Error(
                 'woocommerce_rest_cannot_edit',
                 __( 'Sorry, you are not allowed to capture payments.', 'woocommerce-paypal-payments' ),
