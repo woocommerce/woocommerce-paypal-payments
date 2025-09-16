@@ -132,15 +132,49 @@ class CapturePayPalPaymentEndpoint {
             // Mark the order as paid
             $this->complete_order_payment( $order, $payment_intent_id );
 
-            // Return the payment intent data
+            // Return the payment intent data with proper charges and metadata
             $payment_intent_data = array(
-                'id'             => $payment_intent_id,
-                'status'         => 'succeeded',
-                'created'        => time(),
-                'amount'         => $order->get_total() * 100, // Convert to cents
-                'currency'       => $order->get_currency(),
-                'payment_method' => 'paypal_zettle',
-                'charges'        => array(),
+                'id'       => $payment_intent_id,
+                'status'   => 'succeeded',
+                'created'  => time(),
+                'amount'   => $order->get_total() * 100, // Convert to cents
+                'currency' => $order->get_currency(),
+                'metadata' => array(
+                    'store'         => get_bloginfo( 'name' ),
+                    'customer_name' => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+                    'customer_email'=> $order->get_billing_email(),
+                    'site_url'      => get_site_url(),
+                    'order_id'      => (string) $order->get_id(),
+                    'order_key'     => $order->get_order_key(),
+                    'payment_type'  => 'single',
+                    'ipp_channel'   => 'mobile_store_management',
+                ),
+                'charges'  => array(
+                    array(
+                        'id'             => $payment_intent_id . '_ch',
+                        'amount'         => $order->get_total() * 100,
+                        'currency'       => $order->get_currency(),
+                        'payment_method' => array(
+                            'type'                => 'card_present',
+                            'card_present_details' => array(
+                                'last4'            => '****', // PayPal card readers don't expose this
+                                'brand'            => 'unknown',
+                                'funding'          => 'unknown',
+                                'exp_month'        => 0,
+                                'exp_year'         => 0,
+                                'fingerprint'      => '',
+                                'generated_card'   => '',
+                                'receipt_details'  => array(
+                                    'application_cryptogram'       => '',
+                                    'application_preferred_name'   => 'PayPal Card Reader',
+                                    'authorization_response_code'  => '00',
+                                    'transaction_status_information' => '',
+                                    'dedicated_file_name'          => '',
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
             );
 
             return new WP_REST_Response( $payment_intent_data, 200 );
@@ -166,7 +200,7 @@ class CapturePayPalPaymentEndpoint {
             // Use PayPal API to verify the payment exists and matches the order
             // This would typically call PayPal's Orders API: GET /v2/checkout/orders/{id}
             // For now, we'll do basic validation and return true
-            
+
             // Basic validation: payment_intent_id should be a valid format
             if ( empty( $payment_intent_id ) || strlen( $payment_intent_id ) < 10 ) {
                 return false;
@@ -180,8 +214,8 @@ class CapturePayPalPaymentEndpoint {
             // 5. Return true only if all checks pass
 
             // For POC, we'll log the verification attempt
-            error_log( sprintf( 
-                'PayPal Mobile: Verifying payment %s for order %d (amount: %s %s)', 
+            error_log( sprintf(
+                'PayPal Mobile: Verifying payment %s for order %d (amount: %s %s)',
                 $payment_intent_id,
                 $order->get_id(),
                 $order->get_total(),
@@ -206,6 +240,8 @@ class CapturePayPalPaymentEndpoint {
         // Set transaction ID
         $order->set_transaction_id( $payment_intent_id );
 
+		$order->update_status( 'pending' )
+
         // Add order note
         $order->add_order_note(
             sprintf(
@@ -225,6 +261,9 @@ class CapturePayPalPaymentEndpoint {
 
         // Mark payment complete - this triggers order status change to 'processing'
         $order->payment_complete( $payment_intent_id );
+        // This shouldn't be needed, but without it we get stuck in 'processing'.
+		// Really we should use a hook to correctly handle this in 'payment_complete'
+		$order->update_status( 'completed' );
 
         // Save the order
         $order->save();
