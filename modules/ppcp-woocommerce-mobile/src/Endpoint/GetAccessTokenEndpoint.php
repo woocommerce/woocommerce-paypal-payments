@@ -69,10 +69,29 @@ class GetAccessTokenEndpoint {
      */
     public function get_access_token( WP_REST_Request $request ) {
         try {
+            error_log( 'Zettle Mobile: GetAccessTokenEndpoint called' );
+            
+            // Check current token status for debugging
+            $stored_token = get_option( 'zettle_access_token' );
+            $stored_refresh = get_option( 'zettle_refresh_token' );
+            $token_expires = get_option( 'zettle_token_expires', 0 );
+            
+            // Ensure token_expires is an integer
+            $token_expires_int = is_numeric( $token_expires ) ? intval( $token_expires ) : 0;
+            
+            error_log( sprintf( 
+                'Zettle Mobile: Token status - has_access: %s, has_refresh: %s, expires: %s (current: %s)',
+                $stored_token ? 'yes' : 'no',
+                $stored_refresh ? 'yes' : 'no',
+                $token_expires_int ? gmdate( 'Y-m-d H:i:s', $token_expires_int ) : 'not set',
+                gmdate( 'Y-m-d H:i:s', time() )
+            ) );
+            
             // Get a valid Zettle access token (refresh if necessary)
             $access_token = $this->zettle_client->get_valid_access_token();
             
             if ( is_wp_error( $access_token ) ) {
+                error_log( 'Zettle Mobile: Token fetch error - ' . $access_token->get_error_message() );
                 return new WP_Error(
                     'zettle_auth_failed',
                     __( 'Failed to obtain Zettle access token. Site may not be properly authenticated with Zettle.', 'woocommerce-paypal-payments' ),

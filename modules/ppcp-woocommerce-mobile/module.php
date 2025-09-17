@@ -64,6 +64,12 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule, Executa
                 $zettle_oauth_endpoint->register_routes();
             }
         );
+        
+        // Initialize admin settings page
+        if ( is_admin() ) {
+            $settings_page = $container->get( 'woocommerce-mobile.zettle-settings-page' );
+            $settings_page->init();
+        }
 
         return true;
     }

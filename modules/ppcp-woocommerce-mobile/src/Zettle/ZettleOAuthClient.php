@@ -34,18 +34,26 @@ class ZettleOAuthClient {
      *
      * @param string $client_id The Zettle client ID.
      */
-    public function __construct( string $client_id ) {
+    public function __construct( string $client_id = '' ) {
+        // If client_id is empty, try to get it from options
+        if ( empty( $client_id ) ) {
+            $client_id = get_option( 'zettle_oauth_client_id', '' );
+        }
         $this->client_id = $client_id;
     }
 
     /**
      * Get the authorization URL for Zettle OAuth flow.
      *
-     * @param string $redirect_uri The redirect URI after authorization.
      * @param array  $scopes The requested OAuth scopes.
-     * @return array Authorization URL and PKCE code verifier.
+     * @return array|WP_Error Authorization URL and PKCE code verifier or error.
      */
-    public function get_authorization_url( string $redirect_uri, array $scopes = [] ): array {
+    public function get_authorization_url( array $scopes = [] ) {
+        
+        // Check if client ID is configured
+        if ( empty( $this->client_id ) ) {
+            return new \WP_Error( 'zettle_no_client_id', 'Zettle Client ID is not configured. Please set it in the Zettle settings.' );
+        }
         
         // Generate PKCE parameters
         $code_verifier = $this->generate_code_verifier();
@@ -56,6 +64,11 @@ class ZettleOAuthClient {
             $scopes = [ 'READ:PAYMENT', 'READ:USERINFO', 'WRITE:PAYMENT', 'WRITE:REFUND2', 'WRITE:USERINFO' ];
         }
         
+        // Generate redirect URI
+        $redirect_uri = admin_url( 'admin.php?page=wc-zettle-settings' );
+        
+        $state = wp_generate_uuid4(); // CSRF protection
+        
         $params = [
             'response_type' => 'code',
             'client_id' => $this->client_id,
@@ -63,18 +76,46 @@ class ZettleOAuthClient {
             'scope' => implode( ' ', $scopes ),
             'code_challenge' => $code_challenge,
             'code_challenge_method' => 'S256',
-            'state' => wp_generate_uuid4(), // CSRF protection
+            'state' => $state,
         ];
         
         $auth_url = self::OAUTH_BASE_URL . '/authorize?' . http_build_query( $params );
         
+        // Store code verifier for later use
+        set_transient( 'zettle_code_verifier_' . $state, $code_verifier, 600 ); // 10 minutes
+        
         return [
-            'authorization_url' => $auth_url,
+            'url' => $auth_url,
             'code_verifier' => $code_verifier,
-            'state' => $params['state'],
+            'state' => $state,
+            'redirect_uri' => $redirect_uri,
         ];
     }
 
+    /**
+     * Exchange authorization code for access token (simplified for admin).
+     *
+     * @param string $authorization_code The authorization code from OAuth callback.
+     * @param string $state The state parameter to retrieve code_verifier.
+     * @return array|WP_Error Token response or error.
+     */
+    public function exchange_authorization_code( string $authorization_code, string $state = '' ) {
+        // Retrieve code verifier from transient
+        $code_verifier = '';
+        if ( ! empty( $state ) ) {
+            $code_verifier = get_transient( 'zettle_code_verifier_' . $state );
+            if ( ! $code_verifier ) {
+                return new \WP_Error( 'zettle_invalid_state', 'Invalid or expired OAuth state.' );
+            }
+            delete_transient( 'zettle_code_verifier_' . $state );
+        }
+        
+        // Use the same redirect URI
+        $redirect_uri = admin_url( 'admin.php?page=wc-zettle-settings' );
+        
+        return $this->exchange_code_for_token( $authorization_code, $redirect_uri, $code_verifier );
+    }
+    
     /**
      * Exchange authorization code for access token.
      *
@@ -191,6 +232,9 @@ class ZettleOAuthClient {
         $stored_refresh = get_option( 'zettle_refresh_token' );
         $token_expires = get_option( 'zettle_token_expires', 0 );
         
+        // Ensure token_expires is an integer
+        $token_expires = is_numeric( $token_expires ) ? intval( $token_expires ) : 0;
+        
         // Check if current token is still valid (with 5 minute buffer)
         if ( $stored_token && $token_expires > ( time() + 300 ) ) {
             return $stored_token;
@@ -207,7 +251,7 @@ class ZettleOAuthClient {
             error_log( 'Zettle token refresh failed: ' . $refresh_result->get_error_message() );
         }
         
-        return new WP_Error( 'zettle_no_valid_token', 'No valid Zettle access token available. Re-authorization required.' );
+        return new \WP_Error( 'zettle_no_valid_token', 'No valid Zettle access token available. Re-authorization required.' );
     }
 
     /**
