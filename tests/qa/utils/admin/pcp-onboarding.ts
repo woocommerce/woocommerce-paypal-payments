@@ -103,14 +103,12 @@ export class PcpOnboarding extends PcpAdminPage {
 	};
 
 	openAdvancedOptions = async () => {
-		await this.gotoInitialOnboardingPage();
 		if ( ! ( await this.advancedOptionsContent().isVisible() ) ) {
 			await this.seeAdvancedOptionsButton().click();
 		}
 	};
 
 	closeAdvancedOptions = async () => {
-		await this.gotoInitialOnboardingPage();
 		if ( await this.advancedOptionsContent().isVisible() ) {
 			await this.seeAdvancedOptionsButton().click();
 		}

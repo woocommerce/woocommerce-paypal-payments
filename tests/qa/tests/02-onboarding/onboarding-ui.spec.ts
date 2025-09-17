@@ -39,6 +39,7 @@ test( 'PCP-4312 | Settings - Onboarding initial page - See advanced options - De
 	pcpOnboarding,
 }, testInfo ) => {
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.snapshotLocator(
 		pcpOnboarding.onboardingContentContainer(),
@@ -51,6 +52,7 @@ test( 'PCP-4313 | Settings - Onboarding - Enable Sandbox mode - Default UI', asy
 	pcpOnboarding,
 }, testInfo ) => {
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
 	await pcpOnboarding.snapshotLocator(
@@ -64,6 +66,7 @@ test( 'PCP-4314 | Settings - Onboarding - See advanced options - Manually Connec
 	pcpOnboarding,
 }, testInfo ) => {
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( true );
 	await pcpOnboarding.toggleManuallyConnect( true );
@@ -78,6 +81,7 @@ test( 'PCP-4315 | Settings - Onboarding - See advanced options - Sandbox mode NO
 	pcpOnboarding,
 }, testInfo ) => {
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( false );
 	await pcpOnboarding.toggleManuallyConnect( true );
@@ -92,6 +96,7 @@ test( 'PCP-4316 | Settings - Onboarding - See advanced options - Enable/disable 
 	pcpOnboarding,
 }, testInfo ) => {
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.openAdvancedOptions();
 	await pcpOnboarding.toggleSandboxMode( false );
 	await pcpOnboarding.toggleManuallyConnect( false );
@@ -107,6 +112,7 @@ test( 'PCP-4318 | Settings - US - Onboarding - Connect with business account, al
 	pcpOnboarding,
 }, testInfo ) => {
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.activatePayPalPaymentsButton().click();
 	await pcpOnboarding.snapshotLocator(
 		pcpOnboarding.onboardingContentContainer(),
@@ -203,6 +209,7 @@ test.describe( () => {
 		pcpOnboarding,
 	}, testInfo ) => {
 		await pcpOnboarding.visit();
+		await pcpOnboarding.gotoInitialOnboardingPage();
 		await pcpOnboarding.snapshotLocator(
 			pcpOnboarding.onboardingContentContainer(),
 			`${ testInfo.title } - Initial Page`,
@@ -249,5 +256,6 @@ test( 'PCP-4403 | Settings - Zimbabwe - Onboarding  - Country not eligible for P
 		woocommerce_currency: 'USD',
 	} );
 	await pcpOnboarding.visit();
+	await pcpOnboarding.gotoInitialOnboardingPage();
 	await pcpOnboarding.snapshotContent( testInfo.title, 3000 );
 } );
