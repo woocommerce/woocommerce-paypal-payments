@@ -90,6 +90,7 @@ for ( const testData of savePaymentMethodData ) {
 
 const deletePaymentMethodData = [
 	{
+		// Fail: Deleting Payment Token in WC does not delete it on PayPal bug https://inpsyde.atlassian.net/browse/PCP-4782
 		// https://inpsyde.atlassian.net/browse/PCP-1732
 		testKey: 'PCP-1732',
 		payment: payPal,

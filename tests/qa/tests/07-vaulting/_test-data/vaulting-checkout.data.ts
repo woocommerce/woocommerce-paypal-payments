@@ -75,7 +75,7 @@ const vaultedPaymentMethodData: ShopOrder[] = [
 		customer,
 	},
 	{
-		// FAIL: payment is not accepted. Errors in console.
+		// FAIL: payment is not accepted. Errors in console. https://inpsyde.atlassian.net/browse/PCP-5059
 		// https://inpsyde.atlassian.net/browse/PCP-3235
 		title: 'PCP-3235 | Vaulting - Transaction - Checkout - ACDC - Pay with saved card',
 		...orders.default,

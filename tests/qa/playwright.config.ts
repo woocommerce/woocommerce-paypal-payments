@@ -66,6 +66,9 @@ export default defineConfig< BaseExtend >( {
 
 		ignoreHTTPSErrors: process.env.IGNORE_HTTPS_ERRORS === 'true',
 
+		/**
+		 * For envs with Basic Auth
+		 */
 		httpCredentials: {
 			username: process.env.WP_BASIC_AUTH_USER,
 			password: process.env.WP_BASIC_AUTH_PASS,
@@ -87,7 +90,9 @@ export default defineConfig< BaseExtend >( {
 			args: [ '--disable-web-security' ],
 		},
 
-		// Used for Kinsta, to clear cache
+		/**
+		 * For Kinsta, to clear cache
+		 */
 		// sshConfig: {
 		// 	login: process.env.SSH_LOGIN,
 		// 	host: process.env.SSH_HOST,
