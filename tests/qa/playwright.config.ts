@@ -66,6 +66,9 @@ export default defineConfig< BaseExtend >( {
 
 		ignoreHTTPSErrors: process.env.IGNORE_HTTPS_ERRORS === 'true',
 
+		/**
+		 * For envs with Basic Auth
+		 */
 		httpCredentials: {
 			username: process.env.WP_BASIC_AUTH_USER,
 			password: process.env.WP_BASIC_AUTH_PASS,
