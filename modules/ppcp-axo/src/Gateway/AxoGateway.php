@@ -207,8 +207,10 @@ class AxoGateway extends WC_Payment_Gateway {
 			$this->update_option( 'enabled', $is_axo_enabled ? 'yes' : 'no' );
 		}
 
+		$description = $this->get_option( 'description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ) );
+
 		$this->title       = apply_filters( 'woocommerce_paypal_payments_axo_gateway_title', $this->dcc_configuration->gateway_title( $this->get_option( 'title', $this->method_title ) ), $this );
-		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', __( 'Enter your email address above to continue.', 'woocommerce-paypal-payments' ), $this );
+		$this->description = apply_filters( 'woocommerce_paypal_payments_axo_gateway_description', $description, $this );
 
 		$this->init_form_fields();
 		$this->init_settings();

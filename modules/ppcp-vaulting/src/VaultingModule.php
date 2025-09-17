@@ -13,7 +13,6 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Payment_Token;
 use WC_Payment_Tokens;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -33,7 +32,6 @@ use WP_User_Query;
  */
 class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-	use ContextTrait;
 
 	/**
 	 * Session Handler
@@ -124,7 +122,7 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 			 * @psalm-suppress MissingClosureParamType
 			 * @psalm-suppress MissingClosureReturnType
 			 */
-			function ( $tokens, $customer_id, $gateway_id ) {
+			function ( $tokens ) use ( $container ) {
 				if ( ! is_array( $tokens ) ) {
 					return $tokens;
 				}
@@ -143,16 +141,15 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 					}
 				}
 
-				if ( is_checkout() && ! $is_post && $this->is_paypal_continuation() ) {
+				$context = $container->get( 'button.helper.context' );
+				if ( is_checkout() && ! $is_post && $context->is_paypal_continuation() ) {
 					foreach ( $tokens as $index => $token ) {
 						unset( $tokens[ $index ] );
 					}
 				}
 
 				return $tokens;
-			},
-			10,
-			3
+			}
 		);
 
 		add_filter(

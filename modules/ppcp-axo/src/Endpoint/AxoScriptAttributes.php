@@ -7,15 +7,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 
 /**
  * Handles the request for the PayPal Axo script attributes.
  */
 class AxoScriptAttributes implements EndpointInterface {
-	use ContextTrait;
 
 	const ENDPOINT = 'ppc-axo-script-attributes';
+	protected Context $context;
 
 	private RequestData $request_data;
 	private LoggerInterface $logger;
@@ -26,12 +26,14 @@ class AxoScriptAttributes implements EndpointInterface {
 		RequestData $request_data,
 		LoggerInterface $logger,
 		SdkClientToken $sdk_client_token,
-		bool $axo_eligible
+		bool $axo_eligible,
+		Context $context
 	) {
 		$this->request_data     = $request_data;
 		$this->logger           = $logger;
 		$this->sdk_client_token = $sdk_client_token;
 		$this->axo_eligible     = $axo_eligible;
+		$this->context          = $context;
 	}
 
 	public static function nonce(): string {
@@ -44,7 +46,7 @@ class AxoScriptAttributes implements EndpointInterface {
 		if (
 			! $this->axo_eligible
 			|| is_user_logged_in()
-			|| $this->is_paypal_continuation()
+			|| $this->context->is_paypal_continuation()
 		) {
 			wp_send_json_error( 'Failed to load axo script attributes.' );
 			return false;

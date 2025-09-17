@@ -42,7 +42,7 @@ const defaultPersistent = Object.freeze( {
 	// Custom payment method properties.
 	paypalShowLogo: false,
 	threeDSecure: 'no-3d-secure',
-	fastlaneCardholderName: false,
+	cardholderName: false,
 	fastlaneDisplayWatermark: false,
 	__meta: false,
 } );

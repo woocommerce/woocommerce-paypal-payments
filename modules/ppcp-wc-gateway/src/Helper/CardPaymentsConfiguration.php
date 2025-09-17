@@ -240,8 +240,10 @@ class CardPaymentsConfiguration {
 			} elseif ( $this->settings->has( 'axo_name_on_card' ) ) {
 				// Legacy. The AXO gateway setting was replaced by the DCC setting.
 				// Remove this condition with the #legacy-ui.
-				$show_on_card_value = $this->settings->get( 'axo_name_on_card' );
+				$show_on_card_value = $this->settings->get( 'axo_name_on_card' ) ? 'yes' : 'no';
+
 			}
+
 			if ( in_array( $show_on_card_value, $show_on_card_options, true ) ) {
 				$this->show_name_on_card = $show_on_card_value;
 			}

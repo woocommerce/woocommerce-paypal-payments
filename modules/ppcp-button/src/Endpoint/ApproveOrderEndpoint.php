@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -31,9 +31,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class ApproveOrderEndpoint implements EndpointInterface {
 
-	use ContextTrait;
-
 	const ENDPOINT = 'ppc-approve-order';
+
+	/**
+	 * A helper providing information on the current page, is this a continuation mode, etc.
+	 *
+	 * @var Context $context
+	 */
+	protected Context $context;
 
 	/**
 	 * The request data helper.
@@ -138,7 +143,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		bool $final_review_enabled,
 		PayPalGateway $gateway,
 		WooCommerceOrderCreator $wc_order_creator,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		Context $context
 	) {
 
 		$this->request_data         = $request_data;
@@ -152,6 +158,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		$this->gateway              = $gateway;
 		$this->wc_order_creator     = $wc_order_creator;
 		$this->logger               = $logger;
+		$this->context              = $context;
 	}
 
 	/**
@@ -235,7 +242,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			$should_create_wc_order = $data['should_create_wc_order'] ?? false;
-			if ( ! $this->final_review_enabled && ! $this->is_checkout() && $should_create_wc_order ) {
+			if ( ! $this->final_review_enabled && ! $this->context->is_checkout() && $should_create_wc_order ) {
 				$wc_order = $this->wc_order_creator->create_from_paypal_order( $order, WC()->cart );
 				$this->gateway->process_payment( $wc_order->get_id() );
 				$order_received_url = $wc_order->get_checkout_order_received_url();

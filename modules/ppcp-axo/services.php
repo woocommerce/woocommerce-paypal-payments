@@ -301,7 +301,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.sdk-client-token' ),
-			$container->get( 'axo.eligible' )
+			$container->get( 'axo.eligible' ),
+			$container->get( 'button.helper.context' ),
 		);
 	},
 

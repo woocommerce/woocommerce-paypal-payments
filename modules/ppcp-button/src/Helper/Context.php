@@ -1,23 +1,34 @@
 <?php
-/**
- * Helper trait for context.
- *
- * @package WooCommerce\PayPalCommerce\Button\Helper
- */
-
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionStatus;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
-trait ContextTrait {
+class Context {
+
+	protected SessionHandler $session_handler;
+	protected SubscriptionStatus $subscription_status;
+
+	public function __construct(
+		SessionHandler $session_handler,
+		SubscriptionStatus $subscription_status
+	) {
+
+		$this->session_handler     = $session_handler;
+		$this->subscription_status = $subscription_status;
+	}
+
 	/**
 	 * Initializes context preconditions like is_cart() and is_checkout().
 	 *
 	 * @return void
 	 */
-	protected function init_context(): void {
+	public function init_context(): void {
 		if ( ! apply_filters( 'woocommerce_paypal_payments_block_classic_compat', true ) ) {
 			return;
 		}
@@ -81,7 +92,7 @@ trait ContextTrait {
 	/**
 	 * Checks WC is_checkout() + WC checkout ajax requests.
 	 */
-	private function is_checkout(): bool {
+	public function is_checkout(): bool {
 		if ( is_checkout() ) {
 			return true;
 		}
@@ -155,7 +166,7 @@ trait ContextTrait {
 	 *
 	 * @return string
 	 */
-	protected function context(): string {
+	public function context(): string {
 		// Default context.
 		$context = 'mini-cart';
 
@@ -216,7 +227,7 @@ trait ContextTrait {
 	 *
 	 * @return string
 	 */
-	protected function location(): string {
+	public function location(): string {
 		$context = $this->context();
 		if ( $context !== 'mini-cart' ) {
 			return $context;
@@ -238,17 +249,7 @@ trait ContextTrait {
 	 *
 	 * @return bool
 	 */
-	private function is_paypal_continuation(): bool {
-		/**
-		 * Cannot guarantee that initialized in all places where this trait is used,
-		 * the Psalm checks seem to work weird and sometimes ignore missing property.
-		 *
-		 * @psalm-suppress RedundantPropertyInitializationCheck
-		 */
-		if ( ! isset( $this->session_handler ) ) {
-			return false;
-		}
-
+	public function is_paypal_continuation(): bool {
 		/**
 		 * Property is already defined in trait consumers.
 		 *
@@ -259,8 +260,24 @@ trait ContextTrait {
 			return false;
 		}
 
+		/** @var string $subscription_id */
+		$subscription_id = wc()->session->get( 'ppcp_subscription_id' );
+
 		if ( ! $order->status()->is( OrderStatus::APPROVED )
 			&& ! $order->status()->is( OrderStatus::COMPLETED )
+			&& ! $subscription_id
+		) {
+			return false;
+		}
+
+		try {
+			$subscription_status = $this->subscription_status->get_status( $subscription_id );
+		} catch ( RuntimeException | PayPalApiException $exception ) {
+			$subscription_status = '';
+		}
+
+		if ( $subscription_id &&
+			'ACTIVE' !== $subscription_status
 		) {
 			return false;
 		}
@@ -282,7 +299,7 @@ trait ContextTrait {
 	 *
 	 * @return bool
 	 */
-	private function is_add_payment_method_page(): bool {
+	public function is_add_payment_method_page(): bool {
 		/**
 		 * Needed for WordPress `query_vars`.
 		 *
@@ -300,7 +317,7 @@ trait ContextTrait {
 	 *
 	 * @return bool
 	 */
-	private function is_subscription_change_payment_method_page(): bool {
+	public function is_subscription_change_payment_method_page(): bool {
 		// phpcs:disable WordPress.Security.NonceVerification
 		if ( isset( $_GET['change_payment_method'] ) ) {
 			return wcs_is_subscription( wc_clean( wp_unslash( $_GET['change_payment_method'] ) ) );
@@ -312,7 +329,7 @@ trait ContextTrait {
 	/**
 	 * Checks if it is the block editor page.
 	 */
-	protected function is_block_editor(): bool {
+	public function is_block_editor(): bool {
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return false;
 		}
@@ -325,7 +342,7 @@ trait ContextTrait {
 	 *
 	 * @return bool
 	 */
-	protected function is_wc_settings_payments_tab(): bool {
+	public function is_wc_settings_payments_tab(): bool {
 		// phpcs:disable WordPress.Security.NonceVerification
 		if ( ! is_admin() || isset( $_GET['section'] ) ) {
 			return false;
