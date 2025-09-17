@@ -27,17 +27,20 @@ jobs:
         with:
           php-version: 8.1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
+      - name: Configure npm for GitHub Packages
+        working-directory: ./tests/qa
+        run: |
+          # Create clean .npmrc
+          echo "@inpsyde:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_SYDE }}" >> .npmrc
 
-      - name: Move to QA folder and install dependencies
-        working-directory: ./qa/tests
+      - name: Install dependencies
+        working-directory: ./tests/qa
         run: npm run setup:all
 
       - name: Install WP release candidate (optional)
         if: github.event.inputs.wp-rc-version != ''
+        working-directory: ./tests/qa
         env:
           INPUT_WP_RC_VERSION: ${{ github.event.inputs.wp-rc-version }}
         run: |
@@ -46,6 +49,7 @@ jobs:
 
       - name: Install WC release candidate (optional)
         if: github.event.inputs.wc-rc-version != ''
+        working-directory: ./tests/qa
         env:
           INPUT_WC_RC_VERSION: ${{ github.event.inputs.wc-rc-version }}
         run: |
@@ -53,4 +57,19 @@ jobs:
           npm run -- wp-env run tests-cli -- wp wc update
 
       - name: Run E2E tests
-        run: npm run tests:all
+        working-directory: ./tests/qa
+        env:
+          WP_BASE_URL: 'http://localhost:8889'
+          WP_USERNAME: 'admin'
+          WP_PASSWORD: 'password'
+          WP_BASIC_AUTH_USER: 'admin'
+          WP_BASIC_AUTH_PASS: 'password'
+          STORAGE_STATE_PATH: './storage-states'
+          STORAGE_STATE_PATH_ADMIN: './storage-states/admin.json'
+          MERCHANT_USA_EMAIL: ${{ secrets.MERCHANT_USA_EMAIL }}
+          MERCHANT_USA_CLIENT_ID:  ${{ secrets.MERCHANT_USA_CLIENT_ID }}
+          MERCHANT_USA_CLIENT_SECRET:  ${{ secrets.MERCHANT_USA_CLIENT_SECRET }}
+          MERCHANT_USA_ACCOUNT_ID: ${{ secrets.MERCHANT_USA_ACCOUNT_ID }}
+        run: |
+          cp .env.example .env
+          npm run tests:all
