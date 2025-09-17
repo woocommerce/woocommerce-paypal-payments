@@ -8,7 +8,11 @@ const commands = [
     },
     {
         description: 'Install WooCommerce',
-        command: 'wp-env run tests-cli -- wp plugin install woocommerce --activate'
+        command: 'wp-env run tests-cli -- wp plugin install woocommerce'
+    },
+    {
+        description: 'Activate WooCommerce',
+        command: 'wp-env run tests-cli -- wp plugin activate woocommerce'
     },
     {
         description: 'Install WooCommerce Payments',
@@ -39,8 +43,15 @@ const commands = [
 console.log('Starting test environment setup...\n');
 
 commands.forEach((item, index) => {
-    console.log(`${index + 1}. ${item.description}`);
-    execSync(item.command, { stdio: 'inherit' });
+    try {
+        console.log(`${index + 1}. ${item.description}`);
+        execSync(item.command, { stdio: 'inherit' });
+        console.log('✅ Success\n');
+    } catch (error) {
+        console.error(`❌ Failed: ${item.description}`);
+        console.error(`Command: ${item.command}`);
+        console.error(`Error: ${error.message}\n`);
+    }
 });
 
 console.log('🎉 Test environment setup complete!');

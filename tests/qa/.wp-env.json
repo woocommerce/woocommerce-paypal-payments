@@ -8,6 +8,7 @@
         "wp-cli.yml": "./wp-cli.yml"
     },
     "lifecycleScripts": {
-        "afterStart": "node bin/test-env-setup.js"
+        "afterStart": "node bin/test-env-setup.js",
+        "afterClean": "node bin/test-env-clean.js"
     }
 }
