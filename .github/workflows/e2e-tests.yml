@@ -1,0 +1,56 @@
+name: E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      wp-rc-version:
+        description: 'WordPress version for Release Candidate (ex. 6.3-RC3)'
+      wc-rc-version:
+        description: 'WooCommerce version for Release Candidate (ex. 8.0.0-rc.1)'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  E2ETests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    env:
+      FORCE_COLOR: 2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@0f7f1d08e3e32076e51cae65eb0b0c871405b16e
+        with:
+          php-version: 8.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Move to QA folder and install dependencies
+        working-directory: ./qa/tests
+        run: npm run setup:all
+
+      - name: Install WP release candidate (optional)
+        if: github.event.inputs.wp-rc-version != ''
+        env:
+          INPUT_WP_RC_VERSION: ${{ github.event.inputs.wp-rc-version }}
+        run: |
+          npm run -- wp-env run tests-cli -- wp core update --version="${INPUT_WP_RC_VERSION}"
+          npm run -- wp-env run tests-cli -- wp core update-db
+
+      - name: Install WC release candidate (optional)
+        if: github.event.inputs.wc-rc-version != ''
+        env:
+          INPUT_WC_RC_VERSION: ${{ github.event.inputs.wc-rc-version }}
+        run: |
+          npm run -- wp-env run tests-cli -- wp plugin update woocommerce --version="${INPUT_WC_RC_VERSION}"
+          npm run -- wp-env run tests-cli -- wp wc update
+
+      - name: Run E2E tests
+        run: npm run tests:all
