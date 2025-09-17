@@ -13,16 +13,6 @@ const customSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-s
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
 	snapshotPathTemplate: customSnapshotPathTemplate,
-	expect: {
-		timeout: 20 * 1000,
-		toHaveScreenshot: {
-			mode: 'non-strict',  // Allows minor differences
-			threshold: 0.2       // 20% threshold for differences
-		},
-		toMatchSnapshot: {
-			mode: 'non-strict'
-		}
-	},
 	timeout: 2 * 60 * 1000,
 	/* Run tests in files in parallel */
 	fullyParallel: false,
@@ -36,32 +26,32 @@ export default defineConfig< BaseExtend >( {
 	reporter: process.env.CI
 		? [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
-				[
-					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
-					{
-						apiClient: {
-							client_id: process.env.XRAY_CLIENT_ID,
-							client_secret: process.env.XRAY_CLIENT_SECRET,
-						},
-						testExecutionKey: process.env.TEST_EXEC_KEY,
+			// [ 'html', { outputFolder: 'playwright-report' } ],
+			[
+				'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
+				{
+					apiClient: {
+						client_id: process.env.XRAY_CLIENT_ID,
+						client_secret: process.env.XRAY_CLIENT_SECRET,
 					},
-				],
-		  ]
+					testExecutionKey: process.env.TEST_EXEC_KEY,
+				},
+			],
+		]
 		: [
 				[ 'list' ],
 				[ 'html', { outputFolder: 'playwright-report' } ],
-				[
-					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
-					{
-						apiClient: {
-							client_id: process.env.XRAY_CLIENT_ID,
-							client_secret: process.env.XRAY_CLIENT_SECRET,
-						},
-						testExecutionKey: process.env.TEST_EXEC_KEY,
+			[
+				'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
+				{
+					apiClient: {
+						client_id: process.env.XRAY_CLIENT_ID,
+						client_secret: process.env.XRAY_CLIENT_SECRET,
 					},
-				],
-		  ],
+					testExecutionKey: process.env.TEST_EXEC_KEY,
+				},
+			],
+		],
 	/* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
 
 	globalSetup: require.resolve( './global-setup' ),
@@ -112,7 +102,7 @@ export default defineConfig< BaseExtend >( {
 		// 	path: process.env.SSH_PATH,
 		// },
 	},
-
+	outputDir: './test-results/report',
 	projects: [
 		{
 			name: 'setup-woocommerce',
