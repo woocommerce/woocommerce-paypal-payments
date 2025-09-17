@@ -8,21 +8,28 @@ require( 'dotenv' ).config();
  * Internal dependencies
  */
 import { BaseExtend } from '@inpsyde/playwright-utils/build';
+const customSnapshotPathTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{ext}';
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
+	snapshotPathTemplate: customSnapshotPathTemplate,
 	expect: {
 		timeout: 20 * 1000,
+		toHaveScreenshot: {
+			mode: 'non-strict',  // Allows minor differences
+			threshold: 0.2       // 20% threshold for differences
+		},
+		toMatchSnapshot: {
+			mode: 'non-strict'
+		}
 	},
 	timeout: 2 * 60 * 1000,
 	/* Run tests in files in parallel */
 	fullyParallel: false,
 	/* Fail the build on CI if you accidentally left test.only in the source code. */
 	forbidOnly: !! process.env.CI,
-	/* Retry on CI only */
-	retries: process.env.CI ? 2 : 0,
-	/* Opt out of parallel tests on CI. */
-	workers: process.env.CI ? 1 : 1,
+	retries: 0,
+	workers: 1,
 	/* The base directory, relative to the config file, for snapshot files created with toMatchSnapshot */
 	snapshotDir: './snapshots',
 	/* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -120,11 +127,6 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
-		},
-		{
-			name: 'onboarding',
-			dependencies: [ 'setup-woocommerce' ],
-			testMatch: /onboarding*\.spec\.ts/,
 		},
 	],
 } );

@@ -45,6 +45,8 @@
         "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
         "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
         "tests:all": "npx playwright test --workers=1 --project \"all\"",
+        "tests:onboarding": "npx playwright test 02-onboarding/",
+        "tests:critical": "npx playwright test --grep=\"@Critical\"",
         "setup:store:default": "npx playwright test woocommerce.setup",
         "setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
         "setup:checkout:classic": "npx playwright test --grep=\"setup:checkout:classic;\"",
