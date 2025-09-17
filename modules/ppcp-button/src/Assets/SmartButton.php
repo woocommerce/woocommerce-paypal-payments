@@ -1469,8 +1469,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
 			'commit'           => in_array( $current_context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
-			'debug'            => defined( 'WP_DEBUG' ) && WP_DEBUG,
 		);
+
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$params['debug'] = true;
+		}
 
 		if (
 			$this->settings->has( 'subscriptions_mode' )
