@@ -39,16 +39,8 @@ const commands = [
 console.log('Starting test environment setup...\n');
 
 commands.forEach((item, index) => {
-    try {
-        console.log(`${index + 1}. ${item.description}`);
-        execSync(item.command, { stdio: 'inherit' });
-        console.log('✅ Success\n');
-    } catch (error) {
-        console.error(`❌ Failed: ${item.description}`);
-        console.error(`Command: ${item.command}`);
-        console.error(`Error: ${error.message}\n`);
-        process.exit(1);
-    }
+    console.log(`${index + 1}. ${item.description}`);
+    execSync(item.command, { stdio: 'inherit' });
 });
 
 console.log('🎉 Test environment setup complete!');

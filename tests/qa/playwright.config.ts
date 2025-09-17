@@ -87,7 +87,12 @@ export default defineConfig< BaseExtend >( {
 
 		launchOptions: {
 			// Put your chromium-specific args here
-			args: [ '--disable-web-security' ],
+			args: [
+				'--font-render-hinting=none',
+				'--disable-web-security',
+				'--disable-features=TranslateUI',
+				'--disable-ipc-flooding-protection',
+			]
 		},
 
 		viewport: { width: 1024, height: 768 },
@@ -115,6 +120,11 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
+		},
+		{
+			name: 'onboarding',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /onboarding*\.spec\.ts/,
 		},
 	],
 } );
