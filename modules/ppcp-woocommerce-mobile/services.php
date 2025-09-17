@@ -13,6 +13,8 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint\CapturePayPalPaymentEndpoint;
 use WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint\GetPluginCredentialsEndpoint;
 use WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint\GetAccessTokenEndpoint;
+use WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint\ZettleOAuthSetupEndpoint;
+use WooCommerce\PayPalCommerce\WooCommerceMobile\Zettle\ZettleOAuthClient;
 
 return array(
 
@@ -28,9 +30,21 @@ return array(
         );
     },
 
+    'woocommerce-mobile.zettle-oauth-client' => static function ( ContainerInterface $container ): ZettleOAuthClient {
+        $client_id = get_option( 'zettle_oauth_client_id', '' );
+        
+        return new ZettleOAuthClient( $client_id );
+    },
+
     'woocommerce-mobile.get-access-token-endpoint' => static function ( ContainerInterface $container ): GetAccessTokenEndpoint {
         return new GetAccessTokenEndpoint(
-            $container->get( 'api.bearer' )
+            $container->get( 'woocommerce-mobile.zettle-oauth-client' )
+        );
+    },
+
+    'woocommerce-mobile.zettle-oauth-setup-endpoint' => static function ( ContainerInterface $container ): ZettleOAuthSetupEndpoint {
+        return new ZettleOAuthSetupEndpoint(
+            $container->get( 'woocommerce-mobile.zettle-oauth-client' )
         );
     },
 

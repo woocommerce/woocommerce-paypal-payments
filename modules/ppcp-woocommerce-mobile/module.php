@@ -58,6 +58,10 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule, Executa
                 // Access token endpoint
                 $access_token_endpoint = $container->get( 'woocommerce-mobile.get-access-token-endpoint' );
                 $access_token_endpoint->register_routes();
+
+                // Zettle OAuth setup endpoint
+                $zettle_oauth_endpoint = $container->get( 'woocommerce-mobile.zettle-oauth-setup-endpoint' );
+                $zettle_oauth_endpoint->register_routes();
             }
         );
 

@@ -1,6 +1,6 @@
 <?php
 /**
- * REST API endpoint for getting PayPal access tokens from authenticated plugin
+ * REST API endpoint for getting Zettle access tokens from authenticated plugin
  *
  * @package WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint
  */
@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WooCommerceMobile\Endpoint;
 
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\WooCommerceMobile\Zettle\ZettleOAuthClient;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
@@ -17,25 +17,25 @@ use WP_Error;
 /**
  * Class GetAccessTokenEndpoint
  * 
- * Provides fresh PayPal access tokens to the mobile app using the plugin's existing authentication
- * This eliminates the need for the mobile app to manage PayPal credentials directly
+ * Provides fresh Zettle access tokens to the mobile app using site-managed OAuth
+ * This eliminates the need for the mobile app to manage Zettle credentials directly
  */
 class GetAccessTokenEndpoint {
 
     /**
-     * The PayPal bearer token handler.
+     * The Zettle OAuth client.
      *
-     * @var PayPalBearer
+     * @var ZettleOAuthClient
      */
-    private $bearer;
+    private $zettle_client;
 
     /**
      * GetAccessTokenEndpoint constructor.
      *
-     * @param PayPalBearer $bearer The PayPal bearer token handler.
+     * @param ZettleOAuthClient $zettle_client The Zettle OAuth client.
      */
-    public function __construct( PayPalBearer $bearer ) {
-        $this->bearer = $bearer;
+    public function __construct( ZettleOAuthClient $zettle_client ) {
+        $this->zettle_client = $zettle_client;
     }
 
     /**
@@ -44,7 +44,7 @@ class GetAccessTokenEndpoint {
     public function register_routes() {
         register_rest_route(
             'wc/v3',
-            '/paypal/access-token',
+            '/zettle/access-token',
             array(
                 'methods'             => 'GET',
                 'callback'            => array( $this, 'get_access_token' ),
@@ -53,7 +53,7 @@ class GetAccessTokenEndpoint {
                     'scope' => array(
                         'required' => false,
                         'type'     => 'string',
-                        'default'  => 'https://uri.paypal.com/services/payments/payment',
+                        'default'  => 'READ:PAYMENT READ:USERINFO WRITE:PAYMENT WRITE:REFUND2 WRITE:USERINFO',
                         'description' => 'OAuth scope for the access token',
                     ),
                 ),
@@ -62,46 +62,46 @@ class GetAccessTokenEndpoint {
     }
 
     /**
-     * Gets a fresh PayPal access token using the plugin's existing authentication.
+     * Gets a fresh Zettle access token using site-managed OAuth.
      *
      * @param WP_REST_Request $request The REST request.
      * @return WP_REST_Response|WP_Error
      */
     public function get_access_token( WP_REST_Request $request ) {
         try {
-            // Use the plugin's existing PayPal authentication to get a fresh token
-            $bearer_token = $this->bearer->bearer();
+            // Get a valid Zettle access token (refresh if necessary)
+            $access_token = $this->zettle_client->get_valid_access_token();
             
-            if ( ! $bearer_token ) {
+            if ( is_wp_error( $access_token ) ) {
                 return new WP_Error(
-                    'paypal_auth_failed',
-                    __( 'Failed to obtain PayPal access token. Plugin may not be properly authenticated.', 'woocommerce-paypal-payments' ),
+                    'zettle_auth_failed',
+                    __( 'Failed to obtain Zettle access token. Site may not be properly authenticated with Zettle.', 'woocommerce-paypal-payments' ),
                     array( 'status' => 401 )
                 );
             }
 
-            // Get token details
+            // Return the access token in the format expected by the mobile app
             $token_data = array(
-                'access_token' => $bearer_token->token(),
+                'access_token' => $access_token,
                 'token_type'   => 'Bearer',
-                'expires_in'   => $bearer_token->expires_in(),
+                'expires_in'   => 7200, // Zettle tokens typically last 2 hours
                 'scope'        => $request->get_param( 'scope' ),
                 'issued_at'    => time(),
             );
 
             // Log successful token generation
             error_log( sprintf(
-                'PayPal Mobile: Generated access token for mobile app. Expires in: %d seconds',
-                $bearer_token->expires_in()
+                'Zettle Mobile: Generated access token for mobile app. Length: %d chars',
+                strlen( $access_token )
             ) );
 
             return new WP_REST_Response( $token_data, 200 );
 
         } catch ( Exception $e ) {
-            error_log( 'PayPal Mobile: Failed to generate access token: ' . $e->getMessage() );
+            error_log( 'Zettle Mobile: Failed to generate access token: ' . $e->getMessage() );
             
             return new WP_Error(
-                'paypal_token_error',
+                'zettle_token_error',
                 sprintf( __( 'Failed to generate access token: %s', 'woocommerce-paypal-payments' ), $e->getMessage() ),
                 array( 'status' => 500 )
             );
@@ -119,7 +119,7 @@ class GetAccessTokenEndpoint {
         if ( ! current_user_can( 'manage_woocommerce' ) ) {
             return new WP_Error(
                 'woocommerce_rest_cannot_view',
-                __( 'Sorry, you are not allowed to access PayPal tokens.', 'woocommerce-paypal-payments' ),
+                __( 'Sorry, you are not allowed to access Zettle tokens.', 'woocommerce-paypal-payments' ),
                 array( 'status' => rest_authorization_required_code() )
             );
         }
