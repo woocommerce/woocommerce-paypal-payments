@@ -54,6 +54,10 @@ class WooCommerceMobileModule implements ServiceModule, ExtendingModule, Executa
                 // Credentials endpoint
                 $credentials_endpoint = $container->get( 'woocommerce-mobile.get-plugin-credentials-endpoint' );
                 $credentials_endpoint->register_routes();
+
+                // Access token endpoint
+                $access_token_endpoint = $container->get( 'woocommerce-mobile.get-access-token-endpoint' );
+                $access_token_endpoint->register_routes();
             }
         );
 

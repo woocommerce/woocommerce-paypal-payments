@@ -240,7 +240,7 @@ class CapturePayPalPaymentEndpoint {
         // Set transaction ID
         $order->set_transaction_id( $payment_intent_id );
 
-		$order->update_status( 'pending' )
+		$order->update_status( 'pending' );
 
         // Add order note
         $order->add_order_note(
