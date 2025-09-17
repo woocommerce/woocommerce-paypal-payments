@@ -33,10 +33,9 @@
         "@wordpress/scripts": "^25.0.0"
     },
     "scripts": {
-
-        "setup:all": "npm install && npm run setup:plugin && npm run setup:env && npm run setup:tests",
+        "setup:all": "npm run setup:env && npm run setup:plugin && npm run setup:tests",
         "setup:tests": "npm install && npx playwright install",
-        "setup:env": " wp-env start --update",
+        "setup:env": "npm install && wp-env start --update",
         "setup:reset": "wp-env stop && wp-env destroy",
         "setup:plugin": "cd ../.. && npm run build && mv woocommerce-paypal-payments.zip tests/qa/resources/files",
         "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
