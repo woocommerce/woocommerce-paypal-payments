@@ -47,7 +47,33 @@ class ZettleSettingsPage {
      * Register settings.
      */
     public function register_settings() {
-        register_setting( 'zettle_settings', 'zettle_oauth_client_id' );
+        register_setting( 'zettle_settings', 'zettle_oauth_client_id', array(
+            'sanitize_callback' => array( $this, 'sanitize_client_id' ),
+        ) );
+    }
+
+    /**
+     * Sanitize client ID input.
+     *
+     * @param string $value The client ID value to sanitize.
+     * @return string Sanitized client ID.
+     */
+    public function sanitize_client_id( $value ) {
+        // Client IDs should be alphanumeric with possible dashes and underscores
+        $sanitized = sanitize_text_field( $value );
+        
+        // Validate format - typical Zettle client IDs are 32-character alphanumeric strings
+        if ( ! empty( $sanitized ) && ! preg_match( '/^[a-zA-Z0-9_-]{16,64}$/', $sanitized ) ) {
+            add_settings_error(
+                'zettle_oauth_client_id',
+                'invalid_client_id',
+                __( 'Invalid client ID format. Please check your Zettle developer portal for the correct client ID.', 'woocommerce-paypal-payments' )
+            );
+            // Return empty string if invalid
+            return '';
+        }
+        
+        return $sanitized;
     }
 
     /**
@@ -68,6 +94,11 @@ class ZettleSettingsPage {
      * Handle OAuth callback redirect.
      */
     public function handle_oauth_callback() {
+        // Check admin capabilities first
+        if ( ! current_user_can( 'manage_woocommerce' ) ) {
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'woocommerce-paypal-payments' ) );
+        }
+
         // Check if we're on the callback URL
         if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'wc-zettle-settings' ) {
             return;
@@ -77,9 +108,13 @@ class ZettleSettingsPage {
             return;
         }
 
+        // Sanitize input parameters
+        $code = sanitize_text_field( wp_unslash( $_GET['code'] ) );
+        $state = sanitize_text_field( wp_unslash( $_GET['state'] ) );
+
         // Verify state for CSRF protection
         $stored_state = get_transient( 'zettle_oauth_state' );
-        if ( ! $stored_state || $stored_state !== $_GET['state'] ) {
+        if ( ! $stored_state || $stored_state !== $state ) {
             add_action( 'admin_notices', function() {
                 ?>
                 <div class="notice notice-error is-dismissible">
@@ -91,7 +126,7 @@ class ZettleSettingsPage {
         }
 
         // Exchange authorization code for tokens
-        $result = $this->zettle_client->exchange_authorization_code( $_GET['code'], $_GET['state'] );
+        $result = $this->zettle_client->exchange_authorization_code( $code, $state );
         
         if ( is_wp_error( $result ) ) {
             add_action( 'admin_notices', function() use ( $result ) {
@@ -134,6 +169,8 @@ class ZettleSettingsPage {
         ?>
         <div class="wrap">
             <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+            
+            <?php settings_errors(); ?>
             
             <div class="card">
                 <h2><?php _e( 'Zettle Configuration', 'woocommerce-paypal-payments' ); ?></h2>

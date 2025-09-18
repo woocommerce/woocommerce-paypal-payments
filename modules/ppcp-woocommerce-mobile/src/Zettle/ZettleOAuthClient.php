@@ -237,12 +237,13 @@ class ZettleOAuthClient {
         
         // Check if current token is still valid (with 5 minute buffer)
         if ( $stored_token && $token_expires > ( time() + 300 ) ) {
-            return $stored_token;
+            return $this->decrypt_token( $stored_token );
         }
         
         // Try to refresh token
         if ( $stored_refresh ) {
-            $refresh_result = $this->refresh_access_token( $stored_refresh );
+            $decrypted_refresh = $this->decrypt_token( $stored_refresh );
+            $refresh_result = $this->refresh_access_token( $decrypted_refresh );
             
             if ( ! is_wp_error( $refresh_result ) ) {
                 return $refresh_result['access_token'];
@@ -260,10 +261,13 @@ class ZettleOAuthClient {
      * @param array $token_data Token data from Zettle OAuth response.
      */
     private function store_tokens( array $token_data ): void {
-        update_option( 'zettle_access_token', $token_data['access_token'] );
+        // Encrypt tokens before storing
+        $encrypted_access_token = $this->encrypt_token( $token_data['access_token'] );
+        update_option( 'zettle_access_token', $encrypted_access_token );
         
         if ( isset( $token_data['refresh_token'] ) ) {
-            update_option( 'zettle_refresh_token', $token_data['refresh_token'] );
+            $encrypted_refresh_token = $this->encrypt_token( $token_data['refresh_token'] );
+            update_option( 'zettle_refresh_token', $encrypted_refresh_token );
         }
         
         $expires_at = time() + ( $token_data['expires_in'] ?? 7200 );
@@ -271,9 +275,67 @@ class ZettleOAuthClient {
         
         // Log successful token storage (without exposing sensitive data)
         error_log( sprintf(
-            'Zettle: Stored access token (expires: %s)',
+            'Zettle: Stored encrypted access token (expires: %s)',
             gmdate( 'Y-m-d H:i:s', $expires_at )
         ) );
+    }
+
+    /**
+     * Encrypt a token using WordPress salts.
+     *
+     * @param string $token The token to encrypt.
+     * @return string Base64 encoded encrypted token.
+     */
+    private function encrypt_token( string $token ): string {
+        if ( empty( $token ) ) {
+            return '';
+        }
+
+        // Use WordPress salts for encryption key
+        $key = hash( 'sha256', SECURE_AUTH_KEY . SECURE_AUTH_SALT, true );
+        $iv = random_bytes( 16 );
+        
+        $encrypted = openssl_encrypt( $token, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
+        
+        if ( $encrypted === false ) {
+            error_log( 'Zettle: Failed to encrypt token' );
+            return $token; // Fallback to unencrypted if encryption fails
+        }
+        
+        // Prepend IV to encrypted data and base64 encode
+        return base64_encode( $iv . $encrypted );
+    }
+
+    /**
+     * Decrypt a token using WordPress salts.
+     *
+     * @param string $encrypted_token Base64 encoded encrypted token.
+     * @return string Decrypted token.
+     */
+    private function decrypt_token( string $encrypted_token ): string {
+        if ( empty( $encrypted_token ) ) {
+            return '';
+        }
+
+        $data = base64_decode( $encrypted_token );
+        if ( $data === false || strlen( $data ) < 16 ) {
+            // Might be unencrypted legacy token
+            return $encrypted_token;
+        }
+
+        // Use WordPress salts for encryption key
+        $key = hash( 'sha256', SECURE_AUTH_KEY . SECURE_AUTH_SALT, true );
+        $iv = substr( $data, 0, 16 );
+        $encrypted = substr( $data, 16 );
+        
+        $decrypted = openssl_decrypt( $encrypted, 'AES-256-CBC', $key, OPENSSL_RAW_DATA, $iv );
+        
+        if ( $decrypted === false ) {
+            error_log( 'Zettle: Failed to decrypt token, using as-is' );
+            return $encrypted_token; // Fallback to treat as unencrypted
+        }
+        
+        return $decrypted;
     }
 
     /**
