@@ -74,3 +74,29 @@ jobs:
           asset_name: woocommerce-paypal-payments-weekly.zip
           asset_content_type: application/zip
           max_releases: 1
+
+  notify-slack:
+    if: always() && github.repository_owner == 'woocommerce'
+    name: Send Slack notification
+    runs-on: ubuntu-latest
+    needs: [ update-tag, build, deploy ]
+    steps:
+      - name: Send success message to Slack
+        if: needs.deploy.result == 'success'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.WEEKLY_RELEASE_SLACK_HOOK }}
+          webhook-type: webhook-trigger
+          payload: |
+              "status": "🎉 A new Weekly Pre Release has been uploaded",
+              "workflow": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Send failure message to Slack
+        if: needs.deploy.result == 'failure' || needs.build.result == 'failure' || needs.update-tag.result == 'failure'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.WEEKLY_RELEASE_SLACK_HOOK }}
+          webhook-type: webhook-trigger
+          payload: |
+              "status": "😰 Ups! It was an error uploading the Weekly Pre Release",
+              "workflow": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
