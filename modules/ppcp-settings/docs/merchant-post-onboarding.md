@@ -214,91 +214,6 @@ The settings interface transitions from onboarding wizard to full configuration:
 - **Advanced Settings**: Country and account-specific options
 - **Troubleshooting**: Connection status and diagnostic tools
 
-## Save Payment Methods: PayPal vs Credit Cards
-
-After merchant onboarding, save payment methods eligibility operates differently for PayPal/Venmo payments versus credit card payments, using distinct mechanisms and requirements.
-
-### PayPal/Venmo Save Payment Methods
-
-**Capability Requirement**: `PAYPAL_WALLET_VAULTING_ADVANCED`
-
-PayPal save payment methods requires the merchant's PayPal account to have advanced vaulting capabilities enabled. This is determined through real-time API calls.
-
-**File:** `modules/ppcp-api-client/src/Helper/ReferenceTransactionStatus.php`
-
-```php
-public function reference_transaction_enabled(): bool {
-    foreach ($this->partners_endpoint->seller_status()->capabilities() as $capability) {
-        if (
-            $capability->name() === 'PAYPAL_WALLET_VAULTING_ADVANCED' &&
-            $capability->status() === 'ACTIVE'
-        ) {
-            return true;
-        }
-    }
-    return false;
-}
-```
-
-**Implementation Details:**
-- **Vault Type**: `'MERCHANT'` usage type for reference transactions
-- **Supported Funding Sources**: PayPal and Venmo only
-- **API Check**: Dynamic capability detection with caching (1 month success, 1 hour failure)
-- **Countries**: 38+ supported countries including major markets
-- **Requirement Changes**: Can change based on PayPal account status modifications
-
-**Vault Configuration** (SavePaymentMethodsModule):
-```php
-// PayPal vault attributes
-$new_attributes['vault']['usage_type'] = 'MERCHANT';
-$new_attributes['vault']['permit_multiple_payment_tokens'] = false;
-```
-
-### Credit Card Save Payment Methods
-
-**Capability Requirement**: Country eligibility + ACDC (Advanced Credit and Debit Cards)
-
-Credit card vaulting uses a different mechanism based on static country eligibility and merchant's card processing capabilities.
-
-**File:** `modules/ppcp-card-fields/services.php`
-
-```php
-'card-fields.eligible' => function(ContainerInterface $container): bool {
-    $applies = $container->get('card-fields.helpers.save-payment-methods-applies');
-    return $applies->for_country() && $applies->for_merchant();
-},
-```
-
-**Implementation Details:**
-- **Vault Type**: Card tokenization with customer ID association
-- **Supported Cards**: Visa, MasterCard, American Express, Discover, JCB, etc.
-- **API Check**: Static eligibility based on country whitelist + merchant features
-- **Countries**: 50+ countries with credit card processing support
-- **Requirement Changes**: Remains stable once merchant has ACDC enabled
-
-**Vault Configuration** (SavePaymentMethodsModule):
-```php
-// Credit card vault attributes
-if ($payment_method === CreditCardGateway::ID) {
-    if (!$settings->get('vault_enabled_dcc')) {
-        return $data; // No vaulting
-    }
-    // Standard vault attributes without usage_type
-}
-```
-
-### Key Differences Summary
-
-| Aspect | PayPal/Venmo | Credit Cards |
-|--------|--------------|--------------|
-| **API Check** | Dynamic capability query | Static country + merchant check |
-| **Capability Name** | `PAYPAL_WALLET_VAULTING_ADVANCED` | Country eligibility + ACDC |
-| **Vault Mechanism** | Reference transactions | Card tokenization |
-| **Usage Type** | `'MERCHANT'` | Not specified |
-| **Cache Duration** | 1 month (success) / 1 hour (failure) | No caching (static) |
-| **Change Frequency** | Can change with PayPal account status | Stable once enabled |
-| **Supported Countries** | 38+ countries | 50+ countries |
-
 ### Post-Onboarding Capability Detection
 
 After successful merchant connection, the system can determine actual save payment capabilities through multiple approaches:
@@ -366,7 +281,7 @@ $can_save_cards = $card_applies->for_country() && $card_applies->for_merchant();
 
 ### Merchant Feature Response
 
-Connected merchants receive capability information via the `woocommerce_paypal_payments_rest_common_merchant_features` filter:
+Currently connected merchants receive capability information via the `woocommerce_paypal_payments_rest_common_merchant_features` filter:
 
 ```php
 $features = [
@@ -378,6 +293,7 @@ $features = [
     ]
 ];
 ```
+> Note: `advanced_credit_and_debit_cards.enabled` could be migrated to use new `MerchantCapabilities::can_save_credit_cards` instead.
 
 ### Practical Implications
 
