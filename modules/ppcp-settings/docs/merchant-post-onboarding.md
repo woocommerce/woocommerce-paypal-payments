@@ -1,9 +1,5 @@
 # Post-Onboarding: Merchant Connected State
 
-This document explains what happens after a merchant completes the onboarding process and becomes connected to PayPal, including where merchant information comes from and how the system operates in the connected state.
-
-## Overview
-
 Once onboarding is complete, the plugin transitions from "onboarding mode" to "connected mode" where the merchant can process payments. The system gains access to PayPal merchant information and enables payment processing capabilities based on the merchant's PayPal account features.
 
 ## Connection Process Flow
