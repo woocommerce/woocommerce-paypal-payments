@@ -52,6 +52,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
 use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
+use WooCommerce\PayPalCommerce\Settings\Service\MerchantCapabilities;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
@@ -712,6 +713,13 @@ $services = array(
 		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
 
 		return new MerchantDetails( $merchant_country, $woo_data['country'], $eligibility_checks );
+	},
+	'settings.merchant-capabilities'                      => static function ( ContainerInterface $container ): MerchantCapabilities {
+		return new MerchantCapabilities(
+			$container->get( 'settings.connection-state' ),
+			$container->get( 'api.reference-transaction-status' ),
+			$container->get( 'wcgateway.helper.dcc-product-status' )
+		);
 	},
 );
 
