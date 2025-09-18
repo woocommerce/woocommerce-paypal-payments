@@ -301,7 +301,46 @@ if ($payment_method === CreditCardGateway::ID) {
 
 ### Post-Onboarding Capability Detection
 
-After successful merchant connection, the system can determine actual save payment capabilities:
+After successful merchant connection, the system can determine actual save payment capabilities through multiple approaches:
+
+#### Centralized Capability Service (Recommended)
+
+**File:** `modules/ppcp-settings/src/Service/MerchantCapabilities.php`
+
+The `MerchantCapabilities` service provides a unified, connection-aware approach to checking merchant capabilities:
+
+```php
+class MerchantCapabilities {
+    private ConnectionState $connection_state;
+    private DCCProductStatus $dcc_product_status;
+    private ReferenceTransactionStatus $reference_transaction_status;
+
+    public function can_save_paypal_methods(): bool {
+        if ($this->connection_state->is_connected()) {
+            return $this->reference_transaction_status->reference_transaction_enabled();
+        }
+        return false;
+    }
+
+    public function can_save_credit_cards(): bool {
+        if ($this->connection_state->is_connected()) {
+            return $this->dcc_product_status->is_active();
+        }
+        return false;
+    }
+}
+```
+
+**Usage:**
+```php
+$merchant_capabilities = $container->get('settings.service.merchant-capabilities');
+
+// Clean, connection-aware capability checks
+$can_save_paypal = $merchant_capabilities->can_save_paypal_methods();
+$can_save_cards = $merchant_capabilities->can_save_credit_cards();
+```
+
+#### Direct API Approach (Legacy)
 
 **PayPal Eligibility Check:**
 ```php
@@ -312,7 +351,15 @@ $can_save_paypal = $reference_status->reference_transaction_enabled();
 
 **Credit Card Eligibility Check:**
 ```php
-// Static country-based check
+// Product status check via PayPal API
+$dcc_product_status = $container->get('wcgateway.helper.dcc-product-status');
+$can_save_cards = $dcc_product_status->is_active();
+```
+
+#### Country-Based Fallback (Pre-Connection)
+
+```php
+// Static country-based check (used during onboarding)
 $card_applies = $container->get('card-fields.helpers.save-payment-methods-applies');
 $can_save_cards = $card_applies->for_country() && $card_applies->for_merchant();
 ```
@@ -347,3 +394,105 @@ $features = [
 - PayPal save methods: ❌ Not available (country limitations)
 
 This dual-eligibility system ensures that merchants can offer the most appropriate save payment options based on their PayPal account capabilities and regional availability.
+
+## Centralized Capability Management
+
+### MerchantCapabilities Service Benefits
+
+The `MerchantCapabilities` service addresses several issues with the mixed hardcoded/API approach:
+
+#### 1. **Connection State Awareness**
+```php
+// Automatic connection checking - no manual verification needed
+$can_save_paypal = $merchant_capabilities->can_save_paypal_methods();
+
+// Instead of manual connection checks:
+if ($connection_state->is_connected()) {
+    $can_save_paypal = $reference_status->reference_transaction_enabled();
+} else {
+    $can_save_paypal = false;
+}
+```
+
+#### 2. **API-First Approach**
+The service prioritizes PayPal's authoritative responses over hardcoded country restrictions:
+
+```php
+// For connected merchants: Uses PayPal API exclusively
+public function can_save_credit_cards(): bool {
+    if ($this->connection_state->is_connected()) {
+        return $this->dcc_product_status->is_active();  // PayPal API response
+    }
+    return false;  // Not connected = no capabilities
+}
+```
+
+#### 3. **Simplified Integration**
+Developers can use clean, semantic method calls instead of complex eligibility chains:
+
+```php
+// Simple and clear
+if ($merchant_capabilities->can_save_paypal_methods()) {
+    // Show save PayPal option
+}
+
+// Instead of complex eligibility logic
+$eligible = $save_applies->for_country() &&
+           $save_applies->for_merchant() &&
+           $reference_status->reference_transaction_enabled() &&
+           !$branded_only_mode;
+```
+
+#### 4. **Future-Proof Architecture**
+The service can be extended to include additional capabilities without changing existing code:
+
+```php
+class MerchantCapabilities {
+    // Existing methods...
+
+    public function can_use_apple_pay(): bool { /* ... */ }
+    public function can_use_google_pay(): bool { /* ... */ }
+    public function can_use_fastlane(): bool { /* ... */ }
+}
+```
+
+### Migration from Legacy Approaches
+
+**Before (Scattered Checks):**
+```php
+// Multiple services and complex logic
+$is_connected = $container->get('settings.flag.is-connected');
+if ($is_connected) {
+    $reference_status = $container->get('api.reference-transaction-status');
+    $can_save_paypal = $reference_status->reference_transaction_enabled();
+
+    $dcc_status = $container->get('wcgateway.helper.dcc-product-status');
+    $can_save_cards = $dcc_status->is_active();
+} else {
+    $country_check = $container->get('save-payment-methods.helpers.save-payment-methods-applies');
+    $can_save_paypal = $country_check->for_country();
+    // ... more fallback logic
+}
+```
+
+**After (Centralized Service):**
+```php
+// Single service, clean API
+$capabilities = $container->get('settings.service.merchant-capabilities');
+$can_save_paypal = $capabilities->can_save_paypal_methods();
+$can_save_cards = $capabilities->can_save_credit_cards();
+```
+
+### Service Registration
+
+**File:** `modules/ppcp-settings/services.php`
+
+```php
+'settings.service.merchant-capabilities' => static function(ContainerInterface $container): MerchantCapabilities {
+    return new MerchantCapabilities(
+        $container->get('wcgateway.helper.connection-state'),
+        $container->get('api.reference-transaction-status'),
+        $container->get('wcgateway.helper.dcc-product-status')
+    );
+},
+```

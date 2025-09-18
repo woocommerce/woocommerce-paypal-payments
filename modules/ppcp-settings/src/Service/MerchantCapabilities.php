@@ -7,6 +7,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 
+/**
+ * Determine the merchant's capabilities based on connection state and product status.
+ */
 class MerchantCapabilities {
 
 	private ConnectionState $connection_state;
