@@ -1,0 +1,13 @@
+{
+    "name": "ppcp-agentic-commerce",
+    "version": "1.0.0",
+    "license": "GPL-3.0-or-later",
+    "scripts": {
+        "watch": "wp-scripts start --webpack-src-dir=resources/js --output-path=assets",
+        "build": "wp-scripts build --webpack-src-dir=resources/js --output-path=assets"
+    },
+    "devDependencies": {
+    },
+    "dependencies": {
+    }
+}
