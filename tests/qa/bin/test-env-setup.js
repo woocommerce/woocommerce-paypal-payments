@@ -3,8 +3,12 @@ const { execSync } = require('child_process');
 
 const commands = [
     {
+        description: 'Install storefront theme',
+        command: 'wp-env run tests-cli -- wp theme install storefront'
+    },
+    {
         description: 'Activate storefront theme',
-        command: 'wp-env run tests-cli wp theme activate storefront'
+        command: 'wp-env run tests-cli -- wp theme activate storefront'
     },
     {
         description: 'Install WooCommerce',
