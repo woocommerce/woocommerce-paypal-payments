@@ -94,7 +94,7 @@ return static function ( string $root_dir ): iterable {
 
 	if ( apply_filters(
 		'woocommerce.feature-flags.woocommerce_paypal_payments.agentic_commerce_enabled',
-		getenv( 'PCP_AGENTIC_ENABLED' ) === '1'
+		getenv( 'PCP_AGENTIC_COMMERCE_ENABLED' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-agentic-commerce/module.php" )();
 	}
