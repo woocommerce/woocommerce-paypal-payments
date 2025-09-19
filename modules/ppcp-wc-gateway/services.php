@@ -2321,19 +2321,38 @@ return array(
 	},
 
 	/**
-	 * Returns a centralized list of feature eligibility checks.
+	 * Returns a centralized list of feature eligibility checks either for onboarding or for connected merchant.
 	 *
 	 * This is a helper service which is used by the `MerchantDetails` class and
 	 * should not be directly accessed.
 	 */
 	'wcgateway.feature-eligibility.list'                   => static function ( ContainerInterface $container ): array {
-		return array(
-			MerchantDetails::FEATURE_SAVE_PAYPAL_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),
-			MerchantDetails::FEATURE_ADVANCED_CARD_PROCESSING => $container->get( 'card-fields.eligibility.check' ),
-			MerchantDetails::FEATURE_GOOGLE_PAY        => $container->get( 'googlepay.eligibility.check' ),
-			MerchantDetails::FEATURE_APPLE_PAY         => $container->get( 'applepay.eligibility.check' ),
-			MerchantDetails::FEATURE_CONTACT_MODULE    => $container->get( 'wcgateway.contact-module.eligibility.check' ),
-		);
+		$connection_state = $container->get( 'settings.connection-state' );
+		assert( $connection_state instanceof ConnectionState );
+
+		if ( $connection_state->is_connected() ) {
+			$reference_transaction_status = $container->get( 'api.reference-transaction-status' );
+			assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
+
+			$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+			assert( $dcc_product_status instanceof DCCProductStatus );
+
+			return array(
+				MerchantDetails::FEATURE_SAVE_PAYPAL_VENMO => $reference_transaction_status->reference_transaction_enabled(),
+				MerchantDetails::FEATURE_ADVANCED_CARD_PROCESSING => $dcc_product_status->is_active(),
+				MerchantDetails::FEATURE_GOOGLE_PAY        => $container->get( 'googlepay.eligibility.check' ),
+				MerchantDetails::FEATURE_APPLE_PAY         => $container->get( 'applepay.eligibility.check' ),
+				MerchantDetails::FEATURE_CONTACT_MODULE    => $container->get( 'wcgateway.contact-module.eligibility.check' ),
+			);
+		} else {
+			return array(
+				MerchantDetails::FEATURE_SAVE_PAYPAL_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),
+				MerchantDetails::FEATURE_ADVANCED_CARD_PROCESSING => $container->get( 'card-fields.eligibility.check' ),
+				MerchantDetails::FEATURE_GOOGLE_PAY        => $container->get( 'googlepay.eligibility.check' ),
+				MerchantDetails::FEATURE_APPLE_PAY         => $container->get( 'applepay.eligibility.check' ),
+				MerchantDetails::FEATURE_CONTACT_MODULE    => $container->get( 'wcgateway.contact-module.eligibility.check' ),
+			);
+		}
 	},
 
 	/**
