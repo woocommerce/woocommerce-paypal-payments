@@ -105,7 +105,7 @@ return array(
 		$woo_country        = $container->get( 'api.shop.country' );
 		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
 
-		return new MerchantDetails( $woo_country, $woo_country, $eligibility_checks );
+		return new MerchantDetails( $woo_country, $eligibility_checks );
 	},
 	'onboarding.assets'                  => function ( ContainerInterface $container ): OnboardingAssets {
 		$state                 = $container->get( 'onboarding.state' );

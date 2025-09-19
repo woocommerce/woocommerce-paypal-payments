@@ -708,18 +708,9 @@ $services = array(
 		assert( $data instanceof GeneralSettings );
 
 		$merchant_country = $data->get_merchant_country();
-		$woo_data         = $data->get_woo_settings();
-
 		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
 
-		return new MerchantDetails( $merchant_country, $woo_data['country'], $eligibility_checks );
-	},
-	'settings.merchant-capabilities'                      => static function ( ContainerInterface $container ): MerchantCapabilities {
-		return new MerchantCapabilities(
-			$container->get( 'settings.connection-state' ),
-			$container->get( 'api.reference-transaction-status' ),
-			$container->get( 'wcgateway.helper.dcc-product-status' )
-		);
+		return new MerchantDetails( $merchant_country, $eligibility_checks );
 	},
 );
 

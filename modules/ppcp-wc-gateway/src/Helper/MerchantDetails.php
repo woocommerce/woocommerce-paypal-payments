@@ -52,13 +52,6 @@ class MerchantDetails {
 	private string $merchant_country;
 
 	/**
-	 * The WooCommerce store country.
-	 *
-	 * @var string
-	 */
-	private string $store_country;
-
-	/**
 	 * A collection of feature eligibility checks. The value can be either a
 	 * boolean (static eligibility) or a callback that returns a boolean (lazy check).
 	 *
@@ -69,15 +62,12 @@ class MerchantDetails {
 	/**
 	 * Constructor.
 	 *
-	 * @param string $merchant_country   Merchant country provided by PayPal's API. Not editable.
-	 * @param string $store_country      WooCommerce store country, can be changed by the site
-	 *                                   admin via the WooCommerce settings.
+	 * @param string $merchant_country   Merchant country either provided by WC store country or by PayPal's API.
 	 * @param array  $eligibility_checks Array of eligibility checks. Default service:
 	 *                                   'wcgateway.feature-eligibility.list'.
 	 */
-	public function __construct( string $merchant_country, string $store_country, array $eligibility_checks ) {
+	public function __construct( string $merchant_country, array $eligibility_checks ) {
 		$this->merchant_country   = $merchant_country;
-		$this->store_country      = $store_country;
 		$this->eligibility_checks = $eligibility_checks;
 	}
 
@@ -92,16 +82,6 @@ class MerchantDetails {
 	 */
 	public function get_merchant_country(): string {
 		return $this->merchant_country;
-	}
-
-	/**
-	 * The WooCommerce store's country, which could be different from the
-	 * merchant's country in some cases. This country is used by WooCommerce.
-	 *
-	 * @return string
-	 */
-	public function get_shop_country(): string {
-		return $this->store_country;
 	}
 
 	/**
