@@ -9,9 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Service;
 
-/**
- * Interface FailedOrderPersistenceInterface
- */
 interface FailedOrderPersistenceInterface {
 
 	/**

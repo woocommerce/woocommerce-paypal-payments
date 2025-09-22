@@ -14,9 +14,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
-/**
- * Class FailedOrderTracker
- */
 class FailedOrderTracker {
 
 	/**
@@ -47,6 +44,57 @@ class FailedOrderTracker {
 		if ( $this->is_failed_credit_card_transaction( $wc_order ) ) {
 			$this->record_failed_transaction( $wc_order, $paypal_order );
 		}
+	}
+
+	/**
+	 * Get recent failed orders.
+	 *
+	 * @param int $limit Number of orders to retrieve.
+	 *
+	 * @return array
+	 */
+	public function get_recent_failed_orders( int $limit = 10 ): array {
+		$failed_orders = $this->persistence->get_failed_orders();
+
+		// Sort by timestamp descending (newest first).
+		usort(
+			$failed_orders,
+			function ( $a, $b ) {
+				return $b['timestamp'] - $a['timestamp'];
+			}
+		);
+
+		return array_slice( $failed_orders, 0, $limit );
+	}
+
+	/**
+	 * Get failed orders count for time period.
+	 *
+	 * @param int $minutes Time period in minutes.
+	 *
+	 * @return int
+	 */
+	public function get_failed_orders_count( int $minutes = 60 ): int {
+		$failed_orders = $this->persistence->get_failed_orders();
+		$cutoff_time   = current_time( 'timestamp' ) - ( $minutes * 60 );
+
+		$recent_failures = array_filter(
+			$failed_orders,
+			function ( $order ) use ( $cutoff_time ) {
+				return $order['timestamp'] > $cutoff_time;
+			}
+		);
+
+		return count( $recent_failures );
+	}
+
+	/**
+	 * Clear all stored failed orders (for testing).
+	 *
+	 * @return void
+	 */
+	public function clear_failed_orders(): void {
+		$this->persistence->clear_failed_orders();
 	}
 
 	/**
@@ -108,56 +156,5 @@ class FailedOrderTracker {
 		}
 
 		return 'Payment failed';
-	}
-
-	/**
-	 * Get recent failed orders.
-	 *
-	 * @param int $limit Number of orders to retrieve.
-	 *
-	 * @return array
-	 */
-	public function get_recent_failed_orders( int $limit = 10 ): array {
-		$failed_orders = $this->persistence->get_failed_orders();
-
-		// Sort by timestamp descending (newest first).
-		usort(
-			$failed_orders,
-			function ( $a, $b ) {
-				return $b['timestamp'] - $a['timestamp'];
-			}
-		);
-
-		return array_slice( $failed_orders, 0, $limit );
-	}
-
-	/**
-	 * Get failed orders count for time period.
-	 *
-	 * @param int $minutes Time period in minutes.
-	 *
-	 * @return int
-	 */
-	public function get_failed_orders_count( int $minutes = 60 ): int {
-		$failed_orders = $this->persistence->get_failed_orders();
-		$cutoff_time   = current_time( 'timestamp' ) - ( $minutes * 60 );
-
-		$recent_failures = array_filter(
-			$failed_orders,
-			function ( $order ) use ( $cutoff_time ) {
-				return $order['timestamp'] > $cutoff_time;
-			}
-		);
-
-		return count( $recent_failures );
-	}
-
-	/**
-	 * Clear all stored failed orders (for testing).
-	 *
-	 * @return void
-	 */
-	public function clear_failed_orders(): void {
-		$this->persistence->clear_failed_orders();
 	}
 }

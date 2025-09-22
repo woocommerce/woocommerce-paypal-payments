@@ -9,9 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Service;
 
-/**
- * Class WordPressOptionsFailedOrderPersistence
- */
 class WordPressOptionsFailedOrderPersistence implements FailedOrderPersistenceInterface {
 
 	const OPTION_KEY                 = 'ppcp_failed_orders';
