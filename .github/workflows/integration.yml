@@ -30,7 +30,9 @@ jobs:
       run: ddev orchestrate -f
 
     - name: Create config
-      run: cp -n .env.integration.example .env.integration
+      run: |
+        cat .env.integration.example
+        cp -n .env.integration.example .env.integration
 
     - name: Setup tests
       run: ddev php tests/integration/PHPUnit/setup.php
