@@ -18,7 +18,22 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class FailedOrderTracker
  */
 class FailedOrderTracker {
-	const MAX_FAILED_ORDERS_TO_STORE = 100;
+
+	/**
+	 * The persistence layer for failed orders.
+	 *
+	 * @var FailedOrderPersistenceInterface
+	 */
+	private FailedOrderPersistenceInterface $persistence;
+
+	/**
+	 * FailedOrderTracker constructor.
+	 *
+	 * @param FailedOrderPersistenceInterface $persistence The persistence layer.
+	 */
+	public function __construct( FailedOrderPersistenceInterface $persistence ) {
+		$this->persistence = $persistence;
+	}
 
 	/**
 	 * Track failed card order transactions.
@@ -70,7 +85,7 @@ class FailedOrderTracker {
 			'failure_reason'  => $this->get_failure_reason( $wc_order ),
 		);
 
-		$this->store_failed_transaction( $failed_transaction_data );
+		$this->persistence->store_failed_order( $failed_transaction_data );
 	}
 
 	/**
@@ -96,25 +111,6 @@ class FailedOrderTracker {
 	}
 
 	/**
-	 * Store failed transaction in WordPress options.
-	 *
-	 * @param array $transaction_data The transaction data.
-	 *
-	 * @return void
-	 */
-	private function store_failed_transaction( array $transaction_data ): void {
-		$failed_orders = get_option( 'ppcp_failed_orders', array() );
-
-		$failed_orders[] = $transaction_data;
-
-		if ( count( $failed_orders ) > self::MAX_FAILED_ORDERS_TO_STORE ) {
-			$failed_orders = array_slice( $failed_orders, - self::MAX_FAILED_ORDERS_TO_STORE );
-		}
-
-		update_option( 'ppcp_failed_orders', $failed_orders );
-	}
-
-	/**
 	 * Get recent failed orders.
 	 *
 	 * @param int $limit Number of orders to retrieve.
@@ -122,7 +118,7 @@ class FailedOrderTracker {
 	 * @return array
 	 */
 	public function get_recent_failed_orders( int $limit = 10 ): array {
-		$failed_orders = get_option( 'ppcp_failed_orders', array() );
+		$failed_orders = $this->persistence->get_failed_orders();
 
 		// Sort by timestamp descending (newest first).
 		usort(
@@ -143,7 +139,7 @@ class FailedOrderTracker {
 	 * @return int
 	 */
 	public function get_failed_orders_count( int $minutes = 60 ): int {
-		$failed_orders = get_option( 'ppcp_failed_orders', array() );
+		$failed_orders = $this->persistence->get_failed_orders();
 		$cutoff_time   = current_time( 'timestamp' ) - ( $minutes * 60 );
 
 		$recent_failures = array_filter(
@@ -162,6 +158,6 @@ class FailedOrderTracker {
 	 * @return void
 	 */
 	public function clear_failed_orders(): void {
-		delete_option( 'ppcp_failed_orders' );
+		$this->persistence->clear_failed_orders();
 	}
 }

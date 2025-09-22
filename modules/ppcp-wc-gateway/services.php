@@ -81,6 +81,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrderTracker;
+use WooCommerce\PayPalCommerce\WcGateway\Service\WordPressOptionsFailedOrderPersistence;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -2420,7 +2421,13 @@ return array(
 		);
 	},
 
-	'wcgateway.service.failed-order-tracker'               => static function (): FailedOrderTracker {
-		return new FailedOrderTracker();
+	'wcgateway.service.failed-order-persistence'           => static function (): WordPressOptionsFailedOrderPersistence {
+		return new WordPressOptionsFailedOrderPersistence();
+	},
+
+	'wcgateway.service.failed-order-tracker'               => static function ( ContainerInterface $container ): FailedOrderTracker {
+		return new FailedOrderTracker(
+			$container->get( 'wcgateway.service.failed-order-persistence' )
+		);
 	},
 );
