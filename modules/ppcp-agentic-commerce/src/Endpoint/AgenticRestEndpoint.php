@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 use WC_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCartResponse;
 
 /**
@@ -63,5 +64,15 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected function return_paid_cart( PayPalCartResponse $cart ): WP_REST_Response {
 		return new WP_REST_Response( $cart->with_confirmation()->to_array(), 200 );
+	}
+
+	/**
+	 * Returns an error REST API response.
+	 *
+	 * @param AgenticError $error The error object.
+	 * @return WP_REST_Response The error response.
+	 */
+	protected function return_error( AgenticError $error ): WP_REST_Response {
+		return new WP_REST_Response( $error->to_array(), $error->get_status_code() );
 	}
 }
