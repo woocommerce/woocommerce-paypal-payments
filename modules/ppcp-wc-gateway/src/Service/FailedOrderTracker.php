@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Service;
 
-use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -19,22 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class FailedOrderTracker
  */
 class FailedOrderTracker {
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * FailedOrderTracker constructor.
-	 *
-	 * @param LoggerInterface $logger The logger.
-	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
-	}
+	const MAX_FAILED_ORDERS_TO_STORE = 100;
 
 	/**
 	 * Track failed card order transactions.
@@ -87,7 +71,6 @@ class FailedOrderTracker {
 		);
 
 		$this->store_failed_transaction( $failed_transaction_data );
-		$this->log_failed_transaction( $failed_transaction_data );
 	}
 
 	/**
@@ -124,33 +107,13 @@ class FailedOrderTracker {
 
 		$failed_orders[] = $transaction_data;
 
-		// Keep only last 100 failed orders to prevent database bloat
-		if ( count( $failed_orders ) > 100 ) {
-			$failed_orders = array_slice( $failed_orders, -100 );
+		if ( count( $failed_orders ) > self::MAX_FAILED_ORDERS_TO_STORE ) {
+			$failed_orders = array_slice( $failed_orders, - self::MAX_FAILED_ORDERS_TO_STORE );
 		}
 
 		update_option( 'ppcp_failed_orders', $failed_orders );
 	}
 
-	/**
-	 * Log failed transaction.
-	 *
-	 * @param array $transaction_data The transaction data.
-	 *
-	 * @return void
-	 */
-	private function log_failed_transaction( array $transaction_data ): void {
-		$this->logger->warning(
-			'Failed credit card transaction recorded',
-			array(
-				'order_id'        => $transaction_data['order_id'],
-				'total'           => $transaction_data['total'],
-				'paypal_order_id' => $transaction_data['paypal_order_id'],
-				'avs_code'        => $transaction_data['fraud_data']['avs_code'] ?? 'N/A',
-				'cvv_code'        => $transaction_data['fraud_data']['cvv2_code'] ?? 'N/A',
-			)
-		);
-	}
 
 	/**
 	 * Get recent failed orders.
@@ -162,7 +125,7 @@ class FailedOrderTracker {
 	public function get_recent_failed_orders( int $limit = 10 ): array {
 		$failed_orders = get_option( 'ppcp_failed_orders', array() );
 
-		// Sort by timestamp descending (newest first)
+		// Sort by timestamp descending (newest first).
 		usort(
 			$failed_orders,
 			function ( $a, $b ) {

@@ -2420,7 +2420,7 @@ return array(
 		);
 	},
 
-	'wcgateway.service.failed-order-tracker'               => static function ( ContainerInterface $container ): FailedOrderTracker {
-		return new FailedOrderTracker( $container->get( 'woocommerce.logger.woocommerce' ), );
+	'wcgateway.service.failed-order-tracker'               => static function (): FailedOrderTracker {
+		return new FailedOrderTracker();
 	},
 );

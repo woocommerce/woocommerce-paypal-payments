@@ -618,6 +618,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			3
 		);
 
+		// Track failed credit card orders for fraud analysis and monitoring.
 		add_action(
 			'woocommerce_paypal_payments_fraud_result_added',
 			function ( WC_Order $wc_order, Order $order ) use ( $c ) {
