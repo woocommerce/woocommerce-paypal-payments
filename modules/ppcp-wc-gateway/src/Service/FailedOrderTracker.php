@@ -42,18 +42,18 @@ class FailedOrderTracker {
 	 * @return void
 	 */
 	public function init(): void {
-		add_action( 'woocommerce_paypal_payments_fraud_result_added', array( $this, 'on_fraud_result_added' ), 10, 2 );
+		add_action( 'woocommerce_paypal_payments_fraud_result_added', array( $this, 'track_failed_card_order' ), 10, 2 );
 	}
 
 	/**
-	 * Handle fraud result added event.
+	 * Track failed card order transactions.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @param Order    $paypal_order The PayPal order.
 	 *
 	 * @return void
 	 */
-	public function on_fraud_result_added( WC_Order $wc_order, Order $paypal_order ): void {
+	public function track_failed_card_order( WC_Order $wc_order, Order $paypal_order ): void {
 		if ( $this->is_failed_credit_card_transaction( $wc_order ) ) {
 			$this->record_failed_transaction( $wc_order, $paypal_order );
 		}

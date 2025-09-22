@@ -84,7 +84,7 @@ class FailedOrderTrackerTest extends ModularTestCase {
 			->once()
 			->with( 'Failed credit card transaction recorded', Mockery::type( 'array' ) );
 
-		$this->tracker->on_fraud_result_added( $this->mock_wc_order, $this->mock_paypal_order );
+		$this->tracker->track_failed_card_order( $this->mock_wc_order, $this->mock_paypal_order );
 
 		// Since we can't easily verify the update_option call with Brain Monkey,
 		// we verify the logger was called which means the transaction was processed
@@ -101,7 +101,7 @@ class FailedOrderTrackerTest extends ModularTestCase {
 
 		$this->logger->shouldReceive( 'warning' )->never();
 
-		$this->tracker->on_fraud_result_added( $this->mock_wc_order, $this->mock_paypal_order );
+		$this->tracker->track_failed_card_order( $this->mock_wc_order, $this->mock_paypal_order );
 
 		$this->addToAssertionCount(1); // Test passed - no warnings were logged
 	}
@@ -119,7 +119,7 @@ class FailedOrderTrackerTest extends ModularTestCase {
 
 		$this->logger->shouldReceive( 'warning' )->never();
 
-		$this->tracker->on_fraud_result_added( $this->mock_wc_order, $this->mock_paypal_order );
+		$this->tracker->track_failed_card_order( $this->mock_wc_order, $this->mock_paypal_order );
 
 		$this->addToAssertionCount(1); // Test passed - no warnings were logged
 	}
@@ -151,7 +151,7 @@ class FailedOrderTrackerTest extends ModularTestCase {
 
 		$this->logger->shouldReceive( 'warning' )->once();
 
-		$this->tracker->on_fraud_result_added( $this->mock_wc_order, $this->mock_paypal_order );
+		$this->tracker->track_failed_card_order( $this->mock_wc_order, $this->mock_paypal_order );
 
 		// Test passes if no exceptions thrown and logger was called
 		$this->addToAssertionCount(1);
@@ -290,6 +290,6 @@ class FailedOrderTrackerTest extends ModularTestCase {
 				       $context['paypal_order_id'] === 'FRAUD789';
 			}));
 
-		$this->tracker->on_fraud_result_added( $this->mock_wc_order, $this->mock_paypal_order );
+		$this->tracker->track_failed_card_order( $this->mock_wc_order, $this->mock_paypal_order );
 	}
 }
