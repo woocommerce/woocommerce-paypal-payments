@@ -45,15 +45,6 @@ class FailedOrderTrackerTest extends ModularTestCase {
 	}
 
 	/**
-	 * Test hook registration.
-	 */
-	public function test_init_registers_hooks(): void {
-		$this->tracker->init();
-
-		$this->assertTrue( has_action( 'woocommerce_paypal_payments_fraud_result_added' ) );
-	}
-
-	/**
 	 * Test failed credit card transaction detection - should detect failed orders.
 	 */
 	public function test_detects_failed_credit_card_transaction(): void {

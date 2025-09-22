@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
@@ -57,6 +58,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrderTracker;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -614,6 +616,18 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			},
 			10,
 			3
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_fraud_result_added',
+			function ( WC_Order $wc_order, Order $order ) use ( $c ) {
+				$failed_order_tracker = $c->get( 'wcgateway.service.failed-order-tracker' );
+				assert( $failed_order_tracker instanceof FailedOrderTracker );
+
+				$failed_order_tracker->track_failed_card_order( $wc_order, $order );
+			},
+			10,
+			2
 		);
 
 		return true;

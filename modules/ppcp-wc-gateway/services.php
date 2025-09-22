@@ -80,6 +80,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrderTracker;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -2417,5 +2418,9 @@ return array(
 			'woocommerce.feature-flags.woocommerce_paypal_payments.appswitch_enabled',
 			getenv( 'PCP_APPSWITCH_ENABLED' ) === '1'
 		);
+	},
+
+	'wcgateway.service.failed-order-tracker'               => static function ( ContainerInterface $container ): FailedOrderTracker {
+		return new FailedOrderTracker( $container->get( 'woocommerce.logger.woocommerce' ), );
 	},
 );

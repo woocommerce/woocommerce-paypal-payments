@@ -37,15 +37,6 @@ class FailedOrderTracker {
 	}
 
 	/**
-	 * Initialize the tracker by registering hooks.
-	 *
-	 * @return void
-	 */
-	public function init(): void {
-		add_action( 'woocommerce_paypal_payments_fraud_result_added', array( $this, 'track_failed_card_order' ), 10, 2 );
-	}
-
-	/**
 	 * Track failed card order transactions.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
