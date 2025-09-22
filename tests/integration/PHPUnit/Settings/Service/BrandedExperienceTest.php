@@ -32,15 +32,15 @@ class BrandedExperienceTest extends TestCase {
 
 		$detector->shouldReceive( 'detect_activation_path' )
 		         ->once()
-		         ->andReturn( 'foo' );
+		         ->andReturn( 'payment-settings' );
 
 		$detector->shouldReceive( 'detect_activation_path' )
 		         ->once()
-		         ->andReturn( 'bar' );
+		         ->andReturn( 'core-profiler' );
 
 		$repository->persist();
 		$repository->persist();
 
-		$this->assertEquals( 'foo', $this->generalSettings->get_installation_path() );
+		$this->assertEquals( 'payment-settings', $this->generalSettings->get_installation_path() );
 	}
 }
