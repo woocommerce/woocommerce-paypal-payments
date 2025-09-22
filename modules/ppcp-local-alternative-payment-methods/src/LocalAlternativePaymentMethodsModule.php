@@ -179,11 +179,19 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 					return;
 				}
 
+				// Special handling for crypto payments - PayPal's crypto payment flow only sends
+				// 'cancelled=true' without the specific error codes ('processing_error' or 'payment_error')
+				// that other local APMs include.
+				if ( $order->get_payment_method() === 'ppcp-pwc' && $cancelled ) {
+					$order->update_status( 'failed', __( 'Crypto payment was cancelled or failed.', 'woocommerce-paypal-payments' ) );
+					add_filter( 'woocommerce_order_has_status', '__return_true' );
+					return;
+				}
+
 				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$error_code = wc_clean( wp_unslash( $_GET['errorcode'] ?? '' ) );
 				if ( $error_code === 'processing_error' || $error_code === 'payment_error' ) {
 					$order->update_status( 'failed', __( "The payment can't be processed because of an error.", 'woocommerce-paypal-payments' ) );
-
 					add_filter( 'woocommerce_order_has_status', '__return_true' );
 				}
 			}

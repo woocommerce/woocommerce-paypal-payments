@@ -9,10 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
+use Exception;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
@@ -45,6 +48,13 @@ class PWCGateway extends WC_Payment_Gateway {
 	private RefundProcessor $refund_processor;
 
 	/**
+	 * Shipping preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	private ShippingPreferenceFactory $shipping_preference_factory;
+
+	/**
 	 * Service able to provide transaction url for an order.
 	 *
 	 * @var TransactionUrlProvider
@@ -61,16 +71,18 @@ class PWCGateway extends WC_Payment_Gateway {
 	/**
 	 * PWCGateway constructor.
 	 *
-	 * @param Orders                   $orders_endpoint PayPal Orders endpoint.
-	 * @param PurchaseUnitFactory      $purchase_unit_factory Purchase unit factory.
-	 * @param RefundProcessor          $refund_processor The Refund Processor.
-	 * @param TransactionUrlProvider   $transaction_url_provider Service providing transaction view URL based on order.
-	 * @param ExperienceContextBuilder $experience_context_builder The ExperienceContextBuilder.
+	 * @param Orders                    $orders_endpoint PayPal Orders endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory Purchase unit factory.
+	 * @param RefundProcessor           $refund_processor The Refund Processor.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory Shipping preference factory.
+	 * @param TransactionUrlProvider    $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
 		Orders $orders_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		RefundProcessor $refund_processor,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		TransactionUrlProvider $transaction_url_provider,
 		ExperienceContextBuilder $experience_context_builder
 	) {
@@ -94,11 +106,12 @@ class PWCGateway extends WC_Payment_Gateway {
 
 		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
 
-		$this->orders_endpoint            = $orders_endpoint;
-		$this->purchase_unit_factory      = $purchase_unit_factory;
-		$this->refund_processor           = $refund_processor;
-		$this->transaction_url_provider   = $transaction_url_provider;
-		$this->experience_context_builder = $experience_context_builder;
+		$this->orders_endpoint             = $orders_endpoint;
+		$this->purchase_unit_factory       = $purchase_unit_factory;
+		$this->refund_processor            = $refund_processor;
+		$this->shipping_preference_factory = $shipping_preference_factory;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->experience_context_builder  = $experience_context_builder;
 	}
 
 	/**
@@ -138,8 +151,89 @@ class PWCGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ): array {
-		// TODO: Implement pwc payment processing
-		return array();
+		$wc_order = wc_get_order( $order_id );
+		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+			wc_add_notice( __( 'Order not found.', 'woocommerce-paypal-payments' ), 'error' );
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
+
+		if ( $wc_order->get_currency() !== 'USD' ) {
+			wc_add_notice( __( 'Crypto payments are only available for USD orders.', 'woocommerce-paypal-payments' ), 'error' );
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
+
+		try {
+			$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+			$amount        = $purchase_unit->amount()->to_array();
+
+			$experience_context = $this->experience_context_builder
+				->with_order_return_urls( $wc_order )
+				->with_current_locale()
+				->build()
+				->to_array();
+
+			$request_body = array(
+				'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
+				'intent'                 => 'CAPTURE',
+				'purchase_units'         => array(
+					array(
+						'reference_id' => $purchase_unit->reference_id(),
+						'amount'       => array(
+							'currency_code' => $amount['currency_code'],
+							'value'         => $amount['value'],
+						),
+						'custom_id'    => $purchase_unit->custom_id(),
+						'invoice_id'   => $purchase_unit->invoice_id(),
+					),
+				),
+				'payment_source'         => array(
+					'crypto' => array(
+						'country_code'       => 'US',
+						'name'               => array(
+							'given_name' => $wc_order->get_billing_first_name(),
+							'surname'    => $wc_order->get_billing_last_name(),
+						),
+						'experience_context' => $experience_context,
+					),
+				),
+			);
+
+			$response = $this->orders_endpoint->create( $request_body );
+			$body     = json_decode( $response['body'] );
+
+			$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
+			$wc_order->save_meta_data();
+
+			$payer_action_url = $this->get_payer_action_url( $body );
+
+			if ( empty( $payer_action_url ) ) {
+				throw new Exception( __( 'No payer action URL found in PayPal response.', 'woocommerce-paypal-payments' ) );
+			}
+
+			WC()->cart->empty_cart();
+
+			return array(
+				'result'   => 'success',
+				'redirect' => esc_url( $payer_action_url ),
+			);
+
+		} catch ( Exception $exception ) {
+			wc_add_notice(
+				__( 'Payment failed. Please try again.', 'woocommerce-paypal-payments' ),
+				'error'
+			);
+
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
 	}
 
 	/**
@@ -172,5 +266,25 @@ class PWCGateway extends WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	/**
+	 * Extract payer-action URL from PayPal order response.
+	 *
+	 * @param object $order_response Parsed PayPal order response.
+	 * @return string
+	 */
+	private function get_payer_action_url( $order_response ): string {
+		if ( ! isset( $order_response->links ) ) {
+			return '';
+		}
+
+		foreach ( $order_response->links as $link ) {
+			if ( isset( $link->rel ) && $link->rel === 'payer-action' ) {
+				return $link->href ?? '';
+			}
+		}
+
+		return '';
 	}
 }
