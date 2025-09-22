@@ -114,7 +114,6 @@ class FailedOrderTracker {
 		update_option( 'ppcp_failed_orders', $failed_orders );
 	}
 
-
 	/**
 	 * Get recent failed orders.
 	 *
