@@ -15,22 +15,16 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
- * Class AgenticCommerceModule
+ * Entry point that integrates agentic commerce logic with the plugin's DI system.
  */
 class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function run( ContainerInterface $c ): bool {
+	public function run( ContainerInterface $container ): bool {
 		// Add hooks.
 
 		return true;
