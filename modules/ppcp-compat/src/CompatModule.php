@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
-use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
