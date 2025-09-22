@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Service;
+namespace WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders;
 
 class WordPressOptionsFailedOrderPersistence implements FailedOrderPersistenceInterface {
 

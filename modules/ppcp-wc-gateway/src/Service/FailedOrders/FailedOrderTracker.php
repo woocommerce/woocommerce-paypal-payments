@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Service;
+namespace WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;

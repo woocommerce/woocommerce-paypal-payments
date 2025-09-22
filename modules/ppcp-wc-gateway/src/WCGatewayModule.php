@@ -58,7 +58,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrderTracker;
+use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders\FailedOrderTracker;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
