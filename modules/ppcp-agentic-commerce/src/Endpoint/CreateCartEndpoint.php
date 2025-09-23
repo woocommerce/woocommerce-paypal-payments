@@ -11,7 +11,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticErrorNotFound;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticErrorInvalidRequest;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticError;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -22,12 +23,17 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	 */
 	protected const PATH = 'merchant-cart';
 
+	/**
+	 * The expected HTTP method; must match the PayPal docs.
+	 */
+	protected const METHOD = 'POST';
+
 	public function register_routes(): void {
 		register_rest_route(
 			self::NAMESPACE,
 			self::PATH,
 			array(
-				'methods'             => 'POST',
+				'methods'             => self::METHOD,
 				'callback'            => array( $this, 'create_cart' ),
 				'permission_callback' => array( $this, 'check_permission' ),
 			)
@@ -35,6 +41,12 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	}
 
 	public function create_cart( WP_REST_Request $request ): WP_REST_Response {
-		return $this->error( new AgenticErrorNotFound( 'not implemented' ) );
+		$data = $this->parse_json_body( $request );
+
+		if ( $data instanceof AgenticError ) {
+			return $this->error( $data );
+		}
+
+		return $this->error( new AgenticErrorInvalidRequest( 'Not Implemented' ) );
 	}
 }
