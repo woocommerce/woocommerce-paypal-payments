@@ -631,6 +631,13 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			2
 		);
 
+		add_action( 'rest_api_init', function () use($c) {
+
+			$endpoint = new VoidOrderEndpoint();
+			$endpoint->register();
+			// $endpoint->register_routes();
+		});
+
 		return true;
 	}
 

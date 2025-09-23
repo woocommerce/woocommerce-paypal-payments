@@ -2430,4 +2430,9 @@ return array(
 			$container->get( 'wcgateway.service.failed-order-persistence' )
 		);
 	},
+	'wcgateway.endpoint.failed-order-tracker' => static function ( ContainerInterface $container ): FailedOrderTrackerEndpoint {
+		return new FailedOrderTrackerEndpoint(
+			$container->get( 'wcgateway.service.failed-order-tracker' ),
+		);
+	},
 );
