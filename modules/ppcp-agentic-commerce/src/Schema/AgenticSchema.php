@@ -9,7 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
 /**
  * Agentic schema classes must enforce immutability - only constructor can set properties!

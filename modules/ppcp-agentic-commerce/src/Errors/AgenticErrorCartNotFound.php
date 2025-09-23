@@ -3,7 +3,7 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
 
 /**
  * When to use:
