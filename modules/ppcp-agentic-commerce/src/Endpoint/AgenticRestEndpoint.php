@@ -42,7 +42,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param PayPalCartResponse $cart The PayPalCart response object.
 	 * @return WP_REST_Response The successful response.
 	 */
-	protected function return_cart( PayPalCartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+	protected function cart_details( PayPalCartResponse $cart, int $status_code = 200 ): WP_REST_Response {
 		return new WP_REST_Response( $cart->to_array(), $status_code );
 	}
 
@@ -52,7 +52,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param AgenticError $error The error object.
 	 * @return WP_REST_Response The error response.
 	 */
-	protected function return_error( AgenticError $error ): WP_REST_Response {
+	protected function error( AgenticError $error ): WP_REST_Response {
 		return new WP_REST_Response( $error->to_array(), $error->get_status_code() );
 	}
 }
