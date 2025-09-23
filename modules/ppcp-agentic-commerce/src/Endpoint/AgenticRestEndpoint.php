@@ -37,33 +37,13 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Returns details about a known cart that's stored in the shop's DB.
+	 * Successful API response, always returns cart details.
 	 *
 	 * @param PayPalCartResponse $cart The PayPalCart response object.
 	 * @return WP_REST_Response The successful response.
 	 */
-	protected function return_existing_cart( PayPalCartResponse $cart ): WP_REST_Response {
-		return new WP_REST_Response( $cart->to_array(), 200 );
-	}
-
-	/**
-	 * Returns a new cart created during this request.
-	 *
-	 * @param PayPalCartResponse $cart The PayPalCart response object.
-	 * @return WP_REST_Response The successful response.
-	 */
-	protected function return_new_cart( PayPalCartResponse $cart ): WP_REST_Response {
-		return new WP_REST_Response( $cart->with_token()->to_array(), 201 );
-	}
-
-	/**
-	 * Returns cart details with a payment confirmation property.
-	 *
-	 * @param PayPalCartResponse $cart The PayPalCart response object.
-	 * @return WP_REST_Response The successful response.
-	 */
-	protected function return_paid_cart( PayPalCartResponse $cart ): WP_REST_Response {
-		return new WP_REST_Response( $cart->with_confirmation()->to_array(), 200 );
+	protected function return_cart( PayPalCartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+		return new WP_REST_Response( $cart->to_array(), $status_code );
 	}
 
 	/**
