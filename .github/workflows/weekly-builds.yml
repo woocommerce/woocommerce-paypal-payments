@@ -45,7 +45,7 @@ jobs:
       PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
       PLUGIN_VERSION: weekly
       PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
-      ARCHIVE_NAME: woocommerce-paypal-payments-weekly.zip
+      ARCHIVE_NAME: woocommerce-paypal-payments
       COMPILE_ASSETS_ARGS: '-vv --env=root'
 
   deploy:
@@ -57,12 +57,13 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: woocommerce-paypal-payments-weekly.zip
+          name: woocommerce-paypal-payments
           path: ./artifacts
 
       - name: Create and upload zip file
+        working-directory: ./artifacts
         run: |
-          zip -r ./artifacts/woocommerce-paypal-payments-weekly.zip ./artifacts/woocommerce-paypal-payments
+          zip -r ./woocommerce-paypal-payments-weekly.zip ./woocommerce-paypal-payments
 
       - name: Update weekly release
         uses: WebFreak001/deploy-nightly@v3.2.0
