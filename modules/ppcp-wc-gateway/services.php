@@ -80,6 +80,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders\FailedOrdersRestEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders\FailedOrderTracker;
 use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders\WordPressOptionsFailedOrderPersistence;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
@@ -2430,8 +2431,8 @@ return array(
 			$container->get( 'wcgateway.service.failed-order-persistence' )
 		);
 	},
-	'wcgateway.endpoint.failed-order-tracker' => static function ( ContainerInterface $container ): FailedOrderTrackerEndpoint {
-		return new FailedOrderTrackerEndpoint(
+	'wcgateway.endpoint.failed-order-tracker'              => static function ( ContainerInterface $container ): FailedOrdersRestEndpoint {
+		return new FailedOrdersRestEndpoint(
 			$container->get( 'wcgateway.service.failed-order-tracker' ),
 		);
 	},

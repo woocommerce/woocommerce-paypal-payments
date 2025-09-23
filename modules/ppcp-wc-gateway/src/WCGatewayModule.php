@@ -58,6 +58,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\SendOnlyCountryNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\CreditCardOrderInfoHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders\FailedOrdersRestEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Service\FailedOrders\FailedOrderTracker;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
@@ -631,12 +632,18 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			2
 		);
 
-		add_action( 'rest_api_init', function () use($c) {
+		add_action(
+			'rest_api_init',
+			function () use ( $c ) {
+				$tracker = $c->get( 'wcgateway.service.failed-order-tracker' );
+				assert( $tracker instanceof FailedOrderTracker );
 
-			$endpoint = new VoidOrderEndpoint();
-			$endpoint->register();
-			// $endpoint->register_routes();
-		});
+				$endpoint = $c->get( 'wcgateway.endpoint.failed-order-tracker' );
+				assert( $endpoint instanceof FailedOrdersRestEndpoint );
+
+				$endpoint->register_routes();
+			}
+		);
 
 		return true;
 	}
