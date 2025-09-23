@@ -26,6 +26,13 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	use ModuleClassNameIdTrait;
 
 	/**
+	 * Payment methods configuration.
+	 *
+	 * @var array
+	 */
+	private array $payment_methods;
+
+	/**
 	 * {@inheritDoc}
 	 */
 	public function services(): array {
@@ -57,6 +64,8 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	 * @return void
 	 */
 	private function run_with_translations( ContainerInterface $c ): void {
+		$this->payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+
 		// When Local APMs are disabled, none of the following hooks are needed.
 		if ( ! $this->should_add_local_apm_gateways( $c ) ) {
 			return;
@@ -152,58 +161,13 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			}
 		);
 
-		add_action(
-			'woocommerce_before_thankyou',
-			/**
-			 * Activate is_checkout() on woocommerce/classic-shortcode checkout blocks.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function ( $order_id ) use ( $c ) {
-				$order = wc_get_order( $order_id );
-				if ( ! $order instanceof WC_Order ) {
-					return;
-				}
-
-				// phpcs:disable WordPress.Security.NonceVerification.Recommended
-				$cancelled = wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) );
-				$order_key = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
-				// phpcs:enable
-
-				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
-				if (
-					! $this->is_local_apm( $order->get_payment_method(), $payment_methods )
-					|| ! $cancelled
-					|| $order->get_order_key() !== $order_key
-				) {
-					return;
-				}
-
-				// Special handling for crypto payments - PayPal's crypto payment flow only sends
-				// 'cancelled=true' without the specific error codes ('processing_error' or 'payment_error')
-				// that other local APMs include.
-				if ( $order->get_payment_method() === 'ppcp-pwc' && $cancelled ) {
-					$order->update_status( 'failed', __( 'Crypto payment was cancelled or failed.', 'woocommerce-paypal-payments' ) );
-					add_filter( 'woocommerce_order_has_status', '__return_true' );
-					return;
-				}
-
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-				$error_code = wc_clean( wp_unslash( $_GET['errorcode'] ?? '' ) );
-				if ( $error_code === 'processing_error' || $error_code === 'payment_error' ) {
-					$order->update_status( 'failed', __( "The payment can't be processed because of an error.", 'woocommerce-paypal-payments' ) );
-					add_filter( 'woocommerce_order_has_status', '__return_true' );
-				}
-			}
-		);
+		add_action( 'woocommerce_before_thankyou', array( $this, 'handle_cancelled_local_apm' ) );
 
 		add_action(
 			'woocommerce_paypal_payments_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) use ( $c ) {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
-				if (
-				! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods )
-				) {
+				if ( ! $this->is_local_apm( $wc_order->get_payment_method(), $payment_methods ) ) {
 					return;
 				}
 
@@ -215,6 +179,94 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Handle cancelled local APM payments on the thank you page.
+	 *
+	 * @param int $order_id The order ID.
+	 * @return void
+	 */
+	public function handle_cancelled_local_apm( $order_id ): void {
+
+		$order = wc_get_order( $order_id );
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$cancelled = wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) );
+		$order_key = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
+		// phpcs:enable
+
+		if (
+			! $this->is_local_apm( $order->get_payment_method(), $this->payment_methods )
+			|| ! $cancelled
+			|| $order->get_order_key() !== $order_key
+		) {
+			return;
+		}
+
+		if ( $order->get_payment_method() === 'ppcp-pwc' ) {
+			$this->handle_cancelled_crypto_payment( $order, $cancelled );
+			return;
+		}
+
+		$this->handle_cancelled_standard_apm( $order );
+	}
+
+	/**
+	 * Handle cancelled crypto payments.
+	 *
+	 * @param WC_Order $order The WooCommerce order.
+	 * @param string   $cancelled The cancelled parameter value.
+	 * @return void
+	 */
+	private function handle_cancelled_crypto_payment( WC_Order $order, string $cancelled ): void {
+		if ( ! $cancelled ) {
+			return;
+		}
+
+		if ( $order->get_status() === 'on-hold' ) {
+			$order->update_status(
+				'failed',
+				__( 'Pay with Crypto payment was cancelled or failed.', 'woocommerce-paypal-payments' )
+			);
+
+			$order->add_order_note(
+				__( 'Payment was cancelled during the Pay with Crypto payment process.', 'woocommerce-paypal-payments' ),
+				1
+			);
+		}
+
+		add_filter( 'woocommerce_order_has_status', '__return_true' );
+
+		if ( ! wp_doing_ajax() && ! is_admin() ) {
+			$clean_url = isset( $_SERVER['REQUEST_URI'] )
+				? remove_query_arg( 'cancelled', esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ) )
+				: '';
+			wp_safe_redirect( home_url( $clean_url ) );
+			exit;
+		}
+	}
+
+	/**
+	 * Handle cancelled standard APM payments (non-crypto).
+	 *
+	 * @param WC_Order $order The WooCommerce order.
+	 * @return void
+	 */
+	private function handle_cancelled_standard_apm( WC_Order $order ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$error_code = wc_clean( wp_unslash( $_GET['errorcode'] ?? '' ) );
+
+		if ( $error_code === 'processing_error' || $error_code === 'payment_error' ) {
+			$order->update_status(
+				'failed',
+				__( "The payment can't be processed because of an error.", 'woocommerce-paypal-payments' )
+			);
+			add_filter( 'woocommerce_order_has_status', '__return_true' );
+		}
 	}
 
 	/**

@@ -18,7 +18,7 @@ return array(
 	},
 	'ppcp-local-apms.payment-methods'           => static function ( ContainerInterface $container ): array {
 		return array(
-			'crypto'        => array(
+			'crypto'     => array(
 				'id'         => PWCGateway::ID,
 				'countries'  => array( 'US' ),
 				'currencies' => array( 'USD' ),
@@ -73,7 +73,7 @@ return array(
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
-	'ppcp-local-apms.crypto.wc-gateway'            => static function ( ContainerInterface $container ): PWCGateway {
+	'ppcp-local-apms.crypto.wc-gateway'         => static function ( ContainerInterface $container ): PWCGateway {
 		return new PWCGateway(
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
@@ -155,7 +155,7 @@ return array(
 			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
-	'ppcp-local-apms.crypto.payment-method'        => static function ( ContainerInterface $container ): PWCPaymentMethod {
+	'ppcp-local-apms.crypto.payment-method'     => static function ( ContainerInterface $container ): PWCPaymentMethod {
 		return new PWCPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
 			$container->get( 'ppcp.asset-version' ),

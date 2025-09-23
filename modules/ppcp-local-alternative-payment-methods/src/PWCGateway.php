@@ -172,8 +172,11 @@ class PWCGateway extends WC_Payment_Gateway {
 			$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 			$amount        = $purchase_unit->amount()->to_array();
 
+			$base_return_url = $wc_order->get_checkout_order_received_url();
+
 			$experience_context = $this->experience_context_builder
-				->with_order_return_urls( $wc_order )
+				->with_custom_return_url( $base_return_url )
+				->with_custom_cancel_url( add_query_arg( 'cancelled', 'true', $base_return_url ) )
 				->with_current_locale()
 				->build()
 				->to_array();
@@ -188,7 +191,7 @@ class PWCGateway extends WC_Payment_Gateway {
 							'currency_code' => $amount['currency_code'],
 							'value'         => $amount['value'],
 						),
-						'custom_id'    => $purchase_unit->custom_id(),
+						'custom_id'    => (string) $wc_order->get_id(),
 						'invoice_id'   => $purchase_unit->invoice_id(),
 					),
 				),
@@ -208,7 +211,8 @@ class PWCGateway extends WC_Payment_Gateway {
 			$body     = json_decode( $response['body'] );
 
 			$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $body->id );
-			$wc_order->save_meta_data();
+			$wc_order->update_status( 'on-hold', __( 'Awaiting Pay with Crypto payment confirmation.', 'woocommerce-paypal-payments' ) );
+			$wc_order->save();
 
 			$payer_action_url = $this->get_payer_action_url( $body );
 
