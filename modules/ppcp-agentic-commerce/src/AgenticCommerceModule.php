@@ -21,6 +21,13 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
 class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
+	/**
+	 * A list of all REST services that this module needs to register on init.
+	 */
+	private const REST_ENDPOINT_SERVICES = array(
+		'agentic.rest.create_cart',
+	);
+
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
 	}
@@ -29,11 +36,8 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
-				$endpoints = array(
-					'create_cart' => $container->get( 'agentic.rest.create_cart' ),
-				);
-
-				foreach ( $endpoints as $endpoint ) {
+				foreach ( self::REST_ENDPOINT_SERVICES as $service_id ) {
+					$endpoint = $container->get( $service_id );
 					assert( $endpoint instanceof AgenticRestEndpoint );
 					$endpoint->register_routes();
 				}
