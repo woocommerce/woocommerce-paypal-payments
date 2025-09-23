@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors;
 
-class AgenticErrorNotFound extends AgenticError {
-	protected const ERROR_NAME  = 'NOT_FOUND';
+class AgenticErrorCartNotFound extends AgenticError {
+	protected const ERROR_NAME  = 'CART_NOT_FOUND';
 	protected const STATUS_CODE = 404;
 }
