@@ -11,49 +11,17 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 class PayPalCartResponse {
 	/**
-	 * Whether to include the payment token; only on initial cart creation.
+	 * The full cart details
+	 * todo implement this!
 	 */
-	private bool $include_token = false;
+	protected array $data = array();
 
 	/**
-	 * Whether to include order confirmation details, after successful checkout.
+	 * The payment method token, used to verify checkout.
 	 */
-	private bool $include_confirmation = false;
-
-	public function with_token(): PayPalCartResponse {
-		$clone                       = clone $this;
-		$clone->include_token        = true;
-		$clone->include_confirmation = false;
-
-		return $clone;
-	}
-
-	public function with_confirmation(): PayPalCartResponse {
-		$clone                       = clone $this;
-		$clone->include_confirmation = true;
-		$clone->include_token        = false;
-
-		return $clone;
-	}
+	protected string $token = '';
 
 	public function to_array(): array {
-		$data = array( /* ... standard cart properties ... */ );
-
-		if ( $this->include_token ) {
-			$data['payment_method'] = array(
-				'type'         => 'paypal',
-				'token'        => 'not-implemented',
-				'approval_url' => 'not-implemented',
-			);
-		}
-
-		if ( $this->include_confirmation ) {
-			$data['payment_confirmation'] = array(
-				'merchant_order_number' => 'not-implemented',
-				'order_review_page'     => 'not-implemented',
-			);
-		}
-
-		return $data;
+		return $this->data;
 	}
 }
