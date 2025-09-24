@@ -9,7 +9,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
  * When to use:
  * - Invalid cart ID provided
  */
-class AgenticErrorCartNotFound extends AgenticError {
+class CartNotFoundError extends AgenticError {
 	protected const ERROR_NAME  = 'CART_NOT_FOUND';
 	protected const STATUS_CODE = 404;
 }

@@ -9,7 +9,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
  * When to use:
  * - Required information missing, e.g., missing shipping address.
  */
-class ValidationIssueMissingField extends ValidationIssue {
+class MissingField extends ValidationIssue {
 	protected const ISSUE_CODE = 'DATA_ERROR';
 	protected const ISSUE_TYPE = 'MISSING_FIELD';
 }

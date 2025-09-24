@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
  * - Malformed request
  * - Missing mandatory fields
  */
-class AgenticErrorInvalidRequest extends AgenticError {
+class InvalidRequestError extends AgenticError {
 	protected const ERROR_NAME  = 'INVALID_REQUEST';
 	protected const STATUS_CODE = 400;
 }
