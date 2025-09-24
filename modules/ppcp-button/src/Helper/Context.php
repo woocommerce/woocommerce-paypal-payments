@@ -270,10 +270,13 @@ class Context {
 			return false;
 		}
 
-		try {
-			$subscription_status = $this->subscription_status->get_status( $subscription_id );
-		} catch ( RuntimeException | PayPalApiException $exception ) {
-			$subscription_status = '';
+		$subscription_status = '';
+		if ( $subscription_id ) {
+			try {
+				$subscription_status = $this->subscription_status->get_status( $subscription_id );
+			} catch ( RuntimeException | PayPalApiException $exception ) {
+				return false;
+			}
 		}
 
 		if ( $subscription_id &&
