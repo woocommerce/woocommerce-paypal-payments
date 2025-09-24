@@ -175,12 +175,19 @@ class ReturnUrlEndpoint {
 	}
 
 	/**
-	 * Get checkout URL with Fastlane error parameter.
+	 * Get checkout URL with additional error parameters.
 	 *
-	 * @return string
+	 * Applies the 'ppcp_return_url_error_args' filter to allow external modules to add error parameters.
+	 *
+	 * @return string Checkout URL with error query arguments, if any.
 	 */
 	private function get_checkout_url_with_error(): string {
-		return add_query_arg( 'ppcp_fastlane_error', '1', wc_get_checkout_url() );
+		$url  = wc_get_checkout_url();
+		$args = apply_filters( 'ppcp_return_url_error_args', array(), $this );
+		if ( ! empty( $args ) ) {
+			$url = add_query_arg( $args, $url );
+		}
+		return $url;
 	}
 
 	/**
