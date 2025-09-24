@@ -2,12 +2,12 @@
 /**
  * PayPal Cart Response.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Response
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Response;
 
 class PayPalCartResponse {
 	/**
