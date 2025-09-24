@@ -315,6 +315,46 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		);
 
 		/**
+		 * Restore PayPal as the chosen payment method when returning from an App Switch flow.
+		 *
+		 * Context:
+		 * --------
+		 * When Fastlane (AXO) is active, AxoModule forces the chosen payment method to
+		 * AxoGateway on every checkout page load. This causes a problem when the customer
+		 * initiated checkout with PayPal and was redirected to the PayPal app
+		 * (App Switch): after resuming, the checkout would incorrectly show AxoGateway,
+		 * leading to validation errors and failed payments.
+		 *
+		 * Solution:
+		 * ---------
+		 * This handler runs after the AxoModule one (priority 20). It checks for the
+		 * PayPal return URL query arguments that indicate an App Switch resume, and if
+		 * present, forces the chosen method back to PayPalGateway. This ensures the
+		 * resumed PayPal flow continues as expected.
+		 */
+		add_action(
+			'template_redirect',
+			function () use ( $container ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! isset( $_GET[ ReturnUrlFactory::PCP_QUERY_ARG ] ) ) {
+					return;
+				}
+
+				if ( is_checkout_pay_page() ) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! isset( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) ) {
+					return;
+				}
+
+				WC()->session->set( 'chosen_payment_method', PayPalGateway::ID );
+			},
+			20
+		);
+
+		/**
 		 * By default, WC asks to log in when opening a non-guest Pay for order page as a guest,
 		 * so we disable this for cross-browser AppSwitch.
 		 *
