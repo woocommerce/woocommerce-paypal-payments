@@ -59,14 +59,20 @@ abstract class AgenticSchema {
 	/**
 	 * Factory method to create a new object from the key-value array.
 	 *
-	 * @param array $data Key-value array.
+	 * @param array         $data      Key-value array.
+	 * @param callable|null $add_issue The callback to add a new ValidationIssue; allows
+	 *                                 propagation of issues to the parent instance.
 	 * @return static New instance, or error details.
 	 */
-	final public static function from_array( array $data ): self {
-		$instance  = new static( $data );
-		$add_issue = static function ( ValidationIssue $issue ) use ( $instance ): void {
-			$instance->validation_issues[] = $issue;
-		};
+	final public static function from_array( array $data, ?callable $add_issue = null ): self {
+		$instance = new static( $data );
+
+		if ( null === $add_issue ) {
+			$add_issue = static function ( ValidationIssue $issue ) use ( $instance ): void {
+				$instance->validation_issues[] = $issue;
+			};
+		}
+
 		$instance->parse_fields( $data, $add_issue );
 
 		return $instance;
