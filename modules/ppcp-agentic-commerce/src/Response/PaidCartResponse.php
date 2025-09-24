@@ -2,22 +2,24 @@
 /**
  * PayPal Cart Response (cart checkout confirmed).
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ * @package WooCommerce\PayPalCommerce\AgenticCommerce\Response
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
-class PayPalPaidCartResponse extends PayPalCartResponse {
+class PaidCartResponse extends CartResponse {
 	/**
 	 * @var WC_Order|null The WooCommerce order which was created during checkout.
 	 */
 	protected ?WC_Order $wc_order = null;
 
-	public function __construct( WC_Order $wc_order ) {
+	public function __construct( PayPalCart $cart, WC_Order $wc_order ) {
+		parent::__construct( $cart );
 		$this->wc_order = $wc_order;
 	}
 
