@@ -157,7 +157,7 @@ return array(
 	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ): array {
 		$dcc_allowed_country_currency_matrix = $container->get( 'api.dcc-supported-country-currency-matrix' );
 		$matrix = array(
-			'US' => $dcc_allowed_country_currency_matrix['US']
+			'US' => $dcc_allowed_country_currency_matrix['US'],
 		);
 
 		if ( $container->get( 'axo.uk.enabled' ) ) {
