@@ -16,8 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      latest_tag: ${{ steps.update_refs.outputs.tag }}
     steps:
       - name: Update weekly tag commit ref
+        id: update_refs
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -34,6 +37,13 @@ jobs:
               sha: branchData.data.commit.sha,
             });
 
+            const latestRelease = await github.rest.repos.getLatestRelease({
+              ...context.repo
+            });
+
+            const tagName = latestRelease.data.tag_name;
+            core.setOutput('tag', tagName);
+
   build:
     if: github.repository_owner == 'woocommerce'
     name: Build package
@@ -43,7 +53,7 @@ jobs:
       PHP_VERSION: 7.4
       NODE_VERSION: 22
       PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
-      PLUGIN_VERSION: weekly
+      PLUGIN_VERSION: ${{ needs.update-tag.outputs.latest_tag }}-weekly
       PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
       ARCHIVE_NAME: woocommerce-paypal-payments
       COMPILE_ASSETS_ARGS: '-vv --env=root'
