@@ -743,7 +743,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 */
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
-			static function (string $installed_plugin_version) use ( $container ) {
+			static function ( string $installed_plugin_version ) use ( $container ) {
 				if ( '3.1.0' !== $installed_plugin_version ) {
 					return;
 				}
@@ -761,8 +761,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$payment_settings->toggle_method_state( CreditCardGateway::ID, true );
 			}
 		);
-
-
 
 		return true;
 	}
