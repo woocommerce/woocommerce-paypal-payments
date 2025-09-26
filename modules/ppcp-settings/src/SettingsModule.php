@@ -58,6 +58,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
  * Class SettingsModule
@@ -76,7 +77,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 * is used to disable the new UI, it will override all other conditions.
 		 */
 		if ( ! apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
 			getenv( 'PCP_SETTINGS_ENABLED' ) !== '1'
 		) ) {
@@ -471,7 +472,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 *
 		 * Ensures that only enabled PayPal payment gateways are displayed.
 		 *
-		 * @hook woocommerce_admin_field_payment_gateways
+		 * @hook     woocommerce_admin_field_payment_gateways
 		 * @priority 5 Allows modifying the registered gateways before they are displayed.
 		 */
 		add_action(
@@ -737,9 +738,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 * This ensures continuity of payment functionality for affected users during
 		 * the upgrade process without requiring manual configuration.
 		 *
-		 * @param string $installed_plugin_version The previous version being upgraded from.
-		 *
 		 * @since 3.1.1
+		 * @param string $installed_plugin_version The previous version being upgraded from.
 		 */
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
@@ -760,6 +760,31 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 				$payment_settings->toggle_method_state( CreditCardGateway::ID, true );
 				$payment_settings->save();
+			}
+		);
+
+		/**
+		 * Implement the mutually exclusive BCDC or ACDC rule:
+		 * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
+		 * This effectively hides the black Standard Card button from the express payment block
+		 * and the PayPal smart button stack in classic checkout.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
+			static function ( array $disable_funding ) use ( $container ) {
+				// Already disabled, no correction needed.
+				if ( in_array( 'card', $disable_funding, true ) ) {
+					return $disable_funding;
+				}
+
+				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+				if ( ! $dcc_configuration->is_bcdc_enabled() ) {
+					$disable_funding[] = 'card';
+				}
+
+				return $disable_funding;
 			}
 		);
 
