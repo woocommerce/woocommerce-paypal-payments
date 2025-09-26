@@ -443,8 +443,18 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
-				// If the merchant has ACDC eligibility, remove the Card-Button gateway.
-				if ( $dcc_product_status->is_active() ) {
+				$general_settings = $container->get( 'settings.data.general' );
+				assert( $general_settings instanceof GeneralSettings );
+
+				$merchant_data    = $general_settings->get_merchant_data();
+				$merchant_country = $merchant_data->merchant_country;
+
+				/**
+				 * If the merchant has ACDC eligibility, remove the Card-Button gateway.
+				 * However, Mexico is a special case that offers ACDC merchants the legacy workflow
+				 * of choosing between the Standard Card button and the embedded ACDC integration.
+				 */
+				if ( 'MX' !== $merchant_country && $dcc_product_status->is_active() ) {
 					$group = array_filter( $group, static fn( $item ) => $item['id'] !== CardButtonGateway::ID );
 				}
 
