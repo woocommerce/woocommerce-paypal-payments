@@ -142,9 +142,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						assert( $dcc_product_status instanceof DCCProductStatus );
 						$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
 						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
-						$card_fields_eligible = $container->get( 'card-fields.eligible' );
 
-						$acdc_merchant     = $dcc_product_status->is_active() && $card_fields_eligible;
+						// Check the merchant seller-status, using PayPal's API response.
+						$acdc_merchant = $dcc_product_status->is_active();
+
+						// BCDC button is displayed when "card" funding is enabled and ACDC is not active.
 						$using_bcdc_button = ! $dcc_configuration->is_acdc_enabled() && ! in_array( 'card', $disabled_funding, true );
 					} catch ( \Throwable $exception ) {
 						$acdc_merchant     = false;
