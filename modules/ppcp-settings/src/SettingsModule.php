@@ -129,6 +129,29 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						return $notices;
 					}
 
+					/**
+					 * Try to determine if the merchant is eligible for ACDC but uses the BCDC button.
+					 * In that case, migration will switch from BCDC to ACDC, and we want to inform the
+					 * merchant beforehand.
+					 */
+					try {
+						$settings = $container->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+						$disabled_funding   = $settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array();
+						$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+						assert( $dcc_product_status instanceof DCCProductStatus );
+						$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+						assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+						$card_fields_eligible = $container->get( 'card-fields.eligible' );
+
+						$acdc_merchant     = $dcc_product_status->is_active() && $card_fields_eligible;
+						$using_bcdc_button = ! $dcc_configuration->is_acdc_enabled() && ! in_array( 'card', $disabled_funding, true );
+					} catch ( \Throwable $exception ) {
+						$acdc_merchant     = false;
+						$using_bcdc_button = false;
+					}
+					$notice_type = 'info';
+
 					$message = sprintf(
 					// translators: %1$s is the URL for the startup guide.
 						__(
@@ -138,7 +161,14 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
 					);
 
-					$notices[] = new Message( $message, 'info', false, 'ppcp-notice-wrapper' );
+					if ( $acdc_merchant && $using_bcdc_button ) {
+						$notice_type       = 'warning';
+						$migration_warning = __( 'ℹ️ After upgrading, your Standard Card button will automatically be replaced with Advanced Card Processing (no setup required). Advanced Card Processing provides improved checkout performance and a better customer experience.', 'woocommerce-paypal-payments' );
+
+						$message .= '<br/><br/>' . $migration_warning;
+					}
+
+					$notices[] = new Message( $message, $notice_type, false, 'ppcp-notice-wrapper' );
 
 					$is_paylater_messaging_force_enabled_feature_flag_enabled = apply_filters(
 					// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
