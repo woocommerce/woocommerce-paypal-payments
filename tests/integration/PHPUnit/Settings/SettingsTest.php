@@ -21,9 +21,10 @@ class SettingsTest extends TestCase {
 	protected function setUp(): void {
 		$commonSettingsModel = $this->createMock( AbstractDataModel::class );
 		$commonSettingsModel->method( 'to_array' )->willReturn( [
-			'use_sandbox'   => 'yes',
-			'client_id'     => 'abc123',
-			'client_secret' => 'secret123',
+			'use_sandbox'               => 'yes',
+			'client_id'                 => 'abc123',
+			'client_secret'             => 'secret123',
+			'pay_later_messaging_enabled' => true,  // Add the setting that the test is looking for
 		] );
 
 		$generalSettingsModel = $this->createMock( AbstractDataModel::class );
@@ -37,8 +38,9 @@ class SettingsTest extends TestCase {
 			new SettingsMap(
 				$commonSettingsModel,
 				[
-					'client_id'     => 'client_id',
-					'client_secret' => 'client_secret',
+					'client_id'                   => 'client_id',
+					'client_secret'               => 'client_secret',
+					'pay_later_messaging_enabled' => 'pay_later_messaging_enabled', // Map the setting
 				]
 			),
 			new SettingsMap(
@@ -81,5 +83,5 @@ class SettingsTest extends TestCase {
 
 		$this->settings->get( 'invalid_key' );
 	}
-}
 
+}
