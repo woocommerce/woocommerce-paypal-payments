@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.1.0
+Stable tag: 3.1.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
