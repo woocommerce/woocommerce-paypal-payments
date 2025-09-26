@@ -129,6 +129,9 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 						return $notices;
 					}
 
+					// phpcs:ignore -- yes, this code is intentionally and temporarily commented out.
+					/*
+					# PCP-5357 - This notification is temporarily disabled
 					$message = sprintf(
 					// translators: %1$s is the URL for the startup guide.
 						__(
@@ -139,6 +142,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					);
 
 					$notices[] = new Message( $message, 'info', false, 'ppcp-notice-wrapper' );
+					*/
 
 					$is_paylater_messaging_force_enabled_feature_flag_enabled = apply_filters(
 					// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
