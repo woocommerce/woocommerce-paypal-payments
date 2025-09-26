@@ -732,7 +732,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 * The migration specifically targets merchants who:
 		 * - Are upgrading from exactly version 3.1.0
 		 * - Are ACDC-eligible
-		 * - Have the BCDC enabled in their WooCommerce settings
+		 * - Have the BCDC enabled
 		 *
 		 * This ensures continuity of payment functionality for affected users during
 		 * the upgrade process without requiring manual configuration.
