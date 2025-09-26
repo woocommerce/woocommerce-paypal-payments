@@ -432,6 +432,26 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Remove the BCDC payment gateway from the settings page for ACDC merchants.
+		 * This filter corrects the behavior in branded-only mode, where the plugin
+		 * incorrectly classifies some ACDC merchants as BCDC.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_gateway_group_paypal',
+			static function ( array $group ) use ( $container ): array {
+				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+				assert( $dcc_product_status instanceof DCCProductStatus );
+
+				// If the merchant has ACDC eligibility, remove the Card-Button gateway.
+				if ( $dcc_product_status->is_active() ) {
+					$group = array_filter( $group, static fn( $item ) => $item['id'] !== CardButtonGateway::ID );
+				}
+
+				return $group;
+			}
+		);
+
 		add_filter(
 			'woocommerce_payment_gateways',
 			/**
