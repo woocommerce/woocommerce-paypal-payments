@@ -759,6 +759,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				assert( $payment_settings instanceof PaymentSettings );
 
 				$payment_settings->toggle_method_state( CreditCardGateway::ID, true );
+				$payment_settings->save();
 			}
 		);
 
