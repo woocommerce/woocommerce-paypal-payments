@@ -382,6 +382,8 @@ $services = array(
 	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
 		$c->get( 'wcgateway.settings' ),
 		$c->get( 'settings.data.payment' ),
+		$c->get( 'api.helpers.dccapplies' ),
+		$c->get( 'wcgateway.helper.dcc-product-status' ),
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
