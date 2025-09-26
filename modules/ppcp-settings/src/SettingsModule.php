@@ -755,45 +755,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		);
 
 		/**
-		 * Migrates BCDC settings for existing ACDC merchants upgrading from version 3.1.0.
-		 *
-		 * This migration hook ensures that existing merchants who upgrade from version 3.1.0
-		 * have their ACDC payment method automatically enabled
-		 *
-		 * The migration specifically targets merchants who:
-		 * - Are upgrading from exactly version 3.1.0
-		 * - Are ACDC-eligible
-		 * - Have the BCDC enabled
-		 *
-		 * This ensures continuity of payment functionality for affected users during
-		 * the upgrade process without requiring manual configuration.
-		 *
-		 * @since 3.1.1
-		 * @param string $installed_plugin_version The previous version being upgraded from.
-		 */
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
-			static function ( string $installed_plugin_version ) use ( $container ) {
-				if ( '3.1.0' !== $installed_plugin_version ) {
-					return;
-				}
-
-				$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
-				assert( $payment_settings_migration instanceof PaymentSettingsMigration );
-
-				if ( ! $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() ) {
-					return;
-				}
-
-				$payment_settings = $container->get( 'settings.data.payment' );
-				assert( $payment_settings instanceof PaymentSettings );
-
-				$payment_settings->toggle_method_state( CreditCardGateway::ID, true );
-				$payment_settings->save();
-			}
-		);
-
-		/**
 		 * Implement the mutually exclusive BCDC or ACDC rule:
 		 * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
 		 * This effectively hides the black Standard Card button from the express payment block
