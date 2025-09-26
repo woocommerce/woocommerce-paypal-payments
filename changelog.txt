@@ -2,8 +2,8 @@
 
 = 3.1.1 - 2025-09-26 =
 * Fix - Fix BCDC in branded-only mode #3699
-* Fix - Fix BCDC migration logic for ACDC merchants #3702
 * Fix - Restore BCDC button for ACDC merchants in legacy UI #3703
+* Fix - Temporarily pause new UI upgrades while improving migration experience #3705
 
 = 3.1.0 - 2025-09-02 =
 * Enhancement - Fastlane now available for British & Australian merchants #3589
