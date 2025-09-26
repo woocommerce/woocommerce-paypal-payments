@@ -156,6 +156,11 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
+= 3.1.1 - 2025-09-27 =
+* Fix - Fix BCDC in branded-only mode #3699
+* Fix - Restore BCDC button for ACDC merchants in legacy UI #3703
+* Change - Remove all migration UX/notifications #3705
+
 = 3.1.0 - 2025-09-02 =
 * Enhancement - Fastlane now available for British & Australian merchants #3589
 * Enhancement - Pay Later messaging now auto-enabled for eligible merchants based on the STAY UPDATED preference. Review the Pay Later settings to customize or disable. #3600
