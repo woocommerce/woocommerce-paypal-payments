@@ -108,7 +108,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	 *
 	 * @return bool True if BCDC is enabled for ACDC merchant, false otherwise.
 	 */
-	protected function is_bcdc_enabled_for_acdc_merchant(): bool {
+	public function is_bcdc_enabled_for_acdc_merchant(): bool {
 		$is_acdc_merchant = $this->dcc_applies->for_country_currency() && $this->dcc_status->is_active();
 		if ( ! $is_acdc_merchant ) {
 			return false;
