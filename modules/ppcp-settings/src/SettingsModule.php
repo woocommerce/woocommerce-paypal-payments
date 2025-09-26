@@ -432,11 +432,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		/**
-		 * Remove the BCDC payment gateway from the settings page for ACDC merchants.
-		 * This filter corrects the behavior in branded-only mode, where the plugin
-		 * incorrectly classifies some ACDC merchants as BCDC.
-		 */
+		// Filter out the Standard Card button settings for ACDC merchants.
 		add_filter(
 			'woocommerce_paypal_payments_gateway_group_paypal',
 			static function ( array $group ) use ( $container ): array {
@@ -449,11 +445,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$merchant_data    = $general_settings->get_merchant_data();
 				$merchant_country = $merchant_data->merchant_country;
 
-				/**
-				 * If the merchant has ACDC eligibility, remove the Card-Button gateway.
-				 * However, Mexico is a special case that offers ACDC merchants the legacy workflow
-				 * of choosing between the Standard Card button and the embedded ACDC integration.
-				 */
+				// If the merchant has ACDC eligibility, remove the Card-Button gateway.
 				if ( 'MX' !== $merchant_country && $dcc_product_status->is_active() ) {
 					$group = array_filter( $group, static fn( $item ) => $item['id'] !== CardButtonGateway::ID );
 				}
