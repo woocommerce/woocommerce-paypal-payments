@@ -84,7 +84,7 @@ class DCCProductStatus extends ProductStatus {
 		 * in the legacy UI to maintain BCDC functionality in the new UI, regardless
 		 * of ACDC eligibility API responses.
 		 */
-		$bcdc_override = apply_filters( 'woocommerce_ppcp_override_acdc_status_with_bcdc', null );
+		$bcdc_override = apply_filters( 'woocommerce_paypal_payments_override_acdc_status_with_bcdc', null );
 		if ( true === $bcdc_override ) {
 			// When overriding, short-circuit and mark ACDC as not available.
 			return false;

@@ -240,7 +240,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		$this->apply_branded_only_limitations( $container );
 
 		add_filter(
-			'woocommerce_ppcp_override_acdc_status_with_bcdc',
+			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
 			static function ( ?bool $use_bcdc ) use ( $container ) {
 				$check_override = $container->get( 'settings.migration.bcdc-override-check' );
 				assert( is_callable( $check_override ) );
