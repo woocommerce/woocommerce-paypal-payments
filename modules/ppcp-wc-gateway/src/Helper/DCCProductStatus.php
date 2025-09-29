@@ -77,6 +77,15 @@ class DCCProductStatus extends ProductStatus {
 
 	/** {@inheritDoc} */
 	protected function check_local_state(): ?bool {
+		/**
+		 * Allows other modules to disable the ACDC eligibility of this merchant by returning false.
+		 */
+		$bcdc_override = apply_filters( 'woocommerce_ppcp_override_acdc_status_with_bcdc', null );
+		if ( true === $bcdc_override ) {
+			// When overriding, short-circuit and mark ACDC as not available.
+			return false;
+		}
+
 		if ( $this->cache->has( self::DCC_STATUS_CACHE_KEY ) ) {
 			return wc_string_to_bool( $this->cache->get( self::DCC_STATUS_CACHE_KEY ) );
 		}
