@@ -446,28 +446,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		// Filter out the Standard Card button settings for ACDC merchants.
-		add_filter(
-			'woocommerce_paypal_payments_gateway_group_paypal',
-			static function ( array $group ) use ( $container ): array {
-				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
-				assert( $dcc_product_status instanceof DCCProductStatus );
-
-				$general_settings = $container->get( 'settings.data.general' );
-				assert( $general_settings instanceof GeneralSettings );
-
-				$merchant_data    = $general_settings->get_merchant_data();
-				$merchant_country = $merchant_data->merchant_country;
-
-				// If the merchant has ACDC eligibility, remove the Card-Button gateway.
-				if ( 'MX' !== $merchant_country && $dcc_product_status->is_active() ) {
-					$group = array_filter( $group, static fn( $item ) => $item['id'] !== CardButtonGateway::ID );
-				}
-
-				return $group;
-			}
-		);
-
 		add_filter(
 			'woocommerce_payment_gateways',
 			/**
