@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -26,6 +25,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Handles migration of payment settings.
  */
 class PaymentSettingsMigration implements SettingsMigrationInterface {
+
+	public const OPTION_NAME_BCDC_MIGRATION_OVERRIDE = 'woocommerce_paypal_payments_bcdc_migration_override';
 
 	protected Settings $settings;
 	protected PaymentSettings $payment_settings;
@@ -75,7 +76,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		}
 
 		if ( $this->is_bcdc_enabled_for_acdc_merchant() ) {
-			$this->payment_settings->toggle_method_state( CreditCardGateway::ID, true );
+			update_option( self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
 		}
 
 		foreach ( $this->map() as $old_key => $method_name ) {
