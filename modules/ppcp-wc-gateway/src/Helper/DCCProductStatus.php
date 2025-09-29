@@ -78,7 +78,11 @@ class DCCProductStatus extends ProductStatus {
 	/** {@inheritDoc} */
 	protected function check_local_state(): ?bool {
 		/**
-		 * Allows other modules to disable the ACDC eligibility of this merchant by returning false.
+		 * Force BCDC (Standard Cards) for merchants migrated from legacy UI.
+		 *
+		 * This filter allows migrated merchants that used Standard Card buttons
+		 * in the legacy UI to maintain BCDC functionality in the new UI, regardless
+		 * of ACDC eligibility API responses.
 		 */
 		$bcdc_override = apply_filters( 'woocommerce_ppcp_override_acdc_status_with_bcdc', null );
 		if ( true === $bcdc_override ) {
