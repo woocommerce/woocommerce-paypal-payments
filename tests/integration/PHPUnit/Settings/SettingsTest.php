@@ -24,7 +24,7 @@ class SettingsTest extends TestCase {
 			'use_sandbox'               => 'yes',
 			'client_id'                 => 'abc123',
 			'client_secret'             => 'secret123',
-			'pay_later_messaging_enabled' => true,  // Add the setting that the test is looking for
+			'pay_later_messaging_enabled' => true,
 		] );
 
 		$generalSettingsModel = $this->createMock( AbstractDataModel::class );
@@ -40,7 +40,7 @@ class SettingsTest extends TestCase {
 				[
 					'client_id'                   => 'client_id',
 					'client_secret'               => 'client_secret',
-					'pay_later_messaging_enabled' => 'pay_later_messaging_enabled', // Map the setting
+					'pay_later_messaging_enabled' => 'pay_later_messaging_enabled',
 				]
 			),
 			new SettingsMap(
