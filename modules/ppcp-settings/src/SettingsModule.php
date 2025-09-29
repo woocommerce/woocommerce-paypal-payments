@@ -239,6 +239,20 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		$this->apply_branded_only_limitations( $container );
 
+		add_filter(
+			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
+			static function ( ?bool $use_bcdc ) use ( $container ) {
+				$check_override = $container->get( 'settings.migration.bcdc-override-check' );
+				assert( is_callable( $check_override ) );
+
+				if ( $check_override() ) {
+					$use_bcdc = true;
+				}
+
+				return $use_bcdc;
+			}
+		);
+
 		add_action(
 			'admin_enqueue_scripts',
 			function ( string $hook_suffix ) use ( $container ): void {
