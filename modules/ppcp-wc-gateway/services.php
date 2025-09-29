@@ -2232,7 +2232,7 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-settings-migration-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				false, // # PCP-5357 temporarily disabled - SettingsModule::should_use_the_old_ui(),
+				SettingsModule::should_use_the_old_ui(),
 				new InboxNoteAction(
 					'switch_to_new_settings',
 					__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
