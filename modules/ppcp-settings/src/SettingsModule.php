@@ -248,40 +248,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		$this->apply_branded_only_limitations( $container );
 
-		/**
-		 * Handle BCDC migration override flag for merchants migrated from legacy UI.
-		 *
-		 * This action runs once on init when the BCDC migration override flag is set,
-		 * indicating that a ACDC eligible merchant was using Standard Card buttons (BCDC) in the
-		 * legacy UI and has migrated to the new UI. It ensures proper BCDC eligibility
-		 * by manipulating ACDC cache and settings to force BCDC classification.
-		 *
-		 * The override flag is created during UI migration when we
-		 * detect evidence of BCDC usage in legacy settings, allowing merchants to
-		 * maintain their Standard Card button functionality in the new UI regardless
-		 * of country or ACDC eligibility responses.
-		 */
-		add_action(
-			'init',
-			static function () use ( $container ): void {
-				if ( ! get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE ) ) {
-					return;
-				}
-
-				$settings = $container->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				$dcc_status_cache = $container->get( 'dcc.status-cache' );
-				assert( $dcc_status_cache instanceof Cache );
-
-				$dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
-				$settings->set( DCCProductStatus::SETTINGS_KEY, DCCProductStatus::SETTINGS_VALUE_DISABLED );
-				$settings->persist();
-
-				$dcc_status_cache->set( DCCProductStatus::DCC_STATUS_CACHE_KEY, DCCProductStatus::SETTINGS_VALUE_DISABLED, MONTH_IN_SECONDS );
-			}
-		);
-
 		add_action(
 			'admin_enqueue_scripts',
 			function ( string $hook_suffix ) use ( $container ): void {

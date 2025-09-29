@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
@@ -33,6 +34,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	protected DccApplies $dcc_applies;
 	protected DCCProductStatus $dcc_status;
 	protected CardPaymentsConfiguration $dcc_configuration;
+	protected Cache $dcc_status_cache;
 
 	/**
 	 * The list of local apm methods.
@@ -47,6 +49,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		DccApplies $dcc_applies,
 		DCCProductStatus $dcc_status,
 		CardPaymentsConfiguration $dcc_configuration,
+		Cache $dcc_status_cache,
 		array $local_apms
 	) {
 		$this->settings          = $settings;
@@ -54,6 +57,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		$this->dcc_applies       = $dcc_applies;
 		$this->dcc_status        = $dcc_status;
 		$this->local_apms        = $local_apms;
+		$this->dcc_status_cache = $dcc_status_cache;
 		$this->dcc_configuration = $dcc_configuration;
 	}
 
@@ -77,6 +81,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 
 		if ( $this->is_bcdc_enabled_for_acdc_merchant() ) {
 			update_option( self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
+			$this->handle_bcdc_migration_override();
 		}
 
 		foreach ( $this->map() as $old_key => $method_name ) {
@@ -125,5 +130,24 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 
 		$disabled_funding = $this->settings->has( 'disable_funding' ) ? $this->settings->get( 'disable_funding' ) : array();
 		return ! in_array( 'card', $disabled_funding, true );
+	}
+
+	/**
+	 * Handles BCDC migration override processing for merchants migrated from legacy UI.
+	 *
+	 * This method runs during settings migration to ensure proper BCDC eligibility
+	 * for ACDC-eligible merchants who were using Standard Card buttons (BCDC) in the
+	 * legacy UI. It forces BCDC classification by manipulating ACDC cache and settings
+	 * regardless of country or ACDC eligibility responses.
+	 *
+	 * Clears existing ACDC status cache, disables ACDC, and rebuilds cache to ensure
+	 * migrated merchants maintain their Standard Card button functionality in the new UI.
+	 */
+	protected function handle_bcdc_migration_override(): void {
+		$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
+		$this->settings->set( DCCProductStatus::SETTINGS_KEY, DCCProductStatus::SETTINGS_VALUE_DISABLED );
+		$this->settings->persist();
+
+		$this->dcc_status_cache->set( DCCProductStatus::DCC_STATUS_CACHE_KEY, DCCProductStatus::SETTINGS_VALUE_DISABLED, MONTH_IN_SECONDS );
 	}
 }
