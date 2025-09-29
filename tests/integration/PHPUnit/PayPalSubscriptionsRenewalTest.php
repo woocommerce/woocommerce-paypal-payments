@@ -9,7 +9,6 @@ use WooCommerce\PayPalCommerce\PayPalSubscriptions\RenewalHandler;
 /**
  * @group subscriptions
  * @group subscription-paypal
- * @group skip-ci
  */
 class PayPalSubscriptionsRenewalTest extends TestCase
 {

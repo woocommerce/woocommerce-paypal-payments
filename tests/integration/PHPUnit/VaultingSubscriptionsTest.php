@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 /**
  * @group subscriptions
  * @group subscription-vaulting
- * @group skip-ci
  */
 class VaultingSubscriptionsTest extends IntegrationMockedTestCase {
 	public function setUp(): void {

@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  * Only third-party PayPal API calls are mocked.
  *
  * @group transactions
- * @group skip-ci
  */
 class OxxoTransactionTest extends IntegrationMockedTestCase
 {
