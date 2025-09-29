@@ -24,6 +24,7 @@ use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -60,16 +61,20 @@ class WooCommerceOrderCreator {
 
 	protected CartDataFactory $cart_data_factory;
 
+	protected $shipping_factory;
+
 	public function __construct(
 		FundingSourceRenderer $funding_source_renderer,
 		SessionHandler $session_handler,
 		SubscriptionHelper $subscription_helper,
-		CartDataFactory $cart_data_factory
+		CartDataFactory $cart_data_factory,
+		ShippingFactory $shipping_factory
 	) {
 		$this->funding_source_renderer = $funding_source_renderer;
 		$this->session_handler         = $session_handler;
 		$this->subscription_helper     = $subscription_helper;
 		$this->cart_data_factory       = $cart_data_factory;
+		$this->shipping_factory        = $shipping_factory;
 	}
 
 	/**
@@ -198,6 +203,13 @@ class WooCommerceOrderCreator {
 		$shipping_address = null;
 		$billing_address  = null;
 		$shipping_options = null;
+		$wc_customer = WC()->customer;
+
+		if ( ! $shipping && $needs_shipping ) {
+			if ( $wc_customer instanceof WC_Customer ) {
+				$shipping = $this->shipping_factory->from_wc_customer( $wc_customer, true );
+			}
+		}
 
 		if ( $payer ) {
 			$address     = $payer->address();
@@ -205,7 +217,6 @@ class WooCommerceOrderCreator {
 			$payer_phone = $payer->phone();
 
 			$wc_email    = null;
-			$wc_customer = WC()->customer;
 			if ( $wc_customer instanceof WC_Customer ) {
 				$wc_email = $wc_customer->get_email();
 			}

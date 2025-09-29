@@ -1471,6 +1471,10 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'intent'           => $intent,
 		);
 
+		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+			$params['debug'] = true;
+		}
+
 		if (
 			$this->settings->has( 'subscriptions_mode' )
 			&& $this->settings->get( 'subscriptions_mode' ) === 'vaulting_api'
