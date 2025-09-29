@@ -107,9 +107,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 */
 	public function run( ContainerInterface $container ): bool {
 		if ( self::should_use_the_old_ui() ) {
-			// phpcs:ignore -- yes, this code is intentionally and temporarily commented out.
-			/*
-			# PCP-5357 - This button is temporarily disabled
 			add_filter(
 				'woocommerce_paypal_payments_inside_settings_page_header',
 				static fn(): string => sprintf(
@@ -118,7 +115,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					esc_html__( 'This action will permanently switch to the new settings interface and cannot be undone', 'woocommerce-paypal-payments' )
 				)
 			);
-			*/
 
 			/**
 			 * Adds notes to old UI settings screens.
