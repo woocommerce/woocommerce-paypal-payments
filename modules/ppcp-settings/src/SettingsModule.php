@@ -278,7 +278,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$settings->set( DCCProductStatus::SETTINGS_KEY, DCCProductStatus::SETTINGS_VALUE_DISABLED );
 				$settings->persist();
 
-				$dcc_status_cache->set( DCCProductStatus::DCC_STATUS_CACHE_KEY, DCCProductStatus::SETTINGS_VALUE_ENABLED, MONTH_IN_SECONDS );
+				$dcc_status_cache->set( DCCProductStatus::DCC_STATUS_CACHE_KEY, DCCProductStatus::SETTINGS_VALUE_DISABLED, MONTH_IN_SECONDS );
 			}
 		);
 
