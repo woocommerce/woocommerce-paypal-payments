@@ -39,7 +39,6 @@ use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
-use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -59,6 +58,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use Throwable;
 
 /**
  * Class SettingsModule
@@ -239,6 +239,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		$this->apply_branded_only_limitations( $container );
 
+		/**
+		 * Override ACDC status with BCDC for eligible merchants.
+		 *
+		 * This filter determines whether to force BCDC (Standard Card buttons) classification
+		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+		 *
+		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
+		 * @return bool|null True to force BCDC classification, false/null otherwise.
+		 */
 		add_filter(
 			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
 			static function ( ?bool $use_bcdc ) use ( $container ) {
@@ -250,6 +259,46 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				}
 
 				return $use_bcdc;
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
+			 * Set the BCDC override flag during plugin update, if the merchant has enabled BCDC
+			 * in the legacy settings.
+			 *
+			 * Corrects the BCDC flag for already-migrated merchants, as the previous migration logic
+			 * did not create this flag.  This ensures merchants who migrated before the override flag
+			 * implementation don't lose their Standard Card button functionality.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				// Only run this migration logic when updating from version 3.1.1 or older.
+				if ( $previous_version && version_compare( $previous_version, '3.1.1', 'gt' ) ) {
+					return;
+				}
+
+				try {
+					$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
+					assert( $payment_settings_migration instanceof PaymentSettingsMigration );
+
+					if ( ! $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() ) {
+						return;
+					}
+
+					$payment_settings = $container->get( 'settings.data.payment' );
+					assert( $payment_settings instanceof PaymentSettings );
+
+					// One-time fix: Set override flag for already-migrated merchants with BCDC evidence.
+					update_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
+					$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
+				} catch ( Throwable $error ) {
+					// Something failed - ignore the error and assume there is no migration data.
+					return;
+				}
 			}
 		);
 
