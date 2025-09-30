@@ -262,19 +262,19 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		/**
-		 * Set the BCDC override flag during plugin update, if the merchant has enabled BCDC
-		 * in the legacy settings.
-		 *
-		 * Corrects the BCDC flag for already-migrated merchants, as the previous migration logic
-		 * did not create this flag.  This ensures merchants who migrated before the override flag
-		 * implementation don't lose their Standard Card button functionality.
-		 *
-		 * @param false|string $previous_version The previously installed plugin version,
-		 *                                       or false on first installation.
-		 */
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
+			/**
+			 * Set the BCDC override flag during plugin update, if the merchant has enabled BCDC
+			 * in the legacy settings.
+			 *
+			 * Corrects the BCDC flag for already-migrated merchants, as the previous migration logic
+			 * did not create this flag.  This ensures merchants who migrated before the override flag
+			 * implementation don't lose their Standard Card button functionality.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
 			static function ( $previous_version ) use ( $container ): void {
 				// Only run this migration logic when updating from version 3.1.1 or older.
 				if ( $previous_version && version_compare( $previous_version, '3.1.1', 'gt' ) ) {
