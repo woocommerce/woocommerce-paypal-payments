@@ -1,5 +1,11 @@
 *** Changelog ***
 
+= 3.1.2 - 2025-09-30 =
+* Change - Make migration available again #3710
+* Fix - Override flag to keep BCDC for ACDC merchants during migration #3712
+* Fix - Prevent rare fatal error when shipping address is missing #3655
+* In branded-only mode, every merchant has BCDC #3713
+
 = 3.1.1 - 2025-09-27 =
 * Fix - Fix BCDC in branded-only mode #3699
 * Fix - Restore BCDC button for ACDC merchants in legacy UI #3703
