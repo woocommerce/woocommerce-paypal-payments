@@ -49,7 +49,6 @@ use WooCommerce\PayPalCommerce\Settings\Service\AuthenticationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\ActivationDetector;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\ConnectionUrlGenerator;
-use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
 use WooCommerce\PayPalCommerce\Settings\Service\MerchantCapabilities;
@@ -623,31 +622,10 @@ $services = array(
 			'installments' => $capabilities['installments'], // Installments eligibility.
 		);
 		return new FeaturesDefinition(
-			$container->get( 'settings.service.features_eligibilities' ),
+			$container->get( 'wcgateway.feature-eligibility.list' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
 			$container->get( 'settings.data.settings' )
-		);
-	},
-	'settings.service.features_eligibilities'             => static function ( ContainerInterface $container ): FeaturesEligibilityService {
-
-		$messages_apply = $container->get( 'button.helper.messages-apply' );
-		assert( $messages_apply instanceof MessagesApply );
-		$pay_later_eligible = $messages_apply->for_country();
-
-		// TODO: Variable "merchant_country" contains "shop-country". Which is correct?
-		$merchant_country = $container->get( 'api.shop.country' );
-		$ineligible_countries = array( 'RU', 'BR', 'JP' );
-		$apm_eligible = ! in_array( $merchant_country, $ineligible_countries, true );
-
-		return new FeaturesEligibilityService(
-			$container->get( 'save-payment-methods.eligible' ), // Save PayPal and Venmo eligibility.
-			$container->get( 'card-fields.eligibility.check' ), // Advanced credit and debit cards eligibility.
-			$apm_eligible, // Alternative payment methods eligibility.
-			$container->get( 'googlepay.eligibility.check' ), // Google Pay eligibility.
-			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
-			$pay_later_eligible, // Pay Later eligibility.
-			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
 		);
 	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {

@@ -5,12 +5,11 @@
  * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
@@ -23,11 +22,12 @@ class FeaturesDefinition {
 
 
 	/**
-	 * The features eligibility service.
+	 * List of feature eligibility checks either for onboarding or for connected merchant.
 	 *
-	 * @var FeaturesEligibilityService
+	 * @var array
+	 * @see wcgateway.contact-module.eligibility.check
 	 */
-	protected FeaturesEligibilityService $eligibilities;
+	protected array $eligibilities;
 
 	/**
 	 * The general settings service.
@@ -53,13 +53,13 @@ class FeaturesDefinition {
 	/**
 	 * Constructor.
 	 *
-	 * @param FeaturesEligibilityService $eligibilities The features eligibility service.
-	 * @param GeneralSettings            $settings The general settings service.
-	 * @param array                      $merchant_capabilities The merchant capabilities.
-	 * @param SettingsModel              $plugin_settings The plugin settings.
+	 * @param array           $eligibilities List of feature eligibility checks either for onboarding or for connected merchant.
+	 * @param GeneralSettings $settings The general settings service.
+	 * @param array           $merchant_capabilities The merchant capabilities.
+	 * @param SettingsModel   $plugin_settings The plugin settings.
 	 */
 	public function __construct(
-		FeaturesEligibilityService $eligibilities,
+		array $eligibilities,
 		GeneralSettings $settings,
 		array $merchant_capabilities,
 		SettingsModel $plugin_settings
@@ -78,12 +78,13 @@ class FeaturesDefinition {
 	public function get(): array {
 		$all_features       = $this->all_available_features();
 		$eligible_features  = array();
-		$eligibility_checks = $this->eligibilities->get_eligibility_checks();
+		$eligibility_checks = $this->eligibilities;
 		foreach ( $all_features as $feature_key => $feature ) {
 			if ( $eligibility_checks[ $feature_key ]() ) {
 				$eligible_features[ $feature_key ] = $feature;
 			}
 		}
+
 		return $eligible_features;
 	}
 

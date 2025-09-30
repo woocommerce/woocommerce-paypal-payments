@@ -42,6 +42,16 @@ class MerchantDetails {
 	public const FEATURE_CONTACT_MODULE = 'contact_module';
 
 	/**
+	 * Whether Alternative Payment Methods can be used by the merchant.
+	 */
+	public const FEATURE_ALTERNATIVE_PAYMENT_METHODS = 'alternative_payment_methods';
+
+	/**
+	 * Whether Installments Methods can be used by the merchant.
+	 */
+	public const FEATURE_INSTALLMENTS = 'installments';
+
+	/**
 	 * The merchant's country according to PayPal, which might be different from
 	 * the WooCommerce country.
 	 *
