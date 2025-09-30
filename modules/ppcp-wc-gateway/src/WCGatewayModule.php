@@ -50,6 +50,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
@@ -554,6 +555,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$installments_product_status = $c->get( 'wcgateway.installments-product-status' );
 				assert( $installments_product_status instanceof InstallmentsProductStatus );
 
+				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
+				assert( $pwc_product_status instanceof PWCProductStatus );
+
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
@@ -574,6 +578,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$features['installments'] = array(
 					'enabled' => $installments_product_status->is_active(),
+				);
+
+				$features['pwc'] = array(
+					'enabled' => $pwc_product_status->is_active(),
 				);
 
 				$features['contact_module'] = array(
