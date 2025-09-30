@@ -239,6 +239,29 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		$this->apply_branded_only_limitations( $container );
 
+		/**
+		 * Override ACDC status with BCDC for eligible merchants.
+		 *
+		 * This filter determines whether to force BCDC (Standard Card buttons) classification
+		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+		 *
+		 * 1. Merchants with existing BCDC override flag set during migration
+		 * 2. Already-migrated merchants who have BCDC evidence but missing override flag
+		 *
+		 * For scenario 2, this acts as a one-time fix mechanism that:
+		 * - Checks if merchant has BCDC enabled in legacy settings
+		 * - Verifies override flag is not already set (to avoid duplicate processing)
+		 * - Sets the override flag in database
+		 * - Forces BCDC classification
+		 *
+		 * This ensures merchants who migrated before the override flag implementation
+		 * don't lose their Standard Card button functionality.
+		 *
+		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
+		 * @return bool True to force BCDC classification, false/null otherwise.
+		 *
+		 * @hook woocommerce_paypal_payments_override_acdc_status_with_bcdc
+		 */
 		add_filter(
 			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
 			static function ( ?bool $use_bcdc ) use ( $container ) {
@@ -246,6 +269,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				assert( is_callable( $check_override ) );
 
 				if ( $check_override() ) {
+					$use_bcdc = true;
+				}
+
+				$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
+				assert( $payment_settings_migration instanceof PaymentSettingsMigration );
+
+				// One-time fix: Set override flag for already-migrated merchants with BCDC evidence.
+				if ( $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() && ! $check_override() ) {
+					update_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
 					$use_bcdc = true;
 				}
 
