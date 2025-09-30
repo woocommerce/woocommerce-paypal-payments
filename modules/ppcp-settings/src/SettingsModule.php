@@ -239,17 +239,17 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		$this->apply_branded_only_limitations( $container );
 
+		/**
+		 * Override ACDC status with BCDC for eligible merchants.
+		 *
+		 * This filter determines whether to force BCDC (Standard Card buttons) classification
+		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+		 *
+		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
+		 * @return bool|null True to force BCDC classification, false/null otherwise.
+		 */
 		add_filter(
 			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
-			/**
-			 * Override ACDC status with BCDC for eligible merchants.
-			 *
-			 * This filter determines whether to force BCDC (Standard Card buttons) classification
-			 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
-			 *
-			 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
-			 * @return bool|null True to force BCDC classification, false/null otherwise.
-			 */
 			static function ( ?bool $use_bcdc ) use ( $container ) {
 				$check_override = $container->get( 'settings.migration.bcdc-override-check' );
 				assert( is_callable( $check_override ) );
@@ -262,19 +262,19 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Set the BCDC override flag during plugin update, if the merchant has enabled BCDC
+		 * in the legacy settings.
+		 *
+		 * Corrects the BCDC flag for already-migrated merchants, as the previous migration logic
+		 * did not create this flag.  This ensures merchants who migrated before the override flag
+		 * implementation don't lose their Standard Card button functionality.
+		 *
+		 * @param false|string $previous_version The previously installed plugin version,
+		 *                                       or false on first installation.
+		 */
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
-			/**
-			 * Set the BCDC override flag during plugin update, if the merchant has enabled BCDC
-			 * in the legacy settings.
-			 *
-			 * Corrects the BCDC flag for already-migrated merchants, as the previous migration logic
-			 * did not create this flag.  This ensures merchants who migrated before the override flag
-			 * implementation don't lose their Standard Card button functionality.
-			 *
-			 * @param false|string $previous_version The previously installed plugin version,
-			 *                                       or false on first installation.
-			 */
 			static function ( $previous_version ) use ( $container ): void {
 				// Only run this migration logic when updating from version 3.1.1 or older.
 				if ( $previous_version && version_compare( $previous_version, '3.1.1', 'gt' ) ) {
