@@ -11,7 +11,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * @group transactions
- * @group skip-ci
  */
 class CreditcardTransactionTest extends IntegrationMockedTestCase
 {
