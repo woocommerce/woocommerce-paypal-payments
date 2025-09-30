@@ -275,9 +275,13 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
 				assert( $payment_settings_migration instanceof PaymentSettingsMigration );
 
+				$payment_settings = $container->get( 'settings.data.payment' );
+				assert( $payment_settings instanceof PaymentSettings );
+
 				// One-time fix: Set override flag for already-migrated merchants with BCDC evidence.
 				if ( $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() && ! $check_override() ) {
 					update_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
+					$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
 					$use_bcdc = true;
 				}
 
