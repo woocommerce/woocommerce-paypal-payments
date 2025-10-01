@@ -2379,7 +2379,7 @@ return array(
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.appswitch_enabled',
-			getenv( 'PCP_APPSWITCH_ENABLED' ) === '1'
+			getenv( 'PCP_APPSWITCH_ENABLED' ) !== '0'
 		);
 	},
 );
