@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -33,6 +34,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	protected DccApplies $dcc_applies;
 	protected DCCProductStatus $dcc_status;
 	protected CardPaymentsConfiguration $dcc_configuration;
+	protected PaymentMethodsDefinition $methods_definition;
 
 	/**
 	 * The list of local apm methods.
@@ -47,14 +49,16 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		DccApplies $dcc_applies,
 		DCCProductStatus $dcc_status,
 		CardPaymentsConfiguration $dcc_configuration,
+		PaymentMethodsDefinition $methods_definition,
 		array $local_apms
 	) {
-		$this->settings          = $settings;
-		$this->payment_settings  = $payment_settings;
-		$this->dcc_applies       = $dcc_applies;
-		$this->dcc_status        = $dcc_status;
-		$this->local_apms        = $local_apms;
-		$this->dcc_configuration = $dcc_configuration;
+		$this->settings           = $settings;
+		$this->payment_settings   = $payment_settings;
+		$this->dcc_applies        = $dcc_applies;
+		$this->dcc_status         = $dcc_status;
+		$this->local_apms         = $local_apms;
+		$this->dcc_configuration  = $dcc_configuration;
+		$this->methods_definition = $methods_definition;
 	}
 
 	public function migrate(): void {
@@ -75,32 +79,18 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			}
 		}
 
-		if ( $this->is_bcdc_enabled_for_acdc_merchant() ) {
-			update_option( self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
-		}
-
 		foreach ( $this->map() as $old_key => $method_name ) {
 			if ( $this->settings->has( $old_key ) && $this->settings->get( $old_key ) ) {
 				$this->payment_settings->toggle_method_state( $method_name, true );
 			}
 		}
 
-		$this->payment_settings->save();
-	}
+		if ( $this->is_bcdc_enabled_for_acdc_merchant() ) {
+			$this->disable_acdc_methods();
+			update_option( self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
+		}
 
-	/**
-	 * Maps old setting keys to new payment method names.
-	 *
-	 * @return array<string, string>
-	 */
-	protected function map(): array {
-		return array(
-			'dcc_enabled'              => CreditCardGateway::ID,
-			'axo_enabled'              => AxoGateway::ID,
-			'applepay_button_enabled'  => ApplePayGateway::ID,
-			'googlepay_button_enabled' => GooglePayGateway::ID,
-			'pay_later_button_enabled' => 'pay-later',
-		);
+		$this->payment_settings->save();
 	}
 
 	/**
@@ -125,5 +115,41 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 
 		$disabled_funding = $this->settings->has( 'disable_funding' ) ? $this->settings->get( 'disable_funding' ) : array();
 		return ! in_array( 'card', $disabled_funding, true );
+	}
+
+
+	/**
+	 * Maps old setting keys to new payment method names.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function map(): array {
+		return array(
+			'dcc_enabled'              => CreditCardGateway::ID,
+			'axo_enabled'              => AxoGateway::ID,
+			'applepay_button_enabled'  => ApplePayGateway::ID,
+			'googlepay_button_enabled' => GooglePayGateway::ID,
+			'pay_later_button_enabled' => 'pay-later',
+		);
+	}
+
+	/**
+	 * Disables all ACDC card payment methods.
+	 *
+	 * Iterates through all card payment methods defined in the methods definition
+	 * and disables each one by toggling its state to false. This is used during
+	 * migration when a merchant is switching from ACDC to BCDC classification.
+	 *
+	 * In the legacy UI, merchants could have certain methods (like Google Pay)
+	 * enabled together with BCDC. During migration, we need to disable all ACDC
+	 * card methods to ensure proper BCDC-only state in the new UI.
+	 *
+	 * @return void
+	 */
+	protected  function disable_acdc_methods(): void {
+		foreach ( $this->methods_definition->group_card_methods() as $method ) {
+			$this->payment_settings->toggle_method_state( $method['id'], false );
+			$this->payment_settings->save();
+		}
 	}
 }
