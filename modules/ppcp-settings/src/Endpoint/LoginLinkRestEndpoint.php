@@ -89,6 +89,9 @@ class LoginLinkRestEndpoint extends RestEndpoint {
 							'type' => 'bool',
 						),
 						'sanitize_callback' => function ( $flags ) {
+							if ( is_object( $flags ) ) {
+   								$flags = json_decode( json_encode( $flags ), true );
+							}
 							return array_map( array( $this, 'to_boolean' ), $flags );
 						},
 					),
