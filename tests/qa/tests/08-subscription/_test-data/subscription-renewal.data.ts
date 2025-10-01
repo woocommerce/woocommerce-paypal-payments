@@ -75,8 +75,9 @@ const payPalRenewal: ShopOrder[] = [
 
 const payPalFreeTrialRenewal: ShopOrder[] = [
 	{
+		// Fail: https://inpsyde.atlassian.net/browse/PCP-4980
 		// https://inpsyde.atlassian.net/browse/PCP-4915
-		title: 'PCP-4915 | PayPal subscription - Free trial order renewal', //bug: https://inpsyde.atlassian.net/browse/PCP-4980
+		title: 'PCP-4915 | PayPal subscription - Free trial order renewal',
 		...orders.default,
 		payment: payments.payPal,
 		merchant,
