@@ -6,8 +6,8 @@ import {
 	RequestUtils,
 	Plugins,
 	WooCommerceUtils,
-	Login,
 	restLogin,
+	expect,
 } from '@inpsyde/playwright-utils/build';
 /**
  * Internal dependencies
@@ -31,13 +31,13 @@ import {
 } from './frontend';
 import {
 	subscriptionsPlugin,
-	disableNoncePlugin,
 	wpDebuggingPlugin,
 	pcpPlugin,
 	PcpMerchant,
 	PcpConfig,
 } from '../resources';
-import { getCustomerStorageStateName } from './helpers';
+import { generateRandomString, getCustomerStorageStateName } from './helpers';
+import urls from './urls';
 
 export class Utils {
 	plugins: Plugins;
@@ -193,34 +193,131 @@ export class Utils {
 		);
 	};
 
+
+	/**
+	 * Onboard with Pay Upon Invoice (PUI)
+	 * Only for German merchant
+	 *
+	 */
+	onboardWithPui = async () => {
+		const nonce = await this.requestUtils.getRegexMatchValueOnPage(
+			urls.pcp.connection,
+			/"update_signup_links_nonce":"([^"]+)"/
+		);
+
+		const response = await this.requestUtils.request.post(
+			'/?wc-ajax=ppc-update-signup-links', {
+				data: {
+					nonce,
+					settings: { 'ppcp-onboarding-pui': true },
+				}
+			},
+		);
+		const result = response.ok();
+		await expect( result ).toBeTruthy();
+		return result;
+	}
+
+	/**
+	 * Connects merchant via form post request
+	 *
+	 */
 	connectMerchant = async (
 		merchant: PcpMerchant,
 		options = {
 			enablePayUponInvoice: false,
 		}
-	) => {
-		await this.connection.visit();
-		// check if merchant with expected email is not connected
-		const isExpectedMerchantConnected =
-			await this.connection.isMerchantConnected( merchant );
-		if ( ! isExpectedMerchantConnected ) {
-			await this.connection.disconnectMerchant();
-			await this.connection.connectMerchant( merchant, options );
-		}
-	};
+	 ) => {
+		const ppcpNonce = await this.requestUtils.getRegexMatchValueOnPage(
+			urls.pcp.connection,
+			/<input type="hidden" name="ppcp-nonce" value="([^"]+)">/
+		);
+		
+		const wpnonce = await this.requestUtils.getPageNonce( urls.pcp.connection );
+		
+		const formData = {
+			'_wpnonce': wpnonce,
+			'ppcp-nonce': ppcpNonce,
+			'ppcp[sandbox_on]': '1',
+			'ppcp[merchant_email_production]': '',
+			'ppcp[merchant_id_production]': '',
+			'ppcp[client_id_production]': '',
+			'ppcp[client_secret_production]': '',
+			'ppcp[merchant_email_sandbox]': merchant.email,
+			'ppcp[merchant_id_sandbox]': merchant.account_id,
+			'ppcp[client_id_sandbox]': merchant.client_id,
+			'ppcp[client_secret_sandbox]': merchant.client_secret,
+			'ppcp[soft_descriptor]': '',
+			'ppcp[prefix]': `${ generateRandomString( 10 ) }-`,
+			'ppcp[stay_updated]': '1',
+			'ppcp[subtotal_mismatch_behavior]': 'extra_line',
+			'ppcp[subtotal_mismatch_line_name]': '',
+			'save': 'Save changes',
+		};
 
+		if( options.enablePayUponInvoice === true ) {
+			formData[ 'ppcp_onboarding_dcc' ] = 'basic';
+			await this.onboardWithPui();
+		}
+		
+		const response = await this.requestUtils.submitPageForm( urls.pcp.connection, formData );
+		const result = response.ok();
+		await expect( result ).toBeTruthy();
+		return result;
+	}
+
+	/**
+	 * Disconnects merchant via form post request
+	 *
+	 */
 	disconnectMerchant = async () => {
-		await this.connection.visit();
-		await this.connection.disconnectMerchant();
-	};
+		const ppcpNonce = await this.requestUtils.getRegexMatchValueOnPage(
+			urls.pcp.connection,
+			/<input type="hidden" name="ppcp-nonce" value="([^"]+)">/
+		);
+		const wpnonce = await this.requestUtils.getPageNonce( urls.pcp.connection );
+		const formData = {
+			'_wpnonce': wpnonce,
+			'ppcp-nonce': ppcpNonce,
+			'ppcp[merchant_email_production]': '',
+			'ppcp[merchant_id_production]': '',
+			'ppcp[client_id_production]': '',
+			'ppcp[client_secret_production]': '',
+			'ppcp[merchant_email_sandbox]': '',
+			'ppcp[merchant_id_sandbox]': '',
+			'ppcp[client_id_sandbox]': '',
+			'ppcp[client_secret_sandbox]': '',
+			'ppcp[soft_descriptor]': '',
+			'ppcp[prefix]': '',
+			'ppcp[stay_updated]': '1',
+			'ppcp[subtotal_mismatch_behavior]': 'extra_line',
+			'ppcp[subtotal_mismatch_line_name]': '',
+			'save': 'Save changes',
+		};
+		const response = await this.requestUtils.submitPageForm( urls.pcp.connection, formData );
+		const result = response.ok();
+		await expect( result ).toBeTruthy();
+		return result;
+	}
 
-	clearPcpDb = async ( data: PcpMerchant ) => {
-		await this.connection.visit();
-		if ( ! ( await this.connection.isMerchantConnected() ) ) {
-			await this.connection.connectMerchant( data );
-		}
-		await this.connection.clearDB();
-	};
+	/**
+	 * Clear PCP DB via request
+	 *
+	 */
+	clearPcpDb = async () => {
+		const nonce = await this.requestUtils.getRegexMatchValueOnPage(
+			urls.pcp.connection,
+			/"clearDb":\{[^}]*"nonce":"([^"]+)"/
+		);
+
+		const response = await this.requestUtils.request.post(
+			'/?wc-ajax=ppcp-clear-db',
+			{ data: { nonce } },
+		);
+		const result = response.ok();
+		await expect( result ).toBeTruthy();
+		return result;
+	}
 
 	/**
 	 * Enable PayPal funding source
@@ -353,7 +450,13 @@ export class Utils {
 
 		if ( data.merchant ) {
 			if ( data.clearPCPDB ) {
-				await this.clearPcpDb( data.merchant );
+				// Make sure merchant is connected to clear PCP DB
+				await this.disconnectMerchant();
+				await this.connectMerchant(
+					data.merchant,
+					{ enablePayUponInvoice: !!data.enablePayUponInvoice },
+				);
+				await this.clearPcpDb();
 			}
 
 			if ( data.merchantIsDisconnected ) {
@@ -361,9 +464,11 @@ export class Utils {
 				return;
 			}
 
-			await this.connectMerchant( data.merchant, {
-				enablePayUponInvoice: data.enablePayUponInvoice || false,
-			} );
+			await this.disconnectMerchant();
+			await this.connectMerchant(
+				data.merchant,
+				{ enablePayUponInvoice: !!data.enablePayUponInvoice },
+			);
 		}
 
 		if ( data.standardPayments ) {
