@@ -110,7 +110,7 @@ export class PayPalUi {
 		this.page.frameLocator( '#braintree-hosted-field-cvv' ).locator( '#cvv' );
 	fastlaneCardHolderInput = () =>
 		this.page
-			.frameLocator( '#cardholder-name iframe' )
+			.frameLocator( '#braintree-hosted-field-cardholderName' )
 			.locator( '#cardholder-name' );
 	fastlaneOtpWindow = () =>
 		this.page.getByTestId( 'modal-sheet-inner-sheet' );
