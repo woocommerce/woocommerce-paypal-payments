@@ -295,6 +295,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payment_method            = $data['payment_method'] ?? '';
 			$funding_source            = $data['funding_source'] ?? '';
 			$wc_order                  = null;
+
+			do_action( 'woocommerce_paypal_payments_create_order_request_started', $data );
+
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
 				if ( ! is_a( $wc_order, WC_Order::class ) ) {

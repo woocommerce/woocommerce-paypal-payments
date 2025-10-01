@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Tests\Integration;
 
+use Mockery;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WC_Cart;
@@ -27,5 +28,11 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
 	protected function session(): WC_Session {
 		return WC()->session;
+	}
+
+	public function tearDown(): void {
+		// Clean up mocks
+		Mockery::close();
+		parent::tearDown();
 	}
 }
