@@ -2371,7 +2371,7 @@ return array(
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.server_side_shipping_callback_enabled',
-			getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) === '1'
+			getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0'
 		);
 	},
 
