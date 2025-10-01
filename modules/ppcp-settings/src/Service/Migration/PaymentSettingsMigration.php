@@ -146,7 +146,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	 *
 	 * @return void
 	 */
-	protected  function disable_acdc_methods(): void {
+	protected function disable_acdc_methods(): void {
 		foreach ( $this->methods_definition->group_card_methods() as $method ) {
 			$this->payment_settings->toggle_method_state( $method['id'], false );
 			$this->payment_settings->save();
