@@ -173,7 +173,7 @@ class PaymentMethodsDefinition {
 	// Payment method groups.
 
 	/**
-	 * Define PayPal related payment methods.
+	 * Defines PayPal's branded payment methods; not affected by the "own_brand_only" setting.
 	 *
 	 * @return array
 	 */
@@ -214,20 +214,19 @@ class PaymentMethodsDefinition {
 			),
 		);
 
-		if ( ! $this->general_settings->own_brand_only() ) {
-			$group[] = array(
-				'id'          => CardButtonGateway::ID,
-				'title'       => __( 'Credit and debit card payments', 'woocommerce-paypal-payments' ),
-				'description' => __( "Accept all major credit and debit cards - even if your customer doesn't have a PayPal account . ", 'woocommerce-paypal-payments' ),
-				'icon'        => 'payment-method-cards',
-			);
-		}
+		// This CardButtonGateway is a branded gateway!
+		$group[] = array(
+			'id'          => CardButtonGateway::ID,
+			'title'       => __( 'Credit and debit card payments', 'woocommerce-paypal-payments' ),
+			'description' => __( "Accept all major credit and debit cards - even if your customer doesn't have a PayPal account . ", 'woocommerce-paypal-payments' ),
+			'icon'        => 'payment-method-cards',
+		);
 
 		return apply_filters( 'woocommerce_paypal_payments_gateway_group_paypal', $group );
 	}
 
 	/**
-	 * Define card related payment methods.
+	 * Define embedded payment methods, which are only available in whitelabel mode.
 	 *
 	 * @return array
 	 */
