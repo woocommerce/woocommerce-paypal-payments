@@ -100,14 +100,14 @@ export class PayPalUi {
 		);
 	fastlaneCardNumberInput = () =>
 		this.page
-			.frameLocator( '#card-number iframe' )
+			.frameLocator( '#braintree-hosted-field-number' )
 			.locator( '#credit-card-number' );
 	fastlaneExpirationDateInput = () =>
 		this.page
-			.frameLocator( '#expiration-date iframe' )
+			.frameLocator( '#braintree-hosted-field-expirationDate' )
 			.locator( '#expiration' );
 	fastlaneCvvInput = () =>
-		this.page.frameLocator( '#cvv iframe' ).locator( '#cvv' );
+		this.page.frameLocator( '#braintree-hosted-field-cvv' ).locator( '#cvv' );
 	fastlaneCardHolderInput = () =>
 		this.page
 			.frameLocator( '#cardholder-name iframe' )

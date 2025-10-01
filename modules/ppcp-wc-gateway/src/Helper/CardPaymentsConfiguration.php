@@ -24,8 +24,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
  * configuration.
  *
  * Terminology:
- * - DCC or ACDC refers to the new "Advanced Card Processing" integration.
- * - BCDC is the older "Credit and Debit Cards" integration.
+ * - DCC or ACDC are synonymous referring to the "expanded integration"
+ *       The credit card form is embedded inline on the checkout page.
+ * - BCDC is the "Branded" card payment integration (branded button that opens a modal)
  * - AXO is Fastlane, which is an improved UI for ACDC.
  *
  * Technical implementation via the JS SDK:
@@ -141,8 +142,8 @@ class CardPaymentsConfiguration {
 	 * @param ConnectionState  $connection_state Connection state instance.
 	 * @param Settings         $settings         Plugin settings instance.
 	 * @param DccApplies       $dcc_applies      DCC eligibility helper.
-	 * @param DCCProductStatus $dcc_status        Manages the Seller status.
-	 * @param string           $store_country The shop's country code.
+	 * @param DCCProductStatus $dcc_status       Manages the Seller status.
+	 * @param string           $store_country    The shop's country code.
 	 */
 	public function __construct(
 		ConnectionState $connection_state,
