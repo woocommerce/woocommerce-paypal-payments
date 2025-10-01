@@ -492,6 +492,12 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$pui_product_status->clear( $settings );
 				}
 
+				// Clear PWC status.
+				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
+				if ( $pwc_product_status instanceof PWCProductStatus ) {
+					$pwc_product_status->clear( $settings );
+				}
+
 				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );
 				assert( $reference_transaction_status_cache instanceof Cache );
 				// Clear Reference Transaction status.
