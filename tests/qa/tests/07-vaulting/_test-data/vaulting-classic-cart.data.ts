@@ -8,8 +8,8 @@ const customer = customers.usa;
 const savePaymentMethodData: ShopOrder[] = [
 	{
 		// FAIL: vaulted PayPal button is not displayed.
-		// https://inpsyde.atlassian.net/browse/PCP-
-		title: 'PCP-0000 | Vaulting - Transaction - Classic cart - PayPal - Save payment method',
+		// https://inpsyde.atlassian.net/browse/PCP-5397
+		title: 'PCP-5397 | Vaulting - Transaction - Classic cart - PayPal - Save payment method',
 		...orders.default,
 		payment: {
 			...payments.payPal,
@@ -22,8 +22,8 @@ const savePaymentMethodData: ShopOrder[] = [
 const vaultedPaymentMethodData: ShopOrder[] = [
 	{
 		// FAIL: vaulted PayPal button is not displayed.
-		// https://inpsyde.atlassian.net/browse/PCP-
-		title: 'PCP-0000 | Vaulting - Transaction - Classic cart - PayPal - Pay with vaulted account',
+		// https://inpsyde.atlassian.net/browse/PCP-5398
+		title: 'PCP-5398 | Vaulting - Transaction - Classic cart - PayPal - Pay with vaulted account',
 		...orders.default,
 		payment: {
 			...payments.payPal,
