@@ -235,16 +235,16 @@ export class PayPalUi {
 		// Map to the tested method
 		switch ( shortcut ) {
 			case 'paypal':
-				// pay with vaulted account
+				await this.payPalGateway().click();
+				popup = await this.openPayPalPupup();
+
 				if ( payment.isVaulted ) {
-					// await this.assertVaultedPaymentMethodIsDisplayed( payment );
-					popup = await this.openPayPalPupup();
+					// pay with vaulted account
 					await expect( popup.submitPaymentButton() ).toBeVisible();
 					await popup.completePayment();
 					break;
 				}
-				// open expected PayPal popup
-				popup = await this.openPayPalPupup();
+
 				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
 				break;
