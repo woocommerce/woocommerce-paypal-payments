@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 class CartResponse {
 	protected ?PayPalCart $cart = null;
@@ -55,7 +56,10 @@ class CartResponse {
 			'id'                => $this->cart_id,
 			'status'            => $this->status,
 			'validation_status' => $this->validation_status,
-			'validation_issues' => $this->cart->validate(),
+			'validation_issues' => array_map(
+				static fn( ValidationIssue $issue ) => $issue->to_array(),
+				$this->cart->validate()
+			),
 		);
 
 		return array_merge( $data, $this->cart->to_array() );
