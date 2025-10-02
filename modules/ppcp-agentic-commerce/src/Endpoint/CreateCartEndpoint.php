@@ -53,6 +53,6 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		$cart     = PayPalCart::from_array( $data );
 		$response = new CartResponse( $cart );
 
-		$this->cart_details( $response );
+		return $this->cart_details( $response );
 	}
 }
