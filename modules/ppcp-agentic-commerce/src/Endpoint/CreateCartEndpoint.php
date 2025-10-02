@@ -11,8 +11,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticErrorInvalidRequest;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InvalidRequestError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -47,6 +47,6 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $data );
 		}
 
-		return $this->error( new AgenticErrorInvalidRequest( 'Not Implemented' ) );
+		return $this->error( new InvalidRequestError( 'Not Implemented' ) );
 	}
 }

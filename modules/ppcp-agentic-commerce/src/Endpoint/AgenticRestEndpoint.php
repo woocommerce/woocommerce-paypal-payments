@@ -13,9 +13,9 @@ use JsonException;
 use WC_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCartResponse;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Errors\AgenticErrorInvalidRequest;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InvalidRequestError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -41,10 +41,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	/**
 	 * Successful API response, always returns cart details.
 	 *
-	 * @param PayPalCartResponse $cart The PayPalCart response object.
+	 * @param CartResponse $cart The PayPalCart response object.
 	 * @return WP_REST_Response The successful response.
 	 */
-	protected function cart_details( PayPalCartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+	protected function cart_details( CartResponse $cart, int $status_code = 200 ): WP_REST_Response {
 		return new WP_REST_Response( $cart->to_array(), $status_code );
 	}
 
@@ -67,13 +67,13 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	protected function parse_json_body( WP_REST_Request $request ) {
 		$body = $request->get_body();
 		if ( empty( $body ) ) {
-			return new AgenticErrorInvalidRequest( 'Request body is required' );
+			return new InvalidRequestError( 'Request body is required' );
 		}
 
 		try {
 			return json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
 		} catch ( JsonException $exception ) {
-			return new AgenticErrorInvalidRequest( 'Request body contains invalid JSON. Error: ' . $exception->getMessage() );
+			return new InvalidRequestError( 'Request body contains invalid JSON. Error: ' . $exception->getMessage() );
 		}
 	}
 }
