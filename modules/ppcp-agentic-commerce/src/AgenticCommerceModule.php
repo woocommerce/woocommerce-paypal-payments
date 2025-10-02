@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
@@ -26,6 +26,16 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 	public function run( ContainerInterface $container ): bool {
 		// Add hooks.
+		add_action(
+			'init',
+			function () use ( $container ) {
+				$ingestionManager = $container->get( 'agentic.ingestion-manager' );
+				assert( $ingestionManager instanceof IngestionManager );
+				$ingestionManager->init();
+
+//				do_action('ppcp_agentic_sync_batch');
+			}
+		);
 
 		return true;
 	}
