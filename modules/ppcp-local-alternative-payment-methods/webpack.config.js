@@ -33,6 +33,9 @@ module.exports = {
 		'multibanco-payment-method': path.resolve(
 			'./resources/js/multibanco-payment-method.js'
 		),
+		'pwc-payment-method': path.resolve(
+			'./resources/js/pwc-payment-method.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),

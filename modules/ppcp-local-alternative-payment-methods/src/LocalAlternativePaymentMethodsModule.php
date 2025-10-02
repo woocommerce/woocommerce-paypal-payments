@@ -153,8 +153,22 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			function ( array $data ) use ( $c ) {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 
-				$default_disable_funding               = $data['url_params']['disable-funding'] ?? '';
-				$disable_funding                       = array_merge( array_keys( $payment_methods ), array_filter( explode( ',', $default_disable_funding ) ) );
+				$default_disable_funding = $data['url_params']['disable-funding'] ?? '';
+
+				// Exclude crypto from disable-funding list because it's handled as a payment source,
+				// not a funding source. PayPal's JavaScript SDK doesn't recognize 'crypto' as a valid
+				// funding source to disable, which causes "Invalid query value for disable-funding: crypto" errors.
+				$payment_method_keys = array_filter(
+					array_keys( $payment_methods ),
+					function( $key ) {
+						return $key !== 'crypto';
+					}
+				);
+
+				$disable_funding = array_merge(
+					$payment_method_keys,
+					array_filter( explode( ',', $default_disable_funding ) )
+				);
 				$data['url_params']['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
 				return $data;
