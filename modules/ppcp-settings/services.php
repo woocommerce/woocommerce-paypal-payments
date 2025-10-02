@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -71,6 +72,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -567,6 +569,7 @@ $services = array(
 		 * @param bool $is_enable_installments_eligible     - Show if merchant has installments capability and merchant country is MX.
 		 * @param bool $is_working_capital_eligible         - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
 		 * @param bool $is_pay_later_messaging_auto_enabled - Show if feature flag is enabled, Pay later messaging is enabled for the merchant country and "Stay Updated" is turned On.
+		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability.
 		 */
 		return new TodosEligibilityService(
 			$container->get( 'axo.eligible' ) && $capabilities['acdc'] && ! $gateways['axo'],                  // Enable Fastlane.
@@ -589,7 +592,8 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
 			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
-			$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $settings_model->get_stay_updated() // Pay later messaging auto enabled.
+			$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $settings_model->get_stay_updated(), // Pay later messaging auto enabled.
+			$capabilities['pwc'] && ! $gateways[ PWCGateway::ID ] // Enable Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
