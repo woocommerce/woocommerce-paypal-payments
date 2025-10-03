@@ -192,46 +192,44 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 		add_action(
 			'wp',
 			function () use ( $container ) {
-				if ( $container->get( 'vaulting.vault-v3-enabled' ) ) {
+				global $wp;
+				if ( ! isset( $wp->query_vars['delete-payment-method'] ) ) {
 					return;
 				}
 
-				global $wp;
+				$token_id = absint( $wp->query_vars['delete-payment-method'] );
+				$token    = WC_Payment_Tokens::get( $token_id );
 
-				if ( isset( $wp->query_vars['delete-payment-method'] ) ) {
-					$token_id = absint( $wp->query_vars['delete-payment-method'] );
-					$token    = WC_Payment_Tokens::get( $token_id );
+				if (
+					is_null( $token )
+					|| ( $token->get_gateway_id() !== PayPalGateway::ID && $token->get_gateway_id() !== CreditCardGateway::ID )
+				) {
+					return;
+				}
 
-					if (
-						is_null( $token )
-						|| ( $token->get_gateway_id() !== PayPalGateway::ID && $token->get_gateway_id() !== CreditCardGateway::ID )
-					) {
-						return;
-					}
+				// phpcs:ignore WordPress.Security.NonceVerification
+				$wpnonce         = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
+				$token_id_string = (string) $token_id;
+				$action          = 'delete-payment-method-' . $token_id_string;
+				if (
+					$token->get_user_id() !== get_current_user_id()
+					|| ! isset( $wpnonce ) || ! is_string( $wpnonce )
+					|| wp_verify_nonce( $wpnonce, $action ) === false
+				) {
+					wc_add_notice( __( 'Invalid payment method.', 'woocommerce-paypal-payments' ), 'error' );
+					wp_safe_redirect( wc_get_account_endpoint_url( 'payment-methods' ) );
+					exit();
+				}
 
-					// phpcs:ignore WordPress.Security.NonceVerification
-					$wpnonce         = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
-					$token_id_string = (string) $token_id;
-					$action          = 'delete-payment-method-' . $token_id_string;
-					if (
-						$token->get_user_id() !== get_current_user_id()
-						|| ! isset( $wpnonce ) || ! is_string( $wpnonce )
-						|| wp_verify_nonce( $wpnonce, $action ) === false
-					) {
-						wc_add_notice( __( 'Invalid payment method.', 'woocommerce-paypal-payments' ), 'error' );
-						wp_safe_redirect( wc_get_account_endpoint_url( 'payment-methods' ) );
-						exit();
-					}
+				try {
+					do_action( 'woocommerce_paypal_payments_before_delete_payment_token', $token->get_token() );
 
-					try {
-						do_action( 'woocommerce_paypal_payments_before_delete_payment_token', $token->get_token() );
+					$payment_token_endpoint = $container->get( 'api.endpoint.payment-token' );
+					$payment_token_endpoint->delete_token_by_id( $token->get_token() );
+				} catch ( RuntimeException $exception ) {
+					wc_add_notice( __( 'Could not delete payment token. ', 'woocommerce-paypal-payments' ) . $exception->getMessage(), 'error' );
 
-						$payment_token_endpoint = $container->get( 'api.endpoint.payment-token' );
-						$payment_token_endpoint->delete_token_by_id( $token->get_token() );
-					} catch ( RuntimeException $exception ) {
-						wc_add_notice( __( 'Could not delete payment token. ', 'woocommerce-paypal-payments' ) . $exception->getMessage(), 'error' );
-						return;
-					}
+					return;
 				}
 			}
 		);
