@@ -618,7 +618,7 @@ $services = array(
 		$gateways = array(
 			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
 		);
-		// Merchant capabilities, serve to show active or inactive badge and buttons.
+		// Merchant capabilities serve to show active or inactive badge and buttons.
 		$capabilities = array(
 			'apple_pay'                   => $features['apple_pay']['enabled'] ?? false,
 			'google_pay'                  => $features['google_pay']['enabled'] ?? false,
@@ -626,6 +626,7 @@ $services = array(
 			'save_paypal'                 => $features['save_paypal_and_venmo']['enabled'] ?? false,
 			'alternative_payment_methods' => $features['alternative_payment_methods']['enabled'] ?? false,
 			'installments'                => $features['installments']['enabled'] ?? false,
+			'pwc'                         => $features['pwc']['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
@@ -636,6 +637,7 @@ $services = array(
 			'apple_pay'    => $capabilities['acdc'] && $capabilities['apple_pay'], // Apple Pay eligibility.
 			'pay_later'    => $capabilities['acdc'] && ! $gateways['card-button'], // Pay Later eligibility.
 			'installments' => $capabilities['installments'], // Installments eligibility.
+			'pwc'          => $capabilities['pwc'], // Pay with Crypto eligibility.
 		);
 		return new FeaturesDefinition(
 			$container->get( 'settings.service.features_eligibilities' ),
@@ -663,6 +665,7 @@ $services = array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
+			true  // Pay with Crypto eligibility.
 		);
 	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {

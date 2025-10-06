@@ -345,6 +345,41 @@ class FeaturesDefinition {
 					),
 				),
 			),
+			'pwc'                             => array(
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Allow your customers to pay with crypto. You’ll receive USD payments in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities['pwc'],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pay-with-crypto',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS
+',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
 		);
 	}
 }
