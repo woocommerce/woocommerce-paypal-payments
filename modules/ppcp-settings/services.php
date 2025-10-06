@@ -593,7 +593,7 @@ $services = array(
 			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
 			$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $settings_model->get_stay_updated(), // Pay later messaging auto enabled.
-			$capabilities['pwc'] && ! $gateways[ PWCGateway::ID ] // Enable Pay with Crypto.
+			$capabilities['pwc'] && ! $gateways['pwc'] // Enable Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
