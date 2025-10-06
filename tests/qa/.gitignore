@@ -7,7 +7,7 @@ playwright/.cache
 storage-states
 test-results
 package-lock.json
-
 .env*
 !.env.example
 .DS_Store
+/resources/files/woocommerce-subscriptions.zip
