@@ -40,6 +40,8 @@ jobs:
     env:
       FORCE_COLOR: 2
     steps:
+      - uses: actions/checkout@v2
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
