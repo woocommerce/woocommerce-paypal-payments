@@ -8,18 +8,9 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ShippingUnavailable;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\PriceMismatch;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 
 class ValidationIssueTest extends TestCase {
 
