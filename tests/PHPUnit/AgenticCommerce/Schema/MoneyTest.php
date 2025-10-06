@@ -22,12 +22,6 @@ class MoneyTest extends SchemaTestCase {
 		);
 	}
 
-	protected function get_valid_changes(): array {
-		return array(
-			'value' => '50.00',
-		);
-	}
-
 	/**
 	 * Tests that Money correctly parses valid currency codes.
 	 *
