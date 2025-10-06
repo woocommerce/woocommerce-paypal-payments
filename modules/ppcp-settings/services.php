@@ -506,6 +506,7 @@ $services = array(
 			'apm'          => $features['alternative_payment_methods']['enabled'] ?? false,
 			'paylater'     => $features['pay_later_messaging']['enabled'] ?? false,
 			'installments' => $features['installments']['enabled'] ?? false,
+			'pwc'          => $features['pwc']['enabled'] ?? false,
 		);
 	},
 
