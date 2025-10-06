@@ -13,6 +13,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 
+/**
+ * @see MoneyTest - Unit tests for this class.
+ */
 class Money extends AgenticSchema {
 	private string $currency = '';
 
@@ -39,7 +42,9 @@ class Money extends AgenticSchema {
 		if ( isset( $input['value'] ) ) {
 			$value = $input['value'];
 
-			if ( preg_match( '/^-?\d(\.\d{2,3})?$/', $value ) ) {
+			if ( is_int( $value ) || is_float( $value ) ) {
+				$this->value = (float) $value;
+			} elseif ( is_string( $value ) && preg_match( '/^-?\d+(\.\d{2,3})?$/', $value ) ) {
 				$this->value = (float) $value;
 			} else {
 				$add_issue( new InvalidData( 'Unexpected money value', 'Please provide a valid numerical value.', 'value' ) );
