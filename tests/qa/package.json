@@ -35,7 +35,8 @@
     "scripts": {
         "setup:all": "npm run setup:env && npm run setup:plugin && npm run setup:tests",
         "setup:tests": "npm install && npx playwright install",
-        "setup:env": "npm install && wp-env start --update",
+        "setup:env": "npm install && npm run setup:wc-subscriptions && wp-env start --update",
+        "setup:wc-subscriptions": "cp node_modules/@inpsyde/playwright-utils/src/e2e/plugins/woocommerce-subscriptions.zip ./resources/files",
         "setup:reset": "wp-env stop && wp-env destroy",
         "setup:plugin": "cd ../.. && npm run build && mv woocommerce-paypal-payments.zip tests/qa/resources/files",
         "setup:utils": "npm run setup:tests && cd ./playwright-utils && yarn devLocal",
