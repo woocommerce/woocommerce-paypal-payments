@@ -479,6 +479,7 @@ $services = array(
 			'google_pay'  => $settings['data']['ppcp-googlepay']['enabled'] ?? false,
 			'axo'         => $settings['data']['ppcp-axo-gateway']['enabled'] ?? false,
 			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
+			'pwc'         => $settings['data']['ppcp-pwc']['enabled'] ?? false,
 		);
 	},
 	'settings.service.merchant_capabilities'              => static function ( ContainerInterface $container ): array {
