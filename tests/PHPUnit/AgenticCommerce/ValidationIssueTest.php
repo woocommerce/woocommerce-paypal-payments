@@ -13,6 +13,13 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ShippingUnavailable;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\PriceMismatch;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 
 class ValidationIssueTest extends TestCase {
 
@@ -54,8 +61,15 @@ class ValidationIssueTest extends TestCase {
 
 	public function validation_issue_provider(): array {
 		return array(
-			'MissingField' => array( MissingField::class ),
-			'InvalidData'  => array( InvalidData::class ),
+			'MissingField'         => array( MissingField::class ),
+			'InvalidData'          => array( InvalidData::class ),
+			'InvalidProduct'       => array( InvalidProduct::class ),
+			'ShippingUnavailable'  => array( ShippingUnavailable::class ),
+			'PriceMismatch'        => array( PriceMismatch::class ),
+			'ItemOutOfStock'       => array( ItemOutOfStock::class ),
+			'InvalidAddress'       => array( InvalidAddress::class ),
+			'InsufficientQuantity' => array( InsufficientQuantity::class ),
+			'CouponInvalid'        => array( CouponInvalid::class ),
 		);
 	}
 }
