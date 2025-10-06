@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -543,13 +544,16 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $features;
 				}
 
+				$data = $c->get( 'settings.data.general' );
+				assert( $data instanceof GeneralSettings );
+				$merchant_country = $data->get_merchant_country();
+
 				$reference_transaction_status = $c->get( 'api.reference-transaction-status' );
 				assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
 
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
-				$dcc_applies = $c->get( 'api.helpers.dccapplies' );
 
 				$apms_product_status = $c->get( 'ppcp-local-apms.product-status' );
 				assert( $apms_product_status instanceof LocalApmProductStatus );
@@ -565,7 +569,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				$features['advanced_credit_and_debit_cards'] = array(
-					'enabled' => $dcc_product_status->is_active() && $dcc_applies->for_country_currency(),
+					'enabled' => $dcc_product_status->is_active(),
 				);
 
 				$features['alternative_payment_methods'] = array(
@@ -575,8 +579,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// When local APMs are available, then PayLater messaging is also available.
 				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
 
+				// Even if installments can be ACTIVE in SellerStatus (PayPal) we are using it only in MX for now.
 				$features['installments'] = array(
-					'enabled' => $installments_product_status->is_active(),
+					'enabled' => $installments_product_status->is_active() && $merchant_country === 'MX',
 				);
 
 				$features['contact_module'] = array(

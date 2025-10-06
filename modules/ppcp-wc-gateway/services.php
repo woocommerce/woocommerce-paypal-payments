@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -2312,10 +2313,12 @@ return array(
 				return false;
 			}
 
-			$details = $container->get( 'settings.merchant-details' );
-			assert( $details instanceof MerchantDetails );
+			$data = $container->get( 'settings.data.general' );
+			assert( $data instanceof GeneralSettings );
 
-			$enable_contact_module = 'US' === $details->get_merchant_country();
+			$merchant_country = $data->get_merchant_country();
+
+			$enable_contact_module = 'US' === $merchant_country;
 
 			/**
 			 * The contact module is enabled for US-based merchants by default.
@@ -2339,30 +2342,7 @@ return array(
 		assert( $connection_state instanceof ConnectionState );
 
 		if ( $connection_state->is_connected() ) {
-			$reference_transaction_status = $container->get( 'api.reference-transaction-status' );
-			assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
-
-			$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
-			assert( $dcc_product_status instanceof DCCProductStatus );
-
-			$installements_product_status = $container->get( 'wcgateway.installments-product-status' );
-			assert( $installements_product_status instanceof InstallmentsProductStatus );
-
-			$apm_product_status = $container->get( 'ppcp-local-apms.product-status' );
-			assert( $apm_product_status instanceof LocalApmProductStatus );
-
-			$apple_product_status = $container->get( 'applepay.apple-product-status' );
-			assert( $apple_product_status instanceof AppleProductStatus );
-
-			return array(
-				MerchantDetails::FEATURE_SAVE_PAYPAL_VENMO => $reference_transaction_status->reference_transaction_enabled(),
-				MerchantDetails::FEATURE_ADVANCED_CARD_PROCESSING => $dcc_product_status->is_active(),
-				MerchantDetails::FEATURE_GOOGLE_PAY        => $container->get( 'googlepay.eligibility.check' ),
-				MerchantDetails::FEATURE_APPLE_PAY         => $apple_product_status->is_active(),
-				MerchantDetails::FEATURE_CONTACT_MODULE    => $container->get( 'wcgateway.contact-module.eligibility.check' ),
-				MerchantDetails::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $apm_product_status->is_active(),
-				MerchantDetails::FEATURE_INSTALLMENTS      => $installements_product_status->is_active(),
-			);
+			return $container->get( 'settings.service.merchant_capabilities' );
 		} else {
 			return array(
 				MerchantDetails::FEATURE_SAVE_PAYPAL_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),

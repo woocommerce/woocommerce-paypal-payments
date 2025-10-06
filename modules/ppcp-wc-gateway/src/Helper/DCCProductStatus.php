@@ -77,6 +77,7 @@ class DCCProductStatus extends ProductStatus {
 
 	/** {@inheritDoc} */
 	protected function check_local_state(): ?bool {
+		return null;
 		if ( $this->cache->has( self::DCC_STATUS_CACHE_KEY ) ) {
 			return wc_string_to_bool( $this->cache->get( self::DCC_STATUS_CACHE_KEY ) );
 		}

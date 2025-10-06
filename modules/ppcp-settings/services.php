@@ -494,12 +494,14 @@ $services = array(
 		$general_settings = $container->get( 'settings.data.general' );
 		assert( $general_settings instanceof GeneralSettings );
 
+		$acdc = ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only();
+
 		return array(
-			'apple_pay'    => ( $features['apple_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'google_pay'   => ( $features['google_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'acdc'         => ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'save_paypal'  => $features['save_paypal_and_venmo']['enabled'] ?? false,
+			'apple_pay'    => ( $features['apple_pay']['enabled'] ?? false ) && $acdc,
+			'google_pay'   => ( $features['google_pay']['enabled'] ?? false ) && $acdc,
+			'acdc'         => $acdc,
 			'apm'          => $features['alternative_payment_methods']['enabled'] ?? false,
+			'save_paypal'  => $features['save_paypal_and_venmo']['enabled'] ?? false,
 			'paylater'     => $features['pay_later_messaging']['enabled'] ?? false,
 			'installments' => $features['installments']['enabled'] ?? false,
 		);
@@ -590,39 +592,9 @@ $services = array(
 		);
 	},
 	'settings.data.definition.features'                   => static function ( ContainerInterface $container ): FeaturesDefinition {
-		$features = apply_filters(
-			'woocommerce_paypal_payments_rest_common_merchant_features',
-			array()
-		);
+		$merchant_capabilities = $container->get('settings.service.merchant_capabilities');
 
-		$payment_endpoint = $container->get( 'settings.rest.payment' );
-		$settings = $payment_endpoint->get_details()->get_data();
-
-		// Settings status.
-		$gateways = array(
-			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
-		);
-		// Merchant capabilities, serve to show active or inactive badge and buttons.
-		$capabilities = array(
-			'apple_pay'                   => $features['apple_pay']['enabled'] ?? false,
-			'google_pay'                  => $features['google_pay']['enabled'] ?? false,
-			'acdc'                        => $features['advanced_credit_and_debit_cards']['enabled'] ?? false,
-			'save_paypal'                 => $features['save_paypal_and_venmo']['enabled'] ?? false,
-			'alternative_payment_methods' => $features['alternative_payment_methods']['enabled'] ?? false,
-			'installments'                => $features['installments']['enabled'] ?? false,
-		);
-
-		$merchant_capabilities = array(
-			'save_paypal'  => $capabilities['save_paypal'], // Save PayPal and Venmo eligibility.
-			'acdc'         => $capabilities['acdc'], // Advanced credit and debit cards eligibility.
-			'apm'          => $capabilities['alternative_payment_methods'], // Alternative payment methods eligibility.
-			'google_pay'   => $capabilities['acdc'] && $capabilities['google_pay'], // Google Pay eligibility.
-			'apple_pay'    => $capabilities['acdc'] && $capabilities['apple_pay'], // Apple Pay eligibility.
-			'pay_later'    => $capabilities['acdc'] && ! $gateways['card-button'], // Pay Later eligibility.
-			'installments' => $capabilities['installments'], // Installments eligibility.
-		);
 		return new FeaturesDefinition(
-			$container->get( 'wcgateway.feature-eligibility.list' ),
 			$container->get( 'settings.data.general' ),
 			$merchant_capabilities,
 			$container->get( 'settings.data.settings' )
