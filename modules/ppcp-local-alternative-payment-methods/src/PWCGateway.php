@@ -27,6 +27,13 @@ class PWCGateway extends WC_Payment_Gateway {
 	public const ID = 'ppcp-pwc';
 
 	/**
+	 * The URL to the module.
+	 *
+	 * @var string
+	 */
+	private $module_url;
+
+	/**
 	 * PayPal Orders endpoint.
 	 *
 	 * @var Orders
@@ -71,6 +78,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	/**
 	 * PWCGateway constructor.
 	 *
+	 * @param string                    $module_url The URL to the module.
 	 * @param Orders                    $orders_endpoint PayPal Orders endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory Purchase unit factory.
 	 * @param RefundProcessor           $refund_processor The Refund Processor.
@@ -79,6 +87,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
+		string $module_url,
 		Orders $orders_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		RefundProcessor $refund_processor,
@@ -98,8 +107,10 @@ class PWCGateway extends WC_Payment_Gateway {
 
 		$this->title       = $this->get_option( 'title', __( 'Pay with Crypto', 'woocommerce-paypal-payments' ) );
 		$this->description = $this->get_option( 'description', '' );
+		$this->module_url  = $module_url;
 
-		$this->icon = esc_url( 'https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_crypto_color.svg' );
+		// TODO: Change to the official svg asset when it's available: Something like https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_crypto_color.svg.
+		$this->icon = esc_url( $this->module_url ) . 'assets/images/pwc.svg';
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -149,6 +160,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	 *
 	 * @param int $order_id The WC order ID.
 	 * @return array
+	 * @throws Exception When payer action URL is not found in PayPal response.
 	 */
 	public function process_payment( $order_id ): array {
 		$wc_order = wc_get_order( $order_id );

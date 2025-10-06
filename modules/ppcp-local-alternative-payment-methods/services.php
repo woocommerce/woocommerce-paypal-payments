@@ -75,6 +75,7 @@ return array(
 	},
 	'ppcp-local-apms.crypto.wc-gateway'         => static function ( ContainerInterface $container ): PWCGateway {
 		return new PWCGateway(
+			$container->get( 'wcgateway.url' ),
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),

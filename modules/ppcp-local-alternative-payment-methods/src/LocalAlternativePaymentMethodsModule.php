@@ -160,12 +160,12 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 				// funding source to disable, which causes "Invalid query value for disable-funding: crypto" errors.
 				$payment_method_keys = array_filter(
 					array_keys( $payment_methods ),
-					function( $key ) {
+					function ( $key ) {
 						return $key !== 'crypto';
 					}
 				);
 
-				$disable_funding = array_merge(
+				$disable_funding                       = array_merge(
 					$payment_method_keys,
 					array_filter( explode( ',', $default_disable_funding ) )
 				);
