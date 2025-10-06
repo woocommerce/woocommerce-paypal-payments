@@ -45,14 +45,12 @@ class PayPalCart extends AgenticSchema {
 				$this->items[] = CartItem::from_array( $item, $add_issue );
 			}
 		} else {
-			/** @psalm-suppress MissingThrowsDocblock -- Errors mean the class-code is invalid */
 			$add_issue( new MissingField( 'Required field missing', 'Please provide a list of cart items.', 'items' ) );
 		}
 
 		if ( ! empty( $input['payment_method'] ) && is_array( $input['payment_method'] ) ) {
 			$this->payment_method = $input['payment_method'];
 		} else {
-			/** @psalm-suppress MissingThrowsDocblock -- Errors mean the class-code is invalid */
 			$add_issue( new MissingField( 'Required field missing', 'No payment_method defined.', 'payment_method' ) );
 		}
 
