@@ -75,11 +75,8 @@ abstract class ValidationIssue {
 		if ( ! in_array( static::ISSUE_TYPE, self::VALID_TYPES, true ) ) {
 			throw new RuntimeException( 'Invalid ISSUE_TYPE constant' );
 		}
-		if ( empty( $message ) ) {
-			throw new RuntimeException( 'Validation message cannot be empty' );
-		}
 
-		$this->message      = $message;
+		$this->message      = $message ?: 'Validation error occurred';
 		$this->user_message = $user_message;
 		$this->field        = $field;
 	}
