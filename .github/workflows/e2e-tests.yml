@@ -3,6 +3,10 @@ name: E2E Tests
 on:
   workflow_dispatch:
     inputs:
+      update-workflows:
+        description: 'Weather generate new snapshots'
+        type: boolean
+        default: false
       plugin-version:
         description: 'Plugin version to compile (i.e 3.0.0)'
         default: '3.1.0'
@@ -19,6 +23,10 @@ on:
           - critical
           - onboarding
           - all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -90,12 +98,25 @@ jobs:
       - name: Create .env file
         working-directory: ./tests/qa
         run: |
-          echo "${{ secrets.ENV_FILE }}" > .env
+          echo "${{ secrets.QA_ENV_FILE }}" > .env
 
       - name: Run E2E tests
         working-directory: ./tests/qa
         run: |
-          npm run tests:${{ github.event.inputs.test-suite }}
+          if [ "${{ github.event.inputs.update_snapshots }}" == "true" ]; then
+            npm run tests:${{ github.event.inputs.test-suite }} -- --update-snapshots
+          else
+            npm run tests:${{ github.event.inputs.test-suite }}
+          fi
+
+      - name: Archive updated snapshots
+        if: github.event.inputs.update_snapshots == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: snapshots
+          path: tests/qa/snapshots
+          if-no-files-found: warn
+          retention-days: 5
 
       - name: Archive E2E Test failure screenshots
         if: ${{ always() }}
