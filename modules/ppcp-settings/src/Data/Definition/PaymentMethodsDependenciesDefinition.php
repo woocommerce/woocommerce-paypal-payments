@@ -9,6 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
@@ -76,6 +77,7 @@ class PaymentMethodsDependenciesDefinition {
 			TrustlyGateway::ID        => array( PayPalGateway::ID ),
 			PayUponInvoiceGateway::ID => array( PayPalGateway::ID ),
 			OXXO::ID                  => array( PayPalGateway::ID ),
+			PWCGateway::ID            => array( PayPalGateway::ID ),
 			'venmo'                   => array( PayPalGateway::ID ),
 			'pay-later'               => array( PayPalGateway::ID ),
 		);
