@@ -12,7 +12,7 @@ import { PaymentHooks } from '../../../../../data';
 
 const Modal = ( { method, setModalIsVisible, onSave } ) => {
 	const { all: paymentMethods } = PaymentHooks.usePaymentMethods();
-	const { paypalShowLogo, fastlaneCardholderName, fastlaneDisplayWatermark } =
+	const { paypalShowLogo, cardholderName, fastlaneDisplayWatermark } =
 		PaymentHooks.usePaymentMethodsModal();
 
 	const [ settings, setSettings ] = useState( () => {
@@ -40,7 +40,7 @@ const Modal = ( { method, setModalIsVisible, onSave } ) => {
 		} );
 
 		initialSettings.paypalShowLogo = paypalShowLogo;
-		initialSettings.fastlaneCardholderName = fastlaneCardholderName;
+		initialSettings.cardholderName = cardholderName;
 		initialSettings.fastlaneDisplayWatermark = fastlaneDisplayWatermark;
 
 		return initialSettings;

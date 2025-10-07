@@ -75,30 +75,7 @@ const COUNTRY_CONFIGS = {
 			{ name: 'Crypto', Component: Crypto },
 		],
 		extendedMethods: [
-			{
-				name: 'CreditDebitCards',
-				Component: CreditDebitCards,
-				isOwnBrand: false,
-				isAcdc: false,
-			},
-			{
-				name: 'CardFields',
-				Component: CardFields,
-				isOwnBrand: false,
-				isAcdc: true,
-			},
-			{
-				name: 'DigitalWallets',
-				Component: DigitalWallets,
-				isOwnBrand: false,
-				isAcdc: true,
-			},
-			{
-				name: 'APMs',
-				Component: AlternativePaymentMethods,
-				isOwnBrand: true,
-				isAcdc: true,
-			},
+			...DEFAULT_CONFIG.extendedMethods,
 			{
 				name: 'Fastlane',
 				Component: Fastlane,
@@ -112,6 +89,28 @@ const COUNTRY_CONFIGS = {
 		includedMethods: [
 			{ name: 'PayWithPayPal', Component: PayWithPayPal },
 			{ name: 'PayInThree', Component: PayInThree },
+		],
+		extendedMethods: [
+			...DEFAULT_CONFIG.extendedMethods,
+			{
+				name: 'Fastlane',
+				Component: Fastlane,
+				isOwnBrand: false,
+				isAcdc: true,
+				isFastlane: true,
+			},
+		],
+	},
+	AU: {
+		extendedMethods: [
+			...DEFAULT_CONFIG.extendedMethods,
+			{
+				name: 'Fastlane',
+				Component: Fastlane,
+				isOwnBrand: false,
+				isAcdc: true,
+				isFastlane: true,
+			},
 		],
 	},
 	MX: {
@@ -258,14 +257,6 @@ export const usePaymentConfig = (
 	ownBrandOnly
 ) => {
 	return useMemo( () => {
-		// eslint-disable-next-line no-console
-		console.log( '[Payment Config]', {
-			country,
-			canUseCardPayments,
-			hasFastlane,
-			ownBrandOnly,
-		} );
-
 		// Merge country-specific config with default.
 		const countryConfig = COUNTRY_CONFIGS[ country ] || {};
 		const config = { ...DEFAULT_CONFIG, ...countryConfig };

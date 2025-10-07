@@ -15,6 +15,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ContactPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
@@ -173,6 +175,8 @@ class CreateOrderEndpointTest extends TestCase
             $session_handler,
             $settings,
             $early_order_handler,
+			Mockery::mock(CartDataFactory::class),
+			Mockery::mock(CartDataTransientStorage::class),
 			false,
 			CardBillingMode::MINIMAL_INPUT,
 			false,

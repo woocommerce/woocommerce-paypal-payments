@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
@@ -39,7 +38,7 @@ use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
-use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -56,7 +55,8 @@ use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use Throwable;
 
 /**
  * Class SettingsModule
@@ -75,7 +75,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 * is used to disable the new UI, it will override all other conditions.
 		 */
 		if ( ! apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
 			getenv( 'PCP_SETTINGS_ENABLED' ) !== '1'
 		) ) {
@@ -137,34 +137,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					);
 
 					$notices[] = new Message( $message, 'info', false, 'ppcp-notice-wrapper' );
-
-					$is_paylater_messaging_force_enabled_feature_flag_enabled = apply_filters(
-					// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-						'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
-						true
-					);
-
-					$messages_apply = $container->get( 'button.helper.messages-apply' );
-					assert( $messages_apply instanceof MessagesApply );
-
-					$settings = $container->get( 'wcgateway.settings' );
-					assert( $settings instanceof Settings );
-
-					$stay_updated = $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
-
-					if ( $is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $stay_updated ) {
-						$paylater_enablement_message = sprintf(
-						// translators: %1$s is the URL for Stay Updated setting, %2$s is the URL for Pay Later settings.
-							__(
-								'<strong>PayPal Pay Later messaging successfully enabled</strong>, now displaying this flexible payment option earlier in the shopping experience. This update was made based on your <a href="%1$s">Stay Updated</a> preference and can be customized or disabled through the <a href="%2$s">Pay Later settings</a>.',
-								'woocommerce-paypal-payments'
-							),
-							admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#ppcp-stay_updated_field' ),
-							admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' )
-						);
-
-						$notices[] = new Message( $paylater_enablement_message, 'info', false, 'ppcp-notice-wrapper' );
-					}
 
 					return $notices;
 				}
@@ -236,6 +208,69 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		$loading_screen_service->register();
 
 		$this->apply_branded_only_limitations( $container );
+
+		/**
+		 * Override ACDC status with BCDC for eligible merchants.
+		 *
+		 * This filter determines whether to force BCDC (Standard Card buttons) classification
+		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
+		 *
+		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
+		 * @return bool|null True to force BCDC classification, false/null otherwise.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
+			static function ( ?bool $use_bcdc ) use ( $container ) {
+				$check_override = $container->get( 'settings.migration.bcdc-override-check' );
+				assert( is_callable( $check_override ) );
+
+				if ( $check_override() ) {
+					$use_bcdc = true;
+				}
+
+				return $use_bcdc;
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
+			 * Set the BCDC override flag during plugin update, if the merchant has enabled BCDC
+			 * in the legacy settings.
+			 *
+			 * Corrects the BCDC flag for already-migrated merchants, as the previous migration logic
+			 * did not create this flag.  This ensures merchants who migrated before the override flag
+			 * implementation don't lose their Standard Card button functionality.
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				// Only run this migration logic when updating from version 3.1.1 or older.
+				if ( $previous_version && version_compare( $previous_version, '3.1.1', 'gt' ) ) {
+					return;
+				}
+
+				try {
+					$payment_settings_migration = $container->get( 'settings.service.data-migration.payment-settings' );
+					assert( $payment_settings_migration instanceof PaymentSettingsMigration );
+
+					if ( ! $payment_settings_migration->is_bcdc_enabled_for_acdc_merchant() ) {
+						return;
+					}
+
+					$payment_settings = $container->get( 'settings.data.payment' );
+					assert( $payment_settings instanceof PaymentSettings );
+
+					// One-time fix: Set override flag for already-migrated merchants with BCDC evidence.
+					update_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, true );
+					$payment_settings->toggle_method_state( CardButtonGateway::ID, true );
+				} catch ( Throwable $error ) {
+					// Something failed - ignore the error and assume there is no migration data.
+					return;
+				}
+			}
+		);
 
 		add_action(
 			'admin_enqueue_scripts',
@@ -470,7 +505,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 *
 		 * Ensures that only enabled PayPal payment gateways are displayed.
 		 *
-		 * @hook woocommerce_admin_field_payment_gateways
+		 * @hook     woocommerce_admin_field_payment_gateways
 		 * @priority 5 Allows modifying the registered gateways before they are displayed.
 		 */
 		add_action(
@@ -722,6 +757,31 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Implement the mutually exclusive BCDC or ACDC rule:
+		 * If the current merchant is _not BCDC eligible_, we disable the "card" funding source.
+		 * This effectively hides the black Standard Card button from the express payment block
+		 * and the PayPal smart button stack in classic checkout.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_sdk_disabled_funding_hook',
+			static function ( array $disable_funding ) use ( $container ) {
+				// Already disabled, no correction needed.
+				if ( in_array( 'card', $disable_funding, true ) ) {
+					return $disable_funding;
+				}
+
+				$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
+				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
+
+				if ( ! $dcc_configuration->is_bcdc_enabled() ) {
+					$disable_funding[] = 'card';
+				}
+
+				return $disable_funding;
+			}
+		);
+
 		return true;
 	}
 
@@ -747,6 +807,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_filter( 'woocommerce_paypal_payments_is_eligible_for_axo', '__return_false' );
 		add_filter( 'woocommerce_paypal_payments_is_eligible_for_save_payment_methods', '__return_false' );
 		add_filter( 'woocommerce_paypal_payments_is_eligible_for_card_fields', '__return_false' );
+		add_filter( 'woocommerce_paypal_payments_is_acdc_active', '__return_false' );
 	}
 
 	/**
