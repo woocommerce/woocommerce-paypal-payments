@@ -59,8 +59,8 @@ You can install WooCommerce PayPal Payments locally using the dev environment of
 To set up the DDEV environment, follow these steps:
 
 0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
-1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the [`.ddev/config.yml`](.ddev/config.yaml) file if needed.
-2. `$ ddev setup` to setup and orchestrate the plugin, WooCommerce and WordPress
+1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the `.ddev/config.local.yml` file if needed. 
+2. Run `$ ddev start && ddev orchestrate` to setup and orchestrate the plugin, WooCommerce and WordPress (you can also use `$ yarn ddev:setup`)
 3. Open https://woocommerce-paypal-payments.ddev.site 
 
 Use `$ ddev reset` for reinstallation (will destroy all site data).

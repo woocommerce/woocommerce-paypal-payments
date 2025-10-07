@@ -15,12 +15,13 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -76,31 +77,8 @@ return array(
 	},
 	// This service may not work correctly when called too early.
 	'button.context'                              => static function ( ContainerInterface $container ): string {
-		$obj = new class() {
-			use ContextTrait;
-
-			/**
-			 * Session handler.
-			 *
-			 * @var SessionHandler
-			 */
-			protected $session_handler;
-
-			/** Constructor. */
-			public function __construct() {
-				// phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.ThisFoundInStatic
-				$this->session_handler = new SessionHandler();
-			}
-
-			/**
-			 * Wrapper for a non-public function.
-			 */
-			public function get_context(): string {
-				// phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.ThisFoundInStatic
-				return $this->context();
-			}
-		};
-		return $obj->get_context();
+		$context = $container->get( 'button.helper.context' );
+		return $context->context();
 	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$context = $container->get( 'button.context' );
@@ -159,7 +137,6 @@ return array(
 			$payment_token_repository,
 			$settings_status,
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
@@ -173,7 +150,8 @@ return array(
 			$container->get( 'button.helper.disabled-funding-sources' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'api.helper.partner-attribution' ),
-			$container->get( 'blocks.settings.final_review_enabled' )
+			$container->get( 'blocks.settings.final_review_enabled' ),
+			$container->get( 'button.helper.context' ),
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
@@ -236,6 +214,8 @@ return array(
 			$session_handler,
 			$settings,
 			$early_order_handler,
+			$container->get( 'button.session.factory.card-data' ),
+			$container->get( 'button.session.storage.card-data.transient' ),
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
@@ -265,6 +245,8 @@ return array(
 		$wc_order_creator     = $container->get( 'button.helper.wc-order-creator' );
 		$gateway              = $container->get( 'wcgateway.paypal-gateway' );
 		$logger               = $container->get( 'woocommerce.logger.woocommerce' );
+		$context              = $container->get( 'button.helper.context' );
+
 		return new ApproveOrderEndpoint(
 			$request_data,
 			$order_endpoint,
@@ -276,7 +258,8 @@ return array(
 			$final_review_enabled,
 			$gateway,
 			$wc_order_creator,
-			$logger
+			$logger,
+			$context
 		);
 	},
 	'button.endpoint.approve-subscription'        => static function ( ContainerInterface $container ): ApproveSubscriptionEndpoint {
@@ -286,8 +269,15 @@ return array(
 			$container->get( 'session.handler' ),
 			$container->get( 'blocks.settings.final_review_enabled' ),
 			$container->get( 'button.helper.wc-order-creator' ),
-			$container->get( 'wcgateway.paypal-gateway' )
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'button.helper.context' )
 		);
+	},
+	'button.helper.context'                       => static function ( ContainerInterface $container ): Context {
+		$session_handler = $container->get( 'session.handler' );
+		$subscription_status = $container->get( 'paypal-subscriptions.status' );
+
+		return new Context( $session_handler, $subscription_status );
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
 		return new CheckoutFormSaver(
@@ -407,7 +397,16 @@ return array(
 		return new WooCommerceOrderCreator(
 			$container->get( 'wcgateway.funding-source.renderer' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'wc-subscriptions.helper' )
+			$container->get( 'wc-subscriptions.helper' ),
+			$container->get( 'button.session.factory.card-data' ),
+			$container->get( 'api.factory.shipping' )
 		);
+	},
+
+	'button.session.factory.card-data'            => static function ( ContainerInterface $container ): CartDataFactory {
+		return new CartDataFactory();
+	},
+	'button.session.storage.card-data.transient'  => static function ( ContainerInterface $container ): CartDataTransientStorage {
+		return new CartDataTransientStorage();
 	},
 );

@@ -90,7 +90,7 @@ const bootstrap = () => {
 	};
 
 	const doBasicCheckoutValidation = () => {
-		if ( PayPalCommerceGateway.basic_checkout_validation_enabled ) {
+		if ( PayPalCommerceGateway.basic_checkout_validation_enabled || PayPalCommerceGateway.is_free_trial_cart ) {
 			// A quick fix to get the errors about empty form fields before attempting PayPal order,
 			// it should solve #513 for most of the users, but it is not a proper solution.
 			// Currently it is disabled by default because a better solution is now implemented

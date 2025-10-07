@@ -38,7 +38,7 @@ class PaymentSettings extends AbstractDataModel {
 	protected function get_defaults(): array {
 		return array(
 			'paypal_show_logo'           => false,
-			'fastlane_cardholder_name'   => false,
+			'cardholder_name'            => false,
 			'fastlane_display_watermark' => false,
 			'venmo_enabled'              => false,
 			'paylater_enabled'           => false,
@@ -158,12 +158,12 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Get Fastlane cardholder name.
+	 * Get cardholder name.
 	 *
 	 * @return bool
 	 */
-	public function get_fastlane_cardholder_name(): bool {
-		return (bool) $this->data['fastlane_cardholder_name'];
+	public function get_cardholder_name(): bool {
+		return (bool) $this->data['cardholder_name'];
 	}
 
 	/**
@@ -204,13 +204,13 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
-	 * Set Fastlane cardholder name.
+	 * Set cardholder name.
 	 *
 	 * @param bool $value The value.
 	 * @return void
 	 */
-	public function set_fastlane_cardholder_name( bool $value ): void {
-		$this->data['fastlane_cardholder_name'] = $value;
+	public function set_cardholder_name( bool $value ): void {
+		$this->data['cardholder_name'] = $value;
 	}
 
 	/**

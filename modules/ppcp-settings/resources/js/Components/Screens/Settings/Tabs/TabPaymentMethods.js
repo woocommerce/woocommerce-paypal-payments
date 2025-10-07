@@ -37,7 +37,7 @@ const TabPaymentMethods = () => {
 			const persistentSettings = [
 				'paypalShowLogo',
 				'threeDSecure',
-				'fastlaneCardholderName',
+				'cardholderName',
 				'fastlaneDisplayWatermark',
 			];
 

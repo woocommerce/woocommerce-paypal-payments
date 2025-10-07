@@ -77,8 +77,8 @@ class PaymentRestEndpoint extends RestEndpoint {
 			'js_name'  => 'paypalShowLogo',
 			'sanitize' => 'to_boolean',
 		),
-		'fastlane_cardholder_name'   => array(
-			'js_name'  => 'fastlaneCardholderName',
+		'cardholder_name'            => array(
+			'js_name'  => 'cardholderName',
 			'sanitize' => 'to_boolean',
 		),
 		'fastlane_display_watermark' => array(
@@ -203,7 +203,7 @@ class PaymentRestEndpoint extends RestEndpoint {
 		}
 
 		$gateway_settings['paypalShowLogo']           = $this->payment_settings->get_paypal_show_logo();
-		$gateway_settings['fastlaneCardholderName']   = $this->payment_settings->get_fastlane_cardholder_name();
+		$gateway_settings['cardholderName']           = $this->payment_settings->get_cardholder_name();
 		$gateway_settings['fastlaneDisplayWatermark'] = $this->payment_settings->get_fastlane_display_watermark();
 
 		return $this->return_success( apply_filters( 'woocommerce_paypal_payments_payment_methods', $gateway_settings ) );

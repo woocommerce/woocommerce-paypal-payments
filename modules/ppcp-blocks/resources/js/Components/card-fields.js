@@ -92,12 +92,14 @@ export function CardFields( { config, eventRegistration, emitResponse } ) {
 						console.error( err );
 					} }
 				>
-					<PayPalNameField
-						placeholder={ __(
-							'Cardholder Name (optional)',
-							'woocommerce-paypal-payments'
-						) }
-					/>
+					{ config.name_on_card === 'yes' && (
+						<PayPalNameField
+							placeholder={ __(
+								'Cardholder Name (optional)',
+								'woocommerce-paypal-payments'
+							) }
+						/>
+					) }
 					<PayPalNumberField
 						placeholder={ __(
 							'Card number',
