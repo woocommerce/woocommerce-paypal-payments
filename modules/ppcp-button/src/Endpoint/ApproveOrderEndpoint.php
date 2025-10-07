@@ -183,6 +183,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				throw new RuntimeException( 'No order id given' );
 			}
 
+			do_action( 'woocommerce_paypal_payments_approve_order_request_started', $data );
+
 			$order = $this->api_endpoint->order( $data['order_id'] );
 
 			$payment_source = $order->payment_source();

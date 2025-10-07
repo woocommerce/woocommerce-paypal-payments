@@ -161,7 +161,7 @@ test.describe( () => {
 	} );
 
 	test(
-		'PCP-0000 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
+		'PCP-5380 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
 		annotateVisitor( customer ),
 		async ( { customerPaymentMethods } ) => {
 			// Preconditions
@@ -190,7 +190,7 @@ test.describe( () => {
 	} );
 
 	test(
-		'PCP-0000 | Vaulting - My Account - Payment Methods - ACDC - Save additional card',
+		'PCP-5381 | Vaulting - My Account - Payment Methods - ACDC - Save additional card',
 		annotateVisitor( customer ),
 		async ( { utils, customerPaymentMethods, classicCheckout } ) => {
 			// Preconditions

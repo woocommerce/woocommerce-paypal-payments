@@ -382,6 +382,9 @@ $services = array(
 	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
 		$c->get( 'wcgateway.settings' ),
 		$c->get( 'settings.data.payment' ),
+		$c->get( 'api.helpers.dccapplies' ),
+		$c->get( 'wcgateway.helper.dcc-product-status' ),
+		$c->get( 'wcgateway.configuration.card-configuration' ),
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
@@ -653,6 +656,9 @@ $services = array(
 		$eligibility_checks = $container->get( 'wcgateway.feature-eligibility.list' );
 
 		return new MerchantDetails( $merchant_country, $eligibility_checks );
+	},
+	'settings.migration.bcdc-override-check'              => static function (): callable {
+		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 	},
 );
 

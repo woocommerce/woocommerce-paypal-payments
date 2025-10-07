@@ -16,7 +16,7 @@ const standardPaymentsDefault: PcpSettings.StandardPayments = {
 };
 
 export const pcpConfigDefault: PcpConfig = {
-	clearPCPDB: false, // clear PCP DB
+	clearPCPDB: true, // clear PCP DB
 	merchant: merchants[ country ],
 	standardPayments: standardPaymentsDefault,
 };

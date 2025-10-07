@@ -100,17 +100,17 @@ export class PayPalUi {
 		);
 	fastlaneCardNumberInput = () =>
 		this.page
-			.frameLocator( '#card-number iframe' )
+			.frameLocator( '#braintree-hosted-field-number' )
 			.locator( '#credit-card-number' );
 	fastlaneExpirationDateInput = () =>
 		this.page
-			.frameLocator( '#expiration-date iframe' )
+			.frameLocator( '#braintree-hosted-field-expirationDate' )
 			.locator( '#expiration' );
 	fastlaneCvvInput = () =>
-		this.page.frameLocator( '#cvv iframe' ).locator( '#cvv' );
+		this.page.frameLocator( '#braintree-hosted-field-cvv' ).locator( '#cvv' );
 	fastlaneCardHolderInput = () =>
 		this.page
-			.frameLocator( '#cardholder-name iframe' )
+			.frameLocator( '#braintree-hosted-field-cardholderName' )
 			.locator( '#cardholder-name' );
 	fastlaneOtpWindow = () =>
 		this.page.getByTestId( 'modal-sheet-inner-sheet' );
@@ -235,16 +235,16 @@ export class PayPalUi {
 		// Map to the tested method
 		switch ( shortcut ) {
 			case 'paypal':
-				// pay with vaulted account
+				await this.payPalGateway().click();
+				popup = await this.openPayPalPupup();
+
 				if ( payment.isVaulted ) {
-					// await this.assertVaultedPaymentMethodIsDisplayed( payment );
-					popup = await this.openPayPalPupup();
+					// pay with vaulted account
 					await expect( popup.submitPaymentButton() ).toBeVisible();
 					await popup.completePayment();
 					break;
 				}
-				// open expected PayPal popup
-				popup = await this.openPayPalPupup();
+
 				// pay with given PayPal account
 				await popup.completePayPalPayment( payPalAccount );
 				break;
