@@ -304,6 +304,9 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 									'subscription_id_to_change_payment' => $is_subscription_change_payment_method_page ? (int) $change_payment_method : 0,
 									'error_message'        => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
 									'verification_method'  => $verification_method,
+									'user'                 => array(
+										'is_logged' => is_user_logged_in(),
+									),
 									'ajax'                 => array(
 										'create_setup_token'   => array(
 											'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),

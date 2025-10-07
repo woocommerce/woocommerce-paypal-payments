@@ -58,7 +58,7 @@ import {
 					id_token: ppcp_add_payment_method.id_token,
 				},
 				user: {
-					is_logged: true,
+					is_logged: ppcp_add_payment_method.user?.is_logged ?? false,
 				},
 			};
 
