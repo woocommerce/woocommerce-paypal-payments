@@ -156,12 +156,12 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 				$default_disable_funding = $data['url_params']['disable-funding'] ?? '';
 
 				// Exclude crypto from disable-funding list because it's handled as a payment source,
-				// not a funding source. PayPal's JavaScript SDK doesn't recognize 'crypto' as a valid
-				// funding source to disable, which causes "Invalid query value for disable-funding: crypto" errors.
+				// not a funding source. PayPal's JavaScript SDK doesn't recognize 'pwc' as a valid
+				// funding source to disable, which causes "Invalid query value for disable-funding: pwc" errors.
 				$payment_method_keys = array_filter(
 					array_keys( $payment_methods ),
 					function ( $key ) {
-						return $key !== 'crypto';
+						return $key !== 'pwc';
 					}
 				);
 
