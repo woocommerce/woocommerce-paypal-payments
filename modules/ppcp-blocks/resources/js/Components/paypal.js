@@ -21,6 +21,7 @@ import {
 	onApproveSavePayment,
 } from '../paypal-config';
 import { useRef } from 'react';
+import Spinner from '../../../../ppcp-button/resources/js/modules/Helper/Spinner';
 
 const PAYPAL_GATEWAY_ID = 'ppcp-gateway';
 
@@ -52,8 +53,11 @@ export const PayPalComponent = ( {
 		useState( false );
 
 	const [ paypalScriptLoaded, setPaypalScriptLoaded ] = useState( false );
+	const [ isFullPageSpinnerActive, setIsFullPageSpinnerActive ] =
+		useState( false );
 
 	const paypalButtonRef = useRef( null );
+	const spinnerRef = useRef( null );
 
 	if ( ! paypalScriptLoaded ) {
 		if ( ! paypalScriptPromise ) {
@@ -69,6 +73,18 @@ export const PayPalComponent = ( {
 	const methodId = fundingSource
 		? `${ config.id }-${ fundingSource }`
 		: config.id;
+
+	// Full-page spinner used to block UI interactions during flows like AppSwitch.
+	useEffect( () => {
+		if ( isFullPageSpinnerActive ) {
+			if ( ! spinnerRef.current ) {
+				spinnerRef.current = Spinner.fullPage();
+			}
+			spinnerRef.current.block();
+		} else if ( spinnerRef.current ) {
+			spinnerRef.current.unblock();
+		}
+	}, [ isFullPageSpinnerActive ] );
 
 	useEffect( () => {
 		// fill the form if in continuation (for product or mini-cart buttons)
@@ -287,6 +303,14 @@ export const PayPalComponent = ( {
 	}, [ onPaymentSetup, paypalOrder, activePaymentMethod ] );
 
 	useEffect( () => {
+		const unsubscribe = onCheckoutFail( () => {
+			setIsFullPageSpinnerActive( false );
+		} );
+
+		return unsubscribe;
+	}, [ onCheckoutFail ] );
+
+	useEffect( () => {
 		if ( activePaymentMethod !== methodId ) {
 			return;
 		}
@@ -298,6 +322,15 @@ export const PayPalComponent = ( {
 			if ( config.scriptData.continuation ) {
 				return true;
 			}
+
+			// Don't redirect for trial vaulting subscriptions
+			if (
+				cartHasSubscriptionProducts( config.scriptData ) &&
+				config.scriptData.is_free_trial_cart
+			) {
+				return true;
+			}
+
 			if ( shouldskipFinalConfirmation() ) {
 				location.href = getCheckoutRedirectUrl();
 			}
@@ -336,7 +369,8 @@ export const PayPalComponent = ( {
 						setGotoContinuationOnError,
 						onSubmit,
 						onError,
-						onClose
+						onClose,
+						setIsFullPageSpinnerActive
 					);
 				},
 			}
@@ -491,7 +525,8 @@ export const PayPalComponent = ( {
 					setGotoContinuationOnError,
 					onSubmit,
 					onError,
-					onClose
+					onClose,
+					setIsFullPageSpinnerActive
 				)
 			}
 			onShippingOptionsChange={ getOnShippingOptionsChange(

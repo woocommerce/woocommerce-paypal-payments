@@ -1,0 +1,113 @@
+name: 'Weekly builds'
+on:
+  schedule:
+    - cron:  '0 11 * * 2' # Run every Tuesday at 11 AM UTC (12pm CET)
+  workflow_dispatch:
+
+env:
+  SOURCE_REF: develop
+  TARGET_REF: weekly
+  RELEASE_ID: 248387138 # https://github.com/woocommerce/woocommerce-paypal-payments/releases/tag/weekly
+
+jobs:
+  update-tag:
+    if: github.repository_owner == 'woocommerce'
+    name: Update weekly tag
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      latest_tag: ${{ steps.update_refs.outputs.tag }}
+    steps:
+      - name: Update weekly tag commit ref
+        id: update_refs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const sourceRef = process.env.SOURCE_REF;
+            const targetRef = process.env.TARGET_REF;
+            const branchData = await github.rest.repos.getBranch({
+              ...context.repo,
+              branch: sourceRef,
+            });
+            await github.rest.git.updateRef({
+              ...context.repo,
+              ref: `tags/${ targetRef }`,
+              sha: branchData.data.commit.sha,
+            });
+
+            const latestRelease = await github.rest.repos.getLatestRelease({
+              ...context.repo
+            });
+
+            const tagName = latestRelease.data.tag_name;
+            core.setOutput('tag', tagName);
+
+  build:
+    if: github.repository_owner == 'woocommerce'
+    name: Build package
+    needs: update-tag
+    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@a9af34f34e95cbe18703198c7e972e97ebcd7473
+    with:
+      PHP_VERSION: 7.4
+      NODE_VERSION: 22
+      PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
+      PLUGIN_VERSION: ${{ needs.update-tag.outputs.latest_tag }}-weekly
+      PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
+      ARCHIVE_NAME: woocommerce-paypal-payments
+      COMPILE_ASSETS_ARGS: '-vv --env=root'
+
+  deploy:
+    if: github.repository_owner == 'woocommerce'
+    name: Upload weekly build
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: woocommerce-paypal-payments
+          path: ./artifacts
+
+      - name: Create and upload zip file
+        working-directory: ./artifacts
+        run: |
+          zip -r ./woocommerce-paypal-payments-weekly.zip ./woocommerce-paypal-payments
+
+      - name: Update weekly release
+        uses: WebFreak001/deploy-nightly@v3.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          upload_url: https://uploads.github.com/repos/${{ github.repository }}/releases/${{ env.RELEASE_ID }}/assets{?name,label}
+          release_id: ${{ env.RELEASE_ID }}
+          asset_path: ./artifacts/woocommerce-paypal-payments-weekly.zip
+          asset_name: woocommerce-paypal-payments-weekly.zip
+          asset_content_type: application/zip
+          max_releases: 1
+
+  notify-slack:
+    if: always() && github.repository_owner == 'woocommerce'
+    name: Send Slack notification
+    runs-on: ubuntu-latest
+    needs: [ update-tag, build, deploy ]
+    steps:
+      - name: Send success message to Slack
+        if: needs.deploy.result == 'success'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.WEEKLY_RELEASE_SLACK_HOOK }}
+          webhook-type: webhook-trigger
+          payload: |
+              "status": "🎉 A new Weekly Pre Release has been uploaded",
+              "workflow": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Send failure message to Slack
+        if: needs.deploy.result == 'failure' || needs.build.result == 'failure' || needs.update-tag.result == 'failure'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.WEEKLY_RELEASE_SLACK_HOOK }}
+          webhook-type: webhook-trigger
+          payload: |
+              "status": "😰 Ups! It was an error uploading the Weekly Pre Release",
+              "workflow": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"

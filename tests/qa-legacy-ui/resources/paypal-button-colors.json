@@ -1,0 +1,52 @@
+{
+  "gold": {
+    "paypal": "paypal-button-color-gold",
+    "paylater": "paypal-button-color-gold",
+    "sepa": "paypal-button-color-silver",
+    "giropay": "paypal-button-color-default",
+    "sofort": "paypal-button-color-default",
+    "card": "paypal-button-color-black",
+    "p24": "paypal-button-color-default",
+    "venmo": "paypal-button-color-blue"
+  },
+  "blue": {
+    "paypal": "paypal-button-color-blue",
+    "paylater": "paypal-button-color-blue",
+    "sepa": "paypal-button-color-silver",
+    "giropay": "paypal-button-color-default",
+    "sofort": "paypal-button-color-default",
+    "card": "paypal-button-color-black",
+    "p24": "paypal-button-color-default",
+    "venmo": "paypal-button-color-silver"
+  },
+  "silver": {
+    "paypal": "paypal-button-color-silver",
+    "paylater": "paypal-button-color-silver",
+    "sepa": "paypal-button-color-silver",
+    "giropay": "paypal-button-color-silver",
+    "sofort": "paypal-button-color-silver",
+    "card": "paypal-button-color-black",
+    "p24": "paypal-button-color-silver",
+    "venmo": "paypal-button-color-blue"
+  },
+  "black": {
+    "paypal": "paypal-button-color-black",
+    "paylater": "paypal-button-color-black",
+    "sepa": "paypal-button-color-black",
+    "giropay": "paypal-button-color-black",
+    "sofort": "paypal-button-color-black",
+    "card": "paypal-button-color-black",
+    "p24": "paypal-button-color-black",
+    "venmo": "paypal-button-color-black"
+  },
+  "white": {
+    "paypal": "paypal-button-color-white",
+    "paylater": "paypal-button-color-white",
+    "sepa": "paypal-button-color-white",
+    "giropay": "paypal-button-color-white",
+    "sofort": "paypal-button-color-white",
+    "card": "paypal-button-color-white",
+    "p24": "paypal-button-color-white",
+    "venmo": "paypal-button-color-white"
+  }
+}

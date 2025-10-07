@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
@@ -40,7 +40,6 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-	use ContextTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -251,7 +250,9 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 				add_action(
 					'wp_enqueue_scripts',
 					function () use ( $c ) {
-						if ( ! is_user_logged_in() || ! ( $this->is_add_payment_method_page() || $this->is_subscription_change_payment_method_page() ) ) {
+						$context = $c->get( 'button.helper.context' );
+						assert( $context instanceof Context );
+						if ( ! is_user_logged_in() || ! ( $context->is_add_payment_method_page() || $context->is_subscription_change_payment_method_page() ) ) {
 							return;
 						}
 
@@ -287,7 +288,8 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 								: '';
 
 							// phpcs:ignore WordPress.Security.NonceVerification
-							$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) );
+							$change_payment_method                      = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) );
+							$is_subscription_change_payment_method_page = $context->is_subscription_change_payment_method_page();
 
 							wp_localize_script(
 								'ppcp-add-payment-method',
@@ -298,8 +300,8 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 									'id_token'             => $id_token,
 									'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
 									'view_subscriptions_page' => wc_get_account_endpoint_url( 'view-subscription' ),
-									'is_subscription_change_payment_page' => $this->is_subscription_change_payment_method_page(),
-									'subscription_id_to_change_payment' => $this->is_subscription_change_payment_method_page() ? (int) $change_payment_method : 0,
+									'is_subscription_change_payment_page' => $is_subscription_change_payment_method_page,
+									'subscription_id_to_change_payment' => $is_subscription_change_payment_method_page ? (int) $change_payment_method : 0,
 									'error_message'        => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
 									'verification_method'  => $verification_method,
 									'ajax'                 => array(

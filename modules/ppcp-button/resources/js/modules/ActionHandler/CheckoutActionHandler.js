@@ -158,7 +158,7 @@ class CheckoutActionHandler {
 		};
 		return {
 			createOrder,
-			onApprove: onApprove( this, this.errorHandler, this.spinner ),
+			onApprove: onApprove( this, this.errorHandler ),
 			onCancel: () => {
 				spinner.unblock();
 			},

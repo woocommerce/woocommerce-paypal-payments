@@ -244,16 +244,6 @@ class TodosDefinition {
 				),
 				'priority'    => 14,
 			),
-			'pay_later_messaging_is_auto_enabled'            => array(
-				'title'       => __( 'PayPal Pay Later messaging successfully enabled', 'woocommerce-paypal-payments' ),
-				'description' => __( 'PayPal is now displaying this flexible payment option earlier in the shopping experience. This update was made based on your “Stay Updated” preference and the messaging can be customized or disabled through the Pay Later settings.', 'woocommerce-paypal-payments' ),
-				'isEligible'  => $eligibility_checks['pay_later_messaging_is_auto_enabled'],
-				'action'      => array(
-					'type'      => 'tab',
-					'tab'       => 'pay_later_messaging',
-				),
-				'priority'    => 15,
-			),
 		);
 
 		$todo_items['check_settings_after_migration'] = array(
