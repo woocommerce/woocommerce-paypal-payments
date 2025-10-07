@@ -54,13 +54,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: woocommerce-paypal-payments
-          path: ./artifacts
+          path: ./tests/qa/resources/files
 
       - name: Create and upload zip file
-        working-directory: ./artifacts
+        working-directory: ./tests/qa/resources/files
         run: |
           zip -r ./woocommerce-paypal-payments.zip ./woocommerce-paypal-payments
-          cp woocommerce-paypal-payments.zip ../test/qa/resources/files
+          rm -rf woocommerce-paypal-payments
 
       - name: Configure npm for GitHub Packages
         working-directory: ./tests/qa
