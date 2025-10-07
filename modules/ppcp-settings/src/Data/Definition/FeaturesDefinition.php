@@ -276,7 +276,7 @@ class FeaturesDefinition {
 					'Let customers know they can buy now and pay later with PayPal. Adding this messaging can boost conversion rates and increase cart sizes by 39%¹, with no extra cost to you—plus, you get paid up front.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities['pay_later'],
+				'enabled'     => $this->merchant_capabilities['paylater'],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
