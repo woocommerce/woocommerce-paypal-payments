@@ -235,10 +235,10 @@ class CheckoutOrderApproved implements RequestHandler {
 				 * So you can implement your own for example on subscriptions
 				 *
 				 * - true bool controls execution of 'OrderProcessor::process()'
-				 * - $this \WC_Payment_Gateway
+				 * - null because it's mostly for PayPalGateway instance to handle
 				 * - $wc_order \WC_Order
 				 */
-				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, $this, $wc_order );
+				$process = apply_filters( 'woocommerce_paypal_payments_before_order_process', true, null, $wc_order );
 				if ( $process ) {
 					$this->order_processor->process( $wc_order );
 				}

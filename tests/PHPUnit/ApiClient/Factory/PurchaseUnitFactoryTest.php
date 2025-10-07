@@ -56,6 +56,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $address
             ->shouldReceive('postal_code')
             ->andReturn('12345');
+		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
         $shipping = Mockery::mock(Shipping::class);
         $shipping
             ->shouldReceive('address')
@@ -114,7 +115,9 @@ class PurchaseUnitFactoryTest extends TestCase
         $address = Mockery::mock(Address::class);
         $address->shouldReceive('country_code')->andReturn('DE');
         $address->shouldReceive('postal_code')->andReturn('12345');
-        $shipping = Mockery::mock(Shipping::class);
+	    $address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+
+	    $shipping = Mockery::mock(Shipping::class);
         $shipping->shouldReceive('address')->andReturn($address);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shippingFactory
@@ -159,7 +162,9 @@ class PurchaseUnitFactoryTest extends TestCase
         $address
             ->expects('postal_code')
             ->andReturn('');
-        $shipping = Mockery::mock(Shipping::class);
+	    $address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+
+	    $shipping = Mockery::mock(Shipping::class);
         $shipping
             ->expects('address')
             ->andReturn($address);
@@ -221,6 +226,51 @@ class PurchaseUnitFactoryTest extends TestCase
         $unit = $testee->from_wc_order($wcOrder);
         $this->assertEquals(null, $unit->shipping());
     }
+
+	public function testWcOrderShippingGetsDroppedWhenNoAddressLine1()
+	{
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$amount = Mockery::mock(Amount::class);
+		$amountFactory = Mockery::mock(AmountFactory::class);
+		$amountFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn($amount);
+		$itemFactory = Mockery::mock(ItemFactory::class);
+		$itemFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn([$this->item]);
+
+		$address = Mockery::mock(Address::class);
+		$address
+			->expects('country_code')
+			->andReturn('DE');
+		$address->shouldReceive('postal_code')->andReturn('12345');
+		$address->shouldReceive('address_line_1')->andReturn('');
+
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping
+			->expects('address')
+			->andReturn($address);
+		$shippingFactory = Mockery::mock(ShippingFactory::class);
+		$shippingFactory
+			->expects('from_wc_order')
+			->with($wcOrder)
+			->andReturn($shipping);
+		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
+		$testee = new PurchaseUnitFactory(
+			$amountFactory,
+			$itemFactory,
+			$shippingFactory,
+			$paymentsFacory
+		);
+
+		$unit = $testee->from_wc_order($wcOrder);
+		$this->assertEquals(null, $unit->shipping());
+	}
 
     public function testWcCartDefault()
     {
