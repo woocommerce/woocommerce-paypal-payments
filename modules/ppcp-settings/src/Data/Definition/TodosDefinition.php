@@ -266,6 +266,16 @@ class TodosDefinition {
 				),
 				'priority'    => 16,
 			),
+			'apply_for_pwc'                        => array(
+				'title'       => __( 'Start your Pay with Crypto application', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Allow your customers to pay with crypto. You\'ll receive USD payments in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['apply_for_pwc'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => 'http://example.com/',
+				),
+				'priority'    => 17,
+			),
 		);
 
 		$todo_items['check_settings_after_migration'] = array(
