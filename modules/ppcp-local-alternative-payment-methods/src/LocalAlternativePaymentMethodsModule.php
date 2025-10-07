@@ -71,6 +71,8 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			return;
 		}
 
+		$this->register_pwc_feature_flag_filters();
+
 		/**
 		 * The "woocommerce_payment_gateways" filter is responsible for ADDING
 		 * custom payment gateways to WooCommerce. Here, we add all the local
@@ -89,6 +91,9 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 				}
 
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+
+				$payment_methods = apply_filters( 'woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods );
+
 				foreach ( $payment_methods as $key => $value ) {
 					$methods[] = $c->get( 'ppcp-local-apms.' . $key . '.wc-gateway' );
 				}
@@ -114,7 +119,16 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 					return $methods;
 				}
 
-				$payment_methods  = $c->get( 'ppcp-local-apms.payment-methods' );
+				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+
+				/**
+				 * Filter the payment methods array before checking availability.
+				 *
+				 * @param array $payment_methods The payment methods configuration array.
+				 * @return array The filtered payment methods array.
+				 */
+				$payment_methods = apply_filters( 'woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods );
+
 				$customer_country = WC()->customer->get_billing_country() ?: WC()->customer->get_shipping_country();
 				$site_currency    = get_woocommerce_currency();
 
@@ -142,6 +156,15 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			'woocommerce_blocks_payment_method_type_registration',
 			function ( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
+
+				/**
+				 * Filter the payment methods array before registering block payment methods.
+				 *
+				 * @param array $payment_methods The payment methods configuration array.
+				 * @return array The filtered payment methods array.
+				 */
+				$payment_methods = apply_filters( 'woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods );
+
 				foreach ( $payment_methods as $key => $value ) {
 					$payment_method_registry->register( $c->get( 'ppcp-local-apms.' . $key . '.payment-method' ) );
 				}
@@ -153,22 +176,16 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			function ( array $data ) use ( $c ) {
 				$payment_methods = $c->get( 'ppcp-local-apms.payment-methods' );
 
-				$default_disable_funding = $data['url_params']['disable-funding'] ?? '';
+				/**
+				 * Filter the payment methods array before adding to disable-funding.
+				 *
+				 * @param array $payment_methods The payment methods configuration array.
+				 * @return array The filtered payment methods array.
+				 */
+				$payment_methods = apply_filters( 'woocommerce_paypal_payments_local_apm_payment_methods', $payment_methods );
 
-				// Exclude crypto from disable-funding list because it's handled as a payment source,
-				// not a funding source. PayPal's JavaScript SDK doesn't recognize 'pwc' as a valid
-				// funding source to disable, which causes "Invalid query value for disable-funding: pwc" errors.
-				$payment_method_keys = array_filter(
-					array_keys( $payment_methods ),
-					function ( $key ) {
-						return $key !== 'pwc';
-					}
-				);
-
-				$disable_funding                       = array_merge(
-					$payment_method_keys,
-					array_filter( explode( ',', $default_disable_funding ) )
-				);
+				$default_disable_funding               = $data['url_params']['disable-funding'] ?? '';
+				$disable_funding                       = array_merge( array_keys( $payment_methods ), array_filter( explode( ',', $default_disable_funding ) ) );
 				$data['url_params']['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
 				return $data;
@@ -334,6 +351,105 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	}
 
 	/**
+	 * Register PWC feature flag filters.
+	 *
+	 * @return void
+	 */
+	private function register_pwc_feature_flag_filters(): void {
+		/**
+		 * Filter payment methods array to exclude PWC when feature flag is disabled.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_local_apm_payment_methods',
+			function ( array $methods ) {
+				if ( $this->is_pwc_feature_enabled() ) {
+					return $methods;
+				}
+
+				// Remove PWC from payment methods array when feature flag is disabled.
+				return array_filter(
+					$methods,
+					function ( $method ) {
+						return $method['id'] !== 'ppcp-pwc';
+					}
+				);
+			}
+		);
+
+		/**
+		 * Filter APM gateway list to conditionally exclude PWC.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_gateway_group_apm',
+			function ( array $group ): array {
+				if ( ! $this->is_pwc_feature_enabled() ) {
+					$group = array_filter(
+						$group,
+						function ( $method ) {
+							return $method['id'] !== 'ppcp-pwc';
+						}
+					);
+				}
+				return $group;
+			}
+		);
+
+		/**
+		 * Filter todos list to conditionally exclude PWC-related todos.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_todos_list',
+			function ( array $todos ): array {
+				if ( ! $this->is_pwc_feature_enabled() ) {
+					unset( $todos['enable_pwc'] );
+					unset( $todos['apply_for_pwc'] );
+				}
+				return $todos;
+			}
+		);
+
+		/**
+		 * Filter features list to conditionally exclude PWC feature.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_features_list',
+			function ( array $features ): array {
+				if ( ! $this->is_pwc_feature_enabled() ) {
+					unset( $features['pwc'] );
+				}
+				return $features;
+			}
+		);
+
+		/**
+		 * Filter localized script data to exclude PWC from disable-funding list.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_localized_script_data',
+			function ( array $data ) {
+				if ( ! $this->is_pwc_feature_enabled() ) {
+					return $data;
+				}
+
+				$current_disable_funding = $data['url_params']['disable-funding'] ?? '';
+				$funding_sources         = array_filter( explode( ',', $current_disable_funding ) );
+
+				$funding_sources = array_filter(
+					$funding_sources,
+					function ( $source ) {
+						return $source !== 'pwc';
+					}
+				);
+
+				$data['url_params']['disable-funding'] = implode( ',', array_unique( $funding_sources ) );
+
+				return $data;
+			},
+			11
+		);
+	}
+
+	/**
 	 * Checks, whether the current request is trying to access a WooCommerce REST endpoint.
 	 *
 	 * @return bool True, if the request path matches the WC-Rest namespace.
@@ -343,5 +459,18 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 		$request_uri = wp_unslash( $_SERVER['REQUEST_URI'] ?? '' );
 
 		return str_contains( $request_uri, '/wp-json/wc/' );
+	}
+
+	/**
+	 * Check if PWC (Pay with Crypto) feature flag is enabled.
+	 *
+	 * @return bool True if PWC is enabled, false otherwise.
+	 */
+	private function is_pwc_feature_enabled(): bool {
+		return apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+			'woocommerce.feature-flags.woocommerce_paypal_payments.pwc_enabled',
+			getenv( 'PCP_PWC_ENABLED' ) !== '0'
+		);
 	}
 }
