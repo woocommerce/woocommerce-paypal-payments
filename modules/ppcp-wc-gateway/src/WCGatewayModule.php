@@ -580,7 +580,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
+				$features['pay_later_messaging'] = array(
+					'enabled' => $apms_product_status->is_active(),
+				);
 
 				// Even if installments can be ACTIVE in SellerStatus (PayPal) we are using it only in MX for now.
 				$features['installments'] = array(
