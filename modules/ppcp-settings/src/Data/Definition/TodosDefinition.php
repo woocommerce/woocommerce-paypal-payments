@@ -244,16 +244,6 @@ class TodosDefinition {
 				),
 				'priority'    => 14,
 			),
-			'pay_later_messaging_is_auto_enabled'  => array(
-				'title'       => __( 'PayPal Pay Later messaging successfully enabled', 'woocommerce-paypal-payments' ),
-				'description' => __( 'PayPal is now displaying this flexible payment option earlier in the shopping experience. This update was made based on your “Stay Updated” preference and the messaging can be customized or disabled through the Pay Later settings.', 'woocommerce-paypal-payments' ),
-				'isEligible'  => $eligibility_checks['pay_later_messaging_is_auto_enabled'],
-				'action'      => array(
-					'type' => 'tab',
-					'tab'  => 'pay_later_messaging',
-				),
-				'priority'    => 15,
-			),
 			'enable_pwc'                           => array(
 				'title'       => __( 'Enable Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Allow your customers to pay with crypto. You\'ll receive USD payments in your PayPal balance.', 'woocommerce-paypal-payments' ),
@@ -264,7 +254,7 @@ class TodosDefinition {
 					'section'   => 'ppcp-pwc',
 					'highlight' => 'ppcp-pwc',
 				),
-				'priority'    => 16,
+				'priority'    => 15,
 			),
 			'apply_for_pwc'                        => array(
 				'title'       => __( 'Start your Pay with Crypto application', 'woocommerce-paypal-payments' ),
@@ -274,7 +264,7 @@ class TodosDefinition {
 					'type' => 'external',
 					'url'  => 'http://example.com/',
 				),
-				'priority'    => 17,
+				'priority'    => 16,
 			),
 		);
 

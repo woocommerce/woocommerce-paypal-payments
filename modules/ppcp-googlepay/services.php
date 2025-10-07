@@ -185,12 +185,12 @@ return array(
 			$container->get( 'googlepay.url' ),
 			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'session.handler' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'button.helper.context' ),
 			$container->has( 'settings.data.settings' ) ? $container->get( 'settings.data.settings' ) : null
 		);
 	},

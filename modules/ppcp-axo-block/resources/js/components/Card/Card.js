@@ -48,14 +48,16 @@ const Card = ( { fastlaneSdk, showWatermark = true } ) => {
 						<div className="wc-block-checkout-axo-block-card__meta-logo">
 							{ cardLogo }
 						</div>
-						<div className="wc-block-checkout-axo-block-card__meta-digits">
-							{ `**** **** **** ${ lastDigits }` }
-						</div>
-						<div className="wc-block-checkout-axo-block-card__meta-expiry">
-							{ formattedExpiry }
-						</div>
-						<div className="wc-block-checkout-axo-block-card__meta-name">
-							{ name }
+						<div className="wc-block-checkout-axo-block-card__meta-container">
+							<div className="wc-block-checkout-axo-block-card__meta-digits">
+								{ `•••• ${ lastDigits }` }
+							</div>
+							<div className="wc-block-checkout-axo-block-card__meta-name">
+								{ name }
+							</div>
+							<div className="wc-block-checkout-axo-block-card__meta-expiry">
+								{ formattedExpiry }
+							</div>
 						</div>
 					</div>
 				</div>

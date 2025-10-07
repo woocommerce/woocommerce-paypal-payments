@@ -13,12 +13,11 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
-use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -29,8 +28,12 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class Button implements ButtonInterface {
 
-	use ContextTrait;
-
+	/**
+	 * Context data provider.
+	 *
+	 * @var Context $context
+	 */
+	private Context $context;
 	/**
 	 * The URL to the module.
 	 *
@@ -81,13 +84,6 @@ class Button implements ButtonInterface {
 	private $logger;
 
 	/**
-	 * Session handler.
-	 *
-	 * @var SessionHandler
-	 */
-	private $session_handler;
-
-	/**
 	 * The Subscription Helper.
 	 *
 	 * @var SubscriptionHelper
@@ -105,37 +101,37 @@ class Button implements ButtonInterface {
 	 * @param string             $module_url The URL to the module.
 	 * @param string             $sdk_url The URL to the SDK.
 	 * @param string             $version The assets version.
-	 * @param SessionHandler     $session_handler The Session handler.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
 	 * @param Settings           $settings The legacy settings.
 	 * @param Environment        $environment The environment object.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 * @param LoggerInterface    $logger The logger.
+	 * @param Context            $context Context data provider.
 	 * @param SettingsModel|null $new_settings The new settings model.
 	 */
 	public function __construct(
 		string $module_url,
 		string $sdk_url,
 		string $version,
-		SessionHandler $session_handler,
 		SubscriptionHelper $subscription_helper,
 		Settings $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
+		Context $context,
 		SettingsModel $new_settings = null
 	) {
 
 		$this->module_url          = $module_url;
 		$this->sdk_url             = $sdk_url;
 		$this->version             = $version;
-		$this->session_handler     = $session_handler;
 		$this->subscription_helper = $subscription_helper;
 		$this->settings            = $settings;
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
 		$this->logger              = $logger;
 		$this->new_settings        = $new_settings;
+		$this->context             = $context;
 	}
 
 	/**
@@ -460,7 +456,7 @@ class Button implements ButtonInterface {
 		$use_shipping_form = $this->should_use_shipping();
 
 		// On the product page, only show the shipping form for physical products.
-		$context = $this->context();
+		$context = $this->context->context();
 		if ( $use_shipping_form && 'product' === $context ) {
 			$product = wc_get_product();
 

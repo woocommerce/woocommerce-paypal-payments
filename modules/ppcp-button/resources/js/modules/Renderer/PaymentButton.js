@@ -896,6 +896,9 @@ export default class PaymentButton {
 					this.syncProductButtonsState();
 				}
 			);
+
+			// Ensure initial state is synced on page load
+			this.syncProductButtonsState();
 		}
 	}
 

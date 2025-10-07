@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\PPCP;
+use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CleansTestData;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreateTestOrders;
 use WooCommerce\PayPalCommerce\Tests\Integration\Traits\CreateTestProducts;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -27,7 +28,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 class IntegrationMockedTestCase extends TestCase
 {
-    use MockeryPHPUnitIntegration, CreateTestOrders, CreateTestProducts;
+    use MockeryPHPUnitIntegration, CreateTestOrders, CreateTestProducts, CleansTestData;
 
     public function setUp(): void
     {
@@ -40,7 +41,8 @@ class IntegrationMockedTestCase extends TestCase
     public function tearDown(): void
     {
         // This cleans up everything created during tests
-        //$this->cleanupTestData();
+        $this->cleanupTestData();
+	    wc_clear_notices();
         parent::tearDown();
     }
 

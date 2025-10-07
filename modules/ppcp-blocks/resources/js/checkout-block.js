@@ -103,8 +103,9 @@ if ( blockEnabled ) {
 			edit: descriptionElement,
 			placeOrderButtonLabel: config.placeOrderButtonText,
 			ariaLabel: config.title,
-			canMakePayment: () => {
-				return true;
+			canMakePayment: ( cartData ) => {
+				const total = cartData?.cartTotals?.total_price;
+				return parseInt( total ) > 0;
 			},
 			supports: {
 				features,

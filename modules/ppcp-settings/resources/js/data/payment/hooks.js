@@ -131,16 +131,14 @@ export const usePaymentMethodsModal = () => {
 	const { usePersistent } = useStoreData();
 
 	const [ paypalShowLogo ] = usePersistent( 'paypalShowLogo' );
-	const [ fastlaneCardholderName ] = usePersistent(
-		'fastlaneCardholderName'
-	);
+	const [ cardholderName ] = usePersistent( 'cardholderName' );
 	const [ fastlaneDisplayWatermark ] = usePersistent(
 		'fastlaneDisplayWatermark'
 	);
 
 	return {
 		paypalShowLogo,
-		fastlaneCardholderName,
+		cardholderName,
 		fastlaneDisplayWatermark,
 	};
 };

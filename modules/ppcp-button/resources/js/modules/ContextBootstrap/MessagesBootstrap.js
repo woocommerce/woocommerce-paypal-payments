@@ -94,18 +94,15 @@ class MessagesBootstrap {
 
 	render() {
 		this.renderers.forEach( ( renderer ) => {
+			const shouldShow = this.shouldShow( renderer );
+
+			if ( ! shouldShow ) {
+				return;
+			}
+
 			waitForElement( renderer.config.wrapper )
 				.then( () => {
-					const shouldShow = this.shouldShow( renderer );
 					setVisible( renderer.config.wrapper, shouldShow );
-					if ( ! shouldShow ) {
-						return;
-					}
-
-					if ( ! renderer.shouldRender() ) {
-						return;
-					}
-
 					renderer.renderWithAmount( this.lastAmount );
 				} )
 				.catch( ( err ) => console.error( err ) );

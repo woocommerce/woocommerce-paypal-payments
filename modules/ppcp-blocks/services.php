@@ -48,7 +48,8 @@ return array(
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
 			},
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.configuration.card-configuration' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {

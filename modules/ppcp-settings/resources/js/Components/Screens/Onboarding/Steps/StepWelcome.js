@@ -6,6 +6,7 @@ import { Separator } from '../../../ReusableComponents/Elements';
 import Accordion from '../../../ReusableComponents/AccordionSection';
 import { CommonHooks, OnboardingHooks } from '../../../../data';
 import BusyStateWrapper from '../../../ReusableComponents/BusyStateWrapper';
+import HelpSection from '../../../ReusableComponents/HelpSection';
 import OnboardingHeader from '../Components/OnboardingHeader';
 import WelcomeDocs from '../Components/WelcomeDocs';
 import AdvancedOptionsForm from '../Components/AdvancedOptionsForm';
@@ -88,6 +89,7 @@ const StepWelcome = ( { setStep, currentStep } ) => {
 			>
 				<AdvancedOptionsForm />
 			</Accordion>
+			<HelpSection />
 		</div>
 	);
 };
