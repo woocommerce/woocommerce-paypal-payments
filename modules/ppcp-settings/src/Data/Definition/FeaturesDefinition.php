@@ -85,7 +85,7 @@ class FeaturesDefinition {
 		$store_country                   = $this->settings->get_woo_settings()['country'];
 		$country_location                = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
 
-		return array(
+		$features = array(
 			'save_paypal_and_venmo'           => array(
 				'title'       => __( 'Save PayPal and Venmo', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Securely save PayPal and Venmo payment methods for subscriptions or return buyers.', 'woocommerce-paypal-payments' ),
@@ -325,5 +325,11 @@ class FeaturesDefinition {
 				),
 			),
 		);
+
+		if ( $this->settings->get_merchant_country() !== 'MX' ) {
+			unset( $features['installments'] );
+		}
+
+		return $features;
 	}
 }
