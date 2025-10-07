@@ -150,6 +150,13 @@ class TodosEligibilityService {
 	 */
 	private bool $is_enable_pwc_eligible;
 
+	/**
+	 * Whether applying for Pay with Crypto is eligible.
+	 *
+	 * @var bool
+	 */
+	private bool $is_apply_for_pwc;
+
 
 	/**
 	 * Constructor.
@@ -173,6 +180,7 @@ class TodosEligibilityService {
 	 * @param bool $is_working_capital_eligible         Whether applying for Working Capital is eligible.
 	 * @param bool $is_pay_later_messaging_auto_enabled Whether the Pay later messaging is force enabled.
 	 * @param bool $is_enable_pwc_eligible              Whether enabling Pay with Crypto is eligible.
+	 * @param bool $is_apply_for_pwc                    Whether applying for Pay with Crypto is eligible.
 	 */
 	public function __construct(
 		bool $is_fastlane_eligible,
@@ -193,7 +201,8 @@ class TodosEligibilityService {
 		bool $is_enable_installments_eligible,
 		bool $is_working_capital_eligible,
 		bool $is_pay_later_messaging_auto_enabled,
-		bool $is_enable_pwc_eligible
+		bool $is_enable_pwc_eligible,
+		bool $is_apply_for_pwc
 	) {
 		$this->is_fastlane_eligible                      = $is_fastlane_eligible;
 		$this->is_pay_later_messaging_eligible           = $is_pay_later_messaging_eligible;
@@ -214,6 +223,7 @@ class TodosEligibilityService {
 		$this->is_working_capital_eligible               = $is_working_capital_eligible;
 		$this->is_pay_later_messaging_auto_enabled       = $is_pay_later_messaging_auto_enabled;
 		$this->is_enable_pwc_eligible                    = $is_enable_pwc_eligible;
+		$this->is_apply_for_pwc                          = $is_apply_for_pwc;
 	}
 
 	/**
@@ -242,6 +252,7 @@ class TodosEligibilityService {
 			'apply_for_working_capital'            => fn() => $this->is_working_capital_eligible,
 			'pay_later_messaging_is_auto_enabled'  => fn() => $this->is_pay_later_messaging_auto_enabled,
 			'enable_pwc'                           => fn() => $this->is_enable_pwc_eligible,
+			'apply_for_pwc'                        => fn() => $this->is_apply_for_pwc,
 		);
 	}
 }
