@@ -24,12 +24,15 @@ class Address extends AgenticSchema {
 
 	private ?string $admin_area_2 = null;
 
+	private ?string $admin_area_1 = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
 		$this->country_code   = '';
 		$this->address_line_1 = null;
 		$this->address_line_2 = null;
 		$this->admin_area_2   = null;
+		$this->admin_area_1   = null;
 
 		// Parse mandatory fields.
 		if ( isset( $input['country_code'] ) ) {
@@ -70,7 +73,17 @@ class Address extends AgenticSchema {
 			if ( $admin_area_2 && strlen( $admin_area_2 ) <= 120 ) {
 				$this->admin_area_2 = $admin_area_2;
 			} else {
-				$add_issue( new InvalidData( 'Field admin_area_2 is too long', 'Please provide a valid admin area 2.', 'admin_area_2' ) );
+				$add_issue( new InvalidData( 'Field admin_area_2 is too long', 'Please provide a valid city.', 'admin_area_2' ) );
+			}
+		}
+
+		if ( isset( $input['admin_area_1'] ) ) {
+			$admin_area_1 = trim( $input['admin_area_1'] );
+
+			if ( $admin_area_1 && strlen( $admin_area_1 ) <= 120 ) {
+				$this->admin_area_1 = $admin_area_1;
+			} else {
+				$add_issue( new InvalidData( 'Field admin_area_1 is too long', 'Please provide a valid region or state.', 'admin_area_1' ) );
 			}
 		}
 	}
@@ -98,6 +111,6 @@ class Address extends AgenticSchema {
 	 * The region or state.
 	 */
 	public function admin_area_1(): ?string {
-		return 'CA';
+		return $this->admin_area_1;
 	}
 }
