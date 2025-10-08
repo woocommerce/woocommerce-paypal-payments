@@ -293,4 +293,21 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertNull( $address->postal_code() );
 	}
+
+	/**
+	 * Tests that postal_code exceeding max length produces validation issue.
+	 */
+	public function test_postal_code_too_long_produces_validation_issue(): void {
+		$data    = array(
+			'country_code' => 'US',
+			'postal_code'  => str_repeat( 'P', 61 ),
+		);
+		$address = Address::from_array( $data );
+		$issues  = $address->validate();
+
+		$this->assertCount( 1, $issues );
+
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'postal_code', $issue_data['field'] );
+	}
 }
