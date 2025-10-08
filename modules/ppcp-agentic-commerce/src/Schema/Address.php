@@ -22,7 +22,7 @@ class Address extends AgenticSchema {
 
 		// Parse mandatory fields.
 		if ( isset( $input['country_code'] ) ) {
-			$this->country_code = strtoupper( $input['country_code'] );
+			$this->country_code = strtoupper( trim( $input['country_code'] ) );
 		}
 	}
 
