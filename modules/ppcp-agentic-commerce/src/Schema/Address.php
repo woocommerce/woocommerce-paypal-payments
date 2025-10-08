@@ -26,6 +26,8 @@ class Address extends AgenticSchema {
 
 	private ?string $admin_area_1 = null;
 
+	private ?string $postal_code = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
 		$this->country_code   = '';
@@ -33,6 +35,7 @@ class Address extends AgenticSchema {
 		$this->address_line_2 = null;
 		$this->admin_area_2   = null;
 		$this->admin_area_1   = null;
+		$this->postal_code    = null;
 
 		// Parse mandatory fields.
 		if ( isset( $input['country_code'] ) ) {
@@ -47,6 +50,7 @@ class Address extends AgenticSchema {
 			$add_issue( new InvalidData( 'Missing required field', 'Please provide a country code.', 'country_code' ) );
 		}
 
+		// Parse optional fields.
 		if ( isset( $input['address_line_1'] ) ) {
 			$address_line_1 = trim( $input['address_line_1'] );
 
@@ -86,6 +90,10 @@ class Address extends AgenticSchema {
 				$add_issue( new InvalidData( 'Field admin_area_1 is too long', 'Please provide a valid region or state.', 'admin_area_1' ) );
 			}
 		}
+
+		if ( isset( $input['postal_code'] ) ) {
+			$this->postal_code = trim( $input['postal_code'] );
+		}
 	}
 
 	public function country_code(): string {
@@ -115,6 +123,6 @@ class Address extends AgenticSchema {
 	}
 
 	public function postal_code(): ?string {
-		return '95131';
+		return $this->postal_code;
 	}
 }
