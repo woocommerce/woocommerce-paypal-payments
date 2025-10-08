@@ -91,223 +91,121 @@ class AddressTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that address_line_1 is stored correctly.
+	 * Tests that optional fields are stored correctly.
+	 *
+	 * @dataProvider optional_field_storage_provider
 	 */
-	public function test_address_line_1_is_stored(): void {
-		$data    = array(
-			'country_code'   => 'US',
-			'address_line_1' => '123 Main Street',
-		);
-		$address = Address::from_array( $data );
+	public function test_optional_fields_are_stored( string $field_name, string $value ): void {
+		$data              = array( 'country_code' => 'US' );
+		$data[ $field_name ] = $value;
+		$address           = Address::from_array( $data );
 
 		$this->assertEmpty( $address->validate() );
-		$this->assertSame( '123 Main Street', $address->address_line_1() );
+		$this->assertSame( $value, $address->$field_name() );
+	}
+
+	public function optional_field_storage_provider(): array {
+		return array(
+			'address_line_1' => array(
+				'field_name' => 'address_line_1',
+				'value'      => '123 Main Street',
+			),
+			'address_line_2' => array(
+				'field_name' => 'address_line_2',
+				'value'      => 'Apt 4B',
+			),
+			'admin_area_2'   => array(
+				'field_name' => 'admin_area_2',
+				'value'      => 'San Jose',
+			),
+			'admin_area_1'   => array(
+				'field_name' => 'admin_area_1',
+				'value'      => 'CA',
+			),
+			'postal_code'    => array(
+				'field_name' => 'postal_code',
+				'value'      => '95131',
+			),
+		);
 	}
 
 	/**
-	 * Tests that address_line_1 returns null when not provided.
+	 * Tests that optional fields return null when not provided.
+	 *
+	 * @dataProvider optional_field_names_provider
 	 */
-	public function test_address_line_1_returns_null_when_not_provided(): void {
+	public function test_optional_fields_return_null_when_not_provided( string $field_name ): void {
 		$data    = array( 'country_code' => 'US' );
 		$address = Address::from_array( $data );
 
 		$this->assertEmpty( $address->validate() );
-		$this->assertNull( $address->address_line_1() );
+		$this->assertNull( $address->$field_name() );
+	}
+
+	public function optional_field_names_provider(): array {
+		return array(
+			'address_line_1' => array( 'field_name' => 'address_line_1' ),
+			'address_line_2' => array( 'field_name' => 'address_line_2' ),
+			'admin_area_2'   => array( 'field_name' => 'admin_area_2' ),
+			'admin_area_1'   => array( 'field_name' => 'admin_area_1' ),
+			'postal_code'    => array( 'field_name' => 'postal_code' ),
+		);
 	}
 
 	/**
-	 * Tests that address_line_1 exceeding max length produces validation issue.
+	 * Tests that optional fields exceeding max length produce validation issues.
+	 *
+	 * @dataProvider field_max_length_provider
 	 */
-	public function test_address_line_1_too_long_produces_validation_issue(): void {
-		$data    = array(
-			'country_code'   => 'US',
-			'address_line_1' => str_repeat( 'A', 301 ),
-		);
-		$address = Address::from_array( $data );
-		$issues  = $address->validate();
+	public function test_fields_exceeding_max_length_produce_validation_issue( string $field_name, int $max_length ): void {
+		$data              = array( 'country_code' => 'US' );
+		$data[ $field_name ] = str_repeat( 'X', $max_length + 1 );
+		$address           = Address::from_array( $data );
+		$issues            = $address->validate();
 
 		$this->assertCount( 1, $issues );
 
 		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'address_line_1', $issue_data['field'] );
+		$this->assertSame( $field_name, $issue_data['field'] );
 	}
 
-	/**
-	 * Tests that address_line_2 is stored correctly.
-	 */
-	public function test_address_line_2_is_stored(): void {
-		$data    = array(
-			'country_code'   => 'US',
-			'address_line_2' => 'Apt 4B',
+	public function field_max_length_provider(): array {
+		return array(
+			'address_line_1' => array(
+				'field_name' => 'address_line_1',
+				'max_length' => 300,
+			),
+			'address_line_2' => array(
+				'field_name' => 'address_line_2',
+				'max_length' => 300,
+			),
+			'admin_area_2'   => array(
+				'field_name' => 'admin_area_2',
+				'max_length' => 120,
+			),
+			'admin_area_1'   => array(
+				'field_name' => 'admin_area_1',
+				'max_length' => 300,
+			),
+			'postal_code'    => array(
+				'field_name' => 'postal_code',
+				'max_length' => 60,
+			),
 		);
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( 'Apt 4B', $address->address_line_2() );
-	}
-
-	/**
-	 * Tests that address_line_2 returns null when not provided.
-	 */
-	public function test_address_line_2_returns_null_when_not_provided(): void {
-		$data    = array( 'country_code' => 'US' );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertNull( $address->address_line_2() );
-	}
-
-	/**
-	 * Tests that address_line_2 exceeding max length produces validation issue.
-	 */
-	public function test_address_line_2_too_long_produces_validation_issue(): void {
-		$data    = array(
-			'country_code'   => 'US',
-			'address_line_2' => str_repeat( 'B', 301 ),
-		);
-		$address = Address::from_array( $data );
-		$issues  = $address->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'address_line_2', $issue_data['field'] );
-	}
-
-	/**
-	 * Tests that admin_area_2 is stored correctly.
-	 */
-	public function test_admin_area_2_is_stored(): void {
-		$data    = array(
-			'country_code' => 'US',
-			'admin_area_2' => 'San Jose',
-		);
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( 'San Jose', $address->admin_area_2() );
-	}
-
-	/**
-	 * Tests that admin_area_2 returns null when not provided.
-	 */
-	public function test_admin_area_2_returns_null_when_not_provided(): void {
-		$data    = array( 'country_code' => 'US' );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertNull( $address->admin_area_2() );
-	}
-
-	/**
-	 * Tests that admin_area_2 exceeding max length produces validation issue.
-	 */
-	public function test_admin_area_2_too_long_produces_validation_issue(): void {
-		$data    = array(
-			'country_code' => 'US',
-			'admin_area_2' => str_repeat( 'C', 121 ),
-		);
-		$address = Address::from_array( $data );
-		$issues  = $address->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'admin_area_2', $issue_data['field'] );
-	}
-
-	/**
-	 * Tests that admin_area_1 is stored correctly.
-	 */
-	public function test_admin_area_1_is_stored(): void {
-		$data    = array(
-			'country_code' => 'US',
-			'admin_area_1' => 'CA',
-		);
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( 'CA', $address->admin_area_1() );
-	}
-
-	/**
-	 * Tests that admin_area_1 returns null when not provided.
-	 */
-	public function test_admin_area_1_returns_null_when_not_provided(): void {
-		$data    = array( 'country_code' => 'US' );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertNull( $address->admin_area_1() );
-	}
-
-	/**
-	 * Tests that admin_area_1 accepts values up to 300 characters.
-	 */
-	public function test_admin_area_1_accepts_121_characters(): void {
-		$data    = array(
-			'country_code' => 'US',
-			'admin_area_1' => str_repeat( 'A', 121 ),
-		);
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate(), 'admin_area_1 should accept 121 characters (max is 300)' );
 	}
 
 	/**
 	 * Tests that fields accept their exact max length and store the value.
+	 *
+	 * @dataProvider field_max_length_provider
 	 */
-	public function test_address_line_1_accepts_exactly_300_characters(): void {
-		$value = str_repeat( 'X', 300 );
-		$data  = array(
-			'country_code'   => 'US',
-			'address_line_1' => $value,
-		);
-		$address = Address::from_array( $data );
+	public function test_fields_accept_exact_max_length( string $field_name, int $max_length ): void {
+		$value             = str_repeat( 'X', $max_length );
+		$data              = array( 'country_code' => 'US' );
+		$data[ $field_name ] = $value;
+		$address           = Address::from_array( $data );
 
 		$this->assertEmpty( $address->validate() );
-		$this->assertSame( $value, $address->address_line_1() );
-	}
-
-	/**
-	 * Tests that postal_code is stored correctly.
-	 */
-	public function test_postal_code_is_stored(): void {
-		$data    = array(
-			'country_code' => 'US',
-			'postal_code'  => '95131',
-		);
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( '95131', $address->postal_code() );
-	}
-
-	/**
-	 * Tests that postal_code returns null when not provided.
-	 */
-	public function test_postal_code_returns_null_when_not_provided(): void {
-		$data    = array( 'country_code' => 'US' );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertNull( $address->postal_code() );
-	}
-
-	/**
-	 * Tests that postal_code exceeding max length produces validation issue.
-	 */
-	public function test_postal_code_too_long_produces_validation_issue(): void {
-		$data    = array(
-			'country_code' => 'US',
-			'postal_code'  => str_repeat( 'P', 61 ),
-		);
-		$address = Address::from_array( $data );
-		$issues  = $address->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'postal_code', $issue_data['field'] );
+		$this->assertSame( $value, $address->$field_name() );
 	}
 }
