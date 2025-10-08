@@ -20,10 +20,13 @@ class Address extends AgenticSchema {
 
 	private ?string $address_line_1 = null;
 
+	private ?string $address_line_2 = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
 		$this->country_code   = '';
 		$this->address_line_1 = null;
+		$this->address_line_2 = null;
 
 		// Parse mandatory fields.
 		if ( isset( $input['country_code'] ) ) {
@@ -47,6 +50,16 @@ class Address extends AgenticSchema {
 				$add_issue( new InvalidData( 'Field address_line_1 is too long', 'Please provide a valid address line 1.', 'address_line_1' ) );
 			}
 		}
+
+		if ( isset( $input['address_line_2'] ) ) {
+			$address_line_2 = trim( $input['address_line_2'] );
+
+			if ( $address_line_2 && strlen( $address_line_2 ) <= 300 ) {
+				$this->address_line_2 = $address_line_2;
+			} else {
+				$add_issue( new InvalidData( 'Field address_line_2 is too long', 'Please provide a valid address line 2.', 'address_line_2' ) );
+			}
+		}
 	}
 
 	public function country_code(): string {
@@ -58,6 +71,6 @@ class Address extends AgenticSchema {
 	}
 
 	public function address_line_2(): ?string {
-		return 'Apt 4B';
+		return $this->address_line_2;
 	}
 }
