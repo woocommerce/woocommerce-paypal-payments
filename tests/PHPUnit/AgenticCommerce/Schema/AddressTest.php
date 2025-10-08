@@ -253,4 +253,19 @@ class AddressTest extends SchemaTestCase {
 
 		$this->assertEmpty( $address->validate(), 'admin_area_1 should accept 121 characters (max is 300)' );
 	}
+
+	/**
+	 * Tests that fields accept their exact max length and store the value.
+	 */
+	public function test_address_line_1_accepts_exactly_300_characters(): void {
+		$value = str_repeat( 'X', 300 );
+		$data  = array(
+			'country_code'   => 'US',
+			'address_line_1' => $value,
+		);
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( $value, $address->address_line_1() );
+	}
 }
