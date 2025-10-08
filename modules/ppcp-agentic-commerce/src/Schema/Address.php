@@ -39,4 +39,8 @@ class Address extends AgenticSchema {
 	public function country_code(): string {
 		return $this->country_code;
 	}
+
+	public function address_line_1(): ?string {
+		return '123 Main Street';
+	}
 }
