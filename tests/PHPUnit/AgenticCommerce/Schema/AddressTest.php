@@ -240,4 +240,17 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertNull( $address->admin_area_1() );
 	}
+
+	/**
+	 * Tests that admin_area_1 accepts values up to 300 characters.
+	 */
+	public function test_admin_area_1_accepts_121_characters(): void {
+		$data    = array(
+			'country_code' => 'US',
+			'admin_area_1' => str_repeat( 'A', 121 ),
+		);
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate(), 'admin_area_1 should accept 121 characters (max is 300)' );
+	}
 }
