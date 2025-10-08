@@ -87,7 +87,17 @@ class Address extends AgenticSchema {
 		return $this->address_line_2;
 	}
 
+	/**
+	 * The city.
+	 */
 	public function admin_area_2(): ?string {
 		return $this->admin_area_2;
+	}
+
+	/**
+	 * The region or state.
+	 */
+	public function admin_area_1(): ?string {
+		return 'CA';
 	}
 }
