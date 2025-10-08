@@ -49,4 +49,15 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( 'DE', $address->country_code() );
 	}
+
+	/**
+	 * Tests that country codes with whitespace are trimmed and normalized.
+	 */
+	public function test_country_code_with_whitespace_is_trimmed(): void {
+		$data    = array( 'country_code' => '  GB  ' );
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( 'GB', $address->country_code() );
+	}
 }
