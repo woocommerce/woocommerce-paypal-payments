@@ -182,7 +182,7 @@ export class PayPalUi {
 	 * Clicks PayPal button to open popup
 	 */
 	openPayPalPupup = async (): Promise< PayPalPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup' );
+		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
 		await expect( this.payPalButton() ).toBeVisible();
 		await this.payPalButton().click();
 
@@ -195,7 +195,7 @@ export class PayPalUi {
 	 * Clicks Pay Later button to open popup
 	 */
 	openPayLaterPupup = async (): Promise< PayPalPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup' );
+		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
 		await expect( this.payLaterButton() ).toBeVisible();
 		await this.payLaterButton().click();
 
@@ -208,7 +208,7 @@ export class PayPalUi {
 	 * Clicks Venmo button to open popup
 	 */
 	openVenmoPupup = async (): Promise< PayPalPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup' );
+		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
 		await expect( this.venmoButton() ).toBeVisible();
 		await this.venmoButton().click();
 
@@ -235,7 +235,7 @@ export class PayPalUi {
 		// Map to the tested method
 		switch ( shortcut ) {
 			case 'paypal':
-				await this.payPalGateway().click();
+				// await this.payPalGateway().click();
 				popup = await this.openPayPalPupup();
 
 				if ( payment.isVaulted ) {
@@ -262,7 +262,6 @@ export class PayPalUi {
 
 			case 'acdc':
 				if ( payment.isVaulted ) {
-					await this.assertVaultedPaymentMethodIsDisplayed( payment );
 					await this.completeAcdcVaultedPayment( payment, merchant );
 					break;
 				}
@@ -303,6 +302,7 @@ export class PayPalUi {
 	 * Submits order and waits for page load
 	 */
 	submitOrder = async () => {
+		await expect( this.placeOrderButton() ).toBeVisible();
 		await this.placeOrderButton().click();
 		await this.page.waitForLoadState();
 	};
@@ -347,16 +347,22 @@ export class PayPalUi {
 		// Needed to assert payment via PayPal API
 		// await this.acdcCardholderNameInput().fill( card.card_holder );
 
+		await expect( this.acdcCardNumberInput() ).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
-		// trick to properly fill expiration date input
+
+		await expect( this.acdcCardExpirationInput() ).toBeVisible();
 		await this.acdcCardExpirationInput().click();
+		// trick to properly fill expiration date input
 		for ( const char of card.expiration_date ) {
 			await this.page.keyboard.type( char );
 			await this.page.waitForTimeout( 200 );
 		}
+
+		await expect( this.acdcCardCvvInput() ).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
 
 		if ( saveToAccount ) {
+			await expect( this.acdcSaveToAccountCheckbox() ).toBeVisible();
 			await this.acdcSaveToAccountCheckbox().check();
 		}
 
@@ -407,10 +413,11 @@ export class PayPalUi {
 	 */
 	provideFastlaneEmail = async ( email: string ) => {
 		await expect( this.fastlaneEmailInput() ).toBeVisible();
-		await expect( this.fastlaneContinueButton() ).toBeVisible();
-
 		await this.fastlaneEmailInput().fill( email );
+
+		await expect( this.fastlaneContinueButton() ).toBeVisible();
 		await this.fastlaneContinueButton().click();
+		
 		await this.page.waitForLoadState( 'networkidle' );
 	};
 
@@ -441,11 +448,18 @@ export class PayPalUi {
 			const { card } = payment;
 			await expect( this.fastlaneGateway() ).toBeVisible();
 			await this.fastlaneGateway().click();
+
+			await expect( this.fastlaneCardNumberInput() ).toBeVisible();
 			await this.fastlaneCardNumberInput().fill( card.card_number );
+
+			await expect( this.fastlaneExpirationDateInput() ).toBeVisible();
 			await this.fastlaneExpirationDateInput().pressSequentially(
 				card.expiration_date
 			);
+			
+			await expect( this.fastlaneCvvInput() ).toBeVisible();
 			await this.fastlaneCvvInput().fill( card.card_cvv );
+
 			// TODO: clarify Cardholder name presence (bug PCP-4623)
 			if ( await this.fastlaneCardHolderInput().isVisible() ) {
 				await this.fastlaneCardHolderInput().fill( 'Gary From-USA' );
@@ -469,6 +483,27 @@ export class PayPalUi {
 	completePayUponInvoicePayment = async ( ...args ) =>
 		console.log( `TODO: completePayUponInvoicePayment for block pages` );
 
+	/**
+	 * Clicks payment gateway to make visible payment form or buttons
+	 *
+	 * @param payment
+	 */
+	expandPaymentGateway = async (
+		payment: Pcp.Payment
+	) => {
+		switch ( payment.gateway.shortcut ) {
+			case 'paypal':
+				await expect( this.payPalGateway() ).toBeVisible();
+				await this.payPalGateway().click();
+				break;
+
+			case 'acdc':
+				await expect( this.acdcGateway() ).toBeVisible();
+				await this.acdcGateway().click();
+				break;
+		}
+	};
+
 	// Assertions
 
 	/**
@@ -477,17 +512,19 @@ export class PayPalUi {
 	 * @param payment
 	 */
 	assertVaultedPaymentMethodIsDisplayed = async ( payment: Pcp.Payment ) => {
-		switch ( payment.gateway.shortcut ) {
+		const { gateway, card } = payment;
+		switch ( gateway.shortcut ) {
 			case 'paypal':
-				// Uncomment when bug is fixed
-				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
-				// await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				await expect(
+					this.payPalButton()
+				).toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				await expect(
+					this.payPalButtonMoreOptions()
+				).toBeVisible();
 				break;
 
 			case 'acdc':
-				await expect(
-					this.acdcSavedCard( payment.card )
-				).toBeVisible();
+				await expect( this.acdcSavedCard( card ) ).toBeVisible();
 				break;
 		}
 	};
@@ -502,9 +539,9 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect( this.payPalButton() ).not.toContainText(
-					'Pay Now'
-				);
+				await expect(
+					this.payPalButton()
+				).not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
 				await expect(
 					this.payPalButtonMoreOptions()
 				).not.toBeVisible();
