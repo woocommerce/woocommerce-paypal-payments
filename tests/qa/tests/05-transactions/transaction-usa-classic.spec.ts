@@ -21,7 +21,7 @@ import {
 	venmoClassicProductUsa,
 } from './_test-data/venmo';
 import {
-	payPalCheckoutExcludingTax,
+	payPalClassicCheckoutExcludingTax,
 	payPalClassicCheckout,
 	payPalClassicCheckoutIntentAuthorized,
 } from './_test-data/paypal';
@@ -76,7 +76,7 @@ test.describe( () => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
 
-	transactionsOnClassicCheckout( payPalCheckoutExcludingTax );
+	transactionsOnClassicCheckout( payPalClassicCheckoutExcludingTax );
 	transactionsOnClassicCheckout( acdcClassicCheckoutExcludingTax );
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
