@@ -18,9 +18,12 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 class Address extends AgenticSchema {
 	private string $country_code = '';
 
+	private ?string $address_line_1 = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->country_code = '';
+		$this->country_code   = '';
+		$this->address_line_1 = null;
 
 		// Parse mandatory fields.
 		if ( isset( $input['country_code'] ) ) {
@@ -34,6 +37,10 @@ class Address extends AgenticSchema {
 		} else {
 			$add_issue( new InvalidData( 'Missing required field', 'Please provide a country code.', 'country_code' ) );
 		}
+
+		if ( isset( $input['address_line_1'] ) ) {
+			$this->address_line_1 = trim( $input['address_line_1'] );
+		}
 	}
 
 	public function country_code(): string {
@@ -41,6 +48,6 @@ class Address extends AgenticSchema {
 	}
 
 	public function address_line_1(): ?string {
-		return '123 Main Street';
+		return $this->address_line_1;
 	}
 }
