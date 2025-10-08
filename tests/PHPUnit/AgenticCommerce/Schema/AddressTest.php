@@ -268,4 +268,18 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( $value, $address->address_line_1() );
 	}
+
+	/**
+	 * Tests that postal_code is stored correctly.
+	 */
+	public function test_postal_code_is_stored(): void {
+		$data    = array(
+			'country_code' => 'US',
+			'postal_code'  => '95131',
+		);
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( '95131', $address->postal_code() );
+	}
 }
