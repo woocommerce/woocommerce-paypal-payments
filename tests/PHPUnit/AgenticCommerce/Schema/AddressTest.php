@@ -187,4 +187,15 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( 'San Jose', $address->admin_area_2() );
 	}
+
+	/**
+	 * Tests that admin_area_2 returns null when not provided.
+	 */
+	public function test_admin_area_2_returns_null_when_not_provided(): void {
+		$data    = array( 'country_code' => 'US' );
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertNull( $address->admin_area_2() );
+	}
 }
