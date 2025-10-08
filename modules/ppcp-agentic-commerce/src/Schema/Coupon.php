@@ -14,12 +14,19 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
  * @see CouponTest - Unit tests for this class.
  */
 class Coupon extends AgenticSchema {
+	private string $code = '';
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
-		// TODO: Implement parse_fields() method.
+		// Reset all fields.
+		$this->code = '';
+
+		if ( isset( $input['code'] ) ) {
+			$this->code = trim( $input['code'] );
+		}
 	}
 
 	public function code(): string {
-		return 'SUMMER20';
+		return $this->code;
 	}
 
 	public function action(): string {
