@@ -92,7 +92,13 @@ class Address extends AgenticSchema {
 		}
 
 		if ( isset( $input['postal_code'] ) ) {
-			$this->postal_code = trim( $input['postal_code'] );
+			$postal_code = trim( $input['postal_code'] );
+
+			if ( $postal_code && strlen( $postal_code ) <= 60 ) {
+				$this->postal_code = $postal_code;
+			} else {
+				$add_issue( new InvalidData( 'Field postal_code is too long', 'Please provide a valid postal code.', 'postal_code' ) );
+			}
 		}
 	}
 
