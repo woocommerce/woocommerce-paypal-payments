@@ -113,4 +113,8 @@ class Address extends AgenticSchema {
 	public function admin_area_1(): ?string {
 		return $this->admin_area_1;
 	}
+
+	public function postal_code(): ?string {
+		return '95131';
+	}
 }
