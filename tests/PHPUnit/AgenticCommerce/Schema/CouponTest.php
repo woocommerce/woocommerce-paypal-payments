@@ -18,5 +18,18 @@ class CouponTest extends SchemaTestCase {
 			'action' => 'APPLY',
 		);
 	}
+
+	/**
+	 * Tests that Coupon stores and returns the code.
+	 */
+	public function test_code_accessor(): void {
+		$data   = array(
+			'code'   => 'SUMMER20',
+			'action' => 'APPLY',
+		);
+		$coupon = Coupon::from_array( $data );
+
+		$this->assertSame( 'SUMMER20', $coupon->code() );
+	}
 }
 
