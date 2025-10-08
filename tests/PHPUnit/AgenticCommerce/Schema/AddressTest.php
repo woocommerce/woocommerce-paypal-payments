@@ -27,4 +27,26 @@ class AddressTest extends SchemaTestCase {
 
 		$this->assertSame( 'US', $address->country_code() );
 	}
+
+	/**
+	 * Tests that lowercase country codes are normalized to uppercase.
+	 */
+	public function test_country_code_normalized_to_uppercase(): void {
+		$data    = array( 'country_code' => 'us' );
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( 'US', $address->country_code() );
+	}
+
+	/**
+	 * Tests that different country codes are properly stored.
+	 */
+	public function test_country_code_de_is_stored(): void {
+		$data    = array( 'country_code' => 'de' );
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( 'DE', $address->country_code() );
+	}
 }
