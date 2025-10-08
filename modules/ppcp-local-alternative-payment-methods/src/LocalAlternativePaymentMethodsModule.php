@@ -209,7 +209,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$cancelled = (string) wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) );
+		$cancelled = (string) ( wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) ) ?: '' );
 		$order_key = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
 		// phpcs:enable
 
