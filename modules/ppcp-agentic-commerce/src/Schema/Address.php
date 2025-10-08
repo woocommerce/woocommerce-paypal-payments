@@ -39,7 +39,13 @@ class Address extends AgenticSchema {
 		}
 
 		if ( isset( $input['address_line_1'] ) ) {
-			$this->address_line_1 = trim( $input['address_line_1'] );
+			$address_line_1 = trim( $input['address_line_1'] );
+
+			if ( $address_line_1 && strlen( $address_line_1 ) <= 300 ) {
+				$this->address_line_1 = $address_line_1;
+			} else {
+				$add_issue( new InvalidData( 'Field address_line_1 is too long', 'Please provide a valid address line 1.', 'address_line_1' ) );
+			}
 		}
 	}
 
