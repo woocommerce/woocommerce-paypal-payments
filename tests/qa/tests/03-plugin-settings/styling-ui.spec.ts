@@ -31,6 +31,7 @@ test.fixme( 'PCP-0000 | Settings - Styling - Default UI', async ( {
 		'Mini Cart',
 		'Product Page',
 	];
+	const simpleProduct = products.simple100;
 
 	await pcpStyling.visit();
 	await expect( pcpStyling.configContainer() ).toBeVisible();
@@ -43,9 +44,9 @@ test.fixme( 'PCP-0000 | Settings - Styling - Default UI', async ( {
 		);
 	}
 
-	await utils.fillVisitorsCart( [ products.simple10 ] );
+	await utils.fillVisitorsCart( [ simpleProduct ] );
 
-	await product.visit( products.simple10.slug );
+	await product.visit( simpleProduct.slug );
 	await product.payPalUi.snapshotClassicPayPalButtons(
 		`${ snapshotName } - Frontend - Product`
 	);

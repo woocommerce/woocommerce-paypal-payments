@@ -162,7 +162,7 @@ test.describe( 'Subtests', () => {
 				`${ snapshotName } - After save`
 			);
 
-			await product.visit( products.simple10.slug );
+			await product.visit( products.simple100.slug );
 			await snapshotPlmContainer(
 				product.payPalUi,
 				`${ snapshotName } - Frontend`
@@ -183,7 +183,7 @@ test.describe( 'Subtests', () => {
 		}, testInfo ) => {
 			const snapshotName = testInfo.title;
 			const { location } = cartPlm;
-			await utils.fillVisitorsCart( [ products.simple10 ] );
+			await utils.fillVisitorsCart( [ products.simple100 ] );
 
 			await pcpPayLaterMessaging.visit();
 			await pcpPayLaterMessaging.enableMessagingForLocation( location );
@@ -227,7 +227,7 @@ test.describe( 'Subtests', () => {
 		}, testInfo ) => {
 			const snapshotName = testInfo.title;
 			const { location } = checkoutPlm;
-			await utils.fillVisitorsCart( [ products.simple10 ] );
+			await utils.fillVisitorsCart( [ products.simple100 ] );
 
 			await pcpPayLaterMessaging.visit();
 			await pcpPayLaterMessaging.enableMessagingForLocation( location );
@@ -264,7 +264,6 @@ test.describe( 'Subtests', () => {
 		test.fixme( `(PCP-0004) PLM - Home${ summarizeSettings(
 			settings
 		) }`, async ( { pcpPayLaterMessaging, payPalUiClassic }, testInfo ) => {
-			test.setTimeout( 10 * 60 * 1000 );
 			const snapshotName = testInfo.title;
 			const { location } = homePlm;
 			await pcpPayLaterMessaging.visit();

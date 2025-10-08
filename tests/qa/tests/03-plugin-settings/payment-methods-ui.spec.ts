@@ -29,6 +29,7 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 		classicCheckout,
 	}, testInfo ) => {
 		const snapshotName = testInfo.title;
+		const simpleProduct = products.simple100;
 
 		await pcpPaymentMethods.visit();
 		await expect( pcpPaymentMethods.onlineCardPaymentsContainer() ).toBeVisible();
@@ -92,9 +93,9 @@ for ( const testData of paymentMethodsData.defaultUi ) {
 			}
 		}
 
-		await utils.fillVisitorsCart( [ products.simple10 ] );
+		await utils.fillVisitorsCart( [ simpleProduct ] );
 
-		await product.visit( products.simple10.slug );
+		await product.visit( simpleProduct.slug );
 		await product.payPalUi.snapshotClassicPayPalButtons(
 			`${ snapshotName } - Frontend - Product`
 		);
