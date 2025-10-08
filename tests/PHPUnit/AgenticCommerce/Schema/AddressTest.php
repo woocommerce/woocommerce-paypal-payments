@@ -156,4 +156,21 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertNull( $address->address_line_2() );
 	}
+
+	/**
+	 * Tests that address_line_2 exceeding max length produces validation issue.
+	 */
+	public function test_address_line_2_too_long_produces_validation_issue(): void {
+		$data    = array(
+			'country_code'   => 'US',
+			'address_line_2' => str_repeat( 'B', 301 ),
+		);
+		$address = Address::from_array( $data );
+		$issues  = $address->validate();
+
+		$this->assertCount( 1, $issues );
+
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'address_line_2', $issue_data['field'] );
+	}
 }
