@@ -65,7 +65,13 @@ class Address extends AgenticSchema {
 		}
 
 		if ( isset( $input['admin_area_2'] ) ) {
-			$this->admin_area_2 = trim( $input['admin_area_2'] );
+			$admin_area_2 = trim( $input['admin_area_2'] );
+
+			if ( $admin_area_2 && strlen( $admin_area_2 ) <= 120 ) {
+				$this->admin_area_2 = $admin_area_2;
+			} else {
+				$add_issue( new InvalidData( 'Field admin_area_2 is too long', 'Please provide a valid admin area 2.', 'admin_area_2' ) );
+			}
 		}
 	}
 
