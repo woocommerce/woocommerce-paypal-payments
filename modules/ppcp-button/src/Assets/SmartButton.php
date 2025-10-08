@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateCrossBrowserOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
@@ -1247,6 +1248,10 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 					'wp_rest_nonce'          => wp_create_nonce( 'wc_store_api' ),
 					'update_shipping_method' => \WC_AJAX::get_endpoint( 'update_shipping_method' ),
 				),
+				'create_cross_browser_order'     => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CreateCrossBrowserOrderEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( CreateCrossBrowserOrderEndpoint::nonce() ),
+				),
 			),
 			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
@@ -1380,6 +1385,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'productType'                             => null,
 			'manualRenewalEnabled'                    => $this->subscription_helper->accept_manual_renewals(),
 			'final_review_enabled'                    => $this->final_review_enabled,
+			'cart_hash'                               => WC()->cart ? WC()->cart->get_cart_hash() : '',
 		);
 
 		if ( is_product() ) {

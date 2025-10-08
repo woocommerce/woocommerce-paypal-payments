@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateCrossBrowserOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
@@ -260,6 +261,19 @@ return array(
 			$wc_order_creator,
 			$logger,
 			$context
+		);
+	},
+	'button.endpoint.create-cross-browser-order'  => static function ( ContainerInterface $container ): CreateCrossBrowserOrderEndpoint {
+		$request_data      = $container->get( 'button.request-data' );
+		$cart_data_storage = $container->get( 'button.session.storage.card-data.transient' );
+		$order_endpoint    = $container->get( 'api.endpoint.order' );
+		$wc_order_creator  = $container->get( 'button.helper.wc-order-creator' );
+
+		return new CreateCrossBrowserOrderEndpoint(
+			$request_data,
+			$cart_data_storage,
+			$order_endpoint,
+			$wc_order_creator
 		);
 	},
 	'button.endpoint.approve-subscription'        => static function ( ContainerInterface $container ): ApproveSubscriptionEndpoint {

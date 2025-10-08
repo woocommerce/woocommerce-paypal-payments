@@ -25,6 +25,7 @@ import { loadPaypalScript } from './modules/Helper/ScriptLoading';
 import buttonModuleWatcher from './modules/ButtonModuleWatcher';
 import MessagesBootstrap from './modules/ContextBootstrap/MessagesBootstrap';
 import { apmButtonsInit } from './modules/Helper/ApmButtons';
+import CrossBrowserCartRestorer from './modules/Helper/CrossBrowserCartRestorer';
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -44,6 +45,16 @@ const bootstrap = () => {
 			document.querySelector( '.woocommerce-notices-wrapper' )
 	);
 	const spinner = new Spinner();
+
+	// Check if we need to handle cross-browser AppSwitch
+	const crossBrowserCartRestorer = new CrossBrowserCartRestorer(
+		PayPalCommerceGateway
+	);
+
+	if ( crossBrowserCartRestorer.shouldRestore() ) {
+		crossBrowserCartRestorer.restore();
+		return; // Stop bootstrap - we're handling cross-browser order creation
+	}
 
 	const formSaver = new FormSaver(
 		PayPalCommerceGateway.ajax.save_checkout_form.endpoint,
@@ -90,7 +101,10 @@ const bootstrap = () => {
 	};
 
 	const doBasicCheckoutValidation = () => {
-		if ( PayPalCommerceGateway.basic_checkout_validation_enabled || PayPalCommerceGateway.is_free_trial_cart ) {
+		if (
+			PayPalCommerceGateway.basic_checkout_validation_enabled ||
+			PayPalCommerceGateway.is_free_trial_cart
+		) {
 			// A quick fix to get the errors about empty form fields before attempting PayPal order,
 			// it should solve #513 for most of the users, but it is not a proper solution.
 			// Currently it is disabled by default because a better solution is now implemented

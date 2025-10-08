@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateCrossBrowserOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
@@ -104,7 +105,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->register_ajax_endpoints( $c );
 
-		$this->register_appswitch_crossbrowser_handler( $c );
+		$this->register_crossbrowser_order_filters( $c );
 
 		return true;
 	}
@@ -235,124 +236,30 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$endpoint->handle_request();
 			}
 		);
+
+		add_action(
+			'wc_ajax_' . CreateCrossBrowserOrderEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.create-cross-browser-order' );
+				assert( $endpoint instanceof CreateCrossBrowserOrderEndpoint );
+				$endpoint->handle_request();
+			}
+		);
 	}
 
 	private static function is_cross_browser_order( WC_Order $wc_order ): bool {
 		return wc_string_to_bool( $wc_order->get_meta( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY ) );
 	}
 
-	private function register_appswitch_crossbrowser_handler( ContainerInterface $container ): void {
+	/**
+	 * Register filters that handle cross-browser AppSwitch orders.
+	 * These filters allow guests to access pay-for-order and order-received pages
+	 * for orders created via cross-browser AppSwitch flows.
+	 */
+	private function register_crossbrowser_order_filters( ContainerInterface $container ): void {
 		if ( ! $container->get( 'wcgateway.appswitch-enabled' ) ) {
 			return;
 		}
-
-		// After returning from cross-browser AppSwitch (started in non-default browser, then redirected to the default one)
-		// we need to retrieve the saved cart and PayPal order, create a WC order and redirect to Pay for order.
-		add_action(
-			'wp',
-			static function () use ( $container ) {
-				// phpcs:ignore WordPress.Security.NonceVerification
-				if ( ! isset( $_GET[ ReturnUrlFactory::PCP_QUERY_ARG ] ) ) {
-					return;
-				}
-
-				if ( is_checkout_pay_page() ) {
-					return;
-				}
-
-				// phpcs:ignore WordPress.Security.NonceVerification
-				if ( ! isset( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) ) {
-					return;
-				}
-
-				// phpcs:ignore WordPress.Security.NonceVerification
-				$cart_key = wc_clean( wp_unslash( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) );
-				if ( ! is_string( $cart_key ) ) {
-					return;
-				}
-
-				$card_data_storage = $container->get( 'button.session.storage.card-data.transient' );
-				assert( $card_data_storage instanceof CartDataTransientStorage );
-
-				$cart_data = $card_data_storage->get( $cart_key );
-				if ( ! $cart_data ) {
-					return;
-				}
-
-				// Delete the data to avoid accidentally triggering it again, duplicating orders etc.
-				$card_data_storage->remove( $cart_data );
-
-				if ( ! WC()->cart ) {
-					return;
-				}
-				// The current cart is the same, so we don't need to do anything (probably not cross-browser).
-				if ( WC()->cart->get_cart_hash() === $cart_data->cart_hash() ) {
-					return;
-				}
-
-				$paypal_order_id = $cart_data->paypal_order_id();
-				if ( empty( $paypal_order_id ) ) {
-					return;
-				}
-
-				$order_endpoint = $container->get( 'api.endpoint.order' );
-				assert( $order_endpoint instanceof OrderEndpoint );
-
-				$paypal_order = $order_endpoint->order( $paypal_order_id );
-
-				$wc_order_creator = $container->get( 'button.helper.wc-order-creator' );
-				assert( $wc_order_creator instanceof WooCommerceOrderCreator );
-
-				$wc_order = $wc_order_creator->create_from_paypal_order( $paypal_order, $cart_data );
-
-				$wc_order->update_meta_data( PayPalGateway::CROSS_BROWSER_APPSWITCH_META_KEY, wc_bool_to_string( true ) );
-				$wc_order->save();
-
-				// Redirect via JS because we need to keep the # parameters which are not accessible on the server side.
-				// phpcs:ignore WordPress.Security.EscapeOutput
-				echo "<script>location.href = '" . $wc_order->get_checkout_payment_url() . "' + location.hash;</script>";
-			}
-		);
-
-		/**
-		 * Restore PayPal as the chosen payment method when returning from an App Switch flow.
-		 *
-		 * Context:
-		 * --------
-		 * When Fastlane (AXO) is active, AxoModule forces the chosen payment method to
-		 * AxoGateway on every checkout page load. This causes a problem when the customer
-		 * initiated checkout with PayPal and was redirected to the PayPal app
-		 * (App Switch): after resuming, the checkout would incorrectly show AxoGateway,
-		 * leading to validation errors and failed payments.
-		 *
-		 * Solution:
-		 * ---------
-		 * This handler runs after the AxoModule one (priority 20). It checks for the
-		 * PayPal return URL query arguments that indicate an App Switch resume, and if
-		 * present, forces the chosen method back to PayPalGateway. This ensures the
-		 * resumed PayPal flow continues as expected.
-		 */
-		add_action(
-			'template_redirect',
-			function () use ( $container ) {
-				// phpcs:ignore WordPress.Security.NonceVerification
-				if ( ! isset( $_GET[ ReturnUrlFactory::PCP_QUERY_ARG ] ) ) {
-					return;
-				}
-
-				if ( is_checkout_pay_page() ) {
-					return;
-				}
-
-				// phpcs:ignore WordPress.Security.NonceVerification
-				if ( ! isset( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) ) {
-					return;
-				}
-
-				WC()->session->set( 'chosen_payment_method', PayPalGateway::ID );
-			},
-			20
-		);
 
 		/**
 		 * By default, WC asks to log in when opening a non-guest Pay for order page as a guest,

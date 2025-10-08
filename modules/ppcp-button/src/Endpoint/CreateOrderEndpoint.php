@@ -506,6 +506,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				assert( ! empty( $key ) );
 
 				$custom_args[ self::RETURN_URL_CART_QUERY_ARG ] = $key;
+				$custom_args['pcp-cart-hash']                    = $cart_data->cart_hash();
 			} catch ( Throwable $exception ) {
 				$this->logger->error( 'Failed to serialize cart: ' . $exception->getMessage() );
 			}
