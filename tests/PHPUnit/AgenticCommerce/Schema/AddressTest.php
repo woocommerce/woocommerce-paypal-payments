@@ -282,4 +282,15 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( '95131', $address->postal_code() );
 	}
+
+	/**
+	 * Tests that postal_code returns null when not provided.
+	 */
+	public function test_postal_code_returns_null_when_not_provided(): void {
+		$data    = array( 'country_code' => 'US' );
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertNull( $address->postal_code() );
+	}
 }
