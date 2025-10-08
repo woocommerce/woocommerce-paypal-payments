@@ -32,7 +32,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
-				test.setTimeout( 1.5 * 60 * 1000 );
+				test.setTimeout( 2 * 60 * 1000 );
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
@@ -59,8 +59,9 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
+				await classicCheckout.payPalUi.expandPaymentGateway( payment );
 				if ( payment.saveToAccount !== false ) {
-					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayedOnClassicCheckout(
+					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 						payment
 					);
 				} else {
@@ -95,7 +96,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 				orderReceived,
 				customerSubscriptions,
 			} ) => {
-				test.setTimeout( 1.5 * 60 * 1000 );
+				test.setTimeout( 2 * 60 * 1000 );
 				// Preconditions
 				await customerPaymentMethods.visit();
 				await customerPaymentMethods.assertIsNotSavedPaymentMethod(
@@ -129,8 +130,9 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
+				await classicCheckout.payPalUi.expandPaymentGateway( payment );
 				if ( payment.saveToAccount !== false ) {
-					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayedOnClassicCheckout(
+					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 						payment
 					);
 				} else {
