@@ -103,4 +103,15 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( '123 Main Street', $address->address_line_1() );
 	}
+
+	/**
+	 * Tests that address_line_1 returns null when not provided.
+	 */
+	public function test_address_line_1_returns_null_when_not_provided(): void {
+		$data    = array( 'country_code' => 'US' );
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertNull( $address->address_line_1() );
+	}
 }
