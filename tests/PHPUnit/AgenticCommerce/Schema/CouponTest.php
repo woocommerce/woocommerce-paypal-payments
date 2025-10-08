@@ -44,5 +44,18 @@ class CouponTest extends SchemaTestCase {
 
 		$this->assertSame( 'REMOVE', $coupon->action() );
 	}
+
+	/**
+	 * Tests that Coupon returns the actual code from input data.
+	 */
+	public function test_code_returns_actual_input(): void {
+		$data   = array(
+			'code'   => 'SAVE10',
+			'action' => 'APPLY',
+		);
+		$coupon = Coupon::from_array( $data );
+
+		$this->assertSame( 'SAVE10', $coupon->code() );
+	}
 }
 
