@@ -19,46 +19,37 @@ class AddressTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that Address has a getter for country_code that returns the normalized uppercase value.
+	 * Tests that Address correctly validates and normalizes country codes.
+	 *
+	 * @dataProvider valid_country_code_provider
 	 */
-	public function test_country_code_getter_returns_uppercase(): void {
-		$data    = array( 'country_code' => 'US' );
-		$address = Address::from_array( $data );
-
-		$this->assertSame( 'US', $address->country_code() );
-	}
-
-	/**
-	 * Tests that lowercase country codes are normalized to uppercase.
-	 */
-	public function test_country_code_normalized_to_uppercase(): void {
-		$data    = array( 'country_code' => 'us' );
+	public function test_valid_country_codes( string $input, string $expected ): void {
+		$data    = array( 'country_code' => $input );
 		$address = Address::from_array( $data );
 
 		$this->assertEmpty( $address->validate() );
-		$this->assertSame( 'US', $address->country_code() );
+		$this->assertSame( $expected, $address->country_code() );
 	}
 
-	/**
-	 * Tests that different country codes are properly stored.
-	 */
-	public function test_country_code_de_is_stored(): void {
-		$data    = array( 'country_code' => 'de' );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( 'DE', $address->country_code() );
-	}
-
-	/**
-	 * Tests that country codes with whitespace are trimmed and normalized.
-	 */
-	public function test_country_code_with_whitespace_is_trimmed(): void {
-		$data    = array( 'country_code' => '  GB  ' );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( 'GB', $address->country_code() );
+	public function valid_country_code_provider(): array {
+		return array(
+			'uppercase_us'     => array(
+				'input'    => 'US',
+				'expected' => 'US',
+			),
+			'lowercase_us'     => array(
+				'input'    => 'us',
+				'expected' => 'US',
+			),
+			'lowercase_de'     => array(
+				'input'    => 'de',
+				'expected' => 'DE',
+			),
+			'with_whitespace'  => array(
+				'input'    => '  GB  ',
+				'expected' => 'GB',
+			),
+		);
 	}
 
 	/**
