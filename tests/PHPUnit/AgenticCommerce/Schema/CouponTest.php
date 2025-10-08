@@ -31,5 +31,18 @@ class CouponTest extends SchemaTestCase {
 
 		$this->assertSame( 'SUMMER20', $coupon->code() );
 	}
+
+	/**
+	 * Tests that Coupon stores and returns the action.
+	 */
+	public function test_action_accessor(): void {
+		$data   = array(
+			'code'   => 'SAVE10',
+			'action' => 'REMOVE',
+		);
+		$coupon = Coupon::from_array( $data );
+
+		$this->assertSame( 'REMOVE', $coupon->action() );
+	}
 }
 
