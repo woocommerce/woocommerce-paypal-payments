@@ -89,4 +89,18 @@ class AddressTest extends SchemaTestCase {
 		$issue_data = $issues[0]->to_array();
 		$this->assertSame( 'country_code', $issue_data['field'] );
 	}
+
+	/**
+	 * Tests that address_line_1 is stored correctly.
+	 */
+	public function test_address_line_1_is_stored(): void {
+		$data    = array(
+			'country_code'   => 'US',
+			'address_line_1' => '123 Main Street',
+		);
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( '123 Main Street', $address->address_line_1() );
+	}
 }
