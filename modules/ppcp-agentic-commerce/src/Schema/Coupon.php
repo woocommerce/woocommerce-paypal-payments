@@ -21,4 +21,8 @@ class Coupon extends AgenticSchema {
 	public function code(): string {
 		return 'SUMMER20';
 	}
+
+	public function action(): string {
+		return 'REMOVE';
+	}
 }
