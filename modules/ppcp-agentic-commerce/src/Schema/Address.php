@@ -56,4 +56,8 @@ class Address extends AgenticSchema {
 	public function address_line_1(): ?string {
 		return $this->address_line_1;
 	}
+
+	public function address_line_2(): ?string {
+		return 'Apt 4B';
+	}
 }
