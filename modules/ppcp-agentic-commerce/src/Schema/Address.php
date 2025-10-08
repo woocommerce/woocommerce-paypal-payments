@@ -14,12 +14,19 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
  * @see AddressTest - Unit tests for this class.
  */
 class Address extends AgenticSchema {
+	private string $country_code = '';
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
-		// TODO: Implement parse_fields() method.
+		// Reset all fields.
+		$this->country_code = '';
+
+		// Parse mandatory fields.
+		if ( isset( $input['country_code'] ) ) {
+			$this->country_code = strtoupper( $input['country_code'] );
+		}
 	}
 
 	public function country_code(): string {
-		return 'US';
+		return $this->country_code;
 	}
 }
