@@ -30,7 +30,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 	 *
 	 * @var array
 	 */
-	private array $payment_methods;
+	private array $payment_methods = array();
 
 	/**
 	 * {@inheritDoc}
@@ -209,7 +209,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 		}
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$cancelled = wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) );
+		$cancelled = (string) wc_clean( wp_unslash( $_GET['cancelled'] ?? '' ) );
 		$order_key = wc_clean( wp_unslash( $_GET['key'] ?? '' ) );
 		// phpcs:enable
 
