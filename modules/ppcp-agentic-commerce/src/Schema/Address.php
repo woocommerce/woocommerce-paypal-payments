@@ -31,6 +31,8 @@ class Address extends AgenticSchema {
 			} else {
 				$add_issue( new InvalidData( 'Unexpected country_code', 'Please provide a valid 2-letter country code.', 'country_code' ) );
 			}
+		} else {
+			$add_issue( new InvalidData( 'Missing required field', 'Please provide a country code.', 'country_code' ) );
 		}
 	}
 
