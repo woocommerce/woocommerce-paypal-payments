@@ -347,6 +347,23 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
+		add_filter(
+			'ppcp_return_url_error_args',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $args, $endpoint ) use ( $c ): array {
+				if ( $this->should_render_fastlane( $c ) ) {
+					$args['ppcp_fastlane_error'] = '1';
+				}
+				return $args;
+			},
+			10,
+			2
+		);
+
 		// Remove Fastlane on the Pay for Order page.
 		add_filter(
 			'woocommerce_available_payment_gateways',
