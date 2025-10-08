@@ -17,4 +17,14 @@ class AddressTest extends SchemaTestCase {
 			'country_code' => 'US',
 		);
 	}
+
+	/**
+	 * Tests that Address has a getter for country_code that returns the normalized uppercase value.
+	 */
+	public function test_country_code_getter_returns_uppercase(): void {
+		$data    = array( 'country_code' => 'US' );
+		$address = Address::from_array( $data );
+
+		$this->assertSame( 'US', $address->country_code() );
+	}
 }
