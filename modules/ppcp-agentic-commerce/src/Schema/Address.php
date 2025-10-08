@@ -80,7 +80,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['admin_area_1'] ) ) {
 			$admin_area_1 = trim( $input['admin_area_1'] );
 
-			if ( $admin_area_1 && strlen( $admin_area_1 ) <= 120 ) {
+			if ( $admin_area_1 && strlen( $admin_area_1 ) <= 300 ) {
 				$this->admin_area_1 = $admin_area_1;
 			} else {
 				$add_issue( new InvalidData( 'Field admin_area_1 is too long', 'Please provide a valid region or state.', 'admin_area_1' ) );
