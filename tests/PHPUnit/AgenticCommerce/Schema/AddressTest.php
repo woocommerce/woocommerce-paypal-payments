@@ -173,4 +173,18 @@ class AddressTest extends SchemaTestCase {
 		$issue_data = $issues[0]->to_array();
 		$this->assertSame( 'address_line_2', $issue_data['field'] );
 	}
+
+	/**
+	 * Tests that admin_area_2 is stored correctly.
+	 */
+	public function test_admin_area_2_is_stored(): void {
+		$data    = array(
+			'country_code' => 'US',
+			'admin_area_2' => 'San Jose',
+		);
+		$address = Address::from_array( $data );
+
+		$this->assertEmpty( $address->validate() );
+		$this->assertSame( 'San Jose', $address->admin_area_2() );
+	}
 }
