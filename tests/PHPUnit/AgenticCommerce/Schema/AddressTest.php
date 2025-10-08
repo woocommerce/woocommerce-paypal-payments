@@ -60,4 +60,16 @@ class AddressTest extends SchemaTestCase {
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( 'GB', $address->country_code() );
 	}
+
+	/**
+	 * Tests that country codes with invalid length produce validation issues.
+	 */
+	public function test_country_code_too_long_produces_validation_issue(): void {
+		$data    = array( 'country_code' => 'USA' );
+		$address = Address::from_array( $data );
+		$issues  = $address->validate();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( '', $address->country_code() );
+	}
 }
