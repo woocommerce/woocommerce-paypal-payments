@@ -268,41 +268,41 @@ class TodosDefinition {
 			),
 		);
 
-			$todo_items['check_settings_after_migration'] = array(
-				'title'       => __( "You're now using the new PayPal Payments interface!", 'woocommerce-paypal-payments' ),
-				'description' => __( 'Complete the items below to ensure your payment configuration is optimized for your store.', 'woocommerce-paypal-payments' ),
-				'isEligible'  => fn(): bool => $this->is_settings_migration_done() && ! $this->are_all_todos_completed( $todo_items ),
-				'action'      => array(
-					'type' => 'tab',
-					'tab'  => 'overview',
-				),
-				'priority'    => 0,
-			);
+		$todo_items['check_settings_after_migration'] = array(
+			'title'       => __( "You're now using the new PayPal Payments interface!", 'woocommerce-paypal-payments' ),
+			'description' => __( 'Complete the items below to ensure your payment configuration is optimized for your store.', 'woocommerce-paypal-payments' ),
+			'isEligible'  => fn(): bool => $this->is_settings_migration_done() && ! $this->are_all_todos_completed( $todo_items ),
+			'action'      => array(
+				'type' => 'tab',
+				'tab'  => 'overview',
+			),
+			'priority'    => 0,
+		);
 
-			return $todo_items;
+		return $todo_items;
 	}
 
-			/**
-			 * Checks whether the settings migration to the new UI has been completed.
-			 *
-			 * @return bool True if the migration is marked as done, false otherwise.
-			 */
+	/**
+	 * Checks whether the settings migration to the new UI has been completed.
+	 *
+	 * @return bool True if the migration is marked as done, false otherwise.
+	 */
 	protected function is_settings_migration_done(): bool {
 		return '1' === get_option( SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE );
 	}
 
-			/**
-			 * Determines whether all todos have been completed or dismissed appropriately.
-			 *
-			 * A to-do is considered completed if:
-			 * - It's eligible (based on the callable `isEligible`), AND
-			 * - It is either:
-			 *     - A "completeOnClick" type and is present in the completed list, OR
-			 *     - Not a "completeOnClick" type and is present in the dismissed list.
-			 *
-			 * @param array $todos The array of to-do definitions.
-			 * @return bool True if all to-dos are completed or dismissed as expected, false otherwise.
-			 */
+	/**
+	 * Determines whether all todos have been completed or dismissed appropriately.
+	 *
+	 * A to-do is considered completed if:
+	 * - It's eligible (based on the callable `isEligible`), AND
+	 * - It is either:
+	 *     - A "completeOnClick" type and is present in the completed list, OR
+	 *     - Not a "completeOnClick" type and is present in the dismissed list.
+	 *
+	 * @param array $todos The array of to-do definitions.
+	 * @return bool True if all to-dos are completed or dismissed as expected, false otherwise.
+	 */
 	protected function are_all_todos_completed( array $todos ): bool {
 		$dismissed = $this->todos->get_dismissed_todos();
 		$completed = $this->todos->get_completed_onclick_todos();
@@ -323,6 +323,6 @@ class TodosDefinition {
 			}
 		}
 
-				return true;
+		return true;
 	}
 }
