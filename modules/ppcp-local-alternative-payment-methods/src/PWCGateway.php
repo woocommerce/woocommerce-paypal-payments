@@ -27,11 +27,11 @@ class PWCGateway extends WC_Payment_Gateway {
 	public const ID = 'ppcp-pwc';
 
 	/**
-	 * The URL to the module.
+	 * The URL to the WC Gateway module.
 	 *
 	 * @var string
 	 */
-	private $module_url;
+	private string $wc_gateway_module_url;
 
 	/**
 	 * PayPal Orders endpoint.
@@ -78,7 +78,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	/**
 	 * PWCGateway constructor.
 	 *
-	 * @param string                    $module_url The URL to the module.
+	 * @param string                    $wc_gateway_module_url The URL to the WC Gateway module.
 	 * @param Orders                    $orders_endpoint PayPal Orders endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory Purchase unit factory.
 	 * @param RefundProcessor           $refund_processor The Refund Processor.
@@ -87,7 +87,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
-		string $module_url,
+		string $wc_gateway_module_url,
 		Orders $orders_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		RefundProcessor $refund_processor,
@@ -105,12 +105,12 @@ class PWCGateway extends WC_Payment_Gateway {
 		$this->method_title       = __( 'Pay with Crypto (via PayPal)', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Accept cryptocurrency payments through PayPal, supporting various digital currencies for global customers.', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title', __( 'Pay with Crypto', 'woocommerce-paypal-payments' ) );
-		$this->description = $this->get_option( 'description', '' );
-		$this->module_url  = $module_url;
+		$this->title                 = $this->get_option( 'title', __( 'Pay with Crypto', 'woocommerce-paypal-payments' ) );
+		$this->description           = $this->get_option( 'description', '' );
+		$this->wc_gateway_module_url = $wc_gateway_module_url;
 
 		// TODO: Change to the official svg asset when it's available: Something like https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_crypto_color.svg.
-		$this->icon = esc_url( $this->module_url ) . 'assets/images/pwc.svg';
+		$this->icon = esc_url( $this->wc_gateway_module_url ) . 'assets/images/pwc.svg';
 
 		$this->init_form_fields();
 		$this->init_settings();
