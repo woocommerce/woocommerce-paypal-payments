@@ -354,14 +354,15 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $args, $endpoint ) use ( $c ): array {
-				if ( $this->should_render_fastlane( $c ) ) {
+			function ( $args ) use ( $c ): array {
+				$axo_applies = $c->get( 'axo.service.axo-applies' );
+				assert( $axo_applies instanceof AxoApplies );
+
+				if ( $axo_applies->should_render_fastlane() ) {
 					$args['ppcp_fastlane_error'] = '1';
 				}
 				return $args;
 			},
-			10,
-			2
 		);
 
 		// Remove Fastlane on the Pay for Order page.
