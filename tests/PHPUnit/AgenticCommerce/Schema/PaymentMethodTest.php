@@ -80,4 +80,21 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertNull( $method->token() );
 		$this->assertNull( $method->payer_id() );
 	}
+
+	/**
+	 * Tests that to_array includes all fields when provided.
+	 */
+	public function test_to_array_with_all_fields(): void {
+		$data   = array(
+			'type'     => 'paypal',
+			'token'    => 'EC-7U8939823K567',
+			'payer_id' => 'PAYER123456789',
+		);
+		$method = PaymentMethod::from_array( $data );
+		$result = $method->to_array();
+
+		$this->assertSame( 'paypal', $result['type'] );
+		$this->assertSame( 'EC-7U8939823K567', $result['token'] );
+		$this->assertSame( 'PAYER123456789', $result['payer_id'] );
+	}
 }
