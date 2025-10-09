@@ -2,6 +2,7 @@
 /**
  * Base class for the agentic commerce schema classes.
  *
+ * @see     https://github.com/paypal/agent-commerce/blob/511d3b276d2bc96ebc3e9330e3d753f380323e59/v1/docs/SCHEMA_REFERENCE.md
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
  */
 
