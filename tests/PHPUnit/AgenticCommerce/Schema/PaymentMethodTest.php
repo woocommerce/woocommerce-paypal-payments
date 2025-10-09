@@ -97,4 +97,18 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertSame( 'EC-7U8939823K567', $result['token'] );
 		$this->assertSame( 'PAYER123456789', $result['payer_id'] );
 	}
+
+	/**
+	 * Tests that invalid payment type creates validation issue.
+	 */
+	public function test_invalid_payment_type_creates_validation_issue(): void {
+		$data   = array( 'type' => 'credit_card' );
+		$method = PaymentMethod::from_array( $data );
+
+		$issues = $method->validate();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( 'DATA_ERROR', $issues[0]->to_array()['code'] );
+		$this->assertSame( 'INVALID_DATA', $issues[0]->to_array()['type'] );
+	}
 }
