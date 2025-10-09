@@ -41,7 +41,7 @@ export const acdcClassicCheckoutExcludingTax: ShopOrder[] = [
 export const acdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/
-		title: 'PCP-0000 | Transaction - Classic checkout - ACDC - Order with Intent Authorized',
+		title: 'PCP-2343 | Transaction - Classic checkout - ACDC - Order with Intent Authorized',
 		...orders.default,
 		payment: {
 			...payments.acdc,
@@ -55,7 +55,7 @@ export const acdcClassicCheckoutIntentAuthorized: ShopOrder[] = [
 export const acdcClassicCheckout3ds: ShopOrder[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/
-		title: 'PCP-0000 | Transaction - Classic checkout - ACDC - Contingency for 3D Secure = Always trigger 3D secure',
+		title: 'PCP-5429 | Transaction - Classic checkout - ACDC - Contingency for 3D Secure = Always trigger 3D secure',
 		...orders.default,
 		payment: payments.acdc3ds,
 		customer: guest,
