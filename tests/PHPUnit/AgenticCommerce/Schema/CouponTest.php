@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+
 /**
  * @covers Coupon
  */
@@ -20,55 +22,67 @@ class CouponTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that Coupon stores and returns the code.
+	 * Tests that Coupon correctly stores and returns the code.
+	 *
+	 * @dataProvider code_provider
 	 */
-	public function test_code_accessor(): void {
+	public function test_code_accessor( string $code ): void {
 		$data   = array(
-			'code'   => 'SUMMER20',
+			'code'   => $code,
 			'action' => 'APPLY',
 		);
 		$coupon = Coupon::from_array( $data );
 
-		$this->assertSame( 'SUMMER20', $coupon->code() );
+		$this->assertSame( $code, $coupon->code() );
+	}
+
+	public function code_provider(): array {
+		return array(
+			'save10'   => array( 'SAVE10' ),
+			'summer20' => array( 'SUMMER20' ),
+			'welcome'  => array( 'WELCOME' ),
+		);
 	}
 
 	/**
-	 * Tests that Coupon stores and returns the action.
+	 * Tests that Coupon correctly stores and returns valid action values.
+	 *
+	 * @dataProvider valid_action_provider
 	 */
-	public function test_action_accessor(): void {
+	public function test_action_accessor( string $action ): void {
 		$data   = array(
 			'code'   => 'SAVE10',
-			'action' => 'REMOVE',
+			'action' => $action,
 		);
 		$coupon = Coupon::from_array( $data );
 
-		$this->assertSame( 'REMOVE', $coupon->action() );
+		$this->assertSame( $action, $coupon->action() );
+		$this->assertEmpty( $coupon->validate() );
 	}
 
-	/**
-	 * Tests that Coupon returns the actual code from input data.
-	 */
-	public function test_code_returns_actual_input(): void {
-		$data   = array(
-			'code'   => 'SAVE10',
-			'action' => 'APPLY',
+	public function valid_action_provider(): array {
+		return array(
+			'apply'  => array( 'APPLY' ),
+			'remove' => array( 'REMOVE' ),
 		);
-		$coupon = Coupon::from_array( $data );
-
-		$this->assertSame( 'SAVE10', $coupon->code() );
 	}
 
 	/**
-	 * Tests that Coupon validation rejects invalid action values.
+	 * Tests that invalid action values produce validation issues.
 	 */
-	public function test_validation_rejects_invalid_action(): void {
+	public function test_invalid_action(): void {
 		$data   = array(
 			'code'   => 'SAVE10',
 			'action' => 'INVALID',
 		);
 		$coupon = Coupon::from_array( $data );
+		$issues = $coupon->validate();
 
-		$this->assertCount( 1, $coupon->validate() );
+		$this->assertCount( 1, $issues );
+
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'action', $issue_data['field'] );
+		$this->assertInstanceOf( InvalidData::class, $issues[0] );
 	}
 
 	/**
@@ -80,7 +94,10 @@ class CouponTest extends SchemaTestCase {
 		$issues = $coupon->validate();
 
 		$this->assertCount( 1, $issues );
-		$this->assertSame( 'code', $issues[0]->to_array()['field'] );
+
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'code', $issue_data['field'] );
+		$this->assertInstanceOf( InvalidData::class, $issues[0] );
 	}
 
 	/**
@@ -92,29 +109,10 @@ class CouponTest extends SchemaTestCase {
 		$issues = $coupon->validate();
 
 		$this->assertCount( 1, $issues );
-		$this->assertSame( 'action', $issues[0]->to_array()['field'] );
-	}
 
-	/**
-	 * Tests that valid action values pass validation.
-	 *
-	 * @dataProvider valid_action_provider
-	 */
-	public function test_valid_action_values( string $action ): void {
-		$data   = array(
-			'code'   => 'SAVE10',
-			'action' => $action,
-		);
-		$coupon = Coupon::from_array( $data );
-
-		$this->assertEmpty( $coupon->validate() );
-	}
-
-	public function valid_action_provider(): array {
-		return array(
-			'apply'  => array( 'APPLY' ),
-			'remove' => array( 'REMOVE' ),
-		);
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'action', $issue_data['field'] );
+		$this->assertInstanceOf( InvalidData::class, $issues[0] );
 	}
 
 	/**
