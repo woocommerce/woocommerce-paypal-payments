@@ -116,5 +116,16 @@ class CouponTest extends SchemaTestCase {
 			'remove' => array( 'REMOVE' ),
 		);
 	}
+
+	/**
+	 * Tests that multiple validation issues are collected.
+	 */
+	public function test_multiple_validation_issues(): void {
+		$data   = array(); // Both fields missing.
+		$coupon = Coupon::from_array( $data );
+		$issues = $coupon->validate();
+
+		$this->assertCount( 2, $issues, 'Should collect all validation issues' );
+	}
 }
 
