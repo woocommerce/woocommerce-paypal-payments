@@ -82,5 +82,17 @@ class CouponTest extends SchemaTestCase {
 		$this->assertCount( 1, $issues );
 		$this->assertSame( 'code', $issues[0]->to_array()['field'] );
 	}
+
+	/**
+	 * Tests that missing action produces validation issue.
+	 */
+	public function test_missing_action(): void {
+		$data   = array( 'code' => 'SAVE10' );
+		$coupon = Coupon::from_array( $data );
+		$issues = $coupon->validate();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( 'action', $issues[0]->to_array()['field'] );
+	}
 }
 
