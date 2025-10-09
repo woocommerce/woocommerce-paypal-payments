@@ -79,15 +79,15 @@ use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 $services = array(
-	'settings.url'                                        => static function ( ContainerInterface $container ): string {
+	'settings.url'                                     => static function ( ContainerInterface $container ): string {
 		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
-	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
+	'settings.data.onboarding'                         => static function ( ContainerInterface $container ): OnboardingProfile {
 		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
 		$can_use_vaulting            = $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
 		$can_use_card_payments       = $container->has( 'card-fields.eligible' ) && $container->get( 'card-fields.eligible' );
 		$can_use_subscriptions       = $container->has( 'wc-subscriptions.helper' ) && $container->get( 'wc-subscriptions.helper' )
-																								->plugin_is_active();
+		                                                                                         ->plugin_is_active();
 		$should_skip_payment_methods = class_exists( '\WC_Payments' );
 		$can_use_fastlane            = $container->get( 'axo.eligible' );
 		$can_use_pay_later           = $container->get( 'button.helper.messages-apply' );
@@ -102,22 +102,22 @@ $services = array(
 			$can_use_pay_later->for_country()
 		);
 	},
-	'settings.data.general'                               => static function ( ContainerInterface $container ): GeneralSettings {
+	'settings.data.general'                            => static function ( ContainerInterface $container ): GeneralSettings {
 		return new GeneralSettings(
 			$container->get( 'api.shop.country' ),
 			$container->get( 'api.shop.currency.getter' )->get(),
 			$container->get( 'wcgateway.is-send-only-country' )
 		);
 	},
-	'settings.data.styling'                               => static function ( ContainerInterface $container ): StylingSettings {
+	'settings.data.styling'                            => static function ( ContainerInterface $container ): StylingSettings {
 		return new StylingSettings(
 			$container->get( 'settings.service.sanitizer' )
 		);
 	},
-	'settings.data.payment'                               => static function ( ContainerInterface $container ): PaymentSettings {
+	'settings.data.payment'                            => static function ( ContainerInterface $container ): PaymentSettings {
 		return new PaymentSettings();
 	},
-	'settings.data.settings'                              => static function ( ContainerInterface $container ): SettingsModel {
+	'settings.data.settings'                           => static function ( ContainerInterface $container ): SettingsModel {
 		$environment = $container->get( 'settings.environment' );
 		assert( $environment instanceof Environment );
 
@@ -126,7 +126,7 @@ $services = array(
 			$environment->is_sandbox() ? $container->get( 'wcgateway.settings.invoice-prefix-random' ) : $container->get( 'wcgateway.settings.invoice-prefix' )
 		);
 	},
-	'settings.data.paylater-messaging'                    => static function ( ContainerInterface $container ): array {
+	'settings.data.paylater-messaging'                 => static function ( ContainerInterface $container ): array {
 		// TODO: Create an AbstractDataModel wrapper for this configuration!
 
 		$config_factors = $container->get( 'paylater-configurator.factory.config' );
@@ -150,7 +150,7 @@ $services = array(
 	 *
 	 * @deprecated Directly use 'settings.connection-state' instead of this.
 	 */
-	'settings.environment'                                => static function ( ContainerInterface $container ): Environment {
+	'settings.environment'                             => static function ( ContainerInterface $container ): Environment {
 		$state = $container->get( 'settings.connection-state' );
 		assert( $state instanceof ConnectionState );
 
@@ -162,7 +162,7 @@ $services = array(
 	 *
 	 * @deprecated Use 'settings.connection-state' instead.
 	 */
-	'settings.flag.is-connected'                          => static function ( ContainerInterface $container ): bool {
+	'settings.flag.is-connected'                       => static function ( ContainerInterface $container ): bool {
 		$state = $container->get( 'settings.connection-state' );
 		assert( $state instanceof ConnectionState );
 
@@ -174,71 +174,71 @@ $services = array(
 	 *
 	 * @deprecated Use 'settings.connection-state' instead.
 	 */
-	'settings.flag.is-sandbox'                            => static function ( ContainerInterface $container ): bool {
+	'settings.flag.is-sandbox'                         => static function ( ContainerInterface $container ): bool {
 		$state = $container->get( 'settings.connection-state' );
 		assert( $state instanceof ConnectionState );
 
 		return $state->is_sandbox();
 	},
-	'settings.rest.onboarding'                            => static function ( ContainerInterface $container ): OnboardingRestEndpoint {
+	'settings.rest.onboarding'                         => static function ( ContainerInterface $container ): OnboardingRestEndpoint {
 		return new OnboardingRestEndpoint( $container->get( 'settings.data.onboarding' ) );
 	},
-	'settings.rest.common'                                => static function ( ContainerInterface $container ): CommonRestEndpoint {
+	'settings.rest.common'                             => static function ( ContainerInterface $container ): CommonRestEndpoint {
 		return new CommonRestEndpoint(
 			$container->get( 'settings.data.general' ),
 			$container->get( 'api.endpoint.partners' )
 		);
 	},
-	'settings.rest.payment'                               => static function ( ContainerInterface $container ): PaymentRestEndpoint {
+	'settings.rest.payment'                            => static function ( ContainerInterface $container ): PaymentRestEndpoint {
 		return new PaymentRestEndpoint(
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'settings.data.definition.methods' ),
 			$container->get( 'settings.data.definition.method_dependencies' )
 		);
 	},
-	'settings.rest.styling'                               => static function ( ContainerInterface $container ): StylingRestEndpoint {
+	'settings.rest.styling'                            => static function ( ContainerInterface $container ): StylingRestEndpoint {
 		return new StylingRestEndpoint(
 			$container->get( 'settings.data.styling' ),
 			$container->get( 'settings.service.sanitizer' )
 		);
 	},
-	'settings.rest.refresh_feature_status'                => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
+	'settings.rest.refresh_feature_status'             => static function ( ContainerInterface $container ): RefreshFeatureStatusEndpoint {
 		return new RefreshFeatureStatusEndpoint(
 			$container->get( 'wcgateway.settings' ),
 			new Cache( 'ppcp-timeout' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.rest.authentication'                        => static function ( ContainerInterface $container ): AuthenticationRestEndpoint {
+	'settings.rest.authentication'                     => static function ( ContainerInterface $container ): AuthenticationRestEndpoint {
 		return new AuthenticationRestEndpoint(
 			$container->get( 'settings.service.authentication_manager' ),
 			$container->get( 'settings.service.data-manager' )
 		);
 	},
-	'settings.rest.login_link'                            => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
+	'settings.rest.login_link'                         => static function ( ContainerInterface $container ): LoginLinkRestEndpoint {
 		return new LoginLinkRestEndpoint(
 			$container->get( 'settings.service.connection-url-generator' ),
 		);
 	},
-	'settings.rest.webhooks'                              => static function ( ContainerInterface $container ): WebhookSettingsEndpoint {
+	'settings.rest.webhooks'                           => static function ( ContainerInterface $container ): WebhookSettingsEndpoint {
 		return new WebhookSettingsEndpoint(
 			$container->get( 'api.endpoint.webhook' ),
 			$container->get( 'webhook.registrar' ),
 			$container->get( 'webhook.status.simulation' )
 		);
 	},
-	'settings.rest.pay_later_messaging'                   => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
+	'settings.rest.pay_later_messaging'                => static function ( ContainerInterface $container ): PayLaterMessagingEndpoint {
 		return new PayLaterMessagingEndpoint(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'paylater-configurator.endpoint.save-config' )
 		);
 	},
-	'settings.rest.settings'                              => static function ( ContainerInterface $container ): SettingsRestEndpoint {
+	'settings.rest.settings'                           => static function ( ContainerInterface $container ): SettingsRestEndpoint {
 		return new SettingsRestEndpoint(
 			$container->get( 'settings.data.settings' )
 		);
 	},
-	'settings.casual-selling.supported-countries'         => static function ( ContainerInterface $container ): array {
+	'settings.casual-selling.supported-countries'      => static function ( ContainerInterface $container ): array {
 		return array(
 			'AR',
 			'AU',
@@ -288,13 +288,13 @@ $services = array(
 			'VN',
 		);
 	},
-	'settings.casual-selling.eligible'                    => static function ( ContainerInterface $container ): bool {
+	'settings.casual-selling.eligible'                 => static function ( ContainerInterface $container ): bool {
 		$country            = $container->get( 'api.shop.country' );
 		$eligible_countries = $container->get( 'settings.casual-selling.supported-countries' );
 
 		return in_array( $country, $eligible_countries, true );
 	},
-	'settings.handler.connection-listener'                => static function ( ContainerInterface $container ): ConnectionListener {
+	'settings.handler.connection-listener'             => static function ( ContainerInterface $container ): ConnectionListener {
 		$page_id = $container->has( 'wcgateway.current-ppcp-settings-page-id' ) ? $container->get( 'wcgateway.current-ppcp-settings-page-id' ) : '';
 
 		return new ConnectionListener(
@@ -305,16 +305,16 @@ $services = array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.service.signup-link-cache'                  => static function ( ContainerInterface $container ): Cache {
+	'settings.service.signup-link-cache'               => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-signup-link' );
 	},
-	'settings.service.onboarding-url-manager'             => static function ( ContainerInterface $container ): OnboardingUrlManager {
+	'settings.service.onboarding-url-manager'          => static function ( ContainerInterface $container ): OnboardingUrlManager {
 		return new OnboardingUrlManager(
 			$container->get( 'settings.service.signup-link-cache' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.service.connection-url-generator'           => static function ( ContainerInterface $container ): ConnectionUrlGenerator {
+	'settings.service.connection-url-generator'        => static function ( ContainerInterface $container ): ConnectionUrlGenerator {
 		return new ConnectionUrlGenerator(
 			$container->get( 'api.env.endpoint.partner-referrals' ),
 			$container->get( 'api.repository.partner-referrals-data' ),
@@ -322,7 +322,7 @@ $services = array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.service.authentication_manager'             => static function ( ContainerInterface $container ): AuthenticationManager {
+	'settings.service.authentication_manager'          => static function ( ContainerInterface $container ): AuthenticationManager {
 		return new AuthenticationManager(
 			$container->get( 'settings.data.general' ),
 			$container->get( 'api.env.paypal-host' ),
@@ -333,15 +333,15 @@ $services = array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.service.rest-service'                       => static function ( ContainerInterface $container ): InternalRestService {
+	'settings.service.rest-service'                    => static function ( ContainerInterface $container ): InternalRestService {
 		return new InternalRestService(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'settings.service.sanitizer'                          => static function ( ContainerInterface $container ): DataSanitizer {
+	'settings.service.sanitizer'                       => static function ( ContainerInterface $container ): DataSanitizer {
 		return new DataSanitizer();
 	},
-	'settings.service.data-manager'                       => static function ( ContainerInterface $container ): SettingsDataManager {
+	'settings.service.data-manager'                    => static function ( ContainerInterface $container ): SettingsDataManager {
 		return new SettingsDataManager(
 			$container->get( 'settings.data.definition.methods' ),
 			$container->get( 'settings.data.onboarding' ),
@@ -353,7 +353,7 @@ $services = array(
 			$container->get( 'settings.data.todos' ),
 		);
 	},
-	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
+	'settings.service.script-data-handler'             => static function ( ContainerInterface $container ): ScriptDataHandler {
 		$settings                     = $container->get( 'wcgateway.settings' );
 		$settings_url                 = $container->get( 'settings.url' );
 		$paylater_is_available        = $container->get( 'paylater-configurator.is-available' );
@@ -365,22 +365,22 @@ $services = array(
 
 		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
 	},
-	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
+	'settings.service.data-migration'                  => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
 	),
-	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
+	'settings.service.data-migration.settings-tab'     => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		$c->get( 'wcgateway.settings' ),
 		$c->get( 'settings.data.settings' ),
 		$c->get( 'compat.settings.settings_tab_map_helper' ),
 	),
-	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
+	'settings.service.data-migration.styling'          => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
 		$c->get( 'wcgateway.settings' ),
 		$c->get( 'settings.data.styling' ),
 	),
-	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
+	'settings.service.data-migration.payment-settings' => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
 		$c->get( 'wcgateway.settings' ),
 		$c->get( 'settings.data.payment' ),
 		$c->get( 'api.helpers.dccapplies' ),
@@ -388,19 +388,19 @@ $services = array(
 		$c->get( 'wcgateway.configuration.card-configuration' ),
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
-	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
+	'settings.service.data-migration.general-settings' => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
 		$c->get( 'wcgateway.settings' ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
 	),
-	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
+	'settings.ajax.switch_ui'                          => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
 		$c->get( 'woocommerce.logger.woocommerce' ),
 		$c->get( 'button.request-data' ),
 		$c->get( 'settings.data.onboarding' ),
 		$c->get( 'settings.service.data-migration' ),
 		$c->get( 'api.merchant_id' ) !== ''
 	),
-	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
+	'settings.rest.todos'                              => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(
 			$container->get( 'settings.data.todos' ),
 			$container->get( 'settings.data.definition.todos' ),
@@ -408,17 +408,17 @@ $services = array(
 			$container->get( 'settings.service.todos_sorting' )
 		);
 	},
-	'settings.data.todos'                                 => static function ( ContainerInterface $container ): TodosModel {
+	'settings.data.todos'                              => static function ( ContainerInterface $container ): TodosModel {
 		return new TodosModel();
 	},
-	'settings.data.definition.todos'                      => static function ( ContainerInterface $container ): TodosDefinition {
+	'settings.data.definition.todos'                   => static function ( ContainerInterface $container ): TodosDefinition {
 		return new TodosDefinition(
 			$container->get( 'settings.service.todos_eligibilities' ),
 			$container->get( 'settings.data.general' ),
 			$container->get( 'settings.data.todos' )
 		);
 	},
-	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ): PaymentMethodsDefinition {
+	'settings.data.definition.methods'                 => static function ( ContainerInterface $container ): PaymentMethodsDefinition {
 		$axo_checkout_config_notice      = $container->get( 'axo.checkout-config-notice.raw' );
 		$axo_incompatible_plugins_notice = $container->get( 'axo.incompatible-plugins-notice.raw' );
 
@@ -436,10 +436,10 @@ $services = array(
 			$axo_notices
 		);
 	},
-	'settings.data.definition.method_dependencies'        => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
+	'settings.data.definition.method_dependencies'     => static function ( ContainerInterface $container ): PaymentMethodsDependenciesDefinition {
 		return new PaymentMethodsDependenciesDefinition( $container->get( 'wcgateway.settings' ) );
 	},
-	'settings.service.pay_later_status'                   => static function ( ContainerInterface $container ): array {
+	'settings.service.pay_later_status'                => static function ( ContainerInterface $container ): array {
 		$pay_later_endpoint = $container->get( 'settings.rest.pay_later_messaging' );
 		$pay_later_settings = $pay_later_endpoint->get_details()->get_data();
 
@@ -450,7 +450,7 @@ $services = array(
 			'shop'             => $pay_later_settings['data']['shop']['status'] === 'enabled',
 			'home'             => $pay_later_settings['data']['home']['status'] === 'enabled',
 			'custom_placement' => ! empty( $pay_later_settings['data']['custom_placement'] ) &&
-									$pay_later_settings['data']['custom_placement'][0]['status'] === 'enabled',
+			                      $pay_later_settings['data']['custom_placement'][0]['status'] === 'enabled',
 		);
 
 		$is_pay_later_messaging_enabled_for_any_location = ! array_filter( $pay_later_statuses );
@@ -460,7 +460,7 @@ $services = array(
 			'is_enabled_for_any_location' => $is_pay_later_messaging_enabled_for_any_location,
 		);
 	},
-	'settings.service.button_locations'                   => static function ( ContainerInterface $container ): array {
+	'settings.service.button_locations'                => static function ( ContainerInterface $container ): array {
 		$styling_endpoint = $container->get( 'settings.rest.styling' );
 		$styling_data     = $styling_endpoint->get_details()->get_data()['data'];
 
@@ -470,7 +470,7 @@ $services = array(
 			'product_enabled'        => $styling_data['product']->enabled ?? false,
 		);
 	},
-	'settings.service.gateways_status'                    => static function ( ContainerInterface $container ): array {
+	'settings.service.gateways_status'                 => static function ( ContainerInterface $container ): array {
 		$payment_endpoint = $container->get( 'settings.rest.payment' );
 		$settings         = $payment_endpoint->get_details()->get_data();
 
@@ -481,7 +481,7 @@ $services = array(
 			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
 		);
 	},
-	'settings.service.merchant_capabilities'              => static function ( ContainerInterface $container ): array {
+	'settings.service.merchant_capabilities'           => static function ( ContainerInterface $container ): array {
 		/**
 		 * Use the REST API filter to collect eligibility flags.
 		 *
@@ -501,17 +501,17 @@ $services = array(
 		$is_acdc_enabled = ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only();
 
 		return array(
-			'apple_pay'       => ( $features['apple_pay']['enabled'] ?? false ) && $is_acdc_enabled,
-			'google_pay'      => ( $features['google_pay']['enabled'] ?? false ) && $is_acdc_enabled,
-			'is_acdc_enabled' => $is_acdc_enabled,
-			'apm'             => $features['alternative_payment_methods']['enabled'] ?? false,
-			'save_paypal'     => $features['save_paypal_and_venmo']['enabled'] ?? false,
-			'paylater'        => $features['pay_later_messaging']['enabled'] ?? false,
-			'installments'    => $features['installments']['enabled'] ?? false,
+			'apple_pay'    => ( $features['apple_pay']['enabled'] ?? false ) && $is_acdc_enabled,
+			'google_pay'   => ( $features['google_pay']['enabled'] ?? false ) && $is_acdc_enabled,
+			'acdc'         => $is_acdc_enabled,
+			'apm'          => $features['alternative_payment_methods']['enabled'] ?? false,
+			'save_paypal'  => $features['save_paypal_and_venmo']['enabled'] ?? false,
+			'paylater'     => $features['pay_later_messaging']['enabled'] ?? false,
+			'installments' => $features['installments']['enabled'] ?? false,
 		);
 	},
 
-	'settings.service.todos_eligibilities'                => static function ( ContainerInterface $container ): TodosEligibilityService {
+	'settings.service.todos_eligibilities'                    => static function ( ContainerInterface $container ): TodosEligibilityService {
 		$pay_later_service                               = $container->get( 'settings.service.pay_later_status' );
 		$pay_later_statuses                              = $pay_later_service['statuses'];
 		$is_pay_later_messaging_enabled_for_any_location = $pay_later_service['is_enabled_for_any_location'];
@@ -589,13 +589,13 @@ $services = array(
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
 		);
 	},
-	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
+	'settings.rest.features'                                  => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
 		return new FeaturesRestEndpoint(
 			$container->get( 'settings.data.definition.features' ),
 			$container->get( 'settings.rest.settings' )
 		);
 	},
-	'settings.data.definition.features'                   => static function ( ContainerInterface $container ): FeaturesDefinition {
+	'settings.data.definition.features'                       => static function ( ContainerInterface $container ): FeaturesDefinition {
 		$merchant_capabilities = $container->get( 'settings.service.merchant_capabilities' );
 
 		return new FeaturesDefinition(
@@ -604,15 +604,15 @@ $services = array(
 			$container->get( 'settings.data.settings' )
 		);
 	},
-	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
+	'settings.service.todos_sorting'                          => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
 		return new TodosSortingAndFilteringService(
 			$container->get( 'settings.data.todos' )
 		);
 	},
-	'settings.service.gateway-redirect'                   => static function (): GatewayRedirectService {
+	'settings.service.gateway-redirect'                       => static function (): GatewayRedirectService {
 		return new GatewayRedirectService();
 	},
-	'settings.services.loading-screen-service'            => static function ( ContainerInterface $container ): LoadingScreenService {
+	'settings.services.loading-screen-service'                => static function ( ContainerInterface $container ): LoadingScreenService {
 		return new LoadingScreenService();
 	},
 	/**
@@ -620,7 +620,7 @@ $services = array(
 	 *
 	 * @returns string[] The list of all gateway IDs.
 	 */
-	'settings.config.all-gateway-ids'                     => static function (): array {
+	'settings.config.all-gateway-ids'                         => static function (): array {
 		return array(
 			PayPalGateway::ID,
 			CardButtonGateway::ID,
@@ -643,13 +643,13 @@ $services = array(
 	'settings.service.branded-experience.activation-detector' => static function (): ActivationDetector {
 		return new ActivationDetector();
 	},
-	'settings.service.branded-experience.path-repository' => static function ( ContainerInterface $container ): PathRepository {
+	'settings.service.branded-experience.path-repository'     => static function ( ContainerInterface $container ): PathRepository {
 		return new PathRepository(
 			$container->get( 'settings.service.branded-experience.activation-detector' ),
 			$container->get( 'settings.data.general' )
 		);
 	},
-	'settings.merchant-details'                           => static function ( ContainerInterface $container ): MerchantDetails {
+	'settings.merchant-details'                               => static function ( ContainerInterface $container ): MerchantDetails {
 		$data = $container->get( 'settings.data.general' );
 		assert( $data instanceof GeneralSettings );
 
@@ -658,7 +658,7 @@ $services = array(
 
 		return new MerchantDetails( $merchant_country, $eligibility_checks );
 	},
-	'settings.migration.bcdc-override-check'              => static function (): callable {
+	'settings.migration.bcdc-override-check'                  => static function (): callable {
 		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 	},
 );
