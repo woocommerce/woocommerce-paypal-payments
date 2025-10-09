@@ -5,21 +5,29 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
-
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'agentic.ingestion-batch-provider' => static function (ContainerInterface $container ) {
-		return new IngestionBatchProvider();
+	'agentic.ingestion-api-endpoint'   => static function ( ContainerInterface $container ) {
+		return 'https://d.joinhoney.com/webhooks/products';
 	},
-	'agentic.ingestion-manager' => static function (ContainerInterface $container ) {
-		return new IngestionManager(
-			$container->get('agentic.ingestion-batch-provider'),
+	'agentic.sync-job-factory'         => static function ( ContainerInterface $container ) {
+		return new SyncJobFactory(
+			$container->get( 'agentic.ingestion-api-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
-	}
+	},
+	'agentic.ingestion-batch-provider' => static function ( ContainerInterface $container ) {
+		return new IngestionBatchProvider();
+	},
+	'agentic.ingestion-manager'        => static function ( ContainerInterface $container ) {
+		return new IngestionManager(
+			$container->get( 'agentic.ingestion-batch-provider' ),
+			$container->get( 'agentic.sync-job-factory' )
+		);
+	},
 );

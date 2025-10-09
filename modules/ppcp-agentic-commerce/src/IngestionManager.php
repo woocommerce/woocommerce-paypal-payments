@@ -6,16 +6,16 @@ use Psr\Log\LoggerInterface;
 
 class IngestionManager {
 
-	private $batch_size = 50; // API accepts up to 100 products per request
+	private int $batch_size = 50; // API accepts up to 100 products per request
 	private IngestionBatchProvider $batch_provider;
-	private LoggerInterface $logger;
+	private SyncJobFactory $sync_job_factory;
 
 	public function __construct(
 		IngestionBatchProvider $batch_provider,
-		LoggerInterface $logger
+		SyncJobFactory $sync_job_factory
 	) {
-		$this->batch_provider = $batch_provider;
-		$this->logger         = $logger;
+		$this->batch_provider   = $batch_provider;
+		$this->sync_job_factory = $sync_job_factory;
 	}
 
 	public function init() {
@@ -27,19 +27,16 @@ class IngestionManager {
 		// Main sync action
 		add_action( 'ppcp_agentic_sync_batch', array( $this, 'process_next_batch' ) );
 
-		// Real-time triggers
+		// Handle re-sync on product update
 		add_action( 'woocommerce_update_product', array( $this, 'mark_product_for_sync' ) );
 		add_action( 'woocommerce_product_set_stock', array( $this, 'mark_product_for_sync' ) );
-
-		// Manual sync trigger
-		add_action( 'ppcp_agentic_manual_sync', array( $this, 'trigger_immediate_sync' ) );
 	}
 
 	private function schedule_recurring_sync() {
 		if ( ! as_next_scheduled_action( 'ppcp_agentic_sync_batch' ) ) {
 			as_schedule_recurring_action(
 				time(),
-				15 * MINUTE_IN_SECONDS, // Run every 15 minutes
+				15 * MINUTE_IN_SECONDS, // Run every 15 minutes.
 				'ppcp_agentic_sync_batch',
 				array(),
 				'ppcp_agentic_sync'
@@ -47,14 +44,33 @@ class IngestionManager {
 		}
 	}
 
-	public function process_next_batch() {
+	/**
+	 * @throws \Exception
+	 * @wp-hook ppcp_agentic_sync_batch
+	 */
+	public function process_next_batch(): void {
 		// Get products needing sync using WooCommerce APIs
 		$product_ids = $this->batch_provider->get_batch( $this->batch_size );
 
 		if ( empty( $product_ids ) ) {
 			return; // Nothing to sync
 		}
-		$syncJob = new SyncJob( $product_ids, $this->logger );
+		$syncJob = $this->sync_job_factory->create_job( $product_ids );
 		$syncJob->execute();
+	}
+
+	/**
+	 * Mark product for sync when it's updated.
+	 *
+	 * @wp-hook woocommerce_update_product
+	 */
+	public function mark_product_for_sync( $product_id ): void {
+		$product = wc_get_product( $product_id );
+		if ( ! $product ) {
+			return;
+		}
+
+		$product->update_meta_data( '_ppcp_agentic_needs_sync', '1' );
+		$product->save_meta_data();
 	}
 }

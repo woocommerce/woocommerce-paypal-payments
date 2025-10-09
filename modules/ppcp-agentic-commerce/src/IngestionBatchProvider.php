@@ -4,7 +4,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
 class IngestionBatchProvider {
 	public function get_batch( $limit = 50 ): array {
-		// First, get products that have never been synced
+		// First, get products that have never been synced.
 		$never_synced = wc_get_products(
 			array(
 				'status'     => 'publish',
@@ -23,7 +23,7 @@ class IngestionBatchProvider {
 			return $never_synced;
 		}
 
-		// If we need more, get stale products (synced > 24 hours ago)
+		// If we need more, get products that have never been synced.
 		$remaining = $limit - count( $never_synced );
 
 		$stale_products = wc_get_products(
@@ -34,18 +34,13 @@ class IngestionBatchProvider {
 				'meta_query' => array(
 					array(
 						'key'     => '_ppcp_agentic_last_sync',
-						'value'   => date( 'Y-m-d H:i:s', strtotime( '-24 hours' ) ),
-						'compare' => '<',
-						'type'    => 'DATETIME',
+						'compare' => 'NOT EXISTS',
 					),
 				),
-				'orderby'    => 'meta_value',
-				'order'      => 'ASC',
-				'meta_key'   => '_ppcp_agentic_last_sync',
 			)
 		);
 
-		// Combine and return
+		// Combine and return.
 		return array_merge( $never_synced, $stale_products );
 	}
 }
