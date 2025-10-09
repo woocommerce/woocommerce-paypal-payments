@@ -57,5 +57,18 @@ class CouponTest extends SchemaTestCase {
 
 		$this->assertSame( 'SAVE10', $coupon->code() );
 	}
+
+	/**
+	 * Tests that Coupon validation rejects invalid action values.
+	 */
+	public function test_validation_rejects_invalid_action(): void {
+		$data   = array(
+			'code'   => 'SAVE10',
+			'action' => 'INVALID',
+		);
+		$coupon = Coupon::from_array( $data );
+
+		$this->assertCount( 1, $coupon->validate() );
+	}
 }
 
