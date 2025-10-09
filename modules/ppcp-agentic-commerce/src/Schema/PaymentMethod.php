@@ -20,4 +20,8 @@ class PaymentMethod extends AgenticSchema {
 	public function type(): string {
 		return 'paypal';
 	}
+
+	public function token(): string {
+		return 'EC-7U8939823K567';
+	}
 }
