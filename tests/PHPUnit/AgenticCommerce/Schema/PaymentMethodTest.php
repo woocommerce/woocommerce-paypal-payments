@@ -17,4 +17,14 @@ class PaymentMethodTest extends SchemaTestCase {
 			'type' => 'paypal',
 		);
 	}
+
+	/**
+	 * Tests that PaymentMethod stores and returns the type.
+	 */
+	public function test_type_accessor(): void {
+		$data   = array( 'type' => 'paypal' );
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertSame( 'paypal', $method->type() );
+	}
 }
