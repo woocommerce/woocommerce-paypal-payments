@@ -15,10 +15,9 @@ export class PayPalPopup {
 	usePasswordInsteadButton = () =>
 		this.popup.getByRole( 'button', { name: 'Use Password Instead' } );
 	loginWithPasswordInsteadLink = () =>
-		this.popup
-			.getByRole( 'link', {
-				name: 'Log in with a password instead',
-			} );
+		this.popup.getByRole( 'link', {
+			name: 'Log in with a password instead',
+		} );
 	loginWithYourPasswordLink = () =>
 		this.popup.getByRole( 'link', { name: 'Login with password' } );
 	loginWithPasswordInstead = () =>
@@ -30,11 +29,21 @@ export class PayPalPopup {
 	loginInput = () => this.popup.locator( '[name="login_email"]' );
 	passwordInput = () => this.popup.locator( '[name="login_password"]' );
 	nextButton = () =>
-		this.popup.locator( '#btnNext' )
-			.or( this.popup.locator( 'button[data-atomic-wait-intent="Submit_Email"]' ) );
+		this.popup
+			.locator( '#btnNext' )
+			.or(
+				this.popup.locator(
+					'button[data-atomic-wait-intent="Submit_Email"]'
+				)
+			);
 	loginButton = () =>
-		this.popup.locator( '#btnLogin' )
-			.or( this.popup.locator( 'button[data-atomic-wait-intent="Submit_Password"]' ) );
+		this.popup
+			.locator( '#btnLogin' )
+			.or(
+				this.popup.locator(
+					'button[data-atomic-wait-intent="Submit_Password"]'
+				)
+			);
 	submitPaymentButton = () =>
 		this.popup
 			.locator( '#payment-submit-btn' )
@@ -58,8 +67,7 @@ export class PayPalPopup {
 			'You have read and agree to the Loan Agreement'
 		);
 	agreeAndApplyButton = () => this.payLaterIframe().getByTestId( 'apply' );
-	tryAgainLink = () =>
-		this.popup.getByRole( 'link', { name: 'Try again' } );
+	tryAgainLink = () => this.popup.getByRole( 'link', { name: 'Try again' } );
 
 	// Actions
 

@@ -107,7 +107,9 @@ export class PayPalUi {
 			.frameLocator( '#braintree-hosted-field-expirationDate' )
 			.locator( '#expiration' );
 	fastlaneCvvInput = () =>
-		this.page.frameLocator( '#braintree-hosted-field-cvv' ).locator( '#cvv' );
+		this.page
+			.frameLocator( '#braintree-hosted-field-cvv' )
+			.locator( '#cvv' );
 	fastlaneCardHolderInput = () =>
 		this.page
 			.frameLocator( '#braintree-hosted-field-cardholderName' )
@@ -182,7 +184,9 @@ export class PayPalUi {
 	 * Clicks PayPal button to open popup
 	 */
 	openPayPalPupup = async (): Promise< PayPalPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
 		await expect( this.payPalButton() ).toBeVisible();
 		await this.payPalButton().click();
 
@@ -195,7 +199,9 @@ export class PayPalUi {
 	 * Clicks Pay Later button to open popup
 	 */
 	openPayLaterPupup = async (): Promise< PayPalPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
 		await expect( this.payLaterButton() ).toBeVisible();
 		await this.payLaterButton().click();
 
@@ -208,7 +214,9 @@ export class PayPalUi {
 	 * Clicks Venmo button to open popup
 	 */
 	openVenmoPupup = async (): Promise< PayPalPopup > => {
-		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
 		await expect( this.venmoButton() ).toBeVisible();
 		await this.venmoButton().click();
 
@@ -417,7 +425,7 @@ export class PayPalUi {
 
 		await expect( this.fastlaneContinueButton() ).toBeVisible();
 		await this.fastlaneContinueButton().click();
-		
+
 		await this.page.waitForLoadState( 'networkidle' );
 	};
 
@@ -456,7 +464,7 @@ export class PayPalUi {
 			await this.fastlaneExpirationDateInput().pressSequentially(
 				card.expiration_date
 			);
-			
+
 			await expect( this.fastlaneCvvInput() ).toBeVisible();
 			await this.fastlaneCvvInput().fill( card.card_cvv );
 
@@ -488,9 +496,7 @@ export class PayPalUi {
 	 *
 	 * @param payment
 	 */
-	expandPaymentGateway = async (
-		payment: Pcp.Payment
-	) => {
+	expandPaymentGateway = async ( payment: Pcp.Payment ) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
 				await expect( this.payPalGateway() ).toBeVisible();
@@ -515,12 +521,10 @@ export class PayPalUi {
 		const { gateway, card } = payment;
 		switch ( gateway.shortcut ) {
 			case 'paypal':
-				await expect(
-					this.payPalButton()
-				).toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
-				await expect(
-					this.payPalButtonMoreOptions()
-				).toBeVisible();
+				await expect( this.payPalButton() ).toContainClass(
+					'paypal-button-wallet'
+				); // Class applied for vaulted button
+				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
 				break;
 
 			case 'acdc':
@@ -539,9 +543,9 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect(
-					this.payPalButton()
-				).not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				await expect( this.payPalButton() ).not.toContainClass(
+					'paypal-button-wallet'
+				); // Class applied for vaulted button
 				await expect(
 					this.payPalButtonMoreOptions()
 				).not.toBeVisible();

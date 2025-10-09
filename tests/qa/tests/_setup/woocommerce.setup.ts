@@ -22,13 +22,6 @@ import {
 
 const country = process.env.WC_DEFAULT_COUNTRY || 'usa';
 
-/**
- * Only for Kinsta
-setup( 'Clear SSE cache', async ( { cli } ) => {
-	await cli.clearSseCache();
-} );
-*/
-
 setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 	await requestUtils.setPermalinks( '/%postname%/' );
 } );

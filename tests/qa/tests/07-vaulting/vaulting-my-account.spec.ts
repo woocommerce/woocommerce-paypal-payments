@@ -192,7 +192,7 @@ test.describe( () => {
 	} );
 
 	test(
-		// Fail: 
+		// Fail:
 		'PCP-5381 | Vaulting - My Account - Payment Methods - ACDC - Save additional card',
 		annotateVisitor( customer ),
 		async ( { utils, customerPaymentMethods, classicCheckout } ) => {

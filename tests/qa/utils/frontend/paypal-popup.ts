@@ -19,10 +19,9 @@ export class PayPalPopup {
 	usePasswordInsteadButton = () =>
 		this.page.getByRole( 'button', { name: 'Use Password Instead' } );
 	loginWithPasswordInsteadLink = () =>
-		this.page
-			.getByRole( 'link', {
-				name: 'Log in with a password instead',
-			} );
+		this.page.getByRole( 'link', {
+			name: 'Log in with a password instead',
+		} );
 	loginWithYourPasswordLink = () =>
 		this.page.getByRole( 'link', { name: 'Login with password' } );
 	loginWithPasswordInstead = () =>
@@ -34,11 +33,21 @@ export class PayPalPopup {
 	loginInput = () => this.page.locator( '[name="login_email"]' );
 	passwordInput = () => this.page.locator( '[name="login_password"]' );
 	nextButton = () =>
-		this.page.locator( '#btnNext' )
-			.or( this.page.locator( 'button[data-atomic-wait-intent="Submit_Email"]' ) );
+		this.page
+			.locator( '#btnNext' )
+			.or(
+				this.page.locator(
+					'button[data-atomic-wait-intent="Submit_Email"]'
+				)
+			);
 	loginButton = () =>
-		this.page.locator( '#btnLogin' )
-			.or( this.page.locator( 'button[data-atomic-wait-intent="Submit_Password"]' ) );
+		this.page
+			.locator( '#btnLogin' )
+			.or(
+				this.page.locator(
+					'button[data-atomic-wait-intent="Submit_Password"]'
+				)
+			);
 	submitPaymentButton = () =>
 		this.page
 			.locator( '#payment-submit-btn' )
@@ -54,8 +63,7 @@ export class PayPalPopup {
 	saveAndContinueButton = () => this.page.getByTestId( 'consentButton' );
 	cancelLink = () => this.page.locator( '#cancelLink' );
 	loadSpinnerContainer = () => this.page.locator( '#preloaderSpinner' );
-	tryAgainLink = () =>
-		this.page.getByRole( 'link', { name: 'Try again' } );
+	tryAgainLink = () => this.page.getByRole( 'link', { name: 'Try again' } );
 
 	// Actions
 

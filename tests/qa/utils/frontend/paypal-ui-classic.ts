@@ -373,7 +373,7 @@ export class PayPalUiClassic extends PayPalUi {
 		const savedCard = this.acdcSavedCard( payment.card );
 		await expect( savedCard ).toBeVisible();
 		await savedCard.click();
-		
+
 		await this.submitOrder();
 		await this.replacePayPalAuthToken( merchant );
 	};
@@ -390,7 +390,9 @@ export class PayPalUiClassic extends PayPalUi {
 			)
 		).toBeVisible();
 
-		const popupPromise = this.page.waitForEvent( 'popup', { timeout: 20 * 1000 } );
+		const popupPromise = this.page.waitForEvent( 'popup', {
+			timeout: 20 * 1000,
+		} );
 		await this.submitOrder();
 		const popup = await popupPromise;
 		const paypal = new PayPalPopup( popup );
@@ -415,15 +417,15 @@ export class PayPalUiClassic extends PayPalUi {
 
 		await expect( this.debitOrCreditCardNumberInput() ).toBeVisible();
 		await this.debitOrCreditCardNumberInput().fill( card.card_number );
-		
+
 		await expect( this.debitOrCreditCardExpirationInput() ).toBeVisible();
 		await this.debitOrCreditCardExpirationInput().fill(
 			card.expiration_date
 		);
-		
+
 		await expect( this.debitOrCreditCardCSCInput() ).toBeVisible();
 		await this.debitOrCreditCardCSCInput().fill( card.card_cvv );
-		
+
 		await expect( this.debitOrCreditCardPayNowButton() ).toBeVisible();
 		await this.debitOrCreditCardPayNowButton().click();
 	};
@@ -438,21 +440,21 @@ export class PayPalUiClassic extends PayPalUi {
 	) => {
 		await expect( this.standardCardButtonGateway() ).toBeVisible();
 		await this.standardCardButtonGateway().click();
-		
+
 		await expect( this.standardCardButton() ).toBeVisible();
 		await this.standardCardButton().click();
-		
+
 		await expect( this.standardCardButtonNumberInput() ).toBeVisible();
 		await this.standardCardButtonNumberInput().fill( card.card_number );
-		
+
 		await expect( this.standardCardButtonExpirationInput() ).toBeVisible();
 		await this.standardCardButtonExpirationInput().fill(
 			card.expiration_date
 		);
-		
+
 		await expect( this.standardCardButtonCSCInput() ).toBeVisible();
 		await this.standardCardButtonCSCInput().fill( card.card_cvv );
-		
+
 		await expect( this.standardCardButtonPayNowButton() ).toBeVisible();
 		await this.standardCardButtonPayNowButton().click();
 	};
@@ -477,17 +479,17 @@ export class PayPalUiClassic extends PayPalUi {
 		const { card } = payment;
 		await expect( this.debitCreditCardsGateway() ).toBeVisible();
 		await this.debitCreditCardsGateway().click();
-		
+
 		await expect( this.acdcCardNumberInput() ).toBeVisible();
 		await this.acdcCardNumberInput().fill( card.card_number );
-		
+
 		await expect( this.acdcCardExpirationInput() ).toBeVisible();
 		await this.acdcCardExpirationInput().click();
 		await this.page.keyboard.type( card.expiration_date ); // Trick to properly fill date
-		
+
 		await expect( this.acdcCardCvvInput() ).toBeVisible();
 		await this.acdcCardCvvInput().fill( card.card_cvv );
-		
+
 		await expect( this.addPaymentMethodButton() ).toBeVisible();
 		await this.addPaymentMethodButton().click();
 	};
