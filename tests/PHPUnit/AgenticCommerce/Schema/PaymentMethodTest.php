@@ -111,4 +111,20 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertSame( 'DATA_ERROR', $issues[0]->to_array()['code'] );
 		$this->assertSame( 'INVALID_DATA', $issues[0]->to_array()['type'] );
 	}
+
+	/**
+	 * Tests that valid PaymentMethod has no validation issues.
+	 */
+	public function test_valid_payment_method_has_no_issues(): void {
+		$data   = array(
+			'type'     => 'paypal',
+			'token'    => 'EC-7U8939823K567',
+			'payer_id' => 'PAYER123456789',
+		);
+		$method = PaymentMethod::from_array( $data );
+
+		$issues = $method->validate();
+
+		$this->assertEmpty( $issues );
+	}
 }
