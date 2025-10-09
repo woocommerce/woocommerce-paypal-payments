@@ -12,6 +12,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
+	'agentic.ingestion-stale-timeout-days'   => static function ( ContainerInterface $container ) {
+		return 5;
+	},
 	'agentic.ingestion-api-endpoint'   => static function ( ContainerInterface $container ) {
 		return 'https://d.joinhoney.com/webhooks/products';
 	},
@@ -22,7 +25,9 @@ return array(
 		);
 	},
 	'agentic.ingestion-batch-provider' => static function ( ContainerInterface $container ) {
-		return new IngestionBatchProvider();
+		return new IngestionBatchProvider(
+			$container->get( 'agentic.ingestion-stale-timeout-days' )
+		);
 	},
 	'agentic.ingestion-manager'        => static function ( ContainerInterface $container ) {
 		return new IngestionManager(
