@@ -223,7 +223,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			return;
 		}
 
-		if ( $order->get_payment_method() === 'ppcp-pwc' ) {
+		if ( $order->get_payment_method() === PWCGateway::ID ) {
 			$this->handle_cancelled_crypto_payment( $order, $cancelled );
 			return;
 		}
