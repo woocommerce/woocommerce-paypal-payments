@@ -10,18 +10,33 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+
 /**
  * @see CouponTest - Unit tests for this class.
  */
 class Coupon extends AgenticSchema {
 	private string $code = '';
 
+	private string $action = '';
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->code = '';
+		$this->code   = '';
+		$this->action = '';
 
 		if ( isset( $input['code'] ) ) {
 			$this->code = trim( $input['code'] );
+		}
+		if ( isset( $input['action'] ) ) {
+			$action        = trim( $input['action'] );
+			$valid_actions = array( 'APPLY', 'REMOVE' );
+
+			if ( in_array( $action, $valid_actions, true ) ) {
+				$this->action = $action;
+			} else {
+				$add_issue( new InvalidData( 'Action must be APPLY or REMOVE', 'Please provide a valid action.', 'action' ) );
+			}
 		}
 	}
 
@@ -30,6 +45,6 @@ class Coupon extends AgenticSchema {
 	}
 
 	public function action(): string {
-		return 'REMOVE';
+		return $this->action;
 	}
 }
