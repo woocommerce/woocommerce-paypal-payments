@@ -69,4 +69,15 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertSame( 'EC-7U8939823K567', $method->token() );
 		$this->assertSame( 'PAYER123456789', $method->payer_id() );
 	}
+
+	/**
+	 * Tests that optional fields return null when not provided.
+	 */
+	public function test_optional_fields_return_null_when_missing(): void {
+		$data   = array( 'type' => 'paypal' );
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertNull( $method->token() );
+		$this->assertNull( $method->payer_id() );
+	}
 }
