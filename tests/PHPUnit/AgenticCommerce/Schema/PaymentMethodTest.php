@@ -27,4 +27,17 @@ class PaymentMethodTest extends SchemaTestCase {
 
 		$this->assertSame( 'paypal', $method->type() );
 	}
+
+	/**
+	 * Tests that PaymentMethod stores and returns the optional token.
+	 */
+	public function test_token_accessor(): void {
+		$data   = array(
+			'type'  => 'paypal',
+			'token' => 'EC-7U8939823K567',
+		);
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertSame( 'EC-7U8939823K567', $method->token() );
+	}
 }
