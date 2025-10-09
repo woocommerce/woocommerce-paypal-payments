@@ -8,6 +8,9 @@ import urls from '../urls';
  */
 import { PcpMerchant } from '../../resources';
 import { generateRandomString } from '../helpers';
+/**
+ * External dependencies
+ */
 import { expect } from 'playwright/test';
 
 export class Connection extends PcpSettingsPage {
@@ -53,8 +56,7 @@ export class Connection extends PcpSettingsPage {
 		this.page.locator( '#ppcp-merchant_email_sandbox' );
 	sandboxMerchantIdInput = () =>
 		this.page.locator( '#ppcp-merchant_id_sandbox' );
-	sandboxClientIdInput = () =>
-		this.page.locator( '#ppcp-client_id_sandbox' );
+	sandboxClientIdInput = () => this.page.locator( '#ppcp-client_id_sandbox' );
 	sandboxSecretKeyInput = () =>
 		this.page.locator( 'input[name="ppcp[client_secret_sandbox]"]' );
 
@@ -124,34 +126,34 @@ export class Connection extends PcpSettingsPage {
 			this.toggleToManualCredentialInputButton();
 		await expect( toggleToManualCredentialInputButton ).toBeVisible();
 		await toggleToManualCredentialInputButton.click( { force: true } );
-		
+
 		const sandboxCheckbox = this.sandboxCheckbox();
 		await expect( sandboxCheckbox ).toBeVisible();
-		await sandboxCheckbox.check({ force: true });
+		await sandboxCheckbox.check( { force: true } );
 		await expect( this.sandboxCheckbox() ).toBeChecked();
-		
+
 		const sandboxEmailAddressInput = this.sandboxEmailAddressInput();
 		await expect( sandboxEmailAddressInput ).toBeVisible();
 		await sandboxEmailAddressInput.fill( merchant.email );
-		
+
 		const sandboxMerchantIdInput = this.sandboxMerchantIdInput();
 		await expect( sandboxMerchantIdInput ).toBeVisible();
 		await sandboxMerchantIdInput.fill( merchant.account_id );
-		
+
 		const sandboxClientIdInput = this.sandboxClientIdInput();
 		await expect( sandboxClientIdInput ).toBeVisible();
 		await sandboxClientIdInput.fill( merchant.client_id );
-		
+
 		const sandboxSecretKeyInput = this.sandboxSecretKeyInput();
 		await expect( sandboxSecretKeyInput ).toBeVisible();
 		await sandboxSecretKeyInput.fill( merchant.client_secret );
-		
+
 		const saveChangesButton = this.saveChangesButton();
 		await expect( saveChangesButton ).toBeVisible();
 		await saveChangesButton.click();
 		await this.page.waitForLoadState();
 		// make sure Connection page has been loaded:
-		
+
 		await expect( this.disconnectAccountButton() ).toBeVisible();
 		await this.updateInvoicePrefix();
 	};

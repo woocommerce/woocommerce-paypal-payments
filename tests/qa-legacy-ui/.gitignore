@@ -11,3 +11,5 @@ package-lock.json
 .env*
 !.env.example
 .DS_Store
+
+woocommerce-subscriptions.zip

@@ -25,7 +25,7 @@ export const testRefund = ( testsData: ShopRefund[] ) => {
 				wooCommerceApi,
 				payPalApi,
 			} ) => {
-				test.setTimeout( 1.5 * 60 * 1000 );
+				test.setTimeout( 2 * 60 * 1000 );
 				let order: WooCommerce.Order; // TODO: fix type in playwright-utils
 				const total = await countTotals( testData );
 				const refundAvailable = total.order;

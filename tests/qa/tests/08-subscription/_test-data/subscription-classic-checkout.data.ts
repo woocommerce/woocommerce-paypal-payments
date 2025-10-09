@@ -134,8 +134,8 @@ const payPalCustomer: ShopOrder[] = [
 		products: [ products.subscriptionPayPal ],
 	},
 	{
-		// https://inpsyde.atlassian.net/browse/PCP-2894
-		title: 'PCP-2894 | PayPal subscription - Transaction - Classic checkout - Free trial order by customer',
+		// https://inpsyde.atlassian.net/browse/PCP-4894
+		title: 'PCP-4894 | PayPal subscription - Transaction - Classic checkout - Free trial order by customer',
 		...orders.default,
 		payment: {
 			...payments.payPal,

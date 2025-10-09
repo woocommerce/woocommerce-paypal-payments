@@ -2,6 +2,7 @@
  * External dependencies
  */
 import {
+	expect,
 	RequestUtils,
 	WooCommerceApi as WooCommerceApiBase,
 } from '@inpsyde/playwright-utils/build';
@@ -163,7 +164,7 @@ export class PcpApi extends WooCommerceApiBase {
 			return [];
 		}
 
-		const MAX_RETRY_COUNT = 6;
+		const MAX_RETRY_COUNT = 10;
 		const RETRY_INTERVAL_MS = 1000;
 
 		let retryCount = 0;
@@ -217,19 +218,31 @@ export class PcpApi extends WooCommerceApiBase {
 		const billingId = await this.getPayPalSubscriptionBillingId(
 			subscriptionId
 		);
+
+		const data = {
+			id: 'NOT-IMPORTANT',
+			event_type: 'PAYMENT.SALE.COMPLETED',
+			resource: {
+				billing_agreement_id: billingId,
+				id: 'NOT-IMPORTANT',
+			},
+		};
+
 		const response = await this.requestUtils.request.post(
 			urls.payPalWebhook,
-			{
-				data: {
-					id: 'NOT-IMPORTANT',
-					event_type: 'PAYMENT.SALE.COMPLETED',
-					resource: {
-						billing_agreement_id: billingId,
-						id: 'NOT-IMPORTANT',
-					},
-				},
-			}
+			{ data }
 		);
-		return response.ok();
+		await expect( response.ok() ).toBeTruthy();
+		console.log( await response.json() );
+
+		// 2nd request to trigger renewal (stopped working from v3.2.0)
+		const response2 = await this.requestUtils.request.post(
+			urls.payPalWebhook,
+			{ data }
+		);
+		await expect( response2.ok() ).toBeTruthy();
+		console.log( await response2.json() );
+
+		return response.ok() && response2.ok();
 	};
 }

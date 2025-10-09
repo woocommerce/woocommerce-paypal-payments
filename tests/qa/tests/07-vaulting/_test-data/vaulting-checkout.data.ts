@@ -64,7 +64,6 @@ const acdcAdditionalCardData: ShopOrder[] = [
 
 const vaultedPaymentMethodData: ShopOrder[] = [
 	{
-		// FAIL: vaulted PayPal button is not displayed.
 		// https://inpsyde.atlassian.net/browse/PCP-2051
 		title: 'PCP-2051 | Vaulting - Transaction - Checkout - PayPal - Pay with vaulted account',
 		...orders.default,

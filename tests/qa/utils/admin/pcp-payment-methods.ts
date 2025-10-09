@@ -17,6 +17,8 @@ export class PcpPaymentMethods extends PcpAdminPage {
 			has: this.paymentMethodTitle( title ),
 		} );
 	paymentMethodContainers = () => this.page.locator( '.ppcp--method-item' );
+	onlineCardPaymentsContainer = () =>
+		this.page.locator( '#ppcp-card-payments-card' );
 	paymentMethodContainer = ( title: string ) =>
 		this.paymentMethodContainers().filter( {
 			has: this.paymentMethodTitleContainer( title ),
