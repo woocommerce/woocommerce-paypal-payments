@@ -112,4 +112,22 @@ class PaymentMethodTest extends SchemaTestCase {
 
 		$this->assertEmpty( $issues );
 	}
+
+	/**
+	 * Tests that missing required type field creates validation issue.
+	 */
+	public function test_missing_required_type_creates_validation_issue(): void {
+		$data   = array(
+			'token'    => 'EC-7U8939823K567',
+			'payer_id' => 'PAYER123456789',
+		);
+		$method = PaymentMethod::from_array( $data );
+
+		$issues = $method->validate();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( 'DATA_ERROR', $issues[0]->to_array()['code'] );
+		$this->assertSame( 'MISSING_FIELD', $issues[0]->to_array()['type'] );
+		$this->assertSame( 'type', $issues[0]->to_array()['field'] );
+	}
 }
