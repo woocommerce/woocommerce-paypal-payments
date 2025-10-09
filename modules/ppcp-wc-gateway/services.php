@@ -2368,10 +2368,15 @@ return array(
 	},
 
 	'wcgateway.server-side-shipping-callback-enabled'      => static function ( ContainerInterface $container ): bool {
+		// SSSC depends on Woo's Store API, which doesn't work with plain permalinks.
+		$has_plain_permalinks = empty( get_option( 'permalink_structure' ) );
+
+		$enabled = getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0' && ! $has_plain_permalinks;
+
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.server_side_shipping_callback_enabled',
-			getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0'
+			$enabled
 		);
 	},
 
