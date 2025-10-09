@@ -19,55 +19,40 @@ class PaymentMethodTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that PaymentMethod stores and returns the type.
+	 * Tests that PaymentMethod stores and returns field values correctly.
+	 *
+	 * @dataProvider field_accessor_provider
 	 */
-	public function test_type_accessor(): void {
-		$data   = array( 'type' => 'paypal' );
+	public function test_field_accessors( array $data, string $accessor, $expected ): void {
 		$method = PaymentMethod::from_array( $data );
 
-		$this->assertSame( 'paypal', $method->type() );
+		$this->assertSame( $expected, $method->$accessor() );
 	}
 
-	/**
-	 * Tests that PaymentMethod stores and returns the optional token.
-	 */
-	public function test_token_accessor(): void {
-		$data   = array(
-			'type'  => 'paypal',
-			'token' => 'EC-7U8939823K567',
+	public function field_accessor_provider(): array {
+		return array(
+			'type field'     => array(
+				'data'     => array( 'type' => 'paypal' ),
+				'accessor' => 'type',
+				'expected' => 'paypal',
+			),
+			'token field'    => array(
+				'data'     => array(
+					'type'  => 'paypal',
+					'token' => 'EC-7U8939823K567',
+				),
+				'accessor' => 'token',
+				'expected' => 'EC-7U8939823K567',
+			),
+			'payer_id field' => array(
+				'data'     => array(
+					'type'     => 'paypal',
+					'payer_id' => 'PAYER123456789',
+				),
+				'accessor' => 'payer_id',
+				'expected' => 'PAYER123456789',
+			),
 		);
-		$method = PaymentMethod::from_array( $data );
-
-		$this->assertSame( 'EC-7U8939823K567', $method->token() );
-	}
-
-	/**
-	 * Tests that PaymentMethod stores and returns the optional payer_id.
-	 */
-	public function test_payer_id_accessor(): void {
-		$data   = array(
-			'type'     => 'paypal',
-			'payer_id' => 'PAYER123456789',
-		);
-		$method = PaymentMethod::from_array( $data );
-
-		$this->assertSame( 'PAYER123456789', $method->payer_id() );
-	}
-
-	/**
-	 * Tests that PaymentMethod works with all fields together.
-	 */
-	public function test_all_fields_together(): void {
-		$data   = array(
-			'type'     => 'paypal',
-			'token'    => 'EC-7U8939823K567',
-			'payer_id' => 'PAYER123456789',
-		);
-		$method = PaymentMethod::from_array( $data );
-
-		$this->assertSame( 'paypal', $method->type() );
-		$this->assertSame( 'EC-7U8939823K567', $method->token() );
-		$this->assertSame( 'PAYER123456789', $method->payer_id() );
 	}
 
 	/**
