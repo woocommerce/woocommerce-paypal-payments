@@ -24,4 +24,8 @@ class PaymentMethod extends AgenticSchema {
 	public function token(): string {
 		return 'EC-7U8939823K567';
 	}
+
+	public function payer_id(): string {
+		return 'PAYER123456789';
+	}
 }
