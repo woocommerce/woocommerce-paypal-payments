@@ -73,7 +73,7 @@ class FeaturesDefinition {
 	 * @return array[] The array of all available features.
 	 */
 	public function all_available_features(): array {
-		$paylater_countries              = array(
+		$paylater_countries = array(
 			'UK',
 			'ES',
 			'IT',
@@ -82,8 +82,8 @@ class FeaturesDefinition {
 			'DE',
 			'AU',
 		);
-		$store_country                   = $this->settings->get_woo_settings()['country'];
-		$country_location                = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
+		$store_country      = $this->settings->get_woo_settings()['country'];
+		$country_location   = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
 
 		$features = array(
 			'save_paypal_and_venmo'           => array(
