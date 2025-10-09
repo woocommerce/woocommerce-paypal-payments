@@ -5,11 +5,12 @@
  * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
  */
 
-declare( strict_types=1 );
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Service\FeaturesEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
@@ -19,6 +20,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
  * Each feature has a title, description, eligibility condition, and associated action.
  */
 class FeaturesDefinition {
+
+
 
 	/**
 	 * The general settings service.
@@ -44,9 +47,9 @@ class FeaturesDefinition {
 	/**
 	 * Constructor.
 	 *
-	 * @param GeneralSettings $settings The general settings service.
-	 * @param array           $merchant_capabilities The merchant capabilities.
-	 * @param SettingsModel   $plugin_settings The plugin settings.
+	 * @param GeneralSettings            $settings The general settings service.
+	 * @param array                      $merchant_capabilities The merchant capabilities.
+	 * @param SettingsModel              $plugin_settings The plugin settings.
 	 */
 	public function __construct(
 		GeneralSettings $settings,
@@ -73,7 +76,7 @@ class FeaturesDefinition {
 	 * @return array[] The array of all available features.
 	 */
 	public function all_available_features(): array {
-		$paylater_countries = array(
+		$paylater_countries    = array(
 			'UK',
 			'ES',
 			'IT',
@@ -82,8 +85,9 @@ class FeaturesDefinition {
 			'DE',
 			'AU',
 		);
-		$store_country      = $this->settings->get_woo_settings()['country'];
-		$country_location   = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
+		$store_country         = $this->settings->get_woo_settings()['country'];
+		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
+		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
 
 		$features = array(
 			'save_paypal_and_venmo'           => array(
@@ -276,7 +280,7 @@ class FeaturesDefinition {
 					'Let customers know they can buy now and pay later with PayPal. Adding this messaging can boost conversion rates and increase cart sizes by 39%¹, with no extra cost to you—plus, you get paid up front.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities['paylater'],
+				'enabled'     => $this->merchant_capabilities['paylater'] && ! $save_paypal_and_venmo,
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -325,7 +329,6 @@ class FeaturesDefinition {
 				),
 			),
 		);
-
 		if ( $this->settings->get_merchant_country() !== 'MX' ) {
 			unset( $features['installments'] );
 		}
