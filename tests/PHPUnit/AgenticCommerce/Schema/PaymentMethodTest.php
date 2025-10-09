@@ -53,4 +53,20 @@ class PaymentMethodTest extends SchemaTestCase {
 
 		$this->assertSame( 'PAYER123456789', $method->payer_id() );
 	}
+
+	/**
+	 * Tests that PaymentMethod works with all fields together.
+	 */
+	public function test_all_fields_together(): void {
+		$data   = array(
+			'type'     => 'paypal',
+			'token'    => 'EC-7U8939823K567',
+			'payer_id' => 'PAYER123456789',
+		);
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertSame( 'paypal', $method->type() );
+		$this->assertSame( 'EC-7U8939823K567', $method->token() );
+		$this->assertSame( 'PAYER123456789', $method->payer_id() );
+	}
 }
