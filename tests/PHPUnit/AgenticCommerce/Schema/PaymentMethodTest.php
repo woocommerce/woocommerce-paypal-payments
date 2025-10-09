@@ -40,4 +40,17 @@ class PaymentMethodTest extends SchemaTestCase {
 
 		$this->assertSame( 'EC-7U8939823K567', $method->token() );
 	}
+
+	/**
+	 * Tests that PaymentMethod stores and returns the optional payer_id.
+	 */
+	public function test_payer_id_accessor(): void {
+		$data   = array(
+			'type'     => 'paypal',
+			'payer_id' => 'PAYER123456789',
+		);
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertSame( 'PAYER123456789', $method->payer_id() );
+	}
 }
