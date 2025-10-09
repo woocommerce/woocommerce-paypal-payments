@@ -94,5 +94,27 @@ class CouponTest extends SchemaTestCase {
 		$this->assertCount( 1, $issues );
 		$this->assertSame( 'action', $issues[0]->to_array()['field'] );
 	}
+
+	/**
+	 * Tests that valid action values pass validation.
+	 *
+	 * @dataProvider valid_action_provider
+	 */
+	public function test_valid_action_values( string $action ): void {
+		$data   = array(
+			'code'   => 'SAVE10',
+			'action' => $action,
+		);
+		$coupon = Coupon::from_array( $data );
+
+		$this->assertEmpty( $coupon->validate() );
+	}
+
+	public function valid_action_provider(): array {
+		return array(
+			'apply'  => array( 'APPLY' ),
+			'remove' => array( 'REMOVE' ),
+		);
+	}
 }
 
