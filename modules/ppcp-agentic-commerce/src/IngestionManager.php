@@ -4,12 +4,27 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
 use Psr\Log\LoggerInterface;
 
+/**
+ * Manages the ingestion process for agentic commerce.
+ * This class handles scheduling sync jobs and marking products for sync.
+ */
 class IngestionManager {
 
+	/**
+	 * The batch size for sync operations.
+	 *
+	 * @var int
+	 */
 	private int $batch_size = 50; // API accepts up to 100 products per request
 	private IngestionBatchProvider $batch_provider;
 	private SyncJobFactory $sync_job_factory;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param IngestionBatchProvider $batch_provider The batch provider for getting products to sync.
+	 * @param SyncJobFactory $sync_job_factory The factory for creating sync jobs.
+	 */
 	public function __construct(
 		IngestionBatchProvider $batch_provider,
 		SyncJobFactory $sync_job_factory
@@ -18,11 +33,21 @@ class IngestionManager {
 		$this->sync_job_factory = $sync_job_factory;
 	}
 
+	/**
+	 * Initialize the ingestion manager by registering hooks and scheduling recurring sync.
+	 *
+	 * @return void
+	 */
 	public function init() {
 		$this->register_hooks();
 		$this->schedule_recurring_sync();
 	}
 
+	/**
+	 * Register the necessary hooks for the ingestion process.
+	 *
+	 * @return void
+	 */
 	private function register_hooks() {
 		// Main sync action
 		add_action( 'ppcp_agentic_sync_batch', array( $this, 'process_next_batch' ) );
@@ -32,6 +57,11 @@ class IngestionManager {
 		add_action( 'woocommerce_product_set_stock', array( $this, 'mark_product_for_sync' ) );
 	}
 
+	/**
+	 * Schedule the recurring sync action.
+	 *
+	 * @return void
+	 */
 	private function schedule_recurring_sync() {
 		if ( ! as_next_scheduled_action( 'ppcp_agentic_sync_batch' ) ) {
 			as_schedule_recurring_action(
@@ -45,8 +75,11 @@ class IngestionManager {
 	}
 
 	/**
-	 * @throws \Exception
+	 * Process the next batch of products for sync.
+	 *
+	 * @throws \Exception When an error occurs during sync.
 	 * @wp-hook ppcp_agentic_sync_batch
+	 * @return void
 	 */
 	public function process_next_batch(): void {
 		// Get products needing sync using WooCommerce APIs
@@ -60,9 +93,11 @@ class IngestionManager {
 	}
 
 	/**
-	 * Mark product for sync when it's updated.
+	 * Mark a product for sync when it's updated.
 	 *
 	 * @wp-hook woocommerce_update_product
+	 * @param int $product_id The ID of the product being updated.
+	 * @return void
 	 */
 	public function mark_product_for_sync( $product_id ): void {
 		$product = wc_get_product( $product_id );
