@@ -16,4 +16,8 @@ class PaymentMethod extends AgenticSchema {
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// TODO: Implement parse_fields() method.
 	}
+
+	public function type(): string {
+		return 'paypal';
+	}
 }
