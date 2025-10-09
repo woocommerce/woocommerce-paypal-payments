@@ -40,6 +40,8 @@ class Coupon extends AgenticSchema {
 			} else {
 				$add_issue( new InvalidData( 'Action must be APPLY or REMOVE', 'Please provide a valid action.', 'action' ) );
 			}
+		} else {
+			$add_issue( new InvalidData( 'Missing required field', 'Please provide an action.', 'action' ) );
 		}
 	}
 
