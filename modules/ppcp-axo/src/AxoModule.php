@@ -354,7 +354,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( $args ) use ( $c ): array {
+			function ( $args ) use ( $c ): array {
 				$axo_applies = $c->get( 'axo.service.axo-applies' );
 				assert( $axo_applies instanceof AxoApplies );
 
