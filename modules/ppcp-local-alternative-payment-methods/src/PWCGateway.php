@@ -209,7 +209,7 @@ class PWCGateway extends WC_Payment_Gateway {
 				),
 				'payment_source'         => array(
 					'crypto' => array(
-						'country_code'       => 'US',
+						'country_code'       => $wc_order->get_billing_country(),
 						'name'               => array(
 							'given_name' => $wc_order->get_billing_first_name(),
 							'surname'    => $wc_order->get_billing_last_name(),
