@@ -47,6 +47,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
+				await classicCheckout.payPalUi.expandPaymentGateway( payment );
 				if ( payment.saveToAccount === true ) {
 					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 						payment
@@ -110,6 +111,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
+				await classicCheckout.payPalUi.expandPaymentGateway( payment );
 				if ( payment.saveToAccount === true ) {
 					await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 						payment
