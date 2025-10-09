@@ -27,7 +27,10 @@ class Coupon extends AgenticSchema {
 
 		if ( isset( $input['code'] ) ) {
 			$this->code = trim( $input['code'] );
+		} else {
+			$add_issue( new InvalidData( 'Missing required field', 'Please provide a coupon code.', 'code' ) );
 		}
+
 		if ( isset( $input['action'] ) ) {
 			$action        = trim( $input['action'] );
 			$valid_actions = array( 'APPLY', 'REMOVE' );
