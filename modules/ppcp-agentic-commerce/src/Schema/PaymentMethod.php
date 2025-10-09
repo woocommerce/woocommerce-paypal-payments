@@ -13,19 +13,32 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
  * @see PaymentMethodTest - Unit tests for this class.
  */
 class PaymentMethod extends AgenticSchema {
+	private ?string $token = null;
+	private ?string $payer_id = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
-		// TODO: Implement parse_fields() method.
+		// Reset all fields.
+		$this->token    = null;
+		$this->payer_id = null;
+
+		// Optional fields.
+		if ( isset( $input['token'] ) ) {
+			$this->token = $input['token'];
+		}
+		if ( isset( $input['payer_id'] ) ) {
+			$this->payer_id = $input['payer_id'];
+		}
 	}
 
 	public function type(): string {
 		return 'paypal';
 	}
 
-	public function token(): string {
-		return 'EC-7U8939823K567';
+	public function token(): ?string {
+		return $this->token;
 	}
 
-	public function payer_id(): string {
-		return 'PAYER123456789';
+	public function payer_id(): ?string {
+		return $this->payer_id;
 	}
 }
