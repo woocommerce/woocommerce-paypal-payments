@@ -9,17 +9,25 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+
 /**
  * @see PaymentMethodTest - Unit tests for this class.
  */
 class PaymentMethod extends AgenticSchema {
 	private ?string $token = null;
+
 	private ?string $payer_id = null;
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
 		$this->token    = null;
 		$this->payer_id = null;
+
+		// Mandatory fields.
+		if ( empty( $input['type'] ) || 'paypal' !== $input['type'] ) {
+			$add_issue( new InvalidData( 'Unexpected payment method type', 'Only PayPal is supported', 'type' ) );
+		}
 
 		// Optional fields.
 		if ( isset( $input['token'] ) ) {
