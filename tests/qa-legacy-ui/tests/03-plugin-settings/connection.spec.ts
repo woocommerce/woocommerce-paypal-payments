@@ -14,8 +14,10 @@ test.describe( 'Сonnection', () => {
 		connection,
 	} ) => {
 		await connection.visit();
-		await connection.disconnectMerchant();
-
+		const disconnectButton = connection.disconnectAccountButton();
+		await expect( disconnectButton ).toBeVisible();
+		await disconnectButton.click();
+		await expect ( connection.page ).toHaveURL( connection.url );
 		await expect(
 			connection.toggleToManualCredentialInputButton()
 		).toBeVisible();
