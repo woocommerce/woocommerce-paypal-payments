@@ -57,14 +57,14 @@ class ProductsPayload {
 				$api_product['product_type'] = wp_strip_all_tags( $categories );
 			}
 
-			// Handle variable products by adding variants
+			// Handle variable products by adding variants.
 			if ( $product->is_type( 'variable' ) ) {
 				$variants = $this->get_product_variants( $product );
 				if ( $variants ) {
 					$api_product['item_group_id'] = (string) $product->get_id();
-					// Add main product
+					// Add main product.
 					$api_products[] = $api_product;
-					// Add variants
+					// Add variants.
 					$api_products = array_merge( $api_products, $variants );
 					continue;
 				}
@@ -106,7 +106,7 @@ class ProductsPayload {
 				$clean_attr = str_replace( 'attribute_pa_', '', $attribute );
 				$clean_attr = str_replace( 'attribute_', '', $clean_attr );
 
-				if ( in_array( $clean_attr, array( 'color', 'size', 'gender' ) ) ) {
+				if ( in_array( $clean_attr, array( 'color', 'size', 'gender' ), true ) ) {
 					$variant[ $clean_attr ] = $value;
 				}
 			}
