@@ -18,11 +18,6 @@ return array(
 	},
 	'ppcp-local-apms.payment-methods'           => static function ( ContainerInterface $container ): array {
 		return array(
-			'pwc'        => array(
-				'id'         => PWCGateway::ID,
-				'countries'  => array( 'US' ),
-				'currencies' => array( 'USD' ),
-			),
 			'bancontact' => array(
 				'id'         => BancontactGateway::ID,
 				'countries'  => array( 'BE' ),
