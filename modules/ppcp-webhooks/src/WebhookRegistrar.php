@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 /**
  * The WebhookRegistrar registers and unregisters webhooks with PayPal.
@@ -24,6 +25,8 @@ class WebhookRegistrar {
 
 	private WebhookEventStorage $last_webhook_event_storage;
 
+	private WebhookSimulation $webhook_simulation;
+
 	private LoggerInterface $logger;
 
 	public function __construct(
@@ -31,6 +34,7 @@ class WebhookRegistrar {
 		WebhookEndpoint $endpoint,
 		IncomingWebhookEndpoint $incoming_webhook_endpoint,
 		WebhookEventStorage $last_webhook_event_storage,
+		WebhookSimulation $webhook_simulation,
 		LoggerInterface $logger
 	) {
 
@@ -38,6 +42,7 @@ class WebhookRegistrar {
 		$this->endpoint                   = $endpoint;
 		$this->incoming_webhook_endpoint  = $incoming_webhook_endpoint;
 		$this->last_webhook_event_storage = $last_webhook_event_storage;
+		$this->webhook_simulation         = $webhook_simulation;
 		$this->logger                     = $logger;
 	}
 
@@ -59,11 +64,17 @@ class WebhookRegistrar {
 			if ( empty( $created->id() ) ) {
 				return false;
 			}
+
 			update_option(
 				self::KEY,
 				$created->to_array()
 			);
+
 			$this->last_webhook_event_storage->clear();
+
+			// Check whether webhooks are arriving (e.g. for the Status page).
+			$this->webhook_simulation->start( $created );
+
 			$this->logger->info( 'Webhooks subscribed.' );
 			return true;
 		} catch ( RuntimeException $error ) {
