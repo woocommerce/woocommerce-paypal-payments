@@ -591,7 +591,8 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
 			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
-			$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $settings_model->get_stay_updated() // Pay later messaging auto enabled.
+			$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $settings_model->get_stay_updated(), // Pay later messaging auto enabled.
+			$capabilities['apm'] // Sign up for Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {

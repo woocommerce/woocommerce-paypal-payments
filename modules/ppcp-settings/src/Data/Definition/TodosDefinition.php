@@ -244,16 +244,28 @@ class TodosDefinition {
 				),
 				'priority'    => 14,
 			),
-			'pay_later_messaging_is_auto_enabled'            => array(
+			'pay_later_messaging_is_auto_enabled'  => array(
 				'title'       => __( 'PayPal Pay Later messaging successfully enabled', 'woocommerce-paypal-payments' ),
 				'description' => __( 'PayPal is now displaying this flexible payment option earlier in the shopping experience. This update was made based on your “Stay Updated” preference and the messaging can be customized or disabled through the Pay Later settings.', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['pay_later_messaging_is_auto_enabled'],
 				'action'      => array(
-					'type'      => 'tab',
-					'tab'       => 'pay_later_messaging',
+					'type' => 'tab',
+					'tab'  => 'pay_later_messaging',
 				),
 				'priority'    => 15,
 			),
+		);
+
+		$todo_items['pwc_promo'] = array(
+			'title'       => __( 'Pay with Crypto is coming to your store!', 'woocommerce-paypal-payments' ),
+			'description' => __( 'Sign up now to let customers pay with crypto immediately when it becomes available before the holidays and get 0.99% fees through July 2026', 'woocommerce-paypal-payments' ),
+			'isEligible'  => $eligibility_checks['pwc_promo'],
+			'action'      => array(
+				'type'            => 'external',
+				'url'             => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+				'completeOnClick' => true,
+			),
+			'priority'    => 0,
 		);
 
 		$todo_items['check_settings_after_migration'] = array(

@@ -2212,6 +2212,21 @@ return array(
 
 		return array(
 			$inbox_note_factory->create_note(
+				__( 'Pay with Crypto is coming to your store!', 'woocommerce-paypal-payments' ),
+				__( 'Sign up now to let customers pay with crypto immediately when it becomes available before the holidays and get 0.99% fees through July 2026.', 'woocommerce-paypal-payments' ),
+				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
+				'ppcp-pwc-promo-inbox-note',
+				Note::E_WC_ADMIN_NOTE_UNACTIONED,
+				true,
+				new InboxNoteAction(
+					'sign_up_now',
+					__( 'Sign up now', 'woocommerce-paypal-payments' ),
+					'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+					Note::E_WC_ADMIN_NOTE_UNACTIONED,
+					true
+				)
+			),
+			$inbox_note_factory->create_note(
 				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
 				__( 'Fast funds with payments that flex with your PayPal sales The PayPal Working Capital business loan is primarily based on your PayPal account history. Apply for $1,000-$200,000 (and up to $300,000 for repeat borrowers) with no credit check.† If approved, loans are funded in minutes.', 'woocommerce-paypal-payments' ),
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
