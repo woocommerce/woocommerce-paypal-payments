@@ -7,9 +7,6 @@ on:
         description: 'Weather generate new snapshots'
         type: boolean
         default: false
-      plugin-version:
-        description: 'Plugin version to compile (i.e 3.0.0)'
-        default: '3.1.0'
       wp-rc-version:
         description: 'WordPress version for Release Candidate (i.e. 6.3-RC3)'
       wc-rc-version:
@@ -36,7 +33,7 @@ jobs:
       PHP_VERSION: 7.4
       NODE_VERSION: 22
       PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
-      PLUGIN_VERSION: ${{ github.event.inputs.plugin-version }}
+      PLUGIN_VERSION: 3.0.0
       PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
       ARCHIVE_NAME: woocommerce-paypal-payments
       COMPILE_ASSETS_ARGS: '-vv --env=root'
@@ -118,11 +115,20 @@ jobs:
           if-no-files-found: warn
           retention-days: 5
 
-      - name: Archive E2E Test failure screenshots
+      - name: Archive Playwright Report
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-screenshots
-          path: tests/qa/test-results/report/**/*.png
+          name: playwright-test-results
+          path: tests/qa/playwright-report
+          if-no-files-found: ignore
+          retention-days: 5
+
+      - name: Archive Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/qa/test-results/
           if-no-files-found: ignore
           retention-days: 5
