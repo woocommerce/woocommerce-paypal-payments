@@ -17,9 +17,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 
-/**
- * Class PWCProductStatus
- */
 class PWCProductStatus extends ProductStatus {
 	public const CAPABILITY_NAME      = 'CRYPTO_PYMTS';
 	public const SETTINGS_KEY         = 'products_pwc_enabled';
@@ -29,18 +26,8 @@ class PWCProductStatus extends ProductStatus {
 	public const SETTINGS_VALUE_DISABLED  = 'no';
 	public const SETTINGS_VALUE_UNDEFINED = '';
 
-	/**
-	 * The Cache.
-	 *
-	 * @var Cache
-	 */
 	protected Cache $cache;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
 	private Settings $settings;
 
 	/**
@@ -65,7 +52,6 @@ class PWCProductStatus extends ProductStatus {
 		$this->cache    = $cache;
 	}
 
-	/** {@inheritDoc} */
 	protected function check_local_state(): ?bool {
 		if ( $this->cache->has( self::PWC_STATUS_CACHE_KEY ) ) {
 			return wc_string_to_bool( $this->cache->get( self::PWC_STATUS_CACHE_KEY ) );
@@ -78,7 +64,6 @@ class PWCProductStatus extends ProductStatus {
 		return null;
 	}
 
-	/** {@inheritDoc} */
 	protected function check_active_state( SellerStatus $seller_status ): bool {
 		// Check the seller status for the intended capability.
 		$has_capability = false;
@@ -102,7 +87,6 @@ class PWCProductStatus extends ProductStatus {
 		return false;
 	}
 
-	/** {@inheritDoc} */
 	protected function clear_state( ?Settings $settings = null ): void {
 		if ( null === $settings ) {
 			$settings = $this->settings;
