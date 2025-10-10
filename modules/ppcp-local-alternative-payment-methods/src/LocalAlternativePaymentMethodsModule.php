@@ -120,8 +120,11 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 
 				// Remove unsupported gateways from the customer's payment options.
 				foreach ( $payment_methods as $payment_method ) {
-					$is_currency_supported = in_array( $site_currency, $payment_method['currencies'], true );
-					$is_country_supported  = in_array( $customer_country, $payment_method['countries'], true );
+					// Empty arrays mean "allow all" - skip restriction checks.
+					$is_currency_supported = empty( $payment_method['currencies'] )
+						|| in_array( $site_currency, $payment_method['currencies'], true );
+					$is_country_supported  = empty( $payment_method['countries'] )
+						|| in_array( $customer_country, $payment_method['countries'], true );
 
 					if ( ! $is_currency_supported || ! $is_country_supported ) {
 						unset( $methods[ $payment_method['id'] ] );
