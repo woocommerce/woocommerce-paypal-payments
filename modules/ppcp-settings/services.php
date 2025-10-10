@@ -659,7 +659,7 @@ $services = array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
-			true  // Pay with Crypto eligibility.
+			$apm_eligible  // Pay with Crypto eligibility.
 		);
 	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
