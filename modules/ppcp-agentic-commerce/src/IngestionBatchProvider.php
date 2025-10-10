@@ -2,13 +2,22 @@
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
+use Automattic\WooCommerce\Enums\ProductStatus;
+
+/**
+ * Provides a batch of WC_Product IDs eligible for
+ * syncing with the agentic commerce product ingestion endpoint
+ */
 class IngestionBatchProvider {
 	private int $stale_timeout_days;
+	private array $product_types;
 
 	public function __construct(
-		int $stale_timeout_days
+		int $stale_timeout_days,
+		array $product_types
 	) {
 		$this->stale_timeout_days = $stale_timeout_days;
+		$this->product_types      = $product_types;
 	}
 
 	/**
@@ -27,10 +36,12 @@ class IngestionBatchProvider {
 		// First, get products that have never been synced.
 		$batch = wc_get_products(
 			array(
-				'status'     => 'publish',
-				'limit'      => $limit,
-				'return'     => 'ids',
-				'meta_query' => array(
+				'status'       => ProductStatus::PUBLISH,
+				'type'         => $this->product_types,
+				'downloadable' => false,
+				'limit'        => $limit,
+				'return'       => 'ids',
+				'meta_query'   => array(
 					array(
 						'key'     => '_ppcp_agentic_last_sync',
 						'compare' => 'NOT EXISTS',
@@ -47,6 +58,7 @@ class IngestionBatchProvider {
 		$dirty_products = wc_get_products(
 			array(
 				'status'     => 'publish',
+				'type'       => $this->product_types,
 				'limit'      => $limit - count( $batch ),
 				'return'     => 'ids',
 				'meta_query' => array(
@@ -66,10 +78,16 @@ class IngestionBatchProvider {
 		}
 
 		// If we need even more, get stale products (last synced before the timeout)
-		$stale_date     = date( 'Y-m-d H:i:s', strtotime( '-' . $this->stale_timeout_days . ' days' ) );
+		$stale_date = date(
+			'Y-m-d H:i:s',
+			strtotime(
+				'-' . $this->stale_timeout_days . ' days'
+			)
+		);
 		$stale_products = wc_get_products(
 			array(
 				'status'     => 'publish',
+				'type'       => $this->product_types,
 				'limit'      => $limit - count( $batch ),
 				'return'     => 'ids',
 				'meta_query' => array(

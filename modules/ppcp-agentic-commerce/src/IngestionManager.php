@@ -15,7 +15,7 @@ class IngestionManager {
 	 *
 	 * @var int
 	 */
-	private int $batch_size = 50; // API accepts up to 100 products per request
+	private int $batch_size = 50;
 	private IngestionBatchProvider $batch_provider;
 	private SyncJobFactory $sync_job_factory;
 
@@ -23,7 +23,7 @@ class IngestionManager {
 	 * Constructor.
 	 *
 	 * @param IngestionBatchProvider $batch_provider The batch provider for getting products to sync.
-	 * @param SyncJobFactory $sync_job_factory The factory for creating sync jobs.
+	 * @param SyncJobFactory         $sync_job_factory The factory for creating sync jobs.
 	 */
 	public function __construct(
 		IngestionBatchProvider $batch_provider,
@@ -49,10 +49,10 @@ class IngestionManager {
 	 * @return void
 	 */
 	private function register_hooks() {
-		// Main sync action
+		// Main sync action.
 		add_action( 'ppcp_agentic_sync_batch', array( $this, 'process_next_batch' ) );
 
-		// Handle re-sync on product update
+		// Handle re-sync on product update.
 		add_action( 'woocommerce_update_product', array( $this, 'mark_product_for_sync' ) );
 		add_action( 'woocommerce_product_set_stock', array( $this, 'mark_product_for_sync' ) );
 	}
@@ -82,11 +82,11 @@ class IngestionManager {
 	 * @return void
 	 */
 	public function process_next_batch(): void {
-		// Get products needing sync using WooCommerce APIs
+		// Get products needing sync using WooCommerce APIs.
 		$product_ids = $this->batch_provider->get_batch( $this->batch_size );
 
 		if ( empty( $product_ids ) ) {
-			return; // Nothing to sync
+			return; // Nothing to sync.
 		}
 		$syncJob = $this->sync_job_factory->create_job( $product_ids );
 		$syncJob->execute();
