@@ -279,7 +279,7 @@ class TodosDefinition {
 			'priority'    => 0,
 		);
 
-		return $todo_items;
+		return apply_filters( 'woocommerce_paypal_payments_todos_list', $todo_items );
 	}
 
 	/**

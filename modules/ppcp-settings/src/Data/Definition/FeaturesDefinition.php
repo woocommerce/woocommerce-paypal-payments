@@ -106,7 +106,7 @@ class FeaturesDefinition {
 		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
 		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
 
-		return array(
+		$feature_items = array(
 			'save_paypal_and_venmo'           => array(
 				'title'       => __( 'Save PayPal and Venmo', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Securely save PayPal and Venmo payment methods for subscriptions or return buyers.', 'woocommerce-paypal-payments' ),
@@ -381,5 +381,7 @@ class FeaturesDefinition {
 				),
 			),
 		);
+
+		return apply_filters( 'woocommerce_paypal_payments_features_list', $feature_items );
 	}
 }
