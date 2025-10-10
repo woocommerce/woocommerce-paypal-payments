@@ -88,8 +88,8 @@ class IngestionManager {
 		if ( empty( $product_ids ) ) {
 			return; // Nothing to sync.
 		}
-		$syncJob = $this->sync_job_factory->create_job( $product_ids );
-		$syncJob->execute();
+		$sync_job = $this->sync_job_factory->create_job( $product_ids );
+		$sync_job->execute();
 	}
 
 	/**
