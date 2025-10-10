@@ -101,6 +101,7 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartTotalsFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -2371,7 +2372,15 @@ return array(
 		// SSSC depends on Woo's Store API, which currently doesn't work with plain permalinks because of the rest_get_url_prefix bug.
 		$has_plain_permalinks = empty( get_option( 'permalink_structure' ) );
 
-		$enabled = getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0' && ! $has_plain_permalinks;
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
+		assert( $last_webhook_storage instanceof WebhookEventStorage );
+
+		// Not directly related, but if webhooks are not arriving then SSSC probably is not accessible too.
+		$webhooks_working = ! $last_webhook_storage->is_empty();
+
+		$enabled = getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0'
+			&& ! $has_plain_permalinks
+			&& $webhooks_working;
 
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
