@@ -59,6 +59,7 @@ class IngestionBatchProvider {
 			array(
 				'status'     => 'publish',
 				'type'       => $this->product_types,
+				'downloadable' => false,
 				'limit'      => $limit - count( $batch ),
 				'return'     => 'ids',
 				'meta_query' => array(
@@ -88,6 +89,7 @@ class IngestionBatchProvider {
 			array(
 				'status'     => 'publish',
 				'type'       => $this->product_types,
+				'downloadable' => false,
 				'limit'      => $limit - count( $batch ),
 				'return'     => 'ids',
 				'meta_query' => array(
