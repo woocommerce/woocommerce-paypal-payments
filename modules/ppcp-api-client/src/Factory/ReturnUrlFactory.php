@@ -25,15 +25,6 @@ class ReturnUrlFactory {
 		array $request_data = array(),
 		array $custom_query_args = array()
 	): string {
-		// TODO: Temporarily disabled cross-browser appswitch query params.
-		// This logic will be migrated to the frontend using hash params instead of query params
-		// return add_query_arg(
-		// array_merge(
-		// array( self::PCP_QUERY_ARG => 'button' ),
-		// $custom_query_args
-		// ),
-		// $this->wc_url_from_context( $context, $request_data )
-		// );
 		return $this->wc_url_from_context( $context, $request_data );
 	}
 
