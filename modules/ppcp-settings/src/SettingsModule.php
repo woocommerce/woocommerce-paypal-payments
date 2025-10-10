@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
@@ -390,6 +391,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			function ( array $payment_methods ) use ( $container ): array {
 				$all_payment_methods = $payment_methods;
 
+				$merchant_capabilities = $container->get( 'settings.service.merchant_capabilities' );
+
 				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
@@ -459,6 +462,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					unset( $payment_methods[ P24Gateway::ID ] );
 					unset( $payment_methods[ TrustlyGateway::ID ] );
 					unset( $payment_methods[ MultibancoGateway::ID ] );
+				}
+
+				// Unset PWC if the merchant does not have capability.
+				if ( ! $merchant_capabilities['pwc'] ) {
+					unset( $payment_methods[ PWCGateway::ID ] );
 				}
 
 				return $payment_methods;

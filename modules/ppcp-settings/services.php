@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -478,6 +479,7 @@ $services = array(
 			'google_pay'  => $settings['data']['ppcp-googlepay']['enabled'] ?? false,
 			'axo'         => $settings['data']['ppcp-axo-gateway']['enabled'] ?? false,
 			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
+			'pwc'         => $settings['data']['ppcp-pwc']['enabled'] ?? false,
 		);
 	},
 	'settings.service.merchant_capabilities'              => static function ( ContainerInterface $container ): array {
@@ -676,6 +678,7 @@ $services = array(
 			AxoGateway::ID,
 			ApplePayGateway::ID,
 			GooglePayGateway::ID,
+			PWCGateway::ID,
 			BancontactGateway::ID,
 			BlikGateway::ID,
 			EPSGateway::ID,
