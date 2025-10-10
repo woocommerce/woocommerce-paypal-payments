@@ -74,7 +74,7 @@ class TodosDefinition {
 					'section'   => 'ppcp-axo-gateway',
 					'highlight' => 'ppcp-axo-gateway',
 				),
-				'priority'    => 1,
+				'priority'    => 2,
 			),
 			'enable_pay_later_messaging'           => array(
 				'title'       => __( 'Enable Pay Later messaging', 'woocommerce-paypal-payments' ),
@@ -276,7 +276,7 @@ class TodosDefinition {
 				'type' => 'tab',
 				'tab'  => 'overview',
 			),
-			'priority'    => 0,
+			'priority'    => 1,
 		);
 
 		return $todo_items;
