@@ -95,4 +95,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertNull( $options->gift_message() );
 	}
+
+	/**
+	 * Tests that GiftOptions stores and returns the delivery_date.
+	 */
+	public function test_delivery_date_accessor(): void {
+		$data    = array( 'delivery_date' => '2024-12-25T09:00:00Z' );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertSame( '2024-12-25T09:00:00Z', $options->delivery_date() );
+	}
 }
