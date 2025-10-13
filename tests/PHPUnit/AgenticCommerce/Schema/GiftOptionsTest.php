@@ -134,4 +134,14 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertSame( 'Mary Johnson', $recipient['name'] );
 		$this->assertSame( 'mary@example.com', $recipient['email'] );
 	}
+
+	/**
+	 * Tests that recipient returns null when not provided.
+	 */
+	public function test_recipient_returns_null_when_missing(): void {
+		$data    = array();
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->recipient() );
+	}
 }
