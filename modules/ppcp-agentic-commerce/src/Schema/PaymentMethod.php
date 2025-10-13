@@ -36,10 +36,18 @@ class PaymentMethod extends AgenticSchema {
 
 		// Optional fields.
 		if ( isset( $input['token'] ) && is_string( $input['token'] ) ) {
-			$this->token = $input['token'];
+			$token = trim( $input['token'] );
+
+			if ( $token ) {
+				$this->token = $token;
+			}
 		}
 		if ( isset( $input['payer_id'] ) && is_string( $input['payer_id'] ) ) {
-			$this->payer_id = $input['payer_id'];
+			$payer_id = trim( $input['payer_id'] );
+
+			if ( $payer_id ) {
+				$this->payer_id = $payer_id;
+			}
 		}
 	}
 
