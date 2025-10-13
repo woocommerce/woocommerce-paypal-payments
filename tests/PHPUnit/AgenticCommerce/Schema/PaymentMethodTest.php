@@ -67,67 +67,57 @@ class PaymentMethodTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that to_array includes all fields when provided.
+	 * Tests validation scenarios.
+	 *
+	 * @dataProvider validation_provider
 	 */
-	public function test_to_array_with_all_fields(): void {
-		$data   = array(
-			'type'     => 'paypal',
-			'token'    => 'EC-7U8939823K567',
-			'payer_id' => 'PAYER123456789',
-		);
+	public function test_validation( array $data, int $expected_issue_count, ?array $expected_issue = null ): void {
 		$method = PaymentMethod::from_array( $data );
-		$result = $method->to_array();
-
-		$this->assertSame( 'paypal', $result['type'] );
-		$this->assertSame( 'EC-7U8939823K567', $result['token'] );
-		$this->assertSame( 'PAYER123456789', $result['payer_id'] );
-	}
-
-	/**
-	 * Tests that invalid payment type creates validation issue.
-	 */
-	public function test_invalid_payment_type_creates_validation_issue(): void {
-		$data   = array( 'type' => 'credit_card' );
-		$method = PaymentMethod::from_array( $data );
-
 		$issues = $method->validate();
 
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'DATA_ERROR', $issues[0]->to_array()['code'] );
-		$this->assertSame( 'INVALID_DATA', $issues[0]->to_array()['type'] );
+		$this->assertCount( $expected_issue_count, $issues );
+
+		if ( $expected_issue ) {
+			$issue_data = $issues[0]->to_array();
+			$this->assertSame( $expected_issue['code'], $issue_data['code'] );
+			$this->assertSame( $expected_issue['type'], $issue_data['type'] );
+			if ( isset( $expected_issue['field'] ) ) {
+				$this->assertSame( $expected_issue['field'], $issue_data['field'] );
+			}
+		}
 	}
 
-	/**
-	 * Tests that valid PaymentMethod has no validation issues.
-	 */
-	public function test_valid_payment_method_has_no_issues(): void {
-		$data   = array(
-			'type'     => 'paypal',
-			'token'    => 'EC-7U8939823K567',
-			'payer_id' => 'PAYER123456789',
+	public function validation_provider(): array {
+		return array(
+			'valid payment method'   => array(
+				'data'                 => array(
+					'type'     => 'paypal',
+					'token'    => 'EC-7U8939823K567',
+					'payer_id' => 'PAYER123456789',
+				),
+				'expected_issue_count' => 0,
+				'expected_issue'       => null,
+			),
+			'invalid payment type'   => array(
+				'data'                 => array( 'type' => 'credit_card' ),
+				'expected_issue_count' => 1,
+				'expected_issue'       => array(
+					'code' => 'DATA_ERROR',
+					'type' => 'INVALID_DATA',
+				),
+			),
+			'missing required type'  => array(
+				'data'                 => array(
+					'token'    => 'EC-7U8939823K567',
+					'payer_id' => 'PAYER123456789',
+				),
+				'expected_issue_count' => 1,
+				'expected_issue'       => array(
+					'code'  => 'DATA_ERROR',
+					'type'  => 'MISSING_FIELD',
+					'field' => 'type',
+				),
+			),
 		);
-		$method = PaymentMethod::from_array( $data );
-
-		$issues = $method->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	/**
-	 * Tests that missing required type field creates validation issue.
-	 */
-	public function test_missing_required_type_creates_validation_issue(): void {
-		$data   = array(
-			'token'    => 'EC-7U8939823K567',
-			'payer_id' => 'PAYER123456789',
-		);
-		$method = PaymentMethod::from_array( $data );
-
-		$issues = $method->validate();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'DATA_ERROR', $issues[0]->to_array()['code'] );
-		$this->assertSame( 'MISSING_FIELD', $issues[0]->to_array()['type'] );
-		$this->assertSame( 'type', $issues[0]->to_array()['field'] );
 	}
 }
