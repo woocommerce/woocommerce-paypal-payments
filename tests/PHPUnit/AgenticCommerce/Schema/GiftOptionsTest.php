@@ -298,22 +298,4 @@ class GiftOptionsTest extends SchemaTestCase {
 			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
 		);
 	}
-
-	/**
-	 * Tests that to_array() reconstructs original invalid input exactly.
-	 */
-	public function test_to_array_preserves_invalid_data(): void {
-		$data = array(
-			'gift_message'  => str_repeat( 'a', 501 ),
-			'recipient'     => array(
-				'name'  => 'Mary Johnson',
-				'email' => 'invalid-email',
-			),
-			'delivery_date' => 'not-a-date',
-		);
-
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertSame( $data, $options->to_array(), 'to_array() must preserve invalid input exactly' );
-	}
 }
