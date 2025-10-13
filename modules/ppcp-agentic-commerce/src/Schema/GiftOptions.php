@@ -71,4 +71,14 @@ class GiftOptions extends AgenticSchema {
 	public function delivery_date(): ?string {
 		return $this->delivery_date;
 	}
+
+	/**
+	 * @return null|array Recipient as simple array, no own schema.
+	 */
+	public function recipient(): ?array {
+		return array(
+			'name'  => 'Mary Johnson',
+			'email' => 'mary@example.com',
+		);
+	}
 }
