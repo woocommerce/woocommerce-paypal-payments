@@ -203,4 +203,20 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertCount( 1, $issues );
 		$this->assertSame( 'recipient.email', $issue_data['field'] );
 	}
+
+	/**
+	 * Tests that invalid RFC3339 format in delivery_date produces validation issue.
+	 */
+	public function test_delivery_date_invalid_format(): void {
+		$data = array(
+			'delivery_date' => '2024-12-25',
+		);
+
+		$options    = GiftOptions::from_array( $data );
+		$issues     = $options->validate();
+		$issue_data = $issues[0]->to_array();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( 'delivery_date', $issue_data['field'] );
+	}
 }
