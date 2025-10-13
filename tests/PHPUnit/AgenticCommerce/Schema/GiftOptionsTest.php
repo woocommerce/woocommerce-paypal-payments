@@ -154,4 +154,20 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertNull( $options->recipient() );
 	}
+
+	/**
+	 * Tests that gift_message exceeding 500 characters produces validation issue.
+	 */
+	public function test_gift_message_exceeds_max_length(): void {
+		$data = array(
+			'gift_message' => str_repeat( 'a', 501 ),
+		);
+
+		$options    = GiftOptions::from_array( $data );
+		$issues     = $options->validate();
+		$issue_data = $issues[0]->to_array();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( 'gift_message', $issue_data['field'] );
+	}
 }
