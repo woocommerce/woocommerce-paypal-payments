@@ -13,7 +13,17 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	protected function get_valid_data(): array {
-		return array();
+		return array(
+			'is_gift'       => true,
+			'recipient'     => array(
+				'name'  => 'Mary Johnson',
+				'email' => 'mary@example.com',
+			),
+			'delivery_date' => '2024-12-25T09:00:00Z',
+			'sender_name'   => 'John Smith',
+			'gift_message'  => 'Happy Birthday! Hope you enjoy this gift.',
+			'gift_wrap'     => true,
+		);
 	}
 
 	/**
