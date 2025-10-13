@@ -89,7 +89,7 @@ class PaymentMethodTest extends SchemaTestCase {
 
 	public function validation_provider(): array {
 		return array(
-			'valid payment method'   => array(
+			'valid payment method' => array(
 				'data'                 => array(
 					'type'     => 'paypal',
 					'token'    => 'EC-7U8939823K567',
@@ -98,24 +98,12 @@ class PaymentMethodTest extends SchemaTestCase {
 				'expected_issue_count' => 0,
 				'expected_issue'       => null,
 			),
-			'invalid payment type'   => array(
+			'invalid payment type' => array(
 				'data'                 => array( 'type' => 'credit_card' ),
 				'expected_issue_count' => 1,
 				'expected_issue'       => array(
 					'code' => 'DATA_ERROR',
 					'type' => 'INVALID_DATA',
-				),
-			),
-			'missing required type'  => array(
-				'data'                 => array(
-					'token'    => 'EC-7U8939823K567',
-					'payer_id' => 'PAYER123456789',
-				),
-				'expected_issue_count' => 1,
-				'expected_issue'       => array(
-					'code'  => 'DATA_ERROR',
-					'type'  => 'MISSING_FIELD',
-					'field' => 'type',
 				),
 			),
 		);
@@ -232,44 +220,11 @@ class PaymentMethodTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that empty string on required type field produces validation error.
-	 */
-	public function test_empty_type_field_produces_validation_error(): void {
-		$data   = array( 'type' => '' );
-		$method = PaymentMethod::from_array( $data );
-		$issues = $method->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'DATA_ERROR', $issue_data['code'] );
-		$this->assertSame( 'MISSING_FIELD', $issue_data['type'] );
-		$this->assertSame( 'type', $issue_data['field'] );
-	}
-
-	/**
-	 * Tests that whitespace-only on required type field produces validation error.
-	 */
-	public function test_whitespace_type_field_produces_validation_error(): void {
-		$data   = array( 'type' => '   ' );
-		$method = PaymentMethod::from_array( $data );
-		$issues = $method->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'DATA_ERROR', $issue_data['code'] );
-		$this->assertSame( 'MISSING_FIELD', $issue_data['type'] );
-		$this->assertSame( 'type', $issue_data['field'] );
-	}
-
-	/**
-	 * Tests that non-string values for required type field produce validation error.
+	 * Tests that invalid/missing type field values produce validation errors.
 	 *
-	 * @dataProvider invalid_type_field_provider
+	 * @dataProvider missing_type_field_provider
 	 */
-	public function test_required_type_field_rejects_non_string_values( $invalid_value ): void {
-		$data   = array( 'type' => $invalid_value );
+	public function test_missing_or_invalid_type_field_produces_validation_error( array $data ): void {
 		$method = PaymentMethod::from_array( $data );
 		$issues = $method->validate();
 
@@ -281,12 +236,15 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertSame( 'type', $issue_data['field'] );
 	}
 
-	public function invalid_type_field_provider(): array {
+	public function missing_type_field_provider(): array {
 		return array(
-			'type with array'   => array( array( 'paypal' ) ),
-			'type with integer' => array( 123 ),
-			'type with boolean' => array( true ),
-			'type with null'    => array( null ),
+			'type empty string'    => array( array( 'type' => '' ) ),
+			'type whitespace-only' => array( array( 'type' => '   ' ) ),
+			'type with array'      => array( array( 'type' => array( 'paypal' ) ) ),
+			'type with integer'    => array( array( 'type' => 123 ) ),
+			'type with boolean'    => array( array( 'type' => true ) ),
+			'type with null'       => array( array( 'type' => null ) ),
+			'type not provided'    => array( array( 'token' => 'EC-123' ) ),
 		);
 	}
 }
