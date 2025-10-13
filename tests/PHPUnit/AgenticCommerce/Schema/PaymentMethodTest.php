@@ -168,4 +168,34 @@ class PaymentMethodTest extends SchemaTestCase {
 			),
 		);
 	}
+
+	/**
+	 * Tests that empty strings are treated as missing values.
+	 *
+	 * @dataProvider empty_string_provider
+	 */
+	public function test_empty_strings_treated_as_null( array $data, string $getter_method ): void {
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertNull( $method->$getter_method() );
+	}
+
+	public function empty_string_provider(): array {
+		return array(
+			'token empty string'    => array(
+				'data'          => array(
+					'type'  => 'paypal',
+					'token' => '',
+				),
+				'getter_method' => 'token',
+			),
+			'payer_id empty string' => array(
+				'data'          => array(
+					'type'     => 'paypal',
+					'payer_id' => '',
+				),
+				'getter_method' => 'payer_id',
+			),
+		);
+	}
 }
