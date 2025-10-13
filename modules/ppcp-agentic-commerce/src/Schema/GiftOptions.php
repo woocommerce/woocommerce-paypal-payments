@@ -13,7 +13,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
  * @see GiftOptionsTest - Unit tests for this class.
  */
 class GiftOptions extends AgenticSchema {
-	private bool $is_gift;
+	private bool $is_gift = false;
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.

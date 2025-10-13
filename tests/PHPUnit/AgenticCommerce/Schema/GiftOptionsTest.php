@@ -35,4 +35,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertFalse( $options->is_gift() );
 	}
+
+	/**
+	 * Tests that GiftOptions stores and returns the gift_wrap flag.
+	 */
+	public function test_gift_wrap_accessor(): void {
+		$data    = array( 'gift_wrap' => true );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertTrue( $options->gift_wrap() );
+	}
 }
