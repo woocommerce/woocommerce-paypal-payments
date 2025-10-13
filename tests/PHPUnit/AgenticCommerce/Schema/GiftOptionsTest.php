@@ -75,4 +75,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertNull( $options->sender_name() );
 	}
+
+	/**
+	 * Tests that GiftOptions stores and returns the gift_message.
+	 */
+	public function test_gift_message_accessor(): void {
+		$data    = array( 'gift_message' => 'Happy Birthday! Hope you enjoy this gift.' );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertSame( 'Happy Birthday! Hope you enjoy this gift.', $options->gift_message() );
+	}
 }
