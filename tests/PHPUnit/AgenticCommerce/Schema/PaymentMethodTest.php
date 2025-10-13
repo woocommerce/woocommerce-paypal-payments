@@ -246,4 +246,20 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertSame( 'MISSING_FIELD', $issue_data['type'] );
 		$this->assertSame( 'type', $issue_data['field'] );
 	}
+
+	/**
+	 * Tests that whitespace-only on required type field produces validation error.
+	 */
+	public function test_whitespace_type_field_produces_validation_error(): void {
+		$data   = array( 'type' => '   ' );
+		$method = PaymentMethod::from_array( $data );
+		$issues = $method->validate();
+
+		$this->assertCount( 1, $issues );
+
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'DATA_ERROR', $issue_data['code'] );
+		$this->assertSame( 'MISSING_FIELD', $issue_data['type'] );
+		$this->assertSame( 'type', $issue_data['field'] );
+	}
 }
