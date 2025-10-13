@@ -198,4 +198,36 @@ class PaymentMethodTest extends SchemaTestCase {
 			),
 		);
 	}
+
+	/**
+	 * Tests that string values are trimmed.
+	 *
+	 * @dataProvider whitespace_trimming_provider
+	 */
+	public function test_string_values_are_trimmed( array $data, string $getter_method, string $expected ): void {
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertSame( $expected, $method->$getter_method() );
+	}
+
+	public function whitespace_trimming_provider(): array {
+		return array(
+			'token with spaces'    => array(
+				'data'          => array(
+					'type'  => 'paypal',
+					'token' => '  EC-7U8939823K567  ',
+				),
+				'getter_method' => 'token',
+				'expected'      => 'EC-7U8939823K567',
+			),
+			'payer_id with spaces' => array(
+				'data'          => array(
+					'type'     => 'paypal',
+					'payer_id' => '  PAYER123456789  ',
+				),
+				'getter_method' => 'payer_id',
+				'expected'      => 'PAYER123456789',
+			),
+		);
+	}
 }
