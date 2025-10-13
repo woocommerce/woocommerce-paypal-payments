@@ -46,19 +46,23 @@ class GiftOptions extends AgenticSchema {
 			$this->gift_wrap = $input['gift_wrap'];
 		}
 		if ( ! empty( $input['sender_name'] ) && is_string( $input['sender_name'] ) ) {
-			$this->sender_name = $input['sender_name'];
+			$sender_name = trim( $input['sender_name'] );
+
+			if ( $sender_name ) {
+				$this->sender_name = $sender_name;
+			}
 		}
 		if ( ! empty( $input['gift_message'] ) && is_string( $input['gift_message'] ) ) {
-			$gift_message = $input['gift_message'];
+			$gift_message = trim( $input['gift_message'] );
 
-			if ( strlen( $gift_message ) <= 500 ) {
-				$this->gift_message = $gift_message;
-			} else {
+			if ( strlen( $gift_message ) > 500 ) {
 				$add_issue( new InvalidData( 'Gift message too long', 'The gift message must be no longer than 500 characters', 'gift_message' ) );
+			} elseif ( $gift_message ) {
+				$this->gift_message = $gift_message;
 			}
 		}
 		if ( ! empty( $input['delivery_date'] ) && is_string( $input['delivery_date'] ) ) {
-			$delivery_date = $input['delivery_date'];
+			$delivery_date = trim( $input['delivery_date'] );
 
 			$rfc_date = DateTime::createFromFormat( DateTimeInterface::RFC3339, $delivery_date );
 
@@ -72,9 +76,16 @@ class GiftOptions extends AgenticSchema {
 			$recipient_email = $input['recipient']['email'] ?? null;
 			$recipient_name  = $input['recipient']['name'] ?? null;
 
-			if ( $recipient_email && ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
-				$recipient_email = null;
-				$add_issue( new InvalidData( 'Invalid recipient email', 'The recipient email is not valid', 'recipient.email' ) );
+			if ( $recipient_email ) {
+				$recipient_email = trim( $recipient_email );
+
+				if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
+					$recipient_email = null;
+					$add_issue( new InvalidData( 'Invalid recipient email', 'The recipient email is not valid', 'recipient.email' ) );
+				}
+			}
+			if ( $recipient_name ) {
+				$recipient_name = trim( $recipient_name );
 			}
 
 			$this->recipient = array(
