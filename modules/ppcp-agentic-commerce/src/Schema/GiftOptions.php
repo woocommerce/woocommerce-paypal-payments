@@ -10,6 +10,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+use DateTime;
+use DateTimeInterface;
 
 /**
  * @see GiftOptionsTest - Unit tests for this class.
@@ -56,7 +58,15 @@ class GiftOptions extends AgenticSchema {
 			}
 		}
 		if ( ! empty( $input['delivery_date'] ) ) {
-			$this->delivery_date = $input['delivery_date'];
+			$delivery_date = $input['delivery_date'];
+
+			$rfc_date = DateTime::createFromFormat( DateTimeInterface::RFC3339, $delivery_date );
+
+			if ( $rfc_date ) {
+				$this->delivery_date = $delivery_date;
+			} else {
+				$add_issue( new InvalidData( 'Invalid delivery date format', 'The delivery date must be in RFC3339 format (e.g., 2024-12-25T09:00:00Z)', 'delivery_date' ) );
+			}
 		}
 		if ( ! empty( $input['recipient'] ) && is_array( $input['recipient'] ) ) {
 			$recipient_email = $input['recipient']['email'] ?: null;
