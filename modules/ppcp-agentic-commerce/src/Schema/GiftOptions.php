@@ -58,8 +58,19 @@ class GiftOptions extends AgenticSchema {
 		if ( ! empty( $input['delivery_date'] ) ) {
 			$this->delivery_date = $input['delivery_date'];
 		}
-		if ( ! empty( $input['recipient'] ) ) {
-			$this->recipient = $input['recipient'];
+		if ( ! empty( $input['recipient'] ) && is_array( $input['recipient'] ) ) {
+			$recipient_email = $input['recipient']['email'] ?: null;
+			$recipient_name  = $input['recipient']['name'] ?: null;
+
+			if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
+				$recipient_email = null;
+				$add_issue( new InvalidData( 'Invalid recipient email', 'The recipient email is not valid', 'recipient.email' ) );
+			}
+
+			$this->recipient = array(
+				'email' => $recipient_email,
+				'name'  => $recipient_name,
+			);
 		}
 	}
 
