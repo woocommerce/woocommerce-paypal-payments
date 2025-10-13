@@ -278,4 +278,42 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertContains( 'recipient.email', $fields );
 		$this->assertContains( 'delivery_date', $fields );
 	}
+
+	/**
+	 * Tests that whitespace-only strings are treated as empty.
+	 *
+	 * @dataProvider whitespace_string_provider
+	 */
+	public function test_whitespace_only_strings_treated_as_null( string $field_name, string $getter_method ): void {
+		$data    = array( $field_name => '   ' );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->$getter_method() );
+	}
+
+	public function whitespace_string_provider(): array {
+		return array(
+			'sender_name'   => array( 'sender_name', 'sender_name' ),
+			'gift_message'  => array( 'gift_message', 'gift_message' ),
+			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
+		);
+	}
+
+	/**
+	 * Tests that to_array() reconstructs original invalid input exactly.
+	 */
+	public function test_to_array_preserves_invalid_data(): void {
+		$data = array(
+			'gift_message'  => str_repeat( 'a', 501 ),
+			'recipient'     => array(
+				'name'  => 'Mary Johnson',
+				'email' => 'invalid-email',
+			),
+			'delivery_date' => 'not-a-date',
+		);
+
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertSame( $data, $options->to_array(), 'to_array() must preserve invalid input exactly' );
+	}
 }
