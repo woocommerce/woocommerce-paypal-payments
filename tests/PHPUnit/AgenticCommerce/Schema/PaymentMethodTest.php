@@ -262,4 +262,31 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertSame( 'MISSING_FIELD', $issue_data['type'] );
 		$this->assertSame( 'type', $issue_data['field'] );
 	}
+
+	/**
+	 * Tests that non-string values for required type field produce validation error.
+	 *
+	 * @dataProvider invalid_type_field_provider
+	 */
+	public function test_required_type_field_rejects_non_string_values( $invalid_value ): void {
+		$data   = array( 'type' => $invalid_value );
+		$method = PaymentMethod::from_array( $data );
+		$issues = $method->validate();
+
+		$this->assertCount( 1, $issues );
+
+		$issue_data = $issues[0]->to_array();
+		$this->assertSame( 'DATA_ERROR', $issue_data['code'] );
+		$this->assertSame( 'MISSING_FIELD', $issue_data['type'] );
+		$this->assertSame( 'type', $issue_data['field'] );
+	}
+
+	public function invalid_type_field_provider(): array {
+		return array(
+			'type with array'   => array( array( 'paypal' ) ),
+			'type with integer' => array( 123 ),
+			'type with boolean' => array( true ),
+			'type with null'    => array( null ),
+		);
+	}
 }
