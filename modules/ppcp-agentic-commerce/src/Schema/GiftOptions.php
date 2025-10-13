@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+
 /**
  * @see GiftOptionsTest - Unit tests for this class.
  */
@@ -45,7 +47,13 @@ class GiftOptions extends AgenticSchema {
 			$this->sender_name = $input['sender_name'];
 		}
 		if ( ! empty( $input['gift_message'] ) ) {
-			$this->gift_message = $input['gift_message'];
+			$gift_message = $input['gift_message'];
+
+			if ( strlen( $gift_message ) <= 500 ) {
+				$this->gift_message = $gift_message;
+			} else {
+				$add_issue( new InvalidData( 'Gift message too long', 'The gift message must be no longer than 500 characters', 'gift_message' ) );
+			}
 		}
 		if ( ! empty( $input['delivery_date'] ) ) {
 			$this->delivery_date = $input['delivery_date'];
