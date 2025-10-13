@@ -105,4 +105,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertSame( '2024-12-25T09:00:00Z', $options->delivery_date() );
 	}
+
+	/**
+	 * Tests that delivery_date returns null when not provided.
+	 */
+	public function test_delivery_date_returns_null_when_missing(): void {
+		$data    = array();
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->delivery_date() );
+	}
 }
