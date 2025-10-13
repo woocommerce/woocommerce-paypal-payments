@@ -228,4 +228,24 @@ class GiftOptionsTest extends SchemaTestCase {
 			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
 		);
 	}
+
+	/**
+	 * Tests that recipient with missing email field is stored without validation error.
+	 */
+	public function test_recipient_with_missing_email(): void {
+		$data = array(
+			'recipient' => array(
+				'name' => 'Mary Johnson',
+			),
+		);
+
+		$options   = GiftOptions::from_array( $data );
+		$recipient = $options->recipient();
+		$issues    = $options->validate();
+
+		$this->assertIsArray( $recipient );
+		$this->assertSame( 'Mary Johnson', $recipient['name'] );
+		$this->assertNull( $recipient['email'] );
+		$this->assertEmpty( $issues, 'Missing email should not produce validation error' );
+	}
 }
