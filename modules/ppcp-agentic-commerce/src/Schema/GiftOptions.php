@@ -58,4 +58,8 @@ class GiftOptions extends AgenticSchema {
 	public function gift_message(): ?string {
 		return $this->gift_message;
 	}
+
+	public function delivery_date(): ?string {
+		return '2024-12-25T09:00:00Z';
+	}
 }
