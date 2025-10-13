@@ -85,4 +85,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertSame( 'Happy Birthday! Hope you enjoy this gift.', $options->gift_message() );
 	}
+
+	/**
+	 * Tests that gift_message returns null when not provided.
+	 */
+	public function test_gift_message_returns_null_when_missing(): void {
+		$data    = array();
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->gift_message() );
+	}
 }
