@@ -55,4 +55,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertFalse( $options->gift_wrap() );
 	}
+
+	/**
+	 * Tests that GiftOptions stores and returns the sender_name.
+	 */
+	public function test_sender_name_accessor(): void {
+		$data    = array( 'sender_name' => 'John Smith' );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertSame( 'John Smith', $options->sender_name() );
+	}
 }
