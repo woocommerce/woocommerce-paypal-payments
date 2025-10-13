@@ -201,9 +201,19 @@ class GiftOptionsTest extends SchemaTestCase {
 			'is_gift with string'     => array( 'is_gift', 'true', 'is_gift', false ),
 			'is_gift with integer'    => array( 'is_gift', 1, 'is_gift', false ),
 			'gift_wrap with string'   => array( 'gift_wrap', 'yes', 'gift_wrap', false ),
-			'sender_name with array'  => array( 'sender_name', array( 'name' ), 'sender_name', null ),
+			'sender_name with array'  => array(
+				'sender_name',
+				array( 'name' ),
+				'sender_name',
+				null
+			),
 			'sender_name with int'    => array( 'sender_name', 123, 'sender_name', null ),
-			'gift_message with array' => array( 'gift_message', array( 'msg' ), 'gift_message', null ),
+			'gift_message with array' => array(
+				'gift_message',
+				array( 'msg' ),
+				'gift_message',
+				null
+			),
 			'delivery_date with int'  => array( 'delivery_date', 20241225, 'delivery_date', null ),
 			'recipient with string'   => array( 'recipient', 'not-an-array', 'recipient', null ),
 		);
@@ -296,6 +306,29 @@ class GiftOptionsTest extends SchemaTestCase {
 			'sender_name'   => array( 'sender_name', 'sender_name' ),
 			'gift_message'  => array( 'gift_message', 'gift_message' ),
 			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
+		);
+	}
+
+	/**
+	 * Tests that leading/trailing whitespace is trimmed from string values.
+	 *
+	 * @dataProvider whitespace_trimming_provider
+	 */
+	public function test_string_values_are_trimmed( string $field_name, string $input_value, string $expected_value ): void {
+		$data    = array( $field_name => $input_value );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertSame( $expected_value, $options->$field_name() );
+	}
+
+	public function whitespace_trimming_provider(): array {
+		return array(
+			'sender_name with leading space'   => array( 'sender_name', ' John Smith', 'John Smith' ),
+			'sender_name with trailing space'  => array( 'sender_name', 'John Smith ', 'John Smith' ),
+			'sender_name with both'            => array( 'sender_name', '  John Smith  ', 'John Smith' ),
+			'gift_message with leading space'  => array( 'gift_message', ' Happy Birthday!', 'Happy Birthday!' ),
+			'gift_message with trailing space' => array( 'gift_message', 'Happy Birthday! ', 'Happy Birthday!' ),
+			'delivery_date with spaces'        => array( 'delivery_date', ' 2024-12-25T09:00:00Z ', '2024-12-25T09:00:00Z' ),
 		);
 	}
 }
