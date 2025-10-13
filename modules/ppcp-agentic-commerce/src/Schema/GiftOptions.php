@@ -19,11 +19,14 @@ class GiftOptions extends AgenticSchema {
 
 	private ?string $sender_name = null;
 
+	private ?string $gift_message = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->is_gift     = false;
-		$this->gift_wrap   = false;
-		$this->sender_name = null;
+		$this->is_gift      = false;
+		$this->gift_wrap    = false;
+		$this->sender_name  = null;
+		$this->gift_message = null;
 
 		// Optional fields.
 		if ( isset( $input['is_gift'] ) ) {
@@ -34,6 +37,9 @@ class GiftOptions extends AgenticSchema {
 		}
 		if ( ! empty( $input['sender_name'] ) ) {
 			$this->sender_name = $input['sender_name'];
+		}
+		if ( ! empty( $input['gift_message'] ) ) {
+			$this->gift_message = $input['gift_message'];
 		}
 	}
 
@@ -50,6 +56,6 @@ class GiftOptions extends AgenticSchema {
 	}
 
 	public function gift_message(): ?string {
-		return 'Happy Birthday! Hope you enjoy this gift.';
+		return $this->gift_message;
 	}
 }
