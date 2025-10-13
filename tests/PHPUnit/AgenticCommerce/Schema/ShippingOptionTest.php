@@ -23,4 +23,22 @@ class ShippingOptionTest extends SchemaTestCase {
 			'isSelected' => true,
 		);
 	}
+
+	/**
+	 * Tests that ShippingOption stores and returns the id.
+	 */
+	public function test_id_accessor(): void {
+		$data   = array(
+			'id'         => 'EXPRESS_SHIPPING',
+			'name'       => 'Express',
+			'price'      => array(
+				'currency_code' => 'USD',
+				'value'         => '12.99',
+			),
+			'isSelected' => false,
+		);
+		$option = ShippingOption::from_array( $data );
+
+		$this->assertSame( 'EXPRESS_SHIPPING', $option->id() );
+	}
 }
