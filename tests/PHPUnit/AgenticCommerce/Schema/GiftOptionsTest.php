@@ -27,43 +27,30 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that GiftOptions stores and returns the is_gift flag.
+	 * @dataProvider boolean_field_provider
 	 */
-	public function test_is_gift_accessor(): void {
-		$data    = array( 'is_gift' => true );
+	public function test_boolean_fields_store_and_return_value( string $field_name, string $getter_method ): void {
+		$data    = array( $field_name => true );
 		$options = GiftOptions::from_array( $data );
 
-		$this->assertTrue( $options->is_gift() );
+		$this->assertTrue( $options->$getter_method() );
 	}
 
 	/**
-	 * Tests that is_gift returns false when not provided.
+	 * @dataProvider boolean_field_provider
 	 */
-	public function test_is_gift_returns_false_when_missing(): void {
+	public function test_boolean_fields_return_false_when_missing( string $field_name, string $getter_method ): void {
 		$data    = array();
 		$options = GiftOptions::from_array( $data );
 
-		$this->assertFalse( $options->is_gift() );
+		$this->assertFalse( $options->$getter_method() );
 	}
 
-	/**
-	 * Tests that GiftOptions stores and returns the gift_wrap flag.
-	 */
-	public function test_gift_wrap_accessor(): void {
-		$data    = array( 'gift_wrap' => true );
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertTrue( $options->gift_wrap() );
-	}
-
-	/**
-	 * Tests that gift_wrap returns false when not provided.
-	 */
-	public function test_gift_wrap_returns_false_when_missing(): void {
-		$data    = array();
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertFalse( $options->gift_wrap() );
+	public function boolean_field_provider(): array {
+		return array(
+			'is_gift'   => array( 'is_gift', 'is_gift' ),
+			'gift_wrap' => array( 'gift_wrap', 'gift_wrap' ),
+		);
 	}
 
 	/**
@@ -77,16 +64,6 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that sender_name returns null when not provided.
-	 */
-	public function test_sender_name_returns_null_when_missing(): void {
-		$data    = array();
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertNull( $options->sender_name() );
-	}
-
-	/**
 	 * Tests that GiftOptions stores and returns the gift_message.
 	 */
 	public function test_gift_message_accessor(): void {
@@ -94,16 +71,6 @@ class GiftOptionsTest extends SchemaTestCase {
 		$options = GiftOptions::from_array( $data );
 
 		$this->assertSame( 'Happy Birthday! Hope you enjoy this gift.', $options->gift_message() );
-	}
-
-	/**
-	 * Tests that gift_message returns null when not provided.
-	 */
-	public function test_gift_message_returns_null_when_missing(): void {
-		$data    = array();
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertNull( $options->gift_message() );
 	}
 
 	/**
@@ -117,13 +84,22 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that delivery_date returns null when not provided.
+	 * @dataProvider optional_field_provider
 	 */
-	public function test_delivery_date_returns_null_when_missing(): void {
+	public function test_optional_fields_return_null_when_missing( string $field_name, string $getter_method ): void {
 		$data    = array();
 		$options = GiftOptions::from_array( $data );
 
-		$this->assertNull( $options->delivery_date() );
+		$this->assertNull( $options->$getter_method() );
+	}
+
+	public function optional_field_provider(): array {
+		return array(
+			'sender_name'   => array( 'sender_name', 'sender_name' ),
+			'gift_message'  => array( 'gift_message', 'gift_message' ),
+			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
+			'recipient'     => array( 'recipient', 'recipient' ),
+		);
 	}
 
 	/**
@@ -143,16 +119,6 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertIsArray( $recipient );
 		$this->assertSame( 'Mary Johnson', $recipient['name'] );
 		$this->assertSame( 'mary@example.com', $recipient['email'] );
-	}
-
-	/**
-	 * Tests that recipient returns null when not provided.
-	 */
-	public function test_recipient_returns_null_when_missing(): void {
-		$data    = array();
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertNull( $options->recipient() );
 	}
 
 	/**
@@ -221,28 +187,25 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that is_gift handles non-boolean values gracefully.
+	 * @dataProvider invalid_type_provider
 	 */
-	public function test_is_gift_non_boolean_value(): void {
-		$data = array(
-			'is_gift' => 'true',
-		);
-
+	public function test_fields_reject_invalid_types( string $field_name, $invalid_value, string $getter_method, $expected_default ): void {
+		$data    = array( $field_name => $invalid_value );
 		$options = GiftOptions::from_array( $data );
 
-		$this->assertFalse( $options->is_gift() );
+		$this->assertSame( $expected_default, $options->$getter_method() );
 	}
 
-	/**
-	 * Tests that recipient with non-array value is ignored.
-	 */
-	public function test_recipient_non_array_value(): void {
-		$data = array(
-			'recipient' => 'not-an-array',
+	public function invalid_type_provider(): array {
+		return array(
+			'is_gift with string'     => array( 'is_gift', 'true', 'is_gift', false ),
+			'is_gift with integer'    => array( 'is_gift', 1, 'is_gift', false ),
+			'gift_wrap with string'   => array( 'gift_wrap', 'yes', 'gift_wrap', false ),
+			'sender_name with array'  => array( 'sender_name', array( 'name' ), 'sender_name', null ),
+			'sender_name with int'    => array( 'sender_name', 123, 'sender_name', null ),
+			'gift_message with array' => array( 'gift_message', array( 'msg' ), 'gift_message', null ),
+			'delivery_date with int'  => array( 'delivery_date', 20241225, 'delivery_date', null ),
+			'recipient with string'   => array( 'recipient', 'not-an-array', 'recipient', null ),
 		);
-
-		$options = GiftOptions::from_array( $data );
-
-		$this->assertNull( $options->recipient() );
 	}
 }
