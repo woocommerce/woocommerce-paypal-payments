@@ -69,10 +69,10 @@ class GiftOptions extends AgenticSchema {
 			}
 		}
 		if ( ! empty( $input['recipient'] ) && is_array( $input['recipient'] ) ) {
-			$recipient_email = $input['recipient']['email'] ?: null;
-			$recipient_name  = $input['recipient']['name'] ?: null;
+			$recipient_email = $input['recipient']['email'] ?? null;
+			$recipient_name  = $input['recipient']['name'] ?? null;
 
-			if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
+			if ( $recipient_email && ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
 				$recipient_email = null;
 				$add_issue( new InvalidData( 'Invalid recipient email', 'The recipient email is not valid', 'recipient.email' ) );
 			}
