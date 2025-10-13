@@ -17,4 +17,7 @@ class GiftOptions extends AgenticSchema {
 		// TODO: Implement parse_fields() method.
 	}
 
+	public function is_gift(): bool {
+		return true;
+	}
 }
