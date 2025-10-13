@@ -208,4 +208,24 @@ class GiftOptionsTest extends SchemaTestCase {
 			'recipient with string'   => array( 'recipient', 'not-an-array', 'recipient', null ),
 		);
 	}
+
+	/**
+	 * Tests that empty strings are treated as missing values.
+	 *
+	 * @dataProvider empty_string_provider
+	 */
+	public function test_empty_strings_treated_as_null( string $field_name, string $getter_method ): void {
+		$data    = array( $field_name => '' );
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->$getter_method() );
+	}
+
+	public function empty_string_provider(): array {
+		return array(
+			'sender_name'   => array( 'sender_name', 'sender_name' ),
+			'gift_message'  => array( 'gift_message', 'gift_message' ),
+			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
+		);
+	}
 }
