@@ -184,4 +184,23 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertEmpty( $issues );
 	}
+
+	/**
+	 * Tests that invalid email format in recipient produces validation issue.
+	 */
+	public function test_recipient_invalid_email_format(): void {
+		$data = array(
+			'recipient' => array(
+				'name'  => 'Mary Johnson',
+				'email' => 'not-an-email',
+			),
+		);
+
+		$options    = GiftOptions::from_array( $data );
+		$issues     = $options->validate();
+		$issue_data = $issues[0]->to_array();
+
+		$this->assertCount( 1, $issues );
+		$this->assertSame( 'recipient.email', $issue_data['field'] );
+	}
 }
