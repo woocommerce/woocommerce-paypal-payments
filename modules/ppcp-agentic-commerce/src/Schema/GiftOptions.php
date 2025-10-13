@@ -15,13 +15,19 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 class GiftOptions extends AgenticSchema {
 	private bool $is_gift = false;
 
+	private bool $gift_wrap = false;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->is_gift = false;
+		$this->is_gift   = false;
+		$this->gift_wrap = false;
 
 		// Optional fields.
 		if ( isset( $input['is_gift'] ) ) {
 			$this->is_gift = $input['is_gift'];
+		}
+		if ( isset( $input['gift_wrap'] ) ) {
+			$this->gift_wrap = $input['gift_wrap'];
 		}
 	}
 
@@ -30,6 +36,6 @@ class GiftOptions extends AgenticSchema {
 	}
 
 	public function gift_wrap(): bool {
-		return true;
+		return $this->gift_wrap;
 	}
 }
