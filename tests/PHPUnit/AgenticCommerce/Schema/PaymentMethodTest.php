@@ -247,4 +247,16 @@ class PaymentMethodTest extends SchemaTestCase {
 			'type not provided'    => array( array( 'token' => 'EC-123' ) ),
 		);
 	}
+
+	/**
+	 * Tests that type field value is trimmed and validated correctly.
+	 */
+	public function test_type_field_is_trimmed(): void {
+		$data   = array( 'type' => '  paypal  ' );
+		$method = PaymentMethod::from_array( $data );
+		$issues = $method->validate();
+
+		$this->assertEmpty( $issues, 'Trimmed "paypal" should be valid' );
+		$this->assertSame( 'paypal', $method->type() );
+	}
 }
