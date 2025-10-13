@@ -25,4 +25,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertTrue( $options->is_gift() );
 	}
+
+	/**
+	 * Tests that is_gift returns false when not provided.
+	 */
+	public function test_is_gift_returns_false_when_missing(): void {
+		$data    = array();
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertFalse( $options->is_gift() );
+	}
 }
