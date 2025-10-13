@@ -115,4 +115,23 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertNull( $options->delivery_date() );
 	}
+
+	/**
+	 * Tests that GiftOptions stores and returns the recipient object.
+	 */
+	public function test_recipient_accessor(): void {
+		$data    = array(
+			'recipient' => array(
+				'name'  => 'Mary Johnson',
+				'email' => 'mary@example.com',
+			),
+		);
+		$options = GiftOptions::from_array( $data );
+
+		$recipient = $options->recipient();
+
+		$this->assertIsArray( $recipient );
+		$this->assertSame( 'Mary Johnson', $recipient['name'] );
+		$this->assertSame( 'mary@example.com', $recipient['email'] );
+	}
 }
