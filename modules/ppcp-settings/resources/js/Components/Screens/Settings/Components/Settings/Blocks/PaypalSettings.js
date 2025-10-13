@@ -19,6 +19,8 @@ const PaypalSettings = ( { hasContactModule } ) => {
 		setContactModule,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
+		instantPaymentsOnly,
+		setInstantPaymentsOnly,
 		brandName,
 		setBrandName,
 		softDescriptor,
@@ -68,8 +70,8 @@ const PaypalSettings = ( { hasContactModule } ) => {
 						'If enabled, PayPal will not allow buyers to use funding sources that take additional time to complete, such as eChecks.',
 						'woocommerce-paypal-payments'
 					) }
-					value={ savePaypalAndVenmo }
-					onChange={ setSavePaypalAndVenmo }
+					value={ instantPaymentsOnly }
+					onChange={ setInstantPaymentsOnly }
 				/>
 			</SettingsBlock>
 
