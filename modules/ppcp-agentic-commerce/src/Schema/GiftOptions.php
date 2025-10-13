@@ -38,4 +38,8 @@ class GiftOptions extends AgenticSchema {
 	public function gift_wrap(): bool {
 		return $this->gift_wrap;
 	}
+
+	public function sender_name(): ?string {
+		return 'John Smith';
+	}
 }
