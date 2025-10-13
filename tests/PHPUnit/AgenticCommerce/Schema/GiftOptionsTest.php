@@ -65,4 +65,14 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertSame( 'John Smith', $options->sender_name() );
 	}
+
+	/**
+	 * Tests that sender_name returns null when not provided.
+	 */
+	public function test_sender_name_returns_null_when_missing(): void {
+		$data    = array();
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->sender_name() );
+	}
 }
