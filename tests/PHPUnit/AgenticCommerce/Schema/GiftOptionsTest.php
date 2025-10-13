@@ -232,4 +232,17 @@ class GiftOptionsTest extends SchemaTestCase {
 
 		$this->assertFalse( $options->is_gift() );
 	}
+
+	/**
+	 * Tests that recipient with non-array value is ignored.
+	 */
+	public function test_recipient_non_array_value(): void {
+		$data = array(
+			'recipient' => 'not-an-array',
+		);
+
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertNull( $options->recipient() );
+	}
 }
