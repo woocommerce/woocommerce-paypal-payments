@@ -248,4 +248,34 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertNull( $recipient['email'] );
 		$this->assertEmpty( $issues, 'Missing email should not produce validation error' );
 	}
+
+	/**
+	 * Tests that multiple validation errors are all returned together.
+	 */
+	public function test_multiple_validation_errors_returned_together(): void {
+		$data = array(
+			'gift_message'  => str_repeat( 'a', 501 ),
+			'recipient'     => array(
+				'name'  => 'Mary Johnson',
+				'email' => 'invalid-email',
+			),
+			'delivery_date' => 'not-a-date',
+		);
+
+		$options = GiftOptions::from_array( $data );
+		$issues  = $options->validate();
+
+		$this->assertCount( 3, $issues, 'Should return all validation errors at once' );
+
+		$fields = array_map(
+			function ( $issue ) {
+				return $issue->to_array()['field'];
+			},
+			$issues
+		);
+
+		$this->assertContains( 'gift_message', $fields );
+		$this->assertContains( 'recipient.email', $fields );
+		$this->assertContains( 'delivery_date', $fields );
+	}
 }
