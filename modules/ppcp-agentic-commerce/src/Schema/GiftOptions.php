@@ -28,4 +28,8 @@ class GiftOptions extends AgenticSchema {
 	public function is_gift(): bool {
 		return $this->is_gift;
 	}
+
+	public function gift_wrap(): bool {
+		return true;
+	}
 }
