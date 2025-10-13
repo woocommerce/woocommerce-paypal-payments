@@ -21,12 +21,15 @@ class GiftOptions extends AgenticSchema {
 
 	private ?string $gift_message = null;
 
+	private ?string $delivery_date = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->is_gift      = false;
-		$this->gift_wrap    = false;
-		$this->sender_name  = null;
-		$this->gift_message = null;
+		$this->is_gift       = false;
+		$this->gift_wrap     = false;
+		$this->sender_name   = null;
+		$this->gift_message  = null;
+		$this->delivery_date = null;
 
 		// Optional fields.
 		if ( isset( $input['is_gift'] ) ) {
@@ -40,6 +43,9 @@ class GiftOptions extends AgenticSchema {
 		}
 		if ( ! empty( $input['gift_message'] ) ) {
 			$this->gift_message = $input['gift_message'];
+		}
+		if ( ! empty( $input['delivery_date'] ) ) {
+			$this->delivery_date = $input['delivery_date'];
 		}
 	}
 
@@ -59,7 +65,10 @@ class GiftOptions extends AgenticSchema {
 		return $this->gift_message;
 	}
 
+	/**
+	 * @return string|null The scheduled delivery date, in RFC3339 format, or null.
+	 */
 	public function delivery_date(): ?string {
-		return '2024-12-25T09:00:00Z';
+		return $this->delivery_date;
 	}
 }
