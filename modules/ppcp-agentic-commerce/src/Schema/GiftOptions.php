@@ -23,6 +23,8 @@ class GiftOptions extends AgenticSchema {
 
 	private ?string $delivery_date = null;
 
+	private ?array $recipient = null;
+
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
 		$this->is_gift       = false;
@@ -30,6 +32,7 @@ class GiftOptions extends AgenticSchema {
 		$this->sender_name   = null;
 		$this->gift_message  = null;
 		$this->delivery_date = null;
+		$this->recipient     = null;
 
 		// Optional fields.
 		if ( isset( $input['is_gift'] ) ) {
@@ -46,6 +49,9 @@ class GiftOptions extends AgenticSchema {
 		}
 		if ( ! empty( $input['delivery_date'] ) ) {
 			$this->delivery_date = $input['delivery_date'];
+		}
+		if ( ! empty( $input['recipient'] ) ) {
+			$this->recipient = $input['recipient'];
 		}
 	}
 
@@ -76,9 +82,6 @@ class GiftOptions extends AgenticSchema {
 	 * @return null|array Recipient as simple array, no own schema.
 	 */
 	public function recipient(): ?array {
-		return array(
-			'name'  => 'Mary Johnson',
-			'email' => 'mary@example.com',
-		);
+		return $this->recipient;
 	}
 }
