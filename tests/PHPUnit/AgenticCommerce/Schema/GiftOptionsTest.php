@@ -219,4 +219,17 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertCount( 1, $issues );
 		$this->assertSame( 'delivery_date', $issue_data['field'] );
 	}
+
+	/**
+	 * Tests that is_gift handles non-boolean values gracefully.
+	 */
+	public function test_is_gift_non_boolean_value(): void {
+		$data = array(
+			'is_gift' => 'true',
+		);
+
+		$options = GiftOptions::from_array( $data );
+
+		$this->assertFalse( $options->is_gift() );
+	}
 }
