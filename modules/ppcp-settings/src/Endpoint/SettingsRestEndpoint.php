@@ -56,6 +56,10 @@ class SettingsRestEndpoint extends RestEndpoint {
 		'subtotal_adjustment'    => array(
 			'js_name' => 'subtotalAdjustment',
 		),
+		'instant_payments_only'  => array(
+			'js_name'  => 'instantPaymentsOnly',
+			'sanitize' => 'to_boolean',
+		),
 		'landing_page'           => array(
 			'js_name' => 'landingPage',
 		),
