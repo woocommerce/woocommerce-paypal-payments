@@ -89,9 +89,9 @@ class CaptureFactory {
 			),
 			$amount,
 			(bool) $data->final_capture,
-			(string) $data->seller_protection->status,
-			(string) $data->invoice_id,
-			(string) $data->custom_id,
+			(string) ( $data->seller_protection->status ?? '' ),
+			(string) ( $data->invoice_id ?? '' ),
+			(string) ( $data->custom_id ?? '' ),
 			$seller_receivable_breakdown,
 			$fraud_processor_response
 		);
