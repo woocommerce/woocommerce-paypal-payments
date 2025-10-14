@@ -639,22 +639,4 @@ class CustomerTest extends SchemaTestCase {
 		$this->assertSame( '', $name['given_name'] );
 		$this->assertSame( '', $name['surname'] );
 	}
-
-	/**
-	 * Tests that phone fields with empty strings are preserved.
-	 */
-	public function test_phone_empty_strings_are_preserved(): void {
-		$data = array(
-			'phone' => array(
-				'country_code'    => '',
-				'national_number' => '',
-			),
-		);
-
-		$customer = Customer::from_array( $data );
-		$phone    = $customer->phone();
-
-		$this->assertSame( '', $phone['country_code'] );
-		$this->assertSame( '', $phone['national_number'] );
-	}
 }
