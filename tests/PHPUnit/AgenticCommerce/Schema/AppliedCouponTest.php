@@ -60,8 +60,8 @@ class AppliedCouponTest extends SchemaTestCase {
 		$discount_amount = $coupon->discount_amount();
 
 		$this->assertInstanceOf( Money::class, $discount_amount );
-		$this->assertSame( 'USD', $discount_amount->currency_code() );
-		$this->assertSame( '5.50', $discount_amount->value() );
+		$this->assertSame( 'USD', $discount_amount->currency() );
+		$this->assertSame( 5.50, $discount_amount->value() );
 	}
 
 	/**
@@ -330,14 +330,14 @@ class AppliedCouponTest extends SchemaTestCase {
 		);
 
 		$coupon = AppliedCoupon::from_array( $data_eur );
-		$this->assertSame( 'EUR', $coupon->discount_amount()->currency_code() );
+		$this->assertSame( 'EUR', $coupon->discount_amount()->currency() );
 
 		$data_gbp = array(
 			'discount_amount' => array( 'currency_code' => 'GBP', 'value' => '2.75' ),
 		);
 
 		$coupon = AppliedCoupon::from_array( $data_gbp );
-		$this->assertSame( 'GBP', $coupon->discount_amount()->currency_code() );
+		$this->assertSame( 'GBP', $coupon->discount_amount()->currency() );
 	}
 
 	/**
