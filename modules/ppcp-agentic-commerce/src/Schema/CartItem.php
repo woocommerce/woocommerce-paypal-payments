@@ -12,6 +12,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 
+/**
+ * @see CartItemTest - Unit tests for this class.
+ */
 class CartItem extends AgenticSchema {
 	private ?string $id = null;
 
