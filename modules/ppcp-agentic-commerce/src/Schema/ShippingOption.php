@@ -1,0 +1,135 @@
+<?php
+/**
+ * Defines the shipping option schema.
+ *
+ * @package WooCommerce\PayPalCommerce\AgenticCommerce\Schema
+ */
+
+declare( strict_types = 1 );
+
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
+
+/**
+ * @see ShippingOptionTest - Unit tests for this class.
+ */
+class ShippingOption extends AgenticSchema {
+	private string $id = '';
+
+	private string $name = '';
+
+	private ?Money $price = null;
+
+	private bool $is_selected = false;
+
+	private ?string $description = null;
+
+	private ?string $estimated_delivery = null;
+
+	protected function parse_fields( array $input, callable $add_issue ): void {
+		// Reset all fields.
+		$this->id                 = '';
+		$this->name               = '';
+		$this->price              = null;
+		$this->is_selected        = false;
+		$this->description        = null;
+		$this->estimated_delivery = null;
+
+		// Required field: id.
+		if ( ! isset( $input['id'] ) || ! is_string( $input['id'] ) ) {
+			$add_issue( new MissingField( 'Shipping option ID is required', 'Please provide a shipping option ID', 'id' ) );
+		} else {
+			$id = trim( $input['id'] );
+
+			if ( empty( $id ) ) {
+				$add_issue( new MissingField( 'Shipping option ID is required', 'Please provide a shipping option ID', 'id' ) );
+			} else {
+				$this->id = $id;
+			}
+		}
+
+		// Required field: name.
+		if ( ! isset( $input['name'] ) || ! is_string( $input['name'] ) ) {
+			$add_issue( new MissingField( 'Shipping option name is required', 'Please provide a shipping option name', 'name' ) );
+		} else {
+			$name = trim( $input['name'] );
+
+			if ( empty( $name ) ) {
+				$add_issue( new MissingField( 'Shipping option name is required', 'Please provide a shipping option name', 'name' ) );
+			} else {
+				$this->name = $name;
+			}
+		}
+
+		// Required field: price.
+		if ( ! isset( $input['price'] ) || ! is_array( $input['price'] ) ) {
+			$add_issue( new MissingField( 'Shipping price is required', 'Please provide a shipping price', 'price' ) );
+		} else {
+			$money  = Money::from_array( $input['price'] );
+			$issues = $money->validate();
+
+			if ( empty( $issues ) ) {
+				$this->price = $money;
+			} else {
+				foreach ( $issues as $issue ) {
+					$add_issue( $issue );
+				}
+			}
+		}
+
+		// Required field: isSelected.
+		if ( ! isset( $input['isSelected'] ) ) {
+			$add_issue( new MissingField( 'Selection status is required', 'Please specify if this shipping option is selected', 'isSelected' ) );
+		} elseif ( is_bool( $input['isSelected'] ) ) {
+			$this->is_selected = $input['isSelected'];
+		}
+
+		// Optional field: description.
+		if ( isset( $input['description'] ) && is_string( $input['description'] ) ) {
+			$description = trim( $input['description'] );
+
+			if ( $description ) {
+				$this->description = $description;
+			}
+		}
+
+		// Optional field: estimated_delivery..
+		if ( isset( $input['estimated_delivery'] ) && is_string( $input['estimated_delivery'] ) ) {
+			$estimated_delivery = trim( $input['estimated_delivery'] );
+
+			if ( $estimated_delivery ) {
+				if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $estimated_delivery ) ) {
+					$this->estimated_delivery = $estimated_delivery;
+				} else {
+					$add_issue( new InvalidData( 'Invalid delivery date format', 'The estimated delivery date must be in YYYY-MM-DD format', 'estimated_delivery' ) );
+				}
+			}
+		}
+	}
+
+	public function id(): string {
+		return $this->id;
+	}
+
+	public function name(): string {
+		return $this->name;
+	}
+
+	public function price(): ?Money {
+		return $this->price;
+	}
+
+	public function is_selected(): bool {
+		return $this->is_selected;
+	}
+
+	public function description(): ?string {
+		return $this->description;
+	}
+
+	public function estimated_delivery(): ?string {
+		return $this->estimated_delivery;
+	}
+}
