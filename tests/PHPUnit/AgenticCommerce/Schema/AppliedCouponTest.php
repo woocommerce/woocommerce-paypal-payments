@@ -148,16 +148,16 @@ class AppliedCouponTest extends SchemaTestCase {
 	// === Whitespace Handling Tests ===
 
 	/**
-	 * Tests that empty strings are treated as null.
+	 * Tests that empty strings are preserved as empty strings.
 	 *
 	 * @dataProvider empty_string_provider
 	 */
-	public function test_empty_strings_treated_as_null( string $field_name, string $accessor ): void {
+	public function test_empty_strings_are_preserved( string $field_name, string $accessor ): void {
 		$data = array( $field_name => '' );
 
 		$coupon = AppliedCoupon::from_array( $data );
 
-		$this->assertNull( $coupon->$accessor() );
+		$this->assertSame( '', $coupon->$accessor() );
 	}
 
 	public function empty_string_provider(): array {
@@ -168,16 +168,16 @@ class AppliedCouponTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that whitespace-only strings are treated as null.
+	 * Tests that whitespace-only strings are trimmed to empty strings.
 	 *
 	 * @dataProvider whitespace_string_provider
 	 */
-	public function test_whitespace_only_strings_treated_as_null( string $field_name, string $accessor ): void {
+	public function test_whitespace_only_strings_trimmed_to_empty( string $field_name, string $accessor ): void {
 		$data = array( $field_name => '   ' );
 
 		$coupon = AppliedCoupon::from_array( $data );
 
-		$this->assertNull( $coupon->$accessor() );
+		$this->assertSame( '', $coupon->$accessor() );
 	}
 
 	public function whitespace_string_provider(): array {

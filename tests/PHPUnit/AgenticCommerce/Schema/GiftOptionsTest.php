@@ -205,14 +205,14 @@ class GiftOptionsTest extends SchemaTestCase {
 				'sender_name',
 				array( 'name' ),
 				'sender_name',
-				null
+				null,
 			),
 			'sender_name with int'    => array( 'sender_name', 123, 'sender_name', null ),
 			'gift_message with array' => array(
 				'gift_message',
 				array( 'msg' ),
 				'gift_message',
-				null
+				null,
 			),
 			'delivery_date with int'  => array( 'delivery_date', 20241225, 'delivery_date', null ),
 			'recipient with string'   => array( 'recipient', 'not-an-array', 'recipient', null ),
@@ -220,22 +220,21 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that empty strings are treated as missing values.
+	 * Tests that empty strings are preserved as empty strings.
 	 *
 	 * @dataProvider empty_string_provider
 	 */
-	public function test_empty_strings_treated_as_null( string $field_name, string $getter_method ): void {
+	public function test_empty_strings_are_preserved( string $field_name, string $getter_method ): void {
 		$data    = array( $field_name => '' );
 		$options = GiftOptions::from_array( $data );
 
-		$this->assertNull( $options->$getter_method() );
+		$this->assertSame( '', $options->$getter_method() );
 	}
 
 	public function empty_string_provider(): array {
 		return array(
-			'sender_name'   => array( 'sender_name', 'sender_name' ),
-			'gift_message'  => array( 'gift_message', 'gift_message' ),
-			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
+			'sender_name'  => array( 'sender_name', 'sender_name' ),
+			'gift_message' => array( 'gift_message', 'gift_message' ),
 		);
 	}
 
@@ -290,22 +289,21 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that whitespace-only strings are treated as empty.
+	 * Tests that whitespace-only strings are trimmed to empty strings.
 	 *
 	 * @dataProvider whitespace_string_provider
 	 */
-	public function test_whitespace_only_strings_treated_as_null( string $field_name, string $getter_method ): void {
+	public function test_whitespace_only_strings_trimmed_to_empty( string $field_name, string $getter_method ): void {
 		$data    = array( $field_name => '   ' );
 		$options = GiftOptions::from_array( $data );
 
-		$this->assertNull( $options->$getter_method() );
+		$this->assertSame( '', $options->$getter_method() );
 	}
 
 	public function whitespace_string_provider(): array {
 		return array(
-			'sender_name'   => array( 'sender_name', 'sender_name' ),
-			'gift_message'  => array( 'gift_message', 'gift_message' ),
-			'delivery_date' => array( 'delivery_date', 'delivery_date' ),
+			'sender_name'  => array( 'sender_name', 'sender_name' ),
+			'gift_message' => array( 'gift_message', 'gift_message' ),
 		);
 	}
 
@@ -323,12 +321,36 @@ class GiftOptionsTest extends SchemaTestCase {
 
 	public function whitespace_trimming_provider(): array {
 		return array(
-			'sender_name with leading space'   => array( 'sender_name', ' John Smith', 'John Smith' ),
-			'sender_name with trailing space'  => array( 'sender_name', 'John Smith ', 'John Smith' ),
-			'sender_name with both'            => array( 'sender_name', '  John Smith  ', 'John Smith' ),
-			'gift_message with leading space'  => array( 'gift_message', ' Happy Birthday!', 'Happy Birthday!' ),
-			'gift_message with trailing space' => array( 'gift_message', 'Happy Birthday! ', 'Happy Birthday!' ),
-			'delivery_date with spaces'        => array( 'delivery_date', ' 2024-12-25T09:00:00Z ', '2024-12-25T09:00:00Z' ),
+			'sender_name with leading space'   => array(
+				'sender_name',
+				' John Smith',
+				'John Smith',
+			),
+			'sender_name with trailing space'  => array(
+				'sender_name',
+				'John Smith ',
+				'John Smith',
+			),
+			'sender_name with both'            => array(
+				'sender_name',
+				'  John Smith  ',
+				'John Smith',
+			),
+			'gift_message with leading space'  => array(
+				'gift_message',
+				' Happy Birthday!',
+				'Happy Birthday!',
+			),
+			'gift_message with trailing space' => array(
+				'gift_message',
+				'Happy Birthday! ',
+				'Happy Birthday!',
+			),
+			'delivery_date with spaces'        => array(
+				'delivery_date',
+				' 2024-12-25T09:00:00Z ',
+				'2024-12-25T09:00:00Z',
+			),
 		);
 	}
 }

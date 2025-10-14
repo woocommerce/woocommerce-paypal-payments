@@ -158,14 +158,14 @@ class PaymentMethodTest extends SchemaTestCase {
 	}
 
 	/**
-	 * Tests that empty strings are treated as missing values.
+	 * Tests that empty strings are preserved as empty strings.
 	 *
 	 * @dataProvider empty_string_provider
 	 */
-	public function test_empty_strings_treated_as_null( array $data, string $getter_method ): void {
+	public function test_empty_strings_are_preserved( array $data, string $getter_method ): void {
 		$method = PaymentMethod::from_array( $data );
 
-		$this->assertNull( $method->$getter_method() );
+		$this->assertSame( '', $method->$getter_method() );
 	}
 
 	public function empty_string_provider(): array {
@@ -181,6 +181,36 @@ class PaymentMethodTest extends SchemaTestCase {
 				'data'          => array(
 					'type'     => 'paypal',
 					'payer_id' => '',
+				),
+				'getter_method' => 'payer_id',
+			),
+		);
+	}
+
+	/**
+	 * Tests that whitespace-only strings are trimmed to empty strings.
+	 *
+	 * @dataProvider whitespace_only_string_provider
+	 */
+	public function test_whitespace_only_strings_trimmed_to_empty( array $data, string $getter_method ): void {
+		$method = PaymentMethod::from_array( $data );
+
+		$this->assertSame( '', $method->$getter_method() );
+	}
+
+	public function whitespace_only_string_provider(): array {
+		return array(
+			'token whitespace only'    => array(
+				'data'          => array(
+					'type'  => 'paypal',
+					'token' => '   ',
+				),
+				'getter_method' => 'token',
+			),
+			'payer_id whitespace only' => array(
+				'data'          => array(
+					'type'     => 'paypal',
+					'payer_id' => '   ',
 				),
 				'getter_method' => 'payer_id',
 			),

@@ -131,8 +131,16 @@ class ShippingOptionTest extends SchemaTestCase {
 
 	public function optional_string_field_provider(): array {
 		return array(
-			'description field'        => array( 'description', 'Standard ground shipping via USPS', 'description' ),
-			'estimated_delivery field' => array( 'estimated_delivery', '2024-07-01', 'estimated_delivery' ),
+			'description field'        => array(
+				'description',
+				'Standard ground shipping via USPS',
+				'description',
+			),
+			'estimated_delivery field' => array(
+				'estimated_delivery',
+				'2024-07-01',
+				'estimated_delivery',
+			),
 		);
 	}
 
@@ -218,11 +226,11 @@ class ShippingOptionTest extends SchemaTestCase {
 	// === Whitespace Handling Tests ===
 
 	/**
-	 * Tests that empty strings are treated as null.
+	 * Tests that empty strings are preserved as empty strings.
 	 *
 	 * @dataProvider empty_string_provider
 	 */
-	public function test_empty_strings_treated_as_null( string $field_name, string $accessor ): void {
+	public function test_empty_strings_are_preserved( string $field_name, string $accessor ): void {
 		$data = array(
 			'id'         => 'STANDARD',
 			'name'       => 'Standard',
@@ -233,22 +241,21 @@ class ShippingOptionTest extends SchemaTestCase {
 
 		$option = ShippingOption::from_array( $data );
 
-		$this->assertNull( $option->$accessor() );
+		$this->assertSame( '', $option->$accessor() );
 	}
 
 	public function empty_string_provider(): array {
 		return array(
-			'description'        => array( 'description', 'description' ),
-			'estimated_delivery' => array( 'estimated_delivery', 'estimated_delivery' ),
+			'description' => array( 'description', 'description' ),
 		);
 	}
 
 	/**
-	 * Tests that whitespace-only strings are treated as null.
+	 * Tests that whitespace-only strings are trimmed to empty strings.
 	 *
 	 * @dataProvider whitespace_string_provider
 	 */
-	public function test_whitespace_only_strings_treated_as_null( string $field_name, string $accessor ): void {
+	public function test_whitespace_only_strings_trimmed_to_empty( string $field_name, string $accessor ): void {
 		$data = array(
 			'id'         => 'STANDARD',
 			'name'       => 'Standard',
@@ -259,13 +266,12 @@ class ShippingOptionTest extends SchemaTestCase {
 
 		$option = ShippingOption::from_array( $data );
 
-		$this->assertNull( $option->$accessor() );
+		$this->assertSame( '', $option->$accessor() );
 	}
 
 	public function whitespace_string_provider(): array {
 		return array(
-			'description'        => array( 'description', 'description' ),
-			'estimated_delivery' => array( 'estimated_delivery', 'estimated_delivery' ),
+			'description' => array( 'description', 'description' ),
 		);
 	}
 
@@ -290,10 +296,25 @@ class ShippingOptionTest extends SchemaTestCase {
 
 	public function string_trimming_provider(): array {
 		return array(
-			'id with spaces'                       => array( 'id', '  STANDARD  ', 'STANDARD', 'id' ),
-			'name with spaces'                     => array( 'name', '  Standard Shipping  ', 'Standard Shipping', 'name' ),
-			'description with spaces'              => array( 'description', '  Ground shipping  ', 'Ground shipping', 'description' ),
-			'estimated_delivery with spaces'       => array( 'estimated_delivery', '  2024-07-01  ', '2024-07-01', 'estimated_delivery' ),
+			'id with spaces'                 => array( 'id', '  STANDARD  ', 'STANDARD', 'id' ),
+			'name with spaces'               => array(
+				'name',
+				'  Standard Shipping  ',
+				'Standard Shipping',
+				'name',
+			),
+			'description with spaces'        => array(
+				'description',
+				'  Ground shipping  ',
+				'Ground shipping',
+				'description',
+			),
+			'estimated_delivery with spaces' => array(
+				'estimated_delivery',
+				'  2024-07-01  ',
+				'2024-07-01',
+				'estimated_delivery',
+			),
 		);
 	}
 
