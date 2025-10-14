@@ -27,18 +27,10 @@ class AppliedCoupon extends AgenticSchema {
 
 		// Optional fields.
 		if ( isset( $input['code'] ) && is_string( $input['code'] ) ) {
-			$code = trim( $input['code'] );
-
-			if ( $code ) {
-				$this->code = $code;
-			}
+			$this->code = trim( $input['code'] );
 		}
 		if ( isset( $input['description'] ) && is_string( $input['description'] ) ) {
-			$description = trim( $input['description'] );
-
-			if ( $description ) {
-				$this->description = $description;
-			}
+			$this->description = trim( $input['description'] );
 		}
 		if ( isset( $input['discount_amount'] ) && is_array( $input['discount_amount'] ) ) {
 			$money = Money::from_array( $input['discount_amount'] );

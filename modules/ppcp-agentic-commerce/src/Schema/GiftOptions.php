@@ -45,23 +45,19 @@ class GiftOptions extends AgenticSchema {
 		if ( isset( $input['gift_wrap'] ) && is_bool( $input['gift_wrap'] ) ) {
 			$this->gift_wrap = $input['gift_wrap'];
 		}
-		if ( ! empty( $input['sender_name'] ) && is_string( $input['sender_name'] ) ) {
-			$sender_name = trim( $input['sender_name'] );
-
-			if ( $sender_name ) {
-				$this->sender_name = $sender_name;
-			}
+		if ( isset( $input['sender_name'] ) && is_string( $input['sender_name'] ) ) {
+			$this->sender_name = trim( $input['sender_name'] );
 		}
-		if ( ! empty( $input['gift_message'] ) && is_string( $input['gift_message'] ) ) {
+		if ( isset( $input['gift_message'] ) && is_string( $input['gift_message'] ) ) {
 			$gift_message = trim( $input['gift_message'] );
 
 			if ( strlen( $gift_message ) > 500 ) {
 				$add_issue( new InvalidData( 'Gift message too long', 'The gift message must be no longer than 500 characters', 'gift_message' ) );
-			} elseif ( $gift_message ) {
+			} else {
 				$this->gift_message = $gift_message;
 			}
 		}
-		if ( ! empty( $input['delivery_date'] ) && is_string( $input['delivery_date'] ) ) {
+		if ( isset( $input['delivery_date'] ) && is_string( $input['delivery_date'] ) ) {
 			$delivery_date = trim( $input['delivery_date'] );
 
 			$rfc_date = DateTime::createFromFormat( DateTimeInterface::RFC3339, $delivery_date );

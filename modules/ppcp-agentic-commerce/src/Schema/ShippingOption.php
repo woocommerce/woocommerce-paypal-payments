@@ -88,14 +88,10 @@ class ShippingOption extends AgenticSchema {
 
 		// Optional field: description.
 		if ( isset( $input['description'] ) && is_string( $input['description'] ) ) {
-			$description = trim( $input['description'] );
-
-			if ( $description ) {
-				$this->description = $description;
-			}
+			$this->description = trim( $input['description'] );
 		}
 
-		// Optional field: estimated_delivery..
+		// Optional field: estimated_delivery.
 		if ( isset( $input['estimated_delivery'] ) && is_string( $input['estimated_delivery'] ) ) {
 			$estimated_delivery = trim( $input['estimated_delivery'] );
 
