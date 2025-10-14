@@ -53,7 +53,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['address_line_1'] ) ) {
 			$address_line_1 = trim( $input['address_line_1'] );
 
-			if ( $address_line_1 && strlen( $address_line_1 ) <= 300 ) {
+			if ( strlen( $address_line_1 ) <= 300 ) {
 				$this->address_line_1 = $address_line_1;
 			} else {
 				$add_issue( new InvalidData( 'Field address_line_1 is too long', 'Please provide a valid address line 1.', 'address_line_1' ) );
@@ -63,7 +63,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['address_line_2'] ) ) {
 			$address_line_2 = trim( $input['address_line_2'] );
 
-			if ( $address_line_2 && strlen( $address_line_2 ) <= 300 ) {
+			if ( strlen( $address_line_2 ) <= 300 ) {
 				$this->address_line_2 = $address_line_2;
 			} else {
 				$add_issue( new InvalidData( 'Field address_line_2 is too long', 'Please provide a valid address line 2.', 'address_line_2' ) );
@@ -73,7 +73,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['admin_area_2'] ) ) {
 			$admin_area_2 = trim( $input['admin_area_2'] );
 
-			if ( $admin_area_2 && strlen( $admin_area_2 ) <= 120 ) {
+			if ( strlen( $admin_area_2 ) <= 120 ) {
 				$this->admin_area_2 = $admin_area_2;
 			} else {
 				$add_issue( new InvalidData( 'Field admin_area_2 is too long', 'Please provide a valid city.', 'admin_area_2' ) );
@@ -83,7 +83,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['admin_area_1'] ) ) {
 			$admin_area_1 = trim( $input['admin_area_1'] );
 
-			if ( $admin_area_1 && strlen( $admin_area_1 ) <= 300 ) {
+			if ( strlen( $admin_area_1 ) <= 300 ) {
 				$this->admin_area_1 = $admin_area_1;
 			} else {
 				$add_issue( new InvalidData( 'Field admin_area_1 is too long', 'Please provide a valid region or state.', 'admin_area_1' ) );
@@ -93,7 +93,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['postal_code'] ) ) {
 			$postal_code = trim( $input['postal_code'] );
 
-			if ( $postal_code && strlen( $postal_code ) <= 60 ) {
+			if ( strlen( $postal_code ) <= 60 ) {
 				$this->postal_code = $postal_code;
 			} else {
 				$add_issue( new InvalidData( 'Field postal_code is too long', 'Please provide a valid postal code.', 'postal_code' ) );
