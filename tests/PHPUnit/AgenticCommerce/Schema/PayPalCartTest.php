@@ -512,45 +512,45 @@ class PayPalCartTest extends SchemaTestCase {
 
 	public function invalid_type_provider(): array {
 		return array(
-			'items with string'             => array( 'items', 'items', 'items', array() ),
-			'items with object'             => array(
+			'items with string'            => array( 'items', 'items', 'items', array() ),
+			'items with object'            => array(
 				'items',
 				array( 'item_id' => 'SHIRT-001' ),
 				'items',
 				array(),
 			),
-			'customer with string'          => array(
+			'customer with string'         => array(
 				'customer',
 				'customer@example.com',
 				'customer',
 				null,
 			),
-			'shipping_address with string'  => array(
+			'shipping_address with string' => array(
 				'shipping_address',
 				'123 Main St',
 				'shipping_address',
 				null,
 			),
-			'billing_address with string'   => array(
+			'billing_address with string'  => array(
 				'billing_address',
 				'456 Payment Blvd',
 				'billing_address',
 				null,
 			),
-			'payment_method with string'    => array(
+			'payment_method with string'   => array(
 				'payment_method',
 				'paypal',
 				'payment_method',
 				null,
 			),
-			'checkout_fields with string'   => array(
+			'checkout_fields with string'  => array(
 				'checkout_fields',
 				'age_verification',
 				'checkout_fields',
 				null,
 			),
-			'coupons with string'           => array( 'coupons', 'SAVE10', 'coupons', null ),
-			'geo_coordinates with string'   => array(
+			'coupons with string'          => array( 'coupons', 'SAVE10', 'coupons', null ),
+			'geo_coordinates with string'  => array(
 				'geo_coordinates',
 				'37.7749,-122.4194',
 				'geo_coordinates',

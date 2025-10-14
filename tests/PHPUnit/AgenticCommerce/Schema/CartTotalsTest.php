@@ -43,19 +43,46 @@ class CartTotalsTest extends SchemaTestCase {
 	}
 
 	public function money_field_accessor_provider(): array {
-		$base_data = array( 'total' => array( 'currency_code' => 'USD', 'value' => '100.00' ) );
+		$base_data  = array( 'total' => array( 'currency_code' => 'USD', 'value' => '100.00' ) );
 		$test_money = array( 'currency_code' => 'USD', 'value' => '10.00' );
 
 		return array(
-			'total field'             => array( array_merge( $base_data, array( 'total' => $test_money ) ), 'total' ),
-			'subtotal field'          => array( array_merge( $base_data, array( 'subtotal' => $test_money ) ), 'subtotal' ),
-			'discount field'          => array( array_merge( $base_data, array( 'discount' => $test_money ) ), 'discount' ),
-			'shipping field'          => array( array_merge( $base_data, array( 'shipping' => $test_money ) ), 'shipping' ),
-			'tax field'               => array( array_merge( $base_data, array( 'tax' => $test_money ) ), 'tax' ),
-			'handling field'          => array( array_merge( $base_data, array( 'handling' => $test_money ) ), 'handling' ),
-			'insurance field'         => array( array_merge( $base_data, array( 'insurance' => $test_money ) ), 'insurance' ),
-			'shipping_discount field' => array( array_merge( $base_data, array( 'shipping_discount' => $test_money ) ), 'shipping_discount' ),
-			'custom_charges field'    => array( array_merge( $base_data, array( 'custom_charges' => $test_money ) ), 'custom_charges' ),
+			'total field'             => array(
+				array_merge( $base_data, array( 'total' => $test_money ) ),
+				'total',
+			),
+			'subtotal field'          => array(
+				array_merge( $base_data, array( 'subtotal' => $test_money ) ),
+				'subtotal',
+			),
+			'discount field'          => array(
+				array_merge( $base_data, array( 'discount' => $test_money ) ),
+				'discount',
+			),
+			'shipping field'          => array(
+				array_merge( $base_data, array( 'shipping' => $test_money ) ),
+				'shipping',
+			),
+			'tax field'               => array(
+				array_merge( $base_data, array( 'tax' => $test_money ) ),
+				'tax',
+			),
+			'handling field'          => array(
+				array_merge( $base_data, array( 'handling' => $test_money ) ),
+				'handling',
+			),
+			'insurance field'         => array(
+				array_merge( $base_data, array( 'insurance' => $test_money ) ),
+				'insurance',
+			),
+			'shipping_discount field' => array(
+				array_merge( $base_data, array( 'shipping_discount' => $test_money ) ),
+				'shipping_discount',
+			),
+			'custom_charges field'    => array(
+				array_merge( $base_data, array( 'custom_charges' => $test_money ) ),
+				'custom_charges',
+			),
 		);
 	}
 
@@ -92,8 +119,13 @@ class CartTotalsTest extends SchemaTestCase {
 	 * @dataProvider invalid_type_provider
 	 */
 	public function test_money_fields_reject_invalid_types( string $field_name, $invalid_value, string $accessor ): void {
-		$data            = array( 'total' => array( 'currency_code' => 'USD', 'value' => '100.00' ) );
-		$data[$field_name] = $invalid_value;
+		$data                = array(
+			'total' => array(
+				'currency_code' => 'USD',
+				'value'         => '100.00',
+			),
+		);
+		$data[ $field_name ] = $invalid_value;
 
 		$totals = CartTotals::from_array( $data );
 
@@ -109,7 +141,11 @@ class CartTotalsTest extends SchemaTestCase {
 			'tax with string'               => array( 'tax', 'ten dollars', 'tax' ),
 			'handling with integer'         => array( 'handling', 150, 'handling' ),
 			'insurance with string'         => array( 'insurance', '0.50', 'insurance' ),
-			'shipping_discount with number' => array( 'shipping_discount', 100, 'shipping_discount' ),
+			'shipping_discount with number' => array(
+				'shipping_discount',
+				100,
+				'shipping_discount',
+			),
 			'custom_charges with string'    => array( 'custom_charges', '3.00', 'custom_charges' ),
 		);
 	}
@@ -177,9 +213,18 @@ class CartTotalsTest extends SchemaTestCase {
 	public function invalid_money_structure_provider(): array {
 		return array(
 			'subtotal missing currency_code' => array( 'subtotal', array( 'value' => '25.00' ) ),
-			'subtotal missing value'         => array( 'subtotal', array( 'currency_code' => 'USD' ) ),
-			'discount invalid currency'      => array( 'discount', array( 'currency_code' => 'INVALID', 'value' => '5.00' ) ),
-			'shipping invalid value format'  => array( 'shipping', array( 'currency_code' => 'USD', 'value' => 'not-a-number' ) ),
+			'subtotal missing value'         => array(
+				'subtotal',
+				array( 'currency_code' => 'USD' ),
+			),
+			'discount invalid currency'      => array(
+				'discount',
+				array( 'currency_code' => 'INVALID', 'value' => '5.00' ),
+			),
+			'shipping invalid value format'  => array(
+				'shipping',
+				array( 'currency_code' => 'USD', 'value' => 'not-a-number' ),
+			),
 			'total missing currency_code'    => array( 'total', array( 'value' => '100.00' ) ),
 			'total missing value'            => array( 'total', array( 'currency_code' => 'USD' ) ),
 			'total empty structure'          => array( 'total', array() ),
@@ -206,9 +251,12 @@ class CartTotalsTest extends SchemaTestCase {
 	 */
 	public function test_multiple_validation_errors_returned_together(): void {
 		$data = array(
-			'total'    => array( 'value' => '100.00' ), // Missing currency_code.
-			'subtotal' => array( 'currency_code' => 'USD' ), // Missing value.
-			'tax'      => array( 'currency_code' => 'INVALID', 'value' => 'not-a-number' ), // Invalid structure.
+			'total'    => array( 'value' => '100.00' ),
+			// Missing currency_code.
+			'subtotal' => array( 'currency_code' => 'USD' ),
+			// Missing value.
+			'tax'      => array( 'currency_code' => 'INVALID', 'value' => 'not-a-number' ),
+			// Invalid structure.
 		);
 
 		$totals = CartTotals::from_array( $data );

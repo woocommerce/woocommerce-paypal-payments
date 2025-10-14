@@ -225,7 +225,7 @@ class CartItemTest extends SchemaTestCase {
 	 * Tests that negative quantity produces validation issue.
 	 */
 	public function test_quantity_negative_value(): void {
-		$data = array( 'quantity' => -5 );
+		$data = array( 'quantity' => - 5 );
 		$item = CartItem::from_array( $data );
 
 		$issues     = $item->validate();
@@ -440,7 +440,7 @@ class CartItemTest extends SchemaTestCase {
 	 */
 	public function test_selected_attributes_exceeds_max_count(): void {
 		$attributes = array();
-		for ( $i = 0; $i < 11; $i++ ) {
+		for ( $i = 0; $i < 11; $i ++ ) {
 			$attributes[] = array(
 				'name'  => "Attribute $i",
 				'value' => "Value $i",
@@ -465,7 +465,7 @@ class CartItemTest extends SchemaTestCase {
 	 */
 	public function test_selected_attributes_at_max_count_is_valid(): void {
 		$attributes = array();
-		for ( $i = 0; $i < 10; $i++ ) {
+		for ( $i = 0; $i < 10; $i ++ ) {
 			$attributes[] = array(
 				'name'  => "Attribute $i",
 				'value' => "Value $i",
@@ -556,30 +556,40 @@ class CartItemTest extends SchemaTestCase {
 
 	public function invalid_type_provider(): array {
 		return array(
-			'item_id with array'             => array( 'item_id', array( 'id' ), 'item_id', null ),
-			'item_id with integer'           => array( 'item_id', 123, 'item_id', null ),
-			'variant_id with array'          => array( 'variant_id', array( 'id' ), 'variant_id', null ),
-			'variant_id with integer'        => array( 'variant_id', 456, 'variant_id', null ),
-			'parent_id with array'           => array( 'parent_id', array( 'id' ), 'parent_id', null ),
-			'parent_id with integer'         => array( 'parent_id', 789, 'parent_id', null ),
-			'quantity with string'           => array( 'quantity', 'five', 'quantity', 1 ),
-			'quantity with array'            => array( 'quantity', array( 5 ), 'quantity', 1 ),
-			'name with array'                => array( 'name', array( 'name' ), 'name', null ),
-			'name with integer'              => array( 'name', 123, 'name', null ),
-			'description with array'         => array(
+			'item_id with array'              => array( 'item_id', array( 'id' ), 'item_id', null ),
+			'item_id with integer'            => array( 'item_id', 123, 'item_id', null ),
+			'variant_id with array'           => array(
+				'variant_id',
+				array( 'id' ),
+				'variant_id',
+				null,
+			),
+			'variant_id with integer'         => array( 'variant_id', 456, 'variant_id', null ),
+			'parent_id with array'            => array(
+				'parent_id',
+				array( 'id' ),
+				'parent_id',
+				null,
+			),
+			'parent_id with integer'          => array( 'parent_id', 789, 'parent_id', null ),
+			'quantity with string'            => array( 'quantity', 'five', 'quantity', 1 ),
+			'quantity with array'             => array( 'quantity', array( 5 ), 'quantity', 1 ),
+			'name with array'                 => array( 'name', array( 'name' ), 'name', null ),
+			'name with integer'               => array( 'name', 123, 'name', null ),
+			'description with array'          => array(
 				'description',
 				array( 'desc' ),
 				'description',
 				null,
 			),
-			'description with integer'       => array( 'description', 123, 'description', null ),
+			'description with integer'        => array( 'description', 123, 'description', null ),
 			'selected_attributes with string' => array(
 				'selected_attributes',
 				'color:blue',
 				'selected_attributes',
 				null,
 			),
-			'gift_options with string'       => array(
+			'gift_options with string'        => array(
 				'gift_options',
 				'is_gift',
 				'gift_options',
@@ -605,25 +615,25 @@ class CartItemTest extends SchemaTestCase {
 
 	public function whitespace_trimming_provider(): array {
 		return array(
-			'item_id with leading space'      => array( 'item_id', ' SHIRT-001', 'SHIRT-001' ),
-			'item_id with trailing space'     => array( 'item_id', 'SHIRT-001 ', 'SHIRT-001' ),
-			'item_id with both'               => array( 'item_id', '  SHIRT-001  ', 'SHIRT-001' ),
-			'variant_id with spaces'          => array(
+			'item_id with leading space'  => array( 'item_id', ' SHIRT-001', 'SHIRT-001' ),
+			'item_id with trailing space' => array( 'item_id', 'SHIRT-001 ', 'SHIRT-001' ),
+			'item_id with both'           => array( 'item_id', '  SHIRT-001  ', 'SHIRT-001' ),
+			'variant_id with spaces'      => array(
 				'variant_id',
 				' SHIRT-BLUE-M ',
 				'SHIRT-BLUE-M',
 			),
-			'parent_id with spaces'           => array(
+			'parent_id with spaces'       => array(
 				'parent_id',
 				' COLLECTION-001 ',
 				'COLLECTION-001',
 			),
-			'name with spaces'                => array(
+			'name with spaces'            => array(
 				'name',
 				' Blue T-Shirt ',
 				'Blue T-Shirt',
 			),
-			'description with spaces'         => array(
+			'description with spaces'     => array(
 				'description',
 				' Comfortable cotton t-shirt ',
 				'Comfortable cotton t-shirt',
@@ -636,7 +646,7 @@ class CartItemTest extends SchemaTestCase {
 	 */
 	public function test_multiple_validation_errors_returned_together(): void {
 		$attributes = array();
-		for ( $i = 0; $i < 11; $i++ ) {
+		for ( $i = 0; $i < 11; $i ++ ) {
 			$attributes[] = array(
 				'name'  => "Attribute $i",
 				'value' => "Value $i",

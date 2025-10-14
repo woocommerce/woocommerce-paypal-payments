@@ -202,12 +202,27 @@ class AppliedCouponTest extends SchemaTestCase {
 
 	public function string_trimming_provider(): array {
 		return array(
-			'code with leading space'       => array( 'code', ' SAVE10', 'SAVE10', 'code' ),
-			'code with trailing space'      => array( 'code', 'SAVE10 ', 'SAVE10', 'code' ),
-			'code with both spaces'         => array( 'code', '  SAVE10  ', 'SAVE10', 'code' ),
-			'description with leading'      => array( 'description', ' 10% off', '10% off', 'description' ),
-			'description with trailing'     => array( 'description', '10% off ', '10% off', 'description' ),
-			'description with both'         => array( 'description', '  10% off entire order  ', '10% off entire order', 'description' ),
+			'code with leading space'   => array( 'code', ' SAVE10', 'SAVE10', 'code' ),
+			'code with trailing space'  => array( 'code', 'SAVE10 ', 'SAVE10', 'code' ),
+			'code with both spaces'     => array( 'code', '  SAVE10  ', 'SAVE10', 'code' ),
+			'description with leading'  => array(
+				'description',
+				' 10% off',
+				'10% off',
+				'description',
+			),
+			'description with trailing' => array(
+				'description',
+				'10% off ',
+				'10% off',
+				'description',
+			),
+			'description with both'     => array(
+				'description',
+				'  10% off entire order  ',
+				'10% off entire order',
+				'description',
+			),
 		);
 	}
 
@@ -231,8 +246,18 @@ class AppliedCouponTest extends SchemaTestCase {
 		return array(
 			'missing currency_code' => array( array( 'value' => '5.00' ) ),
 			'missing value'         => array( array( 'currency_code' => 'USD' ) ),
-			'invalid currency'      => array( array( 'currency_code' => 'INVALID', 'value' => '5.00' ) ),
-			'invalid value format'  => array( array( 'currency_code' => 'USD', 'value' => 'not-a-number' ) ),
+			'invalid currency'      => array(
+				array(
+					'currency_code' => 'INVALID',
+					'value'         => '5.00',
+				),
+			),
+			'invalid value format'  => array(
+				array(
+					'currency_code' => 'USD',
+					'value'         => 'not-a-number',
+				),
+			),
 			'empty structure'       => array( array() ),
 		);
 	}
