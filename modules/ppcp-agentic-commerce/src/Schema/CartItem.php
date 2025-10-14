@@ -9,6 +9,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
+
 class CartItem extends AgenticSchema {
 	private ?string $id = null;
 
@@ -26,7 +29,7 @@ class CartItem extends AgenticSchema {
 
 	private ?array $selected_attributes = null;
 
-	private ?array $gift_options = null;
+	private ?GiftOptions $gift_options = null;
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
@@ -44,54 +47,103 @@ class CartItem extends AgenticSchema {
 		if ( isset( $input['quantity'] ) ) {
 			$quantity = (int) $input['quantity'];
 
-			if ( $quantity > 0 ) {
-				$this->quantity = (int) $input['quantity'];
+			if ( $quantity < 1 || $quantity > 999 ) {
+				$add_issue( new InvalidData( 'Quantity is invalid', 'Item quantity must be between 1 and 999', 'quantity' ) );
 			} else {
-				$add_issue();
+				$this->quantity = $quantity;
 			}
+		} else {
+			$add_issue( new MissingField( 'Quantity missing', 'The quantity field is required.', 'quantity' ) );
 		}
 
 		// Parse optional fields.
-		if ( isset( $input['item_id'] ) ) {
-			$this->id = trim( $input['item_id'] );
+		if ( isset( $input['item_id'] ) && is_string( $input['item_id'] ) ) {
+			$id = trim( $input['item_id'] );
+
+			if ( strlen( $id ) > 127 ) {
+				$add_issue( new InvalidData( 'Item id too long', 'The item ID can be at most 127 characters long', 'item_id' ) );
+			} else {
+				$this->id = $id;
+			}
 		}
 
-		if ( isset( $input['variant_id'] ) ) {
-			$this->variant_id = trim( $input['variant_id'] );
+		if ( isset( $input['variant_id'] ) && is_string( $input['variant_id'] ) ) {
+			$variant_id = trim( $input['variant_id'] );
+
+			if ( strlen( $variant_id ) > 127 ) {
+				$add_issue( new InvalidData( 'Variant id too long', 'The variant ID can be at most 127 characters long', 'variant_id' ) );
+			} else {
+				$this->variant_id = $variant_id;
+			}
 		}
 
-		if ( isset( $input['parent_id'] ) ) {
-			$this->parent_id = trim( $input['parent_id'] );
+		if ( isset( $input['parent_id'] ) && is_string( $input['parent_id'] ) ) {
+			$parent_id = trim( $input['parent_id'] );
+
+			if ( strlen( $parent_id ) > 127 ) {
+				$add_issue( new InvalidData( 'Parent id too long', 'The parent ID can be at most 127 characters long', 'parent_id' ) );
+			} else {
+				$this->parent_id = $parent_id;
+			}
 		}
 
-		if ( isset( $input['name'] ) ) {
-			$this->name = trim( $input['name'] );
+		if ( isset( $input['name'] ) && is_string( $input['name'] ) ) {
+			$name = trim( $input['name'] );
+
+			if ( strlen( $name ) > 127 ) {
+				$add_issue( new InvalidData( 'Item name too long', 'The item name can be at most 127 characters long', 'name' ) );
+			} else {
+				$this->name = $name;
+			}
 		}
 
-		if ( isset( $input['description'] ) ) {
-			$this->description = trim( $input['description'] );
+		if ( isset( $input['description'] ) && is_string( $input['description'] ) ) {
+			$description = trim( $input['description'] );
+
+			if ( strlen( $description ) > 255 ) {
+				$add_issue( new InvalidData( 'Item description too long', 'The item description can be at most 127 characters long', 'description' ) );
+			} else {
+				$this->description = $description;
+			}
 		}
 
-		if ( isset( $input['price'] ) ) {
-			$this->price = Money::from_array( $input['price'] );
+		if ( isset( $input['price'] ) && is_array( $input['price'] ) ) {
+			$price = Money::from_array( $input['price'] );
+
+			if ( $price->value() <= 0. ) {
+				$add_issue( new InvalidData( 'Item price is invalid', 'The item price is invalid', 'price' ) );
+			} else {
+				$this->price = $price;
+			}
 		}
 
-		if ( isset( $input['gift_options'] ) ) {
-			// todo - parse to GiftOptions.
-			$this->gift_options = $input['gift_options'];
+		if ( isset( $input['gift_options'] ) && is_array( $input['gift_options'] ) ) {
+			$this->gift_options = GiftOptions::from_array( $input['gift_options'] );
 		}
 
 		if ( isset( $input['selected_attributes'] ) && is_array( $input['selected_attributes'] ) ) {
-			$this->selected_attributes = array();
+			$attributes = $input['selected_attributes'];
 
-			foreach ( $input['selected_attributes'] as $attribute ) {
-				// todo - parse to Attribute.
-				$this->selected_attributes[] = $attribute;
+			if ( count( $attributes ) > 10 ) {
+				$add_issue( new InvalidData( 'Too many attributes', 'The item can have at most 10 attributes', 'selected_attributes' ) );
+			} else {
+				$attributes = array_filter(
+					$attributes,
+					static fn( $attribute ) => is_array( $attribute ) && ! empty( $attribute['name'] )
+				);
+
+				$this->selected_attributes = array();
+				foreach ( $attributes as $attribute ) {
+					$this->selected_attributes[] = array(
+						'name'  => $attribute['name'],
+						'value' => $attribute['value'] ?? '',
+					);
+				}
 			}
 		}
 	}
 
-	public function id(): ?string {
+	public function item_id(): ?string {
 		return $this->id;
 	}
 
@@ -123,7 +175,7 @@ class CartItem extends AgenticSchema {
 		return $this->selected_attributes;
 	}
 
-	public function gift_options(): ?array {
+	public function gift_options(): ?GiftOptions {
 		return $this->gift_options;
 	}
 }
