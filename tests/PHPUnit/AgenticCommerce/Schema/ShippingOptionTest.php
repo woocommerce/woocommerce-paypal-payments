@@ -104,8 +104,8 @@ class ShippingOptionTest extends SchemaTestCase {
 		$price  = $option->price();
 
 		$this->assertInstanceOf( Money::class, $price );
-		$this->assertSame( 'USD', $price->currency_code() );
-		$this->assertSame( '5.99', $price->value() );
+		$this->assertSame( 'USD', $price->currency() );
+		$this->assertSame( 5.99, $price->value() );
 	}
 
 	// === Optional Field Accessors ===
