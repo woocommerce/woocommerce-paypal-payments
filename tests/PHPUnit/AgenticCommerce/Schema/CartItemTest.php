@@ -42,6 +42,23 @@ class CartItemTest extends SchemaTestCase {
 		);
 	}
 
+	public function test_required_fields(): void {
+		$this->assertRequiredField( 'quantity' );
+	}
+
+	public function test_optional_fields(): void {
+		$base_data = array( 'quantity' => 1 );
+
+		$this->assertOptionalField( 'item_id', $base_data );
+		$this->assertOptionalField( 'variant_id', $base_data );
+		$this->assertOptionalField( 'parent_id', $base_data );
+		$this->assertOptionalField( 'name', $base_data );
+		$this->assertOptionalField( 'description', $base_data );
+		$this->assertOptionalField( 'price', $base_data );
+		$this->assertOptionalField( 'selected_attributes', $base_data );
+		$this->assertOptionalField( 'gift_options', $base_data );
+	}
+
 	/**
 	 * Tests that CartItem stores and returns the item_id.
 	 */

@@ -18,6 +18,15 @@ class PaymentMethodTest extends SchemaTestCase {
 		);
 	}
 
+	public function test_required_fields(): void {
+		$this->assertRequiredField( 'type' );
+	}
+
+	public function test_optional_fields(): void {
+		$this->assertOptionalField( 'token', array( 'type' => 'paypal' ) );
+		$this->assertOptionalField( 'payer_id', array( 'type' => 'paypal' ) );
+	}
+
 	/**
 	 * Tests that PaymentMethod stores and returns field values correctly.
 	 *

@@ -226,6 +226,16 @@ class MoneyTest extends SchemaTestCase {
 		);
 	}
 
+	public function test_required_fields(): void {
+		$this->assertRequiredField( 'currency_code' );
+		$this->assertRequiredField( 'value' );
+	}
+
+	public function test_optional_fields(): void {
+		// Money has no optional fields - all fields are required.
+		$this->addToAssertionCount( 1 );
+	}
+
 	/**
 	 * Tests that missing currency_code produces validation issue.
 	 */

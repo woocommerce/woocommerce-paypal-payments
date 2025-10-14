@@ -52,6 +52,22 @@ class AddressTest extends SchemaTestCase {
 		);
 	}
 
+	public function test_required_fields(): void {
+		$this->assertRequiredField( 'country_code' );
+	}
+
+	public function test_optional_fields(): void {
+		$mandatory = array(
+			'country_code' => 'US',
+		);
+
+		$this->assertOptionalField( 'address_line_1', $mandatory );
+		$this->assertOptionalField( 'address_line_2', $mandatory );
+		$this->assertOptionalField( 'admin_area_2', $mandatory );
+		$this->assertOptionalField( 'admin_area_1', $mandatory );
+		$this->assertOptionalField( 'postal_code', $mandatory );
+	}
+
 	/**
 	 * Tests that country codes with invalid length produce validation issues.
 	 */

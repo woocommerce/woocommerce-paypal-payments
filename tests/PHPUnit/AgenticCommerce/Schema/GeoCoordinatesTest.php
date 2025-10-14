@@ -21,6 +21,18 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		);
 	}
 
+	public function test_required_fields(): void {
+		// GeoCoordinates has no required fields - all fields are optional when schema is used.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_optional_fields(): void {
+		$this->assertOptionalField( 'latitude' );
+		$this->assertOptionalField( 'longitude' );
+		$this->assertOptionalField( 'subdivision' );
+		$this->assertOptionalField( 'country_code' );
+	}
+
 	/**
 	 * Tests that GeoCoordinates stores and returns the latitude.
 	 */

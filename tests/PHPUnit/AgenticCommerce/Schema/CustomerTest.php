@@ -26,6 +26,35 @@ class CustomerTest extends SchemaTestCase {
 		);
 	}
 
+	public function test_required_fields(): void {
+		// Customer has no required fields - all fields are optional.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_optional_fields(): void {
+		$this->assertOptionalField( 'email_address' );
+		$this->assertFieldReturnsType( array(
+			'name' => array(
+				'given_name' => 'John',
+				'surname'    => 'Smith',
+			),
+		), 'name', 'array' );
+		$this->assertFieldReturnsType( array(
+			'phone' => array(
+				'country_code'    => '1',
+				'national_number' => '5551234567',
+			),
+		), 'phone', 'array' );
+	}
+
+	public function test_optional_customer_fields(): void {
+		$data     = array();
+		$customer = Customer::from_array( $data );
+
+		$this->assertNull( $customer->name() );
+		$this->assertNull( $customer->phone() );
+	}
+
 	/**
 	 * Tests that Customer stores and returns the name object.
 	 */
