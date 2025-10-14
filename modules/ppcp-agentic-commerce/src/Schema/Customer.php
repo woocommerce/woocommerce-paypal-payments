@@ -39,7 +39,11 @@ class Customer extends AgenticSchema {
 			}
 		}
 		if ( isset( $input['name'] ) && is_array( $input['name'] ) ) {
-			$this->name = array();
+			$this->name = array(
+				'given_name' => null,
+				'surname'    => null,
+			);
+
 			$given_name = $input['name']['given_name'] ?? null;
 			$surname    = $input['name']['surname'] ?? null;
 
@@ -59,7 +63,11 @@ class Customer extends AgenticSchema {
 			}
 		}
 		if ( isset( $input['phone'] ) && is_array( $input['phone'] ) ) {
-			$this->phone     = array();
+			$this->phone = array(
+				'country_code'    => null,
+				'national_number' => null,
+			);
+
 			$country_code    = $input['phone']['country_code'] ?? null;
 			$national_number = $input['phone']['national_number'] ?? null;
 
