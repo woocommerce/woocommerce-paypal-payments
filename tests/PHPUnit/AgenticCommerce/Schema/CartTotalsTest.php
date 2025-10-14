@@ -38,8 +38,8 @@ class CartTotalsTest extends SchemaTestCase {
 		$money  = $totals->$accessor();
 
 		$this->assertInstanceOf( Money::class, $money );
-		$this->assertSame( 'USD', $money->currency_code() );
-		$this->assertSame( '10.00', $money->value() );
+		$this->assertSame( 'USD', $money->currency() );
+		$this->assertSame( 10.00, $money->value() );
 	}
 
 	public function money_field_accessor_provider(): array {
@@ -270,8 +270,8 @@ class CartTotalsTest extends SchemaTestCase {
 
 		$totals = CartTotals::from_array( $data );
 
-		$this->assertSame( 'EUR', $totals->subtotal()->currency_code() );
-		$this->assertSame( 'GBP', $totals->shipping()->currency_code() );
-		$this->assertSame( 'USD', $totals->total()->currency_code() );
+		$this->assertSame( 'EUR', $totals->subtotal()->currency() );
+		$this->assertSame( 'GBP', $totals->shipping()->currency() );
+		$this->assertSame( 'USD', $totals->total()->currency() );
 	}
 }
