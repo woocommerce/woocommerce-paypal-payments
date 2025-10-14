@@ -31,6 +31,11 @@ class CouponTest extends SchemaTestCase {
 		$this->addToAssertionCount( 1 );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'code', 'SAVE10' );
+		$this->assertWhitespaceTrimming( 'action', 'APPLY' );
+	}
+
 	/**
 	 * Tests that Coupon correctly stores and returns the code.
 	 *

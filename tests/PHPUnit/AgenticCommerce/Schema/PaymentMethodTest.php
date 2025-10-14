@@ -27,6 +27,15 @@ class PaymentMethodTest extends SchemaTestCase {
 		$this->assertOptionalField( 'payer_id', array( 'type' => 'paypal' ) );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'type', 'paypal' );
+		$this->assertWhitespaceTrimming( 'token', 'EC-123' );
+		$this->assertWhitespaceTrimming( 'payer_id', 'PAYER123' );
+
+		$this->assertEmptyStringPreserved( 'token' );
+		$this->assertEmptyStringPreserved( 'payer_id' );
+	}
+
 	/**
 	 * Tests that PaymentMethod stores and returns field values correctly.
 	 *

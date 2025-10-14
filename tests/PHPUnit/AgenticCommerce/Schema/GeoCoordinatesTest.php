@@ -33,6 +33,14 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		$this->assertOptionalField( 'country_code' );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'country_code', 'US' );
+
+		$this->assertWhitespaceTrimming( 'subdivision', 'CA' );
+		$this->assertEmptyStringPreserved( 'subdivision' );
+		$this->assertStringFieldMaxLength( 'subdivision', 10 );
+	}
+
 	/**
 	 * Tests that GeoCoordinates stores and returns the latitude.
 	 */

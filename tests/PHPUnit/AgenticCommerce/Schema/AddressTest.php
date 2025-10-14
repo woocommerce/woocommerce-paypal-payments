@@ -52,20 +52,43 @@ class AddressTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return array(
+			'country_code' => 'US',
+		);
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'country_code' );
 	}
 
 	public function test_optional_fields(): void {
-		$mandatory = array(
-			'country_code' => 'US',
-		);
+		$this->assertOptionalField( 'address_line_1', $this->mandatory_data() );
+		$this->assertOptionalField( 'address_line_2', $this->mandatory_data() );
+		$this->assertOptionalField( 'admin_area_2', $this->mandatory_data() );
+		$this->assertOptionalField( 'admin_area_1', $this->mandatory_data() );
+		$this->assertOptionalField( 'postal_code', $this->mandatory_data() );
+	}
 
-		$this->assertOptionalField( 'address_line_1', $mandatory );
-		$this->assertOptionalField( 'address_line_2', $mandatory );
-		$this->assertOptionalField( 'admin_area_2', $mandatory );
-		$this->assertOptionalField( 'admin_area_1', $mandatory );
-		$this->assertOptionalField( 'postal_code', $mandatory );
+	public function test_string_fields(): void {
+		$this->assertEmptyStringPreserved( 'address_line_1' );
+		$this->assertEmptyStringPreserved( 'address_line_2' );
+		$this->assertEmptyStringPreserved( 'admin_area_2' );
+		$this->assertEmptyStringPreserved( 'admin_area_1' );
+		$this->assertEmptyStringPreserved( 'postal_code' );
+
+		$this->assertWhitespaceTrimming( 'country_code', 'US' );
+		$this->assertWhitespaceTrimming( 'address_line_1', 'ABC' );
+		$this->assertWhitespaceTrimming( 'address_line_2', 'ABC' );
+		$this->assertWhitespaceTrimming( 'admin_area_2', 'ABC' );
+		$this->assertWhitespaceTrimming( 'admin_area_1', 'ABC' );
+		$this->assertWhitespaceTrimming( 'postal_code', 'ABC' );
+
+		$this->assertStringFieldMaxLength( 'address_line_1', 300, $this->mandatory_data() );
+		$this->assertStringFieldMaxLength( 'address_line_2', 300, $this->mandatory_data() );
+		$this->assertStringFieldMaxLength( 'admin_area_2', 120, $this->mandatory_data() );
+		$this->assertStringFieldMaxLength( 'admin_area_1', 300, $this->mandatory_data() );
+		$this->assertStringFieldMaxLength( 'postal_code', 60, $this->mandatory_data() );
 	}
 
 	/**

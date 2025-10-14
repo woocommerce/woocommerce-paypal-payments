@@ -115,6 +115,37 @@ abstract class SchemaTestCase extends TestCase {
 	}
 
 	/**
+	 * Tests string field max length validation.
+	 *
+	 * @param string $field_name Field name in the data array (supports dot notation).
+	 * @param int    $max_length Maximum allowed length.
+	 * @param array  $extra_data Additional data required for validation.
+	 */
+	protected function assertStringFieldMaxLength( string $field_name, int $max_length, array $extra_data = array() ): void {
+		$class = $this->get_schema_class();
+
+		// Test exceeding max length produces validation issue
+		$too_long = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
+		$instance = $class::from_array( $too_long );
+		$issues   = $instance->validate();
+
+		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when exceeding $max_length characters" );
+
+		$issue_fields = array_map(
+			static fn( $issue ) => $issue->to_array()['field'],
+			$issues
+		);
+		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
+
+		// Test at max length is valid
+		$at_max   = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length ) ) );
+		$instance = $class::from_array( $at_max );
+		$issues   = $instance->validate();
+
+		$this->assertEmpty( $issues, "Field '$field_name' should be valid at exactly $max_length characters" );
+	}
+
+	/**
 	 * Tests that a field returns the expected type (object instance or primitive type).
 	 *
 	 * @param array  $input_data    Data to set on the schema (e.g., ['phone' => [...]] ).
@@ -136,6 +167,43 @@ abstract class SchemaTestCase extends TestCase {
 		} else {
 			$this->assertSame( $expected_type, gettype( $value ), "Getter '$getter()' should return type $expected_type" );
 		}
+	}
+
+	/**
+	 * Tests that empty strings are preserved (not converted to null).
+	 *
+	 * @param string      $field_name Field name in the data array (supports dot notation).
+	 * @param string|null $getter     Getter method name (supports dot notation).
+	 * @param array       $extra_data Additional data required for validation.
+	 */
+	protected function assertEmptyStringPreserved( string $field_name, string $getter = null, array $extra_data = array() ): void {
+		$getter   = $getter ?? $field_name;
+		$class    = $this->get_schema_class();
+		$data     = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, '' ) );
+		$instance = $class::from_array( $data );
+
+		$actual = $this->getNestedValue( $instance, $getter );
+		$this->assertSame( '', $actual, "Field '{$field_name}' should be empty string'" );
+	}
+
+	/**
+	 * Tests that whitespace is trimmed from string values.
+	 *
+	 * @param string      $field_name     Field name in the data array (supports dot notation).
+	 * @param string      $input_value    Input value with whitespace.
+	 * @param mixed       $expected_value Expected trimmed value.
+	 * @param string|null $getter         Getter method name (supports dot notation).
+	 * @param array       $extra_data     Additional data required for validation.
+	 */
+	protected function assertWhitespaceTrimming( string $field_name, string $input_value, $expected_value = null, string $getter = null, array $extra_data = array() ): void {
+		$getter         = $getter ?? $field_name;
+		$expected_value = $expected_value ?? $input_value;
+		$class          = $this->get_schema_class();
+		$data           = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+		$instance       = $class::from_array( $data );
+
+		$actual = $this->getNestedValue( $instance, $getter );
+		$this->assertEquals( $expected_value, $actual );
 	}
 
 }

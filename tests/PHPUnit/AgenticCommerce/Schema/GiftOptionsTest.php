@@ -43,6 +43,17 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertOptionalField( 'gift_message' );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'sender_name', 'John Smith' );
+		$this->assertWhitespaceTrimming( 'gift_message', 'Happy Birthday' );
+		$this->assertWhitespaceTrimming( 'delivery_date', '2024-12-25T09:00:00Z' );
+
+		$this->assertEmptyStringPreserved( 'sender_name' );
+		$this->assertEmptyStringPreserved( 'gift_message' );
+
+		$this->assertStringFieldMaxLength( 'gift_message', 500 );
+	}
+
 	/**
 	 * @dataProvider boolean_field_provider
 	 */

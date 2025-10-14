@@ -59,6 +59,28 @@ class CartItemTest extends SchemaTestCase {
 		$this->assertOptionalField( 'gift_options', $base_data );
 	}
 
+	public function test_string_fields(): void {
+		$mandatory = array( 'quantity' => 1 );
+
+		$this->assertWhitespaceTrimming( 'item_id', 'SHIRT-001' );
+		$this->assertWhitespaceTrimming( 'variant_id', 'VARIANT-001' );
+		$this->assertWhitespaceTrimming( 'parent_id', 'PARENT-001' );
+		$this->assertWhitespaceTrimming( 'name', 'Blue T-Shirt' );
+		$this->assertWhitespaceTrimming( 'description', 'Cotton shirt' );
+
+		$this->assertEmptyStringPreserved( 'item_id' );
+		$this->assertEmptyStringPreserved( 'variant_id' );
+		$this->assertEmptyStringPreserved( 'parent_id' );
+		$this->assertEmptyStringPreserved( 'name' );
+		$this->assertEmptyStringPreserved( 'description' );
+
+		$this->assertStringFieldMaxLength( 'item_id', 127, $mandatory );
+		$this->assertStringFieldMaxLength( 'variant_id', 127, $mandatory );
+		$this->assertStringFieldMaxLength( 'parent_id', 127, $mandatory );
+		$this->assertStringFieldMaxLength( 'name', 127, $mandatory );
+		$this->assertStringFieldMaxLength( 'description', 255, $mandatory );
+	}
+
 	/**
 	 * Tests that CartItem stores and returns the item_id.
 	 */

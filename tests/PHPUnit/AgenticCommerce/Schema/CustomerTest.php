@@ -55,6 +55,12 @@ class CustomerTest extends SchemaTestCase {
 		$this->assertNull( $customer->phone() );
 	}
 
+	public function test_string_fields(): void {
+		// Top-level optional fields
+		$this->assertWhitespaceTrimming( 'email_address', 'test@example.com' );
+		$this->assertEmptyStringPreserved( 'email_address', 'email_address' );
+	}
+
 	/**
 	 * Tests that Customer stores and returns the name object.
 	 */

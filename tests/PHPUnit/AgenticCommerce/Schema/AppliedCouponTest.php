@@ -34,6 +34,14 @@ class AppliedCouponTest extends SchemaTestCase {
 		$this->assertOptionalField( 'discount_amount' );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'code', 'SAVE10' );
+		$this->assertWhitespaceTrimming( 'description', 'Discount' );
+
+		$this->assertEmptyStringPreserved( 'code' );
+		$this->assertEmptyStringPreserved( 'description' );
+	}
+
 	// === Field Accessor Tests ===
 
 	/**

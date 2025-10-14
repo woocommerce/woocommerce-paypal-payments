@@ -48,6 +48,15 @@ class ShippingOptionTest extends SchemaTestCase {
 		$this->assertOptionalField( 'estimated_delivery', $mandatory );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'id', 'STANDARD' );
+		$this->assertWhitespaceTrimming( 'name', 'Standard' );
+
+		$this->assertWhitespaceTrimming( 'description', 'Description' );
+		$this->assertWhitespaceTrimming( 'estimated_delivery', '2024-07-01' );
+		$this->assertEmptyStringPreserved( 'description' );
+	}
+
 	// === Required Field Accessors ===
 
 	/**

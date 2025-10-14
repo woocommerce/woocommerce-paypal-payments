@@ -236,6 +236,10 @@ class MoneyTest extends SchemaTestCase {
 		$this->addToAssertionCount( 1 );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'currency_code', 'USD', 'USD', 'currency' );
+	}
+
 	/**
 	 * Tests that missing currency_code produces validation issue.
 	 */

@@ -46,6 +46,11 @@ class CheckoutFieldTest extends SchemaTestCase {
 		$this->assertOptionalField( 'context', $mandatory );
 	}
 
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'type', 'GIFT_MESSAGE' );
+		$this->assertWhitespaceTrimming( 'status', 'PENDING' );
+	}
+
 	/**
 	 * Tests that CheckoutField stores and returns the type.
 	 */
