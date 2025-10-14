@@ -108,7 +108,12 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 				if ( ! $c->get( 'wcgateway.configuration.card-configuration' )->is_enabled() ) {
 					return $default_fields;
 				}
-				if ( CreditCardGateway::ID === $id && apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', false ) ) {
+
+				$card_payments_configuration = $c->get( 'wcgateway.configuration.card-configuration' );
+				assert( $card_payments_configuration instanceof CardPaymentsConfiguration );
+				$should_show_card_holder_name = apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', $card_payments_configuration->show_name_on_card() === 'yes' );
+
+				if ( CreditCardGateway::ID === $id && $should_show_card_holder_name ) {
 					$default_fields['card-name-field'] = '<p class="form-row form-row-wide">
 						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__( 'Cardholder Name', 'woocommerce-paypal-payments' ) . '</label>
 						<input id="ppcp-credit-card-gateway-card-name" class="input-text wc-credit-card-form-card-expiry" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">

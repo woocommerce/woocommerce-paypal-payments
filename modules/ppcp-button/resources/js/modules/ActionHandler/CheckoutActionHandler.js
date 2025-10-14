@@ -158,9 +158,13 @@ class CheckoutActionHandler {
 		};
 		return {
 			createOrder,
-			onApprove: onApprove( this, this.errorHandler, this.spinner ),
+			onApprove: onApprove( this, this.errorHandler ),
 			onCancel: () => {
 				spinner.unblock();
+
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 			onError: ( err ) => {
 				console.error( err );
@@ -172,12 +176,9 @@ class CheckoutActionHandler {
 
 				this.errorHandler.genericError();
 
-				if ( ResumeFlowHelper.isResumeFlow() ) {
-					ResumeFlowHelper.cleanHashParams();
-					jQuery( this.config.button.wrapper ).trigger(
-						'ppcp-reload-buttons'
-					);
-				}
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 		};
 	}

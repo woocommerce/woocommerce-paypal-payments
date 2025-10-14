@@ -89,15 +89,17 @@ class CartActionHandler {
 		return {
 			createOrder,
 			onApprove: onApprove( this, this.errorHandler ),
+			onCancel: () => {
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
+			},
 			onError: () => {
 				this.errorHandler.genericError();
 
-				if ( ResumeFlowHelper.isResumeFlow() ) {
-					ResumeFlowHelper.cleanHashParams();
-					jQuery( this.config.button.wrapper ).trigger(
-						'ppcp-reload-buttons'
-					);
-				}
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 		};
 	}

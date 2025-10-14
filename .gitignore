@@ -9,6 +9,8 @@ modules/*/vendor/*
 modules/*/assets/*
 !modules/ppcp-wc-gateway/assets/images
 *.zip
+!tests/qa/resources/files/*.zip
+!tests/qa-legacy-ui/resources/files/*.zip
 .env
 .env.integration
 auth.json

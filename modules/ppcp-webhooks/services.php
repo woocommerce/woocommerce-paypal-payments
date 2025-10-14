@@ -48,6 +48,7 @@ return array(
 			$endpoint,
 			$rest_endpoint,
 			$last_webhook_storage,
+			$container->get( 'webhook.status.simulation' ),
 			$logger
 		);
 	},

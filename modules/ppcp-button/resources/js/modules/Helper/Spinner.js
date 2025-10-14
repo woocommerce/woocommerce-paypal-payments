@@ -14,12 +14,16 @@ class Spinner {
 				background: '#fff',
 				opacity: 0.6,
 			},
+			baseZ: 10000,
 		} );
 	}
 
 	unblock() {
 		jQuery( this.target ).unblock();
 	}
-}
 
+	static fullPage() {
+		return new Spinner( window );
+	}
+}
 export default Spinner;

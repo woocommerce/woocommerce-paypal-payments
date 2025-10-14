@@ -1,9 +1,4 @@
 <?php
-/**
- * Factory for determining the appropriate return URL based on context.
- *
- * @package WooCommerce\PayPalCommerce\ApiClient\Factory
- */
 
 declare(strict_types=1);
 
@@ -12,14 +7,28 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
- * Class ReturnUrlFactory
+ * Factory for determining the appropriate return URL based on context.
  */
 class ReturnUrlFactory {
+	public const PCP_QUERY_ARG = 'pcp-return';
 
 	/**
+	 * @param string                $context The context, like in ContextTrait.
+	 * @param array<string, mixed>  $request_data The request parameters, if exist.
+	 *  'order_id`, 'purchase_units' etc.
+	 * @param array<string, string> $custom_query_args Additional query args to add into the URL.
+	 *
 	 * @throws RuntimeException When required data is missing for the context.
 	 */
-	public function from_context( string $context, array $request_data = array() ): string {
+	public function from_context(
+		string $context,
+		array $request_data = array(),
+		array $custom_query_args = array()
+	): string {
+		return $this->wc_url_from_context( $context, $request_data );
+	}
+
+	protected function wc_url_from_context( string $context, array $request_data = array() ): string {
 		switch ( $context ) {
 			case 'cart':
 			case 'cart-block':

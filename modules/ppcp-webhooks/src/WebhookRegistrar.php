@@ -1,9 +1,4 @@
 <?php
-/**
- * The WebhookRegistrar registers and unregisters webhooks with PayPal.
- *
- * @package WooCommerce\PayPalCommerce\Webhooks
- */
 
 declare(strict_types=1);
 
@@ -13,72 +8,41 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 /**
- * Class WebhookRegistrar
+ * The WebhookRegistrar registers and unregisters webhooks with PayPal.
  */
 class WebhookRegistrar {
-
-
 	const EVENT_HOOK = 'ppcp-register-event';
 	const KEY        = 'ppcp-webhook';
 
-	/**
-	 * The Webhook factory.
-	 *
-	 * @var WebhookFactory
-	 */
-	private $webhook_factory;
+	private WebhookFactory $webhook_factory;
 
-	/**
-	 * The Webhook endpoint.
-	 *
-	 * @var WebhookEndpoint
-	 */
-	private $endpoint;
+	private WebhookEndpoint $endpoint;
 
-	/**
-	 * The WordPress Rest API endpoint.
-	 *
-	 * @var IncomingWebhookEndpoint
-	 */
-	private $rest_endpoint;
+	private IncomingWebhookEndpoint $incoming_webhook_endpoint;
 
-	/**
-	 * The last webhook event storage.
-	 *
-	 * @var WebhookEventStorage
-	 */
-	private $last_webhook_event_storage;
+	private WebhookEventStorage $last_webhook_event_storage;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private WebhookSimulation $webhook_simulation;
 
-	/**
-	 * WebhookRegistrar constructor.
-	 *
-	 * @param WebhookFactory          $webhook_factory The Webhook factory.
-	 * @param WebhookEndpoint         $endpoint The Webhook endpoint.
-	 * @param IncomingWebhookEndpoint $rest_endpoint The WordPress Rest API endpoint.
-	 * @param WebhookEventStorage     $last_webhook_event_storage The last webhook event storage.
-	 * @param LoggerInterface         $logger The logger.
-	 */
+	private LoggerInterface $logger;
+
 	public function __construct(
 		WebhookFactory $webhook_factory,
 		WebhookEndpoint $endpoint,
-		IncomingWebhookEndpoint $rest_endpoint,
+		IncomingWebhookEndpoint $incoming_webhook_endpoint,
 		WebhookEventStorage $last_webhook_event_storage,
+		WebhookSimulation $webhook_simulation,
 		LoggerInterface $logger
 	) {
 
 		$this->webhook_factory            = $webhook_factory;
 		$this->endpoint                   = $endpoint;
-		$this->rest_endpoint              = $rest_endpoint;
+		$this->incoming_webhook_endpoint  = $incoming_webhook_endpoint;
 		$this->last_webhook_event_storage = $last_webhook_event_storage;
+		$this->webhook_simulation         = $webhook_simulation;
 		$this->logger                     = $logger;
 	}
 
@@ -91,8 +55,8 @@ class WebhookRegistrar {
 		$this->unregister();
 
 		$webhook = $this->webhook_factory->for_url_and_events(
-			$this->rest_endpoint->url(),
-			$this->rest_endpoint->handled_event_types()
+			$this->incoming_webhook_endpoint->url(),
+			$this->incoming_webhook_endpoint->handled_event_types()
 		);
 
 		try {
@@ -100,11 +64,17 @@ class WebhookRegistrar {
 			if ( empty( $created->id() ) ) {
 				return false;
 			}
+
 			update_option(
 				self::KEY,
 				$created->to_array()
 			);
+
 			$this->last_webhook_event_storage->clear();
+
+			// Check whether webhooks are arriving (e.g. for the Status page).
+			$this->webhook_simulation->start( $created );
+
 			$this->logger->info( 'Webhooks subscribed.' );
 			return true;
 		} catch ( RuntimeException $error ) {
