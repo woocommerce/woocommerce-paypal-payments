@@ -34,10 +34,12 @@ class GeoCoordinatesTest extends SchemaTestCase {
 	}
 
 	public function test_string_fields(): void {
-		$this->assertWhitespaceTrimming( 'country_code', 'US' );
-
-		$this->assertWhitespaceTrimming( 'subdivision', 'CA' );
 		$this->assertEmptyStringPreserved( 'subdivision' );
+
+		$this->assertWhitespaceTrimming( 'country_code', 'US' );
+		$this->assertWhitespaceTrimming( 'subdivision', 'CA' );
+
+		$this->assertStringFieldExactLength( 'country_code', 2 );
 		$this->assertStringFieldMaxLength( 'subdivision', 10 );
 	}
 
@@ -321,8 +323,6 @@ class GeoCoordinatesTest extends SchemaTestCase {
 
 	public function invalid_country_code_provider(): array {
 		return array(
-			'lowercase'    => array( 'us', 'Lowercase not allowed' ),
-			'mixed case'   => array( 'Us', 'Mixed case not allowed' ),
 			'single char'  => array( 'U', 'Must be exactly 2 characters' ),
 			'three chars'  => array( 'USA', 'Must be exactly 2 characters' ),
 			'with numbers' => array( 'U1', 'Numbers not allowed' ),

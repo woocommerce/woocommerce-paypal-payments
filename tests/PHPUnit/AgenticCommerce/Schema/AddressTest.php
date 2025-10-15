@@ -50,7 +50,7 @@ class AddressTest extends SchemaTestCase {
 		$this->assertWhitespaceTrimming( 'admin_area_1', 'ABC' );
 		$this->assertWhitespaceTrimming( 'postal_code', 'ABC' );
 
-		$this->assertStringFieldMaxLength( 'country_code', 2 );
+		$this->assertStringFieldExactLength( 'country_code', 2 );
 		$this->assertStringFieldMaxLength( 'address_line_1', 300 );
 		$this->assertStringFieldMaxLength( 'address_line_2', 300 );
 		$this->assertStringFieldMaxLength( 'admin_area_2', 120 );

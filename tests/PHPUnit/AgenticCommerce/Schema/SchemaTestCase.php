@@ -124,6 +124,46 @@ abstract class SchemaTestCase extends TestCase {
 	}
 
 	/**
+	 * Tests string field exact length validation.
+	 *
+	 * @param string     $field_name     Field name in the data array (supports dot notation).
+	 * @param int        $exact_length   Required exact length.
+	 * @param array|null $mandatory_data Additional data required for validation.
+	 */
+	protected function assertStringFieldExactLength( string $field_name, int $exact_length, array $mandatory_data = null ): void {
+		$class          = $this->get_schema_class();
+		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+
+		// Test below exact length produces validation issue
+		$too_short = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length - 1 ) ) );
+		$instance  = $class::from_array( $too_short );
+		$issues    = $instance->validate();
+
+		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when below $exact_length characters" );
+
+		$issue_fields = array_map(
+			static fn( $issue ) => $issue->to_array()['field'],
+			$issues
+		);
+		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
+
+		// Test at exact length is valid
+		$at_exact = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length ) ) );
+		$instance = $class::from_array( $at_exact );
+		$issues   = $instance->validate();
+
+		$this->assertEmpty( $issues, "Field '$field_name' should be valid at exactly $exact_length characters" );
+
+		// Test above exact length produces validation issue
+		$too_long = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length + 1 ) ) );
+		$instance = $class::from_array( $too_long );
+		$issues   = $instance->validate();
+
+		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when above $exact_length characters" );
+		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
+	}
+
+	/**
 	 * Tests string field max length validation.
 	 *
 	 * @param string     $field_name     Field name in the data array (supports dot notation).
