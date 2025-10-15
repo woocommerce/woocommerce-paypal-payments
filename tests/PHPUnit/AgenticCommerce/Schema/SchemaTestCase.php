@@ -35,6 +35,8 @@ abstract class SchemaTestCase extends TestCase {
 	 */
 	abstract protected function get_expected_data(): array;
 
+	abstract protected function get_data_types(): array;
+
 	/**
 	 * @return array Minimal input to pass schema validation
 	 */
@@ -100,6 +102,44 @@ abstract class SchemaTestCase extends TestCase {
 		}
 	}
 
+	/**
+	 * Tests that all fields accept only their declared types.
+	 *
+	 * @see get_data_type
+	 * @see assertFieldAcceptsOnlyType
+	 */
+	public function test_fields_accept_only_declared_types(): void {
+		$data_types = $this->get_data_types();
+
+		if ( empty( $data_types ) ) {
+			// Skip, no plain data-types to verify.
+			$this->addToAssertionCount( 1 );
+
+			return;
+		}
+
+		foreach ( $data_types as $field_name => $type_config ) {
+			$default = null;
+			$getter  = null;
+			$valid   = null;
+
+			if ( is_array( $type_config ) ) {
+				$type    = $type_config['type'];
+				$default = $type_config['default'] ?? null;
+				$getter  = $type_config['getter'] ?? null;
+				$valid   = $type_config['valid'] ?? null;
+
+				if ( ! is_null( $valid ) && ! is_array( $valid ) ) {
+					$valid = array( $valid );
+				}
+			} else {
+				$type = $type_config;
+			}
+
+			$this->assertFieldAcceptsOnlyType( $field_name, $type, $default, $getter, $valid );
+		}
+	}
+
 	// === Helper methods for common test patterns ===
 
 	/**
@@ -140,15 +180,14 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests that a boolean field returns the expected default state when missing.
 	 *
-	 * @param string $getter        Getter method name.
-	 * @param bool   $default_state Expected default value (default: false).
+	 * @param string $getter Getter method name.
 	 */
-	protected function assertBooleanFieldDefaultState( string $getter, bool $default_state = false ): void {
+	protected function assertBooleanFieldDefaultState( string $getter ): void {
 		$class    = $this->get_schema_class();
 		$data     = array();
 		$instance = $class::from_array( $data );
 
-		$this->assertEquals( $default_state, $instance->$getter() );
+		$this->assertSame( false, $instance->$getter() );
 	}
 
 	/**
@@ -224,49 +263,57 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests integer field min/max range validation.
 	 *
-	 * @param string $field_name     Field name in the data array.
-	 * @param int    $min            Minimum allowed value.
-	 * @param int    $max            Maximum allowed value.
-	 * @param string $validation_key Expected validation error field key.
-	 * @param array  $extra_data     Additional data required for validation.
+	 * @param string      $field_name Field name in the data array.
+	 * @param int         $min        Minimum allowed value.
+	 * @param int         $max        Maximum allowed value.
+	 * @param string|null $getter     Expected validation error field key.
 	 */
-	protected function assertIntegerFieldRange( string $field_name, int $min, int $max, string $validation_key = null, array $extra_data = array() ): void {
-		$validation_key = $validation_key ?? $field_name;
+	protected function assertIntegerFieldRange( string $field_name, int $min, int $max, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
 
 		// Test below minimum
-		$below_min = array_merge( $extra_data, array( $field_name => $min - 1 ) );
+		$below_min = array_merge( $mandatory_data, array( $field_name => $min - 1 ) );
 		$instance  = $class::from_array( $below_min );
 		$issues    = $instance->validate();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when below $min" );
-		$this->assertSame( $validation_key, $issues[0]->to_array()['field'] );
+		$this->assertSame( $getter, $issues[0]->to_array()['field'] );
 
 		// Test at minimum (valid)
-		$at_min   = array_merge( $extra_data, array( $field_name => $min ) );
+		$at_min   = array_merge( $mandatory_data, array( $field_name => $min ) );
 		$instance = $class::from_array( $at_min );
 		$issues   = $instance->validate();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at minimum value $min" );
 
 		// Test above maximum
-		$above_max = array_merge( $extra_data, array( $field_name => $max + 1 ) );
+		$above_max = array_merge( $mandatory_data, array( $field_name => $max + 1 ) );
 		$instance  = $class::from_array( $above_max );
 		$issues    = $instance->validate();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when above $max" );
-		$this->assertSame( $validation_key, $issues[0]->to_array()['field'] );
+		$this->assertSame( $getter, $issues[0]->to_array()['field'] );
 
 		// Test at maximum (valid)
-		$at_max   = array_merge( $extra_data, array( $field_name => $max ) );
+		$at_max   = array_merge( $mandatory_data, array( $field_name => $max ) );
 		$instance = $class::from_array( $at_max );
 		$issues   = $instance->validate();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at maximum value $max" );
 	}
 
-	protected function assertArrayFieldMinCount( string $field_name, int $min_count, array $item_template, string $validation_key = null ): void {
-		$validation_key = $validation_key ?? $field_name;
+	/**
+	 * Tests array field min count validation.
+	 *
+	 * @param string      $field_name    Field name in the data array.
+	 * @param int         $min_count     Minimum allowed number of items.
+	 * @param array       $item_template Template for generating array items.
+	 * @param string|null $getter        Expected validation error field key.
+	 */
+	protected function assertArrayFieldMinCount( string $field_name, int $min_count, array $item_template, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
 		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
 
@@ -283,7 +330,7 @@ abstract class SchemaTestCase extends TestCase {
 				static fn( $issue ) => $issue->to_array()['field'],
 				$issues
 			);
-			$this->assertContains( $validation_key, $issue_fields );
+			$this->assertContains( $getter, $issue_fields );
 		}
 
 		// Test at min count is valid
@@ -302,14 +349,13 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests array field max count validation.
 	 *
-	 * @param string $field_name     Field name in the data array.
-	 * @param int    $max_count      Maximum allowed number of items.
-	 * @param array  $item_template  Template for generating array items.
-	 * @param string $validation_key Expected validation error field key.
-	 * @param array  $extra_data     Additional data required for validation.
+	 * @param string      $field_name    Field name in the data array.
+	 * @param int         $max_count     Maximum allowed number of items.
+	 * @param array       $item_template Template for generating array items.
+	 * @param string|null $getter        Expected validation error field key.
 	 */
-	protected function assertArrayFieldMaxCount( string $field_name, int $max_count, array $item_template, string $validation_key = null ): void {
-		$validation_key = $validation_key ?? $field_name;
+	protected function assertArrayFieldMaxCount( string $field_name, int $max_count, array $item_template, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
 		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
 
@@ -334,7 +380,7 @@ abstract class SchemaTestCase extends TestCase {
 		$issues   = $instance->validate();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when exceeding $max_count items" );
-		$this->assertSame( $validation_key, $issues[0]->to_array()['field'] );
+		$this->assertSame( $getter, $issues[0]->to_array()['field'] );
 
 		// Test at max count (valid)
 		$at_max   = array_slice( $too_many, 0, $max_count );
@@ -346,26 +392,89 @@ abstract class SchemaTestCase extends TestCase {
 	}
 
 	/**
-	 * Tests that a field returns the expected type (object instance or primitive type).
+	 * Tests that a field only accepts a specific type and rejects others with a default.
 	 *
-	 * @param array  $input_data    Data to set on the schema (e.g., ['phone' => [...]] ).
-	 * @param string $getter        Getter method name to test.
-	 * @param string $expected_type Expected class name or primitive type (e.g., Money::class,
-	 *                              'array', 'string').
-	 * @param array  $extra_data    Additional data required for validation (e.g., required
-	 *                              fields).
+	 * @param string      $field_name    Field name in the data array (supports dot notation).
+	 * @param string      $expected_type Expected type.
+	 * @param mixed       $default_value Expected default when type is invalid.
+	 * @param string|null $getter        Getter method name (supports dot notation).
+	 * @param array|null  $valid_values  Optional override for valid test values.
 	 */
-	protected function assertFieldReturnsType( array $input_data, string $getter, string $expected_type, array $extra_data = array() ): void {
-		$class    = $this->get_schema_class();
-		$data     = array_merge( $extra_data, $input_data );
-		$instance = $class::from_array( $data );
+	protected function assertFieldAcceptsOnlyType( string $field_name, string $expected_type, $default_value = null, string $getter = null, array $valid_values = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $this->mandatory_data();
+		$class          = $this->get_schema_class();
 
-		$value = $instance->$getter();
+		// Primitive types to test for rejection
+		$unique_values = array(
+			'string' => 'a',
+			'int'    => 42,
+			'float'  => 3.14,
+			'true'   => true,
+			'false'  => false,
+			'array'  => array(),
+		);
 
-		if ( class_exists( $expected_type ) ) {
-			$this->assertInstanceOf( $expected_type, $value, "Getter '$getter()' should return instance of $expected_type" );
-		} else {
-			$this->assertSame( $expected_type, gettype( $value ), "Getter '$getter()' should return type $expected_type" );
+		// Valid values that should be accepted per type
+		$known_types = array(
+			'country'   => array( 'US' ),
+			'currency'  => array( 'USD' ),
+			'string'    => array( 'valid' ),
+			'int'       => array( 42 ),
+			'float'     => array( 3.14 ),
+			'number'    => array( '25.00', 25, 25. ),
+			'date'      => array( '2024-12-25' ),
+			'timestamp' => array( '2024-12-25T09:00:00Z' ),
+			'email'     => array( 'test@example.com' ),
+			'bool'      => array( true, false ),
+		);
+
+		// Which primitive types are compatible (should NOT be rejected)
+		$compatible_types = array(
+			'number'    => array( 'int', 'float', 'string' ),
+			'timestamp' => array( 'string' ),
+			'date'      => array( 'string' ),
+			'email'     => array( 'string' ),
+			'country'   => array( 'string' ),
+			'currency'  => array( 'string' ),
+			'bool'      => array( 'true', 'false' ),
+		);
+
+		if ( ! isset( $known_types[ $expected_type ] ) ) {
+			$this->fail( "Unknown type '$expected_type'. Valid types: " . implode( ', ', array_keys( $known_types ) ) );
+		}
+
+		// Positive tests: All known valid values must be accepted
+		$test_values = $valid_values ?? $known_types[ $expected_type ];
+
+		foreach ( $test_values as $input_value ) {
+			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+			$instance = $class::from_array( $data );
+			$actual   = $this->getNestedValue( $instance, $getter );
+
+			if ( 'string' === $expected_type ) {
+				$actual = strtolower( $actual );
+			}
+			$this->assertEquals( $input_value, $actual, "Field '$field_name' should accept valid $expected_type value" );
+		}
+
+		// Negative tests: All incompatible types must return default
+		$skip_checks = $compatible_types[ $expected_type ] ?? array( $expected_type );
+
+		foreach ( $unique_values as $type_name => $input_value ) {
+			if ( in_array( $type_name, $skip_checks, true ) ) {
+				continue;
+			}
+
+			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+			$instance = $class::from_array( $data );
+			$actual   = $this->getNestedValue( $instance, $getter );
+
+			$this->assertSame(
+				$default_value,
+				$actual,
+				"Field '$field_name' ($expected_type) should reject $type_name and return default"
+			);
 		}
 	}
 
@@ -410,45 +519,17 @@ abstract class SchemaTestCase extends TestCase {
 	}
 
 	/**
-	 * Tests that multiple validation errors are returned together.
-	 *
-	 * @param array $invalid_data    Invalid data with multiple errors.
-	 * @param array $expected_fields Expected field names in validation errors.
-	 * @param int   $expected_count  Expected number of validation errors.
-	 */
-	protected function assertMultipleValidationErrors( array $invalid_data, array $expected_fields, int $expected_count = null ): void {
-		$expected_count = $expected_count ?? count( $expected_fields );
-		$class          = $this->get_schema_class();
-		$instance       = $class::from_array( $invalid_data );
-		$issues         = $instance->validate();
-
-		$this->assertCount( $expected_count, $issues, 'Should return all validation errors at once' );
-
-		$actual_fields = array_map(
-			function ( $issue ) {
-				return $issue->to_array()['field'];
-			},
-			$issues
-		);
-
-		foreach ( $expected_fields as $field ) {
-			$this->assertContains( $field, $actual_fields, "Expected validation error for field: $field" );
-		}
-	}
-
-	/**
 	 * Tests field format validation with multiple test cases.
 	 *
-	 * @param string      $field_name      Field name in the data array (supports dot notation).
-	 * @param array       $test_cases      Test cases [description => [input, is_valid,
-	 *                                     expected_output]]. expected_output is optional -
-	 *                                     defaults to input if not provided.
-	 * @param string|null $getter          Getter method name (supports dot notation, defaults to
-	 *                                     field_name).
-	 * @param mixed       $invalid_default Expected value when validation fails (e.g., '', null,
-	 *                                     0).
+	 * @param string      $field_name    Field name in the data array (supports dot notation).
+	 * @param array       $test_cases    Test cases [description => [input, is_valid,
+	 *                                   expected_output]]. expected_output is optional -
+	 *                                   defaults to input if not provided.
+	 * @param string|null $getter        Getter method name (supports dot notation, defaults to
+	 *                                   field_name).
+	 * @param mixed       $default_value Expected value when validation fails (e.g., '', null).
 	 */
-	protected function assertFieldFormat( string $field_name, array $test_cases, string $getter = null, $invalid_default = null ): void {
+	protected function assertFieldFormat( string $field_name, array $test_cases, string $getter = null, $default_value = null ): void {
 		$getter         = $getter ?? $field_name;
 		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
@@ -474,7 +555,7 @@ abstract class SchemaTestCase extends TestCase {
 					$issues
 				);
 				$this->assertContains( $field_name, $issue_fields, "Case '$description': Expected validation error for field '$field_name'" );
-				$this->assertSame( $invalid_default, $actual, "Case '$description': Unexpected default value for invalid input" );
+				$this->assertSame( $default_value, $actual, "Case '$description': Unexpected default value for invalid input" );
 			}
 		}
 	}

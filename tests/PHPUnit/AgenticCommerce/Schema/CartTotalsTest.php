@@ -26,6 +26,10 @@ class CartTotalsTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array();
+	}
+
 	protected function get_expected_data(): array {
 		return array(
 			'subtotal.currency'          => 'USD',

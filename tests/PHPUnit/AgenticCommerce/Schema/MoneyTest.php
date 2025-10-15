@@ -28,6 +28,13 @@ class MoneyTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'currency_code' => array( 'type' => 'currency', 'getter' => 'currency' ),
+			'value'         => 'number',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'currency_code' => 'USD',

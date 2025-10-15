@@ -26,6 +26,13 @@ class CouponTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'code'   => 'string',
+			'action' => array( 'type' => 'string', 'valid' => 'apply' ),
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'code'   => 'SAVE10',

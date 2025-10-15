@@ -102,6 +102,10 @@ class PayPalCartTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array();
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'payment_method' => array( 'type' => 'paypal' ),

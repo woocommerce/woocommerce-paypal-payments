@@ -62,6 +62,17 @@ class CartItemTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'item_id'     => 'string',
+			'variant_id'  => 'string',
+			'parent_id'   => 'string',
+			'quantity'    => array( 'type' => 'number', 'default' => 0 ),
+			'name'        => 'string',
+			'description' => 'string',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array( 'quantity' => 1 );
 	}

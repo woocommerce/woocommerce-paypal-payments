@@ -38,6 +38,16 @@ class GiftOptionsTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'is_gift'       => array( 'type' => 'bool', 'default' => false ),
+			'gift_wrap'     => array( 'type' => 'bool', 'default' => false ),
+			'delivery_date' => 'timestamp',
+			'sender_name'   => 'string',
+			'gift_message'  => 'string',
+		);
+	}
+
 	public function test_required_fields(): void {
 		// GiftOptions has no required fields - all fields are optional.
 		$this->addToAssertionCount( 1 );
@@ -45,8 +55,8 @@ class GiftOptionsTest extends SchemaTestCase {
 
 	public function test_optional_fields(): void {
 		// Boolean fields have default behavior, so test separately.
-		$this->assertBooleanFieldDefaultState( 'is_gift', false );
-		$this->assertBooleanFieldDefaultState( 'gift_wrap', false );
+		$this->assertBooleanFieldDefaultState( 'is_gift' );
+		$this->assertBooleanFieldDefaultState( 'gift_wrap' );
 
 		// Other optional fields return null.
 		$this->assertOptionalField( 'recipient' );

@@ -32,6 +32,13 @@ class AppliedCouponTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'code'        => 'string',
+			'description' => 'string',
+		);
+	}
+
 	public function test_required_fields(): void {
 		// AppliedCoupon has no required fields - all fields are optional.
 		$this->addToAssertionCount( 1 );
@@ -50,7 +57,6 @@ class AppliedCouponTest extends SchemaTestCase {
 		$this->assertEmptyStringPreserved( 'code' );
 		$this->assertEmptyStringPreserved( 'description' );
 	}
-
 
 	/**
 	 * Tests that string fields reject invalid types.

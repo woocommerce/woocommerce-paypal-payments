@@ -38,6 +38,20 @@ class ShippingOptionTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'id'                 => array( 'type' => 'string', 'default' => '' ),
+			'name'               => array( 'type' => 'string', 'default' => '' ),
+			'description'        => 'string',
+			'isSelected'         => array(
+				'type'    => 'bool',
+				'getter'  => 'is_selected',
+				'default' => false,
+			),
+			'estimated_delivery' => 'date',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'id'         => 'STANDARD_SHIPPING',

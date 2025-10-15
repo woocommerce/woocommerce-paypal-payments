@@ -30,6 +30,15 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'latitude'     => 'number',
+			'longitude'    => 'number',
+			'subdivision'  => 'string',
+			'country_code' => 'country',
+		);
+	}
+
 	public function test_required_fields(): void {
 		// GeoCoordinates has no required fields - all fields are optional when schema is used.
 		$this->addToAssertionCount( 1 );
@@ -138,65 +147,5 @@ class GeoCoordinatesTest extends SchemaTestCase {
 			'with dots'             => array( 'CA.NY', false ),
 			'with slash'            => array( 'CA/NY', false ),
 		);
-	}
-
-	/**
-	 * @dataProvider invalid_type_provider
-	 */
-	public function test_fields_reject_invalid_types( string $field_name, $invalid_value, string $getter_method, $expected_default ): void {
-		$data        = array( $field_name => $invalid_value );
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertSame( $expected_default, $coordinates->$getter_method() );
-	}
-
-	public function invalid_type_provider(): array {
-		return array(
-			'latitude with array'      => array( 'latitude', array( '37.7749' ), 'latitude', null ),
-			'longitude with array'     => array( 'longitude', array( '-122' ), 'longitude', null ),
-			'subdivision with array'   => array(
-				'subdivision',
-				array( 'CA' ),
-				'subdivision',
-				null,
-			),
-			'subdivision with integer' => array( 'subdivision', 95, 'subdivision', null ),
-			'country_code with array'  => array(
-				'country_code',
-				array( 'US' ),
-				'country_code',
-				null,
-			),
-			'country_code with int'    => array( 'country_code', 1, 'country_code', null ),
-		);
-	}
-
-	/**
-	 * Tests that multiple validation errors are all returned together.
-	 */
-	public function test_multiple_validation_errors_returned_together(): void {
-		$data = array(
-			'latitude'     => '100',
-			'longitude'    => '200',
-			'subdivision'  => 'invalid-subdiv',
-			'country_code' => 'USA',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertCount( 4, $issues, 'Should return all validation errors at once' );
-
-		$fields = array_map(
-			function ( $issue ) {
-				return $issue->to_array()['field'];
-			},
-			$issues
-		);
-
-		$this->assertContains( 'latitude', $fields );
-		$this->assertContains( 'longitude', $fields );
-		$this->assertContains( 'subdivision', $fields );
-		$this->assertContains( 'country_code', $fields );
 	}
 }

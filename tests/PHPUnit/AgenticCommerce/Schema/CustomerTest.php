@@ -36,6 +36,12 @@ class CustomerTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'email_address' => 'email',
+		);
+	}
+
 	public function test_required_fields(): void {
 		// Customer has no required fields - all fields are optional.
 		$this->addToAssertionCount( 1 );
@@ -43,19 +49,6 @@ class CustomerTest extends SchemaTestCase {
 
 	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'email_address' );
-
-		$this->assertFieldReturnsType( array(
-			'name' => array(
-				'given_name' => 'John',
-				'surname'    => 'Smith',
-			),
-		), 'name', 'array' );
-		$this->assertFieldReturnsType( array(
-			'phone' => array(
-				'country_code'    => '1',
-				'national_number' => '5551234567',
-			),
-		), 'phone', 'array' );
 	}
 
 	public function test_optional_customer_fields(): void {

@@ -28,6 +28,14 @@ class PaymentMethodTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'type'     => array( 'type' => 'string', 'valid' => 'paypal', 'default' => 'paypal' ),
+			'token'    => 'string',
+			'payer_id' => 'string',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'type' => 'paypal',
@@ -50,53 +58,5 @@ class PaymentMethodTest extends SchemaTestCase {
 
 		$this->assertEmptyStringPreserved( 'token' );
 		$this->assertEmptyStringPreserved( 'payer_id' );
-	}
-
-	/**
-	 * Tests that fields reject invalid types and use defaults.
-	 *
-	 * @dataProvider invalid_type_provider
-	 */
-	public function test_fields_reject_invalid_types( array $data, string $getter_method, $expected_default ): void {
-		$method = PaymentMethod::from_array( $data );
-
-		$this->assertSame( $expected_default, $method->$getter_method() );
-	}
-
-	public function invalid_type_provider(): array {
-		return array(
-			'token with array'    => array(
-				'data'             => array(
-					'type'  => 'paypal',
-					'token' => array( 'invalid' ),
-				),
-				'getter_method'    => 'token',
-				'expected_default' => null,
-			),
-			'token with integer'  => array(
-				'data'             => array(
-					'type'  => 'paypal',
-					'token' => 123,
-				),
-				'getter_method'    => 'token',
-				'expected_default' => null,
-			),
-			'payer_id with array' => array(
-				'data'             => array(
-					'type'     => 'paypal',
-					'payer_id' => array( 'invalid' ),
-				),
-				'getter_method'    => 'payer_id',
-				'expected_default' => null,
-			),
-			'payer_id with int'   => array(
-				'data'             => array(
-					'type'     => 'paypal',
-					'payer_id' => 456,
-				),
-				'getter_method'    => 'payer_id',
-				'expected_default' => null,
-			),
-		);
 	}
 }

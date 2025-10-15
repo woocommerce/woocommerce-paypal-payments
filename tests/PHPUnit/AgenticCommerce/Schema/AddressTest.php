@@ -34,6 +34,17 @@ class AddressTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_data_types(): array {
+		return array(
+			'address_line_1' => 'string',
+			'address_line_2' => 'string',
+			'admin_area_2'   => 'string',
+			'admin_area_1'   => 'string',
+			'postal_code'    => 'string',
+			'country_code'   => 'country',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array( 'country_code' => 'US' );
 	}
