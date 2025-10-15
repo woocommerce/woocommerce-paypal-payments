@@ -3,10 +3,6 @@
     "version": "1.0.0",
     "description": "WooCommerce Paypal Payments Playwright tests",
     "main": "index.js",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/inpsyde/playwright-tests.git"
-    },
     "author": {
         "name": "Syde GmbH",
         "email": "hello@syde.com",
@@ -18,7 +14,6 @@
     },
     "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
     "dependencies": {
-        "@inpsyde/playwright-tests": "git+https://github.com/inpsyde/playwright-tests.git#main",
         "@inpsyde/playwright-utils": "^2.7.3",
         "dotenv": "^16.3.1",
         "dotenv-cli": "^7.3.0",
