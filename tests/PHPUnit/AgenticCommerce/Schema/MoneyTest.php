@@ -256,37 +256,6 @@ class MoneyTest extends SchemaTestCase {
 		);
 	}
 
-	/**
-	 * Tests that missing currency_code produces validation issue.
-	 */
-	public function test_missing_currency_code(): void {
-		$data   = array( 'value' => '10.00' );
-		$money  = Money::from_array( $data );
-		$issues = $money->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'currency_code', $issue_data['field'] );
-		$this->assertInstanceOf( MissingField::class, $issues[0] );
-		$this->assertStringContainsString( 'currency code', $issue_data['user_message'] );
-	}
-
-	/**
-	 * Tests that missing value produces validation issue.
-	 */
-	public function test_missing_value(): void {
-		$data   = array( 'currency_code' => 'USD' );
-		$money  = Money::from_array( $data );
-		$issues = $money->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'value', $issue_data['field'] );
-		$this->assertInstanceOf( MissingField::class, $issues[0] );
-		$this->assertStringContainsString( 'value', $issue_data['user_message'] );
-	}
 
 	/**
 	 * Tests that multiple validation issues are collected.

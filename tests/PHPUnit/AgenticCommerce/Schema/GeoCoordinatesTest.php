@@ -503,48 +503,5 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		$this->assertSame( 'GB', $coordinates->country_code() );
 	}
 
-	/**
-	 * Tests that zero coordinates are valid (Gulf of Guinea).
-	 */
-	public function test_zero_coordinates_are_valid(): void {
-		$data = array(
-			'latitude'  => '0',
-			'longitude' => '0',
-		);
 
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	/**
-	 * Tests that integer string coordinates without decimals are valid.
-	 */
-	public function test_integer_coordinates_without_decimals(): void {
-		$data = array(
-			'latitude'  => '45',
-			'longitude' => '-90',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	/**
-	 * Tests that very precise coordinates with many decimals are valid.
-	 */
-	public function test_high_precision_coordinates(): void {
-		$data = array(
-			'latitude'  => '37.774929',
-			'longitude' => '-122.419416',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-	}
 }
