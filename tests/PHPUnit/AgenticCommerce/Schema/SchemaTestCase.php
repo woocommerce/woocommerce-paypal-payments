@@ -257,4 +257,51 @@ abstract class SchemaTestCase extends TestCase {
 		$this->assertEquals( $expected_value, $actual );
 	}
 
+	// === Helper utilities for nested field access ===
+
+	/**
+	 * Sets a nested value in an array using dot notation.
+	 *
+	 * @param array  $data  Array to modify.
+	 * @param string $path  Dot-separated path (e.g., 'phone.country_code').
+	 * @param mixed  $value Value to set.
+	 * @return array Modified array.
+	 */
+	protected function setNestedValue( array $data, string $path, $value ): array {
+		$keys = explode( '.', $path );
+		$temp = &$data;
+
+		foreach ( $keys as $key ) {
+			if ( ! isset( $temp[ $key ] ) || ! is_array( $temp[ $key ] ) ) {
+				$temp[ $key ] = array();
+			}
+			$temp = &$temp[ $key ];
+		}
+
+		$temp = $value;
+
+		return $data;
+	}
+
+	/**
+	 * Gets a nested value from an object using dot notation.
+	 *
+	 * @param object $instance Schema instance.
+	 * @param string $path     Dot-separated path (e.g., 'phone.country_code').
+	 * @return mixed Retrieved value.
+	 */
+	protected function getNestedValue( $instance, string $path ) {
+		$keys  = explode( '.', $path );
+		$value = $instance;
+
+		foreach ( $keys as $key ) {
+			if ( is_array( $value ) ) {
+				$value = $value[ $key ] ?? null;
+			} else {
+				$value = $value->$key();
+			}
+		}
+
+		return $value;
+	}
 }
