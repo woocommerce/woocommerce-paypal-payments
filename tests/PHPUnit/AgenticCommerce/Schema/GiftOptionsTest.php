@@ -52,6 +52,12 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertEmptyStringPreserved( 'gift_message' );
 
 		$this->assertStringFieldMaxLength( 'gift_message', 500 );
+
+		// Nested fields
+		$this->assertWhitespaceTrimming( 'recipient.name', 'John' );
+		$this->assertWhitespaceTrimming( 'recipient.email', 'john@example.com' );
+		$this->assertEmptyStringPreserved( 'recipient.name' );
+		$this->assertEmptyStringPreserved( 'recipient.email' );
 	}
 
 	/**

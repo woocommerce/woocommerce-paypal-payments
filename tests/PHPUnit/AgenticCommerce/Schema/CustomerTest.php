@@ -59,6 +59,18 @@ class CustomerTest extends SchemaTestCase {
 		// Top-level optional fields
 		$this->assertWhitespaceTrimming( 'email_address', 'test@example.com' );
 		$this->assertEmptyStringPreserved( 'email_address', 'email_address' );
+
+		// Nested name fields
+		$this->assertWhitespaceTrimming( 'name.given_name', 'John' );
+		$this->assertWhitespaceTrimming( 'name.surname', 'Smith' );
+		$this->assertEmptyStringPreserved( 'name.given_name' );
+		$this->assertEmptyStringPreserved( 'name.surname' );
+		$this->assertStringFieldMaxLength( 'name.given_name', 140 );
+		$this->assertStringFieldMaxLength( 'name.surname', 140 );
+
+		// Nested phone fields (digits only, no max length test for pattern-validated fields)
+		$this->assertWhitespaceTrimming( 'phone.country_code', '1' );
+		$this->assertWhitespaceTrimming( 'phone.national_number', '5551234567' );
 	}
 
 	/**
