@@ -72,6 +72,8 @@ class Customer extends AgenticSchema {
 			$national_number = $input['phone']['national_number'] ?? null;
 
 			if ( is_string( $country_code ) ) {
+				$country_code = trim( $country_code );
+
 				if ( ! is_numeric( $country_code ) ) {
 					$add_issue( new InvalidData( 'Invalid country code format', 'The customers phone country-code must be numeric', 'phone.country_code' ) );
 				} elseif ( strlen( $country_code ) > 3 ) {
@@ -81,6 +83,8 @@ class Customer extends AgenticSchema {
 				}
 			}
 			if ( is_string( $national_number ) ) {
+				$national_number = trim( $national_number );
+
 				if ( ! is_numeric( $national_number ) ) {
 					$add_issue( new InvalidData( 'Invalid national number format', 'The customers phone number must be numeric', 'phone.national_number' ) );
 				} elseif ( strlen( $national_number ) > 14 ) {
