@@ -221,6 +221,50 @@ abstract class SchemaTestCase extends TestCase {
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at exactly $max_length characters" );
 	}
 
+	/**
+	 * Tests integer field min/max range validation.
+	 *
+	 * @param string $field_name     Field name in the data array.
+	 * @param int    $min            Minimum allowed value.
+	 * @param int    $max            Maximum allowed value.
+	 * @param string $validation_key Expected validation error field key.
+	 * @param array  $extra_data     Additional data required for validation.
+	 */
+	protected function assertIntegerFieldRange( string $field_name, int $min, int $max, string $validation_key = null, array $extra_data = array() ): void {
+		$validation_key = $validation_key ?? $field_name;
+		$class          = $this->get_schema_class();
+
+		// Test below minimum
+		$below_min = array_merge( $extra_data, array( $field_name => $min - 1 ) );
+		$instance  = $class::from_array( $below_min );
+		$issues    = $instance->validate();
+
+		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when below $min" );
+		$this->assertSame( $validation_key, $issues[0]->to_array()['field'] );
+
+		// Test at minimum (valid)
+		$at_min   = array_merge( $extra_data, array( $field_name => $min ) );
+		$instance = $class::from_array( $at_min );
+		$issues   = $instance->validate();
+
+		$this->assertEmpty( $issues, "Field '$field_name' should be valid at minimum value $min" );
+
+		// Test above maximum
+		$above_max = array_merge( $extra_data, array( $field_name => $max + 1 ) );
+		$instance  = $class::from_array( $above_max );
+		$issues    = $instance->validate();
+
+		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when above $max" );
+		$this->assertSame( $validation_key, $issues[0]->to_array()['field'] );
+
+		// Test at maximum (valid)
+		$at_max   = array_merge( $extra_data, array( $field_name => $max ) );
+		$instance = $class::from_array( $at_max );
+		$issues   = $instance->validate();
+
+		$this->assertEmpty( $issues, "Field '$field_name' should be valid at maximum value $max" );
+	}
+
 	protected function assertArrayFieldMinCount( string $field_name, int $min_count, array $item_template, string $validation_key = null ): void {
 		$validation_key = $validation_key ?? $field_name;
 		$mandatory_data = $this->mandatory_data();
