@@ -23,6 +23,15 @@ class AppliedCouponTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'code'                     => 'SAVE10',
+			'description'              => '10% off entire order',
+			'discount_amount.currency' => 'USD',
+			'discount_amount.value'    => 4.0,
+		);
+	}
+
 	public function test_required_fields(): void {
 		// AppliedCoupon has no required fields - all fields are optional.
 		$this->addToAssertionCount( 1 );

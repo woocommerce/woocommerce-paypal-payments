@@ -20,6 +20,14 @@ class PaymentMethodTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'type'     => 'paypal',
+			'token'    => 'EC123456789',
+			'payer_id' => 'merchant@example.com',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'type' => 'paypal',

@@ -42,8 +42,28 @@ class CartItemTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'item_id'                     => 'SHIRT-BLUE-M',
+			'variant_id'                  => 'SHIRT-BLUE-M-COTTON',
+			'parent_id'                   => 'SHIRT-COLLECTION-001',
+			'quantity'                    => 2,
+			'name'                        => 'Blue Cotton T-Shirt (Medium)',
+			'description'                 => 'Comfortable cotton t-shirt in medium size',
+			'price.currency'              => 'USD',
+			'price.value'                 => 25.0,
+			'selected_attributes.0.name'  => 'Color',
+			'selected_attributes.0.value' => 'Blue',
+			'selected_attributes.1.name'  => 'Size',
+			'selected_attributes.1.value' => 'Medium',
+			'gift_options.is_gift'        => true,
+			'gift_options.sender_name'    => 'John Smith',
+			'gift_options.gift_message'   => 'Happy Birthday!',
+		);
+	}
+
 	protected function mandatory_data(): array {
-		return  array( 'quantity' => 1 );
+		return array( 'quantity' => 1 );
 	}
 
 	public function test_required_fields(): void {

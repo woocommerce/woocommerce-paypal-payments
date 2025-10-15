@@ -27,6 +27,13 @@ abstract class SchemaTestCase extends TestCase {
 	 */
 	abstract protected function get_valid_data(): array;
 
+	/**
+	 * A flat array defining the expected getter responses for an instance
+	 * that was initialized using the `get_valid_data()` response.
+	 *
+	 * @return array Map of getter names to expected values (e.g., ['country_code' => 'US']).
+	 */
+	abstract protected function get_expected_data(): array;
 
 	/**
 	 * @return array Minimal input to pass schema validation
@@ -69,6 +76,28 @@ abstract class SchemaTestCase extends TestCase {
 
 		$this->assertNotSame( $instance1, $instance2, 'with() must return a new instance' );
 		$this->assertInstanceOf( $class, $instance2 );
+	}
+
+	/**
+	 * Tests that valid data is correctly parsed and accessible via getters.
+	 * Subclasses should override get_expected_values() to define field->getter mappings.
+	 */
+	public function test_valid_data_accessible_via_getters(): void {
+		$expectations = $this->get_expected_data();
+
+		if ( empty( $expectations ) ) {
+			$this->markTestSkipped( 'No getter mappings defined - override get_expected_values() to test' );
+		}
+
+		$class    = $this->get_schema_class();
+		$instance = $class::from_array( $this->get_valid_data() );
+
+		$this->assertEmpty( $instance->validate(), 'Valid data should pass validation' );
+
+		foreach ( $expectations as $getter => $expected ) {
+			$actual = $this->getNestedValue( $instance, $getter );
+			$this->assertSame( $expected, $actual, "Getter '$getter()' should return '$expected' value" );
+		}
 	}
 
 	// === Helper methods for common test patterns ===

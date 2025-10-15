@@ -26,6 +26,18 @@ class ShippingOptionTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'id'                 => 'STANDARD_SHIPPING',
+			'name'               => 'Standard Shipping (5-7 days)',
+			'description'        => 'Standard ground shipping via USPS',
+			'price.currency'     => 'USD',
+			'price.value'        => 5.99,
+			'is_selected'        => true,
+			'estimated_delivery' => '2024-07-01',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'id'         => 'STANDARD_SHIPPING',

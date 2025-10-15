@@ -14,11 +14,22 @@ class AddressTest extends SchemaTestCase {
 
 	protected function get_valid_data(): array {
 		return array(
-			'address_line_1' => 'Main Street 123',
-			'address_line_2' => 'Apartment 1',
-			'admin_area_2'   => 'City',
-			'admin_area_1'   => 'Region',
-			'postal_code'    => '12345',
+			'address_line_1' => '123 Main Street',
+			'address_line_2' => 'Apt 4B',
+			'admin_area_2'   => 'San Jose',
+			'admin_area_1'   => 'CA',
+			'postal_code'    => '95131',
+			'country_code'   => 'US',
+		);
+	}
+
+	protected function get_expected_data(): array {
+		return array(
+			'address_line_1' => '123 Main Street',
+			'address_line_2' => 'Apt 4B',
+			'admin_area_2'   => 'San Jose',
+			'admin_area_1'   => 'CA',
+			'postal_code'    => '95131',
 			'country_code'   => 'US',
 		);
 	}

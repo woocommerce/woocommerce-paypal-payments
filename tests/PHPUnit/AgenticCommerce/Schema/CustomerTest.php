@@ -26,6 +26,16 @@ class CustomerTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'name.given_name'       => 'John',
+			'name.surname'          => 'Smith',
+			'email_address'         => 'john.smith@example.com',
+			'phone.country_code'    => '1',
+			'phone.national_number' => '5551234567',
+		);
+	}
+
 	public function test_required_fields(): void {
 		// Customer has no required fields - all fields are optional.
 		$this->addToAssertionCount( 1 );

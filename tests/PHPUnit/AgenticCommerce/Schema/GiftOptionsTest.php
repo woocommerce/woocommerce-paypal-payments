@@ -26,6 +26,18 @@ class GiftOptionsTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'is_gift'         => true,
+			'recipient.name'  => 'Mary Johnson',
+			'recipient.email' => 'mary@example.com',
+			'delivery_date'   => '2024-12-25T09:00:00Z',
+			'sender_name'     => 'John Smith',
+			'gift_message'    => 'Happy Birthday! Hope you enjoy this gift.',
+			'gift_wrap'       => true,
+		);
+	}
+
 	public function test_required_fields(): void {
 		// GiftOptions has no required fields - all fields are optional.
 		$this->addToAssertionCount( 1 );

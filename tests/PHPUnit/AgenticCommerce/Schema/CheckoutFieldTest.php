@@ -31,6 +31,19 @@ class CheckoutFieldTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'type'                      => 'AGE_VERIFICATION_21_PLUS',
+			'status'                    => 'COMPLETED',
+			'value.confirmed'           => true,
+			'value.verification_method' => 'self_declaration',
+			'value.verification_date'   => '2024-06-24T14:30:00Z',
+			'context.display_name'      => 'Age Verification (21+)',
+			'context.min_age'           => 21,
+			'context.compliance_note'   => 'Required by state law',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'type'   => 'AGE_VERIFICATION_21_PLUS',

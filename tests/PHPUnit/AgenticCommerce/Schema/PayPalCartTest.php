@@ -70,6 +70,38 @@ class PayPalCartTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'items.0.item_id'                 => 'SHIRT-001',
+			'items.0.quantity'                => 1,
+			'items.0.name'                    => 'Blue T-Shirt',
+			'items.0.price.currency'          => 'USD',
+			'items.0.price.value'             => 25.00,
+			'customer.email_address'          => 'customer@example.com',
+			'customer.name.given_name'        => 'John',
+			'customer.name.surname'           => 'Smith',
+			'shipping_address.address_line_1' => '123 Main Street',
+			'shipping_address.admin_area_2'   => 'San Jose',
+			'shipping_address.admin_area_1'   => 'CA',
+			'shipping_address.postal_code'    => '95131',
+			'shipping_address.country_code'   => 'US',
+			'billing_address.address_line_1'  => '456 Payment Blvd',
+			'billing_address.admin_area_2'    => 'New York',
+			'billing_address.admin_area_1'    => 'NY',
+			'billing_address.postal_code'     => '10001',
+			'billing_address.country_code'    => 'US',
+			'payment_method.type'             => 'paypal',
+			'checkout_fields.0.type'          => 'AGE_VERIFICATION_21_PLUS',
+			'checkout_fields.0.status'        => 'PENDING',
+			'coupons.0.code'                  => 'SAVE10',
+			'coupons.0.action'                => 'APPLY',
+			'geo_coordinates.latitude'        => 37.7749,
+			'geo_coordinates.longitude'       => - 122.4194,
+			'geo_coordinates.subdivision'     => 'CA',
+			'geo_coordinates.country_code'    => 'US',
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'payment_method' => array( 'type' => 'paypal' ),

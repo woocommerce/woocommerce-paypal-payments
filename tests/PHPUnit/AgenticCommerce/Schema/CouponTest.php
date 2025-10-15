@@ -21,6 +21,13 @@ class CouponTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'code'   => 'SAVE10',
+			'action' => 'APPLY',
+		);
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'code' );
 		$this->assertRequiredField( 'action' );

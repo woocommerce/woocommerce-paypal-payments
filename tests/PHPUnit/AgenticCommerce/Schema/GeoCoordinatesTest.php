@@ -21,6 +21,15 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'latitude'     => 37.7749,
+			'longitude'    => - 122.4194,
+			'subdivision'  => 'CA',
+			'country_code' => 'US',
+		);
+	}
+
 	public function test_required_fields(): void {
 		// GeoCoordinates has no required fields - all fields are optional when schema is used.
 		$this->addToAssertionCount( 1 );

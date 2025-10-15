@@ -22,6 +22,13 @@ class MoneyTest extends SchemaTestCase {
 		);
 	}
 
+	protected function get_expected_data(): array {
+		return array(
+			'currency' => 'USD',
+			'value'    => 25.,
+		);
+	}
+
 	protected function mandatory_data(): array {
 		return array(
 			'currency_code' => 'USD',
