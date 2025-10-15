@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
  * @see AddressTest - Unit tests for this class.
  */
 class Address extends AgenticSchema {
-	private string $country_code = '';
+	private ?string $country_code = null;
 
 	private ?string $address_line_1 = null;
 
@@ -29,7 +29,7 @@ class Address extends AgenticSchema {
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->country_code   = '';
+		$this->country_code   = null;
 		$this->address_line_1 = null;
 		$this->address_line_2 = null;
 		$this->admin_area_2   = null;
@@ -40,7 +40,7 @@ class Address extends AgenticSchema {
 		if ( isset( $input['country_code'] ) ) {
 			$country_code = strtoupper( trim( $input['country_code'] ) );
 
-			if ( 2 === strlen( $country_code ) ) {
+			if ( preg_match( '/^[A-Z]{2}$/', $country_code ) ) {
 				$this->country_code = $country_code;
 			} else {
 				$add_issue( new InvalidData( 'Unexpected country_code', 'Please provide a valid 2-letter country code.', 'country_code' ) );
@@ -101,7 +101,7 @@ class Address extends AgenticSchema {
 		}
 	}
 
-	public function country_code(): string {
+	public function country_code(): ?string {
 		return $this->country_code;
 	}
 

@@ -68,8 +68,7 @@ class GeoCoordinates extends AgenticSchema {
 			}
 		}
 		if ( isset( $input['subdivision'] ) && is_string( $input['subdivision'] ) ) {
-			$subdivision       = strtoupper( trim( $input['subdivision'] ) );
-			$this->subdivision = '';
+			$subdivision = strtoupper( trim( $input['subdivision'] ) );
 
 			if ( strlen( $subdivision ) > 10 ) {
 				$add_issue( new InvalidData( 'Subdivision too long', 'The subdivision code must be in ISO 3166-2 format (no country code).', 'subdivision' ) );
@@ -80,10 +79,9 @@ class GeoCoordinates extends AgenticSchema {
 			}
 		}
 		if ( isset( $input['country_code'] ) && is_string( $input['country_code'] ) ) {
-			$country_code       = strtoupper( trim( $input['country_code'] ) );
-			$this->country_code = '';
+			$country_code = strtoupper( trim( $input['country_code'] ) );
 
-			if ( $country_code && ! preg_match( '/^[A-Z]{2}$/', $country_code ) ) {
+			if ( ! preg_match( '/^[A-Z]{2}$/', $country_code ) ) {
 				$add_issue( new InvalidData( 'Country code invalid', 'The country code must be a 2-letter value.', 'country_code' ) );
 			} else {
 				$this->country_code = $country_code;

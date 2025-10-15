@@ -16,21 +16,21 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
  * @see MoneyTest - Unit tests for this class.
  */
 class Money extends AgenticSchema {
-	private string $currency = '';
+	private ?string $currency = null;
 
-	private float $value = 0.;
+	private ?float $value = null;
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->currency = '';
-		$this->value    = 0.;
+		$this->currency = null;
+		$this->value    = null;
 
 		// Parse mandatory fields.
 		if ( isset( $input['currency_code'] ) ) {
-			$currency = trim( $input['currency_code'] );
+			$currency = strtoupper( trim( $input['currency_code'] ) );
 
-			if ( 3 === strlen( $currency ) ) {
-				$this->currency = strtoupper( $currency );
+			if ( preg_match( '/^[A-Z]{3}$/', $currency ) ) {
+				$this->currency = $currency;
 			} else {
 				$add_issue( new InvalidData( 'Unexpected currency_code', 'Please provide a valid 3-letter currency code.', 'currency_code' ) );
 			}
@@ -53,11 +53,11 @@ class Money extends AgenticSchema {
 		}
 	}
 
-	public function currency(): string {
+	public function currency(): ?string {
 		return $this->currency;
 	}
 
-	public function value(): float {
+	public function value(): ?float {
 		return $this->value;
 	}
 }

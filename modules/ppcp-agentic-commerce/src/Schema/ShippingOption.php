@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
+use DateTime;
 
 /**
  * @see ShippingOptionTest - Unit tests for this class.
@@ -95,11 +96,16 @@ class ShippingOption extends AgenticSchema {
 		if ( isset( $input['estimated_delivery'] ) && is_string( $input['estimated_delivery'] ) ) {
 			$estimated_delivery = trim( $input['estimated_delivery'] );
 
-			if ( $estimated_delivery ) {
-				if ( preg_match( '/^\d{4}-\d{2}-\d{2}$/', $estimated_delivery ) ) {
-					$this->estimated_delivery = $estimated_delivery;
+			if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $estimated_delivery ) ) {
+				$add_issue( new InvalidData( 'Invalid delivery date format', 'The estimated delivery date must be in YYYY-MM-DD format', 'estimated_delivery' ) );
+			} else {
+				$parsed_date = DateTime::createFromFormat( 'Y-m-d', $estimated_delivery );
+				$real_date   = $parsed_date->format( 'Y-m-d' );
+
+				if ( $real_date !== $estimated_delivery ) {
+					$add_issue( new InvalidData( 'Invalid date', 'The date provided does not exist (e.g., Feb 31 or month 13)', 'estimated_delivery' ) );
 				} else {
-					$add_issue( new InvalidData( 'Invalid delivery date format', 'The estimated delivery date must be in YYYY-MM-DD format', 'estimated_delivery' ) );
+					$this->estimated_delivery = $estimated_delivery;
 				}
 			}
 		}

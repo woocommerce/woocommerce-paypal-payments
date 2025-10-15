@@ -31,10 +31,9 @@ class Customer extends AgenticSchema {
 		if ( isset( $input['email_address'] ) && is_string( $input['email_address'] ) ) {
 			$email_address = trim( $input['email_address'] );
 
-			$this->email_address = $email_address;
-			if ( strlen( $email_address ) > 254 ) {
-				$add_issue( new InvalidData( 'Email address too long', 'The customers email address must be shorter than 255 characters', 'email_address' ) );
-			} elseif ( ! filter_var( $email_address, FILTER_VALIDATE_EMAIL ) ) {
+			if ( filter_var( $email_address, FILTER_VALIDATE_EMAIL ) ) {
+				$this->email_address = $email_address;
+			} else {
 				$add_issue( new InvalidData( 'Invalid email', 'The customers email address is not valid', 'email_address' ) );
 			}
 		}
@@ -74,7 +73,7 @@ class Customer extends AgenticSchema {
 			if ( is_string( $country_code ) ) {
 				$country_code = trim( $country_code );
 
-				if ( ! is_numeric( $country_code ) ) {
+				if ( ! is_numeric( $country_code ) || '0' === $country_code ) {
 					$add_issue( new InvalidData( 'Invalid country code format', 'The customers phone country-code must be numeric', 'phone.country_code' ) );
 				} elseif ( strlen( $country_code ) > 3 ) {
 					$add_issue( new InvalidData( 'Invalid country code length', 'The customers phone country-code must have between 1 and 3 digits', 'phone.country_code' ) );

@@ -15,14 +15,14 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
  * @see CouponTest - Unit tests for this class.
  */
 class Coupon extends AgenticSchema {
-	private string $code = '';
+	private ?string $code = null;
 
-	private string $action = '';
+	private ?string $action = null;
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->code   = '';
-		$this->action = '';
+		$this->code   = null;
+		$this->action = null;
 
 		if ( isset( $input['code'] ) ) {
 			$this->code = trim( $input['code'] );
@@ -44,11 +44,11 @@ class Coupon extends AgenticSchema {
 		}
 	}
 
-	public function code(): string {
+	public function code(): ?string {
 		return $this->code;
 	}
 
-	public function action(): string {
+	public function action(): ?string {
 		return $this->action;
 	}
 }
