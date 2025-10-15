@@ -30,6 +30,7 @@ class PaymentMethod extends AgenticSchema {
 			$add_issue( new MissingField( 'Payment method is required', 'No value for the payment method type found', 'type' ) );
 		} else {
 			$type = trim( $input['type'] );
+
 			if ( empty( $type ) ) {
 				$add_issue( new MissingField( 'Payment method is required', 'No value for the payment method type found', 'type' ) );
 			} elseif ( 'paypal' !== $type ) {

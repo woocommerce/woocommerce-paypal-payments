@@ -26,7 +26,7 @@ class Money extends AgenticSchema {
 		$this->value    = null;
 
 		// Parse mandatory fields.
-		if ( isset( $input['currency_code'] ) ) {
+		if ( isset( $input['currency_code'] ) && is_string( $input['currency_code'] ) ) {
 			$currency = strtoupper( trim( $input['currency_code'] ) );
 
 			if ( preg_match( '/^[A-Z]{3}$/', $currency ) ) {

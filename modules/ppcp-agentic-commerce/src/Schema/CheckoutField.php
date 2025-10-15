@@ -24,7 +24,7 @@ class CheckoutField extends AgenticSchema {
 		'ERROR',
 	);
 
-	private string $type = '';
+	private ?string $type = null;
 
 	private string $status = '';
 
@@ -34,7 +34,7 @@ class CheckoutField extends AgenticSchema {
 
 	protected function parse_fields( array $input, callable $add_issue ): void {
 		// Reset all fields.
-		$this->type    = '';
+		$this->type    = null;
 		$this->status  = 'ERROR';
 		$this->value   = null;
 		$this->context = null;
@@ -45,6 +45,7 @@ class CheckoutField extends AgenticSchema {
 		} else {
 			$add_issue( new MissingField( 'Type is required', 'The field type is mandatory', 'type' ) );
 		}
+
 		if ( ! empty( $input['status'] ) && is_string( $input['status'] ) ) {
 			$status = strtoupper( trim( $input['status'] ) );
 
@@ -61,12 +62,13 @@ class CheckoutField extends AgenticSchema {
 		if ( isset( $input['value'] ) && is_array( $input['value'] ) ) {
 			$this->value = $input['value'];
 		}
+
 		if ( isset( $input['context'] ) && is_array( $input['context'] ) ) {
 			$this->context = $input['context'];
 		}
 	}
 
-	public function type(): string {
+	public function type(): ?string {
 		return $this->type;
 	}
 

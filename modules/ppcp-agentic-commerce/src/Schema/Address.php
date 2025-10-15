@@ -37,7 +37,7 @@ class Address extends AgenticSchema {
 		$this->postal_code    = null;
 
 		// Parse mandatory fields.
-		if ( isset( $input['country_code'] ) ) {
+		if ( isset( $input['country_code'] ) && is_string( $input['country_code'] ) ) {
 			$country_code = strtoupper( trim( $input['country_code'] ) );
 
 			if ( preg_match( '/^[A-Z]{2}$/', $country_code ) ) {
@@ -50,7 +50,7 @@ class Address extends AgenticSchema {
 		}
 
 		// Parse optional fields.
-		if ( isset( $input['address_line_1'] ) ) {
+		if ( isset( $input['address_line_1'] ) && is_string( $input['address_line_1'] ) ) {
 			$address_line_1 = trim( $input['address_line_1'] );
 
 			if ( strlen( $address_line_1 ) <= 300 ) {
@@ -60,7 +60,7 @@ class Address extends AgenticSchema {
 			}
 		}
 
-		if ( isset( $input['address_line_2'] ) ) {
+		if ( isset( $input['address_line_2'] ) && is_string( $input['address_line_2'] ) ) {
 			$address_line_2 = trim( $input['address_line_2'] );
 
 			if ( strlen( $address_line_2 ) <= 300 ) {
@@ -70,7 +70,7 @@ class Address extends AgenticSchema {
 			}
 		}
 
-		if ( isset( $input['admin_area_2'] ) ) {
+		if ( isset( $input['admin_area_2'] ) && is_string( $input['admin_area_2'] ) ) {
 			$admin_area_2 = trim( $input['admin_area_2'] );
 
 			if ( strlen( $admin_area_2 ) <= 120 ) {
@@ -80,7 +80,7 @@ class Address extends AgenticSchema {
 			}
 		}
 
-		if ( isset( $input['admin_area_1'] ) ) {
+		if ( isset( $input['admin_area_1'] ) && is_string( $input['admin_area_1'] ) ) {
 			$admin_area_1 = trim( $input['admin_area_1'] );
 
 			if ( strlen( $admin_area_1 ) <= 300 ) {
@@ -90,7 +90,7 @@ class Address extends AgenticSchema {
 			}
 		}
 
-		if ( isset( $input['postal_code'] ) ) {
+		if ( isset( $input['postal_code'] ) && is_string( $input['postal_code'] ) ) {
 			$postal_code = trim( $input['postal_code'] );
 
 			if ( strlen( $postal_code ) <= 60 ) {

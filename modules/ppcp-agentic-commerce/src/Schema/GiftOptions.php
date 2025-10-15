@@ -72,7 +72,7 @@ class GiftOptions extends AgenticSchema {
 			$recipient_email = $input['recipient']['email'] ?? null;
 			$recipient_name  = $input['recipient']['name'] ?? null;
 
-			if ( $recipient_email ) {
+			if ( $recipient_email && is_string( $recipient_email ) ) {
 				$recipient_email = trim( $recipient_email );
 
 				if ( ! filter_var( $recipient_email, FILTER_VALIDATE_EMAIL ) ) {
@@ -80,7 +80,7 @@ class GiftOptions extends AgenticSchema {
 					$add_issue( new InvalidData( 'Invalid recipient email', 'The recipient email is not valid', 'recipient.email' ) );
 				}
 			}
-			if ( $recipient_name ) {
+			if ( $recipient_name && is_string( $recipient_name ) ) {
 				$recipient_name = trim( $recipient_name );
 			}
 

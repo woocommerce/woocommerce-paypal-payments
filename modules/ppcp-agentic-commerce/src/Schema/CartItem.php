@@ -47,7 +47,7 @@ class CartItem extends AgenticSchema {
 		$this->gift_options        = null;
 
 		// Parse mandatory fields.
-		if ( isset( $input['quantity'] ) ) {
+		if ( isset( $input['quantity'] ) && is_numeric( $input['quantity'] ) ) {
 			$quantity = (int) $input['quantity'];
 
 			if ( $quantity < 1 || $quantity > 999 ) {
