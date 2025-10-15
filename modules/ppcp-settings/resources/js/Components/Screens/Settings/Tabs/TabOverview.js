@@ -8,12 +8,16 @@ import usePaymentGatewaySync from '../../../../hooks/usePaymentGatewaySync';
 const TabOverview = () => {
 	const { isReady: areTodosReady } = TodosHooks.useTodos();
 	const { isReady: merchantIsReady } = CommonHooks.useMerchantInfo();
-	const { isReady: featuresIsReady } = FeaturesHooks.useFeatures();
+	const { isReady: featuresIsReady, features } = FeaturesHooks.useFeatures();
 
 	// Enable payment gateways after onboarding based on relevant flags.
 	usePaymentGatewaySync();
 
-	if ( ! areTodosReady || ! merchantIsReady || ! featuresIsReady ) {
+	// For countries without features (Brazil, Japan, Russia), consider features ready if array is empty
+	const effectiveFeaturesReady =
+		featuresIsReady || ( features && features.length === 0 );
+
+	if ( ! areTodosReady || ! merchantIsReady || ! effectiveFeaturesReady ) {
 		return (
 			<SpinnerOverlay
 				asModal={ true }
