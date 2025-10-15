@@ -222,15 +222,16 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests that empty strings are preserved (not converted to null).
 	 *
-	 * @param string      $field_name Field name in the data array (supports dot notation).
-	 * @param string|null $getter     Getter method name (supports dot notation).
-	 * @param array       $extra_data Additional data required for validation.
+	 * @param string      $field_name     Field name in the data array (supports dot notation).
+	 * @param string|null $getter         Getter method name (supports dot notation).
+	 * @param array|null  $mandatory_data Additional data required for validation.
 	 */
-	protected function assertEmptyStringPreserved( string $field_name, string $getter = null, array $extra_data = array() ): void {
-		$getter   = $getter ?? $field_name;
-		$class    = $this->get_schema_class();
-		$data     = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, '' ) );
-		$instance = $class::from_array( $data );
+	protected function assertEmptyStringPreserved( string $field_name, string $getter = null, array $mandatory_data = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$class          = $this->get_schema_class();
+		$data           = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, '' ) );
+		$instance       = $class::from_array( $data );
 
 		$actual = $this->getNestedValue( $instance, $getter );
 		$this->assertSame( '', $actual, "Field '{$field_name}' should be empty string'" );
@@ -240,21 +241,24 @@ abstract class SchemaTestCase extends TestCase {
 	 * Tests that whitespace is trimmed from string values.
 	 *
 	 * @param string      $field_name     Field name in the data array (supports dot notation).
-	 * @param string      $input_value    Input value with whitespace.
-	 * @param mixed       $expected_value Expected trimmed value.
+	 * @param mixed       $clean_value    The expected clean value (without whitespace).
 	 * @param string|null $getter         Getter method name (supports dot notation).
 	 * @param array|null  $mandatory_data Additional data required for validation.
 	 */
-	protected function assertWhitespaceTrimming( string $field_name, string $input_value, $expected_value = null, string $getter = null, array $mandatory_data = null ): void {
+	protected function assertWhitespaceTrimming( string $field_name, $clean_value, string $getter = null, array $mandatory_data = null ): void {
 		$getter         = $getter ?? $field_name;
-		$expected_value = $expected_value ?? $input_value;
 		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
 		$class          = $this->get_schema_class();
-		$data           = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
-		$instance       = $class::from_array( $data );
 
-		$actual = $this->getNestedValue( $instance, $getter );
-		$this->assertEquals( $expected_value, $actual );
+		$test_cases = $this->getWhitespaceTrimTestCases( $clean_value );
+
+		foreach ( $test_cases as $description => list( $input_value, $expected_value ) ) {
+			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+			$instance = $class::from_array( $data );
+			$actual   = $this->getNestedValue( $instance, $getter );
+
+			$this->assertEquals( $expected_value, $actual, "Failed whitespace trimming for case: $description" );
+		}
 	}
 
 	// === Helper utilities for nested field access ===
@@ -303,5 +307,23 @@ abstract class SchemaTestCase extends TestCase {
 		}
 
 		return $value;
+	}
+
+	// === Common data providers ===
+
+	/**
+	 * Provides whitespace trimming test cases for a given clean value.
+	 *
+	 * @param mixed $clean_value Clean value without whitespace.
+	 * @return array Test cases [description => [input_value, expected_value]].
+	 */
+	protected function getWhitespaceTrimTestCases( $clean_value ): array {
+		$string_value = (string) $clean_value;
+
+		return array(
+			'leading space'  => array( " $string_value", $clean_value ),
+			'trailing space' => array( "$string_value ", $clean_value ),
+			'both spaces'    => array( "  $string_value  ", $clean_value ),
+		);
 	}
 }

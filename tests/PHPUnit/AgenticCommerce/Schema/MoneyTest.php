@@ -40,7 +40,7 @@ class MoneyTest extends SchemaTestCase {
 	}
 
 	public function test_string_fields(): void {
-		$this->assertWhitespaceTrimming( 'currency_code', 'USD', 'USD', 'currency' );
+		$this->assertWhitespaceTrimming( 'currency_code', 'USD', 'currency' );
 
 		$this->assertStringFieldExactLength( 'currency_code', 3 );
 	}
