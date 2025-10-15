@@ -156,12 +156,12 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.2.0 - XXXX-XX-XX =
+= 3.2.0 - 2025-10-15 =
 * Enhancement - Enable AppSwitch and SSSC feature flags by default #3724
 * Enhancement - Remove temporary Pay Later messaging auto-enablement logic #3680
 * Enhancement - Align Fastlane currency support with ACDC matrix #3697
 * Enhancement - Add hooks at the start of Create/Approve Order requests #3717
-* Enhancement - Don't filter tokens on changing payment method of a subscription (author @gedex) #3617 
+* Enhancement - Don't filter tokens on changing payment method of a subscription (author @gedex) #3617
 * Enhancement - Reorganize ACDC and Fastlane gateway settings modals #3652
 * Enhancement - Update PayPal Package Tracking Carriers List #3630
 * Enhancement - Display help center section #3587
