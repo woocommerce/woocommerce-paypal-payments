@@ -43,8 +43,6 @@ class GeoCoordinatesTest extends SchemaTestCase {
 	}
 
 	public function test_string_fields(): void {
-		$this->assertEmptyStringPreserved( 'subdivision' );
-
 		$this->assertWhitespaceTrimming( 'country_code', 'US' );
 		$this->assertWhitespaceTrimming( 'subdivision', 'CA' );
 
@@ -52,290 +50,93 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		$this->assertStringFieldMaxLength( 'subdivision', 10 );
 	}
 
-	/**
-	 * Tests that GeoCoordinates stores and returns the latitude.
-	 */
-	public function test_latitude_accessor(): void {
-		$data        = array( 'latitude' => '37.7749' );
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertSame( 37.7749, $coordinates->latitude() );
+	public function test_field_format_validation(): void {
+		$this->assertFieldFormat( 'country_code', $this->getCountryCodeFormatCases() );
+		$this->assertFieldFormat( 'subdivision', $this->get_subdivision_values() );
+		$this->assertFieldFormat( 'latitude', $this->get_latitude_values() );
+		$this->assertFieldFormat( 'longitude', $this->get_longitude_values() );
 	}
 
-	/**
-	 * Tests that GeoCoordinates stores and returns the longitude.
-	 */
-	public function test_longitude_accessor(): void {
-		$data        = array( 'longitude' => '-122.4194' );
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertSame( - 122.4194, $coordinates->longitude() );
-	}
-
-	/**
-	 * Tests that GeoCoordinates stores and returns the subdivision.
-	 */
-	public function test_subdivision_accessor(): void {
-		$data        = array( 'subdivision' => 'CA' );
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertSame( 'CA', $coordinates->subdivision() );
-	}
-
-	/**
-	 * Tests that GeoCoordinates stores and returns the country_code.
-	 */
-	public function test_country_code_accessor(): void {
-		$data        = array( 'country_code' => 'US' );
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertSame( 'US', $coordinates->country_code() );
-	}
-
-	/**
-	 * @dataProvider optional_field_provider
-	 */
-	public function test_optional_fields_return_null_when_missing( string $field_name, string $getter_method ): void {
-		$data        = array();
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertNull( $coordinates->$getter_method() );
-	}
-
-	public function optional_field_provider(): array {
+	public function get_latitude_values(): array {
 		return array(
-			'latitude'     => array( 'latitude', 'latitude' ),
-			'longitude'    => array( 'longitude', 'longitude' ),
-			'subdivision'  => array( 'subdivision', 'subdivision' ),
-			'country_code' => array( 'country_code', 'country_code' ),
+			'zero'                 => array( '0', true, 0. ),
+			'positive integer'     => array( '45', true, 45. ),
+			'negative integer'     => array( '-45', true, - 45. ),
+			'positive decimal'     => array( '37.7749', true, 37.7749 ),
+			'negative decimal'     => array( '-33.8688', true, - 33.8688 ),
+			'max positive'         => array( '90', true, 90. ),
+			'leading space'        => array( '  90', true, 90. ),
+			'trailing space'       => array( '90  ', true, 90. ),
+			'max positive decimal' => array( '90.0', true, 90.0 ),
+			'max negative'         => array( '-90', true, - 90. ),
+			'max negative decimal' => array( '-90.0', true, - 90.0 ),
+			'small positive'       => array( '0.0001', true, 0.0001 ),
+			'small negative'       => array( '-0.0001', true, - 0.0001 ),
+			'single digit'         => array( '5', true, 5. ),
+			'89.9999'              => array( '89.9999', true, 89.9999 ),
+			'int'                  => array( 23, true, 23. ),
+			'float'                => array( 23.0, true, 23. ),
+			'exceeds max'          => array( '90.1', false ),
+			'exceeds min'          => array( '-90.1', false ),
+			'way too large'        => array( '180', false ),
+			'way too small'        => array( '-180', false ),
+			'non-numeric'          => array( 'abc', false ),
+			'with units'           => array( '45°', false ),
+			'with comma'           => array( '45,5', false ),
+			'multiple decimals'    => array( '45.5.5', false ),
 		);
 	}
 
-	/**
-	 * @dataProvider valid_latitude_provider
-	 */
-	public function test_valid_latitude_values_accepted( $latitude, float $expected ): void {
-		$data        = array( 'latitude' => $latitude );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( $expected, $coordinates->latitude() );
-	}
-
-	public function valid_latitude_provider(): array {
+	public function get_longitude_values(): array {
 		return array(
-			'zero'                 => array( '0', 0. ),
-			'positive integer'     => array( '45', 45. ),
-			'negative integer'     => array( '-45', - 45. ),
-			'positive decimal'     => array( '37.7749', 37.7749 ),
-			'negative decimal'     => array( '-33.8688', - 33.8688 ),
-			'max positive'         => array( '90', 90. ),
-			'max positive decimal' => array( '90.0', 90.0 ),
-			'max negative'         => array( '-90', - 90. ),
-			'max negative decimal' => array( '-90.0', - 90.0 ),
-			'small positive'       => array( '0.0001', 0.0001 ),
-			'small negative'       => array( '-0.0001', - 0.0001 ),
-			'single digit'         => array( '5', 5. ),
-			'89.9999'              => array( '89.9999', 89.9999 ),
-			'int'                  => array( 23, 23. ),
-			'float'                => array( 23.0, 23. ),
+			'zero'                 => array( '0', true, 0. ),
+			'positive integer'     => array( '90', true, 90. ),
+			'negative integer'     => array( '-90', true, - 90. ),
+			'positive decimal'     => array( '122.4194', true, 122.4194 ),
+			'negative decimal'     => array( '-122.4194', true, - 122.4194 ),
+			'max positive'         => array( '180', true, 180. ),
+			'leading space'        => array( '  180', true, 180. ),
+			'trailing space'       => array( '180  ', true, 180. ),
+			'max positive decimal' => array( '180.0', true, 180.0 ),
+			'max negative'         => array( '-180', true, - 180. ),
+			'max negative decimal' => array( '-180.0', true, - 180.0 ),
+			'small positive'       => array( '0.0001', true, 0.0001 ),
+			'small negative'       => array( '-0.0001', true, - 0.0001 ),
+			'single digit'         => array( '5', true, 5. ),
+			'179.9999'             => array( '179.9999', true, 179.9999 ),
+			'int'                  => array( 23, true, 23. ),
+			'float'                => array( 23.0, true, 23. ),
+			'exceeds max'          => array( '180.1', false ),
+			'exceeds min'          => array( '-180.1', false ),
+			'way too large'        => array( '360', false ),
+			'way too small'        => array( '-360', false ),
+			'non-numeric'          => array( 'xyz', false ),
+			'with units'           => array( '-122°', false ),
+			'with comma'           => array( '122,4', false ),
+			'multiple decimals'    => array( '122.41.94', false ),
 		);
 	}
 
-	/**
-	 * @dataProvider invalid_latitude_provider
-	 */
-	public function test_invalid_latitude_values_rejected( string $latitude ): void {
-		$data        = array( 'latitude' => $latitude );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-		$issue_data  = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'latitude', $issue_data['field'] );
-	}
-
-	public function invalid_latitude_provider(): array {
+	public function get_subdivision_values(): array {
 		return array(
-			'exceeds max'       => array( '90.1' ),
-			'exceeds min'       => array( '-90.1' ),
-			'way too large'     => array( '180' ),
-			'way too small'     => array( '-180' ),
-			'non-numeric'       => array( 'abc' ),
-			'with units'        => array( '45°' ),
-			'with comma'        => array( '45,5' ),
-			'multiple decimals' => array( '45.5.5' ),
-		);
-	}
-
-	/**
-	 * @dataProvider valid_longitude_provider
-	 */
-	public function test_valid_longitude_values_accepted( $longitude, float $expected ): void {
-		$data        = array( 'longitude' => $longitude );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( $expected, $coordinates->longitude() );
-	}
-
-	public function valid_longitude_provider(): array {
-		return array(
-			'zero'                 => array( '0', 0. ),
-			'positive integer'     => array( '90', 90. ),
-			'negative integer'     => array( '-90', - 90. ),
-			'positive decimal'     => array( '122.4194', 122.4194 ),
-			'negative decimal'     => array( '-122.4194', - 122.4194 ),
-			'max positive'         => array( '180', 180. ),
-			'max positive decimal' => array( '180.0', 180.0 ),
-			'max negative'         => array( '-180', - 180. ),
-			'max negative decimal' => array( '-180.0', - 180.0 ),
-			'small positive'       => array( '0.0001', 0.0001 ),
-			'small negative'       => array( '-0.0001', - 0.0001 ),
-			'single digit'         => array( '5', 5. ),
-			'179.9999'             => array( '179.9999', 179.9999 ),
-			'int'                  => array( 23, 23. ),
-			'float'                => array( 23.0, 23. ),
-		);
-	}
-
-	/**
-	 * @dataProvider invalid_longitude_provider
-	 */
-	public function test_invalid_longitude_values_rejected( string $longitude ): void {
-		$data        = array( 'longitude' => $longitude );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-		$issue_data  = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'longitude', $issue_data['field'] );
-	}
-
-	public function invalid_longitude_provider(): array {
-		return array(
-			'exceeds max'       => array( '180.1' ),
-			'exceeds min'       => array( '-180.1' ),
-			'way too large'     => array( '360' ),
-			'way too small'     => array( '-360' ),
-			'non-numeric'       => array( 'xyz' ),
-			'with units'        => array( '-122°' ),
-			'with comma'        => array( '122,4' ),
-			'multiple decimals' => array( '122.41.94' ),
-		);
-	}
-
-	/**
-	 * @dataProvider valid_subdivision_provider
-	 */
-	public function test_valid_subdivision_values_accepted( string $subdivision ): void {
-		$data        = array( 'subdivision' => $subdivision );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( $subdivision, $coordinates->subdivision() );
-	}
-
-	public function valid_subdivision_provider(): array {
-		return array(
-			'US state CA'           => array( 'CA' ),
-			'US state NY'           => array( 'NY' ),
-			'Canada province ON'    => array( 'ON' ),
-			'UK region ENG'         => array( 'ENG' ),
-			'Germany Bavaria BY'    => array( 'BY' ),
-			'Australia NSW'         => array( 'NSW' ),
-			'with hyphen'           => array( 'AB-CD' ),
-			'with numbers'          => array( 'CA1' ),
-			'with multiple hyphens' => array( 'A-B-C' ),
-			'max length 10 chars'   => array( 'ABCDEFGHIJ' ),
-			'alphanumeric mix'      => array( 'A1B2C3' ),
-		);
-	}
-
-	/**
-	 * @dataProvider invalid_subdivision_provider
-	 */
-	public function test_invalid_subdivision_values_rejected( string $subdivision, string $reason ): void {
-		$data        = array( 'subdivision' => $subdivision );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-		$issue_data  = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues, $reason );
-		$this->assertSame( 'subdivision', $issue_data['field'] );
-	}
-
-	public function invalid_subdivision_provider(): array {
-		return array(
-			'exceeds max length' => array( 'ABCDEFGHIJK', 'Exceeds 10 character limit' ),
-			'with spaces'        => array( 'CA NY', 'Spaces not allowed' ),
-			'with special chars' => array( 'CA_NY', 'Underscores not allowed' ),
-			'with dots'          => array( 'CA.NY', 'Dots not allowed' ),
-			'with slash'         => array( 'CA/NY', 'Slashes not allowed' ),
-		);
-	}
-
-	/**
-	 * Tests that subdivision with exactly 10 characters is valid.
-	 */
-	public function test_subdivision_at_max_length_is_valid(): void {
-		$data = array(
-			'subdivision' => 'ABCDEFGHIJ', // Exactly 10 chars
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	/**
-	 * @dataProvider valid_country_code_provider
-	 */
-	public function test_valid_country_codes_accepted( string $country_code ): void {
-		$data        = array( 'country_code' => $country_code );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( $country_code, $coordinates->country_code() );
-	}
-
-	public function valid_country_code_provider(): array {
-		return array(
-			'United States'  => array( 'US' ),
-			'Canada'         => array( 'CA' ),
-			'United Kingdom' => array( 'GB' ),
-			'Germany'        => array( 'DE' ),
-			'France'         => array( 'FR' ),
-			'Australia'      => array( 'AU' ),
-			'Japan'          => array( 'JP' ),
-			'China'          => array( 'CN' ),
-		);
-	}
-
-	/**
-	 * @dataProvider invalid_country_code_provider
-	 */
-	public function test_invalid_country_codes_rejected( string $country_code, string $reason ): void {
-		$data        = array( 'country_code' => $country_code );
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-		$issue_data  = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues, $reason );
-		$this->assertSame( 'country_code', $issue_data['field'] );
-	}
-
-	public function invalid_country_code_provider(): array {
-		return array(
-			'single char'  => array( 'U', 'Must be exactly 2 characters' ),
-			'three chars'  => array( 'USA', 'Must be exactly 2 characters' ),
-			'with numbers' => array( 'U1', 'Numbers not allowed' ),
-			'with special' => array( 'U-', 'Special characters not allowed' ),
+			'US state CA'           => array( 'CA', true ),
+			'lowercase CA'          => array( 'ca', true, 'CA' ),
+			'US state NY'           => array( 'NY', true ),
+			'Canada province ON'    => array( 'ON', true ),
+			'UK region ENG'         => array( 'ENG', true ),
+			'ENG with spaces'       => array( ' ENG ', true, 'ENG' ),
+			'Germany Bavaria BY'    => array( 'BY', true ),
+			'Australia NSW'         => array( 'NSW', true ),
+			'with hyphen'           => array( 'AB-CD', true ),
+			'with numbers'          => array( 'CA1', true ),
+			'with multiple hyphens' => array( 'A-B-C', true ),
+			'alphanumeric mix'      => array( 'A1B2C3', true ),
+			'max length 10 chars'   => array( 'ABCDEFGHIJ', true ),
+			'exceeds max length'    => array( 'ABCDEFGHIJK', false ),
+			'with spaces'           => array( 'CA NY', false ),
+			'with special chars'    => array( 'CA_NY', false ),
+			'with dots'             => array( 'CA.NY', false ),
+			'with slash'            => array( 'CA/NY', false ),
 		);
 	}
 
@@ -398,110 +199,4 @@ class GeoCoordinatesTest extends SchemaTestCase {
 		$this->assertContains( 'subdivision', $fields );
 		$this->assertContains( 'country_code', $fields );
 	}
-
-	/**
-	 * Tests that leading/trailing whitespace is trimmed from string values.
-	 *
-	 * @dataProvider whitespace_trimming_provider
-	 */
-	public function test_string_values_are_trimmed( string $field_name, string $input_value, $expected_value ): void {
-		$data        = array( $field_name => $input_value );
-		$coordinates = GeoCoordinates::from_array( $data );
-
-		$this->assertSame( $expected_value, $coordinates->$field_name() );
-	}
-
-	public function whitespace_trimming_provider(): array {
-		return array(
-			'latitude with leading space'   => array( 'latitude', ' 37.7749', 37.7749 ),
-			'latitude with trailing space'  => array( 'latitude', '37.7749 ', 37.7749 ),
-			'latitude with both'            => array( 'latitude', '  37.7749  ', 37.7749 ),
-			'longitude with leading space'  => array(
-				'longitude',
-				' -122.4194',
-				- 122.4194,
-			),
-			'longitude with trailing space' => array(
-				'longitude',
-				'-122.4194 ',
-				- 122.4194,
-			),
-			'subdivision with spaces'       => array( 'subdivision', ' CA ', 'CA' ),
-			'country_code with spaces'      => array( 'country_code', ' US ', 'US' ),
-		);
-	}
-
-	/**
-	 * Tests that coordinates at exact boundaries are valid.
-	 */
-	public function test_boundary_coordinates_are_valid(): void {
-		$data = array(
-			'latitude'  => '90.0',
-			'longitude' => '180.0',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	/**
-	 * Tests that negative boundary coordinates are valid.
-	 */
-	public function test_negative_boundary_coordinates_are_valid(): void {
-		$data = array(
-			'latitude'  => '-90.0',
-			'longitude' => '-180.0',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	/**
-	 * Tests complete valid coordinate set from schema examples.
-	 */
-	public function test_complete_us_location(): void {
-		$data = array(
-			'latitude'     => '40.7128',
-			'longitude'    => '-74.0060',
-			'subdivision'  => 'NY',
-			'country_code' => 'US',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( 40.7128, $coordinates->latitude() );
-		$this->assertSame( - 74.0060, $coordinates->longitude() );
-		$this->assertSame( 'NY', $coordinates->subdivision() );
-		$this->assertSame( 'US', $coordinates->country_code() );
-	}
-
-	/**
-	 * Tests complete valid coordinate set for international location.
-	 */
-	public function test_complete_international_location(): void {
-		$data = array(
-			'latitude'     => '51.5074',
-			'longitude'    => '-0.1278',
-			'subdivision'  => 'ENG',
-			'country_code' => 'GB',
-		);
-
-		$coordinates = GeoCoordinates::from_array( $data );
-		$issues      = $coordinates->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( 51.5074, $coordinates->latitude() );
-		$this->assertSame( - 0.1278, $coordinates->longitude() );
-		$this->assertSame( 'ENG', $coordinates->subdivision() );
-		$this->assertSame( 'GB', $coordinates->country_code() );
-	}
-
-
 }

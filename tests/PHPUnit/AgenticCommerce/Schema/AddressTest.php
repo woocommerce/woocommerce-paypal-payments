@@ -71,4 +71,8 @@ class AddressTest extends SchemaTestCase {
 		$this->assertStringFieldMaxLength( 'admin_area_1', 300 );
 		$this->assertStringFieldMaxLength( 'postal_code', 60 );
 	}
+
+	public function test_field_format_validation(): void {
+		$this->assertFieldFormat( 'country_code', $this->getCountryCodeFormatCases() );
+	}
 }

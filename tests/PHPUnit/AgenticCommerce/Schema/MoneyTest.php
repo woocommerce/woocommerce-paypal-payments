@@ -4,7 +4,6 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 
 /**
  * @covers Money
@@ -52,210 +51,28 @@ class MoneyTest extends SchemaTestCase {
 		$this->assertStringFieldExactLength( 'currency_code', 3 );
 	}
 
-	/**
-	 * Tests that Money correctly parses valid currency codes.
-	 *
-	 * @dataProvider valid_currency_provider
-	 */
-	public function test_valid_currency_codes( string $input, string $expected ): void {
-		$data  = array(
-			'currency_code' => $input,
-			'value'         => '10.00',
-		);
-		$money = Money::from_array( $data );
-
-		$this->assertEmpty( $money->validate() );
-		$this->assertSame( $expected, $money->currency() );
+	public function test_field_format_validation(): void {
+		$this->assertFieldFormat( 'currency_code', $this->getCurrencyCodeFormatCases(), 'currency' );
+		$this->assertFieldFormat( 'value', $this->get_value_cases() );
 	}
 
-	public function valid_currency_provider(): array {
+	public function get_value_cases(): array {
 		return array(
-			'usd'           => array(
-				'input'    => 'USD',
-				'expected' => 'USD',
-			),
-			'eur'           => array(
-				'input'    => 'EUR',
-				'expected' => 'EUR',
-			),
-			'gbp'           => array(
-				'input'    => 'GBP',
-				'expected' => 'GBP',
-			),
-			'jpy'           => array(
-				'input'    => 'JPY',
-				'expected' => 'JPY',
-			),
-			'lowercase_usd' => array(
-				'input'    => 'usd',
-				'expected' => 'USD',
-			),
-			'mixed_case'    => array(
-				'input'    => 'EuR',
-				'expected' => 'EUR',
-			),
+			'positive_integer'    => array( '25', true, 25.0 ),
+			'positive_decimal'    => array( '25.99', true, 25.99 ),
+			'three_decimal_jpy'   => array( '25.500', true, 25.5 ),
+			'three_decimal_jpy_2' => array( '25.599', true, 25.599 ),
+			'negative_value'      => array( '-10.50', true, - 10.5 ),
+			'zero'                => array( '0', true, 0.0 ),
+			'large_amount'        => array( '999999.99', true, 999999.99 ),
+			'int_amount'          => array( 10, true, 10.0 ),
+			'float_amount'        => array( 10.5, true, 10.5 ),
+			'non_numeric'         => array( 'abc', false ),
+			'too_many_decimals'   => array( '10.1234', false ),
+			'invalid_format'      => array( '10,50', false ),
+			'empty_string'        => array( '', false ),
 		);
 	}
-
-	/**
-	 * Tests that Money correctly parses various valid value formats.
-	 *
-	 * @dataProvider valid_value_provider
-	 */
-	public function test_valid_values( $value, float $expected ): void {
-		$data  = array(
-			'currency_code' => 'USD',
-			'value'         => $value,
-		);
-		$money = Money::from_array( $data );
-
-		$this->assertEmpty( $money->validate() );
-		$this->assertSame( $expected, $money->value() );
-	}
-
-	public function valid_value_provider(): array {
-		return array(
-			'positive_integer'    => array(
-				'value'    => '25',
-				'expected' => 25.0,
-			),
-			'positive_decimal'    => array(
-				'value'    => '25.99',
-				'expected' => 25.99,
-			),
-			'three_decimal_jpy'   => array(
-				'value'    => '25.500',
-				'expected' => 25.5,
-			),
-			'three_decimal_jpy_2' => array(
-				'value'    => '25.599',
-				'expected' => 25.599,
-			),
-			'negative_value'      => array(
-				'value'    => '-10.50',
-				'expected' => - 10.5,
-			),
-			'zero'                => array(
-				'value'    => '0',
-				'expected' => 0.0,
-			),
-			'large_amount'        => array(
-				'value'    => '999999.99',
-				'expected' => 999999.99,
-			),
-			'int_amount'          => array(
-				'value'    => 10,
-				'expected' => 10.0,
-			),
-			'float_amount'        => array(
-				'value'    => 10.5,
-				'expected' => 10.5,
-			),
-		);
-	}
-
-	/**
-	 * Tests that invalid currency codes produce validation issues.
-	 *
-	 * @dataProvider invalid_currency_provider
-	 */
-	public function test_invalid_currency_codes( array $data, string $expected_message_fragment ): void {
-		$money  = Money::from_array( $data );
-		$issues = $money->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'currency_code', $issue_data['field'] );
-		$this->assertInstanceOf( InvalidData::class, $issues[0] );
-		$this->assertStringContainsString( $expected_message_fragment, $issue_data['user_message'] );
-		$this->assertSame( '', $money->currency() );
-	}
-
-	public function invalid_currency_provider(): array {
-		return array(
-			'too_short'  => array(
-				'data'                      => array(
-					'currency_code' => 'US',
-					'value'         => '10.00',
-				),
-				'expected_message_fragment' => 'valid 3-letter currency code',
-			),
-			'too_long'   => array(
-				'data'                      => array(
-					'currency_code' => 'USDD',
-					'value'         => '10.00',
-				),
-				'expected_message_fragment' => 'valid 3-letter currency code',
-			),
-			'empty'      => array(
-				'data'                      => array(
-					'currency_code' => '',
-					'value'         => '10.00',
-				),
-				'expected_message_fragment' => 'valid 3-letter currency code',
-			),
-			'whitespace' => array(
-				'data'                      => array(
-					'currency_code' => '   ',
-					'value'         => '10.00',
-				),
-				'expected_message_fragment' => 'valid 3-letter currency code',
-			),
-		);
-	}
-
-	/**
-	 * Tests that invalid values produce validation issues.
-	 *
-	 * @dataProvider invalid_value_provider
-	 */
-	public function test_invalid_values( array $data, string $expected_message_fragment ): void {
-		$money  = Money::from_array( $data );
-		$issues = $money->validate();
-
-		$this->assertCount( 1, $issues );
-
-		$issue_data = $issues[0]->to_array();
-		$this->assertSame( 'value', $issue_data['field'] );
-		$this->assertInstanceOf( InvalidData::class, $issues[0] );
-		$this->assertStringContainsString( $expected_message_fragment, $issue_data['user_message'] );
-		$this->assertSame( 0.0, $money->value() );
-	}
-
-	public function invalid_value_provider(): array {
-		return array(
-			'non_numeric'       => array(
-				'data'                      => array(
-					'currency_code' => 'USD',
-					'value'         => 'abc',
-				),
-				'expected_message_fragment' => 'valid numerical value',
-			),
-			'too_many_decimals' => array(
-				'data'                      => array(
-					'currency_code' => 'USD',
-					'value'         => '10.1234',
-				),
-				'expected_message_fragment' => 'valid numerical value',
-			),
-			'invalid_format'    => array(
-				'data'                      => array(
-					'currency_code' => 'USD',
-					'value'         => '10,50',
-				),
-				'expected_message_fragment' => 'valid numerical value',
-			),
-			'empty_string'      => array(
-				'data'                      => array(
-					'currency_code' => 'USD',
-					'value'         => '',
-				),
-				'expected_message_fragment' => 'valid numerical value',
-			),
-		);
-	}
-
 
 	/**
 	 * Tests that multiple validation issues are collected.

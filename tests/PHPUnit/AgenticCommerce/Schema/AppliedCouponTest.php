@@ -111,42 +111,7 @@ class AppliedCouponTest extends SchemaTestCase {
 		);
 	}
 
-
 	// === Validation Tests ===
-
-	/**
-	 * Tests that invalid Money structure in discount_amount produces validation errors.
-	 *
-	 * @dataProvider invalid_discount_amount_structure_provider
-	 */
-	public function test_invalid_discount_amount_structure_produces_validation_errors( array $invalid_money ): void {
-		$data = array( 'discount_amount' => $invalid_money );
-
-		$coupon = AppliedCoupon::from_array( $data );
-		$issues = $coupon->validate();
-
-		$this->assertGreaterThan( 0, count( $issues ), 'Invalid Money structure should produce validation issues' );
-	}
-
-	public function invalid_discount_amount_structure_provider(): array {
-		return array(
-			'missing currency_code' => array( array( 'value' => '5.00' ) ),
-			'missing value'         => array( array( 'currency_code' => 'USD' ) ),
-			'invalid currency'      => array(
-				array(
-					'currency_code' => 'INVALID',
-					'value'         => '5.00',
-				),
-			),
-			'invalid value format'  => array(
-				array(
-					'currency_code' => 'USD',
-					'value'         => 'not-a-number',
-				),
-			),
-			'empty structure'       => array( array() ),
-		);
-	}
 
 	/**
 	 * Tests that discount_amount with invalid Money structure is set to null.

@@ -3,8 +3,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
-
 /**
  * @covers Coupon
  */
@@ -28,6 +26,13 @@ class CouponTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return array(
+			'code'   => 'SAVE10',
+			'action' => 'APPLY',
+		);
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'code' );
 		$this->assertRequiredField( 'action' );
@@ -43,32 +48,16 @@ class CouponTest extends SchemaTestCase {
 		$this->assertWhitespaceTrimming( 'action', 'APPLY' );
 	}
 
-	/**
-	 * @dataProvider action_values_provider
-	 */
-	public function test_action_values( $action, bool $is_valid ): void {
-		$data   = array(
-			'code'   => 'SAVE10',
-			'action' => $action,
-		);
-		$coupon = Coupon::from_array( $data );
-		$issues = $coupon->validate();
-
-		if ( $is_valid ) {
-			$this->assertSame( strtoupper( $action ), $coupon->action() );
-			$this->assertEmpty( $issues );
-		} else {
-			$this->assertSame( '', $coupon->action() );
-			$this->assertCount( 1, $issues );
-		}
+	public function test_field_format_validation(): void {
+		$this->assertFieldFormat( 'action', $this->get_action_values() );
 	}
 
-	public function action_values_provider(): array {
+	public function get_action_values(): array {
 		return array(
-			'apply'        => array( 'APPLY', true ),
+			'valid apply'  => array( 'APPLY', true ),
 			'remove'       => array( 'REMOVE', true ),
-			'apply lower'  => array( 'apply', true ),
-			'remove mixed' => array( 'ReMoVe', true ),
+			'apply lower'  => array( 'apply', true, 'APPLY' ),
+			'remove mixed' => array( 'ReMoVe', true, 'REMOVE' ),
 			'invalid'      => array( 'INVALID', false ),
 			'empty'        => array( '', false ),
 		);

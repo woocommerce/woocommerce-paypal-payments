@@ -69,7 +69,6 @@ class CustomerTest extends SchemaTestCase {
 	public function test_string_fields(): void {
 		// Top-level optional fields
 		$this->assertWhitespaceTrimming( 'email_address', 'test@example.com' );
-		$this->assertEmptyStringPreserved( 'email_address', 'email_address' );
 
 		// Nested name fields
 		$this->assertWhitespaceTrimming( 'name.given_name', 'John' );
@@ -84,86 +83,10 @@ class CustomerTest extends SchemaTestCase {
 		$this->assertWhitespaceTrimming( 'phone.national_number', '5551234567' );
 	}
 
-	/**
-	 * Tests that country_code with non-digit characters produces validation issue.
-	 */
-	public function test_country_code_invalid_format(): void {
-		$data = array(
-			'phone' => array(
-				'country_code'    => '1a',
-				'national_number' => '5551234567',
-			),
-		);
-
-		$customer   = Customer::from_array( $data );
-		$issues     = $customer->validate();
-		$issue_data = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'phone.country_code', $issue_data['field'] );
-	}
-
-	/**
-	 * @dataProvider valid_country_code_provider
-	 */
-	public function test_valid_country_codes_accepted( string $country_code ): void {
-		$data = array(
-			'phone' => array(
-				'country_code'    => $country_code,
-				'national_number' => '5551234567',
-			),
-		);
-
-		$customer = Customer::from_array( $data );
-		$issues   = $customer->validate();
-
-		$this->assertEmpty( $issues );
-	}
-
-	public function valid_country_code_provider(): array {
-		return array(
-			'1 digit (US)'      => array( '1' ),
-			'2 digits (UK)'     => array( '44' ),
-			'3 digits (Russia)' => array( '380' ),
-		);
-	}
-
-	/**
-	 * Tests that national_number exceeding 14 digits produces validation issue.
-	 */
-	public function test_national_number_exceeds_max_length(): void {
-		$data = array(
-			'phone' => array(
-				'country_code'    => '1',
-				'national_number' => '123456789012345', // 15 digits
-			),
-		);
-
-		$customer   = Customer::from_array( $data );
-		$issues     = $customer->validate();
-		$issue_data = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'phone.national_number', $issue_data['field'] );
-	}
-
-	/**
-	 * Tests that national_number with non-digit characters produces validation issue.
-	 */
-	public function test_national_number_invalid_format(): void {
-		$data = array(
-			'phone' => array(
-				'country_code'    => '1',
-				'national_number' => '555-123-4567',
-			),
-		);
-
-		$customer   = Customer::from_array( $data );
-		$issues     = $customer->validate();
-		$issue_data = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'phone.national_number', $issue_data['field'] );
+	public function test_field_format_validation(): void {
+		$this->assertFieldFormat( 'email_address', $this->getEmailAddressFormatCases() );
+		$this->assertFieldFormat( 'phone.country_code', $this->getPhoneCountryCodeFormatCases() );
+		$this->assertFieldFormat( 'phone.national_number', $this->getPhoneNationalNumberFormatCases() );
 	}
 
 	/**

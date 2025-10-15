@@ -72,40 +72,11 @@ class GiftOptionsTest extends SchemaTestCase {
 		$this->assertEmptyStringPreserved( 'recipient.email' );
 	}
 
-	/**
-	 * Tests that invalid email format in recipient produces validation issue.
-	 */
-	public function test_recipient_invalid_email_format(): void {
-		$data = array(
-			'recipient' => array(
-				'name'  => 'Mary Johnson',
-				'email' => 'not-an-email',
-			),
-		);
-
-		$options    = GiftOptions::from_array( $data );
-		$issues     = $options->validate();
-		$issue_data = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'recipient.email', $issue_data['field'] );
+	public function test_field_format_validation(): void {
+		$this->assertFieldFormat( 'delivery_date', $this->getIsoDateFormatCases() );
+		$this->assertFieldFormat( 'recipient.email', $this->getEmailAddressFormatCases( true ) );
 	}
 
-	/**
-	 * Tests that invalid RFC3339 format in delivery_date produces validation issue.
-	 */
-	public function test_delivery_date_invalid_format(): void {
-		$data = array(
-			'delivery_date' => '2024-12-25',
-		);
-
-		$options    = GiftOptions::from_array( $data );
-		$issues     = $options->validate();
-		$issue_data = $issues[0]->to_array();
-
-		$this->assertCount( 1, $issues );
-		$this->assertSame( 'delivery_date', $issue_data['field'] );
-	}
 
 	/**
 	 * @dataProvider invalid_type_provider
@@ -135,7 +106,6 @@ class GiftOptionsTest extends SchemaTestCase {
 				'gift_message',
 				null,
 			),
-			'delivery_date with int'  => array( 'delivery_date', 20241225, 'delivery_date', null ),
 			'recipient with string'   => array( 'recipient', 'not-an-array', 'recipient', null ),
 		);
 	}
