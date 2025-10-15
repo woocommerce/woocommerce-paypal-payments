@@ -272,6 +272,22 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		/**
+		 * Clean up migration-related options on settings reset.
+		 *
+		 * Removes migration state flags when merchant disconnects via "Start Over"
+		 * to ensure a clean state for subsequent merchant connections.
+		 *
+		 * Removed options:
+		 * - BCDC migration override flag (OPTION_NAME_BCDC_MIGRATION_OVERRIDE)
+		 */
+		add_action(
+			'woocommerce_paypal_payments_reset_settings',
+			function (): void {
+				delete_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
+			}
+		);
+
 		add_action(
 			'admin_enqueue_scripts',
 			function ( string $hook_suffix ) use ( $container ): void {
