@@ -69,6 +69,8 @@ jobs:
       - name: Install Environment
         working-directory: ./tests/qa
         run: npm run setup:env
+        env:
+          COMPOSER_AUTH: '${{ secrets.COMPOSER_AUTH_SYDE }}'
 
       - name: Install WP release candidate (optional)
         if: github.event.inputs.wp-rc-version != ''
