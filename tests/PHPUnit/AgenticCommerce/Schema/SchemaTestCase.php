@@ -74,6 +74,27 @@ abstract class SchemaTestCase extends TestCase {
 	// === Helper methods for common test patterns ===
 
 	/**
+	 * Tests that a required field produces validation error when missing.
+	 *
+	 * @param string $field_name Expected validation error field key.
+	 * @param array  $extra_data Additional data to include in test.
+	 */
+	protected function assertRequiredField( string $field_name, array $extra_data = array() ): void {
+		$class    = $this->get_schema_class();
+		$instance = $class::from_array( $extra_data );
+		$issues   = $instance->validate();
+
+		$this->assertGreaterThan( 0, count( $issues ), "Missing value for field '$field_name' should raise a validation issue" );
+
+		$issue_fields = array_map(
+			static fn( $issue ) => $issue->to_array()['field'],
+			$issues
+		);
+
+		$this->assertContains( $field_name, $issue_fields, "Expected validation error for required field: $field_name" );
+	}
+
+	/**
 	 * Tests that an optional field returns null when missing.
 	 *
 	 * @param string     $getter         Getter method name.
@@ -100,27 +121,6 @@ abstract class SchemaTestCase extends TestCase {
 		$instance = $class::from_array( $extra_data );
 
 		$this->assertEquals( $default_state, $instance->$getter() );
-	}
-
-	/**
-	 * Tests that a required field produces validation error when missing.
-	 *
-	 * @param string $field_name Expected validation error field key.
-	 * @param array  $extra_data Additional data to include in test.
-	 */
-	protected function assertRequiredField( string $field_name, array $extra_data = array() ): void {
-		$class    = $this->get_schema_class();
-		$instance = $class::from_array( $extra_data );
-		$issues   = $instance->validate();
-
-		$this->assertGreaterThan( 0, count( $issues ), "Missing value for field '$field_name' should raise a validation issue" );
-
-		$issue_fields = array_map(
-			static fn( $issue ) => $issue->to_array()['field'],
-			$issues
-		);
-
-		$this->assertContains( $field_name, $issue_fields, "Expected validation error for required field: $field_name" );
 	}
 
 	/**
