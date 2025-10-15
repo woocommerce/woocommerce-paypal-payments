@@ -26,15 +26,8 @@ class ShippingOptionTest extends SchemaTestCase {
 		);
 	}
 
-	public function test_required_fields(): void {
-		$this->assertRequiredField( 'id' );
-		$this->assertRequiredField( 'name' );
-		$this->assertRequiredField( 'price' );
-		$this->assertRequiredField( 'isSelected' );
-	}
-
-	public function test_optional_fields(): void {
-		$mandatory = array(
+	protected function mandatory_data(): array {
+		return array(
 			'id'         => 'STANDARD_SHIPPING',
 			'name'       => 'Standard Shipping',
 			'price'      => array(
@@ -43,9 +36,18 @@ class ShippingOptionTest extends SchemaTestCase {
 			),
 			'isSelected' => true,
 		);
+	}
 
-		$this->assertOptionalField( 'description', $mandatory );
-		$this->assertOptionalField( 'estimated_delivery', $mandatory );
+	public function test_required_fields(): void {
+		$this->assertRequiredField( 'id' );
+		$this->assertRequiredField( 'name' );
+		$this->assertRequiredField( 'price' );
+		$this->assertRequiredField( 'isSelected' );
+	}
+
+	public function test_optional_fields(): void {
+		$this->assertOptionalField( 'description' );
+		$this->assertOptionalField( 'estimated_delivery' );
 	}
 
 	public function test_string_fields(): void {

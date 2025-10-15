@@ -22,6 +22,27 @@ class MoneyTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return array(
+			'currency_code' => 'USD',
+			'value'         => '25.00',
+		);
+	}
+
+	public function test_required_fields(): void {
+		$this->assertRequiredField( 'currency_code' );
+		$this->assertRequiredField( 'value' );
+	}
+
+	public function test_optional_fields(): void {
+		// Money has no optional fields - all fields are required.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_string_fields(): void {
+		$this->assertWhitespaceTrimming( 'currency_code', 'USD', 'USD', 'currency' );
+	}
+
 	/**
 	 * Tests that Money correctly parses valid currency codes.
 	 *
@@ -224,20 +245,6 @@ class MoneyTest extends SchemaTestCase {
 				'expected_message_fragment' => 'valid numerical value',
 			),
 		);
-	}
-
-	public function test_required_fields(): void {
-		$this->assertRequiredField( 'currency_code' );
-		$this->assertRequiredField( 'value' );
-	}
-
-	public function test_optional_fields(): void {
-		// Money has no optional fields - all fields are required.
-		$this->addToAssertionCount( 1 );
-	}
-
-	public function test_string_fields(): void {
-		$this->assertWhitespaceTrimming( 'currency_code', 'USD', 'USD', 'currency' );
 	}
 
 	/**

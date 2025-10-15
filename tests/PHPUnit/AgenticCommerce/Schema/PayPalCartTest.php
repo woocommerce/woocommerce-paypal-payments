@@ -70,25 +70,27 @@ class PayPalCartTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return array(
+			'payment_method' => array( 'type' => 'paypal' ),
+			'items'          => array(
+				array( 'quantity' => 1 ),
+			),
+		);
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'items' );
 		$this->assertRequiredField( 'payment_method' );
 	}
 
 	public function test_optional_fields(): void {
-		$mandatory = array(
-			'payment_method' => array( 'type' => 'paypal' ),
-			'items'          => array(
-				array( 'quantity' => 1 ),
-			),
-		);
-
-		$this->assertOptionalField( 'customer', $mandatory );
-		$this->assertOptionalField( 'shipping_address', $mandatory );
-		$this->assertOptionalField( 'billing_address', $mandatory );
-		$this->assertOptionalField( 'checkout_fields', $mandatory );
-		$this->assertOptionalField( 'coupons', $mandatory );
-		$this->assertOptionalField( 'geo_coordinates', $mandatory );
+		$this->assertOptionalField( 'customer' );
+		$this->assertOptionalField( 'shipping_address' );
+		$this->assertOptionalField( 'billing_address' );
+		$this->assertOptionalField( 'checkout_fields' );
+		$this->assertOptionalField( 'coupons' );
+		$this->assertOptionalField( 'geo_coordinates' );
 	}
 
 	/**

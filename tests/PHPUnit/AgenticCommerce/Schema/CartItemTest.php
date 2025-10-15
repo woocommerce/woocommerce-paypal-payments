@@ -42,26 +42,26 @@ class CartItemTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return  array( 'quantity' => 1 );
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'quantity' );
 	}
 
 	public function test_optional_fields(): void {
-		$base_data = array( 'quantity' => 1 );
-
-		$this->assertOptionalField( 'item_id', $base_data );
-		$this->assertOptionalField( 'variant_id', $base_data );
-		$this->assertOptionalField( 'parent_id', $base_data );
-		$this->assertOptionalField( 'name', $base_data );
-		$this->assertOptionalField( 'description', $base_data );
-		$this->assertOptionalField( 'price', $base_data );
-		$this->assertOptionalField( 'selected_attributes', $base_data );
-		$this->assertOptionalField( 'gift_options', $base_data );
+		$this->assertOptionalField( 'item_id' );
+		$this->assertOptionalField( 'variant_id' );
+		$this->assertOptionalField( 'parent_id' );
+		$this->assertOptionalField( 'name' );
+		$this->assertOptionalField( 'description' );
+		$this->assertOptionalField( 'price' );
+		$this->assertOptionalField( 'selected_attributes' );
+		$this->assertOptionalField( 'gift_options' );
 	}
 
 	public function test_string_fields(): void {
-		$mandatory = array( 'quantity' => 1 );
-
 		$this->assertWhitespaceTrimming( 'item_id', 'SHIRT-001' );
 		$this->assertWhitespaceTrimming( 'variant_id', 'VARIANT-001' );
 		$this->assertWhitespaceTrimming( 'parent_id', 'PARENT-001' );
@@ -74,11 +74,11 @@ class CartItemTest extends SchemaTestCase {
 		$this->assertEmptyStringPreserved( 'name' );
 		$this->assertEmptyStringPreserved( 'description' );
 
-		$this->assertStringFieldMaxLength( 'item_id', 127, $mandatory );
-		$this->assertStringFieldMaxLength( 'variant_id', 127, $mandatory );
-		$this->assertStringFieldMaxLength( 'parent_id', 127, $mandatory );
-		$this->assertStringFieldMaxLength( 'name', 127, $mandatory );
-		$this->assertStringFieldMaxLength( 'description', 255, $mandatory );
+		$this->assertStringFieldMaxLength( 'item_id', 127 );
+		$this->assertStringFieldMaxLength( 'variant_id', 127 );
+		$this->assertStringFieldMaxLength( 'parent_id', 127 );
+		$this->assertStringFieldMaxLength( 'name', 127 );
+		$this->assertStringFieldMaxLength( 'description', 255 );
 	}
 
 	/**

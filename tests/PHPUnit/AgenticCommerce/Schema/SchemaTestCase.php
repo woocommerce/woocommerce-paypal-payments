@@ -27,6 +27,14 @@ abstract class SchemaTestCase extends TestCase {
 	 */
 	abstract protected function get_valid_data(): array;
 
+
+	/**
+	 * @return array Minimal input to pass schema validation
+	 */
+	protected function mandatory_data(): array {
+		return array();
+	}
+
 	// === Shared tests that run for all schema classes ===
 
 	/**
@@ -68,12 +76,13 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests that an optional field returns null when missing.
 	 *
-	 * @param string $getter         Getter method name.
-	 * @param array  $mandatory_data Mandatory data required to prevent validation issues.
+	 * @param string     $getter         Getter method name.
+	 * @param null|array $mandatory_data Mandatory data required to prevent validation issues.
 	 */
-	protected function assertOptionalField( string $getter, array $mandatory_data = array() ): void {
-		$class    = $this->get_schema_class();
-		$instance = $class::from_array( $mandatory_data );
+	protected function assertOptionalField( string $getter, array $mandatory_data = null ): void {
+		$class          = $this->get_schema_class();
+		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$instance       = $class::from_array( $mandatory_data );
 
 		$this->assertNull( $instance->$getter() );
 		$this->assertEmpty( $instance->validate() );
@@ -117,15 +126,16 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests string field max length validation.
 	 *
-	 * @param string $field_name Field name in the data array (supports dot notation).
-	 * @param int    $max_length Maximum allowed length.
-	 * @param array  $extra_data Additional data required for validation.
+	 * @param string     $field_name     Field name in the data array (supports dot notation).
+	 * @param int        $max_length     Maximum allowed length.
+	 * @param array|null $mandatory_data Additional data required for validation.
 	 */
-	protected function assertStringFieldMaxLength( string $field_name, int $max_length, array $extra_data = array() ): void {
-		$class = $this->get_schema_class();
+	protected function assertStringFieldMaxLength( string $field_name, int $max_length, array $mandatory_data = null ): void {
+		$class          = $this->get_schema_class();
+		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
 
 		// Test exceeding max length produces validation issue
-		$too_long = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
+		$too_long = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
 		$instance = $class::from_array( $too_long );
 		$issues   = $instance->validate();
 
@@ -138,7 +148,7 @@ abstract class SchemaTestCase extends TestCase {
 		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
 
 		// Test at max length is valid
-		$at_max   = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length ) ) );
+		$at_max   = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length ) ) );
 		$instance = $class::from_array( $at_max );
 		$issues   = $instance->validate();
 
@@ -193,13 +203,14 @@ abstract class SchemaTestCase extends TestCase {
 	 * @param string      $input_value    Input value with whitespace.
 	 * @param mixed       $expected_value Expected trimmed value.
 	 * @param string|null $getter         Getter method name (supports dot notation).
-	 * @param array       $extra_data     Additional data required for validation.
+	 * @param array|null  $mandatory_data Additional data required for validation.
 	 */
-	protected function assertWhitespaceTrimming( string $field_name, string $input_value, $expected_value = null, string $getter = null, array $extra_data = array() ): void {
+	protected function assertWhitespaceTrimming( string $field_name, string $input_value, $expected_value = null, string $getter = null, array $mandatory_data = null ): void {
 		$getter         = $getter ?? $field_name;
 		$expected_value = $expected_value ?? $input_value;
+		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
 		$class          = $this->get_schema_class();
-		$data           = array_merge( $extra_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+		$data           = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
 		$instance       = $class::from_array( $data );
 
 		$actual = $this->getNestedValue( $instance, $getter );

@@ -31,19 +31,21 @@ class CheckoutFieldTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return array(
+			'type'   => 'AGE_VERIFICATION_21_PLUS',
+			'status' => 'PENDING',
+		);
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'type' );
 		$this->assertRequiredField( 'status' );
 	}
 
 	public function test_optional_fields(): void {
-		$mandatory = array(
-			'type'   => 'AGE_VERIFICATION_21_PLUS',
-			'status' => 'PENDING',
-		);
-
-		$this->assertOptionalField( 'value', $mandatory );
-		$this->assertOptionalField( 'context', $mandatory );
+		$this->assertOptionalField( 'value' );
+		$this->assertOptionalField( 'context' );
 	}
 
 	public function test_string_fields(): void {

@@ -14,6 +14,14 @@ class PaymentMethodTest extends SchemaTestCase {
 
 	protected function get_valid_data(): array {
 		return array(
+			'type'     => 'paypal',
+			'token'    => 'EC123456789',
+			'payer_id' => 'merchant@example.com',
+		);
+	}
+
+	protected function mandatory_data(): array {
+		return array(
 			'type' => 'paypal',
 		);
 	}
@@ -23,8 +31,8 @@ class PaymentMethodTest extends SchemaTestCase {
 	}
 
 	public function test_optional_fields(): void {
-		$this->assertOptionalField( 'token', array( 'type' => 'paypal' ) );
-		$this->assertOptionalField( 'payer_id', array( 'type' => 'paypal' ) );
+		$this->assertOptionalField( 'token' );
+		$this->assertOptionalField( 'payer_id' );
 	}
 
 	public function test_string_fields(): void {

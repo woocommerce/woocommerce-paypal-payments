@@ -26,23 +26,25 @@ class CartTotalsTest extends SchemaTestCase {
 		);
 	}
 
+	protected function mandatory_data(): array {
+		return array(
+			'total' => array( 'currency_code' => 'USD', 'value' => '2.50' ),
+		);
+	}
+
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'total' );
 	}
 
 	public function test_optional_fields(): void {
-		$mandatory = array(
-			'total' => array( 'currency_code' => 'USD', 'value' => '2.50' ),
-		);
-
-		$this->assertOptionalField( 'subtotal', $mandatory );
-		$this->assertOptionalField( 'discount', $mandatory );
-		$this->assertOptionalField( 'shipping', $mandatory );
-		$this->assertOptionalField( 'tax', $mandatory );
-		$this->assertOptionalField( 'handling', $mandatory );
-		$this->assertOptionalField( 'insurance', $mandatory );
-		$this->assertOptionalField( 'shipping_discount', $mandatory );
-		$this->assertOptionalField( 'custom_charges', $mandatory );
+		$this->assertOptionalField( 'subtotal' );
+		$this->assertOptionalField( 'discount' );
+		$this->assertOptionalField( 'shipping' );
+		$this->assertOptionalField( 'tax' );
+		$this->assertOptionalField( 'handling' );
+		$this->assertOptionalField( 'insurance' );
+		$this->assertOptionalField( 'shipping_discount' );
+		$this->assertOptionalField( 'custom_charges' );
 	}
 
 	// === Field Accessor Tests ===
