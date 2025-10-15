@@ -106,11 +106,11 @@ abstract class SchemaTestCase extends TestCase {
 	 * Tests that a required field produces validation error when missing.
 	 *
 	 * @param string $field_name Expected validation error field key.
-	 * @param array  $extra_data Additional data to include in test.
 	 */
-	protected function assertRequiredField( string $field_name, array $extra_data = array() ): void {
+	protected function assertRequiredField( string $field_name ): void {
 		$class    = $this->get_schema_class();
-		$instance = $class::from_array( $extra_data );
+		$data     = array();
+		$instance = $class::from_array( $data );
 		$issues   = $instance->validate();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Missing value for field '$field_name' should raise a validation issue" );
@@ -126,12 +126,11 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests that an optional field returns null when missing.
 	 *
-	 * @param string     $getter         Getter method name.
-	 * @param null|array $mandatory_data Mandatory data required to prevent validation issues.
+	 * @param string $getter Getter method name.
 	 */
-	protected function assertOptionalField( string $getter, array $mandatory_data = null ): void {
+	protected function assertOptionalField( string $getter ): void {
 		$class          = $this->get_schema_class();
-		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$mandatory_data = $this->mandatory_data();
 		$instance       = $class::from_array( $mandatory_data );
 
 		$this->assertNull( $instance->$getter() );
@@ -143,11 +142,11 @@ abstract class SchemaTestCase extends TestCase {
 	 *
 	 * @param string $getter        Getter method name.
 	 * @param bool   $default_state Expected default value (default: false).
-	 * @param array  $extra_data    Additional data required for validation.
 	 */
-	protected function assertBooleanFieldDefaultState( string $getter, bool $default_state = false, array $extra_data = array() ): void {
+	protected function assertBooleanFieldDefaultState( string $getter, bool $default_state = false ): void {
 		$class    = $this->get_schema_class();
-		$instance = $class::from_array( $extra_data );
+		$data     = array();
+		$instance = $class::from_array( $data );
 
 		$this->assertEquals( $default_state, $instance->$getter() );
 	}
@@ -155,13 +154,12 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests string field exact length validation.
 	 *
-	 * @param string     $field_name     Field name in the data array (supports dot notation).
-	 * @param int        $exact_length   Required exact length.
-	 * @param array|null $mandatory_data Additional data required for validation.
+	 * @param string $field_name   Field name in the data array (supports dot notation).
+	 * @param int    $exact_length Required exact length.
 	 */
-	protected function assertStringFieldExactLength( string $field_name, int $exact_length, array $mandatory_data = null ): void {
+	protected function assertStringFieldExactLength( string $field_name, int $exact_length ): void {
 		$class          = $this->get_schema_class();
-		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$mandatory_data = $this->mandatory_data();
 
 		// Test below exact length produces validation issue
 		$too_short = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length - 1 ) ) );
@@ -195,13 +193,12 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests string field max length validation.
 	 *
-	 * @param string     $field_name     Field name in the data array (supports dot notation).
-	 * @param int        $max_length     Maximum allowed length.
-	 * @param array|null $mandatory_data Additional data required for validation.
+	 * @param string $field_name Field name in the data array (supports dot notation).
+	 * @param int    $max_length Maximum allowed length.
 	 */
-	protected function assertStringFieldMaxLength( string $field_name, int $max_length, array $mandatory_data = null ): void {
+	protected function assertStringFieldMaxLength( string $field_name, int $max_length ): void {
 		$class          = $this->get_schema_class();
-		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$mandatory_data = $this->mandatory_data();
 
 		// Test exceeding max length produces validation issue
 		$too_long = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
@@ -251,13 +248,12 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests that empty strings are preserved (not converted to null).
 	 *
-	 * @param string      $field_name     Field name in the data array (supports dot notation).
-	 * @param string|null $getter         Getter method name (supports dot notation).
-	 * @param array|null  $mandatory_data Additional data required for validation.
+	 * @param string      $field_name Field name in the data array (supports dot notation).
+	 * @param string|null $getter     Getter method name (supports dot notation).
 	 */
-	protected function assertEmptyStringPreserved( string $field_name, string $getter = null, array $mandatory_data = null ): void {
+	protected function assertEmptyStringPreserved( string $field_name, string $getter = null ): void {
 		$getter         = $getter ?? $field_name;
-		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
 		$data           = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, '' ) );
 		$instance       = $class::from_array( $data );
@@ -269,14 +265,13 @@ abstract class SchemaTestCase extends TestCase {
 	/**
 	 * Tests that whitespace is trimmed from string values.
 	 *
-	 * @param string      $field_name     Field name in the data array (supports dot notation).
-	 * @param mixed       $clean_value    The expected clean value (without whitespace).
-	 * @param string|null $getter         Getter method name (supports dot notation).
-	 * @param array|null  $mandatory_data Additional data required for validation.
+	 * @param string      $field_name  Field name in the data array (supports dot notation).
+	 * @param mixed       $clean_value The expected clean value (without whitespace).
+	 * @param string|null $getter      Getter method name (supports dot notation).
 	 */
-	protected function assertWhitespaceTrimming( string $field_name, $clean_value, string $getter = null, array $mandatory_data = null ): void {
+	protected function assertWhitespaceTrimming( string $field_name, $clean_value, string $getter = null ): void {
 		$getter         = $getter ?? $field_name;
-		$mandatory_data = $mandatory_data ?? $this->mandatory_data();
+		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
 
 		$test_cases = $this->getWhitespaceTrimTestCases( $clean_value );
