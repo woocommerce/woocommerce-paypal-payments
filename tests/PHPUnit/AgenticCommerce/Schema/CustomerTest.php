@@ -33,6 +33,7 @@ class CustomerTest extends SchemaTestCase {
 
 	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'email_address' );
+
 		$this->assertFieldReturnsType( array(
 			'name' => array(
 				'given_name' => 'John',

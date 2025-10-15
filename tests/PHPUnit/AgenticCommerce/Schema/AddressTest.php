@@ -14,14 +14,17 @@ class AddressTest extends SchemaTestCase {
 
 	protected function get_valid_data(): array {
 		return array(
-			'country_code' => 'US',
+			'address_line_1' => 'Main Street 123',
+			'address_line_2' => 'Apartment 1',
+			'admin_area_2'   => 'City',
+			'admin_area_1'   => 'Region',
+			'postal_code'    => '12345',
+			'country_code'   => 'US',
 		);
 	}
 
 	protected function mandatory_data(): array {
-		return array(
-			'country_code' => 'US',
-		);
+		return array( 'country_code' => 'US' );
 	}
 
 	public function test_required_fields(): void {
