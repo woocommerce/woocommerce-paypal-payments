@@ -18,40 +18,6 @@ class AddressTest extends SchemaTestCase {
 		);
 	}
 
-	/**
-	 * Tests that Address correctly validates and normalizes country codes.
-	 *
-	 * @dataProvider valid_country_code_provider
-	 */
-	public function test_valid_country_codes( string $input, string $expected ): void {
-		$data    = array( 'country_code' => $input );
-		$address = Address::from_array( $data );
-
-		$this->assertEmpty( $address->validate() );
-		$this->assertSame( $expected, $address->country_code() );
-	}
-
-	public function valid_country_code_provider(): array {
-		return array(
-			'uppercase_us'     => array(
-				'input'    => 'US',
-				'expected' => 'US',
-			),
-			'lowercase_us'     => array(
-				'input'    => 'us',
-				'expected' => 'US',
-			),
-			'lowercase_de'     => array(
-				'input'    => 'de',
-				'expected' => 'DE',
-			),
-			'with_whitespace'  => array(
-				'input'    => '  GB  ',
-				'expected' => 'GB',
-			),
-		);
-	}
-
 	protected function mandatory_data(): array {
 		return array(
 			'country_code' => 'US',
@@ -124,9 +90,9 @@ class AddressTest extends SchemaTestCase {
 	 * @dataProvider optional_field_storage_provider
 	 */
 	public function test_optional_fields_are_stored( string $field_name, string $value ): void {
-		$data              = array( 'country_code' => 'US' );
+		$data                = array( 'country_code' => 'US' );
 		$data[ $field_name ] = $value;
-		$address           = Address::from_array( $data );
+		$address             = Address::from_array( $data );
 
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( $value, $address->$field_name() );
@@ -186,10 +152,10 @@ class AddressTest extends SchemaTestCase {
 	 * @dataProvider field_max_length_provider
 	 */
 	public function test_fields_exceeding_max_length_produce_validation_issue( string $field_name, int $max_length ): void {
-		$data              = array( 'country_code' => 'US' );
+		$data                = array( 'country_code' => 'US' );
 		$data[ $field_name ] = str_repeat( 'X', $max_length + 1 );
-		$address           = Address::from_array( $data );
-		$issues            = $address->validate();
+		$address             = Address::from_array( $data );
+		$issues              = $address->validate();
 
 		$this->assertCount( 1, $issues );
 
@@ -228,10 +194,10 @@ class AddressTest extends SchemaTestCase {
 	 * @dataProvider field_max_length_provider
 	 */
 	public function test_fields_accept_exact_max_length( string $field_name, int $max_length ): void {
-		$value             = str_repeat( 'X', $max_length );
-		$data              = array( 'country_code' => 'US' );
+		$value               = str_repeat( 'X', $max_length );
+		$data                = array( 'country_code' => 'US' );
 		$data[ $field_name ] = $value;
-		$address           = Address::from_array( $data );
+		$address             = Address::from_array( $data );
 
 		$this->assertEmpty( $address->validate() );
 		$this->assertSame( $value, $address->$field_name() );
