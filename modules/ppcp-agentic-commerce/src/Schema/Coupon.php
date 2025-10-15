@@ -31,7 +31,7 @@ class Coupon extends AgenticSchema {
 		}
 
 		if ( isset( $input['action'] ) ) {
-			$action        = trim( $input['action'] );
+			$action        = strtoupper( trim( $input['action'] ) );
 			$valid_actions = array( 'APPLY', 'REMOVE' );
 
 			if ( in_array( $action, $valid_actions, true ) ) {
