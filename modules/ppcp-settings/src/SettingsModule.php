@@ -283,7 +283,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 */
 		add_action(
 			'woocommerce_paypal_payments_reset_settings',
-			function (): void {
+			static function (): void {
 				delete_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 			}
 		);
