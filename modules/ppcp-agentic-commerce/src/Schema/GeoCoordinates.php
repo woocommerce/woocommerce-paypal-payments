@@ -80,7 +80,7 @@ class GeoCoordinates extends AgenticSchema {
 			}
 		}
 		if ( isset( $input['country_code'] ) && is_string( $input['country_code'] ) ) {
-			$country_code       = trim( $input['country_code'] );
+			$country_code       = strtoupper( trim( $input['country_code'] ) );
 			$this->country_code = '';
 
 			if ( $country_code && ! preg_match( '/^[A-Z]{2}$/', $country_code ) ) {
