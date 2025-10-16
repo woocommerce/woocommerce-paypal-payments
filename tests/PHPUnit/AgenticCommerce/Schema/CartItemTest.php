@@ -21,7 +21,7 @@ class CartItemTest extends SchemaTestCase {
 			'name'                => 'Blue Cotton T-Shirt (Medium)',
 			'description'         => 'Comfortable cotton t-shirt in medium size',
 			'price'               => array(
-				'currency_code' => 'USD',
+				'currency_code' => 'usd',
 				'value'         => '25.00',
 			),
 			'selected_attributes' => array(
@@ -110,6 +110,18 @@ class CartItemTest extends SchemaTestCase {
 		$this->assertStringFieldMaxLength( 'parent_id', 127 );
 		$this->assertStringFieldMaxLength( 'name', 127 );
 		$this->assertStringFieldMaxLength( 'description', 255 );
+
+		$this->assertFieldIsCaseSensitive( 'item_id', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'variant_id', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'parent_id', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'name', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'description', 'sample' );
+
+		$this->assertFieldAcceptsSpecialCharacters( 'item_id' );
+		$this->assertFieldAcceptsSpecialCharacters( 'variant_id' );
+		$this->assertFieldAcceptsSpecialCharacters( 'parent_id' );
+		$this->assertFieldAcceptsSpecialCharacters( 'name' );
+		$this->assertFieldAcceptsSpecialCharacters( 'description' );
 	}
 
 	public function test_quantity_range(): void {

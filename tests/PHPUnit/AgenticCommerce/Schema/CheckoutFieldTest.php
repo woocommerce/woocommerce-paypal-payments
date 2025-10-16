@@ -16,8 +16,8 @@ class CheckoutFieldTest extends SchemaTestCase {
 
 	protected function get_valid_data(): array {
 		return array(
-			'type'    => 'AGE_VERIFICATION_21_PLUS',
-			'status'  => 'COMPLETED',
+			'type'    => 'age_verification_21_plus',
+			'status'  => 'completed',
 			'value'   => array(
 				'confirmed'           => true,
 				'verification_method' => 'self_declaration',
@@ -46,8 +46,10 @@ class CheckoutFieldTest extends SchemaTestCase {
 
 	protected function get_data_types(): array {
 		return array(
-			'type'   => 'string',
-			'status' => array( 'type' => 'string', 'valid' => 'completed', 'default' => 'ERROR' ),
+			'type'    => 'string',
+			'status'  => array( 'type' => 'string', 'valid' => 'completed', 'default' => 'ERROR' ),
+			'value'   => array( 'type' => 'array', 'valid' => array() ),
+			'context' => array( 'type' => 'array', 'valid' => array() ),
 		);
 	}
 
@@ -71,6 +73,9 @@ class CheckoutFieldTest extends SchemaTestCase {
 	public function test_string_fields(): void {
 		$this->assertWhitespaceTrimming( 'type', 'GIFT_MESSAGE' );
 		$this->assertWhitespaceTrimming( 'status', 'PENDING' );
+
+		$this->assertFieldNormalizesToUppercase( 'type', 'sample', 'SAMPLE' );
+		$this->assertFieldNormalizesToUppercase( 'status', 'pending', 'PENDING' );
 	}
 
 	/**

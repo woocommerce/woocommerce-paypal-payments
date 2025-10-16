@@ -58,5 +58,10 @@ class PaymentMethodTest extends SchemaTestCase {
 
 		$this->assertEmptyStringPreserved( 'token' );
 		$this->assertEmptyStringPreserved( 'payer_id' );
+
+		$this->assertFieldIsCaseSensitive( 'token', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'payer_id', 'sample' );
+		$this->assertFieldAcceptsSpecialCharacters( 'token' );
+		$this->assertFieldAcceptsSpecialCharacters( 'payer_id' );
 	}
 }

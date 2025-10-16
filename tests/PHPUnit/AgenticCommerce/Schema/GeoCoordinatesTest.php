@@ -17,7 +17,7 @@ class GeoCoordinatesTest extends SchemaTestCase {
 			'latitude'     => '37.7749',
 			'longitude'    => '-122.4194',
 			'subdivision'  => 'CA',
-			'country_code' => 'US',
+			'country_code' => 'us',
 		);
 	}
 
@@ -57,6 +57,9 @@ class GeoCoordinatesTest extends SchemaTestCase {
 
 		$this->assertStringFieldExactLength( 'country_code', 2 );
 		$this->assertStringFieldMaxLength( 'subdivision', 10 );
+
+		$this->assertFieldNormalizesToUppercase( 'country_code', 'us', 'US' );
+		$this->assertFieldNormalizesToUppercase( 'subdivision', 'sample', 'SAMPLE' );
 	}
 
 	public function test_field_format_validation(): void {

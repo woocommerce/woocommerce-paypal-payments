@@ -19,7 +19,7 @@ class AddressTest extends SchemaTestCase {
 			'admin_area_2'   => 'San Jose',
 			'admin_area_1'   => 'CA',
 			'postal_code'    => '95131',
-			'country_code'   => 'US',
+			'country_code'   => 'us',
 		);
 	}
 
@@ -81,6 +81,19 @@ class AddressTest extends SchemaTestCase {
 		$this->assertStringFieldMaxLength( 'admin_area_2', 120 );
 		$this->assertStringFieldMaxLength( 'admin_area_1', 300 );
 		$this->assertStringFieldMaxLength( 'postal_code', 60 );
+
+		$this->assertFieldNormalizesToUppercase( 'country_code', 'us', 'US' );
+		$this->assertFieldIsCaseSensitive( 'address_line_1', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'address_line_2', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'admin_area_2', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'admin_area_1', 'sample' );
+		$this->assertFieldIsCaseSensitive( 'postal_code', 'sample' );
+
+		$this->assertFieldAcceptsSpecialCharacters( 'address_line_1' );
+		$this->assertFieldAcceptsSpecialCharacters( 'address_line_2' );
+		$this->assertFieldAcceptsSpecialCharacters( 'admin_area_2' );
+		$this->assertFieldAcceptsSpecialCharacters( 'admin_area_1' );
+		$this->assertFieldAcceptsSpecialCharacters( 'postal_code' );
 	}
 
 	public function test_field_format_validation(): void {

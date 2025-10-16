@@ -14,15 +14,15 @@ class CartTotalsTest extends SchemaTestCase {
 
 	protected function get_valid_data(): array {
 		return array(
-			'subtotal'          => array( 'currency_code' => 'USD', 'value' => '25.00' ),
-			'discount'          => array( 'currency_code' => 'USD', 'value' => '2.50' ),
-			'shipping'          => array( 'currency_code' => 'USD', 'value' => '5.99' ),
-			'tax'               => array( 'currency_code' => 'USD', 'value' => '2.70' ),
-			'handling'          => array( 'currency_code' => 'USD', 'value' => '1.50' ),
-			'insurance'         => array( 'currency_code' => 'USD', 'value' => '0.50' ),
-			'shipping_discount' => array( 'currency_code' => 'USD', 'value' => '1.00' ),
-			'custom_charges'    => array( 'currency_code' => 'USD', 'value' => '3.00' ),
-			'total'             => array( 'currency_code' => 'USD', 'value' => '36.69' ),
+			'subtotal'          => array( 'currency_code' => 'usd', 'value' => '25.00' ),
+			'discount'          => array( 'currency_code' => 'usd', 'value' => '2.50' ),
+			'shipping'          => array( 'currency_code' => 'usd', 'value' => '5.99' ),
+			'tax'               => array( 'currency_code' => 'usd', 'value' => '2.70' ),
+			'handling'          => array( 'currency_code' => 'usd', 'value' => '1.50' ),
+			'insurance'         => array( 'currency_code' => 'usd', 'value' => '0.50' ),
+			'shipping_discount' => array( 'currency_code' => 'usd', 'value' => '1.00' ),
+			'custom_charges'    => array( 'currency_code' => 'usd', 'value' => '3.00' ),
+			'total'             => array( 'currency_code' => 'usd', 'value' => '36.69' ),
 		);
 	}
 

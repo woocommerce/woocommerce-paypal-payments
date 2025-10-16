@@ -18,7 +18,7 @@ class ShippingOptionTest extends SchemaTestCase {
 			'name'               => 'Standard Shipping (5-7 days)',
 			'description'        => 'Standard ground shipping via USPS',
 			'price'              => array(
-				'currency_code' => 'USD',
+				'currency_code' => 'usd',
 				'value'         => '5.99',
 			),
 			'isSelected'         => true,
@@ -79,10 +79,18 @@ class ShippingOptionTest extends SchemaTestCase {
 	public function test_string_fields(): void {
 		$this->assertWhitespaceTrimming( 'id', 'STANDARD' );
 		$this->assertWhitespaceTrimming( 'name', 'Standard' );
-
 		$this->assertWhitespaceTrimming( 'description', 'Description' );
 		$this->assertWhitespaceTrimming( 'estimated_delivery', '2024-07-01' );
+
 		$this->assertEmptyStringPreserved( 'description' );
+
+		$this->assertFieldIsCaseSensitive( 'id', 'STANDARD' );
+		$this->assertFieldIsCaseSensitive( 'name', 'Standard' );
+		$this->assertFieldIsCaseSensitive( 'description', 'Description' );
+
+		$this->assertFieldAcceptsSpecialCharacters( 'id' );
+		$this->assertFieldAcceptsSpecialCharacters( 'name' );
+		$this->assertFieldAcceptsSpecialCharacters( 'description' );
 	}
 
 	public function test_field_format_validation(): void {

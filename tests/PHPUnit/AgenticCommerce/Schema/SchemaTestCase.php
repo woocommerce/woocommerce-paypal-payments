@@ -119,24 +119,20 @@ abstract class SchemaTestCase extends TestCase {
 		}
 
 		foreach ( $data_types as $field_name => $type_config ) {
-			$default = null;
-			$getter  = null;
-			$valid   = null;
+			$type    = is_array( $type_config ) ? $type_config['type'] : $type_config;
+			$default = is_array( $type_config ) ? ( $type_config['default'] ?? null ) : null;
+			$getter  = is_array( $type_config ) ? ( $type_config['getter'] ?? null ) : null;
+			$valid   = is_array( $type_config ) ? ( $type_config['valid'] ?? null ) : null;
 
-			if ( is_array( $type_config ) ) {
-				$type    = $type_config['type'];
-				$default = $type_config['default'] ?? null;
-				$getter  = $type_config['getter'] ?? null;
-				$valid   = $type_config['valid'] ?? null;
-
-				if ( ! is_null( $valid ) && ! is_array( $valid ) ) {
-					$valid = array( $valid );
-				}
-			} else {
-				$type = $type_config;
+			if ( ! is_null( $valid ) && ! is_array( $valid ) ) {
+				$valid = array( $valid );
 			}
 
-			$this->assertFieldAcceptsOnlyType( $field_name, $type, $default, $getter, $valid );
+			// Positive tests: field accepts valid values
+			$this->assertFieldAcceptsValidTypes( $field_name, $type, $getter, $valid );
+
+			// Negative tests: field rejects wrong types
+			$this->assertFieldRejectsInvalidTypes( $field_name, $type, $default, $getter );
 		}
 	}
 
@@ -392,28 +388,17 @@ abstract class SchemaTestCase extends TestCase {
 	}
 
 	/**
-	 * Tests that a field only accepts a specific type and rejects others with a default.
+	 * Tests that a field accepts all valid values for its declared type.
 	 *
 	 * @param string      $field_name    Field name in the data array (supports dot notation).
-	 * @param string      $expected_type Expected type.
-	 * @param mixed       $default_value Expected default when type is invalid.
+	 * @param string      $expected_type Expected type (e.g., 'string', 'int', 'country', 'email').
 	 * @param string|null $getter        Getter method name (supports dot notation).
 	 * @param array|null  $valid_values  Optional override for valid test values.
 	 */
-	protected function assertFieldAcceptsOnlyType( string $field_name, string $expected_type, $default_value = null, string $getter = null, array $valid_values = null ): void {
+	protected function assertFieldAcceptsValidTypes( string $field_name, string $expected_type, string $getter = null, array $valid_values = null ): void {
 		$getter         = $getter ?? $field_name;
 		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
-
-		// Primitive types to test for rejection
-		$unique_values = array(
-			'string' => 'a',
-			'int'    => 42,
-			'float'  => 3.14,
-			'true'   => true,
-			'false'  => false,
-			'array'  => array(),
-		);
 
 		// Valid values that should be accepted per type
 		$known_types = array(
@@ -422,29 +407,18 @@ abstract class SchemaTestCase extends TestCase {
 			'string'    => array( 'valid' ),
 			'int'       => array( 42 ),
 			'float'     => array( 3.14 ),
-			'number'    => array( '25.00', 25, 25. ),
+			'number'    => array( '25.00', 25, 25.0 ),
 			'date'      => array( '2024-12-25' ),
 			'timestamp' => array( '2024-12-25T09:00:00Z' ),
 			'email'     => array( 'test@example.com' ),
 			'bool'      => array( true, false ),
-		);
-
-		// Which primitive types are compatible (should NOT be rejected)
-		$compatible_types = array(
-			'number'    => array( 'int', 'float', 'string' ),
-			'timestamp' => array( 'string' ),
-			'date'      => array( 'string' ),
-			'email'     => array( 'string' ),
-			'country'   => array( 'string' ),
-			'currency'  => array( 'string' ),
-			'bool'      => array( 'true', 'false' ),
+			'array'     => array( array( 'key' => 'value' ), array() ),
 		);
 
 		if ( ! isset( $known_types[ $expected_type ] ) ) {
 			$this->fail( "Unknown type '$expected_type'. Valid types: " . implode( ', ', array_keys( $known_types ) ) );
 		}
 
-		// Positive tests: All known valid values must be accepted
 		$test_values = $valid_values ?? $known_types[ $expected_type ];
 
 		foreach ( $test_values as $input_value ) {
@@ -452,17 +426,62 @@ abstract class SchemaTestCase extends TestCase {
 			$instance = $class::from_array( $data );
 			$actual   = $this->getNestedValue( $instance, $getter );
 
+			// Handle case normalization for string types
 			if ( 'string' === $expected_type ) {
 				$actual = strtolower( $actual );
 			}
-			$this->assertEquals( $input_value, $actual, "Field '$field_name' should accept valid $expected_type value" );
+
+			$this->assertEquals(
+				$input_value,
+				$actual,
+				"Field '$field_name' should accept valid $expected_type value: " . var_export( $input_value, true )
+			);
 		}
+	}
 
-		// Negative tests: All incompatible types must return default
-		$skip_checks = $compatible_types[ $expected_type ] ?? array( $expected_type );
+	/**
+	 * Tests that a field rejects incompatible types and returns the specified default.
+	 *
+	 * @param string      $field_name    Field name in the data array (supports dot notation).
+	 * @param string      $expected_type Expected type that should be accepted.
+	 * @param mixed       $default_value Expected value when type is incompatible.
+	 * @param string|null $getter        Getter method name (supports dot notation).
+	 */
+	protected function assertFieldRejectsInvalidTypes( string $field_name, string $expected_type, $default_value, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $this->mandatory_data();
+		$class          = $this->get_schema_class();
 
-		foreach ( $unique_values as $type_name => $input_value ) {
-			if ( in_array( $type_name, $skip_checks, true ) ) {
+		// Primitive types to test for rejection
+		$primitive_values = array(
+			'string' => 'a',
+			'int'    => 42,
+			'float'  => 3.14,
+			'true'   => true,
+			'false'  => false,
+			'array'  => array(),
+			'null'   => null,
+		);
+
+		// Which primitive types are compatible with each semantic type
+		$compatible_primitives = array(
+			'number'    => array( 'int', 'float', 'string' ),
+			'timestamp' => array( 'string' ),
+			'date'      => array( 'string' ),
+			'email'     => array( 'string' ),
+			'country'   => array( 'string' ),
+			'currency'  => array( 'string' ),
+			'string'    => array( 'string' ),
+			'int'       => array( 'int' ),
+			'float'     => array( 'float' ),
+			'bool'      => array( 'true', 'false' ),
+		);
+
+		$allowed_primitives = $compatible_primitives[ $expected_type ] ?? array( $expected_type );
+
+		foreach ( $primitive_values as $primitive_type => $input_value ) {
+			// Skip compatible types
+			if ( in_array( $primitive_type, $allowed_primitives, true ) ) {
 				continue;
 			}
 
@@ -473,7 +492,7 @@ abstract class SchemaTestCase extends TestCase {
 			$this->assertSame(
 				$default_value,
 				$actual,
-				"Field '$field_name' ($expected_type) should reject $type_name and return default"
+				"Field '$field_name' (type: $expected_type) should reject primitive type '$primitive_type' and return default"
 			);
 		}
 	}
@@ -557,6 +576,118 @@ abstract class SchemaTestCase extends TestCase {
 				$this->assertContains( $field_name, $issue_fields, "Case '$description': Expected validation error for field '$field_name'" );
 				$this->assertSame( $default_value, $actual, "Case '$description': Unexpected default value for invalid input" );
 			}
+		}
+	}
+
+	/**
+	 * Tests that a field normalizes input to uppercase.
+	 *
+	 * @param string      $field_name     Field name in the data array (supports dot notation).
+	 * @param string      $test_value     Base value to test (e.g., 'us' for country codes).
+	 * @param string      $expected_value Expected normalized value (e.g., 'US').
+	 * @param string|null $getter         Getter method name (supports dot notation).
+	 */
+	protected function assertFieldNormalizesToUppercase( string $field_name, string $test_value, string $expected_value, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $this->mandatory_data();
+		$class          = $this->get_schema_class();
+
+		$test_cases = array(
+			'lowercase' => strtolower( $test_value ),
+			'uppercase' => strtoupper( $test_value ),
+			'mixed'     => ucfirst( strtolower( $test_value ) ),
+		);
+
+		foreach ( $test_cases as $case_type => $input ) {
+			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input ) );
+			$instance = $class::from_array( $data );
+			$actual   = $this->getNestedValue( $instance, $getter );
+
+			$this->assertSame(
+				$expected_value,
+				$actual,
+				"Field '$field_name' should normalize $case_type input to uppercase"
+			);
+		}
+	}
+
+	/**
+	 * Tests that a field preserves the exact case of input (case-sensitive).
+	 *
+	 * @param string      $field_name Field name in the data array (supports dot notation).
+	 * @param string      $test_value Value with mixed case to test (e.g., 'JohnSmith').
+	 * @param string|null $getter     Getter method name (supports dot notation).
+	 */
+	protected function assertFieldIsCaseSensitive( string $field_name, string $test_value, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $this->mandatory_data();
+		$class          = $this->get_schema_class();
+
+		$test_cases = array(
+			'lowercase' => strtolower( $test_value ),
+			'uppercase' => strtoupper( $test_value ),
+			'mixed'     => $test_value,
+		);
+
+		foreach ( $test_cases as $case_type => $input ) {
+			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input ) );
+			$instance = $class::from_array( $data );
+			$actual   = $this->getNestedValue( $instance, $getter );
+
+			$this->assertSame(
+				$input,
+				$actual,
+				"Field '$field_name' should preserve exact case for $case_type input"
+			);
+		}
+	}
+
+	/**
+	 * Tests that a field accepts special characters without modification.
+	 *
+	 * @param string      $field_name    Field name in the data array (supports dot notation).
+	 * @param array|null  $special_chars Characters to test (null = common set).
+	 * @param string|null $getter        Getter method name (supports dot notation).
+	 */
+	protected function assertFieldAcceptsSpecialCharacters( string $field_name, array $special_chars = null, string $getter = null ): void {
+		$getter         = $getter ?? $field_name;
+		$mandatory_data = $this->mandatory_data();
+		$class          = $this->get_schema_class();
+
+		$default_chars = array(
+			'hyphen'      => 'Test-Value',
+			'underscore'  => 'Test_Value',
+			'period'      => 'Test.Value',
+			'comma'       => 'Test, Value',
+			'apostrophe'  => "Test's Value",
+			'parentheses' => 'Test (Value)',
+			'ampersand'   => 'Test & Value',
+			'exclamation' => 'Test! Value',
+			'question'    => 'Test? Value',
+			'colon'       => 'Test: Value',
+			'slash'       => 'Test/Value',
+			'plus'        => 'Test+Value',
+			'equals'      => 'Test=Value',
+			'at'          => 'Test@Value',
+			'hash'        => 'Test#Value',
+			'dollar'      => 'Test$Value',
+			'percent'     => 'Test%Value',
+			'unicode'     => 'Tëst Vãlüe',
+			'emoji'       => 'Test 🎉 Value',
+		);
+
+		$test_cases = $special_chars ?? $default_chars;
+
+		foreach ( $test_cases as $char_type => $input ) {
+			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input ) );
+			$instance = $class::from_array( $data );
+			$actual   = $this->getNestedValue( $instance, $getter );
+
+			$this->assertSame(
+				$input,
+				$actual,
+				"Field '$field_name' should accept special character: $char_type"
+			);
 		}
 	}
 

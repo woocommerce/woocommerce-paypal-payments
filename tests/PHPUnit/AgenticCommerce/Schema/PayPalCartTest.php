@@ -20,7 +20,7 @@ class PayPalCartTest extends SchemaTestCase {
 					'quantity' => 1,
 					'name'     => 'Blue T-Shirt',
 					'price'    => array(
-						'currency_code' => 'USD',
+						'currency_code' => 'usd',
 						'value'         => '25.00',
 					),
 				),
@@ -37,14 +37,14 @@ class PayPalCartTest extends SchemaTestCase {
 				'admin_area_2'   => 'San Jose',
 				'admin_area_1'   => 'CA',
 				'postal_code'    => '95131',
-				'country_code'   => 'US',
+				'country_code'   => 'us',
 			),
 			'billing_address'  => array(
 				'address_line_1' => '456 Payment Blvd',
 				'admin_area_2'   => 'New York',
 				'admin_area_1'   => 'NY',
 				'postal_code'    => '10001',
-				'country_code'   => 'US',
+				'country_code'   => 'us',
 			),
 			'payment_method'   => array(
 				'type' => 'paypal',
@@ -52,20 +52,20 @@ class PayPalCartTest extends SchemaTestCase {
 			'checkout_fields'  => array(
 				array(
 					'type'   => 'AGE_VERIFICATION_21_PLUS',
-					'status' => 'PENDING',
+					'status' => 'pending',
 				),
 			),
 			'coupons'          => array(
 				array(
 					'code'   => 'SAVE10',
-					'action' => 'APPLY',
+					'action' => 'apply',
 				),
 			),
 			'geo_coordinates'  => array(
 				'latitude'     => '37.7749',
 				'longitude'    => '-122.4194',
 				'subdivision'  => 'CA',
-				'country_code' => 'US',
+				'country_code' => 'us',
 			),
 		);
 	}
@@ -103,7 +103,15 @@ class PayPalCartTest extends SchemaTestCase {
 	}
 
 	protected function get_data_types(): array {
-		return array();
+		return array(
+			'customer'         => array( 'type' => 'array', 'valid' => array() ),
+			'shipping_address' => array( 'type' => 'array', 'valid' => array() ),
+			'billing_address'  => array( 'type' => 'array', 'valid' => array() ),
+			'payment_method'   => array( 'type' => 'array', 'valid' => array() ),
+			'checkout_fields'  => array( 'type' => 'array', 'valid' => array() ),
+			'coupons'          => array( 'type' => 'array', 'valid' => array() ),
+			'geo_coordinates'  => array( 'type' => 'array', 'valid' => array() ),
+		);
 	}
 
 	protected function mandatory_data(): array {

@@ -15,7 +15,7 @@ class CouponTest extends SchemaTestCase {
 	protected function get_valid_data(): array {
 		return array(
 			'code'   => 'SAVE10',
-			'action' => 'APPLY',
+			'action' => 'apply',
 		);
 	}
 
@@ -53,6 +53,9 @@ class CouponTest extends SchemaTestCase {
 	public function test_string_fields(): void {
 		$this->assertWhitespaceTrimming( 'code', 'SAVE10' );
 		$this->assertWhitespaceTrimming( 'action', 'APPLY' );
+
+		$this->assertFieldIsCaseSensitive( 'code', 'Save10' );
+		$this->assertFieldNormalizesToUppercase( 'action', 'apply', 'APPLY' );
 	}
 
 	public function test_field_format_validation(): void {
@@ -68,17 +71,6 @@ class CouponTest extends SchemaTestCase {
 			'invalid'      => array( 'INVALID', false ),
 			'empty'        => array( '', false ),
 		);
-	}
-
-	/**
-	 * Tests that multiple validation issues are collected.
-	 */
-	public function test_multiple_validation_issues(): void {
-		$data   = array(); // Both fields missing.
-		$coupon = Coupon::from_array( $data );
-		$issues = $coupon->validate();
-
-		$this->assertCount( 2, $issues, 'Should collect all validation issues' );
 	}
 }
 

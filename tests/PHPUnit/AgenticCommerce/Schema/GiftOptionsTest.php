@@ -42,6 +42,7 @@ class GiftOptionsTest extends SchemaTestCase {
 		return array(
 			'is_gift'       => array( 'type' => 'bool', 'default' => false ),
 			'gift_wrap'     => array( 'type' => 'bool', 'default' => false ),
+			'recipient'     => array( 'type' => 'array', 'valid' => array() ),
 			'delivery_date' => 'timestamp',
 			'sender_name'   => 'string',
 			'gift_message'  => 'string',
