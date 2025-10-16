@@ -38,6 +38,7 @@ class CreateCartEndpointTest extends TestCase {
 
 		$this->assertIsArray( $data['validation_issues'] );
 		$this->assertEmpty( $data['validation_issues'] );
+		$this->assertSame( 'CREATED', $data['status'] );
 		$this->assertSame( 'VALID', $data['validation_status'] );
 	}
 }
