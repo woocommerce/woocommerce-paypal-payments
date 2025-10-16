@@ -70,6 +70,7 @@ You may also need `$ ddev restart` to apply the config changes.
 
 Tests and code style:
 - `$ yarn ddev:unit-tests`
+- `$ yarn ddev:unit-tests:coverage`
 - `$ yarn ddev:lint`
 - `$ yarn ddev:fix-lint`
 - `$ yarn ddev:lint-js`
@@ -97,6 +98,12 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 3. `$ ./vendor/bin/psalm`
 4. `$ yarn run lint-js`
 5. `$ yarn run test:unit-js` - Ensure node version is `18` or above
+
+#### Unit tests with Coverage
+
+Run `yarn ddev:unit-tests:coverage` 
+
+This command will generate a `coverage` folder in the project root. Open this in your browser to inspect the Unit Test coverage.
 
 ### Building a release package
 
