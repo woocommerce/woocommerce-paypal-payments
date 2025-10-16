@@ -55,6 +55,6 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 
 		$new_cart = new NewCartResponse( $cart, $token );
 
-		return $this->cart_details( $new_cart );
+		return $this->cart_details( $new_cart, 201 );
 	}
 }
