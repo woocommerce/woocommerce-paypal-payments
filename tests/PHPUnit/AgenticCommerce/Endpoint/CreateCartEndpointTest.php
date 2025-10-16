@@ -12,11 +12,10 @@ use function Brain\Monkey\Functions\when;
  */
 class CreateCartEndpointTest extends TestCase {
 
-	public function test_create_cart_returns_201_created(): void {
+	public function test_create_cart_returns_valid_response(): void {
 		$endpoint = new CreateCartEndpoint();
 
 		when( 'wp_generate_password' )->justReturn( 'random-string' );
-
 		$request = new WP_REST_Request( 'POST', '/wp-json/paypal/v1/merchant-cart' );
 		$request->set_body( json_encode( array(
 			'items'          => array(
@@ -35,9 +34,10 @@ class CreateCartEndpointTest extends TestCase {
 		) ) );
 
 		$response = $endpoint->create_cart( $request );
-		$data = $response->get_data();
+		$data     = $response->get_data();
 
 		$this->assertIsArray( $data['validation_issues'] );
 		$this->assertEmpty( $data['validation_issues'] );
+		$this->assertSame( 'VALID', $data['validation_status'] );
 	}
 }
