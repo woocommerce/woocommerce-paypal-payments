@@ -53,7 +53,7 @@ class Money extends AgenticSchema {
 		}
 	}
 
-	public function currency(): ?string {
+	public function currency_code(): ?string {
 		return $this->currency;
 	}
 

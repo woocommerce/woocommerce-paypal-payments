@@ -123,7 +123,7 @@ class ShippingOption extends AgenticSchema {
 		return $this->price;
 	}
 
-	public function is_selected(): bool {
+	public function isSelected(): bool {
 		return $this->is_selected;
 	}
 
