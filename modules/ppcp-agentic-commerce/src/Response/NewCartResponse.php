@@ -17,6 +17,7 @@ class NewCartResponse extends CartResponse {
 		parent::__construct( $cart );
 		$this->token = $token;
 
+		// todo - status 'CREATED' should be set after cart was persisted; via #5272-persist-cart.
 		$this->status = 'CREATED';
 
 		// todo - the cart_id is generated when we persist the new cart; via #5272-persist-cart.
