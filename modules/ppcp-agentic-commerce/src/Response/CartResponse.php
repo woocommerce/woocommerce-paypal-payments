@@ -45,7 +45,11 @@ class CartResponse {
 
 	public function __construct( PayPalCart $cart ) {
 		$this->cart = $cart;
-		// todo - set the other props of this class, once the flow becomes more clear.
+
+		$validation_issues = $this->cart->validate();
+		if ( empty( $validation_issues ) ) {
+			$this->validation_status = 'VALID';
+		}
 	}
 
 	public function to_array(): array {
