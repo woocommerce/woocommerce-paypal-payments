@@ -35,7 +35,9 @@ class CreateCartEndpointTest extends TestCase {
 		) ) );
 
 		$response = $endpoint->create_cart( $request );
+		$data = $response->get_data();
 
-		$this->assertSame( 201, $response->get_status() );
+		$this->assertIsArray( $data['validation_issues'] );
+		$this->assertEmpty( $data['validation_issues'] );
 	}
 }
