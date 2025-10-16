@@ -68,7 +68,7 @@ class ShippingOption extends AgenticSchema {
 		if ( ! isset( $input['price'] ) || ! is_array( $input['price'] ) ) {
 			$add_issue( new MissingField( 'Shipping price is required', 'Please provide a shipping price', 'price' ) );
 		} else {
-			$money  = Money::from_array( $input['price'] );
+			$money  = Money::from_array( $input['price'], $add_issue );
 			$issues = $money->validate();
 
 			if ( empty( $issues ) ) {

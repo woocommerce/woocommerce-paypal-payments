@@ -111,7 +111,7 @@ class CartItem extends AgenticSchema {
 		}
 
 		if ( isset( $input['price'] ) && is_array( $input['price'] ) ) {
-			$price = Money::from_array( $input['price'] );
+			$price = Money::from_array( $input['price'], $add_issue );
 
 			if ( $price->value() <= 0. ) {
 				$add_issue( new InvalidData( 'Item price is invalid', 'The item price is invalid', 'price' ) );
@@ -121,7 +121,7 @@ class CartItem extends AgenticSchema {
 		}
 
 		if ( isset( $input['gift_options'] ) && is_array( $input['gift_options'] ) ) {
-			$this->gift_options = GiftOptions::from_array( $input['gift_options'] );
+			$this->gift_options = GiftOptions::from_array( $input['gift_options'], $add_issue );
 		}
 
 		if ( isset( $input['selected_attributes'] ) && is_array( $input['selected_attributes'] ) ) {
