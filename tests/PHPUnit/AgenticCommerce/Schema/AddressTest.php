@@ -95,6 +95,6 @@ class AddressTest extends SchemaTestCase {
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'country_code', $this->getCountryCodeFormatCases() );
+		$this->assertFieldFormat( 'country_code', $this->get_country_code_format_cases() );
 	}
 }

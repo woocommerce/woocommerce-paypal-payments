@@ -81,8 +81,8 @@ class CustomerTest extends SchemaTestCase {
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'email_address', $this->getEmailAddressFormatCases() );
-		$this->assertFieldFormat( 'phone.country_code', $this->getPhoneCountryCodeFormatCases() );
-		$this->assertFieldFormat( 'phone.national_number', $this->getPhoneNationalNumberFormatCases() );
+		$this->assertFieldFormat( 'email_address', $this->get_email_address_format_cases() );
+		$this->assertFieldFormat( 'phone.country_code', $this->get_phone_country_code_format_cases() );
+		$this->assertFieldFormat( 'phone.national_number', $this->get_phone_national_number_format_cases() );
 	}
 }

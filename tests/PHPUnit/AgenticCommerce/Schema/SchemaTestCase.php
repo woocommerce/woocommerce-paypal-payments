@@ -97,7 +97,7 @@ abstract class SchemaTestCase extends TestCase {
 		$this->assertEmpty( $instance->validate(), 'Valid data should pass validation' );
 
 		foreach ( $expectations as $field_name => $expected ) {
-			$actual = $this->getNestedValue( $instance, $field_name );
+			$actual = $this->get_nested_value( $instance, $field_name );
 			$this->assertSame( $expected, $actual, "Getter '$field_name()' should return '$expected' value" );
 		}
 	}
@@ -135,7 +135,14 @@ abstract class SchemaTestCase extends TestCase {
 		}
 	}
 
-	// === Helper methods for common test patterns ===
+	/**
+	 * ----------------------------------------------------------------------
+	 * CUSTOM ASSERTIONS
+	 *
+	 * Assertion methods use camelCase to align with PHPUnit's built-in
+	 * "assertSomething" convention.
+	 * ----------------------------------------------------------------------
+	 */
 
 	/**
 	 * Tests that a required field produces validation error when missing.
@@ -196,7 +203,7 @@ abstract class SchemaTestCase extends TestCase {
 		$mandatory_data = $this->mandatory_data();
 
 		// Test below exact length produces validation issue
-		$too_short = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length - 1 ) ) );
+		$too_short = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $exact_length - 1 ) ) );
 		$instance  = $class::from_array( $too_short );
 		$issues    = $instance->validate();
 
@@ -209,14 +216,14 @@ abstract class SchemaTestCase extends TestCase {
 		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
 
 		// Test at exact length is valid
-		$at_exact = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length ) ) );
+		$at_exact = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $exact_length ) ) );
 		$instance = $class::from_array( $at_exact );
 		$issues   = $instance->validate();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at exactly $exact_length characters" );
 
 		// Test above exact length produces validation issue
-		$too_long = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $exact_length + 1 ) ) );
+		$too_long = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $exact_length + 1 ) ) );
 		$instance = $class::from_array( $too_long );
 		$issues   = $instance->validate();
 
@@ -235,7 +242,7 @@ abstract class SchemaTestCase extends TestCase {
 		$mandatory_data = $this->mandatory_data();
 
 		// Test exceeding max length produces validation issue
-		$too_long = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
+		$too_long = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
 		$instance = $class::from_array( $too_long );
 		$issues   = $instance->validate();
 
@@ -248,7 +255,7 @@ abstract class SchemaTestCase extends TestCase {
 		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
 
 		// Test at max length is valid
-		$at_max   = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, str_repeat( 'a', $max_length ) ) );
+		$at_max   = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $max_length ) ) );
 		$instance = $class::from_array( $at_max );
 		$issues   = $instance->validate();
 
@@ -413,9 +420,9 @@ abstract class SchemaTestCase extends TestCase {
 		$test_values = $valid_values ?? $known_types[ $expected_type ];
 
 		foreach ( $test_values as $input_value ) {
-			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+			$data     = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, $input_value ) );
 			$instance = $class::from_array( $data );
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			// Handle case normalization for string types
 			if ( 'string' === $expected_type ) {
@@ -474,9 +481,9 @@ abstract class SchemaTestCase extends TestCase {
 				continue;
 			}
 
-			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+			$data     = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, $input_value ) );
 			$instance = $class::from_array( $data );
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			$this->assertSame(
 				$default_value,
@@ -494,10 +501,10 @@ abstract class SchemaTestCase extends TestCase {
 	protected function assertEmptyStringPreserved( string $field_name ): void {
 		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
-		$data           = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, '' ) );
+		$data           = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, '' ) );
 		$instance       = $class::from_array( $data );
 
-		$actual = $this->getNestedValue( $instance, $field_name );
+		$actual = $this->get_nested_value( $instance, $field_name );
 		$this->assertSame( '', $actual, "Field '{$field_name}' should be empty string'" );
 	}
 
@@ -511,12 +518,12 @@ abstract class SchemaTestCase extends TestCase {
 		$mandatory_data = $this->mandatory_data();
 		$class          = $this->get_schema_class();
 
-		$test_cases = $this->getWhitespaceTrimTestCases( $clean_value );
+		$test_cases = $this->get_whitespace_trim_test_cases( $clean_value );
 
 		foreach ( $test_cases as $description => list( $input_value, $expected_value ) ) {
-			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input_value ) );
+			$data     = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, $input_value ) );
 			$instance = $class::from_array( $data );
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			$this->assertEquals( $expected_value, $actual, "Failed whitespace trimming for case: $description" );
 		}
@@ -541,10 +548,10 @@ abstract class SchemaTestCase extends TestCase {
 			$expected_output = $case[2] ?? $input;
 
 			$data     = array_merge( array(), $mandatory_data );
-			$data     = $this->setNestedValue( $data, $field_name, $input );
+			$data     = $this->set_nested_value( $data, $field_name, $input );
 			$instance = $class::from_array( $data );
 			$issues   = $instance->validate();
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			if ( $is_valid ) {
 				$this->assertEmpty( $issues, "Case '$description': Expected no validation issues" );
@@ -579,9 +586,9 @@ abstract class SchemaTestCase extends TestCase {
 		);
 
 		foreach ( $test_cases as $case_type => $input ) {
-			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input ) );
+			$data     = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, $input ) );
 			$instance = $class::from_array( $data );
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			$this->assertSame(
 				$expected_value,
@@ -608,9 +615,9 @@ abstract class SchemaTestCase extends TestCase {
 		);
 
 		foreach ( $test_cases as $case_type => $input ) {
-			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input ) );
+			$data     = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, $input ) );
 			$instance = $class::from_array( $data );
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			$this->assertSame(
 				$input,
@@ -655,9 +662,9 @@ abstract class SchemaTestCase extends TestCase {
 		$test_cases = $special_chars ?? $default_chars;
 
 		foreach ( $test_cases as $char_type => $input ) {
-			$data     = array_merge( $mandatory_data, $this->setNestedValue( array(), $field_name, $input ) );
+			$data     = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, $input ) );
 			$instance = $class::from_array( $data );
-			$actual   = $this->getNestedValue( $instance, $field_name );
+			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			$this->assertSame(
 				$input,
@@ -667,7 +674,11 @@ abstract class SchemaTestCase extends TestCase {
 		}
 	}
 
-	// === Helper utilities for nested field access ===
+	/**
+	 * ----------------------------------------------------------------------
+	 * HELPERS - DATA ACCESS AND VALUE GENERATORS
+	 * ----------------------------------------------------------------------
+	 */
 
 	/**
 	 * Sets a nested value in an array using dot notation.
@@ -677,7 +688,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @param mixed  $value Value to set.
 	 * @return array Modified array.
 	 */
-	protected function setNestedValue( array $data, string $path, $value ): array {
+	protected function set_nested_value( array $data, string $path, $value ): array {
 		$keys = explode( '.', $path );
 		$temp = &$data;
 
@@ -700,7 +711,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @param string $path     Dot-separated path (e.g., 'phone.country_code').
 	 * @return mixed Retrieved value.
 	 */
-	protected function getNestedValue( $instance, string $path ) {
+	protected function get_nested_value( $instance, string $path ) {
 		$keys  = explode( '.', $path );
 		$value = $instance;
 
@@ -723,7 +734,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @param mixed $clean_value Clean value without whitespace.
 	 * @return array Test cases [description => [input_value, expected_value]].
 	 */
-	protected function getWhitespaceTrimTestCases( $clean_value ): array {
+	protected function get_whitespace_trim_test_cases( $clean_value ): array {
 		$string_value = (string) $clean_value;
 
 		return array(
@@ -739,7 +750,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getCountryCodeFormatCases(): array {
+	protected function get_country_code_format_cases(): array {
 		return array(
 			'United States'  => array( 'US', true ),
 			'Canada'         => array( 'CA', true ),
@@ -763,7 +774,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getCurrencyCodeFormatCases(): array {
+	protected function get_currency_code_format_cases(): array {
 		return array(
 			'US Dollar'     => array( 'USD', true ),
 			'Euro'          => array( 'EUR', true ),
@@ -784,7 +795,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getPhoneCountryCodeFormatCases(): array {
+	protected function get_phone_country_code_format_cases(): array {
 		return array(
 			'US single'          => array( '1', true ),
 			'UK double'          => array( '44', true ),
@@ -805,7 +816,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getPhoneNationalNumberFormatCases(): array {
+	protected function get_phone_national_number_format_cases(): array {
 		return array(
 			'short'               => array( '123', true ),
 			'medium'              => array( '5551234', true ),
@@ -827,7 +838,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getEmailAddressFormatCases( bool $allow_empty = false ): array {
+	protected function get_email_address_format_cases( bool $allow_empty = false ): array {
 		return array(
 			'simple'                    => array( 'test@example.com', true ),
 			'with plus'                 => array( 'user+tag@example.com', true ),
@@ -858,7 +869,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getIsoDateFormatCases( bool $allow_empty = false ): array {
+	protected function get_iso_date_format_cases( bool $allow_empty = false ): array {
 		return array(
 			'UTC'                => array( '2024-12-25T09:00:00Z', true ),
 			'with offset'        => array( '2024-12-25T09:00:00+01:00', true ),
@@ -879,7 +890,7 @@ abstract class SchemaTestCase extends TestCase {
 	 * @see assertFieldFormat
 	 * @return array Test cases [description => [input, is_valid, expected_output]].
 	 */
-	protected function getYmdDateFormatCases( bool $allow_empty = false ): array {
+	protected function get_ymd_date_format_cases( bool $allow_empty = false ): array {
 		return array(
 			'standard date'       => array( '2024-12-25', true ),
 			'start of year'       => array( '2024-01-01', true ),
@@ -906,6 +917,127 @@ abstract class SchemaTestCase extends TestCase {
 			'text date'           => array( 'December 25, 2024', false ),
 			'only spaces'         => array( '   ', $allow_empty ),
 			'empty'               => array( '', $allow_empty ),
+		);
+	}
+
+	protected function get_geo_latitude_test_cases(): array {
+		return array(
+			'zero'                 => array( '0', true, 0. ),
+			'positive integer'     => array( '45', true, 45. ),
+			'negative integer'     => array( '-45', true, - 45. ),
+			'positive decimal'     => array( '37.7749', true, 37.7749 ),
+			'negative decimal'     => array( '-33.8688', true, - 33.8688 ),
+			'max positive'         => array( '90', true, 90. ),
+			'leading space'        => array( '  90', true, 90. ),
+			'trailing space'       => array( '90  ', true, 90. ),
+			'max positive decimal' => array( '90.0', true, 90.0 ),
+			'max negative'         => array( '-90', true, - 90. ),
+			'max negative decimal' => array( '-90.0', true, - 90.0 ),
+			'small positive'       => array( '0.0001', true, 0.0001 ),
+			'small negative'       => array( '-0.0001', true, - 0.0001 ),
+			'single digit'         => array( '5', true, 5. ),
+			'89.9999'              => array( '89.9999', true, 89.9999 ),
+			'int'                  => array( 23, true, 23. ),
+			'float'                => array( 23.0, true, 23. ),
+			'exceeds max'          => array( '90.1', false ),
+			'exceeds min'          => array( '-90.1', false ),
+			'way too large'        => array( '180', false ),
+			'way too small'        => array( '-180', false ),
+			'non-numeric'          => array( 'abc', false ),
+			'with units'           => array( '45°', false ),
+			'with comma'           => array( '45,5', false ),
+			'multiple decimals'    => array( '45.5.5', false ),
+		);
+	}
+
+	protected function get_geo_longitude_test_cases(): array {
+		return array(
+			'zero'                 => array( '0', true, 0. ),
+			'positive integer'     => array( '90', true, 90. ),
+			'negative integer'     => array( '-90', true, - 90. ),
+			'positive decimal'     => array( '122.4194', true, 122.4194 ),
+			'negative decimal'     => array( '-122.4194', true, - 122.4194 ),
+			'max positive'         => array( '180', true, 180. ),
+			'leading space'        => array( '  180', true, 180. ),
+			'trailing space'       => array( '180  ', true, 180. ),
+			'max positive decimal' => array( '180.0', true, 180.0 ),
+			'max negative'         => array( '-180', true, - 180. ),
+			'max negative decimal' => array( '-180.0', true, - 180.0 ),
+			'small positive'       => array( '0.0001', true, 0.0001 ),
+			'small negative'       => array( '-0.0001', true, - 0.0001 ),
+			'single digit'         => array( '5', true, 5. ),
+			'179.9999'             => array( '179.9999', true, 179.9999 ),
+			'int'                  => array( 23, true, 23. ),
+			'float'                => array( 23.0, true, 23. ),
+			'exceeds max'          => array( '180.1', false ),
+			'exceeds min'          => array( '-180.1', false ),
+			'way too large'        => array( '360', false ),
+			'way too small'        => array( '-360', false ),
+			'non-numeric'          => array( 'xyz', false ),
+			'with units'           => array( '-122°', false ),
+			'with comma'           => array( '122,4', false ),
+			'multiple decimals'    => array( '122.41.94', false ),
+		);
+	}
+
+	protected function get_geo_subdivision_test_cases(): array {
+		return array(
+			'US state CA'           => array( 'CA', true ),
+			'lowercase CA'          => array( 'ca', true, 'CA' ),
+			'US state NY'           => array( 'NY', true ),
+			'Canada province ON'    => array( 'ON', true ),
+			'UK region ENG'         => array( 'ENG', true ),
+			'ENG with spaces'       => array( ' ENG ', true, 'ENG' ),
+			'Germany Bavaria BY'    => array( 'BY', true ),
+			'Australia NSW'         => array( 'NSW', true ),
+			'with hyphen'           => array( 'AB-CD', true ),
+			'with numbers'          => array( 'CA1', true ),
+			'with multiple hyphens' => array( 'A-B-C', true ),
+			'alphanumeric mix'      => array( 'A1B2C3', true ),
+			'max length 10 chars'   => array( 'ABCDEFGHIJ', true ),
+			'exceeds max length'    => array( 'ABCDEFGHIJK', false ),
+			'with spaces'           => array( 'CA NY', false ),
+			'with special chars'    => array( 'CA_NY', false ),
+			'with dots'             => array( 'CA.NY', false ),
+			'with slash'            => array( 'CA/NY', false ),
+		);
+	}
+
+	protected function get_coupon_action_test_cases(): array {
+		// Allowed values are APPLY and REMOVE.
+		return array(
+			'valid apply'  => array( 'APPLY', true ),
+			'remove'       => array( 'REMOVE', true ),
+			'apply lower'  => array( 'apply', true, 'APPLY' ),
+			'remove mixed' => array( 'ReMoVe', true, 'REMOVE' ),
+			'invalid'      => array( 'INVALID', false ),
+			'empty'        => array( '', false ),
+		);
+	}
+
+	protected function get_money_value_cases( bool $allow_zero = true, bool $allow_negative = true ): array {
+		return array(
+			// Positive.
+			'positive integer'      => array( '25', true, 25.0 ),
+			'positive decimal'      => array( '25.99', true, 25.99 ),
+			'three decimal jpy'     => array( '25.500', true, 25.5 ),
+			'three decimal jpy 2'   => array( '25.599', true, 25.599 ),
+			'large amount'          => array( '999999.99', true, 999999.99 ),
+			'int amount'            => array( 10, true, 10.0 ),
+			'float amount'          => array( 10.5, true, 10.5 ),
+			// Zero.
+			'zero string'           => array( '0', $allow_zero, 0.0 ),
+			'zero int'              => array( 0, $allow_zero, 0.0 ),
+			'zero float'            => array( 0., $allow_zero, 0.0 ),
+			// Negative.
+			'minus one'             => array( - 1, $allow_negative, - 1. ),
+			'negative value'        => array( '-10.50', $allow_negative, - 10.5 ),
+			'large negative amount' => array( '-999999.99', $allow_negative, - 999999.99 ),
+			// Invalid format.
+			'non numeric'           => array( 'abc', false ),
+			'too many decimals'     => array( '10.1234', false ),
+			'invalid format'        => array( '10,50', false ),
+			'empty string'          => array( '', false ),
 		);
 	}
 }

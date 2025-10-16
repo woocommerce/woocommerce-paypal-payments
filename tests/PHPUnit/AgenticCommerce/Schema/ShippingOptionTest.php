@@ -66,7 +66,7 @@ class ShippingOptionTest extends SchemaTestCase {
 		$this->assertRequiredField( 'price' );
 		$this->assertRequiredField( 'isSelected' );
 
-		$this->assertBooleanFieldDefaultState( 'isSelected', false );
+		$this->assertBooleanFieldDefaultState( 'isSelected' );
 
 		$this->assertOptionalField( 'description' );
 		$this->assertOptionalField( 'estimated_delivery' );
@@ -90,6 +90,6 @@ class ShippingOptionTest extends SchemaTestCase {
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'estimated_delivery', $this->getYmdDateFormatCases() );
+		$this->assertFieldFormat( 'estimated_delivery', $this->get_ymd_date_format_cases() );
 	}
 }

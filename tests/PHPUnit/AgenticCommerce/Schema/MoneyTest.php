@@ -55,25 +55,7 @@ class MoneyTest extends SchemaTestCase {
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'currency_code', $this->getCurrencyCodeFormatCases() );
-		$this->assertFieldFormat( 'value', $this->get_value_cases() );
-	}
-
-	public function get_value_cases(): array {
-		return array(
-			'positive_integer'    => array( '25', true, 25.0 ),
-			'positive_decimal'    => array( '25.99', true, 25.99 ),
-			'three_decimal_jpy'   => array( '25.500', true, 25.5 ),
-			'three_decimal_jpy_2' => array( '25.599', true, 25.599 ),
-			'negative_value'      => array( '-10.50', true, - 10.5 ),
-			'zero'                => array( '0', true, 0.0 ),
-			'large_amount'        => array( '999999.99', true, 999999.99 ),
-			'int_amount'          => array( 10, true, 10.0 ),
-			'float_amount'        => array( 10.5, true, 10.5 ),
-			'non_numeric'         => array( 'abc', false ),
-			'too_many_decimals'   => array( '10.1234', false ),
-			'invalid_format'      => array( '10,50', false ),
-			'empty_string'        => array( '', false ),
-		);
+		$this->assertFieldFormat( 'currency_code', $this->get_currency_code_format_cases() );
+		$this->assertFieldFormat( 'value', $this->get_money_value_cases() );
 	}
 }

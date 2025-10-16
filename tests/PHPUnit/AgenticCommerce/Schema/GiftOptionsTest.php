@@ -81,7 +81,7 @@ class GiftOptionsTest extends SchemaTestCase {
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'delivery_date', $this->getIsoDateFormatCases() );
-		$this->assertFieldFormat( 'recipient.email', $this->getEmailAddressFormatCases( true ) );
+		$this->assertFieldFormat( 'delivery_date', $this->get_iso_date_format_cases() );
+		$this->assertFieldFormat( 'recipient.email', $this->get_email_address_format_cases( true ) );
 	}
 }

@@ -56,18 +56,7 @@ class CouponTest extends SchemaTestCase {
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'action', $this->get_action_values() );
-	}
-
-	public function get_action_values(): array {
-		return array(
-			'valid apply'  => array( 'APPLY', true ),
-			'remove'       => array( 'REMOVE', true ),
-			'apply lower'  => array( 'apply', true, 'APPLY' ),
-			'remove mixed' => array( 'ReMoVe', true, 'REMOVE' ),
-			'invalid'      => array( 'INVALID', false ),
-			'empty'        => array( '', false ),
-		);
+		$this->assertFieldFormat( 'action', $this->get_coupon_action_test_cases() );
 	}
 }
 
