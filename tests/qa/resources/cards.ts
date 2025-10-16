@@ -12,6 +12,13 @@ const visa2: WooCommerce.CreditCard = {
 	card_type: 'Visa',
 };
 
+const visaFastlane: WooCommerce.CreditCard = {
+	card_number: '4000000000002701', // for Ryan's fastlane only last 4 digits matter
+	expiration_date: '12/30',
+	card_cvv: '123',
+	card_type: 'Visa',
+};
+
 const visa3ds: WooCommerce.CreditCard = {
 	card_number: '4020024518402084',
 	expiration_date: '01/30',
@@ -39,6 +46,7 @@ export const cards: {
 } = {
 	visa,
 	visa2,
+	visaFastlane,
 	visa3ds,
 	mastercard,
 	declined,

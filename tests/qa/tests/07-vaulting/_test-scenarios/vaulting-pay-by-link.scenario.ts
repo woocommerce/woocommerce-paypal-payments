@@ -48,6 +48,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				order = await wooCommerceUtils.createApiOrder( testOrder );
 				await payForOrder.visit( order.id, order.order_key );
+				await payForOrder.payPalUi.expandPaymentGateway( payment );
 				if ( payment.saveToAccount === true ) {
 					await payForOrder.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 						payment
@@ -112,6 +113,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 				order = await wooCommerceUtils.createApiOrder( testOrder );
 				await payForOrder.visit( order.id, order.order_key );
+				await payForOrder.payPalUi.expandPaymentGateway( payment );
 				if ( payment.saveToAccount === true ) {
 					await payForOrder.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 						payment

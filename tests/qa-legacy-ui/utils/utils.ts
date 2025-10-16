@@ -201,7 +201,6 @@ export class Utils {
 		);
 	};
 
-
 	/**
 	 * Onboard with Pay Upon Invoice (PUI)
 	 * Only for German merchant
@@ -214,37 +213,42 @@ export class Utils {
 		);
 
 		const response = await this.requestUtils.request.post(
-			'/?wc-ajax=ppc-update-signup-links', {
+			'/?wc-ajax=ppc-update-signup-links',
+			{
 				data: {
 					nonce,
 					settings: { 'ppcp-onboarding-pui': true },
-				}
-			},
+				},
+			}
 		);
 		const result = response.ok();
 		await expect( result ).toBeTruthy();
 		return result;
-	}
+	};
 
 	/**
 	 * Connects merchant via form post request
 	 *
+	 * @param merchant
+	 * @param options
 	 */
 	connectMerchant = async (
 		merchant: PcpMerchant,
 		options = {
 			enablePayUponInvoice: false,
 		}
-	 ) => {
+	) => {
 		const ppcpNonce = await this.requestUtils.getRegexMatchValueOnPage(
 			urls.pcp.connection,
 			/<input type="hidden" name="ppcp-nonce" value="([^"]+)">/
 		);
-		
-		const wpnonce = await this.requestUtils.getPageNonce( urls.pcp.connection );
-		
+
+		const wpnonce = await this.requestUtils.getPageNonce(
+			urls.pcp.connection
+		);
+
 		const formData = {
-			'_wpnonce': wpnonce,
+			_wpnonce: wpnonce,
 			'ppcp-nonce': ppcpNonce,
 			'ppcp[sandbox_on]': '1',
 			'ppcp[merchant_email_production]': '',
@@ -260,19 +264,22 @@ export class Utils {
 			'ppcp[stay_updated]': '1',
 			'ppcp[subtotal_mismatch_behavior]': 'extra_line',
 			'ppcp[subtotal_mismatch_line_name]': '',
-			'save': 'Save changes',
+			save: 'Save changes',
 		};
 
-		if( options.enablePayUponInvoice === true ) {
-			formData[ 'ppcp_onboarding_dcc' ] = 'basic';
+		if ( options.enablePayUponInvoice === true ) {
+			formData.ppcp_onboarding_dcc = 'basic';
 			await this.onboardWithPui();
 		}
-		
-		const response = await this.requestUtils.submitPageForm( urls.pcp.connection, formData );
+
+		const response = await this.requestUtils.submitPageForm(
+			urls.pcp.connection,
+			formData
+		);
 		const result = response.ok();
 		await expect( result ).toBeTruthy();
 		return result;
-	}
+	};
 
 	/**
 	 * Disconnects merchant via form post request
@@ -283,9 +290,11 @@ export class Utils {
 			urls.pcp.connection,
 			/<input type="hidden" name="ppcp-nonce" value="([^"]+)">/
 		);
-		const wpnonce = await this.requestUtils.getPageNonce( urls.pcp.connection );
+		const wpnonce = await this.requestUtils.getPageNonce(
+			urls.pcp.connection
+		);
 		const formData = {
-			'_wpnonce': wpnonce,
+			_wpnonce: wpnonce,
 			'ppcp-nonce': ppcpNonce,
 			'ppcp[merchant_email_production]': '',
 			'ppcp[merchant_id_production]': '',
@@ -300,13 +309,16 @@ export class Utils {
 			'ppcp[stay_updated]': '1',
 			'ppcp[subtotal_mismatch_behavior]': 'extra_line',
 			'ppcp[subtotal_mismatch_line_name]': '',
-			'save': 'Save changes',
+			save: 'Save changes',
 		};
-		const response = await this.requestUtils.submitPageForm( urls.pcp.connection, formData );
+		const response = await this.requestUtils.submitPageForm(
+			urls.pcp.connection,
+			formData
+		);
 		const result = response.ok();
 		await expect( result ).toBeTruthy();
 		return result;
-	}
+	};
 
 	/**
 	 * Clear PCP DB via request
@@ -320,12 +332,12 @@ export class Utils {
 
 		const response = await this.requestUtils.request.post(
 			'/?wc-ajax=ppcp-clear-db',
-			{ data: { nonce } },
+			{ data: { nonce } }
 		);
 		const result = response.ok();
 		await expect( result ).toBeTruthy();
 		return result;
-	}
+	};
 
 	/**
 	 * Enable PayPal funding source
@@ -460,10 +472,9 @@ export class Utils {
 			if ( data.clearPCPDB ) {
 				// Make sure merchant is connected to clear PCP DB
 				await this.disconnectMerchant();
-				await this.connectMerchant(
-					data.merchant,
-					{ enablePayUponInvoice: !!data.enablePayUponInvoice },
-				);
+				await this.connectMerchant( data.merchant, {
+					enablePayUponInvoice: !! data.enablePayUponInvoice,
+				} );
 				await this.clearPcpDb();
 			}
 
@@ -473,10 +484,9 @@ export class Utils {
 			}
 
 			await this.disconnectMerchant();
-			await this.connectMerchant(
-				data.merchant,
-				{ enablePayUponInvoice: !!data.enablePayUponInvoice },
-			);
+			await this.connectMerchant( data.merchant, {
+				enablePayUponInvoice: !! data.enablePayUponInvoice,
+			} );
 		}
 
 		if ( data.standardPayments ) {
