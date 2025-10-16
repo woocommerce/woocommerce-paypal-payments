@@ -50,11 +50,11 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 
 		$cart = PayPalCart::from_array( $data );
 
-		// todo - the token represents a checkout-session and must be persisted in the DB + linked to a cart.
+		// todo - the token represents a checkout-session, linked to the cart; via #5272-persist-cart.
 		$token = wp_generate_password( 12, false );
 
-		$response = new NewCartResponse( $cart, $token );
+		$new_cart = new NewCartResponse( $cart, $token );
 
-		return $this->cart_details( $response );
+		return $this->cart_details( $new_cart );
 	}
 }

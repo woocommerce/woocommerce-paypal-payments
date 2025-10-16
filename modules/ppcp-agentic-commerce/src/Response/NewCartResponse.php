@@ -17,7 +17,7 @@ class NewCartResponse extends CartResponse {
 		parent::__construct( $cart );
 		$this->token = $token;
 
-		// todo - the cart_id is generated when we persist the new cart. Fix this after cart persistence is done.
+		// todo - the cart_id is generated when we persist the new cart; via #5272-persist-cart.
 		$this->cart_id = wp_generate_password( 12, false );
 	}
 
