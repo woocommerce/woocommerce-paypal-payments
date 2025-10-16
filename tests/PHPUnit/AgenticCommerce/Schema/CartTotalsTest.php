@@ -27,7 +27,17 @@ class CartTotalsTest extends SchemaTestCase {
 	}
 
 	protected function get_data_types(): array {
-		return array();
+		return array(
+			'subtotal'          => array( 'type' => 'array', 'valid' => array() ),
+			'discount'          => array( 'type' => 'array', 'valid' => array() ),
+			'shipping'          => array( 'type' => 'array', 'valid' => array() ),
+			'tax'               => array( 'type' => 'array', 'valid' => array() ),
+			'handling'          => array( 'type' => 'array', 'valid' => array() ),
+			'insurance'         => array( 'type' => 'array', 'valid' => array() ),
+			'shipping_discount' => array( 'type' => 'array', 'valid' => array() ),
+			'custom_charges'    => array( 'type' => 'array', 'valid' => array() ),
+			'total'             => array( 'type' => 'array', 'valid' => array() ),
+		);
 	}
 
 	protected function get_expected_data(): array {
