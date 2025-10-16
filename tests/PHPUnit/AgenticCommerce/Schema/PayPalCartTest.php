@@ -144,4 +144,24 @@ class PayPalCartTest extends SchemaTestCase {
 		$this->assertArrayFieldMaxCount( 'items', 100, $car_item );
 		$this->assertArrayFieldMaxCount( 'checkout_fields', 20, $checkout_field );
 	}
+
+	public function test_validation_issue_propagation(): void {
+		/**
+		 * The PayPalCart instance is expected to collect ALL issues from child classes.
+		 *
+		 * This input should generate 3 validation issues:
+		 * 1. 'items' - at least one item must be provided (MissingField)
+		 * 2. 'payment_method' - this field is expected (MissingField)
+		 * 3. 'customer.email_address' - when provided, must be a valid email (InvalidData))
+		 */
+		$multiple_problems = array(
+			'items'    => array(),
+			'customer' => array( 'email_address' => 'not-provided' ),
+		);
+
+		$testee = PayPalCart::from_array( $multiple_problems );
+
+		$issues = $testee->validate();
+		$this->assertCount( 3, $issues );
+	}
 }
