@@ -18,5 +18,8 @@ require_once TESTS_ROOT_DIR . '/stubs/Task.php';
 require_once TESTS_ROOT_DIR . '/stubs/DefaultPaymentGateways.php';
 require_once TESTS_ROOT_DIR . '/stubs/NoteTraits.php';
 require_once TESTS_ROOT_DIR . '/stubs/AbstractPaymentMethodType.php';
+require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Request.php';
+require_once TESTS_ROOT_DIR . '/stubs/WP_REST_Response.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_REST_Controller.php';
 
 Hamcrest\Util::registerGlobalFunctions();
