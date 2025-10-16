@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers GeoCoordinates
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\GeoCoordinates
  */
 class GeoCoordinatesTest extends SchemaTestCase {
 

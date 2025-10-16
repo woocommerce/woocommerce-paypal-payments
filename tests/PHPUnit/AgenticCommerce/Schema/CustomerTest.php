@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers Customer
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer
  */
 class CustomerTest extends SchemaTestCase {
 

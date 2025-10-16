@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers Address
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address
  */
 class AddressTest extends SchemaTestCase {
 

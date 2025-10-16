@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers CheckoutField
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CheckoutField
  */
 class CheckoutFieldTest extends SchemaTestCase {
 

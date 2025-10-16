@@ -4,7 +4,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers PayPalCart
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\AgenticSchema
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart
  */
 class PayPalCartTest extends SchemaTestCase {
 

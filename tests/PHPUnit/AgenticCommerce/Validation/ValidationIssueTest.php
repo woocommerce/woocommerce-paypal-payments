@@ -12,6 +12,18 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use WooCommerce\PayPalCommerce\TestCase;
 
+/**
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ShippingUnavailable
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\PriceMismatch
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid
+ */
 class ValidationIssueTest extends TestCase {
 
 	private const VALID_CODES = array(

@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers Coupon
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon
  */
 class CouponTest extends SchemaTestCase {
 

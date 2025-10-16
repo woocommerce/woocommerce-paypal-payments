@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers GiftOptions
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\GiftOptions
  */
 class GiftOptionsTest extends SchemaTestCase {
 

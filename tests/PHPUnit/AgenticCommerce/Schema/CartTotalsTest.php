@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers CartTotals
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartTotals
  */
 class CartTotalsTest extends SchemaTestCase {
 

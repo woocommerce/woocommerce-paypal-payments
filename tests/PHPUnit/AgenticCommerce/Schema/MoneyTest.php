@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers Money
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Money
  */
 class MoneyTest extends SchemaTestCase {
 

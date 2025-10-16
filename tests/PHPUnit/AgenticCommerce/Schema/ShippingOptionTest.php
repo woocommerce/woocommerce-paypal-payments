@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers ShippingOption
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\ShippingOption
  */
 class ShippingOptionTest extends SchemaTestCase {
 

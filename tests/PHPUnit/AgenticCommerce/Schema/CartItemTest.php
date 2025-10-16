@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers CartItem
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem
  */
 class CartItemTest extends SchemaTestCase {
 

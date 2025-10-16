@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
 /**
- * @covers PaymentMethod
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod
  */
 class PaymentMethodTest extends SchemaTestCase {
 
