@@ -32,9 +32,7 @@ export const useFeatures = () => {
 				if ( response?.data?.features ) {
 					const featuresData = response.data.features;
 
-					// Set features regardless of length
 					await setFeatures( featuresData );
-					// Always set ready after successful fetch
 					await setIsReady( true );
 				}
 			} catch ( error ) {}
@@ -53,7 +51,6 @@ export const useFeatures = () => {
 				const response = await apiFetch( { path: REST_PATH } );
 				const featuresData = response.data?.features || [];
 
-				// Set features and ready regardless of array length
 				await setFeatures( featuresData );
 				await setIsReady( true );
 
