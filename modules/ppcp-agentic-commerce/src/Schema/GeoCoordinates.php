@@ -36,8 +36,12 @@ class GeoCoordinates extends AgenticSchema {
 
 			if ( is_int( $latitude ) ) {
 				$latitude = (float) $latitude;
-			} elseif ( is_string( $latitude ) && is_numeric( $latitude ) ) {
-				$latitude = (float) $latitude;
+			} elseif ( is_string( $latitude ) ) {
+				$latitude = trim( $latitude );
+
+				if ( is_numeric( $latitude ) ) {
+					$latitude = (float) $latitude;
+				}
 			}
 			if ( is_float( $latitude ) ) {
 				if ( $latitude < - 90.0 || $latitude > 90.0 ) {
@@ -54,8 +58,12 @@ class GeoCoordinates extends AgenticSchema {
 
 			if ( is_int( $longitude ) ) {
 				$longitude = (float) $longitude;
-			} elseif ( is_string( $longitude ) && is_numeric( $longitude ) ) {
-				$longitude = (float) $longitude;
+			} elseif ( is_string( $longitude ) ) {
+				$longitude = trim( $longitude );
+
+				if ( is_numeric( $longitude ) ) {
+					$longitude = (float) $longitude;
+				}
 			}
 			if ( is_float( $longitude ) ) {
 				if ( $longitude < - 180.0 || $longitude > 180.0 ) {
