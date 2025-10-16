@@ -50,7 +50,7 @@ class CartItemTest extends SchemaTestCase {
 			'quantity'                    => 2,
 			'name'                        => 'Blue Cotton T-Shirt (Medium)',
 			'description'                 => 'Comfortable cotton t-shirt in medium size',
-			'price.currency'              => 'USD',
+			'price.currency_code'         => 'USD',
 			'price.value'                 => 25.0,
 			'selected_attributes.0.name'  => 'Color',
 			'selected_attributes.0.value' => 'Blue',

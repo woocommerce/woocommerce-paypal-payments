@@ -14,15 +14,15 @@ class MoneyTest extends SchemaTestCase {
 
 	protected function get_valid_data(): array {
 		return array(
-			'currency_code' => 'USD',
+			'currency_code' => 'usd',
 			'value'         => '25.00',
 		);
 	}
 
 	protected function get_expected_data(): array {
 		return array(
-			'currency' => 'USD',
-			'value'    => 25.,
+			'currency_code' => 'USD',
+			'value'         => 25.,
 		);
 	}
 
@@ -48,13 +48,14 @@ class MoneyTest extends SchemaTestCase {
 	}
 
 	public function test_string_fields(): void {
-		$this->assertWhitespaceTrimming( 'currency_code', 'USD', 'currency' );
+		$this->assertWhitespaceTrimming( 'currency_code', 'USD' );
 
 		$this->assertStringFieldExactLength( 'currency_code', 3 );
+		$this->assertFieldNormalizesToUppercase( 'currency_code', 'usd', 'USD' );
 	}
 
 	public function test_field_format_validation(): void {
-		$this->assertFieldFormat( 'currency_code', $this->getCurrencyCodeFormatCases(), 'currency' );
+		$this->assertFieldFormat( 'currency_code', $this->getCurrencyCodeFormatCases() );
 		$this->assertFieldFormat( 'value', $this->get_value_cases() );
 	}
 

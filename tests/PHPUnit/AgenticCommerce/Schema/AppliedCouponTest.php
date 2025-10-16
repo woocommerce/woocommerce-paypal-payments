@@ -25,10 +25,10 @@ class AppliedCouponTest extends SchemaTestCase {
 
 	protected function get_expected_data(): array {
 		return array(
-			'code'                     => 'SAVE10',
-			'description'              => '10% off entire order',
-			'discount_amount.currency' => 'USD',
-			'discount_amount.value'    => 4.0,
+			'code'                          => 'SAVE10',
+			'description'                   => '10% off entire order',
+			'discount_amount.currency_code' => 'USD',
+			'discount_amount.value'         => 4.0,
 		);
 	}
 

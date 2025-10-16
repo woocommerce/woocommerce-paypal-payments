@@ -75,7 +75,7 @@ class PayPalCartTest extends SchemaTestCase {
 			'items.0.item_id'                 => 'SHIRT-001',
 			'items.0.quantity'                => 1,
 			'items.0.name'                    => 'Blue T-Shirt',
-			'items.0.price.currency'          => 'USD',
+			'items.0.price.currency_code'     => 'USD',
 			'items.0.price.value'             => 25.00,
 			'customer.email_address'          => 'customer@example.com',
 			'customer.name.given_name'        => 'John',
