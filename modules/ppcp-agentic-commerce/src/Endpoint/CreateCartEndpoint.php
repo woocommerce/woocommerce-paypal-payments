@@ -11,11 +11,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InvalidRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use Automattic\WooCommerce\Blocks\Payments\Integrations\PayPal;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -50,8 +48,12 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $data );
 		}
 
-		$cart     = PayPalCart::from_array( $data );
-		$response = new CartResponse( $cart );
+		$cart = PayPalCart::from_array( $data );
+
+		// todo - the token represents a checkout-session and must be persisted in the DB + linked to a cart.
+		$token = wp_generate_password( 12, false );
+
+		$response = new NewCartResponse( $cart, $token );
 
 		return $this->cart_details( $response );
 	}
