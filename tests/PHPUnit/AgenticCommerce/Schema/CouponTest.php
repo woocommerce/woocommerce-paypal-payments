@@ -43,11 +43,8 @@ class CouponTest extends SchemaTestCase {
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'code' );
 		$this->assertRequiredField( 'action' );
-	}
 
-	public function test_optional_fields(): void {
 		// Coupon has no optional fields - both fields are required.
-		$this->addToAssertionCount( 1 );
 	}
 
 	public function test_string_fields(): void {

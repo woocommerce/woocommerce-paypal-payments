@@ -41,10 +41,7 @@ class AppliedCouponTest extends SchemaTestCase {
 
 	public function test_required_fields(): void {
 		// AppliedCoupon has no required fields - all fields are optional.
-		$this->addToAssertionCount( 1 );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'code' );
 		$this->assertOptionalField( 'description' );
 		$this->assertOptionalField( 'discount_amount' );

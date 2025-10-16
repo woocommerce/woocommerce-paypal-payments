@@ -51,9 +51,7 @@ class AddressTest extends SchemaTestCase {
 
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'country_code' );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'address_line_1' );
 		$this->assertOptionalField( 'address_line_2' );
 		$this->assertOptionalField( 'admin_area_2' );

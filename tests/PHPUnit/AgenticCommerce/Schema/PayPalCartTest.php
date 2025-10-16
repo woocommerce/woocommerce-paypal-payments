@@ -126,9 +126,7 @@ class PayPalCartTest extends SchemaTestCase {
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'items' );
 		$this->assertRequiredField( 'payment_method' );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'customer' );
 		$this->assertOptionalField( 'shipping_address' );
 		$this->assertOptionalField( 'billing_address' );

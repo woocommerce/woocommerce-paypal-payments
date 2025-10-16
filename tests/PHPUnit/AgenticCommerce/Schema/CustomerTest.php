@@ -46,16 +46,11 @@ class CustomerTest extends SchemaTestCase {
 
 	public function test_required_fields(): void {
 		// Customer has no required fields - all fields are optional.
-		$this->addToAssertionCount( 1 );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'email_address' );
-	}
 
-	public function test_optional_customer_fields(): void {
-		$data     = array();
-		$customer = Customer::from_array( $data );
+		// Test optional nested fields.
+		$customer = Customer::from_array( array() );
 
 		$this->assertNull( $customer->name() );
 		$this->assertNull( $customer->phone() );

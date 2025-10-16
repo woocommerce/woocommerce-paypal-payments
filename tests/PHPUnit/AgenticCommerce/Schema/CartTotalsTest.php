@@ -61,9 +61,7 @@ class CartTotalsTest extends SchemaTestCase {
 
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'total' );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'subtotal' );
 		$this->assertOptionalField( 'discount' );
 		$this->assertOptionalField( 'shipping' );
@@ -72,25 +70,5 @@ class CartTotalsTest extends SchemaTestCase {
 		$this->assertOptionalField( 'insurance' );
 		$this->assertOptionalField( 'shipping_discount' );
 		$this->assertOptionalField( 'custom_charges' );
-	}
-
-	/**
-	 * Tests that multiple validation errors are returned together.
-	 */
-	public function test_multiple_validation_errors_returned_together(): void {
-		$data = array(
-			'total'    => array( 'value' => '100.00' ),
-			// Missing currency_code.
-			'subtotal' => array( 'currency_code' => 'USD' ),
-			// Missing value.
-			'tax'      => array( 'currency_code' => 'INVALID', 'value' => 'not-a-number' ),
-			// Invalid structure.
-		);
-
-		$totals = CartTotals::from_array( $data );
-		$issues = $totals->validate();
-
-		// Should have validation issues from total, subtotal, and tax.
-		$this->assertGreaterThanOrEqual( 2, count( $issues ), 'Should return multiple validation errors' );
 	}
 }

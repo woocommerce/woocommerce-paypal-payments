@@ -79,9 +79,7 @@ class CartItemTest extends SchemaTestCase {
 
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'quantity' );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'item_id' );
 		$this->assertOptionalField( 'variant_id' );
 		$this->assertOptionalField( 'parent_id' );

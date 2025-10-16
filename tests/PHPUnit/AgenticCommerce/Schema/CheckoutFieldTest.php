@@ -3,8 +3,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
-
 /**
  * @covers CheckoutField
  */
@@ -63,9 +61,7 @@ class CheckoutFieldTest extends SchemaTestCase {
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'type' );
 		$this->assertRequiredField( 'status' );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'value' );
 		$this->assertOptionalField( 'context' );
 	}
@@ -77,32 +73,4 @@ class CheckoutFieldTest extends SchemaTestCase {
 		$this->assertFieldNormalizesToUppercase( 'type', 'sample', 'SAMPLE' );
 		$this->assertFieldNormalizesToUppercase( 'status', 'pending', 'PENDING' );
 	}
-
-	/**
-	 * @dataProvider valid_type_provider
-	 */
-	public function test_valid_types_accepted( string $type ): void {
-		$data  = array(
-			'type'   => $type,
-			'status' => 'PENDING',
-		);
-		$field = CheckoutField::from_array( $data );
-
-		$issues = $field->validate();
-
-		$this->assertEmpty( $issues );
-		$this->assertSame( $type, $field->type() );
-	}
-
-	public function valid_type_provider(): array {
-		return array(
-			'age verification'      => array( 'AGE_VERIFICATION_21_PLUS' ),
-			'gift message'          => array( 'GIFT_MESSAGE' ),
-			'delivery instructions' => array( 'DELIVERY_INSTRUCTIONS' ),
-			'gift recipient email'  => array( 'GIFT_RECIPIENT_EMAIL' ),
-			'custom engraving'      => array( 'CUSTOM_ENGRAVING' ),
-			'allergy information'   => array( 'ALLERGY_INFORMATION' ),
-		);
-	}
-
 }

@@ -44,9 +44,7 @@ class PaymentMethodTest extends SchemaTestCase {
 
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'type' );
-	}
 
-	public function test_optional_fields(): void {
 		$this->assertOptionalField( 'token' );
 		$this->assertOptionalField( 'payer_id' );
 	}

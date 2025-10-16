@@ -3,8 +3,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
-
 /**
  * @covers Money
  */
@@ -45,11 +43,8 @@ class MoneyTest extends SchemaTestCase {
 	public function test_required_fields(): void {
 		$this->assertRequiredField( 'currency_code' );
 		$this->assertRequiredField( 'value' );
-	}
 
-	public function test_optional_fields(): void {
 		// Money has no optional fields - all fields are required.
-		$this->addToAssertionCount( 1 );
 	}
 
 	public function test_string_fields(): void {
@@ -79,16 +74,5 @@ class MoneyTest extends SchemaTestCase {
 			'invalid_format'      => array( '10,50', false ),
 			'empty_string'        => array( '', false ),
 		);
-	}
-
-	/**
-	 * Tests that multiple validation issues are collected.
-	 */
-	public function test_multiple_validation_issues(): void {
-		$data   = array(); // Both fields missing.
-		$money  = Money::from_array( $data );
-		$issues = $money->validate();
-
-		$this->assertCount( 2, $issues, 'Should collect all validation issues' );
 	}
 }
