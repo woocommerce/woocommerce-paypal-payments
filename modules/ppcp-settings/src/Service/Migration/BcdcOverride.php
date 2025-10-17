@@ -53,7 +53,7 @@ class BcdcOverride {
 
 	public function describe(): array {
 		return array(
-			'status'            => $this->is_active ? 'active' : 'inactive',
+			'is_active'         => $this->is_active,
 			'activate_time'     => $this->activate_time,
 			'activate_reason'   => $this->activate_reason,
 			'deactivate_time'   => $this->deactivate_time,
