@@ -220,4 +220,70 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertEmpty( $description['activate_time'] );
 		$this->assertEmpty( $description['activate_reason'] );
 	}
+
+	public function test_constructor_handles_missing_option_with_default_state(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn( false );
+
+		$override = new BcdcOverride();
+
+		$this->assertFalse( $override->is_active() );
+		$description = $override->describe();
+		$this->assertFalse( $description['is_active'] );
+		$this->assertSame( '', $description['activate_time'] );
+		$this->assertSame( '', $description['activate_reason'] );
+	}
+
+	public function test_constructor_handles_corrupted_data_with_default_state(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn( 'not-an-array' );
+
+		$override = new BcdcOverride();
+
+		$this->assertFalse( $override->is_active() );
+		$description = $override->describe();
+		$this->assertFalse( $description['is_active'] );
+	}
+
+	public function test_constructor_loads_inactive_state_from_database(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array(
+					'is_active'         => false,
+					'activate_time'     => '2024-01-15 10:30:00',
+					'activate_reason'   => 'plugin_update',
+					'deactivate_time'   => '2024-01-20 14:45:00',
+					'deactivate_reason' => 'migration_complete',
+				)
+			);
+
+		$override = new BcdcOverride();
+
+		$this->assertFalse( $override->is_active() );
+		$description = $override->describe();
+		$this->assertFalse( $description['is_active'] );
+		$this->assertSame( '2024-01-15 10:30:00', $description['activate_time'] );
+		$this->assertSame( 'plugin_update', $description['activate_reason'] );
+		$this->assertSame( '2024-01-20 14:45:00', $description['deactivate_time'] );
+		$this->assertSame( 'migration_complete', $description['deactivate_reason'] );
+	}
+
+	public function test_constructor_handles_incomplete_data_with_defaults(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array( 'is_active' => true )
+			);
+
+		$override = new BcdcOverride();
+
+		$this->assertTrue( $override->is_active() );
+		$description = $override->describe();
+		$this->assertTrue( $description['is_active'] );
+		$this->assertSame( '', $description['activate_time'] );
+		$this->assertSame( '', $description['activate_reason'] );
+	}
 }
