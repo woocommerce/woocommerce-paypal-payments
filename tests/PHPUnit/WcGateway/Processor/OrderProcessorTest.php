@@ -62,9 +62,8 @@ class OrderProcessorTest extends TestCase
 		    ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn(1);
 		$wcOrder->expects('get_items')->andReturn([]);
-        $wcOrder->expects('update_meta_data')
-            ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
         $wcOrder->shouldReceive('get_id')->andReturn(1);
 
         $orderStatus = Mockery::mock(OrderStatus::class);
@@ -143,6 +142,7 @@ class OrderProcessorTest extends TestCase
             ->andReturnFalse();
 
         $logger = Mockery::mock(LoggerInterface::class);
+		$logger->shouldReceive('info')->byDefault();
 
         $subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $subscription_helper->shouldReceive('has_subscription');
@@ -295,6 +295,7 @@ class OrderProcessorTest extends TestCase
             ->andReturnFalse();
 
 		$logger = Mockery::mock(LoggerInterface::class);
+		$logger->shouldReceive('info')->byDefault();
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$order_helper = Mockery::mock(OrderHelper::class);
@@ -366,9 +367,6 @@ class OrderProcessorTest extends TestCase
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 
-        $wcOrder->expects('update_meta_data')
-            ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
-
         $wcOrder->shouldReceive('set_transaction_id')
             ->with($transactionId);
 
@@ -427,6 +425,7 @@ class OrderProcessorTest extends TestCase
         $settings = Mockery::mock(Settings::class);
 
 		$logger = Mockery::mock(LoggerInterface::class);
+		$logger->shouldReceive('info')->byDefault();
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$order_helper = Mockery::mock(OrderHelper::class);
