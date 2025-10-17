@@ -30,17 +30,19 @@ class BcdcOverride {
 	}
 
 	public function activate( string $reason ): void {
-		if ( ! $reason ) {
+		if ( ! $reason || $this->is_active ) {
 			return;
 		}
 
-		$this->activate_reason = $reason;
-		$this->activate_time   = gmdate( 'Y-m-d H:i:s' );
-		$this->is_active       = true;
+		$this->activate_reason   = $reason;
+		$this->activate_time     = gmdate( 'Y-m-d H:i:s' );
+		$this->deactivate_reason = '';
+		$this->deactivate_time   = '';
+		$this->is_active         = true;
 	}
 
 	public function deactivate( string $reason ): void {
-		if ( ! $reason ) {
+		if ( ! $reason || ! $this->is_active ) {
 			return;
 		}
 
