@@ -118,7 +118,7 @@ class OrderProcessorTest extends TestCase
 	    $orderEndpoint->shouldReceive('order')->andReturn($currentOrder);
 
         $orderEndpoint
-            ->expects('patch_order_with')
+            ->shouldReceive('patch_order_with')
             ->with($currentOrder, $currentOrder)
             ->andReturn($currentOrder);
         $orderEndpoint
