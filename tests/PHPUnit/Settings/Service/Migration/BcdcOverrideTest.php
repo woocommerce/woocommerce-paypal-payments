@@ -113,4 +113,17 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $description['activate_time'] );
 	}
 
+	public function test_activate_when_already_active_does_not_change_state(): void {
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+		$first_description = $override->describe();
+
+		$override->activate( 'ui_migration' );
+		$second_description = $override->describe();
+
+		$this->assertTrue( $override->is_active() );
+		$this->assertSame( 'plugin_update', $second_description['activate_reason'] );
+		$this->assertSame( $first_description['activate_time'], $second_description['activate_time'] );
+	}
+
 }
