@@ -128,7 +128,7 @@ class OrderProcessorTest extends TestCase
 
         $orderFactory = Mockery::mock(OrderFactory::class);
         $orderFactory
-            ->expects('from_wc_order')
+            ->shouldReceive('from_wc_order')
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
 
