@@ -219,8 +219,7 @@ class OrderProcessor {
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @throws PayPalOrderMissingException If no PayPal order.
-	 * @throws RuntimeException If order retrieval fails.
-	 * @throws Exception If processing fails (General exception).
+	 * @throws \Exception If processing fails (General exception).
 	 */
 	public function process( WC_Order $wc_order ): void {
 		$order_id = $wc_order->get_id();
@@ -257,7 +256,7 @@ class OrderProcessor {
 						$this->logger->info( sprintf( 'Retrieved PayPal order %s from API', $order_id_meta ) );
 					} catch ( RuntimeException $exception ) {
 						$this->logger->error( sprintf( 'Failed to retrieve PayPal order: %s', $exception->getMessage() ) );
-						throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
+						throw new \Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
 					}
 				} else {
 					$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
@@ -294,7 +293,7 @@ class OrderProcessor {
 
 			if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
 				$this->logger->error( sprintf( 'Order #%d not ready for processing (physical goods check)', $order_id ) );
-				throw new Exception(
+				throw new \Exception(
 					__(
 						'The payment is not ready for processing yet.',
 						'woocommerce-paypal-payments'
