@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderLockHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
@@ -153,6 +154,13 @@ class OrderProcessor {
 	private ExperienceContextBuilder $experience_context_builder;
 
 	/**
+	 * The order lock helper.
+	 *
+	 * @var OrderLockHelper
+	 */
+	private $order_lock_helper;
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -184,7 +192,8 @@ class OrderProcessor {
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
-		ExperienceContextBuilder $experience_context_builder
+		ExperienceContextBuilder $experience_context_builder,
+		OrderLockHelper $order_lock_helper
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -201,6 +210,7 @@ class OrderProcessor {
 		$this->payer_factory                 = $payer_factory;
 		$this->shipping_preference_factory   = $shipping_preference_factory;
 		$this->experience_context_builder    = $experience_context_builder;
+		$this->order_lock_helper             = $order_lock_helper;
 	}
 
 	/**
@@ -209,87 +219,136 @@ class OrderProcessor {
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @throws PayPalOrderMissingException If no PayPal order.
-	 * @throws Exception If processing fails.
+	 * @throws Exception If processing fails (General exception).
+	 * @throws Exception If order locking fails or the order is not ready for processing.
 	 */
 	public function process( WC_Order $wc_order ): void {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			// phpcs:ignore WordPress.Security.NonceVerification
-			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
-			if ( is_string( $order_id ) && $order_id ) {
-				try {
-					$order = $this->order_endpoint->order( $order_id );
-				} catch ( RuntimeException $exception ) {
-					throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
-				}
-			} else {
-				$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_id = $wc_order->get_id();
 
-				if ( $is_paypal_return ) {
-					$this->logger->warning(
-						sprintf(
-							'No PayPal order ID found for WooCommerce order #%d.',
-							$wc_order->get_id()
+		// Try to acquire lock to prevent race conditions.
+		if ( ! $this->order_lock_helper->acquire_lock( $wc_order ) ) {
+			$this->logger->info(
+				sprintf(
+					'Order #%d is already being processed, skipping.',
+					$order_id
+				)
+			);
+			return;
+		}
+
+		$this->logger->info( sprintf( 'Lock acquired for order #%d', $order_id ) );
+
+		try {
+			$this->logger->info( sprintf( 'Beginning PayPal order retrieval for order #%d', $order_id ) );
+
+			$order = $this->session_handler->order();
+			if ( ! $order ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				$order_id_meta = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+
+				$this->logger->info( sprintf( 'No session order found, checking meta/POST for PayPal order ID: %s', $order_id_meta ?: 'none' ) );
+
+				if ( is_string( $order_id_meta ) && $order_id_meta ) {
+					try {
+						$order = $this->order_endpoint->order( $order_id_meta );
+						$this->logger->info( sprintf( 'Retrieved PayPal order %s from API', $order_id_meta ) );
+					} catch ( RuntimeException $exception ) {
+						$this->logger->error( sprintf( 'Failed to retrieve PayPal order: %s', $exception->getMessage() ) );
+						throw new Exception( __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' ) );
+					}
+				} else {
+					$is_paypal_return = isset( $_GET['wc-ajax'] ) && wc_clean( wp_unslash( $_GET['wc-ajax'] ) ) === 'ppc-return-url'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+					if ( $is_paypal_return ) {
+						$this->logger->warning(
+							sprintf(
+								'No PayPal order ID found for WooCommerce order #%d.',
+								$order_id
+							)
+						);
+					}
+
+					throw new PayPalOrderMissingException(
+						esc_attr__(
+							'There was an error processing your order. Please check for any charges in your payment method and review your order history before placing the order again.',
+							'woocommerce-paypal-payments'
 						)
 					);
 				}
+			}
 
-				throw new PayPalOrderMissingException(
-					esc_attr__(
-						'There was an error processing your order. Please check for any charges in your payment method and review your order history before placing the order again.',
+			// Do not continue if PayPal order status is completed.
+			$this->logger->info( sprintf( 'Checking PayPal order status for order #%d', $order_id ) );
+			$order = $this->order_endpoint->order( $order->id() );
+
+			if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
+				$this->logger->warning( 'Could not process PayPal completed order #' . $order->id() . ', Status: ' . $order->status()->name() );
+				return;
+			}
+
+			$this->logger->info( sprintf( 'Adding PayPal meta for order #%d', $order_id ) );
+			$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+			if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
+				$this->logger->error( sprintf( 'Order #%d not ready for processing (physical goods check)', $order_id ) );
+				throw new Exception(
+					__(
+						'The payment is not ready for processing yet.',
 						'woocommerce-paypal-payments'
 					)
 				);
 			}
-		}
 
-		// Do not continue if PayPal order status is completed.
-		$order = $this->order_endpoint->order( $order->id() );
-		if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
-			$this->logger->warning( 'Could not process PayPal completed order #' . $order->id() . ', Status: ' . $order->status()->name() );
-			return;
-		}
-
-		$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-		if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
-			throw new Exception(
-				__(
-					'The payment is not ready for processing yet.',
-					'woocommerce-paypal-payments'
-				)
-			);
-		}
-
-		$order = $this->patch_order( $wc_order, $order );
-
-		if ( $order->intent() === 'CAPTURE' ) {
-			$order = $this->order_endpoint->capture( $order );
-		}
-
-		if ( $order->intent() === 'AUTHORIZE' ) {
-			$order = $this->order_endpoint->authorize( $order );
-
-			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
-
-			if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
-				$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
+			$this->logger->info( sprintf( 'Patching order #%d', $order_id ) );
+			if ( ! $order->status()->is( OrderStatus::APPROVED ) ) {
+				$order = $this->patch_order( $wc_order, $order );
 			}
+
+			if ( $order->intent() === 'CAPTURE' ) {
+				$this->logger->info( sprintf( 'Capturing payment for order #%d', $order_id ) );
+				$order = $this->order_endpoint->capture( $order );
+				$this->logger->info( sprintf( 'Payment captured successfully for order #%d', $order_id ) );
+			}
+
+			if ( $order->intent() === 'AUTHORIZE' ) {
+				$this->logger->info( sprintf( 'Authorizing payment for order #%d', $order_id ) );
+				$order = $this->order_endpoint->authorize( $order );
+				$this->logger->info( sprintf( 'Payment authorized successfully for order #%d', $order_id ) );
+
+				$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+
+				if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
+					$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
+				}
+			}
+
+			$transaction_id = $this->get_paypal_order_transaction_id( $order );
+
+			if ( $transaction_id ) {
+				$this->logger->info( sprintf( 'Updating transaction ID %s for order #%d', $transaction_id, $order_id ) );
+				$this->update_transaction_id( $transaction_id, $wc_order );
+			}
+
+			$this->logger->info( sprintf( 'Handling order status update for order #%d', $order_id ) );
+			$this->handle_new_order_status( $order, $wc_order );
+
+			if ( $this->capture_authorized_downloads( $order ) ) {
+				$this->logger->info( sprintf( 'Capturing authorized downloads for order #%d', $order_id ) );
+				$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+			}
+
+			$this->logger->info( sprintf( 'Firing after_order_processor action for order #%d', $order_id ) );
+			do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
+
+			$this->logger->info( sprintf( 'Successfully completed processing for order #%d', $order_id ) );
+
+		} catch ( \Exception $e ) {
+			$this->logger->error( sprintf( 'Exception in OrderProcessor for order #%d: %s', $order_id, $e->getMessage() ) );
+			throw $e;
+		} finally {
+			$this->order_lock_helper->release_lock( $wc_order );
+			$this->logger->info( sprintf( 'Lock released for order #%d', $order_id ) );
 		}
-
-		$transaction_id = $this->get_paypal_order_transaction_id( $order );
-
-		if ( $transaction_id ) {
-			$this->update_transaction_id( $transaction_id, $wc_order );
-		}
-
-		$this->handle_new_order_status( $order, $wc_order );
-
-		if ( $this->capture_authorized_downloads( $order ) ) {
-			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
-		}
-
-		do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
 	}
 
 	/**
