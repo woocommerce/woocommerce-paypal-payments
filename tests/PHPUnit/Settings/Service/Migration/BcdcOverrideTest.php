@@ -50,4 +50,12 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertTrue( $override->is_active() );
 	}
 
+	public function test_describe_returns_inactive_status_by_default(): void {
+		$override = new BcdcOverride();
+
+		$description = $override->describe();
+
+		$this->assertStringContainsString( 'inactive', $description );
+	}
+
 }
