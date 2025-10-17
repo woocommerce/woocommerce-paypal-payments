@@ -10,6 +10,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
 class BcdcOverride {
+	public const OPTION_NAME_BCDC_MIGRATION_OVERRIDE = 'woocommerce_paypal_payments_bcdc_migration_override';
+
 	private bool $is_active = false;
 
 	private string $activate_time = '';
@@ -19,6 +21,10 @@ class BcdcOverride {
 	private string $activate_reason = '';
 
 	private string $deactivate_reason = '';
+
+	public function __construct() {
+		$this->load();
+	}
 
 	/**
 	 * Returns the current override state.
@@ -59,5 +65,30 @@ class BcdcOverride {
 			'deactivate_time'   => $this->deactivate_time,
 			'deactivate_reason' => $this->deactivate_reason,
 		);
+	}
+
+	private function load(): void {
+		$data = get_option( self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
+
+		if ( true === $data ) {
+			// Initial flag format (boolean).
+			$this->is_active = true;
+
+			return;
+		}
+
+		if ( ! is_array( $data ) ) {
+			return;
+		}
+
+		$this->is_active         = $data['is_active'] ?? false;
+		$this->activate_time     = $data['activate_time'] ?? '';
+		$this->activate_reason   = $data['activate_reason'] ?? '';
+		$this->deactivate_time   = $data['deactivate_time'] ?? '';
+		$this->deactivate_reason = $data['deactivate_reason'] ?? '';
+	}
+
+	private function save(): void {
+		update_option( self::OPTION_NAME_BCDC_MIGRATION_OVERRIDE, $this->describe() );
 	}
 }
