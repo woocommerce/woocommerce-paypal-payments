@@ -79,4 +79,16 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertStringNotContainsString( 'plugin_update', $description );
 	}
 
+	public function test_describe_includes_deactivation_reason(): void {
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+
+		$override->deactivate( 'migration_complete' );
+		$description = $override->describe();
+
+		$this->assertStringContainsString( 'inactive', $description );
+		$this->assertStringContainsString( 'plugin_update', $description );
+		$this->assertStringContainsString( 'migration_complete', $description );
+	}
+
 }
