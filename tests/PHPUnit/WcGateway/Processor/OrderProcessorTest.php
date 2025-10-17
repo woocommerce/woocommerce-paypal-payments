@@ -63,7 +63,7 @@ class OrderProcessorTest extends TestCase
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_id')->andReturn(1);
-		$wcOrder->expects('get_items')->andReturn([]);
+		$wcOrder->shouldReceive('get_items')->andReturn([]);
         $wcOrder->shouldReceive('get_id')->andReturn(1);
 
         $orderStatus = Mockery::mock(OrderStatus::class);
@@ -287,8 +287,8 @@ class OrderProcessorTest extends TestCase
             ->with($currentOrder)
             ->andReturn($currentOrder);
         $orderFactory = Mockery::mock(OrderFactory::class);
-        $orderFactory
-            ->expects('from_wc_order')
+		$orderFactory
+			->shouldReceive('from_wc_order')
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
