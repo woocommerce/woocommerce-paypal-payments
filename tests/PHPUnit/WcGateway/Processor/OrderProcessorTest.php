@@ -143,6 +143,7 @@ class OrderProcessorTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
 		$logger->shouldReceive('info')->byDefault();
+		$logger->shouldReceive('error')->byDefault();
 
         $subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $subscription_helper->shouldReceive('has_subscription');
@@ -223,7 +224,7 @@ class OrderProcessorTest extends TestCase
 
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_id')->andReturn(1);
-		$wcOrder->expects('get_items')->andReturn([]);
+		$wcOrder->shouldReceive('get_items')->andReturn([]);
 		$orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
             ->shouldReceive('is')
@@ -296,6 +297,7 @@ class OrderProcessorTest extends TestCase
 
 		$logger = Mockery::mock(LoggerInterface::class);
 		$logger->shouldReceive('info')->byDefault();
+		$logger->shouldReceive('error')->byDefault();
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$order_helper = Mockery::mock(OrderHelper::class);
@@ -366,6 +368,8 @@ class OrderProcessorTest extends TestCase
 		    ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn(1);
+		$wcOrder->shouldReceive('get_items')->andReturn([]);
 
         $wcOrder->shouldReceive('set_transaction_id')
             ->with($transactionId);
@@ -426,6 +430,7 @@ class OrderProcessorTest extends TestCase
 
 		$logger = Mockery::mock(LoggerInterface::class);
 		$logger->shouldReceive('info')->byDefault();
+		$logger->shouldReceive('error')->byDefault();
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$order_helper = Mockery::mock(OrderHelper::class);
@@ -451,18 +456,18 @@ class OrderProcessorTest extends TestCase
 			$order_lock_helper
         );
 
-        $wcOrder
-            ->expects('update_meta_data')
-            ->with(
-                PayPalGateway::ORDER_ID_META_KEY,
-                $orderId
-            );
-        $wcOrder
-            ->expects('update_meta_data')
-            ->with(
-                PayPalGateway::INTENT_META_KEY,
-                $orderIntent
-            );
+		$wcOrder
+			->shouldReceive('update_meta_data')
+			->with(
+				PayPalGateway::ORDER_ID_META_KEY,
+				$orderId
+			);
+		$wcOrder
+			->shouldReceive('update_meta_data')
+			->with(
+				PayPalGateway::INTENT_META_KEY,
+				$orderIntent
+			);
 		$wcOrder->shouldReceive('save');
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
