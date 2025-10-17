@@ -45,6 +45,8 @@ class BcdcOverride {
 		$this->deactivate_reason = '';
 		$this->deactivate_time   = '';
 		$this->is_active         = true;
+
+		$this->save();
 	}
 
 	public function deactivate( string $reason ): void {
@@ -55,6 +57,8 @@ class BcdcOverride {
 		$this->deactivate_reason = $reason;
 		$this->deactivate_time   = gmdate( 'Y-m-d H:i:s' );
 		$this->is_active         = false;
+
+		$this->save();
 	}
 
 	public function describe(): array {
