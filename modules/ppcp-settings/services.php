@@ -77,6 +77,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\BcdcOverride;
 
 $services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ): string {
@@ -708,8 +709,8 @@ $services = array(
 
 		return new MerchantDetails( $merchant_country, $woo_data['country'], $eligibility_checks );
 	},
-	'settings.migration.bcdc-override-check'              => static function (): callable {
-		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
+	'settings.migration.bcdc-override-flag'               => static function (): BcdcOverride {
+		return new BcdcOverride();
 	},
 );
 

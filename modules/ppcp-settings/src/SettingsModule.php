@@ -57,6 +57,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use Throwable;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\BcdcOverride;
 
 /**
  * Class SettingsModule
@@ -221,10 +222,10 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_filter(
 			'woocommerce_paypal_payments_override_acdc_status_with_bcdc',
 			static function ( ?bool $use_bcdc ) use ( $container ) {
-				$check_override = $container->get( 'settings.migration.bcdc-override-check' );
-				assert( is_callable( $check_override ) );
+				$override_flag = $container->get( 'settings.migration.bcdc-override-flag' );
+				assert( $override_flag instanceof BcdcOverride );
 
-				if ( $check_override() ) {
+				if ( $override_flag->is_active() ) {
 					$use_bcdc = true;
 				}
 
