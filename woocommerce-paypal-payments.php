@@ -161,6 +161,8 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 					$current_plugin_version   = (string) PPCP::container()->get( 'ppcp.plugin' )->getVersion();
 					$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
+						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
+
 						/**
 						 * The hook fired when the plugin is installed or updated.
 						 */
@@ -172,7 +174,6 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 							 */
 							do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
 						}
-						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
 					}
 				},
 				-1
