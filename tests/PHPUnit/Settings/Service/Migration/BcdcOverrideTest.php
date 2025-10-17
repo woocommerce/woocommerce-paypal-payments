@@ -368,6 +368,98 @@ class BcdcOverrideTest extends TestCase {
 
 		$override = new BcdcOverride();
 		$override->activate( '' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
 	}
 
+	public function test_deactivate_with_empty_reason_does_not_save_to_database(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array(
+					'is_active'         => true,
+					'activate_time'     => '2024-01-15 10:30:00',
+					'activate_reason'   => 'plugin_update',
+					'deactivate_time'   => '',
+					'deactivate_reason' => '',
+				)
+			);
+
+		expect( 'update_option' )->never();
+
+		$override = new BcdcOverride();
+		$override->deactivate( '' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_activate_when_already_active_does_not_save_to_database(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array(
+					'is_active'         => true,
+					'activate_time'     => '2024-01-15 10:30:00',
+					'activate_reason'   => 'plugin_update',
+					'deactivate_time'   => '',
+					'deactivate_reason' => '',
+				)
+			);
+
+		expect( 'update_option' )->never();
+
+		$override = new BcdcOverride();
+		$override->activate( 'ui_migration' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_deactivate_when_already_inactive_does_not_save_to_database(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array(
+					'is_active'         => false,
+					'activate_time'     => '2024-01-15 10:30:00',
+					'activate_reason'   => 'plugin_update',
+					'deactivate_time'   => '2024-01-20 14:45:00',
+					'deactivate_reason' => 'migration_complete',
+				)
+			);
+
+		expect( 'update_option' )->never();
+
+		$override = new BcdcOverride();
+		$override->deactivate( 'user_requested' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_multiple_activate_calls_update_database_correctly(): void {
+		when( 'get_option' )->justReturn( false );
+
+		expect( 'update_option' )
+			->once()
+			->with(
+				self::OPTION_NAME,
+				Mockery::on(
+					static fn( $data ) => $data['is_active'] === true
+						&& $data['activate_reason'] === 'plugin_update'
+				)
+			)
+			->andReturn( true );
+
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+
+		// Second activate should not trigger update_option (already tested above, but documenting the flow)
+		$override->activate( 'ui_migration' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
+	}
 }
