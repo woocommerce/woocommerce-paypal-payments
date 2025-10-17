@@ -126,4 +126,18 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertSame( $first_description['activate_time'], $second_description['activate_time'] );
 	}
 
+	public function test_deactivate_when_already_inactive_does_not_change_state(): void {
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+		$override->deactivate( 'migration_complete' );
+		$first_description = $override->describe();
+
+		$override->deactivate( 'user_requested' );
+		$second_description = $override->describe();
+
+		$this->assertFalse( $override->is_active() );
+		$this->assertSame( 'migration_complete', $second_description['deactivate_reason'] );
+		$this->assertSame( $first_description['deactivate_time'], $second_description['deactivate_time'] );
+	}
+
 }
