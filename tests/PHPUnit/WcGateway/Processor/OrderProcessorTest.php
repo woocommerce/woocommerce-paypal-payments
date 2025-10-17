@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderLockHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -147,6 +148,7 @@ class OrderProcessorTest extends TestCase
         $subscription_helper->shouldReceive('has_subscription');
 
         $order_helper = Mockery::mock(OrderHelper::class);
+		$order_lock_helper = Mockery::mock(OrderLockHelper::class);
 
         $testee = new OrderProcessor(
             $sessionHandler,
@@ -162,7 +164,8 @@ class OrderProcessorTest extends TestCase
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
 			Mockery::mock(ShippingPreferenceFactory::class),
-			Mockery::mock(ExperienceContextBuilder::class)
+			Mockery::mock(ExperienceContextBuilder::class),
+			$order_lock_helper
         );
 
         $wcOrder
@@ -292,6 +295,7 @@ class OrderProcessorTest extends TestCase
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$order_helper = Mockery::mock(OrderHelper::class);
+		$order_lock_helper = Mockery::mock(OrderLockHelper::class);
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -307,7 +311,8 @@ class OrderProcessorTest extends TestCase
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
 			Mockery::mock(ShippingPreferenceFactory::class),
-			Mockery::mock(ExperienceContextBuilder::class)
+			Mockery::mock(ExperienceContextBuilder::class),
+			$order_lock_helper
         );
 
         $wcOrder
@@ -420,6 +425,7 @@ class OrderProcessorTest extends TestCase
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$order_helper = Mockery::mock(OrderHelper::class);
+		$order_lock_helper = Mockery::mock(OrderLockHelper::class);
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -435,7 +441,8 @@ class OrderProcessorTest extends TestCase
 			Mockery::mock(PurchaseUnitFactory::class),
 			Mockery::mock(PayerFactory::class),
 			Mockery::mock(ShippingPreferenceFactory::class),
-			Mockery::mock(ExperienceContextBuilder::class)
+			Mockery::mock(ExperienceContextBuilder::class),
+			$order_lock_helper
         );
 
         $wcOrder
