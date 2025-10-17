@@ -219,8 +219,8 @@ class OrderProcessor {
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @throws PayPalOrderMissingException If no PayPal order.
+	 * @throws RuntimeException If order retrieval fails.
 	 * @throws Exception If processing fails (General exception).
-	 * @throws Exception If order locking fails or the order is not ready for processing.
 	 */
 	public function process( WC_Order $wc_order ): void {
 		$order_id = $wc_order->get_id();
