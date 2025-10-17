@@ -326,4 +326,48 @@ class BcdcOverrideTest extends TestCase {
 		// Mockery expectations also count.
 		$this->addToAssertionCount( 1 );
 	}
+
+	public function test_deactivate_saves_state_to_database(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array(
+					'is_active'         => true,
+					'activate_time'     => '2024-01-15 10:30:00',
+					'activate_reason'   => 'plugin_update',
+					'deactivate_time'   => '',
+					'deactivate_reason' => '',
+				)
+			);
+
+		expect( 'update_option' )
+			->once()
+			->with(
+				self::OPTION_NAME,
+				Mockery::on(
+					static fn( $data ) => is_array( $data )
+						&& $data['is_active'] === false
+						&& $data['activate_reason'] === 'plugin_update'
+						&& $data['activate_time'] === '2024-01-15 10:30:00'
+						&& $data['deactivate_reason'] === 'migration_complete'
+						&& ! empty( $data['deactivate_time'] )
+				)
+			)
+			->andReturn( true );
+
+		$override = new BcdcOverride();
+		$override->deactivate( 'migration_complete' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
+	}
+
+	public function test_activate_with_empty_reason_does_not_save_to_database(): void {
+		when( 'get_option' )->justReturn( false );
+		expect( 'update_option' )->never();
+
+		$override = new BcdcOverride();
+		$override->activate( '' );
+	}
+
 }
