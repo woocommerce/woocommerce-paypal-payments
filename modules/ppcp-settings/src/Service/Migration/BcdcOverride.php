@@ -12,6 +12,10 @@ namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 class BcdcOverride {
 	private bool $is_active = false;
 
+	private string $activate_time = '';
+
+	private string $deactivate_time = '';
+
 	private string $activate_reason = '';
 
 	private string $deactivate_reason = '';
@@ -31,6 +35,7 @@ class BcdcOverride {
 		}
 
 		$this->activate_reason = $reason;
+		$this->activate_time   = gmdate( 'Y-m-d H:i:s' );
 		$this->is_active       = true;
 	}
 
@@ -40,13 +45,16 @@ class BcdcOverride {
 		}
 
 		$this->deactivate_reason = $reason;
+		$this->deactivate_time   = gmdate( 'Y-m-d H:i:s' );
 		$this->is_active         = false;
 	}
 
 	public function describe(): string {
 		$info = array(
 			'state'             => $this->is_active ? 'active' : 'inactive',
+			'activate_time'     => $this->activate_time,
 			'activate_reason'   => $this->activate_reason,
+			'deactivate_time'   => $this->deactivate_time,
 			'deactivate_reason' => $this->deactivate_reason,
 		);
 
