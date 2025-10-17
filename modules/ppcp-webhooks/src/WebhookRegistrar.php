@@ -27,6 +27,8 @@ class WebhookRegistrar {
 
 	private WebhookSimulation $webhook_simulation;
 
+	private WebhookOrchestrator $webhook_orchestrator;
+
 	private LoggerInterface $logger;
 
 	public function __construct(
@@ -35,6 +37,7 @@ class WebhookRegistrar {
 		IncomingWebhookEndpoint $incoming_webhook_endpoint,
 		WebhookEventStorage $last_webhook_event_storage,
 		WebhookSimulation $webhook_simulation,
+		WebhookOrchestrator $webhook_orchestrator,
 		LoggerInterface $logger
 	) {
 
@@ -43,6 +46,7 @@ class WebhookRegistrar {
 		$this->incoming_webhook_endpoint  = $incoming_webhook_endpoint;
 		$this->last_webhook_event_storage = $last_webhook_event_storage;
 		$this->webhook_simulation         = $webhook_simulation;
+		$this->webhook_orchestrator       = $webhook_orchestrator;
 		$this->logger                     = $logger;
 	}
 
@@ -52,7 +56,32 @@ class WebhookRegistrar {
 	 * @return bool
 	 */
 	public function register(): bool {
-		$this->unregister();
+		$result = $this->webhook_orchestrator->with_lock(
+			'register',
+			fn() => $this->do_register()
+		);
+
+		// If locked (null), treat as failure.
+		return $result ?? false;
+	}
+
+	/**
+	 * Unregister webhooks with PayPal.
+	 */
+	public function unregister(): void {
+		$this->webhook_orchestrator->with_lock(
+			'unregister',
+			fn() => $this->do_unregister()
+		);
+	}
+
+	/**
+	 * Internal registration logic.
+	 *
+	 * @return bool
+	 */
+	private function do_register(): bool {
+		$this->do_unregister();
 
 		$webhook = $this->webhook_factory->for_url_and_events(
 			$this->incoming_webhook_endpoint->url(),
@@ -84,9 +113,9 @@ class WebhookRegistrar {
 	}
 
 	/**
-	 * Unregister webhooks with PayPal.
+	 * Internal unregister logic.
 	 */
-	public function unregister(): void {
+	private function do_unregister(): void {
 		try {
 			$webhooks = $this->endpoint->list();
 			foreach ( $webhooks as $webhook ) {
