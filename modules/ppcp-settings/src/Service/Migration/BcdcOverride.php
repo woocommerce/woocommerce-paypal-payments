@@ -36,4 +36,8 @@ class BcdcOverride {
 
 		$this->is_active = false;
 	}
+
+	public function describe(): string {
+		return 'inactive';
+	}
 }
