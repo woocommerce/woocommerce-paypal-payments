@@ -49,15 +49,13 @@ class BcdcOverride {
 		$this->is_active         = false;
 	}
 
-	public function describe(): string {
-		$info = array(
-			'state'             => $this->is_active ? 'active' : 'inactive',
+	public function describe(): array {
+		return array(
+			'status'            => $this->is_active ? 'active' : 'inactive',
 			'activate_time'     => $this->activate_time,
 			'activate_reason'   => $this->activate_reason,
 			'deactivate_time'   => $this->deactivate_time,
 			'deactivate_reason' => $this->deactivate_reason,
 		);
-
-		return (string) wp_json_encode( $info );
 	}
 }
