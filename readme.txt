@@ -156,6 +156,9 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
+= 3.2.1 - XXXX-XX-XX =
+* Enhancement - Make plugin upgrade hooks safer #3789
+
 = 3.2.0 - 2025-10-15 =
 * Enhancement - Enable AppSwitch and SSSC feature flags by default #3724
 * Enhancement - Remove temporary Pay Later messaging auto-enablement logic #3680
