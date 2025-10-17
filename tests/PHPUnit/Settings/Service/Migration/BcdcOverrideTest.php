@@ -191,4 +191,33 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertSame( '2024-01-15 10:30:00', $description['activate_time'] );
 		$this->assertSame( 'plugin_update', $description['activate_reason'] );
 	}
+
+	public function test_empty_db_value_initializes_correctly(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn( null );
+
+		$override = new BcdcOverride();
+
+		$this->assertFalse( $override->is_active() );
+		$description = $override->describe();
+		$this->assertFalse( $description['is_active'] );
+		$this->assertEmpty( $description['activate_time'] );
+		$this->assertEmpty( $description['activate_reason'] );
+	}
+
+
+	public function test_legacy_db_value_initializes_as_active(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn( true );
+
+		$override = new BcdcOverride();
+
+		$this->assertTrue( $override->is_active() );
+		$description = $override->describe();
+		$this->assertTrue( $description['is_active'] );
+		$this->assertEmpty( $description['activate_time'] );
+		$this->assertEmpty( $description['activate_reason'] );
+	}
 }
