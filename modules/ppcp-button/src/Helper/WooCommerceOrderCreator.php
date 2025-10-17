@@ -203,7 +203,7 @@ class WooCommerceOrderCreator {
 		$shipping_address = null;
 		$billing_address  = null;
 		$shipping_options = null;
-		$wc_customer      = WC()->customer;
+		$wc_customer = WC()->customer;
 
 		if ( ! $shipping && $needs_shipping ) {
 			if ( $wc_customer instanceof WC_Customer ) {
@@ -216,7 +216,7 @@ class WooCommerceOrderCreator {
 			$payer_name  = $payer->name();
 			$payer_phone = $payer->phone();
 
-			$wc_email = null;
+			$wc_email    = null;
 			if ( $wc_customer instanceof WC_Customer ) {
 				$wc_email = $wc_customer->get_email();
 			}
