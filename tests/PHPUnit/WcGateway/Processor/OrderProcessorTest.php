@@ -189,6 +189,9 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
+		$wcOrder
+			->expects('update_meta_data')
+			->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
         $wcOrder
             ->expects('update_status')
             ->with('on-hold', 'Awaiting payment.');
@@ -275,8 +278,8 @@ class OrderProcessorTest extends TestCase
 
 	    $orderEndpoint->shouldReceive('order')->andReturn($currentOrder);
 
-        $orderEndpoint
-            ->expects('patch_order_with')
+		$orderEndpoint
+			->shouldReceive('patch_order_with')
             ->with($currentOrder, $currentOrder)
             ->andReturn($currentOrder);
         $orderEndpoint
@@ -379,12 +382,12 @@ class OrderProcessorTest extends TestCase
 		    ->shouldReceive('is')
 		    ->with(OrderStatus::COMPLETED)
 		    ->andReturn(false);
-        $orderStatus
-            ->expects('is')
+		$orderStatus
+			->shouldReceive('is')
             ->with(OrderStatus::APPROVED)
             ->andReturn(false);
 		$orderStatus
-			->expects('is')
+			->shouldReceive('is')
 			->with(OrderStatus::CREATED)
 			->andReturn(false);
         $orderId = 'abc';
