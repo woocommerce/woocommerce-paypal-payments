@@ -21,11 +21,19 @@ class BcdcOverride {
 		return $this->is_active;
 	}
 
-	public function activate(): void {
+	public function activate( string $reason ): void {
+		if ( ! $reason ) {
+			return;
+		}
+
 		$this->is_active = true;
 	}
 
-	public function deactivate(): void {
+	public function deactivate( string $reason ): void {
+		if ( ! $reason ) {
+			return;
+		}
+
 		$this->is_active = false;
 	}
 }
