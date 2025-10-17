@@ -140,4 +140,17 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertSame( $first_description['deactivate_time'], $second_description['deactivate_time'] );
 	}
 
+	public function test_activate_clears_deactivate_fields(): void {
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+		$override->deactivate( 'migration_complete' );
+
+		$override->activate( 'ui_migration' );
+		$description = $override->describe();
+
+		$this->assertTrue( $override->is_active() );
+		$this->assertSame( '', $description['deactivate_reason'] );
+		$this->assertSame( '', $description['deactivate_time'] );
+	}
+
 }
