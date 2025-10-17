@@ -244,9 +244,10 @@ class OrderProcessor {
 			$order = $this->session_handler->order();
 			if ( ! $order ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-				$post_order_id = $_POST['paypal_order_id'] ?? '';
-				$post_order_id = is_string( $post_order_id ) ? wc_clean( wp_unslash( $post_order_id ) ) : '';
-				$order_id_meta = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: $post_order_id;
+				$post_order_id     = $_POST['paypal_order_id'] ?? '';
+				$post_order_id     = is_string( $post_order_id ) ? wc_clean( wp_unslash( $post_order_id ) ) : '';
+				$order_id_meta_raw = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+				$order_id_meta     = ( is_string( $order_id_meta_raw ) && $order_id_meta_raw ) ? $order_id_meta_raw : $post_order_id;
 
 				$this->logger->info( sprintf( 'No session order found, checking meta/POST for PayPal order ID: %s', $order_id_meta ?: 'none' ) );
 
