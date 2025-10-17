@@ -33,4 +33,21 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertFalse( $override->is_active() );
 	}
 
+	public function test_activate_with_empty_reason_does_not_change_state(): void {
+		$override = new BcdcOverride();
+
+		$override->activate( '' );
+
+		$this->assertFalse( $override->is_active() );
+	}
+
+	public function test_deactivate_with_empty_reason_does_not_change_state(): void {
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+
+		$override->deactivate( '' );
+
+		$this->assertTrue( $override->is_active() );
+	}
+
 }
