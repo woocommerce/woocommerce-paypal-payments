@@ -55,7 +55,9 @@ class BcdcOverrideTest extends TestCase {
 
 		$description = $override->describe();
 
-		$this->assertStringContainsString( 'inactive', $description );
+		$this->assertIsArray( $description );
+		$this->assertArrayHasKey( 'status', $description );
+		$this->assertSame( 'inactive', $description['status'] );
 	}
 
 	public function test_describe_includes_activation_reason_when_active(): void {
@@ -64,8 +66,11 @@ class BcdcOverrideTest extends TestCase {
 		$override->activate( 'plugin_update' );
 		$description = $override->describe();
 
-		$this->assertStringContainsString( 'active', $description );
-		$this->assertStringContainsString( 'plugin_update', $description );
+		$this->assertIsArray( $description );
+		$this->assertArrayHasKey( 'status', $description );
+		$this->assertSame( 'active', $description['status'] );
+		$this->assertArrayHasKey( 'activate_reason', $description );
+		$this->assertSame( 'plugin_update', $description['activate_reason'] );
 	}
 
 	public function test_describe_includes_different_activation_reason(): void {
@@ -74,9 +79,11 @@ class BcdcOverrideTest extends TestCase {
 		$override->activate( 'ui_migration' );
 		$description = $override->describe();
 
-		$this->assertStringContainsString( 'active', $description );
-		$this->assertStringContainsString( 'ui_migration', $description );
-		$this->assertStringNotContainsString( 'plugin_update', $description );
+		$this->assertIsArray( $description );
+		$this->assertArrayHasKey( 'status', $description );
+		$this->assertSame( 'active', $description['status'] );
+		$this->assertArrayHasKey( 'activate_reason', $description );
+		$this->assertSame( 'ui_migration', $description['activate_reason'] );
 	}
 
 	public function test_describe_includes_deactivation_reason(): void {
@@ -86,9 +93,13 @@ class BcdcOverrideTest extends TestCase {
 		$override->deactivate( 'migration_complete' );
 		$description = $override->describe();
 
-		$this->assertStringContainsString( 'inactive', $description );
-		$this->assertStringContainsString( 'plugin_update', $description );
-		$this->assertStringContainsString( 'migration_complete', $description );
+		$this->assertIsArray( $description );
+		$this->assertArrayHasKey( 'status', $description );
+		$this->assertSame( 'inactive', $description['status'] );
+		$this->assertArrayHasKey( 'activate_reason', $description );
+		$this->assertSame( 'plugin_update', $description['activate_reason'] );
+		$this->assertArrayHasKey( 'deactivate_reason', $description );
+		$this->assertSame( 'migration_complete', $description['deactivate_reason'] );
 	}
 
 	public function test_describe_includes_activation_timestamp(): void {
@@ -97,10 +108,9 @@ class BcdcOverrideTest extends TestCase {
 		$override->activate( 'plugin_update' );
 		$description = $override->describe();
 
-		$data = json_decode( $description, true );
-		$this->assertIsArray( $data );
-		$this->assertArrayHasKey( 'activate_time', $data );
-		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $data['activate_time'] );
+		$this->assertIsArray( $description );
+		$this->assertArrayHasKey( 'activate_time', $description );
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $description['activate_time'] );
 	}
 
 }
