@@ -4,12 +4,15 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
 use WooCommerce\PayPalCommerce\TestCase;
+use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 /**
  * @covers BcdcOverride
  */
 class BcdcOverrideTest extends TestCase {
+
+	private const OPTION_NAME = 'woocommerce_paypal_payments_bcdc_migration_override';
 
 	public function test_is_active_returns_false_by_default(): void {
 		when( 'get_option' )->justReturn( false );
@@ -167,4 +170,25 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertSame( '', $description['deactivate_time'] );
 	}
 
+	public function test_constructor_loads_active_state_from_database(): void {
+		expect( 'get_option' )
+			->with( self::OPTION_NAME )
+			->andReturn(
+				array(
+					'is_active'         => true,
+					'activate_time'     => '2024-01-15 10:30:00',
+					'activate_reason'   => 'plugin_update',
+					'deactivate_time'   => '',
+					'deactivate_reason' => '',
+				)
+			);
+
+		$override = new BcdcOverride();
+
+		$this->assertTrue( $override->is_active() );
+		$description = $override->describe();
+		$this->assertTrue( $description['is_active'] );
+		$this->assertSame( '2024-01-15 10:30:00', $description['activate_time'] );
+		$this->assertSame( 'plugin_update', $description['activate_reason'] );
+	}
 }
