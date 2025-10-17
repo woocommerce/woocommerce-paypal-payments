@@ -52,6 +52,11 @@ return array(
 			$logger
 		);
 	},
+	'webhook.orchestration'                   => static function ( ContainerInterface $container ): WebhookOrchestrator {
+		return new WebhookOrchestrator(
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 	'webhook.endpoint.controller'             => function ( ContainerInterface $container ): IncomingWebhookEndpoint {
 		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
 		$webhook  = $container->get( 'webhook.current' );
