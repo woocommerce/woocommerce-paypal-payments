@@ -149,6 +149,8 @@ class OrderProcessorTest extends TestCase
 
         $order_helper = Mockery::mock(OrderHelper::class);
 		$order_lock_helper = Mockery::mock(OrderLockHelper::class);
+		$order_lock_helper->shouldReceive('acquire_lock')->once()->andReturn(true);
+		$order_lock_helper->shouldReceive('release_lock')->once();
 
         $testee = new OrderProcessor(
             $sessionHandler,
@@ -220,6 +222,7 @@ class OrderProcessorTest extends TestCase
 	        ->andReturn(null);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->shouldReceive('get_id')->andReturn(1);
 		$wcOrder->expects('get_items')->andReturn([]);
 		$orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
@@ -296,6 +299,8 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper = Mockery::mock(OrderHelper::class);
 		$order_lock_helper = Mockery::mock(OrderLockHelper::class);
+		$order_lock_helper->shouldReceive('acquire_lock')->once()->andReturn(true);
+		$order_lock_helper->shouldReceive('release_lock')->once();
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -426,6 +431,8 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper = Mockery::mock(OrderHelper::class);
 		$order_lock_helper = Mockery::mock(OrderLockHelper::class);
+		$order_lock_helper->shouldReceive('acquire_lock')->once()->andReturn(true);
+		$order_lock_helper->shouldReceive('release_lock')->once();
 
 		$testee = new OrderProcessor(
             $sessionHandler,
