@@ -63,8 +63,8 @@ class BcdcOverrideTest extends TestCase {
 		$description = $override->describe();
 
 		$this->assertIsArray( $description );
-		$this->assertArrayHasKey( 'status', $description );
-		$this->assertSame( 'inactive', $description['status'] );
+		$this->assertArrayHasKey( 'is_active', $description );
+		$this->assertFalse( $description['is_active'] );
 	}
 
 	public function test_describe_includes_activation_reason_when_active(): void {
@@ -75,8 +75,8 @@ class BcdcOverrideTest extends TestCase {
 		$description = $override->describe();
 
 		$this->assertIsArray( $description );
-		$this->assertArrayHasKey( 'status', $description );
-		$this->assertSame( 'active', $description['status'] );
+		$this->assertArrayHasKey( 'is_active', $description );
+		$this->assertTrue( $description['is_active'] );
 		$this->assertArrayHasKey( 'activate_reason', $description );
 		$this->assertSame( 'plugin_update', $description['activate_reason'] );
 	}
@@ -89,8 +89,8 @@ class BcdcOverrideTest extends TestCase {
 		$description = $override->describe();
 
 		$this->assertIsArray( $description );
-		$this->assertArrayHasKey( 'status', $description );
-		$this->assertSame( 'active', $description['status'] );
+		$this->assertArrayHasKey( 'is_active', $description );
+		$this->assertTrue( $description['is_active'] );
 		$this->assertArrayHasKey( 'activate_reason', $description );
 		$this->assertSame( 'ui_migration', $description['activate_reason'] );
 	}
@@ -104,8 +104,8 @@ class BcdcOverrideTest extends TestCase {
 		$description = $override->describe();
 
 		$this->assertIsArray( $description );
-		$this->assertArrayHasKey( 'status', $description );
-		$this->assertSame( 'inactive', $description['status'] );
+		$this->assertArrayHasKey( 'is_active', $description );
+		$this->assertFalse( $description['is_active'] );
 		$this->assertArrayHasKey( 'activate_reason', $description );
 		$this->assertSame( 'plugin_update', $description['activate_reason'] );
 		$this->assertArrayHasKey( 'deactivate_reason', $description );
