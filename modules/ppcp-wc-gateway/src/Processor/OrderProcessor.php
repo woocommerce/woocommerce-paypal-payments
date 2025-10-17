@@ -249,7 +249,7 @@ class OrderProcessor {
 				$order_id_meta_raw = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 				$order_id_meta     = ( is_string( $order_id_meta_raw ) && $order_id_meta_raw ) ? $order_id_meta_raw : $post_order_id;
 
-				$this->logger->info( sprintf( 'No session order found, checking meta/POST for PayPal order ID: %s', $order_id_meta ?: 'none' ) );
+				$this->logger->info( sprintf( 'No session order found, checking meta/POST for PayPal order ID: %s', is_string( $order_id_meta ) ? $order_id_meta : 'none' ) );
 
 				if ( is_string( $order_id_meta ) && $order_id_meta ) {
 					try {
