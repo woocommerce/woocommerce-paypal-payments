@@ -42,7 +42,7 @@ class OrderLockHelper {
 		);
 
 		$current_time = time();
-		$lock_value   = $current_time . ':' . $request_id;
+		$lock_value   = (string) $current_time . ':' . $request_id;
 
 		// Get any existing lock.
 		$existing_lock = $wc_order->get_meta( self::LOCK_META_KEY );
@@ -220,9 +220,9 @@ class OrderLockHelper {
 
 		if ( $request_id === null ) {
 			// Use a combination of time and random for uniqueness.
-			$request_id = substr( md5( microtime( true ) . wp_rand() ), 0, 8 );
+			$request_id = substr( md5( (string) microtime( true ) . (string) wp_rand() ), 0, 8 );
 		}
 
-		return $request_id;
+		return (string) $request_id;
 	}
 }
