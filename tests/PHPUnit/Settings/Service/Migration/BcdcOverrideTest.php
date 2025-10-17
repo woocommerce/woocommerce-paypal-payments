@@ -91,4 +91,16 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertStringContainsString( 'migration_complete', $description );
 	}
 
+	public function test_describe_includes_activation_timestamp(): void {
+		$override = new BcdcOverride();
+
+		$override->activate( 'plugin_update' );
+		$description = $override->describe();
+
+		$data = json_decode( $description, true );
+		$this->assertIsArray( $data );
+		$this->assertArrayHasKey( 'activate_time', $data );
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $data['activate_time'] );
+	}
+
 }
