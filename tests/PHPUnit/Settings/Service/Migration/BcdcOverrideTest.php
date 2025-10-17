@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
+use Mockery;
 
 /**
  * @covers BcdcOverride
@@ -298,5 +299,31 @@ class BcdcOverrideTest extends TestCase {
 		$this->assertTrue( $description['is_active'] );
 		$this->assertSame( '', $description['activate_time'] );
 		$this->assertSame( '', $description['activate_reason'] );
+	}
+
+	public function test_activate_saves_state_to_database(): void {
+		when( 'get_option' )->justReturn( false );
+
+		expect( 'update_option' )
+			->once()
+			->with(
+				self::OPTION_NAME,
+				Mockery::on(
+					static fn( $data ) => is_array( $data )
+						&& $data['is_active'] === true
+						&& $data['activate_reason'] === 'plugin_update'
+						&& ! empty( $data['activate_time'] )
+						&& $data['deactivate_reason'] === ''
+						&& $data['deactivate_time'] === ''
+
+				)
+			)
+			->andReturn( true );
+
+		$override = new BcdcOverride();
+		$override->activate( 'plugin_update' );
+
+		// Mockery expectations also count.
+		$this->addToAssertionCount( 1 );
 	}
 }
