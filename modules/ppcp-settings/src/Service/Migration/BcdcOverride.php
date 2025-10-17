@@ -24,4 +24,8 @@ class BcdcOverride {
 	public function activate(): void {
 		$this->is_active = true;
 	}
+
+	public function deactivate(): void {
+		$this->is_active = false;
+	}
 }
