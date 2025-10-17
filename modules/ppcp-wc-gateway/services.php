@@ -68,6 +68,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderLockHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
@@ -587,7 +588,8 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.factory.shipping-preference' ),
-			$container->get( 'wcgateway.builder.experience-context' )
+			$container->get( 'wcgateway.builder.experience-context' ),
+			$container->get( 'wcgateway.helper.order-lock' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
@@ -2380,6 +2382,12 @@ return array(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.appswitch_enabled',
 			getenv( 'PCP_APPSWITCH_ENABLED' ) !== '0'
+		);
+	},
+
+	'wcgateway.helper.order-lock'                          => static function ( ContainerInterface $container ): OrderLockHelper {
+		return new OrderLockHelper(
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

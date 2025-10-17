@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\OrderLockHelper;
 use WP_REST_Response;
 
 /**
@@ -40,17 +41,27 @@ class PaymentCaptureCompleted implements RequestHandler {
 	private $order_endpoint;
 
 	/**
+	 * The order lock helper.
+	 *
+	 * @var OrderLockHelper
+	 */
+	private $order_lock_helper;
+
+	/**
 	 * PaymentCaptureCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
 	 * @param OrderEndpoint   $order_endpoint The order endpoint.
+	 * @param OrderLockHelper $order_lock_helper The order lock helper.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
-		OrderEndpoint $order_endpoint
+		OrderEndpoint $order_endpoint,
+		OrderLockHelper $order_lock_helper
 	) {
-		$this->logger         = $logger;
-		$this->order_endpoint = $order_endpoint;
+		$this->logger            = $logger;
+		$this->order_endpoint    = $order_endpoint;
+		$this->order_lock_helper = $order_lock_helper;
 	}
 
 	/**
@@ -111,6 +122,18 @@ class PaymentCaptureCompleted implements RequestHandler {
 		if ( $wc_order->get_status() !== 'on-hold' ) {
 			return $this->success_response();
 		}
+
+		// Check if order is being processed elsewhere.
+		if ( $this->order_lock_helper->is_locked( $wc_order ) ) {
+			$this->logger->info(
+				sprintf(
+					'Order #%d is being processed elsewhere, webhook will skip.',
+					$wc_order->get_id()
+				)
+			);
+			return $this->success_response();
+		}
+
 		$wc_order->add_order_note(
 			__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 		);

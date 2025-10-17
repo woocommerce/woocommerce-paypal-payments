@@ -80,6 +80,7 @@ return array(
 		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
 		$payment_token_helper = $container->get( 'vaulting.payment-token-helper' );
 		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
+		$order_lock = $container->get( 'wcgateway.helper.order-lock' );
 
 		return array(
 			new CheckoutOrderApproved(
@@ -93,7 +94,7 @@ return array(
 			new CheckoutPaymentApprovalReversed( $logger ),
 			new PaymentCaptureRefunded( $logger, $refund_fees_updater ),
 			new PaymentCaptureReversed( $logger ),
-			new PaymentCaptureCompleted( $logger, $order_endpoint ),
+			new PaymentCaptureCompleted( $logger, $order_endpoint, $order_lock ),
 			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory, $payment_token_helper ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
