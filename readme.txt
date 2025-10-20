@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.2.1 - XXXX-XX-XX =
+= 3.2.1 - 2025-10-20 =
 * Enhancement - Make plugin upgrade hooks safer #3789
 * Enhancement - Webhook transient lock #3790
 
