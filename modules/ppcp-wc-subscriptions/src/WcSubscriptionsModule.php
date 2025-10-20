@@ -11,17 +11,14 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -29,6 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\DisplaySavedPaymentTokens;
 
 /**
  * Class SubscriptionModule
@@ -140,6 +138,10 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			}
 		);
 
+		/**
+		 * Vault v2 custom saved PayPal payment tokens implementation.
+		 * It will be removed when Vault v3 is the only available vaulting method.
+		 */
 		add_filter(
 			'woocommerce_gateway_description',
 			/**
@@ -148,16 +150,23 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $description, $id ) use ( $c ) {
-				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
-				$settings                 = $c->get( 'wcgateway.settings' );
-				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return $description;
+				}
 
-				return $this->display_saved_paypal_payments( $settings, (string) $id, $payment_token_repository, (string) $description, $subscription_helper );
+				$display_saved_payment_tokens = $c->get( 'wc-subscriptions.vault-v2.display-saved-payment-tokens' );
+				assert( $display_saved_payment_tokens instanceof DisplaySavedPaymentTokens );
+
+				return $display_saved_payment_tokens->display_saved_paypal_payments( (string) $id, (string) $description );
 			},
 			10,
 			2
 		);
 
+		/**
+		 * Vault v2 custom saved credit card payment tokens implementation.
+		 * It will be removed when Vault v3 is the only available vaulting method.
+		 */
 		add_filter(
 			'woocommerce_credit_card_form_fields',
 			/**
@@ -170,11 +179,10 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 					return $default_fields;
 				}
 
-				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
-				$settings                 = $c->get( 'wcgateway.settings' );
-				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
+				$display_saved_payment_tokens = $c->get( 'wc-subscriptions.vault-v2.display-saved-payment-tokens' );
+				assert( $display_saved_payment_tokens instanceof DisplaySavedPaymentTokens );
 
-				return $this->display_saved_credit_cards( $settings, $id, $payment_token_repository, $default_fields, $subscription_helper );
+				return $display_saved_payment_tokens->display_saved_credit_cards( (string) $id, $default_fields );
 			},
 			20,
 			2
@@ -299,93 +307,6 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 
 			$logger->log( 'warning', $message );
 		}
-	}
-
-	/**
-	 * Displays saved PayPal payments.
-	 *
-	 * @param Settings               $settings The settings.
-	 * @param string                 $id The payment gateway Id.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param string                 $description The payment gateway description.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @return string
-	 */
-	protected function display_saved_paypal_payments(
-		Settings $settings,
-		string $id,
-		PaymentTokenRepository $payment_token_repository,
-		string $description,
-		SubscriptionHelper $subscription_helper
-	): string {
-		if ( $settings->has( 'vault_enabled' )
-			&& $settings->get( 'vault_enabled' )
-			&& PayPalGateway::ID === $id
-			&& $subscription_helper->is_subscription_change_payment()
-		) {
-			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
-
-			$output = '<ul class="wc-saved-payment-methods">';
-			foreach ( $tokens as $token ) {
-				$output     .= '<li>';
-					$output .= sprintf( '<input name="saved_paypal_payment" type="radio" value="%s" style="width:auto;" checked="checked">', $token->get_id() );
-					$output .= sprintf( '<label for="saved_paypal_payment">%s / %s</label>', $token->get_type(), $token->get_meta( 'email' ) ?? '' );
-				$output     .= '</li>';
-			}
-			$output .= '</ul>';
-
-			return $output;
-		}
-
-		return $description;
-	}
-
-	/**
-	 * Displays saved credit cards.
-	 *
-	 * @param Settings               $settings The settings.
-	 * @param string                 $id The payment gateway Id.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param array                  $default_fields Default payment gateway fields.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @return array|mixed|string
-	 * @throws NotFoundException When setting was not found.
-	 */
-	protected function display_saved_credit_cards(
-		Settings $settings,
-		string $id,
-		PaymentTokenRepository $payment_token_repository,
-		array $default_fields,
-		SubscriptionHelper $subscription_helper
-	) {
-		if ( $settings->has( 'vault_enabled_dcc' )
-			&& $settings->get( 'vault_enabled_dcc' )
-			&& $subscription_helper->is_subscription_change_payment()
-			&& CreditCardGateway::ID === $id
-		) {
-			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
-			$output = sprintf(
-				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card">',
-				esc_html__( 'Select a saved Credit Card payment', 'woocommerce-paypal-payments' )
-			);
-			foreach ( $tokens as $token ) {
-				if ( $token instanceof WC_Payment_Token_CC ) {
-					$output .= sprintf(
-						'<option value="%1$s">%2$s ...%3$s</option>',
-						$token->get_id(),
-						$token->get_card_type(),
-						$token->get_last4()
-					);
-				}
-			}
-			$output .= '</select></p>';
-
-			$default_fields                      = array();
-			$default_fields['saved-credit-card'] = $output;
-			return $default_fields;
-		}
-
-		return $default_fields;
 	}
 
 	/**

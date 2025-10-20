@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\DisplaySavedPaymentTokens;
 
 return array(
 	'wc-subscriptions.helper'                            => static function ( ContainerInterface $container ): SubscriptionHelper {
@@ -58,6 +59,12 @@ return array(
 	'wc-subscriptions.endpoint.subscription-change-payment-method' => static function ( ContainerInterface $container ): SubscriptionChangePaymentMethod {
 		return new SubscriptionChangePaymentMethod(
 			$container->get( 'button.request-data' )
+		);
+	},
+	'wc-subscriptions.vault-v2.display-saved-payment-tokens' => static function ( ContainerInterface $container ): DisplaySavedPaymentTokens {
+		return new DisplaySavedPaymentTokens(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wc-subscriptions.helper' )
 		);
 	},
 );
