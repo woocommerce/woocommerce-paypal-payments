@@ -52,7 +52,7 @@
         "ci": [
             "vendor/bin/phpcs"
         ],
-        "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
+        "unit": "vendor/bin/phpunit"
     },
     "extra": {
         "installer-types": [
