@@ -103,7 +103,9 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 
 Run `yarn ddev:unit-tests:coverage` 
 
-This command will generate a `coverage` folder in the project root. Open this in your browser to inspect the Unit Test coverage.
+This command generates a full test coverage report, available at the URL https://woocommerce-paypal-payments.ddev.site/coverage
+
+Note: The code coverage report requires XDebug to be enabled. Run `ddev xdebug on` if no report is generated.
 
 ### Building a release package
 
