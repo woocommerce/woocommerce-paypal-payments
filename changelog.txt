@@ -2,6 +2,7 @@
 
 = 3.2.1 - XXXX-XX-XX =
 * Enhancement - Make plugin upgrade hooks safer #3789
+* Enhancement - Webhook transient lock #3790
 
 = 3.2.0 - 2025-10-15 =
 * Enhancement - Enable AppSwitch and SSSC feature flags by default #3724
