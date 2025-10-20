@@ -105,8 +105,6 @@ Run `yarn ddev:unit-tests:coverage`
 
 This command generates a full test coverage report, available at the URL https://woocommerce-paypal-payments.ddev.site/coverage
 
-Note: The code coverage report requires XDebug to be enabled. Run `ddev xdebug on` if no report is generated.
-
 ### Building a release package
 
 If you want to build a release package
