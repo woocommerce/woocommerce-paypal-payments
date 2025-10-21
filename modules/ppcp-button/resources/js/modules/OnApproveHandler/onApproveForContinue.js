@@ -35,6 +35,10 @@ const onApprove = ( context, errorHandler ) => {
 			payload.payer = data.payer;
 		}
 
+		if ( canCreateOrder && data.shippingAddress ) {
+			payload.shipping_address = data.shippingAddress;
+		}
+
 		return fetch( context.config.ajax.approve_order.endpoint, {
 			method: 'POST',
 			headers: {

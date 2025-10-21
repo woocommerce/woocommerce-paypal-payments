@@ -399,7 +399,8 @@ return array(
 			$container->get( 'session.handler' ),
 			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'button.session.factory.card-data' ),
-			$container->get( 'api.factory.shipping' )
+			$container->get( 'api.factory.shipping' ),
+			$container->get( 'api.factory.payer' )
 		);
 	},
 
