@@ -845,8 +845,6 @@ class GooglepayButton extends PaymentButton {
 		this.logGroup( 'processPayment' );
 		let result;
 
-		this.log( 'processPayment paymentData', paymentData );
-
 		const payer = payerDataFromPaymentResponse( paymentData );
 		const shippingAddress =
 			shippingAddressDataFromPaymentResponse( paymentData );
