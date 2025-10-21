@@ -67,4 +67,22 @@ class JwtAuthServiceTest extends TestCase {
 		$this->assertSame( 'invalid_jwt', $result->get_error_code() );
 		$this->assertSame( 401, $result->get_error_data()['status'] );
 	}
+
+	/**
+	 * GIVEN valid Bearer format but invalid JWT token
+	 * WHEN validate_request is called
+	 * THEN should return WP_Error with 'invalid_jwt' code and 401 status
+	 */
+	public function test_validate_request_rejects_invalid_jwt(): void {
+		$service = new JwtAuthService();
+
+		// Invalid JWT: malformed, wrong signature, or can't be decoded
+		$invalid_jwt = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.invalid_signature';
+
+		$result = $service->validate_request( $invalid_jwt );
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'invalid_jwt', $result->get_error_code() );
+		$this->assertSame( 401, $result->get_error_data()['status'] );
+	}
 }
