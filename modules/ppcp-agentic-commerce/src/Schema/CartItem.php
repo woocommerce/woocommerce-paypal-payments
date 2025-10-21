@@ -54,7 +54,6 @@ class CartItem extends AgenticSchema {
 				$add_issue( new InvalidData( 'Quantity is invalid', 'Item quantity must be between 1 and 999', 'quantity' ) );
 			} else {
 				$this->quantity = $quantity;
-				$add_issue( new InvalidData( 'Quantity must be an integer' ) );
 			}
 		} else {
 			$add_issue( new MissingField( 'Quantity missing', 'The quantity field is required.', 'quantity' ) );
