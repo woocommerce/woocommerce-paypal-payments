@@ -412,7 +412,8 @@ class WooCommerceOrderCreator {
 	private function get_payer( Order $order, ?array $paypal_data = null ): ?Payer {
 		$payer = $order->payer();
 		if ( is_null( $payer ) && isset( $paypal_data['payer'] ) ) {
-			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $paypal_data['payer'] ) ) );
+			$payer_data = json_decode( wp_json_encode( $paypal_data['payer'] ) ?: '' );
+			$payer      = $this->payer_factory->from_paypal_response( $payer_data );
 		}
 
 		return $payer;
@@ -437,7 +438,7 @@ class WooCommerceOrderCreator {
 				},
 				$shipping->options()
 			);
-			$shipping_address_data                      = json_decode( wp_json_encode( $paypal_data['shipping_address'] ) );
+			$shipping_address_data                      = json_decode( wp_json_encode( $paypal_data['shipping_address'] ) ?: '' );
 			$shipping                                   = $this->shipping_factory->from_paypal_response( $shipping_address_data );
 		}
 
