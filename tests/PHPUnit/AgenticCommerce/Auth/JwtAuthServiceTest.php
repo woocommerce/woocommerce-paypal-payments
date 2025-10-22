@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
 use Mockery;
 use Firebase\JWT\Key;
+use Firebase\JWT\JWT;
 
 class JwtAuthServiceTest extends TestCase {
 
@@ -116,5 +117,36 @@ class JwtAuthServiceTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'key_unavailable', $result->get_error_code() );
 		$this->assertSame( 503, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * GIVEN valid Bearer token with correct signature
+	 * WHEN validate_request is called
+	 * THEN should return decoded stdClass payload
+	 */
+	public function test_validate_request_returns_decoded_payload_for_valid_jwt(): void {
+		$expected_payload = (object) array(
+			'sub'  => '1234567890',
+			'name' => 'John Doe',
+			'iat'  => 1516239022,
+		);
+
+		$key = new Key( 'test-secret-key', 'HS256' );
+
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$provider->shouldReceive( 'keys' )
+			->once()
+			->andReturn( $key );
+
+		$service = new JwtAuthService( $provider );
+
+		// Generate a real valid JWT using the same secret
+		$valid_jwt = JWT::encode( (array) $expected_payload, 'test-secret-key', 'HS256' );
+		$token     = 'Bearer ' . $valid_jwt;
+
+		$result = $service->validate_request( $token );
+
+		$this->assertInstanceOf( \stdClass::class, $result );
+		$this->assertEquals( $expected_payload, $result );
 	}
 }
