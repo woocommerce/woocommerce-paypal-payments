@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 class PaymentMethodTokensChecker {
 
@@ -35,12 +36,16 @@ class PaymentMethodTokensChecker {
 			return false;
 		}
 
-		$tokens = $this->payment_method_tokens_endpoint->payment_tokens_for_customer( $customer_id );
-		foreach ( $tokens as $token ) {
-			$payment_source = $token['payment_source']->name() ?? '';
-			if ( $payment_source === 'paypal' ) {
-				return true;
+		try {
+			$tokens = $this->payment_method_tokens_endpoint->payment_tokens_for_customer( $customer_id );
+			foreach ( $tokens as $token ) {
+				$payment_source = $token['payment_source']->name() ?? '';
+				if ( $payment_source === 'paypal' ) {
+					return true;
+				}
 			}
+		} catch ( RuntimeException $e ) {
+			return false;
 		}
 
 		return false;
