@@ -21,5 +21,7 @@ return array(
 	JwtAuthService::class     => static fn( ContainerInterface $c ): JwtAuthService => new JwtAuthService(
 		$c->get( PayPalJwkProvider::class )
 	),
-	CreateCartEndpoint::class => static fn(): CreateCartEndpoint => new CreateCartEndpoint(),
+	CreateCartEndpoint::class => static fn( ContainerInterface $c ): CreateCartEndpoint => new CreateCartEndpoint(
+		$c->get( JwtAuthService::class )
+	),
 );

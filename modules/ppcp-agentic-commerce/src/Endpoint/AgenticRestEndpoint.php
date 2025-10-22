@@ -13,9 +13,11 @@ use JsonException;
 use WC_REST_Controller;
 use WP_REST_Request;
 use WP_REST_Response;
+use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InvalidRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -26,15 +28,30 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected const NAMESPACE = 'wc/v3/agentic';
 
+	private JwtAuthService $auth_service;
+
+	public function __construct( JwtAuthService $auth_service ) {
+		$this->auth_service = $auth_service;
+	}
+
 	/**
 	 * Verify JWT access.
 	 *
 	 * @param WP_REST_Request $request The request object.
-	 * @return bool True if access is granted.
+	 * @return bool|WP_Error True if access is granted, otherwise a WP_Error object.
 	 */
-	public function check_permission( WP_REST_Request $request ): bool {
-		// TODO: Implement JWT validation
-		// Extract and validate PayPal JWT token from Authorization header.
+	public function check_permission( WP_REST_Request $request ) {
+		$token   = $request->get_header( 'Authorization' );
+		$context = $this->auth_service->validate_request( $token );
+
+		if ( is_wp_error( $context ) ) {
+			assert( $context instanceof WP_Error );
+
+			return $context;
+		}
+
+		// TODO: verify the merchant details in $context.
+
 		return true;
 	}
 
