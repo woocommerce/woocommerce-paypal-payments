@@ -4,7 +4,9 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WP_REST_Request;
+use Mockery;
 use function Brain\Monkey\Functions\when;
 
 /**
@@ -13,7 +15,9 @@ use function Brain\Monkey\Functions\when;
 class CreateCartEndpointTest extends TestCase {
 
 	public function test_create_cart_returns_201_created(): void {
-		$endpoint = new CreateCartEndpoint();
+		$auth = Mockery::mock( JwtAuthService::class );
+
+		$endpoint = new CreateCartEndpoint( $auth );
 
 		when( 'wp_generate_password' )->justReturn( 'random-string' );
 
