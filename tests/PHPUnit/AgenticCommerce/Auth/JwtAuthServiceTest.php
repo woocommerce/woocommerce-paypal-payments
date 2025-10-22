@@ -149,4 +149,64 @@ class JwtAuthServiceTest extends TestCase {
 		$this->assertInstanceOf( \stdClass::class, $result );
 		$this->assertEquals( $expected_payload, $result );
 	}
+
+	/**
+	 * GIVEN expired JWT token
+	 * WHEN validate_request is called
+	 * THEN should return WP_Error with 'invalid_jwt' code
+	 */
+	public function test_validate_request_rejects_expired_jwt(): void {
+		$expired_payload = array(
+			'sub' => '1234567890',
+			'exp' => time() - 3600, // Expired 1 hour ago
+		);
+
+		$key = new Key( 'test-secret-key', 'HS256' );
+
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$provider->shouldReceive( 'keys' )
+			->once()
+			->andReturn( $key );
+
+		$service = new JwtAuthService( $provider );
+
+		$expired_jwt = JWT::encode( $expired_payload, 'test-secret-key', 'HS256' );
+		$token       = 'Bearer ' . $expired_jwt;
+
+		$result = $service->validate_request( $token );
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'invalid_jwt', $result->get_error_code() );
+		$this->assertSame( 401, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * GIVEN the JWT token is not valid yet
+	 * WHEN validate_request is called
+	 * THEN should return WP_Error with 'invalid_jwt' code
+	 */
+	public function test_validate_request_rejects_not_yet_valid_jwt(): void {
+		$expired_payload = array(
+			'sub' => '1234567890',
+			'nbf' => time() + 3600, // Valid in hour, but not right now
+		);
+
+		$key = new Key( 'test-secret-key', 'HS256' );
+
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$provider->shouldReceive( 'keys' )
+			->once()
+			->andReturn( $key );
+
+		$service = new JwtAuthService( $provider );
+
+		$expired_jwt = JWT::encode( $expired_payload, 'test-secret-key', 'HS256' );
+		$token       = 'Bearer ' . $expired_jwt;
+
+		$result = $service->validate_request( $token );
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'invalid_jwt', $result->get_error_code() );
+		$this->assertSame( 401, $result->get_error_data()['status'] );
+	}
 }
