@@ -26,14 +26,17 @@ class PayPalJwkProviderTest extends TestCase {
 		);
 
 		$provider = $this->getMockBuilder( PayPalJwkProvider::class )
-			->onlyMethods( array( 'get_cached', 'fetch_keys' ) )
+			->onlyMethods( array( 'cache_get', 'cache_set', 'fetch' ) )
 			->getMock();
 
-		$provider->method( 'get_cached' )
+		$provider->method( 'cache_get' )
 			->willReturn( $cached_keys );
 
 		$provider->expects( $this->never() )
-			->method( 'fetch_keys' );
+			->method( 'fetch' );
+
+		$provider->expects( $this->never() )
+			->method( 'cache_set' );
 
 		$result = $provider->keys();
 
@@ -45,7 +48,7 @@ class PayPalJwkProviderTest extends TestCase {
 	 * WHEN keys() is called
 	 * THEN should fetch and return fresh keys
 	 */
-	public function test_fetches_keys_when_cache_empty(): void {
+	public function test_fetches_and_caches_keys_when_cache_empty(): void {
 		$fresh_keys = array(
 			'kty' => 'RSA',
 			'kid' => 'test-key-id',
@@ -54,11 +57,11 @@ class PayPalJwkProviderTest extends TestCase {
 		);
 
 		$provider = $this->getMockBuilder( PayPalJwkProvider::class )
-			->onlyMethods( array( 'fetch_keys' ) )
+			->onlyMethods( array( 'fetch' ) )
 			->getMock();
 
 		$provider->expects( $this->once() )
-			->method( 'fetch_keys' )
+			->method( 'fetch' )
 			->willReturn( $fresh_keys );
 
 		$result = $provider->keys();

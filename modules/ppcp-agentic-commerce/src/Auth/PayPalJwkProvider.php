@@ -5,19 +5,30 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 
 class PayPalJwkProvider {
+	private ?array $cache = null;
 
 	public function keys(): array {
-		return $this->get_cached() ?? $this->fetch_keys();
+		$cached = $this->cache_get();
+
+		if ( null !== $cached ) {
+			return $cached;
+		}
+
+		$keys = $this->fetch();
+		$this->cache_set( $keys );
+
+		return $keys;
 	}
 
-	protected function get_cached(): ?array {
-		return array(
-			'key1' => 'value1',
-			'key2' => 'value2',
-		);
+	protected function cache_get(): ?array {
+		return $this->cache;
 	}
 
-	protected function fetch_keys(): array {
+	protected function cache_set( array $value ): void {
+		$this->cache = $value;
+	}
+
+	protected function fetch(): array {
 		return array();
 	}
 }
