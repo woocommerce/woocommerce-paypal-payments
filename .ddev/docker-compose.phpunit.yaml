@@ -1,0 +1,4 @@
+services:
+    web:
+        volumes:
+            - ../coverage:/var/www/html/.ddev/wordpress/coverage:ro

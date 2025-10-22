@@ -66,12 +66,9 @@ class SingleProductActionHandler {
 			onError: ( err ) => {
 				console.error( err );
 
-				if ( ResumeFlowHelper.isResumeFlow() ) {
-					ResumeFlowHelper.cleanHashParams();
-					jQuery( this.config.button.wrapper ).trigger(
-						'ppcp-reload-buttons'
-					);
-				}
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 		};
 	}
@@ -95,12 +92,9 @@ class SingleProductActionHandler {
 					this.errorHandler.genericError();
 				}
 
-				if ( ResumeFlowHelper.isResumeFlow() ) {
-					ResumeFlowHelper.cleanHashParams();
-					jQuery( this.config.button.wrapper ).trigger(
-						'ppcp-reload-buttons'
-					);
-				}
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 			onCancel: () => {
 				// Could be used for every product type,
@@ -110,6 +104,10 @@ class SingleProductActionHandler {
 				} else {
 					this.refreshMiniCart();
 				}
+
+				ResumeFlowHelper.reloadButtonsIfRequired(
+					this.config.button.wrapper
+				);
 			},
 		};
 	}
