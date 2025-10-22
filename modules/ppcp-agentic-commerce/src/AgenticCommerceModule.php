@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -25,7 +26,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	 * A list of all REST services that this module needs to register on init.
 	 */
 	private const REST_ENDPOINT_SERVICES = array(
-		'agentic.rest.create_cart',
+		CreateCartEndpoint::class,
 	);
 
 	public function services(): array {

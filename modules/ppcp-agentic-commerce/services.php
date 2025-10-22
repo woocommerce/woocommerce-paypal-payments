@@ -14,13 +14,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 
 return array(
-	'agentic.response.factory' => static function ( ContainerInterface $container ): ResponseFactory {
-		return new ResponseFactory();
-	},
-
-	// REST endpoints.
-
-	'agentic.rest.create_cart' => static function ( ContainerInterface $container ): CreateCartEndpoint {
-		return new CreateCartEndpoint();
-	},
+	ResponseFactory::class    => static fn(): ResponseFactory => new ResponseFactory(),
+	CreateCartEndpoint::class => static fn(): CreateCartEndpoint => new CreateCartEndpoint(),
 );
