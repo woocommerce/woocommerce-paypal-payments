@@ -22,7 +22,7 @@ class PayPalJwkProviderTest extends TestCase {
 	 * THEN should return the cached key without fetching
 	 */
 	public function test_returns_cached_key_when_available(): void {
-		$cached_key = new Key( 'cached-key-string', 'HS256' );
+		$cached_key = new Key( 'cached-key-string', 'RS256' );
 
 		$provider = Mockery::mock( PayPalJwkProvider::class )
 			->makePartial()
@@ -32,11 +32,9 @@ class PayPalJwkProviderTest extends TestCase {
 			->once()
 			->andReturn( $cached_key );
 
-		$provider->shouldReceive( 'fetch_key_material' )
-			->never();
+		$provider->shouldReceive( 'fetch_key_material' )->never();
 
-		$provider->shouldReceive( 'cache_set' )
-			->never();
+		$provider->shouldReceive( 'cache_set' )->never();
 
 		$result = $provider->keys();
 
@@ -47,11 +45,15 @@ class PayPalJwkProviderTest extends TestCase {
 	/**
 	 * GIVEN no cached key exists
 	 * WHEN keys() is called
-	 * THEN should fetch key string, create Key instance, cache it, and return it
+	 * THEN should fetch key material and handle result appropriately
+	 *
+	 * @dataProvider fetchScenarioProvider
 	 */
-	public function test_fetches_and_caches_key_when_cache_empty(): void {
-		$key_string = 'fresh-key-string';
-
+	public function test_handles_fetch_scenarios(
+		string $key_material,
+		bool $should_cache,
+		?string $expected_algorithm
+	): void {
 		$provider = Mockery::mock( PayPalJwkProvider::class )
 			->makePartial()
 			->shouldAllowMockingProtectedMethods();
@@ -62,21 +64,44 @@ class PayPalJwkProviderTest extends TestCase {
 
 		$provider->shouldReceive( 'fetch_key_material' )
 			->once()
-			->andReturn( $key_string );
+			->andReturn( $key_material );
 
-		$provider->shouldReceive( 'cache_set' )
-			->once()
-			->withArgs(
-				fn( $key ) => $key instanceof Key
-					&& $key->getKeyMaterial() === $key_string
-					&& $key->getAlgorithm() === 'RS256'
-			);
+		if ( $should_cache ) {
+			$provider->shouldReceive( 'cache_set' )
+				->once()
+				->withArgs(
+					fn( $key ) => $key instanceof Key
+						&& $key->getKeyMaterial() === $key_material
+						&& $key->getAlgorithm() === $expected_algorithm
+				);
+		} else {
+			$provider->shouldReceive( 'cache_set' )->never();
+		}
 
 		$result = $provider->keys();
 
-		$this->assertInstanceOf( Key::class, $result );
-		$this->assertSame( $key_string, $result->getKeyMaterial() );
-		$this->assertSame( 'RS256', $result->getAlgorithm() );
+		if ( $should_cache ) {
+			$this->assertInstanceOf( Key::class, $result );
+			$this->assertSame( $key_material, $result->getKeyMaterial() );
+			$this->assertSame( $expected_algorithm, $result->getAlgorithm() );
+		} else {
+			$this->assertNull( $result );
+		}
+	}
+
+	public function fetchScenarioProvider(): array {
+		return array(
+			'successful fetch'   => array(
+				'key_material'       => 'fresh-key-string',
+				'should_cache'       => true,
+				'expected_algorithm' => 'RS256',
+			),
+			'empty string fetch' => array(
+				'key_material'       => '',
+				'should_cache'       => false,
+				'expected_algorithm' => null,
+			),
+		);
 	}
 
 	/**
@@ -95,66 +120,12 @@ class PayPalJwkProviderTest extends TestCase {
 			->once()
 			->andReturn( $key_string );
 
-		$result1 = $provider->keys(); // Fresh fetch.
+		$result1 = $provider->keys();
 		$this->assertInstanceOf( Key::class, $result1 );
 		$this->assertSame( $key_string, $result1->getKeyMaterial() );
 
-		$result2 = $provider->keys(); // Cache hit, no second fetch.
+		$result2 = $provider->keys();
 		$this->assertInstanceOf( Key::class, $result2 );
 		$this->assertSame( $result1, $result2 );
-	}
-
-	/**
-	 * GIVEN no cached key exists
-	 * AND fetch returns empty string
-	 * WHEN keys() is called
-	 * THEN should return null without caching
-	 */
-	public function test_returns_null_when_fetch_returns_empty_string(): void {
-		$provider = Mockery::mock( PayPalJwkProvider::class )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$provider->shouldReceive( 'cache_get' )
-			->once()
-			->andReturn( null );
-
-		$provider->shouldReceive( 'fetch_key_material' )
-			->once()
-			->andReturn( '' );
-
-		$provider->shouldReceive( 'cache_set' )
-			->never();
-
-		$result = $provider->keys();
-
-		$this->assertNull( $result );
-	}
-
-	/**
-	 * GIVEN no cached key exists
-	 * AND fetch returns an empty string
-	 * WHEN keys() is called
-	 * THEN should return null without caching
-	 */
-	public function test_returns_null_when_fetch_returns_nothing(): void {
-		$provider = Mockery::mock( PayPalJwkProvider::class )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$provider->shouldReceive( 'cache_get' )
-			->once()
-			->andReturn( null );
-
-		$provider->shouldReceive( 'fetch_key_material' )
-			->once()
-			->andReturn( '' );
-
-		$provider->shouldReceive( 'cache_set' )
-			->never();
-
-		$result = $provider->keys();
-
-		$this->assertNull( $result );
 	}
 }
