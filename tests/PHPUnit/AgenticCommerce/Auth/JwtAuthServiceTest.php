@@ -209,4 +209,39 @@ class JwtAuthServiceTest extends TestCase {
 		$this->assertSame( 'invalid_jwt', $result->get_error_code() );
 		$this->assertSame( 401, $result->get_error_data()['status'] );
 	}
+
+	/**
+	 * GIVEN Bearer prefix in different cases
+	 * WHEN validate_request is called
+	 * THEN should handle all case variations
+	 *
+	 * @dataProvider bearerCaseProvider
+	 */
+	public function test_validate_request_handles_case_insensitive_bearer( string $prefix ): void {
+		$payload = array( 'sub' => 'test' );
+		$key     = new Key( 'test-secret-key', 'HS256' );
+
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$provider->shouldReceive( 'keys' )
+			->once()
+			->andReturn( $key );
+
+		$service = new JwtAuthService( $provider );
+
+		$valid_jwt = JWT::encode( $payload, 'test-secret-key', 'HS256' );
+		$token     = $prefix . ' ' . $valid_jwt;
+
+		$result = $service->validate_request( $token );
+
+		$this->assertInstanceOf( \stdClass::class, $result );
+	}
+
+	public function bearerCaseProvider(): array {
+		return array(
+			'lowercase' => array( 'bearer' ),
+			'uppercase' => array( 'BEARER' ),
+			'mixedcase' => array( 'BeArEr' ),
+			'standard'  => array( 'Bearer' ),
+		);
+	}
 }
