@@ -7,6 +7,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 use WP_Error;
 use Firebase\JWT\JWT;
 use Firebase\JWT\SignatureInvalidException;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\BeforeValidException;
 
 class JwtAuthService {
 
@@ -44,6 +46,10 @@ class JwtAuthService {
 		try {
 			return JWT::decode( $jwt, $keys );
 		} catch ( SignatureInvalidException $exception ) {
+			return new WP_Error( 'invalid_jwt', '', array( 'status' => 401 ) );
+		} catch ( ExpiredException $exception ) {
+			return new WP_Error( 'invalid_jwt', '', array( 'status' => 401 ) );
+		} catch ( BeforeValidException $exception ) {
 			return new WP_Error( 'invalid_jwt', '', array( 'status' => 401 ) );
 		}
 	}
