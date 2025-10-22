@@ -69,14 +69,14 @@ class PayPalJwkProviderTest extends TestCase {
 			->withArgs(
 				fn( $key ) => $key instanceof Key
 					&& $key->getKeyMaterial() === $key_string
-					&& $key->getAlgorithm() === 'HS256'
+					&& $key->getAlgorithm() === 'RS256'
 			);
 
 		$result = $provider->keys();
 
 		$this->assertInstanceOf( Key::class, $result );
 		$this->assertSame( $key_string, $result->getKeyMaterial() );
-		$this->assertSame( 'HS256', $result->getAlgorithm() );
+		$this->assertSame( 'RS256', $result->getAlgorithm() );
 	}
 
 	/**
