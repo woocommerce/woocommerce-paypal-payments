@@ -9,6 +9,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 
 use WooCommerce\PayPalCommerce\TestCase;
 use WP_Error;
+use Mockery;
+use Firebase\JWT\Key;
 
 class JwtAuthServiceTest extends TestCase {
 
@@ -18,7 +20,8 @@ class JwtAuthServiceTest extends TestCase {
 	 * THEN should return WP_Error with 'missing_token' code and 401 status
 	 */
 	public function test_validate_request_returns_error_when_no_authorization_header(): void {
-		$service = new JwtAuthService();
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$service  = new JwtAuthService( $provider );
 
 		$result = $service->validate_request( null );
 
@@ -35,7 +38,8 @@ class JwtAuthServiceTest extends TestCase {
 	 * @dataProvider emptyTokenProvider
 	 */
 	public function test_validate_request_handles_empty_tokens( string $token ): void {
-		$service = new JwtAuthService();
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$service  = new JwtAuthService( $provider );
 
 		$result = $service->validate_request( $token );
 
@@ -59,7 +63,8 @@ class JwtAuthServiceTest extends TestCase {
 	 * THEN should return WP_Error with 'invalid_jwt' code and 401 status
 	 */
 	public function test_validate_request_rejects_malformed_format(): void {
-		$service = new JwtAuthService();
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$service  = new JwtAuthService( $provider );
 
 		$result = $service->validate_request( 'NotBearerFormat' );
 
@@ -74,7 +79,14 @@ class JwtAuthServiceTest extends TestCase {
 	 * THEN should return WP_Error with 'invalid_jwt' code and 401 status
 	 */
 	public function test_validate_request_rejects_invalid_jwt(): void {
-		$service = new JwtAuthService();
+		$key = new Key( 'test-key-material', 'HS256' );
+
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$provider->shouldReceive( 'keys' )
+			->once()
+			->andReturn( $key );
+
+		$service = new JwtAuthService( $provider );
 
 		// Invalid JWT: malformed, wrong signature, or can't be decoded
 		$invalid_jwt = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.invalid_signature';
