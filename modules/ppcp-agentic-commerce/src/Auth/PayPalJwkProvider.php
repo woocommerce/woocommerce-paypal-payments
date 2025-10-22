@@ -4,31 +4,36 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 
+use Firebase\JWT\Key;
+
 class PayPalJwkProvider {
-	private ?array $cache = null;
+	private ?Key $cache = null;
 
-	public function keys(): array {
-		$cached = $this->cache_get();
+	public function keys(): ?Key {
+		$keys = $this->cache_get();
 
-		if ( null !== $cached ) {
-			return $cached;
+		if ( null !== $keys ) {
+			return $keys;
 		}
 
-		$keys = $this->fetch();
-		$this->cache_set( $keys );
+		$key_string = $this->fetch_key_material();
+		if ( $key_string ) {
+			$keys = new Key( $key_string, 'HS256' );
+			$this->cache_set( $keys );
+		}
 
 		return $keys;
 	}
 
-	protected function cache_get(): ?array {
+	protected function cache_get(): ?Key {
 		return $this->cache;
 	}
 
-	protected function cache_set( array $value ): void {
+	protected function cache_set( Key $value ): void {
 		$this->cache = $value;
 	}
 
-	protected function fetch(): array {
-		return array();
+	protected function fetch_key_material(): string {
+		return 'test';
 	}
 }
