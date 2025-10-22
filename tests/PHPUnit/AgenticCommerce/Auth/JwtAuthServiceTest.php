@@ -97,4 +97,24 @@ class JwtAuthServiceTest extends TestCase {
 		$this->assertSame( 'invalid_jwt', $result->get_error_code() );
 		$this->assertSame( 401, $result->get_error_data()['status'] );
 	}
+
+	/**
+	 * GIVEN provider returns null (key unavailable)
+	 * WHEN validate_request is called with valid Bearer token
+	 * THEN should return WP_Error with 'key_unavailable' code and 503 status
+	 */
+	public function test_validate_request_handles_unavailable_key(): void {
+		$provider = Mockery::mock( PayPalJwkProvider::class );
+		$provider->shouldReceive( 'keys' )
+			->once()
+			->andReturn( null );
+
+		$service = new JwtAuthService( $provider );
+
+		$result = $service->validate_request( 'Bearer some.valid.token' );
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'key_unavailable', $result->get_error_code() );
+		$this->assertSame( 503, $result->get_error_data()['status'] );
+	}
 }
