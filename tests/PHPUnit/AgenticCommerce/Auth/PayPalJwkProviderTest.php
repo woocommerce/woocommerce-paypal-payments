@@ -130,4 +130,31 @@ class PayPalJwkProviderTest extends TestCase {
 
 		$this->assertNull( $result );
 	}
+
+	/**
+	 * GIVEN no cached key exists
+	 * AND fetch returns an empty string
+	 * WHEN keys() is called
+	 * THEN should return null without caching
+	 */
+	public function test_returns_null_when_fetch_returns_nothing(): void {
+		$provider = Mockery::mock( PayPalJwkProvider::class )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$provider->shouldReceive( 'cache_get' )
+			->once()
+			->andReturn( null );
+
+		$provider->shouldReceive( 'fetch_key_material' )
+			->once()
+			->andReturn( '' );
+
+		$provider->shouldReceive( 'cache_set' )
+			->never();
+
+		$result = $provider->keys();
+
+		$this->assertNull( $result );
+	}
 }
