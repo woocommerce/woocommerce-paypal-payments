@@ -38,6 +38,28 @@ class PayPalJwkProviderTest extends TestCase {
 		$result = $provider->keys();
 
 		$this->assertSame( $cached_keys, $result );
+	}
+
+	/**
+	 * GIVEN no cached keys exist
+	 * WHEN keys() is called
+	 * THEN should fetch and return fresh keys
+	 */
+	public function test_fetches_keys_when_cache_empty(): void {
+		$fresh_keys = array(
+			'kty' => 'RSA',
+			'kid' => 'test-key-id',
+			'n'   => 'test-modulus',
+			'e'   => 'AQAB',
+		);
+
+		$provider = $this->getMockBuilder( PayPalJwkProvider::class )
+			->onlyMethods( array( 'fetch_keys' ) )
+			->getMock();
+
+		$provider->expects( $this->once() )
+			->method( 'fetch_keys' )
+			->willReturn( $fresh_keys );
 
 		$result = $provider->keys();
 
