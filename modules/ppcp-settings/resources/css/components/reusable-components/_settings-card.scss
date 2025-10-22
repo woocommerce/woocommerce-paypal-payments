@@ -29,7 +29,7 @@ $width_gap: 24px;
 
 	display: var(--card-layout);
 	gap: var(--card-gap);
-	margin: 0 0 var(--card-gap) 0;
+	margin: var(--card-gap-top, 0) 0 var(--card-gap) 0;
 
 	.ppcp-r-settings-card__header {
 		display: var(--card-layout);

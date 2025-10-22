@@ -6,10 +6,12 @@ import {
 	ControlRadioGroup,
 } from '../../../../../ReusableComponents/Controls';
 import { SettingsHooks } from '../../../../../../data';
+import { useMerchantInfo } from '../../../../../../data/common/hooks';
 
 const OtherSettings = () => {
 	const { disabledCards, setDisabledCards, threeDSecure, setThreeDSecure } =
 		SettingsHooks.useSettings();
+	const { features } = useMerchantInfo();
 
 	const disabledCardChoices = window.ppcpSettings.disabledCardsChoices;
 	const threeDSecureOptions = window.ppcpSettings.threeDSecureOptions;
@@ -25,27 +27,30 @@ const OtherSettings = () => {
 				'woocommerce-paypal-payments'
 			) }
 		>
-			<SettingsBlock
-				title={ __(
-					'Disable specific credit cards',
-					'woocommerce-paypal-payments'
-				) }
-				description={ __(
-					'By default, all possible credit cards will be accepted. Card types added here will be rejected at checkout.',
-					'woocommerce-paypal-payments'
-				) }
-			>
-				<ControlSelect
-					options={ disabledCardChoices }
-					value={ disabledCards }
-					onChange={ setDisabledCards }
-					isMulti={ true }
-					placeholder={ __(
-						'Show all cards',
+			{ features.advanced_credit_and_debit_cards.enabled && (
+				<SettingsBlock
+					title={ __(
+						'Disable specific credit cards',
 						'woocommerce-paypal-payments'
 					) }
-				/>
-			</SettingsBlock>
+					description={ __(
+						'By default, all possible credit cards will be accepted. Card types added here will be rejected at checkout.',
+						'woocommerce-paypal-payments'
+					) }
+				>
+					<ControlSelect
+						options={ disabledCardChoices }
+						value={ disabledCards }
+						onChange={ setDisabledCards }
+						isMulti={ true }
+						placeholder={ __(
+							'Show all cards',
+							'woocommerce-paypal-payments'
+						) }
+					/>
+				</SettingsBlock>
+			) }
+
 			<SettingsBlock
 				title={ __( '3D Secure', 'woocommerce-paypal-payments' ) }
 				description={ __(

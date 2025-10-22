@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
@@ -56,7 +55,6 @@ use WooCommerce\PayPalCommerce\Settings\Enum\ProductChoicesEnum;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use Throwable;
 
@@ -139,34 +137,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					);
 
 					$notices[] = new Message( $message, 'info', false, 'ppcp-notice-wrapper' );
-
-					$is_paylater_messaging_force_enabled_feature_flag_enabled = apply_filters(
-					// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-						'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
-						true
-					);
-
-					$messages_apply = $container->get( 'button.helper.messages-apply' );
-					assert( $messages_apply instanceof MessagesApply );
-
-					$settings = $container->get( 'wcgateway.settings' );
-					assert( $settings instanceof Settings );
-
-					$stay_updated = $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' );
-
-					if ( $is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $stay_updated ) {
-						$paylater_enablement_message = sprintf(
-						// translators: %1$s is the URL for Stay Updated setting, %2$s is the URL for Pay Later settings.
-							__(
-								'<strong>PayPal Pay Later messaging successfully enabled</strong>, now displaying this flexible payment option earlier in the shopping experience. This update was made based on your <a href="%1$s">Stay Updated</a> preference and can be customized or disabled through the <a href="%2$s">Pay Later settings</a>.',
-								'woocommerce-paypal-payments'
-							),
-							admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#ppcp-stay_updated_field' ),
-							admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' )
-						);
-
-						$notices[] = new Message( $paylater_enablement_message, 'info', false, 'ppcp-notice-wrapper' );
-					}
 
 					return $notices;
 				}
@@ -299,6 +269,22 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					// Something failed - ignore the error and assume there is no migration data.
 					return;
 				}
+			}
+		);
+
+		/**
+		 * Clean up migration-related options on settings reset.
+		 *
+		 * Removes migration state flags when merchant disconnects via "Start Over"
+		 * to ensure a clean state for subsequent merchant connections.
+		 *
+		 * Removed options:
+		 * - BCDC migration override flag (OPTION_NAME_BCDC_MIGRATION_OVERRIDE)
+		 */
+		add_action(
+			'woocommerce_paypal_payments_reset_settings',
+			static function (): void {
+				delete_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 			}
 		);
 

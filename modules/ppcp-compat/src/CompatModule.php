@@ -10,12 +10,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat;
 
 use Exception;
-use WC_Cart;
 use WC_Order;
 use WC_Order_Item_Product;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
+use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -23,7 +20,6 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -78,7 +74,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 
 		$this->fix_page_builders();
 		$this->exclude_cache_plugins_js_minification( $c );
-		$this->set_elementor_checkout_context();
 
 		$is_nyp_active = $c->get( 'compat.nyp.is_supported_plugin_version_active' );
 		if ( $is_nyp_active ) {
@@ -93,67 +88,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action( 'woocommerce_paypal_payments_gateway_migrate', static fn() => delete_transient( 'ppcp_has_ppec_subscriptions' ) );
 
 		$this->legacy_ui_card_payment_mapping( $c );
-
-		/**
-		 * Automatically enable Pay Later messaging for eligible stores during plugin update.
-		 *
-		 * This action runs during plugin updates to automatically enable Pay Later messaging for stores
-		 * that meet the following criteria:
-		 * - Feature flag 'paylater_messaging_force_enabled' is enabled (default: true, can be disabled via filter)
-		 * - Pay Later messaging is available for the store's country
-		 * - The "Stay updated" checkbox is enabled (checked in either old or new UI)
-		 *
-		 * The "Stay updated" setting is retrieved differently based on the UI version:
-		 * - Legacy UI: Retrieved from wcgateway.settings
-		 * - New UI: Retrieved from settings.data.settings model
-		 *
-		 * When all conditions are met, this will:
-		 * - Enable Pay Later messaging
-		 * - Add default messaging locations (product, cart, checkout) to existing selections
-		 *
-		 * @todo Remove this auto-enablement logic after the next release
-		 *
-		 * @hook woocommerce_paypal_payments_gateway_migrate_on_update
-		 */
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function () use ( $c ) {
-				if ( ! apply_filters(
-				// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
-					'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
-					true
-				) ) {
-					return;
-				}
-
-				$messages_apply = $c->get( 'button.helper.messages-apply' );
-				assert( $messages_apply instanceof MessagesApply );
-
-				$settings_model = $c->get( 'settings.data.settings' );
-				assert( $settings_model instanceof SettingsModel );
-
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				$stay_updated = SettingsModule::should_use_the_old_ui()
-					? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
-					: $settings_model->get_stay_updated();
-
-				if ( ! $messages_apply->for_country() || ! $stay_updated ) {
-					return;
-				}
-
-				$selected_locations = $settings->has( 'pay_later_messaging_locations' ) ? $settings->get( 'pay_later_messaging_locations' ) : array();
-
-				$settings->set( 'pay_later_messaging_enabled', true );
-				$settings->set(
-					'pay_later_messaging_locations',
-					array_unique( array_merge( $selected_locations, array( 'product', 'cart', 'checkout' ) ) )
-				);
-
-				$settings->persist();
-			}
-		);
 
 		return true;
 	}
@@ -436,31 +370,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	}
 
 	/**
-	 * Sets the context for the Elementor checkout page.
-	 *
-	 * @return void
-	 */
-	protected function set_elementor_checkout_context(): void {
-		add_action(
-			'wp',
-			function () {
-				$page_id = get_the_ID();
-				if ( ! is_numeric( $page_id ) || ! CartCheckoutDetector::has_elementor_checkout( (int) $page_id ) ) {
-					return;
-				}
-
-				add_filter(
-					'woocommerce_paypal_payments_context',
-					function ( string $context ): string {
-						// Default context.
-						return ( 'mini-cart' === $context ) ? 'checkout' : $context;
-					}
-				);
-			}
-		);
-	}
-
-	/**
 	 * Excludes PayPal scripts from being minified by cache plugins.
 	 *
 	 * @param ContainerInterface $c The Container.
@@ -537,11 +446,10 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	 */
 	protected function initialize_wc_bookings_compat_layer( ContainerInterface $container ): void {
 		add_action(
-			'woocommerce_paypal_payments_shipping_callback_woocommerce_order_created',
-			static function ( WC_Order $wc_order, WC_Cart $wc_cart ) use ( $container ): void {
+			'woocommerce_paypal_payments_woocommerce_order_created_from_cart',
+			static function ( WC_Order $wc_order, CartData $cart_data ) use ( $container ): void {
 				try {
-					$cart_contents = $wc_cart->get_cart();
-					foreach ( $cart_contents as $cart_item ) {
+					foreach ( $cart_data->items() as $cart_item ) {
 						if ( empty( $cart_item['booking'] ) ) {
 							continue;
 						}

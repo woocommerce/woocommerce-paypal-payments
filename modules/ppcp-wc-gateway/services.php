@@ -101,6 +101,7 @@ use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\CartTotalsFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\WcGateway\StoreApi\Factory\ShippingRatesFactory;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -233,11 +234,11 @@ return array(
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
-		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
+		$context = $container->get( 'button.helper.context' );
+		return new DisableGateways( $settings, $settings_status, $subscription_helper, $context );
 	},
 
 	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
@@ -1951,7 +1952,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.gateway-repository' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'wcgateway.is-fraudnet-enabled' )
+			$container->get( 'wcgateway.is-fraudnet-enabled' ),
+			$container->get( 'button.helper.context' ),
 		);
 	},
 	'wcgateway.cli.settings.command'                       => function ( ContainerInterface $container ): SettingsCommand {
@@ -2183,23 +2185,9 @@ return array(
 			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
 		);
 
-		$is_paylater_messaging_force_enabled_feature_flag_enabled = apply_filters(
-		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_messaging_force_enabled',
-			true
-		);
-
 		$stay_updated = SettingsModule::should_use_the_old_ui()
 			? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
 			: $settings_model->get_stay_updated();
-
-		$stay_updated_field_link = SettingsModule::should_use_the_old_ui()
-			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#ppcp-stay_updated_field' )
-			: admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=settings#ppcp-stay-updated' );
-
-		$paylater_messaging_tab_link = SettingsModule::should_use_the_old_ui()
-			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-pay-later' )
-			: admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&panel=pay-later-messaging' );
 
 		$message = sprintf(
 		// translators: %1$s is the URL for the startup guide.
@@ -2237,28 +2225,6 @@ return array(
 					'switch_to_new_settings',
 					__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
 					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
-					Note::E_WC_ADMIN_NOTE_UNACTIONED,
-					true
-				)
-			),
-			$inbox_note_factory->create_note(
-				__( 'PayPal Pay Later Messaging now enabled', 'woocommerce-paypal-payments' ),
-				sprintf(
-				// translators: %1$s is the URL for Pay Later messaging documentation.
-					__(
-						'PayPal Pay Later messaging was included in the 3.1 version release and has now been enabled on your store based on your <a href="%1$s">STAY UPDATED</a> preference.<br>This feature displays the payment option earlier in the shopping experience to drive customer engagement and can be fully customized or disabled through the PayPal admin panel.',
-						'woocommerce-paypal-payments'
-					),
-					$stay_updated_field_link
-				),
-				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
-				'ppcp-settings-paylater-messaging-force-enabled-inbox-note',
-				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$is_paylater_messaging_force_enabled_feature_flag_enabled && $messages_apply->for_country() && $stay_updated,
-				new InboxNoteAction(
-					'review_pay_later_settings',
-					__( 'Review Pay Later settings', 'woocommerce-paypal-payments' ),
-					$paylater_messaging_tab_link,
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
 				)
@@ -2403,10 +2369,23 @@ return array(
 	},
 
 	'wcgateway.server-side-shipping-callback-enabled'      => static function ( ContainerInterface $container ): bool {
+		// SSSC depends on Woo's Store API, which currently doesn't work with plain permalinks because of the rest_get_url_prefix bug.
+		$has_plain_permalinks = empty( get_option( 'permalink_structure' ) );
+
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
+		assert( $last_webhook_storage instanceof WebhookEventStorage );
+
+		// Not directly related, but if webhooks are not arriving then SSSC probably is not accessible too.
+		$webhooks_working = ! $last_webhook_storage->is_empty();
+
+		$enabled = getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0'
+			&& ! $has_plain_permalinks
+			&& $webhooks_working;
+
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.server_side_shipping_callback_enabled',
-			getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) === '1'
+			$enabled
 		);
 	},
 
@@ -2414,7 +2393,7 @@ return array(
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.appswitch_enabled',
-			getenv( 'PCP_APPSWITCH_ENABLED' ) === '1'
+			getenv( 'PCP_APPSWITCH_ENABLED' ) !== '0'
 		);
 	},
 );
