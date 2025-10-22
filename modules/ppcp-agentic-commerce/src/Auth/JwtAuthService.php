@@ -4,9 +4,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 
+use Exception;
+use stdClass;
 use WP_Error;
 use Firebase\JWT\JWT;
-use Exception;
 
 class JwtAuthService {
 
@@ -18,7 +19,7 @@ class JwtAuthService {
 
 	/**
 	 * @param string|null $token
-	 * @return \stdClass|WP_Error
+	 * @return stdClass|WP_Error
 	 */
 	public function validate_request( ?string $token ) {
 		$string_token = trim( $token ?? '' );
