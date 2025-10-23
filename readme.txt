@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, credit card
 Requires at least: 6.5
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.1.2
+Stable tag: 3.2.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -155,6 +155,36 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 3.2.1 - 2025-10-20 =
+* Enhancement - Make plugin upgrade hooks safer #3789
+* Enhancement - Webhook transient lock #3790
+
+= 3.2.0 - 2025-10-15 =
+* Enhancement - Enable AppSwitch and SSSC feature flags by default #3724
+* Enhancement - Remove temporary Pay Later messaging auto-enablement logic #3680
+* Enhancement - Align Fastlane currency support with ACDC matrix #3697
+* Enhancement - Add hooks at the start of Create/Approve Order requests #3717
+* Enhancement - Don't filter tokens on changing payment method of a subscription (author @gedex) #3617
+* Enhancement - Reorganize ACDC and Fastlane gateway settings modals #3652
+* Enhancement - Update PayPal Package Tracking Carriers List #3630
+* Enhancement - Display help center section #3587
+* Enhancement - Update Fastlane card placeholder design #3625
+* Enhancement - Add Fastlane session restoration post payment failure #3598
+* Fix - Check for messages visibility setting before rendering #3686
+* Fix - Fatal error where a callback expects \WC_Payment_Gateway but got RequestHandler (author @gedex) #3660
+* Fix - Continuation with PayPal subscriptions #3656
+* Fix - Add fallback for getting subscription order address in classic contexts #3657
+* Fix - Fastlane - UK and Australia - Add Fastlane to onboarding screen and four step #3635
+* Fix - Check variation stock for all variable products #3605
+* Fix - Google Pay button enabled state on variable product pages #3602
+* Fix - Pay by link with PayPal error on front end when no shipping address #3627
+* Fix - Sync checkout fields and headers in Fastlane flow #3628
+* Fix - Classic checkout - Guest user - Trial vaulting subscription validation does not work #3663
+* Fix - Prevent redirect on checkout failure for trial vaulting subscriptions #3644
+* Fix - Contacts race condition in block #3518
+* Fix - Add shipping-related filters to avoid MISSING_%field_name% errors #3586
+* Fix - Continuation mode in Elementor checkout #3612
 
 = 3.1.2 - 2025-09-30 =
 * Change - Make migration available again #3710

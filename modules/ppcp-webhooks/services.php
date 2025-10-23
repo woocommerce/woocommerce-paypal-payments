@@ -43,12 +43,20 @@ return array(
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
 		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+
 		return new WebhookRegistrar(
 			$factory,
 			$endpoint,
 			$rest_endpoint,
 			$last_webhook_storage,
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.orchestration' ),
 			$logger
+		);
+	},
+	'webhook.orchestration'                   => static function ( ContainerInterface $container ): WebhookOrchestrator {
+		return new WebhookOrchestrator(
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'webhook.endpoint.controller'             => function ( ContainerInterface $container ): IncomingWebhookEndpoint {

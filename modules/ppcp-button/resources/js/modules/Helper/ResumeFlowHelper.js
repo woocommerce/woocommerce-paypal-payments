@@ -54,6 +54,13 @@ class ResumeFlowHelper {
 			return paramName === 'switch_initiated_time';
 		} );
 	}
+
+	static reloadButtonsIfRequired( buttonWrapper ) {
+		if ( this.isResumeFlow() ) {
+			this.cleanHashParams();
+			jQuery( buttonWrapper ).trigger( 'ppcp-reload-buttons' );
+		}
+	}
 }
 
 export default ResumeFlowHelper;
