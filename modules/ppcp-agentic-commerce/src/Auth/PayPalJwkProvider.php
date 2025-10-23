@@ -8,7 +8,14 @@ use Firebase\JWT\JWK;
 use Firebase\JWT\Key;
 use Exception;
 
+/**
+ * @see PayPalJwkProviderTest
+ */
 class PayPalJwkProvider {
+	private const TRANSIENT_NAME = 'ppcp-ai-jwks';
+
+	private const TRANSIENT_TTL = 24 * HOUR_IN_SECONDS;
+
 	private const JWKS_URL = 'https://www.paypal.ai/.well-known/jwks.json';
 
 	private ?Key $cache = null;
@@ -39,6 +46,28 @@ class PayPalJwkProvider {
 	}
 
 	protected function fetch_key(): ?Key {
+		$jwks = get_transient( self::TRANSIENT_NAME );
+
+		if ( ! is_array( $jwks ) || empty( $jwks['keys'] ) ) {
+			$jwks = $this->fetch_jwks_from_remote();
+
+			if ( is_array( $jwks ) && ! empty( $jwks['keys'] ) ) {
+				set_transient( self::TRANSIENT_NAME, $jwks, self::TRANSIENT_TTL );
+			} else {
+				return null;
+			}
+		}
+
+		try {
+			$keys = JWK::parseKeySet( $jwks );
+
+			return reset( $keys ) ?: null;
+		} catch ( Exception $exception ) {
+			return null;
+		}
+	}
+
+	private function fetch_jwks_from_remote(): ?array {
 		$remove_user_agent =
 			/**
 			 * @param mixed|array  $args
@@ -69,10 +98,7 @@ class PayPalJwkProvider {
 				return null;
 			}
 
-			$keys = JWK::parseKeySet( $data );
-
-			// Return the first (and only) key from the keyset.
-			return reset( $keys ) ?: null;
+			return $data;
 		} catch ( Exception $exception ) {
 			return null;
 		}
