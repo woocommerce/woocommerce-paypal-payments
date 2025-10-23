@@ -14,7 +14,10 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 class ResponseFactory {
 	public function new_cart( PayPalCart $cart ): NewCartResponse {
-		return new NewCartResponse( $cart, 'not-implemented' );
+		// todo - the token represents a checkout-session, linked to the cart; via #5272-persist-cart.
+		$token = wp_generate_password( 12, false );
+
+		return new NewCartResponse( $cart, $token );
 	}
 
 	public function from_order( WC_Order $order, PayPalCart $cart ): PaidCartResponse {
