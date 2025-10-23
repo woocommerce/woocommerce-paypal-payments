@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
@@ -17,11 +17,15 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
+ * This module handles the initialization and execution of the agentic commerce functionality.
  */
 class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
+	 * Returns the services provided by this module.
+	 *
+	 * @return array The array of services.
 	 * A list of all REST services that this module needs to register on init.
 	 */
 	private const REST_ENDPOINT_SERVICES = array(
@@ -32,7 +36,14 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		return require __DIR__ . '/../services.php';
 	}
 
+	/**
+	 * Runs the module initialization.
+	 *
+	 * @param ContainerInterface $container The dependency injection container.
+	 * @return bool True if the module was initialized successfully.
+	 */
 	public function run( ContainerInterface $container ): bool {
+
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
@@ -41,6 +52,17 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 					assert( $endpoint instanceof AgenticRestEndpoint );
 					$endpoint->register_routes();
 				}
+			}
+		);
+
+		add_action(
+			'init',
+			function () use ( $container ) {
+				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
+				assert( $ingestion_manager instanceof IngestionManager );
+				$ingestion_manager->init();
+
+//				do_action('ppcp_agentic_sync_batch');
 			}
 		);
 
