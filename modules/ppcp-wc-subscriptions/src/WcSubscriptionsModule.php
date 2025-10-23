@@ -158,15 +158,19 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 					return $methods;
 				}
 
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return $methods;
+				}
+
+				// Vault v2 - If customer does not have saved PayPal payments, remove PayPal gateway from available payment methods.
+				// The reason is that it's not possible to save a payment without purchasing.
 				$paypal_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
 				if ( ! $paypal_tokens ) {
 					unset( $methods[ PayPalGateway::ID ] );
 				}
 
-				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
-					return $methods;
-				}
-
+				// Vault v2 - If customer does not have saved card payments, remove credit card gateway from available payment methods.
+				// The reason is that it's not possible to save a payment without purchasing.
 				$card_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
 				if ( ! $card_tokens ) {
 					unset( $methods[ CreditCardGateway::ID ] );
