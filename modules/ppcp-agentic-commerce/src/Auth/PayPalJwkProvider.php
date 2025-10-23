@@ -85,8 +85,8 @@ class PayPalJwkProvider {
 	 *
 	 * @param array $jwks The JWKS data to cache.
 	 */
-	protected function cache_set( array $jwks ): void {
-		set_transient( self::TRANSIENT_NAME, $jwks, self::TRANSIENT_TTL );
+	protected function cache_set( array $jwks ): bool {
+		return set_transient( self::TRANSIENT_NAME, $jwks, self::TRANSIENT_TTL );
 	}
 
 	/**
@@ -94,7 +94,7 @@ class PayPalJwkProvider {
 	 *
 	 * @return array|null The JWKS data, or null on failure.
 	 */
-	private function fetch_jwks_from_remote(): ?array {
+	protected function fetch_jwks_from_remote(): ?array {
 		$remove_user_agent =
 			/**
 			 * @param mixed|array  $args

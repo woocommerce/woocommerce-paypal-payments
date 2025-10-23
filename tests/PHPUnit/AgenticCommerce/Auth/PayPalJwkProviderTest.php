@@ -17,115 +17,109 @@ use function Brain\Monkey\Functions\when;
  */
 class PayPalJwkProviderTest extends TestCase {
 
+	private Mockery\MockInterface $provider;
+
+	private array $valid_jwks = array(
+		'keys' => array(
+			array(
+				'kty' => 'RSA',
+				'n'   => 'test-modulus',
+				'e'   => 'AQAB',
+				'alg' => 'RS256',
+				'kid' => 'test-key-id',
+			),
+		),
+	);
+
 	public function setUp(): void {
 		parent::setUp();
 
-		when( 'get_transient' )->justReturn( false );
-		when( 'set_transient' )->justReturn( false );
+		$this->provider = Mockery::mock( PayPalJwkProvider::class )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
 	}
 
 	/**
-	 * GIVEN cached key is available
+	 * GIVEN valid JWKS data exists in cache
 	 * WHEN keys() is called
-	 * THEN should return the cached key without fetching
+	 * THEN should return parsed key without fetching remote
 	 */
-	public function test_returns_cached_key_when_available(): void {
-		$cached_key = new Key( 'cached-key-string', 'RS256' );
-
-		$provider = Mockery::mock( PayPalJwkProvider::class )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$provider->shouldReceive( 'cache_get' )
+	public function test_returns_key_from_cache(): void {
+		$this->provider->shouldReceive( 'cache_get' )
 			->once()
-			->andReturn( $cached_key );
+			->andReturn( $this->valid_jwks );
 
-		$provider->shouldReceive( 'fetch_key' )->never();
+		$this->provider->shouldReceive( 'fetch_jwks_from_remote' )->never();
 
-		$provider->shouldReceive( 'cache_set' )->never();
-
-		$result = $provider->keys();
+		$result = $this->provider->keys();
 
 		$this->assertInstanceOf( Key::class, $result );
-		$this->assertSame( $cached_key, $result );
 	}
 
 	/**
-	 * GIVEN no cached key exists
+	 * GIVEN no cached data exists
 	 * WHEN keys() is called
-	 * THEN should fetch key material and handle result appropriately
-	 *
-	 * @dataProvider fetchScenarioProvider
+	 * THEN should fetch from remote, cache it, and return parsed key
 	 */
-	public function test_handles_fetch_scenarios(
-		?Key $key_material,
-		bool $should_cache
-	): void {
-		$provider = Mockery::mock( PayPalJwkProvider::class )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$provider->shouldReceive( 'cache_get' )
+	public function test_fetches_and_caches_on_cache_miss(): void {
+		$this->provider->shouldReceive( 'cache_get' )
 			->once()
 			->andReturn( null );
 
-		$provider->shouldReceive( 'fetch_key' )
+		$this->provider->shouldReceive( 'fetch_jwks_from_remote' )
 			->once()
-			->andReturn( $key_material );
+			->andReturn( $this->valid_jwks );
 
-		if ( $should_cache ) {
-			$provider->shouldReceive( 'cache_set' )
-				->once()
-				->with( $key_material );
-		} else {
-			$provider->shouldReceive( 'cache_set' )->never();
-		}
+		$this->provider->shouldReceive( 'cache_set' )
+			->once()
+			->with( $this->valid_jwks );
 
-		$result = $provider->keys();
+		$result = $this->provider->keys();
 
-		if ( $should_cache ) {
-			$this->assertInstanceOf( Key::class, $result );
-			$this->assertSame( $key_material, $result );
-		} else {
-			$this->assertNull( $result );
-		}
-	}
-
-	public function fetchScenarioProvider(): array {
-		return array(
-			'successful fetch' => array(
-				'key_material' => new Key( 'fresh-key-string', 'RS256' ),
-				'should_cache' => true,
-			),
-			'null fetch'       => array(
-				'key_material' => null,
-				'should_cache' => false,
-			),
-		);
+		$this->assertInstanceOf( Key::class, $result );
 	}
 
 	/**
-	 * GIVEN no cached key exists initially
-	 * WHEN keys() is called multiple times
-	 * THEN should fetch once and return cached key on subsequent calls
+	 * GIVEN no cached data exists
+	 * AND remote fetch fails
+	 * WHEN keys() is called
+	 * THEN should return null without caching
 	 */
-	public function test_caches_key_after_first_fetch(): void {
-		$fetched_key = new Key( 'fresh-key-string', 'RS256' );
-
-		$provider = Mockery::mock( PayPalJwkProvider::class )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$provider->shouldReceive( 'fetch_key' )
+	public function test_returns_null_when_remote_fetch_fails(): void {
+		$this->provider->shouldReceive( 'cache_get' )
 			->once()
-			->andReturn( $fetched_key );
+			->andReturn( null );
 
-		$result1 = $provider->keys();
-		$this->assertInstanceOf( Key::class, $result1 );
-		$this->assertSame( $fetched_key, $result1 );
+		$this->provider->shouldReceive( 'fetch_jwks_from_remote' )
+			->once()
+			->andReturn( null );
 
-		$result2 = $provider->keys();
-		$this->assertInstanceOf( Key::class, $result2 );
-		$this->assertSame( $result1, $result2 );
+		$this->provider->shouldReceive( 'cache_set' )->never();
+
+		$result = $this->provider->keys();
+
+		$this->assertNull( $result );
+	}
+
+	/**
+	 * GIVEN remote returns JWKS with invalid key structure
+	 * WHEN keys() is called
+	 * THEN should return null
+	 */
+	public function test_returns_null_when_parsing_fails(): void {
+		when( 'set_transient' )->justReturn( true );
+		$invalid_jwks = array(
+			'keys' => array(
+				array( 'missing' => 'required-fields' ),
+			),
+		);
+
+		$this->provider->shouldReceive( 'cache_get' )->andReturn( null );
+		$this->provider->shouldReceive( 'fetch_jwks_from_remote' )
+			->andReturn( $invalid_jwks );
+
+		$result = $this->provider->keys();
+
+		$this->assertNull( $result );
 	}
 }
