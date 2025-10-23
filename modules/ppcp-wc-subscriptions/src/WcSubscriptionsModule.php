@@ -14,6 +14,8 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Helper\Context;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Service\PaymentMethodTokensChecker;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -141,6 +143,10 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			}
 		);
 
+		/**
+		 * Vault v2 - Hides PayPal and Credit Card gateways if customer has no saved payments.
+		 * It will be removed when Vault v3 becomes the only available vaulting method.
+		 */
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			/**
@@ -300,6 +306,29 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			},
 			10,
 			3
+		);
+
+		add_action(
+			'woocommerce_subscriptions_change_payment_after_submit',
+			function () use ( $c ) {
+				$context = $c->get( 'button.helper.context' );
+				assert( $context instanceof Context );
+
+				if ( ! is_user_logged_in() || ! $context->is_subscription_change_payment_method_page() ) {
+					return;
+				}
+
+				$payment_method_tokens_checked = $c->get( 'save-payment-methods.service.payment-method-tokens-checker' );
+				assert( $payment_method_tokens_checked instanceof PaymentMethodTokensChecker );
+				$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+
+				// Do not display PayPal button if the user already has a PayPal payment token.
+				if ( $payment_method_tokens_checked->has_paypal_payment_token( $customer_id ) ) {
+					return;
+				}
+
+				echo '<div id="ppc-button-' . esc_attr( PayPalGateway::ID ) . '-save-payment-method"></div>';
+			}
 		);
 
 		return true;
