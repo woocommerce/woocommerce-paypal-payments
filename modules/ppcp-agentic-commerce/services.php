@@ -16,12 +16,13 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 
 return array(
-	ResponseFactory::class    => static fn(): ResponseFactory => new ResponseFactory(),
-	PayPalJwkProvider::class  => static fn(): PayPalJwkProvider => new PayPalJwkProvider(),
-	JwtAuthService::class     => static fn( ContainerInterface $c ): JwtAuthService => new JwtAuthService(
-		$c->get( PayPalJwkProvider::class )
+	'agentic.response.factory'  => static fn(): ResponseFactory => new ResponseFactory(),
+	'agentic.auth.key_provider' => static fn(): PayPalJwkProvider => new PayPalJwkProvider(),
+	'agentic.auth.service'      => static fn( ContainerInterface $c ): JwtAuthService => new JwtAuthService(
+		$c->get( 'agentic.auth.key_provider' )
 	),
-	CreateCartEndpoint::class => static fn( ContainerInterface $c ): CreateCartEndpoint => new CreateCartEndpoint(
-		$c->get( JwtAuthService::class )
+
+	'agentic.rest.create_cart'  => static fn( ContainerInterface $c ): CreateCartEndpoint => new CreateCartEndpoint(
+		$c->get( 'agentic.auth.service' )
 	),
 );
