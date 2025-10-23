@@ -16,14 +16,24 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 
 return array(
-	'agentic.response.factory'  => static fn(): ResponseFactory => new ResponseFactory(),
-	'agentic.auth.key_provider' => static fn(): PayPalJwkProvider => new PayPalJwkProvider(),
-	'agentic.auth.service'      => static fn( ContainerInterface $c ): JwtAuthService => new JwtAuthService(
-		$c->get( 'agentic.auth.key_provider' )
-	),
+	'agentic.response.factory'  => static function (): ResponseFactory {
+		return new ResponseFactory();
+	},
+	'agentic.auth.key_provider' => static function (): PayPalJwkProvider {
+		return new PayPalJwkProvider();
+	},
+	'agentic.auth.service'      => static function ( ContainerInterface $c ): JwtAuthService {
+		return new JwtAuthService(
+			$c->get( 'agentic.auth.key_provider' )
+		);
+	},
 
-	'agentic.rest.create_cart'  => static fn( ContainerInterface $c ): CreateCartEndpoint => new CreateCartEndpoint(
-		$c->get( 'agentic.auth.service' ),
-		$c->get( 'agentic.response.factory' ),
-	),
+	// REST endpoints.
+
+	'agentic.rest.create_cart'  => static function ( ContainerInterface $c ): CreateCartEndpoint {
+		return new CreateCartEndpoint(
+			$c->get( 'agentic.auth.service' ),
+			$c->get( 'agentic.response.factory' ),
+		);
+	},
 );
