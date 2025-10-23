@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InvalidRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -30,8 +31,11 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	private JwtAuthService $auth_service;
 
-	public function __construct( JwtAuthService $auth_service ) {
-		$this->auth_service = $auth_service;
+	protected ResponseFactory $response_factory;
+
+	public function __construct( JwtAuthService $auth_service, ResponseFactory $response_factory ) {
+		$this->auth_service     = $auth_service;
+		$this->response_factory = $response_factory;
 	}
 
 	/**

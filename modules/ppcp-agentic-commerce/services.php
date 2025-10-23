@@ -23,6 +23,7 @@ return array(
 	),
 
 	'agentic.rest.create_cart'  => static fn( ContainerInterface $c ): CreateCartEndpoint => new CreateCartEndpoint(
-		$c->get( 'agentic.auth.service' )
+		$c->get( 'agentic.auth.service' ),
+		$c->get( 'agentic.response.factory' ),
 	),
 );
