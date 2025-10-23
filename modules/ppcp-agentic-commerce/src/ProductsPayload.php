@@ -31,6 +31,17 @@ class ProductsPayload {
 				continue;
 			}
 
+			// Handle variable products by only adding their variants
+			if ( $product->is_type( 'variable' ) ) {
+				$variants = $this->get_product_variants( $product );
+				if ( $variants ) {
+					// Only add variants, not the parent variable product
+					$api_products = array_merge( $api_products, $variants );
+				}
+				continue;
+			}
+
+			// For all other product types (simple, grouped, etc.)
 			$api_product = array(
 				'id'               => (string) $product->get_id(),
 				'title'            => $product->get_name(),
@@ -55,19 +66,6 @@ class ProductsPayload {
 			$categories = wc_get_product_category_list( $product_id );
 			if ( $categories ) {
 				$api_product['product_type'] = wp_strip_all_tags( $categories );
-			}
-
-			// Handle variable products by adding variants.
-			if ( $product->is_type( 'variable' ) ) {
-				$variants = $this->get_product_variants( $product );
-				if ( $variants ) {
-					$api_product['item_group_id'] = (string) $product->get_id();
-					// Add main product.
-					$api_products[] = $api_product;
-					// Add variants.
-					$api_products = array_merge( $api_products, $variants );
-					continue;
-				}
 			}
 
 			$api_products[] = $api_product;
