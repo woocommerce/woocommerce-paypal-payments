@@ -14,6 +14,8 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Service\ChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\ChangePaymentMethodVaultV2;
 use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\DisplaySavedPaymentTokens;
 
 return array(
@@ -65,6 +67,16 @@ return array(
 		return new DisplaySavedPaymentTokens(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wc-subscriptions.helper' )
+		);
+	},
+	'wc-subscriptions.vault-v2.change-payment-method'    => static function ( ContainerInterface $container ): ChangePaymentMethodVaultV2 {
+		return new ChangePaymentMethodVaultV2(
+			$container->get( 'button.helper.context' )
+		);
+	},
+	'wc-subscriptions.change-payment-method'             => static function ( ContainerInterface $container ): ChangePaymentMethod {
+		return new ChangePaymentMethod(
+			$container->get( 'button.helper.context' )
 		);
 	},
 );
