@@ -92,6 +92,7 @@
     "ddev:pw-tests": "ddev yarn playwright test",
     "ddev:test": "yarn run ddev:unit-tests && yarn run ddev:e2e-tests && yarn run ddev:pw-tests",
     "ddev:tdd": "sh -c 'ddev exec phpunit --stop-on-failure -v ${1:+--filter $1}' --",
+    "ddev:tdd:integration": "sh -c 'ddev exec phpunit -c tests/integration/phpunit.xml.dist --stop-on-failure -v ${1:+--filter $1}' --",
     "ddev:lint": "yarn ddev:phpcs && yarn ddev:psalm",
     "ddev:phpcs": "ddev exec phpcs --parallel=8 -s --runtime-set ignore_warnings_on_exit 1",
     "ddev:psalm": "ddev exec psalm --show-info=false --threads=8 --diff",
