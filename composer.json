@@ -11,7 +11,8 @@
         "wikimedia/composer-merge-plugin": "^2.0",
         "wp-oop/wordpress-interface": "^0.1.0-alpha1",
         "dhii/versions": "^0.1.0-alpha1",
-        "symfony/polyfill-php80": "^1.19"
+        "symfony/polyfill-php80": "^1.19",
+        "firebase/php-jwt": "^6.0"
     },
     "require-dev": {
         "inpsyde/composer-assets-compiler": "^2.5",
@@ -52,7 +53,7 @@
         "ci": [
             "vendor/bin/phpcs"
         ],
-        "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
+        "unit": "vendor/bin/phpunit"
     },
     "extra": {
         "installer-types": [

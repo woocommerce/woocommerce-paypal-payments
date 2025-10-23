@@ -29,7 +29,7 @@ export default defineConfig< BaseExtend >( {
 	reporter: process.env.CI
 		? [
 				[ 'list' ],
-				// [ 'html', { outputFolder: 'playwright-report' } ],
+				[ 'html', { outputFolder: 'playwright-report' } ],
 				[
 					'@inpsyde/playwright-utils/build/integration/jira/xray-reporter.js',
 					{

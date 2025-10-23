@@ -19,79 +19,39 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 ## Local installation
 
-1. In VSCode open the terminal and clone PCP repository to your local PC:
+1. Clone repository locally:
 
 	```bash
 	git clone https://github.com/woocommerce/woocommerce-paypal-payments.git
 	```
 
-2. Change directory to newly cloned repo:
-
-	```bash
-    cd woocommerce-paypal-payments
-    ```
-
-3. (Temporary, till autotests are not yet merged into main branch) Switch to `qa` branch:
-
-	```bash
- 	git fetch origin
-	git checkout qa
-	```
-
-4.  Change directory to `./tests/qa/`:
-
-	```bash
-	cd tests/qa
-	```
-
-## Installation of `node_modules`
+## Installation of `wp env, PlayWright and PayPal plugin`
 
 > See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#installation).
 
 1. Make sure you're logged in the [Syde npm package registry](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3112894465/GitHub+Package+Registry+for+npm).
 
-2. Make sure that `"workspaces": [ "playwright-utils" ]` node isn't present in `./tests/qa/package.json`.
-
-3. In the terminal change directory to `./tests/qa` and run following command:
+2. In the terminal change directory to `./tests/qa` and run following command:
 
 	```bash
-	npm run setup:tests
+	npm run setup:all
 	```
 
-## Installation of `playwright-utils` for local development
+This will run the next scripts:
 
-> See also [@inpsyde/playwright-utils documentation](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#development).
+- `setup:env` -- Setup `wp env` and required plugins for running tests in http://localhost:8889
+- `setup:plugin` -- Compile WooCommerce PayPal Payments plugin, generates a ZIP and moves it into resources/files to be used in tests
+- `setup:tests` -- Setup required PlayWright libraries and utils
 
-1. Add `"workspaces": [ "playwright-utils" ]` to `./tests/qa/package.json`.
+## Project configuration (Devs)
 
-2. Delete `@inpsyde/playwright-utils` from `./tests/qa/node_modules`.
+1. In the test project directory (`./tests/qa/`) create and configure `.env` file:
 
-3. In the terminal change directory to `./tests/qa` and run following command:
+2. Set general variables following [these steps](https://github.com/inpsyde/playwright-utils?tab=readme-ov-file#env-variables).
+	
+3.  Set PayPal API keys and test credentials. See `.env.example`. The `.env` content with actual test users' credentials is [stored in 1Password](https://start.1password.com/open/i?a=UL7QZZ6P6JDVBI422AOVJXMEGU&v=uthlbcp4jkori6w6rhgxvsvfoe&i=klejf7rgcip76c7auhsnhvxcbi&h=inpsyde.1password.eu).
 
-	```bash
-	git clone https://github.com/inpsyde/playwright-utils.git
-	```
-
-	[`@inpsyde/playwright-utils`](https://github.com/inpsyde/playwright-utils) repository should be cloned as `playwright-utils` right inside the root directory of monorepo.
-
-4. Restart VSCode editor. This will create `playwright-utils` instance in the source control tab of VSCode editor.
-
-5. Run following command:
-
-	```bash
-	npm run setup:utils
-	```
-
-6. `@inpsyde/playwright-utils` should reappear in node_modules. Following message (coming from `tsc-watch`) should be displayed in the terminal:
-
-	```bash
-	10:00:00 - Found 0 errors. Watching for file changes.
-	```
-
-7. If you plan to make changes in `playwright-utils` keep current terminal window opened and create another instance of terminal.
-
-
-## Project configuration
+## Project configuration (QA team)
 
 1. [SSE setup](https://inpsyde.atlassian.net/wiki/spaces/AT/pages/3175907370/Self+Service+WordPress+Environment) - will be deprecated in Q1 of 2025.
 
@@ -109,13 +69,11 @@ Detailed information about current test project can be found in [docs](./docs/RE
 
 6. Additional website and WooCommerce configuration is done automatically via `setup-woocommerce` dependency project (see [`/tests/_setup/woocommerce.setup.ts`](./tests/_setup/woocommerce.setup.ts)).
 
-## Run tests
+## Running tests
 
-To execute tests, in the terminal, navigate to the __qa__ directory of the project (e.g. `cd tests/qa`) and run following command:
-
-```bash
-npx playwright test --project=all
-```
+- `npm run tests:all` -- Runs all the tests
+- `npm run tests:critical` -- Runs all the critical tests
+- `npm run tests:onboarding` -- Runs all the onboarding tests
 
 ### Additional options to run tests from command line
 

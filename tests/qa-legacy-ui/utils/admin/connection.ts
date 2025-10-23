@@ -8,6 +8,10 @@ import urls from '../urls';
  */
 import { PcpMerchant } from '../../resources';
 import { generateRandomString } from '../helpers';
+/**
+ * External dependencies
+ */
+import { expect } from 'playwright/test';
 
 export class Connection extends PcpSettingsPage {
 	url = urls.pcp.connection;
@@ -36,13 +40,11 @@ export class Connection extends PcpSettingsPage {
 			name: 'Test payments with PayPal sandbox',
 		} );
 	toggleToManualCredentialInputButton = () =>
-		this.page.getByRole( 'button', {
-			name: 'Toggle to manual credential input',
-		} );
+		this.page.locator( 'button[id="ppcp[toggle_manual_input]"]' );
 	documentationLink = () =>
 		this.page.getByRole( 'link', { name: 'documentation', exact: true } );
 
-	sandboxCheckbox = () => this.page.getByLabel( 'Sandbox', { exact: true } );
+	sandboxCheckbox = () => this.page.locator( '#ppcp-sandbox_on' );
 
 	liveEmailAddressInput = () => this.page.getByLabel( 'Live Email address' );
 	liveMerchantIdInput = () => this.page.getByLabel( 'Live Merchant Id' );
@@ -51,12 +53,12 @@ export class Connection extends PcpSettingsPage {
 		this.page.locator( 'input[name="ppcp\\[client_secret_production\\]"]' );
 
 	sandboxEmailAddressInput = () =>
-		this.page.getByLabel( 'Sandbox Email address' );
+		this.page.locator( '#ppcp-merchant_email_sandbox' );
 	sandboxMerchantIdInput = () =>
-		this.page.getByLabel( 'Sandbox Merchant Id' );
-	sandboxClientIdInput = () => this.page.getByLabel( 'Sandbox Client Id' );
+		this.page.locator( '#ppcp-merchant_id_sandbox' );
+	sandboxClientIdInput = () => this.page.locator( '#ppcp-client_id_sandbox' );
 	sandboxSecretKeyInput = () =>
-		this.page.locator( 'input[name="ppcp\\[client_secret_sandbox\\]"]' );
+		this.page.locator( 'input[name="ppcp[client_secret_sandbox]"]' );
 
 	statusConnected = () => this.page.getByText( 'Status: Connected' );
 	disconnectAccountButton = () =>
@@ -102,43 +104,6 @@ export class Connection extends PcpSettingsPage {
 	};
 
 	/**
-	 * Checks if merchant is connected
-	 *
-	 * @param data
-	 */
-	isMerchantConnected = async ( data? ) => {
-		if ( ! ( await this.disconnectAccountButton().isVisible() ) ) {
-			return false;
-		}
-
-		const emailInput = this.sandboxEmailAddressInput();
-		const merchantIdInput = this.sandboxMerchantIdInput();
-		const clientIdInput = this.sandboxClientIdInput();
-		const secretKeyInput = this.sandboxSecretKeyInput();
-
-		const emailInputValue = ( await emailInput.inputValue() ).trim();
-		const merchantIdValue = ( await merchantIdInput.inputValue() ).trim();
-		const clientIdValue = ( await clientIdInput.inputValue() ).trim();
-		const secretKeyValue = ( await secretKeyInput.inputValue() ).trim();
-
-		if ( ! data ) {
-			return (
-				emailInputValue !== '' &&
-				merchantIdValue !== '' &&
-				clientIdValue !== '' &&
-				secretKeyValue !== ''
-			);
-		}
-
-		return (
-			emailInputValue === data.email &&
-			merchantIdValue === data.account_id &&
-			clientIdValue === data.client_id &&
-			secretKeyValue === data.client_secret
-		);
-	};
-
-	/**
 	 * Connects PayPal merchant with options
 	 *
 	 * @param merchant
@@ -150,23 +115,46 @@ export class Connection extends PcpSettingsPage {
 			enablePayUponInvoice: false,
 		}
 	) => {
+		await this.page.waitForLoadState();
 		if ( options.enablePayUponInvoice ) {
 			await this.onboardPayUponInvoiceCheckbox().check();
 		} else if ( await this.onboardPayUponInvoiceCheckbox().isVisible() ) {
 			await this.onboardPayUponInvoiceCheckbox().uncheck();
 		}
 
-		await this.toggleToManualCredentialInputButton().click();
-		await this.page.waitForTimeout( 500 );
-		await this.sandboxCheckbox().check();
-		await this.sandboxEmailAddressInput().fill( merchant.email );
-		await this.sandboxMerchantIdInput().fill( merchant.account_id );
-		await this.sandboxClientIdInput().fill( merchant.client_id );
-		await this.sandboxSecretKeyInput().fill( merchant.client_secret );
-		await this.saveChangesButton().click();
+		const toggleToManualCredentialInputButton =
+			this.toggleToManualCredentialInputButton();
+		await expect( toggleToManualCredentialInputButton ).toBeVisible();
+		await toggleToManualCredentialInputButton.click( { force: true } );
+
+		const sandboxCheckbox = this.sandboxCheckbox();
+		await expect( sandboxCheckbox ).toBeVisible();
+		await sandboxCheckbox.check( { force: true } );
+		await expect( this.sandboxCheckbox() ).toBeChecked();
+
+		const sandboxEmailAddressInput = this.sandboxEmailAddressInput();
+		await expect( sandboxEmailAddressInput ).toBeVisible();
+		await sandboxEmailAddressInput.fill( merchant.email );
+
+		const sandboxMerchantIdInput = this.sandboxMerchantIdInput();
+		await expect( sandboxMerchantIdInput ).toBeVisible();
+		await sandboxMerchantIdInput.fill( merchant.account_id );
+
+		const sandboxClientIdInput = this.sandboxClientIdInput();
+		await expect( sandboxClientIdInput ).toBeVisible();
+		await sandboxClientIdInput.fill( merchant.client_id );
+
+		const sandboxSecretKeyInput = this.sandboxSecretKeyInput();
+		await expect( sandboxSecretKeyInput ).toBeVisible();
+		await sandboxSecretKeyInput.fill( merchant.client_secret );
+
+		const saveChangesButton = this.saveChangesButton();
+		await expect( saveChangesButton ).toBeVisible();
+		await saveChangesButton.click();
 		await this.page.waitForLoadState();
 		// make sure Connection page has been loaded:
-		await this.disconnectAccountButton().waitFor( { state: 'visible' } );
+
+		await expect( this.disconnectAccountButton() ).toBeVisible();
 		await this.updateInvoicePrefix();
 	};
 
@@ -175,32 +163,6 @@ export class Connection extends PcpSettingsPage {
 	) => {
 		await this.invoicePrefixInput().fill( `${ prefix }-` );
 		await this.saveChanges();
-	};
-
-	/**
-	 * Disconnects PayPal merchant
-	 */
-	disconnectMerchant = async () => {
-		const disconnectButton = this.disconnectAccountButton();
-
-		if ( await disconnectButton.isVisible() ) {
-			await disconnectButton.click();
-		}
-		await this.page.waitForLoadState();
-		// make sure Account Setup page has been loaded:
-		await this.toggleToManualCredentialInputButton().waitFor( {
-			state: 'visible',
-		} );
-	};
-
-	clearDB = async () => {
-		this.page.on( 'dialog', ( dialog ) => dialog.accept() );
-		await this.clearNowButton().click();
-		await this.page.waitForLoadState();
-		// make sure Account Setup page has been loaded:
-		await this.toggleToManualCredentialInputButton().waitFor( {
-			state: 'visible',
-		} );
 	};
 
 	// Assertions

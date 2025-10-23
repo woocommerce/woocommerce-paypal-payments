@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "description": "Monorepo for Playwright tests",
   "main": "index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/inpsyde/playwright-tests.git"
-  },
+  "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "author": {
     "name": "Inpsyde GmbH",
     "email": "hello@inpsyde.com",

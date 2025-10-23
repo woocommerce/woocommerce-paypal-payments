@@ -78,8 +78,9 @@ for ( const testData of savePaymentMethodData ) {
 					payment
 				);
 
-				await utils.fillVisitorsCart( [ products.simple10 ] );
+				await utils.fillVisitorsCart( [ products.simple100 ] );
 				await classicCheckout.visit();
+				await classicCheckout.payPalUi.expandPaymentGateway( payment );
 				await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 					payment
 				);
@@ -143,8 +144,9 @@ for ( const testData of deletePaymentMethodData ) {
 					payment
 				);
 
-				await utils.fillVisitorsCart( [ products.simple10 ] );
+				await utils.fillVisitorsCart( [ products.simple100 ] );
 				await classicCheckout.visit();
+				await classicCheckout.payPalUi.expandPaymentGateway( payment );
 				await classicCheckout.payPalUi.assertVaultedPaymentMethodIsNotDisplayed(
 					payment
 				);
@@ -161,7 +163,7 @@ test.describe( () => {
 	} );
 
 	test(
-		'PCP-0000 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
+		'PCP-5380 | Vaulting - My Account - Payment Methods - PayPal - Unable to save additional account',
 		annotateVisitor( customer ),
 		async ( { customerPaymentMethods } ) => {
 			// Preconditions
@@ -190,7 +192,8 @@ test.describe( () => {
 	} );
 
 	test(
-		'PCP-0000 | Vaulting - My Account - Payment Methods - ACDC - Save additional card',
+		// Fail:
+		'PCP-5381 | Vaulting - My Account - Payment Methods - ACDC - Save additional card',
 		annotateVisitor( customer ),
 		async ( { utils, customerPaymentMethods, classicCheckout } ) => {
 			// Preconditions
@@ -207,8 +210,9 @@ test.describe( () => {
 			await customerPaymentMethods.assertIsSavedPaymentMethod( acdc );
 			await customerPaymentMethods.assertIsSavedPaymentMethod( acdc2 );
 
-			await utils.fillVisitorsCart( [ products.simple10 ] );
+			await utils.fillVisitorsCart( [ products.simple100 ] );
 			await classicCheckout.visit();
+			await classicCheckout.payPalUi.expandPaymentGateway( acdc );
 			await classicCheckout.payPalUi.assertVaultedPaymentMethodIsDisplayed(
 				acdc
 			);

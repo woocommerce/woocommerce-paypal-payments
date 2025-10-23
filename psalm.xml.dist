@@ -31,6 +31,7 @@
 		<ignoreFiles allowMissingFiles="true">
 			<directory name="node_modules"/>
 			<directory name="modules/*/node_modules"/>
+			<directory name="tests"/>
 		</ignoreFiles>
     </projectFiles>
 

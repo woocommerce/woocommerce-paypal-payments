@@ -1,0 +1,14 @@
+{
+    "phpVersion": "8.0",
+    "plugins": [
+        "https://downloads.wordpress.org/plugin/wp-debugging.2.12.2.zip",
+        "./resources/e2e-snippets"
+    ],
+    "mappings": {
+        "wp-cli.yml": "./wp-cli.yml"
+    },
+    "lifecycleScripts": {
+        "afterStart": "node bin/test-env-setup.js",
+        "afterClean": "node bin/test-env-clean.js"
+    }
+}

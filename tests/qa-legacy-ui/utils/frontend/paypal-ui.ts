@@ -412,13 +412,15 @@ export class PayPalUI {
 		let popup: PayPalPopup;
 		switch ( data.payment.method ) {
 			case 'PayPal':
-				if( await this.payPalGateway().isVisible() ) {
+				if ( await this.payPalGateway().isVisible() ) {
 					await this.payPalGateway().click();
 				}
 				// pay with vaulted account
 				if ( data.payment.isVaulted ) {
 					await expect( this.payPalButton() ).toBeVisible();
-					await this.assertVaultedPaymentMethodIsDisplayed( data.payment );
+					await this.assertVaultedPaymentMethodIsDisplayed(
+						data.payment
+					);
 					await this.payPalButton().click();
 					break;
 				}
@@ -436,7 +438,7 @@ export class PayPalUI {
 				break;
 
 			case 'PayLater':
-				if( await this.payPalGateway().isVisible() ) {
+				if ( await this.payPalGateway().isVisible() ) {
 					await this.payPalGateway().click();
 				}
 				popup = await this.openPayLaterPopup();
@@ -719,46 +721,47 @@ export class PayPalUI {
 		await this.debitOrCreditCardPayNowButton().click();
 		await this.page.waitForTimeout( 2500 );
 
-		const firstName = this.debitOrCreditCardFirstNameInput();
-		if ( await firstName.isVisible() ) {
-			await firstName.fill( customer.first_name );
-		}
-		const lastName = this.debitOrCreditCardLastNameInput();
-		if ( await lastName.isVisible() ) {
-			await lastName.fill( customer.last_name );
-		}
-		const street = this.debitOrCreditCardStreetInput();
-		if ( await street.isVisible() ) {
-			await street.fill( customer.billing.address_1 );
-		}
-		const apartment = this.debitOrCreditCardApartmentInput();
-		if ( await apartment.isVisible() ) {
-			await apartment.fill( customer.billing.address_2 );
-		}
-		const city = this.debitOrCreditCardCityInput();
-		if ( await city.isVisible() ) {
-			await city.fill( customer.billing.city );
-		}
-		const state = this.debitOrCreditCardStateInput();
-		if ( await state.isVisible() ) {
-			await state.fill( customer.billing.state );
-		}
-		const postcode = this.debitOrCreditCardZipCodeInput();
-		if ( await postcode.isVisible() ) {
-			await postcode.fill( customer.billing.postcode );
-		}
-		const phone = this.debitOrCreditCardPhoneInput();
-		if ( await phone.isVisible() ) {
-			await phone.fill( customer.billing.phone );
-		}
-		const email = this.debitOrCreditCardEmailInput();
-		if ( await email.isVisible() ) {
-			await email.fill( customer.billing.email );
-		}
-		const payNow = this.debitOrCreditCardPayNowButton();
-		if ( await payNow.isVisible() ) {
-			await payNow.click();
-		}
+		// Commented by MUtkin on 30-09-2025 due to changed UI behavior by PayPal
+		// const firstName = this.debitOrCreditCardFirstNameInput();
+		// if ( await firstName.isVisible() ) {
+		// 	await firstName.fill( customer.first_name );
+		// }
+		// const lastName = this.debitOrCreditCardLastNameInput();
+		// if ( await lastName.isVisible() ) {
+		// 	await lastName.fill( customer.last_name );
+		// }
+		// const street = this.debitOrCreditCardStreetInput();
+		// if ( await street.isVisible() ) {
+		// 	await street.fill( customer.billing.address_1 );
+		// }
+		// const apartment = this.debitOrCreditCardApartmentInput();
+		// if ( await apartment.isVisible() ) {
+		// 	await apartment.fill( customer.billing.address_2 );
+		// }
+		// const city = this.debitOrCreditCardCityInput();
+		// if ( await city.isVisible() ) {
+		// 	await city.fill( customer.billing.city );
+		// }
+		// const state = this.debitOrCreditCardStateInput();
+		// if ( await state.isVisible() ) {
+		// 	await state.fill( customer.billing.state );
+		// }
+		// const postcode = this.debitOrCreditCardZipCodeInput();
+		// if ( await postcode.isVisible() ) {
+		// 	await postcode.fill( customer.billing.postcode );
+		// }
+		// const phone = this.debitOrCreditCardPhoneInput();
+		// if ( await phone.isVisible() ) {
+		// 	await phone.fill( customer.billing.phone );
+		// }
+		// const email = this.debitOrCreditCardEmailInput();
+		// if ( await email.isVisible() ) {
+		// 	await email.fill( customer.billing.email );
+		// }
+		// const payNow = this.debitOrCreditCardPayNowButton();
+		// if ( await payNow.isVisible() ) {
+		// 	await payNow.click();
+		// }
 	};
 
 	/**
