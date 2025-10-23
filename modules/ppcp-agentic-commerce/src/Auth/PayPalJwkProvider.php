@@ -20,7 +20,7 @@ class PayPalJwkProvider {
 			return $keys;
 		}
 
-		$keys = $this->fetch_key_material();
+		$keys = $this->fetch_key();
 		if ( ! $keys ) {
 			return null;
 		}
@@ -38,7 +38,7 @@ class PayPalJwkProvider {
 		$this->cache = $value;
 	}
 
-	protected function fetch_key_material(): ?Key {
+	protected function fetch_key(): ?Key {
 		$remove_user_agent =
 			/**
 			 * @param mixed|array  $args

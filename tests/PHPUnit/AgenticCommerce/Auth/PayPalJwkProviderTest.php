@@ -32,7 +32,7 @@ class PayPalJwkProviderTest extends TestCase {
 			->once()
 			->andReturn( $cached_key );
 
-		$provider->shouldReceive( 'fetch_key_material' )->never();
+		$provider->shouldReceive( 'fetch_key' )->never();
 
 		$provider->shouldReceive( 'cache_set' )->never();
 
@@ -61,7 +61,7 @@ class PayPalJwkProviderTest extends TestCase {
 			->once()
 			->andReturn( null );
 
-		$provider->shouldReceive( 'fetch_key_material' )
+		$provider->shouldReceive( 'fetch_key' )
 			->once()
 			->andReturn( $key_material );
 
@@ -108,7 +108,7 @@ class PayPalJwkProviderTest extends TestCase {
 			->makePartial()
 			->shouldAllowMockingProtectedMethods();
 
-		$provider->shouldReceive( 'fetch_key_material' )
+		$provider->shouldReceive( 'fetch_key' )
 			->once()
 			->andReturn( $fetched_key );
 
