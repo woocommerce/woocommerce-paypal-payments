@@ -50,9 +50,8 @@ class PayPalJwkProviderTest extends TestCase {
 	 * @dataProvider fetchScenarioProvider
 	 */
 	public function test_handles_fetch_scenarios(
-		string $key_material,
-		bool $should_cache,
-		?string $expected_algorithm
+		?Key $key_material,
+		bool $should_cache
 	): void {
 		$provider = Mockery::mock( PayPalJwkProvider::class )
 			->makePartial()
@@ -69,11 +68,7 @@ class PayPalJwkProviderTest extends TestCase {
 		if ( $should_cache ) {
 			$provider->shouldReceive( 'cache_set' )
 				->once()
-				->withArgs(
-					fn( $key ) => $key instanceof Key
-						&& $key->getKeyMaterial() === $key_material
-						&& $key->getAlgorithm() === $expected_algorithm
-				);
+				->with( $key_material );
 		} else {
 			$provider->shouldReceive( 'cache_set' )->never();
 		}
@@ -82,8 +77,7 @@ class PayPalJwkProviderTest extends TestCase {
 
 		if ( $should_cache ) {
 			$this->assertInstanceOf( Key::class, $result );
-			$this->assertSame( $key_material, $result->getKeyMaterial() );
-			$this->assertSame( $expected_algorithm, $result->getAlgorithm() );
+			$this->assertSame( $key_material, $result );
 		} else {
 			$this->assertNull( $result );
 		}
@@ -91,15 +85,13 @@ class PayPalJwkProviderTest extends TestCase {
 
 	public function fetchScenarioProvider(): array {
 		return array(
-			'successful fetch'   => array(
-				'key_material'       => 'fresh-key-string',
-				'should_cache'       => true,
-				'expected_algorithm' => 'RS256',
+			'successful fetch' => array(
+				'key_material' => new Key( 'fresh-key-string', 'RS256' ),
+				'should_cache' => true,
 			),
-			'empty string fetch' => array(
-				'key_material'       => '',
-				'should_cache'       => false,
-				'expected_algorithm' => null,
+			'null fetch'       => array(
+				'key_material' => null,
+				'should_cache' => false,
 			),
 		);
 	}
@@ -110,7 +102,7 @@ class PayPalJwkProviderTest extends TestCase {
 	 * THEN should fetch once and return cached key on subsequent calls
 	 */
 	public function test_caches_key_after_first_fetch(): void {
-		$key_string = 'fresh-key-string';
+		$fetched_key = new Key( 'fresh-key-string', 'RS256' );
 
 		$provider = Mockery::mock( PayPalJwkProvider::class )
 			->makePartial()
@@ -118,11 +110,11 @@ class PayPalJwkProviderTest extends TestCase {
 
 		$provider->shouldReceive( 'fetch_key_material' )
 			->once()
-			->andReturn( $key_string );
+			->andReturn( $fetched_key );
 
 		$result1 = $provider->keys();
 		$this->assertInstanceOf( Key::class, $result1 );
-		$this->assertSame( $key_string, $result1->getKeyMaterial() );
+		$this->assertSame( $fetched_key, $result1 );
 
 		$result2 = $provider->keys();
 		$this->assertInstanceOf( Key::class, $result2 );
