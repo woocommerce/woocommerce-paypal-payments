@@ -39,13 +39,19 @@ class PayPalJwkProvider {
 	}
 
 	protected function fetch_key_material(): ?Key {
-		$remove_user_agent = static function ( $args, $url ): array {
-			if ( $url === self::JWKS_URL ) {
-				$args['user-agent'] = '';
-			}
+		$remove_user_agent =
+			/**
+			 * @param mixed|array  $args
+			 * @param mixed|string $url
+			 * @return mixed|array
+			 */
+			static function ( $args, $url ) {
+				if ( is_array( $args ) && $url === self::JWKS_URL ) {
+					$args['user-agent'] = '';
+				}
 
-			return $args;
-		};
+				return $args;
+			};
 
 		add_filter( 'http_request_args', $remove_user_agent, 10, 2 );
 		$response = wp_remote_get( self::JWKS_URL );
@@ -59,7 +65,7 @@ class PayPalJwkProvider {
 			$body = wp_remote_retrieve_body( $response );
 			$data = json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
 
-			if ( ! $data || empty( $data['keys'] ) ) {
+			if ( ! is_array( $data ) || empty( $data['keys'] ) ) {
 				return null;
 			}
 
