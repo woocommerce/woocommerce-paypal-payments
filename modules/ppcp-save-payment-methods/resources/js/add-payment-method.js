@@ -12,7 +12,7 @@ import {
 	setVisibleByClass,
 } from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 
-( function ( { ppcp_add_payment_method } ) {
+( function ( { addPaymentMethodConfig } ) {
 	/**
 	 * Handles payment method change by updating visibility of buttons.
 	 */
@@ -21,7 +21,7 @@ import {
 		const paypalButtonSelector = `#ppc-button-${ PaymentMethods.PAYPAL }-save-payment-method`;
 		const paypalButton = document.querySelector( paypalButtonSelector );
 		const isSubscriptionChangePage =
-			ppcp_add_payment_method.is_subscription_change_payment_page;
+			addPaymentMethodConfig.is_subscription_change_payment_page;
 
 		if ( paypalButton ) {
 			setVisibleByClass(
@@ -39,7 +39,6 @@ import {
 			setVisibleByClass( ORDER_BUTTON_SELECTOR, true, 'ppcp-hidden' );
 		} else {
 			// On add payment method page: use standard logic even if PayPal button doesn't exist
-			console.log( 'Add payment method page: Using standard logic' );
 			setVisibleByClass(
 				ORDER_BUTTON_SELECTOR,
 				currentMethod !== PaymentMethods.PAYPAL,
@@ -60,7 +59,6 @@ import {
 				( target.type === 'radio' &&
 					target.closest( '.payment_methods' ) )
 			) {
-				console.log( 'Payment method clicked' );
 				handlePaymentMethodChange();
 			}
 		} );
@@ -72,7 +70,6 @@ import {
 				target.matches( '.payment_methods input.input-radio' ) ||
 				( target.type === 'radio' && target.name === 'payment_method' )
 			) {
-				console.log( 'Payment method changed via change event' );
 				handlePaymentMethodChange();
 			}
 		} );
@@ -88,7 +85,7 @@ import {
 	 * Main initialization function for PayPal and card fields.
 	 */
 	async function initializeScript() {
-		if ( ppcp_add_payment_method.is_subscription_change_payment_page ) {
+		if ( addPaymentMethodConfig.is_subscription_change_payment_page ) {
 			const saveToAccount = document.querySelector(
 				'#wc-ppcp-credit-card-gateway-new-payment-method'
 			);
@@ -99,7 +96,7 @@ import {
 		}
 
 		const errorHandler = new ErrorHandler(
-			ppcp_add_payment_method.labels.error.generic,
+			addPaymentMethodConfig.labels.error.generic,
 			document.querySelector( '.woocommerce-notices-wrapper' )
 		);
 		errorHandler.clear();
@@ -107,15 +104,15 @@ import {
 		try {
 			const config = {
 				url_params: {
-					'client-id': ppcp_add_payment_method.client_id,
-					'merchant-id': ppcp_add_payment_method.merchant_id,
+					'client-id': addPaymentMethodConfig.client_id,
+					'merchant-id': addPaymentMethodConfig.merchant_id,
 					components: 'buttons,card-fields',
 				},
 				save_payment_methods: {
-					id_token: ppcp_add_payment_method.id_token,
+					id_token: addPaymentMethodConfig.id_token,
 				},
 				user: {
-					is_logged: ppcp_add_payment_method.user?.is_logged ?? false,
+					is_logged: addPaymentMethodConfig.user?.is_logged ?? false,
 				},
 			};
 
@@ -129,10 +126,10 @@ import {
 			);
 
 			if ( paypalButtonContainer ) {
-				paypal
+				await paypal
 					.Buttons(
 						buttonConfiguration(
-							ppcp_add_payment_method,
+							addPaymentMethodConfig,
 							errorHandler
 						)
 					)
@@ -142,7 +139,7 @@ import {
 			}
 
 			const cardFields = paypal.CardFields(
-				cardFieldsConfiguration( ppcp_add_payment_method, errorHandler )
+				cardFieldsConfiguration( addPaymentMethodConfig, errorHandler )
 			);
 
 			if ( cardFields.isEligible() ) {
@@ -165,7 +162,7 @@ import {
 				cardFields.submit().catch( ( error ) => {
 					console.error( error );
 					errorHandler.message(
-						ppcp_add_payment_method.error_message
+						addPaymentMethodConfig.error_message
 					);
 					placeOrderButton.disabled = false;
 				} );
@@ -173,7 +170,7 @@ import {
 		} catch ( error ) {
 			console.error( 'Failed to load PayPal script:', error );
 			errorHandler.message(
-				ppcp_add_payment_method.labels.error.generic ||
+				addPaymentMethodConfig.labels.error.generic ||
 					'Failed to load PayPal. Please refresh the page.'
 			);
 		}
@@ -197,5 +194,5 @@ import {
 
 	initializeWhenReady();
 } )( {
-	ppcp_add_payment_method: window.ppcp_add_payment_method,
+	addPaymentMethodConfig: window.ppcp_add_payment_method,
 } );
