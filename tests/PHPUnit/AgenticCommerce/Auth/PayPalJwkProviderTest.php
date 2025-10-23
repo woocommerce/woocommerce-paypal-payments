@@ -10,11 +10,19 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 use WooCommerce\PayPalCommerce\TestCase;
 use Firebase\JWT\Key;
 use Mockery;
+use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider
  */
 class PayPalJwkProviderTest extends TestCase {
+
+	public function setUp(): void {
+		parent::setUp();
+
+		when( 'get_transient' )->justReturn( false );
+		when( 'set_transient' )->justReturn( false );
+	}
 
 	/**
 	 * GIVEN cached key is available
