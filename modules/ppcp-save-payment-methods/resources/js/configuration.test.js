@@ -16,7 +16,7 @@ import {
 	buttonConfiguration,
 	cardFieldsConfiguration,
 	addPaymentMethodConfiguration,
-} from './Configuration';
+} from './configuration';
 import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 
 describe( 'Configuration', () => {
