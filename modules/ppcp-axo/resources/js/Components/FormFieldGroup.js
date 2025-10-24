@@ -15,6 +15,10 @@ class FormFieldGroup {
 		this.#stored = new Map();
 	}
 
+	isActive() {
+		return this.#active;
+	}
+
 	setData( data ) {
 		this.#data = data;
 		this.refresh();
