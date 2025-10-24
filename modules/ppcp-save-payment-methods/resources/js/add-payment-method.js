@@ -5,7 +5,7 @@ import {
 } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
-import { buttonConfiguration, cardFieldsConfiguration } from './Configuration';
+import { buttonConfiguration, cardFieldsConfiguration } from './configuration';
 import { renderFields } from '../../../ppcp-card-fields/resources/js/Render';
 import {
 	setVisible,
@@ -59,8 +59,7 @@ export function setupPaymentMethodListeners( addPaymentMethodConfig ) {
 
 		if (
 			target.matches( '.payment_methods input.input-radio' ) ||
-			( target.type === 'radio' &&
-				target.closest( '.payment_methods' ) )
+			( target.type === 'radio' && target.closest( '.payment_methods' ) )
 		) {
 			handlePaymentMethodChange( addPaymentMethodConfig );
 		}
@@ -133,10 +132,7 @@ export async function initializeScript( addPaymentMethodConfig ) {
 		if ( paypalButtonContainer ) {
 			await paypal
 				.Buttons(
-					buttonConfiguration(
-						addPaymentMethodConfig,
-						errorHandler
-					)
+					buttonConfiguration( addPaymentMethodConfig, errorHandler )
 				)
 				.render(
 					`#ppc-button-${ PaymentMethods.PAYPAL }-save-payment-method`
@@ -166,9 +162,7 @@ export async function initializeScript( addPaymentMethodConfig ) {
 			event.preventDefault();
 			cardFields.submit().catch( ( error ) => {
 				console.error( error );
-				errorHandler.message(
-					addPaymentMethodConfig.error_message
-				);
+				errorHandler.message( addPaymentMethodConfig.error_message );
 				placeOrderButton.disabled = false;
 			} );
 		} );
