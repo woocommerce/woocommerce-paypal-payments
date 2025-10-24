@@ -27,8 +27,8 @@ class ChangePaymentMethodVaultV2 {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
-		if ( $saved_paypal_payment ) {
-			$payment_token = WC_Payment_Tokens::get( $saved_paypal_payment );
+		if ( $saved_paypal_payment && is_numeric($saved_paypal_payment) ) {
+			$payment_token = WC_Payment_Tokens::get( (int) $saved_paypal_payment );
 			if ( $payment_token ) {
 				$wc_order->add_payment_token( $payment_token );
 				$wc_order->save();
