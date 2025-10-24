@@ -412,13 +412,15 @@ export class PayPalUI {
 		let popup: PayPalPopup;
 		switch ( data.payment.method ) {
 			case 'PayPal':
-				if( await this.payPalGateway().isVisible() ) {
+				if ( await this.payPalGateway().isVisible() ) {
 					await this.payPalGateway().click();
 				}
 				// pay with vaulted account
 				if ( data.payment.isVaulted ) {
 					await expect( this.payPalButton() ).toBeVisible();
-					await this.assertVaultedPaymentMethodIsDisplayed( data.payment );
+					await this.assertVaultedPaymentMethodIsDisplayed(
+						data.payment
+					);
 					await this.payPalButton().click();
 					break;
 				}
@@ -436,7 +438,7 @@ export class PayPalUI {
 				break;
 
 			case 'PayLater':
-				if( await this.payPalGateway().isVisible() ) {
+				if ( await this.payPalGateway().isVisible() ) {
 					await this.payPalGateway().click();
 				}
 				popup = await this.openPayLaterPopup();

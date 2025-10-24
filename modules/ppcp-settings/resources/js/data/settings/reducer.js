@@ -40,6 +40,7 @@ const defaultPersistent = Object.freeze( {
 	authorizeOnly: false, // Whether to only authorize payments initially
 	captureVirtualOrders: false, // Auto-capture virtual-only orders
 	savePaypalAndVenmo: false, // Enable PayPal & Venmo vaulting
+	instantPaymentsOnly: false, // Enable the instant payments only
 	enableContactModule: false, // Enable the "Custom Shipping Contact" feature
 	saveCardDetails: false, // Enable card vaulting
 	enablePayNow: false, // Enable Pay Now experience

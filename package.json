@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "3.1.2",
+  "version": "3.2.1",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -83,6 +83,7 @@
     "test:unit-js": "wp-scripts test-unit-js --config ./tests/js/jest.config.json",
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
+    "ddev:unit-tests:coverage": "ddev xdebug on && ddev exec XDEBUG_MODE=coverage phpunit --coverage-html coverage/",
     "ddev:e2e-tests": "(cp -n .env.e2e.example .env.e2e || true) && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
     "ddev:pw-install": "ddev yarn playwright install --with-deps",
     "ddev:pw-tests": "ddev yarn playwright test",

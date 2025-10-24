@@ -105,7 +105,7 @@ class MessagesBootstrap {
 					setVisible( renderer.config.wrapper, shouldShow );
 					renderer.renderWithAmount( this.lastAmount );
 				} )
-				.catch( ( err ) => console.error( err ) );
+				.catch( () => {} ); // Element not found, this is expected for certain contexts.
 		} );
 	}
 }
