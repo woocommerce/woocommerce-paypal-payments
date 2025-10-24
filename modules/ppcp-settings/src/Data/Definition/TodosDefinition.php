@@ -246,7 +246,7 @@ class TodosDefinition {
 			),
 			'enable_pwc'                           => array(
 				'title'       => __( 'Enable Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Allow your customers to pay with crypto. You\'ll receive USD payments in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['enable_pwc'],
 				'action'      => array(
 					'type'      => 'tab',
@@ -258,7 +258,7 @@ class TodosDefinition {
 			),
 			'apply_for_pwc'                        => array(
 				'title'       => __( 'Start your Pay with Crypto application', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Allow your customers to pay with crypto. You\'ll receive USD payments in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['apply_for_pwc'],
 				'action'      => array(
 					'type' => 'external',
