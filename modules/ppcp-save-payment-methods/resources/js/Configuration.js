@@ -269,21 +269,21 @@ function handleError( error, errorHandler, errorMessage ) {
 /**
  * Configuration for PayPal button payment method addition
  *
- * @param {Object} ppcp_add_payment_method - Configuration from server
- * @param {Object} errorHandler            - Error handler object
+ * @param {Object} addPaymentMethodConfig - Configuration from server
+ * @param {Object} errorHandler           - Error handler object
  * @return {Object} Button configuration object
  */
-export function buttonConfiguration( ppcp_add_payment_method, errorHandler ) {
+export function buttonConfiguration( addPaymentMethodConfig, errorHandler ) {
 	return {
 		createVaultSetupToken: async () => {
 			return await createVaultSetupToken(
-				ppcp_add_payment_method,
+				addPaymentMethodConfig,
 				errorHandler
 			);
 		},
 		onApprove: async ( { vaultSetupToken } ) => {
 			return await handleApproval(
-				ppcp_add_payment_method,
+				addPaymentMethodConfig,
 				errorHandler,
 				vaultSetupToken
 			);
@@ -292,7 +292,7 @@ export function buttonConfiguration( ppcp_add_payment_method, errorHandler ) {
 			handleError(
 				error,
 				errorHandler,
-				ppcp_add_payment_method.error_message
+				addPaymentMethodConfig.error_message
 			);
 		},
 	};
@@ -301,33 +301,33 @@ export function buttonConfiguration( ppcp_add_payment_method, errorHandler ) {
 /**
  * Configuration for card fields payment method addition
  *
- * @param {Object} ppcp_add_payment_method - Configuration from server
- * @param {Object} errorHandler            - Error handler object
+ * @param {Object} addPaymentMethodConfig - Configuration from server
+ * @param {Object} errorHandler           - Error handler object
  * @return {Object} Card fields configuration object
  */
 export function cardFieldsConfiguration(
-	ppcp_add_payment_method,
+	addPaymentMethodConfig,
 	errorHandler
 ) {
 	return {
 		createVaultSetupToken: async () => {
 			return await createVaultSetupToken(
-				ppcp_add_payment_method,
+				addPaymentMethodConfig,
 				errorHandler,
 				{
 					paymentMethod: PaymentMethods.CARDS,
 					verificationMethod:
-						ppcp_add_payment_method.verification_method,
+						addPaymentMethodConfig.verification_method,
 				}
 			);
 		},
 		onApprove: async ( { vaultSetupToken } ) => {
 			const isFreeTrialCart =
-				ppcp_add_payment_method?.is_free_trial_cart ?? false;
-			const context = ppcp_add_payment_method?.context ?? null;
+				addPaymentMethodConfig?.is_free_trial_cart ?? false;
+			const context = addPaymentMethodConfig?.context ?? null;
 
 			return await handleApproval(
-				ppcp_add_payment_method,
+				addPaymentMethodConfig,
 				errorHandler,
 				vaultSetupToken,
 				{
@@ -341,7 +341,7 @@ export function cardFieldsConfiguration(
 			handleError(
 				error,
 				errorHandler,
-				ppcp_add_payment_method.error_message
+				addPaymentMethodConfig.error_message
 			);
 		},
 	};
@@ -350,16 +350,16 @@ export function cardFieldsConfiguration(
 /**
  * Configuration for guest checkout payment method addition
  *
- * @param {Object} ppcp_add_payment_method - Configuration from server
+ * @param {Object} addPaymentMethodConfig - Configuration from server
  * @return {Object} Guest payment method configuration object
  */
-export function addPaymentMethodConfiguration( ppcp_add_payment_method ) {
+export function addPaymentMethodConfiguration( addPaymentMethodConfig ) {
 	return {
 		createVaultSetupToken: async () => {
 			try {
 				const result = await makeApiRequest(
-					ppcp_add_payment_method.ajax.create_setup_token.endpoint,
-					ppcp_add_payment_method.ajax.create_setup_token.nonce,
+					addPaymentMethodConfig.ajax.create_setup_token.endpoint,
+					addPaymentMethodConfig.ajax.create_setup_token.nonce,
 					{
 						payment_method: getCurrentPaymentMethod(),
 					}
@@ -377,7 +377,7 @@ export function addPaymentMethodConfiguration( ppcp_add_payment_method ) {
 		},
 		onApprove: async ( { vaultSetupToken } ) => {
 			return await handleGuestApproval(
-				ppcp_add_payment_method,
+				addPaymentMethodConfig,
 				vaultSetupToken
 			);
 		},
