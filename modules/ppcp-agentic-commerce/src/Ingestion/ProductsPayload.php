@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 class ProductsPayload {
 	/**
@@ -31,17 +31,17 @@ class ProductsPayload {
 				continue;
 			}
 
-			// Handle variable products by only adding their variants
+			// Handle variable products by only adding their variants.
 			if ( $product->is_type( 'variable' ) ) {
 				$variants = $this->get_product_variants( $product );
 				if ( $variants ) {
-					// Only add variants, not the parent variable product
+					// Only add variants, not the parent variable product.
 					$api_products = array_merge( $api_products, $variants );
 				}
 				continue;
 			}
 
-			// For all other product types (simple, grouped, etc.)
+			// For all other product types (simple, grouped, etc.).
 			$api_product = array(
 				'id'               => (string) $product->get_id(),
 				'title'            => $product->get_name(),
@@ -53,7 +53,7 @@ class ProductsPayload {
 				'merchantStoreUrl' => home_url(),
 			);
 
-			// Add optional fields
+			// Add optional fields.
 			if ( $product->get_sku() ) {
 				$api_product['mpn'] = $product->get_sku();
 			}
@@ -128,7 +128,7 @@ class ProductsPayload {
 			return '';
 		}
 
-		return number_format( (float) $price, 2, '.', '' ) . ' ' . get_woocommerce_currency();
+		return number_format( (float) $price, 2, '.', '' ) . ' ProductsPayload.php' . get_woocommerce_currency();
 	}
 
 	private function map_stock_status( $stock_status ): string {

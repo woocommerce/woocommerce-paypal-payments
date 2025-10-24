@@ -50,22 +50,22 @@ return array(
 		return 5;
 	},
 	'agentic.ingestion-api-endpoint'           => static function ( ContainerInterface $container ) {
-		return 'https://d.joinhoney.com/webhooks/products';
+		return 'https://d-staging.joinhoney.com/webhooks/products';
 	},
 	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ) {
-		return new SyncJobFactory(
+		return new Ingestion\SyncJobFactory(
 			$container->get( 'agentic.ingestion-api-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $container ) {
-		return new IngestionBatchProvider(
+	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $container ): Ingestion\IngestionBatchProvider {
+		return new Ingestion\IngestionBatchProvider(
 			$container->get( 'agentic.ingestion-stale-timeout-days' ),
 			$container->get( 'agentic.ingestion-eligible-product-types' )
 		);
 	},
-	'agentic.ingestion-manager'                => static function ( ContainerInterface $container ) {
-		return new IngestionManager(
+	'agentic.ingestion-manager'                => static function ( ContainerInterface $container ): Ingestion\IngestionManager {
+		return new Ingestion\IngestionManager(
 			$container->get( 'agentic.ingestion-batch-provider' ),
 			$container->get( 'agentic.sync-job-factory' )
 		);

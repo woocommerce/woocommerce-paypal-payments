@@ -5,10 +5,11 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -57,12 +58,12 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'init',
-			function () use ( $container ) {
+			static function () use ( $container ) {
 				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
 
-//				do_action('ppcp_agentic_sync_batch');
+				// Test via: do_action('ppcp_agentic_sync_batch').
 			}
 		);
 
