@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -43,8 +43,8 @@ class SyncJob {
 	/**
 	 * Constructor.
 	 *
-	 * @param string $api_endpoint The API endpoint URL for product synchronization.
-	 * @param array  $product_ids  The product IDs to be synced.
+	 * @param string          $api_endpoint The API endpoint URL for product synchronization.
+	 * @param array           $product_ids  The product IDs to be synced.
 	 * @param LoggerInterface $logger The logger instance for logging sync operations.
 	 */
 	public function __construct(
@@ -194,7 +194,7 @@ class SyncJob {
 				count( $product_ids )
 			),
 			array(
-				'product_ids'   => $product_ids,
+				'product_ids' => $product_ids,
 			)
 		);
 	}

@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use Psr\Log\LoggerInterface;
 
