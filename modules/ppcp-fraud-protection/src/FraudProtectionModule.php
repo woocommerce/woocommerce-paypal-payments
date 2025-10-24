@@ -23,6 +23,44 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): bool {
+		$this->init_settings( $container );
+
 		return true;
+	}
+
+	protected function init_settings( ContainerInterface $container ): void {
+		add_filter(
+			'woocommerce_get_sections_advanced',
+			/**
+			 * @param $sections array
+			 * @returns array
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			function ( $sections ) use ( $container ) {
+				$sections[ $container->get( 'fraud-protection.settings.section.id' ) ] = $container->get( 'fraud-protection.settings.section.title' );
+				return $sections;
+			}
+		);
+
+		add_filter(
+			'woocommerce_get_settings_advanced',
+			/**
+			 * @param $settings array
+			 * @param $current_section string
+			 * @returns array
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			function ( $settings, $current_section ) use ( $container ) {
+				if ( $current_section !== $container->get( 'fraud-protection.settings.section.id' ) ) {
+					return $settings;
+				}
+
+				return $container->get( 'fraud-protection.settings.fields' );
+			},
+			10,
+			2
+		);
 	}
 }
