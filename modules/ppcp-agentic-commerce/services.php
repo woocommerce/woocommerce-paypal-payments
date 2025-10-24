@@ -17,13 +17,13 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 
 return array(
-	'agentic.response.factory'  => static function (): ResponseFactory {
+	'agentic.response.factory'                 => static function (): ResponseFactory {
 		return new ResponseFactory();
 	},
-	'agentic.auth.key_provider' => static function (): PayPalJwkProvider {
+	'agentic.auth.key_provider'                => static function (): PayPalJwkProvider {
 		return new PayPalJwkProvider();
 	},
-	'agentic.auth.service'      => static function ( ContainerInterface $c ): JwtAuthService {
+	'agentic.auth.service'                     => static function ( ContainerInterface $c ): JwtAuthService {
 		return new JwtAuthService(
 			$c->get( 'agentic.auth.key_provider' )
 		);
@@ -31,14 +31,14 @@ return array(
 
 	// REST endpoints.
 
-	'agentic.rest.create_cart'  => static function ( ContainerInterface $c ): CreateCartEndpoint {
+	'agentic.rest.create_cart'                 => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
 			$c->get( 'agentic.auth.service' ),
 			$c->get( 'agentic.response.factory' ),
 		);
 	},
 
-	// Ingestion
+	// Ingestion.
 
 	'agentic.ingestion-eligible-product-types' => static function ( ContainerInterface $container ) {
 		return array(
