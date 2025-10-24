@@ -62,7 +62,6 @@ return array(
 			$container->get( 'agentic.response.factory' )
 		);
 	},
-
 	'agentic.rest.replace_cart'                => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
 			$container->get( 'agentic.auth.service' ),
