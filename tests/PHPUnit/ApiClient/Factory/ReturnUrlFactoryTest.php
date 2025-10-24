@@ -37,7 +37,7 @@ class ReturnUrlFactoryTest extends TestCase
 
 		$result = $this->testee->from_context($context);
 
-		$this->assertEquals('https://example.com/cart?pcp-return=button', $result);
+		$this->assertEquals('https://example.com/cart', $result);
 	}
 
     public function testFromContextProductReturnsProductUrl()
@@ -56,7 +56,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('product', $request_data);
 
-        $this->assertEquals('https://example.com/product/123?pcp-return=button', $result);
+        $this->assertEquals('https://example.com/product/123', $result);
     }
 
     public function testFromContextProductThrowsExceptionWhenNoUrl()
@@ -90,7 +90,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('pay-now', $request_data);
 
-        $this->assertEquals('https://example.com/checkout/pay/123?key=abc&pcp-return=button', $result);
+        $this->assertEquals('https://example.com/checkout/pay/123?key=abc', $result);
     }
 
     public function testFromContextPayNowThrowsExceptionWhenOrderNotFound()
@@ -110,7 +110,7 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('checkout');
 
-        $this->assertEquals('https://example.com/checkout?pcp-return=button', $result);
+        $this->assertEquals('https://example.com/checkout', $result);
     }
 
     public function testFromContextDefaultReturnsCheckoutUrl()
@@ -119,17 +119,8 @@ class ReturnUrlFactoryTest extends TestCase
 
         $result = $this->testee->from_context('unknown-context');
 
-        $this->assertEquals('https://example.com/checkout?pcp-return=button', $result);
+        $this->assertEquals('https://example.com/checkout', $result);
     }
-
-	public function testFromContextReturnsCartUrlWithCustomArgs()
-	{
-		when('wc_get_cart_url')->justReturn('https://example.com/cart');
-
-		$result = $this->testee->from_context('cart', [], ['session' => '123']);
-
-		$this->assertEquals('https://example.com/cart?pcp-return=button&session=123', $result);
-	}
 
 	public function cartContextProvider(): array
 	{

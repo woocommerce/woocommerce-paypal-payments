@@ -523,7 +523,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 			->with_custom_return_url( $return_url )
 			->with_custom_cancel_url( $return_url );
 
-		if ( $this->server_side_shipping_callback_enabled
+		if ( $this->should_handle_shipping_in_paypal( $funding_source )
+			&& $this->server_side_shipping_callback_enabled
 			&& $shipping_preference === ExperienceContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
 			$experience_context = $experience_context->with_shipping_callback();
 		}

@@ -158,6 +158,16 @@ export const PayPalComponent = ( {
 		onClick();
 	};
 
+	const handleCancel = () => {
+		// Don't call onClose if AppSwitch is enabled - PayPal SDK fires onCancel
+		// when switching to the app, but the user hasn't actually canceled
+		if ( shouldEnableAppSwitch() ) {
+			return;
+		}
+
+		onClose();
+	};
+
 	const handleButtonInit = () => {
 		if ( fundingSource === 'paypal' ) {
 			const buttonInstance = paypalButtonRef.current?.state?.parent;
@@ -452,7 +462,7 @@ export const PayPalComponent = ( {
 			<PayPalButton
 				style={ style }
 				onClick={ handleClick }
-				onCancel={ onClose }
+				onCancel={ handleCancel }
 				onError={ onClose }
 				createVaultSetupToken={ () => createVaultSetupToken( config ) }
 				onApprove={ ( { vaultSetupToken } ) =>
@@ -468,7 +478,7 @@ export const PayPalComponent = ( {
 				fundingSource={ fundingSource }
 				style={ style }
 				onClick={ handleClick }
-				onCancel={ onClose }
+				onCancel={ handleCancel }
 				onError={ onClose }
 				createSubscription={ ( data, actions ) =>
 					createSubscription( data, actions, config )
@@ -507,7 +517,7 @@ export const PayPalComponent = ( {
 			style={ style }
 			onInit={ handleButtonInit }
 			onClick={ handleClick }
-			onCancel={ onClose }
+			onCancel={ handleCancel }
 			onError={ onClose }
 			createOrder={ ( data ) =>
 				createOrder( data, config, onError, onClose )
