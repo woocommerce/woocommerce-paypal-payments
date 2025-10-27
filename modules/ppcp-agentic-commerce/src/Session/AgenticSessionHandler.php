@@ -36,7 +36,9 @@ class AgenticSessionHandler {
 	public function __construct() {
 		// Include required WC files for REST context.
 		if ( defined( 'WC_ABSPATH' ) ) {
+			/** @psalm-suppress UnresolvableInclude */
 			include_once WC_ABSPATH . 'includes/wc-cart-functions.php';
+			/** @psalm-suppress UnresolvableInclude */
 			include_once WC_ABSPATH . 'includes/wc-notice-functions.php';
 		}
 

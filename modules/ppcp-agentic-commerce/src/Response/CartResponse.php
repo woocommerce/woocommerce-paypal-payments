@@ -63,7 +63,6 @@ class CartResponse {
 	 * @return array The totals array.
 	 */
 	protected function calculate_totals(): array {
-		assert( $this->cart instanceof PayPalCart );
 		$cart_array = $this->cart->to_array();
 
 		$currency_code = $cart_array['items'][0]['price']['currency_code'] ?? 'USD';
