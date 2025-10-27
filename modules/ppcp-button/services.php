@@ -304,7 +304,7 @@ return array(
 	'button.endpoint.vault-paypal'                => static function ( ContainerInterface $container ): StartPayPalVaultingEndpoint {
 		return new StartPayPalVaultingEndpoint(
 			$container->get( 'button.request-data' ),
-			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'vault-v2.endpoint.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

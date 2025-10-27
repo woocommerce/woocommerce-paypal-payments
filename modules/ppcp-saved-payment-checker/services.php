@@ -19,7 +19,7 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.processor.authorized-payments' ),
 			$container->get( 'api.endpoint.payments' ),
-			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'vault-v2.endpoint.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

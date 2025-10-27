@@ -11,8 +11,8 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 
 /**
  * Class StartPayPalVaultingEndpoint.

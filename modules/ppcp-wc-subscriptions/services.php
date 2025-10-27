@@ -55,7 +55,7 @@ return array(
 	},
 	'wc-subscriptions.repository.payment-token'          => static function ( ContainerInterface $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
-		$endpoint = $container->get( 'api.endpoint.payment-token' );
+		$endpoint = $container->get( 'vault-v2.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
 	},
 	'wc-subscriptions.endpoint.subscription-change-payment-method' => static function ( ContainerInterface $container ): SubscriptionChangePaymentMethod {

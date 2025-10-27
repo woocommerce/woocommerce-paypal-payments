@@ -13,10 +13,9 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
-use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -24,6 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 
 /**
  * Class PaymentTokenChecker

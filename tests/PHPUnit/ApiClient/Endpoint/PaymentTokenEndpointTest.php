@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Psr\Log\LoggerInterface;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
@@ -13,9 +15,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
-use Mockery;
-use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
