@@ -43,6 +43,7 @@ return array(
 	// REST endpoints.
 	'agentic.rest.create_cart'                 => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
+			$c->get( 'agentic.auth.service' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' )
 		);
@@ -50,6 +51,7 @@ return array(
 
 	'agentic.rest.get_cart'                    => static function ( ContainerInterface $container ): GetCartEndpoint {
 		return new GetCartEndpoint(
+			$container->get( 'agentic.auth.service' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' )
 		);
@@ -57,6 +59,7 @@ return array(
 
 	'agentic.rest.update_cart'                 => static function ( ContainerInterface $container ): UpdateCartEndpoint {
 		return new UpdateCartEndpoint(
+			$container->get( 'agentic.auth.service' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' )
 		);
