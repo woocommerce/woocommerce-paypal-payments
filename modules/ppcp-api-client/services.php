@@ -837,7 +837,7 @@ return array(
 				'AU',
 				'IT',
 				'ES',
-				'CA'
+				'CA',
 			)
 		);
 	},
