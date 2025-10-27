@@ -8,8 +8,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
 /**
  * When to use:
  * - Empty request body
- * - Malformed request
- * - Missing mandatory fields
+ * - Invalid JSON body
+ * - Malformed request data
  */
 class InvalidRequestError extends AgenticError {
 	protected const ERROR_NAME  = 'INVALID_REQUEST';
@@ -20,12 +20,12 @@ class InvalidRequestError extends AgenticError {
 Sample:
 {
 	"name": "INVALID_REQUEST",
-	"message": "Required field 'items' is missing",
+	"message": "Request body contains invalid JSON. Error: Syntax error",
+	"debug_id": "ERROR-400-12348",
 	"details": [
 		{
-			"field": "items",
-			"issue": "MISSING_REQUIRED_FIELD",
-			"description": "The items field is required and cannot be empty."
+			"issue": "MALFORMED_JSON",
+			"description": "Request body must contain valid JSON"
 		}
 	]
 }
