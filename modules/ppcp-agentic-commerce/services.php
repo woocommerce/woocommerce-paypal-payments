@@ -13,13 +13,18 @@ use Automattic\WooCommerce\Enums\ProductType;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
 		return new ResponseFactory();
 	},
+
+	// Authentication services.
 	'agentic.auth.key_provider'                => static function (): PayPalJwkProvider {
 		return new PayPalJwkProvider();
 	},
@@ -29,17 +34,32 @@ return array(
 		);
 	},
 
-	// REST endpoints.
+	// Session management.
+	'agentic.session.handler'                  => static function ( ContainerInterface $container ): AgenticSessionHandler {
+		return new AgenticSessionHandler();
+	},
 
+	// REST endpoints.
 	'agentic.rest.create_cart'                 => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
-			$c->get( 'agentic.auth.service' ),
-			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' )
+		);
+	},
+	'agentic.rest.get_cart'                    => static function ( ContainerInterface $container ): GetCartEndpoint {
+		return new GetCartEndpoint(
+			$container->get( 'agentic.session.handler' ),
+			$container->get( 'agentic.response.factory' )
+		);
+	},
+	'agentic.rest.update_cart'                 => static function ( ContainerInterface $container ): UpdateCartEndpoint {
+		return new UpdateCartEndpoint(
+			$container->get( 'agentic.session.handler' ),
+			$container->get( 'agentic.response.factory' )
 		);
 	},
 
-	// Ingestion.
-
+	// Ingestion services.
 	'agentic.ingestion-eligible-product-types' => static function ( ContainerInterface $container ) {
 		return array(
 			ProductType::SIMPLE,
