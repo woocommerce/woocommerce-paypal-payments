@@ -295,7 +295,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( string $hook_suffix ) use ( $container ): void {
+			function ( $hook_suffix ) use ( $container ): void {
 				if ( ! is_string( $hook_suffix ) ) {
 					return;
 				}
