@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
+namespace PHPUnit\ApiClient\Vaultv2;
 
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
