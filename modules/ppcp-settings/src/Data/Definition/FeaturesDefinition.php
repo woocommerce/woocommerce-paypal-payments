@@ -101,6 +101,7 @@ class FeaturesDefinition {
 			'US',
 			'DE',
 			'AU',
+			'CA',
 		);
 		$store_country         = $this->settings->get_woo_settings()['country'];
 		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
