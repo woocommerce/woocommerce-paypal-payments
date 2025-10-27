@@ -290,8 +290,19 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'admin_enqueue_scripts',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( string $hook_suffix ) use ( $container ): void {
+				if ( ! is_string( $hook_suffix ) ) {
+					return;
+				}
+
 				$script_data_handler = $container->get( 'settings.service.script-data-handler' );
+				assert( $script_data_handler instanceof ScriptDataHandler );
+
 				$script_data_handler->localize_scripts( $hook_suffix );
 			}
 		);
