@@ -465,6 +465,10 @@ class Button implements ButtonInterface {
 			}
 		}
 
+		if ( ! is_null( WC()->cart ) && ! WC()->cart->needs_shipping() ) {
+			$use_shipping_form = false;
+		}
+
 		$shipping = array(
 			'enabled'    => $use_shipping_form,
 			'configured' => wc_shipping_enabled() && wc_get_shipping_method_count( false, true ) > 0,
