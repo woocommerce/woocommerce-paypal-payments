@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\CartNotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\UpdateFailedError;
@@ -42,24 +43,19 @@ class UpdateCartEndpoint extends AgenticRestEndpoint {
 	private AgenticSessionHandler $session_handler;
 
 	/**
-	 * The response factory.
-	 *
-	 * @var ResponseFactory
-	 */
-	private ResponseFactory $response_factory;
-
-	/**
 	 * Constructor.
 	 *
+	 * @param JwtAuthService        $auth_service The JWT auth service.
 	 * @param AgenticSessionHandler $session_handler The session handler.
 	 * @param ResponseFactory       $response_factory The response factory.
 	 */
 	public function __construct(
+		JwtAuthService $auth_service,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory
 	) {
-		$this->session_handler  = $session_handler;
-		$this->response_factory = $response_factory;
+		parent::__construct( $auth_service, $response_factory );
+		$this->session_handler = $session_handler;
 	}
 
 	/**
