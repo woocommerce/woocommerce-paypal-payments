@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 class CartResponse {
-	protected ?PayPalCart $cart = null;
+	protected PayPalCart $cart;
 
 	/**
 	 * The cart ID used by the API to reference to an existing cart.
@@ -63,13 +63,14 @@ class CartResponse {
 	 * @return array The totals array.
 	 */
 	protected function calculate_totals(): array {
+		assert( $this->cart instanceof PayPalCart );
 		$cart_array = $this->cart->to_array();
 
 		$currency_code = $cart_array['items'][0]['price']['currency_code'] ?? 'USD';
 
 		$item_total = array_reduce(
 			$cart_array['items'] ?? array(),
-			function ( $sum, $item ) {
+			function ( float $sum, $item ): float {
 				return $sum + ( (float) $item['price']['value'] * $item['quantity'] );
 			},
 			0.0

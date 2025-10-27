@@ -35,9 +35,9 @@ class AgenticSessionHandler {
 	 */
 	public function __construct() {
 		// Include required WC files for REST context.
-		if ( defined( '\WC_ABSPATH' ) ) {
-			include_once \WC_ABSPATH . 'includes/wc-cart-functions.php';
-			include_once \WC_ABSPATH . 'includes/wc-notice-functions.php';
+		if ( defined( 'WC_ABSPATH' ) ) {
+			include_once WC_ABSPATH . 'includes/wc-cart-functions.php';
+			include_once WC_ABSPATH . 'includes/wc-notice-functions.php';
 		}
 
 		$this->session = new AgenticWcSession();
