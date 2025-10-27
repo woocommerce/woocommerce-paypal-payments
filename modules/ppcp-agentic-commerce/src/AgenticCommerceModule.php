@@ -31,6 +31,8 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	 */
 	private const REST_ENDPOINT_SERVICES = array(
 		'agentic.rest.create_cart',
+		'agentic.rest.get_cart',
+		'agentic.rest.update_cart',
 	);
 
 	public function services(): array {
@@ -63,7 +65,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
 
-//				do_action('ppcp_agentic_sync_batch');
+				// do_action('ppcp_agentic_sync_batch');
 			}
 		);
 
