@@ -119,12 +119,14 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			static function () use ( $c ) {
 
 				// Check if current date is after November 12th, 2025 (Expected PayPal release date).
-				$paypal_expected_release_date = strtotime( '2025-11-12 00:00:00' );
-				if ( current_time( 'timestamp' ) < $paypal_expected_release_date ) {
+				$release_date = '2025-11-12';
+				$current_date = current_time( 'Y-m-d' );
+
+				if ( $current_date < $release_date ) {
 					return;
 				}
 
-				// Check if the "Stay updated" checkbox is enabled (checked in either old or new UI)
+				// Check if the "Stay updated" checkbox is enabled (checked in either old or new UI).
 				$settings_model = $c->get( 'settings.data.settings' );
 				assert( $settings_model instanceof SettingsModel );
 
