@@ -107,7 +107,7 @@ class FeaturesDefinition {
 		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
 		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
 
-		return array(
+		$feature_items = array(
 			'save_paypal_and_venmo'           => array(
 				'title'       => __( 'Save PayPal and Venmo', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Securely save PayPal and Venmo payment methods for subscriptions or return buyers.', 'woocommerce-paypal-payments' ),
@@ -346,6 +346,43 @@ class FeaturesDefinition {
 					),
 				),
 			),
+			'pwc'                             => array(
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities['pwc'],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pay-with-crypto',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS
+',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
 		);
+
+		return apply_filters( 'woocommerce_paypal_payments_features_list', $feature_items );
 	}
 }
