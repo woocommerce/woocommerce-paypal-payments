@@ -102,11 +102,11 @@ class PWCGateway extends WC_Payment_Gateway {
 			'products',
 		);
 
-		$this->method_title       = __( 'Pay with Crypto (via PayPal)', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Pay with Crypto', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Accept cryptocurrency payments through PayPal, supporting various digital currencies for global customers.', 'woocommerce-paypal-payments' );
 
 		$this->title                 = $this->get_option( 'title', __( 'Pay with Crypto', 'woocommerce-paypal-payments' ) );
-		$this->description           = $this->get_option( 'description', '' );
+		$this->description           = $this->get_option( 'description', __( 'Clicking “Place order” will redirect you to PayPal\'s encrypted checkout to complete your cryptocurrency purchase.', 'woocommerce-paypal-payments' ) );
 		$this->wc_gateway_module_url = $wc_gateway_module_url;
 
 		// TODO: Change to the official svg asset when it's available: Something like https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_crypto_color.svg.

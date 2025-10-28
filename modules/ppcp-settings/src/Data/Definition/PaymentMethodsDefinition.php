@@ -299,7 +299,7 @@ class PaymentMethodsDefinition {
 				'id'          => PWCGateway::ID,
 				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'description' => __(
-					'Accept cryptocurrency payments through PayPal, supporting various digital currencies for global customers.',
+					'Accept cryptocurrency payments through PayPal, which supports various digital currencies globally. Receive USD payments in your PayPal balance.',
 					'woocommerce-paypal-payments'
 				),
 				'icon'        => 'payment-method-pwc',
