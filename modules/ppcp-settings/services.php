@@ -613,6 +613,7 @@ $services = array(
 			'save_paypal'                 => $features['save_paypal_and_venmo']['enabled'] ?? false,
 			'alternative_payment_methods' => $features['alternative_payment_methods']['enabled'] ?? false,
 			'installments'                => $features['installments']['enabled'] ?? false,
+			'pay_later_messaging'         => $features['pay_later_messaging']['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
@@ -621,7 +622,7 @@ $services = array(
 			'apm'          => $capabilities['alternative_payment_methods'], // Alternative payment methods eligibility.
 			'google_pay'   => $capabilities['acdc'] && $capabilities['google_pay'], // Google Pay eligibility.
 			'apple_pay'    => $capabilities['acdc'] && $capabilities['apple_pay'], // Apple Pay eligibility.
-			'pay_later'    => $capabilities['acdc'] && ! $gateways['card-button'], // Pay Later eligibility.
+			'pay_later'    => $capabilities['pay_later_messaging'] && $capabilities['acdc'] && ! $gateways['card-button'], // Pay Later eligibility.
 			'installments' => $capabilities['installments'], // Installments eligibility.
 		);
 		return new FeaturesDefinition(
