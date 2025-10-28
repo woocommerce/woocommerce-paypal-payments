@@ -475,7 +475,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 		return apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.pwc_enabled',
-			getenv( 'PCP_PWC_ENABLED' ) !== '0'
+			getenv( 'PCP_PWC_ENABLED' ) === '1'
 		);
 	}
 }
