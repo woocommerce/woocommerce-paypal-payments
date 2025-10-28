@@ -2214,14 +2214,14 @@ return array(
 		return array(
 			$inbox_note_factory->create_note(
 				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
-				__( 'Fast funds with payments that flex with your PayPal sales The PayPal Working Capital business loan is primarily based on your PayPal account history. Apply for $1,000-$200,000 (and up to $300,000 for repeat borrowers) with no credit check.† If approved, loans are funded in minutes.', 'woocommerce-paypal-payments' ),
+				__( 'Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments' ),
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
 				$is_working_capital_feature_flag_enabled && $container->get( 'api.shop.country' ) === 'US' && $stay_updated,
 				new InboxNoteAction(
-					'apply_now',
-					__( 'Apply now', 'woocommerce-paypal-payments' ),
+					'learn_more',
+					__( 'Learn More', 'woocommerce-paypal-payments' ),
 					'http://example.com/',
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
