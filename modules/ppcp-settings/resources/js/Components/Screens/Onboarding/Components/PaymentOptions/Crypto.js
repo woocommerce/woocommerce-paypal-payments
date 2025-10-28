@@ -8,7 +8,7 @@ const Crypto = ( { learnMore = '' } ) => {
 			title={ __( 'Crypto', 'woocommerce-paypal-payments' ) }
 			imageBadge={ [ 'icon-payment-method-crypto.svg' ] }
 			description={ __(
-				'Let customers check out with cryptocurrencies while you get paid in cash.',
+				'Let customers check out with cryptocurrency while you get paid in cash.',
 				'woocommerce-paypal-payments'
 			) }
 			learnMoreLink={ learnMore }
