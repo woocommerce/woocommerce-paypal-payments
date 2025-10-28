@@ -2105,7 +2105,7 @@ return array(
 			array(
 				'id'           => 'ppcp-working-capital-task',
 				'title'        => __( 'Fuel your business growth with a PayPal Working Capital loan. Check eligibility', 'woocommerce-paypal-payments' ),
-				'description'  => __( '', 'woocommerce-paypal-payments' ),
+				'description'  => '',
 				'redirect_url' => 'http://example.com/',
 			),
 		);
