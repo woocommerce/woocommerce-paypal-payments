@@ -119,7 +119,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			static function () use ( $c ) {
 
 				// Check if current date is after November 12th, 2025 (Expected PayPal release date).
-				$paypal_expected_release_date = strtotime( '2025-10-12 00:00:00' );
+				$paypal_expected_release_date = strtotime( '2025-11-12 00:00:00' );
 				if ( current_time( 'timestamp' ) < $paypal_expected_release_date ) {
 					return;
 				}
