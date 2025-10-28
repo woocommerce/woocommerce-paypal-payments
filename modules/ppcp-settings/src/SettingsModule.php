@@ -40,6 +40,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -291,8 +292,19 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'admin_enqueue_scripts',
-			function ( string $hook_suffix ) use ( $container ): void {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $hook_suffix ) use ( $container ): void {
+				if ( ! is_string( $hook_suffix ) ) {
+					return;
+				}
+
 				$script_data_handler = $container->get( 'settings.service.script-data-handler' );
+				assert( $script_data_handler instanceof ScriptDataHandler );
+
 				$script_data_handler->localize_scripts( $hook_suffix );
 			}
 		);
