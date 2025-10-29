@@ -828,7 +828,7 @@ return array(
 	'api.paylater.is-canada-released'                => static function ( ContainerInterface $container ): bool {
 		// Check if current date is after November 12th, 2025 (Expected PayPal release date).
 		// @todo Remove this logic after the next release
-		$release_date = '2025-10-12';
+		$release_date = '2025-11-12';
 		$current_date = current_time( 'Y-m-d' );
 
 		return $current_date >= $release_date;
