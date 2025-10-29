@@ -549,6 +549,9 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
+
+		$this->logger->debug( wc_print_r( $response['body'], true ) );
+
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 204 !== $status_code ) {

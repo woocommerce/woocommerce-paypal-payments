@@ -601,10 +601,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {
-			if ( $error->details() ) {
-				$this->logger->debug( wc_print_r( $error->details(), true ) );
-			}
-
 			return $this->handle_payment_failure(
 				$wc_order,
 				new Exception(
