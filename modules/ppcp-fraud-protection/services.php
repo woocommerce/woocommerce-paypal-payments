@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -12,7 +13,14 @@ return array(
 		return plugins_url( '/modules/fraud-protection/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
-	'fraud-protection.recaptcha.integration' => static function ( ContainerInterface $container ): RecaptchaIntegration {
+	'fraud-protection.recaptcha'             => static function ( ContainerInterface $container ): Recaptcha {
+		return new Recaptcha(
+			$container->get( 'fraud-protection.recaptcha.integration' ),
+			$container->get( 'fraud-protection.url' ),
+			$container->get( 'ppcp.asset-version' )
+		);
+	},
+	'fraud-protection.recaptcha.integration' => static function (): RecaptchaIntegration {
 		return new RecaptchaIntegration();
 	},
 );

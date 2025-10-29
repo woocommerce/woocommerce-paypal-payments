@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -39,11 +40,19 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 			 * @psalm-suppress MissingClosureReturnType
 			 */
 			static function ( $integrations ) use ( $container ) {
-				$integration = $container->get( 'fraud-protection.recaptcha.integration' );
-				assert( $integration instanceof RecaptchaIntegration );
-
-				$integrations[] = $integration;
+				// WC always creates a new instance here.
+				$integrations[] = RecaptchaIntegration::class;
 				return $integrations;
+			}
+		);
+
+		add_action(
+			'wp_enqueue_scripts',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->enqueue_scripts();
 			}
 		);
 	}

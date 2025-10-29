@@ -6,8 +6,11 @@ module.exports = {
 	cache: false,
 	...{
 		entry: {
-			index: path.resolve( process.cwd(), 'resources/js', 'index.js' ),
-			style: path.resolve( process.cwd(), 'resources/css', 'style.scss' ),
+			'recaptcha-handler': path.resolve(
+				process.cwd(),
+				'resources/js',
+				'recaptcha-handler.js'
+			),
 		},
 	},
 };
