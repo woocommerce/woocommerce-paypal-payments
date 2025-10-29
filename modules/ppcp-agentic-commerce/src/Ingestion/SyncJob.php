@@ -76,7 +76,7 @@ class SyncJob {
 			sprintf( 'Agentic Sync Job %s: Started', $this->batch_id )
 		);
 
-		// Transform products for API
+		// Transform products for API.
 		$api_products = new ProductsPayload( $this->product_ids );
 		$api_payload  = $api_products->get_array();
 		if ( empty( $api_payload ) ) {
@@ -86,7 +86,7 @@ class SyncJob {
 			return;
 		}
 
-		// Send to API
+		// Send to API.
 		$response = wp_remote_post(
 			$this->api_endpoint,
 			array(
@@ -163,7 +163,7 @@ class SyncJob {
 	 * @param array $product_ids Product IDs to mark as synced.
 	 */
 	private function mark_products_synced( $product_ids ): void {
-		// Use WordPress's current_time function with 'mysql' format for consistency
+		// Use WordPress's current_time function with 'mysql' format for consistency.
 		$timestamp = current_time( 'mysql' );
 
 		foreach ( $product_ids as $product_id ) {

@@ -39,7 +39,7 @@ return array(
 		);
 	},
 
-	// Ingestion
+	// Ingestion services.
 
 	'agentic.ingestion-eligible-product-types' => static function ( ContainerInterface $container ) {
 		return array(

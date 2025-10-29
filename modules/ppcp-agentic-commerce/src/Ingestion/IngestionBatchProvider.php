@@ -33,6 +33,7 @@ class IngestionBatchProvider {
 	 * @return array An array of product IDs that need to be synced.
 	 */
 	public function get_batch( $limit = 50 ): array {
+		// phpcs:disable WordPress.DB.SlowDBQuery
 		// First, get products that have never been synced.
 		$batch = wc_get_products(
 			array(
@@ -57,12 +58,12 @@ class IngestionBatchProvider {
 		// If we need more, get products that have been updated since the last sync.
 		$dirty_products = wc_get_products(
 			array(
-				'status'     => 'publish',
-				'type'       => $this->product_types,
+				'status'       => 'publish',
+				'type'         => $this->product_types,
 				'downloadable' => false,
-				'limit'      => $limit - count( $batch ),
-				'return'     => 'ids',
-				'meta_query' => array(
+				'limit'        => $limit - count( $batch ),
+				'return'       => 'ids',
+				'meta_query'   => array(
 					array(
 						'key'     => '_ppcp_agentic_needs_sync',
 						'compare' => 'EXISTS',
@@ -78,8 +79,8 @@ class IngestionBatchProvider {
 			return $batch;
 		}
 
-		// If we need even more, get stale products (last synced before the timeout)
-		$stale_date = date(
+		// If we need even more, get stale products (last synced before the timeout).
+		$stale_date     = gmdate(
 			'Y-m-d H:i:s',
 			strtotime(
 				'-' . $this->stale_timeout_days . ' days'
@@ -87,12 +88,12 @@ class IngestionBatchProvider {
 		);
 		$stale_products = wc_get_products(
 			array(
-				'status'     => 'publish',
-				'type'       => $this->product_types,
+				'status'       => 'publish',
+				'type'         => $this->product_types,
 				'downloadable' => false,
-				'limit'      => $limit - count( $batch ),
-				'return'     => 'ids',
-				'meta_query' => array(
+				'limit'        => $limit - count( $batch ),
+				'return'       => 'ids',
+				'meta_query'   => array(
 					array(
 						'key'     => '_ppcp_agentic_last_sync',
 						'value'   => $stale_date,
@@ -100,12 +101,12 @@ class IngestionBatchProvider {
 						'type'    => 'DATETIME',
 					),
 				),
-				'orderby'    => 'meta_value',
-				'order'      => 'ASC',
-				'meta_key'   => '_ppcp_agentic_last_sync',
+				'orderby'      => 'meta_value',
+				'order'        => 'ASC',
+				'meta_key'     => '_ppcp_agentic_last_sync',
 			)
 		);
-
+		// phpcs:enable WordPress.DB.SlowDBQuery
 		// Merge and return.
 		return array_merge( $batch, $stale_products );
 	}
