@@ -4,6 +4,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 
+use Psr\Log\LoggerInterface;
+
 class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
 	private const ERROR_CODE_MISSING_TOKEN       = 'ppcp_recaptcha_missing_token';
@@ -17,15 +19,19 @@ class Recaptcha {
 
 	private string $asset_version;
 
+	private LoggerInterface $logger;
+
 	public function __construct(
 		RecaptchaIntegration $integration,
 		string $module_url,
-		string $asset_version
+		string $asset_version,
+		LoggerInterface $logger
 	) {
 
 		$this->integration   = $integration;
 		$this->module_url    = $module_url;
 		$this->asset_version = $asset_version;
+		$this->logger        = $logger;
 	}
 
 	protected function should_use_recaptcha(): bool {
@@ -172,9 +178,8 @@ class Recaptcha {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			wc_get_logger()->error(
-				'reCAPTCHA v3 API error: ' . $response->get_error_message(),
-				array( 'source' => 'wppc' )
+			$this->logger->error(
+				'reCAPTCHA v3 API error: ' . $response->get_error_message()
 			);
 
 			return false;
@@ -223,9 +228,8 @@ class Recaptcha {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			wc_get_logger()->error(
-				'reCAPTCHA v2 API error: ' . $response->get_error_message(),
-				array( 'source' => 'wppc' )
+			$this->logger->error(
+				'reCAPTCHA v2 API error: ' . $response->get_error_message()
 			);
 
 			return false;

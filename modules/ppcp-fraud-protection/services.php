@@ -17,7 +17,8 @@ return array(
 		return new Recaptcha(
 			$container->get( 'fraud-protection.recaptcha.integration' ),
 			$container->get( 'fraud-protection.url' ),
-			$container->get( 'ppcp.asset-version' )
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'fraud-protection.recaptcha.integration' => static function (): RecaptchaIntegration {
