@@ -71,7 +71,7 @@ class Recaptcha {
 
 		wp_enqueue_script(
 			'ppcp-recaptcha-handler',
-			untrailingslashit( $this->module_url ) . '/assets/js/recaptcha-handler.js',
+			untrailingslashit( $this->module_url ) . '/assets/recaptcha-handler.js',
 			$dependencies,
 			$this->asset_version,
 			true

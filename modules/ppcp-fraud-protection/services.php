@@ -10,7 +10,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	'fraud-protection.url'                   => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/fraud-protection/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+		return plugins_url( '/modules/ppcp-fraud-protection/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
 	'fraud-protection.recaptcha'             => static function ( ContainerInterface $container ): Recaptcha {
