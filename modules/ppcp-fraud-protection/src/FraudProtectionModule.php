@@ -55,5 +55,15 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 				$recaptcha->enqueue_scripts();
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_create_order_request_started',
+			static function ( array $data ) use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->intercept_paypal_ajax( $data );
+			}
+		);
 	}
 }

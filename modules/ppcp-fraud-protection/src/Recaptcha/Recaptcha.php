@@ -8,6 +8,8 @@ class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
 	private const ERROR_CODE_MISSING_TOKEN       = 'ppcp_recaptcha_missing_token';
 	private const ERROR_CODE_VERIFICATION_FAILED = 'ppcp_recaptcha_verification_failed';
+	private const CAPTCHA_USAGE_LIMIT            = 5;
+	private const CAPTCHA_RESULT_TRANSIENT_KEY   = 'ppcp_recaptcha_result_';
 
 	private RecaptchaIntegration $integration;
 
@@ -93,5 +95,201 @@ class Recaptcha {
 				'errorCodeVerificationFailed' => self::ERROR_CODE_VERIFICATION_FAILED,
 			)
 		);
+	}
+
+	public function intercept_paypal_ajax( array $request_data ): void {
+		if ( ! $this->should_use_recaptcha() ) {
+			return;
+		}
+
+		$token   = sanitize_text_field(
+			wp_unslash(
+				$request_data['ppcp_recaptcha_token'] ?? ''
+			)
+		);
+		$version = sanitize_text_field(
+			wp_unslash(
+				$request_data['ppcp_recaptcha_version'] ?? ''
+			)
+		);
+
+		if ( empty( $token ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __(
+						'Please complete the CAPTCHA verification.',
+						'woocommerce-paypal-payments'
+					),
+					'code'    => self::ERROR_CODE_MISSING_TOKEN,
+				),
+				400
+			);
+			exit;
+		}
+
+		$success = ( $version === 'v3' )
+			? $this->verify_v3(
+				$token,
+				$this->integration->get_option( 'secret_key_v3' ),
+				floatval( $this->integration->get_option( 'score_threshold', 0.5 ) )
+			)
+			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
+
+		if ( ! $success ) {
+			wp_send_json_error(
+				array(
+					'message' => __(
+						'CAPTCHA verification failed. Please try again.',
+						'woocommerce-paypal-payments'
+					),
+					'code'    => self::ERROR_CODE_VERIFICATION_FAILED,
+				),
+				403
+			);
+			exit;
+		}
+	}
+
+	private function verify_v3(
+		string $token,
+		string $secret,
+		float $threshold
+	): bool {
+
+		if ( $this->check_cached_verification( $token ) ) {
+			return true;
+		}
+
+		$response = wp_remote_post(
+			'https://www.google.com/recaptcha/api/siteverify',
+			array(
+				'body' => array(
+					'secret'   => $secret,
+					'response' => $token,
+					'remoteip' => $this->customer_ip(),
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			wc_get_logger()->error(
+				'reCAPTCHA v3 API error: ' . $response->get_error_message(),
+				array( 'source' => 'wppc' )
+			);
+
+			return false;
+		}
+
+		$result             = json_decode( wp_remote_retrieve_body( $response ), true );
+		$score              = isset( $result['score'] ) ? floatval( $result['score'] ) : 0;
+		$is_above_threshold = ! empty( $result['success'] ) && $score >= $threshold;
+		$is_valid           = apply_filters(
+			'woocommerce_paypal_payments_recaptcha_verify_v3_result',
+			$is_above_threshold,
+			$threshold,
+			$result
+		);
+
+		if ( $is_valid ) {
+			$cached_data = array(
+				'result'      => $result,
+				'token'       => $token,
+				'usage_count' => 1,
+			);
+			set_transient(
+				self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier(),
+				$cached_data,
+				300
+			);
+		}
+
+		return $is_valid;
+	}
+
+	private function verify_v2( string $token, string $secret ): bool {
+		if ( $this->check_cached_verification( $token ) ) {
+			return true;
+		}
+
+		$response = wp_remote_post(
+			'https://www.google.com/recaptcha/api/siteverify',
+			array(
+				'body' => array(
+					'secret'   => $secret,
+					'response' => $token,
+					'remoteip' => $this->customer_ip(),
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			wc_get_logger()->error(
+				'reCAPTCHA v2 API error: ' . $response->get_error_message(),
+				array( 'source' => 'wppc' )
+			);
+
+			return false;
+		}
+
+		$result   = json_decode( wp_remote_retrieve_body( $response ), true );
+		$is_valid = apply_filters(
+			'woocommerce_paypal_payments_recaptcha_verify_v2_result',
+			$result['success'],
+			$result
+		);
+
+		if ( $is_valid ) {
+			$cached_data = array(
+				'result'      => $result,
+				'token'       => $token,
+				'usage_count' => 1,
+			);
+			set_transient(
+				self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier(),
+				$cached_data,
+				300
+			);
+		}
+
+		return $is_valid;
+	}
+
+	private function check_cached_verification(
+		string $token
+	): bool {
+
+		$cached_data = get_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier() );
+
+		if ( $cached_data === false || ! isset( $cached_data['usage_count'], $cached_data['token'] ) ) {
+			return false;
+		}
+
+		if ( $cached_data['token'] === $token && $cached_data['usage_count'] < self::CAPTCHA_USAGE_LIMIT ) {
+			++$cached_data['usage_count'];
+			set_transient(
+				self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier(),
+				$cached_data,
+				300
+			);
+
+			return true;
+		}
+
+		if ( $cached_data['usage_count'] >= self::CAPTCHA_USAGE_LIMIT ) {
+			delete_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier() );
+		}
+
+		return false;
+	}
+
+	private function customer_identifier(): string {
+		return (string) WC()->session->get_customer_id();
+	}
+
+	private function customer_ip(): string {
+		return filter_var(
+			wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ),
+			FILTER_VALIDATE_IP
+		) ?: '';
 	}
 }
