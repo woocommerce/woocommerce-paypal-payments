@@ -235,8 +235,8 @@ class TodosDefinition {
 				'priority'    => 13,
 			),
 			'apply_for_working_capital'            => array(
-				'title'       => __( 'Start your PayPal Working Capital application', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
+				'title'       => __( 'Discover how PayPal Working Capital can fuel your business growth', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Approved loans are quickly deposited, so you can put them to work right away. Check eligibility.', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['apply_for_working_capital'],
 				'action'      => array(
 					'type' => 'external',
