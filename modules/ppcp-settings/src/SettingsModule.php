@@ -455,6 +455,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					unset( $payment_methods['venmo'] );
 				}
 
+				// @todo Remove this logic after the next release. Unset PayPal Pay Later if shop is Canadian and Canadian Pay Later is not released.
+				if ( $container->get( 'api.shop.country' ) === 'CA' && ! $container->get( 'api.paylater.is-canada-released' ) ) {
+					unset( $payment_methods['pay-later'] );
+				}
+
 				// Unset if country/currency is not supported or merchant not eligible for Google Pay.
 				if ( ! $container->get( 'googlepay.eligible' ) || ! $googlepay_product_status->is_active() ) {
 					unset( $payment_methods['ppcp-googlepay'] );

@@ -62,7 +62,8 @@ class FeaturesDefinition {
 		FeaturesEligibilityService $eligibilities,
 		GeneralSettings $settings,
 		array $merchant_capabilities,
-		SettingsModel $plugin_settings
+		SettingsModel $plugin_settings,
+		array $paylater_countries = array()
 	) {
 		$this->eligibilities         = $eligibilities;
 		$this->settings              = $settings;
@@ -93,7 +94,7 @@ class FeaturesDefinition {
 	 * @return array[] The array of all available features.
 	 */
 	public function all_available_features(): array {
-		$paylater_countries    = array(
+		$paylater_documentation_countries = array(
 			'UK',
 			'ES',
 			'IT',
@@ -101,10 +102,10 @@ class FeaturesDefinition {
 			'US',
 			'DE',
 			'AU',
-			'CA',
 		);
+
 		$store_country         = $this->settings->get_woo_settings()['country'];
-		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
+		$country_location      = in_array( $store_country, $paylater_documentation_countries, true ) ? strtolower( $store_country ) : 'us';
 		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
 
 		$feature_items = array(
