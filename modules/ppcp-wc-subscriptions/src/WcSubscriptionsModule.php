@@ -135,6 +135,7 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 				$endpoint->handle_request();
 			}
 		);
+
 		add_action(
 			'woocommerce_subscriptions_change_payment_after_submit',
 			function () use ( $c ) {
@@ -185,6 +186,7 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 
 				$change_payment_method_vault_v2 = $c->get( 'wc-subscriptions.vault-v2.change-payment-method' );
 				assert( $change_payment_method_vault_v2 instanceof ChangePaymentMethodVaultV2 );
+
 				try {
 					return $change_payment_method_vault_v2->to_paypal_payment( $wc_order );
 				} catch ( Exception $exception ) {
