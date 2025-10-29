@@ -70,6 +70,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -1528,6 +1529,15 @@ return array(
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
+	'wcgateway.pwc-product-status'                         => static function ( ContainerInterface $container ): PWCProductStatus {
+		return new PWCProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'pwc.status-cache' ),
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'api.helper.failure-registry' )
+		);
+	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
 		return new PayUponInvoice(
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
@@ -1850,6 +1860,9 @@ return array(
 	},
 	'installments.status-cache'                            => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-installments-status-cache' );
+	},
+	'pwc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-pwc-status-cache' );
 	},
 	'dcc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-dcc-status-cache' );
