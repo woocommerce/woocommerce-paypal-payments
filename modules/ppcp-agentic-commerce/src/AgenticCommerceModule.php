@@ -64,8 +64,6 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
-
-				// Test via: do_action('ppcp_agentic_sync_batch').
 			}
 		);
 
