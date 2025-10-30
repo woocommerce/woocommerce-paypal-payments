@@ -59,7 +59,7 @@ class Recaptcha {
 			return false;
 		}
 
-		if ( wc_string_to_bool( 'guest_only' ) && is_user_logged_in() ) {
+		if ( wc_string_to_bool( $this->integration->get_option( 'guest_only' ) ) && is_user_logged_in() ) {
 			return false;
 		}
 
