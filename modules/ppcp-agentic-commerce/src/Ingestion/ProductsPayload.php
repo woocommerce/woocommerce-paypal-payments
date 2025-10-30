@@ -2,6 +2,9 @@
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
+use WC_Product;
+use WC_Product_Variation;
+
 class ProductsPayload {
 	/**
 	 * @var int[]
@@ -17,7 +20,7 @@ class ProductsPayload {
 		return $this->transform_products( $this->product_ids );
 	}
 
-	private function transform_products( array $product_ids ) {
+	private function transform_products( array $product_ids ): array {
 		$api_products = array();
 
 		foreach ( $product_ids as $product_id ) {
@@ -46,7 +49,7 @@ class ProductsPayload {
 				'id'               => (string) $product->get_id(),
 				'title'            => $product->get_name(),
 				'link'             => $product->get_permalink(),
-				'image_link'       => wp_get_attachment_image_url( $product->get_image_id(), 'full' ) ?: '',
+				'image_link'       => wp_get_attachment_image_url( (int) $product->get_image_id(), 'full' ) ?: '',
 				'description'      => $product->get_description() ?: $product->get_short_description(),
 				'price'            => $this->format_price( $product->get_price() ),
 				'availability'     => $this->map_stock_status( $product->get_stock_status() ),
@@ -74,13 +77,13 @@ class ProductsPayload {
 		return $api_products;
 	}
 
-	private function get_product_variants( \WC_Product $variable_product ): array {
+	private function get_product_variants( WC_Product $variable_product ): array {
 		$variants      = array();
 		$variation_ids = $variable_product->get_children();
 
 		foreach ( $variation_ids as $variation_id ) {
 			$variation = wc_get_product( $variation_id );
-			if ( ! $variation || ! $variation->is_purchasable() ) {
+			if ( ! $variation instanceof WC_Product_Variation || ! $variation->is_purchasable() ) {
 				continue;
 			}
 
@@ -89,7 +92,7 @@ class ProductsPayload {
 				'item_group_id'    => (string) $variable_product->get_id(),
 				'title'            => $variation->get_name(),
 				'link'             => $variation->get_permalink(),
-				'image_link'       => wp_get_attachment_image_url( $variation->get_image_id(), 'full' )
+				'image_link'       => wp_get_attachment_image_url( (int) $variation->get_image_id(), 'full' )
 					?: wp_get_attachment_image_url( (int) $variable_product->get_image_id(), 'full' )
 						?: '',
 				'description'      => $variation->get_description() ?: $variable_product->get_description(),
@@ -128,7 +131,7 @@ class ProductsPayload {
 			return '';
 		}
 
-		return number_format( (float) $price, 2, '.', '' ) . ' ProductsPayload.php' . get_woocommerce_currency();
+		return number_format( (float) $price, 2, '.', '' ) . ' ' . get_woocommerce_currency();
 	}
 
 	private function map_stock_status( $stock_status ): string {
