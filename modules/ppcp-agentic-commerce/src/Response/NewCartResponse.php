@@ -13,17 +13,32 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 
 class NewCartResponse extends CartResponse {
-	public function __construct( PayPalCart $cart, string $token ) {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param PayPalCart $cart The PayPal cart.
+	 * @param string     $cart_id The cart ID.
+	 * @param string     $token The EC token.
+	 * @param string     $status The cart status (CREATED or ACTIVE).
+	 */
+	public function __construct(
+		PayPalCart $cart,
+		string $cart_id,
+		string $token,
+		string $status = 'CREATED'
+	) {
 		parent::__construct( $cart );
-		$this->token = $token;
-
-		// todo - status 'CREATED' should be set after cart was persisted; via #5272-persist-cart.
-		$this->status = 'CREATED';
-
-		// todo - the cart_id is generated when we persist the new cart; via #5272-persist-cart.
-		$this->cart_id = wp_generate_password( 12, false );
+		$this->cart_id = $cart_id;
+		$this->token   = $token;
+		$this->status  = $status;
 	}
 
+	/**
+	 * Convert to array for API response.
+	 *
+	 * @return array The response array.
+	 */
 	public function to_array(): array {
 		$data = parent::to_array();
 

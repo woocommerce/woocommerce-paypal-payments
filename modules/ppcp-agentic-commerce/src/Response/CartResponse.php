@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 class CartResponse {
-	protected ?PayPalCart $cart = null;
+	protected PayPalCart $cart;
 
 	/**
 	 * The cart ID used by the API to reference to an existing cart.
@@ -43,6 +43,11 @@ class CartResponse {
 	 */
 	protected string $token = '';
 
+	/**
+	 * Constructor.
+	 *
+	 * @param PayPalCart $cart The PayPal cart.
+	 */
 	public function __construct( PayPalCart $cart ) {
 		$this->cart = $cart;
 
@@ -52,10 +57,50 @@ class CartResponse {
 		}
 	}
 
-	public function to_array(): array {
-		// Always set via the constructor, but the IDE does not believe it.
-		assert( $this->cart instanceof PayPalCart );
+	/**
+	 * Calculate cart totals.
+	 *
+	 * @return array The totals array.
+	 */
+	protected function calculate_totals(): array {
+		$cart_array = $this->cart->to_array();
 
+		$currency_code = $cart_array['items'][0]['price']['currency_code'] ?? 'USD';
+
+		$item_total = array_reduce(
+			$cart_array['items'] ?? array(),
+			function ( float $sum, $item ): float {
+				return $sum + ( (float) $item['price']['value'] * $item['quantity'] );
+			},
+			0.0
+		);
+
+		return array(
+			'item_total' => array(
+				'currency_code' => $currency_code,
+				'value'         => $item_total,
+			),
+			'shipping'   => array(
+				'currency_code' => $currency_code,
+				'value'         => '0.00',
+			),
+			'tax_total'  => array(
+				'currency_code' => $currency_code,
+				'value'         => '0.00',
+			),
+			'amount'     => array(
+				'currency_code' => $currency_code,
+				'value'         => $item_total,
+			),
+		);
+	}
+
+	/**
+	 * Convert to array for API response.
+	 *
+	 * @return array The response array.
+	 */
+	public function to_array(): array {
 		$data = array(
 			'id'                => $this->cart_id,
 			'status'            => $this->status,
@@ -64,6 +109,7 @@ class CartResponse {
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
 				$this->cart->validate()
 			),
+			'totals'            => $this->calculate_totals(),
 		);
 
 		return array_merge( $data, $this->cart->to_array() );
