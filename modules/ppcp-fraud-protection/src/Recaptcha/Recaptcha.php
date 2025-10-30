@@ -137,7 +137,7 @@ class Recaptcha {
 			? $this->verify_v3(
 				$token,
 				$this->integration->get_option( 'secret_key_v3' ),
-				floatval( $this->integration->get_option( 'score_threshold', 0.5 ) )
+				$this->score_threshold()
 			)
 			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
 
@@ -153,6 +153,58 @@ class Recaptcha {
 				403
 			);
 			exit;
+		}
+	}
+
+
+	public function validate_classic_checkout(): void {
+		if ( ! $this->should_use_recaptcha() ) {
+			return;
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verification handled by WooCommerce before this hook fires
+		/** @psalm-suppress PossiblyInvalidCast */
+		$token = sanitize_text_field(
+			wp_unslash(
+				(string) ( $_POST['ppcp_recaptcha_token'] ?? '' )
+			)
+		);
+		/** @psalm-suppress PossiblyInvalidCast */
+		$version = sanitize_text_field(
+			wp_unslash(
+				(string) ( $_POST['ppcp_recaptcha_version'] ?? '' )
+			)
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		if ( empty( $token ) ) {
+			wc_add_notice(
+				__(
+					'Please complete the CAPTCHA verification.',
+					'woocommerce-paypal-payments'
+				),
+				'error'
+			);
+
+			return;
+		}
+
+		$success = ( $version === 'v3' )
+			? $this->verify_v3(
+				$token,
+				$this->integration->get_option( 'secret_key_v3' ),
+				$this->score_threshold()
+			)
+			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
+
+		if ( ! $success ) {
+			wc_add_notice(
+				__(
+					'CAPTCHA verification failed. Please try again.',
+					'woocommerce-paypal-payments'
+				),
+				'error'
+			);
 		}
 	}
 
@@ -295,5 +347,9 @@ class Recaptcha {
 			wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ),
 			FILTER_VALIDATE_IP
 		) ?: '';
+	}
+
+	private function score_threshold(): float {
+		return floatval( $this->integration->get_option( 'score_threshold', 0.5 ) );
 	}
 }

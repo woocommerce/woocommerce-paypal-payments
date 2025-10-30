@@ -65,5 +65,17 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 				$recaptcha->intercept_paypal_ajax( $data );
 			}
 		);
+
+		foreach ( array( 'woocommerce_checkout_process', 'woocommerce_before_pay_action' ) as $hook ) {
+			add_action(
+				$hook,
+				static function () use ( $container ): void {
+					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+					assert( $recaptcha instanceof Recaptcha );
+
+					$recaptcha->validate_classic_checkout();
+				}
+			);
+		}
 	}
 }
