@@ -101,9 +101,6 @@ class CartResponse {
 	 * @return array The response array.
 	 */
 	public function to_array(): array {
-		// Always set via the constructor, but the IDE does not believe it.
-		assert( $this->cart instanceof PayPalCart );
-
 		$data = array(
 			'id'                => $this->cart_id,
 			'status'            => $this->status,
