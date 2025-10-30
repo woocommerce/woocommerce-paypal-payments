@@ -5,6 +5,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 
 use Psr\Log\LoggerInterface;
+use WP_Error;
 
 class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
@@ -206,6 +207,105 @@ class Recaptcha {
 				'error'
 			);
 		}
+	}
+
+	public function register_blocks_extension(): void {
+		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+			return;
+		}
+
+		woocommerce_store_api_register_endpoint_data(
+			array(
+				'endpoint'        => 'checkout',
+				'namespace'       => 'ppcp_recaptcha',
+				'schema_callback' => static function (): array {
+					return array(
+						'token'   => array(
+							'description' => __(
+								'reCAPTCHA token',
+								'woocommerce-paypal-payments'
+							),
+							'type'        => 'string',
+							'readonly'    => false,
+						),
+						'version' => array(
+							'description' => __(
+								'reCAPTCHA version',
+								'woocommerce-paypal-payments'
+							),
+							'type'        => 'string',
+							'readonly'    => false,
+						),
+					);
+				},
+			)
+		);
+	}
+
+
+	/**
+	 * @param  WP_Error|null|true $errors
+	 *
+	 * @return WP_Error|null|true WP_Error
+	 */
+	public function validate_blocks_request( $errors ) {
+		$request_uri = sanitize_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ) );
+
+		if (
+			! is_wp_error( $errors ) && strpos(
+				$request_uri,
+				'/wc/store/v1/checkout'
+			) !== false
+		) {
+			if ( ! $this->should_use_recaptcha() ) {
+				return $errors;
+			}
+
+			$request_body = file_get_contents( 'php://input' );
+			if ( ! is_string( $request_body ) ) {
+				return $errors;
+			}
+			$data     = json_decode( $request_body, true );
+			$ext_data = $data['extensions']['ppcp_recaptcha'] ?? null;
+
+			if ( empty( $ext_data ) || empty( $ext_data['token'] ) || empty( $ext_data['version'] ) ) {
+				return new WP_Error(
+					self::ERROR_CODE_MISSING_TOKEN,
+					__(
+						'Please complete the CAPTCHA verification.',
+						'woocommerce-paypal-payments'
+					),
+					array( 'status' => 400 )
+				);
+			}
+
+			$token   = sanitize_text_field( $ext_data['token'] );
+			$version = sanitize_text_field( $ext_data['version'] );
+
+			// Initialize WooCommerce session as it doesn't exist in REST API requests.
+			WC()->initialize_session();
+
+			$success = ( $version === 'v3' )
+				? $this->verify_v3(
+					$token,
+					$this->integration->get_option( 'secret_key_v3' ),
+					$this->score_threshold()
+				)
+				: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
+
+			if ( ! $success ) {
+				return new WP_Error(
+					self::ERROR_CODE_VERIFICATION_FAILED,
+					__(
+						'CAPTCHA verification failed. Please try again.',
+						'woocommerce-paypal-payments'
+					),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
+		return $errors;
 	}
 
 	private function verify_v3(

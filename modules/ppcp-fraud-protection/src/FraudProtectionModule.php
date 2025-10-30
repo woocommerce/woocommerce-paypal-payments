@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WP_Error;
 
 class FraudProtectionModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
@@ -77,5 +78,32 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 				}
 			);
 		}
+
+		add_action(
+			'woocommerce_blocks_loaded',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->register_blocks_extension();
+			}
+		);
+
+		add_filter(
+			'rest_authentication_errors',
+			/**
+			 * @param WP_Error|null|true $errors
+			 * @return WP_Error|null|true WP_Error
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			static function ( $errors ) use ( $container ) {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				return $recaptcha->validate_blocks_request( $errors );
+			},
+			99
+		);
 	}
 }
