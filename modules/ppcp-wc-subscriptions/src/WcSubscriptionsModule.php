@@ -28,10 +28,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Service\ChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\ChangePaymentMethodVaultV2;
 use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\DisplaySavedPaymentTokens;
+use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\VaultedPayPalEmail;
 
 /**
  * Class SubscriptionModule
@@ -334,6 +336,58 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			},
 			20,
 			2
+		);
+
+		/**
+		 * Vault v2 Free trial subscription, adds PayPal email into checkout form.
+		 */
+		add_action(
+			'woocommerce_paypal_payments_smart_button_render_wrapper',
+			function () use ( $c ) {
+				// Return early if save payment methods (Vault v3) is enabled.
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return;
+				}
+
+				$free_trial_subscription_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
+				assert( $free_trial_subscription_helper instanceof FreeTrialSubscriptionHelper );
+
+				if ( ! $free_trial_subscription_helper->is_free_trial_cart() ) {
+					return;
+				}
+
+				add_action(
+					'woocommerce_review_order_after_submit',
+					function () use ( $c ) {
+						$vaulted_paypal_email = $c->get( 'wc-subscriptions.vault-v2.vaulted-paypal-email' );
+						assert( $vaulted_paypal_email instanceof VaultedPayPalEmail );
+
+						$vaulted_email = $vaulted_paypal_email->get_vaulted_paypal_email();
+						if ( ! $vaulted_email ) {
+							return;
+						}
+
+						?>
+						<div class="ppcp-vaulted-paypal-details">
+							<?php
+							echo wp_kses_post(
+								sprintf(
+								// translators: %1$s - email, %2$s, %3$s - HTML tags for a link.
+									esc_html__(
+										'Using %2$s%1$s%3$s PayPal.',
+										'woocommerce-paypal-payments'
+									),
+									$vaulted_email,
+									'<b>',
+									'</b>'
+								)
+							);
+							?>
+						</div>
+						<?php
+					}
+				);
+			}
 		);
 
 		return true;

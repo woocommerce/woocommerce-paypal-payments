@@ -74,6 +74,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$smart_button->render_wrapper();
 			}
 		);
+
 		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $c ) {
