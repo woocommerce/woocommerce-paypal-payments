@@ -4,7 +4,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 
+use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WP_Error;
 
 class Recaptcha {
@@ -13,6 +15,7 @@ class Recaptcha {
 	private const ERROR_CODE_VERIFICATION_FAILED = 'ppcp_recaptcha_verification_failed';
 	private const CAPTCHA_USAGE_LIMIT            = 5;
 	private const CAPTCHA_RESULT_TRANSIENT_KEY   = 'ppcp_recaptcha_result_';
+	private const CAPTCHA_RESULT_META_KEY        = 'ppcp_recaptcha_captcha_result';
 
 	private RecaptchaIntegration $integration;
 
@@ -313,6 +316,70 @@ class Recaptcha {
 		}
 
 		return $errors;
+	}
+
+	public function add_result_meta( WC_Order $order ): void {
+
+		$customer_id = $this->customer_identifier();
+		$result      = get_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier() );
+
+		if ( ! $result ) {
+			return;
+		}
+
+		$order->update_meta_data( self::CAPTCHA_RESULT_META_KEY, $result );
+		$order->save();
+
+		delete_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id );
+	}
+
+	public function add_metabox(): void {
+		if ( ! wc_string_to_bool( $this->integration->get_option( 'show_metabox' ) ) ) {
+			return;
+		}
+
+		$screen = OrderUtil::custom_orders_table_usage_is_enabled()
+			? wc_get_page_screen_id( 'shop-order' )
+			: 'shop_order';
+
+		add_meta_box(
+			'ppcp_recaptcha_status',
+			__( 'reCAPTCHA Status', 'woocommerce-paypal-payments' ),
+			function ( WC_Order $order ): void {
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo $this->render_metabox( $order );
+			},
+			$screen,
+			'normal'
+		);
+	}
+
+	private function render_metabox( WC_Order $order ): string {
+		$captcha_result = $order->get_meta( self::CAPTCHA_RESULT_META_KEY );
+
+		if ( empty( $captcha_result ) ) {
+			return '<p>' . esc_html__(
+				'No reCAPTCHA data',
+				'woocommerce-paypal-payments'
+			) . '</p>';
+		}
+
+		// Truncate token to last 10 characters for display.
+		if ( isset( $captcha_result['token'] ) && is_string( $captcha_result['token'] ) ) {
+			if ( strlen( $captcha_result['token'] ) > 10 ) {
+				$captcha_result['token'] = '...' . (string) substr(
+					$captcha_result['token'],
+					-10
+				);
+			}
+		}
+
+		return '<pre>' . esc_html(
+			(string) wp_json_encode(
+				$captcha_result,
+				JSON_PRETTY_PRINT
+			)
+		) . '</pre>';
 	}
 
 	private function verify_v3(

@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -143,6 +144,34 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 				return $recaptcha->validate_blocks_request( $errors );
 			},
 			99
+		);
+
+		add_action(
+			'woocommerce_new_order',
+			/**
+			 * @param int $order_id
+			 * @param WC_Order $order
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			static function ( $order_id, $order ) use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->add_result_meta( $order );
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'add_meta_boxes',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->add_metabox();
+			}
 		);
 	}
 }
