@@ -57,6 +57,45 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		foreach ( array(
+			'woocommerce_review_order_before_submit' => 10,
+			'woocommerce_pay_order_before_submit'    => 10,
+			'woocommerce_after_cart_totals'          => 10,
+			'woocommerce_single_product_summary'     => 32,
+		) as $hook => $priority ) {
+			add_action(
+				$hook,
+				static function () use ( $container ): void {
+					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+					assert( $recaptcha instanceof Recaptcha );
+
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo $recaptcha->render_v2_container();
+				},
+				$priority
+			);
+		}
+		foreach ( array(
+			'render_block_woocommerce/checkout-actions-block',
+			'render_block_woocommerce/proceed-to-checkout-block',
+		) as $filter ) {
+			add_filter(
+				$filter,
+				/**
+				 * @param string $block_html
+				 * @returns string
+				 * @psalm-suppress MissingClosureParamType
+				 * @psalm-suppress MissingClosureReturnType
+				 */
+				static function ( string $block_html ) use ( $container ) {
+					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+					assert( $recaptcha instanceof Recaptcha );
+
+					return $block_html . $recaptcha->render_v2_container();
+				}
+			);
+		}
+
 		add_action(
 			'woocommerce_paypal_payments_create_order_request_started',
 			static function ( array $data ) use ( $container ): void {
