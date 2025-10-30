@@ -268,7 +268,11 @@ class Recaptcha {
 			if ( ! is_string( $request_body ) ) {
 				return $errors;
 			}
-			$data     = json_decode( $request_body, true );
+			$data = json_decode( $request_body, true );
+			// Not an order creation request.
+			if ( ! is_array( $data ) || ! isset( $data['billing_address'] ) ) {
+				return $errors;
+			}
 			$ext_data = $data['extensions']['ppcp_recaptcha'] ?? null;
 
 			if ( empty( $ext_data ) || empty( $ext_data['token'] ) || empty( $ext_data['version'] ) ) {
