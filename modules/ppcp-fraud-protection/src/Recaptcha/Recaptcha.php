@@ -36,7 +36,7 @@ class Recaptcha {
 	}
 
 	protected function should_use_recaptcha(): bool {
-		if ( ! $this->integration->enabled ) {
+		if ( ! wc_string_to_bool( $this->integration->enabled ) ) {
 			return false;
 		}
 
