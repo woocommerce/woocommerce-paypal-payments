@@ -137,14 +137,15 @@
 			return;
 		}
 
-		container.innerHTML =
-			'<div class="g-recaptcha" data-sitekey="' +
-			config.siteKeyV2 +
-			'" data-theme="' +
-			config.theme +
-			'"></div>';
+		container.innerHTML = '';
 
-		const recaptchaDiv = container.querySelector( '.g-recaptcha' );
+		const recaptchaDiv = document.createElement( 'div' );
+		recaptchaDiv.className = 'g-recaptcha';
+		recaptchaDiv.setAttribute( 'data-sitekey', config.siteKeyV2 );
+		recaptchaDiv.setAttribute( 'data-theme', config.theme );
+
+		container.appendChild( recaptchaDiv );
+
 		v2WidgetId = grecaptcha.render( recaptchaDiv, {
 			sitekey: config.siteKeyV2,
 			theme: config.theme,
