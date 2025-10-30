@@ -2,8 +2,8 @@
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
-use Psr\Log\LoggerInterface;
-
+use function as_next_scheduled_action;
+use function as_schedule_recurring_action;
 /**
  * Manages the ingestion process for agentic commerce.
  * This class handles scheduling sync jobs and marking products for sync.
