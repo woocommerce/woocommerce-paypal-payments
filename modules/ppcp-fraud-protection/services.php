@@ -29,10 +29,13 @@ return array(
 		return new RecaptchaIntegration();
 	},
 	'fraud-protection.recaptcha.payment-methods' => static function (): array {
-		return array(
-			PayPalGateway::ID,
-			CreditCardGateway::ID,
-			CardButtonGateway::ID,
+		return apply_filters(
+			'woocommerce_paypal_payments_recaptcha_payment_methods',
+			array(
+				PayPalGateway::ID,
+				CreditCardGateway::ID,
+				CardButtonGateway::ID,
+			)
 		);
 	},
 );
