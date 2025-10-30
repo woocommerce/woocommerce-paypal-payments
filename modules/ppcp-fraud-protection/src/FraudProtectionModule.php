@@ -77,7 +77,7 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 			);
 		}
 		foreach ( array(
-			'render_block_woocommerce/checkout-actions-block',
+			'render_block_woocommerce/checkout-express-payment-block',
 			'render_block_woocommerce/proceed-to-checkout-block',
 		) as $filter ) {
 			add_filter(
