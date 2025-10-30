@@ -50,6 +50,8 @@ class IngestionBatchProvider {
 				),
 			)
 		);
+		assert( is_array( $batch ) );
+
 		// If we're already at the limit, return early.
 		if ( count( $batch ) >= $limit ) {
 			return $batch;
@@ -71,6 +73,7 @@ class IngestionBatchProvider {
 				),
 			)
 		);
+		assert( is_array( $dirty_products ) );
 		// Merge into batch.
 		$batch = array_merge( $batch, $dirty_products );
 
@@ -82,8 +85,8 @@ class IngestionBatchProvider {
 		// If we need even more, get stale products (last synced before the timeout).
 		$stale_date     = gmdate(
 			'Y-m-d H:i:s',
-			strtotime(
-				'-' . $this->stale_timeout_days . ' days'
+			(int) strtotime(
+				'-' . (string) $this->stale_timeout_days . ' days'
 			)
 		);
 		$stale_products = wc_get_products(
@@ -106,6 +109,7 @@ class IngestionBatchProvider {
 				'meta_key'     => '_ppcp_agentic_last_sync',
 			)
 		);
+		assert( is_array( $stale_products ) );
 		// phpcs:enable WordPress.DB.SlowDBQuery
 		// Merge and return.
 		return array_merge( $batch, $stale_products );

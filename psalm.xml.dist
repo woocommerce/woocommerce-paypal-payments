@@ -40,6 +40,7 @@
     	<file name=".psalm/wcblocks.php"/>
     	<file name=".psalm/wcs.php"/>
     	<file name=".psalm/gzd.php"/>
+    	<file name=".psalm/php-jwt.php"/>
     	<file name=".psalm/wc-bookings.php"/>
     	<file name=".psalm/wpcli.php"/>
 		<file name="vendor/php-stubs/wordpress-stubs/wordpress-stubs.php"/>
