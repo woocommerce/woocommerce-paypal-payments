@@ -95,6 +95,42 @@ function as_schedule_single_action( $timestamp, $hook, $args = array(), $group =
 }
 
 /**
+ * Check if there is an existing action in the queue with a given hook, args and group combination.
+ *
+ * An action in the queue could be pending, in-progress or async. If the is pending for a time in
+ * future, its scheduled date will be returned as a timestamp. If it is currently being run, or an
+ * async action sitting in the queue waiting to be processed, in which case boolean true will be
+ * returned. Or there may be no async, in-progress or pending action for this hook, in which case,
+ * boolean false will be the return value.
+ *
+ * @param string $hook Name of the hook to search for.
+ * @param array  $args Arguments of the action to be searched.
+ * @param string $group Group of the action to be searched.
+ *
+ * @return int|bool The timestamp for the next occurrence of a pending scheduled action, true for an async or in-progress action or false if there is no matching action.
+ */
+function as_next_scheduled_action( $hook, $args = null, $group = '' ) {
+	return 0;
+}
+
+/**
+ * Schedule a recurring action
+ *
+ * @param int    $timestamp When the first instance of the job will run.
+ * @param int    $interval_in_seconds How long to wait between runs.
+ * @param string $hook The hook to trigger.
+ * @param array  $args Arguments to pass when the hook triggers.
+ * @param string $group The group to assign this job to.
+ * @param bool   $unique Whether the action should be unique. It will not be scheduled if another pending or running action has the same hook and group parameters.
+ * @param int    $priority Lower values take precedence over higher values. Defaults to 10, with acceptable values falling in the range 0-255.
+ *
+ * @return int The action ID. Zero if there was an error scheduling the action.
+ */
+function as_schedule_recurring_action( $timestamp, $interval_in_seconds, $hook, $args = array(), $group = '', $unique = false, $priority = 10 ) {
+	return 0;
+}
+
+/**
  * Retrieves the number of times a filter has been applied during the current request.
  *
  * @since 6.1.0
