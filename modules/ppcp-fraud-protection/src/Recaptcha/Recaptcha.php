@@ -19,23 +19,39 @@ class Recaptcha {
 
 	private RecaptchaIntegration $integration;
 
+	/**
+	 * The methods that require captcha.
+	 *
+	 * @var string[]
+	 */
+	private array $payment_methods;
+
 	private string $module_url;
 
 	private string $asset_version;
 
 	private LoggerInterface $logger;
 
+	/**
+	 * @param RecaptchaIntegration $integration
+	 * @param string[]             $payment_methods The methods that require captcha.
+	 * @param string               $module_url
+	 * @param string               $asset_version
+	 * @param LoggerInterface      $logger
+	 */
 	public function __construct(
 		RecaptchaIntegration $integration,
+		array $payment_methods,
 		string $module_url,
 		string $asset_version,
 		LoggerInterface $logger
 	) {
 
-		$this->integration   = $integration;
-		$this->module_url    = $module_url;
-		$this->asset_version = $asset_version;
-		$this->logger        = $logger;
+		$this->integration     = $integration;
+		$this->payment_methods = $payment_methods;
+		$this->module_url      = $module_url;
+		$this->asset_version   = $asset_version;
+		$this->logger          = $logger;
 	}
 
 	protected function should_use_recaptcha(): bool {
@@ -171,6 +187,12 @@ class Recaptcha {
 
 		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nonce verification handled by WooCommerce before this hook fires
 		/** @psalm-suppress PossiblyInvalidCast */
+		$payment_method = sanitize_text_field(
+			wp_unslash(
+				(string) ( $_POST['payment_method'] ?? '' )
+			)
+		);
+		/** @psalm-suppress PossiblyInvalidCast */
 		$token = sanitize_text_field(
 			wp_unslash(
 				(string) ( $_POST['ppcp_recaptcha_token'] ?? '' )
@@ -183,6 +205,10 @@ class Recaptcha {
 			)
 		);
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		if ( ! in_array( $payment_method, $this->payment_methods, true ) ) {
+			return;
+		}
 
 		if ( empty( $token ) ) {
 			wc_add_notice(
@@ -277,6 +303,12 @@ class Recaptcha {
 				return $errors;
 			}
 			$ext_data = $data['extensions']['ppcp_recaptcha'] ?? null;
+
+			$payment_method = sanitize_text_field( $data['payment_method'] ?? '' );
+
+			if ( ! in_array( $payment_method, $this->payment_methods, true ) ) {
+				return $errors;
+			}
 
 			if ( empty( $ext_data ) || empty( $ext_data['token'] ) || empty( $ext_data['version'] ) ) {
 				return new WP_Error(
