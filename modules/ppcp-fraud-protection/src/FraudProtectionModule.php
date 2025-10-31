@@ -115,11 +115,8 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'woocommerce_blocks_loaded',
-			static function () use ( $container ): void {
-				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
-				assert( $recaptcha instanceof Recaptcha );
-
-				$recaptcha->register_blocks_extension();
+			function (): void {
+				$this->register_recaptcha_blocks_extension();
 			}
 		);
 
@@ -166,6 +163,33 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 
 				$recaptcha->add_metabox();
 			}
+		);
+	}
+
+	private function register_recaptcha_blocks_extension(): void {
+		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
+			return;
+		}
+
+		woocommerce_store_api_register_endpoint_data(
+			array(
+				'endpoint'        => 'checkout',
+				'namespace'       => 'ppcp_recaptcha',
+				'schema_callback' => static function (): array {
+					return array(
+						'token'   => array(
+							'description' => 'reCAPTCHA token',
+							'type'        => 'string',
+							'readonly'    => false,
+						),
+						'version' => array(
+							'description' => 'reCAPTCHA version',
+							'type'        => 'string',
+							'readonly'    => false,
+						),
+					);
+				},
+			)
 		);
 	}
 }
