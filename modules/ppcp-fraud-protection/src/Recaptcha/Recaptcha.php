@@ -319,7 +319,19 @@ class Recaptcha {
 	public function add_result_meta( WC_Order $order ): void {
 
 		$customer_id = $this->customer_identifier();
-		$result      = get_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier() );
+
+		if ( ! $customer_id ) {
+			$this->logger->debug(
+				'Skipping reCAPTCHA meta addition: No customer identifier available',
+				array(
+					'order_id'  => $order->get_id(),
+					'backtrace' => true,
+				)
+			);
+			return;
+		}
+
+		$result = get_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id );
 
 		if ( ! $result ) {
 			return;
@@ -420,16 +432,25 @@ class Recaptcha {
 		);
 
 		if ( $is_valid ) {
-			$cached_data = array(
-				'result'      => $result,
-				'token'       => $token,
-				'usage_count' => 1,
-			);
-			set_transient(
-				self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier(),
-				$cached_data,
-				300
-			);
+			$customer_id = $this->customer_identifier();
+
+			if ( $customer_id ) {
+				$cached_data = array(
+					'result'      => $result,
+					'token'       => $token,
+					'usage_count' => 1,
+				);
+				set_transient(
+					self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id,
+					$cached_data,
+					300
+				);
+			} else {
+				$this->logger->debug(
+					'reCAPTCHA v3 verification successful but not cached: No customer identifier available',
+					array( 'backtrace' => true )
+				);
+			}
 		}
 
 		return $is_valid;
@@ -467,16 +488,25 @@ class Recaptcha {
 		);
 
 		if ( $is_valid ) {
-			$cached_data = array(
-				'result'      => $result,
-				'token'       => $token,
-				'usage_count' => 1,
-			);
-			set_transient(
-				self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier(),
-				$cached_data,
-				300
-			);
+			$customer_id = $this->customer_identifier();
+
+			if ( $customer_id ) {
+				$cached_data = array(
+					'result'      => $result,
+					'token'       => $token,
+					'usage_count' => 1,
+				);
+				set_transient(
+					self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id,
+					$cached_data,
+					300
+				);
+			} else {
+				$this->logger->debug(
+					'reCAPTCHA v2 verification successful but not cached: No customer identifier available',
+					array( 'backtrace' => true )
+				);
+			}
 		}
 
 		return $is_valid;
@@ -485,8 +515,17 @@ class Recaptcha {
 	private function check_cached_verification(
 		string $token
 	): bool {
+		$customer_id = $this->customer_identifier();
 
-		$cached_data = get_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier() );
+		if ( ! $customer_id ) {
+			$this->logger->debug(
+				'Skipping cached verification check: No customer identifier available',
+				array( 'backtrace' => true )
+			);
+			return false;
+		}
+
+		$cached_data = get_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id );
 
 		if ( $cached_data === false || ! isset( $cached_data['usage_count'], $cached_data['token'] ) ) {
 			return false;
@@ -495,7 +534,7 @@ class Recaptcha {
 		if ( $cached_data['token'] === $token && $cached_data['usage_count'] < self::CAPTCHA_USAGE_LIMIT ) {
 			++$cached_data['usage_count'];
 			set_transient(
-				self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier(),
+				self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id,
 				$cached_data,
 				300
 			);
@@ -504,13 +543,17 @@ class Recaptcha {
 		}
 
 		if ( $cached_data['usage_count'] >= self::CAPTCHA_USAGE_LIMIT ) {
-			delete_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $this->customer_identifier() );
+			delete_transient( self::CAPTCHA_RESULT_TRANSIENT_KEY . $customer_id );
 		}
 
 		return false;
 	}
 
-	private function customer_identifier(): string {
+	private function customer_identifier(): ?string {
+		if ( ! WC()->session || ! WC()->session->get_customer_id() ) {
+			return null;
+		}
+
 		return (string) WC()->session->get_customer_id();
 	}
 
