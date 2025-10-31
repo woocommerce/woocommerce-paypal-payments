@@ -93,7 +93,7 @@ class FeaturesDefinition {
 	 * @return array[] The array of all available features.
 	 */
 	public function all_available_features(): array {
-		$paylater_countries    = array(
+		$paylater_documentation_supported_countries = array(
 			'UK',
 			'ES',
 			'IT',
@@ -101,11 +101,11 @@ class FeaturesDefinition {
 			'US',
 			'DE',
 			'AU',
-			'CA',
 		);
-		$store_country         = $this->settings->get_woo_settings()['country'];
-		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
-		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
+
+		$store_country                  = $this->settings->get_woo_settings()['country'];
+		$paylater_docs_country_location = in_array( $store_country, $paylater_documentation_supported_countries, true ) ? strtolower( $store_country ) : 'us';
+		$save_paypal_and_venmo          = $this->plugin_settings->get_save_paypal_and_venmo();
 
 		$feature_items = array(
 			'save_paypal_and_venmo'           => array(
@@ -313,7 +313,7 @@ class FeaturesDefinition {
 					array(
 						'type'  => 'tertiary',
 						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
-						'url'   => "https://www.paypal.com/$country_location/business/accept-payments/checkout/installments",
+						'url'   => "https://www.paypal.com/$paylater_docs_country_location/business/accept-payments/checkout/installments",
 						'class' => 'small-button',
 					),
 				),
@@ -367,8 +367,7 @@ class FeaturesDefinition {
 						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
 						'urls'     => array(
 							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
-							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS
-',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
 						),
 						'showWhen' => 'disabled',
 						'class'    => 'small-button',

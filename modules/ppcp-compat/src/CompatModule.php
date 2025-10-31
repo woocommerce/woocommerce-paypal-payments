@@ -98,7 +98,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		 *
 		 * This action runs during plugin updates to automatically enable Pay Later messaging for stores
 		 * that meet the following criteria:
-		 * - Date is after 12th November 2025 (PayPal release time)
 		 * - Store Country is set as Canada
 		 * - The "Stay updated" checkbox is enabled (checked in either old or new UI)
 		 *
@@ -108,6 +107,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		 *
 		 * When all conditions are met, this will:
 		 * - Enable Pay Later messaging
+		 * - Enable Pay Later Payment Method
 		 * - Add default messaging locations (product, cart, checkout) to existing selections
 		 *
 		 * @todo Remove this auto-enablement logic after the next release
@@ -117,15 +117,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			static function () use ( $c ) {
-
-				// Check if current date is after November 12th, 2025 (Expected PayPal release date).
-				$release_date = '2025-11-12';
-				$current_date = current_time( 'Y-m-d' );
-
-				if ( $current_date < $release_date ) {
-					return;
-				}
-
 				// Check if the "Stay updated" checkbox is enabled (checked in either old or new UI).
 				$settings_model = $c->get( 'settings.data.settings' );
 				assert( $settings_model instanceof SettingsModel );

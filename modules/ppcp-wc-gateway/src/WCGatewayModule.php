@@ -583,7 +583,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
+				// @todo Remove this logic after the next release. If Store is Canada and PayLater for Canada is not released, then PayLater messaging is not available.
+				$is_paylater_canada_released     = $c->get( 'api.paylater.is-canada-released' );
+				$features['pay_later_messaging'] = array(
+					'enabled' => $features['alternative_payment_methods']['enabled'] && ( $c->get( 'api.shop.country' ) !== 'CA' || $is_paylater_canada_released ),
+				);
 
 				$features['installments'] = array(
 					'enabled' => $installments_product_status->is_active(),
