@@ -1,10 +1,10 @@
 === WooCommerce PayPal Payments ===
 Contributors: paypal, woocommerce, automattic, syde
 Tags: woocommerce, paypal, payments, ecommerce, credit card
-Requires at least: 6.5
+Requires at least: 6.6
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 3.2.1
+Stable tag: 3.3.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -155,6 +155,11 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 3.3.0 - 2025-10-31 =
+* Enhancement - Pay Later messaging & button auto-enabled for eligible Canadian merchants on 12th November, based on the STAY UPDATED preference. #3819
+* Enhancement - Customizable reCAPTCHA implementation for PayPal endpoints #3829
+* Fix - Fatal error in Visual Composer front-end editor due to strict $hook_suffix type #3815
 
 = 3.2.1 - 2025-10-20 =
 * Enhancement - Make plugin upgrade hooks safer #3789
