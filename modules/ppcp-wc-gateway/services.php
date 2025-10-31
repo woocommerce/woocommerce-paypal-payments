@@ -2106,7 +2106,7 @@ return array(
 				'id'           => 'ppcp-working-capital-task',
 				'title'        => __( 'Fuel your business growth with a PayPal Working Capital loan. Check eligibility', 'woocommerce-paypal-payments' ),
 				'description'  => '',
-				'redirect_url' => 'http://example.com/',
+				'redirect_url' => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
 			),
 		);
 	},
@@ -2222,7 +2222,7 @@ return array(
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
-					'http://example.com/',
+					'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
 				)

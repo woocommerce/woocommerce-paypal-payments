@@ -240,7 +240,7 @@ class TodosDefinition {
 				'isEligible'  => $eligibility_checks['apply_for_working_capital'],
 				'action'      => array(
 					'type' => 'external',
-					'url'  => 'http://example.com/',
+					'url'  => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
 				),
 				'priority'    => 14,
 			),
