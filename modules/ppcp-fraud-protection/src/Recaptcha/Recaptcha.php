@@ -241,34 +241,6 @@ class Recaptcha {
 		}
 	}
 
-	public function register_blocks_extension(): void {
-		if ( ! function_exists( 'woocommerce_store_api_register_endpoint_data' ) ) {
-			return;
-		}
-
-		woocommerce_store_api_register_endpoint_data(
-			array(
-				'endpoint'        => 'checkout',
-				'namespace'       => 'ppcp_recaptcha',
-				'schema_callback' => static function (): array {
-					return array(
-						'token'   => array(
-							'description' => 'reCAPTCHA token',
-							'type'        => 'string',
-							'readonly'    => false,
-						),
-						'version' => array(
-							'description' => 'reCAPTCHA version',
-							'type'        => 'string',
-							'readonly'    => false,
-						),
-					);
-				},
-			)
-		);
-	}
-
-
 	/**
 	 * @param  WP_Error|null|true $errors
 	 *
