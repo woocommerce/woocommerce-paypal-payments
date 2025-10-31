@@ -9,8 +9,8 @@
  * License:     GPL-2.0
  * Requires PHP: 7.4
  * Requires Plugins: woocommerce
- * Requires at least: 6.6
- * WC requires at least: 10.1
+ * Requires at least: 6.5
+ * WC requires at least: 9.6
  * WC tested up to: 10.3
  * Text Domain: woocommerce-paypal-payments
  *
