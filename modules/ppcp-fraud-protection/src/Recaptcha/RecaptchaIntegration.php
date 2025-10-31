@@ -81,9 +81,9 @@ class RecaptchaIntegration extends WC_Integration {
 				'title'       => __( 'reCAPTCHA v2 Settings', 'woocommerce-paypal-payments' ),
 				'type'        => 'title',
 				// translators: %s - URL.
-				'description' => __(
+				sprintf(
 					'Fallback visible checkbox when v3 score is below threshold. To get the keys go to <a href="%s" target="_blank">Google reCAPTCHA Admin</a> and create a site with <b>Challenge (v2) -> "I\'m not a robot" Checkbox</b> reCAPTCHA type.',
-					'woocommerce-paypal-payments'
+					'https://www.google.com/recaptcha/admin'
 				),
 			),
 			'site_key_v2'     => array(
