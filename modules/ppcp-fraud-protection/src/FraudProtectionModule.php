@@ -4,10 +4,14 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use WC_Order;
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WP_Error;
 
 class FraudProtectionModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
@@ -23,44 +27,151 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): bool {
-		$this->init_settings( $container );
+		$this->init_recaptcha( $container );
 
 		return true;
 	}
 
-	protected function init_settings( ContainerInterface $container ): void {
+	protected function init_recaptcha( ContainerInterface $container ): void {
 		add_filter(
-			'woocommerce_get_sections_advanced',
+			'woocommerce_integrations',
 			/**
-			 * @param $sections array
+			 * @param array $integrations
 			 * @returns array
 			 * @psalm-suppress MissingClosureParamType
 			 * @psalm-suppress MissingClosureReturnType
 			 */
-			function ( $sections ) use ( $container ) {
-				$sections[ $container->get( 'fraud-protection.settings.section.id' ) ] = $container->get( 'fraud-protection.settings.section.title' );
-				return $sections;
+			static function ( $integrations ) use ( $container ) {
+				// WC always creates a new instance here.
+				$integrations[] = RecaptchaIntegration::class;
+				return $integrations;
+			}
+		);
+
+		add_action(
+			'wp_enqueue_scripts',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->enqueue_scripts();
+			}
+		);
+
+		foreach ( array(
+			'woocommerce_review_order_before_submit' => 10,
+			'woocommerce_pay_order_before_submit'    => 10,
+			'woocommerce_after_cart_totals'          => 10,
+			'woocommerce_single_product_summary'     => 32,
+		) as $hook => $priority ) {
+			add_action(
+				$hook,
+				static function () use ( $container ): void {
+					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+					assert( $recaptcha instanceof Recaptcha );
+
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					echo $recaptcha->render_v2_container();
+				},
+				$priority
+			);
+		}
+		foreach ( array(
+			'render_block_woocommerce/checkout-express-payment-block',
+			'render_block_woocommerce/proceed-to-checkout-block',
+		) as $filter ) {
+			add_filter(
+				$filter,
+				/**
+				 * @param string $block_html
+				 * @returns string
+				 * @psalm-suppress MissingClosureParamType
+				 * @psalm-suppress MissingClosureReturnType
+				 */
+				static function ( string $block_html ) use ( $container ) {
+					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+					assert( $recaptcha instanceof Recaptcha );
+
+					return $block_html . $recaptcha->render_v2_container();
+				}
+			);
+		}
+
+		add_action(
+			'woocommerce_paypal_payments_create_order_request_started',
+			static function ( array $data ) use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->intercept_paypal_ajax( $data );
+			}
+		);
+
+		foreach ( array( 'woocommerce_checkout_process', 'woocommerce_before_pay_action' ) as $hook ) {
+			add_action(
+				$hook,
+				static function () use ( $container ): void {
+					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+					assert( $recaptcha instanceof Recaptcha );
+
+					$recaptcha->validate_classic_checkout();
+				}
+			);
+		}
+
+		add_action(
+			'woocommerce_blocks_loaded',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->register_blocks_extension();
 			}
 		);
 
 		add_filter(
-			'woocommerce_get_settings_advanced',
+			'rest_authentication_errors',
 			/**
-			 * @param $settings array
-			 * @param $current_section string
-			 * @returns array
+			 * @param WP_Error|null|true $errors
+			 * @return WP_Error|null|true WP_Error
 			 * @psalm-suppress MissingClosureParamType
 			 * @psalm-suppress MissingClosureReturnType
 			 */
-			function ( $settings, $current_section ) use ( $container ) {
-				if ( $current_section !== $container->get( 'fraud-protection.settings.section.id' ) ) {
-					return $settings;
-				}
+			static function ( $errors ) use ( $container ) {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
 
-				return $container->get( 'fraud-protection.settings.fields' );
+				return $recaptcha->validate_blocks_request( $errors );
+			},
+			99
+		);
+
+		add_action(
+			'woocommerce_new_order',
+			/**
+			 * @param int $order_id
+			 * @param WC_Order $order
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			static function ( $order_id, $order ) use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->add_result_meta( $order );
 			},
 			10,
 			2
+		);
+
+		add_action(
+			'add_meta_boxes',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				$recaptcha->add_metabox();
+			}
 		);
 	}
 }

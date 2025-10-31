@@ -4,42 +4,38 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
-	'fraud-protection.url'                    => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/fraud-protection/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'fraud-protection.url'                       => static function ( ContainerInterface $container ): string {
+		return plugins_url( '/modules/ppcp-fraud-protection/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 
-	'fraud-protection.settings.section.id'    => static fn(): string => 'ppcp_fraud_protection',
-	'fraud-protection.settings.section.title' => static function (): string {
-		return __( 'PayPal fraud protection', 'woocommerce-paypal-payments' );
+	'fraud-protection.recaptcha'                 => static function ( ContainerInterface $container ): Recaptcha {
+		return new Recaptcha(
+			$container->get( 'fraud-protection.recaptcha.integration' ),
+			$container->get( 'fraud-protection.recaptcha.payment-methods' ),
+			$container->get( 'fraud-protection.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
-
-	'fraud-protection.settings.prefix'        => static fn(): string => 'ppcp_fraud_protection_',
-
-	'fraud-protection.settings.fields'        => static function ( ContainerInterface $container ): array {
-		$prefix = $container->get( 'fraud-protection.settings.prefix' );
-
-		return array(
+	'fraud-protection.recaptcha.integration'     => static function (): RecaptchaIntegration {
+		return new RecaptchaIntegration();
+	},
+	'fraud-protection.recaptcha.payment-methods' => static function (): array {
+		return apply_filters(
+			'woocommerce_paypal_payments_recaptcha_payment_methods',
 			array(
-				'type' => 'title',
-				'id'   => $prefix . 'title',
-				'name' => $container->get( 'fraud-protection.settings.section.title' ),
-				'desc' => '',
-			),
-
-			array(
-				'type' => 'checkbox',
-				'id'   => $prefix . 'enabled',
-				'name' => __( 'Enable', 'woocommerce-paypal-payments' ),
-				'desc' => __( 'Enable fraud protection', 'woocommerce-paypal-payments' ),
-			),
-
-			array(
-				'type' => 'sectionend',
-				'id'   => $prefix . 'end',
-			),
+				PayPalGateway::ID,
+				CreditCardGateway::ID,
+				CardButtonGateway::ID,
+			)
 		);
 	},
 );
