@@ -253,18 +253,12 @@ class Recaptcha {
 				'schema_callback' => static function (): array {
 					return array(
 						'token'   => array(
-							'description' => __(
-								'reCAPTCHA token',
-								'woocommerce-paypal-payments'
-							),
+							'description' => 'reCAPTCHA token',
 							'type'        => 'string',
 							'readonly'    => false,
 						),
 						'version' => array(
-							'description' => __(
-								'reCAPTCHA version',
-								'woocommerce-paypal-payments'
-							),
+							'description' => 'reCAPTCHA version',
 							'type'        => 'string',
 							'readonly'    => false,
 						),
