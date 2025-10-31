@@ -16,16 +16,10 @@ use WP_Error;
 class FraudProtectionModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function services(): array {
 		return require __DIR__ . '/../services.php';
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
 	public function run( ContainerInterface $container ): bool {
 		$this->init_recaptcha( $container );
 
