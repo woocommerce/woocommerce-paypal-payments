@@ -390,6 +390,36 @@ class WcSubscriptionsModule implements ServiceModule, ExtendingModule, Executabl
 			}
 		);
 
+		/**
+		 * Vault v2 Free trial subscription, adds vaulted PayPal email to localized script data.
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_localized_script_data',
+			function ( array $localized_script_data ) use ( $c ) {
+				// Return early if save payment methods (Vault v3) is enabled.
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return $localized_script_data;
+				}
+
+				$vaulted_paypal_email = $c->get( 'wc-subscriptions.vault-v2.vaulted-paypal-email' );
+				assert( $vaulted_paypal_email instanceof VaultedPayPalEmail );
+
+				$vaulted_email = $vaulted_paypal_email->get_vaulted_paypal_email();
+				if ( ! $vaulted_email ) {
+					return $localized_script_data;
+				}
+
+				$free_trial_subscription_helper = $c->get( 'wc-subscriptions.free-trial-subscription-helper' );
+				assert( $free_trial_subscription_helper instanceof FreeTrialSubscriptionHelper );
+
+				$localized_script_data['vaulted_paypal_email'] = ( is_checkout() && $free_trial_subscription_helper->is_free_trial_cart() )
+				? $vaulted_paypal_email->get_vaulted_paypal_email()
+				: '';
+
+				return $localized_script_data;
+			}
+		);
+
 		return true;
 	}
 

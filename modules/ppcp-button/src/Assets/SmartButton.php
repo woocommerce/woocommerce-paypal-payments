@@ -1229,7 +1229,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,
-			'vaulted_paypal_email'                    => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                                => $this->bn_codes(),
 			'payer'                                   => $this->payerData(),
 			'button'                                  => array(
