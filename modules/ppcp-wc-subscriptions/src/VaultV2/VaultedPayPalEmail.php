@@ -9,6 +9,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 
 class VaultedPayPalEmail {
+	private ?array $payment_tokens = null;
+
 	private PaymentTokensEndpoint $payment_tokens_endpoint;
 	private PaymentTokenRepository $payment_token_repository;
 	private LoggerInterface $logger;
