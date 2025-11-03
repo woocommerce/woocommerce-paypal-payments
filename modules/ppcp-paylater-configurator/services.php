@@ -48,12 +48,10 @@ return array(
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		assert( $dcc_product_status instanceof DCCProductStatus );
 
-		$card_fields_eligible = $container->get( 'card-fields.eligible' );
-
 		$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
 
 		// Pay Later Messaging is available if vaulting is not enabled, the shop country is supported, and is eligible for ACDC.
-		return ! $vault_enabled && $messages_apply->for_country() && $dcc_product_status->is_active() && $card_fields_eligible;
+		return ! $vault_enabled && $messages_apply->for_country() && $dcc_product_status->is_active();
 	},
 	'paylater-configurator.messaging-locations'  => static function ( ContainerInterface $container ): array {
 		// Get an array of locations that display the Pay-Later message.
