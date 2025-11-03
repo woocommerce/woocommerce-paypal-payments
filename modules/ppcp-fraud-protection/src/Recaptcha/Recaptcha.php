@@ -7,6 +7,8 @@ namespace WooCommerce\PayPalCommerce\FraudProtection\Recaptcha;
 use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Product;
+use WooCommerce\PayPalCommerce\FraudProtection\PersistentCounter;
 use WP_Error;
 
 class Recaptcha {
@@ -32,26 +34,38 @@ class Recaptcha {
 
 	private LoggerInterface $logger;
 
+	private PersistentCounter $rejection_counter;
+
+	private string $rejection_logger_source;
+
+	private float $last_v3_score = 0;
+
 	/**
 	 * @param RecaptchaIntegration $integration
 	 * @param string[]             $payment_methods The methods that require captcha.
 	 * @param string               $module_url
 	 * @param string               $asset_version
 	 * @param LoggerInterface      $logger
+	 * @param PersistentCounter    $rejection_counter
+	 * @param string               $rejection_logger_source
 	 */
 	public function __construct(
 		RecaptchaIntegration $integration,
 		array $payment_methods,
 		string $module_url,
 		string $asset_version,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		PersistentCounter $rejection_counter,
+		string $rejection_logger_source
 	) {
 
-		$this->integration     = $integration;
-		$this->payment_methods = $payment_methods;
-		$this->module_url      = $module_url;
-		$this->asset_version   = $asset_version;
-		$this->logger          = $logger;
+		$this->integration             = $integration;
+		$this->payment_methods         = $payment_methods;
+		$this->module_url              = $module_url;
+		$this->asset_version           = $asset_version;
+		$this->logger                  = $logger;
+		$this->rejection_counter       = $rejection_counter;
+		$this->rejection_logger_source = $rejection_logger_source;
 	}
 
 	protected function should_use_recaptcha(): bool {
@@ -71,6 +85,20 @@ class Recaptcha {
 		}
 
 		return true;
+	}
+
+	public function render_settings_page_log(): string {
+		$count = esc_attr( (string) $this->rejection_counter->current() );
+		$url   = esc_url( admin_url( 'admin.php?page=wc-status&tab=logs&source=' . $this->rejection_logger_source ) );
+		return "
+		<tr valign='top'>
+			<td colspan='2' style='padding: 0;'>
+				<h4>Requests rejected by reCAPTCHA v3:
+					$count
+					<a href='$url'>view logs</a>
+				</h4>
+			</td>
+		</tr>";
 	}
 
 	public function enqueue_scripts(): void {
@@ -165,6 +193,15 @@ class Recaptcha {
 			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
 
 		if ( ! $success ) {
+			if ( $version === 'v3' ) {
+				$content = $request_data;
+				// Sending only form to reduce the amount of data.
+				if ( isset( $request_data['form'] ) ) {
+					$content = $request_data['form'];
+				}
+				$this->log_rejection( 'Create Order AJAX', $content );
+			}
+
 			wp_send_json_error(
 				array(
 					'message' => __(
@@ -204,7 +241,6 @@ class Recaptcha {
 				(string) ( $_POST['ppcp_recaptcha_version'] ?? '' )
 			)
 		);
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		if ( ! in_array( $payment_method, $this->payment_methods, true ) ) {
 			return;
@@ -231,6 +267,11 @@ class Recaptcha {
 			: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
 
 		if ( ! $success ) {
+			if ( $version === 'v3' ) {
+				$content = $_POST;
+				$this->log_rejection( 'Classic Checkout Submission', $content );
+			}
+
 			wc_add_notice(
 				__(
 					'CAPTCHA verification failed. Please try again.',
@@ -239,6 +280,7 @@ class Recaptcha {
 				'error'
 			);
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**
@@ -302,6 +344,12 @@ class Recaptcha {
 				: $this->verify_v2( $token, $this->integration->get_option( 'secret_key_v2' ) );
 
 			if ( ! $success ) {
+				if ( $version === 'v3' ) {
+					$content = $data;
+					unset( $content['extensions'] );
+					$this->log_rejection( 'Block Checkout Submission', $content );
+				}
+
 				return new WP_Error(
 					self::ERROR_CODE_VERIFICATION_FAILED,
 					__(
@@ -430,6 +478,8 @@ class Recaptcha {
 			$threshold,
 			$result
 		);
+
+		$this->last_v3_score = $score;
 
 		if ( $is_valid ) {
 			$customer_id = $this->customer_identifier();
@@ -564,7 +614,73 @@ class Recaptcha {
 		) ?: '';
 	}
 
+	private function customer_user_agent(): string {
+		return sanitize_text_field(
+			(string) ( wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' ) )
+		);
+	}
+
 	private function score_threshold(): float {
 		return floatval( $this->integration->get_option( 'score_threshold', 0.5 ) );
+	}
+
+	private function cart_contents(): array {
+		$cart = WC()->cart;
+		if ( ! isset( $cart ) || $cart->is_empty() ) {
+			return array();
+		}
+		$cart_data = array(
+			'items'  => array(),
+			'totals' => array(
+				'subtotal' => $cart->subtotal,
+				'tax'      => $cart->get_total_tax(),
+				'shipping' => $cart->get_shipping_total(),
+				'total'    => $cart->total,
+			),
+		);
+
+		foreach ( $cart->get_cart() as $cart_item ) {
+			$product = $cart_item['data'];
+			if ( ! $product instanceof WC_Product ) {
+				continue;
+			}
+
+			$cart_data['items'][] = array(
+				'product_id' => $cart_item['product_id'],
+				'name'       => $product->get_name(),
+				'quantity'   => $cart_item['quantity'],
+				'price'      => $product->get_price(),
+				'line_total' => $cart_item['line_total'],
+				'variation'  => $cart_item['variation'] ?? array(),
+			);
+		}
+
+		return $cart_data;
+	}
+
+
+	private function log_rejection( string $endpoint_name, array $request_data ): void {
+		$this->rejection_counter->increment();
+
+		if ( ! wc_string_to_bool( $this->integration->get_option( 'log_rejections' ) ) ) {
+			return;
+		}
+
+		$ip         = $this->customer_ip();
+		$user_agent = $this->customer_user_agent();
+
+		unset( $request_data['ppcp_recaptcha_token'] );
+		unset( $request_data['ppcp_recaptcha_version'] );
+		unset( $request_data['g-recaptcha-response'] );
+		$request_data_str = wp_json_encode( $request_data );
+
+		$cart = wp_json_encode( $this->cart_contents() );
+
+		$this->logger->debug(
+			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}, request content: {$request_data_str}, cart: {$cart}",
+			array(
+				'source' => $this->rejection_logger_source,
+			)
+		);
 	}
 }

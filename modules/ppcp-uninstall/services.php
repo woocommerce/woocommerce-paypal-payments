@@ -39,6 +39,7 @@ return array(
 			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
 			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
 			PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE,
+			$container->get( 'fraud-protection.recaptcha.rejection-counter.option-id' ),
 		);
 	},
 

@@ -42,6 +42,16 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		add_filter(
+			'woocommerce_generate_ppcp_recaptcha_log_html',
+			function () use ( $container ): string {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
+
+				return $recaptcha->render_settings_page_log();
+			}
+		);
+
 		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $container ): void {

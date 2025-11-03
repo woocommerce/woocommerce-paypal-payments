@@ -34,6 +34,10 @@ class RecaptchaIntegration extends WC_Integration {
 				'default' => 'no',
 			),
 
+			'log'             => array(
+				'type' => 'ppcp_recaptcha_log',
+			),
+
 			'v3_title'        => array(
 				'title'       => 'reCAPTCHA v3 Settings',
 				'type'        => 'title',
@@ -126,6 +130,14 @@ class RecaptchaIntegration extends WC_Integration {
 				'default'     => 'no',
 				'description' =>
 					'Display reCAPTCHA verification details in a metabox on order edit pages',
+			),
+			'log_rejections'  => array(
+				'title'       => 'Log',
+				'type'        => 'checkbox',
+				'label'       => 'Log rejected attempts',
+				'default'     => 'no',
+				'description' =>
+					'Log information about the checkout attempts rejected by v3 reCAPTCHA',
 			),
 		);
 	}
