@@ -33,29 +33,6 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 	protected const METHOD = 'GET';
 
 	/**
-	 * The agentic session handler.
-	 *
-	 * @var AgenticSessionHandler
-	 */
-	private AgenticSessionHandler $session_handler;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param JwtAuthService        $auth_service The JWT auth service.
-	 * @param AgenticSessionHandler $session_handler The session handler.
-	 * @param ResponseFactory       $response_factory The response factory.
-	 */
-	public function __construct(
-		JwtAuthService $auth_service,
-		AgenticSessionHandler $session_handler,
-		ResponseFactory $response_factory
-	) {
-		parent::__construct( $auth_service, $response_factory );
-		$this->session_handler = $session_handler;
-	}
-
-	/**
 	 * Register REST API routes.
 	 *
 	 * @return void
