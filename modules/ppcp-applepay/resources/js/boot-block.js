@@ -22,6 +22,7 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ applePayLoaded, setApplePayLoaded ] = useState( false );
+	const [ manager, setManager ] = useState( null );
 	const wrapperRef = useRef( null );
 
 	useEffect( () => {
@@ -47,7 +48,7 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 	}, [ isEditing ] );
 
 	useEffect( () => {
-		if ( isEditing || ! paypalLoaded || ! applePayLoaded ) {
+		if ( isEditing || ! paypalLoaded || ! applePayLoaded || manager ) {
 			return;
 		}
 
@@ -57,13 +58,50 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 
 		buttonConfig.reactWrapper = wrapperRef.current;
 
-		new ManagerClass(
+		const newManager = new ManagerClass(
 			namespace,
 			buttonConfig,
 			ppcpConfig,
 			buttonAttributes
 		);
-	}, [ paypalLoaded, applePayLoaded, isEditing, buttonAttributes ] );
+
+		setManager( newManager );
+	}, [ paypalLoaded, applePayLoaded, isEditing, buttonAttributes, manager ] );
+
+	useEffect( () => {
+		if ( ! manager || isEditing ) {
+			return;
+		}
+
+		let previousTotal = null;
+
+		const unsubscribe = wp.data.subscribe( () => {
+			const store = wp.data.select( 'wc/store/cart' );
+			if ( ! store ) {
+				return;
+			}
+
+			const totals = store.getCartTotals();
+			if ( ! totals ) {
+				return;
+			}
+
+			const currentTotal =
+				parseInt( totals.total_price, 10 ) /
+				10 ** totals.currency_minor_unit;
+
+			if ( currentTotal !== previousTotal && previousTotal !== null ) {
+				previousTotal = currentTotal;
+				manager.reinit();
+			} else if ( previousTotal === null ) {
+				previousTotal = currentTotal;
+			}
+		} );
+
+		return () => {
+			unsubscribe();
+		};
+	}, [ manager, isEditing ] );
 
 	if ( isEditing ) {
 		return (
