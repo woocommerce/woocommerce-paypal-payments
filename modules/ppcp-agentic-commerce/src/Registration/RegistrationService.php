@@ -69,12 +69,11 @@ class RegistrationService {
 	 * @return RegistrationResult|WP_Error|null Null if store was not registered.
 	 */
 	public function deregister() {
-		$token = $this->get_registration_token();
-
-		if ( ! $token ) {
+		if ( ! $this->is_registered() ) {
 			return null;
 		}
 
+		$token  = $this->get_registration_token();
 		$result = $this->webhook_call( $token, self::UNINSTALL_PATH );
 		$this->delete_registration_token();
 
@@ -90,6 +89,15 @@ class RegistrationService {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Checks, if the current store is registered to support PayPal Agentic Commerce.
+	 *
+	 * @return bool
+	 */
+	public function is_registered(): bool {
+		return (bool) $this->get_registration_token();
 	}
 
 	/**
