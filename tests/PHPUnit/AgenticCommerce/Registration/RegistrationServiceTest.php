@@ -269,4 +269,39 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertTrue( $result->success );
 		$this->assertSame( 'Deregistration successful', $result->message );
 	}
+
+	public function test_deregister_failure(): void {
+		$this->connection_state->shouldReceive( 'is_production' )
+			->once()
+			->andReturn( false );
+
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->returnArg( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => false,
+					'message' => 'Deregistration rejected',
+					'error'   => 'Token not found',
+				)
+			)
+		);
+
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( 'stored-token' );
+
+		$testee->shouldReceive( 'delete_registration_token' )
+			->once();
+
+		$result = $testee->deregister();
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
+		$this->assertSame( 'Token not found', $result->get_error_message() );
+	}
 }
