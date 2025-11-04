@@ -207,7 +207,10 @@ class RegistrationServiceTest extends TestCase {
 			->andReturn( array() );
 
 		$testee = $this->create_testable_service( true );
-		$testee->deregister();
+		$result = $testee->deregister();
+
+		$this->assertInstanceOf( RegistrationResult::class, $result );
+		$this->assertTrue( $result->success );
 	}
 
 	public function environment_urls_provider(): array {
