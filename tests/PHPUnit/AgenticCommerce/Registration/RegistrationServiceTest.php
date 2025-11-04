@@ -151,4 +151,49 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertSame( 'registration_failed', $result->get_error_code() );
 		$this->assertSame( 'Invalid merchant data', $result->get_error_message() );
 	}
+
+	public function test_register_webhook_network_error(): void {
+		$metadata = new MerchantMetadata(
+			'Test Store',
+			'https://example.com',
+			'US',
+			'USD',
+			'MERCHANT123',
+			'https://example.com/catalog.json'
+		);
+
+		$this->metadata_provider->shouldReceive( 'get_metadata' )
+			->once()
+			->andReturn( $metadata );
+
+		$this->connection_state->shouldReceive( 'is_production' )
+			->once()
+			->andReturn( false );
+
+		$wp_error = new WP_Error( 'http_request_failed', 'Connection timeout' );
+
+		when( 'wp_remote_post' )->justReturn( $wp_error );
+		when( 'is_wp_error' )->alias(
+			function ( $thing ) {
+				return $thing instanceof WP_Error;
+			}
+		);
+
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( false );
+
+		$testee->shouldReceive( 'delete_registration_token' )
+			->once();
+
+		$result = $testee->register();
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'webhook_request_failed', $result->get_error_code() );
+		$this->assertSame( 'Connection timeout', $result->get_error_message() );
+	}
 }
