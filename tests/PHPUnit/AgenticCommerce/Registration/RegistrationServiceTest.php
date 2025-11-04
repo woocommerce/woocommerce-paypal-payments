@@ -133,7 +133,11 @@ class RegistrationServiceTest extends TestCase {
 		$this->connection_state->allows( 'is_production' )->andReturn( false );
 
 		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->justReturn( false );
+		when( 'is_wp_error' )->alias(
+			function ( $thing ) {
+				return $thing instanceof WP_Error;
+			}
+		);
 		when( 'wp_remote_retrieve_body' )->justReturn( 'invalid json {[' );
 
 		$testee = $this->create_testable_service( false );
