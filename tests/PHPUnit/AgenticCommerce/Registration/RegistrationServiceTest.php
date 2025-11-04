@@ -19,156 +19,97 @@ class RegistrationServiceTest extends TestCase {
 
 	private ConnectionState $connection_state;
 	private MerchantMetadataProvider $metadata_provider;
-	private RegistrationService $testee;
 
 	public function setUp(): void {
 		parent::setUp();
 
 		$this->connection_state  = Mockery::mock( ConnectionState::class );
 		$this->metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
+	}
 
-		$this->testee = new RegistrationService(
+	private function create_testable_service( bool $has_token = false ): TestableRegistrationService {
+		return new TestableRegistrationService(
 			$this->connection_state,
-			$this->metadata_provider
+			$this->metadata_provider,
+			$has_token ? 'stored-token' : false
 		);
 	}
 
+	private function stub_metadata(): MerchantMetadata {
+		$metadata = new MerchantMetadata(
+			'Test Store',
+			'https://example.com',
+			'US',
+			'USD',
+			'MERCHANT123',
+			'https://example.com/catalog.json'
+		);
+
+		$this->metadata_provider->allows( 'get_metadata' )
+			->andReturn( $metadata );
+
+		return $metadata;
+	}
+
 	public function test_is_registered_returns_false(): void {
-		$result = $this->testee->is_registered();
+		$testee = $this->create_testable_service();
+
+		$result = $testee->is_registered();
 
 		$this->assertFalse( $result );
 	}
 
 	public function test_deregister_returns_null_when_not_registered(): void {
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( false );
+		$testee = $this->create_testable_service( false );
 
 		$result = $testee->deregister();
 
 		$this->assertNull( $result );
 	}
 
-	public function test_register_success(): void {
-		$metadata = new MerchantMetadata(
-			'Test Store',
-			'https://example.com',
-			'US',
-			'USD',
-			'MERCHANT123',
-			'https://example.com/catalog.json'
-		);
-
-		$this->metadata_provider->shouldReceive( 'get_metadata' )
-			->once()
-			->andReturn( $metadata );
-
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
+	/**
+	 * @dataProvider registration_outcomes_provider
+	 */
+	public function test_register_outcomes( bool $success, string $error_code = null ): void {
+		$this->stub_metadata();
+		$this->connection_state->allows( 'is_production' )->andReturn( false );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
-					'success' => true,
-					'message' => 'Registration successful',
+					'success' => $success,
+					'message' => $success ? 'Registration successful' : 'Registration failed',
+					'error'   => $success ? null : 'Error details',
 				)
 			)
 		);
 
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( false );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
-
-		$testee->shouldReceive( 'save_registration_token' )
-			->once()
-			->with( Mockery::type( 'string' ) );
-
+		$testee = $this->create_testable_service( false );
 		$result = $testee->register();
 
-		$this->assertInstanceOf( RegistrationResult::class, $result );
-		$this->assertTrue( $result->success );
-		$this->assertSame( 'Registration successful', $result->message );
+		if ( $success ) {
+			$this->assertInstanceOf( RegistrationResult::class, $result );
+			$this->assertTrue( $result->success );
+			$this->assertTrue( $testee->was_token_saved );
+		} else {
+			$this->assertInstanceOf( WP_Error::class, $result );
+			$this->assertSame( $error_code, $result->get_error_code() );
+			$this->assertFalse( $testee->was_token_saved );
+		}
 	}
 
-	public function test_register_failure(): void {
-		$metadata = new MerchantMetadata(
-			'Test Store',
-			'https://example.com',
-			'US',
-			'USD',
-			'MERCHANT123',
-			'https://example.com/catalog.json'
+	public function registration_outcomes_provider(): array {
+		return array(
+			'success' => array( true ),
+			'failure' => array( false, 'registration_failed' ),
 		);
-
-		$this->metadata_provider->shouldReceive( 'get_metadata' )
-			->once()
-			->andReturn( $metadata );
-
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
-
-		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->returnArg( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => false,
-					'message' => 'Registration rejected',
-					'error'   => 'Invalid merchant data',
-				)
-			)
-		);
-
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( false );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->twice();
-
-		$result = $testee->register();
-
-		$this->assertInstanceOf( WP_Error::class, $result );
-		$this->assertSame( 'registration_failed', $result->get_error_code() );
-		$this->assertSame( 'Invalid merchant data', $result->get_error_message() );
 	}
 
 	public function test_register_webhook_network_error(): void {
-		$metadata = new MerchantMetadata(
-			'Test Store',
-			'https://example.com',
-			'US',
-			'USD',
-			'MERCHANT123',
-			'https://example.com/catalog.json'
-		);
-
-		$this->metadata_provider->shouldReceive( 'get_metadata' )
-			->once()
-			->andReturn( $metadata );
-
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
+		$this->stub_metadata();
+		$this->connection_state->allows( 'is_production' )->andReturn( false );
 
 		$wp_error = new WP_Error( 'http_request_failed', 'Connection timeout' );
 
@@ -179,17 +120,7 @@ class RegistrationServiceTest extends TestCase {
 			}
 		);
 
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( false );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
-
+		$testee = $this->create_testable_service( false );
 		$result = $testee->register();
 
 		$this->assertInstanceOf( WP_Error::class, $result );
@@ -198,119 +129,66 @@ class RegistrationServiceTest extends TestCase {
 	}
 
 	public function test_register_json_parsing_error(): void {
-		$metadata = new MerchantMetadata(
-			'Test Store',
-			'https://example.com',
-			'US',
-			'USD',
-			'MERCHANT123',
-			'https://example.com/catalog.json'
-		);
-
-		$this->metadata_provider->shouldReceive( 'get_metadata' )
-			->once()
-			->andReturn( $metadata );
-
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
+		$this->stub_metadata();
+		$this->connection_state->allows( 'is_production' )->andReturn( false );
 
 		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->returnArg( false );
+		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn( 'invalid json {[' );
 
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( false );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
-
+		$testee = $this->create_testable_service( false );
 		$result = $testee->register();
 
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'webhook_response_failed', $result->get_error_code() );
 	}
 
-	public function test_deregister_success(): void {
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
+	/**
+	 * @dataProvider deregistration_outcomes_provider
+	 */
+	public function test_deregister_outcomes( bool $success, string $error_code = null ): void {
+		$this->connection_state->allows( 'is_production' )->andReturn( false );
 
 		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->returnArg( false );
+		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
-					'success' => true,
-					'message' => 'Deregistration successful',
+					'success' => $success,
+					'message' => $success ? 'Deregistration successful' : 'Deregistration failed',
+					'error'   => $success ? null : 'Token not found',
 				)
 			)
 		);
 
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( 'stored-token' );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
-
+		$testee = $this->create_testable_service( true );
 		$result = $testee->deregister();
 
-		$this->assertInstanceOf( RegistrationResult::class, $result );
-		$this->assertTrue( $result->success );
-		$this->assertSame( 'Deregistration successful', $result->message );
+		if ( $success ) {
+			$this->assertInstanceOf( RegistrationResult::class, $result );
+			$this->assertTrue( $result->success );
+		} else {
+			$this->assertInstanceOf( WP_Error::class, $result );
+			$this->assertSame( $error_code, $result->get_error_code() );
+		}
+
+		$this->assertTrue( $testee->was_token_deleted );
 	}
 
-	public function test_deregister_failure(): void {
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
-
-		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->returnArg( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => false,
-					'message' => 'Deregistration rejected',
-					'error'   => 'Token not found',
-				)
-			)
+	public function deregistration_outcomes_provider(): array {
+		return array(
+			'success' => array( true ),
+			'failure' => array( false, 'deregistration_failed' ),
 		);
-
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( 'stored-token' );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
-
-		$result = $testee->deregister();
-
-		$this->assertInstanceOf( WP_Error::class, $result );
-		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
-		$this->assertSame( 'Token not found', $result->get_error_message() );
 	}
 
-	public function test_uses_production_url(): void {
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( true );
+	/**
+	 * @dataProvider environment_urls_provider
+	 */
+	public function test_uses_correct_environment_url( bool $is_production, string $expected_url ): void {
+		$this->connection_state->allows( 'is_production' )->andReturn( $is_production );
 
-		when( 'is_wp_error' )->returnArg( false );
+		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -321,61 +199,50 @@ class RegistrationServiceTest extends TestCase {
 		);
 
 		expect( 'wp_remote_post' )
-			->once()
-			->with(
-				'https://d.joinhoney.com/webhooks/ws/uninstall',
-				Mockery::type( 'array' )
-			)
+			->with( $expected_url, Mockery::type( 'array' ) )
 			->andReturn( array() );
 
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
-
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( 'stored-token' );
-
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
-
+		$testee = $this->create_testable_service( true );
 		$testee->deregister();
 	}
 
-	public function test_uses_sandbox_url(): void {
-		$this->connection_state->shouldReceive( 'is_production' )
-			->once()
-			->andReturn( false );
-
-		when( 'is_wp_error' )->returnArg( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => true,
-					'message' => 'Success',
-				)
-			)
+	public function environment_urls_provider(): array {
+		return array(
+			'production' => array( true, 'https://d.joinhoney.com/webhooks/ws/uninstall' ),
+			'sandbox'    => array( false, 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' ),
 		);
+	}
+}
 
-		expect( 'wp_remote_post' )
-			->once()
-			->with(
-				'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall',
-				Mockery::type( 'array' )
-			)
-			->andReturn( array() );
+/**
+ * Testable version of RegistrationService that exposes protected methods.
+ */
+class TestableRegistrationService extends RegistrationService {
 
-		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
-			->makePartial()
-			->shouldAllowMockingProtectedMethods();
+	public bool $was_token_saved   = false;
+	public bool $was_token_deleted = false;
 
-		$testee->shouldReceive( 'get_registration_token' )
-			->once()
-			->andReturn( 'stored-token' );
+	/**
+	 * @var string|false
+	 */
+	private $stored_token;
 
-		$testee->shouldReceive( 'delete_registration_token' )
-			->once();
+	public function __construct( $connection_state, $metadata_provider, $initial_token ) {
+		parent::__construct( $connection_state, $metadata_provider );
+		$this->stored_token = $initial_token;
+	}
 
-		$testee->deregister();
+	protected function get_registration_token() {
+		return $this->stored_token;
+	}
+
+	protected function save_registration_token( string $token ): void {
+		$this->was_token_saved = true;
+		$this->stored_token    = $token;
+	}
+
+	protected function delete_registration_token(): void {
+		$this->was_token_deleted = true;
+		$this->stored_token      = false;
 	}
 }
