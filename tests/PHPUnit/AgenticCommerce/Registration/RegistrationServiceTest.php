@@ -13,7 +13,7 @@ use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers RegistrationService
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService
  */
 class RegistrationServiceTest extends TestCase {
 

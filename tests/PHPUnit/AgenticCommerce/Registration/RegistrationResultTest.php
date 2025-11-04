@@ -6,7 +6,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 use WooCommerce\PayPalCommerce\TestCase;
 
 /**
- * @covers RegistrationResult
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationResult
  */
 class RegistrationResultTest extends TestCase {
 

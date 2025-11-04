@@ -13,7 +13,7 @@ use WP_REST_Request;
 use Mockery;
 
 /**
- * @covers UpdateCartEndpoint
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint
  */
 class UpdateCartEndpointTest extends TestCase {
 

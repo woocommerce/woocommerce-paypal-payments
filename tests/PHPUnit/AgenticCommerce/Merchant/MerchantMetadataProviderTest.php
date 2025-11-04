@@ -10,7 +10,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers MerchantMetadataProvider
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider
  */
 class MerchantMetadataProviderTest extends TestCase {
 

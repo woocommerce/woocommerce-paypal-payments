@@ -6,7 +6,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Merchant;
 use WooCommerce\PayPalCommerce\TestCase;
 
 /**
- * @covers MerchantMetadata
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadata
  */
 class MerchantMetadataTest extends TestCase {
 

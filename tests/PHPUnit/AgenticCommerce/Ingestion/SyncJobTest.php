@@ -11,7 +11,7 @@ use Mockery;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers SyncJob
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\SyncJob
  */
 class SyncJobTest extends TestCase {
 
