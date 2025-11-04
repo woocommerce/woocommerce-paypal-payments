@@ -39,8 +39,12 @@ class RegistrationService {
 	 * @return RegistrationResult|WP_Error
 	 */
 	public function register() {
-		// Try cleanup first, ignore errors.
-		$this->deregister();
+		if ( $this->is_registered() ) {
+			return new WP_Error(
+				self::ERROR_REGISTRATION_FAILED,
+				'Already registered',
+			);
+		}
 
 		$token  = $this->create_token();
 		$result = $this->webhook_call( $token, self::INSTALL_PATH );

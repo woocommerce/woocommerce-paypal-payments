@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -66,6 +67,28 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
+			}
+		);
+
+		add_action(
+			'init',
+			static function () use ( $container ) {
+				$registration_handler = $container->get( 'agentic.registration.handler' );
+				assert( $registration_handler instanceof RegistrationService );
+				$eligibility_check = $container->get( 'agentic.registration.eligibility' );
+				assert( $eligibility_check instanceof RegistrationEligibility );
+				$active_in_settings = true; // TODO - implement this.
+
+				/** @psalm-suppress RedundantCondition */
+				$should_register = $active_in_settings && $eligibility_check->is_eligible();
+
+				if ( $should_register ) {
+					$registration_handler->register();
+
+					return;
+				}
+
+				$registration_handler->deregister();
 			}
 		);
 
