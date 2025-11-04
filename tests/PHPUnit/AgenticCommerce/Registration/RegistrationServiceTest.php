@@ -51,12 +51,67 @@ class RegistrationServiceTest extends TestCase {
 		return $metadata;
 	}
 
-	public function test_is_registered_returns_false(): void {
-		$testee = $this->create_testable_service();
+	public function test_is_registered_returns_false_without_token(): void {
+		$testee = $this->create_testable_service( false );
 
 		$result = $testee->is_registered();
 
 		$this->assertFalse( $result );
+	}
+
+	public function test_is_registered_returns_true_with_token(): void {
+		$testee = $this->create_testable_service( true );
+
+		$result = $testee->is_registered();
+
+		$this->assertTrue( $result );
+	}
+
+	public function test_is_registered_returns_true_after_successful_registration(): void {
+		$this->stub_metadata();
+		$this->connection_state->allows( 'is_production' )->andReturn( false );
+
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Registration successful',
+				)
+			)
+		);
+
+		$testee = $this->create_testable_service( false );
+
+		$this->assertFalse( $testee->is_registered() );
+
+		$testee->register();
+
+		$this->assertTrue( $testee->is_registered() );
+	}
+
+	public function test_is_registered_returns_false_after_deregistration(): void {
+		$this->connection_state->allows( 'is_production' )->andReturn( false );
+
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Deregistration successful',
+				)
+			)
+		);
+
+		$testee = $this->create_testable_service( true );
+
+		$this->assertTrue( $testee->is_registered() );
+
+		$testee->deregister();
+
+		$this->assertFalse( $testee->is_registered() );
 	}
 
 	public function test_deregister_returns_null_when_not_registered(): void {
