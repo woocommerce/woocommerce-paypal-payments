@@ -19,11 +19,23 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
 		return new ResponseFactory();
+	},
+	'agentic.merchant.provider'                => static function ( ContainerInterface $c ): MerchantMetadataProvider {
+		return new MerchantMetadataProvider(
+			$c->get( 'settings.data.general' )
+		);
+	},
+	'agentic.registration.handler'             => static function ( ContainerInterface $c ): RegistrationService {
+		return new RegistrationService(
+			$c->get( 'settings.connection-state' ),
+			$c->get( 'agentic.merchant.provider' )
+		);
 	},
 
 	// Authentication services.
