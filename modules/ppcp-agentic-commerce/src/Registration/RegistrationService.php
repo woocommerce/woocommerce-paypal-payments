@@ -73,7 +73,7 @@ class RegistrationService {
 			return null;
 		}
 
-		$token  = $this->get_registration_token();
+		$token  = (string) $this->get_registration_token();
 		$result = $this->webhook_call( $token, self::UNINSTALL_PATH );
 		$this->delete_registration_token();
 
