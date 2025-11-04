@@ -281,7 +281,7 @@ class RegistrationServiceTest extends TestCase {
  */
 class TestableRegistrationService extends RegistrationService {
 
-	public bool $was_token_saved   = false;
+	public bool $was_token_saved = false;
 	public bool $was_token_deleted = false;
 
 	/**

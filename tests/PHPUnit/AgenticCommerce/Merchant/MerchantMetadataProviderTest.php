@@ -46,8 +46,9 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc        = new \stdClass();
+				$wc            = new \stdClass();
 				$wc->countries = $wc_countries;
+
 				return $wc;
 			}
 		);
@@ -89,8 +90,9 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc        = new \stdClass();
+				$wc            = new \stdClass();
 				$wc->countries = $wc_countries;
+
 				return $wc;
 			}
 		);
@@ -123,8 +125,9 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc        = new \stdClass();
+				$wc            = new \stdClass();
 				$wc->countries = $wc_countries;
+
 				return $wc;
 			}
 		);
@@ -156,8 +159,9 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc        = new \stdClass();
+				$wc            = new \stdClass();
 				$wc->countries = $wc_countries;
+
 				return $wc;
 			}
 		);
