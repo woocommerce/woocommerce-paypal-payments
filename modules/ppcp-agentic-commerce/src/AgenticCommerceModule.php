@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -68,6 +69,19 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+
+		// Registers the clean-up tasks on plugin uninstallation.
+		$this->register_uninstall_action(
+			$container->get( 'agentic.registration.handler' )
+		);
+
 		return true;
+	}
+
+	private function register_uninstall_action( RegistrationService $registration_service ): void {
+		add_action(
+			'woocommerce_paypal_payments_uninstall',
+			static fn() => $registration_service->deregister()
+		);
 	}
 }
