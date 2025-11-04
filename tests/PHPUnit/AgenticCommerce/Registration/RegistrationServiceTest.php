@@ -52,4 +52,55 @@ class RegistrationServiceTest extends TestCase {
 
 		$this->assertNull( $result );
 	}
+
+	public function test_register_success(): void {
+		$metadata = new MerchantMetadata(
+			'Test Store',
+			'https://example.com',
+			'US',
+			'USD',
+			'MERCHANT123',
+			'https://example.com/catalog.json'
+		);
+
+		$this->metadata_provider->shouldReceive( 'get_metadata' )
+			->once()
+			->andReturn( $metadata );
+
+		$this->connection_state->shouldReceive( 'is_production' )
+			->once()
+			->andReturn( false );
+
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->returnArg( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Registration successful',
+				)
+			)
+		);
+
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( false );
+
+		$testee->shouldReceive( 'delete_registration_token' )
+			->once();
+
+		$testee->shouldReceive( 'save_registration_token' )
+			->once()
+			->with( Mockery::type( 'string' ) );
+
+		$result = $testee->register();
+
+		$this->assertInstanceOf( RegistrationResult::class, $result );
+		$this->assertTrue( $result->success );
+		$this->assertSame( 'Registration successful', $result->message );
+	}
 }
