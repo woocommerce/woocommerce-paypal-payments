@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -29,6 +30,11 @@ return array(
 	'agentic.merchant.provider'                => static function ( ContainerInterface $c ): MerchantMetadataProvider {
 		return new MerchantMetadataProvider(
 			$c->get( 'settings.data.general' )
+		);
+	},
+	'agentic.registration.eligibility'         => static function ( ContainerInterface $c ): RegistrationEligibility {
+		return new RegistrationEligibility(
+			$c->get( 'agentic.merchant.provider' )
 		);
 	},
 	'agentic.registration.handler'             => static function ( ContainerInterface $c ): RegistrationService {
