@@ -235,4 +235,38 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'webhook_response_failed', $result->get_error_code() );
 	}
+
+	public function test_deregister_success(): void {
+		$this->connection_state->shouldReceive( 'is_production' )
+			->once()
+			->andReturn( false );
+
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->returnArg( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Deregistration successful',
+				)
+			)
+		);
+
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( 'stored-token' );
+
+		$testee->shouldReceive( 'delete_registration_token' )
+			->once();
+
+		$result = $testee->deregister();
+
+		$this->assertInstanceOf( RegistrationResult::class, $result );
+		$this->assertTrue( $result->success );
+		$this->assertSame( 'Deregistration successful', $result->message );
+	}
 }
