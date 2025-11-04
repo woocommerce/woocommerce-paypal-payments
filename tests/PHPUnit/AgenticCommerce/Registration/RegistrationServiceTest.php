@@ -38,4 +38,18 @@ class RegistrationServiceTest extends TestCase {
 
 		$this->assertFalse( $result );
 	}
+
+	public function test_deregister_returns_null_when_not_registered(): void {
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( false );
+
+		$result = $testee->deregister();
+
+		$this->assertNull( $result );
+	}
 }
