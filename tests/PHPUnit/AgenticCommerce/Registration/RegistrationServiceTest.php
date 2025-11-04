@@ -72,7 +72,7 @@ class RegistrationServiceTest extends TestCase {
 			->andReturn( false );
 
 		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->returnArg( false );
+		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -303,5 +303,79 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
 		$this->assertSame( 'Token not found', $result->get_error_message() );
+	}
+
+	public function test_uses_production_url(): void {
+		$this->connection_state->shouldReceive( 'is_production' )
+			->once()
+			->andReturn( true );
+
+		when( 'is_wp_error' )->returnArg( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Success',
+				)
+			)
+		);
+
+		expect( 'wp_remote_post' )
+			->once()
+			->with(
+				'https://d.joinhoney.com/webhooks/ws/uninstall',
+				Mockery::type( 'array' )
+			)
+			->andReturn( array() );
+
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( 'stored-token' );
+
+		$testee->shouldReceive( 'delete_registration_token' )
+			->once();
+
+		$testee->deregister();
+	}
+
+	public function test_uses_sandbox_url(): void {
+		$this->connection_state->shouldReceive( 'is_production' )
+			->once()
+			->andReturn( false );
+
+		when( 'is_wp_error' )->returnArg( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Success',
+				)
+			)
+		);
+
+		expect( 'wp_remote_post' )
+			->once()
+			->with(
+				'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall',
+				Mockery::type( 'array' )
+			)
+			->andReturn( array() );
+
+		$testee = Mockery::mock( RegistrationService::class, array( $this->connection_state, $this->metadata_provider ) )
+			->makePartial()
+			->shouldAllowMockingProtectedMethods();
+
+		$testee->shouldReceive( 'get_registration_token' )
+			->once()
+			->andReturn( 'stored-token' );
+
+		$testee->shouldReceive( 'delete_registration_token' )
+			->once();
+
+		$testee->deregister();
 	}
 }
