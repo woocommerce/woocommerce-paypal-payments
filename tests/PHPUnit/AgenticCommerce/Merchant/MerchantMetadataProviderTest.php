@@ -26,10 +26,11 @@ class MerchantMetadataProviderTest extends TestCase {
 
 	public function test_get_metadata_returns_complete_merchant_metadata(): void {
 		$merchant_connection = new MerchantConnectionDTO(
-			'MERCHANT123',
-			'test@example.com',
 			true,
-			'sandbox'
+			'API_USER123',
+			'API_KEY123',
+			'MERCHANT123',
+			'test@example.com'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
@@ -64,10 +65,11 @@ class MerchantMetadataProviderTest extends TestCase {
 
 	public function test_canonical_url_removes_trailing_slash(): void {
 		$merchant_connection = new MerchantConnectionDTO(
-			'MERCHANT456',
-			'test@example.com',
 			true,
-			'sandbox'
+			'API_USER123',
+			'API_KEY123',
+			'MERCHANT123',
+			'test@example.com'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
@@ -101,10 +103,11 @@ class MerchantMetadataProviderTest extends TestCase {
 
 	public function test_store_url_and_catalog_url_are_identical(): void {
 		$merchant_connection = new MerchantConnectionDTO(
-			'MERCHANT789',
-			'test@example.com',
 			true,
-			'live'
+			'API_USER123',
+			'API_KEY123',
+			'MERCHANT123',
+			'test@example.com'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
@@ -133,10 +136,11 @@ class MerchantMetadataProviderTest extends TestCase {
 
 	public function test_uses_wordpress_and_woocommerce_functions(): void {
 		$merchant_connection = new MerchantConnectionDTO(
-			'MERCHANT999',
-			'store@example.com',
 			true,
-			'sandbox'
+			'API_USER123',
+			'API_KEY123',
+			'MERCHANT123',
+			'test@example.com'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
