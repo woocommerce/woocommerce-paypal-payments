@@ -49,7 +49,7 @@ return array(
 	},
 
 	// Session management.
-	'agentic.session.handler'                  => static function ( ContainerInterface $container ): AgenticSessionHandler {
+	'agentic.session.handler'                  => static function (): AgenticSessionHandler {
 		return new AgenticSessionHandler();
 	},
 
@@ -87,19 +87,19 @@ return array(
 	},
 
 	// Ingestion services.
-	'agentic.ingestion-eligible-product-types' => static function ( ContainerInterface $container ) {
+	'agentic.ingestion-eligible-product-types' => static function (): array {
 		return array(
 			ProductType::SIMPLE,
 			ProductType::VARIABLE,
 		);
 	},
-	'agentic.ingestion-stale-timeout-days'     => static function ( ContainerInterface $container ) {
+	'agentic.ingestion-stale-timeout-days'     => static function (): int {
 		return 5;
 	},
-	'agentic.ingestion-api-endpoint'           => static function ( ContainerInterface $container ) {
+	'agentic.ingestion-api-endpoint'           => static function (): string {
 		return 'https://d-staging.joinhoney.com/webhooks/products';
 	},
-	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ) {
+	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ): Ingestion\SyncJobFactory {
 		return new Ingestion\SyncJobFactory(
 			$container->get( 'agentic.ingestion-api-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
