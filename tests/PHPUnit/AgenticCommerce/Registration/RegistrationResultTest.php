@@ -10,27 +10,23 @@ use WooCommerce\PayPalCommerce\TestCase;
  */
 class RegistrationResultTest extends TestCase {
 
-	public function test_can_be_instantiated_with_success(): void {
-		$result = new RegistrationResult(
-			true,
-			'Registration successful',
-			null
-		);
+	/**
+	 * @dataProvider result_scenarios_provider
+	 */
+	public function test_stores_all_properties( bool $success, string $message, ?string $error ): void {
+		$result = new RegistrationResult( $success, $message, $error );
 
-		$this->assertTrue( $result->success );
-		$this->assertSame( 'Registration successful', $result->message );
-		$this->assertNull( $result->error );
+		$this->assertSame( $success, $result->success );
+		$this->assertSame( $message, $result->message );
+		$this->assertSame( $error, $result->error );
 	}
 
-	public function test_can_be_instantiated_with_error(): void {
-		$result = new RegistrationResult(
-			false,
-			'Operation failed',
-			'Webhook connection timeout'
+	public function result_scenarios_provider(): array {
+		return array(
+			'success'         => array( true, 'Registration successful', null ),
+			'failure'         => array( false, 'Operation failed', 'Webhook connection timeout' ),
+			'empty_message'   => array( false, '', 'Error occurred' ),
+			'success_message' => array( true, 'Completed successfully', null ),
 		);
-
-		$this->assertFalse( $result->success );
-		$this->assertSame( 'Operation failed', $result->message );
-		$this->assertSame( 'Webhook connection timeout', $result->error );
 	}
 }
