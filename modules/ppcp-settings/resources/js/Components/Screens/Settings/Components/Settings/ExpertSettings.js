@@ -7,8 +7,12 @@ import {
 import Troubleshooting from './Blocks/Troubleshooting';
 import PaypalSettings from './Blocks/PaypalSettings';
 import OtherSettings from './Blocks/OtherSettings';
+import { useRegisteredSettings, SLOTS } from '../../../../../extensions';
 
 const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
+	// Get registered settings for expert settings
+	const footerSettings = useRegisteredSettings( SLOTS.EXPERT_SETTINGS_END );
+
 	return (
 		<SettingsCard
 			icon="icon-settings-expert.svg"
@@ -42,6 +46,13 @@ const ExpertSettings = ( { ownBradOnly, hasContactModule } ) => {
 						<OtherSettings />
 					</Content>
 				) }
+
+				{ /* Extension point */ }
+				{ footerSettings.map( ( { component: Component, id } ) => (
+					<Content key={ id }>
+						<Component />
+					</Content>
+				) ) }
 			</ContentWrapper>
 		</SettingsCard>
 	);
