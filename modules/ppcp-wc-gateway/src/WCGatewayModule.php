@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -241,9 +242,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$notices[] = $unsupported_currency_message;
 				}
 
-				foreach ( array(
-					$c->get( 'wcgateway.notice.dcc-without-paypal' ),
-					$c->get( 'wcgateway.notice.card-button-without-paypal' ),
+				foreach (
+					array(
+						$c->get( 'wcgateway.notice.dcc-without-paypal' ),
+						$c->get( 'wcgateway.notice.card-button-without-paypal' ),
 				) as $gateway_without_paypal_notice ) {
 					assert( $gateway_without_paypal_notice instanceof GatewayWithoutPayPalAdminNotice );
 					$message = $gateway_without_paypal_notice->message();
@@ -575,7 +577,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				// When local APMs are available, then PayLater messaging is also available.
 				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
 
-				$features['installments'] = array(
+				$features[ FeaturesDefinition::FEATURE_INSTALLMENTS ] = array(
 					'enabled' => $installments_product_status->is_active(),
 				);
 
@@ -761,6 +763,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$field = $renderer->render_heading( $field, $key, $args, $value );
 				$field = $renderer->render_table( $field, $key, $args, $value );
 				$field = $renderer->render_html( $field, $key, $args, $value );
+
 				return $field;
 			},
 			10,
@@ -771,6 +774,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			'woocommerce_available_payment_gateways',
 			static function ( $methods ) use ( $container ): array {
 				$disabler = $container->get( 'wcgateway.disabler' );
+
 				/**
 				 * The Gateay disabler.
 				 *
@@ -884,6 +888,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				 * @var OrderTablePaymentStatusColumn $payment_status_column
 				 */
 				$payment_status_column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+
 				return $payment_status_column->register( $columns );
 			}
 		);

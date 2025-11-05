@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
@@ -21,6 +21,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
  */
 class FeaturesDefinition {
 
+
+	public const FEATURE_INSTALLMENTS = 'installments';
 
 	/**
 	 * The features eligibility service.
@@ -84,6 +86,7 @@ class FeaturesDefinition {
 				$eligible_features[ $feature_key ] = $feature;
 			}
 		}
+
 		return $eligible_features;
 	}
 
@@ -317,7 +320,7 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'installments'                    => array(
+			self::FEATURE_INSTALLMENTS        => array(
 				'title'       => __( 'Installments', 'woocommerce-paypal-payments' ),
 				'description' =>
 					__( 'Allow your customers to pay in installments without interest while you receive the full payment.*', 'woocommerce-paypal-payments' ) .
@@ -327,7 +330,7 @@ class FeaturesDefinition {
 						__( '*You will receive the full payment minus the applicable PayPal fee. See %s.', 'woocommerce-paypal-payments' ),
 						'<a href="https://www.paypal.com/mx/webapps/mpp/merchant-fees">' . __( 'terms and conditions', 'woocommerce-paypal-payments' ) . '</a>'
 					) . '</p>',
-				'enabled'     => $this->merchant_capabilities['installments'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_INSTALLMENTS ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',

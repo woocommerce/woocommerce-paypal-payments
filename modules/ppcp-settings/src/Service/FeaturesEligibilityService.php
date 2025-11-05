@@ -9,9 +9,11 @@
  * @package WooCommerce\PayPalCommerce\Settings\Service
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Service;
+
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 
 /**
  * Manages eligibility checks for various PayPal Commerce features.
@@ -69,13 +71,13 @@ class FeaturesEligibilityService {
 	/**
 	 * Constructor.
 	 *
-	 * @param bool     $is_save_paypal_eligible   If saving PayPal and Venmo is eligible.
-	 * @param callable $check_acdc_eligible       If advanced credit and debit cards are eligible.
-	 * @param bool     $is_apm_eligible           If alternative payment methods are eligible.
+	 * @param bool     $is_save_paypal_eligible If saving PayPal and Venmo is eligible.
+	 * @param callable $check_acdc_eligible If advanced credit and debit cards are eligible.
+	 * @param bool     $is_apm_eligible If alternative payment methods are eligible.
 	 * @param callable $check_google_pay_eligible If Google Pay is eligible.
-	 * @param callable $check_apple_pay_eligible  If Apple Pay is eligible.
-	 * @param bool     $is_pay_later_eligible     If Pay Later is eligible.
-	 * @param bool     $is_installments_eligible   If Installments is eligible.
+	 * @param callable $check_apple_pay_eligible If Apple Pay is eligible.
+	 * @param bool     $is_pay_later_eligible If Pay Later is eligible.
+	 * @param bool     $is_installments_eligible If Installments is eligible.
 	 */
 	public function __construct(
 		bool $is_save_paypal_eligible,
@@ -102,13 +104,13 @@ class FeaturesEligibilityService {
 	 */
 	public function get_eligibility_checks(): array {
 		return array(
-			'save_paypal_and_venmo'           => fn() => $this->is_save_paypal_eligible,
-			'advanced_credit_and_debit_cards' => $this->check_acdc_eligible,
-			'alternative_payment_methods'     => fn() => $this->is_apm_eligible,
-			'google_pay'                      => $this->check_google_pay_eligible,
-			'apple_pay'                       => $this->check_apple_pay_eligible,
-			'pay_later'                       => fn() => $this->is_pay_later_eligible,
-			'installments'                    => fn() => $this->is_installments_eligible,
+			'save_paypal_and_venmo'                  => fn() => $this->is_save_paypal_eligible,
+			'advanced_credit_and_debit_cards'        => $this->check_acdc_eligible,
+			'alternative_payment_methods'            => fn() => $this->is_apm_eligible,
+			'google_pay'                             => $this->check_google_pay_eligible,
+			'apple_pay'                              => $this->check_apple_pay_eligible,
+			'pay_later'                              => fn() => $this->is_pay_later_eligible,
+			FeaturesDefinition::FEATURE_INSTALLMENTS => fn() => $this->is_installments_eligible,
 		);
 	}
 }
