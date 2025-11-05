@@ -246,7 +246,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					array(
 						$c->get( 'wcgateway.notice.dcc-without-paypal' ),
 						$c->get( 'wcgateway.notice.card-button-without-paypal' ),
-				) as $gateway_without_paypal_notice ) {
+					) as $gateway_without_paypal_notice ) {
 					assert( $gateway_without_paypal_notice instanceof GatewayWithoutPayPalAdminNotice );
 					$message = $gateway_without_paypal_notice->message();
 					if ( $message ) {
@@ -562,7 +562,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
-				$features['save_paypal_and_venmo'] = array(
+				$features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] = array(
 					'enabled' => $reference_transaction_status->reference_transaction_enabled(),
 				);
 

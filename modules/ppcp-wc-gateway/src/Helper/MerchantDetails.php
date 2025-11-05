@@ -15,12 +15,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 class MerchantDetails {
 
 	/**
-	 * Save tokenized PayPal and Venmo payment details, required for subscriptions and saving
-	 * payment methods in user account.
-	 */
-	public const FEATURE_SAVE_PAYPAL_VENMO = 'save_paypal_venmo';
-
-	/**
 	 * Advanced card processing eligibility. Required for credit- and debit-card processing.
 	 */
 	public const FEATURE_ADVANCED_CARD_PROCESSING = 'acdc';

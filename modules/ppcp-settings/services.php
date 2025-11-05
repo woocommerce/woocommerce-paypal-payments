@@ -502,7 +502,7 @@ $services = array(
 			'apple_pay'                              => ( $features['apple_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			'google_pay'                             => ( $features['google_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			'acdc'                                   => ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'save_paypal'                            => $features['save_paypal_and_venmo']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			'apm'                                    => $features['alternative_payment_methods']['enabled'] ?? false,
 			'paylater'                               => $features['pay_later_messaging']['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
@@ -611,13 +611,13 @@ $services = array(
 			'apple_pay'                              => $features['apple_pay']['enabled'] ?? false,
 			'google_pay'                             => $features['google_pay']['enabled'] ?? false,
 			'acdc'                                   => $features['advanced_credit_and_debit_cards']['enabled'] ?? false,
-			'save_paypal'                            => $features['save_paypal_and_venmo']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			'alternative_payment_methods'            => $features['alternative_payment_methods']['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
-			'save_paypal'                            => $capabilities['save_paypal'],
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $capabilities[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ],
 			// Save PayPal and Venmo eligibility.
 			'acdc'                                   => $capabilities['acdc'],
 			// Advanced credit and debit cards eligibility.

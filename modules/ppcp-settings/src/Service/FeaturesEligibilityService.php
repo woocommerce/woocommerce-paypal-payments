@@ -104,7 +104,7 @@ class FeaturesEligibilityService {
 	 */
 	public function get_eligibility_checks(): array {
 		return array(
-			'save_paypal_and_venmo'                  => fn() => $this->is_save_paypal_eligible,
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => fn() => $this->is_save_paypal_eligible,
 			'advanced_credit_and_debit_cards'        => $this->check_acdc_eligible,
 			'alternative_payment_methods'            => fn() => $this->is_apm_eligible,
 			'google_pay'                             => $this->check_google_pay_eligible,
