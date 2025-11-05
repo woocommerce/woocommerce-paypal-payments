@@ -18,6 +18,8 @@ class Recaptcha {
 	private const CAPTCHA_USAGE_LIMIT            = 5;
 	private const CAPTCHA_RESULT_TRANSIENT_KEY   = 'ppcp_recaptcha_result_';
 	private const CAPTCHA_RESULT_META_KEY        = 'ppcp_recaptcha_captcha_result';
+	public const REJECTION_LOGGER_SOURCE         = 'woocommerce-paypal-payments-recaptcha';
+	public const REJECTION_COUNTER_OPTION        = 'ppcp_recaptcha_rejection_counter';
 
 	private RecaptchaIntegration $integration;
 
@@ -36,8 +38,6 @@ class Recaptcha {
 
 	private PersistentCounter $rejection_counter;
 
-	private string $rejection_logger_source;
-
 	private float $last_v3_score = 0;
 
 	/**
@@ -47,7 +47,6 @@ class Recaptcha {
 	 * @param string               $asset_version
 	 * @param LoggerInterface      $logger
 	 * @param PersistentCounter    $rejection_counter
-	 * @param string               $rejection_logger_source
 	 */
 	public function __construct(
 		RecaptchaIntegration $integration,
@@ -55,17 +54,15 @@ class Recaptcha {
 		string $module_url,
 		string $asset_version,
 		LoggerInterface $logger,
-		PersistentCounter $rejection_counter,
-		string $rejection_logger_source
+		PersistentCounter $rejection_counter
 	) {
 
-		$this->integration             = $integration;
-		$this->payment_methods         = $payment_methods;
-		$this->module_url              = $module_url;
-		$this->asset_version           = $asset_version;
-		$this->logger                  = $logger;
-		$this->rejection_counter       = $rejection_counter;
-		$this->rejection_logger_source = $rejection_logger_source;
+		$this->integration       = $integration;
+		$this->payment_methods   = $payment_methods;
+		$this->module_url        = $module_url;
+		$this->asset_version     = $asset_version;
+		$this->logger            = $logger;
+		$this->rejection_counter = $rejection_counter;
 	}
 
 	protected function should_use_recaptcha(): bool {
@@ -89,7 +86,7 @@ class Recaptcha {
 
 	public function render_settings_page_log(): string {
 		$count = esc_attr( (string) $this->rejection_counter->current() );
-		$url   = esc_url( admin_url( 'admin.php?page=wc-status&tab=logs&source=' . $this->rejection_logger_source ) );
+		$url   = esc_url( admin_url( 'admin.php?page=wc-status&tab=logs&source=' . self::REJECTION_LOGGER_SOURCE ) );
 		return "
 		<tr valign='top'>
 			<td colspan='2' style='padding: 0;'>
@@ -678,7 +675,7 @@ class Recaptcha {
 		$this->logger->debug(
 			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.",
 			array(
-				'source' => $this->rejection_logger_source,
+				'source'  => self::REJECTION_LOGGER_SOURCE,
 				'request' => $request_data,
 				'cart'    => $cart,
 			)

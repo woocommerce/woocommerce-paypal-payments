@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Uninstall;
 
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Uninstall\Assets\ClearDatabaseAssets;
@@ -39,7 +40,7 @@ return array(
 			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
 			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
 			PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE,
-			$container->get( 'fraud-protection.recaptcha.rejection-counter.option-id' ),
+			Recaptcha::REJECTION_COUNTER_OPTION,
 		);
 	},
 
