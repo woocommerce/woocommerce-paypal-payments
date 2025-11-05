@@ -34,6 +34,11 @@ class FeaturesDefinition {
 	public const FEATURE_INSTALLMENTS = 'installments';
 
 	/**
+	 * Allow customers to buy now and pay later with PayPal
+	 */
+	public const FEATURE_PAY_LATER_MESSAGING = 'pay_later_messaging';
+
+	/**
 	 * The features eligibility service.
 	 *
 	 * @var FeaturesEligibilityService
@@ -303,13 +308,13 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'pay_later'                         => array(
+			self::FEATURE_PAY_LATER_MESSAGING   => array(
 				'title'       => __( 'Pay Later Messaging', 'woocommerce-paypal-payments' ),
 				'description' => __(
 					'Let customers know they can buy now and pay later with PayPal. Adding this messaging can boost conversion rates and increase cart sizes by 39%¹, with no extra cost to you—plus, you get paid up front.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities['pay_later'] && ! $save_paypal_and_venmo,
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ] && ! $save_paypal_and_venmo,
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',

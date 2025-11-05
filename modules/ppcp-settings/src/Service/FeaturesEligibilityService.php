@@ -109,7 +109,7 @@ class FeaturesEligibilityService {
 			'alternative_payment_methods'            => fn() => $this->is_apm_eligible,
 			'google_pay'                             => $this->check_google_pay_eligible,
 			'apple_pay'                              => $this->check_apple_pay_eligible,
-			'pay_later'                              => fn() => $this->is_pay_later_eligible,
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => fn() => $this->is_pay_later_eligible,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => fn() => $this->is_installments_eligible,
 		);
 	}

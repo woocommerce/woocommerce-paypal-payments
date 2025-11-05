@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Settings
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings;
 
@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
@@ -118,6 +119,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 * Adds notes to old UI settings screens.
 			 *
 			 * @param Message[] $notices
+			 *
 			 * @return Message[]
 			 */
 			add_filter(
@@ -199,7 +201,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			static fn() => ! get_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI )
-				&& update_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes' )
+							&& update_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes' )
 		);
 
 		// Suppress WooCommerce Settings UI elements via CSS to improve the loading experience.
@@ -216,6 +218,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		 * for merchants instead of ACDC (Advanced Card processing). It handles two scenarios:
 		 *
 		 * @param bool|null $use_bcdc Whether to use BCDC instead of ACDC.
+		 *
 		 * @return bool|null True to force BCDC classification, false/null otherwise.
 		 */
 		add_filter(
@@ -323,7 +326,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					'settings'               => $container->get( 'settings.rest.settings' ),
 					'styling'                => $container->get( 'settings.rest.styling' ),
 					'todos'                  => $container->get( 'settings.rest.todos' ),
-					'pay_later_messaging'    => $container->get( 'settings.rest.pay_later_messaging' ),
+					FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $container->get( 'settings.rest.pay_later_messaging' ),
 					'features'               => $container->get( 'settings.rest.features' ),
 				);
 
@@ -805,6 +808,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * Checks the branded-only state and applies relevant site-wide feature limitations, if needed.
 	 *
 	 * @param ContainerInterface $container The DI container provider.
+	 *
 	 * @return void
 	 */
 	protected function apply_branded_only_limitations( ContainerInterface $container ): void {
@@ -839,6 +843,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 *    is injected to the DOM, and not while the UI is used.
 	 *
 	 * @param ContainerInterface $container The DI container provider.
+	 *
 	 * @return void
 	 */
 	protected function initialize_branded_only( ContainerInterface $container ): void {
@@ -880,6 +885,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * Checks if the payment gateway with the given name is enabled.
 	 *
 	 * @param string $gateway_name The gateway name.
+	 *
 	 * @return bool True if the payment gateway with the given name is enabled, otherwise false.
 	 */
 	protected function is_gateway_enabled( string $gateway_name ): bool {

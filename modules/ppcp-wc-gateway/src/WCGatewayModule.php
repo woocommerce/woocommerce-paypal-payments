@@ -575,7 +575,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
+				$features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] = $features['alternative_payment_methods'];
 
 				$features[ FeaturesDefinition::FEATURE_INSTALLMENTS ] = array(
 					'enabled' => $installments_product_status->is_active(),

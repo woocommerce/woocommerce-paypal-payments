@@ -504,7 +504,7 @@ $services = array(
 			'acdc'                                   => ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			'apm'                                    => $features['alternative_payment_methods']['enabled'] ?? false,
-			'paylater'                               => $features['pay_later_messaging']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
 		);
 	},
@@ -627,7 +627,7 @@ $services = array(
 			// Google Pay eligibility.
 			'apple_pay'                              => $capabilities['acdc'] && $capabilities['apple_pay'],
 			// Apple Pay eligibility.
-			'pay_later'                              => $capabilities['acdc'] && ! $gateways['card-button'],
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities['acdc'] && ! $gateways['card-button'],
 			// Pay Later eligibility.
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
