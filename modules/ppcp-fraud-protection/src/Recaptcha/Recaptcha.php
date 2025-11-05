@@ -672,14 +672,15 @@ class Recaptcha {
 		unset( $request_data['ppcp_recaptcha_token'] );
 		unset( $request_data['ppcp_recaptcha_version'] );
 		unset( $request_data['g-recaptcha-response'] );
-		$request_data_str = wp_json_encode( $request_data );
 
-		$cart = wp_json_encode( $this->cart_contents() );
+		$cart = $this->cart_contents();
 
 		$this->logger->debug(
-			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}, request content: {$request_data_str}, cart: {$cart}",
+			"Rejected by v3 reCAPTCHA at {$endpoint_name} with score {$this->last_v3_score}, IP: {$ip}, User Agent: {$user_agent}.",
 			array(
 				'source' => $this->rejection_logger_source,
+				'request' => $request_data,
+				'cart'    => $cart,
 			)
 		);
 	}
