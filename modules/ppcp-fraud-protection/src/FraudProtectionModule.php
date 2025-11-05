@@ -101,17 +101,15 @@ class FraudProtectionModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		foreach ( array( 'woocommerce_checkout_process', 'woocommerce_before_pay_action' ) as $hook ) {
-			add_action(
-				$hook,
-				static function () use ( $container ): void {
-					$recaptcha = $container->get( 'fraud-protection.recaptcha' );
-					assert( $recaptcha instanceof Recaptcha );
+		add_action(
+			'woocommerce_checkout_process',
+			static function () use ( $container ): void {
+				$recaptcha = $container->get( 'fraud-protection.recaptcha' );
+				assert( $recaptcha instanceof Recaptcha );
 
-					$recaptcha->validate_classic_checkout();
-				}
-			);
-		}
+				$recaptcha->validate_classic_checkout();
+			}
+		);
 
 		add_action(
 			'woocommerce_blocks_loaded',
