@@ -68,6 +68,33 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
+		add_action(
+			'woocommerce_paypal_payments_settings_scripts_enqueued',
+			fn() => $this->enqueue_scripts(
+				'modules/ppcp-agentic-commerce/assets/',
+				$container->get( 'ppcp.path-to-plugin-folder' ),
+				$container->get( 'ppcp.path-to-plugin-main-file' )
+			)
+		);
+
 		return true;
+	}
+
+	private function enqueue_scripts( string $assets_dir, string $absolute_plugin_path, string $plugin_main_file ): void {
+		$assets_path = $absolute_plugin_path . $assets_dir;
+		$assets_url  = plugins_url( $assets_dir, $plugin_main_file );
+
+		/** @psalm-suppress UnresolvableInclude */
+		$script_asset_file = require $assets_path . '/settings.asset.php';
+
+		wp_register_script(
+			'ppcp-agentic-commerce-settings',
+			$assets_url . '/settings.js',
+			$script_asset_file['dependencies'],
+			$script_asset_file['version'],
+			true
+		);
+
+		wp_enqueue_script( 'ppcp-agentic-commerce-settings' );
 	}
 }
