@@ -5,11 +5,9 @@
  */
 
 export { SLOTS } from './slots';
-export {
-	registerSetting,
-	unregisterSetting,
-	getRegisteredSettings,
-	clearRegistry,
-	getRegistryState,
-} from './registry';
+export { registerSetting, unregisterSetting } from './registry';
 export { useRegisteredSettings } from './useRegisteredSettings';
+export { STORE_NAME } from './store';
+
+// Initialize store on import
+import './store';

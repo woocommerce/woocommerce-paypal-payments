@@ -1,5 +1,5 @@
-import { useMemo } from '@wordpress/element';
-import { getRegisteredSettings } from './registry';
+import { useSelect } from '@wordpress/data';
+import { STORE_NAME } from './store';
 
 /**
  * React hook to get registered settings for a slot.
@@ -8,7 +8,8 @@ import { getRegisteredSettings } from './registry';
  * @return {Array} Array of registered components.
  */
 export const useRegisteredSettings = ( slot ) => {
-	// Use useMemo to avoid recalculating on every render
-	// Since registrations happen during initialization, this is stable
-	return useMemo( () => getRegisteredSettings( slot ), [ slot ] );
+	return useSelect(
+		( select ) => select( STORE_NAME ).getRegisteredSettings( slot ),
+		[ slot ]
+	);
 };
