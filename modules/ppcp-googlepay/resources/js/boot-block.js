@@ -41,7 +41,7 @@ const GooglePayComponent = ( { isEditing, buttonAttributes, onClick } ) => {
 					console.error( 'Failed to load PayPal script: ', error );
 				} );
 		}
-	}, [ isEditing, buttonConfig, ppcpConfig ] );
+	}, [ isEditing ] );
 
 	useEffect( () => {
 		if ( ! isEditing && paypalLoaded && googlePayLoaded && ! manager ) {
