@@ -2318,7 +2318,7 @@ return array(
 	'wcgateway.feature-eligibility.list'                   => static function ( ContainerInterface $container ): array {
 		return array(
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),
-			MerchantDetails::FEATURE_ADVANCED_CARD_PROCESSING => $container->get( 'card-fields.eligibility.check' ),
+			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $container->get( 'card-fields.eligibility.check' ),
 			FeaturesDefinition::FEATURE_GOOGLE_PAY  => $container->get( 'googlepay.eligibility.check' ),
 			FeaturesDefinition::FEATURE_APPLE_PAY   => $container->get( 'applepay.eligibility.check' ),
 			MerchantDetails::FEATURE_CONTACT_MODULE => $container->get( 'wcgateway.contact-module.eligibility.check' ),

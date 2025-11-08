@@ -15,11 +15,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 class MerchantDetails {
 
 	/**
-	 * Advanced card processing eligibility. Required for credit- and debit-card processing.
-	 */
-	public const FEATURE_ADVANCED_CARD_PROCESSING = 'acdc';
-
-	/**
 	 * Contact module allows the merchant to unlock the "Custom Shipping Contact" toggle.
 	 */
 	public const FEATURE_CONTACT_MODULE = 'contact_module';

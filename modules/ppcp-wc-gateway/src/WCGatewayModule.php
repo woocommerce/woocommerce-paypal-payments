@@ -566,7 +566,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					'enabled' => $reference_transaction_status->reference_transaction_enabled(),
 				);
 
-				$features['advanced_credit_and_debit_cards'] = array(
+				$features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] = array(
 					'enabled' => $dcc_product_status->is_active() && $dcc_applies->for_country_currency(),
 				);
 
