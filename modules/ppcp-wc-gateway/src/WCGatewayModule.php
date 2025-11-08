@@ -570,18 +570,18 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					'enabled' => $dcc_product_status->is_active() && $dcc_applies->for_country_currency(),
 				);
 
-				$features['alternative_payment_methods'] = array(
+				$features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ] = array(
 					'enabled' => $apms_product_status->is_active(),
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				$features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] = $features['alternative_payment_methods'];
+				$features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] = $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ];
 
 				$features[ FeaturesDefinition::FEATURE_INSTALLMENTS ] = array(
 					'enabled' => $installments_product_status->is_active(),
 				);
 
-				$features['contact_module'] = array(
+				$features[ FeaturesDefinition::FEATURE_CONTACT_MODULE ] = array(
 					'enabled' => $contact_module_check(),
 				);
 

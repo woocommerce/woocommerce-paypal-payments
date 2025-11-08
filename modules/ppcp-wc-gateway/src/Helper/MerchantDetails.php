@@ -15,11 +15,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 class MerchantDetails {
 
 	/**
-	 * Contact module allows the merchant to unlock the "Custom Shipping Contact" toggle.
-	 */
-	public const FEATURE_CONTACT_MODULE = 'contact_module';
-
-	/**
 	 * The merchant's country according to PayPal, which might be different from
 	 * the WooCommerce country.
 	 *

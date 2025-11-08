@@ -503,7 +503,7 @@ $services = array(
 			FeaturesDefinition::FEATURE_GOOGLE_PAY   => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => ( $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
-			'apm'                                    => $features['alternative_payment_methods']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
 		);
@@ -612,7 +612,7 @@ $services = array(
 			FeaturesDefinition::FEATURE_GOOGLE_PAY   => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
-			'alternative_payment_methods'            => $features['alternative_payment_methods']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
 		);
 
@@ -621,7 +621,7 @@ $services = array(
 			// Save PayPal and Venmo eligibility.
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ],
 			// Advanced credit and debit cards eligibility.
-			'apm'                                    => $capabilities['alternative_payment_methods'],
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $capabilities[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ],
 			// Alternative payment methods eligibility.
 			FeaturesDefinition::FEATURE_GOOGLE_PAY   => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			// Google Pay eligibility.

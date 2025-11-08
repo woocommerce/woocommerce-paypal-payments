@@ -924,7 +924,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'alternative_payment_methods'     => array(
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => array(
 				'heading'      => __( 'Alternative Payment Methods', 'woocommerce-paypal-payments' ),
 				'description'  => sprintf(
 				// translators: %1$s, %2$s, %3$s and %4$s are a link tags.
@@ -2319,9 +2319,9 @@ return array(
 		return array(
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),
 			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $container->get( 'card-fields.eligibility.check' ),
-			FeaturesDefinition::FEATURE_GOOGLE_PAY  => $container->get( 'googlepay.eligibility.check' ),
-			FeaturesDefinition::FEATURE_APPLE_PAY   => $container->get( 'applepay.eligibility.check' ),
-			MerchantDetails::FEATURE_CONTACT_MODULE => $container->get( 'wcgateway.contact-module.eligibility.check' ),
+			FeaturesDefinition::FEATURE_GOOGLE_PAY     => $container->get( 'googlepay.eligibility.check' ),
+			FeaturesDefinition::FEATURE_APPLE_PAY      => $container->get( 'applepay.eligibility.check' ),
+			FeaturesDefinition::FEATURE_CONTACT_MODULE => $container->get( 'wcgateway.contact-module.eligibility.check' ),
 		);
 	},
 

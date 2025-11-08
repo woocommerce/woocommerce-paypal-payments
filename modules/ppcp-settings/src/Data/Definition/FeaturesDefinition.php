@@ -55,6 +55,16 @@ class FeaturesDefinition {
 	public const FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS = 'advanced_credit_and_debit_cards';
 
 	/**
+	 * Whether alternative payment methods are supported.
+	 */
+	public const FEATURE_ALTERNATIVE_PAYMENT_METHODS = 'alternative_payment_methods';
+
+	/**
+	 * Contact module allows the merchant to unlock the "Custom Shipping Contact" toggle.
+	 */
+	public const FEATURE_CONTACT_MODULE = 'contact_module';
+
+	/**
 	 * The features eligibility service.
 	 *
 	 * @var FeaturesEligibilityService
@@ -209,10 +219,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'alternative_payment_methods'                 => array(
+			self::FEATURE_ALTERNATIVE_PAYMENT_METHODS     => array(
 				'title'       => __( 'Alternative Payment Methods', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Offer global, country-specific payment options for your customers.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['apm'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_ALTERNATIVE_PAYMENT_METHODS ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
