@@ -107,8 +107,8 @@ class FeaturesEligibilityService {
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => fn() => $this->is_save_paypal_eligible,
 			'advanced_credit_and_debit_cards'        => $this->check_acdc_eligible,
 			'alternative_payment_methods'            => fn() => $this->is_apm_eligible,
-			'google_pay'                             => $this->check_google_pay_eligible,
-			'apple_pay'                              => $this->check_apple_pay_eligible,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY   => $this->check_google_pay_eligible,
+			FeaturesDefinition::FEATURE_APPLE_PAY    => $this->check_apple_pay_eligible,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => fn() => $this->is_pay_later_eligible,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => fn() => $this->is_installments_eligible,
 		);

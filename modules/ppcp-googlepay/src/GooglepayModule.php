@@ -244,7 +244,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$google_pay_enabled = $product_status->is_active();
 
-				$features['google_pay'] = array(
+				$features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] = array(
 					'enabled' => $google_pay_enabled,
 				);
 

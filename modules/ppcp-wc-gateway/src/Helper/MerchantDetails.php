@@ -20,17 +20,6 @@ class MerchantDetails {
 	public const FEATURE_ADVANCED_CARD_PROCESSING = 'acdc';
 
 	/**
-	 * Merchant eligibility to use Google Pay.
-	 */
-	public const FEATURE_GOOGLE_PAY = 'googlepay';
-
-	/**
-	 * Whether Apple Pay can be used by the merchant. Apple Pay requires an Apple device (like
-	 * iPhone) to be used by customers.
-	 */
-	public const FEATURE_APPLE_PAY = 'applepay';
-
-	/**
 	 * Contact module allows the merchant to unlock the "Custom Shipping Contact" toggle.
 	 */
 	public const FEATURE_CONTACT_MODULE = 'contact_module';

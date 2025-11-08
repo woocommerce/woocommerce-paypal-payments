@@ -39,6 +39,17 @@ class FeaturesDefinition {
 	public const FEATURE_PAY_LATER_MESSAGING = 'pay_later_messaging';
 
 	/**
+	 * Whether Apple Pay can be used by the merchant. Apple Pay requires an Apple device (like
+	 * iPhone) to be used by customers.
+	 */
+	public const FEATURE_APPLE_PAY = 'apple_pay';
+
+	/**
+	 * Merchant eligibility to use Google Pay.
+	 */
+	public const FEATURE_GOOGLE_PAY = 'google_pay';
+
+	/**
 	 * The features eligibility service.
 	 *
 	 * @var FeaturesEligibilityService
@@ -225,10 +236,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'google_pay'                        => array(
+			self::FEATURE_GOOGLE_PAY            => array(
 				'title'       => __( 'Google Pay', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Let customers pay using their Google Pay wallet.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['google_pay'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_GOOGLE_PAY ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -263,10 +274,10 @@ class FeaturesDefinition {
 					__( '¹PayPal Q2 Earnings-2021.', 'woocommerce-paypal-payments' ),
 				),
 			),
-			'apple_pay'                         => array(
+			self::FEATURE_APPLE_PAY             => array(
 				'title'       => __( 'Apple Pay', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Let customers pay using their Apple Pay wallet.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['apple_pay'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_APPLE_PAY ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',

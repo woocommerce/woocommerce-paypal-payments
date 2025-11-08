@@ -194,7 +194,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 				$apple_pay_enabled = $product_status->is_active();
 
-				$features['apple_pay'] = array(
+				$features[ FeaturesDefinition::FEATURE_APPLE_PAY ] = array(
 					'enabled' => $apple_pay_enabled,
 				);
 

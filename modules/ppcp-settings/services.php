@@ -499,8 +499,8 @@ $services = array(
 		assert( $general_settings instanceof GeneralSettings );
 
 		return array(
-			'apple_pay'                              => ( $features['apple_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'google_pay'                             => ( $features['google_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_APPLE_PAY    => ( $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_GOOGLE_PAY   => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			'acdc'                                   => ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			'apm'                                    => $features['alternative_payment_methods']['enabled'] ?? false,
@@ -577,12 +577,12 @@ $services = array(
 			! $button_locations['cart_enabled'],                                                          // Add PayPal buttons to cart.
 			! $button_locations['block_checkout_enabled'],                                                // Add PayPal buttons to block checkout.
 			! $button_locations['product_enabled'],                                                       // Add PayPal buttons to product.
-			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'],  // Register Domain for Apple Pay.
-			$capabilities['acdc'] && ! ( $capabilities['apple_pay'] && $capabilities['google_pay'] ),     // Add digital wallets to your account.
-			$container->get( 'applepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['apple_pay'],                                        // Add Apple Pay to your account.
-			$container->get( 'googlepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['google_pay'],                                       // Add Google Pay to your account.
-			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
-			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],  // Register Domain for Apple Pay.
+			$capabilities['acdc'] && ! ( $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] ),     // Add digital wallets to your account.
+			$container->get( 'applepay.eligible' ) && $capabilities['acdc'] && ! $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                        // Add Apple Pay to your account.
+			$container->get( 'googlepay.eligible' ) && $capabilities['acdc'] && ! $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],                                       // Add Google Pay to your account.
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                       // Enable Apple Pay.
+			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			! $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
 		);
@@ -608,8 +608,8 @@ $services = array(
 		);
 		// Merchant capabilities, serve to show active or inactive badge and buttons.
 		$capabilities = array(
-			'apple_pay'                              => $features['apple_pay']['enabled'] ?? false,
-			'google_pay'                             => $features['google_pay']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_APPLE_PAY    => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY   => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
 			'acdc'                                   => $features['advanced_credit_and_debit_cards']['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			'alternative_payment_methods'            => $features['alternative_payment_methods']['enabled'] ?? false,
@@ -623,9 +623,9 @@ $services = array(
 			// Advanced credit and debit cards eligibility.
 			'apm'                                    => $capabilities['alternative_payment_methods'],
 			// Alternative payment methods eligibility.
-			'google_pay'                             => $capabilities['acdc'] && $capabilities['google_pay'],
+			FeaturesDefinition::FEATURE_GOOGLE_PAY   => $capabilities['acdc'] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			// Google Pay eligibility.
-			'apple_pay'                              => $capabilities['acdc'] && $capabilities['apple_pay'],
+			FeaturesDefinition::FEATURE_APPLE_PAY    => $capabilities['acdc'] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
 			// Apple Pay eligibility.
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities['acdc'] && ! $gateways['card-button'],
 			// Pay Later eligibility.
