@@ -184,6 +184,9 @@ class PayPalSettingsImporter implements StepProcessor {
 		if ( self::OPTION_NOT_FOUND !== $current_value && $this->values_are_equal( $current_value, $option_value ) ) {
 			return true;
 		}
+		if(is_object($option_value)) {
+			$option_value = get_object_vars($option_value);
+		}
 
 		return update_option( $option_name, $option_value );
 	}
