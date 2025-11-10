@@ -65,6 +65,11 @@ class FeaturesDefinition {
 	public const FEATURE_CONTACT_MODULE = 'contact_module';
 
 	/**
+	 * Whether Pay With Crypto Feature is supported.
+	 */
+	public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
+
+	/**
 	 * The features eligibility service.
 	 *
 	 * @var FeaturesEligibilityService
@@ -389,10 +394,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'pwc'                                         => array(
+			self::FEATURE_PAY_WITH_CRYPTO                 => array(
 				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['pwc'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',

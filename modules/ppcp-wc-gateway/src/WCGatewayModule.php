@@ -595,7 +595,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					'enabled' => $installments_product_status->is_active(),
 				);
 
-				$features['pwc'] = array(
+				$features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] = array(
 					'enabled' => $pwc_product_status->is_active(),
 				);
 

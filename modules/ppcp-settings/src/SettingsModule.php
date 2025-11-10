@@ -339,7 +339,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					'settings'               => $container->get( 'settings.rest.settings' ),
 					'styling'                => $container->get( 'settings.rest.styling' ),
 					'todos'                  => $container->get( 'settings.rest.todos' ),
-					FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $container->get( 'settings.rest.pay_later_messaging' ),
+					'pay_later_messaging'    => $container->get( 'settings.rest.pay_later_messaging' ),
 					'features'               => $container->get( 'settings.rest.features' ),
 				);
 
@@ -496,7 +496,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				}
 
 				// Unset PWC if the merchant does not have capability.
-				if ( ! $merchant_capabilities['pwc'] ) {
+				if ( ! $merchant_capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] ) {
 					unset( $payment_methods[ PWCGateway::ID ] );
 				}
 

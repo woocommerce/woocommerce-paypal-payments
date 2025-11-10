@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WC_Order;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -420,7 +421,7 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			'woocommerce_paypal_payments_features_list',
 			function ( array $features ): array {
 				if ( ! $this->is_pwc_feature_enabled() ) {
-					unset( $features['pwc'] );
+					unset( $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] );
 				}
 				return $features;
 			}
