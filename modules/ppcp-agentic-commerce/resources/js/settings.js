@@ -1,11 +1,18 @@
 import { __ } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
 import { registerSetting, SLOTS } from '@settings/extensions';
 import SettingsBlock from '@settings/Components/ReusableComponents/SettingsBlock';
 import { ControlToggleButton } from '@settings/Components/ReusableComponents/Controls/index.js';
+import { createExtensionStore } from '@settings/extensions';
+
+const useSettings = createExtensionStore( {
+	name: 'agentic-settings',
+	defaults: {
+		active: false,
+	},
+} );
 
 const AgenticSettings = () => {
-	const [ active, setActive ] = useState( true );
+	const { active, setActive } = useSettings();
 
 	return (
 		<SettingsBlock
@@ -13,11 +20,11 @@ const AgenticSettings = () => {
 		>
 			<ControlToggleButton
 				label={ __(
-					'Enable Agentic Features',
+					'Agentic Features',
 					'woocommerce-paypal-payments'
 				) }
 				description={ __(
-					'Enable this to enable agentic shopping on this shop.',
+					'Enable this to allow the PayPal AI agent to shop on this store.',
 					'woocommerce-paypal-payments'
 				) }
 				value={ active }

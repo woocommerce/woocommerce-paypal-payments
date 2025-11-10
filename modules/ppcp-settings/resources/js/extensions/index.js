@@ -8,6 +8,7 @@ export { SLOTS } from './slots';
 export { registerSetting, unregisterSetting } from './registry';
 export { useRegisteredSettings } from './useRegisteredSettings';
 export { STORE_NAME } from './store';
+export { createExtensionStore } from './createExtensionStore';
 
 // Initialize store on import
 import './store';
