@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -107,7 +108,12 @@ return array(
 	},
 
 	// Settings.
-	'agentic.settings.endpoint'                => static function (): AgenticSettingsEndpoint {
-		return new AgenticSettingsEndpoint();
+	'agentic.settings.model'                   => static function (): AgenticSettingsDataModel {
+		return new AgenticSettingsDataModel();
+	},
+	'agentic.settings.endpoint'                => static function ( ContainerInterface $container ): AgenticSettingsEndpoint {
+		return new AgenticSettingsEndpoint(
+			$container->get( 'agentic.settings.model' )
+		);
 	},
 );

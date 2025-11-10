@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
 
+use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -22,14 +23,20 @@ use WP_REST_Server;
 abstract class ExtensionRestEndpoint extends RestEndpoint {
 
 	/**
-	 * Set this to the store name (same as used in JS)
+	 * The data model for persistence.
+	 *
+	 * @var AbstractDataModel
 	 */
-	protected $rest_base = '';
+	protected AbstractDataModel $data_model;
 
 	/**
-	 * Option key prefix for storing extension settings.
+	 * Constructor.
+	 *
+	 * @param AbstractDataModel $data_model The data model for persistence.
 	 */
-	private const OPTION_PREFIX = 'woocommerce-ppcp-ext-';
+	public function __construct( AbstractDataModel $data_model ) {
+		$this->data_model = $data_model;
+	}
 
 	/**
 	 * Sanitizes and validates REST request data.
@@ -62,10 +69,7 @@ abstract class ExtensionRestEndpoint extends RestEndpoint {
 	}
 
 	public function get_settings(): WP_REST_Response {
-		$option_key = $this->get_option_key();
-		$data       = get_option( $option_key, array() );
-
-		return $this->return_success( $data );
+		return $this->return_success( $this->data_model->to_array() );
 	}
 
 	public function update_settings( WP_REST_Request $request ): WP_REST_Response {
@@ -77,13 +81,9 @@ abstract class ExtensionRestEndpoint extends RestEndpoint {
 			return $this->return_error( 'Invalid data provided' );
 		}
 
-		$option_key = $this->get_option_key();
-		update_option( $option_key, $sanitized_data );
+		$this->data_model->from_array( $sanitized_data );
+		$this->data_model->save();
 
 		return $this->get_settings();
-	}
-
-	private function get_option_key(): string {
-		return self::OPTION_PREFIX . $this->rest_base;
 	}
 }

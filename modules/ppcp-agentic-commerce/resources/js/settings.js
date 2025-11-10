@@ -1,8 +1,11 @@
 import { __ } from '@wordpress/i18n';
-import { registerSetting, SLOTS } from '@settings/extensions';
+import {
+	registerSetting,
+	createExtensionStore,
+	SLOTS,
+} from '@settings/extensions';
 import SettingsBlock from '@settings/Components/ReusableComponents/SettingsBlock';
 import { ControlToggleButton } from '@settings/Components/ReusableComponents/Controls/index.js';
-import { createExtensionStore } from '@settings/extensions';
 
 const useSettings = createExtensionStore( {
 	name: 'agentic-settings',
