@@ -9,8 +9,6 @@ use WC_Subscriptions_Product;
 class FreeTrialSubscriptionHelper {
 	/**
 	 * Checks if the cart contains only free trial.
-	 *
-	 * @return bool
 	 */
 	public function is_free_trial_cart(): bool {
 		if ( ! $this->is_wcs_plugin_active() ) {
@@ -38,8 +36,6 @@ class FreeTrialSubscriptionHelper {
 
 	/**
 	 * Whether the subscription plugin is active or not.
-	 *
-	 * @return bool
 	 */
 	protected function is_wcs_plugin_active(): bool {
 		return class_exists( WC_Subscriptions::class );
