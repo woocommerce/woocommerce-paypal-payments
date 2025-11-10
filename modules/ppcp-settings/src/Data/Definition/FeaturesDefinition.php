@@ -389,7 +389,7 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'pwc'                             => array(
+			'pwc'                                         => array(
 				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
 				'enabled'     => $this->merchant_capabilities['pwc'],

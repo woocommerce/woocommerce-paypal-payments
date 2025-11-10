@@ -509,7 +509,7 @@ $services = array(
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
-			'pwc'          => $features['pwc']['enabled'] ?? false,
+			'pwc'                                    => $features['pwc']['enabled'] ?? false,
 		);
 	},
 
@@ -621,8 +621,8 @@ $services = array(
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
-			'pwc'                         => $features['pwc']['enabled'] ?? false,
-			'pay_later_messaging'         => $features['pay_later_messaging']['enabled'] ?? false,
+			'pwc'                                    => $features['pwc']['enabled'] ?? false,
+			'pay_later_messaging'                    => $features['pay_later_messaging']['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
@@ -640,7 +640,7 @@ $services = array(
 			// Pay Later eligibility.
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
-			'pwc'          => $capabilities['pwc'], // Pay with Crypto eligibility.
+			'pwc'                                    => $capabilities['pwc'], // Pay with Crypto eligibility.
 		);
 
 		return new FeaturesDefinition(

@@ -121,7 +121,7 @@ class FeaturesEligibilityService {
 			FeaturesDefinition::FEATURE_APPLE_PAY    => $this->check_apple_pay_eligible,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => fn() => $this->is_pay_later_eligible,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => fn() => $this->is_installments_eligible,
-			'pwc'                             => fn() => $this->is_pwc_eligibility_checked,
+			'pwc'                                    => fn() => $this->is_pwc_eligibility_checked,
 		);
 	}
 }
