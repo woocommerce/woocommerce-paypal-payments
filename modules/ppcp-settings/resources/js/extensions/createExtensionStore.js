@@ -47,7 +47,7 @@ export const createExtensionStore = ( config ) => {
 
 	// Generate store identifiers
 	const STORE_NAME = `wc/paypal/${ name }`;
-	const REST_PATH = `/${ namespace }/${ name }`;
+	const REST_PATH = `/${ namespace }/ext/${ name }`;
 
 	// Action types
 	const ACTION_TYPES = {
