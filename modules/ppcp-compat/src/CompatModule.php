@@ -616,7 +616,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				'ppcp-blueprint-export',
 				function() use ($c) {
 					// Handle export BEFORE any output
-					if (isset($_POST['export_blueprint']) && check_admin_referer('ppcp_export_blueprint')) {
+					if ( isset($_POST['export_blueprint']) && check_admin_referer('ppcp_export_blueprint') ) {
 
 						// Get all registered exporters
 						$all_exporters = apply_filters('wooblueprint_exporters', array());
@@ -641,17 +641,17 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 							'steps' => $steps
 						);
 
-						if (ob_get_level()) {
+						if ( ob_get_level() ) {
 							ob_end_clean();
 						}
 
 						header('Content-Type: application/json');
 						header('Content-Disposition: attachment; filename="paypal-blueprint-' . date('Y-m-d-His') . '.json"');
-						echo wp_json_encode($blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+						echo wp_json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
 						exit;
 					}
 
-					// Only show UI if not exporting
+					// Only show UI if not exporting.
 					?>
 					<div class="wrap">
 						<h1>PayPal Settings Blueprint Export</h1>
