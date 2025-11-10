@@ -2,7 +2,9 @@ import { createReduxStore, register } from '@wordpress/data';
 
 const STORE_NAME = 'ppcp/settings-registry';
 
-const DEFAULT_STATE = {};
+const DEFAULT_STATE = {
+	extensionStores: {}, // Track extension stores by name
+};
 
 const actions = {
 	registerSetting( slot, id, component, priority = 10 ) {
@@ -20,6 +22,14 @@ const actions = {
 			type: 'UNREGISTER_SETTING',
 			slot,
 			id,
+		};
+	},
+
+	registerExtensionStore( storeName, config ) {
+		return {
+			type: 'REGISTER_EXTENSION_STORE',
+			storeName,
+			config,
 		};
 	},
 };
@@ -59,6 +69,26 @@ const reducer = ( state = DEFAULT_STATE, action ) => {
 			};
 		}
 
+		case 'REGISTER_EXTENSION_STORE': {
+			const { storeName, config } = action;
+
+			// Check for duplicate store name
+			if ( state.extensionStores[ storeName ] ) {
+				console.warn(
+					`[SettingsRegistry] Extension store already registered: "${ storeName }"`
+				);
+				return state;
+			}
+
+			return {
+				...state,
+				extensionStores: {
+					...state.extensionStores,
+					[ storeName ]: config,
+				},
+			};
+		}
+
 		default:
 			return state;
 	}
@@ -71,6 +101,10 @@ const selectors = {
 
 	getAllRegistrations( state ) {
 		return state;
+	},
+
+	getExtensionStores( state ) {
+		return Object.values( state.extensionStores || {} );
 	},
 };
 

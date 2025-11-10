@@ -16,6 +16,8 @@ import {
 import { useMemo } from '@wordpress/element';
 import apiFetch from '@wordpress/api-fetch';
 
+import { registerExtensionStore } from './registry';
+
 const EMPTY_OBJ = Object.freeze( {} );
 
 /**
@@ -127,12 +129,20 @@ export const createExtensionStore = ( config ) => {
 		};
 	};
 
+	const refresh = () => {
+		return ( { dispatch, select } ) => {
+			dispatch.setIsReady( false );
+			select.persistentData();
+		};
+	};
+
 	const actions = {
 		setTransient,
 		setPersistent,
 		hydrate,
 		setIsReady,
 		persist,
+		refresh,
 	};
 
 	// Selectors
@@ -172,7 +182,7 @@ export const createExtensionStore = ( config ) => {
 		persistentData: persistentDataResolver,
 	};
 
-	// Register the store
+	// Register and initialize the store
 	const store = createReduxStore( STORE_NAME, {
 		reducer,
 		actions,
@@ -181,13 +191,24 @@ export const createExtensionStore = ( config ) => {
 	} );
 	register( store );
 
+	// Auto-register this extension store for central persistence management
+	const dispatch = wp.data.dispatch( STORE_NAME );
+	registerExtensionStore( STORE_NAME, {
+		key: name,
+		message: `Process ${ name } settings`,
+		store: {
+			persist: dispatch.persist,
+			refresh: dispatch.refresh,
+		},
+	} );
+
 	// Return hook to access the store
 	return () => {
 		const select = useSelect(
 			( storeSelectors ) => storeSelectors( STORE_NAME ),
 			[]
 		);
-		const dispatch = useDispatch( STORE_NAME );
+		const storeDispatch = useDispatch( STORE_NAME );
 
 		// Check if store is ready
 		const isReady = useSelect(
@@ -207,7 +228,7 @@ export const createExtensionStore = ( config ) => {
 			[]
 		);
 
-		const { persist: persistAction } = dispatch;
+		const { persist: persistAction } = storeDispatch;
 
 		// Generate getters and setters for each field
 		return useMemo( () => {
@@ -226,11 +247,11 @@ export const createExtensionStore = ( config ) => {
 					key.charAt( 0 ).toUpperCase() + key.slice( 1 )
 				}`;
 				result[ setterName ] = ( value ) => {
-					dispatch.setPersistent( key, value );
+					storeDispatch.setPersistent( key, value );
 				};
 			} );
 
 			return result;
-		}, [ data, isReady, persistAction, dispatch ] );
+		}, [ data, isReady, persistAction, storeDispatch ] );
 	};
 };
