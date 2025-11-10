@@ -7,18 +7,19 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\VaultV2;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\VaultV2\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
+use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 
 /**
  * Class StartPayPalVaultingEndpoint.
  */
 class StartPayPalVaultingEndpoint implements EndpointInterface {
-
 
 	const ENDPOINT = 'ppc-vault-paypal';
 

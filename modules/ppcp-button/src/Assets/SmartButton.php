@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Cart;
 use WC_Order;
 use WC_Payment_Tokens;
 use WC_Product;
@@ -33,29 +34,28 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Button\Helper\DisabledFundingSources;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
+use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
-use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
-use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WC_Cart;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
  * Class SmartButton
@@ -379,36 +379,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->render_dcc_wrapper();
 		}
 
-		if ( $this->is_free_trial_cart() ) {
-			add_action(
-				'woocommerce_review_order_after_submit',
-				function () {
-					$vaulted_email = $this->get_vaulted_paypal_email();
-					if ( ! $vaulted_email ) {
-						return;
-					}
-
-					?>
-					<div class="ppcp-vaulted-paypal-details">
-						<?php
-						echo wp_kses_post(
-							sprintf(
-							// translators: %1$s - email, %2$s, %3$s - HTML tags for a link.
-								esc_html__(
-									'Using %2$s%1$s%3$s PayPal.',
-									'woocommerce-paypal-payments'
-								),
-								$vaulted_email,
-								'<b>',
-								'</b>'
-							)
-						);
-						?>
-					</div>
-					<?php
-				}
-			);
-		}
+		do_action( 'woocommerce_paypal_payments_smart_button_render_wrapper' );
 
 		$this->sanitize_woocommerce_filters();
 
@@ -1258,7 +1229,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,
-			'vaulted_paypal_email'                    => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                                => $this->bn_codes(),
 			'payer'                                   => $this->payerData(),
 			'button'                                  => array(
@@ -2060,50 +2030,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = array() ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
-	}
-
-	/**
-	 * Retrieves all payment tokens for the user, via API or cached if already queried.
-	 *
-	 * @return PaymentToken[]
-	 */
-	private function get_payment_tokens(): array {
-		if ( null === $this->payment_tokens ) {
-			$this->payment_tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
-		}
-
-		return $this->payment_tokens;
-	}
-
-	/**
-	 * Returns the vaulted PayPal email or empty string.
-	 *
-	 * @return string
-	 */
-	private function get_vaulted_paypal_email(): string {
-		try {
-			$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-			if ( $customer_id ) {
-				$customer_tokens = $this->payment_tokens_endpoint->payment_tokens_for_customer( $customer_id );
-				foreach ( $customer_tokens as $token ) {
-					$email_address = $token['payment_source']->properties()->email_address ?? '';
-					if ( $email_address ) {
-						return $email_address;
-					}
-				}
-			}
-
-			$tokens = $this->get_payment_tokens();
-			foreach ( $tokens as $token ) {
-				if ( isset( $token->source()->paypal ) ) {
-					return $token->source()->paypal->payer->email_address;
-				}
-			}
-		} catch ( Exception $exception ) {
-			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
-		}
-
-		return '';
 	}
 
 	/**
