@@ -6,10 +6,7 @@
 
 export { SLOTS } from './slots';
 export { registerSetting, unregisterSetting } from './registry';
-export {
-	useRegisteredSettings,
-	useExtensionStores,
-} from './useRegisteredSettings';
+export { useRegisteredSettings, useExtensionStores } from './hooks';
 export { STORE_NAME } from './store';
 export { createExtensionStore } from './createExtensionStore';
 

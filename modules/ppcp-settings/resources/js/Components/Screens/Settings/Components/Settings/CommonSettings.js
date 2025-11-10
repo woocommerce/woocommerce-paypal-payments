@@ -6,7 +6,7 @@ import SavePaymentMethods from './Blocks/SavePaymentMethods';
 import InvoicePrefix from './Blocks/InvoicePrefix';
 import PayNowExperience from './Blocks/PayNowExperience';
 import StayUpdated from './Blocks/StayUpdated';
-import { useRegisteredSettings, SLOTS } from '../../../../../extensions';
+import { useRegisteredSettings, SLOTS } from '@settings/extensions';
 
 const CommonSettings = ( { ownBradOnly } ) => {
 	// Get registered settings for common settings

@@ -8,7 +8,7 @@ import DisconnectButton from './Parts/DisconnectButton';
 import SettingsBlock from '../../../../ReusableComponents/SettingsBlock';
 import { ControlStaticValue } from '../../../../ReusableComponents/Controls';
 import { CardActions } from '../../../../ReusableComponents/Elements';
-import { useRegisteredSettings, SLOTS } from '../../../../../extensions';
+import { useRegisteredSettings, SLOTS } from '@settings/extensions';
 
 const ConnectionStatus = () => {
 	const merchant = CommonHooks.useMerchant();

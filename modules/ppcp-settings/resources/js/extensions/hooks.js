@@ -28,7 +28,7 @@ export const useRegisteredSettings = ( slot ) => {
  * Used by useStoreManager to include extension stores in persistAll/refreshAll.
  * Returns stores in the format expected by useStoreManager.
  *
- * @return {Array<{key: string, message: string, store: {persist: Function, refresh: Function}}>}
+ * @return {Array<{key: string, message: string, store: {persist: Function, refresh: Function}}>} List of extension's Redux stores.
  */
 export const useExtensionStores = () => {
 	return useSelect(
