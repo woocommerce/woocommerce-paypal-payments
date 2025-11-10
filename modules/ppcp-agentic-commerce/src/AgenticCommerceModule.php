@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -56,6 +57,11 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 					assert( $endpoint instanceof AgenticRestEndpoint );
 					$endpoint->register_routes();
 				}
+
+				// Internal (settings) endpoint.
+				$endpoint = $container->get( 'agentic.settings.endpoint' );
+				assert( $endpoint instanceof RestEndpoint );
+				$endpoint->register_routes();
 			}
 		);
 

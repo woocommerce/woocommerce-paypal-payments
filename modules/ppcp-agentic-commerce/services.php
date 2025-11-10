@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -104,5 +104,10 @@ return array(
 			$container->get( 'agentic.ingestion-batch-provider' ),
 			$container->get( 'agentic.sync-job-factory' )
 		);
+	},
+
+	// Settings.
+	'agentic.settings.endpoint'                => static function (): AgenticSettingsEndpoint {
+		return new AgenticSettingsEndpoint();
 	},
 );
