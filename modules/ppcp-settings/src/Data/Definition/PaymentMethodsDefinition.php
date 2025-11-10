@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -294,6 +295,15 @@ class PaymentMethodsDefinition {
 	 */
 	public function group_apms(): array {
 		$group = array(
+			array(
+				'id'          => PWCGateway::ID,
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __(
+					'Accept cryptocurrency payments through PayPal, which supports various digital currencies. Receive USD payments in your PayPal balance.',
+					'woocommerce-paypal-payments'
+				),
+				'icon'        => 'payment-method-pwc',
+			),
 			array(
 				'id'          => BancontactGateway::ID,
 				'title'       => __( 'Bancontact', 'woocommerce-paypal-payments' ),

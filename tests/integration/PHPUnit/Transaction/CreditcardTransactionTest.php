@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\Tests\Integration\Transaction_tests;
+namespace WooCommerce\PayPalCommerce\Tests\Integration\Transaction;
 
 use WC_Payment_Token;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;

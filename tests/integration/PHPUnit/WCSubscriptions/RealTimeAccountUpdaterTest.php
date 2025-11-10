@@ -1,10 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Tests\Integration;
+namespace WooCommerce\PayPalCommerce\Tests\Integration\WCSubscriptions;
 
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 

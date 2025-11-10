@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -71,6 +72,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -479,6 +481,7 @@ $services = array(
 			'google_pay'  => $settings['data']['ppcp-googlepay']['enabled'] ?? false,
 			'axo'         => $settings['data']['ppcp-axo-gateway']['enabled'] ?? false,
 			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
+			'pwc'         => $settings['data']['ppcp-pwc']['enabled'] ?? false,
 		);
 	},
 	'settings.service.merchant_capabilities'              => static function ( ContainerInterface $container ): array {
@@ -506,6 +509,7 @@ $services = array(
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			'pwc'          => $features['pwc']['enabled'] ?? false,
 		);
 	},
 
@@ -563,6 +567,7 @@ $services = array(
 		 * @param bool $is_enable_google_pay_eligible - Show if merchant has Google Pay capability but hasn't enabled the gateway.
 		 * @param bool $is_enable_installments_eligible - Show if merchant has installments capability and merchant country is MX.
 		 * @param bool $is_working_capital_eligible - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
+		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability.
 		 */
 		return new TodosEligibilityService(
 			$container->get( 'axo.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['axo'],                  // Enable Fastlane.
@@ -584,7 +589,9 @@ $services = array(
 			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                       // Enable Apple Pay.
 			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			! $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
-			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible // Enable Working Capital.
+			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
+			$capabilities['pwc'] && ! $gateways['pwc'], // Enable Pay with Crypto.
+			$capabilities['acdc'] && ! $capabilities['pwc'], // Apply for Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
@@ -606,7 +613,7 @@ $services = array(
 		$gateways = array(
 			'card-button' => $settings['data']['ppcp-card-button-gateway']['enabled'] ?? false,
 		);
-		// Merchant capabilities, serve to show active or inactive badge and buttons.
+		// Merchant capabilities serve to show active or inactive badge and buttons.
 		$capabilities = array(
 			FeaturesDefinition::FEATURE_APPLE_PAY    => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_GOOGLE_PAY   => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
@@ -614,6 +621,8 @@ $services = array(
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			'pwc'                         => $features['pwc']['enabled'] ?? false,
+			'pay_later_messaging'         => $features['pay_later_messaging']['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
@@ -627,10 +636,11 @@ $services = array(
 			// Google Pay eligibility.
 			FeaturesDefinition::FEATURE_APPLE_PAY    => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
 			// Apple Pay eligibility.
-			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['card-button'],
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities['pay_later_messaging'] && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['card-button'],
 			// Pay Later eligibility.
 			FeaturesDefinition::FEATURE_INSTALLMENTS => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
 			// Installments eligibility.
+			'pwc'          => $capabilities['pwc'], // Pay with Crypto eligibility.
 		);
 
 		return new FeaturesDefinition(
@@ -659,6 +669,7 @@ $services = array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
+			$apm_eligible  // Pay with Crypto eligibility.
 		);
 	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
@@ -685,6 +696,7 @@ $services = array(
 			AxoGateway::ID,
 			ApplePayGateway::ID,
 			GooglePayGateway::ID,
+			PWCGateway::ID,
 			BancontactGateway::ID,
 			BlikGateway::ID,
 			EPSGateway::ID,

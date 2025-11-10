@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\IDealGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MultibancoGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
+use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
@@ -40,6 +41,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
+use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
@@ -293,8 +295,19 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'admin_enqueue_scripts',
-			function ( string $hook_suffix ) use ( $container ): void {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $hook_suffix ) use ( $container ): void {
+				if ( ! is_string( $hook_suffix ) ) {
+					return;
+				}
+
 				$script_data_handler = $container->get( 'settings.service.script-data-handler' );
+				assert( $script_data_handler instanceof ScriptDataHandler );
+
 				$script_data_handler->localize_scripts( $hook_suffix );
 			}
 		);
@@ -409,6 +422,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			function ( array $payment_methods ) use ( $container ): array {
 				$all_payment_methods = $payment_methods;
 
+				$merchant_capabilities = $container->get( 'settings.service.merchant_capabilities' );
+
 				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_product_status instanceof DCCProductStatus );
 
@@ -478,6 +493,11 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					unset( $payment_methods[ P24Gateway::ID ] );
 					unset( $payment_methods[ TrustlyGateway::ID ] );
 					unset( $payment_methods[ MultibancoGateway::ID ] );
+				}
+
+				// Unset PWC if the merchant does not have capability.
+				if ( ! $merchant_capabilities['pwc'] ) {
+					unset( $payment_methods[ PWCGateway::ID ] );
 				}
 
 				return $payment_methods;

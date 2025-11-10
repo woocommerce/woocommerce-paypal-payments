@@ -69,6 +69,13 @@ class FeaturesEligibilityService {
 	private bool $is_installments_eligible;
 
 	/**
+	 * Whether the Pay with Crypto eligibility has been checked.
+	 *
+	 * @var bool
+	 */
+	private bool $is_pwc_eligibility_checked;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param bool     $is_save_paypal_eligible If saving PayPal and Venmo is eligible.
@@ -78,6 +85,7 @@ class FeaturesEligibilityService {
 	 * @param callable $check_apple_pay_eligible If Apple Pay is eligible.
 	 * @param bool     $is_pay_later_eligible If Pay Later is eligible.
 	 * @param bool     $is_installments_eligible If Installments is eligible.
+	 * @param bool     $is_pwc_eligibility_checked If Pay With Crypto eligibility has been checked.
 	 */
 	public function __construct(
 		bool $is_save_paypal_eligible,
@@ -86,15 +94,17 @@ class FeaturesEligibilityService {
 		callable $check_google_pay_eligible,
 		callable $check_apple_pay_eligible,
 		bool $is_pay_later_eligible,
-		bool $is_installments_eligible
+		bool $is_installments_eligible,
+		bool $is_pwc_eligibility_checked
 	) {
-		$this->is_save_paypal_eligible   = $is_save_paypal_eligible;
-		$this->check_acdc_eligible       = $check_acdc_eligible;
-		$this->is_apm_eligible           = $is_apm_eligible;
-		$this->check_google_pay_eligible = $check_google_pay_eligible;
-		$this->check_apple_pay_eligible  = $check_apple_pay_eligible;
-		$this->is_pay_later_eligible     = $is_pay_later_eligible;
-		$this->is_installments_eligible  = $is_installments_eligible;
+		$this->is_save_paypal_eligible    = $is_save_paypal_eligible;
+		$this->check_acdc_eligible        = $check_acdc_eligible;
+		$this->is_apm_eligible            = $is_apm_eligible;
+		$this->check_google_pay_eligible  = $check_google_pay_eligible;
+		$this->check_apple_pay_eligible   = $check_apple_pay_eligible;
+		$this->is_pay_later_eligible      = $is_pay_later_eligible;
+		$this->is_installments_eligible   = $is_installments_eligible;
+		$this->is_pwc_eligibility_checked = $is_pwc_eligibility_checked;
 	}
 
 	/**
@@ -111,6 +121,7 @@ class FeaturesEligibilityService {
 			FeaturesDefinition::FEATURE_APPLE_PAY    => $this->check_apple_pay_eligible,
 			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => fn() => $this->is_pay_later_eligible,
 			FeaturesDefinition::FEATURE_INSTALLMENTS => fn() => $this->is_installments_eligible,
+			'pwc'                             => fn() => $this->is_pwc_eligibility_checked,
 		);
 	}
 }
