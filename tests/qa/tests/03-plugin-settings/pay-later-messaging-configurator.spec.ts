@@ -142,183 +142,193 @@ test.describe( 'Subtests', () => {
 		payLaterMessagingData.checkoutLocationSettings[ 'Product page' ];
 
 	for ( const settings of productPlm.settings ) {
-		test.fixme( `(PCP-0001) PLM - Product page${ summarizeSettings(
-			settings
-		) }`, async ( { pcpPayLaterMessaging, product }, testInfo ) => {
-			const snapshotName = testInfo.title;
-			const { location } = productPlm;
-			await pcpPayLaterMessaging.visit();
-			await pcpPayLaterMessaging.enableMessagingForLocation( location );
-			await pcpPayLaterMessaging.updateLocationSettings(
-				location,
-				settings
-			);
-			// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.saveChanges();
-			await pcpPayLaterMessaging.page.reload();
-			await pcpPayLaterMessaging.expandAccordionSection( location );
-			// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.snapshotPlmConfigurator(
-				`${ snapshotName } - After save`
-			);
+		test.fixme(
+			`(PCP-0001) PLM - Product page${ summarizeSettings( settings ) }`,
+			async ( { pcpPayLaterMessaging, product }, testInfo ) => {
+				const snapshotName = testInfo.title;
+				const { location } = productPlm;
+				await pcpPayLaterMessaging.visit();
+				await pcpPayLaterMessaging.enableMessagingForLocation(
+					location
+				);
+				await pcpPayLaterMessaging.updateLocationSettings(
+					location,
+					settings
+				);
+				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.saveChanges();
+				await pcpPayLaterMessaging.page.reload();
+				await pcpPayLaterMessaging.expandAccordionSection( location );
+				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.snapshotPlmConfigurator(
+					`${ snapshotName } - After save`
+				);
 
-			await product.visit( products.simple10.slug );
-			await snapshotPlmContainer(
-				product.payPalUi,
-				`${ snapshotName } - Frontend`
-			);
-		} );
+				await product.visit( products.simple100.slug );
+				await snapshotPlmContainer(
+					product.payPalUi,
+					`${ snapshotName } - Frontend`
+				);
+			}
+		);
 	}
 
 	const cartPlm = payLaterMessagingData.checkoutLocationSettings.Cart;
 
 	for ( const settings of cartPlm.settings ) {
-		test.fixme( `(PCP-0002) PLM - Cart${ summarizeSettings(
-			settings
-		) }`, async ( {
-			utils,
-			pcpPayLaterMessaging,
-			cart,
-			classicCart,
-		}, testInfo ) => {
-			const snapshotName = testInfo.title;
-			const { location } = cartPlm;
-			await utils.fillVisitorsCart( [ products.simple10 ] );
+		test.fixme(
+			`(PCP-0002) PLM - Cart${ summarizeSettings( settings ) }`,
+			async (
+				{ utils, pcpPayLaterMessaging, cart, classicCart },
+				testInfo
+			) => {
+				const snapshotName = testInfo.title;
+				const { location } = cartPlm;
+				await utils.fillVisitorsCart( [ products.simple100 ] );
 
-			await pcpPayLaterMessaging.visit();
-			await pcpPayLaterMessaging.enableMessagingForLocation( location );
-			await pcpPayLaterMessaging.updateLocationSettings(
-				location,
-				settings
-			);
-			// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.saveChanges();
-			await pcpPayLaterMessaging.page.reload();
-			await pcpPayLaterMessaging.expandAccordionSection( location );
-			// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.snapshotPlmConfigurator(
-				`${ snapshotName } - After save`
-			);
-			// Block cart
-			await cart.visit();
-			await snapshotPlmContainer(
-				cart.payPalUi,
-				`${ snapshotName } - Frontend - Block cart`
-			);
-			// Classic cart
-			await classicCart.visit();
-			await snapshotPlmContainer(
-				classicCart.payPalUi,
-				`${ snapshotName } - Frontend - Classic cart`
-			);
-		} );
+				await pcpPayLaterMessaging.visit();
+				await pcpPayLaterMessaging.enableMessagingForLocation(
+					location
+				);
+				await pcpPayLaterMessaging.updateLocationSettings(
+					location,
+					settings
+				);
+				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.saveChanges();
+				await pcpPayLaterMessaging.page.reload();
+				await pcpPayLaterMessaging.expandAccordionSection( location );
+				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.snapshotPlmConfigurator(
+					`${ snapshotName } - After save`
+				);
+				// Block cart
+				await cart.visit();
+				await snapshotPlmContainer(
+					cart.payPalUi,
+					`${ snapshotName } - Frontend - Block cart`
+				);
+				// Classic cart
+				await classicCart.visit();
+				await snapshotPlmContainer(
+					classicCart.payPalUi,
+					`${ snapshotName } - Frontend - Classic cart`
+				);
+			}
+		);
 	}
 
 	const checkoutPlm = payLaterMessagingData.checkoutLocationSettings.Checkout;
 
 	for ( const settings of checkoutPlm.settings ) {
-		test.fixme( `(PCP-0003) PLM - Checkout${ summarizeSettings(
-			settings
-		) }`, async ( {
-			utils,
-			pcpPayLaterMessaging,
-			checkout,
-			classicCheckout,
-		}, testInfo ) => {
-			const snapshotName = testInfo.title;
-			const { location } = checkoutPlm;
-			await utils.fillVisitorsCart( [ products.simple10 ] );
+		test.fixme(
+			`(PCP-0003) PLM - Checkout${ summarizeSettings( settings ) }`,
+			async (
+				{ utils, pcpPayLaterMessaging, checkout, classicCheckout },
+				testInfo
+			) => {
+				const snapshotName = testInfo.title;
+				const { location } = checkoutPlm;
+				await utils.fillVisitorsCart( [ products.simple100 ] );
 
-			await pcpPayLaterMessaging.visit();
-			await pcpPayLaterMessaging.enableMessagingForLocation( location );
-			await pcpPayLaterMessaging.updateLocationSettings(
-				location,
-				settings
-			);
-			// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.saveChanges();
-			await pcpPayLaterMessaging.page.reload();
-			await pcpPayLaterMessaging.expandAccordionSection( location );
-			// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.snapshotPlmConfigurator(
-				`${ snapshotName } - After save`
-			);
-			// Block checkout
-			await checkout.visit();
-			await snapshotPlmContainer(
-				checkout.payPalUi,
-				`${ snapshotName } - Frontend - Block checkout`
-			);
-			// Classic checkout
-			await classicCheckout.visit();
-			await snapshotPlmContainer(
-				classicCheckout.payPalUi,
-				`${ snapshotName } - Frontend - Classic checkout`
-			);
-		} );
+				await pcpPayLaterMessaging.visit();
+				await pcpPayLaterMessaging.enableMessagingForLocation(
+					location
+				);
+				await pcpPayLaterMessaging.updateLocationSettings(
+					location,
+					settings
+				);
+				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.saveChanges();
+				await pcpPayLaterMessaging.page.reload();
+				await pcpPayLaterMessaging.expandAccordionSection( location );
+				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.snapshotPlmConfigurator(
+					`${ snapshotName } - After save`
+				);
+				// Block checkout
+				await checkout.visit();
+				await snapshotPlmContainer(
+					checkout.payPalUi,
+					`${ snapshotName } - Frontend - Block checkout`
+				);
+				// Classic checkout
+				await classicCheckout.visit();
+				await snapshotPlmContainer(
+					classicCheckout.payPalUi,
+					`${ snapshotName } - Frontend - Classic checkout`
+				);
+			}
+		);
 	}
 
 	const homePlm = payLaterMessagingData.bannerLocationSettings.Home;
 
 	for ( const settings of homePlm.settings ) {
-		test.fixme( `(PCP-0004) PLM - Home${ summarizeSettings(
-			settings
-		) }`, async ( { pcpPayLaterMessaging, payPalUiClassic }, testInfo ) => {
-			test.setTimeout( 10 * 60 * 1000 );
-			const snapshotName = testInfo.title;
-			const { location } = homePlm;
-			await pcpPayLaterMessaging.visit();
-			await pcpPayLaterMessaging.enableMessagingForLocation( location );
-			await pcpPayLaterMessaging.updateLocationSettings(
-				location,
-				settings
-			);
-			// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.saveChanges();
-			await pcpPayLaterMessaging.page.reload();
-			await pcpPayLaterMessaging.expandAccordionSection( location );
-			// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.snapshotPlmConfigurator(
-				`${ snapshotName } - After save`
-			);
+		test.fixme(
+			`(PCP-0004) PLM - Home${ summarizeSettings( settings ) }`,
+			async ( { pcpPayLaterMessaging, payPalUiClassic }, testInfo ) => {
+				const snapshotName = testInfo.title;
+				const { location } = homePlm;
+				await pcpPayLaterMessaging.visit();
+				await pcpPayLaterMessaging.enableMessagingForLocation(
+					location
+				);
+				await pcpPayLaterMessaging.updateLocationSettings(
+					location,
+					settings
+				);
+				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.saveChanges();
+				await pcpPayLaterMessaging.page.reload();
+				await pcpPayLaterMessaging.expandAccordionSection( location );
+				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.snapshotPlmConfigurator(
+					`${ snapshotName } - After save`
+				);
 
-			await payPalUiClassic.page.goto( '/' );
-			await snapshotPlmContainer(
-				payPalUiClassic,
-				`${ snapshotName } - Frontend`
-			);
-		} );
+				await payPalUiClassic.page.goto( '/' );
+				await snapshotPlmContainer(
+					payPalUiClassic,
+					`${ snapshotName } - Frontend`
+				);
+			}
+		);
 	}
 
 	const shopPlm = payLaterMessagingData.bannerLocationSettings.Shop;
 
 	for ( const settings of shopPlm.settings ) {
-		test.fixme( `(PCP-0005) PLM - Shop${ summarizeSettings(
-			settings
-		) }`, async ( { pcpPayLaterMessaging, shop }, testInfo ) => {
-			const snapshotName = testInfo.title;
-			const { location } = shopPlm;
-			await pcpPayLaterMessaging.visit();
-			await pcpPayLaterMessaging.enableMessagingForLocation( location );
-			await pcpPayLaterMessaging.updateLocationSettings(
-				location,
-				settings
-			);
-			// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.saveChanges();
-			await pcpPayLaterMessaging.page.reload();
-			await pcpPayLaterMessaging.expandAccordionSection( location );
-			// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
-			await pcpPayLaterMessaging.snapshotPlmConfigurator(
-				`${ snapshotName } - After save`
-			);
+		test.fixme(
+			`(PCP-0005) PLM - Shop${ summarizeSettings( settings ) }`,
+			async ( { pcpPayLaterMessaging, shop }, testInfo ) => {
+				const snapshotName = testInfo.title;
+				const { location } = shopPlm;
+				await pcpPayLaterMessaging.visit();
+				await pcpPayLaterMessaging.enableMessagingForLocation(
+					location
+				);
+				await pcpPayLaterMessaging.updateLocationSettings(
+					location,
+					settings
+				);
+				// await takePreviewSnapshots( pcpPayLaterMessaging, snapshotName ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.saveChanges();
+				await pcpPayLaterMessaging.page.reload();
+				await pcpPayLaterMessaging.expandAccordionSection( location );
+				// await pcpPayLaterMessaging.assertLocationSettings( settings ); // TODO: uncomment when fixed
+				await pcpPayLaterMessaging.snapshotPlmConfigurator(
+					`${ snapshotName } - After save`
+				);
 
-			await shop.visit();
-			await snapshotPlmContainer(
-				shop.payPalUi,
-				`${ snapshotName } - Frontend`
-			);
-		} );
+				await shop.visit();
+				await snapshotPlmContainer(
+					shop.payPalUi,
+					`${ snapshotName } - Frontend`
+				);
+			}
+		);
 	}
 
 	test.afterEach( async ( {}, testInfo ) => {
@@ -330,22 +340,37 @@ test.describe( 'Subtests', () => {
 	} );
 } );
 
-test.fixme( 'PCP-0001 | Pay Later Messaging - Customize on Product page', async () => {
-	getTestResultsFromFile( 'PCP-0001', TEST_RESULTS_FILE );
-} );
+test.fixme(
+	'PCP-0001 | Pay Later Messaging - Customize on Product page',
+	async () => {
+		getTestResultsFromFile( 'PCP-0001', TEST_RESULTS_FILE );
+	}
+);
 
-test.fixme( 'PCP-0002 | Pay Later Messaging - Customize on Cart (block and classic)', async () => {
-	getTestResultsFromFile( 'PCP-0002', TEST_RESULTS_FILE );
-} );
+test.fixme(
+	'PCP-0002 | Pay Later Messaging - Customize on Cart (block and classic)',
+	async () => {
+		getTestResultsFromFile( 'PCP-0002', TEST_RESULTS_FILE );
+	}
+);
 
-test.fixme( 'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic)', async () => {
-	getTestResultsFromFile( 'PCP-0003', TEST_RESULTS_FILE );
-} );
+test.fixme(
+	'PCP-0003 | Pay Later Messaging - Customize on Checkout (block and classic)',
+	async () => {
+		getTestResultsFromFile( 'PCP-0003', TEST_RESULTS_FILE );
+	}
+);
 
-test.fixme( 'PCP-0004 | Pay Later Messaging - Customize on Home page', async () => {
-	getTestResultsFromFile( 'PCP-0004', TEST_RESULTS_FILE );
-} );
+test.fixme(
+	'PCP-0004 | Pay Later Messaging - Customize on Home page',
+	async () => {
+		getTestResultsFromFile( 'PCP-0004', TEST_RESULTS_FILE );
+	}
+);
 
-test.fixme( 'PCP-0005 | Pay Later Messaging - Customize on Shop page', async () => {
-	getTestResultsFromFile( 'PCP-0005', TEST_RESULTS_FILE );
-} );
+test.fixme(
+	'PCP-0005 | Pay Later Messaging - Customize on Shop page',
+	async () => {
+		getTestResultsFromFile( 'PCP-0005', TEST_RESULTS_FILE );
+	}
+);

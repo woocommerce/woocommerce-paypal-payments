@@ -99,6 +99,7 @@ class SettingsModel extends AbstractDataModel {
 			'authorize_only'         => false,
 			'capture_virtual_orders' => false,
 			'save_paypal_and_venmo'  => false,
+			'instant_payments_only'  => false,
 			'enable_contact_module'  => true,
 			'save_card_details'      => false,
 			'enable_pay_now'         => false,
@@ -312,6 +313,24 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_save_paypal_and_venmo( bool $save ): void {
 		$this->data['save_paypal_and_venmo'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Gets the instant payments only setting.
+	 *
+	 * @return bool True if instant payments only setting is enabled, false otherwise.
+	 */
+	public function get_instant_payments_only(): bool {
+		return $this->data['instant_payments_only'];
+	}
+
+	/**
+	 * Sets the instant payments only setting.
+	 *
+	 * @param bool $save Whether to use instant payments only.
+	 */
+	public function set_instant_payments_only( bool $save ): void {
+		$this->data['instant_payments_only'] = $this->sanitizer->sanitize_bool( $save );
 	}
 
 	/**

@@ -15,18 +15,39 @@ export class PayPalPopup {
 	}
 
 	// Locators
+
+	usePasswordInsteadButton = () =>
+		this.page.getByRole( 'button', { name: 'Use Password Instead' } );
 	loginWithPasswordInsteadLink = () =>
 		this.page.getByRole( 'link', {
 			name: 'Log in with a password instead',
 		} );
 	loginWithYourPasswordLink = () =>
 		this.page.getByRole( 'link', { name: 'Login with password' } );
+	loginWithPasswordInstead = () =>
+		this.loginWithPasswordInsteadLink()
+			.or( this.usePasswordInsteadButton() )
+			.or( this.loginWithYourPasswordLink() );
 	tryAnotherWayLink = () =>
 		this.page.getByRole( 'link', { name: 'Try another way' } );
 	loginInput = () => this.page.locator( '[name="login_email"]' );
 	passwordInput = () => this.page.locator( '[name="login_password"]' );
-	nextButton = () => this.page.locator( '#btnNext' );
-	loginButton = () => this.page.locator( '#btnLogin' );
+	nextButton = () =>
+		this.page
+			.locator( '#btnNext' )
+			.or(
+				this.page.locator(
+					'button[data-atomic-wait-intent="Submit_Email"]'
+				)
+			);
+	loginButton = () =>
+		this.page
+			.locator( '#btnLogin' )
+			.or(
+				this.page.locator(
+					'button[data-atomic-wait-intent="Submit_Password"]'
+				)
+			);
 	submitPaymentButton = () =>
 		this.page
 			.locator( '#payment-submit-btn' )
@@ -42,6 +63,7 @@ export class PayPalPopup {
 	saveAndContinueButton = () => this.page.getByTestId( 'consentButton' );
 	cancelLink = () => this.page.locator( '#cancelLink' );
 	loadSpinnerContainer = () => this.page.locator( '#preloaderSpinner' );
+	tryAgainLink = () => this.page.getByRole( 'link', { name: 'Try again' } );
 
 	// Actions
 
@@ -56,9 +78,9 @@ export class PayPalPopup {
 
 		await this.loginInput().fill( email );
 
-		await this.tryLoginWithPasswordInstead();
-
 		await this.tryClickNext();
+
+		await this.tryLoginWithPasswordInstead();
 
 		await this.tryAnotherWay();
 
@@ -72,11 +94,12 @@ export class PayPalPopup {
 	 */
 	tryLoginWithPasswordInstead = async () => {
 		try {
-			await this.loginWithPasswordInsteadLink().waitFor( {
+			await this.loginWithPasswordInstead().waitFor( {
 				state: 'visible',
 				timeout: 4000,
 			} );
-			await this.loginWithPasswordInsteadLink().click();
+			await this.loginWithPasswordInstead().click();
+			await this.page.waitForLoadState();
 		} catch {}
 	};
 
@@ -91,6 +114,7 @@ export class PayPalPopup {
 				timeout: 4000,
 			} );
 			await this.nextButton().click();
+			await this.page.waitForLoadState();
 		} catch {}
 	};
 
@@ -114,15 +138,11 @@ export class PayPalPopup {
 		await expect( this.loadSpinnerContainer() ).not.toBeVisible();
 
 		while ( ! this.page.isClosed() ) {
-			const submitButton = this.submitPaymentButton();
-			if ( ! ( await submitButton.isVisible() ) ) {
-				break; // No visible button, exit
-			}
-
 			// Race click with popup closure
 			try {
 				await Promise.race( [
-					submitButton.click(),
+					this.submitPaymentButton().click(),
+					this.tryAgainLink().click(),
 					this.page.waitForEvent( 'close', { timeout: 30 * 1000 } ), // Short timeout to prevent hang
 				] );
 			} catch ( error ) {

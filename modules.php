@@ -34,6 +34,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-paypal-subscriptions/module.php" )(),
 		( require "$modules_dir/ppcp-local-alternative-payment-methods/module.php" )(),
 		( require "$modules_dir/ppcp-settings/module.php" )(),
+		( require "$modules_dir/ppcp-fraud-protection/module.php" )(),
 	);
 	// phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
 
