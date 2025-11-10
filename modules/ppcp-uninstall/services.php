@@ -45,7 +45,6 @@ return array(
 	'uninstall.ppcp-all-scheduled-action-names' => function ( ContainerInterface $container ): array {
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
-			'woocommerce_paypal_payments_check_saved_payment',
 			'woocommerce_paypal_payments_payment_tokens_migration',
 		);
 	},

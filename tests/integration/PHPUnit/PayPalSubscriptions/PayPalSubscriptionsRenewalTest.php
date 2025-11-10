@@ -1,10 +1,11 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\Tests\Integration;
+namespace WooCommerce\PayPalCommerce\Tests\Integration\PayPalSubscriptions;
 
 use Psr\Log\LoggerInterface;
 use WC_Product_Simple;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\RenewalHandler;
+use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 
 /**
  * @group subscriptions

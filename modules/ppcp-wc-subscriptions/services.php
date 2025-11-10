@@ -9,14 +9,15 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Service\ChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\ChangePaymentMethodVaultV2;
 use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\DisplaySavedPaymentTokens;
+use WooCommerce\PayPalCommerce\WcSubscriptions\VaultV2\VaultedPayPalEmail;
 
 return array(
 	'wc-subscriptions.helper'                            => static function ( ContainerInterface $container ): SubscriptionHelper {
@@ -53,15 +54,18 @@ return array(
 			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
-	'wc-subscriptions.repository.payment-token'          => static function ( ContainerInterface $container ): PaymentTokenRepository {
-		$factory  = $container->get( 'api.factory.payment-token' );
-		$endpoint = $container->get( 'api.endpoint.payment-token' );
-		return new PaymentTokenRepository( $factory, $endpoint );
-	},
 	'wc-subscriptions.endpoint.subscription-change-payment-method' => static function ( ContainerInterface $container ): SubscriptionChangePaymentMethod {
 		return new SubscriptionChangePaymentMethod(
 			$container->get( 'button.request-data' )
 		);
+	},
+	'wc-subscriptions.change-payment-method'             => static function ( ContainerInterface $container ): ChangePaymentMethod {
+		return new ChangePaymentMethod(
+			$container->get( 'button.helper.context' )
+		);
+	},
+	'wc-subscriptions.free-trial-subscription-helper'    => static function ( ContainerInterface $container ): FreeTrialSubscriptionHelper {
+		return new FreeTrialSubscriptionHelper();
 	},
 	'wc-subscriptions.vault-v2.display-saved-payment-tokens' => static function ( ContainerInterface $container ): DisplaySavedPaymentTokens {
 		return new DisplaySavedPaymentTokens(
@@ -74,9 +78,11 @@ return array(
 			$container->get( 'button.helper.context' )
 		);
 	},
-	'wc-subscriptions.change-payment-method'             => static function ( ContainerInterface $container ): ChangePaymentMethod {
-		return new ChangePaymentMethod(
-			$container->get( 'button.helper.context' )
+	'wc-subscriptions.vault-v2.vaulted-paypal-email'     => static function ( ContainerInterface $container ): VaultedPayPalEmail {
+		return new VaultedPayPalEmail(
+			$container->get( 'api.endpoint.payment-tokens' ),
+			$container->get( 'vaulting.repository.payment-token' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

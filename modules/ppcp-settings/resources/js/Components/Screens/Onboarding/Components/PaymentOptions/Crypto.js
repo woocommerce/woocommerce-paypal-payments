@@ -5,10 +5,10 @@ import BadgeBox from '../../../../ReusableComponents/BadgeBox';
 const Crypto = ( { learnMore = '' } ) => {
 	return (
 		<BadgeBox
-			title={ __( 'Crypto', 'woocommerce-paypal-payments' ) }
+			title={ __( 'Pay with Crypto', 'woocommerce-paypal-payments' ) }
 			imageBadge={ [ 'icon-payment-method-crypto.svg' ] }
 			description={ __(
-				'Let customers checkout with Crypto while you get paid in cash.',
+				'Let customers check out with cryptocurrencies while you get paid in cash.',
 				'woocommerce-paypal-payments'
 			) }
 			learnMoreLink={ learnMore }

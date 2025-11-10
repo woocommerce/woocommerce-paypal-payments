@@ -50,6 +50,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
@@ -492,6 +493,12 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					$pui_product_status->clear( $settings );
 				}
 
+				// Clear PWC status.
+				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
+				if ( $pwc_product_status instanceof PWCProductStatus ) {
+					$pwc_product_status->clear( $settings );
+				}
+
 				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );
 				assert( $reference_transaction_status_cache instanceof Cache );
 				// Clear Reference Transaction status.
@@ -557,6 +564,9 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$installments_product_status = $c->get( 'wcgateway.installments-product-status' );
 				assert( $installments_product_status instanceof InstallmentsProductStatus );
 
+				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
+				assert( $pwc_product_status instanceof PWCProductStatus );
+
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
@@ -573,10 +583,18 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				$features['pay_later_messaging'] = $features['alternative_payment_methods'];
+				// @todo Remove this logic after the next release. If Store is Canada and PayLater for Canada is not released, then PayLater messaging is not available.
+				$is_paylater_canada_released     = $c->get( 'api.paylater.is-canada-released' );
+				$features['pay_later_messaging'] = array(
+					'enabled' => $features['alternative_payment_methods']['enabled'] && ( $c->get( 'api.shop.country' ) !== 'CA' || $is_paylater_canada_released ),
+				);
 
 				$features['installments'] = array(
 					'enabled' => $installments_product_status->is_active(),
+				);
+
+				$features['pwc'] = array(
+					'enabled' => $pwc_product_status->is_active(),
 				);
 
 				$features['contact_module'] = array(
