@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -114,6 +115,13 @@ return array(
 	'agentic.settings.endpoint'                => static function ( ContainerInterface $container ): AgenticSettingsEndpoint {
 		return new AgenticSettingsEndpoint(
 			$container->get( 'agentic.settings.model' )
+		);
+	},
+	'agentic.settings.module'                  => static function ( ContainerInterface $container ): AgenticSettingsModule {
+		return new AgenticSettingsModule(
+			$container->get( 'ppcp.path-to-plugin-folder' ),
+			$container->get( 'ppcp.path-to-plugin-main-file' ),
+			$container->get( 'agentic.settings.endpoint' )
 		);
 	},
 );
