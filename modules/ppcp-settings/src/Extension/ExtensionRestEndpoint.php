@@ -10,17 +10,24 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Settings\Endpoint;
+namespace WooCommerce\PayPalCommerce\Settings\Extension;
 
-use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
+use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
+use WooCommerce\PayPalCommerce\Settings\Endpoint\RestEndpoint;
 
 /**
  * Class ExtensionRestEndpoint
  */
 abstract class ExtensionRestEndpoint extends RestEndpoint {
+	/**
+	 * Extension must define the leaf name of the REST path!
+	 *
+	 * This path must match the value used in the extension's JS code.
+	 */
+	protected const PATH = '';
 
 	/**
 	 * The data model for persistence.
@@ -52,7 +59,7 @@ abstract class ExtensionRestEndpoint extends RestEndpoint {
 	public function register_routes(): void {
 		register_rest_route(
 			static::NAMESPACE,
-			'/ext/' . $this->rest_base,
+			'/ext/' . static::PATH,
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
