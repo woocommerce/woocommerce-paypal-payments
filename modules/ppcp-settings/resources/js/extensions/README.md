@@ -33,83 +33,100 @@ registerSetting(
 
 ---
 
-## PHP Implementation
+## PHP
+
+**Steps:**
+
+1. Data model - `extends ExtensionDataModel`
+2. REST endpoint - `extends ExtensionRestEndpoint`
+3. Settings module - `extends ExtensionSettingsModule`
+4. Create three DI services - `services.php`
+5. Call the settings `init()` method
 
 ### 1. Data Model
 
 ```php
-use WooCommerce\PayPalCommerce\Settings\Data\ExtensionDataModel;
+use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionDataModel;
 
-class SettingsDataModel extends ExtensionDataModel {
+class MyExtensionDataModel extends ExtensionDataModel {
     
-    protected const OPTION_KEY = 'woocommerce-ppcp-my-extension-store';
+    protected const NAME = 'my-extension'; // Becomes 'woocommerce-ppcp-ext-my-extension'
     
     protected function get_defaults(): array {
         return array(
-            'active'    => false,
-            'max_items' => 10,
+            'active' => false,
         );
     }
     
-    public function get_active(): bool {}
-    public function get_max_items(): int {}
-    public function set_active(): void {}
-    public function set_max_items(): void {}
+    public function is_active(): bool {
+        return (bool) $this->data['active'];
+    }
+    
+    public function set_active( bool $state ): void {
+        $this->data['active'] = $state;
+    }
 }
 ```
 
 ### 2. REST Endpoint
 
 ```php
-use WooCommerce\PayPalCommerce\Settings\Data\AbstractDataModel;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\ExtensionRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint;
 
-class SettingsRestEndpoint extends ExtensionRestEndpoint {
+class MyExtensionEndpoint extends ExtensionRestEndpoint {
     
-    protected $rest_base = 'js-extension-store'; // Must match JS store name
-    
-    public function __construct( AbstractDataModel $data_model ) {
-        parent::__construct( $data_model );
-    }
+    protected const PATH = 'my-extension-settings';
     
     protected function sanitize_rest_data( array $data ): ?array {
-        // Return NULL to reject the request
+        // Return null to reject
         if ( ! isset( $data['active'] ) ) {
             return null;
         }
         
-        // Return sanitized data with data types compatible with model setters
         return array(
-            'active'    => (bool) $data['active'],
-            'max_items' => isset( $data['maxItems'] ) ? (int) $data['maxItems'] : 10,
+            'active' => (bool) $data['active'],
         );
     }
 }
 ```
 
-### 3. DI Container
+### 3. Settings Module
 
 ```php
-use WooCommerce\PayPalCommerce\MyModule\Data\SettingsDataModel;
-use WooCommerce\PayPalCommerce\MyModule\Endpoint\SettingsRestEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionSettingsModule;
 
+class MyExtensionSettingsModule extends ExtensionSettingsModule {
+    
+    protected const ASSETS_DIR    = 'modules/ppcp-my-module/assets/';
+    protected const SCRIPT_HANDLE = 'ppcp-my-extension-settings';
+}
+```
+
+### 4. DI Container
+
+```php
 return array(
-    'my-module.settings.data-model' => static function (): SettingsDataModel {
-        return new SettingsDataModel();
+    'my-module.settings.model'    => static function (): MyExtensionDataModel {
+        return new MyExtensionDataModel();
     },
-    'my-module.settings.endpoint'   => static function ( $container ): SettingsRestEndpoint {
-        return new SettingsRestEndpoint(
-            $container->get( 'my-module.settings.data-model' )
+    'my-module.settings.endpoint' => static function ( $container ): MyExtensionEndpoint {
+        return new MyExtensionEndpoint(
+            $container->get( 'my-module.settings.model' )
+        );
+    },
+    'my-module.settings.module'   => static function ( $container ): MyExtensionSettingsModule {
+        return new MyExtensionSettingsModule(
+            $container->get( 'ppcp.path-to-plugin-folder' ),     // static dependency.
+            $container->get( 'ppcp.path-to-plugin-main-file' ),  // static dependency.
+            $container->get( 'my-module.settings.endpoint' )
         );
     },
 );
 ```
 
-### 4. Register Endpoint
+### 5. Initialize
 
 ```php
-add_action( 'rest_api_init', static function () use ( $container ) {
-    $endpoint = $container->get( 'my-module.settings.endpoint' );
-    $endpoint->register_routes();
-} );
+$settings_module = $container->get( 'my-module.settings.module' );
+$settings_module->init();
 ```
