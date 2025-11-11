@@ -100,30 +100,31 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 				assert( $registration_handler instanceof RegistrationService );
 				$eligibility_check = $container->get( 'agentic.registration.eligibility' );
 				assert( $eligibility_check instanceof RegistrationEligibility );
-				$active_in_settings = true; // TODO - implement this.
 
-				/** @psalm-suppress RedundantCondition */
-				$should_register = $active_in_settings && $eligibility_check->is_eligible();
+				$is_eligible   = $eligibility_check->is_eligible();
+				$is_registered = $registration_handler->is_registered();
 
-				if ( $should_register ) {
+				// Sync registration state with eligibility.
+				if ( $is_eligible && ! $is_registered ) {
 					$registration_handler->register();
-
-					return;
+				} elseif ( ! $is_eligible && $is_registered ) {
+					$registration_handler->deregister();
 				}
-
-				$registration_handler->deregister();
 			}
 		);
 
 		// Registers the clean-up tasks on plugin uninstallation.
-		$this->register_uninstall_action(
+		$this->add_uninstall_action(
 			$container->get( 'agentic.registration.handler' )
 		);
 
 		return true;
 	}
 
-	private function register_uninstall_action( RegistrationService $registration_service ): void {
+	/**
+	 * Intentionally a separate method to make uninstall logic stand out.
+	 */
+	private function add_uninstall_action( RegistrationService $registration_service ): void {
 		add_action(
 			'woocommerce_paypal_payments_uninstall',
 			static fn() => $registration_service->deregister()
