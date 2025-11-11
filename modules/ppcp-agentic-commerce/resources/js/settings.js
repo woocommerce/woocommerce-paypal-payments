@@ -27,7 +27,7 @@ const AgenticSettings = () => {
 					'woocommerce-paypal-payments'
 				) }
 				description={ __(
-					'Enable this to allow the PayPal AI agent to shop on this store.',
+					'Allow the PayPal AI agent to shop on this store - payments are collected by this plugin, while the customer never visits your website.',
 					'woocommerce-paypal-payments'
 				) }
 				value={ active }
