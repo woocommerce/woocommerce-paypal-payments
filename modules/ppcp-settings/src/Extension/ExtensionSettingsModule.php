@@ -39,7 +39,7 @@ abstract class ExtensionSettingsModule {
 	}
 
 	/**
-	 * Initializes the settings extension.
+	 * Initializes the settings extension, must be called during the plugin_loaded action.
 	 *
 	 * Registers WordPress hooks for script enqueuing and REST endpoint registration.
 	 */
@@ -56,9 +56,26 @@ abstract class ExtensionSettingsModule {
 	}
 
 	/**
-	 * Enqueues the settings JavaScript module.
+	 * Determines if the settings UI should be displayed.
+	 *
+	 * Called during script enqueuing, after the 'init' hook.
+	 * Override in child classes to conditionally hide settings based on decisions that
+	 * happen after plugin init is done.
+	 *
+	 * @return bool True to display settings, false to hide.
+	 */
+	protected function is_available(): bool {
+		return true;
+	}
+
+	/**
+	 * Enqueues the settings JavaScript module - it must be named "settings.js"!
 	 */
 	private function enqueue_settings_script(): void {
+		if ( ! $this->is_available() ) {
+			return;
+		}
+
 		$assets_path = trailingslashit( $this->absolute_plugin_path . static::ASSETS_DIR );
 		$assets_url  = trailingslashit( plugins_url( static::ASSETS_DIR, $this->plugin_main_file ) );
 
