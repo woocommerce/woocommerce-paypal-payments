@@ -235,14 +235,36 @@ class TodosDefinition {
 				'priority'    => 13,
 			),
 			'apply_for_working_capital'            => array(
-				'title'       => __( 'Start your PayPal Working Capital application', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
+				'title'       => __( 'Discover how PayPal Working Capital can fuel your business growth', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Approved loans are quickly deposited, so you can put them to work right away. Check eligibility.', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['apply_for_working_capital'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
+				),
+				'priority'    => 14,
+			),
+			'enable_pwc'                           => array(
+				'title'       => __( 'Enable Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['enable_pwc'],
+				'action'      => array(
+					'type'      => 'tab',
+					'tab'       => 'payment_methods',
+					'section'   => 'ppcp-pwc',
+					'highlight' => 'ppcp-pwc',
+				),
+				'priority'    => 15,
+			),
+			'apply_for_pwc'                        => array(
+				'title'       => __( 'Start your Pay with Crypto application', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['apply_for_pwc'],
 				'action'      => array(
 					'type' => 'external',
 					'url'  => 'http://example.com/',
 				),
-				'priority'    => 14,
+				'priority'    => 16,
 			),
 		);
 
@@ -257,7 +279,7 @@ class TodosDefinition {
 			'priority'    => 0,
 		);
 
-		return $todo_items;
+		return apply_filters( 'woocommerce_paypal_payments_todos_list', $todo_items );
 	}
 
 	/**

@@ -345,18 +345,13 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 					}
 				);
 
-				// Do not display PayPal button if the user already has a PayPal payment token.
+				/**
+				 * Displays the PayPal button on the Add Payment Method page.
+				 */
 				add_action(
 					'woocommerce_add_payment_method_form_bottom',
 					function () use ( $c ) {
 						if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
-							return;
-						}
-
-						$payment_method_tokens_checked = $c->get( 'save-payment-methods.service.payment-method-tokens-checker' );
-						assert( $payment_method_tokens_checked instanceof PaymentMethodTokensChecker );
-						$customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
-						if ( $payment_method_tokens_checked->has_paypal_payment_token( $customer_id ) ) {
 							return;
 						}
 

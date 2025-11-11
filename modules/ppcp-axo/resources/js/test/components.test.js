@@ -13,8 +13,8 @@ test( 'get dom element selector', () => {
 test( 'form field group activate', () => {
 	const formFieldGroup = new FormFieldGroup( {} );
 
-	expect( formFieldGroup.active ).toBe( false );
+	expect( formFieldGroup.isActive() ).toBe( false );
 
 	formFieldGroup.activate();
-	expect( formFieldGroup.active ).toBe( true );
+	expect( formFieldGroup.isActive() ).toBe( true );
 } );

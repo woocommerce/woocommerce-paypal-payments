@@ -9,7 +9,7 @@ import {
 	PaymentMethods,
 } from '../Helper/CheckoutMethodState';
 import BootstrapHelper from '../Helper/BootstrapHelper';
-import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/Configuration';
+import { addPaymentMethodConfiguration } from '../../../../../ppcp-save-payment-methods/resources/js/configuration';
 import {
 	ButtonEvents,
 	dispatchButtonEvent,
