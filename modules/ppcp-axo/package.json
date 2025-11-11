@@ -11,7 +11,8 @@
     ],
     "dependencies": {
         "@paypal/paypal-js": "^6.0.0",
-        "core-js": "^3.39"
+        "core-js": "^3.39",
+        "escape-html": "^1.0.3"
     },
     "devDependencies": {
         "@babel/core": "^7.26",
