@@ -17,6 +17,8 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Endpoint\ExtensionRestEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -63,7 +65,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'init',
-			function () use ( $container ) {
+			static function () use ( $container ) {
 				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
@@ -74,6 +76,40 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		assert( $settings_module instanceof AgenticSettingsModule );
 		$settings_module->init();
 
+		add_action(
+			'init',
+			static function () use ( $container ) {
+				$registration_handler = $container->get( 'agentic.registration.handler' );
+				assert( $registration_handler instanceof RegistrationService );
+				$eligibility_check = $container->get( 'agentic.registration.eligibility' );
+				assert( $eligibility_check instanceof RegistrationEligibility );
+				$active_in_settings = true; // TODO - implement this.
+
+				/** @psalm-suppress RedundantCondition */
+				$should_register = $active_in_settings && $eligibility_check->is_eligible();
+
+				if ( $should_register ) {
+					$registration_handler->register();
+
+					return;
+				}
+
+				$registration_handler->deregister();
+			}
+		);
+
+		// Registers the clean-up tasks on plugin uninstallation.
+		$this->register_uninstall_action(
+			$container->get( 'agentic.registration.handler' )
+		);
+
 		return true;
+	}
+
+	private function register_uninstall_action( RegistrationService $registration_service ): void {
+		add_action(
+			'woocommerce_paypal_payments_uninstall',
+			static fn() => $registration_service->deregister()
+		);
 	}
 }

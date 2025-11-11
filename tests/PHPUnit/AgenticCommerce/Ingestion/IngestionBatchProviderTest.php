@@ -8,7 +8,7 @@ use Automattic\WooCommerce\Enums\ProductStatus;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers IngestionBatchProvider
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider
  */
 class IngestionBatchProviderTest extends TestCase {
 
@@ -54,7 +54,7 @@ class IngestionBatchProviderTest extends TestCase {
 		// Mock wc_get_products calls
 		when( 'wc_get_products' )->alias( function( $args ) use ( $never_synced_ids ) {
 			// First call - products never synced
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				$this->assertEquals( ProductStatus::PUBLISH, $args['status'] );
@@ -66,14 +66,14 @@ class IngestionBatchProviderTest extends TestCase {
 			}
 
 			// Second call - products needing sync
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				$this->assertEquals( 5, $args['limit'] ); // 10 - 5 already found
 				return array( 6, 7 );
 			}
 
 			// Third call - stale products
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 3, $args['limit'] ); // 10 - 7 already found
@@ -100,7 +100,7 @@ class IngestionBatchProviderTest extends TestCase {
 		$limit = 5;
 
 		when( 'wc_get_products' )->alias( function( $args ) use ( $never_synced_ids ) {
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				$this->assertEquals( 5, $args['limit'] );
@@ -124,21 +124,21 @@ class IngestionBatchProviderTest extends TestCase {
 
 		when( 'wc_get_products' )->alias( function( $args ) use ( $dirty_product_ids ) {
 			// First call - no never synced products
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array();
 			}
 
 			// Second call - products needing sync
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				$this->assertEquals( 5, $args['limit'] );
 				return $dirty_product_ids;
 			}
 
 			// Third call - stale products
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 2, $args['limit'] ); // 5 - 3 already found
@@ -162,28 +162,28 @@ class IngestionBatchProviderTest extends TestCase {
 
 		when( 'wc_get_products' )->alias( function( $args ) use ( $stale_product_ids ) {
 			// First call - no never synced products
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array();
 			}
 
 			// Second call - no dirty products
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				return array();
 			}
 
 			// Third call - stale products
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 5, $args['limit'] );
-				
+
 				// Verify stale date calculation
 				$expected_stale_date = gmdate( 'Y-m-d H:i:s', strtotime( '-7 days' ) );
 				$this->assertEquals( $expected_stale_date, $args['meta_query'][0]['value'] );
-				
+
 				return $stale_product_ids;
 			}
 
@@ -250,13 +250,13 @@ class IngestionBatchProviderTest extends TestCase {
 
 		when( 'wc_get_products' )->alias( function( $args ) use ( $custom_timeout_days ) {
 			// Skip to stale products check
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === '<' ) {
-				
+
 				$expected_stale_date = gmdate( 'Y-m-d H:i:s', strtotime( '-30 days' ) );
 				$this->assertEquals( $expected_stale_date, $args['meta_query'][0]['value'] );
-				
+
 				return array( 100, 101, 102 );
 			}
 
@@ -297,19 +297,19 @@ class IngestionBatchProviderTest extends TestCase {
 		$limit = 15;
 
 		when( 'wc_get_products' )->alias( function( $args ) {
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array( 1, 2, 3, 4, 5 );
 			}
 
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				$this->assertEquals( 10, $args['limit'] ); // 15 - 5
 				return array( 6, 7, 8, 9, 10 );
 			}
 
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 5, $args['limit'] ); // 15 - 10
@@ -332,13 +332,13 @@ class IngestionBatchProviderTest extends TestCase {
 		$limit = 7;
 
 		when( 'wc_get_products' )->alias( function( $args ) {
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
 				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array( 1, 2, 3 );
 			}
 
-			if ( isset( $args['meta_query'][0]['key'] ) && 
+			if ( isset( $args['meta_query'][0]['key'] ) &&
 				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				return array( 4, 5, 6, 7 );
 			}

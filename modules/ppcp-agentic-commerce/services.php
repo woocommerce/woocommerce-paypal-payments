@@ -22,10 +22,29 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
 		return new ResponseFactory();
+	},
+	'agentic.merchant.provider'                => static function ( ContainerInterface $c ): MerchantMetadataProvider {
+		return new MerchantMetadataProvider(
+			$c->get( 'settings.data.general' )
+		);
+	},
+	'agentic.registration.eligibility'         => static function ( ContainerInterface $c ): RegistrationEligibility {
+		return new RegistrationEligibility(
+			$c->get( 'agentic.merchant.provider' )
+		);
+	},
+	'agentic.registration.handler'             => static function ( ContainerInterface $c ): RegistrationService {
+		return new RegistrationService(
+			$c->get( 'settings.connection-state' ),
+			$c->get( 'agentic.merchant.provider' )
+		);
 	},
 
 	// Authentication services.
@@ -39,7 +58,7 @@ return array(
 	},
 
 	// Session management.
-	'agentic.session.handler'                  => static function ( ContainerInterface $container ): AgenticSessionHandler {
+	'agentic.session.handler'                  => static function (): AgenticSessionHandler {
 		return new AgenticSessionHandler();
 	},
 
@@ -77,19 +96,19 @@ return array(
 	},
 
 	// Ingestion services.
-	'agentic.ingestion-eligible-product-types' => static function ( ContainerInterface $container ) {
+	'agentic.ingestion-eligible-product-types' => static function (): array {
 		return array(
 			ProductType::SIMPLE,
 			ProductType::VARIABLE,
 		);
 	},
-	'agentic.ingestion-stale-timeout-days'     => static function ( ContainerInterface $container ) {
+	'agentic.ingestion-stale-timeout-days'     => static function (): int {
 		return 5;
 	},
-	'agentic.ingestion-api-endpoint'           => static function ( ContainerInterface $container ) {
+	'agentic.ingestion-api-endpoint'           => static function (): string {
 		return 'https://d-staging.joinhoney.com/webhooks/products';
 	},
-	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ) {
+	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ): Ingestion\SyncJobFactory {
 		return new Ingestion\SyncJobFactory(
 			$container->get( 'agentic.ingestion-api-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
