@@ -96,11 +96,15 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
-		assert( $ingestion_manager instanceof IngestionManager );
-
-		// Product ingestion for agentic recommendation.
-		add_action( 'init', static fn() => $ingestion_manager->init() );
+		// Product ingestion.
+		add_action(
+			'init',
+			static function () use ( $container ) {
+				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
+				assert( $ingestion_manager instanceof IngestionManager );
+				$ingestion_manager->init();
+			}
+		);
 
 		return true;
 	}
