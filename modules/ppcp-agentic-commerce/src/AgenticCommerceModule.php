@@ -15,10 +15,10 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
-use WooCommerce\PayPalCommerce\Settings\Endpoint\ExtensionRestEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -52,6 +52,27 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	 */
 	public function run( ContainerInterface $container ): bool {
 
+		$settings_module = $container->get( 'agentic.settings.module' );
+		assert( $settings_module instanceof AgenticSettingsModule );
+		$settings_module->init();
+
+		$settings = $container->get( 'agentic.settings.model' );
+		assert( $settings instanceof AgenticSettingsDataModel );
+
+		$registration_handler = $container->get( 'agentic.registration.handler' );
+		assert( $registration_handler instanceof RegistrationService );
+
+		// Early exit if the module is disabled.
+		if ( ! $settings->is_active() ) {
+
+			// Deregister the shop if agentic features are disabled in settings.
+			if ( $registration_handler->is_registered() ) {
+				$registration_handler->deregister();
+			}
+
+			return true;
+		}
+
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
@@ -71,10 +92,6 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 				$ingestion_manager->init();
 			}
 		);
-
-		$settings_module = $container->get( 'agentic.settings.module' );
-		assert( $settings_module instanceof AgenticSettingsModule );
-		$settings_module->init();
 
 		add_action(
 			'init',
