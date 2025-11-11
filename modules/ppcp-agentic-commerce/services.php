@@ -140,7 +140,8 @@ return array(
 		return new AgenticSettingsModule(
 			$container->get( 'ppcp.path-to-plugin-folder' ),
 			$container->get( 'ppcp.path-to-plugin-main-file' ),
-			$container->get( 'agentic.settings.endpoint' )
+			$container->get( 'agentic.settings.endpoint' ),
+			$container->get( 'agentic.registration.eligibility' )
 		);
 	},
 );
