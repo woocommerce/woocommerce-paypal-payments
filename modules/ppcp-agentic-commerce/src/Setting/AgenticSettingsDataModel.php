@@ -14,7 +14,7 @@ class AgenticSettingsDataModel extends AbstractDataModel {
 		);
 	}
 
-	public function get_active(): bool {
+	public function is_active(): bool {
 		return (bool) $this->data['active'];
 	}
 
