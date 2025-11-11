@@ -51,7 +51,6 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	 * @return bool True if the module was initialized successfully.
 	 */
 	public function run( ContainerInterface $container ): bool {
-
 		$agentic_settings = $container->get( 'agentic.settings.model' );
 		assert( $agentic_settings instanceof AgenticSettingsDataModel );
 
@@ -61,28 +60,31 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		$eligibility_check = $container->get( 'agentic.registration.eligibility' );
 		assert( $eligibility_check instanceof RegistrationEligibility );
 
+		// Settings extension always available (merchants need to see the toggle).
 		$settings_module = $container->get( 'agentic.settings.module' );
 		assert( $settings_module instanceof AgenticSettingsModule );
-
-		// Register the settings extension.
 		$settings_module->init();
 
-		// Uninstall logic.
+		// Uninstall logic always registered.
 		$this->add_uninstall_action( $registration_handler );
 
-		// Early exit if the module is disabled or not eligible for this merchant.
-		if ( ! $agentic_settings->is_active() || ! $eligibility_check->is_eligible() ) {
+		// Sync eligibility cache on init (when WC is available).
+		$this->sync_eligibility_cache( $agentic_settings, $eligibility_check );
 
-			// Deregister the shop if agentic features are disabled in settings.
+		// Early exit if features should not be initialized.
+		if ( ! $agentic_settings->should_initialize_features() ) {
 			$this->ensure_deregistered( $registration_handler );
+
+			// todo: also remove scheduled action?
 
 			return true;
 		}
 
-		// Registration for discovery.
+		// Feature is active and merchant is eligible: Initialize everything.
+
 		$this->ensure_registered( $registration_handler );
 
-		// Public REST endpoints for agentic usage.
+		// Public REST endpoints.
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
@@ -110,6 +112,20 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		add_action(
 			'woocommerce_paypal_payments_uninstall',
 			static fn() => $registration_service->deregister()
+		);
+	}
+
+	private function sync_eligibility_cache( AgenticSettingsDataModel $settings, RegistrationEligibility $eligibility_check ): void {
+		add_action(
+			'init',
+			static function () use ( $settings, $eligibility_check ) {
+				if ( $settings->is_eligible() === $eligibility_check->is_eligible() ) {
+					return;
+				}
+
+				$settings->set_eligible( $eligibility_check->is_eligible() );
+				$settings->save();
+			}
 		);
 	}
 
