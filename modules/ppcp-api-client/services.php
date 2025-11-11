@@ -156,7 +156,7 @@ return array(
 	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ): SellerStatusFactory {
 		return new SellerStatusFactory();
 	},
-	'vault-v2.endpoint.payment-token'                     => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
+	'vault-v2.endpoint.payment-token'                => static function ( ContainerInterface $container ): PaymentTokenEndpoint {
 		return new PaymentTokenEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),

@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Settings
  */
 
-declare( strict_types = 1 );
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings;
 
@@ -85,14 +85,14 @@ $services = array(
 		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
-		$can_use_casual_selling = $container->get( 'settings.casual-selling.eligible' );
-		$can_use_vaulting       = $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
-		$can_use_card_payments  = $container->has( 'card-fields.eligible' ) && $container->get( 'card-fields.eligible' );
-		$can_use_subscriptions  = $container->has( 'wc-subscriptions.helper' ) && $container->get( 'wc-subscriptions.helper' )
-				->plugin_is_active();
+		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
+		$can_use_vaulting            = $container->has( 'save-payment-methods.eligible' ) && $container->get( 'save-payment-methods.eligible' );
+		$can_use_card_payments       = $container->has( 'card-fields.eligible' ) && $container->get( 'card-fields.eligible' );
+		$can_use_subscriptions       = $container->has( 'wc-subscriptions.helper' ) && $container->get( 'wc-subscriptions.helper' )
+																								->plugin_is_active();
 		$should_skip_payment_methods = class_exists( '\WC_Payments' );
-		$can_use_fastlane = $container->get( 'axo.eligible' );
-		$can_use_pay_later = $container->get( 'button.helper.messages-apply' );
+		$can_use_fastlane            = $container->get( 'axo.eligible' );
+		$can_use_pay_later           = $container->get( 'button.helper.messages-apply' );
 
 		return new OnboardingProfile(
 			$can_use_casual_selling,
@@ -356,14 +356,15 @@ $services = array(
 		);
 	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
-		$settings = $container->get( 'wcgateway.settings' );
-		$settings_url = $container->get( 'settings.url' );
-		$paylater_is_available = $container->get( 'paylater-configurator.is-available' );
-		$store_country = $container->get( 'wcgateway.store-country' );
-		$merchant_id = $container->get( 'api.partner_merchant_id' );
-		$button_language_choices = $container->get( 'wcgateway.wp-paypal-locales-map' );
-		$partner_attribution = $container->get( 'api.helper.partner-attribution' );
+		$settings                     = $container->get( 'wcgateway.settings' );
+		$settings_url                 = $container->get( 'settings.url' );
+		$paylater_is_available        = $container->get( 'paylater-configurator.is-available' );
+		$store_country                = $container->get( 'wcgateway.store-country' );
+		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
+		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
+		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
 		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
+
 		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
@@ -394,7 +395,7 @@ $services = array(
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
 	),
-	'settings.ajax.switch_ui'                             => static fn ( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
+	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
 		$c->get( 'woocommerce.logger.woocommerce' ),
 		$c->get( 'button.request-data' ),
 		$c->get( 'settings.data.onboarding' ),
@@ -420,7 +421,7 @@ $services = array(
 		);
 	},
 	'settings.data.definition.methods'                    => static function ( ContainerInterface $container ): PaymentMethodsDefinition {
-		$axo_checkout_config_notice = $container->get( 'axo.checkout-config-notice.raw' );
+		$axo_checkout_config_notice      = $container->get( 'axo.checkout-config-notice.raw' );
 		$axo_incompatible_plugins_notice = $container->get( 'axo.incompatible-plugins-notice.raw' );
 
 		// Combine the notices - only include non-empty ones.
@@ -451,7 +452,7 @@ $services = array(
 			'shop'             => $pay_later_settings['data']['shop']['status'] === 'enabled',
 			'home'             => $pay_later_settings['data']['home']['status'] === 'enabled',
 			'custom_placement' => ! empty( $pay_later_settings['data']['custom_placement'] ) &&
-				$pay_later_settings['data']['custom_placement'][0]['status'] === 'enabled',
+									$pay_later_settings['data']['custom_placement'][0]['status'] === 'enabled',
 		);
 
 		$is_pay_later_messaging_enabled_for_any_location = ! array_filter( $pay_later_statuses );
@@ -463,7 +464,7 @@ $services = array(
 	},
 	'settings.service.button_locations'                   => static function ( ContainerInterface $container ): array {
 		$styling_endpoint = $container->get( 'settings.rest.styling' );
-		$styling_data = $styling_endpoint->get_details()->get_data()['data'];
+		$styling_data     = $styling_endpoint->get_details()->get_data()['data'];
 
 		return array(
 			'cart_enabled'           => $styling_data['cart']->enabled ?? false,
@@ -473,7 +474,7 @@ $services = array(
 	},
 	'settings.service.gateways_status'                    => static function ( ContainerInterface $container ): array {
 		$payment_endpoint = $container->get( 'settings.rest.payment' );
-		$settings = $payment_endpoint->get_details()->get_data();
+		$settings         = $payment_endpoint->get_details()->get_data();
 
 		return array(
 			'apple_pay'   => $settings['data']['ppcp-applepay']['enabled'] ?? false,
@@ -501,24 +502,24 @@ $services = array(
 		assert( $general_settings instanceof GeneralSettings );
 
 		return array(
-			'apple_pay'    => ( $features['apple_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'google_pay'   => ( $features['google_pay']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'acdc'         => ( $features['advanced_credit_and_debit_cards']['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
-			'save_paypal'  => $features['save_paypal_and_venmo']['enabled'] ?? false,
-			'apm'          => $features['alternative_payment_methods']['enabled'] ?? false,
-			'paylater'     => $features['pay_later_messaging']['enabled'] ?? false,
-			'installments' => $features['installments']['enabled'] ?? false,
-			'pwc'          => $features['pwc']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_APPLE_PAY       => ( $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_GOOGLE_PAY      => ( $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => ( $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false ) && ! $general_settings->own_brand_only(),
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
 		);
 	},
 
 	'settings.service.todos_eligibilities'                => static function ( ContainerInterface $container ): TodosEligibilityService {
-		$pay_later_service = $container->get( 'settings.service.pay_later_status' );
-		$pay_later_statuses = $pay_later_service['statuses'];
+		$pay_later_service                               = $container->get( 'settings.service.pay_later_status' );
+		$pay_later_statuses                              = $pay_later_service['statuses'];
 		$is_pay_later_messaging_enabled_for_any_location = $pay_later_service['is_enabled_for_any_location'];
 
 		$button_locations = $container->get( 'settings.service.button_locations' );
-		$gateways = $container->get( 'settings.service.gateways_status' );
+		$gateways         = $container->get( 'settings.service.gateways_status' );
 
 		// TODO: This "merchant_capabilities" service is only used here. Could it be merged to make the code cleaner and less segmented?
 		$capabilities = $container->get( 'settings.service.merchant_capabilities' );
@@ -549,27 +550,27 @@ $services = array(
 		 * 2. $capabilities - Whether the merchant is eligible for specific features on their PayPal account.
 		 * 3. $gateways, $pay_later_statuses, $button_locations - Plugin settings (enabled/disabled status).
 		 *
-		 * @param bool $is_fastlane_eligible                - Show if merchant is eligible (ACDC) but hasn't enabled Fastlane gateway.
-		 * @param bool $is_pay_later_messaging_eligible     - Show if Pay Later messaging is enabled for at least one location.
+		 * @param bool $is_fastlane_eligible - Show if merchant is eligible (ACDC) but hasn't enabled Fastlane gateway.
+		 * @param bool $is_pay_later_messaging_eligible - Show if Pay Later messaging is enabled for at least one location.
 		 * @param bool $is_pay_later_messaging_product_eligible - Show if Pay Later is not enabled anywhere and specifically not on product page.
 		 * @param bool $is_pay_later_messaging_cart_eligible - Show if Pay Later is not enabled anywhere and specifically not on cart.
 		 * @param bool $is_pay_later_messaging_checkout_eligible - Show if Pay Later is not enabled anywhere and specifically not on checkout.
-		 * @param bool $is_subscription_eligible            - Show if WooCommerce Subscriptions plugin is active but merchant is not eligible for PayPal Vaulting.
-		 * @param bool $is_paypal_buttons_cart_eligible     - Show if PayPal buttons are not enabled on cart page.
+		 * @param bool $is_subscription_eligible - Show if WooCommerce Subscriptions plugin is active but merchant is not eligible for PayPal Vaulting.
+		 * @param bool $is_paypal_buttons_cart_eligible - Show if PayPal buttons are not enabled on cart page.
 		 * @param bool $is_paypal_buttons_block_checkout_eligible - Show if PayPal buttons are not enabled on blocks checkout.
-		 * @param bool $is_paypal_buttons_product_eligible  - Show if PayPal buttons are not enabled on product page.
-		 * @param bool $is_apple_pay_domain_eligible        - Show if merchant has Apple Pay capability on PayPal account.
-		 * @param bool $is_digital_wallet_eligible          - Show if merchant is eligible (ACDC) but doesn't have both wallet types on PayPal.
-		 * @param bool $is_apple_pay_eligible               - Show if merchant is eligible (ACDC) but doesn't have Apple Pay on PayPal.
-		 * @param bool $is_google_pay_eligible              - Show if merchant is eligible (ACDC) but doesn't have Google Pay on PayPal.
-		 * @param bool $is_enable_apple_pay_eligible        - Show if merchant has Apple Pay capability but hasn't enabled the gateway.
-		 * @param bool $is_enable_google_pay_eligible       - Show if merchant has Google Pay capability but hasn't enabled the gateway.
-		 * @param bool $is_enable_installments_eligible     - Show if merchant has installments capability and merchant country is MX.
-		 * @param bool $is_working_capital_eligible         - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
+		 * @param bool $is_paypal_buttons_product_eligible - Show if PayPal buttons are not enabled on product page.
+		 * @param bool $is_apple_pay_domain_eligible - Show if merchant has Apple Pay capability on PayPal account.
+		 * @param bool $is_digital_wallet_eligible - Show if merchant is eligible (ACDC) but doesn't have both wallet types on PayPal.
+		 * @param bool $is_apple_pay_eligible - Show if merchant is eligible (ACDC) but doesn't have Apple Pay on PayPal.
+		 * @param bool $is_google_pay_eligible - Show if merchant is eligible (ACDC) but doesn't have Google Pay on PayPal.
+		 * @param bool $is_enable_apple_pay_eligible - Show if merchant has Apple Pay capability but hasn't enabled the gateway.
+		 * @param bool $is_enable_google_pay_eligible - Show if merchant has Google Pay capability but hasn't enabled the gateway.
+		 * @param bool $is_enable_installments_eligible - Show if merchant has installments capability and merchant country is MX.
+		 * @param bool $is_working_capital_eligible - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
 		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability.
 		 */
 		return new TodosEligibilityService(
-			$container->get( 'axo.eligible' ) && $capabilities['acdc'] && ! $gateways['axo'],                  // Enable Fastlane.
+			$container->get( 'axo.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['axo'],                  // Enable Fastlane.
 			$is_pay_later_messaging_enabled_for_any_location,                                             // Enable Pay Later messaging.
 			! $is_pay_later_messaging_enabled_for_any_location && ! $pay_later_statuses['product'],       // Add Pay Later messaging (Product page).
 			! $is_pay_later_messaging_enabled_for_any_location && ! $pay_later_statuses['cart'],          // Add Pay Later messaging (Cart).
@@ -581,16 +582,16 @@ $services = array(
 			! $button_locations['cart_enabled'],                                                          // Add PayPal buttons to cart.
 			! $button_locations['block_checkout_enabled'],                                                // Add PayPal buttons to block checkout.
 			! $button_locations['product_enabled'],                                                       // Add PayPal buttons to product.
-			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'],  // Register Domain for Apple Pay.
-			$capabilities['acdc'] && ! ( $capabilities['apple_pay'] && $capabilities['google_pay'] ),     // Add digital wallets to your account.
-			$container->get( 'applepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['apple_pay'],                                        // Add Apple Pay to your account.
-			$container->get( 'googlepay.eligible' ) && $capabilities['acdc'] && ! $capabilities['google_pay'],                                       // Add Google Pay to your account.
-			$container->get( 'applepay.eligible' ) && $capabilities['apple_pay'] && ! $gateways['apple_pay'],                                       // Enable Apple Pay.
-			$container->get( 'googlepay.eligible' ) && $capabilities['google_pay'] && ! $gateways['google_pay'],
-			! $capabilities['installments'] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],  // Register Domain for Apple Pay.
+			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! ( $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] ),     // Add digital wallets to your account.
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                        // Add Apple Pay to your account.
+			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],                                       // Add Google Pay to your account.
+			$container->get( 'applepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_APPLE_PAY ],                                       // Enable Apple Pay.
+			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
+			! $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
-			$capabilities['pwc'] && ! $gateways['pwc'], // Enable Pay with Crypto.
-			$capabilities['acdc'] && ! $capabilities['pwc'], // Apply for Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Enable Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Apply for Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
@@ -606,7 +607,7 @@ $services = array(
 		);
 
 		$payment_endpoint = $container->get( 'settings.rest.payment' );
-		$settings = $payment_endpoint->get_details()->get_data();
+		$settings         = $payment_endpoint->get_details()->get_data();
 
 		// Settings status.
 		$gateways = array(
@@ -614,26 +615,34 @@ $services = array(
 		);
 		// Merchant capabilities serve to show active or inactive badge and buttons.
 		$capabilities = array(
-			'apple_pay'                   => $features['apple_pay']['enabled'] ?? false,
-			'google_pay'                  => $features['google_pay']['enabled'] ?? false,
-			'acdc'                        => $features['advanced_credit_and_debit_cards']['enabled'] ?? false,
-			'save_paypal'                 => $features['save_paypal_and_venmo']['enabled'] ?? false,
-			'alternative_payment_methods' => $features['alternative_payment_methods']['enabled'] ?? false,
-			'installments'                => $features['installments']['enabled'] ?? false,
-			'pwc'                         => $features['pwc']['enabled'] ?? false,
-			'pay_later_messaging'         => $features['pay_later_messaging']['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_APPLE_PAY       => $features[ FeaturesDefinition::FEATURE_APPLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_INSTALLMENTS    => $features[ FeaturesDefinition::FEATURE_INSTALLMENTS ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $features[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]['enabled'] ?? false,
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ]['enabled'] ?? false,
 		);
 
 		$merchant_capabilities = array(
-			'save_paypal'  => $capabilities['save_paypal'], // Save PayPal and Venmo eligibility.
-			'acdc'         => $capabilities['acdc'], // Advanced credit and debit cards eligibility.
-			'apm'          => $capabilities['alternative_payment_methods'], // Alternative payment methods eligibility.
-			'google_pay'   => $capabilities['acdc'] && $capabilities['google_pay'], // Google Pay eligibility.
-			'apple_pay'    => $capabilities['acdc'] && $capabilities['apple_pay'], // Apple Pay eligibility.
-			'pay_later'    => $capabilities['pay_later_messaging'] && $capabilities['acdc'] && ! $gateways['card-button'], // Pay Later eligibility.
-			'installments' => $capabilities['installments'], // Installments eligibility.
-			'pwc'          => $capabilities['pwc'], // Pay with Crypto eligibility.
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $capabilities[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ],
+			// Save PayPal and Venmo eligibility.
+			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ],
+			// Advanced credit and debit cards eligibility.
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => $capabilities[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ],
+			// Alternative payment methods eligibility.
+			FeaturesDefinition::FEATURE_GOOGLE_PAY      => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
+			// Google Pay eligibility.
+			FeaturesDefinition::FEATURE_APPLE_PAY       => $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && $capabilities[ FeaturesDefinition::FEATURE_APPLE_PAY ],
+			// Apple Pay eligibility.
+			FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING => $capabilities[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['card-button'],
+			// Pay Later eligibility.
+			FeaturesDefinition::FEATURE_INSTALLMENTS    => $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ],
+			// Installments eligibility.
+			FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO => $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Pay with Crypto eligibility.
 		);
+
 		return new FeaturesDefinition(
 			$container->get( 'settings.service.features_eligibilities' ),
 			$container->get( 'settings.data.general' ),
@@ -648,9 +657,9 @@ $services = array(
 		$pay_later_eligible = $messages_apply->for_country();
 
 		// TODO: Variable "merchant_country" contains "shop-country". Which is correct?
-		$merchant_country = $container->get( 'api.shop.country' );
+		$merchant_country     = $container->get( 'api.shop.country' );
 		$ineligible_countries = array( 'RU', 'BR', 'JP' );
-		$apm_eligible = ! in_array( $merchant_country, $ineligible_countries, true );
+		$apm_eligible         = ! in_array( $merchant_country, $ineligible_countries, true );
 
 		return new FeaturesEligibilityService(
 			$container->get( 'save-payment-methods.eligible' ), // Save PayPal and Venmo eligibility.
