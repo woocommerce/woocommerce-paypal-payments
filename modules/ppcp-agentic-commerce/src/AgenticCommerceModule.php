@@ -52,27 +52,37 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	 */
 	public function run( ContainerInterface $container ): bool {
 
-		$settings_module = $container->get( 'agentic.settings.module' );
-		assert( $settings_module instanceof AgenticSettingsModule );
-		$settings_module->init();
-
-		$settings = $container->get( 'agentic.settings.model' );
-		assert( $settings instanceof AgenticSettingsDataModel );
+		$agentic_settings = $container->get( 'agentic.settings.model' );
+		assert( $agentic_settings instanceof AgenticSettingsDataModel );
 
 		$registration_handler = $container->get( 'agentic.registration.handler' );
 		assert( $registration_handler instanceof RegistrationService );
 
-		// Early exit if the module is disabled.
-		if ( ! $settings->is_active() ) {
+		$eligibility_check = $container->get( 'agentic.registration.eligibility' );
+		assert( $eligibility_check instanceof RegistrationEligibility );
+
+		$settings_module = $container->get( 'agentic.settings.module' );
+		assert( $settings_module instanceof AgenticSettingsModule );
+
+		// Register the settings extension.
+		$settings_module->init();
+
+		// Uninstall logic.
+		$this->add_uninstall_action( $registration_handler );
+
+		// Early exit if the module is disabled or not eligible for this merchant.
+		if ( ! $agentic_settings->is_active() || ! $eligibility_check->is_eligible() ) {
 
 			// Deregister the shop if agentic features are disabled in settings.
-			if ( $registration_handler->is_registered() ) {
-				$registration_handler->deregister();
-			}
+			$this->ensure_deregistered( $registration_handler );
 
 			return true;
 		}
 
+		// Registration for discovery.
+		$this->ensure_registered( $registration_handler );
+
+		// Public REST endpoints for agentic usage.
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ): void {
@@ -84,39 +94,11 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			}
 		);
 
-		add_action(
-			'init',
-			static function () use ( $container ) {
-				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
-				assert( $ingestion_manager instanceof IngestionManager );
-				$ingestion_manager->init();
-			}
-		);
+		$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
+		assert( $ingestion_manager instanceof IngestionManager );
 
-		add_action(
-			'init',
-			static function () use ( $container ) {
-				$registration_handler = $container->get( 'agentic.registration.handler' );
-				assert( $registration_handler instanceof RegistrationService );
-				$eligibility_check = $container->get( 'agentic.registration.eligibility' );
-				assert( $eligibility_check instanceof RegistrationEligibility );
-
-				$is_eligible   = $eligibility_check->is_eligible();
-				$is_registered = $registration_handler->is_registered();
-
-				// Sync registration state with eligibility.
-				if ( $is_eligible && ! $is_registered ) {
-					$registration_handler->register();
-				} elseif ( ! $is_eligible && $is_registered ) {
-					$registration_handler->deregister();
-				}
-			}
-		);
-
-		// Registers the clean-up tasks on plugin uninstallation.
-		$this->add_uninstall_action(
-			$container->get( 'agentic.registration.handler' )
-		);
+		// Product ingestion for agentic recommendation.
+		add_action( 'init', static fn() => $ingestion_manager->init() );
 
 		return true;
 	}
@@ -129,5 +111,19 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			'woocommerce_paypal_payments_uninstall',
 			static fn() => $registration_service->deregister()
 		);
+	}
+
+	private function ensure_registered( RegistrationService $registration_service ): void {
+		if ( $registration_service->is_registered() ) {
+			return;
+		}
+		add_action( 'init', static fn() => $registration_service->register() );
+	}
+
+	private function ensure_deregistered( RegistrationService $registration_service ): void {
+		if ( ! $registration_service->is_registered() ) {
+			return;
+		}
+		add_action( 'init', static fn() => $registration_service->deregister() );
 	}
 }
