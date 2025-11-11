@@ -1,13 +1,11 @@
 import { useEffect, useState } from '@wordpress/element';
 import { loadCustomScript } from '@paypal/paypal-js';
-import {
-	registerExpressPaymentMethod,
-	registerPaymentMethod,
-} from '@woocommerce/blocks-registry';
+import { registerExpressPaymentMethod } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
+import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
@@ -42,6 +40,38 @@ const GooglePayComponent = ( { isEditing, buttonAttributes, onClick } ) => {
 				} );
 		}
 	}, [ isEditing ] );
+
+	useEffect( () => {
+		if ( isEditing || ! manager || ! wp.data?.subscribe ) {
+			return;
+		}
+
+		let timeoutId = null;
+
+		const checkAddressChange = () => {
+			const store = wp.data.select( 'wc/store/cart' );
+			if ( ! store ) {
+				return;
+			}
+
+			timeoutId = setTimeout( () => {
+				manager.buttons.forEach( ( button ) => button.addButton() );
+			}, 1000 );
+		};
+
+		const unsubscribe = wp.data.subscribe(
+			debounce( checkAddressChange, 300 )
+		);
+
+		return () => {
+			if ( timeoutId ) {
+				clearTimeout( timeoutId );
+			}
+			if ( unsubscribe ) {
+				unsubscribe();
+			}
+		};
+	}, [ isEditing, manager ] );
 
 	useEffect( () => {
 		if ( ! isEditing && paypalLoaded && googlePayLoaded && ! manager ) {
