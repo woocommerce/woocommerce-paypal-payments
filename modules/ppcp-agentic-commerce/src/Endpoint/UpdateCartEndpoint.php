@@ -11,13 +11,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InternalServerError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\CartNotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\UpdateFailedError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -76,7 +75,7 @@ class UpdateCartEndpoint extends AgenticRestEndpoint {
 
 		if ( ! $session ) {
 			return $this->error(
-				new CartNotFoundError(
+				new NotFoundError(
 					"Cart with ID '{$cart_id}' does not exist or has expired",
 					array(
 						array(
