@@ -34,6 +34,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		'agentic.rest.get_cart',
 		'agentic.rest.update_cart',
 		'agentic.rest.replace_cart',
+		'agentic.rest.checkout',
 	);
 
 	public function services(): array {
