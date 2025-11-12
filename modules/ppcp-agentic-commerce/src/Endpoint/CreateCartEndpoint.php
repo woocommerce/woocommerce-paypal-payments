@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
@@ -64,6 +65,11 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		}
 
 		$cart = PayPalCart::from_array( $data );
+
+		$issues = $cart->validate();
+		if ( ! empty( $issues ) ) {
+			return $this->error( new BadRequestError( 'Cart validation issue', $issues ) );
+		}
 
 		// TODO (#5272): Generate EC token via PayPal Orders API.
 		$ec_token = wp_generate_password( 12, false );

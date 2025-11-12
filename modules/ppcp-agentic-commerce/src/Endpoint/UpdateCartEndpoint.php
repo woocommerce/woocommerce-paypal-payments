@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InternalServerError;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
@@ -104,7 +105,7 @@ class UpdateCartEndpoint extends AgenticRestEndpoint {
 
 		if ( ! $update_result ) {
 			return $this->error(
-				new UpdateFailedError(
+				new InternalServerError(
 					'Failed to update cart',
 					array(
 						array(
@@ -121,7 +122,7 @@ class UpdateCartEndpoint extends AgenticRestEndpoint {
 
 		if ( ! $session ) {
 			return $this->error(
-				new UpdateFailedError(
+				new InternalServerError(
 					'Failed to verify cart update',
 					array(
 						array(

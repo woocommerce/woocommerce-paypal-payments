@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
@@ -71,7 +72,7 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 
 		if ( ! $session ) {
 			return $this->error(
-				new CartNotFoundError(
+				new NotFoundError(
 					"Cart with ID '{$cart_id}' does not exist or has expired",
 					array(
 						array(
