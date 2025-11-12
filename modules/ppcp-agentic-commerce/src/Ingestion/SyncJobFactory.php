@@ -38,8 +38,8 @@ class SyncJobFactory {
 		LoggerInterface $logger,
 		ProductsPayloadFactory $products_payload_factory
 	) {
-		$this->logger       = $logger;
-		$this->api_endpoint = $api_endpoint;
+		$this->logger                   = $logger;
+		$this->api_endpoint             = $api_endpoint;
 		$this->products_payload_factory = $products_payload_factory;
 	}
 
