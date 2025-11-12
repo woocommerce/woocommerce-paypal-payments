@@ -81,9 +81,9 @@ class ProductsPayload {
 		$variants      = array();
 		$variation_ids = $variable_product->get_children();
 
-		// Get parent product categories for variations
+		// Get parent product categories for variations.
 		$parent_categories = wc_get_product_category_list( $variable_product->get_id() );
-		$product_type = $parent_categories ? wp_strip_all_tags( $parent_categories ) : '';
+		$product_type      = $parent_categories ? wp_strip_all_tags( $parent_categories ) : '';
 
 		foreach ( $variation_ids as $variation_id ) {
 			$variation = wc_get_product( $variation_id );
@@ -124,7 +124,7 @@ class ProductsPayload {
 				$variant['sale_price'] = $this->format_price( $variation->get_sale_price() );
 			}
 
-			// Add product type from parent
+			// Add product type from parent.
 			if ( $product_type ) {
 				$variant['product_type'] = $product_type;
 			}
