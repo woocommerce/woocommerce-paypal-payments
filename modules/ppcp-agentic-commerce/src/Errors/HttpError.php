@@ -45,6 +45,10 @@ abstract class HttpError extends AgenticError {
 	 * Generate a debug ID if not provided.
 	 */
 	protected function generate_debug_id(): string {
-		return 'ERROR-' . $this->get_status_code() . '-' . strtoupper( substr( md5( uniqid() ), 0, 8 ) );
+		return sprintf(
+			'ERROR-%s-%s',
+			$this->get_status_code(),
+			strtoupper( (string) substr( md5( uniqid() ), 0, 8 ) )
+		);
 	}
 }

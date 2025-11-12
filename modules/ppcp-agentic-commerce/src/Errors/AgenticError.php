@@ -68,17 +68,31 @@ abstract class AgenticError {
 	}
 
 	/**
-	 * Create instance from WP_Error using late static binding.
+	 * Factory method that child classes can override if needed.
+	 * This method ensures safe instantiation with late static binding.
 	 *
-	 * @param WP_Error    $wp_error The WordPress error to convert.
-	 * @param string|null $debug_id Optional debug ID.
+	 * @param string     $message Descriptive text of the error.
+	 * @param array|null $details Optional. Additional details about the error.
 	 * @return static Instance of the called class.
 	 */
-	public static function from_wp_error( WP_Error $wp_error, ?string $debug_id = null ) {
+	protected static function create_instance( string $message, ?array $details = null ): AgenticError {
+		/**
+		 * @psalm-suppress UnsafeInstantiation
+		 */
+		return new static( $message, $details );
+	}
+
+	/**
+	 * Create instance from WP_Error using late static binding.
+	 *
+	 * @param WP_Error $wp_error The WordPress error to convert.
+	 * @return static Instance of the called class.
+	 */
+	public static function from_wp_error( WP_Error $wp_error ): AgenticError {
 		$message = $wp_error->get_error_message();
 		$details = static::extract_wp_error_details( $wp_error );
 
-		return new static( $message, $details, $debug_id );
+		return static::create_instance( $message, $details );
 	}
 
 	/**

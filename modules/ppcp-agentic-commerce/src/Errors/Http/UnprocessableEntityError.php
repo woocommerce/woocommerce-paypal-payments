@@ -10,8 +10,8 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\HttpError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\HttpErrorName;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 /**
  * Use when business rules prevent cart operations.
