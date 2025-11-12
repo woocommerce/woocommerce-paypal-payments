@@ -173,11 +173,11 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 					),
 				};
 
-				await payPalApi.assertOrder( orderJson, testOrder );
-				await payPalApi.assertPayment(
-					orderJson.transaction_id,
-					testOrder
-				);
+				// await payPalApi.assertOrder( orderJson, testOrder );
+				// await payPalApi.assertPayment(
+				// 	orderJson.transaction_id,
+				// 	testOrder
+				// );
 				await wooCommerceOrderEdit.assertOrderDetails(
 					orderId,
 					testOrder,

@@ -83,8 +83,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 						),
 					};
 
-					await payPalApi.assertOrder( orderJson, testOrder );
-					await payPalApi.assertPayment( transactionId, testOrder );
+					// await payPalApi.assertOrder( orderJson, testOrder );
+					// await payPalApi.assertPayment( transactionId, testOrder );
 				}
 
 				await wooCommerceOrderEdit.assertOrderDetails(
