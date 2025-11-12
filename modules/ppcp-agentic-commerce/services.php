@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
 use Automattic\WooCommerce\Enums\ProductType;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
@@ -89,6 +90,14 @@ return array(
 	'agentic.rest.replace_cart'                => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
 			$container->get( 'agentic.auth.provider' ),
+			$container->get( 'agentic.session.handler' ),
+			$container->get( 'agentic.response.factory' )
+		);
+	},
+
+	'agentic.rest.checkout'                    => static function ( ContainerInterface $container ): CheckoutEndpoint {
+		return new CheckoutEndpoint(
+			$container->get( 'agentic.auth.service' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' )
 		);
