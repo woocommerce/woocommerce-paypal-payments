@@ -25,6 +25,7 @@ class SyncJobFactory {
 	 * @var string
 	 */
 	private string $api_endpoint;
+	private ProductsPayloadFactory $products_payload_factory;
 
 	/**
 	 * Constructor for SyncJobFactory.
@@ -34,10 +35,12 @@ class SyncJobFactory {
 	 */
 	public function __construct(
 		string $api_endpoint,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		ProductsPayloadFactory $products_payload_factory
 	) {
 		$this->logger       = $logger;
 		$this->api_endpoint = $api_endpoint;
+		$this->products_payload_factory = $products_payload_factory;
 	}
 
 	/**
@@ -56,7 +59,8 @@ class SyncJobFactory {
 		return new SyncJob(
 			$this->api_endpoint,
 			$product_ids,
-			$this->logger
+			$this->logger,
+			$this->products_payload_factory
 		);
 	}
 }
