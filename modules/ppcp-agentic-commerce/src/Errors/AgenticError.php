@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
 
 use RuntimeException;
+use WP_Error;
 
 abstract class AgenticError {
 	/**
@@ -64,5 +65,44 @@ abstract class AgenticError {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Create instance from WP_Error using late static binding.
+	 *
+	 * @param WP_Error    $wp_error The WordPress error to convert.
+	 * @param string|null $debug_id Optional debug ID.
+	 * @return static Instance of the called class.
+	 */
+	public static function from_wp_error( WP_Error $wp_error, ?string $debug_id = null ) {
+		$message = $wp_error->get_error_message();
+		$details = static::extract_wp_error_details( $wp_error );
+
+		return new static( $message, $details, $debug_id );
+	}
+
+	/**
+	 * Extract details from WP_Error.
+	 *
+	 * @param WP_Error $wp_error The WordPress error.
+	 * @return array Error details.
+	 */
+	private static function extract_wp_error_details( WP_Error $wp_error ): array {
+		$details = array(
+			'wp_error_codes'    => $wp_error->get_error_codes(),
+			'wp_error_messages' => array(),
+			'wp_error_data'     => array(),
+		);
+
+		foreach ( $wp_error->get_error_codes() as $code ) {
+			$details['wp_error_messages'][ $code ] = $wp_error->get_error_messages( $code );
+
+			$error_data = $wp_error->get_error_data( $code );
+			if ( ! empty( $error_data ) ) {
+				$details['wp_error_data'][ $code ] = $error_data;
+			}
+		}
+
+		return $details;
 	}
 }
