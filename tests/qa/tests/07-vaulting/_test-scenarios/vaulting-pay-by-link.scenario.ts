@@ -162,25 +162,24 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
-				const orderJson = await wooCommerceApi.getOrder( orderId );
-
-				const pcpData = {
-					transactionId: orderJson.transaction_id,
-					payPalFee: await payPalApi.getFee(
-						orderJson.transaction_id,
-						testOrder
-					),
-					payPalPayout: await payPalApi.getPayout(
-						orderJson.transaction_id,
-						testOrder
-					),
-				};
+				const { transaction_id: transactionId } =
+					await wooCommerceApi.getOrder( orderId );
+				const payPalFee = await payPalApi.getFee(
+					transactionId,
+					testOrder
+				);
+				const payPalPayout = await payPalApi.getPayout(
+					transactionId,
+					testOrder
+				);
+				const pcpData = { transactionId, payPalFee, payPalPayout };
 
 				// await payPalApi.assertOrder( orderJson, testOrder );
 				// await payPalApi.assertPayment(
 				// 	orderJson.transaction_id,
 				// 	testOrder
 				// );
+				
 				await wooCommerceOrderEdit.assertOrderDetails(
 					orderId,
 					testOrder,

@@ -26,25 +26,24 @@ export const transactionsOnPayByLink = ( testsData: ShopOrder[] ) => {
 				await expect( order.id ).toEqual(
 					await orderReceived.getOrderNumber()
 				);
-				const orderJson = await wooCommerceApi.getOrder( order.id );
-
-				const pcpData = {
-					transactionId: orderJson.transaction_id,
-					payPalFee: await payPalApi.getFee(
-						orderJson.transaction_id,
-						testData
-					),
-					payPalPayout: await payPalApi.getPayout(
-						orderJson.transaction_id,
-						testData
-					),
-				};
+				const { transaction_id: transactionId } =
+					await wooCommerceApi.getOrder( order.id );
+				const payPalFee = await payPalApi.getFee(
+					transactionId,
+					testData
+				);
+				const payPalPayout = await payPalApi.getPayout(
+					transactionId,
+					testData
+				);
+				const pcpData = { transactionId, payPalFee, payPalPayout };
 
 				// await payPalApi.assertOrder( orderJson, testData );
 				// await payPalApi.assertPayment(
 				// 	orderJson.transaction_id,
 				// 	testData
 				// );
+				
 				await wooCommerceOrderEdit.assertOrderDetails(
 					order.id,
 					testData,

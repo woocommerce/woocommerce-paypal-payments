@@ -41,9 +41,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
-				const orderJson = await wooCommerceApi.getOrder( orderId );
-				const transactionId = orderJson.transaction_id;
-
+				const { transaction_id: transactionId } =
+					await wooCommerceApi.getOrder( orderId );
 				const subscriptionId =
 					await orderReceived.getSubscriptionNumber();
 				const subscriptionJson = await wooCommerceApi.getSubscription(
