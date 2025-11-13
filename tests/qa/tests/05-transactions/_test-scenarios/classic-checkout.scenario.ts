@@ -63,7 +63,7 @@ export const transactionsOnClassicCheckoutOxxo = ( testOrder: ShopOrder ) => {
 			utils,
 		} ) => {
 			await utils.fillVisitorsCart( testOrder.products );
-
+			await classicCheckout.visit();
 			await classicCheckout.makeOrder( testOrder );
 			// Expect Order Received page to be loaded
 			await orderReceived.assertOrderDetails( testOrder );

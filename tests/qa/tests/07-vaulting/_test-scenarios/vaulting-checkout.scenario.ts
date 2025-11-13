@@ -31,6 +31,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
+				await checkout.visit();
 				await checkout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -94,6 +95,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
+				await checkout.visit();
 				await checkout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -152,7 +154,7 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order:
 				await utils.fillVisitorsCart( products );
-
+				await checkout.visit();
 				await checkout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 

@@ -37,6 +37,7 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
+				await classicCheckout.visit();
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -182,6 +183,7 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
+				await classicCheckout.visit();
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 

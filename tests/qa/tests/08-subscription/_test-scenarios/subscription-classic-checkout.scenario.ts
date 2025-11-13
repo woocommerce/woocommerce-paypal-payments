@@ -34,6 +34,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 			} ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				await utils.fillVisitorsCart( products );
+				await classicCheckout.visit();
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -105,6 +106,7 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
+				await classicCheckout.visit();
 				await classicCheckout.makeOrder( testOrder );
 				await orderReceived.assertOrderDetails( testOrder );
 

@@ -140,7 +140,7 @@ export class Utils {
 	 */
 	completeOrderOnCheckout = async ( shopOrder: ShopOrder ) => {
 		await this.fillVisitorsCart( shopOrder.products );
-
+		await this.checkout.visit();
 		await this.checkout.makeOrder( shopOrder );
 		const orderId = await this.orderReceived.getOrderNumber();
 		return await this.wooCommerceApi.getOrderByIdAndStatus(
@@ -156,6 +156,7 @@ export class Utils {
 	 */
 	completeOrderOnClassicCheckout = async ( shopOrder: ShopOrder ) => {
 		await this.fillVisitorsCart( shopOrder.products );
+		await this.classicCheckout.visit();
 		await this.classicCheckout.makeOrder( shopOrder );
 		const orderId = await this.orderReceived.getOrderNumber();
 		return await this.wooCommerceApi.getOrderByIdAndStatus(
