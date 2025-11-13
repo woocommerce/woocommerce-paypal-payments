@@ -20,8 +20,6 @@ export class Cart extends CartBase {
 	// Actions
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		await this.visit();
-
 		// Add coupons if needed
 		if ( data.coupons ) {
 			for ( const coupon of data.coupons ) {

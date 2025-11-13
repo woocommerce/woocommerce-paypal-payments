@@ -20,7 +20,6 @@ export class ClassicCart extends ClassicCartBase {
 	// Actions
 
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		await this.visit();
 		// Add coupons if needed
 		if ( data.coupons ) {
 			for ( const coupon of data.coupons ) {

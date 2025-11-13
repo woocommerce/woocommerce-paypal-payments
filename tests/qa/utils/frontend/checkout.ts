@@ -35,8 +35,7 @@ export class Checkout extends CheckoutBase {
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		const { payment, coupons, shipping, customer, merchant } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
-		await this.visit();
-
+		
 		// Add coupons if needed
 		await this.applyCouponIfNeeded( coupons );
 

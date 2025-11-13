@@ -6,6 +6,8 @@ import { annotateVisitor, test } from '../../../utils';
 
 export const transactionsOnProduct = ( testsData: ShopOrder[] ) => {
 	for ( const testData of testsData ) {
+		const { products, payment, merchant } = testData;
+		
 		test(
 			testData.title,
 			annotateVisitor( testData.customer ),
@@ -17,7 +19,8 @@ export const transactionsOnProduct = ( testsData: ShopOrder[] ) => {
 				payPalApi,
 				wooCommerceOrderEdit,
 			} ) => {
-				await product.makeOrder( testData );
+				await product.visit( products[ 0 ].slug );
+				await product.payPalUi.makePayment( { merchant, payment } );
 				await checkout.completeOrderFromProduct( testData );
 				// Expect Order Received page to be loaded
 				await orderReceived.assertOrderDetails( testData );

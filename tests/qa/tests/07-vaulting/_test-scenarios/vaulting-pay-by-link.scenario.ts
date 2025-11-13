@@ -5,7 +5,7 @@ import { cards, payments, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, customer } = testOrder;
+	const { title, payment, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -31,7 +31,9 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				let order = await wooCommerceUtils.createApiOrder( testOrder );
-				await payForOrder.makeOrder( testOrder, order );
+				
+				await payForOrder.visit( order.id, order.order_key );
+				await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				// Expect Order Received page to be loaded
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -64,7 +66,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 };
 
 const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
-	const { title, payment, customer } = testOrder;
+	const { title, payment, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -97,7 +99,9 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				let order = await wooCommerceUtils.createApiOrder( testOrder );
-				await payForOrder.makeOrder( testOrder, order );
+				
+				await payForOrder.visit( order.id, order.order_key );
+				await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -129,7 +133,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 };
 
 const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, customer } = testOrder;
+	const { title, payment, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -158,7 +162,9 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				const order = await wooCommerceUtils.createApiOrder(
 					testOrder
 				);
-				await payForOrder.makeOrder( testOrder, order );
+				
+				await payForOrder.visit( order.id, order.order_key );
+				await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();

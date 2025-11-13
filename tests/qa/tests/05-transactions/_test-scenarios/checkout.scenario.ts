@@ -18,7 +18,7 @@ export const transactionsOnCheckout = ( testsData: ShopOrder[] ) => {
 				utils,
 			} ) => {
 				await utils.fillVisitorsCart( testData.products );
-
+				await checkout.visit();
 				await checkout.makeOrder( testData );
 				// Expect Order Received page to be loaded
 				await orderReceived.assertOrderDetails( testData );

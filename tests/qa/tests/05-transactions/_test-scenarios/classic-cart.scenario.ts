@@ -19,7 +19,7 @@ export const transactionsOnClassicCart = ( testsData: ShopOrder[] ) => {
 				utils,
 			} ) => {
 				await utils.fillVisitorsCart( testData.products );
-
+				await classicCart.visit();
 				await classicCart.makeOrder( testData );
 				await classicCheckout.fillCheckoutForm( testData.customer );
 				await classicCheckout.placeOrder();

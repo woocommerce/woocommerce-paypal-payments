@@ -19,7 +19,7 @@ export const transactionsOnCart = ( testsData: ShopOrder[] ) => {
 				utils,
 			} ) => {
 				await utils.fillVisitorsCart( testData.products );
-
+				await cart.visit();
 				await cart.makeOrder( testData );
 				await checkout.fillCheckoutForm( testData.customer );
 				await checkout.placeOrder();
@@ -45,7 +45,7 @@ export const transactionsOnCart = ( testsData: ShopOrder[] ) => {
 				// 	orderJson.transaction_id,
 				// 	testData
 				// );
-				
+
 				await wooCommerceOrderEdit.assertOrderDetails(
 					orderId,
 					testData,

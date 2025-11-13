@@ -22,18 +22,5 @@ export class Product extends ProductBase {
 
 	// Actions
 
-	addToCart = async ( productSlug: string ) => {
-		await this.visit( productSlug );
-		await this.addToCartButton().click();
-	};
-
-	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		await this.visit( data.products[ 0 ].slug );
-		await this.payPalUi.makePayment( {
-			merchant: data.merchant,
-			payment: data.payment,
-		} );
-	};
-
 	// Assertions
 }
