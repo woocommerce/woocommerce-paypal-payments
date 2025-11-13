@@ -18,10 +18,12 @@ class JwtAuthService {
 	}
 
 	/**
-	 * @param string|null $token
-	 * @return stdClass|WP_Error
+	 * Parses and validates JWT token.
+	 *
+	 * @param string|null $token Bearer token from Authorization header.
+	 * @return stdClass|WP_Error Decoded token or validation error.
 	 */
-	public function validate_request( ?string $token ) {
+	public function get_token( ?string $token ) {
 		$string_token = trim( $token ?? '' );
 
 		if ( $string_token === '' ) {

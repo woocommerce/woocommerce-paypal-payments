@@ -50,7 +50,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	public function check_permission( WP_REST_Request $request ) {
 		$token   = $request->get_header( 'Authorization' );
-		$context = $this->auth_service->validate_request( $token );
+		$context = $this->auth_service->get_token( $token );
 
 		if ( is_wp_error( $context ) ) {
 			assert( $context instanceof WP_Error );

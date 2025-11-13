@@ -42,7 +42,7 @@ class JwtAuthServiceTest extends TestCase {
 		}
 
 		$service = new JwtAuthService( $provider );
-		$result  = $service->validate_request( $token );
+		$result  = $service->get_token( $token );
 
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( $expected_error_code, $result->get_error_code() );
@@ -144,7 +144,7 @@ class JwtAuthServiceTest extends TestCase {
 			->andReturn( null );
 
 		$service = new JwtAuthService( $provider );
-		$result  = $service->validate_request( 'Bearer some.valid.token' );
+		$result  = $service->get_token( 'Bearer some.valid.token' );
 
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'key_unavailable', $result->get_error_code() );
@@ -177,7 +177,7 @@ class JwtAuthServiceTest extends TestCase {
 		$valid_jwt = JWT::encode( (array) $expected_payload, 'test-secret-key', 'HS256' );
 		$token     = $prefix . ' ' . $valid_jwt;
 
-		$result = $service->validate_request( $token );
+		$result = $service->get_token( $token );
 
 		$this->assertInstanceOf( \stdClass::class, $result );
 		$this->assertEquals( $expected_payload, $result );
