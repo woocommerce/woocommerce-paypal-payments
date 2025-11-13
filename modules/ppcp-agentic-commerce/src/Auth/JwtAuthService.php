@@ -11,6 +11,11 @@ use Firebase\JWT\JWT;
 
 class JwtAuthService {
 
+	/**
+	 * The exact issuer string that we expect to see in the JWT payload.
+	 */
+	private const EXPECTED_ISSUER = 'paypal.com';
+
 	private PayPalJwkProvider $jwk_provider;
 
 	public function __construct( PayPalJwkProvider $jwk_provider ) {
@@ -49,5 +54,44 @@ class JwtAuthService {
 		} catch ( Exception $exception ) {
 			return new WP_Error( 'invalid_jwt', $exception->getMessage(), array( 'status' => 401 ) );
 		}
+	}
+
+	/**
+	 * Verifies token claims against business requirements.
+	 *
+	 * @param object $context Decoded JWT payload.
+	 * @param array  $required_scopes Required permission scopes.
+	 * @return true|WP_Error
+	 */
+	public function verify_claims( object $context, array $required_scopes ) {
+		// Verify issuer.
+		if ( ! isset( $context->iss ) || $context->iss !== self::EXPECTED_ISSUER ) {
+			return new WP_Error(
+				'invalid_issuer',
+				'Token issuer is not recognized',
+				array( 'status' => 401 )
+			);
+		}
+
+		// Verify required scopes are present.
+		$token_scopes = $context->scope ?? array();
+		if ( ! is_array( $token_scopes ) ) {
+			return new WP_Error(
+				'invalid_token',
+				'Token scopes are malformed',
+				array( 'status' => 401 )
+			);
+		}
+
+		$missing_scopes = array_diff( $required_scopes, $token_scopes );
+		if ( ! empty( $missing_scopes ) ) {
+			return new WP_Error(
+				'insufficient_scope',
+				'Token does not have required permissions',
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
 	}
 }
