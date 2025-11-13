@@ -14,7 +14,7 @@ use Mockery;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers CreateCartEndpoint
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint
  */
 class CreateCartEndpointTest extends TestCase {
 

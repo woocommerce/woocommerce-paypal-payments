@@ -1,0 +1,55 @@
+<?php
+declare( strict_types = 1 );
+
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Merchant;
+
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+
+/**
+ * Provides merchant metadata for registration and catalog operations.
+ *
+ * This is the single source of truth for store identification across
+ * registration and catalog ingestion.
+ */
+class MerchantMetadataProvider {
+
+	private GeneralSettings $general_settings;
+
+	public function __construct( GeneralSettings $general_settings ) {
+		$this->general_settings = $general_settings;
+	}
+
+	/**
+	 * Get current merchant metadata.
+	 */
+	public function get_metadata(): MerchantMetadata {
+		$merchant = $this->get_merchant_connection();
+
+		return new MerchantMetadata(
+			get_bloginfo( 'name' ),
+			$this->get_canonical_store_url(),
+			WC()->countries->get_base_country(),
+			get_woocommerce_currency(),
+			$merchant->merchant_id,
+			$this->get_canonical_store_url()
+		);
+	}
+
+	/**
+	 * Get canonical store URL used as stable identifier.
+	 *
+	 * CRITICAL: This must remain stable between registration and catalog ingestion.
+	 * The store URL serves as the primary key for identifying this merchant.
+	 */
+	private function get_canonical_store_url(): string {
+		return untrailingslashit( get_site_url() );
+	}
+
+	/**
+	 * Get PayPal merchant connection data.
+	 */
+	private function get_merchant_connection(): MerchantConnectionDTO {
+		return $this->general_settings->get_merchant_data();
+	}
+}

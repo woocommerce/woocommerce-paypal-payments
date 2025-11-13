@@ -12,7 +12,7 @@ use Mockery;
 use function Brain\Monkey\Functions\when;
 
 /**
- * @covers ProductsPayload
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\ProductsPayload
  */
 class ProductsPayloadTest extends TestCase {
 
