@@ -7,7 +7,7 @@ require( 'dotenv' ).config();
 /**
  * Internal dependencies
  */
-import { BaseExtend } from '@inpsyde/playwright-utils/build';
+import { BaseExtend } from './utils';
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
@@ -74,20 +74,30 @@ export default defineConfig< BaseExtend >( {
 			password: process.env.WP_BASIC_AUTH_PASS,
 		},
 
-		/* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-		trace: 'on-first-retry',
-
-		// Capture screenshot after each test failure.
-		screenshot: 'only-on-failure', //'off', //
-
-		// Record video only when retrying a test for the first time.
-		video: 'retain-on-failure', //'on', //
-
 		...devices[ 'Desktop Chrome' ],
 
 		launchOptions: {
 			// Put your chromium-specific args here
 			args: [ '--disable-web-security' ],
+		},
+
+		viewport: { width: 1280, height: 850 },
+
+    	trace: process.env.CI ? 'off' : 'retain-on-failure',//'on-first-retry',//'on',//
+
+		screenshot: {
+			mode: 'only-on-failure',
+			fullPage: true, // Captures entire scrollable page
+		},
+
+		video: process.env.CI ? 'off' : {
+			mode: 'retain-on-failure', //'on',//
+			size: { width: 1280, height: 850 },
+		},
+
+		recordVideoOptions: process.env.CI ? undefined : {
+			mode: 'retain-on-failure',
+			size: { width: 1280, height: 850 },
 		},
 
 		/**
