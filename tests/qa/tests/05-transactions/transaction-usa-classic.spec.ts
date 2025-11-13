@@ -59,16 +59,29 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-transactionsOnClassicCheckout( payPalClassicCheckout );
-transactionsOnClassicCheckout( acdcClassicCheckout );
+for( const testOrder of payPalClassicCheckout ) {
+	transactionsOnClassicCheckout( testOrder );
+}
+
+for( const testOrder of acdcClassicCheckout ) {
+	transactionsOnClassicCheckout( testOrder );
+}
 
 /**
  * Venmo is eligible only for USA/USD
  */
 // NOT TESTABLE AT THE MOMENT
-// transactionsOnClassicCheckout( venmoClassicCheckoutUsa );
-// transactionsOnClassicCart( venmoClassicCartUsa );
-// transactionsOnClassicProduct( venmoClassicProductUsa );
+// for( const testOrder of venmoClassicCheckoutUsa ) {
+// 	transactionsOnClassicCheckout( testOrder );
+// }
+
+// for( const testOrder of venmoClassicCartUsa ) {
+// 	transactionsOnClassicCart( testOrder );
+// }
+
+// for( const testOrder of venmoClassicProductUsa ) {
+// 	transactionsOnClassicProduct( testOrder );
+// }
 
 // Excluding Tax
 test.describe( () => {
@@ -76,8 +89,13 @@ test.describe( () => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
 
-	transactionsOnClassicCheckout( payPalClassicCheckoutExcludingTax );
-	transactionsOnClassicCheckout( acdcClassicCheckoutExcludingTax );
+	for( const testOrder of payPalClassicCheckoutExcludingTax ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
+	for( const testOrder of acdcClassicCheckoutExcludingTax ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.including );
@@ -90,8 +108,13 @@ test.describe( () => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
 
-	transactionsOnClassicCheckout( payPalClassicCheckoutIntentAuthorized );
-	transactionsOnClassicCheckout( acdcClassicCheckoutIntentAuthorized );
+	for( const testOrder of payPalClassicCheckoutIntentAuthorized ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
+
+	for( const testOrder of acdcClassicCheckoutIntentAuthorized ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );
@@ -106,7 +129,9 @@ test.describe( () => {
 		} );
 	} );
 
-	transactionsOnClassicCheckout( acdcClassicCheckout3ds );
+	for( const testOrder of acdcClassicCheckout3ds ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {
@@ -116,11 +141,7 @@ test.describe( () => {
 } );
 
 /**
- * Fastlane
- * Eligible only for USA/USD
- * NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
- * https://inpsyde.atlassian.net/browse/PCP-4625
- * https://inpsyde.atlassian.net/browse/PCP-4623
+ * Fastlane (only for USA)
  */
 
 test.describe( () => {
@@ -130,7 +151,9 @@ test.describe( () => {
 		} );
 	} );
 
-	transactionsOnClassicCheckout( fastlaneClassicCheckout );
+	for( const testOrder of fastlaneClassicCheckout ) {
+		transactionsOnClassicCheckout( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {

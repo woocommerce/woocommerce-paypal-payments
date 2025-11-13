@@ -96,9 +96,14 @@ test.describe( () => {
 			threeDSecure: 'always-3d-secure',
 		} );
 	} );
-
-	transactionsOnCheckout( acdcCheckout3ds );
-	transactionsOnPayByLink( acdcPayByLink3ds );
+	
+	for( const testOrder of acdcCheckout3ds ) {
+		transactionsOnCheckout( testOrder );
+	}
+	
+	for( const testOrder of acdcPayByLink3ds ) {
+		transactionsOnPayByLink( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {
@@ -109,9 +114,6 @@ test.describe( () => {
 
 /**
  * Fastlane (only for USA)
- * NOT TESTABLE AT THE MOMENT BECAUSE OF BUGS:
- * https://inpsyde.atlassian.net/browse/PCP-4625
- * https://inpsyde.atlassian.net/browse/PCP-4623
  */
 
 test.describe( () => {
@@ -121,7 +123,9 @@ test.describe( () => {
 		} );
 	} );
 
-	transactionsOnCheckout( fastlaneCheckout );
+	for( const testOrder of fastlaneCheckout ) {
+		transactionsOnCheckout( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpPaymentMethods( {
