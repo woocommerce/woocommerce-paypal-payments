@@ -5,6 +5,7 @@ import { ShopOrder } from '../../../resources';
 import { test, annotateVisitor } from '../../../utils';
 
 export const transactionsOnCart = ( testOrder: ShopOrder ) => {
+	const { products, payment, merchant, coupons, customer, shipping } = testOrder;
 	test(
 		testOrder.title,
 		annotateVisitor( testOrder.customer ),
@@ -17,10 +18,16 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
+			await utils.fillVisitorsCart( products );
 			await cart.visit();
-			await cart.makeOrder( testOrder );
-			await checkout.fillCheckoutForm( testOrder.customer );
+			// Add coupons if needed
+			for ( const coupon of coupons ?? [] ) {
+				await cart.applyCoupon( coupon.code );
+			}
+			await cart.selectShippingMethod( shipping.settings.title );
+			await cart.payPalUi.makePayment( { merchant, payment } );
+
+			await checkout.fillCheckoutForm( customer );
 			await checkout.placeOrder();
 
 			// Expect Order Received page to be loaded
