@@ -30,6 +30,11 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected const NAMESPACE = 'wc/v3/agentic';
 
+	/**
+	 * JWT scope(s) required for the endpoint.
+	 */
+	protected const REQUIRED_SCOPES = array( 'cart' );
+
 	private JwtAuthService $auth_service;
 
 	protected AgenticSessionHandler $session_handler;
@@ -58,9 +63,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 			return $context;
 		}
 
-		// TODO: verify the merchant details in $context.
-
-		return true;
+		return $this->auth_service->verify_claims( $context, static::REQUIRED_SCOPES );
 	}
 
 	/**
