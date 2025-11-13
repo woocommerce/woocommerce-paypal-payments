@@ -5,7 +5,7 @@ import { cards, payments, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, products, payment, merchant, coupons, customer, shipping } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -31,7 +31,12 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
-				await classicCart.makeOrder( testOrder );
+				// Add coupons if needed
+				for ( const coupon of coupons ?? [] ) {
+					await classicCart.applyCoupon( coupon.code );
+				}
+				await classicCart.selectShippingMethod( shipping.settings.title );
+				await classicCart.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -62,7 +67,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 };
 
 const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, products, payment, merchant, coupons, customer, shipping } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -89,7 +94,12 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order:
 				await utils.fillVisitorsCart( products );
-				await classicCart.makeOrder( testOrder );
+				// Add coupons if needed
+				for ( const coupon of coupons ?? [] ) {
+					await classicCart.applyCoupon( coupon.code );
+				}
+				await classicCart.selectShippingMethod( shipping.settings.title );
+				await classicCart.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
