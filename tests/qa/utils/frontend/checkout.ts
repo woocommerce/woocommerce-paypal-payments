@@ -41,21 +41,14 @@ export class Checkout extends CheckoutBase {
 		}
 
 		// Select shipping or initial + monthly shipment (for subscriptions) option:
-		const shippingRadio = this.shippingMethodRadio(
-			shipping.settings.title
-		);
-		const shippingRadioCount = await shippingRadio.count();
-		if ( shippingRadioCount ) {
-			for ( let i = 0; i < shippingRadioCount; i++ ) {
-				await shippingRadio.nth( i ).click();
-			}
+		const shippingRadios =
+			await this.shippingMethodRadio( shipping.settings.title ).all();
+		for ( const radio of shippingRadios ) {
+			await radio.click();
 		}
 
 		// Make payment with tested method
-		await this.payPalUi.makePayment( {
-			merchant,
-			payment,
-		} );
+		await this.payPalUi.makePayment( { merchant, payment } );
 	};
 
 	fillFastlaneDetails = async (

@@ -46,18 +46,14 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		}
 
 		// Make payment with tested method
-		await this.payPalUi.makePayment( {
-			merchant,
-			payment,
-		} );
+		await this.payPalUi.makePayment( { merchant, payment } );
 	};
-
 	
-
 	fillFastlaneDetails = async (
 		customer: WooCommerce.CreateCustomer,
 		fastlaneFlow: "gary" | "ryan",
 	) => {
+		await this.payPalUi.provideFastlaneEmail( customer.email );
 
 		if ( fastlaneFlow === 'ryan' ) {
 			// For "Ryan's flow" the OTP is required
