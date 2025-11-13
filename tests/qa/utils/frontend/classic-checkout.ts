@@ -47,14 +47,7 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		await this.shippingMethodRadio( shipping.settings.title ).click();
 
 		if ( isFastlane ) {
-			await this.payPalUi.provideFastlaneEmail( customer.email );
-		}
-
-		if ( isFastlane && payment.fastlaneFlow === 'ryan' ) {
-			// For "Ryan's flow" the OTP is required
-			await this.payPalUi.provideFastlaneOtp();
-			// Checkout form and payment card is already prefilled
-			await this.assertShippingAddressIsPopulated( customer.shipping );
+			await this.fillFastlaneDetails ( customer, payment.fastlaneFlow );
 		} else {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
@@ -66,6 +59,21 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 			payment,
 		} );
 	};
+
+	
+
+	fillFastlaneDetails = async (
+		customer: WooCommerce.CreateCustomer,
+		fastlaneFlow: "gary" | "ryan",
+	) => {
+
+		if ( fastlaneFlow === 'ryan' ) {
+			// For "Ryan's flow" the OTP is required
+			await this.payPalUi.provideFastlaneOtp();
+			// Checkout form and payment card is already prefilled
+			await this.assertShippingAddressIsPopulated( customer.shipping );
+		}
+	}
 
 	/**
 	 * Completes order payed via PayPal on product page

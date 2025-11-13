@@ -41,14 +41,7 @@ export class Checkout extends CheckoutBase {
 		await this.applyCouponIfNeeded( coupons );
 
 		if ( isFastlane ) {
-			await this.payPalUi.provideFastlaneEmail( customer.email );
-		}
-
-		if ( isFastlane && payment.fastlaneFlow === 'ryan' ) {
-			// For "Ryan's flow" the OTP is required
-			await this.payPalUi.provideFastlaneOtp();
-			// Checkout form and payment card is already prefilled
-			await this.assertBillingAddressIsPopulated( customer.billing );
+			await this.fillFastlaneDetails ( customer, payment.fastlaneFlow );
 		} else {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
@@ -71,6 +64,20 @@ export class Checkout extends CheckoutBase {
 			payment,
 		} );
 	};
+
+	fillFastlaneDetails = async (
+		customer: WooCommerce.CreateCustomer,
+		fastlaneFlow: "gary" | "ryan",
+	) => {
+		await this.payPalUi.provideFastlaneEmail( customer.email );
+
+		if ( fastlaneFlow === 'ryan' ) {
+			// For "Ryan's flow" the OTP is required
+			await this.payPalUi.provideFastlaneOtp();
+			// Checkout form and payment card is already prefilled
+			await this.assertBillingAddressIsPopulated( customer.billing );
+		}
+	}
 
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
 		await this.assertUrl();
