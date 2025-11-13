@@ -8,6 +8,7 @@ use Exception;
 use stdClass;
 use WP_Error;
 use Firebase\JWT\JWT;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 
 class JwtAuthService {
 
@@ -18,8 +19,11 @@ class JwtAuthService {
 
 	private PayPalJwkProvider $jwk_provider;
 
-	public function __construct( PayPalJwkProvider $jwk_provider ) {
-		$this->jwk_provider = $jwk_provider;
+	private MerchantMetadataProvider $metadata_provider;
+
+	public function __construct( PayPalJwkProvider $jwk_provider, MerchantMetadataProvider $metadata_provider ) {
+		$this->jwk_provider      = $jwk_provider;
+		$this->metadata_provider = $metadata_provider;
 	}
 
 	/**
@@ -59,7 +63,7 @@ class JwtAuthService {
 	/**
 	 * Verifies token claims against business requirements.
 	 *
-	 * @param object $context Decoded JWT payload.
+	 * @param object $context         Decoded JWT payload.
 	 * @param array  $required_scopes Required permission scopes.
 	 * @return true|WP_Error
 	 */
@@ -88,6 +92,36 @@ class JwtAuthService {
 			return new WP_Error(
 				'insufficient_scope',
 				'Token does not have required permissions',
+				array( 'status' => 403 )
+			);
+		}
+
+		// Verify merchant ID matches.
+		$metadata = $this->metadata_provider->get_metadata();
+		if ( ! $metadata->paypal_merchant_id ) {
+			return new WP_Error(
+				'merchant_not_configured',
+				'Merchant ID is not configured',
+				array( 'status' => 500 )
+			);
+		}
+
+		$external_ids = $context->external_id ?? array();
+		if ( ! is_array( $external_ids ) ) {
+			return new WP_Error(
+				'invalid_token',
+				'Token merchant identifiers are malformed',
+				array( 'status' => 401 )
+			);
+		}
+
+		$expected_id     = 'PayPal:' . $metadata->paypal_merchant_id;
+		$has_merchant_id = in_array( $expected_id, $external_ids, true );
+
+		if ( ! $has_merchant_id ) {
+			return new WP_Error(
+				'merchant_mismatch',
+				'Token is not valid for this merchant',
 				array( 'status' => 403 )
 			);
 		}

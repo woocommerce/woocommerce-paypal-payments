@@ -53,7 +53,8 @@ return array(
 	},
 	'agentic.auth.service'                     => static function ( ContainerInterface $c ): JwtAuthService {
 		return new JwtAuthService(
-			$c->get( 'agentic.auth.key_provider' )
+			$c->get( 'agentic.auth.key_provider' ),
+			$c->get( 'agentic.merchant.provider' )
 		);
 	},
 
