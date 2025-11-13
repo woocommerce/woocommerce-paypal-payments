@@ -29,6 +29,15 @@ const namespace = 'ppcpBlocksPaypalExpressButtons';
 let registeredContext = false;
 let paypalScriptPromise = null;
 
+export const shouldEnableAppSwitch = ( config ) => {
+	// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
+	return (
+		config.scriptData.appswitch.enabled &&
+		! config.scriptData.final_review_enabled &&
+		config.scriptData.server_side_shipping_callback.enabled
+	);
+};
+
 export const PayPalComponent = ( {
 	config,
 	onClick,
@@ -161,7 +170,7 @@ export const PayPalComponent = ( {
 	const handleCancel = () => {
 		// Don't call onClose if AppSwitch is enabled - PayPal SDK fires onCancel
 		// when switching to the app, but the user hasn't actually canceled
-		if ( shouldEnableAppSwitch() ) {
+		if ( shouldEnableAppSwitch( config ) ) {
 			return;
 		}
 
@@ -445,15 +454,6 @@ export const PayPalComponent = ( {
 		};
 	};
 
-	const shouldEnableAppSwitch = () => {
-		// AppSwitch should only be enabled in Pay Now flows with server side shipping callback.
-		return (
-			config.scriptData.appswitch.enabled &&
-			! config.scriptData.final_review_enabled &&
-			config.scriptData.server_side_shipping_callback.enabled
-		);
-	};
-
 	if (
 		cartHasSubscriptionProducts( config.scriptData ) &&
 		config.scriptData.is_free_trial_cart
@@ -512,7 +512,7 @@ export const PayPalComponent = ( {
 	return (
 		<PayPalButton
 			ref={ paypalButtonRef }
-			appSwitchWhenAvailable={ shouldEnableAppSwitch() }
+			appSwitchWhenAvailable={ shouldEnableAppSwitch( config ) }
 			fundingSource={ fundingSource }
 			style={ style }
 			onInit={ handleButtonInit }
