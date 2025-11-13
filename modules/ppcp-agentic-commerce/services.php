@@ -108,8 +108,12 @@ return array(
 	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ): Ingestion\SyncJobFactory {
 		return new Ingestion\SyncJobFactory(
 			$container->get( 'agentic.ingestion-api-endpoint' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'agentic.products-payload-factory' ),
 		);
+	},
+	'agentic.products-payload-factory'         => static function ( ContainerInterface $container ) {
+		return new Ingestion\ProductsPayloadFactory();
 	},
 	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $container ): Ingestion\IngestionBatchProvider {
 		return new Ingestion\IngestionBatchProvider(
