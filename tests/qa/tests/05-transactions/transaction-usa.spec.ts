@@ -54,20 +54,36 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
-
-transactionsOnCheckout( payPalCheckout );
-transactionsOnCheckout( acdcCheckout );
-transactionsOnPayByLink( acdcPayByLink );
+	
+for( const testOrder of payPalCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+	
+for( const testOrder of acdcCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+	
+for( const testOrder of acdcPayByLink ) {
+	transactionsOnPayByLink( testOrder );
+}
 
 // Excluding Tax
 test.describe( () => {
 	test.beforeAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
-
-	transactionsOnCheckout( payPalCheckoutExcludingTax );
-	transactionsOnCheckout( acdcCheckoutExcludingTax );
-	transactionsOnPayByLink( acdcPayByLinkExcludingTax );
+	
+	for( const testOrder of payPalCheckoutExcludingTax ) {
+	transactionsOnCheckout( testOrder );
+	}
+	
+	for( const testOrder of acdcCheckoutExcludingTax ) {
+	transactionsOnCheckout( testOrder );
+	}
+	
+	for( const testOrder of acdcPayByLinkExcludingTax ) {
+	transactionsOnPayByLink( testOrder );
+	}
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.including );
@@ -79,10 +95,18 @@ test.describe( () => {
 	test.beforeAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
-
-	transactionsOnCheckout( payPalCheckoutIntentAuthorized );
-	transactionsOnCheckout( acdcCheckoutIntentAuthorized );
-	transactionsOnPayByLink( acdcPayByLinkIntentAuthorized );
+	
+	for( const testOrder of payPalCheckoutIntentAuthorized ) {
+	transactionsOnCheckout( testOrder );
+	}
+	
+	for( const testOrder of acdcCheckoutIntentAuthorized ) {
+	transactionsOnCheckout( testOrder );
+	}
+	
+	for( const testOrder of acdcPayByLinkIntentAuthorized ) {
+	transactionsOnPayByLink( testOrder );
+	}
 
 	test.afterAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: false } );

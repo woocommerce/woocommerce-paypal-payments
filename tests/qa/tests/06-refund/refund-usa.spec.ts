@@ -44,6 +44,6 @@ for( const testOrder of refundPayPalFromCheckout ) {
 	testRefund( testOrder );
 }
 
-for( const testOrder of refundPayPalFromCheckout ) {
+for( const testOrder of refundPayPalFromPayByLink ) {
 	testRefund( testOrder );
 }
