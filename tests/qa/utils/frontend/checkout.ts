@@ -24,20 +24,14 @@ export class Checkout extends CheckoutBase {
 
 	// Actions
 
-	applyCouponIfNeeded = async ( coupons? ) => {
-		if ( coupons ) {
-			for ( const coupon of coupons ) {
-				await super.applyCoupon( coupon.code );
-			}
-		}
-	};
-
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		const { payment, coupons, shipping, customer, merchant } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
 		
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		if ( isFastlane ) {
 			await this.fillFastlaneDetails ( customer, payment.fastlaneFlow );
@@ -79,21 +73,24 @@ export class Checkout extends CheckoutBase {
 	}
 
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer } = data;
 		await this.assertUrl();
 		await expect(
 			this.page.getByText(
-				`You are currently paying with ${ data.payment.gatewayName }.`
+				`You are currently paying with ${ payment.gatewayName }.`
 			)
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( data.coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		// Fill billing details
-		await this.fillCheckoutForm( data.customer );
+		await this.fillCheckoutForm( customer );
 
 		// Select shipping or initial shipment (for subscriptions) option:
-		await this.selectShippingMethod( data.shipping.settings.title );
+		await this.selectShippingMethod( shipping.settings.title );
 
 		// Make payment with tested method
 		await this.placeOrder();

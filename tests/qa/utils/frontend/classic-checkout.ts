@@ -26,20 +26,14 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 	// Actions
 
-	applyCouponIfNeeded = async ( coupons? ) => {
-		if ( coupons ) {
-			for ( const coupon of coupons ) {
-				await super.applyCoupon( coupon.code );
-			}
-		}
-	};
-
 	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
 		const { payment, coupons, shipping, customer, merchant } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.shippingMethodRadio( shipping.settings.title ).click();
@@ -88,7 +82,9 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		).toBeVisible();
 
 		// Add coupons if needed
-		await this.applyCouponIfNeeded( coupons );
+		for ( const coupon of coupons ?? [] ) {
+			await this.applyCoupon( coupon.code );
+		}
 
 		// Select shipping or initial shipment (for subscriptions) option:
 		await this.shippingMethodRadio( shipping.settings.title ).click();
