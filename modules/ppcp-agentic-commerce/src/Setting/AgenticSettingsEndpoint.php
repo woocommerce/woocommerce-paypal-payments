@@ -1,0 +1,15 @@
+<?php
+declare( strict_types = 1 );
+
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Setting;
+
+use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint;
+
+class AgenticSettingsEndpoint extends ExtensionRestEndpoint {
+
+	protected const PATH = 'agentic-settings';
+
+	protected function sanitize_rest_data( array $data ): ?array {
+		return $data;
+	}
+}

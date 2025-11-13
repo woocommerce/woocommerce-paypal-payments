@@ -19,6 +19,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
@@ -122,6 +125,24 @@ return array(
 		return new Ingestion\IngestionManager(
 			$container->get( 'agentic.ingestion-batch-provider' ),
 			$container->get( 'agentic.sync-job-factory' )
+		);
+	},
+
+	// Settings.
+	'agentic.settings.model'                   => static function (): AgenticSettingsDataModel {
+		return new AgenticSettingsDataModel();
+	},
+	'agentic.settings.endpoint'                => static function ( ContainerInterface $container ): AgenticSettingsEndpoint {
+		return new AgenticSettingsEndpoint(
+			$container->get( 'agentic.settings.model' )
+		);
+	},
+	'agentic.settings.module'                  => static function ( ContainerInterface $container ): AgenticSettingsModule {
+		return new AgenticSettingsModule(
+			$container->get( 'ppcp.path-to-plugin-folder' ),
+			$container->get( 'ppcp.path-to-plugin-main-file' ),
+			$container->get( 'agentic.settings.endpoint' ),
+			$container->get( 'agentic.registration.eligibility' )
 		);
 	},
 );
