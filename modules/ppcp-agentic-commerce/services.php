@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -49,7 +48,6 @@ return array(
 			$c->get( 'agentic.response.factory' )
 		);
 	},
-
 	'agentic.rest.get_cart'                    => static function ( ContainerInterface $container ): GetCartEndpoint {
 		return new GetCartEndpoint(
 			$container->get( 'agentic.auth.service' ),
@@ -57,7 +55,6 @@ return array(
 			$container->get( 'agentic.response.factory' )
 		);
 	},
-
 	'agentic.rest.update_cart'                 => static function ( ContainerInterface $container ): UpdateCartEndpoint {
 		return new UpdateCartEndpoint(
 			$container->get( 'agentic.auth.service' ),
@@ -65,7 +62,6 @@ return array(
 			$container->get( 'agentic.response.factory' )
 		);
 	},
-
 	'agentic.rest.replace_cart'                => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
 			$container->get( 'agentic.auth.service' ),

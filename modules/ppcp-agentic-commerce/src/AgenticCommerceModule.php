@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
@@ -61,7 +61,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		add_action(
 			'init',
-			function () use ( $container ) {
+			static function () use ( $container ) {
 				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
