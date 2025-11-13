@@ -5,9 +5,11 @@ import { ShopOrder } from '../../../resources';
 import { annotateVisitor, test } from '../../../utils';
 
 export const transactionsOnClassicCart = ( testOrder: ShopOrder ) => {
+	const { products, payment, merchant, coupons, customer, shipping } = testOrder;
+
 	test(
 		testOrder.title,
-		annotateVisitor( testOrder.customer ),
+		annotateVisitor( customer ),
 		async ( {
 			classicCart,
 			classicCheckout,
@@ -17,10 +19,16 @@ export const transactionsOnClassicCart = ( testOrder: ShopOrder ) => {
 			wooCommerceOrderEdit,
 			utils,
 		} ) => {
-			await utils.fillVisitorsCart( testOrder.products );
+			await utils.fillVisitorsCart( products );
 			await classicCart.visit();
-			await classicCart.makeOrder( testOrder );
-			await classicCheckout.fillCheckoutForm( testOrder.customer );
+			// Add coupons if needed
+			for ( const coupon of coupons ?? [] ) {
+				await classicCart.applyCoupon( coupon.code );
+			}
+			await classicCart.selectShippingMethod( shipping.settings.title );
+			await classicCart.payPalUi.makePayment( { merchant, payment } );
+
+			await classicCheckout.fillCheckoutForm( customer );
 			await classicCheckout.placeOrder();
 			// Expect Order Received page to be loaded
 			await orderReceived.assertOrderDetails( testOrder );
