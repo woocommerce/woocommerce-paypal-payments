@@ -3,83 +3,37 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WP_REST_Request;
-use Mockery;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint
  */
-class ReplaceCartEndpointTest extends TestCase {
+class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 
 	public function test_replace_cart_returns_200_ok_on_successful_replacement(): void {
 		$cart_id      = 't_mock_cart_id_12345';
 		$ec_token     = 'EC-12345TOKEN';
 		$created_time = time();
 
-		$existing_cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'OLD-ITEM-001',
-					'quantity' => 1,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '25.00',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-		);
+		$existing_cart_data = $this->cart()
+			->with_item_fixture( 'old_item' )
+			->to_array();
 
-		$replacement_cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'NEW-ITEM-002',
-					'quantity' => 3,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '50.00',
-					),
-				),
-				array(
-					'item_id'  => 'NEW-ITEM-003',
-					'quantity' => 1,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '30.00',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-		);
+		$replacement_cart_data = $this->cart()
+			->with_item_fixture( 'new_item_2' )
+			->with_item_fixture( 'new_item_3' )
+			->to_array();
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
-		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
-		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
-		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
-		$response_factory = Mockery::mock( ResponseFactory::class );
-
-		// Mock auth provider to return auth service.
-		$auth_provider->allows( 'auth_service' )->andReturn( $auth_service );
+		$mocks            = $this->create_mocks();
+		$session_handler  = $mocks['session_handler'];
+		$response_factory = $mocks['response_factory'];
 
 		$existing_cart = PayPalCart::from_array( $existing_cart_data );
 
-		// First call - verify cart exists
-		$session_handler->shouldReceive( 'load_cart_session' )
-			->once()
+		// Mock session handler.
+		$session_handler->allows( 'load_cart_session' )
 			->with( $cart_id )
 			->andReturn(
 				array(
@@ -89,24 +43,14 @@ class ReplaceCartEndpointTest extends TestCase {
 				)
 			);
 
-		// Mock replacement operation
-		$session_handler->shouldReceive( 'update_cart_session' )
-			->once()
-			->withArgs( function ( $received_cart_id, $new_cart ) use ( $cart_id ) {
-				return $received_cart_id === $cart_id && $new_cart instanceof PayPalCart;
-			} )
+		$session_handler->allows( 'update_cart_session' )
 			->andReturn( true );
 
-		// Mock response factory - uses from_cart (not active_cart or new_cart)
-		$replacement_cart = PayPalCart::from_array( $replacement_cart_data );
-		$response_factory->shouldReceive( 'from_cart' )
-			->once()
-			->withArgs( function ( $cart ) {
-				return $cart instanceof PayPalCart;
-			} )
+		// Mock response factory.
+		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart ) => new CartResponse( $cart ) );
 
-		$endpoint = new ReplaceCartEndpoint( $auth_provider, $session_handler, $response_factory );
+		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $response_factory );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -123,41 +67,19 @@ class ReplaceCartEndpointTest extends TestCase {
 	public function test_replace_cart_returns_error_when_cart_not_found(): void {
 		$cart_id = 't_nonexistent_cart_id';
 
-		$replacement_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'TEST-001',
-					'quantity' => 2,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '25.00',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-		);
+		$replacement_data = $this->cart()
+			->with_item( 'TEST-001', 2 )
+			->to_array();
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
-		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
-		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
-		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
-		$response_factory = Mockery::mock( ResponseFactory::class );
+		$mocks           = $this->create_mocks();
+		$session_handler = $mocks['session_handler'];
 
-		// Mock auth provider to return auth service.
-		$auth_provider->allows( 'auth_service' )->andReturn( $auth_service );
-
-		// Mock session handler - return null for non-existent cart
-		$session_handler->shouldReceive( 'load_cart_session' )
-			->once()
+		// Mock session handler - return null for non-existent cart.
+		$session_handler->allows( 'load_cart_session' )
 			->with( $cart_id )
 			->andReturn( null );
 
-		$endpoint = new ReplaceCartEndpoint( $auth_provider, $session_handler, $response_factory );
+		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $mocks['response_factory'] );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -167,17 +89,8 @@ class ReplaceCartEndpointTest extends TestCase {
 		$data     = $response->get_data();
 
 		$this->assertIsArray( $data );
-
-		// Error responses should not have 200 status
 		$this->assertNotSame( 200, $response->get_status() );
-
-		// The response should have error information
-		$has_error_info = isset( $data['validation_issues'] )
-			|| isset( $data['error'] )
-			|| isset( $data['message'] )
-			|| isset( $data['issues'] );
-
-		$this->assertTrue( $has_error_info, 'Response should contain error information. Got: ' . json_encode( $data ) );
+		$this->assert_error_response( $data );
 	}
 
 	public function test_replace_cart_completely_replaces_items(): void {
@@ -185,81 +98,24 @@ class ReplaceCartEndpointTest extends TestCase {
 		$ec_token     = 'EC-12345TOKEN';
 		$created_time = time();
 
-		// Original cart has 1 item
-		$existing_cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'OLD-ITEM-001',
-					'quantity' => 1,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '25.00',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-			'shipping'       => array(
-				'name'    => array(
-					'full_name' => 'Old Name',
-				),
-				'address' => array(
-					'address_line_1' => '123 Old St',
-					'admin_area_2'   => 'San Jose',
-					'admin_area_1'   => 'CA',
-					'postal_code'    => '95131',
-					'country_code'   => 'US',
-				),
-			),
-		);
+		$existing_cart_data = $this->cart()
+			->with_item_fixture( 'old_item' )
+			->with_shipping_fixture( 'us_old' )
+			->to_array();
 
-		// Replacement cart has completely different items and shipping
-		$replacement_cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'NEW-ITEM-002',
-					'quantity' => 5,
-					'price'    => array(
-						'currency_code' => 'EUR',
-						'value'         => '99.99',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-			'shipping'       => array(
-				'name'    => array(
-					'full_name' => 'New Name',
-				),
-				'address' => array(
-					'address_line_1' => '456 New Ave',
-					'admin_area_2'   => 'Berlin',
-					'admin_area_1'   => 'BE',
-					'postal_code'    => '10115',
-					'country_code'   => 'DE',
-				),
-			),
-		);
+		$replacement_cart_data = $this->cart()
+			->with_item_fixture( 'eur_item' )
+			->with_shipping_fixture( 'de_new' )
+			->to_array();
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
-		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
-		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
-		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
-		$response_factory = Mockery::mock( ResponseFactory::class );
-
-		// Mock auth provider to return auth service.
-		$auth_provider->allows( 'auth_service' )->andReturn( $auth_service );
+		$mocks            = $this->create_mocks();
+		$session_handler  = $mocks['session_handler'];
+		$response_factory = $mocks['response_factory'];
 
 		$existing_cart = PayPalCart::from_array( $existing_cart_data );
 
-		// Mock load existing cart
-		$session_handler->shouldReceive( 'load_cart_session' )
-			->once()
+		// Mock load existing cart.
+		$session_handler->allows( 'load_cart_session' )
 			->with( $cart_id )
 			->andReturn(
 				array(
@@ -269,7 +125,7 @@ class ReplaceCartEndpointTest extends TestCase {
 				)
 			);
 
-		// Verify that update receives completely new data (full replacement)
+		// Verify that update receives completely new data (full replacement).
 		$session_handler->shouldReceive( 'update_cart_session' )
 			->once()
 			->withArgs( function ( $received_cart_id, $new_cart ) use ( $cart_id ) {
@@ -279,7 +135,7 @@ class ReplaceCartEndpointTest extends TestCase {
 
 				$cart_array = $new_cart->to_array();
 
-				// Should have NEW item only (not old)
+				// Should have NEW item only (not old).
 				if ( count( $cart_array['items'] ) !== 1 ) {
 					return false;
 				}
@@ -288,7 +144,7 @@ class ReplaceCartEndpointTest extends TestCase {
 					return false;
 				}
 
-				// Should have NEW shipping info
+				// Should have NEW shipping info.
 				if ( $cart_array['shipping']['name']['full_name'] !== 'New Name' ) {
 					return false;
 				}
@@ -301,13 +157,11 @@ class ReplaceCartEndpointTest extends TestCase {
 			} )
 			->andReturn( true );
 
-		// Mock response factory
-		$replacement_cart = PayPalCart::from_array( $replacement_cart_data );
-		$response_factory->shouldReceive( 'from_cart' )
-			->once()
+		// Mock response factory.
+		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart ) => new CartResponse( $cart ) );
 
-		$endpoint = new ReplaceCartEndpoint( $auth_provider, $session_handler, $response_factory );
+		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $response_factory );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -323,55 +177,21 @@ class ReplaceCartEndpointTest extends TestCase {
 		$ec_token     = 'EC-12345TOKEN';
 		$created_time = time();
 
-		$existing_cart_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'OLD-ITEM-001',
-					'quantity' => 1,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '25.00',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-		);
+		$existing_cart_data = $this->cart()
+			->with_item_fixture( 'old_item' )
+			->to_array();
 
-		$replacement_data = array(
-			'items'          => array(
-				array(
-					'item_id'  => 'NEW-ITEM-002',
-					'quantity' => 3,
-					'price'    => array(
-						'currency_code' => 'USD',
-						'value'         => '50.00',
-					),
-				),
-			),
-			'payment_method' => array(
-				'type' => 'paypal',
-			),
-		);
+		$replacement_data = $this->cart()
+			->with_item_fixture( 'new_item_2' )
+			->to_array();
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
-		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
-		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
-		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
-		$response_factory = Mockery::mock( ResponseFactory::class );
-
-		// Mock auth provider to return auth service.
-		$auth_provider->allows( 'auth_service' )->andReturn( $auth_service );
+		$mocks           = $this->create_mocks();
+		$session_handler = $mocks['session_handler'];
 
 		$existing_cart = PayPalCart::from_array( $existing_cart_data );
 
-		// Mock load existing cart
-		$session_handler->shouldReceive( 'load_cart_session' )
-			->once()
+		// Mock load existing cart.
+		$session_handler->allows( 'load_cart_session' )
 			->with( $cart_id )
 			->andReturn(
 				array(
@@ -381,12 +201,11 @@ class ReplaceCartEndpointTest extends TestCase {
 				)
 			);
 
-		// Mock replacement operation fails
-		$session_handler->shouldReceive( 'update_cart_session' )
-			->once()
+		// Mock replacement operation fails.
+		$session_handler->allows( 'update_cart_session' )
 			->andReturn( false );
 
-		$endpoint = new ReplaceCartEndpoint( $auth_provider, $session_handler, $response_factory );
+		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $mocks['response_factory'] );
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -396,16 +215,7 @@ class ReplaceCartEndpointTest extends TestCase {
 		$data     = $response->get_data();
 
 		$this->assertIsArray( $data );
-
-		// Error responses should not have 200 status
 		$this->assertNotSame( 200, $response->get_status() );
-
-		// The response should have error information
-		$has_error_info = isset( $data['validation_issues'] )
-			|| isset( $data['error'] )
-			|| isset( $data['message'] )
-			|| isset( $data['issues'] );
-
-		$this->assertTrue( $has_error_info, 'Response should contain error information. Got: ' . json_encode( $data ) );
+		$this->assert_error_response( $data );
 	}
 }
