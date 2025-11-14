@@ -63,6 +63,9 @@ export class Checkout extends CheckoutBase {
 			// Checkout form and payment card is already prefilled
 			await this.assertBillingAddressIsPopulated( customer.billing );
 		}
+		else {
+			await this.fillCheckoutForm( customer );
+		}
 	}
 
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {

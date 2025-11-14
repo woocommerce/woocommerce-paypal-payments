@@ -61,6 +61,9 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 			// Checkout form and payment card is already prefilled
 			await this.assertShippingAddressIsPopulated( customer.shipping );
 		}
+		else {
+			await this.fillCheckoutForm( customer );
+		}
 	}
 
 	/**

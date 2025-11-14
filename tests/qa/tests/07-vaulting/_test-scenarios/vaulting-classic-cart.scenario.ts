@@ -31,6 +31,7 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
+				await classicCart.visit();
 				// Add coupons if needed
 				for ( const coupon of coupons ?? [] ) {
 					await classicCart.applyCoupon( coupon.code );
@@ -94,6 +95,7 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order:
 				await utils.fillVisitorsCart( products );
+				await classicCart.visit();
 				// Add coupons if needed
 				for ( const coupon of coupons ?? [] ) {
 					await classicCart.applyCoupon( coupon.code );
