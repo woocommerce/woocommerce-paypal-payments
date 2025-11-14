@@ -5,16 +5,20 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 
 class AuthServiceProvider {
 
 	private ?JwtAuthService $instance = null;
 
-	protected PayPalJwkProvider $jwk_provider;
+	private ConnectionState $connection_state;
 
-	protected MerchantMetadataProvider $metadata_provider;
+	private PayPalJwkProvider $jwk_provider;
 
-	public function __construct( PayPalJwkProvider $jwk_provider, MerchantMetadataProvider $metadata_provider ) {
+	private MerchantMetadataProvider $metadata_provider;
+
+	public function __construct( ConnectionState $connection_state, PayPalJwkProvider $jwk_provider, MerchantMetadataProvider $metadata_provider ) {
+		$this->connection_state  = $connection_state;
 		$this->jwk_provider      = $jwk_provider;
 		$this->metadata_provider = $metadata_provider;
 	}

@@ -53,6 +53,7 @@ return array(
 	},
 	'agentic.auth.provider'                    => static function ( ContainerInterface $c ): AuthServiceProvider {
 		return new AuthServiceProvider(
+			$c->get( 'settings.connection-state' ),
 			$c->get( 'agentic.auth.key_provider' ),
 			$c->get( 'agentic.merchant.provider' )
 		);
