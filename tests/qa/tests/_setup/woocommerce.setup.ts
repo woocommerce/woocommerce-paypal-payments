@@ -27,7 +27,7 @@ setup( 'Setup Permalinks', async ( { requestUtils } ) => {
 } );
 
 setup(
-	'Setup Disable Nonce plugin (inactive)',
+	'Setup Disable Nonce plugin (active)',
 	async ( { requestUtils, plugins } ) => {
 		if (
 			! ( await requestUtils.isPluginInstalled(
@@ -42,7 +42,7 @@ setup(
 	}
 );
 
-setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
+setup( 'Setup WP Debugging plugin (inactive)', async ( { requestUtils } ) => {
 	if (
 		! ( await requestUtils.isPluginInstalled( wpDebuggingPlugin.slug ) )
 	) {
