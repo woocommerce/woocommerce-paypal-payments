@@ -500,6 +500,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					unset( $payment_methods[ PWCGateway::ID ] );
 				}
 
+				$this->unset_apm_payment_methods_when_not_eligible( $container, $payment_methods );
+
 				return $payment_methods;
 			}
 		);
@@ -913,5 +915,22 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		$gateway_enabled  = $gateway_settings['enabled'] ?? false;
 
 		return $gateway_enabled === 'yes';
+	}
+
+	protected function unset_apm_payment_methods_when_not_eligible( ContainerInterface $container, array &$payment_methods ): void {
+		$apm_eligible = $container->get( 'ppcp-local-apms.eligibility.check' );
+
+		if ( $apm_eligible ) {
+			return;
+		}
+
+		$apm_payment_methods     = $container->get( 'ppcp-local-apms.payment-methods' );
+		$apm_payment_methods_ids = array_column( $apm_payment_methods, 'id' );
+
+		foreach ( $payment_methods as $id => $payment_method ) {
+			if ( in_array( $id, $apm_payment_methods_ids, true ) ) {
+				unset( $payment_methods[ $id ] );
+			}
+		}
 	}
 }
