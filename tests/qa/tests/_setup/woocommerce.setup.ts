@@ -51,13 +51,6 @@ setup( 'Setup WP Debugging plugin (active)', async ( { requestUtils } ) => {
 	await requestUtils.deactivatePlugin( wpDebuggingPlugin.slug );
 } );
 
-setup( 'Setup Disable new UI plugin (inactive)', async ( { requestUtils } ) => {
-	const pluginSlug = 'disable-new-ui';
-	if ( await requestUtils.isPluginInstalled( pluginSlug ) ) {
-		await requestUtils.deactivatePlugin( pluginSlug );
-	}
-} );
-
 setup(
 	'Setup Disable Webhook Verification plugin (inactive)',
 	async ( { plugins, requestUtils } ) => {
