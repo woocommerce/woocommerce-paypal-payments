@@ -54,16 +54,16 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
-	
-for( const testOrder of payPalCheckout ) {
+
+for ( const testOrder of payPalCheckout ) {
 	transactionsOnCheckout( testOrder );
 }
-	
-for( const testOrder of acdcCheckout ) {
+
+for ( const testOrder of acdcCheckout ) {
 	transactionsOnCheckout( testOrder );
 }
-	
-for( const testOrder of acdcPayByLink ) {
+
+for ( const testOrder of acdcPayByLink ) {
 	transactionsOnPayByLink( testOrder );
 }
 
@@ -72,17 +72,17 @@ test.describe( () => {
 	test.beforeAll( async ( { wooCommerceUtils } ) => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
-	
-	for( const testOrder of payPalCheckoutExcludingTax ) {
-	transactionsOnCheckout( testOrder );
+
+	for ( const testOrder of payPalCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
 	}
-	
-	for( const testOrder of acdcCheckoutExcludingTax ) {
-	transactionsOnCheckout( testOrder );
+
+	for ( const testOrder of acdcCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
 	}
-	
-	for( const testOrder of acdcPayByLinkExcludingTax ) {
-	transactionsOnPayByLink( testOrder );
+
+	for ( const testOrder of acdcPayByLinkExcludingTax ) {
+		transactionsOnPayByLink( testOrder );
 	}
 
 	test.afterAll( async ( { wooCommerceUtils } ) => {
@@ -95,17 +95,17 @@ test.describe( () => {
 	test.beforeAll( async ( { pcpApi } ) => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
-	
-	for( const testOrder of payPalCheckoutIntentAuthorized ) {
-	transactionsOnCheckout( testOrder );
+
+	for ( const testOrder of payPalCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
 	}
-	
-	for( const testOrder of acdcCheckoutIntentAuthorized ) {
-	transactionsOnCheckout( testOrder );
+
+	for ( const testOrder of acdcCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
 	}
-	
-	for( const testOrder of acdcPayByLinkIntentAuthorized ) {
-	transactionsOnPayByLink( testOrder );
+
+	for ( const testOrder of acdcPayByLinkIntentAuthorized ) {
+		transactionsOnPayByLink( testOrder );
 	}
 
 	test.afterAll( async ( { pcpApi } ) => {
@@ -120,12 +120,12 @@ test.describe( () => {
 			threeDSecure: 'always-3d-secure',
 		} );
 	} );
-	
-	for( const testOrder of acdcCheckout3ds ) {
+
+	for ( const testOrder of acdcCheckout3ds ) {
 		transactionsOnCheckout( testOrder );
 	}
-	
-	for( const testOrder of acdcPayByLink3ds ) {
+
+	for ( const testOrder of acdcPayByLink3ds ) {
 		transactionsOnPayByLink( testOrder );
 	}
 
@@ -147,7 +147,7 @@ test.describe( () => {
 		} );
 	} );
 
-	for( const testOrder of fastlaneCheckout ) {
+	for ( const testOrder of fastlaneCheckout ) {
 		transactionsOnCheckout( testOrder );
 	}
 

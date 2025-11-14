@@ -59,11 +59,11 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for( const testOrder of payPalClassicCheckout ) {
+for ( const testOrder of payPalClassicCheckout ) {
 	transactionsOnClassicCheckout( testOrder );
 }
 
-for( const testOrder of acdcClassicCheckout ) {
+for ( const testOrder of acdcClassicCheckout ) {
 	transactionsOnClassicCheckout( testOrder );
 }
 
@@ -89,11 +89,11 @@ test.describe( () => {
 		await wooCommerceUtils.setTaxes( taxSettings.excluding );
 	} );
 
-	for( const testOrder of payPalClassicCheckoutExcludingTax ) {
+	for ( const testOrder of payPalClassicCheckoutExcludingTax ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
-	for( const testOrder of acdcClassicCheckoutExcludingTax ) {
+	for ( const testOrder of acdcClassicCheckoutExcludingTax ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
@@ -108,11 +108,11 @@ test.describe( () => {
 		await pcpApi.updatePcpSettings( { authorizeOnly: true } );
 	} );
 
-	for( const testOrder of payPalClassicCheckoutIntentAuthorized ) {
+	for ( const testOrder of payPalClassicCheckoutIntentAuthorized ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
-	for( const testOrder of acdcClassicCheckoutIntentAuthorized ) {
+	for ( const testOrder of acdcClassicCheckoutIntentAuthorized ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
@@ -129,7 +129,7 @@ test.describe( () => {
 		} );
 	} );
 
-	for( const testOrder of acdcClassicCheckout3ds ) {
+	for ( const testOrder of acdcClassicCheckout3ds ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 
@@ -151,7 +151,7 @@ test.describe( () => {
 		} );
 	} );
 
-	for( const testOrder of fastlaneClassicCheckout ) {
+	for ( const testOrder of fastlaneClassicCheckout ) {
 		transactionsOnClassicCheckout( testOrder );
 	}
 

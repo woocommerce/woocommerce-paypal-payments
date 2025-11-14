@@ -37,11 +37,11 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for( const testOrder of vaultingGuest ) {
+for ( const testOrder of vaultingGuest ) {
 	testSubscriptionOrderGuest( testOrder );
 }
 
-for( const testOrder of vaultingCustomer ) {
+for ( const testOrder of vaultingCustomer ) {
 	testSubscriptionOrderCustomer( testOrder );
 }
 
@@ -59,11 +59,11 @@ test.describe( 'PayPal Subscription', () => {
 		} );
 	} );
 
-	for( const testOrder of payPalGuest ) {
+	for ( const testOrder of payPalGuest ) {
 		testSubscriptionOrderGuest( testOrder );
 	}
 
-	for( const testOrder of payPalCustomer ) {
+	for ( const testOrder of payPalCustomer ) {
 		testSubscriptionOrderCustomer( testOrder );
 	}
 } );

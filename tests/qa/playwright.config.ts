@@ -83,22 +83,26 @@ export default defineConfig< BaseExtend >( {
 
 		viewport: { width: 1280, height: 850 },
 
-    	trace: process.env.CI ? 'off' : 'retain-on-failure',//'on-first-retry',//'on',//
+		trace: process.env.CI ? 'off' : 'retain-on-failure', //'on-first-retry',//'on',//
 
 		screenshot: {
 			mode: 'only-on-failure',
 			fullPage: true, // Captures entire scrollable page
 		},
 
-		video: process.env.CI ? 'off' : {
-			mode: 'retain-on-failure', //'on',//
-			size: { width: 1280, height: 850 },
-		},
+		video: process.env.CI
+			? 'off'
+			: {
+					mode: 'retain-on-failure', //'on',//
+					size: { width: 1280, height: 850 },
+			  },
 
-		recordVideoOptions: process.env.CI ? undefined : {
-			mode: 'retain-on-failure',
-			size: { width: 1280, height: 850 },
-		},
+		recordVideoOptions: process.env.CI
+			? undefined
+			: {
+					mode: 'retain-on-failure',
+					size: { width: 1280, height: 850 },
+			  },
 
 		/**
 		 * For Kinsta, to clear cache

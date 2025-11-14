@@ -137,13 +137,12 @@ export class PayPalApi {
 
 	/**
 	 * Gets PayPal order ID stored in WooCommerce meta_data
-	 * 
-	 * @param wooCommerceOrderJson 
-	 * @returns 
+	 *
+	 * @param wooCommerceOrderJson
 	 */
 	getOrderIdFromWooCommerce = async (
 		wooCommerceOrderJson: WooCommerce.Order
-	): Promise<string | undefined> => {
+	): Promise< string | undefined > => {
 		const paypalOrderIdMeta = wooCommerceOrderJson.meta_data.find(
 			( meta ) => meta.key === '_ppcp_paypal_order_id'
 		);
@@ -244,10 +243,12 @@ export class PayPalApi {
 			wooCommerceOrderJson
 		);
 
-		await expect.soft(
-			payPalOrderId,
-			'"_ppcp_paypal_order_id" should be present in WooCommerce Order "meta_data"'
-		).toBeDefined();
+		await expect
+			.soft(
+				payPalOrderId,
+				'"_ppcp_paypal_order_id" should be present in WooCommerce Order "meta_data"'
+			)
+			.toBeDefined();
 
 		if ( ! payPalOrderId ) {
 			return;
@@ -265,9 +266,9 @@ export class PayPalApi {
 				payPalOrder,
 				shopOrder.payment
 			);
-			await expect.soft(
-				String( wooCommerceOrderJson.transaction_id )
-			).toEqual( String( payPalPaymentId ) );
+			await expect
+				.soft( String( wooCommerceOrderJson.transaction_id ) )
+				.toEqual( String( payPalPaymentId ) );
 		}
 
 		const expectedIntent = shopOrder.payment.isAuthorized
@@ -278,79 +279,83 @@ export class PayPalApi {
 		switch ( gatewayShortcut ) {
 			case 'oxxo':
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
-				await expect.soft( payPalOrder.payment_source ).toHaveProperty(
-					'oxxo'
-				);
-				await expect.soft( payPalOrder.payment_source.oxxo.email ).toEqual(
-					shopOrder.customer.email
-				);
+				await expect
+					.soft( payPalOrder.payment_source )
+					.toHaveProperty( 'oxxo' );
+				await expect
+					.soft( payPalOrder.payment_source.oxxo.email )
+					.toEqual( shopOrder.customer.email );
 				break;
 
 			case 'acdc':
 			case 'fastlane':
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
-				await expect.soft( payPalOrder.payment_source ).toHaveProperty(
-					'card'
-				);
-				await expect.soft(
-					payPalOrder.payment_source.card.last_digits
-				).toEqual(
-					getLast4CardDigits( shopOrder.payment.card.card_number )
-				);
+				await expect
+					.soft( payPalOrder.payment_source )
+					.toHaveProperty( 'card' );
+				await expect
+					.soft( payPalOrder.payment_source.card.last_digits )
+					.toEqual(
+						getLast4CardDigits( shopOrder.payment.card.card_number )
+					);
 				break;
 
 			case 'card':
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
-				await expect.soft( payPalOrder.payment_source ).toHaveProperty(
-					'paypal'
-				);
-				await expect.soft(
-					payPalOrder.payment_source.paypal.email_address
-				).toEqual( shopOrder.customer.email );
-				await expect.soft(
-					payPalOrder.payment_source.paypal.name.given_name
-				).toEqual( shopOrder.customer.first_name );
-				await expect.soft(
-					payPalOrder.payment_source.paypal.name.surname
-				).toEqual( shopOrder.customer.last_name );
+				await expect
+					.soft( payPalOrder.payment_source )
+					.toHaveProperty( 'paypal' );
+				await expect
+					.soft( payPalOrder.payment_source.paypal.email_address )
+					.toEqual( shopOrder.customer.email );
+				await expect
+					.soft( payPalOrder.payment_source.paypal.name.given_name )
+					.toEqual( shopOrder.customer.first_name );
+				await expect
+					.soft( payPalOrder.payment_source.paypal.name.surname )
+					.toEqual( shopOrder.customer.last_name );
 				break;
 
 			case 'pay_upon_invoice':
-				await expect.soft( payPalOrder.status ).toEqual(
-					'PENDING_APPROVAL'
-				);
+				await expect
+					.soft( payPalOrder.status )
+					.toEqual( 'PENDING_APPROVAL' );
 				const birthDate = shopOrder.payment.birthDate.split( '.' );
-				await expect.soft( payPalOrder.payment_source ).toHaveProperty(
-					'pay_upon_invoice'
-				);
-				await expect.soft(
-					payPalOrder.payment_source.pay_upon_invoice.birth_date
-				).toEqual(
-					`${ birthDate[ 2 ] }-${ birthDate[ 1 ] }-${ birthDate[ 0 ] }`
-				);
+				await expect
+					.soft( payPalOrder.payment_source )
+					.toHaveProperty( 'pay_upon_invoice' );
+				await expect
+					.soft(
+						payPalOrder.payment_source.pay_upon_invoice.birth_date
+					)
+					.toEqual(
+						`${ birthDate[ 2 ] }-${ birthDate[ 1 ] }-${ birthDate[ 0 ] }`
+					);
 				break;
 
 			default:
 				await expect.soft( payPalOrder.status ).toEqual( 'COMPLETED' );
-				await expect.soft( payPalOrder.payment_source ).toHaveProperty(
-					'paypal'
-				);
+				await expect
+					.soft( payPalOrder.payment_source )
+					.toHaveProperty( 'paypal' );
 				if ( shopOrder.payment.isVaulted ) {
-					await expect.soft(
-						payPalOrder.payment_source.paypal
-					).toHaveProperty( 'attributes' );
-					await expect.soft(
-						payPalOrder.payment_source.paypal.attributes
-					).toHaveProperty( 'vault' );
-					await expect.soft(
-						payPalOrder.payment_source.paypal.attributes.vault
-							.status
-					).toEqual( 'VAULTED' );
+					await expect
+						.soft( payPalOrder.payment_source.paypal )
+						.toHaveProperty( 'attributes' );
+					await expect
+						.soft( payPalOrder.payment_source.paypal.attributes )
+						.toHaveProperty( 'vault' );
+					await expect
+						.soft(
+							payPalOrder.payment_source.paypal.attributes.vault
+								.status
+						)
+						.toEqual( 'VAULTED' );
 					break;
 				}
-				await expect.soft(
-					payPalOrder.payment_source.paypal.email_address
-				).toEqual( shopOrder.payment.payPalAccount.email );
+				await expect
+					.soft( payPalOrder.payment_source.paypal.email_address )
+					.toEqual( shopOrder.payment.payPalAccount.email );
 		}
 	};
 

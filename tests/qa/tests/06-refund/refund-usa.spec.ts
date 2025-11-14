@@ -40,10 +40,10 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for( const testOrder of refundPayPalFromCheckout ) {
+for ( const testOrder of refundPayPalFromCheckout ) {
 	testRefund( testOrder );
 }
 
-for( const testOrder of refundPayPalFromPayByLink ) {
+for ( const testOrder of refundPayPalFromPayByLink ) {
 	testRefund( testOrder );
 }

@@ -5,7 +5,8 @@ import { ShopOrder } from '../../../resources';
 import { test, annotateVisitor } from '../../../utils';
 
 export const transactionsOnCart = ( testOrder: ShopOrder ) => {
-	const { products, payment, merchant, coupons, customer, shipping } = testOrder;
+	const { products, payment, merchant, coupons, customer, shipping } =
+		testOrder;
 	test(
 		testOrder.title,
 		annotateVisitor( testOrder.customer ),
@@ -29,8 +30,7 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 
 			await checkout.fillCheckoutForm( customer );
 			await checkout.placeOrder();
-
-			// Expect Order Received page to be loaded
+			
 			await orderReceived.assertOrderDetails( testOrder );
 
 			const orderId = await orderReceived.getOrderNumber();
@@ -45,7 +45,7 @@ export const transactionsOnCart = ( testOrder: ShopOrder ) => {
 				testOrder
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
-			
+
 			await wooCommerceOrderEdit.assertOrderDetails(
 				orderId,
 				testOrder,

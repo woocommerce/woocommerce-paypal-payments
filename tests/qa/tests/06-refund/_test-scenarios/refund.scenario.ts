@@ -67,21 +67,16 @@ export const testRefund = ( testData: ShopRefund ) => {
 			// Assert URL after page is reloaded
 			await wooCommerceOrderEdit.assertUrl( order.id );
 			// Assert refund ID and expected refund amount are displayed
-			await expect(
-				wooCommerceOrderEdit.refundNumber()
-			).toContainText( `Refund #` );
+			await expect( wooCommerceOrderEdit.refundNumber() ).toContainText(
+				`Refund #`
+			);
 			await expect( wooCommerceOrderEdit.refundAmount() ).toHaveText(
-				`-${ formatMoney(
-					Number( refundAmount ),
-					testData.currency
-				) }`
+				`-${ formatMoney( Number( refundAmount ), testData.currency ) }`
 			);
 
 			// Assert via API WooCommerce Order refund status and presence of refunds
 			order = await wooCommerceApi.getOrder( order.id );
-			await expect( order.status ).toEqual(
-				testData.refundOrderStatus
-			);
+			await expect( order.status ).toEqual( testData.refundOrderStatus );
 			await expect( order.refunds ).not.toHaveLength( 0 );
 
 			// Assert via API the refund status of PayPal payment
@@ -115,20 +110,18 @@ export const testRefund = ( testData: ShopRefund ) => {
 				refundId: orderRefund.id,
 				refundAmount: Number( refundAmount ),
 				refundTotal:
-					payPalRefund.seller_payable_breakdown
-						.total_refunded_amount.value,
+					payPalRefund.seller_payable_breakdown.total_refunded_amount
+						.value,
 				netPayment:
 					parseFloat( order.total ) - parseFloat( refundAmount ),
 				payPalFee:
-					payPalPayment.seller_receivable_breakdown.paypal_fee
-						.value,
+					payPalPayment.seller_receivable_breakdown.paypal_fee.value,
 				payPalRefundFee:
 					payPalRefund.seller_payable_breakdown.paypal_fee.value,
 				payPalRefunded:
 					payPalRefund.seller_payable_breakdown.net_amount.value,
 				payPalPayout:
-					payPalPayment.seller_receivable_breakdown.net_amount
-						.value,
+					payPalPayment.seller_receivable_breakdown.net_amount.value,
 				payPalNetTotal:
 					parseFloat( order.total ) -
 					parseFloat( refundAmount ) -

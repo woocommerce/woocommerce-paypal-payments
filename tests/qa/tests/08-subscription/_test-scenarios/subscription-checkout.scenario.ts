@@ -6,7 +6,7 @@ import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer: guest, merchant } = testOrder;
-	
+
 	test.describe( () => {
 		test.beforeAll( async ( { wooCommerceApi, wooCommerceUtils } ) => {
 			// Remove any stored subscriptions data related to tested guest and payPalAccount
@@ -76,7 +76,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 
 const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
-	
+
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.

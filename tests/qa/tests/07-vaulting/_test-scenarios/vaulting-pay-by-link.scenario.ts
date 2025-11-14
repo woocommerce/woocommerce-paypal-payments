@@ -31,10 +31,9 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				let order = await wooCommerceUtils.createApiOrder( testOrder );
-				
+
 				await payForOrder.visit( order.id, order.order_key );
 				await payForOrder.payPalUi.makePayment( { merchant, payment } );
-				// Expect Order Received page to be loaded
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -99,7 +98,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				let order = await wooCommerceUtils.createApiOrder( testOrder );
-				
+
 				await payForOrder.visit( order.id, order.order_key );
 				await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
@@ -162,7 +161,7 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				const order = await wooCommerceUtils.createApiOrder(
 					testOrder
 				);
-				
+
 				await payForOrder.visit( order.id, order.order_key );
 				await payForOrder.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
@@ -179,7 +178,7 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 					testOrder
 				);
 				const pcpData = { transactionId, payPalFee, payPalPayout };
-				
+
 				await wooCommerceOrderEdit.assertOrderDetails(
 					orderId,
 					testOrder,

@@ -5,7 +5,8 @@ import { cards, payments, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, products, payment, merchant, coupons, customer, shipping } = testOrder;
+	const { title, products, payment, merchant, coupons, customer, shipping } =
+		testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -36,7 +37,9 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 				for ( const coupon of coupons ?? [] ) {
 					await classicCart.applyCoupon( coupon.code );
 				}
-				await classicCart.selectShippingMethod( shipping.settings.title );
+				await classicCart.selectShippingMethod(
+					shipping.settings.title
+				);
 				await classicCart.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
@@ -68,7 +71,8 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 };
 
 const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, products, payment, merchant, coupons, customer, shipping } = testOrder;
+	const { title, products, payment, merchant, coupons, customer, shipping } =
+		testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -100,7 +104,9 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				for ( const coupon of coupons ?? [] ) {
 					await classicCart.applyCoupon( coupon.code );
 				}
-				await classicCart.selectShippingMethod( shipping.settings.title );
+				await classicCart.selectShippingMethod(
+					shipping.settings.title
+				);
 				await classicCart.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 

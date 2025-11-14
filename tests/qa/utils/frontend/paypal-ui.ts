@@ -540,12 +540,12 @@ export class PayPalUi {
 	) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				await expect.soft( this.payPalButton() ).not.toContainClass(
-					'paypal-button-wallet'
-				); // Class applied for vaulted button
-				await expect.soft(
-					this.payPalButtonMoreOptions()
-				).not.toBeVisible();
+				await expect
+					.soft( this.payPalButton() )
+					.not.toContainClass( 'paypal-button-wallet' ); // Class applied for vaulted button
+				await expect
+					.soft( this.payPalButtonMoreOptions() )
+					.not.toBeVisible();
 				break;
 
 			case 'acdc':

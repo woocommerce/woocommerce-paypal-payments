@@ -6,7 +6,7 @@ import { annotateVisitor, test } from '../../../utils';
 
 export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 	const { products, payment, merchant } = testOrder;
-	
+
 	test(
 		testOrder.title,
 		annotateVisitor( testOrder.customer ),
@@ -21,7 +21,6 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 			await product.visit( products[ 0 ].slug );
 			await product.payPalUi.makePayment( { merchant, payment } );
 			await checkout.completeOrderFromProduct( testOrder );
-			// Expect Order Received page to be loaded
 			await orderReceived.assertOrderDetails( testOrder );
 
 			const orderId = await orderReceived.getOrderNumber();
@@ -36,7 +35,7 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 				testOrder
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
-			
+
 			await wooCommerceOrderEdit.assertOrderDetails(
 				orderId,
 				testOrder,

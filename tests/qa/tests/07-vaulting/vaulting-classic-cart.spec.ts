@@ -36,10 +36,10 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for( const testOrder of savePaymentMethodData ) {
+for ( const testOrder of savePaymentMethodData ) {
 	testSavePaymentMethod( testOrder );
 }
 
-for( const testOrder of vaultedPaymentMethodData ) {
+for ( const testOrder of vaultedPaymentMethodData ) {
 	testVaultedPaymentMethod( testOrder );
 }

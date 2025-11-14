@@ -6,7 +6,7 @@ import { test, expect, annotateVisitor } from '../../../utils';
 
 export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 	const { payment, merchant } = testOrder;
-	
+
 	test(
 		testOrder.title,
 		annotateVisitor( testOrder.customer ),
@@ -22,7 +22,6 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 
 			await payForOrder.visit( order.id, order.order_key );
 			await payForOrder.payPalUi.makePayment( { merchant, payment } );
-			// Expect Order Received page to be loaded
 			await orderReceived.assertOrderDetails( testOrder );
 
 			await expect( order.id ).toEqual(
@@ -39,7 +38,7 @@ export const transactionsOnPayByLink = ( testOrder: ShopOrder ) => {
 				testOrder
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
-			
+
 			await wooCommerceOrderEdit.assertOrderDetails(
 				order.id,
 				testOrder,

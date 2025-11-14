@@ -47,11 +47,11 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 	await wooCommerceApi.deleteAllOrders();
 } );
 
-for( const testOrder of vaultingRenewal ) {
+for ( const testOrder of vaultingRenewal ) {
 	testSubscriptionRenewal( testOrder );
 }
 
-for( const testOrder of vaultingFreeTrialRenewal ) {
+for ( const testOrder of vaultingFreeTrialRenewal ) {
 	testFreeTrialSubscriptionRenewal( testOrder );
 }
 
@@ -78,11 +78,11 @@ test.describe( 'PayPal Subscription', () => {
 		);
 	} );
 
-	for( const testOrder of payPalRenewal ) {
+	for ( const testOrder of payPalRenewal ) {
 		testSubscriptionRenewal( testOrder );
 	}
 
-	for( const testOrder of payPalFreeTrialRenewal ) {
+	for ( const testOrder of payPalFreeTrialRenewal ) {
 		testFreeTrialSubscriptionRenewal( testOrder );
 	}
 } );

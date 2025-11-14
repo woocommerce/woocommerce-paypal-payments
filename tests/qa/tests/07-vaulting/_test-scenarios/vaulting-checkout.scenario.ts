@@ -130,7 +130,7 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 
 const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 	const { title, payment, products, customer, merchant } = testOrder;
-	
+
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
@@ -173,7 +173,7 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 					testOrder
 				);
 				const pcpData = { transactionId, payPalFee, payPalPayout };
-				
+
 				await wooCommerceOrderEdit.assertOrderDetails(
 					orderId,
 					testOrder,

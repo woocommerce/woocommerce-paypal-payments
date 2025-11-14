@@ -39,16 +39,16 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		await this.shippingMethodRadio( shipping.settings.title ).click();
 
 		if ( isFastlane ) {
-			await this.fillFastlaneDetails ( customer, payment.fastlaneFlow );
+			await this.fillFastlaneDetails( customer, payment.fastlaneFlow );
 		} else {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
 	};
-	
+
 	fillFastlaneDetails = async (
 		customer: WooCommerce.CreateCustomer,
-		fastlaneFlow: "gary" | "ryan",
+		fastlaneFlow: 'gary' | 'ryan'
 	) => {
 		await this.payPalUi.provideFastlaneEmail( customer.email );
 
@@ -57,11 +57,10 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 			await this.payPalUi.provideFastlaneOtp();
 			// Checkout form and payment card is already prefilled
 			await this.assertShippingAddressIsPopulated( customer.shipping );
-		}
-		else {
+		} else {
 			await this.fillCheckoutForm( customer );
 		}
-	}
+	};
 
 	/**
 	 * Completes order payed via PayPal on product page

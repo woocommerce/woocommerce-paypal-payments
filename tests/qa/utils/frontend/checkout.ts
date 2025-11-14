@@ -27,22 +27,23 @@ export class Checkout extends CheckoutBase {
 	completeCheckoutDetails = async ( data: WooCommerce.ShopOrder ) => {
 		const { payment, coupons, shipping, customer } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
-		
+
 		// Add coupons if needed
 		for ( const coupon of coupons ?? [] ) {
 			await this.applyCoupon( coupon.code );
 		}
 
 		if ( isFastlane ) {
-			await this.fillFastlaneDetails ( customer, payment.fastlaneFlow );
+			await this.fillFastlaneDetails( customer, payment.fastlaneFlow );
 		} else {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
 
 		// Select shipping or initial + monthly shipment (for subscriptions) option:
-		const shippingRadios =
-			await this.shippingMethodRadio( shipping.settings.title ).all();
+		const shippingRadios = await this.shippingMethodRadio(
+			shipping.settings.title
+		).all();
 		for ( const radio of shippingRadios ) {
 			await radio.click();
 		}
@@ -50,7 +51,7 @@ export class Checkout extends CheckoutBase {
 
 	fillFastlaneDetails = async (
 		customer: WooCommerce.CreateCustomer,
-		fastlaneFlow: "gary" | "ryan",
+		fastlaneFlow: 'gary' | 'ryan'
 	) => {
 		await this.payPalUi.provideFastlaneEmail( customer.email );
 
@@ -59,11 +60,10 @@ export class Checkout extends CheckoutBase {
 			await this.payPalUi.provideFastlaneOtp();
 			// Checkout form and payment card is already prefilled
 			await this.assertBillingAddressIsPopulated( customer.billing );
-		}
-		else {
+		} else {
 			await this.fillCheckoutForm( customer );
 		}
-	}
+	};
 
 	completeOrderFromProduct = async ( data: WooCommerce.ShopOrder ) => {
 		const { payment, coupons, shipping, customer } = data;
