@@ -15,11 +15,11 @@ class JwtAuthService {
 	/**
 	 * The exact issuer string that we expect to see in the JWT payload.
 	 */
-	private const EXPECTED_ISSUER = 'paypal.com';
+	protected const EXPECTED_ISSUER = 'paypal.com';
 
-	private PayPalJwkProvider $jwk_provider;
+	protected PayPalJwkProvider $jwk_provider;
 
-	private MerchantMetadataProvider $metadata_provider;
+	protected MerchantMetadataProvider $metadata_provider;
 
 	public function __construct( PayPalJwkProvider $jwk_provider, MerchantMetadataProvider $metadata_provider ) {
 		$this->jwk_provider      = $jwk_provider;
@@ -29,23 +29,14 @@ class JwtAuthService {
 	/**
 	 * Parses and validates JWT token.
 	 *
-	 * @param string|null $token Bearer token from Authorization header.
+	 * @param string|null $auth_header Bearer token from Authorization header.
 	 * @return stdClass|WP_Error Decoded token or validation error.
 	 */
-	public function get_token( ?string $token ) {
-		$string_token = trim( $token ?? '' );
+	public function get_token( ?string $auth_header ) {
+		$jwt = $this->extract_jwt_from_header( $auth_header );
 
-		if ( $string_token === '' ) {
-			return new WP_Error( 'missing_token', 'Please provide a valid token', array( 'status' => 401 ) );
-		}
-
-		if ( 0 !== stripos( $string_token, 'Bearer' ) ) {
-			return new WP_Error( 'invalid_jwt', 'Please provide a valid token', array( 'status' => 401 ) );
-		}
-
-		$jwt = trim( (string) substr( $string_token, 6 ) );
-		if ( empty( $jwt ) ) {
-			return new WP_Error( 'missing_token', 'Bearer prefix without token found', array( 'status' => 401 ) );
+		if ( is_wp_error( $jwt ) ) {
+			return $jwt;
 		}
 
 		$keys = $this->jwk_provider->keys();
@@ -127,5 +118,32 @@ class JwtAuthService {
 		}
 
 		return true;
+	}
+
+	/**
+	 * @param string|null $auth_header Bearer token from Authorization header.
+	 * @return string|WP_Error The encoded JWT string, or WP_Error on failure.
+	 */
+	protected function extract_jwt_from_header( ?string $auth_header ) {
+		$string_token = trim( $auth_header ?? '' );
+
+		if ( $string_token === '' ) {
+			return new WP_Error( 'missing_token', 'Please provide a valid token', array( 'status' => 401 ) );
+		}
+
+		if ( 0 !== stripos( $string_token, 'Bearer' ) ) {
+			return new WP_Error( 'invalid_jwt', 'Please provide a valid token', array( 'status' => 401 ) );
+		}
+
+		$jwt = trim( (string) substr( $string_token, 6 ) );
+		if ( empty( $jwt ) ) {
+			return new WP_Error( 'missing_token', 'Bearer prefix without token found', array( 'status' => 401 ) );
+		}
+
+		if ( 2 !== substr_count( $jwt, '.' ) ) {
+			return new WP_Error( 'invalid_jwt', 'Wrong number of segments in the token', array( 'status' => 401 ) );
+		}
+
+		return $jwt;
 	}
 }
