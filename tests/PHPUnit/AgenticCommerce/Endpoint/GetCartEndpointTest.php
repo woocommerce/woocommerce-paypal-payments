@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
@@ -38,12 +39,18 @@ class GetCartEndpointTest extends TestCase {
 			),
 		);
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth */
-		$auth = Mockery::mock( JwtAuthService::class );
+		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		$auth_service = Mockery::mock( JwtAuthService::class );
+		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		$auth_provider = Mockery::mock( AuthServiceProvider::class );
 		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
 		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
+
+		// Mock auth provider to return auth service.
+		$auth_provider->allows( 'auth_service' )
+			->andReturn( $auth_service );
 
 		// Mock cart object
 		$mock_cart = PayPalCart::from_array( $mock_cart_data );
@@ -75,7 +82,7 @@ class GetCartEndpointTest extends TestCase {
 				'ACTIVE'
 			) );
 
-		$endpoint = new GetCartEndpoint( $auth, $session_handler, $response_factory );
+		$endpoint = new GetCartEndpoint( $auth_provider, $session_handler, $response_factory );
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -91,12 +98,18 @@ class GetCartEndpointTest extends TestCase {
 	public function test_get_cart_returns_error_when_cart_not_found(): void {
 		$cart_id = 't_nonexistent_cart_id';
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth */
-		$auth = Mockery::mock( JwtAuthService::class );
+		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		$auth_service = Mockery::mock( JwtAuthService::class );
+		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		$auth_provider = Mockery::mock( AuthServiceProvider::class );
 		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
 		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
+
+		// Mock auth provider to return auth service.
+		$auth_provider->allows( 'auth_service' )
+			->andReturn( $auth_service );
 
 		// Mock session handler - return null for non-existent cart
 		$session_handler->shouldReceive( 'load_cart_session' )
@@ -104,7 +117,7 @@ class GetCartEndpointTest extends TestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		$endpoint = new GetCartEndpoint( $auth, $session_handler, $response_factory );
+		$endpoint = new GetCartEndpoint( $auth_provider, $session_handler, $response_factory );
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -129,12 +142,18 @@ class GetCartEndpointTest extends TestCase {
 	public function test_get_cart_returns_error_when_cart_expired(): void {
 		$cart_id = 't_expired_cart_id';
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth */
-		$auth = Mockery::mock( JwtAuthService::class );
+		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		$auth_service = Mockery::mock( JwtAuthService::class );
+		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		$auth_provider = Mockery::mock( AuthServiceProvider::class );
 		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
 		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
+
+		// Mock auth provider to return auth service.
+		$auth_provider->allows( 'auth_service' )
+			->andReturn( $auth_service );
 
 		// Mock session handler - return null for expired cart
 		$session_handler->shouldReceive( 'load_cart_session' )
@@ -142,7 +161,7 @@ class GetCartEndpointTest extends TestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		$endpoint = new GetCartEndpoint( $auth, $session_handler, $response_factory );
+		$endpoint = new GetCartEndpoint( $auth_provider, $session_handler, $response_factory );
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );

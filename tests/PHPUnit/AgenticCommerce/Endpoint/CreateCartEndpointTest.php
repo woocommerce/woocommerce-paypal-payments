@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
@@ -39,9 +40,17 @@ class CreateCartEndpointTest extends TestCase {
 
 		when( 'wp_generate_password' )->justReturn( $sample_token );
 
-		$auth             = Mockery::mock( JwtAuthService::class );
-		$session_handler  = Mockery::mock( AgenticSessionHandler::class );
+		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		$auth_service = Mockery::mock( JwtAuthService::class );
+		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		$auth_provider = Mockery::mock( AuthServiceProvider::class );
+		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
+		$session_handler = Mockery::mock( AgenticSessionHandler::class );
+		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
+
+		// Mock auth provider to return auth service.
+		$auth_provider->allows( 'auth_service' )->andReturn( $auth_service );
 
 		// Mock session handler - it should create a cart session and return the cart ID.
 		$session_handler->shouldReceive( 'create_cart_session' )
@@ -65,8 +74,8 @@ class CreateCartEndpointTest extends TestCase {
 				$ec_token
 			) );
 
-		// Pass session_handler as 2nd argument
-		$endpoint = new CreateCartEndpoint( $auth, $session_handler, $response_factory );
+		// Pass auth_provider as 1st argument.
+		$endpoint = new CreateCartEndpoint( $auth_provider, $session_handler, $response_factory );
 
 		$request = new WP_REST_Request( 'POST', '/wp-json/paypal/v1/merchant-cart' );
 		$request->set_body( json_encode( $cart_data ) );
