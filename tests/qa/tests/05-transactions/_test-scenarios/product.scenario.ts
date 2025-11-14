@@ -36,12 +36,6 @@ export const transactionsOnProduct = ( testOrder: ShopOrder ) => {
 				testOrder
 			);
 			const pcpData = { transactionId, payPalFee, payPalPayout };
-
-			// await payPalApi.assertOrder( orderJson, testData );
-			// await payPalApi.assertPayment(
-			// 	orderJson.transaction_id,
-			// 	testData
-			// );
 			
 			await wooCommerceOrderEdit.assertOrderDetails(
 				orderId,

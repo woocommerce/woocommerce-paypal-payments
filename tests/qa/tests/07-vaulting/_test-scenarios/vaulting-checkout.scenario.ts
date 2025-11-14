@@ -173,12 +173,6 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 					testOrder
 				);
 				const pcpData = { transactionId, payPalFee, payPalPayout };
-
-				// await payPalApi.assertOrder( orderJson, testOrder );
-				// await payPalApi.assertPayment(
-				// 	orderJson.transaction_id,
-				// 	testOrder
-				// );
 				
 				await wooCommerceOrderEdit.assertOrderDetails(
 					orderId,
