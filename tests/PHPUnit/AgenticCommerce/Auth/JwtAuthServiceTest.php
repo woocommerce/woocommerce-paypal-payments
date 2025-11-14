@@ -31,17 +31,10 @@ class JwtAuthServiceTest extends TestCase {
 		$jwk_provider      = Mockery::mock( PayPalJwkProvider::class );
 		$metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 
-		if ( $jwk_key !== null ) {
-			$jwk_provider->shouldReceive( 'keys' )
-				->once()
-				->andReturn( $jwk_key );
-		}
-
-		if ( $metadata !== null ) {
-			$metadata_provider->shouldReceive( 'get_metadata' )
-				->once()
-				->andReturn( $metadata );
-		}
+		$jwk_provider->allows( 'keys' )
+			->andReturn( $jwk_key );
+		$metadata_provider->allows( 'get_metadata' )
+			->andReturn( $metadata );
 
 		return new JwtAuthService( $jwk_provider, $metadata_provider );
 	}
@@ -160,8 +153,7 @@ class JwtAuthServiceTest extends TestCase {
 		$jwk_provider      = Mockery::mock( PayPalJwkProvider::class );
 		$metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 
-		$jwk_provider->shouldReceive( 'keys' )
-			->once()
+		$jwk_provider->allows( 'keys' )
 			->andReturn( null );
 
 		$service = new JwtAuthService( $jwk_provider, $metadata_provider );
