@@ -32,6 +32,13 @@ class AuthServiceProvider {
 	}
 
 	private function choose_auth_service(): JwtAuthService {
+		$is_sandbox    = $this->connection_state->is_sandbox();
+		$use_full_auth = defined( 'PPCP_AGENTIC_FULL_AUTH' ) && PPCP_AGENTIC_FULL_AUTH;
+
+		if ( $is_sandbox && ! $use_full_auth ) {
+			return new SandboxAuthService( $this->jwk_provider, $this->metadata_provider );
+		}
+
 		return new JwtAuthService( $this->jwk_provider, $this->metadata_provider );
 	}
 }

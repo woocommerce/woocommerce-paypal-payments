@@ -30,7 +30,7 @@ class JwtAuthService {
 	 * Parses and validates JWT token.
 	 *
 	 * @param string|null $auth_header Bearer token from Authorization header.
-	 * @return stdClass|WP_Error Decoded token or validation error.
+	 * @return object|WP_Error Decoded token or validation error.
 	 */
 	public function get_token( ?string $auth_header ) {
 		$jwt = $this->extract_jwt_from_header( $auth_header );

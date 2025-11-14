@@ -128,3 +128,53 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 | `merchant_mismatch`       | 403         | Token not valid for this merchant          |
 | `merchant_not_configured` | 500         | Merchant ID not configured on store        |
 | `key_unavailable`         | 503         | Could not retrieve PayPal public keys      |
+
+## Local Development
+
+The relaxed authentication service `SandboxAuthService` is a drop-in replacement to unlock REST
+endpoints on a local or dev environment without providing a cryptographically valid JWT token.
+
+This drop-in is automatically enabled when connected using a PayPal sandbox merchant.
+
+To simulate real production authentication as a sandbox merchant, the following flag can be used in
+`wp-config.php`:
+
+```php
+define( 'PPCP_AGENTIC_FULL_AUTH', true );
+```
+
+### Relaxed Rules
+
+The sandbox authentication mainly checks if the Authorization header and the JWT payload have a
+valid structure, and uses the expected issuer string.
+
+| Feature                     | SandboxAuthService         | JwtAuthService                        |
+|-----------------------------|----------------------------|---------------------------------------|
+| **Header format**           | ✅ Required (Bearer prefix) | ✅ Required (Bearer prefix)            |
+| **JWT structure**           | ✅ Must have 3 parts        | ✅ Must have 3 parts                   |
+| **Valid JSON in payload**   | ✅ Must be parseable        | ✅ Must be parseable                   |
+| **Cryptographic signature** | ❌ Not verified             | ✅ Verified against PayPal public keys |
+| **Token expiration (exp)**  | ❌ Not checked              | ✅ Must not be expired                 |
+| **Issues-at time (iat)**    | ❌ Not checked              | ✅ Must be past not-before time        |
+| **Issuer claim (iss)**      | ✅ Must be `paypal.com`     | ✅ Must be `paypal.com`                |
+| **Required scopes**         | ❌ Not checked              | ✅ Must include endpoint scopes        |
+| **Merchant ID match**       | ❌ Not checked              | ✅ Must match configured merchant      |
+
+**Token acceptance scenarios:**
+
+| Token Type           | SandboxAuthService | JwtAuthService                  |
+|----------------------|--------------------|---------------------------------|
+| Valid PayPal token   | ✅ Accepted         | ✅ Accepted                      |
+| Expired PayPal token | ✅ Accepted         | ❌ Rejected (expired)            |
+| Wrong merchant ID    | ✅ Accepted         | ❌ Rejected (merchant mismatch)  |
+| Invalid signature    | ✅ Accepted         | ❌ Rejected (invalid signature)  |
+| Missing scopes       | ✅ Accepted         | ❌ Rejected (insufficient scope) |
+| Wrong issuer         | ❌ Rejected         | ❌ Rejected                      |
+| Malformed JSON       | ❌ Rejected         | ❌ Rejected                      |
+| Missing "Bearer"     | ❌ Rejected         | ❌ Rejected                      |
+
+### Security Notes
+
+- Production environments **always** use full authentication
+- Sandbox mode cannot process real payments
+- Relaxed auth only affects development workflows
