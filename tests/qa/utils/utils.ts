@@ -139,9 +139,11 @@ export class Utils {
 	 * @param shopOrder
 	 */
 	completeOrderOnCheckout = async ( shopOrder: ShopOrder ) => {
-		await this.fillVisitorsCart( shopOrder.products );
+		const { payment, products, merchant } = shopOrder;	
+		await this.fillVisitorsCart( products );
 		await this.checkout.visit();
-		await this.checkout.makeOrder( shopOrder );
+		await this.checkout.completeCheckoutDetails( shopOrder );
+		await this.checkout.payPalUi.makePayment( { merchant, payment } );
 		const orderId = await this.orderReceived.getOrderNumber();
 		return await this.wooCommerceApi.getOrderByIdAndStatus(
 			orderId,
@@ -155,9 +157,11 @@ export class Utils {
 	 * @param shopOrder
 	 */
 	completeOrderOnClassicCheckout = async ( shopOrder: ShopOrder ) => {
-		await this.fillVisitorsCart( shopOrder.products );
+		const { payment, products, merchant } = shopOrder;
+		await this.fillVisitorsCart( products );
 		await this.classicCheckout.visit();
-		await this.classicCheckout.makeOrder( shopOrder );
+		await this.classicCheckout.completeCheckoutDetails( shopOrder );
+		await this.classicCheckout.payPalUi.makePayment( { merchant, payment } );
 		const orderId = await this.orderReceived.getOrderNumber();
 		return await this.wooCommerceApi.getOrderByIdAndStatus(
 			orderId,

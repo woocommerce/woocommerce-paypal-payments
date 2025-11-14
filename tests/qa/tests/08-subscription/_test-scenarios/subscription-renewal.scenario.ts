@@ -9,8 +9,8 @@ import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
-	const { title, products, customer, currency } = testOrder;
-
+	const { title, payment, products, customer, merchant, currency } = testOrder;
+	
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
@@ -38,7 +38,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
@@ -156,8 +157,8 @@ export const testSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 };
 
 export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
-	const { title, products, customer, currency } = testOrder;
-
+	const { title, payment, products, customer, currency, merchant } = testOrder;
+	
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
@@ -184,7 +185,8 @@ export const testFreeTrialSubscriptionRenewal = ( testOrder: ShopOrder ) => {
 				// Precondition: purchase test subscription
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();

@@ -26,8 +26,8 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 
 	// Actions
 
-	makeOrder = async ( data: WooCommerce.ShopOrder ) => {
-		const { payment, coupons, shipping, customer, merchant } = data;
+	completeCheckoutDetails = async ( data: WooCommerce.ShopOrder ) => {
+		const { payment, coupons, shipping, customer } = data;
 		const isFastlane = payment.gateway.shortcut === 'fastlane';
 
 		// Add coupons if needed
@@ -44,9 +44,6 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 			// Fill billing details
 			await this.fillCheckoutForm( customer );
 		}
-
-		// Make payment with tested method
-		await this.payPalUi.makePayment( { merchant, payment } );
 	};
 	
 	fillFastlaneDetails = async (

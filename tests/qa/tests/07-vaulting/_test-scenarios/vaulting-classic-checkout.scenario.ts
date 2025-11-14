@@ -5,8 +5,8 @@ import { cards, payments, ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
-
+	const { title, payment, products, customer, merchant } = testOrder;
+	
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
@@ -32,7 +32,8 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -64,8 +65,8 @@ const testSavePaymentMethod = ( testOrder: ShopOrder ) => {
 };
 
 const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
-
+	const { title, payment, products, customer, merchant } = testOrder;
+	
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
@@ -97,7 +98,8 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				await customerPaymentMethods.visit();
@@ -129,8 +131,8 @@ const testAcdcAdditionalCard = ( testOrder: ShopOrder ) => {
 };
 
 const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
-
+	const { title, payment, products, customer, merchant } = testOrder;
+	
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
 		// Placed in beforeAll for each test to be able to use storate state in a test.
@@ -157,7 +159,8 @@ const testVaultedPaymentMethod = ( testOrder: ShopOrder ) => {
 				// Make tested order:
 				await utils.fillVisitorsCart( products );
 				await classicCheckout.visit();
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( { merchant, payment } );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const orderId = await orderReceived.getOrderNumber();
