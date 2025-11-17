@@ -55,6 +55,8 @@ class RegistrationService {
 
 		if ( $result->success ) {
 			$this->save_registration_token( $token );
+
+			do_action( 'woocommerce_paypal_payments_agentic_commerce_registered' );
 		} else {
 			$this->delete_registration_token();
 
@@ -91,6 +93,8 @@ class RegistrationService {
 				$result->error ?? 'Deregistration failed'
 			);
 		}
+
+		do_action( 'woocommerce_paypal_payments_agentic_commerce_deregistered' );
 
 		return $result;
 	}
