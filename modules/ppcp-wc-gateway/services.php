@@ -1593,10 +1593,26 @@ return array(
 		);
 	},
 	'wcgateway.logging.is-enabled'                         => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-
-		// Check if logging was enabled in plugin settings.
-		$is_enabled = $settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' );
+		/**
+		 * Check if logging was enabled in plugin settings.
+		 *
+		 * We have different logic for the legacy/new UI, as the legacy Settings instance uses
+		 * translation functions too early, and cause a _load_textdomain_just_in_time warning.
+		 * This prevents us from creating a logger instance before the 'init' hook.
+		 *
+		 * The SettingsModel (new UI) does not depend on translations, and allows accessing the
+		 * 'woocommerce.logger.woocommerce' service already during module `::run()` methods.
+		 */
+		if ( SettingsModule::should_use_the_old_ui() ) {
+			// Note: Legacy UI, works after 'init' hook.
+			$settings   = $container->get( 'wcgateway.settings' );
+			$is_enabled = $settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' );
+		} else {
+			// Note: New UI, works instantly.
+			$settings = $container->get( 'settings.data.settings' );
+			assert( $settings instanceof SettingsModel );
+			$is_enabled = $settings->get_enable_logging();
+		}
 
 		// If not enabled, check if plugin is in onboarding mode.
 		if ( ! $is_enabled ) {
