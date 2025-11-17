@@ -7,6 +7,7 @@ import { loadCustomScript } from '@paypal/paypal-js';
 import CheckoutHandler from './Context/CheckoutHandler';
 import ApplePayManager from './ApplepayManager';
 import ApplePayManagerBlockEditor from './ApplepayManagerBlockEditor';
+import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
@@ -22,6 +23,7 @@ if ( typeof window.PayPalCommerceGateway === 'undefined' ) {
 const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 	const [ paypalLoaded, setPaypalLoaded ] = useState( false );
 	const [ applePayLoaded, setApplePayLoaded ] = useState( false );
+	const [ manager, setManager ] = useState( null );
 	const wrapperRef = useRef( null );
 
 	useEffect( () => {
@@ -47,7 +49,39 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 	}, [ isEditing ] );
 
 	useEffect( () => {
-		if ( isEditing || ! paypalLoaded || ! applePayLoaded ) {
+		if ( isEditing || ! manager || ! wp.data?.subscribe ) {
+			return;
+		}
+
+		let timeoutId = null;
+
+		const checkAddressChange = () => {
+			const store = wp.data.select( 'wc/store/cart' );
+			if ( ! store ) {
+				return;
+			}
+
+			timeoutId = setTimeout( () => {
+				manager.buttons.forEach( ( button ) => button.addButton() );
+			}, 1000 );
+		};
+
+		const unsubscribe = wp.data.subscribe(
+			debounce( checkAddressChange, 300 )
+		);
+
+		return () => {
+			if ( timeoutId ) {
+				clearTimeout( timeoutId );
+			}
+			if ( unsubscribe ) {
+				unsubscribe();
+			}
+		};
+	}, [ isEditing, manager ] );
+
+	useEffect( () => {
+		if ( isEditing || ! paypalLoaded || ! applePayLoaded || manager ) {
 			return;
 		}
 
@@ -57,13 +91,14 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 
 		buttonConfig.reactWrapper = wrapperRef.current;
 
-		new ManagerClass(
+		const newManager = new ManagerClass(
 			namespace,
 			buttonConfig,
 			ppcpConfig,
 			buttonAttributes
 		);
-	}, [ paypalLoaded, applePayLoaded, isEditing, buttonAttributes ] );
+		setManager( newManager );
+	}, [ paypalLoaded, applePayLoaded, isEditing, buttonAttributes, manager ] );
 
 	if ( isEditing ) {
 		return (
