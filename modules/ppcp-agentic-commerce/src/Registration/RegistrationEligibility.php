@@ -15,7 +15,12 @@ class RegistrationEligibility {
 
 	public function is_eligible(): bool {
 		$merchant = $this->metadata_provider->get_metadata();
-		$country  = strtoupper( trim( $merchant->country ) );
+
+		if ( ! $merchant->paypal_merchant_id ) {
+			return false;
+		}
+
+		$country = strtoupper( trim( $merchant->country ) );
 
 		return 'US' === $country;
 	}
