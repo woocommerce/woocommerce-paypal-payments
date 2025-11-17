@@ -16,8 +16,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
@@ -51,9 +51,11 @@ return array(
 	'agentic.auth.key_provider'                => static function (): PayPalJwkProvider {
 		return new PayPalJwkProvider();
 	},
-	'agentic.auth.service'                     => static function ( ContainerInterface $c ): JwtAuthService {
-		return new JwtAuthService(
-			$c->get( 'agentic.auth.key_provider' )
+	'agentic.auth.provider'                    => static function ( ContainerInterface $c ): AuthServiceProvider {
+		return new AuthServiceProvider(
+			$c->get( 'settings.connection-state' ),
+			$c->get( 'agentic.auth.key_provider' ),
+			$c->get( 'agentic.merchant.provider' )
 		);
 	},
 
@@ -65,28 +67,28 @@ return array(
 	// REST endpoints.
 	'agentic.rest.create_cart'                 => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
-			$c->get( 'agentic.auth.service' ),
+			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' )
 		);
 	},
 	'agentic.rest.get_cart'                    => static function ( ContainerInterface $container ): GetCartEndpoint {
 		return new GetCartEndpoint(
-			$container->get( 'agentic.auth.service' ),
+			$container->get( 'agentic.auth.provider' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' )
 		);
 	},
 	'agentic.rest.update_cart'                 => static function ( ContainerInterface $container ): UpdateCartEndpoint {
 		return new UpdateCartEndpoint(
-			$container->get( 'agentic.auth.service' ),
+			$container->get( 'agentic.auth.provider' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' )
 		);
 	},
 	'agentic.rest.replace_cart'                => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
-			$container->get( 'agentic.auth.service' ),
+			$container->get( 'agentic.auth.provider' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' )
 		);
@@ -132,17 +134,17 @@ return array(
 	'agentic.settings.model'                   => static function (): AgenticSettingsDataModel {
 		return new AgenticSettingsDataModel();
 	},
-	'agentic.settings.endpoint'                => static function ( ContainerInterface $container ): AgenticSettingsEndpoint {
+	'agentic.settings.endpoint'                => static function ( ContainerInterface $c ): AgenticSettingsEndpoint {
 		return new AgenticSettingsEndpoint(
-			$container->get( 'agentic.settings.model' )
+			$c->get( 'agentic.settings.model' )
 		);
 	},
-	'agentic.settings.module'                  => static function ( ContainerInterface $container ): AgenticSettingsModule {
+	'agentic.settings.module'                  => static function ( ContainerInterface $c ): AgenticSettingsModule {
 		return new AgenticSettingsModule(
-			$container->get( 'ppcp.path-to-plugin-folder' ),
-			$container->get( 'ppcp.path-to-plugin-main-file' ),
-			$container->get( 'agentic.settings.endpoint' ),
-			$container->get( 'agentic.registration.eligibility' )
+			$c->get( 'ppcp.path-to-plugin-folder' ),
+			$c->get( 'ppcp.path-to-plugin-main-file' ),
+			$c->get( 'agentic.settings.endpoint' ),
+			$c->get( 'agentic.registration.eligibility' )
 		);
 	},
 );
