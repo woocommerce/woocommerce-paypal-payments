@@ -60,13 +60,16 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		$eligibility_check = $container->get( 'agentic.registration.eligibility' );
 		assert( $eligibility_check instanceof RegistrationEligibility );
 
+		$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
+		assert( $ingestion_manager instanceof IngestionManager );
+
 		// Settings extension always available (merchants need to see the toggle).
 		$settings_module = $container->get( 'agentic.settings.module' );
 		assert( $settings_module instanceof AgenticSettingsModule );
 		$settings_module->init();
 
 		// Always register cleanup logic.
-		$this->add_cleanup_actions( $registration_handler );
+		$this->add_cleanup_actions( $registration_handler, $ingestion_manager );
 
 		// Sync eligibility cache on init (when WC is available).
 		$this->sync_eligibility_cache( $agentic_settings, $eligibility_check );
@@ -97,14 +100,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		);
 
 		// Product ingestion.
-		add_action(
-			'init',
-			static function () use ( $container ) {
-				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
-				assert( $ingestion_manager instanceof IngestionManager );
-				$ingestion_manager->init();
-			}
-		);
+		add_action( 'init', static fn() => $ingestion_manager->init() );
 
 		return true;
 	}
@@ -112,7 +108,13 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	/**
 	 * Intentionally a separate method to make global cleanup logic stand out.
 	 */
-	private function add_cleanup_actions( RegistrationService $registration_service ): void {
+	private function add_cleanup_actions( RegistrationService $registration_service, IngestionManager $ingestion_manager ): void {
+		// Handle plugin cleanup and remove scheduled task.
+		add_action(
+			'woocommerce_paypal_payments_agentic_commerce_deregistered',
+			static fn() => $ingestion_manager->clear_recurring_schedule()
+		);
+
 		// Disconnect merchant via settings UI (change merchant ID).
 		add_action(
 			'woocommerce_paypal_payments_merchant_disconnected',
