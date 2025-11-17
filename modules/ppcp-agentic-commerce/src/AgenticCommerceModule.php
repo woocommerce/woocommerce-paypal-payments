@@ -65,8 +65,8 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		assert( $settings_module instanceof AgenticSettingsModule );
 		$settings_module->init();
 
-		// Uninstall logic always registered.
-		$this->add_uninstall_action( $registration_handler );
+		// Always register cleanup logic.
+		$this->add_cleanup_actions( $registration_handler );
 
 		// Sync eligibility cache on init (when WC is available).
 		$this->sync_eligibility_cache( $agentic_settings, $eligibility_check );
@@ -110,9 +110,22 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	}
 
 	/**
-	 * Intentionally a separate method to make uninstall logic stand out.
+	 * Intentionally a separate method to make global cleanup logic stand out.
 	 */
-	private function add_uninstall_action( RegistrationService $registration_service ): void {
+	private function add_cleanup_actions( RegistrationService $registration_service ): void {
+		// Disconnect merchant via settings UI (change merchant ID).
+		add_action(
+			'woocommerce_paypal_payments_merchant_disconnected',
+			static fn() => $registration_service->deregister()
+		);
+
+		// Plugin is deactivated.
+		add_action(
+			'woocommerce_paypal_payments_gateway_deactivate',
+			static fn() => $registration_service->deregister()
+		);
+
+		// Plugin is uninstalled.
 		add_action(
 			'woocommerce_paypal_payments_uninstall',
 			static fn() => $registration_service->deregister()
