@@ -20,8 +20,9 @@ class RegistrationEligibility {
 			return false;
 		}
 
-		$country = strtoupper( trim( $merchant->country ) );
+		$store_country    = strtoupper( trim( $merchant->store_country ) );
+		$merchant_country = strtoupper( trim( $merchant->merchant_country ) );
 
-		return 'US' === $country;
+		return 'US' === $store_country && 'US' === $merchant_country;
 	}
 }

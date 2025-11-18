@@ -37,7 +37,8 @@ class MerchantMetadataProvider {
 			WC()->countries->get_base_country(),
 			get_woocommerce_currency(),
 			$merchant_id,
-			$this->get_canonical_store_url()
+			$this->get_canonical_store_url(),
+			$merchant->merchant_country
 		);
 	}
 

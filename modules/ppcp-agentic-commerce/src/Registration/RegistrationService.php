@@ -120,7 +120,7 @@ class RegistrationService {
 		$payload = array(
 			'storeName'          => $metadata->store_name,
 			'storeUrl'           => $metadata->store_url,
-			'country'            => $metadata->country,
+			'country'            => $metadata->store_country,
 			'currency'           => $metadata->currency,
 			'paypalMerchantId'   => $metadata->paypal_merchant_id,
 			'wooMerchantId'      => $metadata->store_url,

@@ -16,7 +16,7 @@ class MerchantMetadata {
 	public string $store_name;
 
 	/**
-	 * Store URL (canonical, without trailing slash).
+	 * Store URL (canonical, without a trailing slash).
 	 *
 	 * CRITICAL: This serves as the stable identifier for this merchant.
 	 *
@@ -29,7 +29,14 @@ class MerchantMetadata {
 	 *
 	 * @var string
 	 */
-	public string $country;
+	public string $store_country;
+
+	/**
+	 * Country of the PayPal merchant (ISO 3166-1 alpha-2).
+	 *
+	 * @var string
+	 */
+	public string $merchant_country;
 
 	/**
 	 * Base currency code (ISO 4217).
@@ -57,24 +64,27 @@ class MerchantMetadata {
 	 *
 	 * @param string $store_name         Store name.
 	 * @param string $store_url          Store URL (canonical identifier).
-	 * @param string $country            Base country code.
+	 * @param string $store_country      Base country code.
 	 * @param string $currency           Base currency code.
 	 * @param string $paypal_merchant_id PayPal merchant ID.
 	 * @param string $catalog_url        Catalog URL.
+	 * @param string $merchant_country   Merchant country code.
 	 */
 	public function __construct(
 		string $store_name,
 		string $store_url,
-		string $country,
+		string $store_country,
 		string $currency,
 		string $paypal_merchant_id,
-		string $catalog_url
+		string $catalog_url,
+		string $merchant_country
 	) {
 		$this->store_name         = $store_name;
 		$this->store_url          = $store_url;
-		$this->country            = $country;
+		$this->store_country      = $store_country;
 		$this->currency           = $currency;
 		$this->paypal_merchant_id = $paypal_merchant_id;
 		$this->catalog_url        = $catalog_url;
+		$this->merchant_country   = $merchant_country;
 	}
 }
