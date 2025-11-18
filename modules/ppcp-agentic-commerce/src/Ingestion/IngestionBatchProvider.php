@@ -32,7 +32,7 @@ class IngestionBatchProvider {
 	 *
 	 * @return array An array of product IDs that need to be synced.
 	 */
-	public function get_batch( $limit = 50 ): array {
+	public function get_batch( int $limit = 50 ): array {
 		// phpcs:disable WordPress.DB.SlowDBQuery
 		// First, get products that have never been synced.
 		$batch = wc_get_products(

@@ -38,6 +38,7 @@ class SyncJobFactory {
 		LoggerInterface $logger,
 		ProductsPayloadFactory $products_payload_factory
 	) {
+
 		$this->logger                   = $logger;
 		$this->api_endpoint             = $api_endpoint;
 		$this->products_payload_factory = $products_payload_factory;
@@ -50,12 +51,9 @@ class SyncJobFactory {
 	 * and logger, along with the specified product IDs to be synchronized.
 	 *
 	 * @param array $product_ids Array of WooCommerce product IDs to be synced.
-	 *
 	 * @return SyncJob A configured SyncJob instance ready for execution.
 	 */
-	public function create_job(
-		array $product_ids
-	): SyncJob {
+	public function create_job( array $product_ids ): SyncJob {
 		return new SyncJob(
 			$this->api_endpoint,
 			$product_ids,

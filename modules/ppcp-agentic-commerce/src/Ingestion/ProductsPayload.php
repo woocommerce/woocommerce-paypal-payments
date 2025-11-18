@@ -12,7 +12,6 @@ class ProductsPayload {
 	private array $product_ids;
 
 	public function __construct( array $product_ids ) {
-
 		$this->product_ids = $product_ids;
 	}
 
@@ -124,7 +123,7 @@ class ProductsPayload {
 				$variant['sale_price'] = $this->format_price( $variation->get_sale_price() );
 			}
 
-			// Add product type from parent.
+			// Add the parent product.
 			if ( $product_type ) {
 				$variant['product_type'] = $product_type;
 			}
