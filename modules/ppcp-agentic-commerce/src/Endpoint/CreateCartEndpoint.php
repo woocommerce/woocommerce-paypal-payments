@@ -14,11 +14,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 
 /**
  * Create Cart REST endpoint.
