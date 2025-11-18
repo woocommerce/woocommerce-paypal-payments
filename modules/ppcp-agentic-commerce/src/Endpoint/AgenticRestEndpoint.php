@@ -20,7 +20,7 @@ use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\InvalidRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 
@@ -33,14 +33,19 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected const NAMESPACE = 'wc/v3/agentic';
 
-	private JwtAuthService $auth_service;
+	/**
+	 * JWT scope(s) required for the endpoint.
+	 */
+	protected const REQUIRED_SCOPES = array( 'cart' );
+
+	private AuthServiceProvider $auth_provider;
 
 	protected AgenticSessionHandler $session_handler;
 
 	protected ResponseFactory $response_factory;
 
-	public function __construct( JwtAuthService $auth_service, AgenticSessionHandler $session_handler, ResponseFactory $response_factory ) {
-		$this->auth_service     = $auth_service;
+	public function __construct( AuthServiceProvider $auth_provider, AgenticSessionHandler $session_handler, ResponseFactory $response_factory ) {
+		$this->auth_provider    = $auth_provider;
 		$this->session_handler  = $session_handler;
 		$this->response_factory = $response_factory;
 	}
@@ -52,8 +57,9 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @return bool|WP_Error True if access is granted, otherwise a WP_Error object.
 	 */
 	public function check_permission( WP_REST_Request $request ) {
-		$token   = $request->get_header( 'Authorization' );
-		$context = $this->auth_service->validate_request( $token );
+		$token        = $request->get_header( 'Authorization' );
+		$auth_service = $this->auth_provider->auth_service();
+		$context      = $auth_service->get_token( $token );
 
 		if ( is_wp_error( $context ) ) {
 			assert( $context instanceof WP_Error );
@@ -61,9 +67,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 			return $context;
 		}
 
-		// TODO: verify the merchant details in $context.
-
-		return true;
+		return $auth_service->verify_claims( $context, static::REQUIRED_SCOPES );
 	}
 
 	/**

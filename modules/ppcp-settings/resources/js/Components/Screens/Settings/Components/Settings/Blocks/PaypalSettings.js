@@ -10,6 +10,7 @@ import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
 import Accordion from '../../../../../ReusableComponents/AccordionSection';
 import { SettingsHooks } from '../../../../../../data';
 import SoftDescriptorInput from '../../../../../ReusableComponents/Controls/SoftdescriptorInput';
+import { useRegisteredSettings, SLOTS } from '@settings/extensions';
 
 const PaypalSettings = ( { hasContactModule } ) => {
 	const {
@@ -33,6 +34,9 @@ const PaypalSettings = ( { hasContactModule } ) => {
 	const siteData = useSelect( ( select ) => select( 'core' ).getSite(), [] );
 	const siteTitle = siteData?.title;
 	const buttonLanguageChoices = window.ppcpSettings.buttonLanguageChoices;
+
+	// Get registered settings for this slot
+	const footerSettings = useRegisteredSettings( SLOTS.PAYPAL_SETTINGS_END );
 
 	return (
 		<Accordion
@@ -158,6 +162,11 @@ const PaypalSettings = ( { hasContactModule } ) => {
 					) }
 				/>
 			</SettingsBlock>
+
+			{ /* Extension point */ }
+			{ footerSettings.map( ( { component: Component, id } ) => (
+				<Component key={ id } />
+			) ) }
 		</Accordion>
 	);
 };
