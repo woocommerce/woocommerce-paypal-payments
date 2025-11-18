@@ -11,7 +11,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use JsonException;
 use WC_REST_Controller;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 use WP_REST_Request;
@@ -72,7 +74,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	/**
 	 * Successful API response, always returns cart details.
 	 *
-	 * @param CartResponse $cart The PayPalCart response object.
+	 * @param CartResponse $cart        The PayPalCart response object.
+	 * @param int          $status_code HTTP status code.
 	 * @return WP_REST_Response The successful response.
 	 */
 	protected function cart_details( CartResponse $cart, int $status_code = 200 ): WP_REST_Response {
@@ -106,6 +109,79 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		} catch ( JsonException $exception ) {
 			return new InternalServerError( 'Request body contains invalid JSON. Error: ' . $exception->getMessage() );
 		}
+	}
+
+	/**
+	 * Parse and validate cart from request body.
+	 *
+	 * @param WP_REST_Request $request The request object.
+	 * @return PayPalCart|AgenticError Valid cart or error.
+	 */
+	protected function parse_and_validate_cart( WP_REST_Request $request ) {
+		$data = $this->parse_json_body( $request );
+
+		if ( $data instanceof AgenticError ) {
+			return $data;
+		}
+
+		$cart = PayPalCart::from_array( $data );
+
+		$issues = $cart->validate();
+		if ( ! empty( $issues ) ) {
+			return new BadRequestError( 'Cart validation issue', $issues );
+		}
+
+		return $cart;
+	}
+
+	/**
+	 * Load cart session with standardized error handling.
+	 *
+	 * @param string $cart_id The cart ID to load.
+	 * @return array|AgenticError Cart session data or error.
+	 */
+	protected function load_cart_session( string $cart_id ) {
+		$session = $this->session_handler->load_cart_session( $cart_id );
+
+		if ( ! $session ) {
+			return new NotFoundError(
+				"Cart with ID '{$cart_id}' does not exist or has expired",
+				array(
+					array(
+						'field'       => 'cartId',
+						'issue'       => 'NOT_FOUND',
+						'description' => "Cart with ID '{$cart_id}' does not exist. Verify cart ID or create a new cart.",
+					),
+				)
+			);
+		}
+
+		return $session;
+	}
+
+	/**
+	 * Standard cart ID validation callback.
+	 *
+	 * @param mixed $param The parameter to validate.
+	 * @return bool True if valid cart ID format.
+	 */
+	protected function validate_cart_id( $param ): bool {
+		return is_string( $param ) && strlen( $param ) >= 10;
+	}
+
+	/**
+	 * Get standard cart ID argument definition for route registration.
+	 *
+	 * @return array Cart ID argument configuration.
+	 */
+	protected function get_cart_id_arg(): array {
+		return array(
+			'cart_id' => array(
+				'required'          => true,
+				'type'              => 'string',
+				'validate_callback' => array( $this, 'validate_cart_id' ),
+			),
+		);
 	}
 
 	/**

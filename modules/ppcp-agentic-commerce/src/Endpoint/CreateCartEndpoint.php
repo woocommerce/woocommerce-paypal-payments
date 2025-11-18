@@ -11,11 +11,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 /**
  * Create Cart REST endpoint.
@@ -24,12 +22,12 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	/**
 	 * The endpoint path following PayPal specs.
 	 */
-	protected const PATH = 'merchant-cart';
+	private const PATH = 'merchant-cart';
 
 	/**
 	 * The expected HTTP method.
 	 */
-	protected const METHOD = 'POST';
+	private const METHOD = 'POST';
 
 	/**
 	 * Register REST API routes.
@@ -55,17 +53,10 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function create_cart( WP_REST_Request $request ): WP_REST_Response {
-		$data = $this->parse_json_body( $request );
+		$cart = $this->parse_and_validate_cart( $request );
 
-		if ( $data instanceof AgenticError ) {
-			return $this->error( $data );
-		}
-
-		$cart = PayPalCart::from_array( $data );
-
-		$issues = $cart->validate();
-		if ( ! empty( $issues ) ) {
-			return $this->error( new BadRequestError( 'Cart validation issue', $issues ) );
+		if ( $cart instanceof AgenticError ) {
+			return $this->error( $cart );
 		}
 
 		// TODO (#5272): Generate EC token via PayPal Orders API.
