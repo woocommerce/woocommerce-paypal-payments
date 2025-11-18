@@ -33,11 +33,6 @@ class ResolutionAction {
 	public const REMOVE_COUPON            = 'REMOVE_COUPON';
 	public const CHOOSE_DIFFERENT_VARIANT = 'CHOOSE_DIFFERENT_VARIANT';
 
-	/**
-	 * Get all available resolution actions.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::REDIRECT_TO_MERCHANT,
@@ -65,12 +60,6 @@ class ResolutionAction {
 		);
 	}
 
-	/**
-	 * Check if resolution action is valid.
-	 *
-	 * @param string $action Action to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $action ): bool {
 		return in_array( $action, self::get_all(), true );
 	}

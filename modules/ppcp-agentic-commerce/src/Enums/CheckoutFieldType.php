@@ -22,11 +22,6 @@ class CheckoutFieldType {
 	public const TERMS_ACCEPTANCE         = 'TERMS_ACCEPTANCE';
 	public const PRIVACY_CONSENT          = 'PRIVACY_CONSENT';
 
-	/**
-	 * Get all available checkout field types.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::AGE_VERIFICATION_18_PLUS,
@@ -44,12 +39,6 @@ class CheckoutFieldType {
 		);
 	}
 
-	/**
-	 * Check if checkout field type is valid.
-	 *
-	 * @param string $type Field type to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $type ): bool {
 		return in_array( $type, self::get_all(), true );
 	}

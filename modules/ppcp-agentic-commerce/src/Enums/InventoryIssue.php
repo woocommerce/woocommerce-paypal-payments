@@ -21,11 +21,6 @@ class InventoryIssue {
 	public const VARIANT_NOT_AVAILABLE     = 'VARIANT_NOT_AVAILABLE';
 	public const CUSTOM_OPTION_UNAVAILABLE = 'CUSTOM_OPTION_UNAVAILABLE';
 
-	/**
-	 * Get all available inventory issue codes.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::ITEM_OUT_OF_STOCK,
@@ -41,12 +36,6 @@ class InventoryIssue {
 		);
 	}
 
-	/**
-	 * Check if inventory issue code is valid.
-	 *
-	 * @param string $issue Issue code to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $issue ): bool {
 		return in_array( $issue, self::get_all(), true );
 	}

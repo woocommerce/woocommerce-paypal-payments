@@ -21,11 +21,6 @@ class ShippingIssue {
 	public const SHIPPING_ZONE_NOT_COVERED                 = 'SHIPPING_ZONE_NOT_COVERED';
 	public const MISSING_COORDINATES_FOR_ENHANCED_DELIVERY = 'MISSING_COORDINATES_FOR_ENHANCED_DELIVERY';
 
-	/**
-	 * Get all available shipping issue codes.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::SHIPPING_ADDRESS_INVALID,
@@ -41,12 +36,6 @@ class ShippingIssue {
 		);
 	}
 
-	/**
-	 * Check if shipping issue code is valid.
-	 *
-	 * @param string $issue Issue code to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $issue ): bool {
 		return in_array( $issue, self::get_all(), true );
 	}

@@ -2,6 +2,8 @@
 /**
  * 422 Unprocessable Entity HTTP error.
  *
+ * TODO: Is this class used or can it be deleted?
+ *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http
  */
 
@@ -21,29 +23,18 @@ class UnprocessableEntityError extends HttpError {
 	protected const ERROR_NAME  = HttpErrorName::UNPROCESSABLE_ENTITY;
 	protected const STATUS_CODE = 422;
 
-	private ?ValidationIssue $business_context;
+	private ?ValidationIssue $business_context = null;
 
-	/**
-	 * Create unprocessable entity error with optional business context.
-	 *
-	 * @param string               $message          Error message.
-	 * @param array|null           $details          Optional technical details.
-	 * @param ValidationIssue|null $business_context Optional rich business context.
-	 * @param string|null          $debug_id         Optional debug ID.
-	 */
-	public function __construct(
-		string $message,
-		?array $details = null,
-		?ValidationIssue $business_context = null,
-		?string $debug_id = null
-	) {
-		parent::__construct( $message, $details, $debug_id ?? $this->generate_debug_id() );
+	public function with_issue( ValidationIssue $business_context ): self {
 		$this->business_context = $business_context;
+
+		return $this;
 	}
 
-	/**
-	 * Convert to array with business_context when present.
-	 */
+	public function get_business_context(): ?ValidationIssue {
+		return $this->business_context;
+	}
+
 	public function to_array(): array {
 		$data = parent::to_array();
 
@@ -52,9 +43,5 @@ class UnprocessableEntityError extends HttpError {
 		}
 
 		return $data;
-	}
-
-	public function get_business_context(): ?ValidationIssue {
-		return $this->business_context;
 	}
 }

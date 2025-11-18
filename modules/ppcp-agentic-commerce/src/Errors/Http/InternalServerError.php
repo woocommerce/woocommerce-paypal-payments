@@ -18,11 +18,4 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\HttpErrorName;
 class InternalServerError extends HttpError {
 	protected const ERROR_NAME  = HttpErrorName::INTERNAL_SERVER_ERROR;
 	protected const STATUS_CODE = 500;
-
-	/**
-	 * Create internal server error with auto-generated debug ID.
-	 */
-	public function __construct( string $message, ?array $details = null, ?string $debug_id = null ) {
-		parent::__construct( $message, $details, $debug_id ?? $this->generate_debug_id() );
-	}
 }

@@ -49,12 +49,6 @@ class HttpErrorName {
 		);
 	}
 
-	/**
-	 * Check if an error name is valid.
-	 *
-	 * @param string $name The error name to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $name ): bool {
 		return in_array( $name, self::get_all(), true );
 	}
@@ -82,8 +76,6 @@ class HttpErrorName {
 			case self::PAYMENT_CAPTURE_FAILED:
 			case self::INVENTORY_SYSTEM_ERROR:
 			case self::ORDER_SYSTEM_ERROR:
-				return 500;
-
 			default:
 				return 500;
 		}

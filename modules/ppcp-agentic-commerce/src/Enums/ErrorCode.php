@@ -17,11 +17,6 @@ class ErrorCode {
 	public const BUSINESS_RULE_ERROR = 'BUSINESS_RULE_ERROR';
 	public const PAYMENT_ERROR       = 'PAYMENT_ERROR';
 
-	/**
-	 * Get all available error codes.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::INVENTORY_ISSUE,
@@ -33,12 +28,6 @@ class ErrorCode {
 		);
 	}
 
-	/**
-	 * Check if error code is valid.
-	 *
-	 * @param string $code Error code to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $code ): bool {
 		return in_array( $code, self::get_all(), true );
 	}

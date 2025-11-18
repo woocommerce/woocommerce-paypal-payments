@@ -25,11 +25,6 @@ class DataIssue {
 	public const INVALID_ITEM_DATA         = 'INVALID_ITEM_DATA';
 	public const ITEM_ATTRIBUTE_MISMATCH   = 'ITEM_ATTRIBUTE_MISMATCH';
 
-	/**
-	 * Get all available data issue codes.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::MISSING_CHECKOUT_FIELDS,
@@ -49,12 +44,6 @@ class DataIssue {
 		);
 	}
 
-	/**
-	 * Check if data issue code is valid.
-	 *
-	 * @param string $issue Issue code to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $issue ): bool {
 		return in_array( $issue, self::get_all(), true );
 	}

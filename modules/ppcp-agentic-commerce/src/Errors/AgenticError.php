@@ -68,22 +68,7 @@ abstract class AgenticError {
 	}
 
 	/**
-	 * Factory method that child classes can override if needed.
-	 * This method ensures safe instantiation with late static binding.
-	 *
-	 * @param string     $message Descriptive text of the error.
-	 * @param array|null $details Optional. Additional details about the error.
-	 * @return static Instance of the called class.
-	 */
-	protected static function create_instance( string $message, ?array $details = null ): AgenticError {
-		/**
-		 * @psalm-suppress UnsafeInstantiation
-		 */
-		return new static( $message, $details );
-	}
-
-	/**
-	 * Create instance from WP_Error using late static binding.
+	 * Create an instance from WP_Error using late static binding.
 	 *
 	 * @param WP_Error $wp_error The WordPress error to convert.
 	 * @return static Instance of the called class.
@@ -92,7 +77,13 @@ abstract class AgenticError {
 		$message = $wp_error->get_error_message();
 		$details = static::extract_wp_error_details( $wp_error );
 
-		return static::create_instance( $message, $details );
+		/**
+		 * @psalm-suppress MissingThrowsDocblock, UnsafeInstantiation
+		 *  Parent constructor throws only on developer errors, like missing ERROR_NAME, or an
+		 *  invalid STATUS_CODE. These are implementation issues that should fail fast, not
+		 *  runtime errors requiring handling.
+		 */
+		return new static( $message, $details );
 	}
 
 	/**

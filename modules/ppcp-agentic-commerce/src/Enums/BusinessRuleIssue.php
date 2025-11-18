@@ -24,11 +24,6 @@ class BusinessRuleIssue {
 	public const PRODUCT_ARCHIVED                  = 'PRODUCT_ARCHIVED';
 	public const SUBSCRIPTION_PRODUCT_ERROR        = 'SUBSCRIPTION_PRODUCT_ERROR';
 
-	/**
-	 * Get all available business rule issue codes.
-	 *
-	 * @return array<string>
-	 */
 	public static function get_all(): array {
 		return array(
 			self::MINIMUM_ORDER_NOT_MET,
@@ -47,12 +42,6 @@ class BusinessRuleIssue {
 		);
 	}
 
-	/**
-	 * Check if business rule issue code is valid.
-	 *
-	 * @param string $issue Issue code to validate.
-	 * @return bool
-	 */
 	public static function is_valid( string $issue ): bool {
 		return in_array( $issue, self::get_all(), true );
 	}
