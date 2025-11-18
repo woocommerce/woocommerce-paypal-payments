@@ -66,8 +66,12 @@ jobs:
           echo "@inpsyde:registry=https://npm.pkg.github.com" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_SYDE }}" >> .npmrc
 
-      - name: Configure Composer auth
-        run: composer config --global --auth http-basic.packagist.inpsyde.com ${{ secrets.SYDE_COMPOSER_USER }} ${{ secrets.SYDE_COMPOSER_PASSWORD }}
+      - name: Install Composer dependencies
+        uses: ramsey/composer-install@v3
+        with:
+          working-directory: "./tests/inc/inpsyde"
+        env:
+          COMPOSER_AUTH: '{ "http-basic": { "repo.packagist.com": { "username": "${{ secrets.SYDE_COMPOSER_USER }}", "password": "${{ secrets.SYDE_COMPOSER_PASSWORD }}" }}}'
 
       - name: Install Environment
         working-directory: ./tests/qa
