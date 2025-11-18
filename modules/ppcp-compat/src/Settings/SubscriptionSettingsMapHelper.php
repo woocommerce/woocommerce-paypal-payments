@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
@@ -70,7 +71,7 @@ class SubscriptionSettingsMapHelper {
 			return null;
 		}
 
-		$vaulting                = $settings_model['save_paypal_and_venmo'] ?? false;
+		$vaulting                = $settings_model[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] ?? false;
 		$subscription_mode_value = $vaulting ? self::OLD_SETTINGS_SUBSCRIPTION_MODE_VALUE_VAULTING : self::OLD_SETTINGS_SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
 
 		/**

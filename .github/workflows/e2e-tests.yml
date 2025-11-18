@@ -3,7 +3,7 @@ name: E2E Tests
 on:
   workflow_dispatch:
     inputs:
-      update-workflows:
+      update-snapshots:
         description: 'Weather generate new snapshots'
         type: boolean
         default: false
@@ -66,11 +66,12 @@ jobs:
           echo "@inpsyde:registry=https://npm.pkg.github.com" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_SYDE }}" >> .npmrc
 
+      - name: Configure Composer auth
+        run: composer config --global --auth http-basic.packagist.inpsyde.com ${{ secrets.SYDE_COMPOSER_USER }} ${{ secrets.SYDE_COMPOSER_PASSWORD }}
+
       - name: Install Environment
         working-directory: ./tests/qa
         run: npm run setup:env
-        env:
-          COMPOSER_AUTH: '${{ secrets.COMPOSER_AUTH_SYDE }}'
 
       - name: Install WP release candidate (optional)
         if: github.event.inputs.wp-rc-version != ''
@@ -102,14 +103,14 @@ jobs:
       - name: Run E2E tests
         working-directory: ./tests/qa
         run: |
-          if [ "${{ github.event.inputs.update_snapshots }}" == "true" ]; then
+          if [ "${{ github.event.inputs.update-snapshots }}" == "true" ]; then
             npm run tests:${{ github.event.inputs.test-suite }} -- --update-snapshots
           else
             npm run tests:${{ github.event.inputs.test-suite }}
           fi
 
       - name: Archive updated snapshots
-        if: github.event.inputs.update_snapshots == 'true'
+        if: github.event.inputs.update-snapshots == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: snapshots

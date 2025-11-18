@@ -7,7 +7,7 @@
 
 // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -70,6 +71,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\InstallmentsProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -234,20 +236,23 @@ return array(
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
-		$settings       = $container->get( 'wcgateway.settings' );
-		$settings_status = $container->get( 'wcgateway.settings.status' );
+		$settings            = $container->get( 'wcgateway.settings' );
+		$settings_status     = $container->get( 'wcgateway.settings.status' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-		$context = $container->get( 'button.helper.context' );
+		$context             = $container->get( 'button.helper.context' );
+
 		return new DisableGateways( $settings, $settings_status, $subscription_helper, $context );
 	},
 
 	'wcgateway.is-wc-settings-page'                        => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+
 		return 'wc-settings' === $page;
 	},
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
 		$is_wc_settings_page = $container->get( 'wcgateway.is-wc-settings-page' );
-		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
+		$tab                 = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
+
 		return $is_wc_settings_page && 'checkout' === $tab;
 	},
 	'wcgateway.is-wc-gateways-list-page'                   => static function ( ContainerInterface $container ): bool {
@@ -260,6 +265,7 @@ return array(
 		}
 
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+
 		return in_array(
 			$section,
 			array(
@@ -306,7 +312,7 @@ return array(
 			return '';
 		}
 
-		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+		$section  = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
 		$ppcp_tab = isset( $_GET[ SectionsRenderer::KEY ] ) ? sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) : '';
 
 		$is_connected = $container->get( 'settings.flag.is-connected' );
@@ -368,6 +374,7 @@ return array(
 	},
 	'wcgateway.store-country'                              => static function (): string {
 		$location = wc_get_base_location();
+
 		return $location['country'];
 	},
 	'wcgateway.send-only-message'                          => static function () {
@@ -456,8 +463,9 @@ return array(
 		);
 	},
 	'wcgateway.is-send-only-country'                       => static function ( ContainerInterface $container ) {
-		$store_country = $container->get( 'wcgateway.store-country' );
+		$store_country       = $container->get( 'wcgateway.store-country' );
 		$send_only_countries = $container->get( 'wcgateway.send-only-countries' );
+
 		return in_array( $store_country, $send_only_countries, true );
 	},
 	'wcgateway.notice.send-only-country'                   => static function ( ContainerInterface $container ) {
@@ -479,7 +487,7 @@ return array(
 			$settings = $container->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
 
-			$axo_available = $container->has( 'axo.available' ) && $container->get( 'axo.available' );
+			$axo_available     = $container->has( 'axo.available' ) && $container->get( 'axo.available' );
 			$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
 			assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
@@ -492,7 +500,7 @@ return array(
 			}
 
 			$checkout_page_link = esc_url( get_edit_post_link( wc_get_page_id( 'checkout' ) ) ?? '' );
-			$instructions_link = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
+			$instructions_link  = 'https://woocommerce.com/document/cart-checkout-blocks-status/#using-the-cart-and-checkout-blocks';
 
 			$notice_content = sprintf(
 			/* translators: %1$s: URL to the Checkout edit page. %2$s: URL to the WooCommerce Checkout instructions. */
@@ -523,7 +531,8 @@ return array(
 		);
 	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
-		$settings      = $container->get( 'wcgateway.settings' );
+		$settings = $container->get( 'wcgateway.settings' );
+
 		return new SettingsStatus( $settings );
 	},
 	'wcgateway.settings.render'                            => static function ( ContainerInterface $container ): SettingsRenderer {
@@ -564,16 +573,17 @@ return array(
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
 
-		$session_handler              = $container->get( 'session.handler' );
-		$order_endpoint               = $container->get( 'api.endpoint.order' );
-		$order_factory                = $container->get( 'api.factory.order' );
-		$threed_secure                = $container->get( 'button.helper.three-d-secure' );
+		$session_handler               = $container->get( 'session.handler' );
+		$order_endpoint                = $container->get( 'api.endpoint.order' );
+		$order_factory                 = $container->get( 'api.factory.order' );
+		$threed_secure                 = $container->get( 'button.helper.three-d-secure' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'settings.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
-		$order_helper = $container->get( 'api.order-helper' );
+		$subscription_helper           = $container->get( 'wc-subscriptions.helper' );
+		$order_helper                  = $container->get( 'api.order-helper' );
+
 		return new OrderProcessor(
 			$session_handler,
 			$order_endpoint,
@@ -601,13 +611,14 @@ return array(
 		);
 	},
 	'wcgateway.processor.authorized-payments'              => static function ( ContainerInterface $container ): AuthorizedPaymentsProcessor {
-		$order_endpoint    = $container->get( 'api.endpoint.order' );
-		$payments_endpoint = $container->get( 'api.endpoint.payments' );
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		$order_endpoint      = $container->get( 'api.endpoint.order' );
+		$payments_endpoint   = $container->get( 'api.endpoint.payments' );
+		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
 		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$amount_factory      = $container->get( 'api.factory.amount' );
+
 		return new AuthorizedPaymentsProcessor(
 			$order_endpoint,
 			$payments_endpoint,
@@ -620,18 +631,22 @@ return array(
 	},
 	'wcgateway.admin.render-authorize-action'              => static function ( ContainerInterface $container ): RenderAuthorizeAction {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+
 		return new RenderAuthorizeAction( $column );
 	},
 	'wcgateway.admin.render-reauthorize-action'            => static function ( ContainerInterface $container ): RenderReauthorizeAction {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+
 		return new RenderReauthorizeAction( $column );
 	},
 	'wcgateway.admin.order-payment-status'                 => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+
 		return new PaymentStatusOrderDetail( $column );
 	},
 	'wcgateway.admin.orders-payment-status-column'         => static function ( ContainerInterface $container ): OrderTablePaymentStatusColumn {
 		$settings = $container->get( 'wcgateway.settings' );
+
 		return new OrderTablePaymentStatusColumn( $settings );
 	},
 	'wcgateway.admin.fees-renderer'                        => static function ( ContainerInterface $container ): FeesRenderer {
@@ -710,7 +725,7 @@ return array(
 		$dcc_configuration = $container->get( 'wcgateway.configuration.card-configuration' );
 		assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
-		$fields              = array(
+		$fields = array(
 			'checkout_settings_heading'       => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
@@ -910,7 +925,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'alternative_payment_methods'     => array(
+			FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS => array(
 				'heading'      => __( 'Alternative Payment Methods', 'woocommerce-paypal-payments' ),
 				'description'  => sprintf(
 				// translators: %1$s, %2$s, %3$s and %4$s are a link tags.
@@ -1236,7 +1251,7 @@ return array(
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
 				'label'        => sprintf(
-					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+									// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__( 'Securely store your customers’ PayPal accounts for a seamless checkout experience. Payment methods are saved in the secure %1$sPayPal Vault%2$s.', 'woocommerce-paypal-payments' ),
 					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
 					'</a>'
@@ -1286,8 +1301,8 @@ return array(
 		 * Depending on your store location, some credit cards can't be used.
 		 * Here, we filter them out.
 		 */
-		$card_options = $fields['disable_cards']['options'];
-		$card_icons = $fields['card_icons']['options'];
+		$card_options  = $fields['disable_cards']['options'];
+		$card_icons    = $fields['card_icons']['options'];
 		$dark_versions = array();
 		foreach ( $card_options as $card => $label ) {
 			if ( $dcc_applies->can_process_card( $card ) ) {
@@ -1303,7 +1318,7 @@ return array(
 		}
 
 		$fields['disable_cards']['options'] = $card_options;
-		$fields['card_icons']['options'] = array_merge( $dark_versions, $card_options );
+		$fields['card_icons']['options']    = array_merge( $dark_versions, $card_options );
 
 		if ( $container->get( 'api.shop.country' ) !== 'MX' ) {
 			unset( $fields['mexico_installments'] );
@@ -1373,6 +1388,7 @@ return array(
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ): ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );
+
 		return new ReturnUrlEndpoint(
 			$gateway,
 			$endpoint,
@@ -1402,6 +1418,7 @@ return array(
 		if ( $settings->has( 'soft_descriptor' ) ) {
 			return $settings->get( 'soft_descriptor' );
 		}
+
 		return '';
 	},
 
@@ -1426,6 +1443,7 @@ return array(
 
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
+
 		return new DCCProductStatus(
 			$settings,
 			$partner_endpoint,
@@ -1437,8 +1455,9 @@ return array(
 	},
 
 	'wcgateway.helper.refund-fees-updater'                 => static function ( ContainerInterface $container ): RefundFeesUpdater {
-		$order_endpoint    = $container->get( 'api.endpoint.order' );
-		$logger            = $container->get( 'woocommerce.logger.woocommerce' );
+		$order_endpoint = $container->get( 'api.endpoint.order' );
+		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
+
 		return new RefundFeesUpdater( $order_endpoint, $logger );
 	},
 	'wcgateway.helper.fees-updater'                        => static function ( ContainerInterface $container ): FeesUpdater {
@@ -1500,6 +1519,7 @@ return array(
 	},
 	'wcgateway.fraudnet'                                   => static function ( ContainerInterface $container ): FraudNet {
 		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
+
 		return new FraudNet(
 			(string) $source_website_id()
 		);
@@ -1524,6 +1544,15 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'installments.status-cache' ),
+			$container->get( 'settings.flag.is-connected' ),
+			$container->get( 'api.helper.failure-registry' )
+		);
+	},
+	'wcgateway.pwc-product-status'                         => static function ( ContainerInterface $container ): PWCProductStatus {
+		return new PWCProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'pwc.status-cache' ),
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'api.helper.failure-registry' )
 		);
@@ -1616,6 +1645,7 @@ return array(
 	'wcgateway.helper.vaulting-scope'                      => static function ( ContainerInterface $container ): bool {
 		try {
 			$token = $container->get( 'api.bearer' )->bearer();
+
 			return $token->vaulting_available();
 		} catch ( RuntimeException $exception ) {
 			return false;
@@ -1626,7 +1656,7 @@ return array(
 		$vaulting_label = '';
 		if ( ! $container->get( 'wcgateway.helper.vaulting-scope' ) ) {
 			$vaulting_label .= sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__( ' To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
 				'<a
 					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
@@ -1682,8 +1712,8 @@ return array(
 		return apply_filters(
 			'woocommerce_paypal_payments_enable_standard_card_button_gateway_settings',
 			$settings->has( 'allow_card_button_gateway' ) ?
-			(bool) $settings->get( 'allow_card_button_gateway' ) :
-			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' )
+				(bool) $settings->get( 'allow_card_button_gateway' ) :
+				$container->get( 'wcgateway.settings.allow_card_button_gateway.default' )
 		);
 	},
 	'wcgateway.settings.has_enabled_separate_button_gateways' => static function ( ContainerInterface $container ): bool {
@@ -1701,7 +1731,7 @@ return array(
 	},
 	'wcgateway.settings.fraudnet-label'                    => static function ( ContainerInterface $container ): string {
 		$label = sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__( 'Manage online risk with %1$sFraudNet%2$s.', 'woocommerce-paypal-payments' ),
 			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#fraudnet" target="_blank">',
 			'</a>'
@@ -1851,6 +1881,9 @@ return array(
 	'installments.status-cache'                            => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-installments-status-cache' );
 	},
+	'pwc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-pwc-status-cache' );
+	},
 	'dcc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-dcc-status-cache' );
 	},
@@ -1865,6 +1898,7 @@ return array(
 	'wcgateway.button.default-locations'                   => static function ( ContainerInterface $container ): array {
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 		unset( $button_locations['mini-cart'] );
+
 		return array_keys( $button_locations );
 	},
 	'wcgateway.button.recommended-styling-notice'          => static function ( ContainerInterface $container ): string {
@@ -1888,6 +1922,7 @@ return array(
 	'wcgateway.settings.pay-later.messaging-locations'     => static function ( ContainerInterface $container ): array {
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 		unset( $button_locations['mini-cart'] );
+
 		return array_merge(
 			$button_locations,
 			array(
@@ -1899,6 +1934,7 @@ return array(
 	'wcgateway.settings.pay-later.default-messaging-locations' => static function ( ContainerInterface $container ): array {
 		$locations = $container->get( 'wcgateway.settings.pay-later.messaging-locations' );
 		unset( $locations['home'] );
+
 		return array_keys( $locations );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function ( ContainerInterface $container ): array {
@@ -1930,11 +1966,11 @@ return array(
 		);
 	},
 	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
-		$settings      = $container->get( 'wcgateway.settings' );
+		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
 		if ( apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
 			getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
 		) ) {
@@ -1964,6 +2000,7 @@ return array(
 	'wcgateway.display-manager'                            => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): DisplayManager {
 			$settings = $container->get( 'wcgateway.settings' );
+
 			return new DisplayManager( $settings );
 		}
 	),
@@ -2037,7 +2074,7 @@ return array(
 	},
 
 	'wcgateway.settings.wc-tasks.pay-later-task-config'    => static function ( ContainerInterface $container ): array {
-		$section_id = PayPalGateway::ID;
+		$section_id       = PayPalGateway::ID;
 		$pay_later_tab_id = Settings::PAY_LATER_TAB_ID;
 
 		if ( $container->has( 'paylater-configurator.is-available' ) && $container->get( 'paylater-configurator.is-available' ) ) {
@@ -2055,7 +2092,7 @@ return array(
 	},
 
 	'wcgateway.settings.wc-tasks.connect-task-config'      => static function ( ContainerInterface $container ): array {
-		$is_connected = $container->get( 'settings.flag.is-connected' );
+		$is_connected                 = $container->get( 'settings.flag.is-connected' );
 		$is_current_country_send_only = $container->get( 'wcgateway.is-send-only-country' );
 
 		if ( ! $is_connected && ! $is_current_country_send_only ) {
@@ -2091,9 +2128,9 @@ return array(
 		return array(
 			array(
 				'id'           => 'ppcp-working-capital-task',
-				'title'        => __( 'Start your PayPal Working Capital application', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Hey, you are eligible for credit. Click here to learn more and sign up', 'woocommerce-paypal-payments' ),
-				'redirect_url' => 'http://example.com/',
+				'title'        => __( 'Fuel your business growth with a PayPal Working Capital loan. Check eligibility', 'woocommerce-paypal-payments' ),
+				'description'  => '',
+				'redirect_url' => 'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
 			),
 		);
 	},
@@ -2117,12 +2154,12 @@ return array(
 	 * }>
 	 */
 	'wcgateway.settings.wc-tasks.simple-redirect-tasks-config' => static function ( ContainerInterface $container ): array {
-		$list_of_config = array();
+		$list_of_config       = array();
 		$task_config_services = $container->get( 'wcgateway.settings.wc-tasks.task-config-services' );
 
 		foreach ( $task_config_services as $service_id ) {
 			if ( $container->has( $service_id ) ) {
-				$task_config = $container->get( $service_id );
+				$task_config    = $container->get( $service_id );
 				$list_of_config = array_merge( $list_of_config, $task_config );
 			}
 		}
@@ -2143,10 +2180,10 @@ return array(
 		$simple_redirect_tasks = array();
 
 		foreach ( $simple_redirect_tasks_config as $config ) {
-			$id = $config['id'] ?? '';
-			$title = $config['title'] ?? '';
-			$description = $config['description'] ?? '';
-			$redirect_url = $config['redirect_url'] ?? '';
+			$id                      = $config['id'] ?? '';
+			$title                   = $config['title'] ?? '';
+			$description             = $config['description'] ?? '';
+			$redirect_url            = $config['redirect_url'] ?? '';
 			$simple_redirect_tasks[] = $simple_redirect_task_factory->create_task( $id, $title, $description, $redirect_url );
 		}
 
@@ -2201,15 +2238,15 @@ return array(
 		return array(
 			$inbox_note_factory->create_note(
 				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
-				__( 'Fast funds with payments that flex with your PayPal sales The PayPal Working Capital business loan is primarily based on your PayPal account history. Apply for $1,000-$200,000 (and up to $300,000 for repeat borrowers) with no credit check.† If approved, loans are funded in minutes.', 'woocommerce-paypal-payments' ),
+				__( 'Business loans from $1k to $230k for first-time borrowers. Looking to fuel your business growth? With a PayPal Working Capital loan, approved loans are funded in minutes and repaid as a share of your sales. Minimum payment required every 90 days. The lender for PayPal Working Capital is WebBank.', 'woocommerce-paypal-payments' ),
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
 				$is_working_capital_feature_flag_enabled && $container->get( 'api.shop.country' ) === 'US' && $stay_updated,
 				new InboxNoteAction(
-					'apply_now',
-					__( 'Apply now', 'woocommerce-paypal-payments' ),
-					'http://example.com/',
+					'learn_more',
+					__( 'Learn More', 'woocommerce-paypal-payments' ),
+					'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
 				)
@@ -2255,7 +2292,7 @@ return array(
 
 	'wcgateway.contact-module.eligibility.check'           => static function ( ContainerInterface $container ): callable {
 		$feature_enabled = (bool) apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
 			'woocommerce.feature-flags.woocommerce_paypal_payments.contact_module_enabled',
 			getenv( 'PCP_CONTACT_MODULE_ENABLED' ) !== '0'
 		);
@@ -2293,11 +2330,11 @@ return array(
 	 */
 	'wcgateway.feature-eligibility.list'                   => static function ( ContainerInterface $container ): array {
 		return array(
-			MerchantDetails::FEATURE_SAVE_PAYPAL_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),
-			MerchantDetails::FEATURE_ADVANCED_CARD_PROCESSING => $container->get( 'card-fields.eligibility.check' ),
-			MerchantDetails::FEATURE_GOOGLE_PAY        => $container->get( 'googlepay.eligibility.check' ),
-			MerchantDetails::FEATURE_APPLE_PAY         => $container->get( 'applepay.eligibility.check' ),
-			MerchantDetails::FEATURE_CONTACT_MODULE    => $container->get( 'wcgateway.contact-module.eligibility.check' ),
+			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => $container->get( 'save-payment-methods.eligibility.check' ),
+			FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => $container->get( 'card-fields.eligibility.check' ),
+			FeaturesDefinition::FEATURE_GOOGLE_PAY     => $container->get( 'googlepay.eligibility.check' ),
+			FeaturesDefinition::FEATURE_APPLE_PAY      => $container->get( 'applepay.eligibility.check' ),
+			FeaturesDefinition::FEATURE_CONTACT_MODULE => $container->get( 'wcgateway.contact-module.eligibility.check' ),
 		);
 	},
 
@@ -2318,7 +2355,7 @@ return array(
 	 */
 	'wcgateway.settings.invoice-prefix-random'             => static function ( ContainerInterface $container ): string {
 		$characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$prefix = '';
+		$prefix     = '';
 		for ( $i = 0; $i < 6; $i++ ) {
 			$prefix .= $characters[ wp_rand( 0, strlen( $characters ) - 1 ) ];
 		}
@@ -2379,11 +2416,11 @@ return array(
 		$webhooks_working = ! $last_webhook_storage->is_empty();
 
 		$enabled = getenv( 'PCP_SERVER_SIDE_SHIPPING_CALLBACK_ENABLED' ) !== '0'
-			&& ! $has_plain_permalinks
-			&& $webhooks_working;
+					&& ! $has_plain_permalinks
+					&& $webhooks_working;
 
 		return apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.server_side_shipping_callback_enabled',
 			$enabled
 		);
@@ -2391,7 +2428,7 @@ return array(
 
 	'wcgateway.appswitch-enabled'                          => static function ( ContainerInterface $container ): bool {
 		return apply_filters(
-			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.appswitch_enabled',
 			getenv( 'PCP_APPSWITCH_ENABLED' ) !== '0'
 		);

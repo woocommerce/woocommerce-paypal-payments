@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Tests\Integration\Transaction_tests;
+namespace WooCommerce\PayPalCommerce\Tests\Integration\Transaction;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;

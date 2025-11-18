@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\Settings\Data\Definition
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data\Definition;
 
@@ -21,6 +21,53 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
  */
 class FeaturesDefinition {
 
+
+	/**
+	 * Save tokenized PayPal and Venmo payment details, required for subscriptions and saving
+	 * payment methods in user account.
+	 */
+	public const FEATURE_SAVE_PAYPAL_AND_VENMO = 'save_paypal_and_venmo';
+
+	/**
+	 * Allow to pay in installments.
+	 */
+	public const FEATURE_INSTALLMENTS = 'installments';
+
+	/**
+	 * Allow customers to buy now and pay later with PayPal
+	 */
+	public const FEATURE_PAY_LATER_MESSAGING = 'pay_later_messaging';
+
+	/**
+	 * Whether Apple Pay can be used by the merchant. Apple Pay requires an Apple device (like
+	 * iPhone) to be used by customers.
+	 */
+	public const FEATURE_APPLE_PAY = 'apple_pay';
+
+	/**
+	 * Merchant eligibility to use Google Pay.
+	 */
+	public const FEATURE_GOOGLE_PAY = 'google_pay';
+
+	/**
+	 * Advanced card processing eligibility. Required for credit- and debit-card processing.
+	 */
+	public const FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS = 'advanced_credit_and_debit_cards';
+
+	/**
+	 * Whether alternative payment methods are supported.
+	 */
+	public const FEATURE_ALTERNATIVE_PAYMENT_METHODS = 'alternative_payment_methods';
+
+	/**
+	 * Contact module allows the merchant to unlock the "Custom Shipping Contact" toggle.
+	 */
+	public const FEATURE_CONTACT_MODULE = 'contact_module';
+
+	/**
+	 * Whether Pay With Crypto Feature is supported.
+	 */
+	public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
 
 	/**
 	 * The features eligibility service.
@@ -84,6 +131,7 @@ class FeaturesDefinition {
 				$eligible_features[ $feature_key ] = $feature;
 			}
 		}
+
 		return $eligible_features;
 	}
 
@@ -93,7 +141,7 @@ class FeaturesDefinition {
 	 * @return array[] The array of all available features.
 	 */
 	public function all_available_features(): array {
-		$paylater_countries    = array(
+		$paylater_documentation_supported_countries = array(
 			'UK',
 			'ES',
 			'IT',
@@ -102,15 +150,16 @@ class FeaturesDefinition {
 			'DE',
 			'AU',
 		);
-		$store_country         = $this->settings->get_woo_settings()['country'];
-		$country_location      = in_array( $store_country, $paylater_countries, true ) ? strtolower( $store_country ) : 'us';
-		$save_paypal_and_venmo = $this->plugin_settings->get_save_paypal_and_venmo();
 
-		return array(
-			'save_paypal_and_venmo'           => array(
+		$store_country                  = $this->settings->get_woo_settings()['country'];
+		$paylater_docs_country_location = in_array( $store_country, $paylater_documentation_supported_countries, true ) ? strtolower( $store_country ) : 'us';
+		$save_paypal_and_venmo          = $this->plugin_settings->get_save_paypal_and_venmo();
+
+		$feature_items = array(
+			self::FEATURE_SAVE_PAYPAL_AND_VENMO           => array(
 				'title'       => __( 'Save PayPal and Venmo', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Securely save PayPal and Venmo payment methods for subscriptions or return buyers.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['save_paypal'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_SAVE_PAYPAL_AND_VENMO ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -141,10 +190,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'advanced_credit_and_debit_cards' => array(
+			self::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS => array(
 				'title'       => __( 'Advanced Credit and Debit Cards', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Process major credit and debit cards including Visa, Mastercard, American Express and Discover.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['acdc'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -176,10 +225,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'alternative_payment_methods'     => array(
+			self::FEATURE_ALTERNATIVE_PAYMENT_METHODS     => array(
 				'title'       => __( 'Alternative Payment Methods', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Offer global, country-specific payment options for your customers.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['apm'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_ALTERNATIVE_PAYMENT_METHODS ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -208,10 +257,10 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'google_pay'                      => array(
+			self::FEATURE_GOOGLE_PAY                      => array(
 				'title'       => __( 'Google Pay', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Let customers pay using their Google Pay wallet.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['google_pay'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_GOOGLE_PAY ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -246,10 +295,10 @@ class FeaturesDefinition {
 					__( '¹PayPal Q2 Earnings-2021.', 'woocommerce-paypal-payments' ),
 				),
 			),
-			'apple_pay'                       => array(
+			self::FEATURE_APPLE_PAY                       => array(
 				'title'       => __( 'Apple Pay', 'woocommerce-paypal-payments' ),
 				'description' => __( 'Let customers pay using their Apple Pay wallet.', 'woocommerce-paypal-payments' ),
-				'enabled'     => $this->merchant_capabilities['apple_pay'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_APPLE_PAY ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -291,13 +340,13 @@ class FeaturesDefinition {
 					),
 				),
 			),
-			'pay_later'                       => array(
+			self::FEATURE_PAY_LATER_MESSAGING             => array(
 				'title'       => __( 'Pay Later Messaging', 'woocommerce-paypal-payments' ),
 				'description' => __(
 					'Let customers know they can buy now and pay later with PayPal. Adding this messaging can boost conversion rates and increase cart sizes by 39%¹, with no extra cost to you—plus, you get paid up front.',
 					'woocommerce-paypal-payments'
 				),
-				'enabled'     => $this->merchant_capabilities['pay_later'] && ! $save_paypal_and_venmo,
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_LATER_MESSAGING ] && ! $save_paypal_and_venmo,
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -312,12 +361,12 @@ class FeaturesDefinition {
 					array(
 						'type'  => 'tertiary',
 						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
-						'url'   => "https://www.paypal.com/$country_location/business/accept-payments/checkout/installments",
+						'url'   => "https://www.paypal.com/$paylater_docs_country_location/business/accept-payments/checkout/installments",
 						'class' => 'small-button',
 					),
 				),
 			),
-			'installments'                    => array(
+			self::FEATURE_INSTALLMENTS                    => array(
 				'title'       => __( 'Installments', 'woocommerce-paypal-payments' ),
 				'description' =>
 					__( 'Allow your customers to pay in installments without interest while you receive the full payment.*', 'woocommerce-paypal-payments' ) .
@@ -327,7 +376,7 @@ class FeaturesDefinition {
 						__( '*You will receive the full payment minus the applicable PayPal fee. See %s.', 'woocommerce-paypal-payments' ),
 						'<a href="https://www.paypal.com/mx/webapps/mpp/merchant-fees">' . __( 'terms and conditions', 'woocommerce-paypal-payments' ) . '</a>'
 					) . '</p>',
-				'enabled'     => $this->merchant_capabilities['installments'],
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_INSTALLMENTS ],
 				'buttons'     => array(
 					array(
 						'type'     => 'secondary',
@@ -345,6 +394,42 @@ class FeaturesDefinition {
 					),
 				),
 			),
+			self::FEATURE_PAY_WITH_CRYPTO                 => array(
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pay-with-crypto',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
 		);
+
+		return apply_filters( 'woocommerce_paypal_payments_features_list', $feature_items );
 	}
 }

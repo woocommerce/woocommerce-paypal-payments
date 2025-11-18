@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -244,7 +245,7 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$google_pay_enabled = $product_status->is_active();
 
-				$features['google_pay'] = array(
+				$features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] = array(
 					'enabled' => $google_pay_enabled,
 				);
 

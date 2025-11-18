@@ -7,6 +7,7 @@ import { loadCustomScript } from '@paypal/paypal-js';
 import CheckoutHandler from './Context/CheckoutHandler';
 import ApplePayManager from './ApplepayManager';
 import ApplePayManagerBlockEditor from './ApplepayManagerBlockEditor';
+import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;
@@ -46,6 +47,38 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 				console.error( 'Failed to load PayPal script: ', error );
 			} );
 	}, [ isEditing ] );
+
+	useEffect( () => {
+		if ( isEditing || ! manager || ! wp.data?.subscribe ) {
+			return;
+		}
+
+		let timeoutId = null;
+
+		const checkAddressChange = () => {
+			const store = wp.data.select( 'wc/store/cart' );
+			if ( ! store ) {
+				return;
+			}
+
+			timeoutId = setTimeout( () => {
+				manager.buttons.forEach( ( button ) => button.addButton() );
+			}, 1000 );
+		};
+
+		const unsubscribe = wp.data.subscribe(
+			debounce( checkAddressChange, 300 )
+		);
+
+		return () => {
+			if ( timeoutId ) {
+				clearTimeout( timeoutId );
+			}
+			if ( unsubscribe ) {
+				unsubscribe();
+			}
+		};
+	}, [ isEditing, manager ] );
 
 	useEffect( () => {
 		if ( isEditing || ! paypalLoaded || ! applePayLoaded || manager ) {
