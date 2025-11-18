@@ -20,41 +20,18 @@ class MerchantMetadataProviderTest extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->general_settings = Mockery::mock( GeneralSettings::class );
+		$this->general_settings = $this->createStub( GeneralSettings::class );
 		$this->testee           = new MerchantMetadataProvider( $this->general_settings );
 	}
 
-	public function test_get_metadata_returns_complete_merchant_metadata(): void {
-		$merchant_connection = new MerchantConnectionDTO(
-			true,
-			'API_USER123',
-			'API_KEY123',
-			'MERCHANT123',
-			'test@example.com',
-			'CA'
-		);
-
-		$this->general_settings->allows( 'get_merchant_data' )
-			->andReturn( $merchant_connection );
-		$this->general_settings->allows( 'is_merchant_connected' )
-			->andReturn( true );
-
-		when( 'get_bloginfo' )->justReturn( 'Test Store' );
-		when( 'get_site_url' )->justReturn( 'https://example.com' );
-		when( 'untrailingslashit' )->returnArg();
-		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-
-		$wc_countries = Mockery::mock( 'overload:WC_Countries' );
-		$wc_countries->allows( 'get_base_country' )->andReturn( 'US' );
-
-		when( 'WC' )->alias(
-			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
-				$wc->countries = $wc_countries;
-
-				return $wc;
-			}
-		);
+	/**
+	 * GIVEN a connected merchant with complete store information
+	 * WHEN metadata is requested
+	 * THEN all merchant and store metadata is populated correctly
+	 */
+	public function test_get_metadata_returns_complete_merchant_metadata_when_merchant_connected(): void {
+		$this->setup_connected_merchant( 'CA' );
+		$this->setup_store_metadata( 'Test Store', 'https://example.com', 'USD', 'US' );
 
 		$metadata = $this->testee->get_metadata();
 
@@ -68,32 +45,169 @@ class MerchantMetadataProviderTest extends TestCase {
 		$this->assertSame( 'CA', $metadata->merchant_country );
 	}
 
-	public function test_canonical_url_removes_trailing_slash(): void {
+	/**
+	 * GIVEN a merchant that is not connected to PayPal
+	 * WHEN metadata is requested
+	 * THEN store metadata is populated, but PayPal merchant ID is empty
+	 */
+	public function test_get_metadata_returns_empty_merchant_id_when_merchant_not_connected(): void {
+		$this->setup_disconnected_merchant( 'US' );
+		$this->setup_store_metadata( 'Disconnected Store', 'https://disconnected.com', 'EUR', 'DE' );
+
+		$metadata = $this->testee->get_metadata();
+
+		$this->assertSame( 'Disconnected Store', $metadata->store_name );
+		$this->assertSame( '', $metadata->paypal_merchant_id );
+		$this->assertSame( 'DE', $metadata->store_country );
+		$this->assertSame( 'EUR', $metadata->currency );
+		$this->assertSame( 'US', $metadata->merchant_country );
+	}
+
+	/**
+	 * GIVEN a site URL with a trailing slash
+	 * WHEN metadata is requested
+	 * THEN the trailing slash is removed from store_url and catalog_url to create canonical URLs
+	 * AND both URLs are identical
+	 *
+	 * @dataProvider trailing_slash_provider
+	 */
+	public function test_get_metadata_normalizes_urls_by_removing_trailing_slash(
+		string $site_url,
+		string $expected_url
+	): void {
+		$this->setup_connected_merchant( 'US' );
+		$this->setup_store_metadata( 'Store', $site_url, 'USD', 'US' );
+
+		$metadata = $this->testee->get_metadata();
+
+		$this->assertSame( $expected_url, $metadata->store_url );
+		$this->assertSame( $expected_url, $metadata->catalog_url );
+		$this->assertSame( $metadata->store_url, $metadata->catalog_url, 'store_url and catalog_url must be identical' );
+	}
+
+	public function trailing_slash_provider(): array {
+		return [
+			'url with trailing slash' => [
+				'site_url'     => 'https://example.com/',
+				'expected_url' => 'https://example.com',
+			],
+			'url without trailing slash' => [
+				'site_url'     => 'https://example.com',
+				'expected_url' => 'https://example.com',
+			],
+			'url with multiple trailing slashes' => [
+				'site_url'     => 'https://example.com///',
+				'expected_url' => 'https://example.com',
+			],
+		];
+	}
+
+	/**
+	 * GIVEN merchants from different countries with different store configurations
+	 * WHEN metadata is requested
+	 * THEN the correct country codes and currencies are populated
+	 * AND merchant_country differs from store_country when PayPal account is in a different country
+	 *
+	 * @dataProvider merchant_configuration_provider
+	 */
+	public function test_get_metadata_handles_different_merchant_and_store_countries(
+		string $merchant_country,
+		string $store_country,
+		string $currency
+	): void {
+		$this->setup_connected_merchant( $merchant_country );
+		$this->setup_store_metadata( 'Global Store', 'https://store.example', $currency, $store_country );
+
+		$metadata = $this->testee->get_metadata();
+
+		$this->assertSame( $merchant_country, $metadata->merchant_country );
+		$this->assertSame( $store_country, $metadata->store_country );
+		$this->assertSame( $currency, $metadata->currency );
+	}
+
+	public function merchant_configuration_provider(): array {
+		return [
+			'US merchant with Canadian store' => [
+				'merchant_country' => 'US',
+				'store_country'    => 'CA',
+				'currency'         => 'CAD',
+			],
+			'Canadian merchant with US store' => [
+				'merchant_country' => 'CA',
+				'store_country'    => 'US',
+				'currency'         => 'USD',
+			],
+			'UK merchant with UK store' => [
+				'merchant_country' => 'GB',
+				'store_country'    => 'GB',
+				'currency'         => 'GBP',
+			],
+			'German merchant with EU store' => [
+				'merchant_country' => 'DE',
+				'store_country'    => 'DE',
+				'currency'         => 'EUR',
+			],
+		];
+	}
+
+	/**
+	 * Sets up a connected merchant with the given country.
+	 */
+	private function setup_connected_merchant( string $merchant_country ): void {
 		$merchant_connection = new MerchantConnectionDTO(
 			true,
 			'API_USER123',
 			'API_KEY123',
 			'MERCHANT123',
 			'test@example.com',
-			'US'
+			$merchant_country
 		);
 
-		$this->general_settings->allows( 'get_merchant_data' )
-			->andReturn( $merchant_connection );
-		$this->general_settings->allows( 'is_merchant_connected' )
-			->andReturn( true );
+		$this->general_settings->method( 'get_merchant_data' )
+			->willReturn( $merchant_connection );
+		$this->general_settings->method( 'is_merchant_connected' )
+			->willReturn( true );
+	}
 
-		when( 'get_bloginfo' )->justReturn( 'Store' );
-		when( 'get_site_url' )->justReturn( 'https://example.com/' );
+	/**
+	 * Sets up a disconnected merchant with the given country.
+	 */
+	private function setup_disconnected_merchant( string $merchant_country ): void {
+		$merchant_connection = new MerchantConnectionDTO(
+			false,
+			'',
+			'',
+			'',
+			'',
+			$merchant_country
+		);
+
+		$this->general_settings->method( 'get_merchant_data' )
+			->willReturn( $merchant_connection );
+		$this->general_settings->method( 'is_merchant_connected' )
+			->willReturn( false );
+	}
+
+	/**
+	 * Sets up WordPress and WooCommerce store metadata.
+	 */
+	private function setup_store_metadata(
+		string $store_name,
+		string $site_url,
+		string $currency,
+		string $store_country
+	): void {
+		when( 'get_bloginfo' )->justReturn( $store_name );
+		when( 'get_site_url' )->justReturn( $site_url );
+		when( 'get_woocommerce_currency' )->justReturn( $currency );
 		when( 'untrailingslashit' )->alias(
 			function ( $url ) {
 				return rtrim( $url, '/' );
 			}
 		);
-		when( 'get_woocommerce_currency' )->justReturn( 'EUR' );
 
 		$wc_countries = Mockery::mock( 'overload:WC_Countries' );
-		$wc_countries->allows( 'get_base_country' )->andReturn( 'DE' );
+		$wc_countries->allows( 'get_base_country' )->andReturn( $store_country );
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
@@ -103,87 +217,5 @@ class MerchantMetadataProviderTest extends TestCase {
 				return $wc;
 			}
 		);
-
-		$metadata = $this->testee->get_metadata();
-
-		$this->assertSame( 'https://example.com', $metadata->store_url );
-		$this->assertSame( 'https://example.com', $metadata->catalog_url );
-	}
-
-	public function test_store_url_and_catalog_url_are_identical(): void {
-		$merchant_connection = new MerchantConnectionDTO(
-			true,
-			'API_USER123',
-			'API_KEY123',
-			'MERCHANT123',
-			'test@example.com',
-			'US'
-		);
-
-		$this->general_settings->allows( 'get_merchant_data' )
-			->andReturn( $merchant_connection );
-		$this->general_settings->allows( 'is_merchant_connected' )
-			->andReturn( true );
-
-		when( 'get_bloginfo' )->justReturn( 'My Store' );
-		when( 'get_site_url' )->justReturn( 'https://mystore.com' );
-		when( 'untrailingslashit' )->returnArg();
-		when( 'get_woocommerce_currency' )->justReturn( 'GBP' );
-
-		$wc_countries = Mockery::mock( 'overload:WC_Countries' );
-		$wc_countries->allows( 'get_base_country' )->andReturn( 'GB' );
-
-		when( 'WC' )->alias(
-			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
-				$wc->countries = $wc_countries;
-
-				return $wc;
-			}
-		);
-
-		$metadata = $this->testee->get_metadata();
-
-		$this->assertSame( $metadata->store_url, $metadata->catalog_url );
-	}
-
-	public function test_uses_wordpress_and_woocommerce_functions(): void {
-		$merchant_connection = new MerchantConnectionDTO(
-			true,
-			'API_USER123',
-			'API_KEY123',
-			'MERCHANT123',
-			'test@example.com',
-			'US'
-		);
-
-		$this->general_settings->allows( 'get_merchant_data' )
-			->andReturn( $merchant_connection );
-		$this->general_settings->allows( 'is_merchant_connected' )
-			->andReturn( true );
-
-		when( 'get_bloginfo' )->justReturn( 'WP Store' );
-		when( 'get_site_url' )->justReturn( 'https://wpstore.test' );
-		when( 'untrailingslashit' )->returnArg();
-		when( 'get_woocommerce_currency' )->justReturn( 'CAD' );
-
-		$wc_countries = Mockery::mock( 'overload:WC_Countries' );
-		$wc_countries->allows( 'get_base_country' )->andReturn( 'CA' );
-
-		when( 'WC' )->alias(
-			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
-				$wc->countries = $wc_countries;
-
-				return $wc;
-			}
-		);
-
-		$metadata = $this->testee->get_metadata();
-
-		$this->assertSame( 'WP Store', $metadata->store_name );
-		$this->assertSame( 'CAD', $metadata->currency );
-		$this->assertSame( 'CA', $metadata->store_country );
-		$this->assertSame( 'US', $metadata->merchant_country );
 	}
 }
