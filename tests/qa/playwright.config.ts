@@ -95,24 +95,12 @@ export default defineConfig< BaseExtend >( {
 			: {
 					mode: 'retain-on-failure', //'on',//
 					size: { width: 1280, height: 850 },
-			  },
+			},
 
-		recordVideoOptions: process.env.CI
-			? undefined
-			: {
-					mode: 'retain-on-failure',
-					size: { width: 1280, height: 850 },
-			  },
-
-		/**
-		 * For Kinsta, to clear cache
-		 */
-		// sshConfig: {
-		// 	login: process.env.SSH_LOGIN,
-		// 	host: process.env.SSH_HOST,
-		// 	port: process.env.SSH_PORT,
-		// 	path: process.env.SSH_PATH,
-		// },
+		recordVideoOptions: {
+			mode: 'retain-on-failure',
+			size: { width: 1280, height: 850 },
+		},
 	},
 
 	projects: [

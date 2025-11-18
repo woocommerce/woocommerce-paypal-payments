@@ -420,7 +420,7 @@ export class PayPalUi {
 	 * @param email
 	 */
 	provideFastlaneEmail = async ( email: string ) => {
-		await expect( this.fastlaneEmailInput() ).toBeVisible();
+		await expect( this.fastlaneEmailInput() ).toBeVisible( { timeout: 60_000 } );
 		await this.fastlaneEmailInput().fill( email );
 
 		await expect( this.fastlaneContinueButton() ).toBeVisible();
