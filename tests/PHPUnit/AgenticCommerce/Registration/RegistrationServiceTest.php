@@ -42,7 +42,8 @@ class RegistrationServiceTest extends TestCase {
 			'US',
 			'USD',
 			'MERCHANT123',
-			'https://example.com/catalog.json'
+			'https://example.com/catalog.json',
+			'US'
 		);
 
 		$this->metadata_provider->allows( 'get_metadata' )

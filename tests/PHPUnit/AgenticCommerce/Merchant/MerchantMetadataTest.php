@@ -16,26 +16,29 @@ class MerchantMetadataTest extends TestCase {
 	public function test_constructor_sets_all_properties(
 		string $store_name,
 		string $store_url,
-		string $country,
+		string $store_country,
 		string $currency,
 		string $paypal_merchant_id,
-		string $catalog_url
+		string $catalog_url,
+		string $merchant_country
 	): void {
 		$metadata = new MerchantMetadata(
 			$store_name,
 			$store_url,
-			$country,
+			$store_country,
 			$currency,
 			$paypal_merchant_id,
-			$catalog_url
+			$catalog_url,
+			$merchant_country
 		);
 
 		$this->assertSame( $store_name, $metadata->store_name );
 		$this->assertSame( $store_url, $metadata->store_url );
-		$this->assertSame( $country, $metadata->country );
+		$this->assertSame( $store_country, $metadata->store_country );
 		$this->assertSame( $currency, $metadata->currency );
 		$this->assertSame( $paypal_merchant_id, $metadata->paypal_merchant_id );
 		$this->assertSame( $catalog_url, $metadata->catalog_url );
+		$this->assertSame( $merchant_country, $metadata->merchant_country );
 	}
 
 	public function metadata_scenarios_provider(): array {
@@ -47,6 +50,7 @@ class MerchantMetadataTest extends TestCase {
 				'USD',
 				'MERCHANT123',
 				'https://example.com/catalog.json',
+				'US',
 			),
 			'uk_store'           => array(
 				'UK Shop',
@@ -55,8 +59,10 @@ class MerchantMetadataTest extends TestCase {
 				'GBP',
 				'MERCHANT456',
 				'https://shop.example.co.uk/feed',
+				'GB',
 			),
 			'minimal_data'       => array(
+				'',
 				'',
 				'',
 				'',
@@ -71,6 +77,7 @@ class MerchantMetadataTest extends TestCase {
 				'D',
 				'M',
 				'C',
+				'M',
 			),
 		);
 	}

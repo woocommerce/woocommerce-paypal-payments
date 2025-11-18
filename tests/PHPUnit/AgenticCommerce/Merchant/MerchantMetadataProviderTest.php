@@ -30,11 +30,14 @@ class MerchantMetadataProviderTest extends TestCase {
 			'API_USER123',
 			'API_KEY123',
 			'MERCHANT123',
-			'test@example.com'
+			'test@example.com',
+			'CA'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
 			->andReturn( $merchant_connection );
+		$this->general_settings->allows( 'is_merchant_connected' )
+			->andReturn( true );
 
 		when( 'get_bloginfo' )->justReturn( 'Test Store' );
 		when( 'get_site_url' )->justReturn( 'https://example.com' );
@@ -58,10 +61,11 @@ class MerchantMetadataProviderTest extends TestCase {
 		$this->assertInstanceOf( MerchantMetadata::class, $metadata );
 		$this->assertSame( 'Test Store', $metadata->store_name );
 		$this->assertSame( 'https://example.com', $metadata->store_url );
-		$this->assertSame( 'US', $metadata->country );
+		$this->assertSame( 'US', $metadata->store_country );
 		$this->assertSame( 'USD', $metadata->currency );
 		$this->assertSame( 'MERCHANT123', $metadata->paypal_merchant_id );
 		$this->assertSame( 'https://example.com', $metadata->catalog_url );
+		$this->assertSame( 'CA', $metadata->merchant_country );
 	}
 
 	public function test_canonical_url_removes_trailing_slash(): void {
@@ -70,11 +74,14 @@ class MerchantMetadataProviderTest extends TestCase {
 			'API_USER123',
 			'API_KEY123',
 			'MERCHANT123',
-			'test@example.com'
+			'test@example.com',
+			'US'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
 			->andReturn( $merchant_connection );
+		$this->general_settings->allows( 'is_merchant_connected' )
+			->andReturn( true );
 
 		when( 'get_bloginfo' )->justReturn( 'Store' );
 		when( 'get_site_url' )->justReturn( 'https://example.com/' );
@@ -109,11 +116,14 @@ class MerchantMetadataProviderTest extends TestCase {
 			'API_USER123',
 			'API_KEY123',
 			'MERCHANT123',
-			'test@example.com'
+			'test@example.com',
+			'US'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
 			->andReturn( $merchant_connection );
+		$this->general_settings->allows( 'is_merchant_connected' )
+			->andReturn( true );
 
 		when( 'get_bloginfo' )->justReturn( 'My Store' );
 		when( 'get_site_url' )->justReturn( 'https://mystore.com' );
@@ -143,11 +153,14 @@ class MerchantMetadataProviderTest extends TestCase {
 			'API_USER123',
 			'API_KEY123',
 			'MERCHANT123',
-			'test@example.com'
+			'test@example.com',
+			'US'
 		);
 
 		$this->general_settings->allows( 'get_merchant_data' )
 			->andReturn( $merchant_connection );
+		$this->general_settings->allows( 'is_merchant_connected' )
+			->andReturn( true );
 
 		when( 'get_bloginfo' )->justReturn( 'WP Store' );
 		when( 'get_site_url' )->justReturn( 'https://wpstore.test' );
@@ -170,6 +183,7 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		$this->assertSame( 'WP Store', $metadata->store_name );
 		$this->assertSame( 'CAD', $metadata->currency );
-		$this->assertSame( 'CA', $metadata->country );
+		$this->assertSame( 'CA', $metadata->store_country );
+		$this->assertSame( 'US', $metadata->merchant_country );
 	}
 }

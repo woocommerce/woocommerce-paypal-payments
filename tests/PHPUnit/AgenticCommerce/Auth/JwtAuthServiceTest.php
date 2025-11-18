@@ -52,7 +52,8 @@ class JwtAuthServiceTest extends TestCase {
 			'US',
 			'USD',
 			$merchant_id,
-			'https://example.com'
+			'https://example.com',
+			'CA'
 		);
 	}
 
