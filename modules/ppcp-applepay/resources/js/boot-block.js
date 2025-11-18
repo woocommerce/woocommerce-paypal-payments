@@ -119,15 +119,11 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 				return;
 			}
 
-			const currentTotal =
-				parseInt( totals.total_price, 10 ) /
-				10 ** totals.currency_minor_unit;
-
-			if ( currentTotal !== previousTotal && previousTotal !== null ) {
-				previousTotal = currentTotal;
+			if ( totals.total_price !== previousTotal && previousTotal !== null ) {
+				previousTotal = totals.total_price;
 				manager.reinit();
 			} else if ( previousTotal === null ) {
-				previousTotal = currentTotal;
+				previousTotal = totals.total_price;
 			}
 		} );
 
