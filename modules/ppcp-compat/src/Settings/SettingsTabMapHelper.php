@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Compat\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 
 /**
  * A map of old to new styling settings.
@@ -50,7 +51,7 @@ class SettingsTabMapHelper {
 			'vault_enabled_dcc'           => 'save_card_details',
 			'blocks_final_review_enabled' => 'enable_pay_now',
 			'logging_enabled'             => 'enable_logging',
-			'vault_enabled'               => 'save_paypal_and_venmo',
+			'vault_enabled'               => FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO,
 			'3d_secure_contingency'       => 'three_d_secure',
 			'stay_updated'                => 'stay_updated',
 		);

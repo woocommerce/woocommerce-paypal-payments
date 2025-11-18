@@ -17,12 +17,12 @@ return array(
 	},
 	'vaulting.repository.payment-token'   => static function ( ContainerInterface $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
-		$endpoint = $container->get( 'api.endpoint.payment-token' );
+		$endpoint = $container->get( 'vault-v2.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
 	},
 	'vaulting.customer-approval-listener' => function ( ContainerInterface $container ): CustomerApprovalListener {
 		return new CustomerApprovalListener(
-			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'vault-v2.endpoint.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

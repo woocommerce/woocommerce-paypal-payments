@@ -79,12 +79,12 @@ const ORDER_INCOMPLETE = 'payerAction';
 
 function getAddressFromData( data ) {
 	return {
-		country_code: data.countryCode,
-		address_line_1: data.address1,
-		address_line_2: data.address2,
-		admin_area_1: data.administrativeArea,
-		admin_area_2: data.locality,
-		postal_code: data.postalCode,
+		country_code: data?.countryCode,
+		address_line_1: data?.address1,
+		address_line_2: data?.address2,
+		admin_area_1: data?.administrativeArea,
+		admin_area_2: data?.locality,
+		postal_code: data?.postalCode,
 	};
 }
 
@@ -102,10 +102,13 @@ function payerDataFromPaymentResponse( response ) {
 }
 
 function shippingAddressDataFromPaymentResponse( response ) {
-	const shippingAddress = response?.shippingAddress;
+	const shippingAddress =
+		response?.shippingAddress ??
+		response?.paymentMethodData?.info?.billingAddress;
+
 	return {
 		name: {
-			full_name: shippingAddress.name,
+			full_name: shippingAddress?.name,
 		},
 		address: getAddressFromData( shippingAddress ),
 	};

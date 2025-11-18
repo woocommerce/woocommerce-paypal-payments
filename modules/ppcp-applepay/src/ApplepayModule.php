@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -194,7 +195,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 				$apple_pay_enabled = $product_status->is_active();
 
-				$features['apple_pay'] = array(
+				$features[ FeaturesDefinition::FEATURE_APPLE_PAY ] = array(
 					'enabled' => $apple_pay_enabled,
 				);
 

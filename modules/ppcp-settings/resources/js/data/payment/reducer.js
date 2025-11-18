@@ -28,6 +28,7 @@ const defaultPersistent = Object.freeze( {
 	'ppcp-axo-gateway': {},
 	'ppcp-applepay': {},
 	'ppcp-googlepay': {},
+	'ppcp-pwc': {},
 	'ppcp-bancontact': {},
 	'ppcp-blik': {},
 	'ppcp-eps': {},

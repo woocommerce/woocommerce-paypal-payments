@@ -17,7 +17,7 @@ import {
 } from './modules/Helper/CheckoutMethodState';
 import { setVisibleByClass } from './modules/Helper/Hiding';
 import { isChangePaymentPage } from './modules/Helper/Subscriptions';
-import FreeTrialHandler from './modules/ActionHandler/FreeTrialHandler';
+import FreeTrialHandler from './VaultV2/FreeTrialHandler';
 import MultistepCheckoutHelper from './modules/Helper/MultistepCheckoutHelper';
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from './modules/Helper/FormValidator';
@@ -90,7 +90,10 @@ const bootstrap = () => {
 	};
 
 	const doBasicCheckoutValidation = () => {
-		if ( PayPalCommerceGateway.basic_checkout_validation_enabled || PayPalCommerceGateway.is_free_trial_cart ) {
+		if (
+			PayPalCommerceGateway.basic_checkout_validation_enabled ||
+			PayPalCommerceGateway.is_free_trial_cart
+		) {
 			// A quick fix to get the errors about empty form fields before attempting PayPal order,
 			// it should solve #513 for most of the users, but it is not a proper solution.
 			// Currently it is disabled by default because a better solution is now implemented

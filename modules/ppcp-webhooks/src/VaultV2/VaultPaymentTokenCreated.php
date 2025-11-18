@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\VaultV2;
 
 use Psr\Log\LoggerInterface;
 use WC_Payment_Token_CC;
@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -115,6 +117,9 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		/**
+		 * Only process resource version 2.0 (Vault v2) requests.
+		 */
 		$resource_version = $request['resource_version'] ?? '';
 		if ( $resource_version && $resource_version !== '2.0' ) {
 			return $this->success_response();
