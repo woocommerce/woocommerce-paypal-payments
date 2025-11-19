@@ -1,13 +1,15 @@
 /**
  * External dependencies
  */
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, ViewportSize } from '@playwright/test';
 require( 'dotenv' ).config();
 
 /**
  * Internal dependencies
  */
 import { BaseExtend } from './utils';
+
+const viewportSize: ViewportSize = { width: 1280, height: 1000 };
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
@@ -81,9 +83,9 @@ export default defineConfig< BaseExtend >( {
 			args: [ '--disable-web-security' ],
 		},
 
-		viewport: { width: 1280, height: 1000 },
+		viewport: viewportSize,
 
-		trace: process.env.CI ? 'off' : 'retain-on-failure', //'on-first-retry',//'on',//
+		trace: 'retain-on-failure', //process.env.CI ? 'off' : 'on-first-retry',//'on',//
 
 		screenshot: {
 			mode: 'only-on-failure',
@@ -94,12 +96,12 @@ export default defineConfig< BaseExtend >( {
 			? 'off'
 			: {
 					mode: 'retain-on-failure', //'on',//
-					size: { width: 1280, height: 1000 },
+					size: viewportSize,
 			},
 
 		recordVideoOptions: {
 			mode: 'retain-on-failure',
-			size: { width: 1280, height: 1000 },
+			size: viewportSize,
 		},
 	},
 
