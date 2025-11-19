@@ -30,14 +30,17 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 return array(
+	// Configuration.
 	'agentic.config.webhook_urls'      => static function ( ContainerInterface $c ): AgenticWebhookConfiguration {
 		return new AgenticWebhookConfiguration(
 			$c->get( 'settings.connection-state' ),
 		);
 	},
-	'agentic.response.factory'         => static function (): ResponseFactory {
-		return new ResponseFactory();
+	'agentic.config.ingestion'         => static function (): IngestionConfiguration {
+		return new IngestionConfiguration();
 	},
+
+	// Registration and merchant identification.
 	'agentic.merchant.provider'        => static function ( ContainerInterface $c ): MerchantMetadataProvider {
 		return new MerchantMetadataProvider(
 			$c->get( 'settings.data.general' )
@@ -73,6 +76,9 @@ return array(
 	},
 
 	// REST endpoints.
+	'agentic.response.factory'         => static function (): ResponseFactory {
+		return new ResponseFactory();
+	},
 	'agentic.rest.create_cart'         => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
@@ -103,9 +109,6 @@ return array(
 	},
 
 	// Ingestion services.
-	'agentic.config.ingestion'         => static function (): IngestionConfiguration {
-		return new IngestionConfiguration();
-	},
 	'agentic.ingestion-batch-provider' => static function ( ContainerInterface $c ): IngestionBatchProvider {
 		return new IngestionBatchProvider(
 			$c->get( 'agentic.config.ingestion' )

@@ -18,9 +18,9 @@ use function as_schedule_recurring_action;
 class IngestionManager {
 	private IngestionConfiguration $configuration;
 	private IngestionBatchProvider $batch_provider;
-	private LoggerInterface $logger;
 	private AgenticWebhookConfiguration $webhook_urls;
 	private MerchantMetadataProvider $metadata_provider;
+	private LoggerInterface $logger;
 
 	public function __construct(
 		IngestionConfiguration $configuration,
