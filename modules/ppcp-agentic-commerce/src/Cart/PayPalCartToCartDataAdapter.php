@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Cart;
 
-use WC_Data_Store;
 use WC_Product;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
@@ -26,22 +25,6 @@ use WooCommerce\PayPalCommerce\Button\Session\CartData;
  * PayPalCart → translate() → CartData → WooCommerceOrderCreator → WC_Order
  */
 class PayPalCartToCartDataAdapter {
-
-	/**
-	 * The product data store.
-	 *
-	 * @var WC_Data_Store
-	 */
-	private $product_data_store;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param WC_Data_Store $product_data_store Product data store for resolution.
-	 */
-	public function __construct( WC_Data_Store $product_data_store ) {
-		$this->product_data_store = $product_data_store;
-	}
 
 	/**
 	 * Adapt PayPalCart into a CartData instance.
