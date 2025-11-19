@@ -39,21 +39,25 @@ class SyncJob {
 	 * @var string
 	 */
 	private string $api_endpoint;
+	private string $merchant_store_url;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param string          $api_endpoint The API endpoint URL for product synchronization.
+	 * @param string          $merchant_store_url Primary key to identify the merchant.
 	 * @param array           $product_ids  The product IDs to be synced.
 	 * @param LoggerInterface $logger       The logger instance for logging sync operations.
 	 */
 	public function __construct(
 		string $api_endpoint,
+		string $merchant_store_url,
 		array $product_ids,
 		LoggerInterface $logger
 	) {
 
 		$this->api_endpoint = $api_endpoint;
+		$this->merchant_store_url = $merchant_store_url;
 		$this->product_ids  = $product_ids;
 		$this->logger       = $logger;
 		$this->batch_id     = wp_generate_uuid4();
@@ -76,7 +80,7 @@ class SyncJob {
 		);
 
 		// Transform products for API using the factory.
-		$api_products = new ProductsPayload( $this->product_ids );
+		$api_products = new ProductsPayload( $this->merchant_store_url, $this->product_ids );
 		$api_payload  = $api_products->get_array();
 
 		if ( empty( $api_payload ) ) {
@@ -97,7 +101,7 @@ class SyncJob {
 				),
 				'body'    => (string) wp_json_encode(
 					array(
-						'merchant_url' => home_url(),
+						'merchant_url' => $this->merchant_store_url,
 						'products'     => $api_payload,
 					)
 				),

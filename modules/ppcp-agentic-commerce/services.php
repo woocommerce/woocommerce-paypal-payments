@@ -116,6 +116,7 @@ return array(
 			$c->get( 'agentic.config.ingestion' ),
 			$c->get( 'agentic.ingestion-batch-provider' ),
 			$c->get( 'agentic.config.webhook_urls' ),
+			$c->get( 'agentic.merchant.provider' ),
 			$c->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

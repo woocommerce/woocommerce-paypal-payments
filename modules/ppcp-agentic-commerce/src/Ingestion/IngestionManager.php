@@ -6,6 +6,7 @@ use RuntimeException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;
@@ -19,18 +20,21 @@ class IngestionManager {
 	private IngestionBatchProvider $batch_provider;
 	private LoggerInterface $logger;
 	private AgenticWebhookConfiguration $webhook_urls;
+	private MerchantMetadataProvider $metadata_provider;
 
 	public function __construct(
 		IngestionConfiguration $configuration,
 		IngestionBatchProvider $batch_provider,
 		AgenticWebhookConfiguration $webhook_urls,
+		MerchantMetadataProvider $metadata_provider,
 		LoggerInterface $logger
 	) {
 
-		$this->configuration  = $configuration;
-		$this->batch_provider = $batch_provider;
-		$this->webhook_urls   = $webhook_urls;
-		$this->logger         = $logger;
+		$this->configuration     = $configuration;
+		$this->batch_provider    = $batch_provider;
+		$this->webhook_urls      = $webhook_urls;
+		$this->metadata_provider = $metadata_provider;
+		$this->logger            = $logger;
 	}
 
 	/**
@@ -112,8 +116,11 @@ class IngestionManager {
 	 * and logger, along with the specified product IDs to be synchronized.
 	 */
 	private function create_new_sync_job( array $product_ids ): SyncJob {
+		$metadata = $this->metadata_provider->get_metadata();
+
 		return new SyncJob(
 			$this->webhook_urls->get_product_ingestion_url(),
+			$metadata->store_url,
 			$product_ids,
 			$this->logger
 		);

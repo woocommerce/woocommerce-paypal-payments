@@ -6,13 +6,15 @@ use WC_Product;
 use WC_Product_Variation;
 
 class ProductsPayload {
+	private string $merchant_store_url;
 	/**
 	 * @var int[]
 	 */
 	private array $product_ids;
 
-	public function __construct( array $product_ids ) {
-		$this->product_ids = $product_ids;
+	public function __construct( string $merchant_store_url, array $product_ids ) {
+		$this->merchant_store_url = $merchant_store_url;
+		$this->product_ids        = $product_ids;
 	}
 
 	public function get_array(): array {
@@ -52,7 +54,7 @@ class ProductsPayload {
 				'description'      => $product->get_description() ?: $product->get_short_description(),
 				'price'            => $this->format_price( $product->get_price() ),
 				'availability'     => $this->map_stock_status( $product->get_stock_status() ),
-				'merchantStoreUrl' => home_url(),
+				'merchantStoreUrl' => $this->merchant_store_url,
 			);
 
 			// Add optional fields.
