@@ -143,10 +143,13 @@ class SyncJob {
 		// Mark products with error.
 		foreach ( $product_ids as $product_id ) {
 			$product = wc_get_product( $product_id );
-			if ( $product ) {
-				$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
-				$product->save_meta_data();
+
+			if ( ! $product ) {
+				continue;
 			}
+
+			$product->update_meta_data( '_ppcp_agentic_sync_error', $error_message );
+			$product->save_meta_data();
 		}
 
 		// Let Action Scheduler handle retries by throwing an exception.
@@ -163,18 +166,21 @@ class SyncJob {
 	 *
 	 * @param array $product_ids Product IDs to mark as synced.
 	 */
-	private function mark_products_synced( $product_ids ): void {
+	private function mark_products_synced( array $product_ids ): void {
 		// Use WordPress's current_time function with 'mysql' format for consistency.
 		$timestamp = current_time( 'mysql' );
 
 		foreach ( $product_ids as $product_id ) {
 			$product = wc_get_product( $product_id );
-			if ( $product ) {
-				$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
-				$product->delete_meta_data( '_ppcp_agentic_needs_sync' );
-				$product->delete_meta_data( '_ppcp_agentic_sync_error' );
-				$product->save_meta_data();
+
+			if ( ! $product ) {
+				continue;
 			}
+
+			$product->update_meta_data( '_ppcp_agentic_last_sync', $timestamp );
+			$product->delete_meta_data( '_ppcp_agentic_needs_sync' );
+			$product->delete_meta_data( '_ppcp_agentic_sync_error' );
+			$product->save_meta_data();
 		}
 	}
 
