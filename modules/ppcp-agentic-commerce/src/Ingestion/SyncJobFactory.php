@@ -15,17 +15,14 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\AgenticWebhookConfiguration;
 class SyncJobFactory {
 	private LoggerInterface $logger;
 	private AgenticWebhookConfiguration $webhook_urls;
-	private ProductsPayloadFactory $products_payload_factory;
 
 	public function __construct(
 		AgenticWebhookConfiguration $webhook_urls,
-		LoggerInterface $logger,
-		ProductsPayloadFactory $products_payload_factory
+		LoggerInterface $logger
 	) {
 
-		$this->logger                   = $logger;
-		$this->webhook_urls             = $webhook_urls;
-		$this->products_payload_factory = $products_payload_factory;
+		$this->logger       = $logger;
+		$this->webhook_urls = $webhook_urls;
 	}
 
 	/**
@@ -41,8 +38,7 @@ class SyncJobFactory {
 		return new SyncJob(
 			$this->webhook_urls->get_product_ingestion_url(),
 			$product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			$this->logger
 		);
 	}
 }

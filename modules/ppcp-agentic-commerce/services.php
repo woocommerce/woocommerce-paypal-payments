@@ -112,12 +112,8 @@ return array(
 	'agentic.sync-job-factory'                 => static function ( ContainerInterface $c ): Ingestion\SyncJobFactory {
 		return new Ingestion\SyncJobFactory(
 			$c->get( 'agentic.config.webhook_urls' ),
-			$c->get( 'woocommerce.logger.woocommerce' ),
-			$c->get( 'agentic.products-payload-factory' ),
+			$c->get( 'woocommerce.logger.woocommerce' )
 		);
-	},
-	'agentic.products-payload-factory'         => static function ( ContainerInterface $c ) {
-		return new Ingestion\ProductsPayloadFactory();
 	},
 	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $c ): Ingestion\IngestionBatchProvider {
 		return new Ingestion\IngestionBatchProvider(

@@ -41,35 +41,22 @@ class SyncJob {
 	private string $api_endpoint;
 
 	/**
-	 * Factory for creating ProductsPayload instances.
-	 *
-	 * @var ProductsPayloadFactory
-	 */
-	private ProductsPayloadFactory $products_payload_factory;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param string                 $api_endpoint             The API endpoint URL for product
-	 *                                                         synchronization.
-	 * @param array                  $product_ids              The product IDs to be synced.
-	 * @param LoggerInterface        $logger                   The logger instance for logging sync
-	 *                                                         operations.
-	 * @param ProductsPayloadFactory $products_payload_factory Factory for creating ProductsPayload
-	 *                                                         instances.
+	 * @param string          $api_endpoint The API endpoint URL for product synchronization.
+	 * @param array           $product_ids  The product IDs to be synced.
+	 * @param LoggerInterface $logger       The logger instance for logging sync operations.
 	 */
 	public function __construct(
 		string $api_endpoint,
 		array $product_ids,
-		LoggerInterface $logger,
-		ProductsPayloadFactory $products_payload_factory
+		LoggerInterface $logger
 	) {
 
-		$this->api_endpoint             = $api_endpoint;
-		$this->product_ids              = $product_ids;
-		$this->logger                   = $logger;
-		$this->products_payload_factory = $products_payload_factory;
-		$this->batch_id                 = wp_generate_uuid4();
+		$this->api_endpoint = $api_endpoint;
+		$this->product_ids  = $product_ids;
+		$this->logger       = $logger;
+		$this->batch_id     = wp_generate_uuid4();
 	}
 
 	/**
@@ -89,7 +76,7 @@ class SyncJob {
 		);
 
 		// Transform products for API using the factory.
-		$api_products = $this->products_payload_factory->create( $this->product_ids );
+		$api_products = new ProductsPayload( $this->product_ids );
 		$api_payload  = $api_products->get_array();
 
 		if ( empty( $api_payload ) ) {
