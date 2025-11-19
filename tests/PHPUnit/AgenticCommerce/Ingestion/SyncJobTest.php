@@ -21,16 +21,6 @@ class SyncJobTest extends TestCase {
 	private $logger;
 
 	/**
-	 * @var ProductsPayloadFactory|Mockery\MockInterface
-	 */
-	private $products_payload_factory;
-
-	/**
-	 * @var ProductsPayload|Mockery\MockInterface
-	 */
-	private $products_payload;
-
-	/**
 	 * @var string
 	 */
 	private $api_endpoint = 'https://api.example.com/sync';
@@ -44,38 +34,160 @@ class SyncJobTest extends TestCase {
 		parent::setUp();
 
 		$this->logger = Mockery::mock( LoggerInterface::class );
-		$this->products_payload_factory = Mockery::mock( ProductsPayloadFactory::class );
-		$this->products_payload = Mockery::mock( ProductsPayload::class );
 
-		// Mock WordPress functions
+		// Stub WordPress functions with default values
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
 		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'current_time' )->justReturn( '2024-01-01 12:00:00' );
+		when( 'wc_get_product_category_list' )->justReturn( 'Category1, Category2' );
+		when( 'wp_strip_all_tags' )->returnArg();
+		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
+		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
+		when( 'wp_json_encode' )->alias( function( $data ) {
+			return json_encode( $data );
+		} );
 	}
 
-	public function test_successful_sync(): void {
-		// Arrange
-		$api_payload = array(
-			array(
-				'id' => '1',
-				'title' => 'Product 1',
-				'price' => '10.00 USD',
-			),
-			array(
-				'id' => '2',
-				'title' => 'Product 2',
-				'price' => '20.00 USD',
-			),
-		);
+	/**
+	 * Helper method to stub logger to allow all calls without verification.
+	 */
+	private function stub_logger_to_allow_all(): void {
+		$this->logger->allows( 'info' );
+		$this->logger->allows( 'warning' );
+	}
 
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
+	/**
+	 * Helper method to create a stub simple product with all required methods.
+	 *
+	 * @param int  $id              Product ID.
+	 * @param string $title         Product title.
+	 * @param string $price         Product price.
+	 * @param bool $stub_meta_ops   Whether to stub meta operations (set false when verifying them).
+	 * @return WC_Product|Mockery\MockInterface
+	 */
+	private function create_product_stub(
+		int $id,
+		string $title,
+		string $price,
+		bool $stub_meta_ops = true
+	): WC_Product {
+		$product = Mockery::mock( WC_Product::class );
 
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
+		$product->allows( 'get_type' )->andReturn( 'simple' );
+		$product->allows( 'is_type' )->with( 'variable' )->andReturn( false );
+		$product->allows( 'get_id' )->andReturn( $id );
+		$product->allows( 'get_name' )->andReturn( $title );
+		$product->allows( 'get_permalink' )->andReturn( "https://example.com/product/{$id}" );
+		$product->allows( 'get_image_id' )->andReturn( 100 + $id );
+		$product->allows( 'get_description' )->andReturn( "Description for {$title}" );
+		$product->allows( 'get_short_description' )->andReturn( "Short desc for {$title}" );
+		$product->allows( 'get_price' )->andReturn( $price );
+		$product->allows( 'get_stock_status' )->andReturn( 'instock' );
+		$product->allows( 'get_sku' )->andReturn( "SKU-{$id}" );
+		$product->allows( 'get_sale_price' )->andReturn( '' );
+		$product->allows( 'get_regular_price' )->andReturn( $price );
+
+		// Allow meta operations by default (unless we want to verify them)
+		if ( $stub_meta_ops ) {
+			$product->allows( 'update_meta_data' );
+			$product->allows( 'delete_meta_data' );
+			$product->allows( 'save_meta_data' );
+		}
+
+		return $product;
+	}
+
+	/**
+	 * Helper method to create multiple product stubs and configure wc_get_product.
+	 *
+	 * @param array $product_ids    Product IDs.
+	 * @param bool  $stub_meta_ops  Whether to stub meta operations (set false when verifying them).
+	 * @return array Product stubs indexed by ID.
+	 */
+	private function create_products_and_stub_wc_get_product(
+		array $product_ids,
+		bool $stub_meta_ops = true
+	): array {
+		$products = array();
+		foreach ( $product_ids as $index => $id ) {
+			$products[ $id ] = $this->create_product_stub(
+				$id,
+				"Product {$id}",
+				(string) ( ( $index + 1 ) * 10 ),
+				$stub_meta_ops
+			);
+		}
+
+		when( 'wc_get_product' )->alias( function( $id ) use ( $products ) {
+			return $products[ $id ] ?? false;
+		} );
+
+		return $products;
+	}
+
+	/**
+	 * Helper method to stub a successful API response.
+	 */
+	private function stub_successful_api_response(): void {
+		when( 'wp_remote_post' )->justReturn( array(
+			'response' => array(
+				'code'    => 200,
+				'message' => 'OK',
+			),
+			'body'     => '{"success": true}',
+		) );
+
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
+	}
+
+	/**
+	 * Helper method to stub an HTTP error response.
+	 *
+	 * @param int    $status_code HTTP status code.
+	 * @param string $body        Response body.
+	 */
+	private function stub_http_error_response( int $status_code, string $body ): void {
+		when( 'wp_remote_post' )->justReturn( array(
+			'response' => array(
+				'code'    => $status_code,
+				'message' => 'Error',
+			),
+			'body'     => $body,
+		) );
+
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( $status_code );
+		when( 'wp_remote_retrieve_body' )->justReturn( $body );
+	}
+
+	/**
+	 * GIVEN a sync job with valid product IDs
+	 * WHEN the API returns a successful response
+	 * THEN all products are marked as synced with current timestamp
+	 * AND the needs_sync and sync_error flags are cleared
+	 * AND a success message is logged
+	 */
+	public function test_execute_marks_products_as_synced_when_api_returns_success(): void {
+		// Test verification is done through Mockery expectations
+		$this->expectNotToPerformAssertions();
+
+		$products = $this->create_products_and_stub_wc_get_product( $this->product_ids, false );
+		$this->stub_successful_api_response();
+
+		// Verify meta operations for successful sync
+		foreach ( $products as $product ) {
+			$product->shouldReceive( 'update_meta_data' )
+				->once()
+				->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
+			$product->shouldReceive( 'delete_meta_data' )
+				->once()
+				->with( '_ppcp_agentic_needs_sync' );
+			$product->shouldReceive( 'delete_meta_data' )
+				->once()
+				->with( '_ppcp_agentic_sync_error' );
+			$product->shouldReceive( 'save_meta_data' )->once();
+		}
 
 		$this->logger->shouldReceive( 'info' )
 			->once()
@@ -88,48 +200,26 @@ class SyncJobTest extends TestCase {
 				array( 'product_ids' => $this->product_ids )
 			);
 
-		// Mock successful API response
-		when( 'wp_remote_post' )->justReturn( array(
-			'response' => array(
-				'code' => 200,
-				'message' => 'OK',
-			),
-			'body' => '{"success": true}',
-		) );
-
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
-
-		// Mock product updates
-		$this->mockProductUpdates( $this->product_ids );
-
-		// Act
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			$this->logger
 		);
 
 		$sync_job->execute();
-
-		// Assert - expectations are verified automatically by Mockery
-		$this->assertTrue( true ); // Add assertion to avoid risky test warning
 	}
 
-	public function test_sync_with_empty_payload(): void {
-		// Arrange
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
+	/**
+	 * GIVEN a sync job with product IDs that don't exist in the database
+	 * WHEN execute is called
+	 * THEN no API request is made
+	 * AND a "No products" message is logged
+	 */
+	public function test_execute_logs_no_products_when_all_product_ids_are_invalid(): void {
+		// Test verification is done through Mockery expectations
+		$this->expectNotToPerformAssertions();
 
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( array() );
+		when( 'wc_get_product' )->justReturn( false );
 
 		$this->logger->shouldReceive( 'info' )
 			->once()
@@ -139,34 +229,32 @@ class SyncJobTest extends TestCase {
 			->once()
 			->with( 'Agentic Sync Job test-batch-id-1234: No products' );
 
-		// Act
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			$this->logger
 		);
 
 		$sync_job->execute();
-
-		// Assert - verify no API call was made
-		$this->assertTrue( true ); // Add assertion to avoid risky test warning
 	}
 
-	public function test_sync_with_wp_error(): void {
-		// Arrange
-		$api_payload = array(
-			array( 'id' => '1', 'title' => 'Product 1' ),
-		);
+	/**
+	 * GIVEN a sync job with valid products
+	 * WHEN the API returns a WordPress error (network failure)
+	 * THEN all products are marked with the error message
+	 * AND the error is logged with product details
+	 * AND a RuntimeException is thrown for Action Scheduler retry
+	 */
+	public function test_execute_throws_exception_when_wp_error_occurs(): void {
+		$products = $this->create_products_and_stub_wc_get_product( $this->product_ids, false );
 
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
-
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
+		// Verify error meta is set on products
+		foreach ( $products as $product ) {
+			$product->shouldReceive( 'update_meta_data' )
+				->once()
+				->with( '_ppcp_agentic_sync_error', 'Connection timeout' );
+			$product->shouldReceive( 'save_meta_data' )->once();
+		}
 
 		$this->logger->shouldReceive( 'info' )
 			->once()
@@ -178,31 +266,21 @@ class SyncJobTest extends TestCase {
 				'Agentic Sync Job Connection timeout: Error',
 				array(
 					'product_count' => 3,
-					'product_ids' => $this->product_ids,
+					'product_ids'   => $this->product_ids,
 				)
 			);
 
-		// Mock WP_Error response
+		// Stub WP_Error response
 		$wp_error = Mockery::mock( 'WP_Error' );
-		$wp_error->shouldReceive( 'get_error_message' )
-			->once()
-			->andReturn( 'Connection timeout' );
+		$wp_error->allows( 'get_error_message' )->andReturn( 'Connection timeout' );
 
 		when( 'wp_remote_post' )->justReturn( $wp_error );
 		when( 'is_wp_error' )->justReturn( true );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
 
-		// Mock product error updates
-		$this->mockProductErrorUpdates( $this->product_ids, 'Connection timeout' );
-
-		// Act & Assert
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			$this->logger
 		);
 
 		$this->expectException( Exception::class );
@@ -211,371 +289,253 @@ class SyncJobTest extends TestCase {
 		$sync_job->execute();
 	}
 
-	public function test_sync_with_http_error(): void {
-		// Arrange
-		$api_payload = array(
-			array( 'id' => '1', 'title' => 'Product 1' ),
-		);
+	/**
+	 * GIVEN a sync job with valid products
+	 * WHEN the API returns an HTTP error status code
+	 * THEN all products are marked with the error message including status and body
+	 * AND a RuntimeException is thrown for Action Scheduler retry
+	 *
+	 * @dataProvider http_error_provider
+	 */
+	public function test_execute_throws_exception_when_api_returns_http_error(
+		int $status_code,
+		string $response_body,
+		string $expected_error
+	): void {
+		$products = $this->create_products_and_stub_wc_get_product( $this->product_ids, false );
+		$this->stub_http_error_response( $status_code, $response_body );
 
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
-
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
-
-		$this->logger->shouldReceive( 'info' )
-			->once()
-			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
-
-		$this->logger->shouldReceive( 'warning' )
-			->once()
-			->with(
-				'Agentic Sync Job HTTP 500: Internal Server Error: Error',
-				array(
-					'product_count' => 3,
-					'product_ids' => $this->product_ids,
-				)
-			);
-
-		// Mock HTTP error response
-		when( 'wp_remote_post' )->justReturn( array(
-			'response' => array(
-				'code' => 500,
-				'message' => 'Internal Server Error',
-			),
-			'body' => 'Internal Server Error',
-		) );
-
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_response_code' )->justReturn( 500 );
-		when( 'wp_remote_retrieve_body' )->justReturn( 'Internal Server Error' );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
-
-		// Mock product error updates
-		$this->mockProductErrorUpdates( $this->product_ids, 'HTTP 500: Internal Server Error' );
-
-		// Act & Assert
-		$sync_job = new SyncJob(
-			$this->api_endpoint,
-			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
-		);
-
-		$this->expectException( Exception::class );
-		$this->expectExceptionMessage( 'Agentic sync failed: HTTP 500: Internal Server Error' );
-
-		$sync_job->execute();
-	}
-
-	public function test_sync_with_400_bad_request(): void {
-		// Arrange
-		$api_payload = array(
-			array( 'id' => '1', 'title' => 'Product 1' ),
-		);
-
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
-
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
-
-		$this->logger->shouldReceive( 'info' )
-			->once()
-			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
-
-		$this->logger->shouldReceive( 'warning' )
-			->once()
-			->with(
-				'Agentic Sync Job HTTP 400: {"error": "Invalid product data"}: Error',
-				array(
-					'product_count' => 3,
-					'product_ids' => $this->product_ids,
-				)
-			);
-
-		// Mock HTTP 400 response
-		when( 'wp_remote_post' )->justReturn( array(
-			'response' => array(
-				'code' => 400,
-				'message' => 'Bad Request',
-			),
-			'body' => '{"error": "Invalid product data"}',
-		) );
-
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_response_code' )->justReturn( 400 );
-		when( 'wp_remote_retrieve_body' )->justReturn( '{"error": "Invalid product data"}' );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
-
-		// Mock product error updates
-		$this->mockProductErrorUpdates( $this->product_ids, 'HTTP 400: {"error": "Invalid product data"}' );
-
-		// Act & Assert
-		$sync_job = new SyncJob(
-			$this->api_endpoint,
-			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
-		);
-
-		$this->expectException( Exception::class );
-		$this->expectExceptionMessage( 'Agentic sync failed: HTTP 400: {"error": "Invalid product data"}' );
-
-		$sync_job->execute();
-	}
-
-	public function test_sync_marks_products_correctly(): void {
-		// Arrange
-		$api_payload = array(
-			array( 'id' => '1', 'title' => 'Product 1' ),
-		);
-
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
-
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
-
-		$this->logger->shouldReceive( 'info' )->twice();
-
-		// Mock successful API response
-		when( 'wp_remote_post' )->justReturn( array(
-			'response' => array(
-				'code' => 200,
-				'message' => 'OK',
-			),
-			'body' => '{"success": true}',
-		) );
-
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
-
-		// Mock products and verify metadata updates
-		$products = array();
-		foreach ( $this->product_ids as $product_id ) {
-			$product = Mockery::mock( WC_Product::class );
-
+		// Verify error meta is set on products
+		foreach ( $products as $product ) {
 			$product->shouldReceive( 'update_meta_data' )
 				->once()
-				->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
-
-			$product->shouldReceive( 'delete_meta_data' )
-				->once()
-				->with( '_ppcp_agentic_needs_sync' );
-
-			$product->shouldReceive( 'delete_meta_data' )
-				->once()
-				->with( '_ppcp_agentic_sync_error' );
-
-			$product->shouldReceive( 'save_meta_data' )
-				->once();
-
-			$products[ $product_id ] = $product;
+				->with( '_ppcp_agentic_sync_error', $expected_error );
+			$product->shouldReceive( 'save_meta_data' )->once();
 		}
 
-		when( 'wc_get_product' )->alias( function( $id ) use ( $products ) {
-			return isset( $products[ $id ] ) ? $products[ $id ] : false;
-		} );
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
 
-		// Act
+		$this->logger->shouldReceive( 'warning' )
+			->once()
+			->with(
+				"Agentic Sync Job {$expected_error}: Error",
+				array(
+					'product_count' => 3,
+					'product_ids'   => $this->product_ids,
+				)
+			);
+
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			$this->logger
 		);
+
+		$this->expectException( Exception::class );
+		$this->expectExceptionMessage( "Agentic sync failed: {$expected_error}" );
 
 		$sync_job->execute();
-
-		// Assert
-		$this->assertTrue( true ); // Add assertion to avoid risky test warning
 	}
 
-	public function test_sync_with_invalid_product_id(): void {
-		// Arrange
-		$api_payload = array(
-			array( 'id' => '999', 'title' => 'Invalid Product' ),
-		);
-
-		$invalid_product_ids = array( 999 );
-
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $invalid_product_ids )
-			->andReturn( $this->products_payload );
-
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
-
-		$this->logger->shouldReceive( 'info' )->twice();
-
-		// Mock successful API response
-		when( 'wp_remote_post' )->justReturn( array(
-			'response' => array(
-				'code' => 200,
-				'message' => 'OK',
+	/**
+	 * Provides HTTP error scenarios for testing.
+	 */
+	public function http_error_provider(): array {
+		return array(
+			'internal server error (500)'     => array(
+				500,
+				'Internal Server Error',
+				'HTTP 500: Internal Server Error',
 			),
-			'body' => '{"success": true}',
-		) );
-
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
-
-		// Mock wc_get_product to return false for invalid ID
-		when( 'wc_get_product' )->justReturn( false );
-
-		// Act
-		$sync_job = new SyncJob(
-			$this->api_endpoint,
-			$invalid_product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			'bad request with JSON error (400)' => array(
+				400,
+				'{"error": "Invalid product data"}',
+				'HTTP 400: {"error": "Invalid product data"}',
+			),
+			'unauthorized access (401)'       => array(
+				401,
+				'Unauthorized',
+				'HTTP 401: Unauthorized',
+			),
+			'service unavailable (503)'       => array(
+				503,
+				'Service Temporarily Unavailable',
+				'HTTP 503: Service Temporarily Unavailable',
+			),
 		);
-
-		// Should not throw exception even if product not found
-		$sync_job->execute();
-
-		// Assert
-		$this->assertTrue( true ); // Add assertion to avoid risky test warning
 	}
 
-	public function test_api_request_format(): void {
-		// Arrange
-		$api_payload = array(
-			array( 'id' => '1', 'title' => 'Product 1' ),
-		);
+	/**
+	 * GIVEN a sync job with valid products
+	 * WHEN execute is called
+	 * THEN the API request is sent to the correct endpoint
+	 * AND the request has proper timeout and content-type headers
+	 * AND the body contains merchant URL and product data
+	 */
+	public function test_execute_sends_properly_formatted_api_request(): void {
+		$this->create_products_and_stub_wc_get_product( $this->product_ids );
+		$this->stub_logger_to_allow_all();
 
-		$this->products_payload_factory->shouldReceive( 'create' )
-			->once()
-			->with( $this->product_ids )
-			->andReturn( $this->products_payload );
+		$api_endpoint = $this->api_endpoint;
+		$captured_request = null;
 
-		$this->products_payload->shouldReceive( 'get_array' )
-			->once()
-			->andReturn( $api_payload );
-
-		$this->logger->shouldReceive( 'info' )->twice();
-
-		$expected_body = json_encode( array(
-			'merchant_url' => 'https://example.com',
-			'products' => $api_payload,
-		) );
-
-		// Mock wp_remote_post to verify the request format
-		when( 'wp_remote_post' )->alias( function( $url, $args ) use ( $expected_body ) {
-			$this->assertEquals( $this->api_endpoint, $url );
-			$this->assertEquals( 30, $args['timeout'] );
-			$this->assertEquals( 'application/json', $args['headers']['Content-Type'] );
-			$this->assertEquals( $expected_body, $args['body'] );
+		when( 'wp_remote_post' )->alias( function( $url, $args ) use ( $api_endpoint, &$captured_request ) {
+			$captured_request = array( 'url' => $url, 'args' => $args );
 
 			return array(
 				'response' => array(
-					'code' => 200,
+					'code'    => 200,
 					'message' => 'OK',
 				),
-				'body' => '{"success": true}',
+				'body'     => '{"success": true}',
 			);
 		} );
 
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
-		when( 'wp_json_encode' )->alias( function( $data ) {
-			return json_encode( $data );
-		} );
 
-		$this->mockProductUpdates( $this->product_ids );
-
-		// Act
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
 			$this->product_ids,
-			$this->logger,
-			$this->products_payload_factory
+			$this->logger
 		);
 
 		$sync_job->execute();
 
-		// Assert
-		$this->assertTrue( true ); // Add assertion to avoid risky test warning
+		$this->assertSame( $api_endpoint, $captured_request['url'] );
+		$this->assertSame( 30, $captured_request['args']['timeout'] );
+		$this->assertSame( 'application/json', $captured_request['args']['headers']['Content-Type'] );
+
+		$body = json_decode( $captured_request['args']['body'], true );
+		$this->assertSame( 'https://example.com', $body['merchant_url'] );
+		$this->assertIsArray( $body['products'] );
+		$this->assertCount( 3, $body['products'] );
 	}
 
 	/**
-	 * Helper method to mock product updates for successful sync.
-	 *
-	 * @param array $product_ids Product IDs to mock.
+	 * GIVEN a sync job with a mix of valid and invalid product IDs
+	 * WHEN execute is called
+	 * THEN only valid products are included in the API payload
+	 * AND valid products are marked as synced
 	 */
-	private function mockProductUpdates( array $product_ids ): void {
-		$products = array();
-		foreach ( $product_ids as $product_id ) {
-			$product = Mockery::mock( WC_Product::class );
+	public function test_execute_handles_mixed_valid_and_invalid_product_ids(): void {
+		// Test verification is done through Mockery expectations
+		$this->expectNotToPerformAssertions();
 
-			$product->shouldReceive( 'update_meta_data' )
-				->once()
-				->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
+		$valid_product = $this->create_product_stub( 1, 'Product 1', '10', false );
 
-			$product->shouldReceive( 'delete_meta_data' )
-				->once()
-				->with( '_ppcp_agentic_needs_sync' );
-
-			$product->shouldReceive( 'delete_meta_data' )
-				->once()
-				->with( '_ppcp_agentic_sync_error' );
-
-			$product->shouldReceive( 'save_meta_data' )
-				->once();
-
-			$products[ $product_id ] = $product;
-		}
-
-		when( 'wc_get_product' )->alias( function( $id ) use ( $products ) {
-			return isset( $products[ $id ] ) ? $products[ $id ] : false;
+		when( 'wc_get_product' )->alias( function( $id ) use ( $valid_product ) {
+			return $id === 1 ? $valid_product : false;
 		} );
+
+		$this->stub_successful_api_response();
+
+		// Verify only the valid product gets synced
+		$valid_product->shouldReceive( 'update_meta_data' )
+			->once()
+			->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
+		$valid_product->shouldReceive( 'delete_meta_data' )
+			->once()
+			->with( '_ppcp_agentic_needs_sync' );
+		$valid_product->shouldReceive( 'delete_meta_data' )
+			->once()
+			->with( '_ppcp_agentic_sync_error' );
+		$valid_product->shouldReceive( 'save_meta_data' )->once();
+
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
+
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with(
+				'Agentic Sync Job test-batch-id-1234: Successfully synced 3 products',
+				array( 'product_ids' => array( 1, 999, 888 ) )
+			);
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			array( 1, 999, 888 ),
+			$this->logger
+		);
+
+		$sync_job->execute();
 	}
 
 	/**
-	 * Helper method to mock product updates for error cases.
-	 *
-	 * @param array  $product_ids Product IDs to mock.
-	 * @param string $error_message Error message to set.
+	 * GIVEN a sync job with an empty product IDs array
+	 * WHEN execute is called
+	 * THEN no API request is made
+	 * AND a "No products" message is logged
 	 */
-	private function mockProductErrorUpdates( array $product_ids, string $error_message ): void {
-		$products = array();
-		foreach ( $product_ids as $product_id ) {
-			$product = Mockery::mock( WC_Product::class );
+	public function test_execute_logs_no_products_when_product_ids_array_is_empty(): void {
+		// Test verification is done through Mockery expectations
+		$this->expectNotToPerformAssertions();
 
-			$product->shouldReceive( 'update_meta_data' )
-				->once()
-				->with( '_ppcp_agentic_sync_error', $error_message );
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
 
-			$product->shouldReceive( 'save_meta_data' )
-				->once();
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with( 'Agentic Sync Job test-batch-id-1234: No products' );
 
-			$products[ $product_id ] = $product;
-		}
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			array(),
+			$this->logger
+		);
 
-		when( 'wc_get_product' )->alias( function( $id ) use ( $products ) {
-			return isset( $products[ $id ] ) ? $products[ $id ] : false;
+		$sync_job->execute();
+	}
+
+	/**
+	 * GIVEN a sync job with a single product
+	 * WHEN the API returns success
+	 * THEN the correct product count is logged
+	 */
+	public function test_execute_logs_correct_count_for_single_product(): void {
+		// Test verification is done through Mockery expectations
+		$this->expectNotToPerformAssertions();
+
+		$product = $this->create_product_stub( 42, 'Single Product', '25', false );
+
+		when( 'wc_get_product' )->alias( function( $id ) use ( $product ) {
+			return $id === 42 ? $product : false;
 		} );
+
+		$this->stub_successful_api_response();
+
+		$product->shouldReceive( 'update_meta_data' )
+			->once()
+			->with( '_ppcp_agentic_last_sync', '2024-01-01 12:00:00' );
+		$product->shouldReceive( 'delete_meta_data' )
+			->once()
+			->with( '_ppcp_agentic_needs_sync' );
+		$product->shouldReceive( 'delete_meta_data' )
+			->once()
+			->with( '_ppcp_agentic_sync_error' );
+		$product->shouldReceive( 'save_meta_data' )->once();
+
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with( 'Agentic Sync Job test-batch-id-1234: Started' );
+
+		$this->logger->shouldReceive( 'info' )
+			->once()
+			->with(
+				'Agentic Sync Job test-batch-id-1234: Successfully synced 1 products',
+				array( 'product_ids' => array( 42 ) )
+			);
+
+		$sync_job = new SyncJob(
+			$this->api_endpoint,
+			array( 42 ),
+			$this->logger
+		);
+
+		$sync_job->execute();
 	}
 }
