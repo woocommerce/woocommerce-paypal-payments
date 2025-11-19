@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
 use Automattic\WooCommerce\Enums\ProductType;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CheckoutEndpoint;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibil
 use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 
 return array(
 	// Configuration.
@@ -113,16 +114,21 @@ return array(
 			$c->get( 'agentic.response.factory' )
 		);
 	},
-
+	'agentic.rest.update_cart'          => static function ( ContainerInterface $c ): UpdateCartEndpoint {
+		return new UpdateCartEndpoint(
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' )
+		);
+	},
 	'agentic.rest.replace_cart'         => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
 			$container->get( 'agentic.auth.provider' ),
 			$container->get( 'agentic.session.handler' ),
 			$container->get( 'agentic.response.factory' ),
-			$container->get( 'api.endpoint.orders' )
+			$container->get( 'api.endpoint.orders' ) // The only difference here is the presence of this line from PCP-5273 vs its absence in PCP-5271. Keeping it from PCP-5273 for completeness, as it seems needed for a replace cart operation.
 		);
 	},
-
 	'agentic.rest.checkout'             => static function ( ContainerInterface $container ): CheckoutEndpoint {
 		return new CheckoutEndpoint(
 			$container->get( 'agentic.auth.provider' ),
