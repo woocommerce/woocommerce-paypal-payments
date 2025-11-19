@@ -81,7 +81,7 @@ export default defineConfig< BaseExtend >( {
 			args: [ '--disable-web-security' ],
 		},
 
-		viewport: { width: 1280, height: 850 },
+		viewport: { width: 1280, height: 1000 },
 
 		trace: process.env.CI ? 'off' : 'retain-on-failure', //'on-first-retry',//'on',//
 
