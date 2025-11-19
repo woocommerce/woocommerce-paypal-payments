@@ -18,14 +18,43 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 
 /**
  * Checkout REST endpoint.
  */
 class CheckoutEndpoint extends AgenticRestEndpoint {
+	/**
+	 * The checkout processor service.
+	 *
+	 * @var AgenticCheckoutProcessor
+	 */
+	protected $checkout_processor;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param JwtAuthService           $auth_service       JWT authentication service.
+	 * @param AgenticSessionHandler    $session_handler    Session handler.
+	 * @param ResponseFactory          $response_factory   Response factory.
+	 * @param AgenticCheckoutProcessor $checkout_processor Checkout processor service.
+	 */
+	public function __construct(
+		JwtAuthService $auth_service,
+		AgenticSessionHandler $session_handler,
+		ResponseFactory $response_factory,
+		AgenticCheckoutProcessor $checkout_processor
+	) {
+		parent::__construct( $auth_service, $session_handler, $response_factory );
+		$this->checkout_processor = $checkout_processor;
+	}
+
 	/**
 	 * The endpoint path following PayPal specs.
 	 */
@@ -107,6 +136,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		// Validate products exist in WooCommerce before proceeding.
 		$validation_issues = $this->validate_products_exist( $cart );
 		$validation_issues = array_merge( $validation_issues, $this->verify_inventory( $cart ) );
+
 		if ( ! empty( $validation_issues ) ) {
 			$cart = $cart->with_validation_issues( ...$validation_issues );
 			return $this->cart_details( $this->response_factory->active_cart( $cart, $cart_id, $cart_session['ec_token'] ) );
@@ -114,7 +144,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		try {
 			// Create WooCommerce order.
-			$order = $this->create_wc_order( $cart, $payment_method );
+			$order = $this->create_wc_order( $cart, $payment_method, $cart_session['ec_token'] );
 			if ( is_wp_error( $order ) ) {
 				return $this->error(
 					InternalServerError::from_wp_error( $order )
@@ -198,90 +228,20 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	/**
 	 * Create a WooCommerce order from the cart data.
 	 *
+	 * Delegates to the AgenticCheckoutProcessor service which handles:
+	 * 1. Fetching the PayPal Order using the token (order ID)
+	 * 2. Translating PayPalCart to WC_Cart
+	 * 3. Creating WooCommerce order
+	 * 4. Linking PayPal and WC orders
+	 * 5. Capturing payment
+	 * 6. Cleaning up temporary cart
+	 *
 	 * @param PayPalCart    $cart           The cart data.
 	 * @param PaymentMethod $payment_method The payment method data.
+	 * @param string        $paypal_order_id The PayPal Order ID (ec_token).
 	 * @return \WC_Order|\WP_Error The created order or error.
 	 */
-	private function create_wc_order( PayPalCart $cart, PaymentMethod $payment_method ) {
-		// TODO This is placeholder code. We need a translation from PayPalCart -> WC_Cart -> WC_Order here
-		try {
-			$order = wc_create_order();
-
-			// Add items to order.
-			foreach ( $cart->items() as $item ) {
-				$product_id = wc_get_product_id_by_sku( $item->variant_id() );
-				if ( ! $product_id ) {
-					$product_id = wc_get_product_id_by_sku( $item->item_id() );
-				}
-
-				if ( $product_id ) {
-					$product = wc_get_product( $product_id );
-					if ( $product ) {
-						$order->add_product( $product, $item->quantity() );
-					}
-				}
-			}
-
-			// Set customer information.
-			$customer = $cart->customer();
-			if ( $customer ) {
-				if ( $customer->email_address() ) {
-					$order->set_billing_email( $customer->email_address() );
-				}
-
-				$name = $customer->name();
-				if ( $name ) {
-					$order->set_billing_first_name( $name['given_name'] ?? '' );
-					$order->set_billing_last_name( $name['surname'] ?? '' );
-				}
-
-				$phone = $customer->phone();
-				if ( $phone ) {
-					$order->set_billing_phone(
-						'+' . $phone['country_code'] . $phone['national_number']
-					);
-				}
-			}
-
-			// Set addresses.
-			$shipping_address = $cart->shipping_address();
-			if ( $shipping_address ) {
-				$order->set_shipping_address_1( $shipping_address->get_address_line_1() );
-				$order->set_shipping_address_2( $shipping_address->get_address_line_2() ?? '' );
-				$order->set_shipping_city( $shipping_address->get_admin_area_2() );
-				$order->set_shipping_state( $shipping_address->get_admin_area_1() );
-				$order->set_shipping_postcode( $shipping_address->get_postal_code() );
-				$order->set_shipping_country( $shipping_address->get_country_code() );
-			}
-
-			$billing_address = $cart->billing_address();
-			if ( $billing_address ) {
-				$order->set_billing_address_1( $billing_address->get_address_line_1() );
-				$order->set_billing_address_2( $billing_address->get_address_line_2() ?? '' );
-				$order->set_billing_city( $billing_address->get_admin_area_2() );
-				$order->set_billing_state( $billing_address->get_admin_area_1() );
-				$order->set_billing_postcode( $billing_address->get_postal_code() );
-				$order->set_billing_country( $billing_address->get_country_code() );
-			}
-
-			// Set payment method.
-			$order->set_payment_method( 'ppcp-gateway' );
-			$order->set_payment_method_title( 'PayPal' );
-
-			// Store PayPal token for processing.
-			$order->update_meta_data( '_paypal_token', $payment_method->token() );
-			$order->update_meta_data( '_paypal_payer_id', $payment_method->payer_id() );
-
-			// Calculate totals.
-			$order->calculate_totals();
-
-			// Save the order.
-			$order->save();
-
-			return $order;
-
-		} catch ( \Exception $e ) {
-			return new \WP_Error( 'order_creation_failed', $e->getMessage() );
-		}
+	private function create_wc_order( PayPalCart $cart, PaymentMethod $payment_method, string $paypal_order_id ) {
+		return $this->checkout_processor->process( $cart, $payment_method, $paypal_order_id );
 	}
 }
