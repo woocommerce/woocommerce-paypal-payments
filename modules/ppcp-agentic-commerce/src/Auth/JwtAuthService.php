@@ -5,7 +5,6 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 
 use Exception;
-use stdClass;
 use WP_Error;
 use Firebase\JWT\JWT;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;

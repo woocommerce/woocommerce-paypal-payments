@@ -12,42 +12,19 @@ use Psr\Log\LoggerInterface;
  * managing success/failure states for products.
  */
 class SyncJob {
-	/**
-	 * The product IDs to be synced.
-	 *
-	 * @var array
-	 */
 	private array $product_ids;
-
-	/**
-	 * The logger instance for logging sync operations.
-	 *
-	 * @var LoggerInterface
-	 */
 	private LoggerInterface $logger;
-
-	/**
-	 * The unique identifier for this sync batch.
-	 *
-	 * @var string
-	 */
 	private string $batch_id;
-
-	/**
-	 * The API endpoint URL for product synchronization.
-	 *
-	 * @var string
-	 */
 	private string $api_endpoint;
 	private string $merchant_store_url;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param string          $api_endpoint The API endpoint URL for product synchronization.
+	 * @param string          $api_endpoint       The API endpoint URL for product synchronization.
 	 * @param string          $merchant_store_url Primary key to identify the merchant.
-	 * @param array           $product_ids  The product IDs to be synced.
-	 * @param LoggerInterface $logger       The logger instance for logging sync operations.
+	 * @param array           $product_ids        The product IDs to be synced.
+	 * @param LoggerInterface $logger             The logger instance for logging sync operations.
 	 */
 	public function __construct(
 		string $api_endpoint,
@@ -56,11 +33,11 @@ class SyncJob {
 		LoggerInterface $logger
 	) {
 
-		$this->api_endpoint = $api_endpoint;
+		$this->api_endpoint       = $api_endpoint;
 		$this->merchant_store_url = $merchant_store_url;
-		$this->product_ids  = $product_ids;
-		$this->logger       = $logger;
-		$this->batch_id     = wp_generate_uuid4();
+		$this->product_ids        = $product_ids;
+		$this->logger             = $logger;
+		$this->batch_id           = wp_generate_uuid4();
 	}
 
 	/**
