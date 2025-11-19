@@ -103,7 +103,7 @@ class ProductsPayload {
 				'description'      => $variation->get_description() ?: $variable_product->get_description(),
 				'price'            => $this->format_price( $variation->get_price() ),
 				'availability'     => $this->map_stock_status( $variation->get_stock_status() ),
-				'merchantStoreUrl' => home_url(),
+				'merchantStoreUrl' => $this->merchant_store_url,
 			);
 
 			// Add variant attributes using WooCommerce methods.
