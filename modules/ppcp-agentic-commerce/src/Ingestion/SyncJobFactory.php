@@ -3,6 +3,7 @@
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\AgenticCommerce\AgenticWebhookConfiguration;
 
 /**
  * Factory class for creating SyncJob instances.
@@ -12,35 +13,18 @@ use Psr\Log\LoggerInterface;
  * to be processed through separate job instances.
  */
 class SyncJobFactory {
-	/**
-	 * Logger instance for recording sync operations and errors.
-	 *
-	 * @var LoggerInterface
-	 */
 	private LoggerInterface $logger;
-
-	/**
-	 * The API endpoint URL for the agentic commerce product ingestion service.
-	 *
-	 * @var string
-	 */
-	private string $api_endpoint;
+	private AgenticWebhookConfiguration $webhook_urls;
 	private ProductsPayloadFactory $products_payload_factory;
 
-	/**
-	 * Constructor for SyncJobFactory.
-	 *
-	 * @param string          $api_endpoint The API endpoint URL for product ingestion.
-	 * @param LoggerInterface $logger       Logger instance for recording operations.
-	 */
 	public function __construct(
-		string $api_endpoint,
+		AgenticWebhookConfiguration $webhook_urls,
 		LoggerInterface $logger,
 		ProductsPayloadFactory $products_payload_factory
 	) {
 
 		$this->logger                   = $logger;
-		$this->api_endpoint             = $api_endpoint;
+		$this->webhook_urls             = $webhook_urls;
 		$this->products_payload_factory = $products_payload_factory;
 	}
 
@@ -55,7 +39,7 @@ class SyncJobFactory {
 	 */
 	public function create_job( array $product_ids ): SyncJob {
 		return new SyncJob(
-			$this->api_endpoint,
+			$this->webhook_urls->get_product_ingestion_url(),
 			$product_ids,
 			$this->logger,
 			$this->products_payload_factory

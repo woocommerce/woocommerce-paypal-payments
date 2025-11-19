@@ -27,6 +27,11 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 return array(
+	'agentic.config.webhook_urls'              => static function ( ContainerInterface $c ): AgenticWebhookConfiguration {
+		return new AgenticWebhookConfiguration(
+			$c->get( 'settings.connection-state' ),
+		);
+	},
 	'agentic.response.factory'                 => static function (): ResponseFactory {
 		return new ResponseFactory();
 	},
@@ -42,7 +47,7 @@ return array(
 	},
 	'agentic.registration.handler'             => static function ( ContainerInterface $c ): RegistrationService {
 		return new RegistrationService(
-			$c->get( 'settings.connection-state' ),
+			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' )
 		);
 	},
@@ -72,25 +77,25 @@ return array(
 			$c->get( 'agentic.response.factory' )
 		);
 	},
-	'agentic.rest.get_cart'                    => static function ( ContainerInterface $container ): GetCartEndpoint {
+	'agentic.rest.get_cart'                    => static function ( ContainerInterface $c ): GetCartEndpoint {
 		return new GetCartEndpoint(
-			$container->get( 'agentic.auth.provider' ),
-			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' )
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' )
 		);
 	},
-	'agentic.rest.update_cart'                 => static function ( ContainerInterface $container ): UpdateCartEndpoint {
+	'agentic.rest.update_cart'                 => static function ( ContainerInterface $c ): UpdateCartEndpoint {
 		return new UpdateCartEndpoint(
-			$container->get( 'agentic.auth.provider' ),
-			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' )
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' )
 		);
 	},
-	'agentic.rest.replace_cart'                => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
+	'agentic.rest.replace_cart'                => static function ( ContainerInterface $c ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
-			$container->get( 'agentic.auth.provider' ),
-			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' )
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' )
 		);
 	},
 
@@ -104,29 +109,26 @@ return array(
 	'agentic.ingestion-stale-timeout-days'     => static function (): int {
 		return 5;
 	},
-	'agentic.ingestion-api-endpoint'           => static function (): string {
-		return 'https://d-staging.joinhoney.com/webhooks/products';
-	},
-	'agentic.sync-job-factory'                 => static function ( ContainerInterface $container ): Ingestion\SyncJobFactory {
+	'agentic.sync-job-factory'                 => static function ( ContainerInterface $c ): Ingestion\SyncJobFactory {
 		return new Ingestion\SyncJobFactory(
-			$container->get( 'agentic.ingestion-api-endpoint' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'agentic.products-payload-factory' ),
+			$c->get( 'agentic.config.webhook_urls' ),
+			$c->get( 'woocommerce.logger.woocommerce' ),
+			$c->get( 'agentic.products-payload-factory' ),
 		);
 	},
-	'agentic.products-payload-factory'         => static function ( ContainerInterface $container ) {
+	'agentic.products-payload-factory'         => static function ( ContainerInterface $c ) {
 		return new Ingestion\ProductsPayloadFactory();
 	},
-	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $container ): Ingestion\IngestionBatchProvider {
+	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $c ): Ingestion\IngestionBatchProvider {
 		return new Ingestion\IngestionBatchProvider(
-			$container->get( 'agentic.ingestion-stale-timeout-days' ),
-			$container->get( 'agentic.ingestion-eligible-product-types' )
+			$c->get( 'agentic.ingestion-stale-timeout-days' ),
+			$c->get( 'agentic.ingestion-eligible-product-types' )
 		);
 	},
-	'agentic.ingestion-manager'                => static function ( ContainerInterface $container ): Ingestion\IngestionManager {
+	'agentic.ingestion-manager'                => static function ( ContainerInterface $c ): Ingestion\IngestionManager {
 		return new Ingestion\IngestionManager(
-			$container->get( 'agentic.ingestion-batch-provider' ),
-			$container->get( 'agentic.sync-job-factory' )
+			$c->get( 'agentic.ingestion-batch-provider' ),
+			$c->get( 'agentic.sync-job-factory' )
 		);
 	},
 
