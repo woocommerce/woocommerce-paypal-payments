@@ -36,7 +36,6 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	private const REST_ENDPOINT_SERVICES = array(
 		'agentic.rest.create_cart',
 		'agentic.rest.get_cart',
-		'agentic.rest.update_cart',
 		'agentic.rest.replace_cart',
 		'agentic.rest.checkout',
 	);
@@ -85,6 +84,27 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		$this->ensure_registered( $registration_handler );
 
+		// Add filter for agentic commerce application context.
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			function ( $data, $payment_method, $request_data ) {
+				if ( $payment_method === 'agentic-commerce' ) {
+					$data['application_context'] = array(
+						'brand_name'          => get_bloginfo( 'name' ),
+						'locale'              => 'en-US',
+						'landing_page'        => 'NO_PREFERENCE',
+						'shipping_preference' => 'NO_SHIPPING',
+						'user_action'         => 'PAY_NOW',
+						'return_url'          => home_url( '/paypal-return' ),
+						'cancel_url'          => home_url( '/paypal-cancel' ),
+					);
+				}
+				return $data;
+			},
+			10,
+			3
+		);
+
 		// Public REST endpoints.
 		add_action(
 			'rest_api_init',
@@ -104,6 +124,55 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 				$ingestion_manager = $container->get( 'agentic.ingestion-manager' );
 				assert( $ingestion_manager instanceof IngestionManager );
 				$ingestion_manager->init();
+			}
+		);
+
+		// Handle PayPal return/cancel URLs for approval flow.
+		// In agentic commerce, these are typically not used by AI agents.
+		add_action(
+			'template_redirect',
+			function () {
+				$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+
+				// Handle PayPal return (approval completed).
+				if ( strpos( $request_uri, '/paypal-return' ) !== false ) {
+					// phpcs:disable WordPress.Security.NonceVerification.Recommended
+					$token    = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+					$payer_id = isset( $_GET['PayerID'] ) ? sanitize_text_field( wp_unslash( $_GET['PayerID'] ) ) : '';
+					// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+					wp_die(
+						sprintf(
+							'<h1>Payment Approved</h1>
+							<p>Your PayPal payment has been approved.</p>
+							<p><strong>Order ID:</strong> %s</p>
+							<p><strong>Payer ID:</strong> %s</p>
+							<p>This transaction is being handled by the AI agent. You can close this window.</p>',
+							esc_html( $token ),
+							esc_html( $payer_id )
+						),
+						'Payment Approved',
+						array( 'response' => 200 )
+					);
+				}
+
+				// Handle PayPal cancel.
+				if ( strpos( $request_uri, '/paypal-cancel' ) !== false ) {
+					// phpcs:disable WordPress.Security.NonceVerification.Recommended
+					$token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+					// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+					wp_die(
+						sprintf(
+							'<h1>Payment Cancelled</h1>
+							<p>The PayPal payment was cancelled.</p>
+							<p><strong>Order ID:</strong> %s</p>',
+							esc_html( $token )
+						),
+						'Payment Cancelled',
+						array( 'response' => 200 )
+					);
+				}
 			}
 		);
 
