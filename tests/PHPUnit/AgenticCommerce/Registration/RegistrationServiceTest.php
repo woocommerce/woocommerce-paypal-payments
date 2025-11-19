@@ -4,10 +4,10 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\AgenticCommerce\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadata;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WP_Error;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -17,19 +17,19 @@ use function Brain\Monkey\Functions\when;
  */
 class RegistrationServiceTest extends TestCase {
 
-	private ConnectionState $connection_state;
+	private AgenticWebhookConfiguration $webhook_config;
 	private MerchantMetadataProvider $metadata_provider;
 
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->connection_state  = Mockery::mock( ConnectionState::class );
+		$this->webhook_config    = Mockery::mock( AgenticWebhookConfiguration::class );
 		$this->metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
 	}
 
 	private function create_testable_service( bool $has_token = false ): TestableRegistrationService {
 		return new TestableRegistrationService(
-			$this->connection_state,
+			$this->webhook_config,
 			$this->metadata_provider,
 			$has_token ? 'stored-token' : false
 		);
@@ -69,7 +69,8 @@ class RegistrationServiceTest extends TestCase {
 
 	public function test_is_registered_returns_true_after_successful_registration(): void {
 		$this->stub_metadata();
-		$this->connection_state->allows( 'is_production' )->andReturn( false );
+		$this->webhook_config->allows( 'get_registration_install_url' )
+			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
@@ -92,7 +93,8 @@ class RegistrationServiceTest extends TestCase {
 	}
 
 	public function test_is_registered_returns_false_after_deregistration(): void {
-		$this->connection_state->allows( 'is_production' )->andReturn( false );
+		$this->webhook_config->allows( 'get_registration_uninstall_url' )
+			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
@@ -127,7 +129,8 @@ class RegistrationServiceTest extends TestCase {
 	 */
 	public function test_register_outcomes( bool $success, string $error_code = null ): void {
 		$this->stub_metadata();
-		$this->connection_state->allows( 'is_production' )->andReturn( false );
+		$this->webhook_config->allows( 'get_registration_install_url' )
+			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
@@ -164,7 +167,8 @@ class RegistrationServiceTest extends TestCase {
 
 	public function test_register_webhook_network_error(): void {
 		$this->stub_metadata();
-		$this->connection_state->allows( 'is_production' )->andReturn( false );
+		$this->webhook_config->allows( 'get_registration_install_url' )
+			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
 
 		$wp_error = new WP_Error( 'http_request_failed', 'Connection timeout' );
 
@@ -185,7 +189,8 @@ class RegistrationServiceTest extends TestCase {
 
 	public function test_register_json_parsing_error(): void {
 		$this->stub_metadata();
-		$this->connection_state->allows( 'is_production' )->andReturn( false );
+		$this->webhook_config->allows( 'get_registration_install_url' )
+			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->alias(
@@ -206,7 +211,8 @@ class RegistrationServiceTest extends TestCase {
 	 * @dataProvider deregistration_outcomes_provider
 	 */
 	public function test_deregister_outcomes( bool $success, string $error_code = null ): void {
-		$this->connection_state->allows( 'is_production' )->andReturn( false );
+		$this->webhook_config->allows( 'get_registration_uninstall_url' )
+			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
@@ -244,8 +250,9 @@ class RegistrationServiceTest extends TestCase {
 	/**
 	 * @dataProvider environment_urls_provider
 	 */
-	public function test_uses_correct_environment_url( bool $is_production, string $expected_url ): void {
-		$this->connection_state->allows( 'is_production' )->andReturn( $is_production );
+	public function test_uses_correct_environment_url( string $expected_url ): void {
+		$this->webhook_config->allows( 'get_registration_uninstall_url' )
+			->andReturn( $expected_url );
 
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
@@ -270,8 +277,8 @@ class RegistrationServiceTest extends TestCase {
 
 	public function environment_urls_provider(): array {
 		return array(
-			'production' => array( true, 'https://d.joinhoney.com/webhooks/ws/uninstall' ),
-			'sandbox'    => array( false, 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' ),
+			'production' => array( 'https://d.joinhoney.com/webhooks/ws/uninstall' ),
+			'sandbox'    => array( 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' ),
 		);
 	}
 }
@@ -289,8 +296,8 @@ class TestableRegistrationService extends RegistrationService {
 	 */
 	private $stored_token;
 
-	public function __construct( $connection_state, $metadata_provider, $initial_token ) {
-		parent::__construct( $connection_state, $metadata_provider );
+	public function __construct( $webhook_config, $metadata_provider, $initial_token ) {
+		parent::__construct( $webhook_config, $metadata_provider );
 		$this->stored_token = $initial_token;
 	}
 
