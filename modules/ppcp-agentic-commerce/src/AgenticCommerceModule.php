@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare( strict_types = 1 );
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
  * This module handles the initialization and execution of the agentic commerce functionality.
  */
 class AgenticCommerceModule implements ServiceModule, ExecutableModule {
+
 	use ModuleClassNameIdTrait;
 
 	/**
