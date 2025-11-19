@@ -14,25 +14,19 @@ use function as_schedule_recurring_action;
  * This class handles scheduling sync jobs and marking products for sync.
  */
 class IngestionManager {
-
-	private const INTERVAL_IN_SECONDS = 15 * MINUTE_IN_SECONDS;
-
-	/**
-	 * The batch size for sync operations.
-	 *
-	 * @var int
-	 */
-	private int $batch_size = 50;
+	private IngestionConfiguration $configuration;
 	private IngestionBatchProvider $batch_provider;
 	private LoggerInterface $logger;
 	private AgenticWebhookConfiguration $webhook_urls;
 
 	public function __construct(
+		IngestionConfiguration $configuration,
 		IngestionBatchProvider $batch_provider,
 		AgenticWebhookConfiguration $webhook_urls,
 		LoggerInterface $logger
 	) {
 
+		$this->configuration  = $configuration;
 		$this->batch_provider = $batch_provider;
 		$this->webhook_urls   = $webhook_urls;
 		$this->logger         = $logger;
@@ -68,7 +62,7 @@ class IngestionManager {
 
 		as_schedule_recurring_action(
 			time(),
-			self::INTERVAL_IN_SECONDS,
+			$this->configuration->get_sync_interval_in_seconds(),
 			'ppcp_agentic_sync_batch',
 			array(),
 			'ppcp_agentic_sync'
@@ -83,7 +77,7 @@ class IngestionManager {
 	 */
 	public function process_next_batch(): void {
 		// Get products needing sync using WooCommerce APIs.
-		$product_ids = $this->batch_provider->get_batch( $this->batch_size );
+		$product_ids = $this->batch_provider->get_batch();
 
 		if ( empty( $product_ids ) ) {
 			return; // Nothing to sync.

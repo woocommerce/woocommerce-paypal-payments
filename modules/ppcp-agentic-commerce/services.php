@@ -22,9 +22,12 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
 
 return array(
 	'agentic.config.webhook_urls'              => static function ( ContainerInterface $c ): AgenticWebhookConfiguration {
@@ -100,23 +103,17 @@ return array(
 	},
 
 	// Ingestion services.
-	'agentic.ingestion-eligible-product-types' => static function (): array {
-		return array(
-			ProductType::SIMPLE,
-			ProductType::VARIABLE,
+	'agentic.config.ingestion'         => static function (): IngestionConfiguration {
+		return new IngestionConfiguration();
+	},
+	'agentic.ingestion-batch-provider' => static function ( ContainerInterface $c ): IngestionBatchProvider {
+		return new IngestionBatchProvider(
+			$c->get( 'agentic.config.ingestion' )
 		);
 	},
-	'agentic.ingestion-stale-timeout-days'     => static function (): int {
-		return 5;
-	},
-	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $c ): Ingestion\IngestionBatchProvider {
-		return new Ingestion\IngestionBatchProvider(
-			$c->get( 'agentic.ingestion-stale-timeout-days' ),
-			$c->get( 'agentic.ingestion-eligible-product-types' )
-		);
-	},
-	'agentic.ingestion-manager'                => static function ( ContainerInterface $c ): Ingestion\IngestionManager {
-		return new Ingestion\IngestionManager(
+	'agentic.ingestion-manager'        => static function ( ContainerInterface $c ): IngestionManager {
+		return new IngestionManager(
+			$c->get( 'agentic.config.ingestion' ),
 			$c->get( 'agentic.ingestion-batch-provider' ),
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'woocommerce.logger.woocommerce' )
