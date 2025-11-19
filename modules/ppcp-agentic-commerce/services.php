@@ -109,12 +109,6 @@ return array(
 	'agentic.ingestion-stale-timeout-days'     => static function (): int {
 		return 5;
 	},
-	'agentic.sync-job-factory'                 => static function ( ContainerInterface $c ): Ingestion\SyncJobFactory {
-		return new Ingestion\SyncJobFactory(
-			$c->get( 'agentic.config.webhook_urls' ),
-			$c->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
 	'agentic.ingestion-batch-provider'         => static function ( ContainerInterface $c ): Ingestion\IngestionBatchProvider {
 		return new Ingestion\IngestionBatchProvider(
 			$c->get( 'agentic.ingestion-stale-timeout-days' ),
@@ -124,7 +118,8 @@ return array(
 	'agentic.ingestion-manager'                => static function ( ContainerInterface $c ): Ingestion\IngestionManager {
 		return new Ingestion\IngestionManager(
 			$c->get( 'agentic.ingestion-batch-provider' ),
-			$c->get( 'agentic.sync-job-factory' )
+			$c->get( 'agentic.config.webhook_urls' ),
+			$c->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
