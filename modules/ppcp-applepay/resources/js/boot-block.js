@@ -97,8 +97,40 @@ const ApplePayComponent = ( { isEditing, buttonAttributes } ) => {
 			ppcpConfig,
 			buttonAttributes
 		);
+
 		setManager( newManager );
 	}, [ paypalLoaded, applePayLoaded, isEditing, buttonAttributes, manager ] );
+
+	useEffect( () => {
+		if ( ! manager || isEditing ) {
+			return;
+		}
+
+		let previousTotal = null;
+
+		const unsubscribe = wp.data.subscribe( () => {
+			const store = wp.data.select( 'wc/store/cart' );
+			if ( ! store ) {
+				return;
+			}
+
+			const totals = store.getCartTotals();
+			if ( ! totals ) {
+				return;
+			}
+
+			if ( totals.total_price !== previousTotal && previousTotal !== null ) {
+				previousTotal = totals.total_price;
+				manager.reinit();
+			} else if ( previousTotal === null ) {
+				previousTotal = totals.total_price;
+			}
+		} );
+
+		return () => {
+			unsubscribe();
+		};
+	}, [ manager, isEditing ] );
 
 	if ( isEditing ) {
 		return (
