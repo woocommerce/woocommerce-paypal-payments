@@ -94,12 +94,12 @@ export default defineConfig< BaseExtend >( {
 			? 'off'
 			: {
 					mode: 'retain-on-failure', //'on',//
-					size: { width: 1280, height: 850 },
+					size: { width: 1280, height: 1000 },
 			},
 
 		recordVideoOptions: {
 			mode: 'retain-on-failure',
-			size: { width: 1280, height: 850 },
+			size: { width: 1280, height: 1000 },
 		},
 	},
 
