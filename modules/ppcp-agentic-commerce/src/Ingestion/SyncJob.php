@@ -108,7 +108,7 @@ class SyncJob {
 				'headers' => array(
 					'Content-Type' => 'application/json',
 				),
-				'body'    => wp_json_encode(
+				'body'    => (string) wp_json_encode(
 					array(
 						'merchant_url' => home_url(),
 						'products'     => $api_payload,
