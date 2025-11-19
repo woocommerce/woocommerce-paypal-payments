@@ -37,15 +37,12 @@ class SyncJobTest extends TestCase {
 
 		// Stub WordPress functions with default values
 		when( 'wp_generate_uuid4' )->justReturn( 'test-batch-id-1234' );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'current_time' )->justReturn( '2024-01-01 12:00:00' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Category1, Category2' );
 		when( 'wp_strip_all_tags' )->returnArg();
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-		when( 'wp_json_encode' )->alias( function ( $data ) {
-			return json_encode( $data );
-		} );
+		when( 'wp_json_encode' )->alias( fn( $data ) => json_encode( $data ) );
 	}
 
 	/**
@@ -202,6 +199,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			$this->product_ids,
 			$this->logger
 		);
@@ -231,6 +229,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			$this->product_ids,
 			$this->logger
 		);
@@ -279,6 +278,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			$this->product_ids,
 			$this->logger
 		);
@@ -329,6 +329,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			$this->product_ids,
 			$this->logger
 		);
@@ -398,6 +399,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			$this->product_ids,
 			$this->logger
 		);
@@ -457,6 +459,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			array( 1, 999, 888 ),
 			$this->logger
 		);
@@ -484,6 +487,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			array(),
 			$this->logger
 		);
@@ -532,6 +536,7 @@ class SyncJobTest extends TestCase {
 
 		$sync_job = new SyncJob(
 			$this->api_endpoint,
+			'https://example.com',
 			array( 42 ),
 			$this->logger
 		);

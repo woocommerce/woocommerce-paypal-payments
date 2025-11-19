@@ -37,12 +37,11 @@ class ProductsPayloadTest extends TestCase {
 		// Mock WordPress functions
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Electronics, Gadgets' );
 		when( 'wp_strip_all_tags' )->justReturn( 'Electronics, Gadgets' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
@@ -141,12 +140,11 @@ class ProductsPayloadTest extends TestCase {
 			return false;
 		} );
 
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Clothing' );
 		when( 'wp_strip_all_tags' )->justReturn( 'Clothing' );
 
-		$payload = new ProductsPayload( array( $parent_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 2, $result );
@@ -215,7 +213,7 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $parent_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 0, $result );
@@ -224,14 +222,14 @@ class ProductsPayloadTest extends TestCase {
 	public function test_handle_invalid_product_id(): void {
 		when( 'wc_get_product' )->justReturn( false );
 
-		$payload = new ProductsPayload( array( 999 ) );
+		$payload = new ProductsPayload( 'https://example.com', array( 999 ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 0, $result );
 	}
 
 	public function test_handle_empty_product_list(): void {
-		$payload = new ProductsPayload( array() );
+		$payload = new ProductsPayload( 'https://example.com', array() );
 		$result  = $payload->get_array();
 
 		$this->assertIsArray( $result );
@@ -257,12 +255,11 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( false );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
@@ -293,12 +290,11 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( false );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
@@ -333,12 +329,11 @@ class ProductsPayloadTest extends TestCase {
 
 			when( 'wc_get_product' )->justReturn( $product );
 			when( 'wp_get_attachment_image_url' )->justReturn( false );
-			when( 'home_url' )->justReturn( 'https://example.com' );
 			when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 			when( 'wc_get_product_category_list' )->justReturn( '' );
 			when( 'wp_strip_all_tags' )->justReturn( '' );
 
-			$payload = new ProductsPayload( array( $product_id ) );
+			$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 			$result  = $payload->get_array();
 
 			$this->assertEquals( $expected_availability, $result[0]['availability'] );
@@ -364,12 +359,11 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( false );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
