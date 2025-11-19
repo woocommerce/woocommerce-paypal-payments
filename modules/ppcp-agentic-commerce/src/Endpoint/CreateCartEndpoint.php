@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
@@ -63,20 +64,20 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	/**
 	 * Constructor.
 	 *
-	 * @param JwtAuthService              $auth_service JWT authentication service.
+	 * @param AuthServiceProvider         $auth_provider JWT authentication service provider.
 	 * @param AgenticSessionHandler       $session_handler Session handler.
 	 * @param ResponseFactory             $response_factory Response factory.
 	 * @param OrderEndpoint               $order_endpoint PayPal Orders API endpoint (high-level).
 	 * @param PayPalCartToCartDataAdapter $cart_translator Translator for PayPalCart to CartData.
 	 */
 	public function __construct(
-		JwtAuthService $auth_service,
+		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
 		OrderEndpoint $order_endpoint,
 		PayPalCartToCartDataAdapter $cart_translator
 	) {
-		parent::__construct( $auth_service, $session_handler, $response_factory );
+		parent::__construct( $auth_provider, $session_handler, $response_factory );
 		$this->order_endpoint  = $order_endpoint;
 		$this->cart_translator = $cart_translator;
 	}

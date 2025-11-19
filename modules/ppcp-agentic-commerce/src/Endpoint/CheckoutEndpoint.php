@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 
@@ -40,18 +40,18 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	/**
 	 * Constructor.
 	 *
-	 * @param JwtAuthService           $auth_service       JWT authentication service.
+	 * @param AuthServiceProvider      $auth_provider      JWT authentication service provider.
 	 * @param AgenticSessionHandler    $session_handler    Session handler.
 	 * @param ResponseFactory          $response_factory   Response factory.
 	 * @param AgenticCheckoutProcessor $checkout_processor Checkout processor service.
 	 */
 	public function __construct(
-		JwtAuthService $auth_service,
+		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
 		AgenticCheckoutProcessor $checkout_processor
 	) {
-		parent::__construct( $auth_service, $session_handler, $response_factory );
+		parent::__construct( $auth_provider, $session_handler, $response_factory );
 		$this->checkout_processor = $checkout_processor;
 	}
 
