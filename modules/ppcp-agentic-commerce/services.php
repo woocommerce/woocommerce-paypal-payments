@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
@@ -26,6 +25,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -65,12 +67,28 @@ return array(
 		return new AgenticSessionHandler();
 	},
 
+	// Helper services.
+	'agentic.helper.cart-adapter'              => static function ( ContainerInterface $c ): PayPalCartToCartDataAdapter {
+		return new PayPalCartToCartDataAdapter();
+	},
+
+	'agentic.helper.checkout-processor'        => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
+		return new AgenticCheckoutProcessor(
+			$c->get( 'api.endpoint.order' ),
+			$c->get( 'api.endpoint.orders' ),
+			$c->get( 'button.helper.wc-order-creator' ),
+			$c->get( 'agentic.helper.cart-adapter' )
+		);
+	},
+
 	// REST endpoints.
 	'agentic.rest.create_cart'                 => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
-			$c->get( 'agentic.response.factory' )
+			$c->get( 'agentic.response.factory' ),
+			$c->get( 'api.endpoint.order' ),
+			$c->get( 'agentic.helper.cart-adapter' )
 		);
 	},
 	'agentic.rest.get_cart'                    => static function ( ContainerInterface $container ): GetCartEndpoint {
@@ -80,26 +98,22 @@ return array(
 			$container->get( 'agentic.response.factory' )
 		);
 	},
-	'agentic.rest.update_cart'                 => static function ( ContainerInterface $container ): UpdateCartEndpoint {
-		return new UpdateCartEndpoint(
-			$container->get( 'agentic.auth.provider' ),
-			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' )
-		);
-	},
+
 	'agentic.rest.replace_cart'                => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
 			$container->get( 'agentic.auth.provider' ),
 			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' )
+			$container->get( 'agentic.response.factory' ),
+			$container->get( 'api.endpoint.orders' )
 		);
 	},
 
 	'agentic.rest.checkout'                    => static function ( ContainerInterface $container ): CheckoutEndpoint {
 		return new CheckoutEndpoint(
-			$container->get( 'agentic.auth.service' ),
+			$container->get( 'agentic.auth.provider' ),
 			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' )
+			$container->get( 'agentic.response.factory' ),
+			$container->get( 'agentic.helper.checkout-processor' )
 		);
 	},
 
