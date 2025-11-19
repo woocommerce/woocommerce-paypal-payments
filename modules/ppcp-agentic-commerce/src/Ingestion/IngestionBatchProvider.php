@@ -16,6 +16,7 @@ class IngestionBatchProvider {
 		int $stale_timeout_days,
 		array $product_types
 	) {
+
 		$this->stale_timeout_days = $stale_timeout_days;
 		$this->product_types      = $product_types;
 	}

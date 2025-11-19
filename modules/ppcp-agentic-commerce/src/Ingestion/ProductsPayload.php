@@ -107,8 +107,11 @@ class ProductsPayload {
 			// Add variant attributes using WooCommerce methods.
 			$attributes = $variation->get_variation_attributes();
 			foreach ( $attributes as $attribute => $value ) {
-				$clean_attr = str_replace( 'attribute_pa_', '', $attribute );
-				$clean_attr = str_replace( 'attribute_', '', $clean_attr );
+				$clean_attr = str_replace(
+					array( 'attribute_pa_', 'attribute_' ),
+					'',
+					$attribute
+				);
 
 				if ( in_array( $clean_attr, array( 'color', 'size', 'gender' ), true ) ) {
 					$variant[ $clean_attr ] = $value;
@@ -134,15 +137,21 @@ class ProductsPayload {
 		return $variants;
 	}
 
+	/**
+	 * @param string|mixed $price WooCommerce uses strings, but any numeric value is accepted.
+	 *                            Defends the method against plugins or future changes that use
+	 *                            a different data type.
+	 * @return string
+	 */
 	private function format_price( $price ): string {
-		if ( ! $price ) {
+		if ( ! $price || ! is_numeric( $price ) ) {
 			return '';
 		}
 
 		return number_format( (float) $price, 2, '.', '' ) . ' ' . get_woocommerce_currency();
 	}
 
-	private function map_stock_status( $stock_status ): string {
+	private function map_stock_status( string $stock_status ): string {
 		$mapping = array(
 			'instock'     => 'in stock',
 			'outofstock'  => 'out of stock',

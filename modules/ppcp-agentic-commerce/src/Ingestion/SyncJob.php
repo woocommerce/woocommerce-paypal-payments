@@ -156,10 +156,10 @@ class SyncJob {
 	/**
 	 * Mark products as synced by updating their last sync timestamp.
 	 *
-	 * This method updates the '_ppcp_agentic_last_sync' meta field for each
+	 * This method updates the '_ppcp_agentic_last_sync' meta-field for each
 	 * product with the current timestamp, indicating successful synchronization.
 	 * It also removes the '_ppcp_agentic_needs_sync' and '_ppcp_agentic_sync_error'
-	 * meta fields to indicate that the product is no longer pending or in error state.
+	 * meta-fields to indicate that the product is no longer pending or in an error state.
 	 *
 	 * @param array $product_ids Product IDs to mark as synced.
 	 */
