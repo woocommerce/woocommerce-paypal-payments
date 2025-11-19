@@ -8,6 +8,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
+use stdClass;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider
@@ -46,7 +47,7 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
+				$wc            = new stdClass();
 				$wc->countries = $wc_countries;
 
 				return $wc;
@@ -90,7 +91,7 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
+				$wc            = new stdClass();
 				$wc->countries = $wc_countries;
 
 				return $wc;
@@ -125,7 +126,7 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
+				$wc            = new stdClass();
 				$wc->countries = $wc_countries;
 
 				return $wc;
@@ -159,7 +160,7 @@ class MerchantMetadataProviderTest extends TestCase {
 
 		when( 'WC' )->alias(
 			function () use ( $wc_countries ) {
-				$wc            = new \stdClass();
+				$wc            = new stdClass();
 				$wc->countries = $wc_countries;
 
 				return $wc;

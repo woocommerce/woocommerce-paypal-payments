@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
+use InvalidArgumentException;
+
 /**
  * Fluent builder for cart payloads.
  */
@@ -51,6 +53,7 @@ class CartPayloadBuilder {
 				'value'         => $value,
 			),
 		);
+
 		return $this;
 	}
 
@@ -62,17 +65,17 @@ class CartPayloadBuilder {
 	 */
 	public function with_item_fixture( string $fixture_name ): self {
 		$fixtures = array(
-			'default'     => array( 'TEST-001', 1, '25.00', 'USD' ),
-			'expensive'   => array( 'TEST-002', 1, '99.99', 'USD' ),
-			'multi'       => array( 'TEST-003', 5, '10.00', 'USD' ),
-			'old_item'    => array( 'OLD-ITEM-001', 1, '25.00', 'USD' ),
-			'new_item_2'  => array( 'NEW-ITEM-002', 3, '50.00', 'USD' ),
-			'new_item_3'  => array( 'NEW-ITEM-003', 1, '30.00', 'USD' ),
-			'eur_item'    => array( 'NEW-ITEM-002', 5, '99.99', 'EUR' ),
+			'default'    => array( 'TEST-001', 1, '25.00', 'USD' ),
+			'expensive'  => array( 'TEST-002', 1, '99.99', 'USD' ),
+			'multi'      => array( 'TEST-003', 5, '10.00', 'USD' ),
+			'old_item'   => array( 'OLD-ITEM-001', 1, '25.00', 'USD' ),
+			'new_item_2' => array( 'NEW-ITEM-002', 3, '50.00', 'USD' ),
+			'new_item_3' => array( 'NEW-ITEM-003', 1, '30.00', 'USD' ),
+			'eur_item'   => array( 'NEW-ITEM-002', 5, '99.99', 'EUR' ),
 		);
 
 		if ( ! isset( $fixtures[ $fixture_name ] ) ) {
-			throw new \InvalidArgumentException( "Unknown item fixture: {$fixture_name}" );
+			throw new InvalidArgumentException( "Unknown item fixture: {$fixture_name}" );
 		}
 
 		return $this->with_item( ...$fixtures[ $fixture_name ] );
@@ -105,6 +108,7 @@ class CartPayloadBuilder {
 				'country_code'   => 'US',
 			),
 		);
+
 		return $this;
 	}
 
@@ -135,6 +139,7 @@ class CartPayloadBuilder {
 				'country_code'   => 'DE',
 			),
 		);
+
 		return $this;
 	}
 
@@ -154,10 +159,11 @@ class CartPayloadBuilder {
 		);
 
 		if ( ! isset( $fixtures[ $fixture_name ] ) ) {
-			throw new \InvalidArgumentException( "Unknown shipping fixture: {$fixture_name}" );
+			throw new InvalidArgumentException( "Unknown shipping fixture: {$fixture_name}" );
 		}
 
 		list( $method, $args ) = $fixtures[ $fixture_name ];
+
 		return $this->$method( ...$args );
 	}
 

@@ -43,7 +43,7 @@ class SyncJobTest extends TestCase {
 		when( 'wp_strip_all_tags' )->returnArg();
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
-		when( 'wp_json_encode' )->alias( function( $data ) {
+		when( 'wp_json_encode' )->alias( function ( $data ) {
 			return json_encode( $data );
 		} );
 	}
@@ -59,10 +59,10 @@ class SyncJobTest extends TestCase {
 	/**
 	 * Helper method to create a stub simple product with all required methods.
 	 *
-	 * @param int  $id              Product ID.
+	 * @param int    $id            Product ID.
 	 * @param string $title         Product title.
 	 * @param string $price         Product price.
-	 * @param bool $stub_meta_ops   Whether to stub meta operations (set false when verifying them).
+	 * @param bool   $stub_meta_ops Whether to stub meta operations (set false when verifying them).
 	 * @return WC_Product|Mockery\MockInterface
 	 */
 	private function create_product_stub(
@@ -100,8 +100,8 @@ class SyncJobTest extends TestCase {
 	/**
 	 * Helper method to create multiple product stubs and configure wc_get_product.
 	 *
-	 * @param array $product_ids    Product IDs.
-	 * @param bool  $stub_meta_ops  Whether to stub meta operations (set false when verifying them).
+	 * @param array $product_ids   Product IDs.
+	 * @param bool  $stub_meta_ops Whether to stub meta operations (set false when verifying them).
 	 * @return array Product stubs indexed by ID.
 	 */
 	private function create_products_and_stub_wc_get_product(
@@ -118,7 +118,7 @@ class SyncJobTest extends TestCase {
 			);
 		}
 
-		when( 'wc_get_product' )->alias( function( $id ) use ( $products ) {
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $products ) {
 			return $products[ $id ] ?? false;
 		} );
 
@@ -344,7 +344,7 @@ class SyncJobTest extends TestCase {
 	 */
 	public function http_error_provider(): array {
 		return array(
-			'internal server error (500)'     => array(
+			'internal server error (500)'       => array(
 				500,
 				'Internal Server Error',
 				'HTTP 500: Internal Server Error',
@@ -354,12 +354,12 @@ class SyncJobTest extends TestCase {
 				'{"error": "Invalid product data"}',
 				'HTTP 400: {"error": "Invalid product data"}',
 			),
-			'unauthorized access (401)'       => array(
+			'unauthorized access (401)'         => array(
 				401,
 				'Unauthorized',
 				'HTTP 401: Unauthorized',
 			),
-			'service unavailable (503)'       => array(
+			'service unavailable (503)'         => array(
 				503,
 				'Service Temporarily Unavailable',
 				'HTTP 503: Service Temporarily Unavailable',
@@ -378,10 +378,10 @@ class SyncJobTest extends TestCase {
 		$this->create_products_and_stub_wc_get_product( $this->product_ids );
 		$this->stub_logger_to_allow_all();
 
-		$api_endpoint = $this->api_endpoint;
+		$api_endpoint     = $this->api_endpoint;
 		$captured_request = null;
 
-		when( 'wp_remote_post' )->alias( function( $url, $args ) use ( $api_endpoint, &$captured_request ) {
+		when( 'wp_remote_post' )->alias( function ( $url, $args ) use ( $api_endpoint, &$captured_request ) {
 			$captured_request = array( 'url' => $url, 'args' => $args );
 
 			return array(
@@ -426,7 +426,7 @@ class SyncJobTest extends TestCase {
 
 		$valid_product = $this->create_product_stub( 1, 'Product 1', '10', false );
 
-		when( 'wc_get_product' )->alias( function( $id ) use ( $valid_product ) {
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $valid_product ) {
 			return $id === 1 ? $valid_product : false;
 		} );
 
@@ -502,7 +502,7 @@ class SyncJobTest extends TestCase {
 
 		$product = $this->create_product_stub( 42, 'Single Product', '25', false );
 
-		when( 'wc_get_product' )->alias( function( $id ) use ( $product ) {
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $product ) {
 			return $id === 42 ? $product : false;
 		} );
 

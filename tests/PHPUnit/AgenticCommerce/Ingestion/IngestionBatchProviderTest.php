@@ -45,17 +45,20 @@ class IngestionBatchProviderTest extends TestCase {
 		$this->expired_timestamp = strtotime( '-7 days' );
 
 		$this->configuration = Mockery::mock( IngestionConfiguration::class );
-		$this->configuration->allows( 'get_supported_product_types' )->andReturn( $this->product_types );
+		$this->configuration->allows( 'get_supported_product_types' )
+			->andReturn( $this->product_types );
 		$this->configuration->allows( 'get_sync_batch_size' )->andReturn( $this->batch_size );
-		$this->configuration->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
+		$this->configuration->allows( 'get_expired_product_timestamp' )
+			->andReturn( $this->expired_timestamp );
 
 		$this->provider = new IngestionBatchProvider( $this->configuration );
 
 		// Mock WordPress date functions
-		when( 'gmdate' )->alias( function( $format, $timestamp = null ) {
+		when( 'gmdate' )->alias( function ( $format, $timestamp = null ) {
 			if ( $timestamp === null ) {
 				$timestamp = time();
 			}
+
 			return gmdate( $format, $timestamp );
 		} );
 
@@ -67,35 +70,38 @@ class IngestionBatchProviderTest extends TestCase {
 		$never_synced_ids = array( 1, 2, 3, 4, 5 );
 
 		// Mock wc_get_products calls
-		when( 'wc_get_products' )->alias( function( $args ) use ( $never_synced_ids ) {
+		when( 'wc_get_products' )->alias( function ( $args ) use ( $never_synced_ids ) {
 			// First call - products never synced
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				$this->assertEquals( ProductStatus::PUBLISH, $args['status'] );
 				$this->assertEquals( $this->product_types, $args['type'] );
 				$this->assertFalse( $args['downloadable'] );
 				$this->assertEquals( $this->batch_size, $args['limit'] );
 				$this->assertEquals( 'ids', $args['return'] );
+
 				return $never_synced_ids;
 			}
 
 			// Second call - products needing sync
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				$this->assertEquals( 5, $args['limit'] ); // 10 - 5 already found
+
 				return array( 6, 7 );
 			}
 
 			// Third call - stale products
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === '<' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 3, $args['limit'] ); // 10 - 7 already found
 				$this->assertEquals( 'DATETIME', $args['meta_query'][0]['type'] );
 				$this->assertEquals( 'meta_value', $args['orderby'] );
 				$this->assertEquals( 'ASC', $args['order'] );
 				$this->assertEquals( '_ppcp_agentic_last_sync', $args['meta_key'] );
+
 				return array( 8, 9, 10 );
 			}
 
@@ -116,16 +122,18 @@ class IngestionBatchProviderTest extends TestCase {
 		$config->allows( 'get_sync_batch_size' )->andReturn( 5 );
 		$config->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
 
-		$provider = new IngestionBatchProvider( $config );
+		$provider         = new IngestionBatchProvider( $config );
 		$never_synced_ids = array( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 );
 
-		when( 'wc_get_products' )->alias( function( $args ) use ( $never_synced_ids ) {
+		when( 'wc_get_products' )->alias( function ( $args ) use ( $never_synced_ids ) {
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				$this->assertEquals( 5, $args['limit'] );
+
 				return array_slice( $never_synced_ids, 0, 5 );
 			}
+
 			return array();
 		} );
 
@@ -141,26 +149,28 @@ class IngestionBatchProviderTest extends TestCase {
 		// Arrange
 		$dirty_product_ids = array( 11, 12, 13 );
 
-		when( 'wc_get_products' )->alias( function( $args ) use ( $dirty_product_ids ) {
+		when( 'wc_get_products' )->alias( function ( $args ) use ( $dirty_product_ids ) {
 			// First call - no never synced products
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array();
 			}
 
 			// Second call - products needing sync
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				$this->assertEquals( $this->batch_size, $args['limit'] );
+
 				return $dirty_product_ids;
 			}
 
 			// Third call - stale products
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === '<' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 7, $args['limit'] ); // 10 - 3 already found
+
 				return array( 14, 15 );
 			}
 
@@ -178,24 +188,24 @@ class IngestionBatchProviderTest extends TestCase {
 		// Arrange
 		$stale_product_ids = array( 21, 22, 23, 24 );
 
-		when( 'wc_get_products' )->alias( function( $args ) use ( $stale_product_ids ) {
+		when( 'wc_get_products' )->alias( function ( $args ) use ( $stale_product_ids ) {
 			// First call - no never synced products
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array();
 			}
 
 			// Second call - no dirty products
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				return array();
 			}
 
 			// Third call - stale products
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === '<' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( $this->batch_size, $args['limit'] );
 
 				// Verify stale date calculation uses configured timestamp
@@ -230,8 +240,8 @@ class IngestionBatchProviderTest extends TestCase {
 		// Arrange
 		$call_count = 0;
 
-		when( 'wc_get_products' )->alias( function( $args ) use ( &$call_count ) {
-			$call_count++;
+		when( 'wc_get_products' )->alias( function ( $args ) use ( &$call_count ) {
+			$call_count ++;
 
 			// Common assertions for all calls
 			$this->assertEquals( $this->product_types, $args['type'] );
@@ -259,18 +269,18 @@ class IngestionBatchProviderTest extends TestCase {
 	public function test_get_batch_with_custom_stale_timeout(): void {
 		// Arrange - configure custom expired timestamp (30 days ago)
 		$custom_expired_timestamp = strtotime( '-30 days' );
-		$config = Mockery::mock( IngestionConfiguration::class );
+		$config                   = Mockery::mock( IngestionConfiguration::class );
 		$config->allows( 'get_supported_product_types' )->andReturn( $this->product_types );
 		$config->allows( 'get_sync_batch_size' )->andReturn( 10 );
 		$config->allows( 'get_expired_product_timestamp' )->andReturn( $custom_expired_timestamp );
 
 		$custom_provider = new IngestionBatchProvider( $config );
 
-		when( 'wc_get_products' )->alias( function( $args ) use ( $custom_expired_timestamp ) {
+		when( 'wc_get_products' )->alias( function ( $args ) use ( $custom_expired_timestamp ) {
 			// Skip to stale products check
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === '<' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === '<' ) {
 
 				$expected_stale_date = gmdate( 'Y-m-d H:i:s', $custom_expired_timestamp );
 				$this->assertEquals( $expected_stale_date, $args['meta_query'][0]['value'] );
@@ -293,15 +303,16 @@ class IngestionBatchProviderTest extends TestCase {
 	public function test_get_batch_with_custom_product_types(): void {
 		// Arrange - configure custom product types
 		$custom_types = array( 'simple', 'variable', 'grouped' );
-		$config = Mockery::mock( IngestionConfiguration::class );
+		$config       = Mockery::mock( IngestionConfiguration::class );
 		$config->allows( 'get_supported_product_types' )->andReturn( $custom_types );
 		$config->allows( 'get_sync_batch_size' )->andReturn( 10 );
 		$config->allows( 'get_expired_product_timestamp' )->andReturn( $this->expired_timestamp );
 
 		$custom_provider = new IngestionBatchProvider( $config );
 
-		when( 'wc_get_products' )->alias( function( $args ) use ( $custom_types ) {
+		when( 'wc_get_products' )->alias( function ( $args ) use ( $custom_types ) {
 			$this->assertEquals( $custom_types, $args['type'] );
+
 			return array( 1, 2, 3 );
 		} );
 
@@ -321,23 +332,25 @@ class IngestionBatchProviderTest extends TestCase {
 
 		$provider = new IngestionBatchProvider( $config );
 
-		when( 'wc_get_products' )->alias( function( $args ) {
+		when( 'wc_get_products' )->alias( function ( $args ) {
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array( 1, 2, 3, 4, 5 );
 			}
 
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				$this->assertEquals( 10, $args['limit'] ); // 15 - 5
+
 				return array( 6, 7, 8, 9, 10 );
 			}
 
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === '<' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === '<' ) {
 				$this->assertEquals( 5, $args['limit'] ); // 15 - 10
+
 				return array( 11, 12, 13, 14, 15 );
 			}
 
@@ -361,20 +374,21 @@ class IngestionBatchProviderTest extends TestCase {
 
 		$provider = new IngestionBatchProvider( $config );
 
-		when( 'wc_get_products' )->alias( function( $args ) {
+		when( 'wc_get_products' )->alias( function ( $args ) {
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
-				 $args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_last_sync' &&
+				$args['meta_query'][0]['compare'] === 'NOT EXISTS' ) {
 				return array( 1, 2, 3 );
 			}
 
 			if ( isset( $args['meta_query'][0]['key'] ) &&
-				 $args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
+				$args['meta_query'][0]['key'] === '_ppcp_agentic_needs_sync' ) {
 				return array( 4, 5, 6, 7 );
 			}
 
 			// This should not be called
 			$this->fail( 'Should not query for stale products when limit is reached' );
+
 			return array();
 		} );
 
