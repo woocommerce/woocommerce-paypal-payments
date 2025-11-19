@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 use Mockery;
 use WooCommerce\PayPalCommerce\TestCase;
 use Automattic\WooCommerce\Enums\ProductStatus;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 use function Brain\Monkey\Functions\when;
 
 /**

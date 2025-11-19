@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\AgenticCommerce\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadata;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\TestCase;
