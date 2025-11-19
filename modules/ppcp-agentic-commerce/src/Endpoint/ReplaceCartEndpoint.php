@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WP_REST_Request;
 use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
@@ -31,6 +32,31 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	 * The expected HTTP method.
 	 */
 	private const METHOD = 'PUT';
+
+	/**
+	 * The PayPal Orders API endpoint (low-level).
+	 *
+	 * @var Orders
+	 */
+	protected $orders_api;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param JwtAuthService        $auth_service     JWT authentication service.
+	 * @param AgenticSessionHandler $session_handler  Session handler.
+	 * @param ResponseFactory       $response_factory Response factory.
+	 * @param Orders                $orders_api       PayPal Orders API (low-level).
+	 */
+	public function __construct(
+		JwtAuthService $auth_service,
+		AgenticSessionHandler $session_handler,
+		ResponseFactory $response_factory,
+		Orders $orders_api
+	) {
+		parent::__construct( $auth_service, $session_handler, $response_factory );
+		$this->orders_api = $orders_api;
+	}
 
 	/**
 	 * Register REST API routes.
@@ -80,6 +106,26 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $new_cart );
 		}
 
+		// Get the PayPal Order ID (ec_token).
+		$paypal_order_id = $session['ec_token'];
+
+		// PATCH the PayPal Order with new totals.
+		try {
+			$this->patch_paypal_order( $paypal_order_id, $new_cart );
+		} catch ( \Exception $e ) {
+			return $this->error(
+				new NotFoundError(
+					'Failed to update PayPal Order: ' . $e->getMessage(),
+					array(
+						array(
+							'issue'       => 'PAYPAL_ORDER_UPDATE_FAILED',
+							'description' => 'Could not synchronize cart changes with PayPal.',
+						),
+					)
+				)
+			);
+		}
+
 		// Replace the cart session (preserving ec_token).
 		$update_result = $this->session_handler->update_cart_session( $cart_id, $new_cart );
 
@@ -100,5 +146,86 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		$response = $this->response_factory->from_cart( $new_cart );
 
 		return $this->cart_details( $response, 200 );
+	}
+
+	/**
+	 * PATCH PayPal Order with updated totals.
+	 *
+	 * @param string     $order_id The PayPal Order ID.
+	 * @param PayPalCart $cart The updated cart.
+	 * @throws \Exception If PATCH fails.
+	 */
+	protected function patch_paypal_order( string $order_id, PayPalCart $cart ): void {
+		// Calculate totals from cart items.
+		$totals = $this->calculate_cart_totals( $cart );
+
+		$patch_data = array(
+			array(
+				'op'    => 'replace',
+				'path'  => "/purchase_units/@reference_id=='default'/amount",
+				'value' => array(
+					'currency_code' => $totals['amount']['currency_code'],
+					'value'         => $totals['amount']['value'],
+					'breakdown'     => array(
+						'item_total' => array(
+							'currency_code' => $totals['item_total']['currency_code'],
+							'value'         => $totals['item_total']['value'],
+						),
+						'shipping'   => array(
+							'currency_code' => $totals['shipping']['currency_code'],
+							'value'         => $totals['shipping']['value'],
+						),
+						'tax_total'  => array(
+							'currency_code' => $totals['tax_total']['currency_code'],
+							'value'         => $totals['tax_total']['value'],
+						),
+					),
+				),
+			),
+		);
+
+		$this->orders_api->patch_order( $order_id, $patch_data );
+	}
+
+	/**
+	 * Calculate cart totals from items.
+	 *
+	 * @param PayPalCart $cart The cart.
+	 * @return array The totals array with currency_code and value for each total.
+	 */
+	protected function calculate_cart_totals( PayPalCart $cart ): array {
+		$cart_array = $cart->to_array();
+
+		$currency_code = $cart_array['items'][0]['price']['currency_code'] ?? 'USD';
+
+		$item_total = array_reduce(
+			$cart_array['items'] ?? array(),
+			function ( float $sum, $item ): float {
+				return $sum + ( (float) $item['price']['value'] * $item['quantity'] );
+			},
+			0.0
+		);
+
+		// Format as string with 2 decimal places.
+		$item_total_str = number_format( $item_total, 2, '.', '' );
+
+		return array(
+			'item_total' => array(
+				'currency_code' => $currency_code,
+				'value'         => $item_total_str,
+			),
+			'shipping'   => array(
+				'currency_code' => $currency_code,
+				'value'         => '0.00',
+			),
+			'tax_total'  => array(
+				'currency_code' => $currency_code,
+				'value'         => '0.00',
+			),
+			'amount'     => array(
+				'currency_code' => $currency_code,
+				'value'         => $item_total_str,
+			),
+		);
 	}
 }
