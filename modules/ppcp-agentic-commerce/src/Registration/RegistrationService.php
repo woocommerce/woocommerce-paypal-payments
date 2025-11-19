@@ -7,7 +7,7 @@ use Firebase\JWT\JWT;
 use JsonException;
 use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 
 class RegistrationService {
 

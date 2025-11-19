@@ -3,6 +3,7 @@
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use Automattic\WooCommerce\Enums\ProductStatus;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 
 /**
  * Provides a batch of WC_Product IDs eligible for

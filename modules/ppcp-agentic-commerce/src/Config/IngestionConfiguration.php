@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Config;
 
 use Automattic\WooCommerce\Enums\ProductType;
 

@@ -4,7 +4,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use RuntimeException;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\AgenticCommerce\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;

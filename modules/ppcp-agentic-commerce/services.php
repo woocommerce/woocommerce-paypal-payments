@@ -10,13 +10,17 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
@@ -24,9 +28,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionConfiguration;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
 
 return array(
 	'agentic.config.webhook_urls'      => static function ( ContainerInterface $c ): AgenticWebhookConfiguration {
