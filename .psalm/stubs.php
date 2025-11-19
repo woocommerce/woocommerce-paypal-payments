@@ -179,6 +179,9 @@ namespace {
 		public function __construct( $html ) {
 		}
 
+		/**
+		 * @param array|string|null $query
+		 */
 		public function next_tag( $query = null ): bool {
 			return false;
 		}
