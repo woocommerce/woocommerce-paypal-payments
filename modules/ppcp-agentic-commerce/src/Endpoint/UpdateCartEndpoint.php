@@ -1,6 +1,7 @@
 <?php
 /**
  * Update Cart Endpoint for Agentic Commerce.
+ * TODO: Currently not used, can be removed after confirming it's not part of the API.
  *
  * PUT /api/paypal/v1/merchant-cart/{cart_id}
  *
@@ -15,11 +16,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 
 /**
  * Update Cart REST endpoint.

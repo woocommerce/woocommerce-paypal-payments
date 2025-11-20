@@ -16,6 +16,8 @@ use Mockery\MockInterface;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint
+ *
+ * TODO: Currently not used, can be removed after confirming it's not part of the API.
  */
 class UpdateCartEndpointTest extends TestCase {
 

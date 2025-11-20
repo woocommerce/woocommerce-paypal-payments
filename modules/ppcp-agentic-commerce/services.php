@@ -113,6 +113,7 @@ return array(
 		);
 	},
 	'agentic.rest.update_cart'          => static function ( ContainerInterface $c ): UpdateCartEndpoint {
+		// TODO: Currently not used, can be removed after confirming it's not part of the API.
 		return new UpdateCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
