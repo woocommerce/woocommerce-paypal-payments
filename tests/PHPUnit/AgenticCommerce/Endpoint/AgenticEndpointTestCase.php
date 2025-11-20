@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartPayloadBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use Mockery;
+use Mockery\MockInterface;
 
 /**
  * Base test case for Agentic Commerce endpoint tests.
@@ -19,7 +20,9 @@ abstract class AgenticEndpointTestCase extends TestCase {
 	/**
 	 * Create standard mocks for endpoint tests.
 	 *
-	 * @return array{auth_provider: AuthServiceProvider&\Mockery\MockInterface, session_handler: AgenticSessionHandler&\Mockery\MockInterface, response_factory: ResponseFactory&\Mockery\MockInterface}
+	 * @return array{auth_provider: AuthServiceProvider&MockInterface, session_handler:
+	 *                              AgenticSessionHandler&MockInterface, response_factory:
+	 *                              ResponseFactory&MockInterface}
 	 */
 	protected function create_mocks(): array {
 		$auth_service  = Mockery::mock( JwtAuthService::class );

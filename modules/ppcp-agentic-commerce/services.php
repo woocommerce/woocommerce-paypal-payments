@@ -5,20 +5,20 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
-use Automattic\WooCommerce\Enums\ProductType;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CheckoutEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CheckoutEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
@@ -29,10 +29,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 
 return array(
 	// Configuration.
@@ -81,7 +79,7 @@ return array(
 	},
 
 	// Helper services.
-	'agentic.helper.cart-adapter'       => static function ( ContainerInterface $c ): PayPalCartToCartDataAdapter {
+	'agentic.helper.cart-adapter'       => static function (): PayPalCartToCartDataAdapter {
 		return new PayPalCartToCartDataAdapter();
 	},
 
@@ -121,20 +119,20 @@ return array(
 			$c->get( 'agentic.response.factory' )
 		);
 	},
-	'agentic.rest.replace_cart'         => static function ( ContainerInterface $container ): ReplaceCartEndpoint {
+	'agentic.rest.replace_cart'         => static function ( ContainerInterface $c ): ReplaceCartEndpoint {
 		return new ReplaceCartEndpoint(
-			$container->get( 'agentic.auth.provider' ),
-			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' ),
-			$container->get( 'api.endpoint.orders' ) // The only difference here is the presence of this line from PCP-5273 vs its absence in PCP-5271. Keeping it from PCP-5273 for completeness, as it seems needed for a replace cart operation.
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' ),
+			$c->get( 'api.endpoint.orders' ) // The only difference here is the presence of this line from PCP-5273 vs its absence in PCP-5271. Keeping it from PCP-5273 for completeness, as it seems needed for a replace cart operation.
 		);
 	},
-	'agentic.rest.checkout'             => static function ( ContainerInterface $container ): CheckoutEndpoint {
+	'agentic.rest.checkout'             => static function ( ContainerInterface $c ): CheckoutEndpoint {
 		return new CheckoutEndpoint(
-			$container->get( 'agentic.auth.provider' ),
-			$container->get( 'agentic.session.handler' ),
-			$container->get( 'agentic.response.factory' ),
-			$container->get( 'agentic.helper.checkout-processor' )
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.helper.checkout-processor' )
 		);
 	},
 

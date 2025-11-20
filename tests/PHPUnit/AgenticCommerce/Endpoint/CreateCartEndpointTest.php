@@ -27,7 +27,7 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 		// Verify cart session is created with correct token.
 		$session_handler->shouldReceive( 'create_cart_session' )
 			->once()
-			->withArgs( function( $cart, $ec_token ) use ( $sample_token ) {
+			->withArgs( function ( $cart, $ec_token ) use ( $sample_token ) {
 				return $cart instanceof PayPalCart && $ec_token === $sample_token;
 			} )
 			->andReturn( $cart_id );

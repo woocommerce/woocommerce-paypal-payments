@@ -18,7 +18,7 @@ class ProductsPayloadTest extends TestCase {
 
 	public function test_transform_simple_product(): void {
 		$product_id = 123;
-		$product = Mockery::mock( WC_Product_Simple::class );
+		$product    = Mockery::mock( WC_Product_Simple::class );
 
 		// Mock product methods
 		$product->shouldReceive( 'get_id' )->andReturn( $product_id );
@@ -37,13 +37,12 @@ class ProductsPayloadTest extends TestCase {
 		// Mock WordPress functions
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Electronics, Gadgets' );
 		when( 'wp_strip_all_tags' )->justReturn( 'Electronics, Gadgets' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
 		$this->assertEquals( array(
@@ -62,7 +61,7 @@ class ProductsPayloadTest extends TestCase {
 	}
 
 	public function test_transform_variable_product_with_variations(): void {
-		$parent_id = 100;
+		$parent_id     = 100;
 		$variation1_id = 101;
 		$variation2_id = 102;
 
@@ -70,7 +69,10 @@ class ProductsPayloadTest extends TestCase {
 		$parent_product = Mockery::mock( WC_Product_Variable::class . ', ' . WC_Product::class );
 		$parent_product->shouldReceive( 'get_type' )->andReturn( 'variable' );
 		$parent_product->shouldReceive( 'is_type' )->with( 'variable' )->andReturn( true );
-		$parent_product->shouldReceive( 'get_children' )->andReturn( array( $variation1_id, $variation2_id ) );
+		$parent_product->shouldReceive( 'get_children' )->andReturn( array(
+			$variation1_id,
+			$variation2_id,
+		) );
 		$parent_product->shouldReceive( 'get_id' )->andReturn( $parent_id );
 		$parent_product->shouldReceive( 'get_image_id' )->andReturn( 200 );
 		$parent_product->shouldReceive( 'get_description' )->andReturn( 'Parent description' );
@@ -80,7 +82,8 @@ class ProductsPayloadTest extends TestCase {
 		$variation1->shouldReceive( 'is_purchasable' )->andReturn( true );
 		$variation1->shouldReceive( 'get_id' )->andReturn( $variation1_id );
 		$variation1->shouldReceive( 'get_name' )->andReturn( 'Test Product - Red, Large' );
-		$variation1->shouldReceive( 'get_permalink' )->andReturn( 'https://example.com/product/test?attribute_color=red&attribute_size=large' );
+		$variation1->shouldReceive( 'get_permalink' )
+			->andReturn( 'https://example.com/product/test?attribute_color=red&attribute_size=large' );
 		$variation1->shouldReceive( 'get_image_id' )->andReturn( 0 );
 		$variation1->shouldReceive( 'get_parent_id' )->andReturn( $parent_id );
 		$variation1->shouldReceive( 'get_description' )->andReturn( '' );
@@ -91,7 +94,7 @@ class ProductsPayloadTest extends TestCase {
 		$variation1->shouldReceive( 'get_sale_price' )->andReturn( '' );
 		$variation1->shouldReceive( 'get_variation_attributes' )->andReturn( array(
 			'attribute_color' => 'red',
-			'attribute_size' => 'large'
+			'attribute_size'  => 'large',
 		) );
 
 		// Mock variation 2
@@ -99,7 +102,8 @@ class ProductsPayloadTest extends TestCase {
 		$variation2->shouldReceive( 'is_purchasable' )->andReturn( true );
 		$variation2->shouldReceive( 'get_id' )->andReturn( $variation2_id );
 		$variation2->shouldReceive( 'get_name' )->andReturn( 'Test Product - Blue, Medium' );
-		$variation2->shouldReceive( 'get_permalink' )->andReturn( 'https://example.com/product/test?attribute_color=blue&attribute_size=medium' );
+		$variation2->shouldReceive( 'get_permalink' )
+			->andReturn( 'https://example.com/product/test?attribute_color=blue&attribute_size=medium' );
 		$variation2->shouldReceive( 'get_image_id' )->andReturn( 201 );
 		$variation2->shouldReceive( 'get_parent_id' )->andReturn( $parent_id );
 		$variation2->shouldReceive( 'get_description' )->andReturn( 'Variation description' );
@@ -110,11 +114,11 @@ class ProductsPayloadTest extends TestCase {
 		$variation2->shouldReceive( 'get_sale_price' )->andReturn( '28.00' );
 		$variation2->shouldReceive( 'get_variation_attributes' )->andReturn( array(
 			'attribute_color' => 'blue',
-			'attribute_size' => 'medium'
+			'attribute_size'  => 'medium',
 		) );
 
 		// Mock WordPress functions with closure to capture variables
-		when( 'wc_get_product' )->alias( function( $id ) use ( $parent_id, $variation1_id, $variation2_id, $parent_product, $variation1, $variation2 ) {
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $parent_id, $variation1_id, $variation2_id, $parent_product, $variation1, $variation2 ) {
 			if ( $id === $parent_id ) {
 				return $parent_product;
 			} elseif ( $id === $variation1_id ) {
@@ -122,25 +126,26 @@ class ProductsPayloadTest extends TestCase {
 			} elseif ( $id === $variation2_id ) {
 				return $variation2;
 			}
+
 			return false;
 		} );
 
-		when( 'wp_get_attachment_image_url' )->alias( function( $id ) {
+		when( 'wp_get_attachment_image_url' )->alias( function ( $id ) {
 			if ( $id === 200 ) {
 				return 'https://example.com/parent-image.jpg';
 			} elseif ( $id === 201 ) {
 				return 'https://example.com/variation2-image.jpg';
 			}
+
 			return false;
 		} );
 
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( 'Clothing' );
 		when( 'wp_strip_all_tags' )->justReturn( 'Clothing' );
 
-		$payload = new ProductsPayload( array( $parent_id ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 2, $result );
 
@@ -181,7 +186,7 @@ class ProductsPayloadTest extends TestCase {
 	}
 
 	public function test_skip_non_purchasable_variations(): void {
-		$parent_id = 100;
+		$parent_id    = 100;
 		$variation_id = 101;
 
 		// Mock parent variable product - must implement WC_Product interface
@@ -194,12 +199,13 @@ class ProductsPayloadTest extends TestCase {
 		$variation = Mockery::mock( WC_Product_Variation::class );
 		$variation->shouldReceive( 'is_purchasable' )->andReturn( false );
 
-		when( 'wc_get_product' )->alias( function( $id ) use ( $parent_product, $variation, $parent_id, $variation_id ) {
+		when( 'wc_get_product' )->alias( function ( $id ) use ( $parent_product, $variation, $parent_id, $variation_id ) {
 			if ( $id === $parent_id ) {
 				return $parent_product;
 			} elseif ( $id === $variation_id ) {
 				return $variation;
 			}
+
 			return false;
 		} );
 
@@ -207,8 +213,8 @@ class ProductsPayloadTest extends TestCase {
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $parent_id ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( $parent_id ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 0, $result );
 	}
@@ -216,15 +222,15 @@ class ProductsPayloadTest extends TestCase {
 	public function test_handle_invalid_product_id(): void {
 		when( 'wc_get_product' )->justReturn( false );
 
-		$payload = new ProductsPayload( array( 999 ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( 999 ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 0, $result );
 	}
 
 	public function test_handle_empty_product_list(): void {
-		$payload = new ProductsPayload( array() );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array() );
+		$result  = $payload->get_array();
 
 		$this->assertIsArray( $result );
 		$this->assertCount( 0, $result );
@@ -232,7 +238,7 @@ class ProductsPayloadTest extends TestCase {
 
 	public function test_handle_missing_image(): void {
 		$product_id = 123;
-		$product = Mockery::mock( WC_Product_Simple::class );
+		$product    = Mockery::mock( WC_Product_Simple::class );
 
 		$product->shouldReceive( 'get_id' )->andReturn( $product_id );
 		$product->shouldReceive( 'get_type' )->andReturn( 'simple' );
@@ -249,13 +255,12 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( false );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
 		// Based on the implementation, image_link is always set (empty string if no image)
@@ -268,7 +273,7 @@ class ProductsPayloadTest extends TestCase {
 
 	public function test_handle_product_with_no_price(): void {
 		$product_id = 123;
-		$product = Mockery::mock( WC_Product_Simple::class );
+		$product    = Mockery::mock( WC_Product_Simple::class );
 
 		$product->shouldReceive( 'get_id' )->andReturn( $product_id );
 		$product->shouldReceive( 'get_type' )->andReturn( 'simple' );
@@ -285,13 +290,12 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( false );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
 		// Based on actual implementation, empty price returns empty string
@@ -307,13 +311,14 @@ class ProductsPayloadTest extends TestCase {
 
 		foreach ( $test_cases as $stock_status => $expected_availability ) {
 			$product_id = 123;
-			$product = Mockery::mock( WC_Product_Simple::class );
+			$product    = Mockery::mock( WC_Product_Simple::class );
 
 			$product->shouldReceive( 'get_id' )->andReturn( $product_id );
 			$product->shouldReceive( 'get_type' )->andReturn( 'simple' );
 			$product->shouldReceive( 'is_type' )->with( 'variable' )->andReturn( false );
 			$product->shouldReceive( 'get_name' )->andReturn( 'Test Product' );
-			$product->shouldReceive( 'get_permalink' )->andReturn( 'https://example.com/product/test' );
+			$product->shouldReceive( 'get_permalink' )
+				->andReturn( 'https://example.com/product/test' );
 			$product->shouldReceive( 'get_image_id' )->andReturn( 0 );
 			$product->shouldReceive( 'get_description' )->andReturn( 'Description' );
 			$product->shouldReceive( 'get_short_description' )->andReturn( '' );
@@ -324,13 +329,12 @@ class ProductsPayloadTest extends TestCase {
 
 			when( 'wc_get_product' )->justReturn( $product );
 			when( 'wp_get_attachment_image_url' )->justReturn( false );
-			when( 'home_url' )->justReturn( 'https://example.com' );
 			when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 			when( 'wc_get_product_category_list' )->justReturn( '' );
 			when( 'wp_strip_all_tags' )->justReturn( '' );
 
-			$payload = new ProductsPayload( array( $product_id ) );
-			$result = $payload->get_array();
+			$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+			$result  = $payload->get_array();
 
 			$this->assertEquals( $expected_availability, $result[0]['availability'] );
 		}
@@ -338,7 +342,7 @@ class ProductsPayloadTest extends TestCase {
 
 	public function test_product_with_all_optional_fields_missing(): void {
 		$product_id = 123;
-		$product = Mockery::mock( WC_Product_Simple::class );
+		$product    = Mockery::mock( WC_Product_Simple::class );
 
 		$product->shouldReceive( 'get_id' )->andReturn( $product_id );
 		$product->shouldReceive( 'get_type' )->andReturn( 'simple' );
@@ -355,13 +359,12 @@ class ProductsPayloadTest extends TestCase {
 
 		when( 'wc_get_product' )->justReturn( $product );
 		when( 'wp_get_attachment_image_url' )->justReturn( false );
-		when( 'home_url' )->justReturn( 'https://example.com' );
 		when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 		when( 'wc_get_product_category_list' )->justReturn( '' );
 		when( 'wp_strip_all_tags' )->justReturn( '' );
 
-		$payload = new ProductsPayload( array( $product_id ) );
-		$result = $payload->get_array();
+		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
+		$result  = $payload->get_array();
 
 		$this->assertCount( 1, $result );
 		// Check required fields are present

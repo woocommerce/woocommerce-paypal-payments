@@ -3,6 +3,11 @@
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use RuntimeException;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+
 use function as_next_scheduled_action;
 use function as_schedule_recurring_action;
 
@@ -11,30 +16,25 @@ use function as_schedule_recurring_action;
  * This class handles scheduling sync jobs and marking products for sync.
  */
 class IngestionManager {
-
-	private const INTERVAL_IN_SECONDS = 15 * MINUTE_IN_SECONDS;
-
-	/**
-	 * The batch size for sync operations.
-	 *
-	 * @var int
-	 */
-	private int $batch_size = 50;
+	private IngestionConfiguration $configuration;
 	private IngestionBatchProvider $batch_provider;
-	private SyncJobFactory $sync_job_factory;
+	private AgenticWebhookConfiguration $webhook_urls;
+	private MerchantMetadataProvider $metadata_provider;
+	private LoggerInterface $logger;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param IngestionBatchProvider $batch_provider   Provider for getting products to sync.
-	 * @param SyncJobFactory         $sync_job_factory The factory for creating sync jobs.
-	 */
 	public function __construct(
+		IngestionConfiguration $configuration,
 		IngestionBatchProvider $batch_provider,
-		SyncJobFactory $sync_job_factory
+		AgenticWebhookConfiguration $webhook_urls,
+		MerchantMetadataProvider $metadata_provider,
+		LoggerInterface $logger
 	) {
-		$this->batch_provider   = $batch_provider;
-		$this->sync_job_factory = $sync_job_factory;
+
+		$this->configuration     = $configuration;
+		$this->batch_provider    = $batch_provider;
+		$this->webhook_urls      = $webhook_urls;
+		$this->metadata_provider = $metadata_provider;
+		$this->logger            = $logger;
 	}
 
 	/**
@@ -67,7 +67,7 @@ class IngestionManager {
 
 		as_schedule_recurring_action(
 			time(),
-			self::INTERVAL_IN_SECONDS,
+			$this->configuration->get_sync_interval_in_seconds(),
 			'ppcp_agentic_sync_batch',
 			array(),
 			'ppcp_agentic_sync'
@@ -82,13 +82,13 @@ class IngestionManager {
 	 */
 	public function process_next_batch(): void {
 		// Get products needing sync using WooCommerce APIs.
-		$product_ids = $this->batch_provider->get_batch( $this->batch_size );
+		$product_ids = $this->batch_provider->get_batch();
 
 		if ( empty( $product_ids ) ) {
 			return; // Nothing to sync.
 		}
 
-		$sync_job = $this->sync_job_factory->create_job( $product_ids );
+		$sync_job = $this->create_new_sync_job( $product_ids );
 		$sync_job->execute();
 	}
 
@@ -107,5 +107,22 @@ class IngestionManager {
 
 		$product->update_meta_data( '_ppcp_agentic_needs_sync', '1' );
 		$product->save_meta_data();
+	}
+
+	/**
+	 * Creates a new SyncJob instance for the given product IDs.
+	 *
+	 * This method instantiates a SyncJob with the factory's configured API endpoint
+	 * and logger, along with the specified product IDs to be synchronized.
+	 */
+	private function create_new_sync_job( array $product_ids ): SyncJob {
+		$metadata = $this->metadata_provider->get_metadata();
+
+		return new SyncJob(
+			$this->webhook_urls->get_product_ingestion_url(),
+			$metadata->store_url,
+			$product_ids,
+			$this->logger
+		);
 	}
 }
