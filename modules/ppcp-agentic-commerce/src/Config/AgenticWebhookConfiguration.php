@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 class AgenticWebhookConfiguration {
 
 	private const LIVE_BASE_URL    = 'https://d.joinhoney.com';
-	private const SANDBOX_BASE_URL = 'https://d-sandbox.joinhoney.com';
+	private const SANDBOX_BASE_URL = 'https://d-staging.joinhoney.com';
 
 	private const ENDPOINT_REGISTRATION_INSTALL   = '/webhooks/ws/install';
 	private const ENDPOINT_REGISTRATION_UNINSTALL = '/webhooks/ws/uninstall';
