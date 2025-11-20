@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
@@ -39,36 +39,36 @@ class AgenticCheckoutProcessor {
 	 *
 	 * @var OrderEndpoint
 	 */
-	private $order_endpoint;
+	private OrderEndpoint $order_endpoint;
 
 	/**
 	 * The PayPal Orders API endpoint (low-level).
 	 *
 	 * @var Orders
 	 */
-	private $orders_api;
+	private Orders $orders_api;
 
 	/**
 	 * The WooCommerce order creator.
 	 *
 	 * @var WooCommerceOrderCreator
 	 */
-	private $wc_order_creator;
+	private WooCommerceOrderCreator $wc_order_creator;
 
 	/**
 	 * The cart translator.
 	 *
 	 * @var PayPalCartToCartDataAdapter
 	 */
-	private $cart_translator;
+	private PayPalCartToCartDataAdapter $cart_translator;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param OrderEndpoint               $order_endpoint PayPal Orders API endpoint (high-level).
-	 * @param Orders                      $orders_api PayPal Orders API endpoint (low-level).
+	 * @param OrderEndpoint               $order_endpoint   PayPal Orders API endpoint (high-level).
+	 * @param Orders                      $orders_api       PayPal Orders API endpoint (low-level).
 	 * @param WooCommerceOrderCreator     $wc_order_creator WooCommerce order creator.
-	 * @param PayPalCartToCartDataAdapter $cart_translator Cart translator.
+	 * @param PayPalCartToCartDataAdapter $cart_translator  Cart translator.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
@@ -76,6 +76,7 @@ class AgenticCheckoutProcessor {
 		WooCommerceOrderCreator $wc_order_creator,
 		PayPalCartToCartDataAdapter $cart_translator
 	) {
+
 		$this->order_endpoint   = $order_endpoint;
 		$this->orders_api       = $orders_api;
 		$this->wc_order_creator = $wc_order_creator;
@@ -92,8 +93,8 @@ class AgenticCheckoutProcessor {
 	 * 4. Links PayPal order with WC order ID
 	 * 5. Captures the PayPal payment
 	 *
-	 * @param PayPalCart    $cart The PayPal cart data.
-	 * @param PaymentMethod $payment_method The payment method data.
+	 * @param PayPalCart    $cart            The PayPal cart data.
+	 * @param PaymentMethod $payment_method  The payment method data.
 	 * @param string        $paypal_order_id The PayPal Order ID (ec_token).
 	 * @return WC_Order|WP_Error The created order or error.
 	 */
@@ -102,6 +103,7 @@ class AgenticCheckoutProcessor {
 		PaymentMethod $payment_method,
 		string $paypal_order_id
 	) {
+
 		try {
 			// Step 1: Fetch PayPal order.
 			$paypal_order = $this->order_endpoint->order( $paypal_order_id );
@@ -139,10 +141,10 @@ class AgenticCheckoutProcessor {
 	/**
 	 * Create WooCommerce order from PayPal order and cart data.
 	 *
-	 * @param PayPalOrder   $paypal_order The PayPal order object.
-	 * @param CartData      $cart_data The cart data.
-	 * @param PayPalCart    $cart The PayPal cart with customer data.
-	 * @param PaymentMethod $payment_method The payment method data.
+	 * @param PayPalOrder   $paypal_order    The PayPal order object.
+	 * @param CartData      $cart_data       The cart data.
+	 * @param PayPalCart    $cart            The PayPal cart with customer data.
+	 * @param PaymentMethod $payment_method  The payment method data.
 	 * @param string        $paypal_order_id The PayPal order ID.
 	 * @return WC_Order|WP_Error The created order or error.
 	 */
@@ -176,7 +178,7 @@ class AgenticCheckoutProcessor {
 
 		// Mark as agentic commerce order with metadata.
 		$wc_order->update_meta_data( '_paypal_order_id', $paypal_order_id );
-		$wc_order->update_meta_data( '_agentic_commerce', true );
+		$wc_order->update_meta_data( '_agentic_commerce', '1' );
 		$wc_order->set_status( 'on-hold', 'Awaiting PayPal payment capture.' );
 		$wc_order->save();
 
@@ -197,18 +199,17 @@ class AgenticCheckoutProcessor {
 		$payer_data = array();
 
 		// Add email address.
-		if ( $cart->customer() && $cart->customer()->email_address() ) {
-			$payer_data['email_address'] = $cart->customer()->email_address();
+		$customer = $cart->customer();
+		if ( $customer && $customer->email_address() ) {
+			$payer_data['email_address'] = $customer->email_address();
 		}
 
 		// Add billing address.
 		if ( $cart->billing_address() ) {
 			/** @var Address $billing */
-			$billing               = $cart->billing_address();
-			$payer_data['name']    = array(
-				'given_name' => $billing->given_name() ?? '',
-				'surname'    => $billing->surname() ?? '',
-			);
+			$billing = $cart->billing_address();
+
+			$payer_data['name']    = $customer->name();
 			$payer_data['address'] = array(
 				'address_line_1' => $billing->address_line_1() ?? '',
 				'address_line_2' => $billing->address_line_2() ?? '',
@@ -260,7 +261,7 @@ class AgenticCheckoutProcessor {
 	 * to enable webhook matching.
 	 *
 	 * @param string   $paypal_order_id The PayPal order ID.
-	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @param WC_Order $wc_order        The WooCommerce order.
 	 * @return void
 	 */
 	private function link_orders( string $paypal_order_id, WC_Order $wc_order ): void {
@@ -282,8 +283,8 @@ class AgenticCheckoutProcessor {
 	/**
 	 * Capture PayPal payment and update WC order.
 	 *
-	 * @param PayPalOrder $paypal_order The PayPal order object.
-	 * @param WC_Order    $wc_order The WooCommerce order.
+	 * @param PayPalOrder $paypal_order    The PayPal order object.
+	 * @param WC_Order    $wc_order        The WooCommerce order.
 	 * @param string      $paypal_order_id The PayPal order ID.
 	 * @return void
 	 */
@@ -292,7 +293,8 @@ class AgenticCheckoutProcessor {
 			$capture_result = $this->order_endpoint->capture( $paypal_order );
 			$wc_order->payment_complete( $paypal_order_id );
 
-			$transaction_id = $capture_result->purchase_units()[0]->payments()->captures()[0]->id() ?? $paypal_order_id;
+			$transaction_id = $capture_result->purchase_units()[0]->payments()
+				->captures()[0]->id() ?? $paypal_order_id;
 			$wc_order->add_order_note(
 				sprintf(
 				/* translators: %s: PayPal transaction ID */

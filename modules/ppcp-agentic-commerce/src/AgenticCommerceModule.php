@@ -5,7 +5,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
@@ -88,7 +88,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		// Add filter for agentic commerce application context.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function ( $data, $payment_method, $request_data ) {
+			static function ( array $data, string $payment_method ): array {
 				if ( $payment_method === 'agentic-commerce' ) {
 					$data['application_context'] = array(
 						'brand_name'          => get_bloginfo( 'name' ),
@@ -100,10 +100,11 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 						'cancel_url'          => home_url( '/paypal-cancel' ),
 					);
 				}
+
 				return $data;
 			},
 			10,
-			3
+			2
 		);
 
 		// Public REST endpoints.
@@ -132,7 +133,12 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		// In agentic commerce, these are typically not used by AI agents.
 		add_action(
 			'template_redirect',
-			function () {
+			/**
+			 * TODO: Temporary test code. This code will be removed soon.
+			 *
+			 * @psalm-suppress MixedArgument, MixedArrayAccess, MixedAssignment, PossiblyInvalidArgument
+			 */
+			static function (): void {
 				$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
 
 				// Handle PayPal return (approval completed).

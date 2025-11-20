@@ -8,7 +8,7 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Cart
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Cart;
 
@@ -37,7 +37,9 @@ class PayPalCartToCartDataAdapter {
 		$issues = array();
 
 		// Validate required customer email.
-		$email = $paypal_cart->customer() ? $paypal_cart->customer()->email_address() : null;
+		$cart_customer = $paypal_cart->customer();
+		$email         = $cart_customer ? $cart_customer->email_address() : null;
+
 		if ( empty( $email ) ) {
 			$issues[] = new InvalidProduct(
 				'Missing email address.',
@@ -52,9 +54,7 @@ class PayPalCartToCartDataAdapter {
 		// If we have validation issues, throw exception.
 		if ( ! empty( $issues ) ) {
 			$error_messages = array_map(
-				function ( $issue ) {
-					return $issue->to_array()['message'];
-				},
+				static fn( $issue ): string => $issue->to_array()['message'],
 				$issues
 			);
 			throw new ValidationException(
@@ -64,16 +64,20 @@ class PayPalCartToCartDataAdapter {
 		}
 
 		// Build coupons array (only include coupons with APPLY action that exist in WC).
-		$coupons = array();
-		if ( $paypal_cart->coupons() ) {
-			foreach ( $paypal_cart->coupons() as $coupon ) {
-				if ( $coupon->action() === 'APPLY' && $coupon->code() ) {
-					$coupon_code = $coupon->code();
-					// Validate coupon exists in WooCommerce.
-					$wc_coupon = new \WC_Coupon( $coupon_code );
-					if ( $wc_coupon->get_id() > 0 ) {
-						$coupons[] = $coupon_code;
-					}
+		$coupons      = array();
+		$cart_coupons = $paypal_cart->coupons();
+
+		if ( $cart_coupons ) {
+			foreach ( $cart_coupons as $coupon ) {
+				if ( $coupon->action() !== 'APPLY' || ! $coupon->code() ) {
+					continue;
+				}
+
+				$coupon_code = $coupon->code();
+				// Validate coupon exists in WooCommerce.
+				$wc_coupon = new \WC_Coupon( $coupon_code );
+				if ( $wc_coupon->get_id() > 0 ) {
+					$coupons[] = $coupon_code;
 				}
 			}
 		}
@@ -87,7 +91,7 @@ class PayPalCartToCartDataAdapter {
 			$coupons,
 			$needs_shipping,
 			0, // user_id for guest checkout.
-			md5( wp_json_encode( $cart_items ) ) // cart_hash.
+			md5( (string) wp_json_encode( $cart_items ) ) // cart_hash.
 		);
 	}
 
@@ -95,7 +99,7 @@ class PayPalCartToCartDataAdapter {
 	 * Build cart items array from PayPalCart.
 	 *
 	 * @param PayPalCart $paypal_cart The PayPal cart.
-	 * @param array      $issues Array to collect validation issues.
+	 * @param array      $issues      Array to collect validation issues.
 	 * @return array Cart items in WC format.
 	 */
 	private function build_cart_items( PayPalCart $paypal_cart, array &$issues ): array {
@@ -118,13 +122,18 @@ class PayPalCartToCartDataAdapter {
 			// Build cart item in WC format.
 			$cart_item_key = $this->generate_cart_item_key( $product_id, $variation_id );
 
-			$line_price = (float) $product->get_price() * $quantity;
+			$line_price           = (float) $product->get_price() * $quantity;
+			$variation_attributes = array();
+
+			if ( $variation_id && is_callable( array( $product, 'get_variation_attributes' ) ) ) {
+				$variation_attributes = $product->get_variation_attributes();
+			}
 
 			$cart_items[ $cart_item_key ] = array(
 				'key'               => $cart_item_key,
 				'product_id'        => $product_id,
 				'variation_id'      => $variation_id,
-				'variation'         => $variation_id ? $product->get_variation_attributes() : array(),
+				'variation'         => $variation_attributes,
 				'quantity'          => $quantity,
 				'data'              => $product,
 				'data_hash'         => wc_get_cart_item_data_hash( $product ),
@@ -152,8 +161,8 @@ class PayPalCartToCartDataAdapter {
 	 * 4. Direct ID casting for item_id
 	 *
 	 * @param string|null $variant_id The variant/product identifier.
-	 * @param string|null $item_id The item identifier.
-	 * @param array       $issues Array to collect validation issues.
+	 * @param string|null $item_id    The item identifier.
+	 * @param array       $issues     Array to collect validation issues.
 	 * @return WC_Product|null The resolved product or null.
 	 */
 	private function resolve_product( ?string $variant_id, ?string $item_id, array &$issues ): ?WC_Product {
@@ -188,6 +197,7 @@ class PayPalCartToCartDataAdapter {
 				"The product with ID '{$identifier}' does not exist.",
 				'items'
 			);
+
 			return null;
 		}
 
@@ -199,6 +209,7 @@ class PayPalCartToCartDataAdapter {
 				"The product '{$identifier}' cannot be purchased.",
 				'items'
 			);
+
 			return null;
 		}
 
@@ -212,11 +223,11 @@ class PayPalCartToCartDataAdapter {
 	 * Sufficient for Agentic Commerce since CartData is built for immediate order creation
 	 * rather than persistent cart storage with custom data.
 	 *
-	 * @param int $product_id Product ID.
+	 * @param int $product_id   Product ID.
 	 * @param int $variation_id Variation ID.
 	 * @return string Cart item key.
 	 */
 	private function generate_cart_item_key( int $product_id, int $variation_id ): string {
-		return md5( $product_id . '-' . $variation_id );
+		return md5( (string) $product_id . '-' . (string) $variation_id );
 	}
 }
