@@ -13,10 +13,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\CartNotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
 /**
  * Get Cart REST endpoint.
@@ -25,12 +22,12 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 	/**
 	 * The endpoint path following PayPal specs.
 	 */
-	protected const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)';
+	private const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)';
 
 	/**
 	 * The expected HTTP method.
 	 */
-	protected const METHOD = 'GET';
+	private const METHOD = 'GET';
 
 	/**
 	 * Register REST API routes.
@@ -67,21 +64,10 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 	public function get_cart( WP_REST_Request $request ): WP_REST_Response {
 		$cart_id = $request->get_param( 'cart_id' );
 
-		$session = $this->session_handler->load_cart_session( $cart_id );
+		$session = $this->load_cart_session( $cart_id );
 
-		if ( ! $session ) {
-			return $this->error(
-				new CartNotFoundError(
-					"Cart with ID '{$cart_id}' does not exist or has expired",
-					array(
-						array(
-							'field'       => 'cartId',
-							'issue'       => 'NOT_FOUND',
-							'description' => "Cart with ID '{$cart_id}' does not exist. Verify cart ID or create a new cart.",
-						),
-					)
-				)
-			);
+		if ( $session instanceof AgenticError ) {
+			return $this->error( $session );
 		}
 
 		$response = $this->response_factory->active_cart(

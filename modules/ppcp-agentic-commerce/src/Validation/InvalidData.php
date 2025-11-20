@@ -5,14 +5,17 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
+
 /**
  * When to use:
  * - Provided data is incorrect, e.g., malformed email.
  * - Unexpected data format, e.g., non-numeric price.
  */
 class InvalidData extends ValidationIssue {
-	protected const ISSUE_CODE = 'DATA_ERROR';
-	protected const ISSUE_TYPE = 'INVALID_DATA';
+	protected const ISSUE_CODE = ErrorCode::DATA_ERROR;
+	protected const ISSUE_TYPE = ErrorType::INVALID_DATA;
 }
 
 /*

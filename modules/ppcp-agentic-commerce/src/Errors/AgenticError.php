@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
 
 use RuntimeException;
+use WP_Error;
 
 abstract class AgenticError {
 	/**
@@ -64,5 +65,49 @@ abstract class AgenticError {
 		}
 
 		return $data;
+	}
+
+	/**
+	 * Create an instance from WP_Error using late static binding.
+	 *
+	 * @param WP_Error $wp_error The WordPress error to convert.
+	 * @return static Instance of the called class.
+	 */
+	public static function from_wp_error( WP_Error $wp_error ): AgenticError {
+		$message = $wp_error->get_error_message();
+		$details = static::extract_wp_error_details( $wp_error );
+
+		/**
+		 * @psalm-suppress MissingThrowsDocblock, UnsafeInstantiation
+		 *  Parent constructor throws only on developer errors, like missing ERROR_NAME, or an
+		 *  invalid STATUS_CODE. These are implementation issues that should fail fast, not
+		 *  runtime errors requiring handling.
+		 */
+		return new static( $message, $details );
+	}
+
+	/**
+	 * Extract details from WP_Error.
+	 *
+	 * @param WP_Error $wp_error The WordPress error.
+	 * @return array Error details.
+	 */
+	private static function extract_wp_error_details( WP_Error $wp_error ): array {
+		$details = array(
+			'wp_error_codes'    => $wp_error->get_error_codes(),
+			'wp_error_messages' => array(),
+			'wp_error_data'     => array(),
+		);
+
+		foreach ( $wp_error->get_error_codes() as $code ) {
+			$details['wp_error_messages'][ $code ] = $wp_error->get_error_messages( $code );
+
+			$error_data = $wp_error->get_error_data( $code );
+			if ( ! empty( $error_data ) ) {
+				$details['wp_error_data'][ $code ] = $error_data;
+			}
+		}
+
+		return $details;
 	}
 }

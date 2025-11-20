@@ -5,13 +5,16 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
+
 /**
  * When to use:
  * - Required information missing, e.g., missing shipping address.
  */
 class MissingField extends ValidationIssue {
-	protected const ISSUE_CODE = 'DATA_ERROR';
-	protected const ISSUE_TYPE = 'MISSING_FIELD';
+	protected const ISSUE_CODE = ErrorCode::DATA_ERROR;
+	protected const ISSUE_TYPE = ErrorType::MISSING_FIELD;
 }
 
 /*

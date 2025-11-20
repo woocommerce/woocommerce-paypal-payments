@@ -7,34 +7,29 @@ use Firebase\JWT\JWT;
 use JsonException;
 use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 
 class RegistrationService {
 
-	private const LIVE_HOST              = 'https://d.joinhoney.com';
-	private const SANDBOX_HOST           = 'https://d-sandbox.joinhoney.com';
-	private const INSTALL_PATH           = '/webhooks/ws/install';
-	private const UNINSTALL_PATH         = '/webhooks/ws/uninstall';
-	private const REGISTRATION_TOKEN_KEY = 'ppcp_agentic_registration_token';
-
+	private const REGISTRATION_TOKEN_KEY      = 'ppcp_agentic_registration_token';
 	private const ERROR_REGISTRATION_FAILED   = 'registration_failed';
 	private const ERROR_DEREGISTRATION_FAILED = 'deregistration_failed';
 	private const ERROR_WEBHOOK_REQUEST       = 'webhook_request_failed';
 	private const ERROR_WEBHOOK_RESPONSE      = 'webhook_response_failed';
 
-	private ConnectionState $connection_state;
+	private AgenticWebhookConfiguration $webhook_urls;
 	private MerchantMetadataProvider $metadata_provider;
 
 	public function __construct(
-		ConnectionState $connection_state,
+		AgenticWebhookConfiguration $webhook_urls,
 		MerchantMetadataProvider $metadata_provider
 	) {
-		$this->connection_state  = $connection_state;
+		$this->webhook_urls      = $webhook_urls;
 		$this->metadata_provider = $metadata_provider;
 	}
 
 	/**
-	 * Register store with PayPal Agentic Commerce.
+	 * Register this store with PayPal Agentic Commerce.
 	 *
 	 * @return RegistrationResult|WP_Error
 	 */
@@ -47,7 +42,7 @@ class RegistrationService {
 		}
 
 		$token  = $this->create_token();
-		$result = $this->webhook_call( $token, self::INSTALL_PATH );
+		$result = $this->call_installation_endpoint( $token );
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -70,7 +65,7 @@ class RegistrationService {
 	/**
 	 * Deregister store from PayPal Agentic Commerce.
 	 *
-	 * @return RegistrationResult|WP_Error|null Null if store was not registered.
+	 * @return RegistrationResult|WP_Error|null Null if the store was not registered.
 	 */
 	public function deregister() {
 		if ( ! $this->is_registered() ) {
@@ -78,7 +73,7 @@ class RegistrationService {
 		}
 
 		$token  = (string) $this->get_registration_token();
-		$result = $this->webhook_call( $token, self::UNINSTALL_PATH );
+		$result = $this->call_uninstallation_endpoint( $token );
 		$this->delete_registration_token();
 
 		if ( is_wp_error( $result ) ) {
@@ -96,7 +91,7 @@ class RegistrationService {
 	}
 
 	/**
-	 * Checks, if the current store is registered to support PayPal Agentic Commerce.
+	 * Checks if the current store is registered to support PayPal Agentic Commerce.
 	 *
 	 * @return bool
 	 */
@@ -105,7 +100,7 @@ class RegistrationService {
 	}
 
 	/**
-	 * Create JWT token with store metadata.
+	 * Create a JWT token with store metadata.
 	 *
 	 * The token is signed with a dummy key (HS256) as PayPal does not validate
 	 * the signature - it only serves as a transport mechanism for store metadata.
@@ -129,21 +124,35 @@ class RegistrationService {
 	}
 
 	/**
-	 * Make webhook call to PayPal.
+	 * Call the "installation" (registration) endpoint.
 	 *
 	 * @param string $token JWT token with store metadata.
-	 * @param string $path  Webhook path (INSTALL_PATH or UNINSTALL_PATH).
 	 * @return RegistrationResult|WP_Error
 	 */
-	private function webhook_call( string $token, string $path ) {
-		$base_host = $this->connection_state->is_production()
-			? self::LIVE_HOST
-			: self::SANDBOX_HOST;
+	private function call_installation_endpoint( string $token ) {
+		return $this->webhook_call( $token, $this->webhook_urls->get_registration_install_url() );
+	}
 
-		$url = $base_host . $path;
+	/**
+	 * Call the "uninstallation" (deregistration) endpoint.
+	 *
+	 * @param string $token Previously generated registration token.
+	 * @return RegistrationResult|WP_Error
+	 */
+	private function call_uninstallation_endpoint( string $token ) {
+		return $this->webhook_call( $token, $this->webhook_urls->get_registration_uninstall_url() );
+	}
 
+	/**
+	 * Make a call to PayPal's webhook endpoints.
+	 *
+	 * @param string $token       JWT token with store metadata.
+	 * @param string $webhook_url The absolute webhook URL to call.
+	 * @return RegistrationResult|WP_Error
+	 */
+	private function webhook_call( string $token, string $webhook_url ) {
 		$response = wp_remote_post(
-			$url,
+			$webhook_url,
 			array(
 				'body'    => $token,
 				'headers' => array(
@@ -181,7 +190,7 @@ class RegistrationService {
 	}
 
 	/**
-	 * Get stored registration token.
+	 * Return the previously stored registration token.
 	 *
 	 * Protected to allow mocking in tests.
 	 *
@@ -192,7 +201,7 @@ class RegistrationService {
 	}
 
 	/**
-	 * Save registration token.
+	 * Save the new registration token.
 	 *
 	 * Protected to allow mocking in tests.
 	 *

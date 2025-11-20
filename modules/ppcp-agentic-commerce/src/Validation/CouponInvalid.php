@@ -4,6 +4,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
+
 /**
  * When to use:
  * - Coupon code is invalid or expired.
@@ -11,6 +14,6 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
  * - Coupon usage limit reached.
  */
 class CouponInvalid extends ValidationIssue {
-	protected const ISSUE_CODE = 'PRICING_ERROR';
-	protected const ISSUE_TYPE = 'BUSINESS_RULE';
+	protected const ISSUE_CODE = ErrorCode::PRICING_ERROR;
+	protected const ISSUE_TYPE = ErrorType::BUSINESS_RULE;
 }

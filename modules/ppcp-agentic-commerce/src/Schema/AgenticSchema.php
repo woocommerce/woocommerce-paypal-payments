@@ -91,4 +91,18 @@ abstract class AgenticSchema {
 
 		return static::from_array( $merged );
 	}
+
+	/**
+	 * Creates a new instance with an additional validation issue.
+	 *
+	 * @param ValidationIssue ...$issues The validation issue to add.
+	 *
+	 * @return static New instance with the additional validation issue.
+	 */
+	final public function with_validation_issues( ValidationIssue ...$issues ): self {
+		$new_instance                    = clone $this;
+		$new_instance->validation_issues = array_merge( $new_instance->validation_issues, $issues );
+
+		return $new_instance;
+	}
 }
