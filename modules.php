@@ -10,6 +10,7 @@ namespace WooCommerce\PayPalCommerce;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PayLaterWCBlocks\PayLaterWCBlocksModule;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\PayLaterConfiguratorModule;
+use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 
 return static function ( string $root_dir ): iterable {
 	$modules_dir = "$root_dir/modules";
@@ -86,10 +87,12 @@ return static function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
 	}
 
-	if ( apply_filters(
-		'woocommerce.feature-flags.woocommerce_paypal_payments.agentic_commerce_enabled',
-		getenv( 'PCP_AGENTIC_COMMERCE_ENABLED' ) === '1'
-	) ) {
+	if ( ! SettingsModule::should_use_the_old_ui()
+		&& apply_filters(
+			'woocommerce.feature-flags.woocommerce_paypal_payments.agentic_commerce_enabled',
+			getenv( 'PCP_AGENTIC_COMMERCE_ENABLED' ) === '1'
+		)
+	) {
 		$modules[] = ( require "$modules_dir/ppcp-agentic-commerce/module.php" )();
 	}
 

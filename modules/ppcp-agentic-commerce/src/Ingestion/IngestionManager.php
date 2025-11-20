@@ -75,6 +75,19 @@ class IngestionManager {
 	}
 
 	/**
+	 * Unschedules the recurring action when the store is unregistered.
+	 *
+	 * @return void
+	 */
+	public function clear_recurring_schedule(): void {
+		if ( ! as_next_scheduled_action( 'ppcp_agentic_sync_batch' ) ) {
+			return;
+		}
+
+		as_unschedule_action( 'ppcp_agentic_sync_batch', array(), 'ppcp_agentic_sync' );
+	}
+
+	/**
 	 * Process the next batch of products for sync.
 	 *
 	 * @throws RuntimeException When an error occurs during sync, handled by Action Scheduler.

@@ -26,6 +26,7 @@ class RegistrationEligibilityTest extends TestCase {
 				'',
 				'MERCHANT123',
 				'https://example.com',
+				$store_country
 			) );
 
 		$result = new RegistrationEligibility( $data_provider );
