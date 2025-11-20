@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 return array(
 	'ppcp-local-apms.url'                       => static function ( ContainerInterface $container ): string {
@@ -218,5 +218,14 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.multibanco.wc-gateway' )
 		);
+	},
+	'ppcp-local-apms.eligibility.check'         => static function ( ContainerInterface $container ): bool {
+		$general_settings = $container->get( 'settings.data.general' );
+		assert( $general_settings instanceof GeneralSettings );
+
+		$merchant_data    = $general_settings->get_merchant_data();
+		$merchant_country = $merchant_data->merchant_country;
+		$ineligible_countries = array( 'RU', 'BR', 'JP' );
+		return ! in_array( $merchant_country, $ineligible_countries, true );
 	},
 );
