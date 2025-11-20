@@ -45,6 +45,9 @@ jobs:
     env:
       FORCE_COLOR: 2
     steps:
+      - name: Add custom domain to hosts
+        run: echo "127.0.0.1 mywp.site" | sudo tee -a /etc/hosts
+
       - uses: actions/checkout@v2
 
       - name: Download artifact
