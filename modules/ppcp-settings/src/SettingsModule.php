@@ -500,6 +500,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					unset( $payment_methods[ PWCGateway::ID ] );
 				}
 
+				// Unset all AMP methods when the merchant is not eligible.
+				$apm_eligible = $container->get( 'ppcp-local-apms.eligibility.check' );
+				if ( ! $apm_eligible ) {
+					$payment_methods = array_diff_key(
+						$payment_methods,
+						array_column( $container->get( 'ppcp-local-apms.payment-methods' ), 'id', 'id' )
+					);
+				}
+
 				return $payment_methods;
 			}
 		);
