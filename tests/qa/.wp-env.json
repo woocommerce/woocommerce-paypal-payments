@@ -1,4 +1,9 @@
 {
+    "testsPort": 80,
+    "config": {
+        "WP_HOME": "http://mywp.site",
+        "WP_SITEURL": "http://mywp.site"
+    },
     "phpVersion": "8.0",
     "plugins": [
         "https://downloads.wordpress.org/plugin/wp-debugging.2.12.2.zip",
