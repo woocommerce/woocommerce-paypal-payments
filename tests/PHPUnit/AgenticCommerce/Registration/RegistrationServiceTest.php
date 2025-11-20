@@ -17,19 +17,19 @@ use function Brain\Monkey\Functions\when;
  */
 class RegistrationServiceTest extends TestCase {
 
-	private ConnectionState $connection_state;
+	private AgenticWebhookConfiguration $webhook_config;
 	private MerchantMetadataProvider $metadata_provider;
 
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->connection_state  = $this->createStub( ConnectionState::class );
+		$this->webhook_config    = $this->createStub( AgenticWebhookConfiguration::class );
 		$this->metadata_provider = $this->createStub( MerchantMetadataProvider::class );
 	}
 
 	private function create_testable_service( bool $has_token = false ): TestableRegistrationService {
 		return new TestableRegistrationService(
-			$this->connection_state,
+			$this->webhook_config,
 			$this->metadata_provider,
 			$has_token ? 'stored-token' : false
 		);
@@ -114,7 +114,8 @@ class RegistrationServiceTest extends TestCase {
 	 */
 	public function test_registration_succeeds_with_valid_merchant_data(): void {
 		$this->stub_merchant_metadata();
-		$this->connection_state->method( 'is_production' )->willReturn( false );
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
 		$this->stub_successful_webhook_response();
 
 		$testee = $this->create_testable_service( false );
@@ -138,7 +139,8 @@ class RegistrationServiceTest extends TestCase {
 	 */
 	public function test_registration_fails_when_webhook_returns_error(): void {
 		$this->stub_merchant_metadata();
-		$this->connection_state->method( 'is_production' )->willReturn( false );
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
 		$this->stub_failed_webhook_response( 'Invalid merchant data' );
 
 		$testee = $this->create_testable_service( false );
@@ -173,7 +175,8 @@ class RegistrationServiceTest extends TestCase {
 	 */
 	public function test_registration_fails_on_webhook_network_error(): void {
 		$this->stub_merchant_metadata();
-		$this->connection_state->method( 'is_production' )->willReturn( false );
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
 
 		$wp_error = new WP_Error( 'http_request_failed', 'Connection timeout' );
 
@@ -200,7 +203,8 @@ class RegistrationServiceTest extends TestCase {
 	 */
 	public function test_registration_fails_on_invalid_json_response(): void {
 		$this->stub_merchant_metadata();
-		$this->connection_state->method( 'is_production' )->willReturn( false );
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->alias(
@@ -226,7 +230,8 @@ class RegistrationServiceTest extends TestCase {
 	 * AND the store should no longer be registered
 	 */
 	public function test_deregistration_succeeds_for_registered_store(): void {
-		$this->connection_state->method( 'is_production' )->willReturn( false );
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/uninstall' );
 		$this->stub_successful_webhook_response();
 
 		$testee = $this->create_testable_service( true );
@@ -249,7 +254,8 @@ class RegistrationServiceTest extends TestCase {
 	 * AND the registration token should still be deleted locally
 	 */
 	public function test_deregistration_fails_when_webhook_returns_error(): void {
-		$this->connection_state->method( 'is_production' )->willReturn( false );
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/uninstall' );
 		$this->stub_failed_webhook_response( 'Token not found' );
 
 		$testee = $this->create_testable_service( true );
@@ -282,7 +288,8 @@ class RegistrationServiceTest extends TestCase {
 	 * @dataProvider environment_webhook_urls_provider
 	 */
 	public function test_uses_correct_webhook_url_for_environment( bool $is_production, string $expected_url ): void {
-		$this->connection_state->method( 'is_production' )->willReturn( $is_production );
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( $expected_url );
 
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
@@ -313,7 +320,7 @@ class RegistrationServiceTest extends TestCase {
 			),
 			'sandbox environment uses sandbox webhook URL' => array(
 				false,
-				'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall',
+				'https://d-staging.joinhoney.com/webhooks/ws/uninstall',
 			),
 		);
 	}
@@ -332,8 +339,8 @@ class TestableRegistrationService extends RegistrationService {
 	 */
 	private $stored_token;
 
-	public function __construct( $connection_state, $metadata_provider, $initial_token ) {
-		parent::__construct( $connection_state, $metadata_provider );
+	public function __construct( $webhook_config, $metadata_provider, $initial_token ) {
+		parent::__construct( $webhook_config, $metadata_provider );
 		$this->stored_token = $initial_token;
 	}
 
