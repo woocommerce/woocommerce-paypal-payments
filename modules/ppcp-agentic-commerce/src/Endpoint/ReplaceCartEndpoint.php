@@ -12,6 +12,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WP_REST_Request;
 use WP_REST_Response;
