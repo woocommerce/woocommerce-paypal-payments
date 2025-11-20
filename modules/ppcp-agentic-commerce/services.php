@@ -25,6 +25,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 
 return array(
 	'agentic.response.factory'                 => static function (): ResponseFactory {
@@ -145,6 +147,22 @@ return array(
 			$c->get( 'ppcp.path-to-plugin-main-file' ),
 			$c->get( 'agentic.settings.endpoint' ),
 			$c->get( 'agentic.registration.eligibility' )
+		);
+	},
+
+	// Inspector.
+	'agentic.inspector.form_handler'           => static function ( ContainerInterface $c ): InspectionFormHandler {
+		return new InspectionFormHandler(
+			$c->get( 'agentic.registration.handler' ),
+			$c->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'agentic.inspector.page'                   => static function ( ContainerInterface $c ): InspectionStatusPage {
+		return new InspectionStatusPage(
+			$c->get( 'agentic.inspector.form_handler' ),
+			$c->get( 'agentic.registration.handler' ),
+			$c->get( 'settings.data.general' ),
+			$c->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

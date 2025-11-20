@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -81,6 +82,10 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		}
 
 		// Feature is active and merchant is eligible: Initialize everything.
+
+		$inspector = $container->get( 'agentic.inspector.page' );
+		assert( $inspector instanceof InspectionStatusPage );
+		$inspector->init();
 
 		$this->ensure_registered( $registration_handler );
 
