@@ -42,7 +42,7 @@ return array(
 		return new AxoApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' ),
+			$container->get( 'api.merchant.country' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'wc-subscriptions.helper' )
 		);

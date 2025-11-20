@@ -508,7 +508,7 @@ return array(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
 			$container->get( 'api.dcc-supported-country-card-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 
@@ -1005,5 +1005,14 @@ return array(
 			),
 			PPCP_PAYPAL_BN_CODE
 		);
+	},
+	/**
+	 * If connected, return the PayPal Onboarded merchant country.
+	 * Fallback to WooCommerce Store Country otherwise.
+	 */
+	'api.merchant.country'                           => static function ( ContainerInterface $container ): string {
+		return $container->get( 'settings.flag.is-connected' )
+			? $container->get( 'settings.data.general' )->get_merchant_country()
+			: $container->get( 'api.shop.country' );
 	},
 );
