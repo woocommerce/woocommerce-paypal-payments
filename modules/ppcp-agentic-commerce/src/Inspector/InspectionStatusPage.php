@@ -24,19 +24,16 @@ class InspectionStatusPage {
 	private InspectionFormHandler $form_handler;
 	private RegistrationService $registration_service;
 	private GeneralSettings $general_settings;
-	private LoggerInterface $logger;
 
 	public function __construct(
 		InspectionFormHandler $form_handler,
 		RegistrationService $registration_service,
-		GeneralSettings $general_settings,
-		LoggerInterface $logger
+		GeneralSettings $general_settings
 	) {
 
 		$this->form_handler         = $form_handler;
 		$this->registration_service = $registration_service;
 		$this->general_settings     = $general_settings;
-		$this->logger               = $logger;
 	}
 
 	/**
@@ -74,7 +71,7 @@ class InspectionStatusPage {
 
 			<?php $this->render_notices(); ?>
 
-			<table class="wc_status_table widefat" cellspacing="0">
+			<table class="wc_status_table widefat">
 				<thead>
 				<tr>
 					<th colspan="2" data-export-label="PayPal Agentic Commerce">

@@ -174,18 +174,17 @@ return array(
 	},
 
 	// Inspector.
-	'agentic.inspector.form_handler'           => static function ( ContainerInterface $c ): InspectionFormHandler {
+	'agentic.inspector.form_handler'    => static function ( ContainerInterface $c ): InspectionFormHandler {
 		return new InspectionFormHandler(
 			$c->get( 'agentic.registration.handler' ),
 			$c->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'agentic.inspector.page'                   => static function ( ContainerInterface $c ): InspectionStatusPage {
+	'agentic.inspector.page'            => static function ( ContainerInterface $c ): InspectionStatusPage {
 		return new InspectionStatusPage(
 			$c->get( 'agentic.inspector.form_handler' ),
 			$c->get( 'agentic.registration.handler' ),
-			$c->get( 'settings.data.general' ),
-			$c->get( 'woocommerce.logger.woocommerce' )
+			$c->get( 'settings.data.general' )
 		);
 	},
 );
