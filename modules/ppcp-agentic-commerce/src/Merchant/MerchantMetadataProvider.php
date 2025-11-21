@@ -24,15 +24,21 @@ class MerchantMetadataProvider {
 	 * Get current merchant metadata.
 	 */
 	public function get_metadata(): MerchantMetadata {
-		$merchant = $this->get_merchant_connection();
+		$merchant    = $this->get_merchant_connection();
+		$merchant_id = '';
+
+		if ( $this->general_settings->is_merchant_connected() ) {
+			$merchant_id = $merchant->merchant_id;
+		}
 
 		return new MerchantMetadata(
 			get_bloginfo( 'name' ),
 			$this->get_canonical_store_url(),
 			WC()->countries->get_base_country(),
 			get_woocommerce_currency(),
-			$merchant->merchant_id,
-			$this->get_canonical_store_url()
+			$merchant_id,
+			$this->get_canonical_store_url(),
+			$merchant->merchant_country
 		);
 	}
 

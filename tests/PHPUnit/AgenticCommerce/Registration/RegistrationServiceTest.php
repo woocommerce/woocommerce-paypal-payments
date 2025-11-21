@@ -23,8 +23,8 @@ class RegistrationServiceTest extends TestCase {
 	public function setUp(): void {
 		parent::setUp();
 
-		$this->webhook_config    = Mockery::mock( AgenticWebhookConfiguration::class );
-		$this->metadata_provider = Mockery::mock( MerchantMetadataProvider::class );
+		$this->webhook_config    = $this->createStub( AgenticWebhookConfiguration::class );
+		$this->metadata_provider = $this->createStub( MerchantMetadataProvider::class );
 	}
 
 	private function create_testable_service( bool $has_token = false ): TestableRegistrationService {
@@ -35,23 +35,55 @@ class RegistrationServiceTest extends TestCase {
 		);
 	}
 
-	private function stub_metadata(): MerchantMetadata {
+	private function stub_merchant_metadata(): MerchantMetadata {
 		$metadata = new MerchantMetadata(
 			'Test Store',
 			'https://example.com',
 			'US',
 			'USD',
 			'MERCHANT123',
-			'https://example.com/catalog.json'
+			'https://example.com/catalog.json',
+			'US'
 		);
 
-		$this->metadata_provider->allows( 'get_metadata' )
-			->andReturn( $metadata );
+		$this->metadata_provider->method( 'get_metadata' )->willReturn( $metadata );
 
 		return $metadata;
 	}
 
-	public function test_is_registered_returns_false_without_token(): void {
+	private function stub_successful_webhook_response(): void {
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => true,
+					'message' => 'Operation successful',
+				)
+			)
+		);
+	}
+
+	private function stub_failed_webhook_response( string $error_message ): void {
+		when( 'wp_remote_post' )->returnArg();
+		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_body' )->justReturn(
+			json_encode(
+				array(
+					'success' => false,
+					'message' => 'Operation failed',
+					'error'   => $error_message,
+				)
+			)
+		);
+	}
+
+	/**
+	 * GIVEN a store without a registration token
+	 * WHEN checking registration status
+	 * THEN the store should not be considered registered
+	 */
+	public function test_store_is_not_registered_without_token(): void {
 		$testee = $this->create_testable_service( false );
 
 		$result = $testee->is_registered();
@@ -59,7 +91,12 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertFalse( $result );
 	}
 
-	public function test_is_registered_returns_true_with_token(): void {
+	/**
+	 * GIVEN a store with a valid registration token
+	 * WHEN checking registration status
+	 * THEN the store should be considered registered
+	 */
+	public function test_store_is_registered_with_token(): void {
 		$testee = $this->create_testable_service( true );
 
 		$result = $testee->is_registered();
@@ -67,108 +104,79 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertTrue( $result );
 	}
 
-	public function test_is_registered_returns_true_after_successful_registration(): void {
-		$this->stub_metadata();
-		$this->webhook_config->allows( 'get_registration_install_url' )
-			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
-
-		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => true,
-					'message' => 'Registration successful',
-				)
-			)
-		);
+	/**
+	 * GIVEN an unregistered store with valid merchant metadata
+	 * WHEN registering with PayPal Agentic Commerce
+	 * AND the webhook returns success
+	 * THEN registration should succeed with valid result
+	 * AND the registration token should be persisted
+	 * AND the store should be marked as registered
+	 */
+	public function test_registration_succeeds_with_valid_merchant_data(): void {
+		$this->stub_merchant_metadata();
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
+		$this->stub_successful_webhook_response();
 
 		$testee = $this->create_testable_service( false );
 
 		$this->assertFalse( $testee->is_registered() );
 
-		$testee->register();
+		$result = $testee->register();
 
+		$this->assertInstanceOf( RegistrationResult::class, $result );
+		$this->assertTrue( $result->success );
+		$this->assertTrue( $testee->was_token_saved );
 		$this->assertTrue( $testee->is_registered() );
-	}
-
-	public function test_is_registered_returns_false_after_deregistration(): void {
-		$this->webhook_config->allows( 'get_registration_uninstall_url' )
-			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' );
-
-		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => true,
-					'message' => 'Deregistration successful',
-				)
-			)
-		);
-
-		$testee = $this->create_testable_service( true );
-
-		$this->assertTrue( $testee->is_registered() );
-
-		$testee->deregister();
-
-		$this->assertFalse( $testee->is_registered() );
-	}
-
-	public function test_deregister_returns_null_when_not_registered(): void {
-		$testee = $this->create_testable_service( false );
-
-		$result = $testee->deregister();
-
-		$this->assertNull( $result );
 	}
 
 	/**
-	 * @dataProvider registration_outcomes_provider
+	 * GIVEN an unregistered store
+	 * WHEN registering with PayPal Agentic Commerce
+	 * AND the webhook returns a failure response
+	 * THEN registration should fail with error
+	 * AND the registration token should not be saved
 	 */
-	public function test_register_outcomes( bool $success, string $error_code = null ): void {
-		$this->stub_metadata();
-		$this->webhook_config->allows( 'get_registration_install_url' )
-			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
-
-		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => $success,
-					'message' => $success ? 'Registration successful' : 'Registration failed',
-					'error'   => $success ? null : 'Error details',
-				)
-			)
-		);
+	public function test_registration_fails_when_webhook_returns_error(): void {
+		$this->stub_merchant_metadata();
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
+		$this->stub_failed_webhook_response( 'Invalid merchant data' );
 
 		$testee = $this->create_testable_service( false );
 		$result = $testee->register();
 
-		if ( $success ) {
-			$this->assertInstanceOf( RegistrationResult::class, $result );
-			$this->assertTrue( $result->success );
-			$this->assertTrue( $testee->was_token_saved );
-		} else {
-			$this->assertInstanceOf( WP_Error::class, $result );
-			$this->assertSame( $error_code, $result->get_error_code() );
-			$this->assertFalse( $testee->was_token_saved );
-		}
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'registration_failed', $result->get_error_code() );
+		$this->assertSame( 'Invalid merchant data', $result->get_error_message() );
+		$this->assertFalse( $testee->was_token_saved );
 	}
 
-	public function registration_outcomes_provider(): array {
-		return array(
-			'success' => array( true ),
-			'failure' => array( false, 'registration_failed' ),
-		);
+	/**
+	 * GIVEN an already registered store
+	 * WHEN attempting to register again
+	 * THEN registration should fail with appropriate error
+	 */
+	public function test_registration_fails_when_already_registered(): void {
+		$testee = $this->create_testable_service( true );
+
+		$result = $testee->register();
+
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'registration_failed', $result->get_error_code() );
+		$this->assertSame( 'Already registered', $result->get_error_message() );
 	}
 
-	public function test_register_webhook_network_error(): void {
-		$this->stub_metadata();
-		$this->webhook_config->allows( 'get_registration_install_url' )
-			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
+	/**
+	 * GIVEN an unregistered store
+	 * WHEN registering with PayPal Agentic Commerce
+	 * AND the webhook request encounters a network error
+	 * THEN registration should fail with network error details
+	 */
+	public function test_registration_fails_on_webhook_network_error(): void {
+		$this->stub_merchant_metadata();
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
 
 		$wp_error = new WP_Error( 'http_request_failed', 'Connection timeout' );
 
@@ -187,10 +195,16 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertSame( 'Connection timeout', $result->get_error_message() );
 	}
 
-	public function test_register_json_parsing_error(): void {
-		$this->stub_metadata();
-		$this->webhook_config->allows( 'get_registration_install_url' )
-			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/install' );
+	/**
+	 * GIVEN an unregistered store
+	 * WHEN registering with PayPal Agentic Commerce
+	 * AND the webhook returns invalid JSON response
+	 * THEN registration should fail with JSON parsing error
+	 */
+	public function test_registration_fails_on_invalid_json_response(): void {
+		$this->stub_merchant_metadata();
+		$this->webhook_config->method( 'get_registration_install_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/install' );
 
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->alias(
@@ -208,51 +222,74 @@ class RegistrationServiceTest extends TestCase {
 	}
 
 	/**
-	 * @dataProvider deregistration_outcomes_provider
+	 * GIVEN a registered store
+	 * WHEN deregistering from PayPal Agentic Commerce
+	 * AND the webhook returns success
+	 * THEN deregistration should succeed with valid result
+	 * AND the registration token should be deleted
+	 * AND the store should no longer be registered
 	 */
-	public function test_deregister_outcomes( bool $success, string $error_code = null ): void {
-		$this->webhook_config->allows( 'get_registration_uninstall_url' )
-			->andReturn( 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' );
+	public function test_deregistration_succeeds_for_registered_store(): void {
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/uninstall' );
+		$this->stub_successful_webhook_response();
 
-		when( 'wp_remote_post' )->returnArg();
-		when( 'is_wp_error' )->justReturn( false );
-		when( 'wp_remote_retrieve_body' )->justReturn(
-			json_encode(
-				array(
-					'success' => $success,
-					'message' => $success ? 'Deregistration successful' : 'Deregistration failed',
-					'error'   => $success ? null : 'Token not found',
-				)
-			)
-		);
+		$testee = $this->create_testable_service( true );
+
+		$this->assertTrue( $testee->is_registered() );
+
+		$result = $testee->deregister();
+
+		$this->assertInstanceOf( RegistrationResult::class, $result );
+		$this->assertTrue( $result->success );
+		$this->assertTrue( $testee->was_token_deleted );
+		$this->assertFalse( $testee->is_registered() );
+	}
+
+	/**
+	 * GIVEN a registered store
+	 * WHEN deregistering from PayPal Agentic Commerce
+	 * AND the webhook returns a failure response
+	 * THEN deregistration should fail with error
+	 * AND the registration token should still be deleted locally
+	 */
+	public function test_deregistration_fails_when_webhook_returns_error(): void {
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( 'https://d-staging.joinhoney.com/webhooks/ws/uninstall' );
+		$this->stub_failed_webhook_response( 'Token not found' );
 
 		$testee = $this->create_testable_service( true );
 		$result = $testee->deregister();
 
-		if ( $success ) {
-			$this->assertInstanceOf( RegistrationResult::class, $result );
-			$this->assertTrue( $result->success );
-		} else {
-			$this->assertInstanceOf( WP_Error::class, $result );
-			$this->assertSame( $error_code, $result->get_error_code() );
-		}
-
+		$this->assertInstanceOf( WP_Error::class, $result );
+		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
+		$this->assertSame( 'Token not found', $result->get_error_message() );
 		$this->assertTrue( $testee->was_token_deleted );
 	}
 
-	public function deregistration_outcomes_provider(): array {
-		return array(
-			'success' => array( true ),
-			'failure' => array( false, 'deregistration_failed' ),
-		);
+	/**
+	 * GIVEN an unregistered store
+	 * WHEN attempting to deregister
+	 * THEN deregistration should return null without making API calls
+	 */
+	public function test_deregistration_returns_null_when_not_registered(): void {
+		$testee = $this->create_testable_service( false );
+
+		$result = $testee->deregister();
+
+		$this->assertNull( $result );
 	}
 
 	/**
-	 * @dataProvider environment_urls_provider
+	 * GIVEN a registered store in production mode
+	 * WHEN deregistering from PayPal Agentic Commerce
+	 * THEN the production webhook URL should be called
+	 *
+	 * @dataProvider environment_webhook_urls_provider
 	 */
-	public function test_uses_correct_environment_url( string $expected_url ): void {
-		$this->webhook_config->allows( 'get_registration_uninstall_url' )
-			->andReturn( $expected_url );
+	public function test_uses_correct_webhook_url_for_environment( bool $is_production, string $expected_url ): void {
+		$this->webhook_config->method( 'get_registration_uninstall_url' )
+			->willReturn( $expected_url );
 
 		when( 'is_wp_error' )->justReturn( false );
 		when( 'wp_remote_retrieve_body' )->justReturn(
@@ -275,10 +312,16 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertTrue( $result->success );
 	}
 
-	public function environment_urls_provider(): array {
+	public function environment_webhook_urls_provider(): array {
 		return array(
-			'production' => array( 'https://d.joinhoney.com/webhooks/ws/uninstall' ),
-			'sandbox'    => array( 'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall' ),
+			'production environment uses live webhook URL' => array(
+				true,
+				'https://d.joinhoney.com/webhooks/ws/uninstall',
+			),
+			'sandbox environment uses sandbox webhook URL' => array(
+				false,
+				'https://d-staging.joinhoney.com/webhooks/ws/uninstall',
+			),
 		);
 	}
 }

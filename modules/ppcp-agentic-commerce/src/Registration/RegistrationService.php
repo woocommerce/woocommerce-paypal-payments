@@ -50,6 +50,8 @@ class RegistrationService {
 
 		if ( $result->success ) {
 			$this->save_registration_token( $token );
+
+			do_action( 'woocommerce_paypal_payments_agentic_commerce_registered' );
 		} else {
 			$this->delete_registration_token();
 
@@ -87,6 +89,8 @@ class RegistrationService {
 			);
 		}
 
+		do_action( 'woocommerce_paypal_payments_agentic_commerce_deregistered' );
+
 		return $result;
 	}
 
@@ -111,7 +115,7 @@ class RegistrationService {
 		$payload = array(
 			'storeName'          => $metadata->store_name,
 			'storeUrl'           => $metadata->store_url,
-			'country'            => $metadata->country,
+			'country'            => $metadata->store_country,
 			'currency'           => $metadata->currency,
 			'paypalMerchantId'   => $metadata->paypal_merchant_id,
 			'wooMerchantId'      => $metadata->store_url,
