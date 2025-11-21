@@ -11,9 +11,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
 /**
  * Get Cart REST endpoint.
