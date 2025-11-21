@@ -33,6 +33,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
 
 return array(
 	// Configuration.
@@ -180,12 +183,27 @@ return array(
 			$c->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'agentic.inspector.session_info'    => static function ( ContainerInterface $c ): InspectionSessionData {
+		return new InspectionSessionData();
+	},
+	'agentic.inspector.page.status'     => static function ( ContainerInterface $c ): RegistrationStatusSection {
+		return new RegistrationStatusSection(
+			$c->get( 'agentic.registration.handler' ),
+			$c->get( 'agentic.registration.eligibility' ),
+			$c->get( 'agentic.auth.provider' ),
+			$c->get( 'settings.data.general' )
+		);
+	},
+	'agentic.inspector.page.session'    => static function ( ContainerInterface $c ): CartSessionSection {
+		return new CartSessionSection(
+			$c->get( 'agentic.inspector.session_info' ),
+		);
+	},
 	'agentic.inspector.page'            => static function ( ContainerInterface $c ): InspectionStatusPage {
 		return new InspectionStatusPage(
 			$c->get( 'agentic.inspector.form_handler' ),
-			$c->get( 'agentic.registration.handler' ),
-			$c->get( 'agentic.registration.eligibility' ),
-			$c->get( 'settings.data.general' )
+			$c->get( 'agentic.inspector.page.status' ),
+			$c->get( 'agentic.inspector.page.session' )
 		);
 	},
 );
