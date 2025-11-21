@@ -51,6 +51,13 @@ class NewCartResponse extends CartResponse {
 
 		$data['payment_method'] = $method->to_array();
 
+		// Add sandbox approval URL for testing.
+		// In production, PayPal Commerce Platform handles approval automatically.
+		$data['_testing'] = array(
+			'sandbox_approval_url' => 'https://www.sandbox.paypal.com/checkoutnow?token=' . $this->token,
+			'instructions'         => 'For sandbox testing: Open this URL in browser, login as buyer, and approve payment before checkout.',
+		);
+
 		return $data;
 	}
 }
