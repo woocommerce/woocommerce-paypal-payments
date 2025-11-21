@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 /**
  * Class InspectionStatusPage
@@ -23,16 +24,19 @@ class InspectionStatusPage {
 
 	private InspectionFormHandler $form_handler;
 	private RegistrationService $registration_service;
+	private RegistrationEligibility $eligibility_check;
 	private GeneralSettings $general_settings;
 
 	public function __construct(
 		InspectionFormHandler $form_handler,
 		RegistrationService $registration_service,
+		RegistrationEligibility $eligibility_check,
 		GeneralSettings $general_settings
 	) {
 
 		$this->form_handler         = $form_handler;
 		$this->registration_service = $registration_service;
+		$this->eligibility_check    = $eligibility_check;
 		$this->general_settings     = $general_settings;
 	}
 
@@ -62,6 +66,7 @@ class InspectionStatusPage {
 	 * Render the tab content.
 	 */
 	private function render_content(): void {
+		$is_eligible   = $this->eligibility_check->is_eligible();
 		$is_registered = $this->registration_service->is_registered();
 		$merchant_id   = $this->general_settings->get_merchant_id();
 
@@ -74,28 +79,55 @@ class InspectionStatusPage {
 			<table class="wc_status_table widefat">
 				<thead>
 				<tr>
-					<th colspan="2" data-export-label="PayPal Agentic Commerce">
+					<th colspan="3">
 						<?php esc_html_e( 'Registration Status', 'woocommerce-paypal-payments' ); ?>
 					</th>
 				</tr>
 				</thead>
 				<tbody>
 				<tr>
-					<td data-export-label="Status">
+					<td>
+						<?php esc_html_e( 'Eligible', 'woocommerce-paypal-payments' ); ?>:
+					</td>
+					<td class="help">
+						<?php $this->render_help( __( 'Whether this store can use agentic commerce features', 'woocommerce-paypal-payments' ) ); ?>
+					</td>
+					<td>
+						<?php
+						$this->render_boolean_badge(
+							$is_eligible,
+							esc_html__( 'Eligible', 'woocommerce-paypal-payments' ),
+							esc_html__( 'Not eligible', 'woocommerce-paypal-payments' )
+						);
+						?>
+					</td>
+				</tr>
+				<tr>
+					<td>
 						<?php esc_html_e( 'Status', 'woocommerce-paypal-payments' ); ?>:
+					</td>
+					<td class="help">
+						<?php $this->render_help( __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ) ); ?>
 					</td>
 					<td>
 						<div style="display: flex; align-items: center; gap: 12px;">
-							<?php echo wp_kses_post( $this->render_status_badge( $is_registered ) ); ?>
+							<?php
+							$this->render_boolean_badge(
+								$is_registered,
+								esc_html__( 'Registered', 'woocommerce-paypal-payments' ),
+								esc_html__( 'Not registered', 'woocommerce-paypal-payments' )
+							);
+							?>
 							<?php $this->render_toggle_form( $is_registered ); ?>
 						</div>
 					</td>
 				</tr>
 				<?php if ( $is_registered && $merchant_id ) : ?>
 					<tr>
-						<td data-export-label="Merchant ID">
+						<td>
 							<?php esc_html_e( 'Merchant ID', 'woocommerce-paypal-payments' ); ?>:
 						</td>
+						<td class="help"></td>
 						<td><code><?php echo esc_html( $merchant_id ); ?></code></td>
 					</tr>
 				<?php endif; ?>
@@ -105,24 +137,22 @@ class InspectionStatusPage {
 		<?php
 	}
 
-	/**
-	 * Render status badge HTML.
-	 *
-	 * @param bool $is_registered Whether the merchant is registered.
-	 * @return string Badge HTML.
-	 */
-	private function render_status_badge( bool $is_registered ): string {
-		if ( $is_registered ) {
-			$status = 'yes';
-			$icon   = 'dashicons-yes';
-			$label  = esc_html__( 'Registered', 'woocommerce-paypal-payments' );
-		} else {
-			$status = 'no';
-			$icon   = 'dashicons-minus';
-			$label  = esc_html__( 'Not registered', 'woocommerce-paypal-payments' );
+	private function render_help( string $label ): void {
+		if ( ! $label ) {
+			return;
 		}
 
-		return sprintf( '<mark class="%1$s"><span class="dashicons %2$s"></span> %3$s</mark>', $status, $icon, $label );
+		echo wp_kses_post( sprintf( '<span class="woocommerce-help-tip" tabindex="0" title="%s"></span>', esc_attr( $label ) ) );
+	}
+
+	private function render_boolean_badge( bool $is_true, string $label_true, string $label_false ): void {
+		if ( $is_true ) {
+			echo wp_kses_post( sprintf( '<mark class="yes"><span class="dashicons dashicons-yes"></span> %s</mark>', $label_true ) );
+
+			return;
+		}
+
+		echo wp_kses_post( sprintf( '<mark class="no"><span class="dashicons dashicons-minus"></span> %s</mark>', $label_false ) );
 	}
 
 	/**
@@ -160,7 +190,7 @@ class InspectionStatusPage {
 			return;
 		}
 
-		$notice_type = sanitize_text_field( (string) wp_unslash( $_GET['ppcp_agentic_notice'] ) );
+		$notice_type = sanitize_text_field( wp_unslash( $_GET['ppcp_agentic_notice'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$messages = array(

@@ -76,20 +76,18 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		// Sync eligibility cache on init (when WC is available).
 		$this->sync_eligibility_cache( $agentic_settings, $eligibility_check );
 
+		$inspector = $container->get( 'agentic.inspector.page' );
+		assert( $inspector instanceof InspectionStatusPage );
+		$inspector->init();
+
 		// Early exit if features should not be initialized.
 		if ( ! $agentic_settings->should_initialize_features() ) {
 			$this->ensure_deregistered( $registration_handler );
-
-			// todo: also remove scheduled action?
 
 			return true;
 		}
 
 		// Feature is active and merchant is eligible: Initialize everything.
-
-		$inspector = $container->get( 'agentic.inspector.page' );
-		assert( $inspector instanceof InspectionStatusPage );
-		$inspector->init();
 
 		$this->ensure_registered( $registration_handler );
 

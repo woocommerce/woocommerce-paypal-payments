@@ -24,6 +24,7 @@ class RegistrationService {
 		AgenticWebhookConfiguration $webhook_urls,
 		MerchantMetadataProvider $metadata_provider
 	) {
+
 		$this->webhook_urls      = $webhook_urls;
 		$this->metadata_provider = $metadata_provider;
 	}

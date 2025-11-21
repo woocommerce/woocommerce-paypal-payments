@@ -184,6 +184,7 @@ return array(
 		return new InspectionStatusPage(
 			$c->get( 'agentic.inspector.form_handler' ),
 			$c->get( 'agentic.registration.handler' ),
+			$c->get( 'agentic.registration.eligibility' ),
 			$c->get( 'settings.data.general' )
 		);
 	},
