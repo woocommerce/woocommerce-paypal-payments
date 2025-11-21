@@ -14,6 +14,7 @@ use Firebase\JWT\Key;
 use Firebase\JWT\JWT;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadata;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
+use stdClass;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService
@@ -185,7 +186,7 @@ class JwtAuthServiceTest extends TestCase {
 
 		$result = $service->get_token( $token );
 
-		$this->assertInstanceOf( \stdClass::class, $result );
+		$this->assertInstanceOf( stdClass::class, $result );
 		$this->assertEquals( $expected_payload, $result );
 	}
 

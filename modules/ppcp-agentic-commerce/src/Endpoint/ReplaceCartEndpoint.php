@@ -11,14 +11,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\CartNotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 
 /**
  * Replace Cart REST endpoint.
@@ -29,12 +25,12 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	/**
 	 * The endpoint path following PayPal specs.
 	 */
-	protected const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)';
+	private const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)';
 
 	/**
 	 * The expected HTTP method.
 	 */
-	protected const METHOD = 'PUT';
+	private const METHOD = 'PUT';
 
 	/**
 	 * Register REST API routes.
@@ -72,37 +68,24 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		$cart_id = $request->get_param( 'cart_id' );
 
 		// Verify cart exists.
-		$session = $this->session_handler->load_cart_session( $cart_id );
+		$session = $this->load_cart_session( $cart_id );
 
-		if ( ! $session ) {
-			return $this->error(
-				new CartNotFoundError(
-					"Cart with ID '{$cart_id}' does not exist or has expired",
-					array(
-						array(
-							'field'       => 'cartId',
-							'issue'       => 'NOT_FOUND',
-							'description' => "Cart with ID '{$cart_id}' does not exist. Verify cart ID or create a new cart.",
-						),
-					)
-				)
-			);
+		if ( $session instanceof AgenticError ) {
+			return $this->error( $session );
 		}
 
-		$data = $this->parse_json_body( $request );
+		$new_cart = $this->parse_and_validate_cart( $request );
 
-		if ( $data instanceof AgenticError ) {
-			return $this->error( $data );
+		if ( $new_cart instanceof AgenticError ) {
+			return $this->error( $new_cart );
 		}
-
-		$new_cart = PayPalCart::from_array( $data );
 
 		// Replace the cart session (preserving ec_token).
 		$update_result = $this->session_handler->update_cart_session( $cart_id, $new_cart );
 
 		if ( ! $update_result ) {
 			return $this->error(
-				new CartNotFoundError(
+				new NotFoundError(
 					'Failed to replace cart',
 					array(
 						array(
@@ -116,7 +99,6 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 
 		$response = $this->response_factory->from_cart( $new_cart );
 
-		// Return 200 OK (not 201 Created).
 		return $this->cart_details( $response, 200 );
 	}
 }

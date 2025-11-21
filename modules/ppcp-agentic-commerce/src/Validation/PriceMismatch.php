@@ -4,6 +4,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
+
 /**
  * When to use:
  * - Product price does not match the cart value.
@@ -11,6 +14,6 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
  * - Dynamic pricing adjustments occurred.
  */
 class PriceMismatch extends ValidationIssue {
-	protected const ISSUE_CODE = 'PRICING_ERROR';
-	protected const ISSUE_TYPE = 'BUSINESS_RULE';
+	protected const ISSUE_CODE = ErrorCode::PRICING_ERROR;
+	protected const ISSUE_TYPE = ErrorType::BUSINESS_RULE;
 }

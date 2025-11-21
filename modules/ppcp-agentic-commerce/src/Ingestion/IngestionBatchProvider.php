@@ -3,21 +3,17 @@
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use Automattic\WooCommerce\Enums\ProductStatus;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 
 /**
  * Provides a batch of WC_Product IDs eligible for
  * syncing with the agentic commerce product ingestion endpoint
  */
 class IngestionBatchProvider {
-	private int $stale_timeout_days;
-	private array $product_types;
+	private IngestionConfiguration $configuration;
 
-	public function __construct(
-		int $stale_timeout_days,
-		array $product_types
-	) {
-		$this->stale_timeout_days = $stale_timeout_days;
-		$this->product_types      = $product_types;
+	public function __construct( IngestionConfiguration $configuration ) {
+		$this->configuration = $configuration;
 	}
 
 	/**
@@ -28,19 +24,21 @@ class IngestionBatchProvider {
 	 * 2. Products that have been updated since last sync
 	 * 3. Products that haven't been synced in the configured stale timeout period
 	 *
-	 * @param int $limit The maximum number of products to include in the batch.
-	 *
 	 * @return array An array of product IDs that need to be synced.
 	 */
-	public function get_batch( $limit = 50 ): array {
+	public function get_batch(): array {
+		$product_types    = $this->configuration->get_supported_product_types();
+		$batch_size       = $this->configuration->get_sync_batch_size();
+		$resync_timestamp = $this->configuration->get_expired_product_timestamp();
+
 		// phpcs:disable WordPress.DB.SlowDBQuery
 		// First, get products that have never been synced.
 		$batch = wc_get_products(
 			array(
 				'status'       => ProductStatus::PUBLISH,
-				'type'         => $this->product_types,
+				'type'         => $product_types,
 				'downloadable' => false,
-				'limit'        => $limit,
+				'limit'        => $batch_size,
 				'return'       => 'ids',
 				'meta_query'   => array(
 					array(
@@ -53,7 +51,7 @@ class IngestionBatchProvider {
 		assert( is_array( $batch ) );
 
 		// If we're already at the limit, return early.
-		if ( count( $batch ) >= $limit ) {
+		if ( count( $batch ) >= $batch_size ) {
 			return $batch;
 		}
 
@@ -61,9 +59,9 @@ class IngestionBatchProvider {
 		$dirty_products = wc_get_products(
 			array(
 				'status'       => 'publish',
-				'type'         => $this->product_types,
+				'type'         => $product_types,
 				'downloadable' => false,
-				'limit'        => $limit - count( $batch ),
+				'limit'        => $batch_size - count( $batch ),
 				'return'       => 'ids',
 				'meta_query'   => array(
 					array(
@@ -78,23 +76,19 @@ class IngestionBatchProvider {
 		$batch = array_merge( $batch, $dirty_products );
 
 		// If we're now at the limit, return.
-		if ( count( $batch ) >= $limit ) {
+		if ( count( $batch ) >= $batch_size ) {
 			return $batch;
 		}
 
-		// If we need even more, get stale products (last synced before the timeout).
-		$stale_date     = gmdate(
-			'Y-m-d H:i:s',
-			(int) strtotime(
-				'-' . (string) $this->stale_timeout_days . ' days'
-			)
-		);
+		// If we need even more, include products that are about to get stale.
+		$stale_date = gmdate( 'Y-m-d H:i:s', $resync_timestamp );
+
 		$stale_products = wc_get_products(
 			array(
 				'status'       => 'publish',
-				'type'         => $this->product_types,
+				'type'         => $product_types,
 				'downloadable' => false,
-				'limit'        => $limit - count( $batch ),
+				'limit'        => $batch_size - count( $batch ),
 				'return'       => 'ids',
 				'meta_query'   => array(
 					array(
@@ -111,6 +105,7 @@ class IngestionBatchProvider {
 		);
 		assert( is_array( $stale_products ) );
 		// phpcs:enable WordPress.DB.SlowDBQuery
+
 		// Merge and return.
 		return array_merge( $batch, $stale_products );
 	}

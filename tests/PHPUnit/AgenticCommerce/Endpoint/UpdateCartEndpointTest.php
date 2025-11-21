@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WP_REST_Request;
 use Mockery;
+use Mockery\MockInterface;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint
@@ -52,13 +53,13 @@ class UpdateCartEndpointTest extends TestCase {
 			),
 		);
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		/** @var JwtAuthService&MockInterface $auth_service */
 		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		/** @var AuthServiceProvider&MockInterface $auth_provider */
 		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
+		/** @var AgenticSessionHandler&MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
+		/** @var ResponseFactory&MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
 
 		// Mock auth provider to return auth service.
@@ -81,7 +82,7 @@ class UpdateCartEndpointTest extends TestCase {
 		// Mock update operation
 		$session_handler->shouldReceive( 'update_cart_session' )
 			->once()
-			->withArgs( function( $received_cart_id, $updated_cart ) use ( $cart_id ) {
+			->withArgs( function ( $received_cart_id, $updated_cart ) use ( $cart_id ) {
 				return $received_cart_id === $cart_id && $updated_cart instanceof PayPalCart;
 			} )
 			->andReturn( true );
@@ -103,7 +104,7 @@ class UpdateCartEndpointTest extends TestCase {
 		// Mock response factory
 		$response_factory->shouldReceive( 'active_cart' )
 			->once()
-			->withArgs( function( $cart, $received_cart_id, $received_ec_token ) use ( $cart_id, $ec_token ) {
+			->withArgs( function ( $cart, $received_cart_id, $received_ec_token ) use ( $cart_id, $ec_token ) {
 				return $cart instanceof PayPalCart
 					&& $received_cart_id === $cart_id
 					&& $received_ec_token === $ec_token;
@@ -145,13 +146,13 @@ class UpdateCartEndpointTest extends TestCase {
 			),
 		);
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		/** @var JwtAuthService&MockInterface $auth_service */
 		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		/** @var AuthServiceProvider&MockInterface $auth_provider */
 		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
+		/** @var AgenticSessionHandler&MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
+		/** @var ResponseFactory&MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
 
 		// Mock auth provider to return auth service.
@@ -220,13 +221,13 @@ class UpdateCartEndpointTest extends TestCase {
 			),
 		);
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		/** @var JwtAuthService&MockInterface $auth_service */
 		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		/** @var AuthServiceProvider&MockInterface $auth_provider */
 		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
+		/** @var AgenticSessionHandler&MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
+		/** @var ResponseFactory&MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
 
 		// Mock auth provider to return auth service.
@@ -249,7 +250,7 @@ class UpdateCartEndpointTest extends TestCase {
 		// Mock update operation - return false to simulate failure
 		$session_handler->shouldReceive( 'update_cart_session' )
 			->once()
-			->withArgs( function( $received_cart_id, $updated_cart ) use ( $cart_id ) {
+			->withArgs( function ( $received_cart_id, $updated_cart ) use ( $cart_id ) {
 				return $received_cart_id === $cart_id && $updated_cart instanceof PayPalCart;
 			} )
 			->andReturn( false );
@@ -311,13 +312,13 @@ class UpdateCartEndpointTest extends TestCase {
 			),
 		);
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		/** @var JwtAuthService&MockInterface $auth_service */
 		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		/** @var AuthServiceProvider&MockInterface $auth_provider */
 		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
+		/** @var AgenticSessionHandler&MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
+		/** @var ResponseFactory&MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
 
 		// Mock auth provider to return auth service.
@@ -340,7 +341,7 @@ class UpdateCartEndpointTest extends TestCase {
 		// Mock update operation succeeds
 		$session_handler->shouldReceive( 'update_cart_session' )
 			->once()
-			->withArgs( function( $received_cart_id, $updated_cart ) use ( $cart_id ) {
+			->withArgs( function ( $received_cart_id, $updated_cart ) use ( $cart_id ) {
 				return $received_cart_id === $cart_id && $updated_cart instanceof PayPalCart;
 			} )
 			->andReturn( true );
@@ -422,13 +423,13 @@ class UpdateCartEndpointTest extends TestCase {
 			),
 		);
 
-		/** @var JwtAuthService&\Mockery\MockInterface $auth_service */
+		/** @var JwtAuthService&MockInterface $auth_service */
 		$auth_service = Mockery::mock( JwtAuthService::class );
-		/** @var AuthServiceProvider&\Mockery\MockInterface $auth_provider */
+		/** @var AuthServiceProvider&MockInterface $auth_provider */
 		$auth_provider = Mockery::mock( AuthServiceProvider::class );
-		/** @var AgenticSessionHandler&\Mockery\MockInterface $session_handler */
+		/** @var AgenticSessionHandler&MockInterface $session_handler */
 		$session_handler = Mockery::mock( AgenticSessionHandler::class );
-		/** @var ResponseFactory&\Mockery\MockInterface $response_factory */
+		/** @var ResponseFactory&MockInterface $response_factory */
 		$response_factory = Mockery::mock( ResponseFactory::class );
 
 		// Mock auth provider to return auth service.
@@ -451,7 +452,7 @@ class UpdateCartEndpointTest extends TestCase {
 		// Verify that update receives merged data (partial update)
 		$session_handler->shouldReceive( 'update_cart_session' )
 			->once()
-			->withArgs( function( $received_cart_id, $updated_cart ) use ( $cart_id ) {
+			->withArgs( function ( $received_cart_id, $updated_cart ) use ( $cart_id ) {
 				if ( $received_cart_id !== $cart_id || ! ( $updated_cart instanceof PayPalCart ) ) {
 					return false;
 				}
