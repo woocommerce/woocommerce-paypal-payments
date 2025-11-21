@@ -3,11 +3,8 @@
  */
 import { guests as guestsBase } from '@inpsyde/playwright-utils/build/e2e/plugins/woocommerce';
 
-const emailGary = `guest-${ Date.now() }@personal.example.us`;
-const emailRyan = process.env.FASTLANE_EMAIL_RYAN;
-
 const usaFastlaneGary: WooCommerce.CreateCustomer = {
-	email: emailGary,
+	email: `guest-${ Date.now() }@personal.example.us`,
 	first_name: 'Gary',
 	last_name: 'From-USA',
 	birth_date: '12.08.1985',
@@ -42,7 +39,7 @@ const usaFastlaneGary: WooCommerce.CreateCustomer = {
 };
 
 const usaFastlaneRyan: WooCommerce.CreateCustomer = {
-	email: emailRyan,
+	email: 'test-whitelistallblock-1@example.com',
 	first_name: 'Fred',
 	last_name: 'Flintstone',
 	birth_date: '05.11.1990',
