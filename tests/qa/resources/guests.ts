@@ -4,8 +4,6 @@
 import { guests as guestsBase } from '@inpsyde/playwright-utils/build/e2e/plugins/woocommerce';
 
 const emailGary = `guest-${ Date.now() }@personal.example.us`;
-const emailRyan = process.env.FASTLANE_EMAIL_RYAN;
-
 const usaFastlaneGary: WooCommerce.CreateCustomer = {
 	email: emailGary,
 	first_name: 'Gary',
@@ -41,6 +39,7 @@ const usaFastlaneGary: WooCommerce.CreateCustomer = {
 	},
 };
 
+const emailRyan = 'test-whitelistallblock-1@example.com';
 const usaFastlaneRyan: WooCommerce.CreateCustomer = {
 	email: emailRyan,
 	first_name: 'Fred',

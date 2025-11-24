@@ -5,7 +5,7 @@ import { ShopOrder } from '../../../resources';
 import { annotateVisitor, expect, test } from '../../../utils';
 
 const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer: guest } = testOrder;
+	const { title, payment, products, customer: guest, merchant } = testOrder;
 
 	test.describe( () => {
 		// Delete guest since he becomes registered customer in subscription tests
@@ -34,7 +34,12 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 			} ) => {
 				test.setTimeout( 2 * 60 * 1000 );
 				await utils.fillVisitorsCart( products );
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =
@@ -75,7 +80,7 @@ const testSubscriptionOrderGuest = ( testOrder: ShopOrder ) => {
 };
 
 const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
-	const { title, payment, products, customer } = testOrder;
+	const { title, payment, products, customer, merchant } = testOrder;
 
 	test.describe( () => {
 		// Restore customer and his storage state to remove vaulted payment methods.
@@ -105,7 +110,12 @@ const testSubscriptionOrderCustomer = ( testOrder: ShopOrder ) => {
 
 				// Make tested order (testOrder.payment.saveToAccount = true):
 				await utils.fillVisitorsCart( products );
-				await classicCheckout.makeOrder( testOrder );
+				await classicCheckout.visit();
+				await classicCheckout.completeCheckoutDetails( testOrder );
+				await classicCheckout.payPalUi.makePayment( {
+					merchant,
+					payment,
+				} );
 				await orderReceived.assertOrderDetails( testOrder );
 
 				const subscriptionId =

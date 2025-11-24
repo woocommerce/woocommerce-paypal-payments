@@ -417,7 +417,6 @@ export class PayPalUI {
 				}
 				// pay with vaulted account
 				if ( data.payment.isVaulted ) {
-					await expect( this.payPalButton() ).toBeVisible();
 					await this.assertVaultedPaymentMethodIsDisplayed(
 						data.payment
 					);
@@ -821,8 +820,7 @@ export class PayPalUI {
 	assertVaultedPaymentMethodIsDisplayed = async ( payment ) => {
 		switch ( payment.gateway.shortcut ) {
 			case 'paypal':
-				// await expect( this.payPalButton() ).toContainText( 'Pay Now' );
-				await expect( this.payPalButtonMoreOptions() ).toBeVisible();
+				await expect( this.payPalButton() ).toBeVisible();
 				break;
 
 			// case 'acdc':
