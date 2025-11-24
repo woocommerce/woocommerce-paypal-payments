@@ -374,16 +374,16 @@ $services = array(
 		$c->get( 'settings.service.data-migration.payment-settings' ),
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.settings' ),
 		$c->get( 'compat.settings.settings_tab_map_helper' ),
 	),
 	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.styling' ),
 	),
 	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.payment' ),
 		$c->get( 'api.helpers.dccapplies' ),
 		$c->get( 'wcgateway.helper.dcc-product-status' ),
@@ -391,7 +391,7 @@ $services = array(
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
 	),
