@@ -36,7 +36,7 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 	public function migrate(): void {
 		$location_styles = array();
 
-		$styling_per_location = ! empty( $this->settings['smart_button_enable_styling_per_location'] ) && $this->settings['smart_button_enable_styling_per_location'];
+		$styling_per_location = ! empty( $this->settings['smart_button_enable_styling_per_location'] );
 
 		foreach ( $this->locations_map() as $old_location => $new_location ) {
 			$context = $styling_per_location ? $old_location : 'general';
@@ -80,11 +80,11 @@ class StylingSettingsMigration implements SettingsMigrationInterface {
 			}
 		}
 
-		if ( ! empty( $this->settings['applepay_button_enabled'] ) && $this->settings['applepay_button_enabled'] ) {
+		if ( ! empty( $this->settings['applepay_button_enabled'] ) ) {
 			$methods[] = ApplePayGateway::ID;
 		}
 
-		if ( ! empty( $this->settings['googlepay_button_enabled'] ) && $this->settings['googlepay_button_enabled'] ) {
+		if ( ! empty( $this->settings['googlepay_button_enabled'] ) ) {
 			$methods[] = GooglePayGateway::ID;
 		}
 

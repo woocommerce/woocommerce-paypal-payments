@@ -60,15 +60,13 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	}
 
 	public function migrate(): void {
-		$allow_local_apm_gateways = ! empty( $this->settings['allow_local_apm_gateways'] ) && $this->settings['allow_local_apm_gateways'];
-
 		if ( isset( $this->settings['disable_funding'] ) ) {
 			$disable_funding = (array) $this->settings['disable_funding'];
 			if ( ! in_array( 'venmo', $disable_funding, true ) ) {
 				$this->payment_settings->toggle_method_state( 'venmo', true );
 			}
 
-			if ( ! $allow_local_apm_gateways ) {
+			if ( ! empty( $this->settings['allow_local_apm_gateways'] ) ) {
 				foreach ( $this->local_apms as $apm ) {
 					if ( ! in_array( $apm['id'], $disable_funding, true ) ) {
 						$this->payment_settings->toggle_method_state( $apm['id'], true );
@@ -82,7 +80,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		}
 
 		foreach ( $this->map() as $old_key => $method_name ) {
-			if ( ! empty( $this->settings[ $old_key ] ) && $this->settings[ $old_key ] ) {
+			if ( ! empty( $this->settings[ $old_key ] ) ) {
 				$this->payment_settings->toggle_method_state( $method_name, true );
 			}
 		}

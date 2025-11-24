@@ -47,7 +47,7 @@ class SettingsMigration implements SettingsMigrationInterface {
 		}
 
 		$connection = new MerchantConnectionDTO(
-			! empty( $this->settings['sandbox_on'] ) && $this->settings['sandbox_on'],
+			! empty( $this->settings['sandbox_on'] ),
 			$this->settings['client_id'],
 			$this->settings['client_secret'],
 			$this->settings['merchant_id'],
