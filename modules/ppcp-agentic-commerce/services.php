@@ -62,7 +62,8 @@ return array(
 	'agentic.registration.handler'      => static function ( ContainerInterface $c ): RegistrationService {
 		return new RegistrationService(
 			$c->get( 'agentic.config.webhook_urls' ),
-			$c->get( 'agentic.merchant.provider' )
+			$c->get( 'agentic.merchant.provider' ),
+			$c->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
