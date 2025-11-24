@@ -233,16 +233,7 @@ export class PcpApi extends WooCommerceApiBase {
 			{ data }
 		);
 		await expect( response.ok() ).toBeTruthy();
-		console.log( await response.json() );
 
-		// 2nd request to trigger renewal (stopped working from v3.2.0)
-		const response2 = await this.requestUtils.request.post(
-			urls.payPalWebhook,
-			{ data }
-		);
-		await expect( response2.ok() ).toBeTruthy();
-		console.log( await response2.json() );
-
-		return response.ok() && response2.ok();
+		return response.ok();
 	};
 }

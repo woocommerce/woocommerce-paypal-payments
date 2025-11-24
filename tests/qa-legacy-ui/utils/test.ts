@@ -2,7 +2,7 @@
  * External dependencies
  */
 import fs from 'fs';
-import { APIRequestContext, Page } from '@playwright/test';
+import { APIRequestContext, Page, VideoMode, ViewportSize } from '@playwright/test';
 import {
 	test as base,
 	expect,
@@ -44,7 +44,11 @@ import {
 	ClassicPayForOrder,
 } from './frontend';
 
-type BaseExtend = {
+export type BaseExtend = {
+	recordVideoOptions?: {
+		mode: VideoMode;
+		size?: ViewportSize;
+	};
 	ppapi: PayPalAPI;
 	ppui: PayPalUI;
 	visitorPage: Page;
@@ -83,10 +87,11 @@ type BaseExtend = {
 };
 
 const test = base.extend< BaseExtend >( {
+	recordVideoOptions: [ null, { option: true } ],
 	ppapi: async ( { request }, use ) => {
 		await use( new PayPalAPI( { request } ) );
 	},
-	visitorPage: async ( { browser }, use, testInfo ) => {
+	visitorPage: async ( { browser, recordVideoOptions }, use, testInfo ) => {
 		// check if visitor is specified in test otherwise use guest
 		const storageStateName =
 			testInfo.annotations?.find( ( el ) => el.type === 'visitor' )
@@ -94,14 +99,33 @@ const test = base.extend< BaseExtend >( {
 		const storageStatePath = `${ process.env.STORAGE_STATE_PATH }/${ storageStateName }.json`;
 		// apply current visitor's storage state to the context
 		const context = await browser.newContext( {
+			...testInfo.project.use, // Spread project's use config
 			storageState: fs.existsSync( storageStatePath )
 				? storageStatePath
 				: undefined,
+			...( recordVideoOptions && {
+				recordVideo: {
+					...recordVideoOptions,
+					dir: testInfo.outputDir, // Override recordVideo to use correct output dir
+				}
+			} ),
 		} );
 		const page = await context.newPage();
 		await use( page );
+		
+		// Save video path BEFORE closing
+		const video = page.video();
 		await page.close();
 		await context.close();
+		
+		// Attach video to report after context is closed
+		if ( video ) {
+			const videoPath = await video.path();
+			await testInfo.attach( 'video', {
+				path: videoPath,
+				contentType: 'video/webm',
+			} );
+		}
 	},
 	visitorRequest: async ( { visitorPage }, use ) => {
 		const request = visitorPage.request;

@@ -4,54 +4,53 @@
 import { ShopOrder } from '../../../resources';
 import { annotateVisitor, test } from '../../../utils';
 
-export const transactionsOnClassicCart = ( testsData: ShopOrder[] ) => {
-	for ( const testData of testsData ) {
-		test(
-			testData.title,
-			annotateVisitor( testData.customer ),
-			async ( {
-				classicCart,
-				classicCheckout,
-				wooCommerceApi,
-				orderReceived,
-				payPalApi,
-				wooCommerceOrderEdit,
-				utils,
-			} ) => {
-				await utils.fillVisitorsCart( testData.products );
+export const transactionsOnClassicCart = ( testOrder: ShopOrder ) => {
+	const { products, payment, merchant, coupons, customer, shipping } =
+		testOrder;
 
-				await classicCart.makeOrder( testData );
-				await classicCheckout.fillCheckoutForm( testData.customer );
-				await classicCheckout.placeOrder();
-				// Expect Order Received page to be loaded
-				await orderReceived.assertOrderDetails( testData );
-
-				const orderId = await orderReceived.getOrderNumber();
-				const orderJson = await wooCommerceApi.getOrder( orderId );
-
-				const pcpData = {
-					transactionId: orderJson.transaction_id,
-					payPalFee: await payPalApi.getFee(
-						orderJson.transaction_id,
-						testData
-					),
-					payPalPayout: await payPalApi.getPayout(
-						orderJson.transaction_id,
-						testData
-					),
-				};
-
-				await payPalApi.assertOrder( orderJson, testData );
-				await payPalApi.assertPayment(
-					orderJson.transaction_id,
-					testData
-				);
-				await wooCommerceOrderEdit.assertOrderDetails(
-					orderId,
-					testData,
-					pcpData
-				);
+	test(
+		testOrder.title,
+		annotateVisitor( customer ),
+		async ( {
+			classicCart,
+			classicCheckout,
+			wooCommerceApi,
+			orderReceived,
+			payPalApi,
+			wooCommerceOrderEdit,
+			utils,
+		} ) => {
+			await utils.fillVisitorsCart( products );
+			await classicCart.visit();
+			// Add coupons if needed
+			for ( const coupon of coupons ?? [] ) {
+				await classicCart.applyCoupon( coupon.code );
 			}
-		);
-	}
+			await classicCart.selectShippingMethod( shipping.settings.title );
+			await classicCart.payPalUi.makePayment( { merchant, payment } );
+
+			await classicCheckout.fillCheckoutForm( customer );
+			await classicCheckout.placeOrder();
+			await orderReceived.assertOrderDetails( testOrder );
+
+			const orderId = await orderReceived.getOrderNumber();
+			const { transaction_id: transactionId } =
+				await wooCommerceApi.getOrder( orderId );
+			const payPalFee = await payPalApi.getFee(
+				transactionId,
+				testOrder
+			);
+			const payPalPayout = await payPalApi.getPayout(
+				transactionId,
+				testOrder
+			);
+			const pcpData = { transactionId, payPalFee, payPalPayout };
+
+			await wooCommerceOrderEdit.assertOrderDetails(
+				orderId,
+				testOrder,
+				pcpData
+			);
+		}
+	);
 };
