@@ -15,7 +15,7 @@ const SavePaymentMethods = ( { ownBrandOnly } ) => {
 
 	const { features } = useMerchantInfo();
 
-	if ( ownBrandOnly && ! features.save_paypal_and_venmo.enabled ) {
+	if ( ! features.save_paypal_and_venmo.enabled ) {
 		return null;
 	}
 
@@ -54,22 +54,22 @@ const SavePaymentMethods = ( { ownBrandOnly } ) => {
 				disabled={ ! features.save_paypal_and_venmo.enabled }
 			/>
 
-			{ ownBrandOnly || (
-				// Credit card settings are only available in "white label" mode.
-				<ControlToggleButton
-					id="ppcp-save-card-details"
-					label={ __(
-						'Save Credit and Debit Cards',
-						'woocommerce-paypal-payments'
-					) }
-					description={ __(
-						"Securely store your customer's credit card.",
-						'woocommerce-paypal-payments'
-					) }
-					onChange={ setSaveCardDetails }
-					value={ saveCardDetails }
-				/>
-			) }
+			<ControlToggleButton
+				id="ppcp-save-card-details"
+				label={ __(
+					'Save Credit and Debit Cards',
+					'woocommerce-paypal-payments'
+				) }
+				description={ __(
+					"Securely store your customer's credit card.",
+					'woocommerce-paypal-payments'
+				) }
+				disabled={
+					ownBrandOnly || ! features.save_paypal_and_venmo.enabled
+				}
+				onChange={ setSaveCardDetails }
+				value={ saveCardDetails }
+			/>
 		</SettingsBlock>
 	);
 };
