@@ -10,7 +10,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Uninstall;
 
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Uninstall\Assets\ClearDatabaseAssets;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -37,13 +39,14 @@ return array(
 			'ppcp_payment_tokens_migration_initialized',
 			SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI,
 			SwitchSettingsUiEndpoint::OPTION_NAME_MIGRATION_IS_DONE,
+			PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE,
+			Recaptcha::REJECTION_COUNTER_OPTION,
 		);
 	},
 
 	'uninstall.ppcp-all-scheduled-action-names' => function ( ContainerInterface $container ): array {
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
-			'woocommerce_paypal_payments_check_saved_payment',
 			'woocommerce_paypal_payments_payment_tokens_migration',
 		);
 	},

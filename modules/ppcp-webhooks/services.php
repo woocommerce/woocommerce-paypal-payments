@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
@@ -27,13 +28,12 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenCreated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
 use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
+use WooCommerce\PayPalCommerce\Webhooks\VaultV2\VaultPaymentTokenCreated;
 
 return array(
 
@@ -43,12 +43,20 @@ return array(
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
 		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+
 		return new WebhookRegistrar(
 			$factory,
 			$endpoint,
 			$rest_endpoint,
 			$last_webhook_storage,
+			$container->get( 'webhook.status.simulation' ),
+			$container->get( 'webhook.orchestration' ),
 			$logger
+		);
+	},
+	'webhook.orchestration'                   => static function ( ContainerInterface $container ): WebhookOrchestrator {
+		return new WebhookOrchestrator(
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'webhook.endpoint.controller'             => function ( ContainerInterface $container ): IncomingWebhookEndpoint {
@@ -94,7 +102,6 @@ return array(
 			new PaymentCaptureRefunded( $logger, $refund_fees_updater ),
 			new PaymentCaptureReversed( $logger ),
 			new PaymentCaptureCompleted( $logger, $order_endpoint ),
-			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory, $payment_token_helper ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
 			new PaymentSaleCompleted( $logger, $container->get( 'paypal-subscriptions.renewal-handler' ) ),
@@ -103,6 +110,8 @@ return array(
 			new BillingPlanPricingChangeActivated( $logger ),
 			new CatalogProductUpdated( $logger ),
 			new BillingPlanUpdated( $logger ),
+			// Vault v2 handler, would be deleted when Vault v3 becomes the only one used by merchants.
+			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory, $payment_token_helper ),
 		);
 	},
 

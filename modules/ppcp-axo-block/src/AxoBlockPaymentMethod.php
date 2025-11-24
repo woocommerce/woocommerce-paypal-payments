@@ -182,8 +182,8 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_data() {
 		return array(
 			'id'          => $this->name,
-			'title'       => 'Debit & Credit Cards',
-			'description' => 'Axo Description',
+			'title'       => $this->gateway->title,
+			'description' => $this->gateway->description,
 			'supports'    => array_filter(
 				$this->gateway->supports,
 				array(

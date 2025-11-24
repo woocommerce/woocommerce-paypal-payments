@@ -123,15 +123,33 @@ class TodosEligibilityService {
 	private bool $is_enable_google_pay_eligible;
 
 	/**
-	 * Whether Enabling Installments is eligible.
+	 * Whether enabling Installments is eligible.
 	 *
 	 * @var bool
 	 */
 	private bool $is_enable_installments_eligible;
 
+	/**
+	 * Whether enabling Working Capital is eligible.
+	 *
+	 * @var bool
+	 */
 	private bool $is_working_capital_eligible;
 
-	private bool $is_pay_later_messaging_auto_enabled;
+	/**
+	 * Whether enabling Pay with Crypto is eligible.
+	 *
+	 * @var bool
+	 */
+	private bool $is_enable_pwc_eligible;
+
+	/**
+	 * Whether applying for Pay with Crypto is eligible.
+	 *
+	 * @var bool
+	 */
+	private bool $is_apply_for_pwc;
+
 
 	/**
 	 * Constructor.
@@ -153,7 +171,8 @@ class TodosEligibilityService {
 	 * @param bool $is_enable_google_pay_eligible       Whether enabling Google Pay is eligible.
 	 * @param bool $is_enable_installments_eligible     Whether enabling Installments is eligible.
 	 * @param bool $is_working_capital_eligible         Whether applying for Working Capital is eligible.
-	 * @param bool $is_pay_later_messaging_auto_enabled Whether the Pay later messaging is force enabled.
+	 * @param bool $is_enable_pwc_eligible              Whether enabling Pay with Crypto is eligible.
+	 * @param bool $is_apply_for_pwc                    Whether applying for Pay with Crypto is eligible.
 	 */
 	public function __construct(
 		bool $is_fastlane_eligible,
@@ -173,7 +192,8 @@ class TodosEligibilityService {
 		bool $is_enable_google_pay_eligible,
 		bool $is_enable_installments_eligible,
 		bool $is_working_capital_eligible,
-		bool $is_pay_later_messaging_auto_enabled
+		bool $is_enable_pwc_eligible,
+		bool $is_apply_for_pwc
 	) {
 		$this->is_fastlane_eligible                      = $is_fastlane_eligible;
 		$this->is_pay_later_messaging_eligible           = $is_pay_later_messaging_eligible;
@@ -192,7 +212,8 @@ class TodosEligibilityService {
 		$this->is_enable_google_pay_eligible             = $is_enable_google_pay_eligible;
 		$this->is_enable_installments_eligible           = $is_enable_installments_eligible;
 		$this->is_working_capital_eligible               = $is_working_capital_eligible;
-		$this->is_pay_later_messaging_auto_enabled       = $is_pay_later_messaging_auto_enabled;
+		$this->is_enable_pwc_eligible                    = $is_enable_pwc_eligible;
+		$this->is_apply_for_pwc                          = $is_apply_for_pwc;
 	}
 
 	/**
@@ -219,7 +240,8 @@ class TodosEligibilityService {
 			'enable_google_pay'                    => fn() => $this->is_enable_google_pay_eligible,
 			'enable_installments'                  => fn() => $this->is_enable_installments_eligible,
 			'apply_for_working_capital'            => fn() => $this->is_working_capital_eligible,
-			'pay_later_messaging_is_auto_enabled'  => fn() => $this->is_pay_later_messaging_auto_enabled,
+			'enable_pwc'                           => fn() => $this->is_enable_pwc_eligible,
+			'apply_for_pwc'                        => fn() => $this->is_apply_for_pwc,
 		);
 	}
 }

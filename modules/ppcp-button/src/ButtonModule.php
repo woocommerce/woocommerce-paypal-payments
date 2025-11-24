@@ -12,21 +12,21 @@ namespace WooCommerce\PayPalCommerce\Button;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ReturnUrlFactory;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\GetOrderEndpoint;
-use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataTransientStorage;
+use WooCommerce\PayPalCommerce\Button\VaultV2\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -74,6 +74,7 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$smart_button->render_wrapper();
 			}
 		);
+
 		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $c ) {
@@ -124,15 +125,6 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				 *
 				 * @var DataClientIdEndpoint $endpoint
 				 */
-				$endpoint->handle_request();
-			}
-		);
-		add_action(
-			'wc_ajax_' . StartPayPalVaultingEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'button.endpoint.vault-paypal' );
-				assert( $endpoint instanceof StartPayPalVaultingEndpoint );
-
 				$endpoint->handle_request();
 			}
 		);
@@ -235,6 +227,19 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$endpoint->handle_request();
 			}
 		);
+
+		/**
+		 * Vault v2 ajax handler, would be removed when vault v3 becomes the default for all merchants.
+		 */
+		add_action(
+			'wc_ajax_' . StartPayPalVaultingEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.vault-v2.endpoint.vault-paypal' );
+				assert( $endpoint instanceof StartPayPalVaultingEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
 	}
 
 	private static function is_cross_browser_order( WC_Order $wc_order ): bool {
@@ -312,6 +317,46 @@ class ButtonModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				// phpcs:ignore WordPress.Security.EscapeOutput
 				echo "<script>location.href = '" . $wc_order->get_checkout_payment_url() . "' + location.hash;</script>";
 			}
+		);
+
+		/**
+		 * Restore PayPal as the chosen payment method when returning from an App Switch flow.
+		 *
+		 * Context:
+		 * --------
+		 * When Fastlane (AXO) is active, AxoModule forces the chosen payment method to
+		 * AxoGateway on every checkout page load. This causes a problem when the customer
+		 * initiated checkout with PayPal and was redirected to the PayPal app
+		 * (App Switch): after resuming, the checkout would incorrectly show AxoGateway,
+		 * leading to validation errors and failed payments.
+		 *
+		 * Solution:
+		 * ---------
+		 * This handler runs after the AxoModule one (priority 20). It checks for the
+		 * PayPal return URL query arguments that indicate an App Switch resume, and if
+		 * present, forces the chosen method back to PayPalGateway. This ensures the
+		 * resumed PayPal flow continues as expected.
+		 */
+		add_action(
+			'template_redirect',
+			function () use ( $container ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! isset( $_GET[ ReturnUrlFactory::PCP_QUERY_ARG ] ) ) {
+					return;
+				}
+
+				if ( is_checkout_pay_page() ) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.NonceVerification
+				if ( ! isset( $_GET[ CreateOrderEndpoint::RETURN_URL_CART_QUERY_ARG ] ) ) {
+					return;
+				}
+
+				WC()->session->set( 'chosen_payment_method', PayPalGateway::ID );
+			},
+			20
 		);
 
 		/**

@@ -61,6 +61,9 @@ export const useSettings = () => {
 
 	const [ subtotalAdjustment, setSubtotalAdjustment ] =
 		usePersistent( 'subtotalAdjustment' );
+	const [ instantPaymentsOnly, setInstantPaymentsOnly ] = usePersistent(
+		'instantPaymentsOnly'
+	);
 	const [ landingPage, setLandingPage ] = usePersistent( 'landingPage' );
 	const [ buttonLanguage, setButtonLanguage ] =
 		usePersistent( 'buttonLanguage' );
@@ -86,7 +89,6 @@ export const useSettings = () => {
 
 	const [ threeDSecure, setThreeDSecure ] = usePersistent( 'threeDSecure' );
 
-
 	return {
 		invoicePrefix,
 		setInvoicePrefix,
@@ -108,6 +110,8 @@ export const useSettings = () => {
 		setStayUpdated,
 		subtotalAdjustment,
 		setSubtotalAdjustment,
+		instantPaymentsOnly,
+		setInstantPaymentsOnly,
 		brandName,
 		setBrandName,
 		softDescriptor,

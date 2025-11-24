@@ -72,6 +72,7 @@ export const usePaymentMethods = () => {
 	const [ googlePay ] = usePersistent( 'ppcp-googlepay' );
 
 	// Alternative payment methods.
+	const [ pwc ] = usePersistent( 'ppcp-pwc' );
 	const [ bancontact ] = usePersistent( 'ppcp-bancontact' );
 	const [ blik ] = usePersistent( 'ppcp-blik' );
 	const [ eps ] = usePersistent( 'ppcp-eps' );
@@ -99,6 +100,7 @@ export const usePaymentMethods = () => {
 		googlePay,
 	] );
 	const alternative = removeEmpty( [
+		pwc,
 		bancontact,
 		blik,
 		eps,
@@ -129,16 +131,14 @@ export const usePaymentMethodsModal = () => {
 	const { usePersistent } = useStoreData();
 
 	const [ paypalShowLogo ] = usePersistent( 'paypalShowLogo' );
-	const [ fastlaneCardholderName ] = usePersistent(
-		'fastlaneCardholderName'
-	);
+	const [ cardholderName ] = usePersistent( 'cardholderName' );
 	const [ fastlaneDisplayWatermark ] = usePersistent(
 		'fastlaneDisplayWatermark'
 	);
 
 	return {
 		paypalShowLogo,
-		fastlaneCardholderName,
+		cardholderName,
 		fastlaneDisplayWatermark,
 	};
 };

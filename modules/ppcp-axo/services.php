@@ -42,7 +42,7 @@ return array(
 		return new AxoApplies(
 			$container->get( 'axo.supported-country-currency-matrix' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' ),
+			$container->get( 'api.merchant.country' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'wc-subscriptions.helper' )
 		);
@@ -155,23 +155,17 @@ return array(
 	 * The matrix which countries and currency combinations can be used for AXO.
 	 */
 	'axo.supported-country-currency-matrix'  => static function ( ContainerInterface $container ): array {
+		$dcc_allowed_country_currency_matrix = $container->get( 'api.dcc-supported-country-currency-matrix' );
 		$matrix = array(
-			'US' => array(
-				'AUD',
-				'CAD',
-				'EUR',
-				'GBP',
-				'JPY',
-				'USD',
-			),
+			'US' => $dcc_allowed_country_currency_matrix['US'],
 		);
 
 		if ( $container->get( 'axo.uk.enabled' ) ) {
-			$matrix['GB'] = array( 'GBP' );
+			$matrix['GB'] = $dcc_allowed_country_currency_matrix['GB'];
 		}
 
 		if ( $container->get( 'axo.au.enabled' ) ) {
-			$matrix['AU'] = array( 'AUD' );
+			$matrix['AU'] = $dcc_allowed_country_currency_matrix['AU'];
 		}
 
 		/**
@@ -301,7 +295,8 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.sdk-client-token' ),
-			$container->get( 'axo.eligible' )
+			$container->get( 'axo.eligible' ),
+			$container->get( 'button.helper.context' ),
 		);
 	},
 

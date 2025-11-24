@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 
 return array(
 	'ppcp-local-apms.url'                       => static function ( ContainerInterface $container ): string {
@@ -18,6 +18,11 @@ return array(
 	},
 	'ppcp-local-apms.payment-methods'           => static function ( ContainerInterface $container ): array {
 		return array(
+			'pwc'        => array(
+				'id'         => PWCGateway::ID,
+				'countries'  => array(),
+				'currencies' => array(),
+			),
 			'bancontact' => array(
 				'id'         => BancontactGateway::ID,
 				'countries'  => array( 'BE' ),
@@ -66,6 +71,17 @@ return array(
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'api.helper.failure-registry' )
+		);
+	},
+	'ppcp-local-apms.pwc.wc-gateway'            => static function ( ContainerInterface $container ): PWCGateway {
+		return new PWCGateway(
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'api.endpoint.orders' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
 	'ppcp-local-apms.bancontact.wc-gateway'     => static function ( ContainerInterface $container ): BancontactGateway {
@@ -140,6 +156,13 @@ return array(
 			$container->get( 'wcgateway.builder.experience-context' )
 		);
 	},
+	'ppcp-local-apms.pwc.payment-method'        => static function ( ContainerInterface $container ): PWCPaymentMethod {
+		return new PWCPaymentMethod(
+			$container->get( 'ppcp-local-apms.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'ppcp-local-apms.pwc.wc-gateway' )
+		);
+	},
 	'ppcp-local-apms.bancontact.payment-method' => static function ( ContainerInterface $container ): BancontactPaymentMethod {
 		return new BancontactPaymentMethod(
 			$container->get( 'ppcp-local-apms.url' ),
@@ -195,5 +218,14 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'ppcp-local-apms.multibanco.wc-gateway' )
 		);
+	},
+	'ppcp-local-apms.eligibility.check'         => static function ( ContainerInterface $container ): bool {
+		$general_settings = $container->get( 'settings.data.general' );
+		assert( $general_settings instanceof GeneralSettings );
+
+		$merchant_data    = $general_settings->get_merchant_data();
+		$merchant_country = $merchant_data->merchant_country;
+		$ineligible_countries = array( 'RU', 'BR', 'JP' );
+		return ! in_array( $merchant_country, $ineligible_countries, true );
 	},
 );

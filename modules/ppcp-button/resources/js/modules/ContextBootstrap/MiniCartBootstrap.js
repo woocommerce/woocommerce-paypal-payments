@@ -10,8 +10,17 @@ class MiniCartBootstrap {
 	}
 
 	init() {
+		/*
+		The context coming from the server can be inaccurate because the product
+		context takes precedence over the mini-cart context, so we hardcode it.
+		 */
+		const miniCartConfig = {
+			...PayPalCommerceGateway,
+			context: 'mini-cart',
+		};
+
 		this.actionHandler = new CartActionHandler(
-			PayPalCommerceGateway,
+			miniCartConfig,
 			this.errorHandler
 		);
 		this.render();

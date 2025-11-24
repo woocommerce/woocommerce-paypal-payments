@@ -972,6 +972,10 @@ export default class PaymentButton {
 	 */
 	applyWrapperStyles() {
 		const wrapper = this.wrapperElement;
+		if ( ! wrapper ) {
+			return;
+		}
+
 		const { shape, height } = this.style;
 
 		for ( const classItem of this.#appliedClasses ) {

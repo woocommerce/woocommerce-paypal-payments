@@ -432,12 +432,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	public function get_description() {
 		$gateway_settings = get_option( $this->get_option_key(), array() );
+		$description      = array_key_exists( 'description', $gateway_settings ) ? $gateway_settings['description'] : $this->description;
 
-		if ( array_key_exists( 'description', $gateway_settings ) ) {
-			return $gateway_settings['description'];
-		}
-
-		return $this->description;
+		/**
+		 * Filters the gateway description.
+		 *
+		 * @param string $description Gateway description (already sanitized with wp_kses_post).
+		 * @param PayPalGateway $gateway Gateway instance.
+		 * @return string Filtered gateway description.
+		 */
+		return apply_filters( 'woocommerce_paypal_payments_gateway_description', wp_kses_post( $description ), $this );
 	}
 
 	/**
@@ -669,31 +673,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 			$wc_order->payment_complete();
 			return $this->handle_payment_success( $wc_order );
-		}
-
-		/**
-		 * If customer has chosen change Subscription payment.
-		 */
-		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
-			$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
-			if ( $saved_paypal_payment ) {
-				$payment_token = WC_Payment_Tokens::get( $saved_paypal_payment );
-				if ( $payment_token ) {
-					$wc_order->add_payment_token( $payment_token );
-					$wc_order->save();
-
-					return $this->handle_payment_success( $wc_order );
-				}
-
-				wc_add_notice( __( 'Could not change payment.', 'woocommerce-paypal-payments' ), 'error' );
-
-				return array(
-					'result'       => 'failure',
-					'redirect'     => wc_get_checkout_url(),
-					'errorMessage' => __( 'Could not change payment.', 'woocommerce-paypal-payments' ),
-				);
-			}
 		}
 
 		/**
