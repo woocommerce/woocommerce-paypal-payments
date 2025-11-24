@@ -89,7 +89,8 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		// Feature is active and merchant is eligible: Initialize everything.
 
-		$this->ensure_registered( $registration_handler );
+		// NOTE: Auto-registration removed for testing - merchants must manually register via inspector page.
+		// $this->ensure_registered( $registration_handler );
 
 		// Add filter for agentic commerce application context.
 		add_filter(
