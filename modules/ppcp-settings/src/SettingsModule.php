@@ -495,8 +495,9 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					unset( $payment_methods[ MultibancoGateway::ID ] );
 				}
 
-				// Unset PWC if the merchant does not have capability.
-				if ( ! $merchant_capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] ) {
+				// Unset PWC if the merchant does not have capability or the store currency is not USD.
+				if ( ! $merchant_capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ]
+					|| 'USD' !== $container->get( 'api.shop.currency.getter' )->get() ) {
 					unset( $payment_methods[ PWCGateway::ID ] );
 				}
 

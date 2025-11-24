@@ -21,7 +21,7 @@ return array(
 			'pwc'        => array(
 				'id'         => PWCGateway::ID,
 				'countries'  => array(),
-				'currencies' => array(),
+				'currencies' => array( 'USD' ),
 			),
 			'bancontact' => array(
 				'id'         => BancontactGateway::ID,
