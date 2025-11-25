@@ -34,7 +34,7 @@ return array(
 	'save-payment-methods.helpers.save-payment-methods-applies' => static function ( ContainerInterface $container ): SavePaymentMethodsApplies {
 		return new SavePaymentMethodsApplies(
 			$container->get( 'save-payment-methods.supported-countries' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 	'save-payment-methods.supported-countries'           => static function ( ContainerInterface $container ): array {

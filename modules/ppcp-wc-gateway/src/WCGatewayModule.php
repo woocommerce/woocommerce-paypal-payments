@@ -572,8 +572,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
+				$save_payment_methods_check = $c->get( 'save-payment-methods.eligibility.check' );
+				assert( is_callable( $save_payment_methods_check ) );
 				$features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] = array(
-					'enabled' => $reference_transaction_status->reference_transaction_enabled(),
+					'enabled' => $reference_transaction_status->reference_transaction_enabled() && $save_payment_methods_check(),
 				);
 
 				$features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] = array(
