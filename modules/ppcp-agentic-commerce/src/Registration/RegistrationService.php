@@ -4,7 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Firebase\JWT\JWT;
-use JsonException;
+use Exception;
 use Psr\Log\LoggerInterface;
 use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
@@ -58,6 +58,7 @@ class RegistrationService {
 					'error_message' => $result->get_error_message(),
 				)
 			);
+
 			return $result;
 		}
 
@@ -108,6 +109,7 @@ class RegistrationService {
 					'error_message' => $result->get_error_message(),
 				)
 			);
+
 			return $result;
 		}
 
@@ -141,6 +143,33 @@ class RegistrationService {
 	 */
 	public function is_registered(): bool {
 		return (bool) $this->get_registration_token();
+	}
+
+	/**
+	 * Returns the store data used to register the store with PayPal Agentic Commerce.
+	 *
+	 * @return null|array
+	 */
+	public function get_registration_data(): ?array {
+		$jwt_token = $this->get_registration_token();
+
+		if ( ! $jwt_token ) {
+			return null;
+		}
+
+		$parts = explode( '.', $jwt_token );
+
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Partially decode a token, no obfuscation.
+		$body = base64_decode( $parts[1] );
+		if ( ! $body ) {
+			return null;
+		}
+
+		try {
+			return json_decode( $body, true, 512, JSON_THROW_ON_ERROR );
+		} catch ( Exception $exception ) {
+			return null;
+		}
 	}
 
 	/**
@@ -231,7 +260,7 @@ class RegistrationService {
 				512,
 				JSON_THROW_ON_ERROR
 			);
-		} catch ( JsonException $exception ) {
+		} catch ( Exception $exception ) {
 			$this->logger->error(
 				'Webhook response parse failed: Invalid JSON received from endpoint',
 				array(
