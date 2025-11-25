@@ -228,4 +228,10 @@ return array(
 		$ineligible_countries = array( 'RU', 'BR', 'JP' );
 		return ! in_array( $merchant_country, $ineligible_countries, true );
 	},
+	'ppcp-local-apms.pwc.currency.check'        => static function ( ContainerInterface $container ): bool {
+		return 'USD' === $container->get( 'api.shop.currency.getter' )->get();
+	},
+	'ppcp-local-apms.pwc.eligibility.check'     => static function ( ContainerInterface $container ): bool {
+		return $container->get( 'ppcp-local-apms.eligibility.check' ) && $container->get( 'ppcp-local-apms.pwc.currency.check' );
+	},
 );

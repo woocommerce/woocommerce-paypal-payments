@@ -590,8 +590,8 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			! $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
-			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && 'USD' === $container->get( 'api.shop.currency.getter' )->get(), // Enable Pay with Crypto.
-			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && 'USD' === $container->get( 'api.shop.currency.getter' )->get(), // Apply for Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && $container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Enable Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && $container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Apply for Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
@@ -666,7 +666,7 @@ $services = array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
-			$apm_eligible && 'USD' === $container->get( 'api.shop.currency.getter' )->get() // Pay with Crypto eligibility.
+			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ) // Pay with Crypto eligibility.
 		);
 	},
 
