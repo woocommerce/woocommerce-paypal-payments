@@ -57,7 +57,7 @@ class RegistrationStatusSection {
 	public function render(): void {
 		$is_eligible   = $this->eligibility_check->is_eligible();
 		$is_registered = $this->registration_service->is_registered();
-		$merchant_id   = $this->general_settings->get_merchant_id();
+		$metadata      = $this->registration_service->get_registration_data();
 		$auth_service  = $this->auth_provider->auth_service();
 
 		?>
@@ -123,13 +123,55 @@ class RegistrationStatusSection {
 						</div>
 					</td>
 				</tr>
-				<?php if ( $is_registered && $merchant_id ) : ?>
+				<?php if ( $is_registered && $metadata ) : ?>
+					<?php
+					$woo_config         = $this->general_settings->get_woo_settings();
+					$onboarded_merchant = $this->general_settings->get_merchant_id();
+					$store_identifier   = $metadata['wooSydeCommerceId'] ?? '?';
+					$merchant_id        = $metadata['paypalMerchantId'] ?? '?';
+					$store_country      = $metadata['country'] ?? '?';
+					$store_currency     = $metadata['currency'] ?? '?';
+					$shipping_countries = (array) ( $metadata['shippingCountries'] ?? array() );
+					?>
+					<tr>
+						<td>
+							<?php esc_html_e( 'Store URL', 'woocommerce-paypal-payments' ); ?>:
+						</td>
+						<td class="help">
+							<?php $this->render_help( __( 'This store is identified using that URL. It should not change!', 'woocommerce-paypal-payments' ) ); ?>
+						</td>
+						<td>
+							<code><?php echo esc_html( $store_identifier ); ?></code>
+						</td>
+					</tr>
 					<tr>
 						<td>
 							<?php esc_html_e( 'Merchant ID', 'woocommerce-paypal-payments' ); ?>:
 						</td>
 						<td class="help"></td>
-						<td><code><?php echo esc_html( $merchant_id ); ?></code></td>
+						<td>
+							<?php $this->render_with_validation( $merchant_id, $onboarded_merchant ); ?>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<?php esc_html_e( 'Store Country / Currency', 'woocommerce-paypal-payments' ); ?>:
+						</td>
+						<td class="help"></td>
+						<td>
+							<?php $this->render_with_validation( $store_country, $woo_config['country'] ); ?>
+							/
+							<?php $this->render_with_validation( $store_currency, $woo_config['currency'] ); ?>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<?php esc_html_e( 'Shipping Countries', 'woocommerce-paypal-payments' ); ?>:
+						</td>
+						<td class="help"></td>
+						<td>
+							<?php echo esc_html( implode( ', ', $shipping_countries ) ); ?>
+						</td>
 					</tr>
 				<?php endif; ?>
 				</tbody>
