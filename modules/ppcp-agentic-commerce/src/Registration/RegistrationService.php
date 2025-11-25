@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Firebase\JWT\JWT;
 use JsonException;
+use Psr\Log\LoggerInterface;
 use WP_Error;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
@@ -19,14 +20,17 @@ class RegistrationService {
 
 	private AgenticWebhookConfiguration $webhook_urls;
 	private MerchantMetadataProvider $metadata_provider;
+	private LoggerInterface $logger;
 
 	public function __construct(
 		AgenticWebhookConfiguration $webhook_urls,
-		MerchantMetadataProvider $metadata_provider
+		MerchantMetadataProvider $metadata_provider,
+		LoggerInterface $logger
 	) {
 
 		$this->webhook_urls      = $webhook_urls;
 		$this->metadata_provider = $metadata_provider;
+		$this->logger            = $logger;
 	}
 
 	/**
@@ -46,6 +50,14 @@ class RegistrationService {
 		$result = $this->call_installation_endpoint( $token );
 
 		if ( is_wp_error( $result ) ) {
+			$this->logger->error(
+				'Registration failed: Endpoint returned error',
+				array(
+					'endpoint'      => $this->webhook_urls->get_registration_install_url(),
+					'error_code'    => $result->get_error_code(),
+					'error_message' => $result->get_error_message(),
+				)
+			);
 			return $result;
 		}
 
@@ -55,6 +67,15 @@ class RegistrationService {
 			do_action( 'woocommerce_paypal_payments_agentic_commerce_registered' );
 		} else {
 			$this->delete_registration_token();
+			$this->logger->error(
+				'Registration failed: Endpoint rejected registration',
+				array(
+					'endpoint' => $this->webhook_urls->get_registration_install_url(),
+					'error'    => $result->error ?? 'Registration failed',
+					'message'  => $result->message,
+					'payload'  => $this->metadata_provider->get_metadata(),
+				)
+			);
 
 			return new WP_Error(
 				self::ERROR_REGISTRATION_FAILED,
@@ -77,18 +98,36 @@ class RegistrationService {
 
 		$token  = (string) $this->get_registration_token();
 		$result = $this->call_uninstallation_endpoint( $token );
-		$this->delete_registration_token();
 
 		if ( is_wp_error( $result ) ) {
+			$this->logger->error(
+				'Deregistration failed: Endpoint returned error',
+				array(
+					'endpoint'      => $this->webhook_urls->get_registration_uninstall_url(),
+					'error_code'    => $result->get_error_code(),
+					'error_message' => $result->get_error_message(),
+				)
+			);
 			return $result;
 		}
 
 		if ( ! $result->success ) {
+			$this->logger->error(
+				'Deregistration failed: Endpoint rejected deregistration',
+				array(
+					'endpoint' => $this->webhook_urls->get_registration_uninstall_url(),
+					'error'    => $result->error ?? 'Deregistration failed',
+					'message'  => $result->message,
+				)
+			);
+
 			return new WP_Error(
 				self::ERROR_DEREGISTRATION_FAILED,
 				$result->error ?? 'Deregistration failed'
 			);
 		}
+
+		$this->delete_registration_token();
 
 		do_action( 'woocommerce_paypal_payments_agentic_commerce_deregistered' );
 
@@ -119,7 +158,7 @@ class RegistrationService {
 			'country'            => $metadata->store_country,
 			'currency'           => $metadata->currency,
 			'paypalMerchantId'   => $metadata->paypal_merchant_id,
-			'wooMerchantId'      => $metadata->store_url,
+			'wooSydeCommerceId'  => $metadata->store_url,
 			'catalogDownloadUrl' => $metadata->catalog_url,
 			'favIcon'            => '',
 			'shippingCountries'  => array( 'US' ),
@@ -167,20 +206,42 @@ class RegistrationService {
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->logger->error(
+				'Webhook request failed: HTTP request error',
+				array(
+					'endpoint'      => $webhook_url,
+					'error_code'    => $response->get_error_code(),
+					'error_message' => $response->get_error_message(),
+				)
+			);
+
 			return new WP_Error(
 				self::ERROR_WEBHOOK_REQUEST,
 				$response->get_error_message()
 			);
 		}
 
+		$status_code = wp_remote_retrieve_response_code( $response );
+		$body        = wp_remote_retrieve_body( $response );
+
 		try {
 			$body = json_decode(
-				wp_remote_retrieve_body( $response ),
+				$body,
 				true,
 				512,
 				JSON_THROW_ON_ERROR
 			);
 		} catch ( JsonException $exception ) {
+			$this->logger->error(
+				'Webhook response parse failed: Invalid JSON received from endpoint',
+				array(
+					'endpoint'          => $webhook_url,
+					'http_status_code'  => $status_code,
+					'exception_message' => $exception->getMessage(),
+					'raw_response_body' => $body,
+				)
+			);
+
 			return new WP_Error(
 				self::ERROR_WEBHOOK_RESPONSE,
 				$exception->getMessage()
