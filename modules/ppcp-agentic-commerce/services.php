@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\PayPalJwkProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\UpdateCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\ReplaceCartEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CheckoutEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionBatchProvider;
@@ -134,14 +133,6 @@ return array(
 	},
 	'agentic.rest.get_cart'             => static function ( ContainerInterface $c ): GetCartEndpoint {
 		return new GetCartEndpoint(
-			$c->get( 'agentic.auth.provider' ),
-			$c->get( 'agentic.session.handler' ),
-			$c->get( 'agentic.response.factory' )
-		);
-	},
-	'agentic.rest.update_cart'          => static function ( ContainerInterface $c ): UpdateCartEndpoint {
-		// TODO: Currently not used, can be removed after confirming it's not part of the API.
-		return new UpdateCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' )
