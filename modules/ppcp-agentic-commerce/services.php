@@ -9,6 +9,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
+use Psr\Log\LoggerInterface;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
+use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
@@ -37,7 +40,25 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
 
+/**
+ * Using a different log-source for agentic commerce log entries makes it much easier to inspect
+ * agentic behavior, which is fully decoupled from browser sessions.
+ *
+ * When using log-files, this creates a separate file for agentic log entries
+ * When using DB logging, the source makes it easy to filter for agentic entries
+ */
+const LOGGER_SOURCE = 'woocommerce-paypal-agentic';
+
 return array(
+	// Logging.
+	'agentic.logger'                    => static function (): LoggerInterface {
+		if ( ! class_exists( \WC_Logger::class ) ) {
+			return new NullLogger();
+		}
+
+		return new WooCommerceLogger( wc_get_logger(), LOGGER_SOURCE );
+	},
+
 	// Configuration.
 	'agentic.config.webhook_urls'       => static function ( ContainerInterface $c ): AgenticWebhookConfiguration {
 		return new AgenticWebhookConfiguration(
@@ -63,7 +84,7 @@ return array(
 		return new RegistrationService(
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
-			$c->get( 'woocommerce.logger.woocommerce' )
+			$c->get( 'agentic.logger' )
 		);
 	},
 
@@ -155,7 +176,7 @@ return array(
 			$c->get( 'agentic.ingestion-batch-provider' ),
 			$c->get( 'agentic.config.webhook_urls' ),
 			$c->get( 'agentic.merchant.provider' ),
-			$c->get( 'woocommerce.logger.woocommerce' )
+			$c->get( 'agentic.logger' )
 		);
 	},
 
@@ -181,7 +202,7 @@ return array(
 	'agentic.inspector.form_handler'    => static function ( ContainerInterface $c ): InspectionFormHandler {
 		return new InspectionFormHandler(
 			$c->get( 'agentic.registration.handler' ),
-			$c->get( 'woocommerce.logger.woocommerce' )
+			$c->get( 'agentic.logger' )
 		);
 	},
 	'agentic.inspector.session_info'    => static function ( ContainerInterface $c ): InspectionSessionData {
