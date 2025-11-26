@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
@@ -420,8 +421,6 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		add_filter(
 			'woocommerce_paypal_payments_payment_methods',
 			function ( array $payment_methods ) use ( $container ): array {
-				$all_payment_methods = $payment_methods;
-
 				$merchant_capabilities = $container->get( 'settings.service.merchant_capabilities' );
 
 				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
@@ -439,12 +438,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$general_settings = $container->get( 'settings.data.general' );
 				assert( $general_settings instanceof GeneralSettings );
 
-				$merchant_data    = $general_settings->get_merchant_data();
-				$merchant_country = $merchant_data->merchant_country;
+				$messages_apply = $container->get( 'button.helper.messages-apply' );
+				assert( $messages_apply instanceof MessagesApply );
+				$pay_later_eligible = $messages_apply->for_country();
+
+				$merchant_country = $container->get( 'api.merchant.country' );
 
 				// Unset BCDC if merchant is eligible for ACDC and country is eligible for card fields.
 				$card_fields_eligible = $container->get( 'card-fields.eligible' );
-				if ( 'MX' !== $container->get( 'api.shop.country' ) ) {
+				if ( 'MX' !== $merchant_country ) {
 					if ( $dcc_product_status->is_active() && $card_fields_eligible ) {
 						unset( $payment_methods[ CardButtonGateway::ID ] );
 					} else {
@@ -454,7 +456,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				}
 
 				// Unset Venmo when store location is not United States.
-				if ( $container->get( 'api.shop.country' ) !== 'US' ) {
+				if ( $merchant_country !== 'US' ) {
 					unset( $payment_methods['venmo'] );
 				}
 

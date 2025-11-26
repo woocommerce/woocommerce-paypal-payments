@@ -344,7 +344,7 @@ return array(
 	'button.helper.messages-apply'                => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply(
 			$container->get( 'api.paylater-countries' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 	'button.helper.disabled-funding-sources'      => static function ( ContainerInterface $container ): DisabledFundingSources {
