@@ -11,6 +11,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WP_REST_Request;
+use WP_REST_Response;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
@@ -19,8 +22,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WP_REST_Request;
-use WP_REST_Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -37,21 +38,15 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	 */
 	protected $checkout_processor;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param AuthServiceProvider      $auth_provider      JWT authentication service provider.
-	 * @param AgenticSessionHandler    $session_handler    Session handler.
-	 * @param ResponseFactory          $response_factory   Response factory.
-	 * @param AgenticCheckoutProcessor $checkout_processor Checkout processor service.
-	 */
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
+		LoggerInterface $logger,
 		AgenticCheckoutProcessor $checkout_processor
 	) {
-		parent::__construct( $auth_provider, $session_handler, $response_factory );
+
+		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger );
 		$this->checkout_processor = $checkout_processor;
 	}
 

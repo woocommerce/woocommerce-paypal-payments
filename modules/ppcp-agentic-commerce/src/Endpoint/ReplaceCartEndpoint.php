@@ -11,11 +11,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WP_REST_Request;
 use WP_REST_Response;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -44,21 +45,15 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	 */
 	protected $orders_api;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param AuthServiceProvider   $auth_provider    JWT authentication service provider.
-	 * @param AgenticSessionHandler $session_handler  Session handler.
-	 * @param ResponseFactory       $response_factory Response factory.
-	 * @param Orders                $orders_api       PayPal Orders API (low-level).
-	 */
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
+		LoggerInterface $logger,
 		Orders $orders_api
 	) {
-		parent::__construct( $auth_provider, $session_handler, $response_factory );
+
+		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger );
 		$this->orders_api = $orders_api;
 	}
 

@@ -7,21 +7,16 @@
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
-use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WP_REST_Request;
 use WP_REST_Response;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
+use WC_Product;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
@@ -30,7 +25,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
-use WC_Product;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 
 /**
  * Create Cart REST endpoint.
@@ -61,23 +62,16 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	 */
 	protected $cart_translator;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param AuthServiceProvider         $auth_provider JWT authentication service provider.
-	 * @param AgenticSessionHandler       $session_handler Session handler.
-	 * @param ResponseFactory             $response_factory Response factory.
-	 * @param OrderEndpoint               $order_endpoint PayPal Orders API endpoint (high-level).
-	 * @param PayPalCartToCartDataAdapter $cart_translator Translator for PayPalCart to CartData.
-	 */
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
+		LoggerInterface $logger,
 		OrderEndpoint $order_endpoint,
 		PayPalCartToCartDataAdapter $cart_translator
 	) {
-		parent::__construct( $auth_provider, $session_handler, $response_factory );
+
+		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger );
 		$this->order_endpoint  = $order_endpoint;
 		$this->cart_translator = $cart_translator;
 	}
@@ -153,10 +147,10 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		$paypal_order = $this->order_endpoint->create(
 			array( $purchase_unit ),
 			ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
-			null, // payer.
+			null,               // payer.
 			'agentic-commerce', // payment_method identifier.
-			array(), // request_data.
-			null // payment_source.
+			array(),            // request_data.
+			null                // payment_source.
 		);
 
 		return $paypal_order->id();
@@ -169,7 +163,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	 * The full purchase unit with proper amounts will be created later
 	 * when the WC order is created during checkout.
 	 *
-	 * @param PayPalCart $cart The PayPal cart.
+	 * @param PayPalCart $cart      The PayPal cart.
 	 * @param CartData   $cart_data The translated cart data.
 	 * @return PurchaseUnit
 	 */
@@ -247,10 +241,10 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 			$items,
 			$shipping,
 			'default', // reference_id.
-			'', // description.
-			'', // custom_id - will be set during checkout when WC order is created.
-			'', // invoice_id - will be set during checkout.
-			'', // soft_descriptor.
+			'',        // description.
+			'',        // custom_id - will be set during checkout when WC order is created.
+			'',        // invoice_id - will be set during checkout.
+			'',        // soft_descriptor.
 			null // payee.
 		);
 	}

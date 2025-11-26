@@ -127,6 +127,7 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.logger' ),
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'agentic.helper.cart-adapter' )
 		);
@@ -135,7 +136,8 @@ return array(
 		return new GetCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
-			$c->get( 'agentic.response.factory' )
+			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.logger' )
 		);
 	},
 	'agentic.rest.replace_cart'         => static function ( ContainerInterface $c ): ReplaceCartEndpoint {
@@ -143,6 +145,7 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.logger' ),
 			$c->get( 'api.endpoint.orders' ) // The only difference here is the presence of this line from PCP-5273 vs its absence in PCP-5271. Keeping it from PCP-5273 for completeness, as it seems needed for a replace cart operation.
 		);
 	},
@@ -151,6 +154,7 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.logger' ),
 			$c->get( 'agentic.helper.checkout-processor' )
 		);
 	},

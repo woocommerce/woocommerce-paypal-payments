@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use Psr\Log\LoggerInterface;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -45,10 +46,19 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	protected ResponseFactory $response_factory;
 
-	public function __construct( AuthServiceProvider $auth_provider, AgenticSessionHandler $session_handler, ResponseFactory $response_factory ) {
+	protected LoggerInterface $logger;
+
+	public function __construct(
+		AuthServiceProvider $auth_provider,
+		AgenticSessionHandler $session_handler,
+		ResponseFactory $response_factory,
+		LoggerInterface $logger
+	) {
+
 		$this->auth_provider    = $auth_provider;
 		$this->session_handler  = $session_handler;
 		$this->response_factory = $response_factory;
+		$this->logger           = $logger;
 	}
 
 	/**
