@@ -85,6 +85,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		if ( is_wp_error( $context ) ) {
 			assert( $context instanceof WP_Error );
 
+			$this->logger->error( '[REST] Permission denied', $context->get_all_error_data() );
+
 			return $context;
 		}
 
@@ -99,6 +101,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @return WP_REST_Response The successful response.
 	 */
 	protected function cart_details( CartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+		$this->logger->info( "[REST] $status_code Response", $cart->to_array() );
+
 		return new WP_REST_Response( $cart->to_array(), $status_code );
 	}
 
@@ -109,6 +113,9 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @return WP_REST_Response The error response.
 	 */
 	protected function error( AgenticError $error ): WP_REST_Response {
+		$error_type = $error->get_name();
+		$this->logger->error( "[REST] Error - $error_type", $error->to_array() );
+
 		return new WP_REST_Response( $error->to_array(), $error->get_status_code() );
 	}
 

@@ -54,6 +54,14 @@ abstract class AgenticError {
 		return static::STATUS_CODE;
 	}
 
+	/**
+	 * Exposes the error name, mainly for logging. Note that this is actually a code, but is
+	 * internally referred to as "name" in the API docs.
+	 */
+	public function get_name(): string {
+		return static::ERROR_NAME;
+	}
+
 	public function to_array(): array {
 		$data = array(
 			'name'    => static::ERROR_NAME,
