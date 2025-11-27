@@ -13,14 +13,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 
 /**
  * Replace Cart REST endpoint.

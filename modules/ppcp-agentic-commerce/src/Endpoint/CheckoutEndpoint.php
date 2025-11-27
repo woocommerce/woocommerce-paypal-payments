@@ -14,13 +14,11 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 use WP_REST_Request;
 use WP_REST_Response;
 use Psr\Log\LoggerInterface;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
@@ -34,12 +32,19 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
  * Checkout REST endpoint.
  */
 class CheckoutEndpoint extends AgenticRestEndpoint {
+
 	/**
-	 * The checkout processor service.
-	 *
-	 * @var AgenticCheckoutProcessor
+	 * The endpoint path following PayPal specs.
 	 */
-	protected $checkout_processor;
+	protected const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)/checkout';
+
+	/**
+	 * The expected HTTP method.
+	 */
+	protected const METHOD = 'POST';
+
+	protected AgenticCheckoutProcessor $checkout_processor;
+
 	protected InventoryValidator $inventory_validator;
 
 	public function __construct(
@@ -57,16 +62,6 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		$this->checkout_processor  = $checkout_processor;
 		$this->inventory_validator = $inventory_validator;
 	}
-
-	/**
-	 * The endpoint path following PayPal specs.
-	 */
-	protected const PATH = 'merchant-cart/(?P<cart_id>[a-zA-Z0-9_-]+)/checkout';
-
-	/**
-	 * The expected HTTP method.
-	 */
-	protected const METHOD = 'POST';
 
 	/**
 	 * Register REST API routes.

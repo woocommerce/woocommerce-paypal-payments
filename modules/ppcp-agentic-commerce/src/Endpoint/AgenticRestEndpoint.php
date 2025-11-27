@@ -9,22 +9,22 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use JsonException;
-use WC_REST_Controller;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use JsonException;
+use WC_REST_Controller;
+use Psr\Log\LoggerInterface;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 
@@ -196,10 +196,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected function get_cart_id_arg(): array {
 		return array(
-				'required'          => true,
-				'type'              => 'string',
+			'required'          => true,
+			'type'              => 'string',
 			'sanitize_callback' => 'sanitize_text_field',
-				'validate_callback' => array( $this, 'validate_cart_id' ),
+			'validate_callback' => array( $this, 'validate_cart_id' ),
 		);
 	}
 }

@@ -13,25 +13,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 use WP_REST_Response;
-use WC_Product;
-use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\Button\Session\CartData;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 
 /**
  * Create Cart REST endpoint.
