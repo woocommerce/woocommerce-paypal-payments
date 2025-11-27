@@ -67,9 +67,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 			$ec_token = $this->order_manager->create_order( $cart );
 		} catch ( \Exception $e ) {
 			return $this->error(
-				new BadRequestError(
-					'Failed to create PayPal Order: ' . $e->getMessage()
-				)
+				new BadRequestError( 'Failed to create PayPal Order: ' . $e->getMessage() )
 			);
 		}
 
