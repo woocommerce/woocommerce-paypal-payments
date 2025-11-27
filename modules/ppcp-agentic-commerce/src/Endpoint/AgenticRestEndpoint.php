@@ -196,11 +196,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected function get_cart_id_arg(): array {
 		return array(
-			'cart_id' => array(
 				'required'          => true,
 				'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
 				'validate_callback' => array( $this, 'validate_cart_id' ),
-			),
 		);
 	}
 }

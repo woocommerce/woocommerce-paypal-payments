@@ -82,14 +82,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 				'callback'            => array( $this, 'complete_checkout' ),
 				'permission_callback' => array( $this, 'check_permission' ),
 				'args'                => array(
-					'cart_id' => array(
-						'required'          => true,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-						'validate_callback' => function ( $param ) {
-							return ! empty( $param );
-						},
-					),
+					'cart_id' => $this->get_cart_id_arg(),
 				),
 			)
 		);
