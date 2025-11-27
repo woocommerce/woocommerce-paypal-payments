@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector;
 
 use Psr\Log\LoggerInterface;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 
 /**

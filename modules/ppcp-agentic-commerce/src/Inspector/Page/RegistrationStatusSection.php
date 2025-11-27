@@ -11,10 +11,11 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page;
 
+use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
-use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 
 /**
  * Class RegistrationStatusSection

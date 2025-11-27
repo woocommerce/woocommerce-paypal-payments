@@ -9,18 +9,19 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
+use WC_Order;
+use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
-use WC_Order;
-use WP_Error;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
@@ -34,42 +35,14 @@ use WP_Error;
  */
 class AgenticCheckoutProcessor {
 
-	/**
-	 * The PayPal Orders API endpoint (high-level).
-	 *
-	 * @var OrderEndpoint
-	 */
 	private OrderEndpoint $order_endpoint;
 
-	/**
-	 * The PayPal Orders API endpoint (low-level).
-	 *
-	 * @var Orders
-	 */
 	private Orders $orders_api;
 
-	/**
-	 * The WooCommerce order creator.
-	 *
-	 * @var WooCommerceOrderCreator
-	 */
 	private WooCommerceOrderCreator $wc_order_creator;
 
-	/**
-	 * The cart translator.
-	 *
-	 * @var PayPalCartToCartDataAdapter
-	 */
 	private PayPalCartToCartDataAdapter $cart_translator;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param OrderEndpoint               $order_endpoint   PayPal Orders API endpoint (high-level).
-	 * @param Orders                      $orders_api       PayPal Orders API endpoint (low-level).
-	 * @param WooCommerceOrderCreator     $wc_order_creator WooCommerce order creator.
-	 * @param PayPalCartToCartDataAdapter $cart_translator  Cart translator.
-	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		Orders $orders_api,

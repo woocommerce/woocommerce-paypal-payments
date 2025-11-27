@@ -9,7 +9,6 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
 

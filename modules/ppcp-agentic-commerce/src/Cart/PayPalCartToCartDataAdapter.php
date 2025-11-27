@@ -13,10 +13,11 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Cart;
 
 use WC_Product;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 
 /**
  * Adapts PayPalCart to CartData for order creation.

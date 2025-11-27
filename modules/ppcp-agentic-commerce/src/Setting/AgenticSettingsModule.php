@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Setting;
 
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionSettingsModule;
 use WooCommerce\PayPalCommerce\Settings\Extension\ExtensionRestEndpoint;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 
 class AgenticSettingsModule extends ExtensionSettingsModule {

@@ -5,8 +5,9 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Firebase\JWT\JWT;
 use Exception;
-use Psr\Log\LoggerInterface;
 use WP_Error;
+use Psr\Log\LoggerInterface;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 

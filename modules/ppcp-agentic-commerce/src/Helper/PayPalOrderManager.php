@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
@@ -18,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use Exception;
 
 /**
  * Manages PayPal Order creation and updates.
