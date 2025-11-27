@@ -37,6 +37,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
@@ -131,6 +133,14 @@ return array(
 			$c->get( 'agentic.helper.paypal-order-builder' ),
 			$c->get( 'agentic.helper.cart-adapter' )
 		);
+	},
+
+	// Validation services.
+	'agentic.validation.product'          => static function (): ProductValidator {
+		return new ProductValidator();
+	},
+	'agentic.validation.inventory'        => static function (): InventoryValidator {
+		return new InventoryValidator();
 	},
 
 	// REST endpoints.
