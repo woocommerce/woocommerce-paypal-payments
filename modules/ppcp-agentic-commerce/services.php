@@ -132,7 +132,8 @@ return array(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
 			$c->get( 'agentic.helper.paypal-order-builder' ),
-			$c->get( 'agentic.helper.cart-adapter' )
+			$c->get( 'agentic.helper.cart-adapter' ),
+			$c->get( 'agentic.logger' )
 		);
 	},
 
