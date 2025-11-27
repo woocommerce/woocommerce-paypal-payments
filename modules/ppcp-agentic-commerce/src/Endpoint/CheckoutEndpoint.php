@@ -22,6 +22,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -37,17 +40,22 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	 * @var AgenticCheckoutProcessor
 	 */
 	protected $checkout_processor;
+	protected InventoryValidator $inventory_validator;
 
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
 		LoggerInterface $logger,
-		AgenticCheckoutProcessor $checkout_processor
+		ProductValidator $product_validator,
+		PayPalOrderManager $order_manager,
+		AgenticCheckoutProcessor $checkout_processor,
+		InventoryValidator $inventory_validator
 	) {
 
-		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger );
-		$this->checkout_processor = $checkout_processor;
+		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger, $product_validator, $order_manager );
+		$this->checkout_processor  = $checkout_processor;
+		$this->inventory_validator = $inventory_validator;
 	}
 
 	/**

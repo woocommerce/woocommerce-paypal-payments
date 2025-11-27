@@ -153,8 +153,8 @@ return array(
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'api.endpoint.order' ),
-			$c->get( 'agentic.helper.cart-adapter' )
+			$c->get( 'agentic.validation.product' ),
+			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
 	'agentic.rest.get_cart'               => static function ( ContainerInterface $c ): GetCartEndpoint {
@@ -162,7 +162,9 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
-			$c->get( 'agentic.logger' )
+			$c->get( 'agentic.logger' ),
+			$c->get( 'agentic.validation.product' ),
+			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
 	'agentic.rest.replace_cart'           => static function ( ContainerInterface $c ): ReplaceCartEndpoint {
@@ -171,7 +173,8 @@ return array(
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'api.endpoint.orders' ) // The only difference here is the presence of this line from PCP-5273 vs its absence in PCP-5271. Keeping it from PCP-5273 for completeness, as it seems needed for a replace cart operation.
+			$c->get( 'agentic.validation.product' ),
+			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
 	'agentic.rest.checkout'               => static function ( ContainerInterface $c ): CheckoutEndpoint {
@@ -180,7 +183,10 @@ return array(
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.helper.checkout-processor' )
+			$c->get( 'agentic.validation.product' ),
+			$c->get( 'agentic.helper.paypal-order-manager' ),
+			$c->get( 'agentic.helper.checkout-processor' ),
+			$c->get( 'agentic.validation.inventory' )
 		);
 	},
 

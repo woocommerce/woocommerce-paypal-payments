@@ -39,25 +39,6 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	private const METHOD = 'PUT';
 
 	/**
-	 * The PayPal Orders API endpoint (low-level).
-	 *
-	 * @var Orders
-	 */
-	protected $orders_api;
-
-	public function __construct(
-		AuthServiceProvider $auth_provider,
-		AgenticSessionHandler $session_handler,
-		ResponseFactory $response_factory,
-		LoggerInterface $logger,
-		Orders $orders_api
-	) {
-
-		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger );
-		$this->orders_api = $orders_api;
-	}
-
-	/**
 	 * Register REST API routes.
 	 *
 	 * @return void

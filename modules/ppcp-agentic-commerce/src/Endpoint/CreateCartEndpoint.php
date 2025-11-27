@@ -49,34 +49,6 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	private const METHOD = 'POST';
 
 	/**
-	 * The PayPal Orders API endpoint (high-level).
-	 *
-	 * @var OrderEndpoint
-	 */
-	protected $order_endpoint;
-
-	/**
-	 * Translator to convert PayPalCart to CartData.
-	 *
-	 * @var PayPalCartToCartDataAdapter
-	 */
-	protected $cart_translator;
-
-	public function __construct(
-		AuthServiceProvider $auth_provider,
-		AgenticSessionHandler $session_handler,
-		ResponseFactory $response_factory,
-		LoggerInterface $logger,
-		OrderEndpoint $order_endpoint,
-		PayPalCartToCartDataAdapter $cart_translator
-	) {
-
-		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger );
-		$this->order_endpoint  = $order_endpoint;
-		$this->cart_translator = $cart_translator;
-	}
-
-	/**
 	 * Register REST API routes.
 	 *
 	 * @return void
