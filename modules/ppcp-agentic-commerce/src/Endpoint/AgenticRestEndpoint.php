@@ -113,8 +113,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @return WP_REST_Response The error response.
 	 */
 	protected function error( AgenticError $error ): WP_REST_Response {
-		$error_type = $error->get_name();
-		$this->logger->error( "[REST] Error - $error_type", $error->to_array() );
+		$error_id = $error->get_debug_id();
+		$this->logger->error( "[REST] Error - $error_id", $error->to_array() );
 
 		return new WP_REST_Response( $error->to_array(), $error->get_status_code() );
 	}
