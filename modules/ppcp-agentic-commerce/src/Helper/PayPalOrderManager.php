@@ -132,6 +132,7 @@ class PayPalOrderManager {
 			)
 		);
 
+		// TODO - patch order does not update the cart items??
 		$patch_data = array(
 			array(
 				'op'    => 'replace',
@@ -178,6 +179,152 @@ class PayPalOrderManager {
 			);
 
 			throw $error;
+		}
+	}
+
+	/**
+	 * Fetch a PayPal Order by ID.
+	 *
+	 * @param string $order_id The PayPal Order ID.
+	 * @return \WooCommerce\PayPalCommerce\ApiClient\Entity\Order The PayPal Order.
+	 * @throws Exception If fetching fails.
+	 */
+	public function fetch_order( string $order_id ) {
+		$this->logger->info(
+			'[ORDER] Fetching PayPal Order',
+			array( 'order_id' => $order_id )
+		);
+
+		try {
+			$paypal_order = $this->order_endpoint->order( $order_id );
+
+			$this->logger->info(
+				'[ORDER] PayPal Order fetched successfully',
+				array(
+					'order_id' => $order_id,
+					'status'   => $paypal_order->status(),
+				)
+			);
+
+			return $paypal_order;
+
+		} catch ( Exception $error ) {
+			$this->logger->error(
+				'[ORDER] Failed to fetch PayPal Order',
+				array(
+					'order_id' => $order_id,
+					'error'    => $error->getMessage(),
+				)
+			);
+
+			throw $error;
+		}
+	}
+
+	/**
+	 * Link PayPal Order with WooCommerce order ID.
+	 *
+	 * Updates the PayPal order's custom_id field with the WC order ID
+	 * to enable webhook matching and order correlation.
+	 *
+	 * @param string $order_id    The PayPal Order ID.
+	 * @param int    $wc_order_id The WooCommerce order ID.
+	 * @return void
+	 */
+	public function link_wc_order( string $order_id, int $wc_order_id ): void {
+		$this->logger->info(
+			'[ORDER] Linking WooCommerce order to PayPal Order',
+			array(
+				'order_id'    => $order_id,
+				'wc_order_id' => $wc_order_id,
+			)
+		);
+
+		$patch_data = array(
+			array(
+				'op'    => 'add',
+				'path'  => '/purchase_units/@reference_id==\'default\'/custom_id',
+				'value' => (string) $wc_order_id,
+			),
+		);
+
+		try {
+			$this->orders_api->patch_order( $order_id, $patch_data );
+
+			$this->logger->info(
+				'[ORDER] WooCommerce order linked successfully',
+				array(
+					'order_id'    => $order_id,
+					'wc_order_id' => $wc_order_id,
+				)
+			);
+
+		} catch ( Exception $error ) {
+			$this->logger->warning(
+				'[ORDER] Failed to link WooCommerce order',
+				array(
+					'order_id'    => $order_id,
+					'wc_order_id' => $wc_order_id,
+					'error'       => $error->getMessage(),
+				)
+			);
+
+			// Don't throw - order is created, webhook matching can still work via _paypal_order_id meta.
+		}
+	}
+
+	/**
+	 * Capture PayPal Order payment.
+	 *
+	 * Captures the authorized payment for the order.
+	 *
+	 * @param string $order_id The PayPal Order ID.
+	 * @return array|null Capture result with transaction_id, or null on failure.
+	 */
+	public function capture_order( string $order_id ): ?array {
+		$this->logger->info(
+			'[ORDER] Capturing PayPal Order payment',
+			array( 'order_id' => $order_id )
+		);
+
+		try {
+			// Fetch the order first.
+			$paypal_order = $this->fetch_order( $order_id );
+
+			// Capture the payment.
+			$capture_result = $this->order_endpoint->capture( $paypal_order );
+
+			$transaction_id = $order_id;
+			$payments       = $capture_result->purchase_units()[0]->payments();
+
+			if ( $payments ) {
+				$transaction_id = $payments->captures()[0]->id();
+			}
+
+			$this->logger->info(
+				'[ORDER] PayPal Order payment captured successfully',
+				array(
+					'order_id'       => $order_id,
+					'transaction_id' => $transaction_id,
+				)
+			);
+
+			return array(
+				'order_id'       => $order_id,
+				'transaction_id' => $transaction_id,
+			);
+
+		} catch ( Exception $error ) {
+			$this->logger->error(
+				'[ORDER] PayPal Order capture failed',
+				array(
+					'order_id' => $order_id,
+					'error'    => $error->getMessage(),
+				)
+			);
+
+			// Return null - payment can be handled manually or via webhook.
+			return null;
 		}
 	}
 

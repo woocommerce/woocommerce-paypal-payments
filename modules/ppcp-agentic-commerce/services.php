@@ -116,8 +116,7 @@ return array(
 
 	'agentic.helper.checkout-processor'   => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(
-			$c->get( 'api.endpoint.order' ),
-			$c->get( 'api.endpoint.orders' ),
+			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'button.helper.wc-order-creator' ),
 			$c->get( 'agentic.helper.cart-adapter' )
 		);
