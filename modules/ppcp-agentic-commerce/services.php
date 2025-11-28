@@ -38,6 +38,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartTransformer;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
@@ -110,6 +111,10 @@ return array(
 	},
 
 	// Helper services.
+	'agentic.helper.product-manager'      => static function (): ProductManager {
+		return new ProductManager();
+	},
+
 	'agentic.helper.cart-transformer'     => static function (): CartTransformer {
 		return new CartTransformer();
 	},
