@@ -11,12 +11,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
-use WC_Product;
-use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 
 class CartTransformer {
 	private ProductManager $product_manager;
@@ -26,44 +23,18 @@ class CartTransformer {
 	}
 
 	/**
-	 * Adapt PayPalCart into a CartData instance.
+	 * Transform PayPalCart to WooCommerce CartData.
+	 *
+	 * This method performs pure transformation without throwing exceptions.
+	 * Products that cannot be resolved are skipped silently.
+	 * Validation should be performed separately before using the CartData.
 	 *
 	 * @param PayPalCart $paypal_cart The PayPal cart from AI agent.
 	 * @return CartData The cart data ready for order creation.
-	 * @throws ValidationException If validation fails with collected issues.
 	 */
-	public function translate( PayPalCart $paypal_cart ): CartData {
-		$issues = array();
+	public function paypal_cart_to_wc_cart( PayPalCart $paypal_cart ): CartData {
+		$cart_items = $this->build_cart_items( $paypal_cart );
 
-		// Validate required customer email.
-		$cart_customer = $paypal_cart->customer();
-		$email         = $cart_customer ? $cart_customer->email_address() : null;
-
-		if ( empty( $email ) ) {
-			$issues[] = new InvalidProduct(
-				'Missing email address.',
-				'The customer email address (customer.email_address) is required to create a WooCommerce order.',
-				'customer.email_address'
-			);
-		}
-
-		// Build cart items array.
-		$cart_items = $this->build_cart_items( $paypal_cart, $issues );
-
-		// If we have validation issues, throw exception.
-		if ( ! empty( $issues ) ) {
-			$error_messages = array_map(
-				static fn( $issue ): string => $issue->to_array()['message'],
-				$issues
-			);
-			// TODO: This is possibly incorrect. Cart should be stored in session and returned to the agent with a validation issue rather than throwing an error.
-			throw new ValidationException(
-				$error_messages,
-				'Cart validation failed'
-			);
-		}
-
-		// Build coupons array (only include coupons with APPLY action that exist in WC).
 		$coupons      = array();
 		$cart_coupons = $paypal_cart->coupons();
 
@@ -82,7 +53,6 @@ class CartTransformer {
 			}
 		}
 
-		// Determine if shipping is needed.
 		$needs_shipping = (bool) $paypal_cart->shipping_address();
 
 		// Create CartData with all necessary information.
@@ -118,7 +88,6 @@ class CartTransformer {
 			$product_id   = $product->get_parent_id() ?: $product->get_id();
 			$variation_id = $product->is_type( 'variation' ) ? $product->get_id() : 0;
 
-			// Build cart item in WC format.
 			$cart_item_key = $this->generate_cart_item_key( $product_id, $variation_id );
 
 			$line_price           = (float) $product->get_price() * $quantity;

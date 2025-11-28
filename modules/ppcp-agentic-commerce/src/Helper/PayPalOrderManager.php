@@ -41,11 +41,11 @@ class PayPalOrderManager {
 		LoggerInterface $logger
 	) {
 
-		$this->order_endpoint  = $order_endpoint;
-		$this->orders_api      = $orders_api;
-		$this->order_builder   = $order_builder;
+		$this->order_endpoint   = $order_endpoint;
+		$this->orders_api       = $orders_api;
+		$this->order_builder    = $order_builder;
 		$this->cart_transformer = $cart_transformer;
-		$this->logger          = $logger;
+		$this->logger           = $logger;
 	}
 
 	/**
@@ -71,7 +71,7 @@ class PayPalOrderManager {
 
 		try {
 			// Step 1: Transform PayPalCart to CartData.
-			$cart_data = $this->cart_transformer->translate( $cart );
+			$cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
 
 			// Step 2: Build a minimal PurchaseUnit directly from cart.
 			// We can't use from_wc_order() yet because there's no WC order.

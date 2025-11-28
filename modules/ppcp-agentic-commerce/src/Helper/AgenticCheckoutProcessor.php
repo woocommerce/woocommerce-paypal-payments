@@ -13,7 +13,6 @@ use WC_Order;
 use WP_Error;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as PayPalOrder;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
-use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
@@ -74,16 +73,8 @@ class AgenticCheckoutProcessor {
 			// Step 1: Fetch PayPal order.
 			$paypal_order = $this->order_manager->fetch_order( $paypal_order_id );
 
-			// Step 2: Translate PayPalCart to CartData.
-			try {
-				$cart_data = $this->cart_transformer->translate( $cart );
-			} catch ( ValidationException $e ) {
-				return new WP_Error(
-					'cart_validation_failed',
-					'Cart validation failed: ' . $e->getMessage(),
-					array( 'errors' => $e->errors() )
-				);
-			}
+			// Step 2: Transform PayPalCart to CartData (skipping invalid products).
+			$cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
 
 			// Step 3: Create WC order with customer data from PayPalCart.
 			$wc_order = $this->create_order( $paypal_order, $cart_data, $cart, $payment_method, $paypal_order_id );
