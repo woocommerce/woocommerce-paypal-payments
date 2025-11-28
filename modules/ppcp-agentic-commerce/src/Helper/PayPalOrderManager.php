@@ -59,12 +59,11 @@ class PayPalOrderManager {
 	 * @return string The PayPal Order ID (ec_token) or an empty string.
 	 */
 	public function create_order( PayPalCart $cart ): string {
-		$cart_array = $cart->to_array();
 		$this->logger->info(
 			'[ORDER] Creating PayPal Order',
 			array(
-				'item_count' => count( $cart_array['items'] ?? array() ),
-				'cart'       => $cart_array,
+				'item_count' => count( $cart->items() ),
+				'cart'       => $cart->to_array(),
 			)
 		);
 
@@ -92,7 +91,7 @@ class PayPalOrderManager {
 				'[ORDER] PayPal Order created successfully',
 				array(
 					'order_id'   => $order_id,
-					'item_count' => count( $cart_array['items'] ?? array() ),
+					'item_count' => count( $cart->items() ),
 				)
 			);
 
@@ -102,7 +101,7 @@ class PayPalOrderManager {
 				'[ORDER] PayPal Order creation failed',
 				array(
 					'error'      => $error->getMessage(),
-					'item_count' => count( $cart_array['items'] ?? array() ),
+					'item_count' => count( $cart->items() ),
 				)
 			);
 		}
@@ -118,7 +117,6 @@ class PayPalOrderManager {
 	 * @throws Exception If PATCH fails.
 	 */
 	public function update_order( string $order_id, PayPalCart $cart ): void {
-		// Calculate totals from cart items.
 		$totals = $this->calculate_cart_totals( $cart );
 
 		$this->logger->info(
@@ -130,26 +128,18 @@ class PayPalOrderManager {
 		);
 
 		// TODO - patch order does not update the cart items??
-		$patch_data = array(
+		$cart_amount = $totals['amount'];
+		$patch_data  = array(
 			array(
 				'op'    => 'replace',
 				'path'  => "/purchase_units/@reference_id=='default'/amount",
 				'value' => array(
-					'currency_code' => $totals['amount']['currency_code'],
-					'value'         => $totals['amount']['value'],
+					'currency_code' => $cart_amount['currency_code'],
+					'value'         => $cart_amount['value'],
 					'breakdown'     => array(
-						'item_total' => array(
-							'currency_code' => $totals['item_total']['currency_code'],
-							'value'         => $totals['item_total']['value'],
-						),
-						'shipping'   => array(
-							'currency_code' => $totals['shipping']['currency_code'],
-							'value'         => $totals['shipping']['value'],
-						),
-						'tax_total'  => array(
-							'currency_code' => $totals['tax_total']['currency_code'],
-							'value'         => $totals['tax_total']['value'],
-						),
+						'item_total' => $totals['item_total'],
+						'shipping'   => $totals['shipping'],
+						'tax_total'  => $totals['tax_total'],
 					),
 				),
 			),
@@ -162,7 +152,7 @@ class PayPalOrderManager {
 				'[ORDER] PayPal Order updated successfully',
 				array(
 					'order_id' => $order_id,
-					'amount'   => $totals['amount']['value'],
+					'amount'   => $cart_amount['value'],
 				)
 			);
 		} catch ( Exception $error ) {
@@ -332,35 +322,25 @@ class PayPalOrderManager {
 	 * @return array The totals array with currency_code and value for each total.
 	 */
 	private function calculate_cart_totals( PayPalCart $cart ): array {
-		$cart_array = $cart->to_array();
-
-		$currency_code = $cart_array['items'][0]['price']['currency_code'] ?? 'USD';
-
-		$item_total = array_reduce(
-			$cart_array['items'] ?? array(),
-			static fn( float $sum, $item ): float => $sum + ( (float) $item['price']['value'] * $item['quantity'] ),
-			0.0
-		);
-
-		// Format as string with 2 decimal places.
-		$item_total_str = number_format( $item_total, 2, '.', '' );
+		$currency_code = CartHelper::currency( $cart );
+		$item_total    = CartHelper::cart_item_total( $cart );
 
 		return array(
 			'item_total' => array(
 				'currency_code' => $currency_code,
-				'value'         => $item_total_str,
+				'value'         => $item_total,
 			),
 			'shipping'   => array(
 				'currency_code' => $currency_code,
-				'value'         => '0.00',
+				'value'         => 0.00,
 			),
 			'tax_total'  => array(
 				'currency_code' => $currency_code,
-				'value'         => '0.00',
+				'value'         => 0.00,
 			),
 			'amount'     => array(
 				'currency_code' => $currency_code,
-				'value'         => $item_total_str,
+				'value'         => $item_total,
 			),
 		);
 	}

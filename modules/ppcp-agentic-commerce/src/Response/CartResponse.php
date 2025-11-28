@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
 
 class CartResponse {
 	protected PayPalCart $cart;
@@ -63,17 +64,8 @@ class CartResponse {
 	 * @return array The totals array.
 	 */
 	protected function calculate_totals(): array {
-		$cart_array = $this->cart->to_array();
-
-		$currency_code = $cart_array['items'][0]['price']['currency_code'] ?? 'USD';
-
-		$item_total = array_reduce(
-			$cart_array['items'] ?? array(),
-			function ( float $sum, $item ): float {
-				return $sum + ( (float) $item['price']['value'] * $item['quantity'] );
-			},
-			0.0
-		);
+		$currency_code = CartHelper::currency( $this->cart );
+		$item_total    = CartHelper::cart_item_total( $this->cart );
 
 		return array(
 			'item_total' => array(
@@ -82,11 +74,11 @@ class CartResponse {
 			),
 			'shipping'   => array(
 				'currency_code' => $currency_code,
-				'value'         => '0.00',
+				'value'         => 0.00,
 			),
 			'tax_total'  => array(
 				'currency_code' => $currency_code,
-				'value'         => '0.00',
+				'value'         => 0.00,
 			),
 			'amount'     => array(
 				'currency_code' => $currency_code,
