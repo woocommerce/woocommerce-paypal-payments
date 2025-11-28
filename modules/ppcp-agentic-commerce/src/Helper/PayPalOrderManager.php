@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 /**
@@ -30,7 +29,7 @@ class PayPalOrderManager {
 
 	private PayPalOrderBuilder $order_builder;
 
-	private PayPalCartToCartDataAdapter $cart_translator;
+	private CartTransformer $cart_transformer;
 
 	private LoggerInterface $logger;
 
@@ -38,14 +37,14 @@ class PayPalOrderManager {
 		OrderEndpoint $order_endpoint,
 		Orders $orders_api,
 		PayPalOrderBuilder $order_builder,
-		PayPalCartToCartDataAdapter $cart_translator,
+		CartTransformer $cart_transformer,
 		LoggerInterface $logger
 	) {
 
 		$this->order_endpoint  = $order_endpoint;
 		$this->orders_api      = $orders_api;
 		$this->order_builder   = $order_builder;
-		$this->cart_translator = $cart_translator;
+		$this->cart_transformer = $cart_transformer;
 		$this->logger          = $logger;
 	}
 
@@ -71,8 +70,8 @@ class PayPalOrderManager {
 		);
 
 		try {
-			// Step 1: Translate PayPalCart to CartData for validation.
-			$cart_data = $this->cart_translator->translate( $cart );
+			// Step 1: Transform PayPalCart to CartData.
+			$cart_data = $this->cart_transformer->translate( $cart );
 
 			// Step 2: Build a minimal PurchaseUnit directly from cart.
 			// We can't use from_wc_order() yet because there's no WC order.

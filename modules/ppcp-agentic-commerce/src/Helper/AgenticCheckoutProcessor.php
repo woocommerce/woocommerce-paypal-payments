@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
@@ -37,17 +36,17 @@ class AgenticCheckoutProcessor {
 
 	private WooCommerceOrderCreator $wc_order_creator;
 
-	private PayPalCartToCartDataAdapter $cart_translator;
+	private CartTransformer $cart_transformer;
 
 	public function __construct(
 		PayPalOrderManager $order_manager,
 		WooCommerceOrderCreator $wc_order_creator,
-		PayPalCartToCartDataAdapter $cart_translator
+		CartTransformer $cart_transformer
 	) {
 
 		$this->order_manager    = $order_manager;
 		$this->wc_order_creator = $wc_order_creator;
-		$this->cart_translator  = $cart_translator;
+		$this->cart_transformer = $cart_transformer;
 	}
 
 	/**
@@ -77,7 +76,7 @@ class AgenticCheckoutProcessor {
 
 			// Step 2: Translate PayPalCart to CartData.
 			try {
-				$cart_data = $this->cart_translator->translate( $cart );
+				$cart_data = $this->cart_transformer->translate( $cart );
 			} catch ( ValidationException $e ) {
 				return new WP_Error(
 					'cart_validation_failed',

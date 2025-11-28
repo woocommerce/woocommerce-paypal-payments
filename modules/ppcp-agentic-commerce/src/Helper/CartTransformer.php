@@ -10,7 +10,7 @@
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\AgenticCommerce\Cart;
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
 use WC_Product;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
  * ARCHITECTURE FLOW:
  * PayPalCart → translate() → CartData → WooCommerceOrderCreator → WC_Order
  */
-class PayPalCartToCartDataAdapter {
+class CartTransformer {
 
 	/**
 	 * Adapt PayPalCart into a CartData instance.
