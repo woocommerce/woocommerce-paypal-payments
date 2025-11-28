@@ -52,6 +52,10 @@ abstract class AgenticSchema {
 
 	/**
 	 * Returns a key-value array that represents the object's internal state.
+	 *
+	 * Attention: This method contains UNSANITIZED data, use the schema's getter methods!
+	 * This method should be ONLY used by the `CartResponse` to tell the agent which payload
+	 * was processed to generate a given response.
 	 */
 	final public function to_array(): array {
 		return $this->raw_data;
