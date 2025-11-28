@@ -99,10 +99,9 @@ class CartTransformer {
 	 * Build cart items array from PayPalCart.
 	 *
 	 * @param PayPalCart $paypal_cart The PayPal cart.
-	 * @param array      $issues      Array to collect validation issues.
 	 * @return array Cart items in WC format.
 	 */
-	private function build_cart_items( PayPalCart $paypal_cart, array &$issues ): array {
+	private function build_cart_items( PayPalCart $paypal_cart ): array {
 		$cart_items = array();
 
 		foreach ( $paypal_cart->items() as $item ) {
@@ -110,8 +109,8 @@ class CartTransformer {
 			$item_id    = $item->item_id();
 			$quantity   = $item->quantity();
 
-			// Resolve product.
-			$product = $this->resolve_product( $variant_id, $item_id, $issues );
+			// Resolve product - skip if not found.
+			$product = $this->product_manager->find_product( $variant_id, $item_id );
 			if ( ! $product ) {
 				continue;
 			}
@@ -149,71 +148,6 @@ class CartTransformer {
 		}
 
 		return $cart_items;
-	}
-
-	/**
-	 * Resolve product from variant_id or item_id.
-	 *
-	 * Tries multiple resolution strategies:
-	 * 1. SKU lookup for variant_id
-	 * 2. SKU lookup for item_id
-	 * 3. Direct ID casting for variant_id
-	 * 4. Direct ID casting for item_id
-	 *
-	 * @param string|null $variant_id The variant/product identifier.
-	 * @param string|null $item_id    The item identifier.
-	 * @param array       $issues     Array to collect validation issues.
-	 * @return WC_Product|null The resolved product or null.
-	 */
-	private function resolve_product( ?string $variant_id, ?string $item_id, array &$issues ): ?WC_Product {
-		$product_id = null;
-
-		// Strategy 1: Try variant_id as SKU.
-		if ( $variant_id ) {
-			$product_id = wc_get_product_id_by_sku( $variant_id );
-		}
-
-		// Strategy 2: Try item_id as SKU.
-		if ( ! $product_id && $item_id ) {
-			$product_id = wc_get_product_id_by_sku( $item_id );
-		}
-
-		// Strategy 3: Try variant_id as direct ID.
-		if ( ! $product_id && $variant_id && is_numeric( $variant_id ) ) {
-			$product_id = (int) $variant_id;
-		}
-
-		// Strategy 4: Try item_id as direct ID.
-		if ( ! $product_id && $item_id && is_numeric( $item_id ) ) {
-			$product_id = (int) $item_id;
-		}
-
-		$product = $product_id ? wc_get_product( $product_id ) : null;
-
-		if ( ! $product ) {
-			$identifier = $variant_id ?? $item_id ?? 'unknown';
-			$issues[]   = new InvalidProduct(
-				"Product not found: {$identifier}",
-				"The product with ID '{$identifier}' does not exist.",
-				'items'
-			);
-
-			return null;
-		}
-
-		// Validate product is purchasable.
-		if ( ! $product->is_purchasable() ) {
-			$identifier = $variant_id ?? $item_id ?? $product->get_id();
-			$issues[]   = new InvalidProduct(
-				"Product not purchasable: {$identifier}",
-				"The product '{$identifier}' cannot be purchased.",
-				'items'
-			);
-
-			return null;
-		}
-
-		return $product;
 	}
 
 	/**

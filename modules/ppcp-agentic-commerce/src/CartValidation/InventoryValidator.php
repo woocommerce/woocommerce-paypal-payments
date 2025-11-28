@@ -22,29 +22,15 @@ class InventoryValidator {
 		$this->product_manager = $product_manager;
 	}
 
-	/**
-	 * Verify inventory availability using WooCommerce stock management.
-	 *
-	 * @param PayPalCart $cart The cart to verify.
-	 * @return ValidationIssue[] Array of validation issues if any.
-	 */
 	public function verify_inventory( PayPalCart $cart ): array {
 		$issues = array();
 
 		foreach ( $cart->items() as $item ) {
 			// Get WooCommerce product.
-			$product_id = wc_get_product_id_by_sku( $item->variant_id() );
-			if ( ! $product_id ) {
-				$product_id = wc_get_product_id_by_sku( $item->item_id() );
-			}
+			$product = $this->product_manager->find_product( $item->variant_id(), $item->item_id() );
 
-			if ( ! $product_id ) {
-				continue; // Skip if product not found.
-			}
-
-			$product = wc_get_product( $product_id );
 			if ( ! $product ) {
-				continue;
+				continue; // Skip if product not found.
 			}
 
 			// Check stock status.

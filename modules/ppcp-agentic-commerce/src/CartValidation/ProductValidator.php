@@ -20,29 +20,27 @@ class ProductValidator {
 		$this->product_manager = $product_manager;
 	}
 
-	/**
-	 * Validate that all products in the cart exist in WooCommerce.
-	 *
-	 * @param PayPalCart $cart The cart to validate.
-	 * @return InvalidProduct[] Array of InvalidProduct validation issues.
-	 */
 	public function validate_products_exist( PayPalCart $cart ): array {
 		$issues = array();
 
 		foreach ( $cart->items() as $key => $item ) {
-			$product_id = null;
+			$variant_id = $item->variant_id();
+			$item_id    = $item->item_id();
 
-			// Try to find product by variant_id first, then item_id.
-			$item_identifier = $item->variant_id() ?: $item->item_id();
-			if ( $item_identifier ) {
-				// TODO We currently only send the id. Is this needed/desired?
-				$product_id = wc_get_product_id_by_sku( $item_identifier );
-			}
+			// Resolve product using multiple strategies.
+			$product = $this->product_manager->find_product( $variant_id, $item_id );
 
-			// If no product found by SKU, try direct ID lookup.
-			if ( ! $product_id && is_numeric( $item_identifier ) ) {
-				$product    = wc_get_product( (int) $item_identifier );
-				$product_id = $product ? $product->get_id() : null;
+			if ( ! $product ) {
+				// Product not found.
+				$identifier = $variant_id ?? $item_id ?? 'unknown';
+				$field      = "items[{$key}]";
+
+				$issues[] = new InvalidProduct(
+					"Product '{$identifier}' not found in WooCommerce catalog",
+					"'{$item->name()}' not found in WooCommerce catalog",
+					$field
+				);
+				continue;
 			}
 
 			// If still no product found, create InvalidProduct issue.
