@@ -115,8 +115,10 @@ return array(
 		return new ProductManager();
 	},
 
-	'agentic.helper.cart-transformer'     => static function (): CartTransformer {
-		return new CartTransformer();
+	'agentic.helper.cart-transformer'     => static function ( ContainerInterface $c ): CartTransformer {
+		return new CartTransformer(
+			$c->get( 'agentic.helper.product-manager' )
+		);
 	},
 
 	'agentic.helper.checkout-processor'   => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
@@ -142,11 +144,15 @@ return array(
 	},
 
 	// Validation services.
-	'agentic.validation.product'          => static function (): ProductValidator {
-		return new ProductValidator();
+	'agentic.validation.product'          => static function ( ContainerInterface $c ): ProductValidator {
+		return new ProductValidator(
+			$c->get( 'agentic.helper.product-manager' )
+		);
 	},
-	'agentic.validation.inventory'        => static function (): InventoryValidator {
-		return new InventoryValidator();
+	'agentic.validation.inventory'        => static function ( ContainerInterface $c ): InventoryValidator {
+		return new InventoryValidator(
+			$c->get( 'agentic.helper.product-manager' )
+		);
 	},
 
 	// REST endpoints.

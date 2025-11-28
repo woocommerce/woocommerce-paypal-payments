@@ -13,11 +13,15 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 
-/**
- * Validates inventory availability using WooCommerce stock management.
- */
 class InventoryValidator {
+	private ProductManager $product_manager;
+
+	public function __construct( ProductManager $product_manager ) {
+		$this->product_manager = $product_manager;
+	}
+
 	/**
 	 * Verify inventory availability using WooCommerce stock management.
 	 *

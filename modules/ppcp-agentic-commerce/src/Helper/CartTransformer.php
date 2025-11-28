@@ -1,11 +1,10 @@
 <?php
 /**
- * Adapts PayPal Cart into CartData for WooCommerce order creation.
+ * Cart Transformer for Agentic Commerce.
  *
- * This adapter converts PayPalCart (from AI agents) into CartData objects that can be
- * used by WooCommerceOrderCreator.
+ * Transforms PayPal cart structures to WooCommerce cart structures.
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Cart
+ * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
  */
 
 declare( strict_types = 1 );
@@ -19,13 +18,12 @@ use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 
-/**
- * Adapts PayPalCart to CartData for order creation.
- *
- * ARCHITECTURE FLOW:
- * PayPalCart → translate() → CartData → WooCommerceOrderCreator → WC_Order
- */
 class CartTransformer {
+	private ProductManager $product_manager;
+
+	public function __construct( ProductManager $product_manager ) {
+		$this->product_manager = $product_manager;
+	}
 
 	/**
 	 * Adapt PayPalCart into a CartData instance.

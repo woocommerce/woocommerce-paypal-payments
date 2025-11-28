@@ -11,11 +11,15 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 
-/**
- * Validates that products in a cart exist in WooCommerce.
- */
 class ProductValidator {
+	private ProductManager $product_manager;
+
+	public function __construct( ProductManager $product_manager ) {
+		$this->product_manager = $product_manager;
+	}
+
 	/**
 	 * Validate that all products in the cart exist in WooCommerce.
 	 *
