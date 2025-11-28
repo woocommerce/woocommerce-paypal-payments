@@ -34,29 +34,28 @@ class InventoryValidator {
 			}
 
 			// Check stock status.
-			if ( ! $product->is_in_stock() ) {
+			if ( ! $this->product_manager->is_in_stock( $product ) ) {
 				$issues[] = new ItemOutOfStock(
 					'Product is no longer available',
 					sprintf( '%s is currently out of stock.', $product->get_name() ),
 				);
+				continue;
 			}
 
-			// Check quantity if managing stock.
-			if ( $product->managing_stock() ) {
-				$stock_quantity = $product->get_stock_quantity();
+			// Check quantity.
+			if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
+				$stock_quantity = $product->get_stock_quantity() ?? 0;
 
-				if ( is_numeric( $stock_quantity ) && $stock_quantity < $item->quantity() ) {
-					$issues[] = new InsufficientQuantity(
-						'Insufficient inventory',
-						// TODO should we actually expose the real stock qty here?
-						sprintf(
-							'Only %d of %s available, but %d requested.',
-							$stock_quantity,
-							$product->get_name(),
-							$item->quantity()
-						),
-					);
-				}
+				$issues[] = new InsufficientQuantity(
+					'Insufficient inventory',
+					// TODO should we actually expose the real stock qty here?
+					sprintf(
+						'Only %d of %s available, but %d requested.',
+						$stock_quantity,
+						$product->get_name(),
+						$item->quantity()
+					),
+				);
 			}
 		}
 

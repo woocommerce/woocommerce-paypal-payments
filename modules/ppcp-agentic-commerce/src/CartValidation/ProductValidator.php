@@ -43,13 +43,14 @@ class ProductValidator {
 				continue;
 			}
 
-			// If still no product found, create InvalidProduct issue.
-			if ( ! $product_id ) {
-				$field = "items[{$key}]";
+			// Check if product is purchasable.
+			if ( ! $product->is_purchasable() ) {
+				$identifier = $variant_id ?? $item_id ?? $product->get_id();
+				$field      = "items[{$key}]";
 
 				$issues[] = new InvalidProduct(
-					"Product '{$item_identifier}' not found in WooCommerce catalog",
-					"'{$item->name()}' not found in WooCommerce catalog",
+					"Product '{$identifier}' is not available for purchase",
+					"'{$item->name()}' cannot be purchased at this time",
 					$field
 				);
 			}
