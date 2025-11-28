@@ -56,8 +56,7 @@ class PayPalOrderManager {
 	 * 2. Checkout: Creates WC order + captures payment
 	 *
 	 * @param PayPalCart $cart The cart.
-	 * @return string The PayPal Order ID (ec_token).
-	 * @throws Exception If order creation fails.
+	 * @return string The PayPal Order ID (ec_token) or an empty string.
 	 */
 	public function create_order( PayPalCart $cart ): string {
 		$cart_array = $cart->to_array();
@@ -98,7 +97,6 @@ class PayPalOrderManager {
 			);
 
 			return $order_id;
-
 		} catch ( Exception $error ) {
 			$this->logger->error(
 				'[ORDER] PayPal Order creation failed',
@@ -107,9 +105,9 @@ class PayPalOrderManager {
 					'item_count' => count( $cart_array['items'] ?? array() ),
 				)
 			);
-
-			throw $error;
 		}
+
+		return '';
 	}
 
 	/**
