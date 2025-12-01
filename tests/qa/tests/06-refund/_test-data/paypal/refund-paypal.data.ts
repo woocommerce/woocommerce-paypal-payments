@@ -16,7 +16,7 @@ const guest = guests.usa;
 export const refundPayPalFromCheckout: ShopRefund[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1394
-		title: 'PCP-1394 | Refund - Full - Order from shop (paid via PayPal)',
+		title: 'PCP-1394 | Refund - Full - PayPal - Order from shop @Critical',
 		...orders.default,
 		payment: payPal,
 		isApiOrder: false,
@@ -28,7 +28,7 @@ export const refundPayPalFromCheckout: ShopRefund[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1395
-		title: 'PCP-1395 | Refund - Partial - Order from shop (paid via PayPal)',
+		title: 'PCP-1395 | Refund - Partial - PayPal - Order from shop @Critical',
 		...orders.default,
 		payment: payPal,
 		isApiOrder: false,
@@ -43,7 +43,7 @@ export const refundPayPalFromCheckout: ShopRefund[] = [
 export const refundPayPalFromPayByLink: ShopRefund[] = [
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1405
-		title: 'PCP-1405 | Refund - Full - Order from dashboard (paid via PayPal)',
+		title: 'PCP-1405 | Refund - Full - PayPal - Order from dashboard',
 		...orders.default,
 		payment: payPal,
 		isApiOrder: true,
@@ -55,7 +55,7 @@ export const refundPayPalFromPayByLink: ShopRefund[] = [
 	},
 	{
 		// https://inpsyde.atlassian.net/browse/PCP-1406
-		title: 'PCP-1406 | Refund - Partial - Order from dashboard (paid via PayPal)',
+		title: 'PCP-1406 | Refund - Partial - PayPal - Order from dashboard',
 		...orders.default,
 		payment: payPal,
 		isApiOrder: true,
