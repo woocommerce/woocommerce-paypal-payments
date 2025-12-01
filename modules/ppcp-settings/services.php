@@ -665,7 +665,7 @@ $services = array(
 			$container->get( 'googlepay.eligibility.check' ), // Google Pay eligibility.
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
-			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
+			'MX' === $container->get( 'api.merchant.country' ), // Installments eligibility.
 			$apm_eligible  // Pay with Crypto eligibility.
 		);
 	},

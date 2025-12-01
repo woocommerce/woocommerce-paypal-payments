@@ -42,7 +42,7 @@ return array(
 			$container->get( 'applepay.supported-countries' ),
 			$container->get( 'applepay.supported-currencies' ),
 			$container->get( 'api.shop.currency.getter' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.merchant.country' )
 		);
 	},
 	'applepay.status-cache'                    => static function ( ContainerInterface $container ): Cache {
