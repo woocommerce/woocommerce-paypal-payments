@@ -27,7 +27,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
@@ -38,6 +37,7 @@ use WooCommerce\PayPalCommerce\Settings\Handler\ConnectionListener;
 use WooCommerce\PayPalCommerce\Settings\Service\BrandedExperience\PathRepository;
 use WooCommerce\PayPalCommerce\Settings\Service\GatewayRedirectService;
 use WooCommerce\PayPalCommerce\Settings\Service\LoadingScreenService;
+use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -76,21 +76,45 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): bool {
-		/**
-		 * This hook is fired when the plugin is updated.
-		 */
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static fn() => ! get_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI )
-							&& update_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI, 'yes' )
-		);
-
 		// Suppress WooCommerce Settings UI elements via CSS to improve the loading experience.
 		$loading_screen_service = $container->get( 'settings.services.loading-screen-service' );
 		assert( $loading_screen_service instanceof LoadingScreenService );
 		$loading_screen_service->register();
 
 		$this->apply_branded_only_limitations( $container );
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			/**
+			 * Auto-trigger settings migration to new UI on plugin update.
+			 *
+			 * This hook executes during plugin updates to automatically migrate existing merchants
+			 * from the legacy settings interface to the new settings UI. The migration runs once
+			 * per installation.
+			 *
+			 * Migration process includes:
+			 * - Cleaning up legacy UI toggle options (old/new UI preference flags)
+			 * - Marking onboarding as completed for existing merchants
+			 * - Migrating general settings, styling settings, and payment method configurations
+			 * - Syncing gateway states to reflect current settings
+			 *
+			 * The migration is skipped if:
+			 * - OPTION_NAME_MIGRATION_IS_DONE flag is already set (migration completed previously)
+			 *
+			 * @param false|string $previous_version The previously installed plugin version,
+			 *                                       or false on first installation.
+			 */
+			static function ( $previous_version ) use ( $container ): void {
+				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) === '1' ) {
+					return;
+				}
+
+				$migration_manager = $container->get( 'settings.service.data-migration' );
+				assert( $migration_manager instanceof MigrationManager );
+
+				$migration_manager->migrate();
+			}
+		);
 
 		/**
 		 * Override ACDC status with BCDC for eligible merchants.

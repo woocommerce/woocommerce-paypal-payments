@@ -23,7 +23,6 @@ use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\MyBankGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\P24Gateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\PWCGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\TrustlyGateway;
-use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDependenciesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
@@ -371,6 +370,9 @@ return array(
 		$c->get( 'settings.service.data-migration.settings-tab' ),
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
+		$c->get( 'settings.data.onboarding' ),
+		$c->get( 'api.merchant_id' ) !== '',
+		$c->get( 'woocommerce.logger.woocommerce' )
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
@@ -393,13 +395,6 @@ return array(
 		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
-	),
-	'settings.ajax.switch_ui'                             => static fn( ContainerInterface $c ): SwitchSettingsUiEndpoint => new SwitchSettingsUiEndpoint(
-		$c->get( 'woocommerce.logger.woocommerce' ),
-		$c->get( 'button.request-data' ),
-		$c->get( 'settings.data.onboarding' ),
-		$c->get( 'settings.service.data-migration' ),
-		$c->get( 'api.merchant_id' ) !== ''
 	),
 	'settings.rest.todos'                                 => static function ( ContainerInterface $container ): TodosRestEndpoint {
 		return new TodosRestEndpoint(
