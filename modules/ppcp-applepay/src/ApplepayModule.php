@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -97,11 +96,6 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 				$module->load_admin_assets( $c, $apple_payment_method );
 				$module->load_block_editor_assets( $c, $apple_payment_method );
-
-				if ( SettingsModule::should_use_the_old_ui() && ! $apple_payment_method->is_enabled() ) {
-					return;
-				}
-
 				$module->load_assets( $c, $apple_payment_method );
 				$module->handle_validation_file( $c, $apple_payment_method );
 				$module->render_buttons( $c, $apple_payment_method );

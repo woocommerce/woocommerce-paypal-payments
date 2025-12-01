@@ -11,8 +11,6 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WC_Payment_Gateway;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
@@ -66,35 +64,6 @@ use Throwable;
  */
 class SettingsModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
-
-	/**
-	 * Returns whether the old settings UI should be loaded.
-	 */
-	public static function should_use_the_old_ui(): bool {
-		/**
-		 * Determine if the new Settings UI is disabled via feature flag.
-		 *
-		 * This is the highest-priority check: if the `woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled` filter
-		 * is used to disable the new UI, it will override all other conditions.
-		 */
-		if ( ! apply_filters(
-		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-			'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
-			getenv( 'PCP_SETTINGS_ENABLED' ) !== '1'
-		) ) {
-			return true;
-		}
-
-		// New merchants always see the new UI if the filter above is not used.
-		if ( '1' === get_option( 'woocommerce-ppcp-is-new-merchant' ) ) {
-			return false;
-		}
-
-		// Existing merchants can opt out via DB option.
-		$opt_out = 'yes' === get_option( SwitchSettingsUiEndpoint::OPTION_NAME_SHOULD_USE_OLD_UI );
-
-		return apply_filters( 'woocommerce_paypal_payments_should_use_the_old_ui', $opt_out );
-	}
 
 	/**
 	 * {@inheritDoc}

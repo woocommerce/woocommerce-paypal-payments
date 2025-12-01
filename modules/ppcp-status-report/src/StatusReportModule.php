@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -106,12 +105,6 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Branded only',
 						'description'    => esc_html__( 'Whether the plugin is in Branded only mode or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html( $general_settings->own_brand_only() ),
-					),
-					array(
-						'label'          => esc_html__( 'New UI active', 'woocommerce-paypal-payments' ),
-						'exported_label' => 'New UI active',
-						'description'    => esc_html__( 'Indicates whether the new Settings UI is enabled.', 'woocommerce-paypal-payments' ),
-						'value'          => $this->bool_to_html( ! SettingsModule::should_use_the_old_ui() ),
 					),
 					array(
 						'label'          => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),

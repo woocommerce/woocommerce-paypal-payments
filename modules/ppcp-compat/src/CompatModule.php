@@ -12,11 +12,9 @@ namespace WooCommerce\PayPalCommerce\Compat;
 use Exception;
 use WC_Order;
 use WC_Order_Item_Product;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -122,12 +120,8 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
-				$stay_updated = SettingsModule::should_use_the_old_ui()
-					? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
-					: $settings_model->get_stay_updated();
-
 				// Store Country is set as Canada.
-				if ( $c->get( 'api.shop.country' ) !== 'CA' || ! $stay_updated ) {
+				if ( $c->get( 'api.shop.country' ) !== 'CA' || ! $settings_model->get_stay_updated() ) {
 					return;
 				}
 

@@ -72,7 +72,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -80,7 +79,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
-$services = array(
+return array(
 	'settings.url'                                        => static function ( ContainerInterface $container ): string {
 		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
@@ -730,15 +729,12 @@ $services = array(
 	'settings.migration.bcdc-override-check'              => static function (): callable {
 		return static fn(): bool => (bool) get_option( PaymentSettingsMigration::OPTION_NAME_BCDC_MIGRATION_OVERRIDE );
 	},
-);
-
-if ( ! SettingsModule::should_use_the_old_ui() ) {
 	/**
 	 * Merchant connection details, which includes the connection status
 	 * (onboarding/connected) and connection-aware environment checks.
 	 * This is the preferred solution to check environment and connection state.
 	 */
-	$services['settings.connection-state'] = static function ( ContainerInterface $container ): ConnectionState {
+	'settings.connection-state'                           => static function ( ContainerInterface $container ): ConnectionState {
 		$data = $container->get( 'settings.data.general' );
 		assert( $data instanceof GeneralSettings );
 
@@ -746,7 +742,5 @@ if ( ! SettingsModule::should_use_the_old_ui() ) {
 		$environment  = new Environment( $data->is_sandbox_merchant() );
 
 		return new ConnectionState( $is_connected, $environment );
-	};
-}
-
-return $services;
+	},
+);

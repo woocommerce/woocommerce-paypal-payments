@@ -29,7 +29,6 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -1966,18 +1965,7 @@ return array(
 		);
 	},
 	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		if ( apply_filters(
-		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores -- feature flags use this convention
-			'woocommerce.feature-flags.woocommerce_paypal_payments.settings_enabled',
-			getenv( 'PCP_SETTINGS_ENABLED' ) === '1'
-		) ) {
-			return true;
-		}
-
-		return $settings->has( 'fraudnet_enabled' ) && $settings->get( 'fraudnet_enabled' );
+		return true;
 	},
 	'wcgateway.fraudnet-assets'                            => function ( ContainerInterface $container ): FraudNetAssets {
 		return new FraudNetAssets(
@@ -2222,10 +2210,6 @@ return array(
 			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
 		);
 
-		$stay_updated = SettingsModule::should_use_the_old_ui()
-			? $settings->has( 'stay_updated' ) && $settings->get( 'stay_updated' )
-			: $settings_model->get_stay_updated();
-
 		$message = sprintf(
 		// translators: %1$s is the URL for the startup guide.
 			__(
@@ -2242,26 +2226,11 @@ return array(
 				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
 				'ppcp-working-capital-inbox-note',
 				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				$is_working_capital_feature_flag_enabled && $container->get( 'api.shop.country' ) === 'US' && $stay_updated,
+				$is_working_capital_feature_flag_enabled && $container->get( 'api.shop.country' ) === 'US' && $settings_model->get_stay_updated(),
 				new InboxNoteAction(
 					'learn_more',
 					__( 'Learn More', 'woocommerce-paypal-payments' ),
 					'https://www.paypal.com/us/business/financial-services/working-capital?partner_camp_id=woocommerce_ppwc',
-					Note::E_WC_ADMIN_NOTE_UNACTIONED,
-					true
-				)
-			),
-			$inbox_note_factory->create_note(
-				__( '📢 Important: New PayPal Payments settings UI becoming default in October!', 'woocommerce-paypal-payments' ),
-				$message,
-				Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
-				'ppcp-settings-migration-inbox-note',
-				Note::E_WC_ADMIN_NOTE_UNACTIONED,
-				SettingsModule::should_use_the_old_ui(),
-				new InboxNoteAction(
-					'switch_to_new_settings',
-					__( 'Switch to New Settings', 'woocommerce-paypal-payments' ),
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					true
 				)
@@ -2287,7 +2256,7 @@ return array(
 	},
 
 	'wcgateway.settings.admin-settings-enabled'            => static function ( ContainerInterface $container ): bool {
-		return $container->has( 'settings.url' ) && ! SettingsModule::should_use_the_old_ui();
+		return $container->has( 'settings.url' );
 	},
 
 	'wcgateway.contact-module.eligibility.check'           => static function ( ContainerInterface $container ): callable {
