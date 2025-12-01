@@ -63,7 +63,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		$cart_id = $request->get_param( 'cart_id' );
 
 		// Verify cart exists.
-		$session = $this->load_cart_session( $cart_id );
+		$session = $this->get_stored_cart( $cart_id );
 
 		if ( $session instanceof AgenticError ) {
 			return $this->error( $session );
@@ -96,7 +96,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		}
 
 		// Replace the cart session (preserving ec_token).
-		$update_result = $this->session_handler->update_cart_session( $cart_id, $new_cart );
+		$update_result = $this->store_local_cart( $cart_id, $new_cart );
 
 		if ( ! $update_result ) {
 			return $this->error(

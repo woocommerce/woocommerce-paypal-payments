@@ -44,7 +44,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	private AuthServiceProvider $auth_provider;
 
-	protected AgenticSessionHandler $session_handler;
+	private AgenticSessionHandler $session_handler;
 
 	protected ResponseFactory $response_factory;
 
@@ -162,12 +162,12 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Load cart session with standardized error handling.
+	 * Load cart data from local storage (ie from session table) with standardized error handling.
 	 *
 	 * @param string $cart_id The cart ID to load.
 	 * @return array|AgenticError Cart session data or error.
 	 */
-	protected function load_cart_session( string $cart_id ) {
+	protected function get_stored_cart( string $cart_id ) {
 		$session = $this->session_handler->load_cart_session( $cart_id );
 
 		if ( ! $session ) {
@@ -184,6 +184,18 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		}
 
 		return $session;
+	}
+
+	protected function create_local_cart( PayPalCart $cart, string $ec_token ): string {
+		return $this->session_handler->create_cart_session( $cart, $ec_token );
+	}
+
+	protected function store_local_cart( string $cart_id, PayPalCart $cart ): bool {
+		return $this->session_handler->update_cart_session( $cart_id, $cart );
+	}
+
+	protected function flush_local_cart( string $cart_id ): bool {
+		return $this->session_handler->destroy_cart_session( $cart_id );
 	}
 
 	/**

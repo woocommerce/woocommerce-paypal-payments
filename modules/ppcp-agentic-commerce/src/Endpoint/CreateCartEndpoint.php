@@ -65,7 +65,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		// Token might be an empty string, when order creation fails. That's okay.
 		$ec_token = $this->order_manager->create_order( $cart );
 
-		$cart_id  = $this->session_handler->create_cart_session( $cart, $ec_token );
+		$cart_id  = $this->create_local_cart( $cart, $ec_token );
 		$response = $this->response_factory->new_cart( $cart, $cart_id, $ec_token );
 
 		return $this->cart_details( $response, 201 );

@@ -109,10 +109,9 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			);
 		}
 
-		// Load the cart session.
-		$cart_session = $this->session_handler->load_cart_session( $cart_id );
-		if ( ! $cart_session ) {
-			return $this->error( new NotFoundError( 'Cart not found: ' . $cart_id ) );
+		$session = $this->get_stored_cart( $cart_id );
+		if ( $session instanceof AgenticError ) {
+			return $this->error( $session );
 		}
 
 		// Parse the incoming cart data.
@@ -130,12 +129,13 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		if ( ! empty( $validation_issues ) ) {
 			$cart = $cart->with_validation_issues( ...$validation_issues );
-			return $this->cart_details( $this->response_factory->active_cart( $cart, $cart_id, $cart_session['ec_token'] ) );
+
+			return $this->cart_details( $this->response_factory->active_cart( $cart, $cart_id, $session['ec_token'] ) );
 		}
 
 		try {
 			// Create WooCommerce order.
-			$order = $this->create_wc_order( $cart, $payment_method, $cart_session['ec_token'] );
+			$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
 			if ( is_wp_error( $order ) ) {
 				return $this->error(
 					InternalServerError::from_wp_error( $order )
@@ -143,7 +143,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			}
 
 			// Remove session.
-			$this->session_handler->destroy_cart_session( $cart_id );
+			$this->flush_local_cart( $cart_id );
 
 			// Build the response with payment confirmation.
 			$response = $this->response_factory->from_order(

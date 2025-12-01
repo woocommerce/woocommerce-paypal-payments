@@ -59,7 +59,7 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 	public function get_cart( WP_REST_Request $request ): WP_REST_Response {
 		$cart_id = $request->get_param( 'cart_id' );
 
-		$session = $this->load_cart_session( $cart_id );
+		$session = $this->get_stored_cart( $cart_id );
 
 		if ( $session instanceof AgenticError ) {
 			return $this->error( $session );
