@@ -137,7 +137,7 @@ class PaymentMethodsDefinition {
 		$gateway = $this->wc_gateways[ $gateway_id ] ?? null;
 
 		$gateway_title       = $gateway ? $gateway->get_title() : $title;
-		$gateway_description = $gateway->settings['description'] ?? $description;
+		$gateway_description = $gateway ? $gateway->description : $description;
 		$enabled             = $this->settings->is_method_enabled( $gateway_id );
 		$config              = array(
 			'id'              => $gateway_id,
@@ -288,110 +288,156 @@ class PaymentMethodsDefinition {
 	}
 
 	/**
+	 * Get default titles and descriptions for APM gateways.
+	 * Single source of truth for all APM gateway metadata.
+	 *
+	 * @return array Array of default settings keyed by gateway ID.
+	 */
+	public static function get_apm_defaults(): array {
+		return array(
+			PWCGateway::ID            => array(
+				'method_title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'Accept cryptocurrency payments through PayPal, supporting various digital currencies for global customers.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description'        => __( 'Clicking "Place order" will redirect you to PayPal\'s encrypted checkout to complete your cryptocurrency purchase.', 'woocommerce-paypal-payments' ),
+			),
+			BancontactGateway::ID     => array(
+				'method_title'       => __( 'Bancontact (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A popular and trusted electronic payment method in Belgium, used by Belgian customers with Bancontact cards issued by local banks. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Bancontact', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			BlikGateway::ID           => array(
+				'method_title'       => __( 'Blik (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A widely used mobile payment method in Poland, allowing Polish customers to pay directly via their banking apps. Transactions are processed in PLN.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Blik', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			EPSGateway::ID            => array(
+				'method_title'       => __( 'EPS (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'An online payment method in Austria, enabling Austrian buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'EPS', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			IDealGateway::ID          => array(
+				'method_title'       => __( 'iDeal (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'The most common payment method in the Netherlands, allowing Dutch buyers to pay directly through their preferred bank. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'iDeal', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			MyBankGateway::ID         => array(
+				'method_title'       => __( 'MyBank (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A European online banking payment solution primarily used in Italy, enabling customers to make secure bank transfers during checkout. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'MyBank', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			P24Gateway::ID            => array(
+				'method_title'       => __( 'Przelewy24 (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Przelewy24', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			TrustlyGateway::ID        => array(
+				'method_title'       => __( 'Trustly (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Trustly', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			MultibancoGateway::ID     => array(
+				'method_title'       => __( 'Multibanco (via PayPal)', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Multibanco', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			PayUponInvoiceGateway::ID => array(
+				'method_title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+			OXXO::ID                  => array(
+				'method_title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
+				'method_description' => __( 'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304', 'woocommerce-paypal-payments' ),
+				'title'              => __( 'OXXO', 'woocommerce-paypal-payments' ),
+				'description'        => '',
+			),
+		);
+	}
+
+	/**
 	 * Builds an array of payment method definitions, which includes details
 	 * of all APM gateways.
 	 *
 	 * @return array List of payment method definitions.
 	 */
 	public function group_apms(): array {
+		$defaults = self::get_apm_defaults();
+
 		$group = array(
 			array(
 				'id'          => PWCGateway::ID,
-				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'Accept cryptocurrency payments through PayPal, which supports various digital currencies. Receive USD payments in your PayPal balance.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ PWCGateway::ID ]['title'],
+				'description' => $defaults[ PWCGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-pwc',
 			),
 			array(
 				'id'          => BancontactGateway::ID,
-				'title'       => __( 'Bancontact', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'Bancontact is the most widely used, accepted and trusted electronic payment method in Belgium. Bancontact makes it possible to pay directly through the online payment systems of all major Belgian banks.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ BancontactGateway::ID ]['title'],
+				'description' => $defaults[ BancontactGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-bancontact',
 			),
 			array(
 				'id'          => BlikGateway::ID,
-				'title'       => __( 'BLIK', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A widely used mobile payment method in Poland, allowing Polish customers to pay directly via their banking apps. Transactions are processed in PLN.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ BlikGateway::ID ]['title'],
+				'description' => $defaults[ BlikGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-blik',
 			),
 			array(
 				'id'          => EPSGateway::ID,
-				'title'       => __( 'eps', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'An online payment method in Austria, enabling Austrian buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ EPSGateway::ID ]['title'],
+				'description' => $defaults[ EPSGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-eps',
 			),
 			array(
 				'id'          => IDealGateway::ID,
-				'title'       => __( 'iDEAL', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'iDEAL is a payment method in the Netherlands that allows buyers to select their issuing bank from a list of options.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ IDealGateway::ID ]['title'],
+				'description' => $defaults[ IDealGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-ideal',
 			),
 			array(
 				'id'          => MyBankGateway::ID,
-				'title'       => __( 'MyBank', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A European online banking payment solution primarily used in Italy, enabling customers to make secure bank transfers during checkout. Transactions are processed in EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ MyBankGateway::ID ]['title'],
+				'description' => $defaults[ MyBankGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-mybank',
 			),
 			array(
 				'id'          => P24Gateway::ID,
-				'title'       => __( 'Przelewy24', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A popular online payment gateway in Poland, offering various payment options for Polish customers. Transactions can be processed in PLN or EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ P24Gateway::ID ]['title'],
+				'description' => $defaults[ P24Gateway::ID ]['method_description'],
 				'icon'        => 'payment-method-przelewy24',
 			),
 			array(
 				'id'          => TrustlyGateway::ID,
-				'title'       => __( 'Trustly', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'A European payment method that allows buyers to make payments directly from their bank accounts, suitable for customers across multiple European countries. Supported currencies include EUR, DKK, SEK, GBP, and NOK.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ TrustlyGateway::ID ]['title'],
+				'description' => $defaults[ TrustlyGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-trustly',
 			),
 			array(
 				'id'          => MultibancoGateway::ID,
-				'title'       => __( 'Multibanco', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'An online payment method in Portugal, enabling Portuguese buyers to make secure payments directly through their bank accounts. Transactions are processed in EUR.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ MultibancoGateway::ID ]['title'],
+				'description' => $defaults[ MultibancoGateway::ID ]['method_description'],
 				'icon'        => 'payment-method-multibanco',
 			),
 			array(
 				'id'          => PayUponInvoiceGateway::ID,
-				'title'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ PayUponInvoiceGateway::ID ]['title'],
+				'description' => $defaults[ PayUponInvoiceGateway::ID ]['method_description'],
 				'icon'        => '',
 			),
 			array(
 				'id'          => OXXO::ID,
-				'title'       => __( 'OXXO', 'woocommerce-paypal-payments' ),
-				'description' => __(
-					'OXXO is a Mexican chain of convenience stores. *Get PayPal account permission to use OXXO payment functionality by contacting us at (+52) 800–925–0304',
-					'woocommerce-paypal-payments'
-				),
+				'title'       => $defaults[ OXXO::ID ]['title'],
+				'description' => $defaults[ OXXO::ID ]['method_description'],
 				'icon'        => 'payment-method-oxxo',
 			),
 		);
