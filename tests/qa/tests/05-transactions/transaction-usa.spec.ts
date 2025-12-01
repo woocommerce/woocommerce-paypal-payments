@@ -17,6 +17,9 @@ import {
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
+	payPalPayByLink,
+	payPalPayByLinkExcludingTax,
+	payPalPayByLinkIntentAuthorized,
 } from './_test-data/paypal';
 import {
 	payLaterCheckout,
@@ -73,6 +76,10 @@ for ( const testOrder of acdcCheckout ) {
 	transactionsOnCheckout( testOrder );
 }
 
+for ( const testOrder of payPalPayByLink ) {
+	transactionsOnPayByLink( testOrder );
+}
+
 for ( const testOrder of acdcPayByLink ) {
 	transactionsOnPayByLink( testOrder );
 }
@@ -93,6 +100,10 @@ test.describe( () => {
 
 	for ( const testOrder of acdcCheckoutExcludingTax ) {
 		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payPalPayByLinkExcludingTax ) {
+		transactionsOnPayByLink( testOrder );
 	}
 
 	for ( const testOrder of acdcPayByLinkExcludingTax ) {
@@ -120,6 +131,10 @@ test.describe( () => {
 
 	for ( const testOrder of acdcCheckoutIntentAuthorized ) {
 		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payPalPayByLinkIntentAuthorized ) {
+		transactionsOnPayByLink( testOrder );
 	}
 
 	for ( const testOrder of acdcPayByLinkIntentAuthorized ) {
