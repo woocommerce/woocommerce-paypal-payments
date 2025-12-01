@@ -36,6 +36,7 @@ module.exports = {
 		'pwc-payment-method': path.resolve(
 			'./resources/js/pwc-payment-method.js'
 		),
+		gateway: path.resolve( './resources/css/gateway.scss' ),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),

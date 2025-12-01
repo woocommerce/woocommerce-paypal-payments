@@ -74,6 +74,21 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 
 		$this->register_pwc_feature_flag_filters();
 
+		add_action(
+			'wp_enqueue_scripts',
+			function () use ( $c ) {
+				$module_url    = $c->get( 'ppcp-local-apms.url' );
+				$asset_version = $c->get( 'ppcp.asset-version' );
+
+				wp_enqueue_style(
+					'ppcp-local-apms-gateway',
+					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					array(),
+					$asset_version
+				);
+			}
+		);
+
 		/**
 		 * The "woocommerce_payment_gateways" filter is responsible for ADDING
 		 * custom payment gateways to WooCommerce. Here, we add all the local
