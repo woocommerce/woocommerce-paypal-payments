@@ -4,6 +4,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use RuntimeException;
 use Psr\Log\LoggerInterface;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;

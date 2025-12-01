@@ -12,6 +12,10 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors;
 use RuntimeException;
 use WP_Error;
 
+/**
+ * Errors represent technical failures and invalid requests.
+ * Use when the request format is incorrect, authentication fails, or system errors occur.
+ */
 abstract class AgenticError {
 	/**
 	 * The error name is defined by the PayPal API, usually in upper-case, e.g. "INVALID_REQUEST".
@@ -27,15 +31,17 @@ abstract class AgenticError {
 
 	private string $message;
 	private ?array $details;
+	private ?string $debug_id;
 
 	/**
 	 * Defines the error contents.
 	 *
-	 * @param string     $message Descriptive text of the error.
-	 * @param array|null $details Optional. Additional details about the error.
+	 * @param string      $message  Descriptive text of the error.
+	 * @param array|null  $details  Optional. Additional details about the error.
+	 * @param string|null $debug_id Optional. Debug identifier for support.
 	 * @throws RuntimeException When the error specs are incomplete.
 	 */
-	public function __construct( string $message, ?array $details = null ) {
+	public function __construct( string $message, ?array $details = null, ?string $debug_id = null ) {
 		if ( empty( static::ERROR_NAME ) ) {
 			throw new RuntimeException( 'Child classes must override ERROR_NAME constant' );
 		}
@@ -46,12 +52,25 @@ abstract class AgenticError {
 			throw new RuntimeException( 'Error message cannot be empty' );
 		}
 
-		$this->message = $message;
-		$this->details = $details;
+		$this->message  = $message;
+		$this->details  = $details;
+		$this->debug_id = $debug_id ?? $this->generate_debug_id();
 	}
 
 	public function get_status_code(): int {
 		return static::STATUS_CODE;
+	}
+
+	/**
+	 * Exposes the error name, mainly for logging. Note that this is actually a code, but is
+	 * internally referred to as "name" in the API docs.
+	 */
+	public function get_name(): string {
+		return static::ERROR_NAME;
+	}
+
+	public function get_debug_id(): string {
+		return $this->debug_id ?? '';
 	}
 
 	public function to_array(): array {
@@ -59,6 +78,10 @@ abstract class AgenticError {
 			'name'    => static::ERROR_NAME,
 			'message' => $this->message,
 		);
+
+		if ( $this->debug_id ) {
+			$data['debug_id'] = $this->debug_id;
+		}
 
 		if ( $this->details ) {
 			$data['details'] = $this->details;
@@ -109,5 +132,16 @@ abstract class AgenticError {
 		}
 
 		return $details;
+	}
+
+	/**
+	 * Generate a debug ID if not provided.
+	 */
+	protected function generate_debug_id(): string {
+		return sprintf(
+			'ERROR-%s-%s',
+			$this->get_status_code(),
+			strtoupper( (string) substr( md5( uniqid( '', true ) ), 0, 8 ) )
+		);
 	}
 }

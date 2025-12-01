@@ -11,16 +11,18 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WP_REST_Request;
+use WP_REST_Response;
+use Psr\Log\LoggerInterface;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WP_REST_Request;
-use WP_REST_Response;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -30,30 +32,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
  * Checkout REST endpoint.
  */
 class CheckoutEndpoint extends AgenticRestEndpoint {
-	/**
-	 * The checkout processor service.
-	 *
-	 * @var AgenticCheckoutProcessor
-	 */
-	protected $checkout_processor;
-
-	/**
-	 * Constructor.
-	 *
-	 * @param AuthServiceProvider      $auth_provider      JWT authentication service provider.
-	 * @param AgenticSessionHandler    $session_handler    Session handler.
-	 * @param ResponseFactory          $response_factory   Response factory.
-	 * @param AgenticCheckoutProcessor $checkout_processor Checkout processor service.
-	 */
-	public function __construct(
-		AuthServiceProvider $auth_provider,
-		AgenticSessionHandler $session_handler,
-		ResponseFactory $response_factory,
-		AgenticCheckoutProcessor $checkout_processor
-	) {
-		parent::__construct( $auth_provider, $session_handler, $response_factory );
-		$this->checkout_processor = $checkout_processor;
-	}
 
 	/**
 	 * The endpoint path following PayPal specs.
@@ -64,6 +42,26 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	 * The expected HTTP method.
 	 */
 	protected const METHOD = 'POST';
+
+	protected AgenticCheckoutProcessor $checkout_processor;
+
+	protected InventoryValidator $inventory_validator;
+
+	public function __construct(
+		AuthServiceProvider $auth_provider,
+		AgenticSessionHandler $session_handler,
+		ResponseFactory $response_factory,
+		LoggerInterface $logger,
+		ProductValidator $product_validator,
+		PayPalOrderManager $order_manager,
+		AgenticCheckoutProcessor $checkout_processor,
+		InventoryValidator $inventory_validator
+	) {
+
+		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger, $product_validator, $order_manager );
+		$this->checkout_processor  = $checkout_processor;
+		$this->inventory_validator = $inventory_validator;
+	}
 
 	/**
 	 * Register REST API routes.
@@ -79,14 +77,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 				'callback'            => array( $this, 'complete_checkout' ),
 				'permission_callback' => array( $this, 'check_permission' ),
 				'args'                => array(
-					'cart_id' => array(
-						'required'          => true,
-						'type'              => 'string',
-						'sanitize_callback' => 'sanitize_text_field',
-						'validate_callback' => function ( $param ) {
-							return ! empty( $param );
-						},
-					),
+					'cart_id' => $this->get_cart_id_arg(),
 				),
 			)
 		);
@@ -134,8 +125,8 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		}
 
 		// Validate products exist in WooCommerce before proceeding.
-		$validation_issues = $this->validate_products_exist( $cart );
-		$validation_issues = array_merge( $validation_issues, $this->verify_inventory( $cart ) );
+		$validation_issues = $this->product_validator->validate_products_exist( $cart );
+		$validation_issues = array_merge( $validation_issues, $this->inventory_validator->verify_inventory( $cart ) );
 
 		if ( ! empty( $validation_issues ) ) {
 			$cart = $cart->with_validation_issues( ...$validation_issues );
@@ -169,60 +160,6 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 				)
 			);
 		}
-	}
-
-	/**
-	 * Verify inventory availability using WooCommerce stock management.
-	 *
-	 * @param PayPalCart $cart The cart to verify.
-	 * @return ValidationIssue[] Array of validation issues if any.
-	 */
-	private function verify_inventory( PayPalCart $cart ): array {
-		$issues = array();
-
-		foreach ( $cart->items() as $item ) {
-			// Get WooCommerce product.
-			$product_id = wc_get_product_id_by_sku( $item->variant_id() );
-			if ( ! $product_id ) {
-				$product_id = wc_get_product_id_by_sku( $item->item_id() );
-			}
-
-			if ( ! $product_id ) {
-				continue; // Skip if product not found.
-			}
-
-			$product = wc_get_product( $product_id );
-			if ( ! $product ) {
-				continue;
-			}
-
-			// Check stock status.
-			if ( ! $product->is_in_stock() ) {
-				$issues[] = new ItemOutOfStock(
-					'Product is no longer available',
-					sprintf( '%s is currently out of stock.', $product->get_name() ),
-				);
-			}
-
-			// Check quantity if managing stock.
-			if ( $product->managing_stock() ) {
-				$stock_quantity = $product->get_stock_quantity();
-				if ( $stock_quantity < $item->quantity() ) {
-					$issues[] = new InsufficientQuantity(
-						'Insufficient inventory',
-						// TODO should we actually expose the real stock qty here?
-						sprintf(
-							'Only %d of %s available, but %d requested.',
-							$stock_quantity,
-							$product->get_name(),
-							$item->quantity()
-						),
-					);
-				}
-			}
-		}
-
-		return $issues;
 	}
 
 	/**

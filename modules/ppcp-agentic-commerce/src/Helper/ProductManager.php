@@ -1,0 +1,85 @@
+<?php
+/**
+ * Product Manager for Agentic Commerce.
+ *
+ * Unified helper for product resolution and stock checking.
+ *
+ * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
+ */
+
+declare( strict_types = 1 );
+
+namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
+
+use WC_Product;
+
+class ProductManager {
+	/**
+	 * Find product by variant_id or item_id using multiple resolution strategies.
+	 *
+	 * Resolution strategies:
+	 * 1. SKU lookup for variant_id
+	 * 2. SKU lookup for item_id
+	 * 3. Direct ID casting for variant_id
+	 * 4. Direct ID casting for item_id
+	 *
+	 * @param string|null $variant_id The variant/product identifier.
+	 * @param string|null $item_id    The item identifier.
+	 * @return WC_Product|null The resolved product or null.
+	 */
+	public function find_product( ?string $variant_id, ?string $item_id ): ?WC_Product {
+		$product_id = null;
+
+		// Strategy 1: Try variant_id as SKU.
+		if ( $variant_id ) {
+			$product_id = wc_get_product_id_by_sku( $variant_id );
+		}
+
+		// Strategy 2: Try item_id as SKU.
+		if ( ! $product_id && $item_id ) {
+			$product_id = wc_get_product_id_by_sku( $item_id );
+		}
+
+		// Strategy 3: Try variant_id as direct ID.
+		if ( ! $product_id && $variant_id && is_numeric( $variant_id ) ) {
+			$product_id = (int) $variant_id;
+		}
+
+		// Strategy 4: Try item_id as direct ID.
+		if ( ! $product_id && $item_id && is_numeric( $item_id ) ) {
+			$product_id = (int) $item_id;
+		}
+
+		// Return product or null if not found.
+		$product = $product_id ? wc_get_product( $product_id ) : null;
+
+		return $product instanceof WC_Product ? $product : null;
+	}
+
+	/**
+	 * Check if product is in stock with optional quantity validation.
+	 *
+	 * @param WC_Product $product  The product to check.
+	 * @param int|null   $quantity The desired quantity (optional).
+	 * @return bool True if product is in stock (and has sufficient quantity if provided).
+	 */
+	public function is_in_stock( WC_Product $product, ?int $quantity = null ): bool {
+		if ( ! $product->is_in_stock() ) {
+			return false;
+		}
+
+		if ( $quantity === null ) {
+			return true;
+		}
+
+		if ( $product->managing_stock() ) {
+			$stock_quantity = $product->get_stock_quantity();
+
+			if ( $stock_quantity !== null && $stock_quantity < $quantity ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+}

@@ -7,6 +7,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Auth;
 use Exception;
 use WP_Error;
 use Firebase\JWT\JWT;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
 
 class JwtAuthService {

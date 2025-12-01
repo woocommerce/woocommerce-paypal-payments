@@ -3,6 +3,7 @@
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion;
 
 use Automattic\WooCommerce\Enums\ProductStatus;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\IngestionConfiguration;
 
 /**

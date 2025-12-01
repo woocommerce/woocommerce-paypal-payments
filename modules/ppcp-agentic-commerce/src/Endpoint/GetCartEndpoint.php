@@ -11,9 +11,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WP_REST_Request;
 use WP_REST_Response;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
 /**
  * Get Cart REST endpoint.
@@ -43,13 +44,7 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 				'callback'            => array( $this, 'get_cart' ),
 				'permission_callback' => array( $this, 'check_permission' ),
 				'args'                => array(
-					'cart_id' => array(
-						'required'          => true,
-						'type'              => 'string',
-						'validate_callback' => function ( $param ) {
-							return is_string( $param ) && strlen( $param ) >= 10;
-						},
-					),
+					'cart_id' => $this->get_cart_id_arg(),
 				),
 			)
 		);

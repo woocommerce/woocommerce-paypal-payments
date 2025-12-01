@@ -9,9 +9,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 use DateTime;
 use DateTimeInterface;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 
 /**
  * @see GiftOptionsTest - Unit tests for this class.

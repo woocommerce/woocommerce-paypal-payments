@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use WC_Order;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 class PaidCartResponse extends CartResponse {

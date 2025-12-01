@@ -9,9 +9,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Schema;
 
+use DateTime;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\MissingField;
-use DateTime;
 
 /**
  * @see ShippingOptionTest - Unit tests for this class.

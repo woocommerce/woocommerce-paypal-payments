@@ -9,21 +9,24 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
-use JsonException;
-use WC_REST_Controller;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidProduct;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_Error;
+use JsonException;
+use WC_REST_Controller;
+use Psr\Log\LoggerInterface;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -45,10 +48,27 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	protected ResponseFactory $response_factory;
 
-	public function __construct( AuthServiceProvider $auth_provider, AgenticSessionHandler $session_handler, ResponseFactory $response_factory ) {
-		$this->auth_provider    = $auth_provider;
-		$this->session_handler  = $session_handler;
-		$this->response_factory = $response_factory;
+	protected LoggerInterface $logger;
+
+	protected ProductValidator $product_validator;
+
+	protected PayPalOrderManager $order_manager;
+
+	public function __construct(
+		AuthServiceProvider $auth_provider,
+		AgenticSessionHandler $session_handler,
+		ResponseFactory $response_factory,
+		LoggerInterface $logger,
+		ProductValidator $product_validator,
+		PayPalOrderManager $order_manager
+	) {
+
+		$this->auth_provider     = $auth_provider;
+		$this->session_handler   = $session_handler;
+		$this->response_factory  = $response_factory;
+		$this->logger            = $logger;
+		$this->product_validator = $product_validator;
+		$this->order_manager     = $order_manager;
 	}
 
 	/**
@@ -65,6 +85,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		if ( is_wp_error( $context ) ) {
 			assert( $context instanceof WP_Error );
 
+			$this->logger->error( '[REST] Permission denied', $context->get_all_error_data() );
+
 			return $context;
 		}
 
@@ -79,6 +101,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @return WP_REST_Response The successful response.
 	 */
 	protected function cart_details( CartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+		$this->logger->info( "[REST] $status_code Response", $cart->to_array() );
+
 		return new WP_REST_Response( $cart->to_array(), $status_code );
 	}
 
@@ -89,6 +113,9 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @return WP_REST_Response The error response.
 	 */
 	protected function error( AgenticError $error ): WP_REST_Response {
+		$error_id = $error->get_debug_id();
+		$this->logger->error( "[REST] Error - $error_id", $error->to_array() );
+
 		return new WP_REST_Response( $error->to_array(), $error->get_status_code() );
 	}
 
@@ -176,51 +203,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 */
 	protected function get_cart_id_arg(): array {
 		return array(
-			'cart_id' => array(
-				'required'          => true,
-				'type'              => 'string',
-				'validate_callback' => array( $this, 'validate_cart_id' ),
-			),
+			'required'          => true,
+			'type'              => 'string',
+			'sanitize_callback' => 'sanitize_text_field',
+			'validate_callback' => array( $this, 'validate_cart_id' ),
 		);
-	}
-
-	/**
-	 * Validate that all products in the cart exist in WooCommerce.
-	 *
-	 * @param PayPalCart $cart The cart to validate.
-	 * @return array Array of InvalidProduct validation issues.
-	 */
-	protected function validate_products_exist( PayPalCart $cart ): array {
-		$issues = array();
-
-		foreach ( $cart->items() as $key => $item ) {
-			$product_id = null;
-
-			// Try to find product by variant_id first, then item_id.
-			$item_identifier = $item->variant_id() ?: $item->item_id();
-			if ( $item_identifier ) {
-				// TODO We currently only send the id. Is this needed/desired?
-				$product_id = wc_get_product_id_by_sku( $item_identifier );
-			}
-
-			// If no product found by SKU, try direct ID lookup.
-			if ( ! $product_id && is_numeric( $item_identifier ) ) {
-				$product    = wc_get_product( (int) $item_identifier );
-				$product_id = $product ? $product->get_id() : null;
-			}
-
-			// If still no product found, create InvalidProduct issue.
-			if ( ! $product_id ) {
-				$field           = "items[{$key}]";
-				$invalid_product = new InvalidProduct(
-					"Product '{$item_identifier}' not found in WooCommerce catalog",
-					"'{$item->name()}' not found in WooCommerce catalog",
-					$field
-				);
-				$issues[]        = $invalid_product;
-			}
-		}
-
-		return $issues;
 	}
 }

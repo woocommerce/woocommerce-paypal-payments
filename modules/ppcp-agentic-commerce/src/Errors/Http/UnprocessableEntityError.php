@@ -11,7 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\HttpError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\HttpErrorName;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
  * Use when business rules prevent cart operations.
  * Can optionally include rich business context via ValidationIssue.
  */
-class UnprocessableEntityError extends HttpError {
+class UnprocessableEntityError extends AgenticError {
 	protected const ERROR_NAME  = HttpErrorName::UNPROCESSABLE_ENTITY;
 	protected const STATUS_CODE = 422;
 

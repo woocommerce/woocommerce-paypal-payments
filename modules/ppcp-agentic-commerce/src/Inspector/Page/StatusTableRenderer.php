@@ -63,4 +63,35 @@ trait StatusTableRenderer {
 			)
 		);
 	}
+
+
+	/**
+	 * Displays the value with a valid/invalid icon.
+	 *
+	 * The expected value (which PayPal uses/expects) is compared to the actual value stored in the
+	 * local database.
+	 *
+	 * @param string $expected The expected value used by PayPal.
+	 * @param string $actual   The actual value, stored in local DB.
+	 */
+	protected function render_with_validation( string $expected, string $actual ): void {
+		$is_valid = $expected === $actual;
+		$icon     = $is_valid ? 'dashicons-yes' : 'dashicons-no-alt';
+
+		echo wp_kses_post(
+			sprintf(
+				'<mark class="%1$s"><span class="dashicons %2$s"></span></mark> <code>%3$s</code>',
+				esc_attr( $is_valid ? 'yes' : 'error' ),
+				esc_attr( $icon ),
+				esc_html( $expected )
+			)
+		);
+
+		if ( ! $is_valid ) {
+			printf(
+				' <mark class="actual no">(%s)</mark>',
+				esc_html( $actual )
+			);
+		}
+	}
 }

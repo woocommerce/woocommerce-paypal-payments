@@ -9,13 +9,13 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\HttpError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\HttpErrorName;
 
 /**
  * Use for system errors, database failures, third-party service issues.
  */
-class InternalServerError extends HttpError {
+class InternalServerError extends AgenticError {
 	protected const ERROR_NAME  = HttpErrorName::INTERNAL_SERVER_ERROR;
 	protected const STATUS_CODE = 500;
 }

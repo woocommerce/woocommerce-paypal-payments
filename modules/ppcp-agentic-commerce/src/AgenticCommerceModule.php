@@ -9,11 +9,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+
+use WooCommerce\PayPalCommerce\AgenticCommerce\Ingestion\IngestionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\AgenticRestEndpoint;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
