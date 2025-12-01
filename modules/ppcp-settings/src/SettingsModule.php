@@ -84,7 +84,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		$this->apply_branded_only_limitations( $container );
 
 		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			/**
 			 * Auto-trigger settings migration to new UI on plugin update.
 			 *
@@ -100,11 +100,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			 *
 			 * The migration is skipped if:
 			 * - OPTION_NAME_MIGRATION_IS_DONE flag is already set (migration completed previously)
-			 *
-			 * @param false|string $previous_version The previously installed plugin version,
-			 *                                       or false on first installation.
 			 */
-			static function ( $previous_version ) use ( $container ): void {
+			static function () use ( $container ): void {
 				if ( get_option( MigrationManager::OPTION_NAME_MIGRATION_IS_DONE ) === '1' ) {
 					return;
 				}
