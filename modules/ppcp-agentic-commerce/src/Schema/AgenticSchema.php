@@ -23,6 +23,8 @@ abstract class AgenticSchema {
 
 	/**
 	 * Collection of all validation issues, populated by the parse_fields method.
+	 *
+	 * @var ValidationIssue[]
 	 */
 	private array $validation_issues = array();
 
@@ -45,8 +47,10 @@ abstract class AgenticSchema {
 
 	/**
 	 * Returns a list of validation errors or an empty array when the object is valid.
+	 *
+	 * @return ValidationIssue[]
 	 */
-	final public function validate(): array {
+	final public function issues(): array {
 		return $this->validation_issues;
 	}
 
@@ -108,5 +112,17 @@ abstract class AgenticSchema {
 		$new_instance->validation_issues = array_merge( $new_instance->validation_issues, $issues );
 
 		return $new_instance;
+	}
+
+	final public function has_validation_issue( string $error_code ): bool {
+		$issues = $this->issues();
+
+		foreach ( $issues as $issue ) {
+			if ( $issue->code() === $error_code ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

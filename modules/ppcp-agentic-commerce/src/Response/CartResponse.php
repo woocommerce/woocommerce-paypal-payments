@@ -52,8 +52,7 @@ class CartResponse {
 	public function __construct( PayPalCart $cart ) {
 		$this->cart = $cart;
 
-		$validation_issues = $this->cart->validate();
-		if ( empty( $validation_issues ) ) {
+		if ( ! $this->cart->issues() ) {
 			$this->validation_status = 'VALID';
 		}
 	}
@@ -99,7 +98,7 @@ class CartResponse {
 			'validation_status' => $this->validation_status,
 			'validation_issues' => array_map(
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
-				$this->cart->validate()
+				$this->cart->issues()
 			),
 			'totals'            => $this->calculate_totals(),
 		);

@@ -50,7 +50,7 @@ class CartTotals extends AgenticSchema {
 			$add_issue( new MissingField( 'Total is required', 'Please provide a total amount', 'total' ) );
 		} else {
 			$money  = Money::from_array( $input['total'], $add_issue );
-			$issues = $money->validate();
+			$issues = $money->issues();
 
 			if ( empty( $issues ) ) {
 				$this->total = $money;
@@ -75,7 +75,7 @@ class CartTotals extends AgenticSchema {
 	private function parse_optional_money_field( array $input, string $field_name, callable $add_issue ): void {
 		if ( isset( $input[ $field_name ] ) && is_array( $input[ $field_name ] ) ) {
 			$money  = Money::from_array( $input[ $field_name ], $add_issue );
-			$issues = $money->validate();
+			$issues = $money->issues();
 
 			if ( empty( $issues ) ) {
 				$this->$field_name = $money;

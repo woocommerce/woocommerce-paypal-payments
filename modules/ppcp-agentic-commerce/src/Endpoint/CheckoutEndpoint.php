@@ -97,8 +97,9 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			return $this->error( $data );
 		}
 
+		// TODO: Should this check be isolated here? Consider moving this to a ValidationInterface class.
 		$payment_method        = PaymentMethod::from_array( $data['payment_method'] );
-		$payment_method_issues = $payment_method->validate();
+		$payment_method_issues = $payment_method->issues();
 
 		if ( ! empty( $payment_method_issues ) ) {
 			return $this->error(
