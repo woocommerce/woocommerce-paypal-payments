@@ -19,6 +19,11 @@ import {
 	payPalCheckoutIntentAuthorized,
 } from './_test-data/paypal';
 import {
+	payLaterCheckout,
+	payLaterCheckoutExcludingTax,
+	payLaterCheckoutIntentAuthorized,
+} from './_test-data/pay-later';
+import {
 	acdcCheckout,
 	acdcCheckoutExcludingTax,
 	acdcCheckoutIntentAuthorized,
@@ -30,7 +35,7 @@ import {
 } from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
-const { payPal, venmo, acdc, fastlane } = gateways;
+const { payPal, payLater, venmo, acdc, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
@@ -45,6 +50,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ payLater.id ]: { id: payLater.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
@@ -56,6 +62,10 @@ test.afterAll( async ( { wooCommerceApi } ) => {
 } );
 
 for ( const testOrder of payPalCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of payLaterCheckout ) {
 	transactionsOnCheckout( testOrder );
 }
 
@@ -74,6 +84,10 @@ test.describe( () => {
 	} );
 
 	for ( const testOrder of payPalCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterCheckoutExcludingTax ) {
 		transactionsOnCheckout( testOrder );
 	}
 
@@ -97,6 +111,10 @@ test.describe( () => {
 	} );
 
 	for ( const testOrder of payPalCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payLaterCheckoutIntentAuthorized ) {
 		transactionsOnCheckout( testOrder );
 	}
 
