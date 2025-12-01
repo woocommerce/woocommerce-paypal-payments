@@ -51,9 +51,9 @@ class AgenticWebhookConfigurationTest extends TestCase {
 		return array(
 			'sandbox environment uses sandbox base URL' => array(
 				false,
-				'https://d-sandbox.joinhoney.com/webhooks/ws/install',
-				'https://d-sandbox.joinhoney.com/webhooks/ws/uninstall',
-				'https://d-sandbox.joinhoney.com/webhooks/products',
+				'https://d-staging.joinhoney.com/webhooks/ws/install',
+				'https://d-staging.joinhoney.com/webhooks/ws/uninstall',
+				'https://d-staging.joinhoney.com/webhooks/products',
 			),
 			'production environment uses live base URL' => array(
 				true,

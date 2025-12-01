@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsModule;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -75,18 +76,21 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		// Sync eligibility cache on init (when WC is available).
 		$this->sync_eligibility_cache( $agentic_settings, $eligibility_check );
 
+		$inspector = $container->get( 'agentic.inspector.page' );
+		assert( $inspector instanceof InspectionStatusPage );
+		$inspector->init();
+
 		// Early exit if features should not be initialized.
 		if ( ! $agentic_settings->should_initialize_features() ) {
 			$this->ensure_deregistered( $registration_handler );
-
-			// todo: also remove scheduled action?
 
 			return true;
 		}
 
 		// Feature is active and merchant is eligible: Initialize everything.
 
-		$this->ensure_registered( $registration_handler );
+		// NOTE: Auto-registration removed for testing - merchants must manually register via inspector page.
+		// $this->ensure_registered( $registration_handler );
 
 		// Add filter for agentic commerce application context.
 		add_filter(

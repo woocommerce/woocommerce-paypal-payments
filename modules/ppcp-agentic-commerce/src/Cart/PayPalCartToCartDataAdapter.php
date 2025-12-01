@@ -57,6 +57,7 @@ class PayPalCartToCartDataAdapter {
 				static fn( $issue ): string => $issue->to_array()['message'],
 				$issues
 			);
+			// TODO: This is possibly incorrect. Cart should be stored in session and returned to the agent with a validation issue rather than throwing an error.
 			throw new ValidationException(
 				$error_messages,
 				'Cart validation failed'
