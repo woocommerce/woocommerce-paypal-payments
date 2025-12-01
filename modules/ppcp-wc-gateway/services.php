@@ -2210,15 +2210,6 @@ return array(
 			getenv( 'PCP_WORKING_CAPITAL_ENABLED' ) === '1'
 		);
 
-		$message = sprintf(
-		// translators: %1$s is the URL for the startup guide.
-			__(
-				'We\'ve redesigned the settings for better performance and usability. Starting late October, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" name="settings-switch-ui"><strong>Switch to New Settings</strong></a> to activate it.',
-				'woocommerce-paypal-payments'
-			),
-			'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
-		);
-
 		return array(
 			$inbox_note_factory->create_note(
 				__( 'PayPal Working Capital', 'woocommerce-paypal-payments' ),
