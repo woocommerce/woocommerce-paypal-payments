@@ -432,15 +432,8 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 				$applepay_product_status = $container->get( 'applepay.apple-product-status' );
 				assert( $applepay_product_status instanceof AppleProductStatus );
 
-				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
-				assert( $dcc_applies instanceof DCCApplies );
-
 				$general_settings = $container->get( 'settings.data.general' );
 				assert( $general_settings instanceof GeneralSettings );
-
-				$messages_apply = $container->get( 'button.helper.messages-apply' );
-				assert( $messages_apply instanceof MessagesApply );
-				$pay_later_eligible = $messages_apply->for_country();
 
 				$merchant_country = $container->get( 'api.merchant.country' );
 
