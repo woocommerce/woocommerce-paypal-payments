@@ -69,7 +69,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $session );
 		}
 
-		$new_cart = $this->parse_and_validate_cart( $request );
+		$new_cart = $this->get_cart_from_request( $request );
 
 		if ( $new_cart instanceof AgenticError ) {
 			return $this->error( $new_cart );

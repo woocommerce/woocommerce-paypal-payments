@@ -115,12 +115,9 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		}
 
 		// Parse the incoming cart data.
-		try {
-			$cart = PayPalCart::from_array( $data );
-		} catch ( \Exception $e ) {
-			return $this->error(
-				new InternalServerError( 'Invalid cart data: ' . $e->getMessage() )
-			);
+		$cart = $this->get_cart_from_request( $request );
+		if ( $cart instanceof AgenticError ) {
+			return $this->error( $cart );
 		}
 
 		// Validate products exist in WooCommerce before proceeding.

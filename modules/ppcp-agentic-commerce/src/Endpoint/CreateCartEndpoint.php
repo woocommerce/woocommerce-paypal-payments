@@ -56,7 +56,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function create_cart( WP_REST_Request $request ): WP_REST_Response {
-		$cart = $this->parse_and_validate_cart( $request );
+		$cart = $this->get_cart_from_request( $request );
 
 		if ( $cart instanceof AgenticError ) {
 			return $this->error( $cart );

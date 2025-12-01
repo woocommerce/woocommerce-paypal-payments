@@ -144,7 +144,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param WP_REST_Request $request The request object.
 	 * @return PayPalCart|AgenticError Valid cart or error.
 	 */
-	protected function parse_and_validate_cart( WP_REST_Request $request ) {
+	protected function get_cart_from_request( WP_REST_Request $request ) {
 		$data = $this->parse_json_body( $request );
 
 		if ( $data instanceof AgenticError ) {
