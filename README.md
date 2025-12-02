@@ -74,6 +74,8 @@ Tests and code style:
 - `$ yarn ddev:lint`
 - `$ yarn ddev:fix-lint`
 - `$ yarn ddev:lint-js`
+- `$ yarn test:unit-js`
+- `$ yarn test:unit-js:coverage`
 
 See [package.json](/package.json) for other useful commands.
 
@@ -102,6 +104,7 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 #### Unit tests with Coverage
 
 Run `yarn ddev:unit-tests:coverage` 
+Run `yarn run test:unit-js:coverage` 
 
 This command generates a full test coverage report, available at the URL https://woocommerce-paypal-payments.ddev.site/coverage
 
