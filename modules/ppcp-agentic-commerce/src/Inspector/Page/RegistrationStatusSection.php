@@ -75,56 +75,47 @@ class RegistrationStatusSection {
 				</tr>
 				</thead>
 				<tbody>
-				<tr>
-					<td>
-						<?php esc_html_e( 'Eligible', 'woocommerce-paypal-payments' ); ?>:
-					</td>
-					<td class="help">
-						<?php $this->render_help( __( 'Whether this store can use agentic commerce features', 'woocommerce-paypal-payments' ) ); ?>
-					</td>
-					<td>
-						<?php
-						$this->render_boolean_badge(
-							$is_eligible,
-							esc_html__( 'Eligible', 'woocommerce-paypal-payments' ),
-							esc_html__( 'Not eligible', 'woocommerce-paypal-payments' )
-						);
-						?>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<?php esc_html_e( 'JWK Auth Service', 'woocommerce-paypal-payments' ); ?>:
-					</td>
-					<td class="help">
-						<?php $this->render_help( __( 'Which implementation verifies the JWK token?', 'woocommerce-paypal-payments' ) ); ?>
-					</td>
-					<td>
-						<?php echo wp_kses_post( sprintf( '<code>%s</code>', get_class( $auth_service ) ) ); ?>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<?php esc_html_e( 'Status', 'woocommerce-paypal-payments' ); ?>:
-					</td>
-					<td class="help">
-						<?php $this->render_help( __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ) ); ?>
-					</td>
-					<td>
-						<div style="display: flex; align-items: center; gap: 12px;">
-							<?php
-							$this->render_boolean_badge(
-								$is_registered,
-								esc_html__( 'Registered', 'woocommerce-paypal-payments' ),
-								esc_html__( 'Not registered', 'woocommerce-paypal-payments' )
-							);
-							?>
-							<?php $this->render_toggle_form( $is_registered ); ?>
-						</div>
-					</td>
-				</tr>
+				<?php
 
-				<?php $this->render_registration_data(); ?>
+				$status_rows = array(
+					array(
+						'label' => __( 'Eligible', 'woocommerce-paypal-payments' ),
+						'value' => $this->render_boolean_badge(
+							$is_eligible,
+							__( 'Eligible', 'woocommerce-paypal-payments' ),
+							__( 'Not eligible', 'woocommerce-paypal-payments' )
+						),
+						'help'  => __( 'Whether this store can use agentic commerce features', 'woocommerce-paypal-payments' ),
+					),
+					array(
+						'label' => __( 'JWK Auth Service', 'woocommerce-paypal-payments' ),
+						'value' => sprintf( '<code>%s</code>', get_class( $auth_service ) ),
+						'help'  => __( 'Which implementation verifies the JWK token?', 'woocommerce-paypal-payments' ),
+					),
+					array(
+						'label' => __( 'Status', 'woocommerce-paypal-payments' ),
+						'value' => $this->render_boolean_badge(
+							$is_registered,
+							__( 'Registered', 'woocommerce-paypal-payments' ),
+							__( 'Not registered', 'woocommerce-paypal-payments' )
+						),
+						'help'  => __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ),
+					),
+					array(
+						'label' => '',
+						'value' => function () use ( $is_registered ): void {
+							$this->render_toggle_form( $is_registered );
+						},
+					),
+				);
+
+				foreach ( $status_rows as $row ) {
+					$this->render_row( $row['label'], $row['value'], $row['help'] ?? '' );
+				}
+
+				$this->render_registration_data();
+
+				?>
 				</tbody>
 			</table>
 		</div>
@@ -146,47 +137,34 @@ class RegistrationStatusSection {
 		$store_country      = $metadata['country'] ?? '?';
 		$store_currency     = $metadata['currency'] ?? '?';
 		$shipping_countries = (array) ( $metadata['shippingCountries'] ?? array() );
-		?>
-		<tr>
-			<td>
-				<?php esc_html_e( 'Store URL', 'woocommerce-paypal-payments' ); ?>:
-			</td>
-			<td class="help">
-				<?php $this->render_help( __( 'This store is identified using that URL. It should not change!', 'woocommerce-paypal-payments' ) ); ?>
-			</td>
-			<td>
-				<code><?php echo esc_html( $store_identifier ); ?></code>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<?php esc_html_e( 'Merchant ID', 'woocommerce-paypal-payments' ); ?>:
-			</td>
-			<td class="help"></td>
-			<td>
-				<?php $this->render_with_validation( $merchant_id, $onboarded_merchant ); ?>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<?php esc_html_e( 'Store Country / Currency', 'woocommerce-paypal-payments' ); ?>:
-			</td>
-			<td class="help"></td>
-			<td>
-				<?php $this->render_with_validation( $store_country, $woo_config['country'] ); ?> /
-				<?php $this->render_with_validation( $store_currency, $woo_config['currency'] ); ?>
-			</td>
-		</tr>
-		<tr>
-			<td>
-				<?php esc_html_e( 'Shipping Countries', 'woocommerce-paypal-payments' ); ?>:
-			</td>
-			<td class="help"></td>
-			<td>
-				<?php echo esc_html( implode( ', ', $shipping_countries ) ); ?>
-			</td>
-		</tr>
-		<?php
+
+		$registration_rows = array(
+			array(
+				'label' => __( 'Store URL', 'woocommerce-paypal-payments' ),
+				'value' => $store_identifier,
+				'help'  => __( 'This store is identified using that URL. It should not change!', 'woocommerce-paypal-payments' ),
+			),
+			array(
+				'label' => __( 'Merchant ID', 'woocommerce-paypal-payments' ),
+				'value' => $this->render_with_validation( $merchant_id, $onboarded_merchant ),
+			),
+			array(
+				'label' => __( 'Store Country', 'woocommerce-paypal-payments' ),
+				'value' => $this->render_with_validation( $store_country, $woo_config['country'] ),
+			),
+			array(
+				'label' => __( 'Store Currency', 'woocommerce-paypal-payments' ),
+				'value' => $this->render_with_validation( $store_currency, $woo_config['currency'] ),
+			),
+			array(
+				'label' => __( 'Shipping Countries', 'woocommerce-paypal-payments' ),
+				'value' => implode( ', ', $shipping_countries ),
+			),
+		);
+
+		foreach ( $registration_rows as $row ) {
+			$this->render_row( $row['label'], $row['value'], $row['help'] ?? '' );
+		}
 	}
 
 	/**
