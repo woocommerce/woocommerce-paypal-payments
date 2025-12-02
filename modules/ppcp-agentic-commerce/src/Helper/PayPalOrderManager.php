@@ -69,6 +69,8 @@ class PayPalOrderManager {
 			)
 		);
 
+		// At this stage, the order intent is always AUTHORIZE, not CAPTURE.
+		$set_order_intent = static fn(): string => 'AUTHORIZE';
 
 		/*
 		 * Build a minimal PurchaseUnit directly from the PayPalCart details.
@@ -79,6 +81,7 @@ class PayPalOrderManager {
 		$paypal_order  = null;
 
 		try {
+			add_filter( 'woocommerce_paypal_payments_order_intent', $set_order_intent );
 
 			// Create PayPal Order (application_context filter is registered in AgenticCommerceModule).
 			$paypal_order = $this->order_endpoint->create(
@@ -105,6 +108,8 @@ class PayPalOrderManager {
 					'item_count' => count( $cart->items() ),
 				)
 			);
+		} finally {
+			remove_filter( 'woocommerce_paypal_payments_order_intent', $set_order_intent );
 		}
 
 		if ( ! $paypal_order ) {
