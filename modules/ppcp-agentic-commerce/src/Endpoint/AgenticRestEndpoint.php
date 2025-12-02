@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 
 /**
@@ -48,9 +48,9 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	protected ResponseFactory $response_factory;
 
-	protected LoggerInterface $logger;
+	protected CartValidationProcessor $validation_processor;
 
-	protected ProductValidator $product_validator;
+	protected LoggerInterface $logger;
 
 	protected PayPalOrderManager $order_manager;
 
@@ -58,17 +58,17 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
+		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
-		ProductValidator $product_validator,
 		PayPalOrderManager $order_manager
 	) {
 
-		$this->auth_provider     = $auth_provider;
-		$this->session_handler   = $session_handler;
-		$this->response_factory  = $response_factory;
-		$this->logger            = $logger;
-		$this->product_validator = $product_validator;
-		$this->order_manager     = $order_manager;
+		$this->auth_provider        = $auth_provider;
+		$this->session_handler      = $session_handler;
+		$this->response_factory     = $response_factory;
+		$this->validation_processor = $validation_processor;
+		$this->logger               = $logger;
+		$this->order_manager        = $order_manager;
 	}
 
 	/**

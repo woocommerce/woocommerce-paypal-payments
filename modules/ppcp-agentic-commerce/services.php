@@ -164,8 +164,8 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.validation.product' ),
 			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
@@ -174,8 +174,8 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.validation.product' ),
 			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
@@ -184,8 +184,8 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.validation.product' ),
 			$c->get( 'agentic.helper.paypal-order-manager' )
 		);
 	},
@@ -194,11 +194,10 @@ return array(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
 			$c->get( 'agentic.response.factory' ),
+			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
-			$c->get( 'agentic.validation.product' ),
 			$c->get( 'agentic.helper.paypal-order-manager' ),
-			$c->get( 'agentic.helper.checkout-processor' ),
-			$c->get( 'agentic.validation.inventory' )
+			$c->get( 'agentic.helper.checkout-processor' )
 		);
 	},
 

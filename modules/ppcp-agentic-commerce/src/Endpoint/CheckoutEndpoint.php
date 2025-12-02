@@ -21,8 +21,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -45,22 +44,19 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 	protected AgenticCheckoutProcessor $checkout_processor;
 
-	protected InventoryValidator $inventory_validator;
 
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
+		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
-		ProductValidator $product_validator,
 		PayPalOrderManager $order_manager,
-		AgenticCheckoutProcessor $checkout_processor,
-		InventoryValidator $inventory_validator
+		AgenticCheckoutProcessor $checkout_processor
 	) {
 
-		parent::__construct( $auth_provider, $session_handler, $response_factory, $logger, $product_validator, $order_manager );
-		$this->checkout_processor  = $checkout_processor;
-		$this->inventory_validator = $inventory_validator;
+		parent::__construct( $auth_provider, $session_handler, $response_factory, $validation_processor, $logger, $order_manager );
+		$this->checkout_processor = $checkout_processor;
 	}
 
 	/**
@@ -123,7 +119,6 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		// Validate products exist in WooCommerce before proceeding.
 		$validation_issues = $this->product_validator->validate_products_exist( $cart );
-		$validation_issues = array_merge( $validation_issues, $this->inventory_validator->verify_inventory( $cart ) );
 
 		if ( ! empty( $validation_issues ) ) {
 			$cart = $cart->with_validation_issues( ...$validation_issues );
