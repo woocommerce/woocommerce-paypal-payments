@@ -11,7 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
-use Exception;
+use RuntimeException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
@@ -96,7 +96,7 @@ class PayPalOrderManager {
 			);
 
 			return $order_id;
-		} catch ( Exception $error ) {
+		} catch ( RuntimeException $error ) {
 			$this->logger->error(
 				'[ORDER] PayPal Order creation failed',
 				array(
@@ -114,7 +114,7 @@ class PayPalOrderManager {
 	 *
 	 * @param string     $order_id The PayPal Order ID.
 	 * @param PayPalCart $cart     The updated cart.
-	 * @throws Exception If PATCH fails.
+	 * @throws RuntimeException If the update fails.
 	 */
 	public function update_order( string $order_id, PayPalCart $cart ): void {
 		$totals = $this->calculate_cart_totals( $cart );
@@ -155,7 +155,7 @@ class PayPalOrderManager {
 					'amount'   => $cart_amount['value'],
 				)
 			);
-		} catch ( Exception $error ) {
+		} catch ( RuntimeException $error ) {
 			$this->logger->error(
 				'[ORDER] PayPal Order update failed',
 				array(
@@ -174,7 +174,7 @@ class PayPalOrderManager {
 	 *
 	 * @param string $order_id The PayPal Order ID.
 	 * @return \WooCommerce\PayPalCommerce\ApiClient\Entity\Order The PayPal Order.
-	 * @throws Exception If fetching fails.
+	 * @throws RuntimeException If fetching fails.
 	 */
 	public function fetch_order( string $order_id ) {
 		$this->logger->info(
@@ -195,7 +195,7 @@ class PayPalOrderManager {
 
 			return $paypal_order;
 
-		} catch ( Exception $error ) {
+		} catch ( RuntimeException $error ) {
 			$this->logger->error(
 				'[ORDER] Failed to fetch PayPal Order',
 				array(
@@ -246,7 +246,7 @@ class PayPalOrderManager {
 				)
 			);
 
-		} catch ( Exception $error ) {
+		} catch ( RuntimeException $error ) {
 			$this->logger->warning(
 				'[ORDER] Failed to link WooCommerce order',
 				array(
@@ -256,7 +256,7 @@ class PayPalOrderManager {
 				)
 			);
 
-			// Don't throw - order is created, webhook matching can still work via _paypal_order_id meta.
+			// Don't throw: Order was created, webhook matching can still work via _paypal_order_id meta.
 		}
 	}
 
@@ -266,7 +266,7 @@ class PayPalOrderManager {
 	 * Captures the authorized payment for the order.
 	 *
 	 * @param string $order_id The PayPal Order ID.
-	 * @return array|null Capture result with transaction_id, or null on failure.
+	 * @return array|null Capture the result with transaction_id, or null on failure.
 	 */
 	public function capture_order( string $order_id ): ?array {
 		$this->logger->info(
@@ -275,10 +275,8 @@ class PayPalOrderManager {
 		);
 
 		try {
-			// Fetch the order first.
 			$paypal_order = $this->fetch_order( $order_id );
 
-			// Capture the payment.
 			$capture_result = $this->order_endpoint->capture( $paypal_order );
 
 			$transaction_id = $order_id;
@@ -301,7 +299,7 @@ class PayPalOrderManager {
 				'transaction_id' => $transaction_id,
 			);
 
-		} catch ( Exception $error ) {
+		} catch ( RuntimeException $error ) {
 			$this->logger->error(
 				'[ORDER] PayPal Order capture failed',
 				array(
