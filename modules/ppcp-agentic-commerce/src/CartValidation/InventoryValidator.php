@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 
 class InventoryValidator {
@@ -26,8 +25,7 @@ class InventoryValidator {
 		$issues = array();
 
 		foreach ( $cart->items() as $item ) {
-			// Get WooCommerce product.
-			$product = $this->product_manager->find_product( $item->variant_id(), $item->item_id() );
+			$product = $this->product_manager->find_product( $item );
 
 			if ( ! $product ) {
 				continue; // Skip if product not found.

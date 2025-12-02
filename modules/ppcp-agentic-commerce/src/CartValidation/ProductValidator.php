@@ -28,7 +28,7 @@ class ProductValidator {
 			$item_id    = $item->item_id();
 
 			// Resolve product using multiple strategies.
-			$product = $this->product_manager->find_product( $variant_id, $item_id );
+			$product = $this->product_manager->find_product( $item );
 
 			if ( ! $product ) {
 				// Product not found.

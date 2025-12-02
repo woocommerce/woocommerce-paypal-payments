@@ -13,6 +13,8 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
 use WC_Product;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+
 class ProductManager {
 	protected static array $product_cache = array();
 
@@ -25,12 +27,13 @@ class ProductManager {
 	 * 3. Direct ID casting for variant_id
 	 * 4. Direct ID casting for item_id
 	 *
-	 * @param string|null $variant_id The variant/product identifier.
-	 * @param string|null $item_id    The item identifier.
+	 * @param CartItem $item The cart item.
 	 * @return WC_Product|null The resolved product or null.
 	 */
-	public function find_product( ?string $variant_id, ?string $item_id ): ?WC_Product {
-		$cache_key = $this->build_cache_key( $variant_id, $item_id );
+	public function find_product( CartItem $item ): ?WC_Product {
+		$variant_id = $item->variant_id();
+		$item_id    = $item->item_id();
+		$cache_key  = $this->build_cache_key( $variant_id, $item_id );
 
 		if ( array_key_exists( $cache_key, self::$product_cache ) ) {
 			return self::$product_cache[ $cache_key ];
