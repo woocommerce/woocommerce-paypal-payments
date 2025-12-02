@@ -44,9 +44,11 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 	/**
 	 * A list of default cart validation services that verify business rules.
+	 *
+	 * Validators are processed in the order they are listed here.
 	 */
 	private const CART_VALIDATION_SERVICES = array(
-		'agentic.validation.product',
+		'agentic.validator.product',
 		'agentic.validator.inventory',
 	);
 
