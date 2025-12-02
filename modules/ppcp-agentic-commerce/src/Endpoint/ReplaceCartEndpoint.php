@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 use WP_REST_Request;
 use WP_REST_Response;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
@@ -69,10 +70,30 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $session );
 		}
 
-		$new_cart = $this->parse_and_validate_cart( $request );
+		// Parse the update request body.
+		$update_data = $this->parse_json_body( $request );
 
-		if ( $new_cart instanceof AgenticError ) {
-			return $this->error( $new_cart );
+		if ( $update_data instanceof AgenticError ) {
+			return $this->error( $update_data );
+		}
+
+		// Get the existing cart from session.
+		$existing_cart = $session['cart'];
+
+		// Merge update data with existing cart, preserving fields not in the update.
+		// This allows partial updates (e.g., updating items without re-sending payment_method).
+		$new_cart = $existing_cart->with( $update_data );
+
+		$issues = $new_cart->validate();
+		if ( ! empty( $issues ) ) {
+			$issue_details = array_map(
+				function ( $issue ) {
+					return $issue->to_array();
+				},
+				$issues
+			);
+
+			return $this->error( new BadRequestError( 'Cart validation issue', $issue_details ) );
 		}
 
 		// Get the PayPal Order ID (ec_token).
