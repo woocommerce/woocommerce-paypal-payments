@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
 
 class CartHelper {
 	/**
@@ -51,6 +52,71 @@ class CartHelper {
 				return $cart_total + ( $price->value() * (float) $item->quantity() );
 			},
 			0.0
+		);
+	}
+
+	public static function full_customer_name( PayPalCart $cart, string $default = '' ): string {
+		$full_name = '';
+		$customer  = $cart->customer();
+
+		if ( $customer && $customer->name() ) {
+			$name       = $customer->name();
+			$first_name = $name['given_name'] ?? '';
+			$last_name  = $name['surname'] ?? '';
+
+			$full_name = trim( "$first_name $last_name" );
+		}
+
+		return $full_name ?: $default;
+	}
+
+	/**
+	 * @return array{
+	 *     address_line_1: string,
+	 *     address_line_2: string,
+	 *     admin_area_2: string,
+	 *     admin_area_1: string,
+	 *     postal_code: string,
+	 *     country_code: string
+	 * }
+	 */
+	public static function shipping_address_array( PayPalCart $cart ): array {
+		return self::address_array( $cart->shipping_address() );
+	}
+
+	/**
+	 * @return array{
+	 *     address_line_1: string,
+	 *     address_line_2: string,
+	 *     admin_area_2: string,
+	 *     admin_area_1: string,
+	 *     postal_code: string,
+	 *     country_code: string
+	 * }
+	 */
+	public static function billing_address_array( PayPalCart $cart ): array {
+		return self::address_array( $cart->billing_address() );
+	}
+
+	private static function address_array( ?Address $address ): array {
+		if ( ! $address ) {
+			return array(
+				'address_line_1' => '',
+				'address_line_2' => '',
+				'admin_area_2'   => '',
+				'admin_area_1'   => '',
+				'postal_code'    => '',
+				'country_code'   => '',
+			);
+		}
+
+		return array(
+			'address_line_1' => $address->address_line_1() ?? '',
+			'address_line_2' => $address->address_line_2() ?? '',
+			'admin_area_2'   => $address->admin_area_2() ?? '',
+			'admin_area_1'   => $address->admin_area_1() ?? '',
+			'postal_code'    => $address->postal_code() ?? '',
+			'country_code'   => $address->country_code() ?? '',
 		);
 	}
 }

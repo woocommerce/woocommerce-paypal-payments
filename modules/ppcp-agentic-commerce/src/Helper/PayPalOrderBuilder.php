@@ -78,36 +78,12 @@ class PayPalOrderBuilder {
 		}
 
 		// Build amount breakdown (required when items are present).
-		$breakdown = new AmountBreakdown(
-			new Money( $total, $currency ),
-			null, // shipping.
-			null, // tax_total.
-			null, // insurance.
-			null, // handling.
-			null, // shipping_discount.
-			null  // discount.
-		);
+		$total_amount = new Money( $total, $currency );
+		$breakdown    = new AmountBreakdown( $total_amount );
+		$amount       = new Amount( $total_amount, $breakdown );
+		$shipping     = $this->build_shipping_from_cart( $cart );
 
-		// Build amount with breakdown.
-		$amount = new Amount( new Money( $total, $currency ), $breakdown );
-
-		// Build shipping if needed.
-		$shipping = null;
-		if ( $cart->shipping_address() && $cart->customer() ) {
-			$shipping = $this->build_shipping_from_cart( $cart );
-		}
-
-		return new PurchaseUnit(
-			$amount,
-			$items,
-			$shipping,
-			'default', // reference_id.
-			'',        // description.
-			'',        // custom_id - will be set during checkout when WC order is created.
-			'',        // invoice_id - will be set during checkout.
-			'',        // soft_descriptor.
-			null // payee.
-		);
+		return new PurchaseUnit( $amount, $items, $shipping );
 	}
 
 	/**
@@ -117,35 +93,22 @@ class PayPalOrderBuilder {
 	 * @return Shipping|null
 	 */
 	public function build_shipping_from_cart( PayPalCart $cart ): ?Shipping {
-		$customer = $cart->customer();
-		$shipping = $cart->shipping_address();
+		$full_name = CartHelper::full_customer_name( $cart );
+		$shipping  = CartHelper::shipping_address_array( $cart );
 
-		if ( ! $customer || ! $shipping ) {
+		if ( ! $full_name || ! $shipping['country_code'] ) {
 			return null;
 		}
 
 		$address = new Address(
-			$shipping->country_code() ?? '',
-			$shipping->address_line_1() ?? '',
-			$shipping->address_line_2() ?? '',
-			$shipping->admin_area_2() ?? '', // city.
-			$shipping->admin_area_1() ?? '', // state.
-			$shipping->postal_code() ?? ''
+			$shipping['country_code'],
+			$shipping['address_line_1'],
+			$shipping['address_line_2'],
+			$shipping['admin_area_2'],
+			$shipping['admin_area_1'],
+			$shipping['postal_code'],
 		);
 
-		// Use customer's name for shipping recipient.
-		$full_name = '';
-		if ( $customer->name() ) {
-			$name      = $customer->name();
-			$full_name = trim( ( $name['given_name'] ?? '' ) . ' ' . ( $name['surname'] ?? '' ) );
-		}
-
-		return new Shipping(
-			$full_name,
-			$address,
-			null,    // email_address.
-			null,    // phone_number.
-			array()  // options.
-		);
+		return new Shipping( $full_name, $address );
 	}
 }

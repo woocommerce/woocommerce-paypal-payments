@@ -167,17 +167,7 @@ class AgenticCheckoutProcessor {
 
 		// Add billing address.
 		if ( $cart->billing_address() ) {
-			/** @var Address $billing */
-			$billing = $cart->billing_address();
-
-			$payer_data['address'] = array(
-				'address_line_1' => $billing->address_line_1() ?? '',
-				'address_line_2' => $billing->address_line_2() ?? '',
-				'admin_area_2'   => $billing->admin_area_2() ?? '',
-				'admin_area_1'   => $billing->admin_area_1() ?? '',
-				'postal_code'    => $billing->postal_code() ?? '',
-				'country_code'   => $billing->country_code() ?? '',
-			);
+			$payer_data['address'] = CartHelper::billing_address_array( $cart );
 		}
 
 		return $payer_data;
@@ -194,35 +184,11 @@ class AgenticCheckoutProcessor {
 			return array();
 		}
 
-		/** @var Address $shipping */
-		$shipping   = $cart->shipping_address();
-		$customer   = $cart->customer();
-		$first_name = '';
-		$last_name  = '';
-
-		if ( $customer ) {
-			$customer_name = $customer->name();
-
-			if ( $customer_name ) {
-				$first_name = $customer_name['given_name'];
-				$last_name  = $customer_name['surname'];
-			}
-		}
-
 		return array(
 			'name'    => array(
-				'full_name' => trim(
-					"$first_name $last_name"
-				),
+				'full_name' => CartHelper::full_customer_name( $cart ),
 			),
-			'address' => array(
-				'address_line_1' => $shipping->address_line_1() ?? '',
-				'address_line_2' => $shipping->address_line_2() ?? '',
-				'admin_area_2'   => $shipping->admin_area_2() ?? '',
-				'admin_area_1'   => $shipping->admin_area_1() ?? '',
-				'postal_code'    => $shipping->postal_code() ?? '',
-				'country_code'   => $shipping->country_code() ?? '',
-			),
+			'address' => CartHelper::shipping_address_array( $cart ),
 		);
 	}
 
