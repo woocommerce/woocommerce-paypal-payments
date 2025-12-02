@@ -60,6 +60,7 @@ class RegistrationServiceTest extends TestCase {
 	private function stub_successful_webhook_response(): void {
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -73,6 +74,7 @@ class RegistrationServiceTest extends TestCase {
 	private function stub_failed_webhook_response( string $error_message ): void {
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -218,6 +220,7 @@ class RegistrationServiceTest extends TestCase {
 				return $thing instanceof WP_Error;
 			}
 		);
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 		when( 'wp_remote_retrieve_body' )->justReturn( 'invalid json {[' );
 
 		$testee = $this->create_testable_service( false );
@@ -257,7 +260,7 @@ class RegistrationServiceTest extends TestCase {
 	 * WHEN deregistering from PayPal Agentic Commerce
 	 * AND the webhook returns a failure response
 	 * THEN deregistration should fail with error
-	 * AND the registration token should still be deleted locally
+	 * AND the store should still be considered registered
 	 */
 	public function test_deregistration_fails_when_webhook_returns_error(): void {
 		$this->webhook_config->method( 'get_registration_uninstall_url' )
@@ -265,12 +268,15 @@ class RegistrationServiceTest extends TestCase {
 		$this->stub_failed_webhook_response( 'Token not found' );
 
 		$testee = $this->create_testable_service( true );
+
+		$this->assertTrue( $testee->is_registered(), 'Store should be registered before deregistration attempt' );
+
 		$result = $testee->deregister();
 
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
 		$this->assertSame( 'Token not found', $result->get_error_message() );
-		$this->assertTrue( $testee->was_token_deleted );
+		$this->assertTrue( $testee->is_registered(), 'Store should still be registered after failed deregistration' );
 	}
 
 	/**
@@ -298,6 +304,7 @@ class RegistrationServiceTest extends TestCase {
 			->willReturn( $expected_url );
 
 		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
