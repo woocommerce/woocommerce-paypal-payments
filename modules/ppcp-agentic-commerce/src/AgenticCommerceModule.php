@@ -31,9 +31,6 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
-	 * Returns the services provided by this module.
-	 *
-	 * @return array The array of services.
 	 * A list of all REST services that this module needs to register on init.
 	 */
 	private const REST_ENDPOINT_SERVICES = array(
@@ -90,8 +87,9 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		// Feature is active and merchant is eligible: Initialize everything.
 
-		// NOTE: Auto-registration removed for testing - merchants must manually register via inspector page.
-		// $this->ensure_registered( $registration_handler );
+		if ( $this->should_auto_register() ) {
+			$this->ensure_registered( $registration_handler );
+		}
 
 		// Add filter for agentic commerce application context.
 		add_filter(
@@ -242,5 +240,18 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			return;
 		}
 		add_action( 'init', static fn() => $registration_service->deregister() );
+	}
+
+	/**
+	 * Whether the auto-registration is enabled for this site.
+	 *
+	 * By default, the plugin automatically registers when the merchant is eligible and the feature
+	 * is enabled. For testing or troubleshooting, this behavior can be disabled by adding the
+	 * following constant to wp-config.php:
+	 *
+	 *   define( 'PPCP_AGENTIC_AUTO_REGISTER', false );
+	 */
+	private function should_auto_register(): bool {
+		return ! defined( 'PPCP_AGENTIC_AUTO_REGISTER' ) || PPCP_AGENTIC_AUTO_REGISTER;
 	}
 }

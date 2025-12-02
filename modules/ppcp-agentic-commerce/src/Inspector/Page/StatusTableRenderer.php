@@ -64,7 +64,6 @@ trait StatusTableRenderer {
 		);
 	}
 
-
 	/**
 	 * Displays the value with a valid/invalid icon.
 	 *

@@ -17,7 +17,6 @@ use Psr\Log\LoggerInterface;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
@@ -166,8 +165,8 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	 * 5. Capturing payment
 	 * 6. Cleaning up temporary cart
 	 *
-	 * @param PayPalCart    $cart           The cart data.
-	 * @param PaymentMethod $payment_method The payment method data.
+	 * @param PayPalCart    $cart            The cart data.
+	 * @param PaymentMethod $payment_method  The payment method data.
 	 * @param string        $paypal_order_id The PayPal Order ID (ec_token).
 	 * @return \WC_Order|\WP_Error The created order or error.
 	 */
