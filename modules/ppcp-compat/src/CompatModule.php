@@ -97,11 +97,7 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		 * This action runs during plugin updates to automatically enable Pay Later messaging for stores
 		 * that meet the following criteria:
 		 * - Store Country is set as Canada
-		 * - The "Stay updated" checkbox is enabled (checked in either old or new UI)
-		 *
-		 * The "Stay updated" setting is retrieved differently based on the UI version:
-		 * - Legacy UI: Retrieved from wcgateway.settings
-		 * - New UI: Retrieved from settings.data.settings model
+		 * - The "Stay updated" checkbox is enabled
 		 *
 		 * When all conditions are met, this will:
 		 * - Enable Pay Later messaging
