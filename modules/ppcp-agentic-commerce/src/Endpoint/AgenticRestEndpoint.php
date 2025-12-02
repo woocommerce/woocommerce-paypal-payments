@@ -155,7 +155,15 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 		$issues = $cart->validate();
 		if ( ! empty( $issues ) ) {
-			return new BadRequestError( 'Cart validation issue', $issues );
+			// Convert ValidationIssue objects to arrays for error response.
+			$issue_details = array_map(
+				function ( $issue ) {
+					return $issue->to_array();
+				},
+				$issues
+			);
+
+			return new BadRequestError( 'Cart validation issue', $issue_details );
 		}
 
 		return $cart;
