@@ -11,6 +11,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WC_Order;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 use Psr\Log\LoggerInterface;
@@ -43,7 +45,6 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 	protected AgenticCheckoutProcessor $checkout_processor;
 
-
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
@@ -55,6 +56,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	) {
 
 		parent::__construct( $auth_provider, $session_handler, $response_factory, $validation_processor, $logger, $order_manager );
+
 		$this->checkout_processor = $checkout_processor;
 	}
 
@@ -92,7 +94,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			return $this->error( $data );
 		}
 
-		// TODO: Should this check be isolated here? Consider moving this to a ValidationInterface class.
+		// TODO: Move this into a validator to add a PAYMENT_ERROR, which we can check here.
 		$payment_method        = PaymentMethod::from_array( $data['payment_method'] );
 		$payment_method_issues = $payment_method->issues();
 
@@ -116,42 +118,25 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			return $this->error( $cart );
 		}
 
-		// Validate products exist in WooCommerce before proceeding.
-		$validation_issues = $this->product_validator->validate_products_exist( $cart );
+		// If the cart has _any_ validation issue, stop here.
+		if ( $cart->issues() ) {
+			$cart_response = $this->response_factory->from_cart( $cart );
 
-		if ( ! empty( $validation_issues ) ) {
-			$cart = $cart->with_validation_issues( ...$validation_issues );
-
-			return $this->cart_details( $this->response_factory->active_cart( $cart, $cart_id, $session['ec_token'] ) );
+			return $this->cart_details( $cart_response );
 		}
 
-		try {
-			// Create WooCommerce order.
-			$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
-			if ( is_wp_error( $order ) ) {
-				return $this->error(
-					InternalServerError::from_wp_error( $order )
-				);
-			}
+		// It's time to create the WooCommerce order.
+		$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
 
-			// Remove session.
-			$this->flush_local_cart( $cart_id );
-
-			// Build the response with payment confirmation.
-			$response = $this->response_factory->from_order(
-				$order,
-				$cart
-			);
-
-			return $this->cart_details( $response );
-
-		} catch ( \Exception $e ) {
-			return $this->error(
-				new InternalServerError(
-					'A temporary system error occurred. Please try again later.'
-				)
-			);
+		if ( is_wp_error( $order ) ) {
+			return $this->error( InternalServerError::from_wp_error( $order ) );
 		}
+
+		$this->flush_local_cart( $cart_id );
+
+		$response = $this->response_factory->from_order( $order, $cart );
+
+		return $this->cart_details( $response );
 	}
 
 	/**
@@ -168,7 +153,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	 * @param PayPalCart    $cart            The cart data.
 	 * @param PaymentMethod $payment_method  The payment method data.
 	 * @param string        $paypal_order_id The PayPal Order ID (ec_token).
-	 * @return \WC_Order|\WP_Error The created order or error.
+	 * @return WC_Order|WP_Error The created order or error.
 	 */
 	private function create_wc_order( PayPalCart $cart, PaymentMethod $payment_method, string $paypal_order_id ) {
 		return $this->checkout_processor->process( $cart, $payment_method, $paypal_order_id );
