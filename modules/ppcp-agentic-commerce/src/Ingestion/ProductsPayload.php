@@ -46,12 +46,20 @@ class ProductsPayload {
 			}
 
 			// For all other product types (simple, grouped, etc.).
+			$image_url   = wp_get_attachment_image_url( (int) $product->get_image_id(), 'full' );
+			$description = $product->get_description() ?: $product->get_short_description();
+
+			// Skip products without required fields.
+			if ( ! $image_url || ! $description ) {
+				continue;
+			}
+
 			$api_product = array(
 				'id'               => (string) $product->get_id(),
 				'title'            => $product->get_name(),
 				'link'             => $product->get_permalink(),
-				'image_link'       => wp_get_attachment_image_url( (int) $product->get_image_id(), 'full' ) ?: '',
-				'description'      => $product->get_description() ?: $product->get_short_description(),
+				'image_link'       => $image_url,
+				'description'      => $description,
 				'price'            => $this->format_price( $product->get_price() ),
 				'availability'     => $this->map_stock_status( $product->get_stock_status() ),
 				'merchantStoreUrl' => $this->merchant_store_url,
@@ -92,15 +100,22 @@ class ProductsPayload {
 				continue;
 			}
 
+			$image_url   = wp_get_attachment_image_url( (int) $variation->get_image_id(), 'full' )
+				?: wp_get_attachment_image_url( (int) $variable_product->get_image_id(), 'full' );
+			$description = $variation->get_description() ?: $variable_product->get_description();
+
+			// Skip variations without required fields.
+			if ( ! $image_url || ! $description ) {
+				continue;
+			}
+
 			$variant = array(
 				'id'               => (string) $variation->get_id(),
 				'item_group_id'    => (string) $variable_product->get_id(),
 				'title'            => $variation->get_name(),
 				'link'             => $variation->get_permalink(),
-				'image_link'       => wp_get_attachment_image_url( (int) $variation->get_image_id(), 'full' )
-					?: wp_get_attachment_image_url( (int) $variable_product->get_image_id(), 'full' )
-						?: '',
-				'description'      => $variation->get_description() ?: $variable_product->get_description(),
+				'image_link'       => $image_url,
+				'description'      => $description,
 				'price'            => $this->format_price( $variation->get_price() ),
 				'availability'     => $this->map_stock_status( $variation->get_stock_status() ),
 				'merchantStoreUrl' => $this->merchant_store_url,
