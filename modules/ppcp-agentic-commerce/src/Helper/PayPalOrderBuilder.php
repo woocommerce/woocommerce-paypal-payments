@@ -29,8 +29,9 @@ class PayPalOrderBuilder {
 	 * Build a PurchaseUnit from cart without a WC order.
 	 *
 	 * This creates a minimal purchase unit for PayPal order creation.
-	 * The full purchase unit with proper amounts will be created later
-	 * when the WC order is created during checkout.
+	 * For agentic commerce, we create orders without items to allow
+	 * cart updates via PATCH. Items are added when the WC order is
+	 * created during checkout.
 	 *
 	 * @param PayPalCart $cart      The PayPal cart.
 	 * @param CartData   $cart_data The translated cart data.
@@ -52,44 +53,9 @@ class PayPalOrderBuilder {
 		// Use the WooCommerce currency.
 		$currency = get_woocommerce_currency();
 
-		// Build items for the purchase unit.
-		$items = array();
-		foreach ( $cart_items as $cart_item ) {
-			$product = $cart_item['data'] ?? null;
-			if ( ! $product instanceof WC_Product ) {
-				continue;
-			}
-
-			$product_name        = (string) substr( $product->get_name(), 0, 127 );
-			$unit_amount         = new Money( (float) $product->get_price(), $currency );
-			$product_description = (string) substr( $product->get_description(), 0, 127 );
-			$product_sku         = (string) substr( $product->get_sku(), 0, 127 );
-			$product_category    = $product->is_virtual() ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS;
-
-			$items[] = new Item(
-				$product_name,
-				$unit_amount,
-				(int) $cart_item['quantity'],
-				$product_description,
-				null, // tax.
-				$product_sku,
-				$product_category
-			);
-		}
-
-		// Build amount breakdown (required when items are present).
-		$breakdown = new AmountBreakdown(
-			new Money( $total, $currency ),
-			null, // shipping.
-			null, // tax_total.
-			null, // insurance.
-			null, // handling.
-			null, // shipping_discount.
-			null  // discount.
-		);
-
-		// Build amount with breakdown.
-		$amount = new Amount( new Money( $total, $currency ), $breakdown );
+		// Build amount without breakdown to allow PATCH updates.
+		// PayPal doesn't allow updating orders that have items in breakdown.
+		$amount = new Amount( new Money( $total, $currency ), null );
 
 		// Build shipping if needed.
 		$shipping = null;
@@ -97,9 +63,10 @@ class PayPalOrderBuilder {
 			$shipping = $this->build_shipping_from_cart( $cart );
 		}
 
+		// Create purchase unit without items to allow cart updates via PATCH.
 		return new PurchaseUnit(
 			$amount,
-			$items,
+			array(),   // No items - allows PATCH updates.
 			$shipping,
 			'default', // reference_id.
 			'',        // description.
