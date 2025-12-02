@@ -56,9 +56,10 @@ class RegistrationStatusSection {
 	 * Render the registration status section.
 	 */
 	public function render(): void {
-		$is_eligible   = $this->eligibility_check->is_eligible();
-		$is_registered = $this->registration_service->is_registered();
-		$auth_service  = $this->auth_provider->auth_service();
+		$use_auto_register = $this->use_auto_register();
+		$is_eligible       = $this->eligibility_check->is_eligible();
+		$is_registered     = $this->registration_service->is_registered();
+		$auth_service      = $this->auth_provider->auth_service();
 
 		?>
 		<div class="wrap">
@@ -101,13 +102,25 @@ class RegistrationStatusSection {
 						),
 						'help'  => __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ),
 					),
-					array(
+				);
+
+				if ( $use_auto_register ) {
+					$status_rows[] = array(
+						'label' => '',
+						'value' => sprintf(
+						// translators: The placeholder contains a code snippet for defining a constant.
+							__( 'Auto-registration is enabled, disable by adding %s to wp-config.php', 'woocommerce-paypal-payments' ),
+							'<code>define( "PPCP_AGENTIC_AUTO_REGISTER", false );</code>'
+						),
+					);
+				} else {
+					$status_rows[] = array(
 						'label' => '',
 						'value' => function () use ( $is_registered ): void {
 							$this->render_toggle_form( $is_registered );
 						},
-					),
-				);
+					);
+				}
 
 				foreach ( $status_rows as $row ) {
 					$this->render_row( $row['label'], $row['value'], $row['help'] ?? '' );
@@ -221,5 +234,12 @@ class RegistrationStatusSection {
 			<p><?php echo esc_html( $messages[ $notice_type ] ); ?></p>
 		</div>
 		<?php
+	}
+
+	/**
+	 * Mirrors the logic of AgenticCommerceModule::should_auto_register().
+	 */
+	private function use_auto_register(): bool {
+		return ! defined( 'PPCP_AGENTIC_AUTO_REGISTER' ) || PPCP_AGENTIC_AUTO_REGISTER;
 	}
 }
