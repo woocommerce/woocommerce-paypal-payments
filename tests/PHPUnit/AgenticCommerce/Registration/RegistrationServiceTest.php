@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Mockery;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadata;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
@@ -28,9 +29,14 @@ class RegistrationServiceTest extends TestCase {
 	}
 
 	private function create_testable_service( bool $has_token = false ): TestableRegistrationService {
+		$logger = Mockery::mock( LoggerInterface::class );
+		$logger->allows( 'info' );
+		$logger->allows( 'error' );
+
 		return new TestableRegistrationService(
 			$this->webhook_config,
 			$this->metadata_provider,
+			$logger,
 			$has_token ? 'stored-token' : false
 		);
 	}
@@ -339,8 +345,8 @@ class TestableRegistrationService extends RegistrationService {
 	 */
 	private $stored_token;
 
-	public function __construct( $webhook_config, $metadata_provider, $initial_token ) {
-		parent::__construct( $webhook_config, $metadata_provider );
+	public function __construct( $webhook_config, $metadata_provider, $logger, $initial_token ) {
+		parent::__construct( $webhook_config, $metadata_provider, $logger );
 		$this->stored_token = $initial_token;
 	}
 
