@@ -243,6 +243,10 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler->allows( 'update_cart_session' )
 			->andReturn( false );
 
+		// Mock order_manager behavior - should succeed since we're testing session update failure
+		$order_manager = $mocks['order_manager'];
+		$order_manager->allows( 'update_order' )->andReturn( true );
+
 		// Mock validation_processor to return valid cart
 		$validation_processor = $mocks['validation_processor'];
 		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
