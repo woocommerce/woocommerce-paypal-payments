@@ -59,7 +59,7 @@ import {
 import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
 import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
-import { buttonConfiguration, cardFieldsConfiguration } from './Configuration';
+import { buttonConfiguration, cardFieldsConfiguration } from './configuration';
 import { renderFields } from '../../../ppcp-card-fields/resources/js/Render';
 import {
 	setVisible,
