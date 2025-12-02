@@ -3,10 +3,13 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartPayloadBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use Mockery;
@@ -29,10 +32,17 @@ abstract class AgenticEndpointTestCase extends TestCase {
 		$auth_provider = Mockery::mock( AuthServiceProvider::class );
 		$auth_provider->allows( 'auth_service' )->andReturn( $auth_service );
 
+		$logger = Mockery::mock( LoggerInterface::class );
+		$logger->allows( 'info' );
+		$logger->allows( 'error' );
+
 		return array(
-			'auth_provider'    => $auth_provider,
-			'session_handler'  => Mockery::mock( AgenticSessionHandler::class ),
-			'response_factory' => Mockery::mock( ResponseFactory::class ),
+			'auth_provider'        => $auth_provider,
+			'session_handler'      => Mockery::mock( AgenticSessionHandler::class ),
+			'response_factory'     => Mockery::mock( ResponseFactory::class ),
+			'validation_processor' => Mockery::mock( CartValidationProcessor::class ),
+			'logger'               => $logger,
+			'order_manager'        => Mockery::mock( PayPalOrderManager::class ),
 		);
 	}
 

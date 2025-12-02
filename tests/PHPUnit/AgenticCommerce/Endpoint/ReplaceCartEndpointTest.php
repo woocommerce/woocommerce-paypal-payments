@@ -52,11 +52,22 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart ) => new CartResponse( $cart ) );
 
-		// Mock Orders API.
-		$orders_api = Mockery::mock( Orders::class );
-		$orders_api->allows( 'patch_order' )->andReturn( array() );
+		// Mock order_manager behavior
+		$order_manager = $mocks['order_manager'];
+		$order_manager->allows( 'update_order' )->andReturn( true );
 
-		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $response_factory, $orders_api );
+		// Mock validation_processor to return valid cart
+		$validation_processor = $mocks['validation_processor'];
+		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
+
+		$endpoint = new ReplaceCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$response_factory,
+			$validation_processor,
+			$mocks['logger'],
+			$order_manager
+		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -85,10 +96,14 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		// Mock Orders API (not used in this test path).
-		$orders_api = Mockery::mock( Orders::class );
-
-		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $mocks['response_factory'], $orders_api );
+		$endpoint = new ReplaceCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$mocks['response_factory'],
+			$mocks['validation_processor'],
+			$mocks['logger'],
+			$mocks['order_manager']
+		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -170,11 +185,22 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$response_factory->allows( 'from_cart' )
 			->andReturnUsing( fn( $cart ) => new CartResponse( $cart ) );
 
-		// Mock Orders API.
-		$orders_api = Mockery::mock( Orders::class );
-		$orders_api->allows( 'patch_order' )->andReturn( array() );
+		// Mock order_manager behavior
+		$order_manager = $mocks['order_manager'];
+		$order_manager->allows( 'update_order' )->andReturn( true );
 
-		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $response_factory, $orders_api );
+		// Mock validation_processor to return valid cart
+		$validation_processor = $mocks['validation_processor'];
+		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
+
+		$endpoint = new ReplaceCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$response_factory,
+			$validation_processor,
+			$mocks['logger'],
+			$order_manager
+		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -218,11 +244,18 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$session_handler->allows( 'update_cart_session' )
 			->andReturn( false );
 
-		// Mock Orders API.
-		$orders_api = Mockery::mock( Orders::class );
-		$orders_api->allows( 'patch_order' )->andReturn( array() );
+		// Mock validation_processor to return valid cart
+		$validation_processor = $mocks['validation_processor'];
+		$validation_processor->allows( 'validate_cart' )->andReturnUsing( fn( $cart ) => $cart );
 
-		$endpoint = new ReplaceCartEndpoint( $mocks['auth_provider'], $session_handler, $mocks['response_factory'], $orders_api );
+		$endpoint = new ReplaceCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$mocks['response_factory'],
+			$validation_processor,
+			$mocks['logger'],
+			$mocks['order_manager']
+		);
 
 		$request = new WP_REST_Request( 'PUT', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
