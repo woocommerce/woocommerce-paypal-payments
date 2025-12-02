@@ -8,6 +8,7 @@
     },
     "testPathIgnorePatterns": [
         "<rootDir>/tests/",
+        "<rootDir>/.ddev/",
         "<rootDir>/node_modules/",
         "<rootDir>/vendor/"
     ],
