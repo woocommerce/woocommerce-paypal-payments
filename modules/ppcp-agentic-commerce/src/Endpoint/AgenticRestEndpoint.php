@@ -100,7 +100,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param int          $status_code HTTP status code.
 	 * @return WP_REST_Response The successful response.
 	 */
-	protected function cart_details( CartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+	protected function cart_details( CartResponse $cart, int $status_code ): WP_REST_Response {
 		$this->logger->info( "[REST] $status_code Response", $cart->to_array() );
 
 		return new WP_REST_Response( $cart->to_array(), $status_code );

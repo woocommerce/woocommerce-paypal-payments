@@ -71,6 +71,6 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 			$session['ec_token']
 		);
 
-		return $this->cart_details( $response );
+		return $this->cart_details( $response, 200 );
 	}
 }
