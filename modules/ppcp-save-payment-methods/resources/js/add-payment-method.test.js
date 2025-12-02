@@ -28,7 +28,7 @@ jest.mock( '../../../ppcp-button/resources/js/modules/ErrorHandler', () => {
 	} ) );
 } );
 
-jest.mock( './Configuration', () => ( {
+jest.mock( './configuration', () => ( {
 	buttonConfiguration: jest.fn( () => ( {
 		createVaultSetupToken: jest.fn(),
 		onApprove: jest.fn(),
