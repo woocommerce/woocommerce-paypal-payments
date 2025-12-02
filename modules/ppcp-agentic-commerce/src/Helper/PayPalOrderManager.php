@@ -15,9 +15,11 @@ use RuntimeException;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order as WooOrder;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 
 /**
  * Manages PayPal Order creation and updates.
@@ -67,38 +69,37 @@ class PayPalOrderManager {
 			)
 		);
 
+
+		/*
+		 * Build a minimal PurchaseUnit directly from the PayPalCart details.
+		 * We can't use from_wc_order() yet because there's no WC order.
+		 */
+		$woo_cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
+		$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $woo_cart_data );
+		$paypal_order  = null;
+
 		try {
-			// Step 1: Transform PayPalCart to CartData.
-			$cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
 
-			// Step 2: Build a minimal PurchaseUnit directly from cart.
-			// We can't use from_wc_order() yet because there's no WC order.
-			$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $cart_data );
-
-			// Step 3: Create PayPal Order (application_context filter is registered in AgenticCommerceModule).
+			// Create PayPal Order (application_context filter is registered in AgenticCommerceModule).
 			$paypal_order = $this->order_endpoint->create(
 				array( $purchase_unit ),
 				ExperienceContext::SHIPPING_PREFERENCE_NO_SHIPPING,
 				null,               // payer.
-				'agentic-commerce', // payment_method identifier.
-				array(),            // request_data.
-				null                // payment_source.
+				'agentic-commerce'  // payment_method identifier.
 			);
+		} catch ( PayPalApiException $error ) {
+			$details = $error->details();
 
-			$order_id = $paypal_order->id();
-
-			$this->logger->info(
-				'[ORDER] PayPal Order created successfully',
+			$this->logger->error(
+				'[ORDER] PayPal order creation failed',
 				array(
-					'order_id'   => $order_id,
+					'error'      => reset( $details ),
 					'item_count' => count( $cart->items() ),
 				)
 			);
-
-			return $order_id;
 		} catch ( RuntimeException $error ) {
 			$this->logger->error(
-				'[ORDER] PayPal Order creation failed',
+				'[ORDER] PayPal API request failed',
 				array(
 					'error'      => $error->getMessage(),
 					'item_count' => count( $cart->items() ),
@@ -106,7 +107,21 @@ class PayPalOrderManager {
 			);
 		}
 
-		return '';
+		if ( ! $paypal_order ) {
+			return '';
+		}
+
+		$order_id = $paypal_order->id();
+
+		$this->logger->info(
+			'[ORDER] PayPal Order created successfully',
+			array(
+				'order_id'   => $order_id,
+				'item_count' => count( $cart->items() ),
+			)
+		);
+
+		return $order_id;
 	}
 
 	/**
@@ -173,7 +188,7 @@ class PayPalOrderManager {
 	 * Fetch a PayPal Order by ID.
 	 *
 	 * @param string $order_id The PayPal Order ID.
-	 * @return \WooCommerce\PayPalCommerce\ApiClient\Entity\Order The PayPal Order.
+	 * @return WooOrder The PayPal Order.
 	 * @throws RuntimeException If fetching fails.
 	 */
 	public function fetch_order( string $order_id ) {
@@ -275,11 +290,9 @@ class PayPalOrderManager {
 		);
 
 		try {
-			$paypal_order = $this->fetch_order( $order_id );
-
-			$capture_result = $this->order_endpoint->capture( $paypal_order );
-
 			$transaction_id = $order_id;
+			$paypal_order   = $this->fetch_order( $order_id );
+			$capture_result = $this->order_endpoint->capture( $paypal_order );
 			$payments       = $capture_result->purchase_units()[0]->payments();
 
 			if ( $payments ) {
