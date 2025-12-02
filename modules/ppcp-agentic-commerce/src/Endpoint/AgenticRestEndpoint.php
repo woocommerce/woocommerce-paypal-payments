@@ -151,11 +151,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 			return $data;
 		}
 
-		$cart = PayPalCart::from_array( $data );
+		$cart   = PayPalCart::from_array( $data );
+		$issues = $cart->issues();
 
-		if ( $cart->has_validation_issue() ) {
-			$issues = $cart->issues();
-
+		if ( $issues ) {
 			return new BadRequestError( 'Cart validation issue', $issues );
 		}
 
