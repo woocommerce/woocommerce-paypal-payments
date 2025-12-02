@@ -27,7 +27,6 @@ class MigrationManager implements SettingsMigrationInterface {
 	protected StylingSettingsMigration $styling_settings_migration;
 	protected PaymentSettingsMigration $payment_settings_migration;
 	protected OnboardingProfile $onboarding_profile;
-	protected bool $is_onboarded;
 	protected LoggerInterface $logger;
 
 	public function __construct(
@@ -36,7 +35,6 @@ class MigrationManager implements SettingsMigrationInterface {
 		StylingSettingsMigration $styling_settings_migration,
 		PaymentSettingsMigration $payment_settings_migration,
 		OnboardingProfile $onboarding_profile,
-		bool $is_onboarded,
 		LoggerInterface $logger
 	) {
 		$this->general_settings_migration = $general_settings_migration;
@@ -44,7 +42,6 @@ class MigrationManager implements SettingsMigrationInterface {
 		$this->styling_settings_migration = $styling_settings_migration;
 		$this->payment_settings_migration = $payment_settings_migration;
 		$this->onboarding_profile         = $onboarding_profile;
-		$this->is_onboarded               = $is_onboarded;
 		$this->logger                     = $logger;
 	}
 

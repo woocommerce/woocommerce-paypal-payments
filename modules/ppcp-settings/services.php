@@ -371,7 +371,6 @@ return array(
 		$c->get( 'settings.service.data-migration.styling' ),
 		$c->get( 'settings.service.data-migration.payment-settings' ),
 		$c->get( 'settings.data.onboarding' ),
-		$c->get( 'api.merchant_id' ) !== '',
 		$c->get( 'woocommerce.logger.woocommerce' )
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
