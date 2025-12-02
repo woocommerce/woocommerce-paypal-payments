@@ -4,7 +4,10 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use Psr\Log\LoggerInterface;
+use Mockery;
+use Mockery\MockInterface;
 use WooCommerce\PayPalCommerce\TestCase;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartPayloadBuilder;
@@ -12,8 +15,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProc
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use Mockery;
-use Mockery\MockInterface;
 
 /**
  * Base test case for Agentic Commerce endpoint tests.

@@ -32,24 +32,24 @@ class PayPalOrderBuilder {
 	 * The full purchase unit with proper amounts will be created later
 	 * when the WC order is created during checkout.
 	 *
-	 * @param PayPalCart $cart      The PayPal cart.
-	 * @param CartData   $cart_data The translated cart data.
+	 * @param PayPalCart $cart          The PayPal cart.
+	 * @param CartData   $woo_cart_data The translated cart data.
 	 * @return PurchaseUnit
 	 */
 	public function build_purchase_unit_from_cart(
 		PayPalCart $cart,
-		CartData $cart_data
+		CartData $woo_cart_data
 	): PurchaseUnit {
 
-		$cart_items = $cart_data->items();
+		$cart_items = $woo_cart_data->items();
 
-		// Calculate total from cart items.
+		// TODO: Why not using the PayPalCart to calculate the total?
 		$total = 0.0;
 		foreach ( $cart_items as $item ) {
 			$total += (float) $item['line_total'];
 		}
 
-		// Use the WooCommerce currency.
+		// TODO: Why do we use Woo currency instead of the PayPalCart currency?
 		$currency = get_woocommerce_currency();
 
 		// Build items for the purchase unit.
@@ -86,12 +86,6 @@ class PayPalOrderBuilder {
 		return new PurchaseUnit( $amount, $items, $shipping );
 	}
 
-	/**
-	 * Build shipping entity from cart.
-	 *
-	 * @param PayPalCart $cart The cart.
-	 * @return Shipping|null
-	 */
 	public function build_shipping_from_cart( PayPalCart $cart ): ?Shipping {
 		$full_name = CartHelper::full_customer_name( $cart );
 		$shipping  = CartHelper::shipping_address_array( $cart );

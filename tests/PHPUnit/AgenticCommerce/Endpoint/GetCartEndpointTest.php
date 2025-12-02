@@ -3,9 +3,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WP_REST_Request;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WP_REST_Request;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint

@@ -3,14 +3,11 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WP_REST_Request;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
-use WooCommerce\PayPalCommerce\Button\Session\CartData;
-use WP_REST_Request;
-use Mockery;
+
 use function Brain\Monkey\Functions\when;
 
 /**
