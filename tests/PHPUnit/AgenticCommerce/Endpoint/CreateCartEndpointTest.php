@@ -5,12 +5,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Cart\PayPalCartToCartDataAdapter;
-use WooCommerce\PayPalCommerce\Button\Session\CartData;
 use WP_REST_Request;
-use Mockery;
 use function Brain\Monkey\Functions\when;
 
 /**
@@ -28,28 +23,17 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 		$mocks            = $this->create_mocks();
 		$session_handler  = $mocks['session_handler'];
 		$response_factory = $mocks['response_factory'];
+		$order_manager    = $mocks['order_manager'];
 
-		// Mock OrderEndpoint to return a PayPal order with an ID.
-		$mock_order = Mockery::mock( Order::class );
-		$mock_order->allows( 'id' )->andReturn( $sample_token );
-
-		$order_endpoint = Mockery::mock( OrderEndpoint::class );
-		$order_endpoint->allows( 'create' )->andReturn( $mock_order );
-
-		// Mock CartData for the translator.
-		$cart_data_mock = Mockery::mock( CartData::class );
-		$cart_data_mock->allows( 'items' )->andReturn( array() );
-
-		// Mock PayPalCartToCartDataAdapter.
-		$cart_translator = Mockery::mock( PayPalCartToCartDataAdapter::class );
-		$cart_translator->allows( 'translate' )->andReturn( $cart_data_mock );
+		// Mock order_manager to return our expected token.
+		$order_manager->shouldReceive( 'create_order' )
+			->once()
+			->andReturn( $sample_token );
 
 		// Verify cart session is created with correct token.
 		$session_handler->shouldReceive( 'create_cart_session' )
 			->once()
-			->withArgs( function ( $cart, $ec_token ) use ( $sample_token ) {
-				return $cart instanceof PayPalCart && $ec_token === $sample_token;
-			} )
+			->with( \Mockery::type( PayPalCart::class ), $sample_token )
 			->andReturn( $cart_id );
 
 		// Mock response factory.
@@ -64,8 +48,9 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 			$mocks['auth_provider'],
 			$session_handler,
 			$response_factory,
-			$order_endpoint,
-			$cart_translator
+			$mocks['logger'],
+			$mocks['product_validator'],
+			$order_manager
 		);
 
 		$request = new WP_REST_Request( 'POST', '/wp-json/paypal/v1/merchant-cart' );

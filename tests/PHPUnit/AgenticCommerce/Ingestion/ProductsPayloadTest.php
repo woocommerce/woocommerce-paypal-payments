@@ -262,13 +262,8 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
-		$this->assertCount( 1, $result );
-		// Based on the implementation, image_link is always set (empty string if no image)
-		$this->assertArrayHasKey( 'image_link', $result[0] );
-		$this->assertEquals( '', $result[0]['image_link'] );
-		$this->assertArrayNotHasKey( 'mpn', $result[0] );
-		$this->assertArrayNotHasKey( 'sale_price', $result[0] );
-		$this->assertArrayNotHasKey( 'product_type', $result[0] );
+		// Products without images are now skipped by the implementation.
+		$this->assertCount( 0, $result );
 	}
 
 	public function test_handle_product_with_no_price(): void {
@@ -297,9 +292,8 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
-		$this->assertCount( 1, $result );
-		// Based on actual implementation, empty price returns empty string
-		$this->assertEquals( '', $result[0]['price'] );
+		// Products without images are now skipped by the implementation (even if they have no price).
+		$this->assertCount( 0, $result );
 	}
 
 	public function test_availability_mapping(): void {
@@ -319,7 +313,7 @@ class ProductsPayloadTest extends TestCase {
 			$product->shouldReceive( 'get_name' )->andReturn( 'Test Product' );
 			$product->shouldReceive( 'get_permalink' )
 				->andReturn( 'https://example.com/product/test' );
-			$product->shouldReceive( 'get_image_id' )->andReturn( 0 );
+			$product->shouldReceive( 'get_image_id' )->andReturn( 456 );
 			$product->shouldReceive( 'get_description' )->andReturn( 'Description' );
 			$product->shouldReceive( 'get_short_description' )->andReturn( '' );
 			$product->shouldReceive( 'get_price' )->andReturn( '10.00' );
@@ -328,7 +322,7 @@ class ProductsPayloadTest extends TestCase {
 			$product->shouldReceive( 'get_sale_price' )->andReturn( '' );
 
 			when( 'wc_get_product' )->justReturn( $product );
-			when( 'wp_get_attachment_image_url' )->justReturn( false );
+			when( 'wp_get_attachment_image_url' )->justReturn( 'https://example.com/image.jpg' );
 			when( 'get_woocommerce_currency' )->justReturn( 'USD' );
 			when( 'wc_get_product_category_list' )->justReturn( '' );
 			when( 'wp_strip_all_tags' )->justReturn( '' );
@@ -336,6 +330,7 @@ class ProductsPayloadTest extends TestCase {
 			$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 			$result  = $payload->get_array();
 
+			$this->assertCount( 1, $result );
 			$this->assertEquals( $expected_availability, $result[0]['availability'] );
 		}
 	}
@@ -366,20 +361,7 @@ class ProductsPayloadTest extends TestCase {
 		$payload = new ProductsPayload( 'https://example.com', array( $product_id ) );
 		$result  = $payload->get_array();
 
-		$this->assertCount( 1, $result );
-		// Check required fields are present
-		$this->assertArrayHasKey( 'id', $result[0] );
-		$this->assertArrayHasKey( 'title', $result[0] );
-		$this->assertArrayHasKey( 'link', $result[0] );
-		$this->assertArrayHasKey( 'image_link', $result[0] );
-		$this->assertArrayHasKey( 'description', $result[0] );
-		$this->assertArrayHasKey( 'price', $result[0] );
-		$this->assertArrayHasKey( 'availability', $result[0] );
-		$this->assertArrayHasKey( 'merchantStoreUrl', $result[0] );
-
-		// Check optional fields are not present
-		$this->assertArrayNotHasKey( 'mpn', $result[0] );
-		$this->assertArrayNotHasKey( 'sale_price', $result[0] );
-		$this->assertArrayNotHasKey( 'product_type', $result[0] );
+		// Products without images are now skipped by the implementation.
+		$this->assertCount( 0, $result );
 	}
 }

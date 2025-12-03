@@ -45,7 +45,14 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 				'ACTIVE'
 			) );
 
-		$endpoint = new GetCartEndpoint( $mocks['auth_provider'], $session_handler, $response_factory );
+		$endpoint = new GetCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$response_factory,
+			$mocks['logger'],
+			$mocks['product_validator'],
+			$mocks['order_manager']
+		);
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -69,7 +76,14 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		$endpoint = new GetCartEndpoint( $mocks['auth_provider'], $session_handler, $mocks['response_factory'] );
+		$endpoint = new GetCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$mocks['response_factory'],
+			$mocks['logger'],
+			$mocks['product_validator'],
+			$mocks['order_manager']
+		);
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );

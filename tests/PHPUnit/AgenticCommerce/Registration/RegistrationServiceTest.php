@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Registration;
 
 use Mockery;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Config\AgenticWebhookConfiguration;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadata;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Merchant\MerchantMetadataProvider;
@@ -19,18 +20,25 @@ class RegistrationServiceTest extends TestCase {
 
 	private AgenticWebhookConfiguration $webhook_config;
 	private MerchantMetadataProvider $metadata_provider;
+	private LoggerInterface $logger;
 
 	public function setUp(): void {
 		parent::setUp();
 
 		$this->webhook_config    = $this->createStub( AgenticWebhookConfiguration::class );
 		$this->metadata_provider = $this->createStub( MerchantMetadataProvider::class );
+		$this->logger            = Mockery::mock( LoggerInterface::class );
+		$this->logger->allows( 'info' );
+		$this->logger->allows( 'error' );
+		$this->logger->allows( 'warning' );
+		$this->logger->allows( 'debug' );
 	}
 
 	private function create_testable_service( bool $has_token = false ): TestableRegistrationService {
 		return new TestableRegistrationService(
 			$this->webhook_config,
 			$this->metadata_provider,
+			$this->logger,
 			$has_token ? 'stored-token' : false
 		);
 	}
@@ -54,6 +62,7 @@ class RegistrationServiceTest extends TestCase {
 	private function stub_successful_webhook_response(): void {
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -67,6 +76,7 @@ class RegistrationServiceTest extends TestCase {
 	private function stub_failed_webhook_response( string $error_message ): void {
 		when( 'wp_remote_post' )->returnArg();
 		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 400 );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -213,6 +223,7 @@ class RegistrationServiceTest extends TestCase {
 			}
 		);
 		when( 'wp_remote_retrieve_body' )->justReturn( 'invalid json {[' );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 
 		$testee = $this->create_testable_service( false );
 		$result = $testee->register();
@@ -264,7 +275,7 @@ class RegistrationServiceTest extends TestCase {
 		$this->assertInstanceOf( WP_Error::class, $result );
 		$this->assertSame( 'deregistration_failed', $result->get_error_code() );
 		$this->assertSame( 'Token not found', $result->get_error_message() );
-		$this->assertTrue( $testee->was_token_deleted );
+		$this->assertFalse( $testee->was_token_deleted );
 	}
 
 	/**
@@ -292,6 +303,7 @@ class RegistrationServiceTest extends TestCase {
 			->willReturn( $expected_url );
 
 		when( 'is_wp_error' )->justReturn( false );
+		when( 'wp_remote_retrieve_response_code' )->justReturn( 200 );
 		when( 'wp_remote_retrieve_body' )->justReturn(
 			json_encode(
 				array(
@@ -339,8 +351,8 @@ class TestableRegistrationService extends RegistrationService {
 	 */
 	private $stored_token;
 
-	public function __construct( $webhook_config, $metadata_provider, $initial_token ) {
-		parent::__construct( $webhook_config, $metadata_provider );
+	public function __construct( $webhook_config, $metadata_provider, $logger, $initial_token ) {
+		parent::__construct( $webhook_config, $metadata_provider, $logger );
 		$this->stored_token = $initial_token;
 	}
 
