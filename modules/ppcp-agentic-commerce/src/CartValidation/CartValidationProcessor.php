@@ -9,9 +9,15 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use Throwable;
+use Psr\Log\LoggerInterface;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 class CartValidationProcessor {
+
+	private LoggerInterface $logger;
 
 	/**
 	 * @var ValidatorInterface[]
@@ -19,6 +25,10 @@ class CartValidationProcessor {
 	private array $validators = array();
 
 	private bool $did_register_validators = false;
+
+	public function __construct( LoggerInterface $logger ) {
+		$this->logger = $logger;
+	}
 
 	/**
 	 * @return PayPalCart Cart with accumulated validation issues.
@@ -28,7 +38,25 @@ class CartValidationProcessor {
 		$current_cart = $cart;
 
 		foreach ( $validators as $validator ) {
-			$issues = $validator->validate( $current_cart );
+			try {
+				$issues = $validator->validate( $current_cart );
+			} catch ( Throwable $error ) {
+				/*
+				 * Internal validators do not throw anything.
+				 * This protects us against third party validators blocking the REST endpoint by
+				 * throwing an unexpected exception.
+				 */
+
+				$this->logger->error(
+					sprintf(
+						'[VALIDATE] Unexpected cart validation error by "%s": %s',
+						get_class( $validator ),
+						$error->getMessage()
+					)
+				);
+
+				continue;
+			}
 
 			if ( empty( $issues ) ) {
 				continue;
