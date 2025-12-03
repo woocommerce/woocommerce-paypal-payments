@@ -30,7 +30,17 @@ class CartValidationProcessor {
 		foreach ( $validators as $validator ) {
 			$issues = $validator->validate( $current_cart );
 
-			if ( ! empty( $issues ) ) {
+			if ( empty( $issues ) ) {
+				continue;
+			}
+
+			if ( ! is_array( $issues ) ) {
+				$issues = array( $issues );
+			}
+
+			$issues = array_filter( $issues, static fn( $issue ) => $issue instanceof ValidationIssue );
+
+			if ( $issues ) {
 				$current_cart = $current_cart->with_validation_issues( ...$issues );
 			}
 		}
