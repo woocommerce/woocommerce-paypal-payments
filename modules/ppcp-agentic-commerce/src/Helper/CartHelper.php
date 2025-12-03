@@ -38,7 +38,7 @@ class CartHelper {
 	}
 
 	/**
-	 * Sums (price * quantity) for each item. Items without price are treated as 0.0.
+	 * Sums (price * quantity) for each item. Items without a price are treated as 0.0.
 	 */
 	public static function cart_item_total( PayPalCart $cart ): float {
 		return array_reduce(

@@ -108,7 +108,8 @@ abstract class AgenticSchema {
 	 * @return static New instance with the additional validation issue.
 	 */
 	final public function with_validation_issues( ValidationIssue ...$issues ): self {
-		$new_instance                    = clone $this;
+		$new_instance = clone $this;
+
 		$new_instance->validation_issues = array_merge( $new_instance->validation_issues, $issues );
 
 		return $new_instance;
