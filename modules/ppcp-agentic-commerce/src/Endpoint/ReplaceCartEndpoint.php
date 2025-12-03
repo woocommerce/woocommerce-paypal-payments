@@ -70,14 +70,12 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $session );
 		}
 
-		// Parse the update request body.
 		$update_data = $this->parse_json_body( $request );
 
 		if ( $update_data instanceof AgenticError ) {
 			return $this->error( $update_data );
 		}
 
-		// Get the existing cart from session.
 		$existing_cart = $session['cart'];
 
 		// Merge update data with existing cart, preserving fields not in the update.

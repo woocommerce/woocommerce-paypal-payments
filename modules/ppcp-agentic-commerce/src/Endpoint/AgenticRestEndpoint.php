@@ -120,8 +120,6 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Parses and validates JSON request body.
-	 *
 	 * @param WP_REST_Request $request The request object.
 	 * @return array|AgenticError Parsed data or error response.
 	 */
@@ -155,7 +153,6 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 		$issues = $cart->validate();
 		if ( ! empty( $issues ) ) {
-			// Convert ValidationIssue objects to arrays for error response.
 			$issue_details = array_map(
 				function ( $issue ) {
 					return $issue->to_array();

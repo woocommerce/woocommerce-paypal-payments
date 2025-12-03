@@ -46,8 +46,8 @@ class ProductsPayload {
 			}
 
 			// For all other product types (simple, grouped, etc.).
-			$image_url   = wp_get_attachment_image_url( (int) $product->get_image_id(), 'full' );
-			$description = $product->get_description() ?: $product->get_short_description();
+			$image_url   = $this->get_product_image( $product );
+			$description = $this->get_product_description( $product );
 
 			// Skip products without required fields.
 			if ( ! $image_url || ! $description ) {
@@ -100,9 +100,8 @@ class ProductsPayload {
 				continue;
 			}
 
-			$image_url   = wp_get_attachment_image_url( (int) $variation->get_image_id(), 'full' )
-				?: wp_get_attachment_image_url( (int) $variable_product->get_image_id(), 'full' );
-			$description = $variation->get_description() ?: $variable_product->get_description();
+			$image_url   = $this->get_product_image( $variation, $variable_product );
+			$description = $this->get_product_description( $variation, $variable_product );
 
 			// Skip variations without required fields.
 			if ( ! $image_url || ! $description ) {
@@ -152,6 +151,42 @@ class ProductsPayload {
 		}
 
 		return $variants;
+	}
+
+	/**
+	 * Get product image URL with optional fallback.
+	 *
+	 * @param WC_Product      $product  The product to get image from.
+	 * @param WC_Product|null $fallback Optional fallback product for image.
+	 * @return string|false Image URL or false if not found.
+	 */
+	private function get_product_image( $product, $fallback = null ) {
+		$image_url = wp_get_attachment_image_url( (int) $product->get_image_id(), 'full' );
+
+		if ( ! $image_url && $fallback ) {
+			$image_url = wp_get_attachment_image_url( (int) $fallback->get_image_id(), 'full' );
+		}
+
+		return $image_url;
+	}
+
+	/**
+	 * Get product description with optional fallback.
+	 *
+	 * @param WC_Product      $product  The product to get description from.
+	 * @param WC_Product|null $fallback Optional fallback product for description.
+	 * @return string Product description.
+	 */
+	private function get_product_description( $product, $fallback = null ): string {
+		$description = $product->get_description();
+
+		if ( ! $description && $fallback ) {
+			$description = $fallback->get_description();
+		} elseif ( ! $description ) {
+			$description = $product->get_short_description();
+		}
+
+		return $description;
 	}
 
 	/**
