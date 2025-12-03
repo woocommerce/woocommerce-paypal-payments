@@ -49,6 +49,7 @@ abstract class ValidationIssue {
 	 *
 	 * @param string $message      Technical error description.
 	 * @param string $user_message Optional. Customer friendly error message.
+	 * @param string $field        Optional. Identifies the field that triggered the issue.
 	 */
 	public function __construct( string $message, string $user_message = '', string $field = '' ) {
 		$this->message      = $message ?: 'Validation error occurred';
@@ -56,14 +57,26 @@ abstract class ValidationIssue {
 		$this->field        = $field;
 	}
 
+	/**
+	 * Returns the error code, which is a high-level description of the problem.
+	 * Possible values are defined in the `Enums/ErrorCode` class.
+	 */
 	public function code(): string {
 		return static::ISSUE_CODE;
 	}
 
+	/**
+	 * Returns the error type, which classifies the issue.
+	 * Possible values are defined in the `Enums/ErrorType` class.
+	 */
+	public function type(): string {
+		return static::ISSUE_TYPE;
+	}
+
 	public function to_array(): array {
 		$data = array(
-			'code'    => static::ISSUE_CODE,
-			'type'    => static::ISSUE_TYPE,
+			'code'    => $this->code(),
+			'type'    => $this->type(),
 			'message' => (string) substr( $this->message, 0, 255 ),
 		);
 
