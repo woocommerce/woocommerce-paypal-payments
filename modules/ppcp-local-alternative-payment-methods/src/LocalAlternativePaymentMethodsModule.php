@@ -77,6 +77,10 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 		add_action(
 			'wp_enqueue_scripts',
 			function () use ( $c ) {
+				if ( ! is_checkout() && ! is_cart() && ! is_wc_endpoint_url( 'order-pay' ) ) {
+					return;
+				}
+
 				$module_url    = $c->get( 'ppcp-local-apms.url' );
 				$asset_version = $c->get( 'ppcp.asset-version' );
 
