@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\AdminNotices;
 
 use WooCommerce\PayPalCommerce\AdminNotices\Notes\MexicoInstallmentsNote;
+use WooCommerce\PayPalCommerce\AdminNotices\Notes\RecaptchaNote;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -116,6 +117,7 @@ class AdminNotices implements ServiceModule, ExtendingModule, ExecutableModule {
 			function () {
 				if ( is_admin() && is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() && class_exists( 'Automattic\WooCommerce\Admin\Notes\Notes' ) ) {
 					MexicoInstallmentsNote::init();
+					RecaptchaNote::init();
 				}
 			}
 		);
