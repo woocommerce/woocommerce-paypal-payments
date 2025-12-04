@@ -2111,11 +2111,28 @@ return array(
 		);
 	},
 
+	'wcgateway.settings.wc-tasks.recaptcha-task-config'    => static function ( ContainerInterface $container ): array {
+		$recaptcha_settings = get_option( 'woocommerce_ppcp-recaptcha_settings', array() );
+		if ( isset( $recaptcha_settings['enabled'] ) && 'yes' === $recaptcha_settings['enabled'] ) {
+			return array();
+		}
+
+		return array(
+			array(
+				'id'           => 'ppcp-recaptcha-protection-task',
+				'title'        => __( 'Protect PayPal Checkout from Bots', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Enable reCAPTCHA to protect against spam orders and card testing attacks.', 'woocommerce-paypal-payments' ),
+				'redirect_url' => admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
+			),
+		);
+	},
+
 	'wcgateway.settings.wc-tasks.task-config-services'     => static function (): array {
 		return array(
 			'wcgateway.settings.wc-tasks.pay-later-task-config',
 			'wcgateway.settings.wc-tasks.connect-task-config',
 			'wcgateway.settings.wc-tasks.working-capital-config',
+			'wcgateway.settings.wc-tasks.recaptcha-task-config',
 		);
 	},
 
