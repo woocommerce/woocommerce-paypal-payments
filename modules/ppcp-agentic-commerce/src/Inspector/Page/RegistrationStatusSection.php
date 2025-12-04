@@ -31,14 +31,6 @@ class RegistrationStatusSection {
 	private AuthServiceProvider $auth_provider;
 	private GeneralSettings $general_settings;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param RegistrationService     $registration_service Service for managing registration.
-	 * @param RegistrationEligibility $eligibility_check    Checks if store is eligible.
-	 * @param AuthServiceProvider     $auth_provider        Provides auth service info.
-	 * @param GeneralSettings         $general_settings     Access to merchant settings.
-	 */
 	public function __construct(
 		RegistrationService $registration_service,
 		RegistrationEligibility $eligibility_check,

@@ -12,6 +12,9 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 /**
  * Class CartSessionSection
@@ -23,14 +26,15 @@ class CartSessionSection {
 	use StatusTableRenderer;
 
 	private InspectionSessionData $inspector;
+	private CartValidationProcessor $validation_processor;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param InspectionSessionData $inspector Session inspector service.
-	 */
-	public function __construct( InspectionSessionData $inspector ) {
-		$this->inspector = $inspector;
+	public function __construct(
+		InspectionSessionData $inspector,
+		CartValidationProcessor $validation_processor
+	) {
+
+		$this->inspector            = $inspector;
+		$this->validation_processor = $validation_processor;
 	}
 
 	/**
@@ -155,10 +159,16 @@ class CartSessionSection {
 			<tbody>
 			<?php
 			foreach ( $sessions as $session ) :
-				$session_id    = $session['session_id'];
-				$created_time  = $session['created'] ? ( wp_date( 'Y-m-d H:i:s', $session['created'] ) ?: '-' ) : '-';
-				$modified_time = $session['modified'] ? ( wp_date( 'Y-m-d H:i:s', $session['modified'] ) ?: '-' ) : '-';
-				$age_hours     = $session['created'] ? round( ( time() - $session['created'] ) / 3600, 1 ) : 0;
+				$session_id = $session['session_id'];
+
+				$age_in_sec = time() - $session['created'];
+				$hours      = floor( $age_in_sec / 3600 );
+				$minutes    = floor( ( $age_in_sec % 3600 ) / 60 );
+				$seconds    = $age_in_sec % 60;
+
+				$age_string    = sprintf( '%02d:%02d:%02d', $hours, $minutes, $seconds );
+				$created_time  = wp_date( 'Y-m-d H:i:s', $session['created'] ) ?: '-';
+				$modified_time = wp_date( 'Y-m-d H:i:s', $session['modified'] ) ?: '-';
 
 				// Build inspection URL with nonce.
 				$inspect_url = add_query_arg(
@@ -183,7 +193,7 @@ class CartSessionSection {
 					<td><?php echo esc_html( (string) $session['item_count'] ); ?></td>
 					<td><?php echo esc_html( $created_time ); ?></td>
 					<td><?php echo esc_html( $modified_time ); ?></td>
-					<td><?php echo esc_html( (string) $age_hours ); ?>h</td>
+					<td><?php echo esc_html( $age_string ); ?></td>
 					<td>
 						<?php if ( $is_inspecting ) : ?>
 							<a
@@ -225,11 +235,21 @@ class CartSessionSection {
 			return;
 		}
 
-		$cart     = $details['cart'];
-		$ec_token = $details['ec_token'];
-		$created  = $details['created'] ? ( wp_date( 'Y-m-d H:i:s', $details['created'] ) ?: '-' ) : '-';
-		$modified = $details['modified'] ? ( wp_date( 'Y-m-d H:i:s', $details['modified'] ) ?: '-' ) : '-';
-		$expires  = $details['expires'] ? ( wp_date( 'Y-m-d H:i:s', $details['expires'] ) ?: '-' ) : '-';
+		$cart = $details['cart'];
+		if ( ! ( $cart instanceof PayPalCart ) ) {
+			return;
+		}
+
+		$meta_data = array(
+			'ec_token' => $details['ec_token'] ?? '-',
+			'created'  => wp_date( 'Y-m-d H:i:s', $details['created'] ) ?: '-',
+			'modified' => wp_date( 'Y-m-d H:i:s', $details['modified'] ) ?: '-',
+			'expires'  => wp_date( 'Y-m-d H:i:s', $details['expires'] ) ?: '-',
+		);
+
+		$validated_cart = $this->validation_processor->validate_cart( $cart );
+		$cart_data      = $validated_cart->to_array();
+		$issues_list    = array_map( static fn( ValidationIssue $issue ) => $issue->to_array(), $validated_cart->issues() );
 
 		?>
 		<div
@@ -262,19 +282,19 @@ class CartSessionSection {
 							),
 							array(
 								'label' => __( 'EC Token', 'woocommerce-paypal-payments' ),
-								'value' => fn(): string => '<code>' . esc_html( $ec_token ?: '-' ) . '</code>',
+								'value' => fn(): string => '<code>' . esc_html( $meta_data['ec_token'] ) . '</code>',
 							),
 							array(
 								'label' => __( 'Created', 'woocommerce-paypal-payments' ),
-								'value' => $created,
+								'value' => $meta_data['created'],
 							),
 							array(
 								'label' => __( 'Modified', 'woocommerce-paypal-payments' ),
-								'value' => $modified,
+								'value' => $meta_data['modified'],
 							),
 							array(
 								'label' => __( 'Expires', 'woocommerce-paypal-payments' ),
-								'value' => $expires,
+								'value' => $meta_data['expires'],
 							),
 						);
 
@@ -285,111 +305,18 @@ class CartSessionSection {
 						</tbody>
 					</table>
 				</div>
-
-				<div>
-					<h4 style="margin: 0 0 10px 0; color: #1d2327;"><?php esc_html_e( 'Cart Totals', 'woocommerce-paypal-payments' ); ?></h4>
-					<table class="wc_status_table widefat">
-						<tbody>
-						<?php
-						$totals_rows = array(
-							array(
-								'label' => __( 'Subtotal', 'woocommerce-paypal-payments' ),
-								'value' => $cart->totals->subtotal . ' ' . $cart->currency,
-							),
-							array(
-								'label' => __( 'Shipping', 'woocommerce-paypal-payments' ),
-								'value' => $cart->totals->shipping . ' ' . $cart->currency,
-							),
-							array(
-								'label' => __( 'Tax', 'woocommerce-paypal-payments' ),
-								'value' => $cart->totals->tax . ' ' . $cart->currency,
-							),
-							array(
-								'label' => __( 'Discount', 'woocommerce-paypal-payments' ),
-								'value' => $cart->totals->discount . ' ' . $cart->currency,
-							),
-							array(
-								'label' => __( 'Total', 'woocommerce-paypal-payments' ),
-								'value' => fn(): string => '<strong>' . esc_html( $cart->totals->total . ' ' . $cart->currency ) . '</strong>',
-							),
-						);
-
-						foreach ( $totals_rows as $row ) {
-							$this->render_row( $row['label'], $row['value'] );
-						}
-						?>
-						</tbody>
-					</table>
-				</div>
 			</div>
 
-			<h4 style="margin: 20px 0 10px 0; color: #1d2327;"><?php esc_html_e( 'Cart Items', 'woocommerce-paypal-payments' ); ?></h4>
-			<table class="wc_status_table widefat">
-				<thead>
-				<tr>
-					<th><?php esc_html_e( 'Product', 'woocommerce-paypal-payments' ); ?></th>
-					<th><?php esc_html_e( 'SKU', 'woocommerce-paypal-payments' ); ?></th>
-					<th style="text-align: center;"><?php esc_html_e( 'Quantity', 'woocommerce-paypal-payments' ); ?></th>
-					<th style="text-align: right;"><?php esc_html_e( 'Price', 'woocommerce-paypal-payments' ); ?></th>
-					<th style="text-align: right;"><?php esc_html_e( 'Total', 'woocommerce-paypal-payments' ); ?></th>
-				</tr>
-				</thead>
-				<tbody>
-				<?php foreach ( $cart->items as $item ) : ?>
-					<tr>
-						<td>
-							<?php echo esc_html( $item->name ); ?>
-							<?php if ( ! empty( $item->image_url ) ) : ?>
-								<br><small>
-									<a
-										href="<?php echo esc_url( $item->image_url ); ?>"
-										target="_blank"
-									>
-										<?php esc_html_e( 'View image', 'woocommerce-paypal-payments' ); ?>
-									</a>
-								</small>
-							<?php endif; ?>
-						</td>
-						<td><code><?php echo esc_html( $item->sku ?: '-' ); ?></code></td>
-						<td style="text-align: center;"><?php echo esc_html( $item->quantity ); ?></td>
-						<td style="text-align: right;"><?php echo esc_html( $item->unit_amount . ' ' . $cart->currency ); ?></td>
-						<td style="text-align: right;">
-							<strong><?php echo esc_html( ( $item->unit_amount * $item->quantity ) . ' ' . $cart->currency ); ?></strong>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-				</tbody>
-			</table>
-
-			<?php if ( ! empty( $cart->shipping_address ) ) : ?>
-				<h4 style="margin: 20px 0 10px 0; color: #1d2327;"><?php esc_html_e( 'Shipping Address', 'woocommerce-paypal-payments' ); ?></h4>
-				<div style="padding: 15px; background: #f9f9f9; border: 1px solid #ddd;">
-					<?php
-					$address = $cart->shipping_address;
-					echo esc_html( $address->name ?? '' );
-					if ( ! empty( $address->address_line_1 ) ) {
-						echo '<br>' . esc_html( $address->address_line_1 );
-					}
-					if ( ! empty( $address->address_line_2 ) ) {
-						echo '<br>' . esc_html( $address->address_line_2 );
-					}
-					if ( ! empty( $address->city ) || ! empty( $address->state ) || ! empty( $address->postal_code ) ) {
-						$address_parts = array_filter(
-							array(
-								$address->city ?? '',
-								$address->state ?? '',
-								$address->postal_code ?? '',
-							)
-						);
-
-						echo '<br>' . esc_html( implode( ', ', $address_parts ) );
-					}
-					if ( ! empty( $address->country_code ) ) {
-						echo '<br>' . esc_html( $address->country_code );
-					}
-					?>
-				</div>
-			<?php endif; ?>
+			<?php
+			$this->render_cart_data(
+				__( 'Cart Data', 'woocommerce-paypal-payments' ),
+				$cart->to_array()
+			);
+			$this->render_cart_data(
+				__( 'Validation Issues', 'woocommerce-paypal-payments' ),
+				$issues_list
+			);
+			?>
 
 			<div
 				style="margin-top: 20px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107;"
@@ -397,6 +324,26 @@ class CartSessionSection {
 				<strong><?php esc_html_e( 'Note:', 'woocommerce-paypal-payments' ); ?></strong>
 				<?php esc_html_e( 'This is a read-only view of the cart session for debugging purposes.', 'woocommerce-paypal-payments' ); ?>
 			</div>
+		</div>
+		<?php
+	}
+
+	private function render_cart_data( string $title, array $data ): void {
+		$json  = wp_json_encode( $data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+		$lines = explode( "\n", (string) $json );
+
+		?>
+		<div style="margin-top: 20px;">
+			<h4 style="margin: 0 0 10px 0; color: #1d2327;"><?php echo esc_html( $title ); ?></h4>
+			<ul style="background:#f6f7f7; padding:0; margin:0; border:1px solid #c3c4c7; border-radius:4px; overflow-x:auto; font-family:monospace; font-size:12px; font-weight:500; line-height:1.5; max-height:600px; list-style:none;">
+				<?php foreach ( $lines as $line ) : ?>
+					<li
+						style="padding: 2px 15px; white-space: pre; cursor: default;margin: 0;"
+						onmouseover="this.style.background='#e8eaeb'"
+						onmouseout="this.style.background='transparent'"
+					><?php echo esc_html( $line ); ?></li>
+				<?php endforeach; ?>
+			</ul>
 		</div>
 		<?php
 	}
