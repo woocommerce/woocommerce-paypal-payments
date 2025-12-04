@@ -15,7 +15,7 @@ class RecaptchaIntegration extends WC_Integration {
 		$this->method_title       = 'WooCommerce PayPal Payments reCAPTCHA';
 		$this->method_description = sprintf(
 			'Card-testing attacks have become increasingly common across ecommerce platforms. Native bot protection has been implemented directly within WooCommerce PayPal Payments, helping safeguard your checkout without adding friction for real customers.<br>We recommend enabling this feature immediately to strengthen security and reduce risk.<br>PayPal Payments reCAPTCHA blocks automated card-testing attacks on PayPal payment endpoints. <strong>Both reCAPTCHA v3 and v2 keys must be configured</strong> for protection to activate. %s',
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#recaptcha-configuration" target="_blank">Learn more</a>'
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/fraud-and-disputes/" target="_blank">Learn more</a>'
 		);
 
 		$this->init_form_fields();
