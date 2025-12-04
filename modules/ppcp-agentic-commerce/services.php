@@ -145,8 +145,10 @@ return array(
 	},
 
 	// Validation services.
-	'agentic.validation.processor'        => static function (): CartValidationProcessor {
-		return new CartValidationProcessor();
+	'agentic.validation.processor'        => static function ( ContainerInterface $c ): CartValidationProcessor {
+		return new CartValidationProcessor(
+			$c->get( 'agentic.logger' )
+		);
 	},
 	'agentic.validator.product'           => static function ( ContainerInterface $c ): ProductValidator {
 		return new ProductValidator(

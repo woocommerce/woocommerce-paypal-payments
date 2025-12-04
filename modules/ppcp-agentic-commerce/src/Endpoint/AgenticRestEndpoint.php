@@ -16,7 +16,6 @@ use JsonException;
 use WC_REST_Controller;
 use Psr\Log\LoggerInterface;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;

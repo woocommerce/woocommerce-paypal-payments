@@ -9,8 +9,13 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 interface ValidatorInterface {
 
 	/**
+	 * Validates cart against business rules.
+	 *
 	 * @param PayPalCart $cart The cart to validate.
-	 * @return ValidationIssue[]|null List of detected validation issues or null if no issues found.
+	 *
+	 * @return ValidationIssue|ValidationIssue[]|null An empty array or null if valid.
+	 *                                                Otherwise, a list of all validation issues
+	 *                                                that were detected.
 	 */
-	public function validate( PayPalCart $cart ): ?array;
+	public function validate( PayPalCart $cart );
 }

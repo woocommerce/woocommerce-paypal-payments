@@ -5,7 +5,6 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
 
 /**
  * When to use:
@@ -13,7 +12,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
  * - Address is incomplete or malformed.
  * - Postal code format is invalid.
  */
-class InvalidAddress extends ValidationIssue {
+class InvalidAddress extends InvalidData {
 	protected const ISSUE_CODE = ErrorCode::SHIPPING_ERROR;
-	protected const ISSUE_TYPE = ErrorType::INVALID_DATA;
 }

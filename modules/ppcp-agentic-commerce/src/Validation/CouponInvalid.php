@@ -5,7 +5,6 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
 
 /**
  * When to use:
@@ -13,7 +12,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
  * - Coupon not applicable to cart items.
  * - Coupon usage limit reached.
  */
-class CouponInvalid extends ValidationIssue {
+class CouponInvalid extends BusinessRuleViolation {
 	protected const ISSUE_CODE = ErrorCode::PRICING_ERROR;
-	protected const ISSUE_TYPE = ErrorType::BUSINESS_RULE;
 }

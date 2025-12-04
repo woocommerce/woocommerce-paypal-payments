@@ -5,7 +5,6 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Validation;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
 
 /**
  * When to use:
@@ -13,7 +12,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorType;
  * - Stock reduced between cart creation and checkout.
  * - High-demand item with limited availability.
  */
-class InsufficientQuantity extends ValidationIssue {
+class InsufficientQuantity extends BusinessRuleViolation {
 	protected const ISSUE_CODE = ErrorCode::INVENTORY_ISSUE;
-	protected const ISSUE_TYPE = ErrorType::BUSINESS_RULE;
 }
