@@ -155,9 +155,11 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
-			static function () use ( $container ) {
-				// Disabled for 3.3.1 release.
-				return;
+			static function ( $installed_plugin_version ) use ( $container ) {
+				// Disabled when upgrading from 3.3.0.
+				if ( version_compare( $installed_plugin_version, '3.3.0', '=' ) ) {
+					return;
+				}
 
 				$registrar = $container->get( 'webhook.registrar' );
 				assert( $registrar instanceof WebhookRegistrar );
