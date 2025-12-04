@@ -122,7 +122,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		if ( $cart->issues() ) {
 			$cart_response = $this->response_factory->from_cart( $cart );
 
-			return $this->cart_details( $cart_response );
+			return $this->cart_details( $cart_response, 200 );
 		}
 
 		$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
