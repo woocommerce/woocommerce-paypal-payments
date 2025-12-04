@@ -262,6 +262,7 @@ return array(
 	'agentic.inspector.page.session'      => static function ( ContainerInterface $c ): CartSessionSection {
 		return new CartSessionSection(
 			$c->get( 'agentic.inspector.session_info' ),
+			$c->get( 'agentic.validation.processor' )
 		);
 	},
 	'agentic.inspector.page'              => static function ( ContainerInterface $c ): InspectionStatusPage {

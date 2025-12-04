@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 
 /**
@@ -25,9 +26,15 @@ class CartSessionSection {
 	use StatusTableRenderer;
 
 	private InspectionSessionData $inspector;
+	private CartValidationProcessor $validation_processor;
 
-	public function __construct( InspectionSessionData $inspector ) {
-		$this->inspector = $inspector;
+	public function __construct(
+		InspectionSessionData $inspector,
+		CartValidationProcessor $validation_processor
+	) {
+
+		$this->inspector            = $inspector;
+		$this->validation_processor = $validation_processor;
 	}
 
 	/**
@@ -240,6 +247,9 @@ class CartSessionSection {
 			'expires'  => wp_date( 'Y-m-d H:i:s', $details['expires'] ) ?: '-',
 		);
 
+		$validated_cart = $this->validation_processor->validate_cart( $cart );
+		$cart_data      = $validated_cart->to_array();
+		$issues_list    = array_map( static fn( ValidationIssue $issue ) => $issue->to_array(), $validated_cart->issues() );
 
 		?>
 		<div
@@ -301,6 +311,10 @@ class CartSessionSection {
 			$this->render_cart_data(
 				__( 'Cart Data', 'woocommerce-paypal-payments' ),
 				$cart->to_array()
+			);
+			$this->render_cart_data(
+				__( 'Validation Issues', 'woocommerce-paypal-payments' ),
+				$issues_list
 			);
 			?>
 
