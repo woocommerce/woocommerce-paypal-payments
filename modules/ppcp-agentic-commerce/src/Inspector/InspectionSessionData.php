@@ -65,7 +65,7 @@ class InspectionSessionData {
 				continue;
 			}
 
-			$session_data = $session['session_value'][ self::SESSION_KEY ];
+			$session_data = maybe_unserialize( $session['session_value'][ self::SESSION_KEY ] );
 
 			// Validate required data structure.
 			if ( ! is_array( $session_data ) || ! isset( $session_data['cart'] ) ) {
@@ -121,7 +121,7 @@ class InspectionSessionData {
 			return null;
 		}
 
-		$session_data = $this->session->get( self::SESSION_KEY );
+		$session_data = maybe_unserialize( $this->session->get( self::SESSION_KEY ) );
 
 		if ( ! is_array( $session_data ) || ! isset( $session_data['cart'] ) ) {
 			return null;
