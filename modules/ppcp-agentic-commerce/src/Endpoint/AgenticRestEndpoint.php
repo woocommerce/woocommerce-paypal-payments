@@ -193,16 +193,6 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	}
 
 	/**
-	 * Standard cart ID validation callback.
-	 *
-	 * @param mixed $param The parameter to validate.
-	 * @return bool True if valid cart ID format.
-	 */
-	private function validate_cart_id( $param ): bool {
-		return is_string( $param ) && strlen( $param ) >= 10;
-	}
-
-	/**
 	 * Get standard cart ID argument definition for route registration.
 	 *
 	 * @return array Cart ID argument configuration.
@@ -214,5 +204,15 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 			'sanitize_callback' => 'sanitize_text_field',
 			'validate_callback' => fn( $param ) => $this->validate_cart_id( $param ),
 		);
+	}
+
+	/**
+	 * Standard cart ID validation callback.
+	 *
+	 * @param mixed $param The parameter to validate.
+	 * @return bool True if valid cart ID format.
+	 */
+	private function validate_cart_id( $param ): bool {
+		return is_string( $param ) && strlen( $param ) >= 10;
 	}
 }
