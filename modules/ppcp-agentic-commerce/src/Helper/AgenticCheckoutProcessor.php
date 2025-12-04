@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
