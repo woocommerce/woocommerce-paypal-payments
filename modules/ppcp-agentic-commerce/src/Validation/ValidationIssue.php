@@ -56,6 +56,10 @@ abstract class ValidationIssue {
 		$this->field        = $field;
 	}
 
+	public function code(): string {
+		return static::ISSUE_CODE;
+	}
+
 	public function to_array(): array {
 		$data = array(
 			'code'    => static::ISSUE_CODE,

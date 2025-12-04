@@ -32,24 +32,24 @@ class PayPalOrderBuilder {
 	 * The full purchase unit with proper amounts will be created later
 	 * when the WC order is created during checkout.
 	 *
-	 * @param PayPalCart $cart      The PayPal cart.
-	 * @param CartData   $cart_data The translated cart data.
+	 * @param PayPalCart $cart          The PayPal cart.
+	 * @param CartData   $woo_cart_data The translated cart data.
 	 * @return PurchaseUnit
 	 */
 	public function build_purchase_unit_from_cart(
 		PayPalCart $cart,
-		CartData $cart_data
+		CartData $woo_cart_data
 	): PurchaseUnit {
 
-		$cart_items = $cart_data->items();
+		$cart_items = $woo_cart_data->items();
 
-		// Calculate total from cart items.
+		// TODO: Why not using the PayPalCart to calculate the total?
 		$total = 0.0;
 		foreach ( $cart_items as $item ) {
 			$total += (float) $item['line_total'];
 		}
 
-		// Use the WooCommerce currency.
+		// TODO: Why do we use Woo currency instead of the PayPalCart currency?
 		$currency = get_woocommerce_currency();
 
 		// Build items for the purchase unit.
@@ -78,74 +78,31 @@ class PayPalOrderBuilder {
 		}
 
 		// Build amount breakdown (required when items are present).
-		$breakdown = new AmountBreakdown(
-			new Money( $total, $currency ),
-			null, // shipping.
-			null, // tax_total.
-			null, // insurance.
-			null, // handling.
-			null, // shipping_discount.
-			null  // discount.
-		);
+		$total_amount = new Money( $total, $currency );
+		$breakdown    = new AmountBreakdown( $total_amount );
+		$amount       = new Amount( $total_amount, $breakdown );
+		$shipping     = $this->build_shipping_from_cart( $cart );
 
-		// Build amount with breakdown.
-		$amount = new Amount( new Money( $total, $currency ), $breakdown );
-
-		// Build shipping if needed.
-		$shipping = null;
-		if ( $cart->shipping_address() && $cart->customer() ) {
-			$shipping = $this->build_shipping_from_cart( $cart );
-		}
-
-		return new PurchaseUnit(
-			$amount,
-			$items,
-			$shipping,
-			'default', // reference_id.
-			'',        // description.
-			'',        // custom_id - will be set during checkout when WC order is created.
-			'',        // invoice_id - will be set during checkout.
-			'',        // soft_descriptor.
-			null // payee.
-		);
+		return new PurchaseUnit( $amount, $items, $shipping );
 	}
 
-	/**
-	 * Build shipping entity from cart.
-	 *
-	 * @param PayPalCart $cart The cart.
-	 * @return Shipping|null
-	 */
 	public function build_shipping_from_cart( PayPalCart $cart ): ?Shipping {
-		$customer = $cart->customer();
-		$shipping = $cart->shipping_address();
+		$full_name = CartHelper::full_customer_name( $cart );
+		$shipping  = CartHelper::shipping_address_array( $cart );
 
-		if ( ! $customer || ! $shipping ) {
+		if ( ! $full_name || ! $shipping['country_code'] ) {
 			return null;
 		}
 
 		$address = new Address(
-			$shipping->country_code() ?? '',
-			$shipping->address_line_1() ?? '',
-			$shipping->address_line_2() ?? '',
-			$shipping->admin_area_2() ?? '', // city.
-			$shipping->admin_area_1() ?? '', // state.
-			$shipping->postal_code() ?? ''
+			$shipping['country_code'],
+			$shipping['address_line_1'],
+			$shipping['address_line_2'],
+			$shipping['admin_area_2'],
+			$shipping['admin_area_1'],
+			$shipping['postal_code'],
 		);
 
-		// Use customer's name for shipping recipient.
-		$full_name = '';
-		if ( $customer->name() ) {
-			$name      = $customer->name();
-			$full_name = trim( ( $name['given_name'] ?? '' ) . ' ' . ( $name['surname'] ?? '' ) );
-		}
-
-		return new Shipping(
-			$full_name,
-			$address,
-			null,    // email_address.
-			null,    // phone_number.
-			array()  // options.
-		);
+		return new Shipping( $full_name, $address );
 	}
 }

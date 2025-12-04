@@ -11,6 +11,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use RuntimeException;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -63,13 +64,13 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		$cart_id = $request->get_param( 'cart_id' );
 
 		// Verify cart exists.
-		$session = $this->load_cart_session( $cart_id );
+		$session = $this->get_stored_cart( $cart_id );
 
 		if ( $session instanceof AgenticError ) {
 			return $this->error( $session );
 		}
 
-		$new_cart = $this->parse_and_validate_cart( $request );
+		$new_cart = $this->get_cart_from_request( $request );
 
 		if ( $new_cart instanceof AgenticError ) {
 			return $this->error( $new_cart );
@@ -81,33 +82,25 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		// Update the PayPal Order with new totals.
 		try {
 			$this->order_manager->update_order( $paypal_order_id, $new_cart );
-		} catch ( \Exception $e ) {
-			return $this->error(
-				new NotFoundError(
-					'Failed to update PayPal Order: ' . $e->getMessage(),
-					array(
-						array(
-							'issue'       => 'PAYPAL_ORDER_UPDATE_FAILED',
-							'description' => 'Could not synchronize cart changes with PayPal.',
-						),
-					)
+		} catch ( RuntimeException $e ) {
+			return $this->error_not_found(
+				'Failed to update PayPal Order: ' . $e->getMessage(),
+				array(
+					'issue'       => 'PAYPAL_ORDER_UPDATE_FAILED',
+					'description' => 'Could not synchronize cart changes with PayPal.',
 				)
 			);
 		}
 
 		// Replace the cart session (preserving ec_token).
-		$update_result = $this->session_handler->update_cart_session( $cart_id, $new_cart );
+		$update_result = $this->store_local_cart( $cart_id, $new_cart );
 
 		if ( ! $update_result ) {
-			return $this->error(
-				new NotFoundError(
-					'Failed to replace cart',
-					array(
-						array(
-							'issue'       => 'CART_REPLACE_FAILED',
-							'description' => 'Cart replacement operation failed.',
-						),
-					)
+			return $this->error_not_found(
+				'Failed to replace cart',
+				array(
+					'issue'       => 'CART_REPLACE_FAILED',
+					'description' => 'Cart replacement operation failed.',
 				)
 			);
 		}
@@ -115,5 +108,9 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		$response = $this->response_factory->from_cart( $new_cart );
 
 		return $this->cart_details( $response, 200 );
+	}
+
+	private function error_not_found( string $message, array $details ): WP_REST_Response {
+		return $this->error( new NotFoundError( $message, array( $details ) ) );
 	}
 }

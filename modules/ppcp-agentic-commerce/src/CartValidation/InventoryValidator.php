@@ -9,56 +9,72 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ItemOutOfStock;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 
-class InventoryValidator {
+class InventoryValidator implements ValidatorInterface {
 	private ProductManager $product_manager;
 
 	public function __construct( ProductManager $product_manager ) {
 		$this->product_manager = $product_manager;
 	}
 
-	public function verify_inventory( PayPalCart $cart ): array {
+	public function validate( PayPalCart $cart ): ?array {
+		// Skip validation if the cart already annotates an inventory issue.
+		if ( $cart->has_validation_issue( ErrorCode::INVENTORY_ISSUE ) ) {
+			return null;
+		}
+
 		$issues = array();
 
-		foreach ( $cart->items() as $item ) {
-			// Get WooCommerce product.
-			$product = $this->product_manager->find_product( $item->variant_id(), $item->item_id() );
+		foreach ( $cart->items() as $key => $item ) {
+			$issue = $this->validate_product( $key, $item );
 
-			if ( ! $product ) {
-				continue; // Skip if product not found.
-			}
-
-			// Check stock status.
-			if ( ! $this->product_manager->is_in_stock( $product ) ) {
-				$issues[] = new ItemOutOfStock(
-					'Product is no longer available',
-					sprintf( '%s is currently out of stock.', $product->get_name() ),
-				);
-				continue;
-			}
-
-			// Check quantity.
-			if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
-				$stock_quantity = $product->get_stock_quantity() ?? 0;
-
-				$issues[] = new InsufficientQuantity(
-					'Insufficient inventory',
-					// TODO should we actually expose the real stock qty here?
-					sprintf(
-						'Only %d of %s available, but %d requested.',
-						$stock_quantity,
-						$product->get_name(),
-						$item->quantity()
-					),
-				);
+			if ( $issue ) {
+				$issues[] = $issue;
 			}
 		}
 
 		return $issues;
+	}
+
+	private function validate_product( int $key, CartItem $item ): ?ValidationIssue {
+		$field = "items[{$key}]";
+
+		$product = $this->product_manager->find_product( $item );
+
+		if ( ! $product ) {
+			return null;
+		}
+
+		if ( ! $this->product_manager->is_in_stock( $product ) ) {
+			return new ItemOutOfStock(
+				'Product is no longer available',
+				sprintf( '%s is currently out of stock.', $product->get_name() ),
+				$field
+			);
+		}
+
+		if ( ! $this->product_manager->is_in_stock( $product, $item->quantity() ) ) {
+			$stock_quantity = $product->get_stock_quantity() ?? 0;
+
+			return new InsufficientQuantity(
+				'Insufficient inventory',
+				sprintf(
+					'Only %d of %s available, but %d requested.',
+					$stock_quantity,
+					$product->get_name(),
+					$item->quantity()
+				),
+				$field
+			);
+		}
+
+		return null;
 	}
 }

@@ -161,7 +161,7 @@ class PayPalCartTest extends SchemaTestCase {
 
 		$testee = PayPalCart::from_array( $multiple_problems );
 
-		$issues = $testee->validate();
+		$issues = $testee->issues();
 		$this->assertCount( 3, $issues );
 	}
 }

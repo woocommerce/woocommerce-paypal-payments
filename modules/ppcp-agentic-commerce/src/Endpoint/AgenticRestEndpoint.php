@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 
 /**
@@ -44,13 +44,13 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	private AuthServiceProvider $auth_provider;
 
-	protected AgenticSessionHandler $session_handler;
+	private AgenticSessionHandler $session_handler;
 
 	protected ResponseFactory $response_factory;
 
-	protected LoggerInterface $logger;
+	protected CartValidationProcessor $validation_processor;
 
-	protected ProductValidator $product_validator;
+	protected LoggerInterface $logger;
 
 	protected PayPalOrderManager $order_manager;
 
@@ -58,17 +58,17 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
 		ResponseFactory $response_factory,
+		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
-		ProductValidator $product_validator,
 		PayPalOrderManager $order_manager
 	) {
 
-		$this->auth_provider     = $auth_provider;
-		$this->session_handler   = $session_handler;
-		$this->response_factory  = $response_factory;
-		$this->logger            = $logger;
-		$this->product_validator = $product_validator;
-		$this->order_manager     = $order_manager;
+		$this->auth_provider        = $auth_provider;
+		$this->session_handler      = $session_handler;
+		$this->response_factory     = $response_factory;
+		$this->validation_processor = $validation_processor;
+		$this->logger               = $logger;
+		$this->order_manager        = $order_manager;
 	}
 
 	/**
@@ -100,7 +100,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param int          $status_code HTTP status code.
 	 * @return WP_REST_Response The successful response.
 	 */
-	protected function cart_details( CartResponse $cart, int $status_code = 200 ): WP_REST_Response {
+	protected function cart_details( CartResponse $cart, int $status_code ): WP_REST_Response {
 		$this->logger->info( "[REST] $status_code Response", $cart->to_array() );
 
 		return new WP_REST_Response( $cart->to_array(), $status_code );
@@ -144,7 +144,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param WP_REST_Request $request The request object.
 	 * @return PayPalCart|AgenticError Valid cart or error.
 	 */
-	protected function parse_and_validate_cart( WP_REST_Request $request ) {
+	protected function get_cart_from_request( WP_REST_Request $request ) {
 		$data = $this->parse_json_body( $request );
 
 		if ( $data instanceof AgenticError ) {
@@ -153,21 +153,16 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 		$cart = PayPalCart::from_array( $data );
 
-		$issues = $cart->validate();
-		if ( ! empty( $issues ) ) {
-			return new BadRequestError( 'Cart validation issue', $issues );
-		}
-
-		return $cart;
+		return $this->validation_processor->validate_cart( $cart );
 	}
 
 	/**
-	 * Load cart session with standardized error handling.
+	 * Load cart data from local storage (ie from session table) with standardized error handling.
 	 *
 	 * @param string $cart_id The cart ID to load.
 	 * @return array|AgenticError Cart session data or error.
 	 */
-	protected function load_cart_session( string $cart_id ) {
+	protected function get_stored_cart( string $cart_id ) {
 		$session = $this->session_handler->load_cart_session( $cart_id );
 
 		if ( ! $session ) {
@@ -184,6 +179,18 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		}
 
 		return $session;
+	}
+
+	protected function create_local_cart( PayPalCart $cart, string $ec_token ): string {
+		return $this->session_handler->create_cart_session( $cart, $ec_token );
+	}
+
+	protected function store_local_cart( string $cart_id, PayPalCart $cart ): bool {
+		return $this->session_handler->update_cart_session( $cart_id, $cart );
+	}
+
+	protected function flush_local_cart( string $cart_id ): bool {
+		return $this->session_handler->destroy_cart_session( $cart_id );
 	}
 
 	/**

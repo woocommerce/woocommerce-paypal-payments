@@ -3,9 +3,10 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
+use WP_REST_Request;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WP_REST_Request;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\GetCartEndpoint
@@ -45,7 +46,14 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 				'ACTIVE'
 			) );
 
-		$endpoint = new GetCartEndpoint( $mocks['auth_provider'], $session_handler, $response_factory );
+		$endpoint = new GetCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$response_factory,
+			$mocks['validation_processor'],
+			$mocks['logger'],
+			$mocks['order_manager']
+		);
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );
@@ -69,7 +77,14 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 			->with( $cart_id )
 			->andReturn( null );
 
-		$endpoint = new GetCartEndpoint( $mocks['auth_provider'], $session_handler, $mocks['response_factory'] );
+		$endpoint = new GetCartEndpoint(
+			$mocks['auth_provider'],
+			$session_handler,
+			$mocks['response_factory'],
+			$mocks['validation_processor'],
+			$mocks['logger'],
+			$mocks['order_manager']
+		);
 
 		$request = new WP_REST_Request( 'GET', "/wp-json/paypal/v1/merchant-cart/{$cart_id}" );
 		$request->set_param( 'cart_id', $cart_id );

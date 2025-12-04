@@ -75,12 +75,10 @@ class CartTransformer {
 		$cart_items = array();
 
 		foreach ( $paypal_cart->items() as $item ) {
-			$variant_id = $item->variant_id();
-			$item_id    = $item->item_id();
-			$quantity   = $item->quantity();
+			$quantity = $item->quantity();
 
 			// Resolve product - skip if not found.
-			$product = $this->product_manager->find_product( $variant_id, $item_id );
+			$product = $this->product_manager->find_product( $item );
 			if ( ! $product ) {
 				continue;
 			}

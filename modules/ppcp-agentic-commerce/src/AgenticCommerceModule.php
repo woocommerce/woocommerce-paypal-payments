@@ -21,6 +21,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Setting\AgenticSettingsDataModel;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ValidatorInterface;
 
 /**
  * Entry point that integrates agentic commerce logic with the plugin's DI system.
@@ -31,9 +33,6 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
 
 	/**
-	 * Returns the services provided by this module.
-	 *
-	 * @return array The array of services.
 	 * A list of all REST services that this module needs to register on init.
 	 */
 	private const REST_ENDPOINT_SERVICES = array(
@@ -41,6 +40,16 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		'agentic.rest.get_cart',
 		'agentic.rest.replace_cart',
 		'agentic.rest.checkout',
+	);
+
+	/**
+	 * A list of default cart validation services that verify business rules.
+	 *
+	 * Validators are processed in the order they are listed here.
+	 */
+	private const CART_VALIDATION_SERVICES = array(
+		'agentic.validator.product',
+		'agentic.validator.inventory',
 	);
 
 	public function services(): array {
@@ -90,8 +99,9 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 
 		// Feature is active and merchant is eligible: Initialize everything.
 
-		// NOTE: Auto-registration removed for testing - merchants must manually register via inspector page.
-		// $this->ensure_registered( $registration_handler );
+		if ( $this->should_auto_register() ) {
+			$this->ensure_registered( $registration_handler );
+		}
 
 		// Add filter for agentic commerce application context.
 		add_filter(
@@ -123,6 +133,17 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 					$endpoint = $container->get( $service_id );
 					assert( $endpoint instanceof AgenticRestEndpoint );
 					$endpoint->register_routes();
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_agentic_commerce_validators',
+			static function ( CartValidationProcessor $processor ) use ( $container ) {
+				foreach ( self::CART_VALIDATION_SERVICES as $service_id ) {
+					$validator = $container->get( $service_id );
+					assert( $validator instanceof ValidatorInterface );
+					$processor->register_validator( $validator );
 				}
 			}
 		);
@@ -242,5 +263,18 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 			return;
 		}
 		add_action( 'init', static fn() => $registration_service->deregister() );
+	}
+
+	/**
+	 * Whether the auto-registration is enabled for this site.
+	 *
+	 * By default, the plugin automatically registers when the merchant is eligible and the feature
+	 * is enabled. For testing or troubleshooting, this behavior can be disabled by adding the
+	 * following constant to wp-config.php:
+	 *
+	 *   define( 'PPCP_AGENTIC_AUTO_REGISTER', false );
+	 */
+	private function should_auto_register(): bool {
+		return ! defined( 'PPCP_AGENTIC_AUTO_REGISTER' ) || PPCP_AGENTIC_AUTO_REGISTER;
 	}
 }

@@ -54,7 +54,7 @@ abstract class SchemaTestCase extends TestCase {
 		$instance = $class::from_array( $this->get_valid_data() );
 
 		$this->assertInstanceOf( $class, $instance );
-		$this->assertEmpty( $instance->validate(), 'Valid data should not produce validation issues' );
+		$this->assertEmpty( $instance->issues(), 'Valid data should not produce validation issues' );
 	}
 
 	/**
@@ -94,7 +94,7 @@ abstract class SchemaTestCase extends TestCase {
 		$class    = $this->get_schema_class();
 		$instance = $class::from_array( $this->get_valid_data() );
 
-		$this->assertEmpty( $instance->validate(), 'Valid data should pass validation' );
+		$this->assertEmpty( $instance->issues(), 'Valid data should pass validation' );
 
 		foreach ( $expectations as $field_name => $expected ) {
 			$actual = $this->get_nested_value( $instance, $field_name );
@@ -153,7 +153,7 @@ abstract class SchemaTestCase extends TestCase {
 		$class    = $this->get_schema_class();
 		$data     = array();
 		$instance = $class::from_array( $data );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Missing value for field '$field_name' should raise a validation issue" );
 
@@ -176,7 +176,7 @@ abstract class SchemaTestCase extends TestCase {
 		$instance       = $class::from_array( $mandatory_data );
 
 		$this->assertNull( $instance->$field_name() );
-		$this->assertEmpty( $instance->validate() );
+		$this->assertEmpty( $instance->issues() );
 	}
 
 	/**
@@ -205,7 +205,7 @@ abstract class SchemaTestCase extends TestCase {
 		// Test below exact length produces validation issue
 		$too_short = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $exact_length - 1 ) ) );
 		$instance  = $class::from_array( $too_short );
-		$issues    = $instance->validate();
+		$issues    = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when below $exact_length characters" );
 
@@ -218,14 +218,14 @@ abstract class SchemaTestCase extends TestCase {
 		// Test at exact length is valid
 		$at_exact = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $exact_length ) ) );
 		$instance = $class::from_array( $at_exact );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at exactly $exact_length characters" );
 
 		// Test above exact length produces validation issue
 		$too_long = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $exact_length + 1 ) ) );
 		$instance = $class::from_array( $too_long );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when above $exact_length characters" );
 		$this->assertContains( $field_name, $issue_fields, "Expected validation error for invalid length of '$field_name'" );
@@ -244,7 +244,7 @@ abstract class SchemaTestCase extends TestCase {
 		// Test exceeding max length produces validation issue
 		$too_long = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $max_length + 1 ) ) );
 		$instance = $class::from_array( $too_long );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when exceeding $max_length characters" );
 
@@ -257,7 +257,7 @@ abstract class SchemaTestCase extends TestCase {
 		// Test at max length is valid
 		$at_max   = array_merge( $mandatory_data, $this->set_nested_value( array(), $field_name, str_repeat( 'a', $max_length ) ) );
 		$instance = $class::from_array( $at_max );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at exactly $max_length characters" );
 	}
@@ -276,7 +276,7 @@ abstract class SchemaTestCase extends TestCase {
 		// Test below minimum
 		$below_min = array_merge( $mandatory_data, array( $field_name => $min - 1 ) );
 		$instance  = $class::from_array( $below_min );
-		$issues    = $instance->validate();
+		$issues    = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when below $min" );
 		$this->assertSame( $field_name, $issues[0]->to_array()['field'] );
@@ -284,14 +284,14 @@ abstract class SchemaTestCase extends TestCase {
 		// Test at minimum (valid)
 		$at_min   = array_merge( $mandatory_data, array( $field_name => $min ) );
 		$instance = $class::from_array( $at_min );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at minimum value $min" );
 
 		// Test above maximum
 		$above_max = array_merge( $mandatory_data, array( $field_name => $max + 1 ) );
 		$instance  = $class::from_array( $above_max );
-		$issues    = $instance->validate();
+		$issues    = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when above $max" );
 		$this->assertSame( $field_name, $issues[0]->to_array()['field'] );
@@ -299,7 +299,7 @@ abstract class SchemaTestCase extends TestCase {
 		// Test at maximum (valid)
 		$at_max   = array_merge( $mandatory_data, array( $field_name => $max ) );
 		$instance = $class::from_array( $at_max );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid at maximum value $max" );
 	}
@@ -320,7 +320,7 @@ abstract class SchemaTestCase extends TestCase {
 			$too_few  = array();
 			$data     = array_merge( $mandatory_data, array( $field_name => $too_few ) );
 			$instance = $class::from_array( $data );
-			$issues   = $instance->validate();
+			$issues   = $instance->issues();
 
 			$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation with less than $min_count items" );
 
@@ -339,7 +339,7 @@ abstract class SchemaTestCase extends TestCase {
 
 		$data     = array_merge( $mandatory_data, array( $field_name => $at_min ) );
 		$instance = $class::from_array( $data );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid with exactly $min_count items" );
 	}
@@ -373,7 +373,7 @@ abstract class SchemaTestCase extends TestCase {
 
 		$data     = array_merge( $mandatory_data, array( $field_name => $too_many ) );
 		$instance = $class::from_array( $data );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertGreaterThan( 0, count( $issues ), "Field '$field_name' should fail validation when exceeding $max_count items" );
 		$this->assertSame( $field_name, $issues[0]->to_array()['field'] );
@@ -382,7 +382,7 @@ abstract class SchemaTestCase extends TestCase {
 		$at_max   = array_slice( $too_many, 0, $max_count );
 		$data     = array_merge( $mandatory_data, array( $field_name => $at_max ) );
 		$instance = $class::from_array( $data );
-		$issues   = $instance->validate();
+		$issues   = $instance->issues();
 
 		$this->assertEmpty( $issues, "Field '$field_name' should be valid with exactly $max_count items" );
 	}
@@ -550,7 +550,7 @@ abstract class SchemaTestCase extends TestCase {
 			$data     = array_merge( array(), $mandatory_data );
 			$data     = $this->set_nested_value( $data, $field_name, $input );
 			$instance = $class::from_array( $data );
-			$issues   = $instance->validate();
+			$issues   = $instance->issues();
 			$actual   = $this->get_nested_value( $instance, $field_name );
 
 			if ( $is_valid ) {

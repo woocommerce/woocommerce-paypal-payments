@@ -14,7 +14,6 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 use WP_REST_Request;
 use WP_REST_Response;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\BadRequestError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 
 /**
@@ -56,7 +55,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 	 * @return WP_REST_Response The REST response.
 	 */
 	public function create_cart( WP_REST_Request $request ): WP_REST_Response {
-		$cart = $this->parse_and_validate_cart( $request );
+		$cart = $this->get_cart_from_request( $request );
 
 		if ( $cart instanceof AgenticError ) {
 			return $this->error( $cart );
@@ -65,7 +64,7 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		// Token might be an empty string, when order creation fails. That's okay.
 		$ec_token = $this->order_manager->create_order( $cart );
 
-		$cart_id  = $this->session_handler->create_cart_session( $cart, $ec_token );
+		$cart_id  = $this->create_local_cart( $cart, $ec_token );
 		$response = $this->response_factory->new_cart( $cart, $cart_id, $ec_token );
 
 		return $this->cart_details( $response, 201 );

@@ -44,26 +44,19 @@ trait StatusTableRenderer {
 	 * @param string $label_true  Label to display when true.
 	 * @param string $label_false Label to display when false.
 	 */
-	protected function render_boolean_badge( bool $is_true, string $label_true, string $label_false ): void {
+	protected function render_boolean_badge( bool $is_true, string $label_true, string $label_false ): string {
 		if ( $is_true ) {
-			echo wp_kses_post(
-				sprintf(
-					'<mark class="yes"><span class="dashicons dashicons-yes"></span> %s</mark>',
-					$label_true
-				)
+			return sprintf(
+				'<mark class="yes"><span class="dashicons dashicons-yes"></span> %s</mark>',
+				$label_true
 			);
-
-			return;
 		}
 
-		echo wp_kses_post(
-			sprintf(
-				'<mark class="no"><span class="dashicons dashicons-minus"></span> %s</mark>',
-				$label_false
-			)
+		return sprintf(
+			'<mark class="no"><span class="dashicons dashicons-minus"></span> %s</mark>',
+			$label_false
 		);
 	}
-
 
 	/**
 	 * Displays the value with a valid/invalid icon.
@@ -74,24 +67,64 @@ trait StatusTableRenderer {
 	 * @param string $expected The expected value used by PayPal.
 	 * @param string $actual   The actual value, stored in local DB.
 	 */
-	protected function render_with_validation( string $expected, string $actual ): void {
+	protected function render_with_validation( string $expected, string $actual ): string {
 		$is_valid = $expected === $actual;
 		$icon     = $is_valid ? 'dashicons-yes' : 'dashicons-no-alt';
 
-		echo wp_kses_post(
-			sprintf(
-				'<mark class="%1$s"><span class="dashicons %2$s"></span></mark> <code>%3$s</code>',
-				esc_attr( $is_valid ? 'yes' : 'error' ),
-				esc_attr( $icon ),
-				esc_html( $expected )
-			)
+		$content = sprintf(
+			'<mark class="%1$s"><span class="dashicons %2$s"></span></mark> <code>%3$s</code>',
+			esc_attr( $is_valid ? 'yes' : 'error' ),
+			esc_attr( $icon ),
+			esc_html( $expected )
 		);
 
 		if ( ! $is_valid ) {
-			printf(
+			$content .= sprintf(
 				' <mark class="actual no">(%s)</mark>',
 				esc_html( $actual )
 			);
 		}
+
+		return $content;
+	}
+
+	/**
+	 * Render a table row with optional help text.
+	 *
+	 * @param string          $label The row label.
+	 * @param string|callable $value The value to display (string or callable that echoes/returns
+	 *                               content).
+	 * @param string          $help  Optional help text for tooltip. Defaults to empty string.
+	 */
+	protected function render_row( string $label, $value, string $help = '' ): void {
+		$label = trim( $label, ' :' );
+
+		if ( $label ) {
+			$label .= ':';
+		}
+
+		?>
+		<tr>
+			<td>
+				<?php echo esc_html( $label ); ?>
+			</td>
+			<td class="help">
+				<?php $this->render_help( $help ); ?>
+			</td>
+			<td>
+				<div style="display: flex; align-items: center; gap: 12px;">
+					<?php
+					if ( is_callable( $value ) ) {
+						$value = $value();
+					}
+
+					if ( is_string( $value ) && $value ) {
+						echo wp_kses_post( $value );
+					}
+					?>
+				</div>
+			</td>
+		</tr>
+		<?php
 	}
 }

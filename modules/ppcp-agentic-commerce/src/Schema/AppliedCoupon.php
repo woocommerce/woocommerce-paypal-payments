@@ -33,9 +33,9 @@ class AppliedCoupon extends AgenticSchema {
 			$this->description = trim( $input['description'] );
 		}
 		if ( isset( $input['discount_amount'] ) && is_array( $input['discount_amount'] ) ) {
-			$money = Money::from_array( $input['discount_amount'], $add_issue );
+			$money  = Money::from_array( $input['discount_amount'], $add_issue );
+			$issues = $money->issues();
 
-			$issues = $money->validate();
 			if ( empty( $issues ) ) {
 				$this->discount_amount = $money;
 			} else {

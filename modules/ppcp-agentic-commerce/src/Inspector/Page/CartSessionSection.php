@@ -96,31 +96,29 @@ class CartSessionSection {
 			</tr>
 			</thead>
 			<tbody>
-			<tr>
-				<td><?php esc_html_e( 'Total Sessions', 'woocommerce-paypal-payments' ); ?>:</td>
-				<td class="help">
-					<?php $this->render_help( __( 'Number of active agentic cart sessions', 'woocommerce-paypal-payments' ) ); ?>
-				</td>
-				<td><strong><?php echo esc_html( $stats['total_sessions'] ); ?></strong></td>
-			</tr>
-			<tr>
-				<td><?php esc_html_e( 'Total Items', 'woocommerce-paypal-payments' ); ?>:</td>
-				<td class="help">
-					<?php $this->render_help( __( 'Total number of items across all carts', 'woocommerce-paypal-payments' ) ); ?>
-				</td>
-				<td><strong><?php echo esc_html( $stats['total_items'] ); ?></strong></td>
-			</tr>
-			<?php if ( $stats['average_age_hours'] !== null ) : ?>
-				<tr>
-					<td><?php esc_html_e( 'Average Session Age', 'woocommerce-paypal-payments' ); ?>:</td>
-					<td class="help">
-						<?php $this->render_help( __( 'Average age of sessions in hours', 'woocommerce-paypal-payments' ) ); ?>
-					</td>
-					<td>
-						<strong><?php echo esc_html( number_format( $stats['average_age_hours'], 1 ) ); ?> hours</strong>
-					</td>
-				</tr>
-			<?php endif; ?>
+			<?php
+
+			$this->render_row(
+				__( 'Total Sessions', 'woocommerce-paypal-payments' ),
+				(string) $stats['total_sessions'],
+				__( 'Number of active agentic cart sessions', 'woocommerce-paypal-payments' )
+			);
+
+			$this->render_row(
+				__( 'Total Items', 'woocommerce-paypal-payments' ),
+				(string) $stats['total_items'],
+				__( 'Total number of items across all carts', 'woocommerce-paypal-payments' )
+			);
+
+			if ( $stats['average_age_hours'] !== null ) {
+				$this->render_row(
+					__( 'Average Session Age', 'woocommerce-paypal-payments' ),
+					number_format( $stats['average_age_hours'], 1 ) . ' hours',
+					__( 'Average age of sessions in hours', 'woocommerce-paypal-payments' )
+				);
+			}
+
+			?>
 			</tbody>
 		</table>
 		<?php
@@ -162,7 +160,7 @@ class CartSessionSection {
 				$modified_time = $session['modified'] ? ( wp_date( 'Y-m-d H:i:s', $session['modified'] ) ?: '-' ) : '-';
 				$age_hours     = $session['created'] ? round( ( time() - $session['created'] ) / 3600, 1 ) : 0;
 
-				// Build inspect URL with nonce.
+				// Build inspection URL with nonce.
 				$inspect_url = add_query_arg(
 					array(
 						'page'            => 'wc-status',
@@ -178,7 +176,8 @@ class CartSessionSection {
 				<tr <?php echo $is_inspecting ? 'style="background: #f0f6fc;"' : ''; ?>>
 					<td>
 						<code style="font-size: 11px;">
-							<?php echo esc_html( substr( $session_id, 0, 20 ) ?: $session_id ); ?>...
+							<?php echo esc_html( substr( $session_id, 0, 20 ) ?: $session_id ); ?>
+							...
 						</code>
 					</td>
 					<td><?php echo esc_html( (string) $session['item_count'] ); ?></td>
@@ -233,8 +232,12 @@ class CartSessionSection {
 		$expires  = $details['expires'] ? ( wp_date( 'Y-m-d H:i:s', $details['expires'] ) ?: '-' ) : '-';
 
 		?>
-		<div style="margin-bottom: 30px; padding: 20px; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0,0,0,.04);">
-			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+		<div
+			style="margin-bottom: 30px; padding: 20px; background: #fff; border: 1px solid #c3c4c7; box-shadow: 0 1px 1px rgba(0,0,0,.04);"
+		>
+			<div
+				style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;"
+			>
 				<h3 style="margin: 0;"><?php esc_html_e( 'Inspecting Session', 'woocommerce-paypal-payments' ); ?></h3>
 				<a
 					href="<?php echo esc_url( admin_url( 'admin.php?page=wc-status&tab=paypal-agentic' ) ); ?>"
@@ -244,31 +247,41 @@ class CartSessionSection {
 				</a>
 			</div>
 
-			<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+			<div
+				style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;"
+			>
 				<div>
 					<h4 style="margin: 0 0 10px 0; color: #1d2327;"><?php esc_html_e( 'Session Metadata', 'woocommerce-paypal-payments' ); ?></h4>
 					<table class="wc_status_table widefat">
 						<tbody>
-						<tr>
-							<td><?php esc_html_e( 'Session ID', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><code style="font-size: 11px;"><?php echo esc_html( $session_id ); ?></code></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'EC Token', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><code><?php echo esc_html( $ec_token ?: '-' ); ?></code></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'Created', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $created ); ?></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'Modified', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $modified ); ?></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'Expires', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $expires ); ?></td>
-						</tr>
+						<?php
+						$metadata_rows = array(
+							array(
+								'label' => __( 'Session ID', 'woocommerce-paypal-payments' ),
+								'value' => fn(): string => '<code style="font-size: 11px;">' . esc_html( $session_id ) . '</code>',
+							),
+							array(
+								'label' => __( 'EC Token', 'woocommerce-paypal-payments' ),
+								'value' => fn(): string => '<code>' . esc_html( $ec_token ?: '-' ) . '</code>',
+							),
+							array(
+								'label' => __( 'Created', 'woocommerce-paypal-payments' ),
+								'value' => $created,
+							),
+							array(
+								'label' => __( 'Modified', 'woocommerce-paypal-payments' ),
+								'value' => $modified,
+							),
+							array(
+								'label' => __( 'Expires', 'woocommerce-paypal-payments' ),
+								'value' => $expires,
+							),
+						);
+
+						foreach ( $metadata_rows as $row ) {
+							$this->render_row( $row['label'], $row['value'] );
+						}
+						?>
 						</tbody>
 					</table>
 				</div>
@@ -277,26 +290,34 @@ class CartSessionSection {
 					<h4 style="margin: 0 0 10px 0; color: #1d2327;"><?php esc_html_e( 'Cart Totals', 'woocommerce-paypal-payments' ); ?></h4>
 					<table class="wc_status_table widefat">
 						<tbody>
-						<tr>
-							<td><?php esc_html_e( 'Subtotal', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $cart->totals->subtotal . ' ' . $cart->currency ); ?></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'Shipping', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $cart->totals->shipping . ' ' . $cart->currency ); ?></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'Tax', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $cart->totals->tax . ' ' . $cart->currency ); ?></td>
-						</tr>
-						<tr>
-							<td><?php esc_html_e( 'Discount', 'woocommerce-paypal-payments' ); ?>:</td>
-							<td><?php echo esc_html( $cart->totals->discount . ' ' . $cart->currency ); ?></td>
-						</tr>
-						<tr>
-							<td><strong><?php esc_html_e( 'Total', 'woocommerce-paypal-payments' ); ?>:</strong></td>
-							<td><strong><?php echo esc_html( $cart->totals->total . ' ' . $cart->currency ); ?></strong></td>
-						</tr>
+						<?php
+						$totals_rows = array(
+							array(
+								'label' => __( 'Subtotal', 'woocommerce-paypal-payments' ),
+								'value' => $cart->totals->subtotal . ' ' . $cart->currency,
+							),
+							array(
+								'label' => __( 'Shipping', 'woocommerce-paypal-payments' ),
+								'value' => $cart->totals->shipping . ' ' . $cart->currency,
+							),
+							array(
+								'label' => __( 'Tax', 'woocommerce-paypal-payments' ),
+								'value' => $cart->totals->tax . ' ' . $cart->currency,
+							),
+							array(
+								'label' => __( 'Discount', 'woocommerce-paypal-payments' ),
+								'value' => $cart->totals->discount . ' ' . $cart->currency,
+							),
+							array(
+								'label' => __( 'Total', 'woocommerce-paypal-payments' ),
+								'value' => fn(): string => '<strong>' . esc_html( $cart->totals->total . ' ' . $cart->currency ) . '</strong>',
+							),
+						);
+
+						foreach ( $totals_rows as $row ) {
+							$this->render_row( $row['label'], $row['value'] );
+						}
+						?>
 						</tbody>
 					</table>
 				</div>
@@ -319,7 +340,14 @@ class CartSessionSection {
 						<td>
 							<?php echo esc_html( $item->name ); ?>
 							<?php if ( ! empty( $item->image_url ) ) : ?>
-								<br><small><a href="<?php echo esc_url( $item->image_url ); ?>" target="_blank"><?php esc_html_e( 'View image', 'woocommerce-paypal-payments' ); ?></a></small>
+								<br><small>
+									<a
+										href="<?php echo esc_url( $item->image_url ); ?>"
+										target="_blank"
+									>
+										<?php esc_html_e( 'View image', 'woocommerce-paypal-payments' ); ?>
+									</a>
+								</small>
 							<?php endif; ?>
 						</td>
 						<td><code><?php echo esc_html( $item->sku ?: '-' ); ?></code></td>
@@ -346,18 +374,15 @@ class CartSessionSection {
 						echo '<br>' . esc_html( $address->address_line_2 );
 					}
 					if ( ! empty( $address->city ) || ! empty( $address->state ) || ! empty( $address->postal_code ) ) {
-						echo '<br>' . esc_html(
-							implode(
-								', ',
-								array_filter(
-									array(
-										$address->city ?? '',
-										$address->state ?? '',
-										$address->postal_code ?? '',
-									)
-								)
+						$address_parts = array_filter(
+							array(
+								$address->city ?? '',
+								$address->state ?? '',
+								$address->postal_code ?? '',
 							)
 						);
+
+						echo '<br>' . esc_html( implode( ', ', $address_parts ) );
 					}
 					if ( ! empty( $address->country_code ) ) {
 						echo '<br>' . esc_html( $address->country_code );
@@ -366,7 +391,9 @@ class CartSessionSection {
 				</div>
 			<?php endif; ?>
 
-			<div style="margin-top: 20px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107;">
+			<div
+				style="margin-top: 20px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107;"
+			>
 				<strong><?php esc_html_e( 'Note:', 'woocommerce-paypal-payments' ); ?></strong>
 				<?php esc_html_e( 'This is a read-only view of the cart session for debugging purposes.', 'woocommerce-paypal-payments' ); ?>
 			</div>

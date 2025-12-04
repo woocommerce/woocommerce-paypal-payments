@@ -120,7 +120,6 @@ class AgenticCheckoutProcessor {
 			$paypal_data['payer'] = $payer_data;
 		}
 
-		// Add shipping address.
 		$shipping_data = $this->build_shipping_data( $cart );
 		if ( ! empty( $shipping_data ) ) {
 			$paypal_data['shipping_address'] = $shipping_data;
@@ -145,7 +144,7 @@ class AgenticCheckoutProcessor {
 	/**
 	 * Build payer data from PayPal cart.
 	 *
-	 * @param PayPalCart $cart The PayPal cart with customer data.
+	 * @param PayPalCart $cart The PayPal cart.
 	 * @return array Payer data array.
 	 */
 	private function build_payer_data( PayPalCart $cart ): array {
@@ -155,9 +154,9 @@ class AgenticCheckoutProcessor {
 
 		$payer_data = array();
 
-		// Add email address.
 		$customer = $cart->customer();
 		if ( $customer ) {
+			// Note: name is an array with items 'given_name' and 'surname', which can be string or null.
 			$payer_data['name'] = $customer->name();
 
 			if ( $customer->email_address() ) {
@@ -165,28 +164,17 @@ class AgenticCheckoutProcessor {
 			}
 		}
 
-		// Add billing address.
 		if ( $cart->billing_address() ) {
-			/** @var Address $billing */
-			$billing = $cart->billing_address();
-
-			$payer_data['address'] = array(
-				'address_line_1' => $billing->address_line_1() ?? '',
-				'address_line_2' => $billing->address_line_2() ?? '',
-				'admin_area_2'   => $billing->admin_area_2() ?? '',
-				'admin_area_1'   => $billing->admin_area_1() ?? '',
-				'postal_code'    => $billing->postal_code() ?? '',
-				'country_code'   => $billing->country_code() ?? '',
-			);
+			$payer_data['address'] = CartHelper::billing_address_array( $cart );
 		}
 
 		return $payer_data;
 	}
 
 	/**
-	 * Build shipping data from PayPal cart.
+	 * Build shipping data from PayPalCart.
 	 *
-	 * @param PayPalCart $cart The PayPal cart with shipping address.
+	 * @param PayPalCart $cart The PayPal cart.
 	 * @return array Shipping data array.
 	 */
 	private function build_shipping_data( PayPalCart $cart ): array {
@@ -194,35 +182,11 @@ class AgenticCheckoutProcessor {
 			return array();
 		}
 
-		/** @var Address $shipping */
-		$shipping   = $cart->shipping_address();
-		$customer   = $cart->customer();
-		$first_name = '';
-		$last_name  = '';
-
-		if ( $customer ) {
-			$customer_name = $customer->name();
-
-			if ( $customer_name ) {
-				$first_name = $customer_name['given_name'];
-				$last_name  = $customer_name['surname'];
-			}
-		}
-
 		return array(
 			'name'    => array(
-				'full_name' => trim(
-					"$first_name $last_name"
-				),
+				'full_name' => CartHelper::full_customer_name( $cart ),
 			),
-			'address' => array(
-				'address_line_1' => $shipping->address_line_1() ?? '',
-				'address_line_2' => $shipping->address_line_2() ?? '',
-				'admin_area_2'   => $shipping->admin_area_2() ?? '',
-				'admin_area_1'   => $shipping->admin_area_1() ?? '',
-				'postal_code'    => $shipping->postal_code() ?? '',
-				'country_code'   => $shipping->country_code() ?? '',
-			),
+			'address' => CartHelper::shipping_address_array( $cart ),
 		);
 	}
 

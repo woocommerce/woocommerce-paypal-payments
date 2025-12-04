@@ -13,9 +13,13 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Helper;
 
 use WC_Product;
 
+use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
+
 class ProductManager {
+	protected static array $product_cache = array();
+
 	/**
-	 * Find product by variant_id or item_id using multiple resolution strategies.
+	 * Find a product by variant_id or item_id using multiple resolution strategies.
 	 *
 	 * Resolution strategies:
 	 * 1. SKU lookup for variant_id
@@ -23,11 +27,18 @@ class ProductManager {
 	 * 3. Direct ID casting for variant_id
 	 * 4. Direct ID casting for item_id
 	 *
-	 * @param string|null $variant_id The variant/product identifier.
-	 * @param string|null $item_id    The item identifier.
+	 * @param CartItem $item The cart item.
 	 * @return WC_Product|null The resolved product or null.
 	 */
-	public function find_product( ?string $variant_id, ?string $item_id ): ?WC_Product {
+	public function find_product( CartItem $item ): ?WC_Product {
+		$variant_id = $item->variant_id();
+		$item_id    = $item->item_id();
+		$cache_key  = $this->build_cache_key( $variant_id, $item_id );
+
+		if ( array_key_exists( $cache_key, self::$product_cache ) ) {
+			return self::$product_cache[ $cache_key ];
+		}
+
 		$product_id = null;
 
 		// Strategy 1: Try variant_id as SKU.
@@ -50,18 +61,20 @@ class ProductManager {
 			$product_id = (int) $item_id;
 		}
 
-		// Return product or null if not found.
 		$product = $product_id ? wc_get_product( $product_id ) : null;
+		$product = $product instanceof WC_Product ? $product : null;
 
-		return $product instanceof WC_Product ? $product : null;
+		self::$product_cache[ $cache_key ] = $product;
+
+		return $product;
 	}
 
 	/**
-	 * Check if product is in stock with optional quantity validation.
+	 * Check if the product is in stock with optional quantity validation.
 	 *
 	 * @param WC_Product $product  The product to check.
 	 * @param int|null   $quantity The desired quantity (optional).
-	 * @return bool True if product is in stock (and has sufficient quantity if provided).
+	 * @return bool True if the product is in stock (and has sufficient quantity if provided).
 	 */
 	public function is_in_stock( WC_Product $product, ?int $quantity = null ): bool {
 		if ( ! $product->is_in_stock() ) {
@@ -81,5 +94,9 @@ class ProductManager {
 		}
 
 		return true;
+	}
+
+	private function build_cache_key( ?string $variant_id, ?string $item_id ): string {
+		return ( $variant_id ?? 'null' ) . '|' . ( $item_id ?? 'null' );
 	}
 }
