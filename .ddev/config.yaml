@@ -28,6 +28,9 @@ web_environment:
   - ADMIN_PASS=admin
   - ADMIN_EMAIL=admin@example.com
   - WC_VERSION=10.1.2
+  - WP_DEBUG=true
+  - WP_DEBUG_DISPLAY=true
+  - WP_DEBUG_LOG=true
 
 # Key features of ddev's config.yaml:
 
