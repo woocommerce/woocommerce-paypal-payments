@@ -198,7 +198,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	 * @param mixed $param The parameter to validate.
 	 * @return bool True if valid cart ID format.
 	 */
-	protected function validate_cart_id( $param ): bool {
+	private function validate_cart_id( $param ): bool {
 		return is_string( $param ) && strlen( $param ) >= 10;
 	}
 
@@ -212,7 +212,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 			'required'          => true,
 			'type'              => 'string',
 			'sanitize_callback' => 'sanitize_text_field',
-			'validate_callback' => array( $this, 'validate_cart_id' ),
+			'validate_callback' => fn( $param ) => $this->validate_cart_id( $param ),
 		);
 	}
 }
