@@ -33,15 +33,15 @@ class PayPalOrderBuilder {
 	 * when the WC order is created during checkout.
 	 *
 	 * @param PayPalCart $cart          The PayPal cart.
-	 * @param CartData   $woo_cart_data The translated cart data.
+	 * @param CartData   $wc_cart_data The translated cart data.
 	 * @return PurchaseUnit
 	 */
 	public function build_purchase_unit_from_cart(
 		PayPalCart $cart,
-		CartData $woo_cart_data
+		CartData $wc_cart_data
 	): PurchaseUnit {
 
-		$cart_items = $woo_cart_data->items();
+		$cart_items = $wc_cart_data->items();
 
 		// TODO: Why not using the PayPalCart to calculate the total?
 		$total = 0.0;
