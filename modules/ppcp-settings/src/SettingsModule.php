@@ -132,7 +132,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					$message = sprintf(
 					// translators: %1$s is the URL for the startup guide.
 						__(
-							'<strong>📢 Important: New PayPal Payments settings UI becoming default in October!</strong><br>We\'ve redesigned the settings for better performance and usability. Starting late October, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.',
+							'<strong>📢 Important: New PayPal Payments settings UI becoming default in January!</strong><br>We\'ve redesigned the settings for better performance and usability. Starting late January, this improved design will be the default for all WooCommerce installations to enjoy faster navigation, cleaner organization, and improved performance. Check out the <a href="%1$s" target="_blank">Startup Guide</a>, then click <a href="#" class="settings-switch-ui" role="button" aria-describedby="switch-ui-desc"><strong>Switch to New Settings</strong></a> to activate it.',
 							'woocommerce-paypal-payments'
 						),
 						'https://woocommerce.com/document/woocommerce-paypal-payments/paypal-payments-startup-guide/'
