@@ -161,8 +161,8 @@ class WebhookModule implements ServiceModule, FactoryModule, ExtendingModule, Ex
 					return;
 				}
 
-				// Disabled when upgrading from 3.3.0.
-				if ( version_compare( $installed_plugin_version, '3.3.0', '=' ) ) {
+				// Disabled when upgrading from 3.0.0+.
+				if ( version_compare( $installed_plugin_version, '3.0.0', '>=' ) ) {
 					return;
 				}
 
