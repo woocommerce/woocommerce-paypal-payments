@@ -15,33 +15,23 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch;
 class CurrencyValidator implements ValidatorInterface {
 
 	public function validate( PayPalCart $cart ) {
-		$issues = array();
-
-		// Extract all currencies from cart items.
 		$cart_currencies = $this->extract_cart_currencies( $cart );
 
-		// If no currencies found, nothing to validate.
 		if ( empty( $cart_currencies ) ) {
-			return $issues;
+			return array();
 		}
 
-		// Validate all items have the same currency.
-		$currency_issue = $this->validate_consistent_currency( $cart_currencies );
-		if ( $currency_issue ) {
-			$issues[] = $currency_issue;
-			// Don't check store currency if items have mixed currencies.
-			return $issues;
+		$consistency_issue = $this->validate_consistent_currency( $cart_currencies );
+		if ( $consistency_issue ) {
+			return array( $consistency_issue );
 		}
 
-		// At this point, all currencies are the same - check against store.
-		$cart_currency        = $cart_currencies[0]['currency'];
-		$first_currency_index = $cart_currencies[0]['index'];
-		$store_currency_issue = $this->validate_store_currency( $cart_currency, $first_currency_index );
-		if ( $store_currency_issue ) {
-			$issues[] = $store_currency_issue;
-		}
+		$store_issue = $this->validate_store_currency(
+			$cart_currencies[0]['currency'],
+			$cart_currencies[0]['index']
+		);
 
-		return $issues;
+		return array_filter( array( $store_issue ) );
 	}
 
 	/**
@@ -51,17 +41,31 @@ class CurrencyValidator implements ValidatorInterface {
 	 * @return array Array of ['index' => int, 'currency' => string].
 	 */
 	private function extract_cart_currencies( PayPalCart $cart ): array {
-		$currencies = array();
-		foreach ( $cart->items() as $key => $item ) {
-			$price = $item->price();
-			if ( $price && $price->currency_code() ) {
-				$currencies[] = array(
-					'index'    => $key,
-					'currency' => $price->currency_code(),
-				);
-			}
-		}
-		return $currencies;
+		return array_values(
+			array_filter(
+				array_map(
+					fn( $index ) => $this->extract_currency_at_index( $cart, $index ),
+					array_keys( $cart->items() )
+				)
+			)
+		);
+	}
+
+	/**
+	 * Extracts currency from a specific cart item index.
+	 *
+	 * @param PayPalCart $cart  The cart.
+	 * @param int        $index The item index.
+	 * @return array|null Currency data or null if no currency.
+	 */
+	private function extract_currency_at_index( PayPalCart $cart, int $index ): ?array {
+		$item     = $cart->items()[ $index ];
+		$currency = $item->price()?->currency_code();
+
+		return $currency ? array(
+			'index'    => $index,
+			'currency' => $currency,
+		) : null;
 	}
 
 	/**
@@ -71,21 +75,17 @@ class CurrencyValidator implements ValidatorInterface {
 	 * @return CurrencyMismatch|null Validation issue if currencies are inconsistent.
 	 */
 	private function validate_consistent_currency( array $currencies ): ?CurrencyMismatch {
-		$unique_currencies = array_unique(
-			array_column( $currencies, 'currency' )
-		);
+		$unique_currencies = array_unique( array_column( $currencies, 'currency' ) );
 
-		// If all items have the same currency, validation passes.
 		if ( count( $unique_currencies ) === 1 ) {
 			return null;
 		}
 
-		// Find the first mismatch.
-		$reference_currency = $currencies[0]['currency'];
-		$mismatch           = current(
+		$reference = $currencies[0];
+		$mismatch  = current(
 			array_filter(
 				$currencies,
-				fn( $item ) => $item['currency'] !== $reference_currency
+				fn( $item ) => $item['currency'] !== $reference['currency']
 			)
 		);
 
@@ -94,7 +94,7 @@ class CurrencyValidator implements ValidatorInterface {
 				'Mixed currencies detected: item %d has currency %s, expected %s',
 				$mismatch['index'],
 				$mismatch['currency'],
-				$reference_currency
+				$reference['currency']
 			),
 			'All items in the cart must use the same currency.',
 			"items[{$mismatch['index']}].price.currency_code"
