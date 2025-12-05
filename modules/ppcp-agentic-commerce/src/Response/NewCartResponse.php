@@ -14,12 +14,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 
 class NewCartResponse extends CartResponse {
 
-	public function __construct(
-		PayPalCart $cart,
-		string $cart_id,
-		string $token,
-		string $status = 'CREATED'
-	) {
+	protected string $status = 'CREATED';
+
+	public function __construct( PayPalCart $cart, string $cart_id, string $token ) {
 		parent::__construct( $cart, $cart_id );
 		$this->token = $token;
 	}
