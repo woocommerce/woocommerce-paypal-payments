@@ -31,24 +31,18 @@ class CartResponse {
 
 	/**
 	 * The cart ID used by the API to reference to an existing cart.
-	 *
-	 * @var string The cart ID is usually part of the REST endpoint path.
 	 */
 	private string $cart_id;
 
 	/**
 	 * Used to track cart lifecycle.
 	 * Possible values: CREATED, INCOMPLETE, READY, COMPLETED
-	 *
-	 * @var string Business workflow state.
 	 */
 	protected string $status = 'INCOMPLETE';
 
 	/**
 	 * Used to determine the next step.
 	 * Possible values: VALID, INVALID, REQUIRES_ADDITIONAL_INFORMATION
-	 *
-	 * @var string Data validation state.
 	 */
 	protected string $validation_status = 'INVALID';
 
@@ -57,11 +51,6 @@ class CartResponse {
 	 */
 	protected string $token = '';
 
-	/**
-	 * Constructor.
-	 *
-	 * @param PayPalCart $cart The PayPal cart.
-	 */
 	public function __construct( PayPalCart $cart, string $cart_id = '' ) {
 		$this->cart    = $cart;
 		$this->cart_id = $cart_id;

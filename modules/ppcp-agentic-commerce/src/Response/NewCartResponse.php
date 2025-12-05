@@ -20,11 +20,6 @@ class NewCartResponse extends CartResponse {
 		$this->token = $token;
 	}
 
-	/**
-	 * Convert to array for API response.
-	 *
-	 * @return array The response array.
-	 */
 	public function to_array(): array {
 		$data = parent::to_array();
 
