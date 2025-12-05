@@ -15,11 +15,8 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 class ResponseFactory {
 	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
-		return new NewCartResponse( $cart, $cart_id, $token, 'CREATED' );
-	}
-
-	public function active_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
-		return new NewCartResponse( $cart, $cart_id, $token, 'ACTIVE' );
+		// The only response that includes the token!
+		return new NewCartResponse( $cart, $cart_id, $token );
 	}
 
 	public function from_order( WC_Order $order, PayPalCart $cart ): PaidCartResponse {
