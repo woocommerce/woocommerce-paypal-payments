@@ -2,7 +2,7 @@
 /**
  * PayPal Cart Response (new cart created).
  *
- * @package WooCommerce\PayPalCommerce\AgenticCommerce\Response\
+ * @package WooCommerce\PayPalCommerce\AgenticCommerce\Response
  */
 
 declare( strict_types = 1 );
@@ -14,14 +14,6 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 
 class NewCartResponse extends CartResponse {
 
-	/**
-	 * Constructor.
-	 *
-	 * @param PayPalCart $cart The PayPal cart.
-	 * @param string     $cart_id The cart ID.
-	 * @param string     $token The EC token.
-	 * @param string     $status The cart status (CREATED or ACTIVE).
-	 */
 	public function __construct(
 		PayPalCart $cart,
 		string $cart_id,
