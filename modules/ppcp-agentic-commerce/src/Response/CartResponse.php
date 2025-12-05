@@ -104,22 +104,17 @@ class CartResponse {
 		}
 
 		return array(
-			'item_total' => array(
-				'currency_code' => $currency_code,
-				'value'         => $item_total,
-			),
-			'shipping'   => array(
-				'currency_code' => $currency_code,
-				'value'         => 0.00,
-			),
-			'tax_total'  => array(
-				'currency_code' => $currency_code,
-				'value'         => 0.00,
-			),
-			'amount'     => array(
-				'currency_code' => $currency_code,
-				'value'         => $item_total,
-			),
+			'item_total' => $this->money( $currency_code, $item_total ),
+			'shipping'   => $this->money( $currency_code, 0.00 ),
+			'tax_total'  => $this->money( $currency_code, 0.00 ),
+			'amount'     => $this->money( $currency_code, $item_total ),
+		);
+	}
+
+	private function money( string $currency_code, float $value ): array {
+		return array(
+			'currency_code' => $currency_code,
+			'value'         => $value,
 		);
 	}
 }
