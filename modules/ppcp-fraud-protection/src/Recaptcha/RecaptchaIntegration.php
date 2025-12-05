@@ -135,11 +135,11 @@ class RecaptchaIntegration extends WC_Integration {
 
 	public function process_admin_options() {
 		$post_data     = $this->get_post_data();
-		$enabled       = $post_data[ 'woocommerce_' . $this->id . '_enabled' ];
-		$site_key_v3   = $post_data[ 'woocommerce_' . $this->id . '_site_key_v3' ];
-		$secret_key_v3 = $post_data[ 'woocommerce_' . $this->id . '_secret_key_v3' ];
-		$site_key_v2   = $post_data[ 'woocommerce_' . $this->id . '_site_key_v2' ];
-		$secret_key_v2 = $post_data[ 'woocommerce_' . $this->id . '_secret_key_v2' ];
+		$enabled       = $post_data[ 'woocommerce_' . $this->id . '_enabled' ] ?? false;
+		$site_key_v3   = $post_data[ 'woocommerce_' . $this->id . '_site_key_v3' ] ?? '';
+		$secret_key_v3 = $post_data[ 'woocommerce_' . $this->id . '_secret_key_v3' ] ?? '';
+		$site_key_v2   = $post_data[ 'woocommerce_' . $this->id . '_site_key_v2' ] ?? '';
+		$secret_key_v2 = $post_data[ 'woocommerce_' . $this->id . '_secret_key_v2' ] ?? '';
 
 		if ( ! empty( $enabled ) &&
 			( empty( $site_key_v3 ) || empty( $secret_key_v3 ) || empty( $site_key_v2 ) || empty( $secret_key_v2 ) )
