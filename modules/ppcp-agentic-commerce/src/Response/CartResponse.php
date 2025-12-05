@@ -34,7 +34,7 @@ class CartResponse {
 	 *
 	 * @var string The cart ID is usually part of the REST endpoint path.
 	 */
-	protected string $cart_id = '';
+	private string $cart_id;
 
 	/**
 	 * Used to track cart lifecycle.
@@ -62,8 +62,9 @@ class CartResponse {
 	 *
 	 * @param PayPalCart $cart The PayPal cart.
 	 */
-	public function __construct( PayPalCart $cart ) {
-		$this->cart = $cart;
+	public function __construct( PayPalCart $cart, string $cart_id = '' ) {
+		$this->cart    = $cart;
+		$this->cart_id = $cart_id;
 
 		if ( ! $this->cart->issues() ) {
 			$this->validation_status = 'VALID';

@@ -20,10 +20,8 @@ class NewCartResponse extends CartResponse {
 		string $token,
 		string $status = 'CREATED'
 	) {
-		parent::__construct( $cart );
-		$this->cart_id = $cart_id;
-		$this->token   = $token;
-		$this->status  = $status;
+		parent::__construct( $cart, $cart_id );
+		$this->token = $token;
 	}
 
 	/**

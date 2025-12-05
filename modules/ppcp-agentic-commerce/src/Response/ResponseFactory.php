@@ -20,10 +20,10 @@ class ResponseFactory {
 	}
 
 	public function from_order( WC_Order $order, PayPalCart $cart, string $cart_id ): PaidCartResponse {
-		return new PaidCartResponse( $cart, $order );
+		return new PaidCartResponse( $cart, $cart_id, $order );
 	}
 
 	public function from_cart( PayPalCart $cart, string $cart_id ): CartResponse {
-		return new CartResponse( $cart );
+		return new CartResponse( $cart, $cart_id );
 	}
 }
