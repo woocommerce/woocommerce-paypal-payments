@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
 
 class CartResponse {
 	protected PayPalCart $cart;
@@ -86,11 +87,21 @@ class CartResponse {
 	/**
 	 * Calculate cart totals.
 	 *
-	 * @return array The cart-totals array.
+	 * @return array The cart-totals array, or null if not calculatable.
 	 */
-	private function calculate_totals(): array {
+	private function calculate_totals(): ?array {
+		// Cart items have invalid prices or currency: do not calculate totals.
+		if ( $this->cart->has_validation_issue( ErrorCode::PRICING_ERROR ) ) {
+			return null;
+		}
+
 		$currency_code = CartHelper::currency( $this->cart );
 		$item_total    = CartHelper::cart_item_total( $this->cart );
+
+		// Cart has no items, no currency, no quantity: nothing to calculate.
+		if ( ! $currency_code || ! $item_total ) {
+			return null;
+		}
 
 		return array(
 			'item_total' => array(
