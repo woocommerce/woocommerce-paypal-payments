@@ -109,7 +109,7 @@ class CartResponse {
 		return array_merge( $data, $this->cart->to_array() );
 	}
 
-	public function status(): string {
+	private function status(): string {
 		if ( in_array( $this->status, self::ALLOWED_STATUS, true ) ) {
 			return $this->status;
 		}
@@ -117,7 +117,7 @@ class CartResponse {
 		return 'INCOMPLETE';
 	}
 
-	public function validation_status(): string {
+	private function validation_status(): string {
 		if ( in_array( $this->validation_status, self::ALLOWED_VALIDATION_STATUS, true ) ) {
 			return $this->validation_status;
 		}
