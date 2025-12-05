@@ -58,11 +58,31 @@ class CartResponse {
 	}
 
 	/**
+	 * Convert to array for API response.
+	 *
+	 * @return array The response array.
+	 */
+	public function to_array(): array {
+		$data = array(
+			'id'                => $this->cart_id,
+			'status'            => $this->status,
+			'validation_status' => $this->validation_status,
+			'validation_issues' => array_map(
+				static fn( ValidationIssue $issue ) => $issue->to_array(),
+				$this->cart->issues()
+			),
+			'totals'            => $this->calculate_totals(),
+		);
+
+		return array_merge( $data, $this->cart->to_array() );
+	}
+
+	/**
 	 * Calculate cart totals.
 	 *
-	 * @return array The totals array.
+	 * @return array The cart-totals array.
 	 */
-	protected function calculate_totals(): array {
+	private function calculate_totals(): array {
 		$currency_code = CartHelper::currency( $this->cart );
 		$item_total    = CartHelper::cart_item_total( $this->cart );
 
@@ -84,25 +104,5 @@ class CartResponse {
 				'value'         => $item_total,
 			),
 		);
-	}
-
-	/**
-	 * Convert to array for API response.
-	 *
-	 * @return array The response array.
-	 */
-	public function to_array(): array {
-		$data = array(
-			'id'                => $this->cart_id,
-			'status'            => $this->status,
-			'validation_status' => $this->validation_status,
-			'validation_issues' => array_map(
-				static fn( ValidationIssue $issue ) => $issue->to_array(),
-				$this->cart->issues()
-			),
-			'totals'            => $this->calculate_totals(),
-		);
-
-		return array_merge( $data, $this->cart->to_array() );
 	}
 }
