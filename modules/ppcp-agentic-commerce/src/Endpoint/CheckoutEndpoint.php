@@ -122,7 +122,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		if ( $cart->issues() ) {
 			$cart_response = $this->response_factory->from_cart( $cart );
 
-			return $this->cart_details( $cart_response );
+			return $this->cart_details( $cart_response, 200 );
 		}
 
 		// It's time to create the WooCommerce order.
@@ -136,7 +136,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		$response = $this->response_factory->from_order( $order, $cart );
 
-		return $this->cart_details( $response );
+		return $this->cart_details( $response, 200 );
 	}
 
 	/**
