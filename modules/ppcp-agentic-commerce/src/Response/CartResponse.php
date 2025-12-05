@@ -71,10 +71,16 @@ class CartResponse {
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
 				$this->cart->issues()
 			),
-			'totals'            => $this->calculate_totals(),
 		);
 
-		return array_merge( $data, $this->cart->to_array() );
+		$data   = array_merge( $data, $this->cart->to_array() );
+		$totals = $this->calculate_totals();
+
+		if ( $totals ) {
+			$data['totals'] = $totals;
+		}
+
+		return $data;
 	}
 
 	/**
