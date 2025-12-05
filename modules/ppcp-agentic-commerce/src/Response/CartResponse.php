@@ -14,6 +14,19 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
 
 class CartResponse {
+	private const ALLOWED_STATUS = array(
+		'CREATED',
+		'INCOMPLETE',
+		'READY',
+		'COMPLETED',
+	);
+
+	private const ALLOWED_VALIDATION_STATUS = array(
+		'VALID',
+		'INVALID',
+		'REQUIRES_ADDITIONAL_INFORMATION',
+	);
+
 	protected PayPalCart $cart;
 
 	/**
@@ -94,8 +107,8 @@ class CartResponse {
 	public function to_array(): array {
 		$data = array(
 			'id'                => $this->cart_id,
-			'status'            => $this->status,
-			'validation_status' => $this->validation_status,
+			'status'            => $this->status(),
+			'validation_status' => $this->validation_status(),
 			'validation_issues' => array_map(
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
 				$this->cart->issues()
@@ -104,5 +117,21 @@ class CartResponse {
 		);
 
 		return array_merge( $data, $this->cart->to_array() );
+	}
+
+	public function status(): string {
+		if ( in_array( $this->status, self::ALLOWED_STATUS, true ) ) {
+			return $this->status;
+		}
+
+		return 'INCOMPLETE';
+	}
+
+	public function validation_status(): string {
+		if ( in_array( $this->validation_status, self::ALLOWED_VALIDATION_STATUS, true ) ) {
+			return $this->validation_status;
+		}
+
+		return 'INVALID';
 	}
 }
