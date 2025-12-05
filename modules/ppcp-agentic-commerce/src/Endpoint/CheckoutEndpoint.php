@@ -120,7 +120,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		// If the cart has _any_ validation issue, stop here.
 		if ( $cart->issues() ) {
-			$cart_response = $this->response_factory->from_cart( $cart );
+			$cart_response = $this->response_factory->from_cart( $cart, $cart_id );
 
 			return $this->cart_details( $cart_response, 200 );
 		}
@@ -134,7 +134,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 
 		$this->flush_local_cart( $cart_id );
 
-		$response = $this->response_factory->from_order( $order, $cart );
+		$response = $this->response_factory->from_order( $order, $cart, $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}
