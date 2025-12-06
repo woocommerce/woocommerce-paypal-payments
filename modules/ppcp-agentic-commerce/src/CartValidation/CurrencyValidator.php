@@ -59,13 +59,17 @@ class CurrencyValidator implements ValidatorInterface {
 	 * @return array|null Currency data or null if no currency.
 	 */
 	private function extract_currency_at_index( PayPalCart $cart, int $index ): ?array {
-		$item     = $cart->items()[ $index ];
-		$currency = $item->price()?->currency_code();
+		$item  = $cart->items()[ $index ];
+		$price = $item->price();
 
-		return $currency ? array(
+		if ( ! $price || ! $price->currency_code() ) {
+			return null;
+		}
+
+		return array(
 			'index'    => $index,
-			'currency' => $currency,
-		) : null;
+			'currency' => $price->currency_code(),
+		);
 	}
 
 	/**
