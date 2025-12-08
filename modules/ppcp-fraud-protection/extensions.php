@@ -26,9 +26,9 @@ return array(
 			$notes,
 			array(
 				$inbox_note_factory->create_note(
-					__( 'Protect PayPal Checkout from Bots', 'woocommerce-paypal-payments' ),
+					__( 'Activate PayPal fraud management', 'woocommerce-paypal-payments' ),
 					__(
-						'Many stores are experiencing an increase in spam orders, failed transactions, and wasted resources during the holiday season due to card testing bots. To secure your store during this holiday season, we\'ve introduced a dedicated reCAPTCHA integration in WooCommerce PayPal Payments 3.3.0+ to protect these endpoints.',
+						'PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.',
 						'woocommerce-paypal-payments'
 					),
 					Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
@@ -37,7 +37,7 @@ return array(
 					! $is_recaptcha_enabled,
 					new InboxNoteAction(
 						'protect-paypal-with-recaptcha',
-						__( 'Protect PayPal with reCAPTCHA', 'woocommerce-paypal-payments' ),
+						__( 'Activate Now', 'woocommerce-paypal-payments' ),
 						admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
 						Note::E_WC_ADMIN_NOTE_UNACTIONED,
 						true
