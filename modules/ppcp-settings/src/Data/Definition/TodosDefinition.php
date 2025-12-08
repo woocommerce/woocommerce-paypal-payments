@@ -267,8 +267,8 @@ class TodosDefinition {
 				'priority'    => 16,
 			),
 			'enable_recaptcha_protection'          => array(
-				'title'       => __( 'Protect PayPal Checkout from Bots', 'woocommerce-paypal-payments' ),
-				'description' => __( 'Enable reCAPTCHA to protect against spam orders and card testing attacks.', 'woocommerce-paypal-payments' ),
+				'title'       => __( 'Activate PayPal fraud management', 'woocommerce-paypal-payments' ),
+				'description' => __( 'PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.', 'woocommerce-paypal-payments' ),
 				'isEligible'  => $eligibility_checks['enable_recaptcha_protection'],
 				'action'      => array(
 					'type' => 'external',
