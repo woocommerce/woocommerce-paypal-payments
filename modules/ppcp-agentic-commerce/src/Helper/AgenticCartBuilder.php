@@ -14,6 +14,8 @@ use Psr\Log\LoggerInterface;
 use WP_Error;
 use WC_Cart;
 use WC_Customer;
+use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
+use WooCommerce\PayPalCommerce\Button\Session\CartData;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
@@ -22,11 +24,18 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon;
 
 class AgenticCartBuilder {
 	private ProductManager $product_manager;
+	private CartDataFactory $cart_data_factory;
 	private LoggerInterface $logger;
 
-	public function __construct( ProductManager $product_manager, LoggerInterface $logger ) {
-		$this->product_manager = $product_manager;
-		$this->logger          = $logger;
+	public function __construct(
+		ProductManager $product_manager,
+		CartDataFactory $cart_data_factory,
+		LoggerInterface $logger
+	) {
+
+		$this->product_manager   = $product_manager;
+		$this->cart_data_factory = $cart_data_factory;
+		$this->logger            = $logger;
 	}
 
 	/**
@@ -64,6 +73,11 @@ class AgenticCartBuilder {
 		);
 
 		return $wc_cart;
+	}
+
+	public function wc_cart_to_card_data( WC_Cart $wc_cart ): CartData {
+		/** @psalm-suppress MissingThrowsDocblock -- no throw possible when passing in a WC_Cart. */
+		return $this->cart_data_factory->from_current_cart( $wc_cart );
 	}
 
 	/**
