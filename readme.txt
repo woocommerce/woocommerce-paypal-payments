@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.3.1 - XXXX-XX-XX =
+= 3.3.1 - 2025-12-09 =
 * Enhancement - reCAPTCHA Integration UX Improvements #3907
 * Enhancement - Disable simulate-event endpoint for webhook verification #3908
 
