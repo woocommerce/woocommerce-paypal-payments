@@ -103,7 +103,7 @@
     "pw-install": "npm run playwright install --with-deps",
     "pw-tests": "npm run playwright test",
     "pw-tests-headed": "npm run playwright test --headed",
-    "build": "npm install"
+    "build": "npm run build:modules"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
