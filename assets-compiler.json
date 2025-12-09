@@ -1,4 +1,4 @@
 {
-    "dependencies": "ci",
-    "commands": "npm"
+    "dependencies": "install",
+    "script": "build"
 }

@@ -6,7 +6,7 @@
   "license": "GPL-2.0",
   "author": "WooCommerce",
   "scripts": {
-    "postinstall": "run-s install:modules:* && run-s build:modules",
+    "postinstall": "run-s install:modules:*",
     "install:modules:ppcp-admin-notices": "cd modules/ppcp-admin-notices && npm ci",
     "install:modules:ppcp-applepay": "cd modules/ppcp-applepay && npm ci",
     "install:modules:ppcp-blocks": "cd modules/ppcp-blocks && npm ci",
