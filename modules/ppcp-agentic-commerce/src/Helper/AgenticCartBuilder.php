@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WP_Error;
 use WC_Cart;
 use WC_Customer;
+use WooCommerce;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 
@@ -23,16 +24,19 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Coupon;
 
 class AgenticCartBuilder {
+	private WooCommerce $wc;
 	private ProductManager $product_manager;
 	private CartDataFactory $cart_data_factory;
 	private LoggerInterface $logger;
 
 	public function __construct(
+		WooCommerce $wc,
 		ProductManager $product_manager,
 		CartDataFactory $cart_data_factory,
 		LoggerInterface $logger
 	) {
 
+		$this->wc                = $wc;
 		$this->product_manager   = $product_manager;
 		$this->cart_data_factory = $cart_data_factory;
 		$this->logger            = $logger;
@@ -200,11 +204,12 @@ class AgenticCartBuilder {
 	}
 
 	private function wc_cart(): WC_Cart {
-		$wc_cart = WC()->cart;
+		$wc_cart = $this->wc->cart;
 
 		if ( ! ( $wc_cart instanceof WC_Cart ) ) {
-			$wc_cart   = new WC_Cart();
-			WC()->cart = $wc_cart;
+			$wc_cart = new WC_Cart();
+
+			$this->wc->cart = $wc_cart;
 		}
 
 		return $wc_cart;
@@ -219,12 +224,13 @@ class AgenticCartBuilder {
 	 * @return WC_Customer
 	 */
 	private function wc_customer(): WC_Customer {
-		$wc_customer = WC()->customer;
+		$wc_customer = $this->wc->customer;
 
 		if ( ! ( $wc_customer instanceof WC_Customer ) ) {
 			// Create an in-memory customer - note that it has "is_session" set to false.
-			$wc_customer   = new WC_Customer();
-			WC()->customer = $wc_customer;
+			$wc_customer = new WC_Customer();
+
+			$this->wc->customer = $wc_customer;
 		}
 
 		return $wc_customer;

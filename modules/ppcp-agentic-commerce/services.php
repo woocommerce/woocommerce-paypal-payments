@@ -79,6 +79,7 @@ return array(
 	// Registration and merchant identification.
 	'agentic.merchant.provider'           => static function ( ContainerInterface $c ): MerchantMetadataProvider {
 		return new MerchantMetadataProvider(
+			$c->get( 'woocommerce.core' ),
 			$c->get( 'settings.data.general' )
 		);
 	},
@@ -119,6 +120,7 @@ return array(
 
 	'agentic.helper.cart-builder'         => static function ( ContainerInterface $c ): AgenticCartBuilder {
 		return new AgenticCartBuilder(
+			$c->get( 'woocommerce.core' ),
 			$c->get( 'agentic.helper.product-manager' ),
 			$c->get( 'button.session.factory.card-data' ),
 			$c->get( 'agentic.logger' )

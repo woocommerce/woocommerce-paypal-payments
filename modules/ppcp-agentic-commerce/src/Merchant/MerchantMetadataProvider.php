@@ -3,6 +3,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Merchant;
 
+use WooCommerce;
+
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 
@@ -14,9 +16,11 @@ use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
  */
 class MerchantMetadataProvider {
 
+	private WooCommerce $wc;
 	private GeneralSettings $general_settings;
 
-	public function __construct( GeneralSettings $general_settings ) {
+	public function __construct( WooCommerce $wc, GeneralSettings $general_settings ) {
+		$this->wc               = $wc;
 		$this->general_settings = $general_settings;
 	}
 
@@ -34,7 +38,7 @@ class MerchantMetadataProvider {
 		return new MerchantMetadata(
 			get_bloginfo( 'name' ),
 			$this->get_canonical_store_url(),
-			WC()->countries->get_base_country(),
+			$this->wc->countries->get_base_country(),
 			get_woocommerce_currency(),
 			$merchant_id,
 			$this->get_canonical_store_url(),
