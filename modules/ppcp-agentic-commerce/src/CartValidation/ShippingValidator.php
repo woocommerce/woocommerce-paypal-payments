@@ -152,7 +152,7 @@ class ShippingValidator implements ValidatorInterface {
 
 		if ( ! empty( $signature_required_items ) ) {
 			$restricted_items = array_map(
-				fn( $item ) => $item->item_id(),
+				fn( $item ): string => $item->item_id(),
 				$signature_required_items
 			);
 
@@ -201,7 +201,7 @@ class ShippingValidator implements ValidatorInterface {
 		return array_values(
 			array_filter(
 				$cart->items(),
-				fn( $item ) => $this->item_requires_signature( $item )
+				fn( $item ): bool => $this->item_requires_signature( $item )
 			)
 		);
 	}
