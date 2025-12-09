@@ -23,4 +23,4 @@ jobs:
       GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
     with:
       PACKAGE_VERSION: ${{ inputs.PACKAGE_VERSION }}
-      NODE_VERSION: 20
+      NODE_VERSION: 22
