@@ -125,17 +125,11 @@ return array(
 		);
 	},
 
-	'agentic.helper.cart-transformer'     => static function ( ContainerInterface $c ): CartTransformer {
-		return new CartTransformer(
-			$c->get( 'agentic.helper.product-manager' )
-		);
-	},
-
 	'agentic.helper.checkout-processor'   => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(
 			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'button.helper.wc-order-creator' ),
-			$c->get( 'agentic.helper.cart-transformer' )
+			$c->get( 'agentic.helper.cart-builder' )
 		);
 	},
 
@@ -148,7 +142,7 @@ return array(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
 			$c->get( 'agentic.helper.paypal-order-builder' ),
-			$c->get( 'agentic.helper.cart-transformer' ),
+			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.logger' )
 		);
 	},

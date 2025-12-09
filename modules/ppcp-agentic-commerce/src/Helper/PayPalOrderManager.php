@@ -31,7 +31,7 @@ class PayPalOrderManager {
 
 	private PayPalOrderBuilder $order_builder;
 
-	private CartTransformer $cart_transformer;
+	private AgenticCartBuilder $cart_builder;
 
 	private LoggerInterface $logger;
 
@@ -39,15 +39,15 @@ class PayPalOrderManager {
 		OrderEndpoint $order_endpoint,
 		Orders $orders_api,
 		PayPalOrderBuilder $order_builder,
-		CartTransformer $cart_transformer,
+		AgenticCartBuilder $cart_builder,
 		LoggerInterface $logger
 	) {
 
-		$this->order_endpoint   = $order_endpoint;
-		$this->orders_api       = $orders_api;
-		$this->order_builder    = $order_builder;
-		$this->cart_transformer = $cart_transformer;
-		$this->logger           = $logger;
+		$this->order_endpoint = $order_endpoint;
+		$this->orders_api     = $orders_api;
+		$this->order_builder  = $order_builder;
+		$this->cart_builder   = $cart_builder;
+		$this->logger         = $logger;
 	}
 
 	/**
@@ -69,15 +69,22 @@ class PayPalOrderManager {
 			)
 		);
 
+		$wc_cart = $this->cart_builder->paypal_cart_to_wc_cart( $cart );
+
+		if ( is_wp_error( $wc_cart ) ) {
+			$this->logger->error(
+				'[ORDER] PayPal order creation aborted due to invalid cart data.',
+				$wc_cart->get_all_error_data()
+			);
+
+			return '';
+		}
+
 		// At this stage, the order intent is always AUTHORIZE, not CAPTURE.
 		$set_order_intent = static fn(): string => 'AUTHORIZE';
 
-		/*
-		 * Build a minimal PurchaseUnit directly from the PayPalCart details.
-		 * We can't use from_wc_order() yet because there's no WC order.
-		 */
-		$woo_cart_data = $this->cart_transformer->paypal_cart_to_cart_data( $cart );
-		$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $woo_cart_data );
+		$wc_cart_data  = $this->cart_builder->wc_cart_to_card_data( $wc_cart );
+		$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $wc_cart_data );
 		$paypal_order  = null;
 
 		try {
