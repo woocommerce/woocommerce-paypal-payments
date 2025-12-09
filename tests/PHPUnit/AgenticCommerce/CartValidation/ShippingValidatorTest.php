@@ -384,14 +384,35 @@ class ShippingValidatorTest extends TestCase {
 	}
 
 	private function mock_wc_countries( array $all_countries, array $shipping_countries ): void {
-		$countries_mock = \Mockery::mock( 'WC_Countries' );
-		$countries_mock->shouldReceive( 'get_countries' )->andReturn( $all_countries );
-		$countries_mock->shouldReceive( 'get_allowed_countries' )->andReturn( $all_countries );
-		$countries_mock->shouldReceive( 'get_shipping_countries' )->andReturn( $shipping_countries );
+		when( 'WC' )->alias(
+			function () use ( $all_countries, $shipping_countries ) {
+				$countries_mock = new class( $all_countries, $shipping_countries ) {
+					private array $all_countries;
+					private array $shipping_countries;
 
-		$wc_mock            = \Mockery::mock( 'WooCommerce' );
-		$wc_mock->countries = $countries_mock;
+					public function __construct( array $all, array $shipping ) {
+						$this->all_countries      = $all;
+						$this->shipping_countries = $shipping;
+					}
 
-		when( 'WC' )->justReturn( $wc_mock );
+					public function get_countries(): array {
+						return $this->all_countries;
+					}
+
+					public function get_allowed_countries(): array {
+						return $this->all_countries;
+					}
+
+					public function get_shipping_countries(): array {
+						return $this->shipping_countries;
+					}
+				};
+
+				$wc            = new \stdClass();
+				$wc->countries = $countries_mock;
+
+				return $wc;
+			}
+		);
 	}
 }
