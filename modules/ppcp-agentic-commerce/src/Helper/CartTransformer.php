@@ -32,7 +32,7 @@ class CartTransformer {
 	 * @param PayPalCart $paypal_cart The PayPal cart from AI agent.
 	 * @return CartData The cart data ready for order creation.
 	 */
-	public function paypal_cart_to_wc_cart( PayPalCart $paypal_cart ): CartData {
+	public function paypal_cart_to_cart_data( PayPalCart $paypal_cart ): CartData {
 		$cart_items = $this->build_cart_items( $paypal_cart );
 
 		$coupons      = array();

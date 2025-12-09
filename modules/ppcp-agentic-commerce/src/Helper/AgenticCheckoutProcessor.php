@@ -74,7 +74,7 @@ class AgenticCheckoutProcessor {
 			$paypal_order = $this->order_manager->fetch_order( $paypal_order_id );
 
 			// Step 2: Transform PayPalCart to CartData (skipping invalid products).
-			$cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
+			$cart_data = $this->cart_transformer->paypal_cart_to_cart_data( $cart );
 
 			// Step 3: Create WC order with customer data from PayPalCart.
 			$wc_order = $this->create_order( $paypal_order, $cart_data, $cart, $payment_method, $paypal_order_id );
