@@ -148,7 +148,7 @@ class PaymentMethodsEligibilityService {
 	}
 
 	/**
-	 * Whether Card Fields is supported. It requires aso ACDC to be supported.
+	 * Whether Card Fields is supported. It requires also ACDC to be supported.
 	 *
 	 * @return bool
 	 */
