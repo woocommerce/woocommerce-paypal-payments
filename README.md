@@ -107,23 +107,10 @@ This command generates a full test coverage report, available at the URL https:/
 
 ### Building a release package
 
-If you want to build a release package
-(that can be used for deploying a new version on wordpress.org or manual installation on a WordPress website via ZIP uploading),
-follow these steps:
+If you want to build a release package, use the **Build and distribute** in GitHub Actions
+or download from the branches without `dev/` prefix (e.g. `develop` for the package matching the `dev/develop` source code).
 
-1. Clone the repository and `cd` into it.
-2. Make sure you have the version in the plugin root file updated.
-3. Update the PayPal JavaScript SDK integration date by using the current date for the `PAYPAL_INTEGRATION_DATE` constant.
-4. The following command should get you a ZIP file ready to be used on a WordPress site:
-
-```
-$ yarn run build
-```
-or if using the DDEV setup:
-
-```
-$ yarn run ddev:build-package
-```
+Currently, there is no script for building a proper release package locally, but you may try to run GHA locally via [nektos/act](https://github.com/nektos/act). 
 
 ## Test account setup
 
