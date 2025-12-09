@@ -103,13 +103,7 @@
     "pw-install": "yarn playwright install --with-deps",
     "pw-tests": "yarn playwright test",
     "pw-tests-headed": "yarn playwright test --headed",
-    "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
-    "build": "composer install --no-dev && yarn install && yarn run archive",
-    "prearchive": "rm -rf $npm_package_name.zip",
-    "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
-    "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:prepare-excludes": "awk '!/^[[:space:]]*($|#|!)/ {print}' .distignore | sed -E 's#/$#/*#' > .zip-excludes",
-    "archive:cleanup": "npm run -s archive:prepare-excludes && zip -r \"$npm_package_name.zip\" . -x@.zip-excludes && rm .zip-excludes"
+    "build": "npm install"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
