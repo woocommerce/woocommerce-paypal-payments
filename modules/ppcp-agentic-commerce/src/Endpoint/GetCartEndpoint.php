@@ -65,11 +65,7 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $session );
 		}
 
-		$response = $this->response_factory->active_cart(
-			$session['cart'],
-			$cart_id,
-			$session['ec_token']
-		);
+		$response = $this->response_factory->from_cart( $session['cart'], $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}

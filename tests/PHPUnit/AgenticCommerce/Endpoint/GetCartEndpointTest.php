@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint;
 
 use WP_REST_Request;
 
-use WooCommerce\PayPalCommerce\AgenticCommerce\Response\NewCartResponse;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Response\CartResponse;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 /**
@@ -38,12 +38,10 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 			);
 
 		// Mock response factory.
-		$response_factory->allows( 'active_cart' )
-			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => new NewCartResponse(
+		$response_factory->allows( 'from_cart' )
+			->andReturnUsing( fn( $cart, $cart_id ) => new CartResponse(
 				$cart,
-				$cart_id,
-				$ec_token,
-				'ACTIVE'
+				$cart_id
 			) );
 
 		$endpoint = new GetCartEndpoint(
@@ -63,6 +61,8 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 
 		$this->assertIsArray( $data );
 		$this->assertArrayHasKey( 'status', $data );
+		$this->assertArrayHasKey( 'payment_method', $data );
+		$this->assertArrayNotHasKey( 'token', $data['payment_method'], 'Token is only expected when creating a new cart.' );
 		$this->assertSame( 200, $response->get_status() );
 	}
 
