@@ -41,6 +41,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartTransformer;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ShippingValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
@@ -157,6 +158,11 @@ return array(
 	},
 	'agentic.validator.inventory'         => static function ( ContainerInterface $c ): InventoryValidator {
 		return new InventoryValidator(
+			$c->get( 'agentic.helper.product-manager' )
+		);
+	},
+	'agentic.validator.shipping'          => static function ( ContainerInterface $c ): ShippingValidator {
+		return new ShippingValidator(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
