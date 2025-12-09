@@ -10,38 +10,24 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
 
 class NewCartResponse extends CartResponse {
 
-	public function __construct(
-		PayPalCart $cart,
-		string $cart_id,
-		string $token,
-		string $status = 'CREATED'
-	) {
-		parent::__construct( $cart );
-		$this->cart_id = $cart_id;
-		$this->token   = $token;
-		$this->status  = $status;
+	protected string $status = 'CREATED';
+
+	public function __construct( PayPalCart $cart, string $cart_id, string $token ) {
+		parent::__construct( $cart, $cart_id );
+		$this->token = $token;
 	}
 
-	/**
-	 * Convert to array for API response.
-	 *
-	 * @return array The response array.
-	 */
 	public function to_array(): array {
 		$data = parent::to_array();
 
-		$method = PaymentMethod::from_array(
-			array(
-				'type'  => 'paypal', // hard-coded.
-				'token' => $this->token,
-			)
+		// For security reasons, the token is only included in the "New Cart" response.
+		$data['payment_method'] = array(
+			'type'  => 'paypal', // hard-coded.
+			'token' => $this->token,
 		);
-
-		$data['payment_method'] = $method->to_array();
 
 		// Add sandbox approval URL for testing.
 		// In production, PayPal Commerce Platform handles approval automatically.

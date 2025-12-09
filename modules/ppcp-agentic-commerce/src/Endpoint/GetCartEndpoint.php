@@ -65,7 +65,7 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 			return $this->error( $session );
 		}
 
-		$response = $this->response_factory->from_cart( $session['cart'] );
+		$response = $this->response_factory->from_cart( $session['cart'], $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}

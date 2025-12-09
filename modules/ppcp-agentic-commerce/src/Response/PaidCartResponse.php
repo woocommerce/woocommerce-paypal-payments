@@ -19,8 +19,8 @@ class PaidCartResponse extends CartResponse {
 	 */
 	protected ?WC_Order $wc_order = null;
 
-	public function __construct( PayPalCart $cart, WC_Order $wc_order ) {
-		parent::__construct( $cart );
+	public function __construct( PayPalCart $cart, string $cart_id, WC_Order $wc_order ) {
+		parent::__construct( $cart, $cart_id );
 		$this->wc_order = $wc_order;
 		$this->status   = 'COMPLETED';
 	}

@@ -15,28 +15,35 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
 
 class CartResponse {
+	private const ALLOWED_STATUS = array(
+		'CREATED',
+		'INCOMPLETE',
+		'READY',
+		'COMPLETED',
+	);
+
+	private const ALLOWED_VALIDATION_STATUS = array(
+		'VALID',
+		'INVALID',
+		'REQUIRES_ADDITIONAL_INFORMATION',
+	);
+
 	protected PayPalCart $cart;
 
 	/**
 	 * The cart ID used by the API to reference to an existing cart.
-	 *
-	 * @var string The cart ID is usually part of the REST endpoint path.
 	 */
-	protected string $cart_id = '';
+	private string $cart_id;
 
 	/**
 	 * Used to track cart lifecycle.
 	 * Possible values: CREATED, INCOMPLETE, READY, COMPLETED
-	 *
-	 * @var string Business workflow state.
 	 */
 	protected string $status = 'INCOMPLETE';
 
 	/**
 	 * Used to determine the next step.
 	 * Possible values: VALID, INVALID, REQUIRES_ADDITIONAL_INFORMATION
-	 *
-	 * @var string Data validation state.
 	 */
 	protected string $validation_status = 'INVALID';
 
@@ -45,13 +52,9 @@ class CartResponse {
 	 */
 	protected string $token = '';
 
-	/**
-	 * Constructor.
-	 *
-	 * @param PayPalCart $cart The PayPal cart.
-	 */
-	public function __construct( PayPalCart $cart ) {
-		$this->cart = $cart;
+	public function __construct( PayPalCart $cart, string $cart_id = '' ) {
+		$this->cart    = $cart;
+		$this->cart_id = $cart_id;
 
 		if ( ! $this->cart->issues() ) {
 			$this->validation_status = 'VALID';
@@ -66,8 +69,8 @@ class CartResponse {
 	public function to_array(): array {
 		$data = array(
 			'id'                => $this->cart_id,
-			'status'            => $this->status,
-			'validation_status' => $this->validation_status,
+			'status'            => $this->status(),
+			'validation_status' => $this->validation_status(),
 			'validation_issues' => array_map(
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
 				$this->cart->issues()
@@ -116,5 +119,21 @@ class CartResponse {
 			'currency_code' => $currency_code,
 			'value'         => $value,
 		);
+	}
+
+	private function status(): string {
+		if ( in_array( $this->status, self::ALLOWED_STATUS, true ) ) {
+			return $this->status;
+		}
+
+		return 'INCOMPLETE';
+	}
+
+	private function validation_status(): string {
+		if ( in_array( $this->validation_status, self::ALLOWED_VALIDATION_STATUS, true ) ) {
+			return $this->validation_status;
+		}
+
+		return 'INVALID';
 	}
 }
