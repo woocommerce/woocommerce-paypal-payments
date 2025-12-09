@@ -125,7 +125,6 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			return $this->cart_details( $cart_response, 200 );
 		}
 
-		// It's time to create the WooCommerce order.
 		$order = $this->create_wc_order( $cart, $payment_method, $session['ec_token'] );
 
 		if ( is_wp_error( $order ) ) {

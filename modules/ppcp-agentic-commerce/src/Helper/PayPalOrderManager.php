@@ -76,8 +76,8 @@ class PayPalOrderManager {
 		 * Build a minimal PurchaseUnit directly from the PayPalCart details.
 		 * We can't use from_wc_order() yet because there's no WC order.
 		 */
-		$woo_cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
-		$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $woo_cart_data );
+		$wc_cart_data  = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
+		$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $wc_cart_data );
 		$paypal_order  = null;
 
 		try {
