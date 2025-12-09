@@ -45,6 +45,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProc
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
 
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect
@@ -114,6 +115,13 @@ return array(
 	// Helper services.
 	'agentic.helper.product-manager'      => static function (): ProductManager {
 		return new ProductManager();
+	},
+
+	'agentic.helper.cart-builder'         => static function ( ContainerInterface $c ): AgenticCartBuilder {
+		return new AgenticCartBuilder(
+			$c->get( 'agentic.helper.product-manager' ),
+			$c->get( 'agentic.logger' )
+		);
 	},
 
 	'agentic.helper.cart-transformer'     => static function ( ContainerInterface $c ): CartTransformer {
