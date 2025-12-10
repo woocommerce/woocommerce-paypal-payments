@@ -20,6 +20,8 @@ use WooCommerce;
 use WooCommerce\PayPalCommerce\Button\Session\CartDataFactory;
 use WooCommerce\PayPalCommerce\Button\Session\CartData;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\CartItem;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Customer;
@@ -29,19 +31,22 @@ class AgenticCartBuilder {
 	private WooCommerce $wc;
 	private ProductManager $product_manager;
 	private CartDataFactory $cart_data_factory;
+	private PurchaseUnitFactory $purchase_unit_factory;
 	private LoggerInterface $logger;
 
 	public function __construct(
 		WooCommerce $wc,
 		ProductManager $product_manager,
 		CartDataFactory $cart_data_factory,
+		PurchaseUnitFactory $purchase_unit_factory,
 		LoggerInterface $logger
 	) {
 
-		$this->wc                = $wc;
-		$this->product_manager   = $product_manager;
-		$this->cart_data_factory = $cart_data_factory;
-		$this->logger            = $logger;
+		$this->wc                    = $wc;
+		$this->product_manager       = $product_manager;
+		$this->cart_data_factory     = $cart_data_factory;
+		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -84,6 +89,10 @@ class AgenticCartBuilder {
 	public function wc_cart_to_card_data( WC_Cart $wc_cart ): CartData {
 		/** @psalm-suppress MissingThrowsDocblock -- no throw possible when passing in a WC_Cart. */
 		return $this->cart_data_factory->from_current_cart( $wc_cart );
+	}
+
+	public function wc_cart_to_purchase_unit( WC_Cart $wc_cart ): PurchaseUnit {
+		return $this->purchase_unit_factory->from_wc_cart( $wc_cart, true );
 	}
 
 	/**

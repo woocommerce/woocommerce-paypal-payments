@@ -124,6 +124,7 @@ return array(
 			$c->get( 'woocommerce.core' ),
 			$c->get( 'agentic.helper.product-manager' ),
 			$c->get( 'button.session.factory.card-data' ),
+			$c->get( 'api.factory.purchase-unit' ),
 			$c->get( 'agentic.logger' )
 		);
 	},
