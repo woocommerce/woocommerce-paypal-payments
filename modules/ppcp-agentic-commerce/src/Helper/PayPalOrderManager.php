@@ -80,8 +80,7 @@ class PayPalOrderManager {
 		// At this stage, the order intent is always AUTHORIZE, not CAPTURE.
 		$set_order_intent = static fn(): string => 'AUTHORIZE';
 
-		$wc_cart_data  = $this->cart_builder->wc_cart_to_card_data( $wc_cart );
-		$purchase_unit = $this->order_builder->build_purchase_unit_from_cart( $cart, $wc_cart_data );
+		$purchase_unit = $this->cart_builder->wc_cart_to_purchase_unit( $wc_cart );
 		$paypal_order  = null;
 
 		try {
