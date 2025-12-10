@@ -69,11 +69,11 @@ You may also need `$ ddev restart` to apply the config changes.
 #### Running tests and other tasks in the DDEV environment
 
 Tests and code style:
-- `$ npm run ddev:unit-tests`
+- `$ ddev npm run test`
+- `$ ddev npm run lint`
+- `$ ddev npm run fix-lint`
+- `$ ddev npm run lint-js`
 - `$ npm run ddev:unit-tests:coverage`
-- `$ npm run ddev:lint`
-- `$ npm run ddev:fix-lint`
-- `$ npm run ddev:lint-js`
 
 See [package.json](/package.json) for other useful commands.
 
@@ -96,8 +96,8 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 1. `$ ./vendor/bin/phpunit`
 2. `$ ./vendor/bin/phpcs`
 3. `$ ./vendor/bin/psalm`
-4. `$ npm run run lint-js`
-5. `$ npm run run test:unit-js` - Ensure node version is `18` or above
+4. `$ npm run lint-js`
+5. `$ npm run test:unit-js` - Ensure node version is `18` or above
 
 #### Unit tests with Coverage
 
