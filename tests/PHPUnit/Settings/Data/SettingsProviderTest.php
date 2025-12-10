@@ -7,7 +7,11 @@ namespace PHPUnit\Settings\Data;
 use Mockery;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
+use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\TestCase;
 
@@ -18,14 +22,26 @@ class SettingsProviderTest extends TestCase {
 	private const EXPECTED_VALUE_ARRAY = array();
 	private const EXPECTED_VALUE_INT = 2;
 
+	private GeneralSettings $general_settings;
+	private OnboardingProfile $onboarding_profile;
+	private PaymentSettings $payment_settings;
+	private SettingsModel $settings_model;
+	private StylingSettings $styling_settings;
+
 	public function setUp(): void {
 		// Mock Models
-		$this->general_settings = Mockery::mock( GeneralSettings::class );
+		$this->general_settings   = Mockery::mock( GeneralSettings::class );
 		$this->onboarding_profile = Mockery::mock( OnboardingProfile::class );
+		$this->payment_settings   = Mockery::mock( PaymentSettings::class );
+		$this->settings_model     = Mockery::mock( SettingsModel::class );
+		$this->styling_settings   = Mockery::mock( StylingSettings::class );
 
 		$this->provider = new SettingsProvider(
 			$this->general_settings,
-			$this->onboarding_profile
+			$this->onboarding_profile,
+			$this->payment_settings,
+			$this->settings_model,
+			$this->styling_settings
 		);
 	}
 
@@ -64,13 +80,16 @@ class SettingsProviderTest extends TestCase {
 		return array_merge(
 			$this->get_model_data( $this->get_general_settings_data(), 'general_settings' ),
 			$this->get_model_data( $this->get_onboarding_profile_data(), 'onboarding_profile' ),
+			$this->get_model_data( $this->get_payment_settings_data(), 'payment_settings' ),
+			$this->get_model_data( $this->get_settings_model_data(), 'settings_model' ),
+			$this->get_model_data( $this->get_styling_settings_data(), 'styling_settings' ),
 		);
 	}
 
 	/**
 	 * Attach a model into the test data.
 	 *
-	 * @param array $data
+	 * @param array  $data
 	 * @param string $model
 	 *
 	 * @return array
@@ -79,6 +98,7 @@ class SettingsProviderTest extends TestCase {
 		return array_map(
 			function ( array $method_data ) use ( $model ) {
 				$method_data['model'] = $model;
+
 				return $method_data;
 			},
 			$data
@@ -87,8 +107,8 @@ class SettingsProviderTest extends TestCase {
 
 	/**
 	 * Test data for the GeneralSettings model.
-	 * @see GeneralSettings
 	 * @return array
+	 * @see GeneralSettings
 	 */
 	private function get_general_settings_data(): array {
 		return array(
@@ -105,7 +125,7 @@ class SettingsProviderTest extends TestCase {
 			array(
 				'provider_method' => 'merchant_data',
 				'model_method'    => 'get_merchant_data',
-				'expected_value'  => new MerchantConnectionDTO(true, '','',''),
+				'expected_value'  => new MerchantConnectionDTO( true, '', '', '' ),
 			),
 			array(
 				'provider_method' => 'sandbox_merchant',
@@ -142,13 +162,23 @@ class SettingsProviderTest extends TestCase {
 				'model_method'    => 'get_merchant_country',
 				'expected_value'  => self::EXPECTED_VALUE_STRING
 			),
+			array(
+				'provider_method' => 'own_brand_only',
+				'model_method'    => 'own_brand_only',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL
+			),
+			array(
+				'provider_method' => 'installation_path',
+				'model_method'    => 'get_installation_path',
+				'expected_value'  => self::EXPECTED_VALUE_STRING
+			),
 		);
 	}
 
 	/**
 	 * Test data for the OnboardingProfile model.
-	 * @see OnboardingProfile
 	 * @return array
+	 * @see OnboardingProfile
 	 */
 	private function get_onboarding_profile_data(): array {
 		return array(
@@ -191,6 +221,173 @@ class SettingsProviderTest extends TestCase {
 				'provider_method' => 'gateways_refreshed',
 				'model_method'    => 'is_gateways_refreshed',
 				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+		);
+	}
+
+	/**
+	 * Test data for the PaymentSettings model.
+	 * @return array
+	 * @see PaymentSettings
+	 */
+	private function get_payment_settings_data(): array {
+		return array(
+			array(
+				'provider_method' => 'show_paypal_logo',
+				'model_method'    => 'get_paypal_show_logo',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL
+			),
+			array(
+				'provider_method' => 'show_cardholder_name',
+				'model_method'    => 'get_cardholder_name',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL
+			),
+			array(
+				'provider_method' => 'show_fastlane_watermark',
+				'model_method'    => 'get_fastlane_display_watermark',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'venmo_enabled',
+				'model_method'    => 'get_venmo_enabled',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'paylater_enabled',
+				'model_method'    => 'get_paylater_enabled',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+		);
+	}
+
+	/**
+	 * Test data for the SettingsModel model.
+	 * @return array
+	 * @see SettingsModel
+	 */
+	private function get_settings_model_data(): array {
+		return array(
+			array(
+				'provider_method' => 'invoice_prefix',
+				'model_method'    => 'get_invoice_prefix',
+				'expected_value'  => self::EXPECTED_VALUE_STRING
+			),
+			array(
+				'provider_method' => 'brand_name',
+				'model_method'    => 'get_brand_name',
+				'expected_value'  => self::EXPECTED_VALUE_STRING
+			),
+			array(
+				'provider_method' => 'soft_descriptor',
+				'model_method'    => 'get_soft_descriptor',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
+				'provider_method' => 'subtotal_adjustment',
+				'model_method'    => 'get_subtotal_adjustment',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
+				'provider_method' => 'landing_page',
+				'model_method'    => 'get_landing_page',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
+				'provider_method' => 'button_language',
+				'model_method'    => 'get_button_language',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
+				'provider_method' => 'three_d_secure',
+				'model_method'    => 'get_three_d_secure',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
+				'provider_method' => 'authorize_only',
+				'model_method'    => 'get_authorize_only',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'capture_virtual_orders',
+				'model_method'    => 'get_capture_virtual_orders',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'save_paypal_and_venmo',
+				'model_method'    => 'get_save_paypal_and_venmo',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'instant_payments_only',
+				'model_method'    => 'get_instant_payments_only',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'enable_contact_module',
+				'model_method'    => 'get_enable_contact_module',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'save_card_details',
+				'model_method'    => 'get_save_card_details',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'enable_pay_now',
+				'model_method'    => 'get_enable_pay_now',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'enable_logging',
+				'model_method'    => 'get_enable_logging',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+			array(
+				'provider_method' => 'disabled_cards',
+				'model_method'    => 'get_disabled_cards',
+				'expected_value'  => self::EXPECTED_VALUE_ARRAY,
+			),
+			array(
+				'provider_method' => 'stay_updated',
+				'model_method'    => 'get_stay_updated',
+				'expected_value'  => self::EXPECTED_VALUE_BOOL,
+			),
+		);
+	}
+
+	/**
+	 * Test data for the StylingSettings model.
+	 * @return array
+	 * @see StylingSettings
+	 */
+	private function get_styling_settings_data(): array {
+		$styling_dto = new LocationStylingDTO();
+
+		return array(
+			array(
+				'provider_method' => 'styling_cart',
+				'model_method'    => 'get_cart',
+				'expected_value'  => $styling_dto
+			),
+			array(
+				'provider_method' => 'styling_classic_checkout',
+				'model_method'    => 'get_classic_checkout',
+				'expected_value'  => $styling_dto
+			),
+			array(
+				'provider_method' => 'styling_express_checkout',
+				'model_method'    => 'get_express_checkout',
+				'expected_value'  => $styling_dto,
+			),
+			array(
+				'provider_method' => 'styling_mini_cart',
+				'model_method'    => 'get_mini_cart',
+				'expected_value'  => $styling_dto,
+			),
+			array(
+				'provider_method' => 'styling_product',
+				'model_method'    => 'get_product',
+				'expected_value'  => $styling_dto,
 			),
 		);
 	}
