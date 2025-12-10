@@ -26,8 +26,6 @@ class PayPalOrderManager {
 
 	private Orders $orders_api;
 
-	private PayPalOrderBuilder $order_builder;
-
 	private AgenticCartBuilder $cart_builder;
 
 	private LoggerInterface $logger;
@@ -35,14 +33,12 @@ class PayPalOrderManager {
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		Orders $orders_api,
-		PayPalOrderBuilder $order_builder,
 		AgenticCartBuilder $cart_builder,
 		LoggerInterface $logger
 	) {
 
 		$this->order_endpoint = $order_endpoint;
 		$this->orders_api     = $orders_api;
-		$this->order_builder  = $order_builder;
 		$this->cart_builder   = $cart_builder;
 		$this->logger         = $logger;
 	}

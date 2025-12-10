@@ -35,9 +35,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibil
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartTransformer;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
@@ -137,15 +135,10 @@ return array(
 		);
 	},
 
-	'agentic.helper.paypal-order-builder' => static function (): PayPalOrderBuilder {
-		return new PayPalOrderBuilder();
-	},
-
 	'agentic.helper.paypal-order-manager' => static function ( ContainerInterface $c ): PayPalOrderManager {
 		return new PayPalOrderManager(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
-			$c->get( 'agentic.helper.paypal-order-builder' ),
 			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.logger' )
 		);
