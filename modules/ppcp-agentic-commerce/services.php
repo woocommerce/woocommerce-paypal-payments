@@ -165,8 +165,10 @@ return array(
 	},
 
 	// REST endpoints.
-	'agentic.response.factory'            => static function (): ResponseFactory {
-		return new ResponseFactory();
+	'agentic.response.factory'            => static function ( ContainerInterface $c ): ResponseFactory {
+		return new ResponseFactory(
+			$c->get( 'agentic.helper.cart-builder' )
+		);
 	},
 	'agentic.rest.create_cart'            => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(

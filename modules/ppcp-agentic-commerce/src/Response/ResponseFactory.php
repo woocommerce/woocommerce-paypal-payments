@@ -12,8 +12,15 @@ namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 use WC_Order;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
 
 class ResponseFactory {
+	private AgenticCartBuilder $cart_builder;
+
+	public function __construct( AgenticCartBuilder $cart_builder ) {
+		$this->cart_builder = $cart_builder;
+	}
+
 	public function new_cart( PayPalCart $cart, string $cart_id, string $token ): NewCartResponse {
 		// The only response that includes the token!
 		return new NewCartResponse( $cart, $cart_id, $token );
