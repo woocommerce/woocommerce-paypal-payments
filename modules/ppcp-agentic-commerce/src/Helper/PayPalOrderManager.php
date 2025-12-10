@@ -1,6 +1,6 @@
 <?php
 /**
- * PayPal Order Manager for Agentic Commerce.
+ * Responsibility: PayPal Order API
  *
  * Unified interface for PayPal Order lifecycle management (create, update).
  *
@@ -21,9 +21,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 
-/**
- * Manages PayPal Order creation and updates.
- */
 class PayPalOrderManager {
 	private OrderEndpoint $order_endpoint;
 

@@ -1,6 +1,8 @@
 <?php
 /**
- * Agentic Checkout Processor.
+ * Responsibility: WooCommerce Order creation
+ *
+ * Process the final checkout, turning an agentic cart into a paid WooCommerce order.
  *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
  */

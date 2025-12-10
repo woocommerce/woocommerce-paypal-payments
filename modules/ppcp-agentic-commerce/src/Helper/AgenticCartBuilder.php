@@ -1,6 +1,8 @@
 <?php
 /**
- * Builds WC_Cart instances from agentic data sources.
+ * Responsibility: WC_Cart
+ *
+ * Builds a new, session independent WC_Cart from an agentic cart.
  *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
  */

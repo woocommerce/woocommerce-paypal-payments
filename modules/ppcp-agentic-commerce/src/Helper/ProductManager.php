@@ -1,8 +1,8 @@
 <?php
 /**
- * Product Manager for Agentic Commerce.
+ * Responsibility: WooCommerce Products
  *
- * Unified helper for product resolution and stock checking.
+ * Unified helper for WooCommerce product resolution and stock checking.
  *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
  */
