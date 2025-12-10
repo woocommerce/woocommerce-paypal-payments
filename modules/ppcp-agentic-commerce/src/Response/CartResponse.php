@@ -9,6 +9,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
+use WC_Cart;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
@@ -29,6 +31,8 @@ class CartResponse {
 	);
 
 	protected PayPalCart $cart;
+
+	protected ?WC_Cart $wc_cart;
 
 	/**
 	 * The cart ID used by the API to reference to an existing cart.
@@ -52,9 +56,10 @@ class CartResponse {
 	 */
 	protected string $token = '';
 
-	public function __construct( PayPalCart $cart, string $cart_id = '' ) {
+	public function __construct( PayPalCart $cart, string $cart_id = '', ?WC_Cart $wc_cart = null ) {
 		$this->cart    = $cart;
 		$this->cart_id = $cart_id;
+		$this->wc_cart = $wc_cart;
 
 		if ( ! $this->cart->issues() ) {
 			$this->validation_status = 'VALID';
