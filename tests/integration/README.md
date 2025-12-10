@@ -3,15 +3,15 @@ PHPUnit tests that runs against a working WP site. Useful to test modules (ex. c
 
 ### Setup test environment
 
-- Start ddev `ddev start` && `ddev orchestrate -f`
-- Copy and rename `.env.integration.example` to  `.env.integration` from the root of the plugin pointing to your DDEv url, set other configurations if needed.
+- Setup DDEV (if not already): `ddev start && ddev orchestrate`
 - Install and activate WooCommerce Subscriptions plugin.
-- Run extra setup configuration: `ddev php tests/integration/PHPUnit/setup.php`
+- Run `ddev npm run integration-tests`
+- Edit `.env.integration` in the root if needed, set your DDEV url.
 
 ### How to run the tests
 
-- Run all the tests: `ddev exec phpunit -c tests/integration/phpunit.xml.dist`
-- Run a single test: `ddev exec phpunit --filter testSomeTestName -c tests/integration/phpunit.xml.dist`
+- Run all the tests: `ddev npm run integration-tests`
+- Run a single test: `ddev npm run tdd:integration testSomeTestName` or `ddev npm run tdd:integration SomeTestClassName`
 
 ### How to debug tests
 
