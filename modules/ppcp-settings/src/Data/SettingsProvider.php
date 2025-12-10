@@ -75,7 +75,7 @@ class SettingsProvider {
 	 * @return bool
 	 */
 	public function casual_seller(): bool {
-		return (bool) $this->general_settings->is_casual_seller();
+		return $this->general_settings->is_casual_seller();
 	}
 
 	/**
