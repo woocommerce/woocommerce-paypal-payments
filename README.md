@@ -107,8 +107,7 @@ This command generates a full test coverage report, available at the URL https:/
 
 ### Building a release package
 
-If you want to build a release package, use the **Build and distribute** in GitHub Actions
-or download from the branches without `dev/` prefix (e.g. `develop` for the package matching the `dev/develop` source code).
+If you want to build a release package, use the **Build package (New)** in GitHub Actions.
 
 Currently, there is no script for building a proper release package locally, but you may try to run GHA locally via [nektos/act](https://github.com/nektos/act). 
 
