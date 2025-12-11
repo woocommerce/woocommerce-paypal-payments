@@ -99,30 +99,33 @@ class CartResponse {
 	 */
 	private function calculate_totals(): ?array {
 		// Cart items have invalid prices or currency: do not calculate totals.
-		if ( $this->cart->has_validation_issue( ErrorCode::PRICING_ERROR ) ) {
+		if ( ! $this->wc_cart || $this->cart->has_validation_issue( ErrorCode::PRICING_ERROR ) ) {
 			return null;
 		}
 
-		$currency_code = CartHelper::currency( $this->cart );
-		$item_total    = CartHelper::cart_item_total( $this->cart );
+		$currency_code  = CartHelper::currency( $this->cart );
+		$item_total     = (float) $this->wc_cart->get_cart_contents_total();
+		$shipping_total = $this->wc_cart->get_shipping_total();
+		$tax_total      = $this->wc_cart->get_total_tax();
+		$cart_total     = (float) $this->wc_cart->get_total( 'edit' );
 
 		// Cart has no items, no currency, no quantity: nothing to calculate.
-		if ( ! $currency_code || ! $item_total ) {
+		if ( ! $currency_code || $item_total <= 0 || $cart_total <= 0 ) {
 			return null;
 		}
 
 		return array(
 			'item_total' => $this->money( $currency_code, $item_total ),
-			'shipping'   => $this->money( $currency_code, 0.00 ),
-			'tax_total'  => $this->money( $currency_code, 0.00 ),
-			'amount'     => $this->money( $currency_code, $item_total ),
+			'shipping'   => $this->money( $currency_code, (float) $shipping_total ),
+			'tax_total'  => $this->money( $currency_code, (float) $tax_total ),
+			'amount'     => $this->money( $currency_code, $cart_total ),
 		);
 	}
 
 	private function money( string $currency_code, float $value ): array {
 		return array(
 			'currency_code' => $currency_code,
-			'value'         => $value,
+			'value'         => number_format( $value, 2 ),
 		);
 	}
 
