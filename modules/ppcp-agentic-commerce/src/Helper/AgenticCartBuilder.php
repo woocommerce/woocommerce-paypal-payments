@@ -62,7 +62,7 @@ class AgenticCartBuilder {
 		$result = $this->add_items_to_cart( $wc_cart, $paypal_cart->items() );
 		if ( is_wp_error( $result ) ) {
 			$this->logger->warning(
-				sprintf( 'Failed to convert PayPalCart into WC_Cart: %s', $result->get_error_message() ),
+				sprintf( '[WC_CART] Failed to convert PayPalCart into WC_Cart: %s', $result->get_error_message() ),
 				$result->get_error_data()
 			);
 
@@ -76,7 +76,7 @@ class AgenticCartBuilder {
 		$wc_cart->calculate_totals();
 
 		$this->logger->info(
-			'Converted PayPalCart to WC_Cart',
+			'[WC_CART] Converted PayPalCart to WC_Cart',
 			array(
 				'cart'     => $wc_cart,
 				'customer' => $wc_customer,
@@ -104,7 +104,7 @@ class AgenticCartBuilder {
 		$is_empty = true;
 		$errors   = array();
 
-		$wc_cart->empty_cart();
+		$wc_cart->empty_cart( false );
 
 		foreach ( $items as $item ) {
 			$product = $this->product_manager->find_product( $item );
