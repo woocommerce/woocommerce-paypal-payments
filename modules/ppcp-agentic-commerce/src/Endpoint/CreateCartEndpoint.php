@@ -42,8 +42,8 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 			self::PATH,
 			array(
 				'methods'             => self::METHOD,
-				'callback'            => array( $this, 'create_cart' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				'callback'            => fn( $request ) => $this->with_session( fn() => $this->create_cart( $request ) ),
+				'permission_callback' => fn( $request ) => $this->check_permission( $request ),
 			)
 		);
 	}
