@@ -9,8 +9,8 @@ import PayPalInsights from './Insights/PayPalInsights';
 import {
 	disable,
 	enable,
-} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
-import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+} from '@ppcp-button/Helper/ButtonDisabler';
+import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 
 /**
  * Internal customer details.

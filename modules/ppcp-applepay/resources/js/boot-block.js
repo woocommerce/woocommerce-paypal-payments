@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from '@wordpress/element';
 import { registerExpressPaymentMethod } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
-import { cartHasSubscriptionProducts } from '../../../ppcp-blocks/resources/js/Helper/Subscription';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
+import { cartHasSubscriptionProducts } from '@ppcp-blocks/Helper/Subscription';
 import { loadCustomScript } from '@paypal/paypal-js';
 import CheckoutHandler from './Context/CheckoutHandler';
 import ApplePayManager from './ApplepayManager';
 import ApplePayManagerBlockEditor from './ApplepayManagerBlockEditor';
-import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from '@wordpress/element';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
+import { log } from '@ppcp-axo/Helper/Debug';
 
 /**
  * Custom hook to load and manage the PayPal Commerce Gateway configuration.
