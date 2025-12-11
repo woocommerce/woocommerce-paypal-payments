@@ -30,6 +30,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
@@ -83,6 +84,15 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 $services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ): string {
 		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	},
+	'settings.settings-provider'                          => static function ( ContainerInterface $container ): SettingsProvider {
+		return new SettingsProvider(
+			$container->get( 'settings.data.general' ),
+			$container->get( 'settings.data.onboarding' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'settings.data.styling' ),
+		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
 		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
