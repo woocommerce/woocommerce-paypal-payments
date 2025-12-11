@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
 
 /**
  * Base class for REST controllers in the agentic commerce module.
@@ -45,6 +46,8 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 	private AgenticSessionHandler $session_handler;
 
+	private AgenticSessionManager $session_manager;
+
 	protected ResponseFactory $response_factory;
 
 	protected CartValidationProcessor $validation_processor;
@@ -56,6 +59,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
+		AgenticSessionManager $session_manager,
 		ResponseFactory $response_factory,
 		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
@@ -64,6 +68,7 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 
 		$this->auth_provider        = $auth_provider;
 		$this->session_handler      = $session_handler;
+		$this->session_manager      = $session_manager;
 		$this->response_factory     = $response_factory;
 		$this->validation_processor = $validation_processor;
 		$this->logger               = $logger;
@@ -90,6 +95,10 @@ abstract class AgenticRestEndpoint extends WC_REST_Controller {
 		}
 
 		return $auth_service->verify_claims( $context, static::REQUIRED_SCOPES );
+	}
+
+	protected function with_session( callable $callback ) {
+		return $this->session_manager->with_session( $callback );
 	}
 
 	/**

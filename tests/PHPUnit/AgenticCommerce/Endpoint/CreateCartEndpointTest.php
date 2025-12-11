@@ -47,12 +47,14 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 			->andReturnUsing( fn( $cart, $cart_id, $ec_token ) => new NewCartResponse(
 				$cart,
 				$cart_id,
+				null,
 				$ec_token
 			) );
 
 		$endpoint = new CreateCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$response_factory,
 			$validation_processor,
 			$mocks['logger'],

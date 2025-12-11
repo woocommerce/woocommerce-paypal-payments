@@ -20,6 +20,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\InternalServerError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
@@ -48,6 +49,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
+		AgenticSessionManager $session_manager,
 		ResponseFactory $response_factory,
 		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
@@ -55,7 +57,7 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 		AgenticCheckoutProcessor $checkout_processor
 	) {
 
-		parent::__construct( $auth_provider, $session_handler, $response_factory, $validation_processor, $logger, $order_manager );
+		parent::__construct( $auth_provider, $session_handler, $session_manager, $response_factory, $validation_processor, $logger, $order_manager );
 
 		$this->checkout_processor = $checkout_processor;
 	}
@@ -71,8 +73,8 @@ class CheckoutEndpoint extends AgenticRestEndpoint {
 			self::PATH,
 			array(
 				'methods'             => self::METHOD,
-				'callback'            => array( $this, 'complete_checkout' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				'callback'            => fn( $request ) => $this->with_session( fn() => $this->complete_checkout( $request ) ),
+				'permission_callback' => fn( $request ) => $this->check_permission( $request ),
 				'args'                => array(
 					'cart_id' => $this->get_cart_id_arg(),
 				),

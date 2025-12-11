@@ -62,6 +62,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new ReplaceCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$response_factory,
 			$validation_processor,
 			$mocks['logger'],
@@ -98,6 +99,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new ReplaceCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$mocks['response_factory'],
 			$mocks['validation_processor'],
 			$mocks['logger'],
@@ -195,6 +197,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new ReplaceCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$response_factory,
 			$validation_processor,
 			$mocks['logger'],
@@ -254,6 +257,7 @@ class ReplaceCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new ReplaceCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$mocks['response_factory'],
 			$validation_processor,
 			$mocks['logger'],

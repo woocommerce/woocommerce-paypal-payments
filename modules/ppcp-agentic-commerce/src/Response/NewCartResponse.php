@@ -9,14 +9,16 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
+use WC_Cart;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 class NewCartResponse extends CartResponse {
 
 	protected string $status = 'CREATED';
 
-	public function __construct( PayPalCart $cart, string $cart_id, string $token ) {
-		parent::__construct( $cart, $cart_id );
+	public function __construct( PayPalCart $cart, string $cart_id, ?WC_Cart $wc_cart, string $token ) {
+		parent::__construct( $cart, $cart_id, $wc_cart );
 		$this->token = $token;
 	}
 

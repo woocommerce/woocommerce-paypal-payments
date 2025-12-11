@@ -9,9 +9,12 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
+use WC_Cart;
+
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Validation\ValidationIssue;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartHelper;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Enums\ErrorCode;
 
 class CartResponse {
 	private const ALLOWED_STATUS = array(
@@ -28,6 +31,8 @@ class CartResponse {
 	);
 
 	protected PayPalCart $cart;
+
+	protected ?WC_Cart $wc_cart;
 
 	/**
 	 * The cart ID used by the API to reference to an existing cart.
@@ -51,42 +56,14 @@ class CartResponse {
 	 */
 	protected string $token = '';
 
-	public function __construct( PayPalCart $cart, string $cart_id = '' ) {
+	public function __construct( PayPalCart $cart, string $cart_id = '', ?WC_Cart $wc_cart = null ) {
 		$this->cart    = $cart;
 		$this->cart_id = $cart_id;
+		$this->wc_cart = $wc_cart;
 
 		if ( ! $this->cart->issues() ) {
 			$this->validation_status = 'VALID';
 		}
-	}
-
-	/**
-	 * Calculate cart totals.
-	 *
-	 * @return array The totals array.
-	 */
-	protected function calculate_totals(): array {
-		$currency_code = CartHelper::currency( $this->cart );
-		$item_total    = CartHelper::cart_item_total( $this->cart );
-
-		return array(
-			'item_total' => array(
-				'currency_code' => $currency_code,
-				'value'         => $item_total,
-			),
-			'shipping'   => array(
-				'currency_code' => $currency_code,
-				'value'         => 0.00,
-			),
-			'tax_total'  => array(
-				'currency_code' => $currency_code,
-				'value'         => 0.00,
-			),
-			'amount'     => array(
-				'currency_code' => $currency_code,
-				'value'         => $item_total,
-			),
-		);
 	}
 
 	/**
@@ -103,10 +80,53 @@ class CartResponse {
 				static fn( ValidationIssue $issue ) => $issue->to_array(),
 				$this->cart->issues()
 			),
-			'totals'            => $this->calculate_totals(),
 		);
 
-		return array_merge( $data, $this->cart->to_array() );
+		$data   = array_merge( $data, $this->cart->to_array() );
+		$totals = $this->calculate_totals();
+
+		if ( $totals ) {
+			$data['totals'] = $totals;
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Calculate cart totals.
+	 *
+	 * @return array The cart-totals array, or null if not calculatable.
+	 */
+	private function calculate_totals(): ?array {
+		// Cart items have invalid prices or currency: do not calculate totals.
+		if ( ! $this->wc_cart || $this->cart->has_validation_issue( ErrorCode::PRICING_ERROR ) ) {
+			return null;
+		}
+
+		$currency_code  = CartHelper::currency( $this->cart );
+		$item_total     = (float) $this->wc_cart->get_cart_contents_total();
+		$shipping_total = $this->wc_cart->get_shipping_total();
+		$tax_total      = $this->wc_cart->get_total_tax();
+		$cart_total     = (float) $this->wc_cart->get_total( 'edit' );
+
+		// Cart has no items, no currency, no quantity: nothing to calculate.
+		if ( ! $currency_code || $item_total <= 0 || $cart_total <= 0 ) {
+			return null;
+		}
+
+		return array(
+			'item_total' => $this->money( $currency_code, $item_total ),
+			'shipping'   => $this->money( $currency_code, (float) $shipping_total ),
+			'tax_total'  => $this->money( $currency_code, (float) $tax_total ),
+			'amount'     => $this->money( $currency_code, $cart_total ),
+		);
+	}
+
+	private function money( string $currency_code, float $value ): array {
+		return array(
+			'currency_code' => $currency_code,
+			'value'         => number_format( $value, 2 ),
+		);
 	}
 
 	private function status(): string {

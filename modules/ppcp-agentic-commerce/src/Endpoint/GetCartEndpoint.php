@@ -41,8 +41,8 @@ class GetCartEndpoint extends AgenticRestEndpoint {
 			self::PATH,
 			array(
 				'methods'             => self::METHOD,
-				'callback'            => array( $this, 'get_cart' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				'callback'            => fn( $request ) => $this->with_session( fn() => $this->get_cart( $request ) ),
+				'permission_callback' => fn( $request ) => $this->check_permission( $request ),
 				'args'                => array(
 					'cart_id' => $this->get_cart_id_arg(),
 				),
