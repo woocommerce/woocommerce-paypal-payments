@@ -38,6 +38,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
@@ -115,6 +116,12 @@ return array(
 	// Helper services.
 	'agentic.helper.product-manager'      => static function (): ProductManager {
 		return new ProductManager();
+	},
+
+	'agentic.helper.session-manager'      => static function ( ContainerInterface $c ): AgenticSessionManager {
+		return new AgenticSessionManager(
+			$c->get( 'woocommerce.core' )
+		);
 	},
 
 	'agentic.helper.cart-builder'         => static function ( ContainerInterface $c ): AgenticCartBuilder {
