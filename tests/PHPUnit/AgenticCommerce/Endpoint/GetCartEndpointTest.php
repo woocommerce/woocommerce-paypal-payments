@@ -47,6 +47,7 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new GetCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$response_factory,
 			$mocks['validation_processor'],
 			$mocks['logger'],
@@ -80,6 +81,7 @@ class GetCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new GetCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$mocks['response_factory'],
 			$mocks['validation_processor'],
 			$mocks['logger'],

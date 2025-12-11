@@ -54,6 +54,7 @@ class CreateCartEndpointTest extends AgenticEndpointTestCase {
 		$endpoint = new CreateCartEndpoint(
 			$mocks['auth_provider'],
 			$session_handler,
+			$mocks['session_manager'],
 			$response_factory,
 			$validation_processor,
 			$mocks['logger'],

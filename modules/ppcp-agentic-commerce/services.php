@@ -181,6 +181,7 @@ return array(
 		return new CreateCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
@@ -191,6 +192,7 @@ return array(
 		return new GetCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
@@ -201,6 +203,7 @@ return array(
 		return new ReplaceCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
@@ -211,6 +214,7 @@ return array(
 		return new CheckoutEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
