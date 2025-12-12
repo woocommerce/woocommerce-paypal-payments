@@ -60,7 +60,7 @@ To set up the DDEV environment, follow these steps:
 
 0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
 1. Edit the [configuration](https://docs.ddev.com/en/stable/users/configuration/config/#managing-configuration) in the `.ddev/config.local.yml` file if needed. 
-2. Run `$ ddev start && ddev orchestrate` to setup and orchestrate the plugin, WooCommerce and WordPress (you can also use `$ yarn ddev:setup`)
+2. Run `$ ddev start && ddev orchestrate` to setup and orchestrate the plugin, WooCommerce and WordPress (you can also use `$ npm run ddev:setup`)
 3. Open https://woocommerce-paypal-payments.ddev.site 
 
 Use `$ ddev reset` for reinstallation (will destroy all site data).
@@ -69,11 +69,11 @@ You may also need `$ ddev restart` to apply the config changes.
 #### Running tests and other tasks in the DDEV environment
 
 Tests and code style:
-- `$ yarn ddev:unit-tests`
-- `$ yarn ddev:unit-tests:coverage`
-- `$ yarn ddev:lint`
-- `$ yarn ddev:fix-lint`
-- `$ yarn ddev:lint-js`
+- `$ ddev npm run test`
+- `$ ddev npm run lint`
+- `$ ddev npm run fix-lint`
+- `$ ddev npm run lint-js`
+- `$ npm run ddev:unit-tests:coverage`
 
 See [package.json](/package.json) for other useful commands.
 
@@ -87,7 +87,7 @@ Check [this article](https://docs.ddev.com/en/stable/users/debugging-profiling/s
 #### Install dependencies & build
 
 - `$ composer install`
-- `$ yarn install`
+- `$ npm ci`
 
 Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
 
@@ -96,34 +96,20 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 1. `$ ./vendor/bin/phpunit`
 2. `$ ./vendor/bin/phpcs`
 3. `$ ./vendor/bin/psalm`
-4. `$ yarn run lint-js`
-5. `$ yarn run test:unit-js` - Ensure node version is `18` or above
+4. `$ npm run lint-js`
+5. `$ npm run test:unit-js` - Ensure node version is `18` or above
 
 #### Unit tests with Coverage
 
-Run `yarn ddev:unit-tests:coverage` 
+Run `npm run ddev:unit-tests:coverage` 
 
 This command generates a full test coverage report, available at the URL https://woocommerce-paypal-payments.ddev.site/coverage
 
 ### Building a release package
 
-If you want to build a release package
-(that can be used for deploying a new version on wordpress.org or manual installation on a WordPress website via ZIP uploading),
-follow these steps:
+If you want to build a release package, use the **Build package (New)** in GitHub Actions.
 
-1. Clone the repository and `cd` into it.
-2. Make sure you have the version in the plugin root file updated.
-3. Update the PayPal JavaScript SDK integration date by using the current date for the `PAYPAL_INTEGRATION_DATE` constant.
-4. The following command should get you a ZIP file ready to be used on a WordPress site:
-
-```
-$ yarn run build
-```
-or if using the DDEV setup:
-
-```
-$ yarn run ddev:build-package
-```
+Currently, there is no script for building a proper release package locally, but you may try to run GHA locally via [nektos/act](https://github.com/nektos/act). 
 
 ## Test account setup
 
