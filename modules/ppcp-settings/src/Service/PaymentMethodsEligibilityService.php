@@ -48,7 +48,6 @@ class PaymentMethodsEligibilityService {
 	 */
 	private array $merchant_capabilities;
 
-
 	/**
 	 * ACDC Seller status.
 	 */
@@ -78,19 +77,6 @@ class PaymentMethodsEligibilityService {
 	 */
 	private bool $google_pay_available;
 
-
-	/**
-	 * Constructor.
-	 *
-	 * @param string           $merchant_country PayPal Country (or Woo Country if not onboarded).
-	 * @param bool             $is_apm_eligible If alternative payment methods are eligible.
-	 * @param array            $merchant_capabilities Array of Merchant capabilities (true: enabled / false: disabled).
-	 * @param DCCProductStatus $dcc_product_status ACDC Seller status.
-	 * @param callable         $axo_eligible Whether Axo is eligible.
-	 * @param callable         $card_fields_eligible Whether Card Fields is eligible.
-	 * @param bool             $apple_pay_available Whether Apple Pay is available.
-	 * @param bool             $google_pay_available Whether Google Pay is available.
-	 */
 	public function __construct(
 		string $merchant_country,
 		bool $is_apm_eligible,
