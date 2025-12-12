@@ -2,10 +2,10 @@ import { useEffect, useState } from '@wordpress/element';
 import { loadCustomScript } from '@paypal/paypal-js';
 import { registerExpressPaymentMethod } from '@woocommerce/blocks-registry';
 import { __ } from '@wordpress/i18n';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 import GooglepayManager from './GooglepayManager';
 import GooglepayManagerBlockEditor from './GooglepayManagerBlockEditor';
-import { debounce } from '../../../ppcp-blocks/resources/js/Helper/debounce';
+import { debounce } from '@ppcp-blocks/Helper/debounce';
 
 const ppcpData = wc.wcSettings.getSetting( 'ppcp-gateway_data' );
 const ppcpConfig = ppcpData.scriptData;

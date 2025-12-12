@@ -4,14 +4,20 @@ const isProduction = process.env.NODE_ENV === 'production';
 const DependencyExtractionWebpackPlugin = require( '@woocommerce/dependency-extraction-webpack-plugin' );
 
 module.exports = {
-    resolve: {
-        alias: {
-            '@ppcp-axo-block': path.resolve(__dirname, './resources/js'),
-            '@ppcp-axo': path.resolve(__dirname, '../ppcp-axo/resources/js'),
-            '@ppcp-blocks': path.resolve(__dirname, '../ppcp-blocks/resources/js'),
-            '@ppcp-button': path.resolve(__dirname, '../ppcp-button/resources/js/modules')
-        }
-    },
+	resolve: {
+		alias: {
+			'@ppcp-axo-block': path.resolve( __dirname, './resources/js' ),
+			'@ppcp-axo': path.resolve( __dirname, '../ppcp-axo/resources/js' ),
+			'@ppcp-blocks': path.resolve(
+				__dirname,
+				'../ppcp-blocks/resources/js'
+			),
+			'@ppcp-button': path.resolve(
+				__dirname,
+				'../ppcp-button/resources/js/modules'
+			),
+		},
+	},
 	devtool: isProduction ? 'source-map' : 'eval-source-map',
 	mode: isProduction ? 'production' : 'development',
 	target: 'web',

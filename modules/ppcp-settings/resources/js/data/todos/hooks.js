@@ -9,7 +9,7 @@
 
 import { useSelect, useDispatch } from '@wordpress/data';
 import { STORE_NAME } from './constants';
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { useMemo } from '@wordpress/element';
 
 /**

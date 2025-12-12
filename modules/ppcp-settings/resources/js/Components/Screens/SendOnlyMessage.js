@@ -1,8 +1,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 
-import Container from '../ReusableComponents/Container';
-import SettingsCard from '../ReusableComponents/SettingsCard';
+import Container from '@ppcp-settings/Components/ReusableComponents/Container';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import SettingsNavigation from './Settings/Components/Navigation';
 
 const SendOnlyMessage = () => {

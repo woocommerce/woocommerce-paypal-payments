@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
-import { OnboardingHooks, CommonHooks } from '../data';
-import { STORE_NAME as ONBOARDING_STORE_NAME } from '../data/onboarding';
+import { OnboardingHooks, CommonHooks } from '@ppcp-settings/data';
+import { STORE_NAME as ONBOARDING_STORE_NAME } from '@ppcp-settings/data/onboarding';
 
 /**
  * Custom hook for handling gateway synchronization

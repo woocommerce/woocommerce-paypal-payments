@@ -1,6 +1,6 @@
-import ErrorHandler from '../../../../ppcp-button/resources/js/modules/ErrorHandler';
-import CartActionHandler from '../../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler';
-import TransactionInfo from '../Helper/TransactionInfo';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
+import CartActionHandler from '@ppcp-button/ActionHandler/CartActionHandler';
+import TransactionInfo from '@ppcp-googlepay/Helper/TransactionInfo';
 
 class BaseHandler {
 	constructor( buttonConfig, ppcpConfig, externalHandler ) {

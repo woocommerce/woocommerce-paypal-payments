@@ -1,7 +1,7 @@
 import { createInterpolateElement } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import { selectTab, TAB_IDS } from '../../../../../utils/tabSelector';
-import { scrollAndHighlight } from '../../../../../utils/scrollAndHighlight';
+import { selectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
+import { scrollAndHighlight } from '@ppcp-settings/utils/scrollAndHighlight';
 
 /**
  * Transforms camelCase section IDs to kebab-case with ppcp prefix

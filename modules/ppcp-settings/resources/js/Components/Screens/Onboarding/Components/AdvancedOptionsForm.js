@@ -1,4 +1,4 @@
-import { Separator } from '../../../ReusableComponents/Elements';
+import { Separator } from '@ppcp-settings/Components/ReusableComponents/Elements';
 import SandboxConnectionForm from './SandboxConnectionForm';
 import ManualConnectionForm from './ManualConnectionForm';
 
