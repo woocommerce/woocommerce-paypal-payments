@@ -679,14 +679,14 @@ $services = array(
 		assert( $googlepay_product_status instanceof ApmProductStatus );
 
 		return new PaymentMethodsEligibilityService(
-			$container->get( 'api.shop.country' ),
+			$container->get( 'api.merchant.country' ),
 			$container->get( 'ppcp-local-apms.eligibility.check' ),
 			$container->get( 'settings.service.merchant_capabilities' ),
 			$container->get( 'wcgateway.helper.dcc-product-status' ),
 			$container->get( 'axo.eligibility.check' ),
 			$container->get( 'card-fields.eligibility.check' ),
 			$applepay_product_status->is_active() && $container->get( 'applepay.eligible' ),
-			$applepay_product_status->is_active() && $container->get( 'googlepay.eligible' ),
+			$googlepay_product_status->is_active() && $container->get( 'googlepay.eligible' ),
 		);
 	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
