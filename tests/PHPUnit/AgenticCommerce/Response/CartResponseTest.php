@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use Brain\Monkey;
+use Mockery;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\TestCase;
 
@@ -15,6 +16,16 @@ class CartResponseTest extends TestCase
 	{
 		parent::setUp();
 		Monkey\Functions\when('get_woocommerce_currency')->justReturn('USD');
+	}
+
+	private function create_mock_wc_cart(float $item_total = 100.0, float $discount = 0.0, float $shipping = 0.0, float $tax = 0.0): \WC_Cart
+	{
+		$wc_cart = Mockery::mock(\WC_Cart::class);
+		$wc_cart->allows('get_cart_contents_total')->andReturn((string) $item_total);
+		$wc_cart->allows('get_discount_total')->andReturn((string) $discount);
+		$wc_cart->allows('get_shipping_total')->andReturn((string) $shipping);
+		$wc_cart->allows('get_total_tax')->andReturn((string) $tax);
+		return $wc_cart;
 	}
 
 	public function test_to_array_includes_applied_coupons_when_provided(): void
@@ -39,8 +50,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0, 10.0);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -121,8 +133,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0, 10.0);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -145,8 +158,9 @@ class CartResponseTest extends TestCase
 			'payment_method' => array('type' => 'paypal'),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart);
+		$response = new CartResponse($cart, array(), 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -175,8 +189,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0, 20.0);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -202,8 +217,9 @@ class CartResponseTest extends TestCase
 			'payment_method' => array('type' => 'paypal'),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart);
+		$response = new CartResponse($cart, array(), 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -254,8 +270,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0, 15.0);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -293,8 +310,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(25.0, 24.99);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -329,8 +347,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(50.0, 49.99);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -367,8 +386,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(25.0, 24.99);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
@@ -401,8 +421,9 @@ class CartResponseTest extends TestCase
 			),
 		);
 
+		$wc_cart = $this->create_mock_wc_cart(100.0, 10.0, 5.0, 8.5);
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id', $wc_cart);
 
 		$result = $response->to_array();
 
