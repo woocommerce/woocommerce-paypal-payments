@@ -579,7 +579,7 @@ $services = array(
 		 * @param bool $is_enable_google_pay_eligible - Show if merchant has Google Pay capability but hasn't enabled the gateway.
 		 * @param bool $is_enable_installments_eligible - Show if merchant has installments capability and merchant country is MX.
 		 * @param bool $is_working_capital_eligible - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
-		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability.
+		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability and store currency is USD.
 		 */
 		return new TodosEligibilityService(
 			$container->get( 'axo.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['axo'],                  // Enable Fastlane.
@@ -602,8 +602,8 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			! $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
-			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Enable Pay with Crypto.
-			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Apply for Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && $container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Enable Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && $container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Apply for Pay with Crypto.
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
@@ -678,7 +678,7 @@ $services = array(
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
 			'MX' === $container->get( 'api.merchant.country' ), // Installments eligibility.
-			$apm_eligible  // Pay with Crypto eligibility.
+			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ) // Pay with Crypto eligibility.
 		);
 	},
 	'settings.service.payment_methods_eligibilities'      => static function ( ContainerInterface $container ): PaymentMethodsEligibilityService {
