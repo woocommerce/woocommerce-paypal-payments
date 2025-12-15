@@ -57,10 +57,10 @@ abstract class ValidationIssue {
 	/**
 	 * Defines the validation issue contents.
 	 *
-	 * @param string $message           Technical error description.
-	 * @param string $user_message      Optional. Customer friendly error message.
-	 * @param string $field             Optional. Identifies the field that triggered the issue.
-	 * @param array  $context           Optional. Context information.
+	 * @param string $message            Technical error description.
+	 * @param string $user_message       Optional. Customer friendly error message.
+	 * @param string $field              Optional. Identifies the field that triggered the issue.
+	 * @param array  $context            Optional. Context information.
 	 * @param array  $resolution_options Optional. Available resolution options.
 	 */
 	public function __construct( string $message, string $user_message = '', string $field = '', array $context = array(), array $resolution_options = array() ) {
