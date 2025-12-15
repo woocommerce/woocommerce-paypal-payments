@@ -51,7 +51,7 @@ class ContextBuilder {
 	 * @param array          $extra Extra context data.
 	 * @return array The built context.
 	 */
-	public function build(
+	public function build_coupon_context(
 		string $issue_type,
 		string $code,
 		PayPalCart $cart,

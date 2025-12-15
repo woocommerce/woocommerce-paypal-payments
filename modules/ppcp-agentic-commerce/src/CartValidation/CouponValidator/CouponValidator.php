@@ -393,7 +393,7 @@ class CouponValidator implements ValidatorInterface {
 	): CouponInvalid {
 		$config = self::ISSUE_CONFIG[ $issue_type ] ?? self::ISSUE_CONFIG['COUPON_INVALID'];
 
-		$context = $this->context_builder->build(
+		$context = $this->context_builder->build_coupon_context(
 			$issue_type,
 			$code,
 			$cart,
