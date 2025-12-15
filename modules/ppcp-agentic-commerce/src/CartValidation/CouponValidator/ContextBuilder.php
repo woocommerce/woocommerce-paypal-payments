@@ -155,9 +155,9 @@ class ContextBuilder {
 		$currency = CartHelper::currency( $cart, get_woocommerce_currency() );
 
 		return array(
-			'minimum_required' => wc_format_decimal( $minimum, 2 ),
-			'current_subtotal' => wc_format_decimal( $subtotal, 2 ),
-			'shortage_amount'  => wc_format_decimal( $shortage, 2 ),
+			'minimum_required' => number_format( $minimum, 2, '.', '' ),
+			'current_subtotal' => number_format( $subtotal, 2, '.', '' ),
+			'shortage_amount'  => number_format( $shortage, 2, '.', '' ),
 			'currency_code'    => $currency,
 		);
 	}
@@ -181,8 +181,8 @@ class ContextBuilder {
 		$currency = CartHelper::currency( $cart, get_woocommerce_currency() );
 
 		return array(
-			'maximum_allowed'  => wc_format_decimal( $maximum, 2 ),
-			'current_subtotal' => wc_format_decimal( $subtotal, 2 ),
+			'maximum_allowed'  => number_format( $maximum, 2, '.', '' ),
+			'current_subtotal' => number_format( $subtotal, 2, '.', '' ),
 			'currency_code'    => $currency,
 		);
 	}

@@ -71,7 +71,7 @@ class DiscountCalculator {
 				: $totals[ $code ];
 
 			// The value from get_discounts_by_coupon() is already in regular decimal format.
-			return wc_format_decimal( $discount_value, 2 );
+			return number_format( $discount_value, 2, '.', '' );
 		}
 
 		return '0.00';
