@@ -40,7 +40,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -122,7 +122,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -176,7 +176,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -255,7 +255,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -294,7 +294,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -330,7 +330,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -368,7 +368,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
@@ -402,7 +402,7 @@ class CartResponseTest extends TestCase
 		);
 
 		$cart = PayPalCart::from_array($cart_data);
-		$response = new CartResponse($cart, $applied_coupons);
+		$response = new CartResponse($cart, $applied_coupons, 'test-cart-id');
 
 		$result = $response->to_array();
 
