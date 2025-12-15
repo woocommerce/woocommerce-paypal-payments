@@ -1,0 +1,664 @@
+{
+    "packages": [
+        {
+            "name": "container-interop\/service-provider",
+            "version": "v0.4.1",
+            "version_normalized": "0.4.1.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/container-interop\/service-provider.git",
+                "reference": "e04441ca21ef03e10dce70b0af29269281eec6dc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/container-interop\/service-provider\/zipball\/e04441ca21ef03e10dce70b0af29269281eec6dc",
+                "reference": "e04441ca21ef03e10dce70b0af29269281eec6dc",
+                "shasum": ""
+            },
+            "require": {
+                "psr\/container": "^1.0 || ^2.0"
+            },
+            "time": "2023-12-14T14:50:12+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Interop\\Container\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Promoting container interoperability through standard service providers",
+            "homepage": "https:\/\/github.com\/container-interop\/service-provider",
+            "support": {
+                "issues": "https:\/\/github.com\/container-interop\/service-provider\/issues",
+                "source": "https:\/\/github.com\/container-interop\/service-provider\/tree\/v0.4.1"
+            },
+            "install-path": "..\/container-interop\/service-provider"
+        },
+        {
+            "name": "dhii\/human-readable-interface",
+            "version": "v0.2.0-alpha1",
+            "version_normalized": "0.2.0.0-alpha1",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/Dhii\/human-readable-interface.git",
+                "reference": "2b49d664f117faf72fb7af402ad21c0c27c62b6b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/Dhii\/human-readable-interface\/zipball\/2b49d664f117faf72fb7af402ad21c0c27c62b6b",
+                "reference": "2b49d664f117faf72fb7af402ad21c0c27c62b6b",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 | ^8.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "^6.0 | ^7.0 | ^8.0 | ^9.0",
+                "slevomat\/coding-standard": "^6.0",
+                "symfony\/polyfill-php80": "^1.19",
+                "vimeo\/psalm": "^3.11.7 | ^4.0"
+            },
+            "suggest": {
+                "dhii\/i18n-interface": "For internationalizing and translating human readable strings.",
+                "symfony\/polyfill-php80": "To add Stringable interface"
+            },
+            "time": "2021-03-05T00:36:01+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "0.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Util\\String\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dhii Team",
+                    "email": "development@dhii.co"
+                }
+            ],
+            "description": "Interfaces for human readable string interoperation.",
+            "support": {
+                "issues": "https:\/\/github.com\/Dhii\/human-readable-interface\/issues",
+                "source": "https:\/\/github.com\/Dhii\/human-readable-interface\/tree\/v0.2.0-alpha1"
+            },
+            "install-path": "..\/dhii\/human-readable-interface"
+        },
+        {
+            "name": "dhii\/module-interface",
+            "version": "v0.3.0-alpha2",
+            "version_normalized": "0.3.0.0-alpha2",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/Dhii\/module-interface.git",
+                "reference": "0e39f167d7ed8990c82f5d2e6084159d1a502a5b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/Dhii\/module-interface\/zipball\/0e39f167d7ed8990c82f5d2e6084159d1a502a5b",
+                "reference": "0e39f167d7ed8990c82f5d2e6084159d1a502a5b",
+                "shasum": ""
+            },
+            "require": {
+                "container-interop\/service-provider": "^0.4",
+                "php": "^7.1 | ^8.0",
+                "psr\/container": "^1.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat\/coding-standard": "^6.0",
+                "vimeo\/psalm": "^3.11.7 | ^4.0"
+            },
+            "time": "2021-08-23T08:23:01+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "0.3.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Modular\\Module\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dhii Team",
+                    "email": "development@dhii.co"
+                }
+            ],
+            "description": "Interfaces for modules",
+            "support": {
+                "issues": "https:\/\/github.com\/Dhii\/module-interface\/issues",
+                "source": "https:\/\/github.com\/Dhii\/module-interface\/tree\/v0.3.0-alpha2"
+            },
+            "install-path": "..\/dhii\/module-interface"
+        },
+        {
+            "name": "dhii\/package-interface",
+            "version": "v0.1.0-alpha4",
+            "version_normalized": "0.1.0.0-alpha4",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/Dhii\/package-interface.git",
+                "reference": "bcc73f4285eead9b482dbb89662b723abf49298b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/Dhii\/package-interface\/zipball\/bcc73f4285eead9b482dbb89662b723abf49298b",
+                "reference": "bcc73f4285eead9b482dbb89662b723abf49298b",
+                "shasum": ""
+            },
+            "require": {
+                "dhii\/validation-interface": "^0.3-alpha1",
+                "php": "^7.1 | ^8.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat\/coding-standard": "^6.0",
+                "symfony\/polyfill-php80": "^1.19",
+                "vimeo\/psalm": "^4.4.0"
+            },
+            "time": "2021-12-08T15:57:36+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Package\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anton Ukhanev",
+                    "email": "xedin.unknown@gmail.com"
+                }
+            ],
+            "description": "Interfaces for package-related interop",
+            "support": {
+                "issues": "https:\/\/github.com\/Dhii\/package-interface\/issues",
+                "source": "https:\/\/github.com\/Dhii\/package-interface\/tree\/v0.1.0-alpha4"
+            },
+            "install-path": "..\/dhii\/package-interface"
+        },
+        {
+            "name": "dhii\/validation-interface",
+            "version": "v0.3.0-alpha3",
+            "version_normalized": "0.3.0.0-alpha3",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/Dhii\/validation-interface.git",
+                "reference": "0e73c7bf3d2421ceb79331c60a9bc1b1d5eb65a6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/Dhii\/validation-interface\/zipball\/0e73c7bf3d2421ceb79331c60a9bc1b1d5eb65a6",
+                "reference": "0e73c7bf3d2421ceb79331c60a9bc1b1d5eb65a6",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 | ^8.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat\/coding-standard": "^6.0",
+                "symfony\/polyfill-mbstring": "1.20",
+                "symfony\/polyfill-php80": "^1.19",
+                "vimeo\/psalm": "^3.11.7 | ^4.0"
+            },
+            "time": "2021-01-14T16:19:20+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "0.3.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Validation\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anton Ukhanev",
+                    "email": "xedin.unknown@gmail.com"
+                }
+            ],
+            "description": "A base interface for validators",
+            "support": {
+                "issues": "https:\/\/github.com\/Dhii\/validation-interface\/issues",
+                "source": "https:\/\/github.com\/Dhii\/validation-interface\/tree\/v0.3.0-alpha3"
+            },
+            "install-path": "..\/dhii\/validation-interface"
+        },
+        {
+            "name": "dhii\/versions",
+            "version": "v0.1.0-alpha3",
+            "version_normalized": "0.1.0.0-alpha3",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/Dhii\/versions.git",
+                "reference": "120b22b248d0b46e41bac93bf3394516c9d55730"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/Dhii\/versions\/zipball\/120b22b248d0b46e41bac93bf3394516c9d55730",
+                "reference": "120b22b248d0b46e41bac93bf3394516c9d55730",
+                "shasum": ""
+            },
+            "require": {
+                "dhii\/package-interface": "^0.1.0-alpha3",
+                "php": "^7.1 | ^8.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat\/coding-standard": "^6.0",
+                "symfony\/polyfill-php80": "^1.19",
+                "vimeo\/psalm": "^4.4.0"
+            },
+            "time": "2021-12-08T16:54:50+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Versions\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anton Ukhanev",
+                    "email": "xedin.unknown@gmail.com"
+                }
+            ],
+            "description": "Implementation for dealing with SemVer-compliant versions",
+            "support": {
+                "issues": "https:\/\/github.com\/Dhii\/versions\/issues",
+                "source": "https:\/\/github.com\/Dhii\/versions\/tree\/v0.1.0-alpha3"
+            },
+            "install-path": "..\/dhii\/versions"
+        },
+        {
+            "name": "psr\/container",
+            "version": "1.1.2",
+            "version_normalized": "1.1.2.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/container.git",
+                "reference": "513e0666f7216c7459170d56df27dfcefe1689ea"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/container\/zipball\/513e0666f7216c7459170d56df27dfcefe1689ea",
+                "reference": "513e0666f7216c7459170d56df27dfcefe1689ea",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.4.0"
+            },
+            "time": "2021-11-05T16:50:12+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Container\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common Container Interface (PHP FIG PSR-11)",
+            "homepage": "https:\/\/github.com\/php-fig\/container",
+            "keywords": [
+                "PSR-11",
+                "container",
+                "container-interface",
+                "container-interop",
+                "psr"
+            ],
+            "support": {
+                "issues": "https:\/\/github.com\/php-fig\/container\/issues",
+                "source": "https:\/\/github.com\/php-fig\/container\/tree\/1.1.2"
+            },
+            "install-path": "..\/psr\/container"
+        },
+        {
+            "name": "psr\/log",
+            "version": "1.1.4",
+            "version_normalized": "1.1.4.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/php-fig\/log.git",
+                "reference": "d49695b909c3b7628b6289db5479a1c204601f11"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/php-fig\/log\/zipball\/d49695b909c3b7628b6289db5479a1c204601f11",
+                "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.0"
+            },
+            "time": "2021-05-03T11:20:27+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "WooCommerce\\PayPalCommerce\\Vendor\\Psr\\Log\\": "Psr\/Log\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https:\/\/www.php-fig.org\/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https:\/\/github.com\/php-fig\/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/php-fig\/log\/tree\/1.1.4"
+            },
+            "install-path": "..\/psr\/log"
+        },
+        {
+            "name": "ralouphie\/getallheaders",
+            "version": "3.0.3",
+            "version_normalized": "3.0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/ralouphie\/getallheaders.git",
+                "reference": "120b605dfeb996808c31b6477290a714d356e822"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/ralouphie\/getallheaders\/zipball\/120b605dfeb996808c31b6477290a714d356e822",
+                "reference": "120b605dfeb996808c31b6477290a714d356e822",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6"
+            },
+            "require-dev": {
+                "php-coveralls\/php-coveralls": "^2.1",
+                "phpunit\/phpunit": "^5 || ^6.5"
+            },
+            "time": "2019-03-08T08:55:37+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src\/getallheaders.php"
+                ]
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ralph Khattar",
+                    "email": "ralph.khattar@gmail.com"
+                }
+            ],
+            "description": "A polyfill for getallheaders.",
+            "support": {
+                "issues": "https:\/\/github.com\/ralouphie\/getallheaders\/issues",
+                "source": "https:\/\/github.com\/ralouphie\/getallheaders\/tree\/develop"
+            },
+            "install-path": "..\/ralouphie\/getallheaders"
+        },
+        {
+            "name": "symfony\/polyfill-php80",
+            "version": "v1.33.0",
+            "version_normalized": "1.33.0.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/symfony\/polyfill-php80.git",
+                "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/symfony\/polyfill-php80\/zipball\/0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
+                "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "time": "2025-01-02T08:10:11+00:00",
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https:\/\/github.com\/symfony\/polyfill",
+                    "name": "symfony\/polyfill"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php80\\": ""
+                },
+                "classmap": [
+                    "Resources\/stubs"
+                ]
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ion Bazan",
+                    "email": "ion.bazan@gmail.com"
+                },
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https:\/\/symfony.com\/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.0+ features to lower PHP versions",
+            "homepage": "https:\/\/symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https:\/\/github.com\/symfony\/polyfill-php80\/tree\/v1.33.0"
+            },
+            "funding": [
+                {
+                    "url": "https:\/\/symfony.com\/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https:\/\/github.com\/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/github.com\/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https:\/\/tidelift.com\/funding\/github\/packagist\/symfony\/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "..\/symfony\/polyfill-php80"
+        },
+        {
+            "name": "wikimedia\/composer-merge-plugin",
+            "version": "v2.1.0",
+            "version_normalized": "2.1.0.0",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/wikimedia\/composer-merge-plugin.git",
+                "reference": "a03d426c8e9fb2c9c569d9deeb31a083292788bc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/wikimedia\/composer-merge-plugin\/zipball\/a03d426c8e9fb2c9c569d9deeb31a083292788bc",
+                "reference": "a03d426c8e9fb2c9c569d9deeb31a083292788bc",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^1.1||^2.0",
+                "php": ">=7.2.0"
+            },
+            "require-dev": {
+                "composer\/composer": "^1.1||^2.0",
+                "ext-json": "*",
+                "mediawiki\/mediawiki-phan-config": "0.11.1",
+                "php-parallel-lint\/php-parallel-lint": "~1.3.1",
+                "phpspec\/prophecy": "~1.15.0",
+                "phpunit\/phpunit": "^8.5||^9.0",
+                "squizlabs\/php_codesniffer": "~3.7.1"
+            },
+            "time": "2023-04-15T19:07:00+00:00",
+            "type": "composer-plugin",
+            "extra": {
+                "class": "Wikimedia\\Composer\\Merge\\V2\\MergePlugin",
+                "branch-alias": {
+                    "dev-master": "2.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Wikimedia\\Composer\\Merge\\V2\\": "src\/"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Bryan Davis",
+                    "email": "bd808@wikimedia.org"
+                }
+            ],
+            "description": "Composer plugin to merge multiple composer.json files",
+            "support": {
+                "issues": "https:\/\/github.com\/wikimedia\/composer-merge-plugin\/issues",
+                "source": "https:\/\/github.com\/wikimedia\/composer-merge-plugin\/tree\/v2.1.0"
+            },
+            "install-path": "..\/wikimedia\/composer-merge-plugin"
+        },
+        {
+            "name": "wp-oop\/wordpress-interface",
+            "version": "v0.1.0-alpha2",
+            "version_normalized": "0.1.0.0-alpha2",
+            "source": {
+                "type": "git",
+                "url": "https:\/\/github.com\/wp-oop\/wordpress-interface.git",
+                "reference": "5e40acb49b76702f409bb5bcd2ea5459c9b946f5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https:\/\/api.github.com\/repos\/wp-oop\/wordpress-interface\/zipball\/5e40acb49b76702f409bb5bcd2ea5459c9b946f5",
+                "reference": "5e40acb49b76702f409bb5bcd2ea5459c9b946f5",
+                "shasum": ""
+            },
+            "require": {
+                "dhii\/human-readable-interface": "^0.2.0-alpha1",
+                "dhii\/package-interface": "^0.1-alpha3",
+                "php": "^7.1 | ^8.0"
+            },
+            "require-dev": {
+                "phpunit\/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat\/coding-standard": "^6.0",
+                "vimeo\/psalm": "^4.4.0"
+            },
+            "time": "2021-04-30T09:37:37+00:00",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-task\/initial-interfaces": "0.1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "WpOop\\WordPress\\": "src"
+                }
+            },
+            "notification-url": "https:\/\/packagist.org\/downloads\/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anton Ukhanev",
+                    "email": "xedin.unknown@gmail.com"
+                }
+            ],
+            "description": "Interfaces for interop within WordPress",
+            "support": {
+                "issues": "https:\/\/github.com\/wp-oop\/wordpress-interface\/issues",
+                "source": "https:\/\/github.com\/wp-oop\/wordpress-interface\/tree\/v0.1.0-alpha2"
+            },
+            "install-path": "..\/wp-oop\/wordpress-interface"
+        }
+    ],
+    "dev": false,
+    "dev-package-names": []
+}
