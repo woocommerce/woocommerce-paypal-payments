@@ -50,45 +50,6 @@ class CouponValidator implements ValidatorInterface {
 	private ResolutionBuilder $resolution_builder;
 
 	/**
-	 * Error message patterns for mapping WC errors to PayPal issue types.
-	 *
-	 * WooCommerce's WC_Discounts always returns WP_Error with code 'invalid_coupon'.
-	 * The actual error type is determined by the error message content.
-	 * Patterns are checked in order - more specific patterns should come first.
-	 */
-	private const MESSAGE_PATTERNS = array(
-		// Existence checks.
-		'does not exist'                              => 'COUPON_NOT_EXIST',
-		'cannot be applied because it does not exist' => 'COUPON_NOT_EXIST',
-
-		// Expiration.
-		'has expired'                                 => 'COUPON_EXPIRED',
-
-		// Usage limits.
-		'usage limit'                                 => 'USAGE_LIMIT_EXCEEDED',
-		'reached its usage limit'                     => 'USAGE_LIMIT_EXCEEDED',
-
-		// Spend requirements.
-		'minimum spend'                               => 'MINIMUM_ORDER_NOT_MET',
-		'maximum spend'                               => 'MAXIMUM_ORDER_EXCEEDED',
-
-		// Product/category restrictions - check specific patterns first.
-		'not applicable to the products:'             => 'COUPON_NOT_APPLICABLE',
-		'not applicable to the categories:'           => 'COUPON_NOT_APPLICABLE',
-		'not applicable to selected products'         => 'COUPON_NOT_APPLICABLE',
-		'not valid for sale items'                    => 'COUPON_NOT_APPLICABLE',
-		'not applicable'                              => 'COUPON_NOT_APPLICABLE',
-
-		// Email restrictions.
-		'not yours'                                   => 'COUPON_EMAIL_RESTRICTED',
-		'does not belong'                             => 'COUPON_EMAIL_RESTRICTED',
-
-		// Already applied.
-		'already applied'                             => 'COUPON_ALREADY_APPLIED',
-		'already been applied'                        => 'COUPON_ALREADY_APPLIED',
-	);
-
-	/**
 	 * Issue configuration.
 	 *
 	 * Each issue type declares:
@@ -339,7 +300,7 @@ class CouponValidator implements ValidatorInterface {
 		$result = $discounts->is_coupon_valid( $wc_coupon );
 
 		if ( is_wp_error( $result ) ) {
-			$issue_type = $this->map_wc_error_to_issue_type( $result );
+			$issue_type = $this->map_wc_error_to_issue_type( $result, $wc_coupon );
 			return $this->create_issue( $issue_type, $code, $field, $cart, $wc_coupon );
 		}
 
@@ -347,29 +308,68 @@ class CouponValidator implements ValidatorInterface {
 	}
 
 	/**
-	 * Maps WC_Error to issue type using message pattern matching.
+	 * Maps WC_Error to issue type using WC_Coupon error constants.
 	 *
-	 * WooCommerce's WC_Discounts returns errors with code 'invalid_coupon',
-	 * so we determine the specific issue type by analyzing the error message.
+	 * WooCommerce throws exceptions with numeric error codes (100-114) that are
+	 * caught and converted to WP_Error objects.
 	 *
-	 * @param WP_Error $error The WP_Error from WC validation.
+	 * @param WP_Error  $error The WP_Error from WC validation.
+	 * @param WC_Coupon $wc_coupon The WC coupon object for accessing error constants.
 	 * @return string The mapped issue type.
 	 */
-	private function map_wc_error_to_issue_type( WP_Error $error ): string {
-		$error_code    = $error->get_error_code();
-		$error_message = strtolower( $error->get_error_message() );
+	private function map_wc_error_to_issue_type( WP_Error $error, WC_Coupon $wc_coupon ): string {
+		$error_data = $error->get_error_data();
 
-		// Parse the error message to determine the specific issue type.
-		if ( $error_code === 'invalid_coupon' ) {
-			foreach ( self::MESSAGE_PATTERNS as $pattern => $issue_type ) {
-				if ( strpos( $error_message, $pattern ) !== false ) {
-					return $issue_type;
-				}
-			}
+		// WC_Coupon error constants mapping.
+		$error_code_map = array(
+			100 => 'COUPON_INVALID',              // E_WC_COUPON_INVALID_FILTERED.
+			101 => 'COUPON_INVALID',              // E_WC_COUPON_INVALID_REMOVED.
+			102 => 'COUPON_EMAIL_RESTRICTED',     // E_WC_COUPON_NOT_YOURS_REMOVED.
+			103 => 'COUPON_ALREADY_APPLIED',      // E_WC_COUPON_ALREADY_APPLIED.
+			104 => 'COUPON_STACKING_NOT_ALLOWED', // E_WC_COUPON_ALREADY_APPLIED_INDIV_USE_ONLY.
+			105 => 'COUPON_NOT_EXIST',            // E_WC_COUPON_NOT_EXIST.
+			106 => 'USAGE_LIMIT_EXCEEDED',        // E_WC_COUPON_USAGE_LIMIT_REACHED.
+			107 => 'COUPON_EXPIRED',              // E_WC_COUPON_EXPIRED.
+			108 => 'MINIMUM_ORDER_NOT_MET',       // E_WC_COUPON_MIN_SPEND_LIMIT_NOT_MET.
+			109 => 'COUPON_NOT_APPLICABLE',       // E_WC_COUPON_NOT_APPLICABLE.
+			110 => 'COUPON_NOT_APPLICABLE',       // E_WC_COUPON_NOT_VALID_SALE_ITEMS.
+			112 => 'MAXIMUM_ORDER_EXCEEDED',      // E_WC_COUPON_MAX_SPEND_LIMIT_MET.
+			113 => 'COUPON_NOT_APPLICABLE',       // E_WC_COUPON_EXCLUDED_PRODUCTS.
+			114 => 'COUPON_NOT_APPLICABLE',       // E_WC_COUPON_EXCLUDED_CATEGORIES.
+			115 => 'USAGE_LIMIT_EXCEEDED',        // E_WC_COUPON_USAGE_LIMIT_COUPON_STUCK.
+			116 => 'USAGE_LIMIT_EXCEEDED',        // E_WC_COUPON_USAGE_LIMIT_COUPON_STUCK_GUEST.
+		);
+
+		// Extract numeric error code from WP_Error data.
+		$numeric_code = $this->extract_numeric_error_code( $error_data );
+
+		if ( $numeric_code && isset( $error_code_map[ $numeric_code ] ) ) {
+			return $error_code_map[ $numeric_code ];
 		}
 
-		// Fallback for unrecognized errors.
+		// Default fallback for unrecognized or missing error codes.
 		return 'COUPON_INVALID';
+	}
+
+	/**
+	 * Extracts numeric error code from WP_Error data.
+	 *
+	 * @param mixed $error_data The error data from WP_Error.
+	 * @return int|null The numeric error code or null if not found.
+	 */
+	private function extract_numeric_error_code( $error_data ): ?int {
+		if ( ! is_array( $error_data ) || ! isset( $error_data['details'] ) ) {
+			return null;
+		}
+
+		if ( ! is_array( $error_data['details'] ) || empty( $error_data['details'] ) ) {
+			return null;
+		}
+
+		$numeric_codes = array_keys( $error_data['details'] );
+		$first_code    = reset( $numeric_codes );
+
+		return is_numeric( $first_code ) ? (int) $first_code : null;
 	}
 
 	/**

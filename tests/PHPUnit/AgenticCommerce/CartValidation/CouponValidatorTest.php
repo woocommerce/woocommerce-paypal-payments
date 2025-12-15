@@ -172,28 +172,6 @@ class CouponValidatorTest extends TestCase
 		$this->assertSame(500, strlen($data['user_message']));
 	}
 
-
-
-	public function test_all_message_patterns_have_issue_config(): void
-	{
-		// Verify that all issue types in MESSAGE_PATTERNS have corresponding ISSUE_CONFIG entries.
-		$reflection = new \ReflectionClass($this->validator);
-
-		$message_patterns = $reflection->getConstant('MESSAGE_PATTERNS');
-		$issue_config = $reflection->getConstant('ISSUE_CONFIG');
-
-		$unique_issue_types = array_unique(array_values($message_patterns));
-
-		foreach ($unique_issue_types as $issue_type) {
-			$this->assertArrayHasKey(
-				$issue_type,
-				$issue_config,
-				"Issue type '{$issue_type}' from MESSAGE_PATTERNS is missing from ISSUE_CONFIG"
-			);
-		}
-	}
-
-
 	/**
 	 * Helper to create a cart with coupons.
 	 */

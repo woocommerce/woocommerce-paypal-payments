@@ -61,9 +61,9 @@ Validates WooCommerce coupons and provides enhanced context to PayPal's Agentic 
 
 **Error Mapping:**
 
-The validator maps WooCommerce errors to PayPal issue types using message pattern matching on the `WP_Error` message content. WooCommerce's `WC_Discounts` always returns errors with code `'invalid_coupon'`, so the actual issue type is determined by analyzing the error message.
+The validator maps WooCommerce errors to PayPal issue types using numeric error constants (100-116) from `WC_Coupon`. WooCommerce's `WC_Discounts` throws exceptions with these numeric codes, which are then caught and converted to `WP_Error` objects.
 
-Patterns are defined in `MESSAGE_PATTERNS` constant and checked in order (more specific patterns first).
+Since WooCommerce error messages are localized (`esc_html__`), we cannot rely on pattern matching - instead we extract the numeric error code from the `WP_Error` data structure, making the validation work correctly for all languages.
 
 ## Enhanced Context Fields
 
