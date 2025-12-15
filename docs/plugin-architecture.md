@@ -232,6 +232,105 @@ if ( $container->has( 'optional.service' ) ) {
 }
 ```
 
+### Plugin Feature Definition
+
+The plugin has different features that can be enabled or disabled depending on assertions such as:
+
+```php
+// WooCommerce country location. 
+$container->get( 'api.shop.country' );
+
+// PayPal merchant country location (notice this will fallback to WooCommerce country location if the user is not onboarded. 
+$container->get( 'api.merchant.country' );
+
+// Currency
+$currency = $container->get( 'api.shop.currency.getter' );
+$currency->get(); // USD
+
+// PayPal API Feature flags 
+$product_status = $container->get( 'applepay.apple-product-status' );
+assert( $product_status instanceof AppleProductStatus );
+$apple_pay_enabled = $product_status->is_active();
+
+// Any other feature dependency. For instance, checking if own_brand_only is no enabled.
+$is_enabled => $feature_is_enabled && ! $general_settings->own_brand_only(),
+```
+
+The `FeaturesDefinition.php` file is used to define these features so they can be used in other services.
+
+For instance, they are used in places as:
+
+- Endpoint serving the UI to know which features to show under the Features section under the Overview tab
+- Define the TODO list in the UI Overview tab 
+
+The features should be defined as public constants for easy access an prefixed as `FEATURE_`
+
+```php
+// Defining Pay with Crypto feature
+public const FEATURE_PAY_WITH_CRYPTO = 'pwc';
+```
+
+The features have different fields and a status field (enabled/disabled)
+```php
+self::FEATURE_PAY_WITH_CRYPTO                 => array(
+				'title'       => __( 'Pay with Crypto', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable customers to pay with cryptocurrency, and receive payments in USD in your PayPal balance.', 'woocommerce-paypal-payments' ),
+				'enabled'     => $this->merchant_capabilities[ self::FEATURE_PAY_WITH_CRYPTO ],
+				'buttons'     => array(
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Configure', 'woocommerce-paypal-payments' ),
+						'action'   => array(
+							'type'    => 'tab',
+							'tab'     => 'payment_methods',
+							'section' => 'ppcp-pay-with-crypto',
+						),
+						'showWhen' => 'enabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'     => 'secondary',
+						'text'     => __( 'Sign up', 'woocommerce-paypal-payments' ),
+						'urls'     => array(
+							'sandbox' => 'https://www.sandbox.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+							'live'    => 'https://www.paypal.com/bizsignup/add-product?product=CRYPTO_PYMTS',
+						),
+						'showWhen' => 'disabled',
+						'class'    => 'small-button',
+					),
+					array(
+						'type'  => 'tertiary',
+						'text'  => __( 'Learn more', 'woocommerce-paypal-payments' ),
+						'url'   => 'https://www.paypal.com/us/digital-wallet/manage-money/crypto',
+						'class' => 'small-button',
+					),
+				),
+			),
+```
+
+There is a hook named `woocommerce_paypal_payments_rest_common_merchant_features` 
+allowing to define which features are enabled or disabled:
+
+```php
+// Enable Google Pay Feature
+add_filter(
+			'woocommerce_paypal_payments_rest_common_merchant_features',
+			function ( array $features ) use ( $container ): array {
+				$product_status = $container->get( 'googlepay.helpers.apm-product-status' );
+				assert( $product_status instanceof ApmProductStatus );
+				$google_pay_enabled = $product_status->is_active();
+
+				$features[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] = array(
+					'enabled' => $google_pay_enabled,
+				);
+
+				return $features;
+			}
+		);
+```
+
+The FeaturesDefinition class is initialized in ```settings.data.definition.features```
+
 ## Asset Management
 
 ### Webpack Configuration
