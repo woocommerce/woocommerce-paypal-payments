@@ -1,8 +1,8 @@
 import { __ } from '@wordpress/i18n';
 
-import { ControlTextInput } from '../../../../../ReusableComponents/Controls';
-import { SettingsHooks } from '../../../../../../data';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+import { ControlTextInput } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { SettingsHooks } from '@ppcp-settings/data';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 
 const InvoicePrefix = () => {
 	const { invoicePrefix, setInvoicePrefix } = SettingsHooks.useSettings();

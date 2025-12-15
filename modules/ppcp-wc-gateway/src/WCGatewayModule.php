@@ -572,8 +572,10 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$contact_module_check = $c->get( 'wcgateway.contact-module.eligibility.check' );
 				assert( is_callable( $contact_module_check ) );
 
+				$save_payment_methods_check = $c->get( 'save-payment-methods.eligibility.check' );
+				assert( is_callable( $save_payment_methods_check ) );
 				$features[ FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO ] = array(
-					'enabled' => $reference_transaction_status->reference_transaction_enabled(),
+					'enabled' => $reference_transaction_status->reference_transaction_enabled() && $save_payment_methods_check(),
 				);
 
 				$features[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] = array(
@@ -585,10 +587,8 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				);
 
 				// When local APMs are available, then PayLater messaging is also available.
-				// @todo Remove this logic after the next release. If Store is Canada and PayLater for Canada is not released, then PayLater messaging is not available.
-				$is_paylater_canada_released                                 = $c->get( 'api.paylater.is-canada-released' );
 				$features[ FeaturesDefinition::FEATURE_PAY_LATER_MESSAGING ] = array(
-					'enabled' => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'] && ( $c->get( 'api.shop.country' ) !== 'CA' || $is_paylater_canada_released ),
+					'enabled' => $features[ FeaturesDefinition::FEATURE_ALTERNATIVE_PAYMENT_METHODS ]['enabled'],
 				);
 
 				$features[ FeaturesDefinition::FEATURE_INSTALLMENTS ] = array(

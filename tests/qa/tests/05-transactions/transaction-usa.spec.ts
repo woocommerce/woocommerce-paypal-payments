@@ -17,7 +17,15 @@ import {
 	payPalCheckout,
 	payPalCheckoutExcludingTax,
 	payPalCheckoutIntentAuthorized,
+	payPalPayByLink,
+	payPalPayByLinkExcludingTax,
+	payPalPayByLinkIntentAuthorized,
 } from './_test-data/paypal';
+import {
+	payLaterCheckout,
+	payLaterCheckoutExcludingTax,
+	payLaterCheckoutIntentAuthorized,
+} from './_test-data/pay-later';
 import {
 	acdcCheckout,
 	acdcCheckoutExcludingTax,
@@ -30,7 +38,7 @@ import {
 } from './_test-data/acdc';
 import { fastlaneCheckout } from './_test-data/fastlane';
 
-const { payPal, venmo, acdc, fastlane } = gateways;
+const { payPal, payLater, venmo, acdc, fastlane } = gateways;
 
 test.beforeAll( async ( { utils, pcpApi } ) => {
 	await utils.configureStore( {
@@ -45,6 +53,7 @@ test.beforeAll( async ( { utils, pcpApi } ) => {
 	);
 	await pcpApi.updatePcpPaymentMethods( {
 		[ payPal.id ]: { id: payPal.id, enabled: true },
+		[ payLater.id ]: { id: payLater.id, enabled: true },
 		[ venmo.id ]: { id: venmo.id, enabled: true },
 		[ acdc.id ]: { id: acdc.id, enabled: true },
 		[ fastlane.id ]: { id: fastlane.id, enabled: false },
@@ -59,8 +68,16 @@ for ( const testOrder of payPalCheckout ) {
 	transactionsOnCheckout( testOrder );
 }
 
+for ( const testOrder of payLaterCheckout ) {
+	transactionsOnCheckout( testOrder );
+}
+
 for ( const testOrder of acdcCheckout ) {
 	transactionsOnCheckout( testOrder );
+}
+
+for ( const testOrder of payPalPayByLink ) {
+	transactionsOnPayByLink( testOrder );
 }
 
 for ( const testOrder of acdcPayByLink ) {
@@ -77,8 +94,16 @@ test.describe( () => {
 		transactionsOnCheckout( testOrder );
 	}
 
+	for ( const testOrder of payLaterCheckoutExcludingTax ) {
+		transactionsOnCheckout( testOrder );
+	}
+
 	for ( const testOrder of acdcCheckoutExcludingTax ) {
 		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payPalPayByLinkExcludingTax ) {
+		transactionsOnPayByLink( testOrder );
 	}
 
 	for ( const testOrder of acdcPayByLinkExcludingTax ) {
@@ -100,8 +125,16 @@ test.describe( () => {
 		transactionsOnCheckout( testOrder );
 	}
 
+	for ( const testOrder of payLaterCheckoutIntentAuthorized ) {
+		transactionsOnCheckout( testOrder );
+	}
+
 	for ( const testOrder of acdcCheckoutIntentAuthorized ) {
 		transactionsOnCheckout( testOrder );
+	}
+
+	for ( const testOrder of payPalPayByLinkIntentAuthorized ) {
+		transactionsOnPayByLink( testOrder );
 	}
 
 	for ( const testOrder of acdcPayByLinkIntentAuthorized ) {

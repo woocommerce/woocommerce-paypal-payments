@@ -1,12 +1,12 @@
 import {
 	combineStyles,
 	combineWrapperIds,
-} from '../../../ppcp-button/resources/js/modules/Helper/PaymentButtonHelpers';
-import PaymentButton from '../../../ppcp-button/resources/js/modules/Renderer/PaymentButton';
-import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
+} from '@ppcp-button/Helper/PaymentButtonHelpers';
+import PaymentButton from '@ppcp-button/Renderer/PaymentButton';
+import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
 import UpdatePaymentData from './Helper/UpdatePaymentData';
-import { PaymentMethods } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
-import { setPayerData } from '../../../ppcp-button/resources/js/modules/Helper/PayerData';
+import { PaymentMethods } from '@ppcp-button/Helper/CheckoutMethodState';
+import { setPayerData } from '@ppcp-button/Helper/PayerData';
 import moduleStorage from './Helper/GooglePayStorage';
 
 /**

@@ -3,7 +3,7 @@ import { speak } from '@wordpress/a11y';
 import { Tooltip } from '@wordpress/components';
 import { SVG, Path } from '@wordpress/primitives';
 import classNames from 'classnames';
-import { useCopyToClipboard } from '../../../hooks/useCopyToClipboard';
+import { useCopyToClipboard } from '@ppcp-settings/hooks/useCopyToClipboard';
 
 const COPY_CONFIRMATION_DURATION = 1000;
 

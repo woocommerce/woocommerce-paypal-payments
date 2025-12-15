@@ -2,6 +2,12 @@ const path         = require('path');
 const isProduction = process.env.NODE_ENV === 'production';
 
 module.exports = {
+    resolve: {
+        alias: {
+            '@ppcp-button': path.resolve(__dirname, './resources/js/modules'),
+            '@ppcp-blocks': path.resolve(__dirname, '../ppcp-blocks/resources/js')
+        }
+    },
     devtool: isProduction ? 'source-map' : 'eval-source-map',
     mode: isProduction ? 'production' : 'development',
     target: 'web',

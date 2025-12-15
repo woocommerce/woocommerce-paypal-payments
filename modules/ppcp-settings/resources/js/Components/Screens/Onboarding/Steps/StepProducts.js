@@ -1,9 +1,9 @@
 import { __, sprintf } from '@wordpress/i18n';
 import { useEffect, useState } from '@wordpress/element';
 
-import { OptionSelector } from '../../../ReusableComponents/Fields';
-import { OnboardingHooks, PRODUCT_TYPES } from '../../../../data';
-import OnboardingHeader from '../Components/OnboardingHeader';
+import { OptionSelector } from '@ppcp-settings/Components/ReusableComponents/Fields';
+import { OnboardingHooks, PRODUCT_TYPES } from '@ppcp-settings/data';
+import OnboardingHeader from '@ppcp-settings/Components/Screens/Onboarding/Components/OnboardingHeader';
 
 const StepProducts = () => {
 	const { products, setProducts } = OnboardingHooks.useProducts();

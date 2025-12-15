@@ -1320,7 +1320,7 @@ return array(
 		$fields['disable_cards']['options'] = $card_options;
 		$fields['card_icons']['options']    = array_merge( $dark_versions, $card_options );
 
-		if ( $container->get( 'api.shop.country' ) !== 'MX' ) {
+		if ( $container->get( 'api.merchant.country' ) !== 'MX' ) {
 			unset( $fields['mexico_installments'] );
 			unset( $fields['mexico_installments_action_link'] );
 		}

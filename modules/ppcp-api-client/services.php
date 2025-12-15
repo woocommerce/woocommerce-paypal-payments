@@ -825,14 +825,6 @@ return array(
 			'SE',
 		);
 	},
-	'api.paylater.is-canada-released'                => static function ( ContainerInterface $container ): bool {
-		// Check if current date is after November 12th, 2025 (Expected PayPal release date).
-		// @todo Remove this logic after the next release.
-		$release_date = '2025-11-12';
-		$current_date = gmdate( 'Y-m-d' );
-
-		return $current_date >= $release_date;
-	},
 	'api.paylater-countries'                         => static function ( ContainerInterface $container ): array {
 		$default_countries = array(
 			'US',
@@ -842,14 +834,8 @@ return array(
 			'AU',
 			'IT',
 			'ES',
+			'CA',
 		);
-
-		// @todo Remove this logic after the next release.
-		// Instead add CA as a default country directly.
-		if ( $container->get( 'api.paylater.is-canada-released' ) ) {
-			$default_countries[] = 'CA';
-		}
-
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_paylater_countries',
 			$default_countries

@@ -1,12 +1,12 @@
 import { __ } from '@wordpress/i18n';
-import Accordion from '../../../../../ReusableComponents/AccordionSection';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+import Accordion from '@ppcp-settings/Components/ReusableComponents/AccordionSection';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 import {
 	ControlSelect,
 	ControlRadioGroup,
-} from '../../../../../ReusableComponents/Controls';
-import { SettingsHooks } from '../../../../../../data';
-import { useMerchantInfo } from '../../../../../../data/common/hooks';
+} from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { SettingsHooks } from '@ppcp-settings/data';
+import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
 
 const OtherSettings = () => {
 	const { disabledCards, setDisabledCards, threeDSecure, setThreeDSecure } =

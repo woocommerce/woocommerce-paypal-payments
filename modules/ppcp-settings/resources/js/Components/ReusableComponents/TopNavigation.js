@@ -3,8 +3,8 @@ import { Button, Icon } from '@wordpress/components';
 import { chevronLeft } from '@wordpress/icons';
 import classNames from 'classnames';
 
-import useIsScrolled from '../../hooks/useIsScrolled';
-import { useNavigation } from '../../hooks/useNavigation';
+import useIsScrolled from '@ppcp-settings/hooks/useIsScrolled';
+import { useNavigation } from '@ppcp-settings/hooks/useNavigation';
 import BusyStateWrapper from './BusyStateWrapper';
 
 const TopNavigation = ( {

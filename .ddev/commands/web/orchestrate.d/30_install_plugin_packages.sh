@@ -3,4 +3,4 @@
 popd
 
 composer install
-yarn install
+npm ci

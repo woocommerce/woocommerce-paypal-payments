@@ -1,5 +1,5 @@
 import { dispatch } from '@wordpress/data';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
+import { log } from '@ppcp-axo/Helper/Debug';
 
 /**
  * Saves the current shipping and billing address to localStorage.

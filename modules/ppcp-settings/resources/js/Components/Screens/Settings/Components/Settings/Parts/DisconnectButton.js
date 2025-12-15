@@ -2,10 +2,10 @@ import { __ } from '@wordpress/i18n';
 import { Button, Modal, ToggleControl } from '@wordpress/components';
 import { useCallback, useState } from '@wordpress/element';
 
-import { CommonHooks } from '../../../../../../data';
-import { useToggleState } from '../../../../../../hooks/useToggleState';
-import { HStack } from '../../../../../ReusableComponents/Stack';
-import { useNavigation } from '../../../../../../hooks/useNavigation';
+import { CommonHooks } from '@ppcp-settings/data';
+import { useToggleState } from '@ppcp-settings/hooks/useToggleState';
+import { HStack } from '@ppcp-settings/Components/ReusableComponents/Stack';
+import { useNavigation } from '@ppcp-settings/hooks/useNavigation';
 
 const DisconnectButton = () => {
 	const { isOpen, setIsOpen } = useToggleState( 'disconnect-merchant' );

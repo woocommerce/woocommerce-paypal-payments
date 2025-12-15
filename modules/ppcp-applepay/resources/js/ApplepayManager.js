@@ -1,4 +1,4 @@
-import buttonModuleWatcher from '../../../ppcp-button/resources/js/modules/ButtonModuleWatcher';
+import buttonModuleWatcher from '@ppcp-button/ButtonModuleWatcher';
 import ApplePayButton from './ApplepayButton';
 import ContextHandlerFactory from './Context/ContextHandlerFactory';
 
