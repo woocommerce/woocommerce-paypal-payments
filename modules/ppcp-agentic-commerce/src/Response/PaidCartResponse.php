@@ -16,17 +16,38 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
 class PaidCartResponse extends CartResponse {
 	/**
-	 * @var WC_Order|null The WooCommerce order which was created during checkout.
+	 * The WooCommerce order which was created during checkout.
+	 *
+	 * @var WC_Order|null
 	 */
 	protected ?WC_Order $wc_order = null;
 
-	protected string $status = 'COMPLETED';
-
-	public function __construct( PayPalCart $cart, string $cart_id, ?WC_Cart $wc_cart, WC_Order $wc_order ) {
-		parent::__construct( $cart, $cart_id, $wc_cart );
+	/**
+	 * Constructor.
+	 *
+	 * @param PayPalCart $cart The PayPal cart.
+	 * @param string     $cart_id The cart ID.
+	 * @param WC_Order   $wc_order The WooCommerce order.
+	 * @param array      $applied_coupons Applied coupons data.
+	 * @param WC_Cart|null $wc_cart The WooCommerce cart.
+	 */
+	public function __construct(
+		PayPalCart $cart,
+		string $cart_id,
+		WC_Order $wc_order,
+		array $applied_coupons = array(),
+		?WC_Cart $wc_cart = null
+	) {
+		parent::__construct( $cart, $applied_coupons, $cart_id, $wc_cart );
 		$this->wc_order = $wc_order;
+		$this->status   = 'COMPLETED';
 	}
 
+	/**
+	 * Convert to array for API response.
+	 *
+	 * @return array The response array.
+	 */
 	public function to_array(): array {
 		$data = parent::to_array();
 
