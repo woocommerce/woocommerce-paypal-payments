@@ -45,19 +45,19 @@ Validates WooCommerce coupons and provides enhanced context to PayPal's Agentic 
 
 ## Issue Types
 
-| Issue Type | WC Error Codes | Triggered When |
-|------------|----------------|----------------|
-| `COUPON_EXPIRED` | 107 | Expiration date passed |
-| `COUPON_NOT_EXIST` | 105, 111 | Invalid/non-existent code |
-| `MINIMUM_ORDER_NOT_MET` | 108 | Cart total below minimum |
-| `MAXIMUM_ORDER_EXCEEDED` | 112 | Cart total above maximum |
-| `COUPON_NOT_APPLICABLE` | 109, 110, 113, 114 | Product/category restrictions not met |
-| `USAGE_LIMIT_EXCEEDED` | 106 | Global or per-user limit hit |
-| `COUPON_STACKING_NOT_ALLOWED` | 104 | Can't combine coupons (individual_use) |
-| `COUPON_ALREADY_APPLIED` | 103 | Duplicate application |
-| `COUPON_EMAIL_RESTRICTED` | 102 | Email restriction failed |
-| `COUPON_INVALID` | 100, 101 | Generic invalid coupon |
-| `COUPON_NOT_SUPPORTED` | - | Coupons disabled in WooCommerce |
+| Issue Type | Triggered When |
+|------------|----------------|
+| `COUPON_EXPIRED` | Expiration date passed |
+| `COUPON_NOT_EXIST` | Invalid/non-existent code |
+| `MINIMUM_ORDER_NOT_MET` | Cart total below minimum |
+| `MAXIMUM_ORDER_EXCEEDED` | Cart total above maximum |
+| `COUPON_NOT_APPLICABLE` | Product/category restrictions not met |
+| `USAGE_LIMIT_EXCEEDED` | Global or per-user limit hit |
+| `COUPON_STACKING_NOT_ALLOWED` | Can't combine coupons (individual_use) |
+| `COUPON_ALREADY_APPLIED` | Duplicate application |
+| `COUPON_EMAIL_RESTRICTED` | Email restriction failed |
+| `COUPON_INVALID` | Generic invalid coupon |
+| `COUPON_NOT_SUPPORTED` | Coupons disabled in WooCommerce |
 
 **Error Mapping:**
 

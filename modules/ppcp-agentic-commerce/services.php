@@ -36,9 +36,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartTransformer;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
@@ -141,12 +139,6 @@ return array(
 		);
 	},
 
-	'agentic.helper.cart-transformer'              => static function ( ContainerInterface $c ): CartTransformer {
-		return new CartTransformer(
-			$c->get( 'agentic.helper.product-manager' )
-		);
-	},
-
 	'agentic.helper.checkout-processor'            => static function ( ContainerInterface $c ): AgenticCheckoutProcessor {
 		return new AgenticCheckoutProcessor(
 			$c->get( 'agentic.helper.paypal-order-manager' ),
@@ -155,16 +147,11 @@ return array(
 		);
 	},
 
-	'agentic.helper.paypal-order-builder'          => static function (): PayPalOrderBuilder {
-		return new PayPalOrderBuilder();
-	},
-
 	'agentic.helper.paypal-order-manager'          => static function ( ContainerInterface $c ): PayPalOrderManager {
 		return new PayPalOrderManager(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
-			$c->get( 'agentic.helper.paypal-order-builder' ),
-			$c->get( 'agentic.helper.cart-transformer' ),
+			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.logger' )
 		);
 	},

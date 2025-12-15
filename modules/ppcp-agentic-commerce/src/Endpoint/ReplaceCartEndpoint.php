@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProc
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\Http\NotFoundError;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Errors\AgenticError;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
@@ -53,6 +54,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	 *
 	 * @param AuthServiceProvider     $auth_provider Auth service provider.
 	 * @param AgenticSessionHandler   $session_handler Session handler.
+	 * @param AgenticSessionManager   $session_manager Session manager.
 	 * @param ResponseFactory         $response_factory Response factory.
 	 * @param CartValidationProcessor $validation_processor Validation processor.
 	 * @param LoggerInterface         $logger Logger.
@@ -62,6 +64,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 	public function __construct(
 		AuthServiceProvider $auth_provider,
 		AgenticSessionHandler $session_handler,
+		AgenticSessionManager $session_manager,
 		ResponseFactory $response_factory,
 		CartValidationProcessor $validation_processor,
 		LoggerInterface $logger,
@@ -71,6 +74,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 		parent::__construct(
 			$auth_provider,
 			$session_handler,
+			$session_manager,
 			$response_factory,
 			$validation_processor,
 			$logger,
