@@ -28,7 +28,7 @@ jest.mock( '@ppcp-button/ErrorHandler', () => {
 	} ) );
 } );
 
-jest.mock( './Configuration', () => ( {
+jest.mock( './configuration', () => ( {
 	buttonConfiguration: jest.fn( () => ( {
 		createVaultSetupToken: jest.fn(),
 		onApprove: jest.fn(),
@@ -59,7 +59,7 @@ import {
 import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
 import ErrorHandler from '@ppcp-button/ErrorHandler';
-import { buttonConfiguration, cardFieldsConfiguration } from './Configuration';
+import { buttonConfiguration, cardFieldsConfiguration } from './configuration';
 import { renderFields } from '@ppcp-card-fields/Render';
 import {
 	setVisible,

@@ -69,11 +69,13 @@ You may also need `$ ddev restart` to apply the config changes.
 #### Running tests and other tasks in the DDEV environment
 
 Tests and code style:
-- `$ ddev npm run test`
-- `$ ddev npm run lint`
-- `$ ddev npm run fix-lint`
-- `$ ddev npm run lint-js`
-- `$ npm run ddev:unit-tests:coverage`
+- `$ yarn ddev:unit-tests`
+- `$ yarn ddev:unit-tests:coverage`
+- `$ yarn ddev:lint`
+- `$ yarn ddev:fix-lint`
+- `$ yarn ddev:lint-js`
+- `$ yarn test:unit-js`
+- `$ yarn test:unit-js:coverage`
 
 See [package.json](/package.json) for other useful commands.
 
@@ -101,7 +103,8 @@ Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )`
 
 #### Unit tests with Coverage
 
-Run `npm run ddev:unit-tests:coverage` 
+Run `yarn ddev:unit-tests:coverage` 
+Run `yarn run test:unit-js:coverage` 
 
 This command generates a full test coverage report, available at the URL https://woocommerce-paypal-payments.ddev.site/coverage
 

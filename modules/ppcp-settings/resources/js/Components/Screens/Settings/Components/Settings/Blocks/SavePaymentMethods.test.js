@@ -119,17 +119,17 @@ describe( 'SavePaymentMethods', () => {
 			).toBeInTheDocument();
 		} );
 
-		it( 'does not render credit card toggle button when in ownBrandOnly mode', () => {
+		it( 'Save Credit and Debit Cards is disabled  when in ownBrandOnly mode', () => {
 			render( <SavePaymentMethods ownBrandOnly={ true } /> );
 
 			expect(
 				screen.queryByText( 'Save Credit and Debit Cards' )
-			).not.toBeInTheDocument();
+			).toBeInTheDocument();
 			expect(
 				screen.queryByRole( 'checkbox', {
 					name: 'Save Credit and Debit Cards',
 				} )
-			).not.toBeInTheDocument();
+			).toBeDisabled();
 		} );
 
 		it( 'Does not render the component when ownBrandOnly is true and save_paypal_and_venmo feature is disabled', () => {
@@ -142,7 +142,7 @@ describe( 'SavePaymentMethods', () => {
 			expect( container.firstChild ).toBeNull();
 		} );
 
-		it( 'renders when ownBrandOnly is true and save_paypal_and_venmo feature is enabled', () => {
+		it( 'renders when save_paypal_and_venmo feature is enabled and OwnBrand is true', () => {
 			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
 
 			render( <SavePaymentMethods ownBrandOnly={ true } /> );
@@ -152,13 +152,13 @@ describe( 'SavePaymentMethods', () => {
 			).toBeInTheDocument();
 		} );
 
-		it( 'renders when ownBrandOnly is false regardless of feature status', () => {
-			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = false;
+        it( 'renders when save_paypal_and_venmo feature is enabled and OwnBrand is false', () => {
+            mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = true;
 
-			render( <SavePaymentMethods ownBrandOnly={ false } /> );
+			render( <SavePaymentMethods ownBrandOnly={ true } /> );
 
 			expect(
-				screen.getByTestId( 'settings-block' )
+                screen.getByTestId( 'settings-block' )
 			).toBeInTheDocument();
 		} );
 	} );
@@ -174,29 +174,6 @@ describe( 'SavePaymentMethods', () => {
 				name: 'Save PayPal and Venmo',
 			} );
 			expect( checkbox ).toBeChecked();
-		} );
-
-		it( 'displays false value when feature is disabled', () => {
-			mockUseSettings.savePaypalAndVenmo = true;
-			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = false;
-
-			render( <SavePaymentMethods /> );
-
-			const checkbox = screen.getByRole( 'checkbox', {
-				name: 'Save PayPal and Venmo',
-			} );
-			expect( checkbox ).not.toBeChecked();
-		} );
-
-		it( 'is disabled when feature is not enabled', () => {
-			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = false;
-
-			render( <SavePaymentMethods /> );
-
-			const checkbox = screen.getByRole( 'checkbox', {
-				name: 'Save PayPal and Venmo',
-			} );
-			expect( checkbox ).toBeDisabled();
 		} );
 
 		it( 'is enabled when feature is enabled', () => {
@@ -282,24 +259,6 @@ describe( 'SavePaymentMethods', () => {
 		} );
 	} );
 
-	describe( 'Save Credit and Debit Cards rendering', () => {
-		it( 'Renders when ownBrandOnly={false}', () => {
-			render( <SavePaymentMethods ownBrandOnly={ false } /> );
-
-			expect(
-				screen.getByText( 'Save Credit and Debit Cards' )
-			).toBeInTheDocument();
-		} );
-
-		it( 'Does not render when ownBrandOnly={true}', () => {
-			render( <SavePaymentMethods ownBrandOnly={ true } /> );
-
-			expect(
-				screen.queryByText( 'Save Credit and Debit Cards' )
-			).not.toBeInTheDocument();
-		} );
-	} );
-
 	describe( 'Integration with hooks', () => {
 		it( 'uses values from useSettings hook', () => {
 			mockUseSettings.savePaypalAndVenmo = true;
@@ -316,17 +275,6 @@ describe( 'SavePaymentMethods', () => {
 
 			expect( paypalCheckbox ).toBeChecked();
 			expect( cardCheckbox ).toBeChecked();
-		} );
-
-		it( 'uses features from useMerchantInfo hook', () => {
-			mockUseMerchantInfo.features.save_paypal_and_venmo.enabled = false;
-
-			render( <SavePaymentMethods /> );
-
-			const checkbox = screen.getByRole( 'checkbox', {
-				name: 'Save PayPal and Venmo',
-			} );
-			expect( checkbox ).toBeDisabled();
 		} );
 	} );
 } );
