@@ -35,12 +35,6 @@ class ContextBuilder {
 	 */
 	private DiscountCalculator $discount_calculator;
 
-	/**
-	 * Constructor.
-	 *
-	 * @param ProductManager     $product_manager Product manager instance.
-	 * @param DiscountCalculator $discount_calculator Discount calculator instance.
-	 */
 	public function __construct( ProductManager $product_manager, DiscountCalculator $discount_calculator ) {
 		$this->product_manager     = $product_manager;
 		$this->discount_calculator = $discount_calculator;
