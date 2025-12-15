@@ -9,5 +9,18 @@
 	},
 	"rules": {
 		"no-console": ["error", { "allow": ["warn", "error"] }]
+	},
+	"import/resolver": {
+		"alias": {
+			"map": [
+				// Special case for ppcp-button. Everything is under modules
+				["@ppcp-button", "./ppcp-button/resources/js/modules"],
+				// Dynamic pattern for other modules
+				["/^@(ppcp-\w+)$/", ",./$1/resources/js"]
+			],
+			"extensions": [".js", ".jsx", ".ts", ".tsx"]
+		}
 	}
+
+
 }
