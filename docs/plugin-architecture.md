@@ -258,9 +258,9 @@ module.exports = {
 
 Assets are built using the shared configuration:
 
-- **Individual builds**: `yarn run build:modules:ppcp-{module-name}`
-- **Watch mode**: `yarn run watch:modules:ppcp-{module-name}`
-- **All modules**: `yarn run build:modules` (parallel builds)
+- **Individual builds**: `npm run build:modules:ppcp-{module-name}`
+- **Watch mode**: `npm run watch:modules:ppcp-{module-name}` or `npm run watch:modules` (all modules)
+- **All modules**: `npm run build:modules` (parallel builds)
 
 ### Asset Registration
 

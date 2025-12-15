@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import OrderIntent from './Blocks/OrderIntent';
 import SavePaymentMethods from './Blocks/SavePaymentMethods';
 import InvoicePrefix from './Blocks/InvoicePrefix';

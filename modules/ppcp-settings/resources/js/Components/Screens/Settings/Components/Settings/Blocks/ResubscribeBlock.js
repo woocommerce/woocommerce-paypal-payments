@@ -3,13 +3,13 @@ import { useDispatch } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { store as noticesStore } from '@wordpress/notices';
 
-import { STORE_NAME } from '../../../../../../data/common';
-import { ControlButton } from '../../../../../ReusableComponents/Controls';
+import { STORE_NAME } from '@ppcp-settings/data/common';
+import { ControlButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
 import {
 	NOTIFICATION_ERROR,
 	NOTIFICATION_SUCCESS,
-} from '../../../../../ReusableComponents/Icons';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
+} from '@ppcp-settings/Components/ReusableComponents/Icons';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
 
 const ResubscribeBlock = () => {
 	const { createSuccessNotice, createErrorNotice } =

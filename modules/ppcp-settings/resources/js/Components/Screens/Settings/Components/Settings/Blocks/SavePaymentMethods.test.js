@@ -11,7 +11,7 @@ const mockUseSettings = {
 	setSaveCardDetails: jest.fn(),
 };
 
-jest.mock( '../../../../../../data', () => ( {
+jest.mock( '@ppcp-settings/data', () => ( {
 	SettingsHooks: {
 		useSettings: () => mockUseSettings,
 	},
@@ -25,11 +25,11 @@ const mockUseMerchantInfo = {
 	},
 };
 
-jest.mock( '../../../../../../data/common/hooks', () => ( {
+jest.mock( '@ppcp-settings/data/common/hooks', () => ( {
 	useMerchantInfo: () => mockUseMerchantInfo,
 } ) );
 
-jest.mock( '../../../../../ReusableComponents/SettingsBlock', () => {
+jest.mock( '@ppcp-settings/Components/ReusableComponents/SettingsBlock', () => {
 	return ( { title, description, className, children } ) => (
 		<div data-testid="settings-block" className={ className }>
 			<h3>{ title }</h3>
@@ -39,7 +39,7 @@ jest.mock( '../../../../../ReusableComponents/SettingsBlock', () => {
 	);
 } );
 
-jest.mock( '../../../../../ReusableComponents/Controls', () => ( {
+jest.mock( '@ppcp-settings/Components/ReusableComponents/Controls', () => ( {
 	ControlToggleButton: ( {
 		id,
 		label,

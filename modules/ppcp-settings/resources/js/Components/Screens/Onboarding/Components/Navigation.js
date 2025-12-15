@@ -1,9 +1,9 @@
 import { Button } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 
-import { OnboardingHooks } from '../../../../data';
-import { useNavigation } from '../../../../hooks/useNavigation';
-import TopNavigation from '../../../ReusableComponents/TopNavigation';
+import { OnboardingHooks } from '@ppcp-settings/data';
+import { useNavigation } from '@ppcp-settings/hooks/useNavigation';
+import TopNavigation from '@ppcp-settings/Components/ReusableComponents/TopNavigation';
 
 const OnboardingNavigation = ( { stepDetails, onNext, onPrev } ) => {
 	const { goToWooCommercePaymentsTab } = useNavigation();

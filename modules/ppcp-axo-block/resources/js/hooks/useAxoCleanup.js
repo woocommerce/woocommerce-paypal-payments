@@ -1,14 +1,14 @@
 import { useEffect } from '@wordpress/element';
 import { useDispatch } from '@wordpress/data';
-import { log } from '../../../../ppcp-axo/resources/js/Helper/Debug';
-import { STORE_NAME } from '../stores/axoStore';
-import { removeShippingChangeButton } from '../components/Shipping';
-import { removeWatermark } from '../components/Watermark';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
+import { removeShippingChangeButton } from '@ppcp-axo-block/components/Shipping';
+import { removeWatermark } from '@ppcp-axo-block/components/Watermark';
 import {
 	removeEmailFunctionality,
 	isEmailFunctionalitySetup,
-} from '../components/EmailButton';
-import { restoreOriginalFields } from '../helpers/fieldHelpers';
+} from '@ppcp-axo-block/components/EmailButton';
+import { restoreOriginalFields } from '@ppcp-axo-block/helpers/fieldHelpers';
 import useCustomerData from './useCustomerData';
 
 /**

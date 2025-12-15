@@ -1,9 +1,9 @@
 import { __ } from '@wordpress/i18n';
 import { useEffect } from 'react';
 
-import { ControlToggleButton } from '../../../../../ReusableComponents/Controls';
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import { SettingsHooks } from '../../../../../../data';
+import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import { SettingsHooks } from '@ppcp-settings/data';
 
 const OrderIntent = () => {
 	const {

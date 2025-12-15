@@ -1,7 +1,7 @@
 import { useMemo } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
-import { Watermark } from '../Watermark';
-import { STORE_NAME } from '../../stores/axoStore';
+import { Watermark } from '@ppcp-axo-block/components/Watermark';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 const cardIcons = {
 	VISA: 'visa-light.svg',

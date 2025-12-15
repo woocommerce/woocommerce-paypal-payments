@@ -1,10 +1,10 @@
 import { __ } from '@wordpress/i18n';
-import { FeatureSettingsBlock } from '../../../../../ReusableComponents/SettingsBlocks';
-import { Content } from '../../../../../ReusableComponents/Elements';
-import { TITLE_BADGE_POSITIVE } from '../../../../../ReusableComponents/TitleBadge';
-import { selectTab, TAB_IDS } from '../../../../../../utils/tabSelector';
+import { FeatureSettingsBlock } from '@ppcp-settings/Components/ReusableComponents/SettingsBlocks';
+import { Content } from '@ppcp-settings/Components/ReusableComponents/Elements';
+import { TITLE_BADGE_POSITIVE } from '@ppcp-settings/Components/ReusableComponents/TitleBadge';
+import { selectTab, TAB_IDS } from '@ppcp-settings/utils/tabSelector';
 import { useDispatch } from '@wordpress/data';
-import { STORE_NAME as COMMON_STORE_NAME } from '../../../../../../data/common';
+import { STORE_NAME as COMMON_STORE_NAME } from '@ppcp-settings/data/common';
 
 const FeatureItem = ( {
 	isBusy,

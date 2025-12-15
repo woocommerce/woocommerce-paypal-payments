@@ -1,4 +1,4 @@
-import PayPalInsights from '../../../../ppcp-axo/resources/js/Insights/PayPalInsights';
+import PayPalInsights from '@ppcp-axo/Insights/PayPalInsights';
 
 class EndCheckoutTracker {
 	constructor() {

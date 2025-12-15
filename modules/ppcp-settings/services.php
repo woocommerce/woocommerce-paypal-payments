@@ -11,9 +11,11 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
@@ -30,6 +32,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
@@ -59,6 +62,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
+use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosSortingAndFilteringService;
@@ -72,7 +76,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -83,6 +86,15 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 $services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ): string {
 		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	},
+	'settings.settings-provider'                          => static function ( ContainerInterface $container ): SettingsProvider {
+		return new SettingsProvider(
+			$container->get( 'settings.data.general' ),
+			$container->get( 'settings.data.onboarding' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'settings.data.styling' ),
+		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
 		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
@@ -669,7 +681,24 @@ $services = array(
 			$apm_eligible  // Pay with Crypto eligibility.
 		);
 	},
+	'settings.service.payment_methods_eligibilities'      => static function ( ContainerInterface $container ): PaymentMethodsEligibilityService {
+		$applepay_product_status = $container->get( 'applepay.apple-product-status' );
+		assert( $applepay_product_status instanceof AppleProductStatus );
 
+		$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
+		assert( $googlepay_product_status instanceof ApmProductStatus );
+
+		return new PaymentMethodsEligibilityService(
+			$container->get( 'api.merchant.country' ),
+			$container->get( 'ppcp-local-apms.eligibility.check' ),
+			$container->get( 'settings.service.merchant_capabilities' ),
+			$container->get( 'wcgateway.helper.dcc-product-status' ),
+			$container->get( 'axo.eligibility.check' ),
+			$container->get( 'card-fields.eligibility.check' ),
+			$applepay_product_status->is_active() && $container->get( 'applepay.eligible' ),
+			$googlepay_product_status->is_active() && $container->get( 'googlepay.eligible' ),
+		);
+	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
 		return new TodosSortingAndFilteringService(
 			$container->get( 'settings.data.todos' )

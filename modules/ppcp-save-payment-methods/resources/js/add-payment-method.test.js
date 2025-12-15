@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, waitFor } from '@testing-library/dom';
 
 jest.mock(
-	'../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState',
+	'@ppcp-button/Helper/CheckoutMethodState',
 	() => ( {
 		getCurrentPaymentMethod: jest.fn(),
 		ORDER_BUTTON_SELECTOR: '#place_order',
@@ -15,13 +15,13 @@ jest.mock(
 );
 
 jest.mock(
-	'../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading',
+	'@ppcp-button/Helper/PayPalScriptLoading',
 	() => ( {
 		loadPayPalScript: jest.fn(),
 	} )
 );
 
-jest.mock( '../../../ppcp-button/resources/js/modules/ErrorHandler', () => {
+jest.mock( '@ppcp-button/ErrorHandler', () => {
 	return jest.fn().mockImplementation( () => ( {
 		message: jest.fn(),
 		clear: jest.fn(),
@@ -41,11 +41,11 @@ jest.mock( './configuration', () => ( {
 	} ) ),
 } ) );
 
-jest.mock( '../../../ppcp-card-fields/resources/js/Render', () => ( {
+jest.mock( '@ppcp-card-fields/Render', () => ( {
 	renderFields: jest.fn(),
 } ) );
 
-jest.mock( '../../../ppcp-button/resources/js/modules/Helper/Hiding', () => ( {
+jest.mock( '@ppcp-button/Helper/Hiding', () => ( {
 	setVisible: jest.fn(),
 	setVisibleByClass: jest.fn(),
 } ) );
@@ -56,15 +56,15 @@ import {
 	initializeScript,
 } from './add-payment-method';
 
-import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
-import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
-import { buttonConfiguration, cardFieldsConfiguration } from './configuration';
-import { renderFields } from '../../../ppcp-card-fields/resources/js/Render';
+import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
+import { buttonConfiguration, cardFieldsConfiguration } from './Configuration';
+import { renderFields } from '@ppcp-card-fields/Render';
 import {
 	setVisible,
 	setVisibleByClass,
-} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+} from '@ppcp-button/Helper/Hiding';
 
 describe( 'add-payment-method', () => {
 	let mockConfig;

@@ -3,7 +3,7 @@ import { __ } from '@wordpress/i18n';
 import TitleBadge, {
 	TITLE_BADGE_NEGATIVE,
 	TITLE_BADGE_POSITIVE,
-} from '../../../../../ReusableComponents/TitleBadge';
+} from '@ppcp-settings/Components/ReusableComponents/TitleBadge';
 
 const ConnectionStatusBadge = ( { isActive, isSandbox, isBusinessSeller } ) => {
 	if ( isActive ) {

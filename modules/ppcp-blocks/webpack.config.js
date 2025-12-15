@@ -4,6 +4,11 @@ const isProduction = process.env.NODE_ENV === 'production';
 const DependencyExtractionWebpackPlugin = require( '@woocommerce/dependency-extraction-webpack-plugin' );
 
 module.exports = {
+    resolve: {
+        alias: {
+            '@ppcp-blocks': path.resolve(__dirname, './resources/js'),
+        }
+    },
     devtool: isProduction ? 'source-map' : 'eval-source-map',
     mode: isProduction ? 'production' : 'development',
     target: 'web',

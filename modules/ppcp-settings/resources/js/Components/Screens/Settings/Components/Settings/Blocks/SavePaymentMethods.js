@@ -1,9 +1,9 @@
 import { __, sprintf } from '@wordpress/i18n';
 
-import SettingsBlock from '../../../../../ReusableComponents/SettingsBlock';
-import { ControlToggleButton } from '../../../../../ReusableComponents/Controls';
-import { SettingsHooks } from '../../../../../../data';
-import { useMerchantInfo } from '../../../../../../data/common/hooks';
+import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/SettingsBlock';
+import { ControlToggleButton } from '@ppcp-settings/Components/ReusableComponents/Controls';
+import { SettingsHooks } from '@ppcp-settings/data';
+import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
 
 const SavePaymentMethods = ( { ownBrandOnly } ) => {
 	const {
