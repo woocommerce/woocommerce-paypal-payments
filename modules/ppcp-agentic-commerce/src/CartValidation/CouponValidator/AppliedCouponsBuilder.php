@@ -91,7 +91,7 @@ class AppliedCouponsBuilder {
 			}
 
 			// Calculate discount amount.
-			$discount_amount = $this->discount_calculator->calculate( $wc_coupon, $cart );
+			$discount_amount = $this->discount_calculator->calculate_discount_amount( $wc_coupon, $cart );
 
 			$applied[] = array(
 				'code'            => $code,

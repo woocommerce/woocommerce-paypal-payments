@@ -48,7 +48,7 @@ class DiscountCalculator {
 	 * @param PayPalCart $cart The cart context.
 	 * @return string The discount amount formatted to 2 decimals, or '0.00' if calculation fails.
 	 */
-	public function calculate( WC_Coupon $wc_coupon, PayPalCart $cart ): string {
+	public function calculate_discount_amount( WC_Coupon $wc_coupon, PayPalCart $cart ): string {
 		$discounts = $this->create_discounts_instance( $cart );
 
 		// Skip validation - we only want to calculate the discount amount.

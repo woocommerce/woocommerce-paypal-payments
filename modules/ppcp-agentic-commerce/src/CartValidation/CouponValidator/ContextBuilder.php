@@ -226,7 +226,7 @@ class ContextBuilder {
 			return array();
 		}
 
-		$current_discount   = $wc_coupon ? $this->discount_calculator->calculate( $wc_coupon, $cart ) : '0.00';
+		$current_discount   = $wc_coupon ? $this->discount_calculator->calculate_discount_amount( $wc_coupon, $cart ) : '0.00';
 		$attempted_discount = '0.00';
 
 		// Normalize coupon code to match WooCommerce's case-insensitive behavior.
@@ -234,7 +234,7 @@ class ContextBuilder {
 
 		$other_coupon = new WC_Coupon( $normalized_other_code );
 		if ( $other_coupon->get_id() ) {
-			$attempted_discount = $this->discount_calculator->calculate( $other_coupon, $cart );
+			$attempted_discount = $this->discount_calculator->calculate_discount_amount( $other_coupon, $cart );
 		}
 
 		return array(
