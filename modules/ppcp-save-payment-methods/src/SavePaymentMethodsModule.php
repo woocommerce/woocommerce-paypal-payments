@@ -29,9 +29,10 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
@@ -66,15 +67,15 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $c ) {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings_model = $c->get( 'settings.data.settings' );
+				assert( $settings_model instanceof SettingsModel );
 
 				$reference_transaction_status = $c->get( 'api.reference-transaction-status' );
 				assert( $reference_transaction_status instanceof ReferenceTransactionStatus );
 
 				if ( ! $reference_transaction_status->reference_transaction_enabled() ) {
-					$settings->set( 'vault_enabled', false );
-					$settings->persist();
+					$settings_model->set_save_paypal_and_venmo( false );
+					$settings_model->save();
 				}
 			}
 		);
@@ -82,11 +83,9 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 		add_action(
 			'after_setup_theme',
 			function () use ( $c ) {
-				$settings = $c->get( 'wcgateway.settings' );
-				if (
-					( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) )
-					&& ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) )
-				) {
+				$settings_provider = $c->get( 'settings.settings-provider' );
+				assert( $settings_provider instanceof SettingsProvider );
+				if ( ! $settings_provider->save_paypal_and_venmo() && ! $settings_provider->save_card_details() ) {
 					return true;
 				}
 
@@ -113,8 +112,8 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 				add_filter(
 					'ppcp_create_order_request_body_data',
 					function ( array $data, string $payment_method, array $request_data ) use ( $c ): array {
-						$settings = $c->get( 'wcgateway.settings' );
-						assert( $settings instanceof Settings );
+						$settings_provider = $c->get( 'settings.settings-provider' );
+						assert( $settings_provider instanceof SettingsProvider );
 
 						$new_attributes = array(
 							'vault' => array(
@@ -135,7 +134,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 						$funding_source = (string) ( $request_data['funding_source'] ?? '' );
 
 						if ( $payment_method === CreditCardGateway::ID ) {
-							if ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) ) {
+							if ( ! $settings_provider->save_card_details() ) {
 								return $data;
 							}
 
@@ -144,7 +143,7 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 								return $data;
 							}
 						} elseif ( $payment_method === PayPalGateway::ID ) {
-							if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
+							if ( ! $settings_provider->save_paypal_and_venmo() ) {
 								return $data;
 							}
 
@@ -279,13 +278,13 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 
 							$id_token = $api->id_token( $target_customer_id );
 
-							$settings = $c->get( 'wcgateway.settings' );
-							assert( $settings instanceof Settings );
+							$settings_provider = $c->get( 'settings.settings-provider' );
+							assert( $settings_provider instanceof SettingsProvider );
 
-							$verification_method =
-							$settings->has( '3d_secure_contingency' )
-								? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
-								: '';
+							$verification_method = apply_filters(
+								'woocommerce_paypal_payments_three_d_secure_contingency',
+								$settings_provider->three_d_secure_enum()
+							);
 
 							// phpcs:ignore WordPress.Security.NonceVerification
 							$change_payment_method                      = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) );
@@ -414,10 +413,10 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 				add_filter(
 					'woocommerce_paypal_payments_credit_card_gateway_supports',
 					function ( array $supports ) use ( $c ): array {
-						$settings = $c->get( 'wcgateway.settings' );
-						assert( $settings instanceof ContainerInterface );
+						$settings_provider = $c->get( 'settings.settings-provider' );
+						assert( $settings_provider instanceof SettingsProvider );
 
-						if ( $settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' ) ) {
+						if ( $settings_provider->save_card_details() ) {
 							$supports[] = 'tokenization';
 							$supports[] = 'add_payment_method';
 						}
