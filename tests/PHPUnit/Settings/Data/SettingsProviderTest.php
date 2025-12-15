@@ -303,6 +303,11 @@ class SettingsProviderTest extends TestCase {
 				'expected_value'  => self::EXPECTED_VALUE_STRING,
 			),
 			array(
+				'provider_method' => 'three_d_secure_enum',
+				'model_method'    => 'get_three_d_secure_enum',
+				'expected_value'  => self::EXPECTED_VALUE_STRING,
+			),
+			array(
 				'provider_method' => 'authorize_only',
 				'model_method'    => 'get_authorize_only',
 				'expected_value'  => self::EXPECTED_VALUE_BOOL,
