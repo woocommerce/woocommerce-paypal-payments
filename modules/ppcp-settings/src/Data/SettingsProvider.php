@@ -331,6 +331,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the 3D Secure setting as API enum value.
+	 *
+	 * @return string The 3D Secure API enum ('NO_3D_SECURE', 'SCA_WHEN_REQUIRED', 'SCA_ALWAYS').
+	 */
+	public function three_d_secure_enum(): string {
+		return $this->settings_model->get_three_d_secure_enum();
+	}
+
+	/**
 	 * Gets the authorize only setting.
 	 *
 	 * @return bool True if authorize only is enabled, false otherwise.
