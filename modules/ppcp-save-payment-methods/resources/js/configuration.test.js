@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 
 jest.mock(
-	'../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState',
+	'@ppcp-button/Helper/CheckoutMethodState',
 	() => ( {
 		getCurrentPaymentMethod: jest.fn(),
 		PaymentMethods: {
@@ -17,7 +17,7 @@ import {
 	cardFieldsConfiguration,
 	addPaymentMethodConfiguration,
 } from './configuration';
-import { getCurrentPaymentMethod } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+import { getCurrentPaymentMethod } from '@ppcp-button/Helper/CheckoutMethodState';
 
 describe( 'Configuration', () => {
 	let mockErrorHandler;

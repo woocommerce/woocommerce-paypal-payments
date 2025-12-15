@@ -1,9 +1,9 @@
 import { useEffect, useCallback, useState } from '@wordpress/element';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import { log } from '../../../../../ppcp-axo/resources/js/Helper/Debug';
-import { Card } from '../Card';
-import { STORE_NAME } from '../../stores/axoStore';
+import { log } from '@ppcp-axo/Helper/Debug';
+import { Card } from '@ppcp-axo-block/components/Card';
+import { STORE_NAME } from '@ppcp-axo-block/stores/axoStore';
 
 /**
  * Renders the payment component based on the user's state (guest or authenticated).

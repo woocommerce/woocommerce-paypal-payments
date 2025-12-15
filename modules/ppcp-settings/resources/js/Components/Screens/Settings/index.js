@@ -1,5 +1,5 @@
-import Container from '../../ReusableComponents/Container';
-import HelpSection from '../../ReusableComponents/HelpSection';
+import Container from '@ppcp-settings/Components/ReusableComponents/Container';
+import HelpSection from '@ppcp-settings/Components/ReusableComponents/HelpSection';
 import SettingsNavigation from './Components/Navigation';
 import { getSettingsTabs } from './Tabs';
 
