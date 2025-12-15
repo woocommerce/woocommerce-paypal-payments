@@ -414,8 +414,32 @@ class CouponValidator implements ValidatorInterface {
 			$wc_coupon
 		);
 
-		$resolutions  = $this->apply_resolutions_filter( $resolutions, $issue_type, $code, $wc_coupon, $cart, $context );
-		$user_message = $this->apply_user_message_filter( $user_message, $issue_type, $code, $wc_coupon, $cart, $context );
+		$resolutions = $this->apply_resolutions_filter( $resolutions, $issue_type, $code, $wc_coupon, $cart, $context );
+
+		/**
+		 * Filters the user-facing message for a coupon issue.
+		 *
+		 * Allows coupon plugins to customize the user message for the AI agent.
+		 *
+		 * @param string $message The user message.
+		 * @param string $issue_type The issue type (e.g., 'COUPON_EXPIRED').
+		 * @param string $code The coupon code.
+		 * @param WC_Coupon|null $wc_coupon The WC_Coupon object (null if doesn't exist).
+		 * @param PayPalCart $cart The cart context.
+		 * @param array $context The validation context data.
+		 *
+		 * @return string Modified user message.
+		 * @since 1.0.0
+		 */
+		$user_message = apply_filters(
+			'woocommerce_paypal_payments_agentic_commerce_coupon_validation_user_message',
+			$user_message,
+			$issue_type,
+			$code,
+			$wc_coupon,
+			$cart,
+			$context
+		);
 
 		return new CouponInvalid( $config['message'], $user_message, $field, $context, $resolutions );
 	}
@@ -488,44 +512,6 @@ class CouponValidator implements ValidatorInterface {
 		return apply_filters(
 			'woocommerce_paypal_payments_agentic_commerce_coupon_validation_resolutions',
 			$resolutions,
-			$issue_type,
-			$code,
-			$wc_coupon,
-			$cart,
-			$context
-		);
-	}
-
-	/**
-	 * Applies user message filter.
-	 *
-	 * @param string         $message The user message.
-	 * @param string         $issue_type The issue type.
-	 * @param string         $code The coupon code.
-	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
-	 * @param PayPalCart     $cart The cart context.
-	 * @param array          $context The context data.
-	 * @return string The filtered message.
-	 */
-	private function apply_user_message_filter( string $message, string $issue_type, string $code, ?WC_Coupon $wc_coupon, PayPalCart $cart, array $context ): string {
-		/**
-		 * Filters the user-facing message for a coupon issue.
-		 *
-		 * Allows coupon plugins to customize the user message for the AI agent.
-		 *
-		 * @param string $message The user message.
-		 * @param string $issue_type The issue type (e.g., 'COUPON_EXPIRED').
-		 * @param string $code The coupon code.
-		 * @param WC_Coupon|null $wc_coupon The WC_Coupon object (null if doesn't exist).
-		 * @param PayPalCart $cart The cart context.
-		 * @param array $context The validation context data.
-		 *
-		 * @return string Modified user message.
-		 * @since 1.0.0
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_agentic_commerce_coupon_validation_user_message',
-			$message,
 			$issue_type,
 			$code,
 			$wc_coupon,
