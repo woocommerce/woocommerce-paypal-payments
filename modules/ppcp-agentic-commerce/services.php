@@ -46,6 +46,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\Co
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\ContextBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\DiscountCalculator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\ResolutionBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
@@ -203,8 +204,8 @@ return array(
 	},
 
 	// Response services.
-	'agentic.response.applied-coupons-builder'     => static function ( ContainerInterface $c ): \WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder {
-		return new \WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CouponValidator\AppliedCouponsBuilder(
+	'agentic.response.applied-coupons-builder'     => static function ( ContainerInterface $c ): AppliedCouponsBuilder {
+		return new AppliedCouponsBuilder(
 			$c->get( 'agentic.validator.coupon.discount-calculator' )
 		);
 	},
