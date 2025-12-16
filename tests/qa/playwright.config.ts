@@ -9,7 +9,7 @@ require( 'dotenv' ).config();
  */
 import { BaseExtend } from './utils';
 
-const viewportSize: ViewportSize = { width: 1280, height: 1000 };
+const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
