@@ -185,7 +185,16 @@ class OnboardingProfile extends AbstractDataModel {
 	 * @return array
 	 */
 	public function get_flags(): array {
-		return $this->flags;
+		return array_map(
+			function ( $flag ) {
+				if ( is_callable( $flag ) ) {
+					return $flag();
+				} else {
+					return $flag;
+				}
+			}, 
+			$this->flags
+		);
 	}
 
 	/**
