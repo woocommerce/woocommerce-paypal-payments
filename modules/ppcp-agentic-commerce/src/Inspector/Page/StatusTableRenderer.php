@@ -127,4 +127,11 @@ trait StatusTableRenderer {
 		</tr>
 		<?php
 	}
+
+	protected function render_note( string $note ): string {
+		return sprintf(
+			'<div class="ppcp-notice notice notice-warning below-h2" style="margin:0"><p style="margin:0.5em 0">%s</p></div>',
+			wp_kses_post( $note )
+		);
+	}
 }
