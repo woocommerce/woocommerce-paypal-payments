@@ -66,9 +66,9 @@ class CartResponse {
 	/**
 	 * Constructor.
 	 *
-	 * @param PayPalCart $cart The PayPal cart.
-	 * @param array      $applied_coupons Applied coupons data.
-	 * @param string     $cart_id The cart ID.
+	 * @param PayPalCart   $cart The PayPal cart.
+	 * @param array        $applied_coupons Applied coupons data.
+	 * @param string       $cart_id The cart ID.
 	 * @param WC_Cart|null $wc_cart The WooCommerce cart.
 	 */
 	public function __construct( PayPalCart $cart, array $applied_coupons = array(), string $cart_id = '', ?WC_Cart $wc_cart = null ) {
@@ -126,6 +126,7 @@ class CartResponse {
 
 		$currency_code  = CartHelper::currency( $this->cart );
 		$item_total     = (float) $this->wc_cart->get_cart_contents_total();
+		$discount_total = (float) $this->wc_cart->get_discount_total();
 		$shipping_total = $this->wc_cart->get_shipping_total();
 		$tax_total      = $this->wc_cart->get_total_tax();
 		$cart_total     = (float) $this->wc_cart->get_total( 'edit' );
@@ -135,12 +136,18 @@ class CartResponse {
 			return null;
 		}
 
-		return array(
+		$totals = array(
 			'item_total' => $this->money( $currency_code, $item_total ),
 			'shipping'   => $this->money( $currency_code, (float) $shipping_total ),
 			'tax_total'  => $this->money( $currency_code, (float) $tax_total ),
 			'amount'     => $this->money( $currency_code, $cart_total ),
 		);
+
+		if ( $discount_total > 0 ) {
+			$totals['discount'] = $this->money( $currency_code, $discount_total );
+		}
+
+		return $totals;
 	}
 
 	private function money( string $currency_code, float $value ): array {
