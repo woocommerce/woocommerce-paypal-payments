@@ -127,10 +127,12 @@ class RegistrationStatusSection {
 				if ( $use_auto_register ) {
 					$status_rows[] = array(
 						'label' => '',
-						'value' => sprintf(
-						// translators: The placeholder contains a code snippet for defining a constant.
-							__( 'Auto-registration is enabled, disable by adding %s to wp-config.php', 'woocommerce-paypal-payments' ),
-							'<code>define( "PPCP_AGENTIC_AUTO_REGISTER", false );</code>'
+						'value' => $this->render_note(
+							sprintf(
+							// translators: The placeholder contains a code snippet for defining a constant.
+								__( 'To disable auto-registration: Add %s to wp-config.php', 'woocommerce-paypal-payments' ),
+								'<code>define( "PPCP_AGENTIC_AUTO_REGISTER", false );</code>'
+							)
 						),
 					);
 				} else {
