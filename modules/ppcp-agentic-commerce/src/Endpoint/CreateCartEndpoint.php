@@ -48,6 +48,11 @@ class CreateCartEndpoint extends AgenticRestEndpoint {
 		);
 	}
 
+	public static function endpoint_url(): string {
+		$full_route = '/' . self::NAMESPACE . '/' . trim( self::PATH, '/' );
+		return rest_url( $full_route );
+	}
+
 	/**
 	 * Create a new cart.
 	 *
