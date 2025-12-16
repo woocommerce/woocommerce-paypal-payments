@@ -87,7 +87,14 @@ return static function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-axo-block/module.php" )();
 	}
 
+	if ( ! SettingsModule::should_use_the_old_ui()
+		&& apply_filters(
+			'woocommerce.feature-flags.woocommerce_paypal_payments.agentic_commerce_enabled',
+			getenv( 'PCP_AGENTIC_COMMERCE_ENABLED' ) === '1'
+		)
+	) {
 		$modules[] = ( require "$modules_dir/ppcp-agentic-commerce/module.php" )();
+	}
 
 	return $modules;
 };
