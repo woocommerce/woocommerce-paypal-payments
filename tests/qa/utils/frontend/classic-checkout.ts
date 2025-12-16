@@ -50,7 +50,11 @@ export class ClassicCheckout extends ClassicCheckoutBase {
 		customer: WooCommerce.CreateCustomer,
 		fastlaneFlow: 'gary' | 'ryan'
 	) => {
-		await this.payPalUi.provideFastlaneEmail( customer.email );
+		await expect( this.payPalUi.fastlaneEmailInput() ).toBeVisible();
+		await expect( this.payPalUi.fastlaneContinueButton() ).toBeVisible();
+		await this.payPalUi.fastlaneEmailInput().fill( customer.email );
+		// on classic checkout fastlane popup is triggered when valid email is filled and input loses focus
+		await this.payPalUi.fastlaneEmailInput().press( 'Tab' ); // to trigger make input lose focus
 
 		if ( fastlaneFlow === 'ryan' ) {
 			// For "Ryan's flow" the OTP is required
