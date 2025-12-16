@@ -65,7 +65,7 @@ class OnboardingProfile extends AbstractDataModel {
 		$this->flags['can_use_card_payments']       = $can_use_card_payments;
 		$this->flags['can_use_subscriptions']       = $can_use_subscriptions;
 		$this->flags['should_skip_payment_methods'] = $should_skip_payment_methods;
-		$this->flags['can_use_fastlane']            = fn(): bool => $can_use_fastlane();
+		$this->flags['can_use_fastlane']            = $can_use_fastlane;
 		$this->flags['can_use_pay_later']           = $can_use_pay_later;
 	}
 
@@ -186,7 +186,7 @@ class OnboardingProfile extends AbstractDataModel {
 	 */
 	public function get_flags(): array {
 		return array_map(
-			function ( $flag ) {
+			function ( $flag ): bool {
 				if ( is_callable( $flag ) ) {
 					return $flag();
 				} else {
