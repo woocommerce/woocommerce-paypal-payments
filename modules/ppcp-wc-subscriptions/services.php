@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\FreeTrialSubscriptionHelper;
@@ -84,5 +85,27 @@ return array(
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
+	},
+	'wc-subscriptions.subscription_mode'                 => static function ( ContainerInterface $container ) {
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			return null;
+		}
+
+		$vaulting                = $settings_provider->save_paypal_and_venmo();
+		$subscription_mode_value = $vaulting ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING : SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
+
+		/**
+		 * Allows disabling the subscription mode when using the new settings UI.
+		 *
+		 * @returns bool true if the subscription mode should be disabled, false otherwise (default is false).
+		 */
+		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
+		return $subscription_mode_disabled ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED : $subscription_mode_value;
 	},
 );

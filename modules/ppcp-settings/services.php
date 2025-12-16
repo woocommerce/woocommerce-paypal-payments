@@ -82,6 +82,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\ConnectionState;
 use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 $services = array(
 	'settings.url'                                        => static function ( ContainerInterface $container ): string {
