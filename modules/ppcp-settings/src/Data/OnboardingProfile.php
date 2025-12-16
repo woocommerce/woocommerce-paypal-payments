@@ -192,7 +192,7 @@ class OnboardingProfile extends AbstractDataModel {
 				} else {
 					return $flag;
 				}
-			}, 
+			},
 			$this->flags
 		);
 	}
