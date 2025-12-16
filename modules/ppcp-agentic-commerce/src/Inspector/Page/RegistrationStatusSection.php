@@ -49,10 +49,11 @@ class RegistrationStatusSection {
 	 * Render the registration status section.
 	 */
 	public function render(): void {
-		$use_auto_register = $this->use_auto_register();
-		$is_eligible       = $this->eligibility_check->is_eligible();
-		$is_registered     = $this->registration_service->is_registered();
-		$auth_service      = $this->auth_provider->auth_service();
+		$use_auto_register  = $this->use_auto_register();
+		$is_eligible        = $this->eligibility_check->is_eligible();
+		$is_registered      = $this->registration_service->is_registered();
+		$auth_service       = $this->auth_provider->auth_service();
+		$auth_service_class = get_class( $auth_service );
 
 		?>
 		<div class="wrap">
@@ -82,8 +83,8 @@ class RegistrationStatusSection {
 						'help'  => __( 'Whether this store can use agentic commerce features', 'woocommerce-paypal-payments' ),
 					),
 					array(
-						'label' => __( 'JWK Auth Service', 'woocommerce-paypal-payments' ),
-						'value' => sprintf( '<code>%s</code>', get_class( $auth_service ) ),
+						'label' => __( 'Auth Service', 'woocommerce-paypal-payments' ),
+						'value' => sprintf( '<code>%s</code>', $auth_service_class ),
 						'help'  => __( 'Which implementation verifies the JWK token?', 'woocommerce-paypal-payments' ),
 					),
 					array(
