@@ -25,10 +25,10 @@ class PaidCartResponse extends CartResponse {
 	/**
 	 * Constructor.
 	 *
-	 * @param PayPalCart $cart The PayPal cart.
-	 * @param string     $cart_id The cart ID.
-	 * @param WC_Order   $wc_order The WooCommerce order.
-	 * @param array      $applied_coupons Applied coupons data.
+	 * @param PayPalCart   $cart The PayPal cart.
+	 * @param string       $cart_id The cart ID.
+	 * @param WC_Order     $wc_order The WooCommerce order.
+	 * @param array        $applied_coupons Applied coupons data.
 	 * @param WC_Cart|null $wc_cart The WooCommerce cart.
 	 */
 	public function __construct(
