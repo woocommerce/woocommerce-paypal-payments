@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WP_User_Query;
 
 /**
@@ -237,11 +237,12 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $container ) {
-				$settings = $container->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-				if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) && $settings->has( 'vault_enabled_dcc' ) ) {
-					$settings->set( 'vault_enabled_dcc', true );
-					$settings->persist();
+				$settings_model = $container->get( 'settings.data.settings' );
+				assert( $settings_model instanceof SettingsModel );
+
+				if ( $settings_model->get_save_paypal_and_venmo() ) {
+					$settings_model->set_save_card_details( true );
+					$settings_model->save();
 				}
 
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
