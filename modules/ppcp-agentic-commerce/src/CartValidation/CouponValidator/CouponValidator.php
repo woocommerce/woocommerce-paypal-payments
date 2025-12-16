@@ -162,7 +162,7 @@ class CouponValidator implements ValidatorInterface {
 		}
 
 		if ( ! wc_coupons_enabled() ) {
-			return array( $this->create_issue( 'COUPON_NOT_SUPPORTED', $coupons_to_apply[0]->code(), 'coupons', $cart, null ) );
+			return array( $this->create_issue( 'COUPON_NOT_SUPPORTED', $coupons_to_apply[0]->code() ?? '', 'coupons', $cart, null ) );
 		}
 
 		// Check stacking first (multiple coupons with individual_use).
@@ -194,7 +194,7 @@ class CouponValidator implements ValidatorInterface {
 	private function get_coupons_to_apply( PayPalCart $cart ): array {
 		$coupons = $cart->coupons();
 
-		if ( ! $coupons || ! is_array( $coupons ) ) {
+		if ( ! $coupons ) {
 			return array();
 		}
 
@@ -235,7 +235,7 @@ class CouponValidator implements ValidatorInterface {
 		$wc_coupons = array();
 		foreach ( $coupons as $coupon ) {
 			// Normalize coupon code to match WooCommerce's case-insensitive behavior.
-			$normalized_code = wc_sanitize_coupon_code( $coupon->code() );
+			$normalized_code = wc_sanitize_coupon_code( $coupon->code() ?? '' );
 
 			$wc_coupon = new WC_Coupon( $normalized_code );
 
@@ -262,7 +262,7 @@ class CouponValidator implements ValidatorInterface {
 
 				return $this->create_issue(
 					'COUPON_STACKING_NOT_ALLOWED',
-					$data['coupon']->code(),
+					$data['coupon']->code() ?? '',
 					'coupons',
 					$cart,
 					$data['wc_coupon'],
@@ -284,7 +284,7 @@ class CouponValidator implements ValidatorInterface {
 	 * @return CouponInvalid|null Validation issue or null if valid.
 	 */
 	private function validate_single_coupon( Coupon $coupon, PayPalCart $cart, int $index, WC_Discounts $discounts ): ?CouponInvalid {
-		$code  = $coupon->code();
+		$code  = $coupon->code() ?? '';
 		$field = $index > 0 ? "coupons[$index]" : 'coupons';
 
 		// Normalize coupon code to match WooCommerce's case-insensitive behavior.

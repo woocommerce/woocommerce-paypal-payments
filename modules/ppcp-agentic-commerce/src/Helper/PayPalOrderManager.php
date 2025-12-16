@@ -405,7 +405,7 @@ class PayPalOrderManager {
 
 		// Calculate final amount: item_total - discount (+ shipping + tax when implemented).
 		// Ensure amount is at least $0.01 for PayPal.
-		$amount = max( 0.01, $item_total - $discount );
+		$amount = max( 0.01, (float) $item_total - (float) $discount );
 
 		$totals = array(
 			'item_total' => array(

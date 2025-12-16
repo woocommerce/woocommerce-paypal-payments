@@ -106,12 +106,17 @@ class ContextBuilder {
 	 * @return array The context data.
 	 */
 	private function build_expiration( string $code, PayPalCart $cart, ?WC_Coupon $wc_coupon, array $extra ): array {
-		if ( ! $wc_coupon || ! $wc_coupon->get_date_expires() ) {
+		if ( ! $wc_coupon ) {
+			return array();
+		}
+
+		$expiration_date = $wc_coupon->get_date_expires();
+		if ( ! $expiration_date ) {
 			return array();
 		}
 
 		return array(
-			'expiration_date' => $wc_coupon->get_date_expires()->format( 'c' ),
+			'expiration_date' => $expiration_date->format( 'c' ),
 		);
 	}
 

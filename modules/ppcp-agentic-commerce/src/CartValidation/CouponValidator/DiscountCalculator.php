@@ -101,7 +101,7 @@ class DiscountCalculator {
 			$std_item->object   = array( 'data' => $product );
 			$std_item->product  = $product;
 			$std_item->quantity = $item->quantity();
-			$std_item->price    = wc_add_number_precision( $item_price * $item->quantity() );
+			$std_item->price    = wc_add_number_precision( $item_price * (float) $item->quantity() );
 
 			$items[ $std_item->key ] = $std_item;
 		}

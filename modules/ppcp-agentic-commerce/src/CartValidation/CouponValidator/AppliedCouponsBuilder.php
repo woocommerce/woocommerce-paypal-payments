@@ -51,7 +51,7 @@ class AppliedCouponsBuilder {
 	public function build( PayPalCart $cart, string $validation_status ): array {
 		$coupons = $cart->coupons();
 
-		if ( ! $coupons || ! is_array( $coupons ) ) {
+		if ( ! $coupons ) {
 			return array();
 		}
 
