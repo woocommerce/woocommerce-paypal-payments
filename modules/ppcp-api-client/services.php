@@ -252,13 +252,16 @@ return array(
 		assert( $session_handler instanceof SessionHandler );
 		$bn_code         = $session_handler->bn_code();
 
+		$settings = $container->get( 'settings.settings-provider' );
+		assert( $settings instanceof SettingsProvider );
+
 		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$order_factory,
 			$patch_collection_factory,
-			'CAPTURE',
+			$settings->authorize_only() ? 'AUTHORIZE' : 'CAPTURE',
 			$logger,
 			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
