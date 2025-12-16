@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\SandboxAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 
 /**
@@ -87,15 +88,40 @@ class RegistrationStatusSection {
 						'value' => sprintf( '<code>%s</code>', $auth_service_class ),
 						'help'  => __( 'Which implementation verifies the JWK token?', 'woocommerce-paypal-payments' ),
 					),
-					array(
-						'label' => __( 'Status', 'woocommerce-paypal-payments' ),
-						'value' => $this->render_boolean_badge(
-							$is_registered,
-							__( 'Registered', 'woocommerce-paypal-payments' ),
-							__( 'Not registered', 'woocommerce-paypal-payments' )
+				);
+
+				if ( SandboxAuthService::class === $auth_service_class ) {
+					$status_rows[] = array(
+						'label' => '',
+						'value' => $this->render_note(
+							sprintf(
+							// translators: The placeholder contains a code snippet for defining a constant.
+								__( 'To test real authentication: Add %s to wp-config.php', 'woocommerce-paypal-payments' ),
+								'<code>define( "PPCP_AGENTIC_FULL_AUTH", true );</code>'
+							)
 						),
-						'help'  => __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ),
+					);
+				} elseif ( defined( 'PPCP_AGENTIC_FULL_AUTH' ) ) {
+					$status_rows[] = array(
+						'label' => '',
+						'value' => $this->render_note(
+							sprintf(
+							// translators: The placeholder contains a code snippet for defining a constant.
+								__( 'To use sandbox authentication: Remove %s from wp-config.php', 'woocommerce-paypal-payments' ),
+								'<code>define( "PPCP_AGENTIC_FULL_AUTH", true );</code>'
+							)
+						),
+					);
+				}
+
+				$status_rows[] = array(
+					'label' => __( 'Status', 'woocommerce-paypal-payments' ),
+					'value' => $this->render_boolean_badge(
+						$is_registered,
+						__( 'Registered', 'woocommerce-paypal-payments' ),
+						__( 'Not registered', 'woocommerce-paypal-payments' )
 					),
+					'help'  => __( 'Is the store registered with the joinhoney service?', 'woocommerce-paypal-payments' ),
 				);
 
 				if ( $use_auto_register ) {
