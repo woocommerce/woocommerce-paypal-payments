@@ -84,6 +84,7 @@ use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
 	'api.host'                                       => static function ( ContainerInterface $container ): string {
@@ -217,7 +218,7 @@ return array(
 			$logger,
 			$settings,
 			$customer_repository,
-			$container->get( 'wc-subscriptions.subscription_mode' )
+			$container->get( 'api.subscription_mode' )
 		);
 	},
 	'api.endpoint.payments'                          => static function ( ContainerInterface $container ): PaymentsEndpoint {
@@ -999,5 +1000,27 @@ return array(
 		return $container->get( 'settings.flag.is-connected' )
 			? $container->get( 'settings.data.general' )->get_merchant_country()
 			: $container->get( 'api.shop.country' );
+	},
+	'api.subscription_mode'                          => static function ( ContainerInterface $container ): string {
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			return SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED;
+		}
+
+		$vaulting                = $settings_provider->save_paypal_and_venmo();
+		$subscription_mode_value = $vaulting ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_VAULTING : SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_SUBSCRIPTIONS;
+
+		/**
+		 * Allows disabling the subscription mode when using the new settings UI.
+		 *
+		 * @returns bool true if the subscription mode should be disabled, false otherwise (default is false).
+		 */
+		$subscription_mode_disabled = (bool) apply_filters( 'woocommerce_paypal_payments_subscription_mode_disabled', false );
+		return $subscription_mode_disabled ? SubscriptionHelper::SUBSCRIPTION_MODE_VALUE_DISABLED : $subscription_mode_value;
 	},
 );
