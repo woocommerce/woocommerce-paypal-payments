@@ -25,6 +25,11 @@ class CartResponseTest extends TestCase
 		$wc_cart->allows('get_discount_total')->andReturn((string) $discount);
 		$wc_cart->allows('get_shipping_total')->andReturn((string) $shipping);
 		$wc_cart->allows('get_total_tax')->andReturn((string) $tax);
+
+		// Calculate cart total: item_total - discount + shipping + tax
+		$cart_total = $item_total - $discount + $shipping + $tax;
+		$wc_cart->allows('get_total')->andReturn((string) $cart_total);
+
 		return $wc_cart;
 	}
 
