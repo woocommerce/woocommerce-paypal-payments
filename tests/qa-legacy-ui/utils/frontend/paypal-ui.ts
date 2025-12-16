@@ -688,17 +688,8 @@ export class PayPalUI {
 			)
 		).toBeVisible();
 
-		// 09/12/2025 OXXO popup doesn't appear
-		// const popupPromise = this.page.waitForEvent( 'popup' );
+		// From 09/12/2025 OXXO popup doesn't appear
 		await this.submitOrder();
-		// const popup = await popupPromise;
-		// const paypal = new PayPalPopup( popup );
-
-		// await expect(
-		// 	paypal.popup.getByText( 'Successful Payment', { exact: true } )
-		// ).toBeVisible();
-
-		// await popup.close();
 	};
 
 	/**
