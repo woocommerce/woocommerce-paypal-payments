@@ -45,16 +45,30 @@ abstract class ValidationIssue {
 	private string $field;
 
 	/**
+	 * Context information about the validation issue.
+	 */
+	private array $context;
+
+	/**
+	 * Available resolution options for the validation issue.
+	 */
+	private array $resolution_options;
+
+	/**
 	 * Defines the validation issue contents.
 	 *
-	 * @param string $message      Technical error description.
-	 * @param string $user_message Optional. Customer friendly error message.
-	 * @param string $field        Optional. Identifies the field that triggered the issue.
+	 * @param string $message           Technical error description.
+	 * @param string $user_message      Optional. Customer friendly error message.
+	 * @param string $field             Optional. Identifies the field that triggered the issue.
+	 * @param array  $context           Optional. Context information.
+	 * @param array  $resolution_options Optional. Available resolution options.
 	 */
-	public function __construct( string $message, string $user_message = '', string $field = '' ) {
-		$this->message      = $message ?: 'Validation error occurred';
-		$this->user_message = $user_message;
-		$this->field        = $field;
+	public function __construct( string $message, string $user_message = '', string $field = '', array $context = array(), array $resolution_options = array() ) {
+		$this->message            = $message ?: 'Validation error occurred';
+		$this->user_message       = $user_message;
+		$this->field              = $field;
+		$this->context            = $context;
+		$this->resolution_options = $resolution_options;
 	}
 
 	/**
@@ -85,6 +99,12 @@ abstract class ValidationIssue {
 		}
 		if ( $this->field ) {
 			$data['field'] = $this->field;
+		}
+		if ( ! empty( $this->context ) ) {
+			$data['context'] = $this->context;
+		}
+		if ( ! empty( $this->resolution_options ) ) {
+			$data['resolution_options'] = $this->resolution_options;
 		}
 
 		return $data;

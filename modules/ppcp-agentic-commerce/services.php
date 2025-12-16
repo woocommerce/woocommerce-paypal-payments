@@ -34,18 +34,19 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
-use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CurrencyValidator;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ShippingValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CurrencyValidator;
 
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect
@@ -164,6 +165,11 @@ return array(
 	},
 	'agentic.validator.inventory'         => static function ( ContainerInterface $c ): InventoryValidator {
 		return new InventoryValidator(
+			$c->get( 'agentic.helper.product-manager' )
+		);
+	},
+	'agentic.validator.shipping'          => static function ( ContainerInterface $c ): ShippingValidator {
+		return new ShippingValidator(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
