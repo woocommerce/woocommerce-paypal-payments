@@ -121,6 +121,6 @@ class ResponseFactory {
 	 */
 	private function build_applied_coupons( PayPalCart $cart ): array {
 		$validation_status = $cart->issues() ? 'INVALID' : 'VALID';
-		return $this->applied_coupons_builder->build( $cart, $validation_status );
+		return $this->applied_coupons_builder->build_applied_coupons_array( $cart, $validation_status );
 	}
 }

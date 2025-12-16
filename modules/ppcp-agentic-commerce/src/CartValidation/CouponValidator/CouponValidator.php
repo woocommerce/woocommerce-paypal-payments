@@ -405,7 +405,7 @@ class CouponValidator implements ValidatorInterface {
 		// Build user message with context interpolation.
 		$user_message = $this->build_user_message( $config['user_message'], $code, $context, $cart );
 
-		$resolutions = $this->resolution_builder->build(
+		$resolutions = $this->resolution_builder->build_resolution_options(
 			$issue_type,
 			$config['resolutions'],
 			$code,

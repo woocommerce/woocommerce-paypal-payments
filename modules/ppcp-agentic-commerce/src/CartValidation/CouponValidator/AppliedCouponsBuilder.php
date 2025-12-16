@@ -48,7 +48,7 @@ class AppliedCouponsBuilder {
 	 * @param string     $validation_status The cart validation status.
 	 * @return array Array of applied coupon data.
 	 */
-	public function build( PayPalCart $cart, string $validation_status ): array {
+	public function build_applied_coupons_array( PayPalCart $cart, string $validation_status ): array {
 		$coupons = $cart->coupons();
 
 		if ( ! $coupons ) {
@@ -116,7 +116,7 @@ class AppliedCouponsBuilder {
 	 */
 	public function calculate_total_discount( PayPalCart $cart ): float {
 		$validation_status = $cart->issues() ? 'INVALID' : 'VALID';
-		$applied_coupons   = $this->build( $cart, $validation_status );
+		$applied_coupons   = $this->build_applied_coupons_array( $cart, $validation_status );
 
 		return array_reduce(
 			$applied_coupons,

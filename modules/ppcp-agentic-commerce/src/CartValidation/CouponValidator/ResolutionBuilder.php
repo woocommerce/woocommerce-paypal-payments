@@ -74,7 +74,7 @@ class ResolutionBuilder {
 	 * @param WC_Coupon|null $wc_coupon The WC coupon object.
 	 * @return array The resolution options.
 	 */
-	public function build(
+	public function build_resolution_options(
 		string $issue_type,
 		array $keys,
 		string $code,
