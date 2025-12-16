@@ -84,7 +84,6 @@ use WooCommerce\PayPalCommerce\Settings\Enum\InstallationPathEnum;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'api.host'                                       => static function ( ContainerInterface $container ): string {

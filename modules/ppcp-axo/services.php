@@ -31,10 +31,9 @@ return array(
 		return $eligibility_check();
 	},
 	'axo.eligibility.check'                  => static function ( ContainerInterface $container ): callable {
-		$axo_applies = $container->get( 'axo.service.axo-applies' );
-		assert( $axo_applies instanceof AxoApplies );
-
-		return static function () use ( $axo_applies ): bool {
+		return static function () use ( $container ): bool {
+			$axo_applies = $container->get( 'axo.service.axo-applies' );
+			assert( $axo_applies instanceof AxoApplies );
 			return $axo_applies->for_country_currency() && $axo_applies->for_merchant();
 		};
 	},
