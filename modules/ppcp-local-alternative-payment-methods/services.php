@@ -21,7 +21,7 @@ return array(
 			'pwc'        => array(
 				'id'         => PWCGateway::ID,
 				'countries'  => array(),
-				'currencies' => array(),
+				'currencies' => array( 'USD' ),
 			),
 			'bancontact' => array(
 				'id'         => BancontactGateway::ID,
@@ -227,5 +227,11 @@ return array(
 		$merchant_country = $merchant_data->merchant_country;
 		$ineligible_countries = array( 'RU', 'BR', 'JP' );
 		return ! in_array( $merchant_country, $ineligible_countries, true );
+	},
+	'ppcp-local-apms.pwc.currency.check'        => static function ( ContainerInterface $container ): bool {
+		return 'USD' === $container->get( 'api.shop.currency.getter' )->get();
+	},
+	'ppcp-local-apms.pwc.eligibility.check'     => static function ( ContainerInterface $container ): bool {
+		return $container->get( 'ppcp-local-apms.eligibility.check' ) && $container->get( 'ppcp-local-apms.pwc.currency.check' );
 	},
 );
