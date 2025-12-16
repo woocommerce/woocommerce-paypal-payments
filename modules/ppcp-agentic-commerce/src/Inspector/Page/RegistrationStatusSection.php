@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\AuthServiceProvider;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibility;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationService;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Endpoint\CreateCartEndpoint;
 
 /**
  * Class RegistrationStatusSection
@@ -137,6 +138,7 @@ class RegistrationStatusSection {
 
 		$wc_config          = $this->general_settings->get_woo_settings();
 		$onboarded_merchant = $this->general_settings->get_merchant_id();
+		$rest_endpoint_url  = CreateCartEndpoint::endpoint_url();
 		$store_identifier   = $metadata['wooSydeCommerceId'] ?? '?';
 		$merchant_id        = $metadata['paypalMerchantId'] ?? '?';
 		$store_country      = $metadata['country'] ?? '?';
@@ -148,6 +150,10 @@ class RegistrationStatusSection {
 				'label' => __( 'Store URL', 'woocommerce-paypal-payments' ),
 				'value' => $store_identifier,
 				'help'  => __( 'This store is identified using that URL. It should not change!', 'woocommerce-paypal-payments' ),
+			),
+			array(
+				'label' => __( 'Agentic Endpoint URL', 'woocommerce-paypal-payments' ),
+				'value' => $rest_endpoint_url,
 			),
 			array(
 				'label' => __( 'Merchant ID', 'woocommerce-paypal-payments' ),
