@@ -11,6 +11,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce;
 use Automattic\WooCommerce\Admin\Notes\Note;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ExperienceContext;
@@ -106,6 +107,10 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookEventStorage;
 
 return array(
+	'woocommerce.core'                                     => static function (): WooCommerce {
+		return WC();
+	},
+
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
 		return new PayPalGateway(
 			$container->get( 'wcgateway.settings.render' ),

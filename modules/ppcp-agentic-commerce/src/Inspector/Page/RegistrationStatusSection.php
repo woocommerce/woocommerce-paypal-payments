@@ -135,7 +135,7 @@ class RegistrationStatusSection {
 			return;
 		}
 
-		$woo_config         = $this->general_settings->get_woo_settings();
+		$wc_config          = $this->general_settings->get_woo_settings();
 		$onboarded_merchant = $this->general_settings->get_merchant_id();
 		$store_identifier   = $metadata['wooSydeCommerceId'] ?? '?';
 		$merchant_id        = $metadata['paypalMerchantId'] ?? '?';
@@ -155,11 +155,11 @@ class RegistrationStatusSection {
 			),
 			array(
 				'label' => __( 'Store Country', 'woocommerce-paypal-payments' ),
-				'value' => $this->render_with_validation( $store_country, $woo_config['country'] ),
+				'value' => $this->render_with_validation( $store_country, $wc_config['country'] ),
 			),
 			array(
 				'label' => __( 'Store Currency', 'woocommerce-paypal-payments' ),
-				'value' => $this->render_with_validation( $store_currency, $woo_config['currency'] ),
+				'value' => $this->render_with_validation( $store_currency, $wc_config['currency'] ),
 			),
 			array(
 				'label' => __( 'Shipping Countries', 'woocommerce-paypal-payments' ),

@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Merchant;
 
 use Mockery;
+use WooCommerce;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\TestCase;
@@ -15,14 +16,16 @@ use stdClass;
  */
 class MerchantMetadataProviderTest extends TestCase {
 
+	private WooCommerce $wc;
 	private GeneralSettings $general_settings;
 	private MerchantMetadataProvider $testee;
 
 	public function setUp(): void {
 		parent::setUp();
 
+		$this->wc               = Mockery::mock( WooCommerce::class );
 		$this->general_settings = $this->createStub( GeneralSettings::class );
-		$this->testee           = new MerchantMetadataProvider( $this->general_settings );
+		$this->testee           = new MerchantMetadataProvider( $this->wc, $this->general_settings );
 	}
 
 	/**
@@ -207,16 +210,9 @@ class MerchantMetadataProviderTest extends TestCase {
 			}
 		);
 
-		$wc_countries = Mockery::mock( 'overload:WC_Countries' );
+		$wc_countries = Mockery::mock( 'WC_Countries' );
 		$wc_countries->allows( 'get_base_country' )->andReturn( $store_country );
 
-		when( 'WC' )->alias(
-			function () use ( $wc_countries ) {
-				$wc            = new stdClass();
-				$wc->countries = $wc_countries;
-
-				return $wc;
-			}
-		);
+		$this->wc->countries = $wc_countries;
 	}
 }

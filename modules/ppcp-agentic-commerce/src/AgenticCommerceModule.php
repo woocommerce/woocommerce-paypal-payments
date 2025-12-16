@@ -51,6 +51,7 @@ class AgenticCommerceModule implements ServiceModule, ExecutableModule {
 		'agentic.validator.product',
 		'agentic.validator.inventory',
 		'agentic.validator.shipping',
+		'agentic.validator.currency',
 	);
 
 	public function services(): array {

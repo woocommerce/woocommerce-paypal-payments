@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Auth\JwtAuthService;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartPayloadBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProcessor;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Response\ResponseFactory;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Session\AgenticSessionHandler;
 
@@ -40,6 +41,7 @@ abstract class AgenticEndpointTestCase extends TestCase {
 		return array(
 			'auth_provider'        => $auth_provider,
 			'session_handler'      => Mockery::mock( AgenticSessionHandler::class ),
+			'session_manager'      => Mockery::mock( AgenticSessionManager::class ),
 			'response_factory'     => Mockery::mock( ResponseFactory::class ),
 			'validation_processor' => Mockery::mock( CartValidationProcessor::class ),
 			'logger'               => $logger,

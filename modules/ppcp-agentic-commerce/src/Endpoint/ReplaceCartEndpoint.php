@@ -45,8 +45,8 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			self::PATH,
 			array(
 				'methods'             => self::METHOD,
-				'callback'            => array( $this, 'replace_cart' ),
-				'permission_callback' => array( $this, 'check_permission' ),
+				'callback'            => fn( $request ) => $this->with_session( fn() => $this->replace_cart( $request ) ),
+				'permission_callback' => fn( $request ) => $this->check_permission( $request ),
 				'args'                => array(
 					'cart_id' => $this->get_cart_id_arg(),
 				),
@@ -105,7 +105,7 @@ class ReplaceCartEndpoint extends AgenticRestEndpoint {
 			);
 		}
 
-		$response = $this->response_factory->from_cart( $new_cart );
+		$response = $this->response_factory->from_cart( $new_cart, $cart_id );
 
 		return $this->cart_details( $response, 200 );
 	}

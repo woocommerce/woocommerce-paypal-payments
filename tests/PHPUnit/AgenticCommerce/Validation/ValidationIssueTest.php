@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\TestCase;
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InvalidAddress
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\InsufficientQuantity
  * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CouponInvalid
+ * @covers \WooCommerce\PayPalCommerce\AgenticCommerce\Validation\CurrencyMismatch
  */
 class ValidationIssueTest extends TestCase {
 
@@ -73,6 +74,7 @@ class ValidationIssueTest extends TestCase {
 			'InvalidAddress'       => array( InvalidAddress::class ),
 			'InsufficientQuantity' => array( InsufficientQuantity::class ),
 			'CouponInvalid'        => array( CouponInvalid::class ),
+			'CurrencyMismatch'     => array( CurrencyMismatch::class ),
 		);
 	}
 }

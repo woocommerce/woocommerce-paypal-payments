@@ -35,9 +35,7 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\Registration\RegistrationEligibil
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionFormHandler;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionStatusPage;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCheckoutProcessor;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderBuilder;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\PayPalOrderManager;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\CartTransformer;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\ProductManager;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\ProductValidator;
 use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\InventoryValidator;
@@ -46,6 +44,9 @@ use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CartValidationProc
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\InspectionSessionData;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\RegistrationStatusSection;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Inspector\Page\CartSessionSection;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticSessionManager;
+use WooCommerce\PayPalCommerce\AgenticCommerce\Helper\AgenticCartBuilder;
+use WooCommerce\PayPalCommerce\AgenticCommerce\CartValidation\CurrencyValidator;
 
 /**
  * Using a different log-source for agentic commerce log entries makes it much easier to inspect
@@ -79,6 +80,7 @@ return array(
 	// Registration and merchant identification.
 	'agentic.merchant.provider'           => static function ( ContainerInterface $c ): MerchantMetadataProvider {
 		return new MerchantMetadataProvider(
+			$c->get( 'woocommerce.core' ),
 			$c->get( 'settings.data.general' )
 		);
 	},
@@ -117,9 +119,19 @@ return array(
 		return new ProductManager();
 	},
 
-	'agentic.helper.cart-transformer'     => static function ( ContainerInterface $c ): CartTransformer {
-		return new CartTransformer(
-			$c->get( 'agentic.helper.product-manager' )
+	'agentic.helper.session-manager'      => static function ( ContainerInterface $c ): AgenticSessionManager {
+		return new AgenticSessionManager(
+			$c->get( 'woocommerce.core' )
+		);
+	},
+
+	'agentic.helper.cart-builder'         => static function ( ContainerInterface $c ): AgenticCartBuilder {
+		return new AgenticCartBuilder(
+			$c->get( 'woocommerce.core' ),
+			$c->get( 'agentic.helper.product-manager' ),
+			$c->get( 'button.session.factory.card-data' ),
+			$c->get( 'api.factory.purchase-unit' ),
+			$c->get( 'agentic.logger' )
 		);
 	},
 
@@ -127,20 +139,15 @@ return array(
 		return new AgenticCheckoutProcessor(
 			$c->get( 'agentic.helper.paypal-order-manager' ),
 			$c->get( 'button.helper.wc-order-creator' ),
-			$c->get( 'agentic.helper.cart-transformer' )
+			$c->get( 'agentic.helper.cart-builder' )
 		);
-	},
-
-	'agentic.helper.paypal-order-builder' => static function (): PayPalOrderBuilder {
-		return new PayPalOrderBuilder();
 	},
 
 	'agentic.helper.paypal-order-manager' => static function ( ContainerInterface $c ): PayPalOrderManager {
 		return new PayPalOrderManager(
 			$c->get( 'api.endpoint.order' ),
 			$c->get( 'api.endpoint.orders' ),
-			$c->get( 'agentic.helper.paypal-order-builder' ),
-			$c->get( 'agentic.helper.cart-transformer' ),
+			$c->get( 'agentic.helper.cart-builder' ),
 			$c->get( 'agentic.logger' )
 		);
 	},
@@ -166,15 +173,21 @@ return array(
 			$c->get( 'agentic.helper.product-manager' )
 		);
 	},
+	'agentic.validator.currency'          => static function (): CurrencyValidator {
+		return new CurrencyValidator();
+	},
 
 	// REST endpoints.
-	'agentic.response.factory'            => static function (): ResponseFactory {
-		return new ResponseFactory();
+	'agentic.response.factory'            => static function ( ContainerInterface $c ): ResponseFactory {
+		return new ResponseFactory(
+			$c->get( 'agentic.helper.cart-builder' )
+		);
 	},
 	'agentic.rest.create_cart'            => static function ( ContainerInterface $c ): CreateCartEndpoint {
 		return new CreateCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
@@ -185,6 +198,7 @@ return array(
 		return new GetCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
@@ -195,6 +209,7 @@ return array(
 		return new ReplaceCartEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),
@@ -205,6 +220,7 @@ return array(
 		return new CheckoutEndpoint(
 			$c->get( 'agentic.auth.provider' ),
 			$c->get( 'agentic.session.handler' ),
+			$c->get( 'agentic.helper.session-manager' ),
 			$c->get( 'agentic.response.factory' ),
 			$c->get( 'agentic.validation.processor' ),
 			$c->get( 'agentic.logger' ),

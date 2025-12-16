@@ -10,6 +10,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\AgenticCommerce\Response;
 
 use WC_Order;
+use WC_Cart;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 
@@ -19,10 +20,11 @@ class PaidCartResponse extends CartResponse {
 	 */
 	protected ?WC_Order $wc_order = null;
 
-	public function __construct( PayPalCart $cart, WC_Order $wc_order ) {
-		parent::__construct( $cart );
+	protected string $status = 'COMPLETED';
+
+	public function __construct( PayPalCart $cart, string $cart_id, ?WC_Cart $wc_cart, WC_Order $wc_order ) {
+		parent::__construct( $cart, $cart_id, $wc_cart );
 		$this->wc_order = $wc_order;
-		$this->status   = 'COMPLETED';
 	}
 
 	public function to_array(): array {

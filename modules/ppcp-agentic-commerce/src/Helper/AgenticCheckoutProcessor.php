@@ -1,6 +1,8 @@
 <?php
 /**
- * Agentic Checkout Processor.
+ * Responsibility: WooCommerce Order creation
+ *
+ * Process the final checkout, turning an agentic cart into a paid WooCommerce order.
  *
  * @package WooCommerce\PayPalCommerce\AgenticCommerce\Helper
  */
@@ -17,7 +19,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\WooCommerceOrderCreator;
 
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PayPalCart;
 use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\PaymentMethod;
-use WooCommerce\PayPalCommerce\AgenticCommerce\Schema\Address;
 
 /**
  * Orchestrates the complete checkout workflow for Agentic Commerce.
@@ -35,17 +36,17 @@ class AgenticCheckoutProcessor {
 
 	private WooCommerceOrderCreator $wc_order_creator;
 
-	private CartTransformer $cart_transformer;
+	private AgenticCartBuilder $cart_builder;
 
 	public function __construct(
 		PayPalOrderManager $order_manager,
 		WooCommerceOrderCreator $wc_order_creator,
-		CartTransformer $cart_transformer
+		AgenticCartBuilder $cart_builder
 	) {
 
 		$this->order_manager    = $order_manager;
 		$this->wc_order_creator = $wc_order_creator;
-		$this->cart_transformer = $cart_transformer;
+		$this->cart_builder     = $cart_builder;
 	}
 
 	/**
@@ -70,22 +71,21 @@ class AgenticCheckoutProcessor {
 	) {
 
 		try {
-			// Step 1: Fetch PayPal order.
 			$paypal_order = $this->order_manager->fetch_order( $paypal_order_id );
+			$wc_cart      = $this->cart_builder->paypal_cart_to_wc_cart( $cart );
 
-			// Step 2: Transform PayPalCart to CartData (skipping invalid products).
-			$cart_data = $this->cart_transformer->paypal_cart_to_wc_cart( $cart );
+			if ( is_wp_error( $wc_cart ) ) {
+				return $wc_cart;
+			}
 
-			// Step 3: Create WC order with customer data from PayPalCart.
+			$cart_data = $this->cart_builder->wc_cart_to_card_data( $wc_cart );
+
 			$wc_order = $this->create_order( $paypal_order, $cart_data, $cart, $payment_method, $paypal_order_id );
 			if ( is_wp_error( $wc_order ) ) {
 				return $wc_order;
 			}
 
-			// Step 4: Link PayPal order with WC order ID.
 			$this->link_orders( $paypal_order_id, $wc_order );
-
-			// Step 5: Capture payment.
 			$this->capture_payment( $paypal_order, $wc_order, $paypal_order_id );
 
 			return $wc_order;
