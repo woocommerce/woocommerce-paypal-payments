@@ -3,8 +3,7 @@
 namespace PHPUnit\Vaulting;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WC_Customer;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
@@ -35,7 +34,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 	private $orderEndpoint;
 	private $environment;
 	private $authorizedPaymentProcessor;
-	private $config;
+	private $settingsProvider;
 	private $testee;
 
 	public function setUp(): void
@@ -50,7 +49,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
-		$this->config = Mockery::mock(ContainerInterface::class);
+		$this->settingsProvider = Mockery::mock(SettingsProvider::class);
 
 		$this->testee = new VaultedCreditCardHandler(
 			$this->subscriptionHelper,
@@ -61,7 +60,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 			$this->orderEndpoint,
 			$this->environment,
 			$this->authorizedPaymentProcessor,
-			$this->config
+			$this->settingsProvider
 		);
 	}
 
@@ -87,8 +86,6 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$purchaseUnit = Mockery::mock(PurchaseUnit::class);
 		$this->purchaseUnitFactory->shouldReceive('from_wc_order')
 			->andReturn($purchaseUnit);
-
-		$customer = Mockery::mock(WC_Customer::class);
 
 		$payer = Mockery::mock(Payer::class);
 		$payer->shouldReceive('email_address');
@@ -129,9 +126,11 @@ class VaultedCreditCardHandlerTest extends TestCase
 
 		$this->environment->shouldReceive('current_environment_is')->andReturn(true);
 
-		$this->config->shouldReceive('has')->andReturn(false);
+		$this->settingsProvider->shouldReceive('authorize_only')->andReturn(false);
+		$this->authorizedPaymentProcessor->shouldReceive('capture_authorized_payment')
+			->with($wcOrder);
 
-		$result = $this->testee->handle_payment($tokenId, $wcOrder, $customer);
+		$result = $this->testee->handle_payment($tokenId, $wcOrder);
 		$this->assertInstanceOf(\WC_Order::class, $result);
 	}
 }
