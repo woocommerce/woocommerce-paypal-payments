@@ -1,5 +1,9 @@
 *** Changelog ***
 
+= 3.3.1 - 2025-12-09 =
+* Enhancement - reCAPTCHA Integration UX Improvements #3907
+* Enhancement - Disable simulate-event endpoint for webhook verification #3908
+
 = 3.3.0 - 2025-11-04 =
 * Enhancement - Pay Later messaging & button auto-enabled for eligible Canadian merchants on 12th November, based on the STAY UPDATED preference. #3819
 * Enhancement - Customizable reCAPTCHA implementation for PayPal endpoints #3829

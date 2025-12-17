@@ -13,7 +13,10 @@ class RecaptchaIntegration extends WC_Integration {
 
 		$this->id                 = self::ID;
 		$this->method_title       = 'WooCommerce PayPal Payments reCAPTCHA';
-		$this->method_description = 'Protects PayPal for WooCommerce checkout and cart with Google reCAPTCHA v3 (primary) and v2 (fallback).';
+		$this->method_description = sprintf(
+			'Card-testing attacks have become increasingly common across ecommerce platforms. Native bot protection has been implemented directly within WooCommerce PayPal Payments, helping safeguard your checkout without adding friction for real customers.<br>We recommend enabling this feature immediately to strengthen security and reduce risk.<br>PayPal Payments reCAPTCHA blocks automated card-testing attacks on PayPal payment endpoints. <strong>Both reCAPTCHA v3 and v2 keys must be configured</strong> for protection to activate. %s',
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/fraud-and-disputes/" target="_blank">Learn more</a>'
+		);
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -38,7 +41,7 @@ class RecaptchaIntegration extends WC_Integration {
 				'title'       => 'reCAPTCHA v3 Settings',
 				'type'        => 'title',
 				'description' => sprintf(
-					'Primary invisible protection. To get the keys go to <a href="%s" target="_blank">Google reCAPTCHA Admin</a> and create a site with <b>Score based (v3)</b> reCAPTCHA type.',
+					'Invisible protection that scores visitor behavior (0.0–1.0). Create a <b>Score based (v3)</b> site at <a href="%s" target="_blank">Google reCAPTCHA Admin</a>. v2 keys are also required below.',
 					'https://www.google.com/recaptcha/admin'
 				),
 			),
@@ -73,7 +76,7 @@ class RecaptchaIntegration extends WC_Integration {
 				'type'        => 'title',
 				'description' =>
 				sprintf(
-					'Fallback visible checkbox when v3 score is below threshold. To get the keys go to <a href="%s" target="_blank">Google reCAPTCHA Admin</a> and create a site with <b>Challenge (v2) -> "I\'m not a robot" Checkbox</b> reCAPTCHA type.',
+					'Visible checkbox challenge when v3 score falls below threshold. Create a <b>Challenge (v2) → "I\'m not a robot" Checkbox</b> site at <a href="%s" target="_blank">Google reCAPTCHA Admin</a>. Required alongside v3 above.',
 					'https://www.google.com/recaptcha/admin'
 				),
 			),
@@ -104,7 +107,7 @@ class RecaptchaIntegration extends WC_Integration {
 			'scope_title'     => array(
 				'title'       => 'Protection Scope',
 				'type'        => 'title',
-				'description' => 'Configure where reCAPTCHA protection is applied',
+				'description' => 'Limit protection scope (requires both v3 and v2 keys configured)',
 			),
 			'guest_only'      => array(
 				'title'       => 'Guest Orders Only',
@@ -128,5 +131,25 @@ class RecaptchaIntegration extends WC_Integration {
 					'Display reCAPTCHA verification details in a metabox on order edit pages',
 			),
 		);
+	}
+
+	public function process_admin_options() {
+		$post_data     = $this->get_post_data();
+		$enabled       = $post_data[ 'woocommerce_' . $this->id . '_enabled' ] ?? false;
+		$site_key_v3   = $post_data[ 'woocommerce_' . $this->id . '_site_key_v3' ] ?? '';
+		$secret_key_v3 = $post_data[ 'woocommerce_' . $this->id . '_secret_key_v3' ] ?? '';
+		$site_key_v2   = $post_data[ 'woocommerce_' . $this->id . '_site_key_v2' ] ?? '';
+		$secret_key_v2 = $post_data[ 'woocommerce_' . $this->id . '_secret_key_v2' ] ?? '';
+
+		if ( ! empty( $enabled ) &&
+			( empty( $site_key_v3 ) || empty( $secret_key_v3 ) || empty( $site_key_v2 ) || empty( $secret_key_v2 ) )
+		) {
+			\WC_Admin_Settings::add_error(
+				__( 'All reCAPTCHA keys (v3 and v2) must be configured to enable this feature.', 'woocommerce-paypal-payments' )
+			);
+			return false;
+		}
+
+		return parent::process_admin_options();
 	}
 }

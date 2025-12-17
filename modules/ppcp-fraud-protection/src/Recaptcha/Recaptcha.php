@@ -8,6 +8,7 @@ use Automattic\WooCommerce\Utilities\OrderUtil;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WP_Error;
+use WP_Post;
 
 class Recaptcha {
 	private const V2_CONTAINER_ID                = 'ppcp-recaptcha-v2-container';
@@ -355,7 +356,16 @@ class Recaptcha {
 		add_meta_box(
 			'ppcp_recaptcha_status',
 			__( 'reCAPTCHA Status', 'woocommerce-paypal-payments' ),
-			function ( WC_Order $order ): void {
+			/**
+			 * @param $order WC_Order|WP_Post
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $order ): void {
+				$order = $order instanceof WC_Order ? $order : wc_get_order( $order );
+				if ( ! $order instanceof WC_Order ) {
+					return;
+				}
+
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $this->render_metabox( $order );
 			},
