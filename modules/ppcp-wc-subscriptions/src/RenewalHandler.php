@@ -37,7 +37,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\RealTimeAccountUpdaterHelper;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
@@ -100,11 +100,11 @@ class RenewalHandler {
 	protected $environment;
 
 	/**
-	 * The settings
+	 * The settings provider
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	protected $settings;
+	protected $settings_provider;
 
 	/**
 	 * The processor for authorized payments.
@@ -163,7 +163,7 @@ class RenewalHandler {
 	 * @param ShippingPreferenceFactory    $shipping_preference_factory The shipping_preference factory.
 	 * @param PayerFactory                 $payer_factory The payer factory.
 	 * @param Environment                  $environment The environment.
-	 * @param Settings                     $settings The Settings.
+	 * @param SettingsProvider             $settings_provider The Settings Provider.
 	 * @param AuthorizedPaymentsProcessor  $authorized_payments_processor The Authorized Payments Processor.
 	 * @param FundingSourceRenderer        $funding_source_renderer The funding source renderer.
 	 * @param RealTimeAccountUpdaterHelper $real_time_account_updater_helper Real Time Account Updater helper.
@@ -180,7 +180,7 @@ class RenewalHandler {
 		ShippingPreferenceFactory $shipping_preference_factory,
 		PayerFactory $payer_factory,
 		Environment $environment,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		FundingSourceRenderer $funding_source_renderer,
 		RealTimeAccountUpdaterHelper $real_time_account_updater_helper,
@@ -197,7 +197,7 @@ class RenewalHandler {
 		$this->shipping_preference_factory      = $shipping_preference_factory;
 		$this->payer_factory                    = $payer_factory;
 		$this->environment                      = $environment;
-		$this->settings                         = $settings;
+		$this->settings_provider                = $settings_provider;
 		$this->authorized_payments_processor    = $authorized_payments_processor;
 		$this->funding_source_renderer          = $funding_source_renderer;
 		$this->real_time_account_updater_helper = $real_time_account_updater_helper;
@@ -475,13 +475,9 @@ class RenewalHandler {
 	 * @param Order $order The PayPal order.
 	 *
 	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	protected function capture_authorized_downloads( Order $order ): bool {
-		if (
-			! $this->settings->has( 'capture_for_virtual_only' )
-			|| ! $this->settings->get( 'capture_for_virtual_only' )
-		) {
+		if ( ! $this->settings_provider->capture_virtual_orders() ) {
 			return false;
 		}
 
