@@ -48,6 +48,8 @@ class WebhookSimulationTest extends TestCase
 
     public function testSimulation()
     {
+	    $this->markTestSkipped('Disabled for 3.3.1 release.');
+
 		$this->webhook_endpoint
 			->expects('simulate')
 			->with($this->webhook, $this->event_type, $this->event_version)
@@ -73,6 +75,8 @@ class WebhookSimulationTest extends TestCase
 
     public function testSimulationWhenNoWebhook()
     {
+	    $this->markTestSkipped('Disabled for 3.3.1 release.');
+
 		$this->sut = new WebhookSimulation($this->webhook_endpoint, null, $this->event_type, $this->event_version);
 
 		self::assertFalse($this->sut->is_simulation_event($this->createEvent($this->event_id)));

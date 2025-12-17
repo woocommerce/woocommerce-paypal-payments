@@ -79,6 +79,9 @@ class WebhookSimulation {
 	 * @throws Exception If failed to start simulation.
 	 */
 	public function start( ?Webhook $webhook = null ): void {
+		// Disabled for 3.3.1 release.
+		return;
+
 		if ( ! $webhook ) {
 			$webhook = $this->webhook;
 		}
