@@ -22,7 +22,6 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WP_User_Query;
 
 /**
@@ -231,23 +230,6 @@ class VaultingModule implements ServiceModule, ExtendingModule, ExecutableModule
 
 					return;
 				}
-			}
-		);
-
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			function () use ( $container ) {
-				$settings = $container->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-				if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) && $settings->has( 'vault_enabled_dcc' ) ) {
-					$settings->set( 'vault_enabled_dcc', true );
-					$settings->persist();
-				}
-
-				$logger = $container->get( 'woocommerce.logger.woocommerce' );
-				assert( $logger instanceof LoggerInterface );
-
-				$this->migrate_payment_tokens( $logger );
 			}
 		);
 

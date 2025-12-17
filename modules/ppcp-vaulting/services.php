@@ -36,7 +36,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.processor.authorized-payments' ),
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'settings.settings-provider' )
 		);
 	},
 	'vaulting.payment-token-factory'      => function ( ContainerInterface $container ): PaymentTokenFactory {
