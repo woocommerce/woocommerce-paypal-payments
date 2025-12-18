@@ -46,14 +46,13 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenFor
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
@@ -93,11 +92,11 @@ class SmartButton implements SmartButtonInterface {
 	private $version;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	private $settings;
+	private $settings_provider;
 
 	/**
 	 * The Payer Factory.
@@ -133,6 +132,13 @@ class SmartButton implements SmartButtonInterface {
 	 * @var SubscriptionHelper
 	 */
 	private $subscription_helper;
+
+	/**
+	 * Callable to get subscriptions mode.
+	 *
+	 * @var callable
+	 */
+	private $get_subscriptions_mode;
 
 	/**
 	 * The Messages apply helper.
@@ -274,7 +280,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string                    $module_url                        The URL to the module.
 	 * @param string                    $version                           The assets version.
 	 * @param SessionHandler            $session_handler                   The Session handler.
-	 * @param Settings                  $settings                          The Settings.
+	 * @param SettingsProvider          $settings_provider                 The Settings provider.
 	 * @param PayerFactory              $payer_factory                     The Payer factory.
 	 * @param string                    $client_id                         The client ID.
 	 * @param RequestData               $request_data                      The Request Data helper.
@@ -304,12 +310,13 @@ class SmartButton implements SmartButtonInterface {
 		string $module_url,
 		string $version,
 		SessionHandler $session_handler,
-		Settings $settings,
+		SettingsProvider $settings_provider,
 		PayerFactory $payer_factory,
 		string $client_id,
 		RequestData $request_data,
 		DccApplies $dcc_applies,
 		SubscriptionHelper $subscription_helper,
+		callable $get_subscriptions_mode,
 		MessagesApply $messages_apply,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
@@ -334,12 +341,13 @@ class SmartButton implements SmartButtonInterface {
 		$this->module_url                            = $module_url;
 		$this->version                               = $version;
 		$this->session_handler                       = $session_handler;
-		$this->settings                              = $settings;
+		$this->settings_provider                     = $settings_provider;
 		$this->payer_factory                         = $payer_factory;
 		$this->client_id                             = $client_id;
 		$this->request_data                          = $request_data;
 		$this->dcc_applies                           = $dcc_applies;
 		$this->subscription_helper                   = $subscription_helper;
+		$this->get_subscriptions_mode                = $get_subscriptions_mode;
 		$this->messages_apply                        = $messages_apply;
 		$this->environment                           = $environment;
 		$this->payment_token_repository              = $payment_token_repository;
@@ -370,7 +378,7 @@ class SmartButton implements SmartButtonInterface {
 	public function render_wrapper(): bool {
 		$this->context->init_context();
 
-		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
+		if ( $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();
 		}
@@ -411,8 +419,7 @@ class SmartButton implements SmartButtonInterface {
 				if (
 					CreditCardGateway::ID === $id
 					&& is_user_logged_in()
-					&& $this->settings->has( 'vault_enabled_dcc' )
-					&& $this->settings->get( 'vault_enabled_dcc' )
+					&& $this->settings_provider->save_card_details()
 					&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
 				) {
 
@@ -658,8 +665,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Whether any of our scripts (for DCC or product, mini-cart, non-block cart/checkout) should be loaded.
 	 */
 	public function should_load_ppcp_script(): bool {
-		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $pcp_gateway_enabled ) {
+		if ( ! $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			return false;
 		}
 
@@ -670,8 +676,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Determines whether the button component should be loaded.
 	 */
 	public function should_load_buttons(): bool {
-		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $pcp_gateway_enabled ) {
+		if ( ! $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			return false;
 		}
 
@@ -696,8 +701,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Determines whether the Pay Later messages component should be loaded.
 	 */
 	public function should_load_messages(): bool {
-		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $pcp_gateway_enabled ) {
+		if ( ! $this->settings_provider->gateway_enabled( PayPalGateway::ID ) ) {
 			return false;
 		}
 
@@ -1028,12 +1032,12 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	public function can_save_vault_token(): bool {
-
-		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+		$merchant_data = $this->settings_provider->merchant_data();
+		if ( ! $merchant_data->client_id ) {
 			return false;
 		}
 
-		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
+		if ( ! $this->settings_provider->save_paypal_and_venmo() ) {
 			return false;
 		}
 
@@ -1071,13 +1075,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return bool
 	 */
 	private function paypal_subscriptions_enabled(): bool {
-		try {
-			$subscriptions_mode = $this->settings->get( 'subscriptions_mode' );
-		} catch ( NotFoundException $exception ) {
-			return false;
-		}
-
-		return $subscriptions_mode === 'subscriptions_api';
+		return ( $this->get_subscriptions_mode )() === 'subscriptions_api';
 	}
 
 	/**
@@ -1086,14 +1084,9 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return string
 	 */
 	private function get_3ds_contingency(): string {
-		if ( $this->settings->has( '3d_secure_contingency' ) ) {
-			$value = $this->settings->get( '3d_secure_contingency' );
-			if ( $value ) {
-				return $this->return_3ds_contingency( $value );
-			}
-		}
-
-		return $this->return_3ds_contingency( 'SCA_WHEN_REQUIRED' );
+		return $this->return_3ds_contingency(
+			$this->settings_provider->three_d_secure_enum()
+		);
 	}
 
 	/**
@@ -1346,7 +1339,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				'enabled' => $this->appswitch_enabled,
 			),
 			'needShipping'                            => $this->need_shipping(),
-			'vaultingEnabled'                         => $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ),
+			'vaultingEnabled'                         => $this->settings_provider->save_paypal_and_venmo(),
 			'productType'                             => null,
 			'manualRenewalEnabled'                    => $this->subscription_helper->accept_manual_renewals(),
 			'final_review_enabled'                    => $this->final_review_enabled,
@@ -1423,15 +1416,11 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return array
 	 */
 	private function url_params(): array {
-		$current_context = $this->context->context();
-		try {
-			$intent = $this->intent();
-		} catch ( NotFoundException $exception ) {
-			$intent = 'capture';
-		}
+		$current_context   = $this->context->context();
+		$intent            = $this->intent();
+		$subscription_mode = ( $this->get_subscriptions_mode )();
 
-		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
-		$params            = array(
+		$params = array(
 			'client-id'        => $this->client_id,
 			'currency'         => $this->currency->get(),
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
@@ -1446,8 +1435,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		}
 
 		if (
-			$this->settings->has( 'subscriptions_mode' )
-			&& $this->settings->get( 'subscriptions_mode' ) === 'vaulting_api'
+			$subscription_mode === 'vaulting_api'
 			&& apply_filters( 'woocommerce_paypal_payments_save_payment_methods_eligible', false )
 		) {
 			// Remove vault parameter to allow for Venmo with Save Payment Methods (Vault V3).
@@ -1498,7 +1486,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
 
-		$locale = $this->settings->has( 'smart_button_language' ) ? $this->settings->get( 'smart_button_language' ) : '';
+		$locale = $this->settings_provider->button_language();
 		$locale = (string) apply_filters( 'woocommerce_paypal_payments_smart_buttons_locale', $locale );
 
 		if ( $locale ) {
@@ -1645,11 +1633,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'tagline' => true,
 		);
 
-		$enable_styling_per_location = $this->settings->has( 'smart_button_enable_styling_per_location' ) && $this->settings->get( 'smart_button_enable_styling_per_location' );
-		if ( ! $enable_styling_per_location ) {
-			$context = 'general';
-		}
-
 		return $this->get_style_value( "button_{$context}_{$style}" )
 			?? $this->get_style_value( "button_{$style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
@@ -1678,10 +1661,68 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return string|int|null
 	 */
 	private function get_style_value( string $key ) {
-		if ( ! $this->settings->has( $key ) ) {
+		if ( ! str_starts_with( $key, 'button_' ) ) {
 			return null;
 		}
-		return $this->normalize_style_value( $this->settings->get( $key ) );
+
+		$parts = explode( '_', $key );
+		if ( count( $parts ) < 2 ) {
+			return null;
+		}
+
+		array_shift( $parts );
+		$property = array_pop( $parts );
+		$context  = implode( '_', $parts );
+
+		if ( empty( $context ) ) {
+			return null;
+		}
+
+		$location_styling = null;
+		switch ( $context ) {
+			case 'cart':
+				$location_styling = $this->settings_provider->styling_cart();
+				break;
+			case 'product':
+				$location_styling = $this->settings_provider->styling_product();
+				break;
+			case 'checkout':
+			case 'general':
+				$location_styling = $this->settings_provider->styling_classic_checkout();
+				break;
+			case 'express':
+				$location_styling = $this->settings_provider->styling_express_checkout();
+				break;
+			case 'mini-cart':
+			case 'minicart':
+				$location_styling = $this->settings_provider->styling_mini_cart();
+				break;
+		}
+
+		if ( ! $location_styling ) {
+			return null;
+		}
+
+		$value = null;
+		switch ( $property ) {
+			case 'shape':
+				$value = $location_styling->shape;
+				break;
+			case 'label':
+				$value = $location_styling->label;
+				break;
+			case 'color':
+				$value = $location_styling->color;
+				break;
+			case 'layout':
+				$value = $location_styling->layout;
+				break;
+			case 'tagline':
+				$value = $location_styling->tagline;
+				break;
+		}
+
+		return $value !== null ? $this->normalize_style_value( $value ) : null;
 	}
 
 	/**
@@ -2055,12 +2096,12 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @throws NotFoundException If intent is not found.
 	 */
 	private function intent(): string {
-		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
+		$subscription_mode = ( $this->get_subscriptions_mode )();
 		if ( $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) {
 			return 'subscription';
 		}
 
-		$intent = $this->settings->has( 'intent' ) ? $this->settings->get( 'intent' ) : 'capture';
+		$intent = $this->settings_provider->payment_intent();
 
 		return strtolower( apply_filters( 'woocommerce_paypal_payments_order_intent', $intent ) );
 	}

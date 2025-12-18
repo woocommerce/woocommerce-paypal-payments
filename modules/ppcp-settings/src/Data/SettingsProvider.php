@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class SettingsProvider {
 	private GeneralSettings $general_settings;
@@ -473,5 +474,24 @@ class SettingsProvider {
 	 */
 	public function styling_product(): LocationStylingDTO {
 		return $this->styling_settings->get_product();
+	}
+
+	/**
+	 * Whether the PayPal gateway is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool
+	 */
+	public function gateway_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	/**
+	 * Gets the payment intent (authorize or capture).
+	 *
+	 * @return string The payment intent ('authorize' or 'capture').
+	 */
+	public function payment_intent(): string {
+		return $this->authorize_only() ? 'authorize' : 'capture';
 	}
 }

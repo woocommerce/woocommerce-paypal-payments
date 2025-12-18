@@ -7,20 +7,20 @@ use Mockery;
 use WC_Payment_Gateways;
 use WooCommerce;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use function Brain\Monkey\Functions\when;
 
 class DisabledFundingSourcesTest extends TestCase
 {
-	private $settings;
+	private $settings_provider;
 	private $dcc_configuration;
 
 	public function setUp(): void
 	{
 		parent::setUp();
 
-		$this->settings = Mockery::mock(Settings::class);
+		$this->settings_provider = Mockery::mock(SettingsProvider::class);
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 	}
 
@@ -32,9 +32,8 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'US');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
-		$this->setExpectations();
 		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
@@ -51,9 +50,8 @@ class DisabledFundingSourcesTest extends TestCase
 	{
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'US');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'US');
 
-		$this->setExpectations();
 		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
@@ -67,7 +65,7 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->dcc_configuration->shouldReceive('is_enabled')->andReturn(true);
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
 		$sut = new DisabledFundingSources(
-			$this->settings,
+			$this->settings_provider,
 			[
 				'card' => 'Credit or debit cards',
 				'paypal' => 'PayPal',
@@ -77,7 +75,6 @@ class DisabledFundingSourcesTest extends TestCase
 			'US'
 		);
 
-		$this->setExpectations();
 		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
@@ -95,9 +92,8 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(false); // Changed to false
 		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(true);
 
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'MX');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'MX');
 
-		$this->setExpectations();
 		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
@@ -116,9 +112,8 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true); // This should cause card to be disabled
 		$this->dcc_configuration->shouldReceive('is_bcdc_enabled')->andReturn(false);
 
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'MX');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'MX');
 
-		$this->setExpectations();
 		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
@@ -137,9 +132,8 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->dcc_configuration->shouldReceive('use_acdc')->andReturn(true);
 		// BCDC method should not be called for non-Mexico countries
 
-		$sut = new DisabledFundingSources($this->settings, [], $this->dcc_configuration, 'CA');
+		$sut = new DisabledFundingSources($this->settings_provider, [], $this->dcc_configuration, 'CA');
 
-		$this->setExpectations();
 		$this->setWcPaymentGateways();
 		$this->setWooCommerceFunctionMocks();
 
@@ -149,36 +143,26 @@ class DisabledFundingSourcesTest extends TestCase
 		$this->assertEquals(['card'], $sut->sources('checkout-block'));
 	}
 
-	private function setExpectations(
-		array $disabledFundings = [],
-		bool  $dccEnambled = true
-	): void
+	private function setWcPaymentGateways(array $disabledFundings = []): void
 	{
-		$this->settings->shouldReceive('has')
-			->with('disable_funding')
-			->andReturn(true);
+		$gateway           = Mockery::mock();
+		$gateway->settings = array(
+			'disable_funding' => $disabledFundings,
+		);
 
-		$this->settings->shouldReceive('get')
-			->with('disable_funding')
-			->andReturn($disabledFundings);
+		$paymentGateways = array(
+			'ppcp-gateway' => $gateway,
+		);
 
-		$this->settings->shouldReceive('has')
-			->with('dcc_enabled')
-			->andReturn(true);
+		$payment_gateways_mock = Mockery::mock( WC_Payment_Gateways::class );
+		$payment_gateways_mock->shouldReceive( 'payment_gateways' )
+			->andReturn( $paymentGateways );
 
-		$this->settings->shouldReceive('get')
-			->with('dcc_enabled')
-			->andReturn($dccEnambled);
-	}
+		$woocommerce = Mockery::mock( WooCommerce::class );
+		$woocommerce->shouldReceive( 'payment_gateways' )
+			->andReturn( $payment_gateways_mock );
 
-	private function setWcPaymentGateways(array $paymentGateways = []): void
-	{
-		$woocommerce = Mockery::mock(WooCommerce::class);
-		$payment_gateways = Mockery::mock(WC_Payment_Gateways::class);
-		when('WC')->justReturn($woocommerce);
-		$woocommerce->payment_gateways = $payment_gateways;
-		$payment_gateways->shouldReceive('get_available_payment_gateways')
-			->andReturn($paymentGateways);
+		when( 'WC' )->justReturn( $woocommerce );
 	}
 
 	/**

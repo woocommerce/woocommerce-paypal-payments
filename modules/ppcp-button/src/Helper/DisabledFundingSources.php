@@ -9,8 +9,7 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CartCheckoutDetector;
@@ -23,11 +22,11 @@ class DisabledFundingSources {
 	use FreeTrialHandlerTrait;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	private Settings $settings;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * All existing funding sources.
@@ -53,13 +52,13 @@ class DisabledFundingSources {
 	/**
 	 * DisabledFundingSources constructor.
 	 *
-	 * @param Settings                  $settings            The settings.
+	 * @param SettingsProvider          $settings_provider   The settings provider.
 	 * @param array                     $all_funding_sources All existing funding sources.
 	 * @param CardPaymentsConfiguration $dcc_configuration   DCC gateway configuration.
 	 * @param string                    $merchant_country    Merchant country.
 	 */
-	public function __construct( Settings $settings, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
-		$this->settings            = $settings;
+	public function __construct( SettingsProvider $settings_provider, array $all_funding_sources, CardPaymentsConfiguration $dcc_configuration, string $merchant_country ) {
+		$this->settings_provider   = $settings_provider;
 		$this->all_funding_sources = $all_funding_sources;
 		$this->dcc_configuration   = $dcc_configuration;
 		$this->merchant_country    = $merchant_country;
@@ -105,11 +104,12 @@ class DisabledFundingSources {
 	 * @return array
 	 */
 	private function get_sources_from_settings(): array {
-		try {
-			// Settings field present in the legacy UI.
-			$disabled_funding = $this->settings->get( 'disable_funding' );
-		} catch ( NotFoundException $exception ) {
-			$disabled_funding = array();
+		// Access gateway settings directly since disable_funding is stored in WooCommerce
+		// gateway configuration, not in SettingsProvider.
+		$gateways         = WC()->payment_gateways()->payment_gateways();
+		$disabled_funding = array();
+		if ( isset( $gateways['ppcp-gateway'] ) && isset( $gateways['ppcp-gateway']->settings['disable_funding'] ) ) {
+			$disabled_funding = (array) $gateways['ppcp-gateway']->settings['disable_funding'];
 		}
 
 		/**
