@@ -574,7 +574,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Registers the hooks where to render the button HTML according to the settings.
 	 *
 	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
@@ -2093,7 +2092,6 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * Returns the intent.
 	 *
 	 * @return string
-	 * @throws NotFoundException If intent is not found.
 	 */
 	private function intent(): string {
 		$subscription_mode = ( $this->get_subscriptions_mode )();

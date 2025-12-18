@@ -477,7 +477,7 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Whether the PayPal gateway is enabled.
+	 * Whether the given gateway is enabled.
 	 *
 	 * @param string $method_id ID of the payment method.
 	 * @return bool
