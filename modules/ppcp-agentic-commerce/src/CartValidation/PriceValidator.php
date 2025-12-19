@@ -82,9 +82,11 @@ class PriceValidator implements ValidatorInterface {
 				$store_price
 			),
 			sprintf(
-				'The price of %s has changed %s %s %s.',
+				'The price of %s has %s from %s %s to %s %s.',
 				$product->get_name(),
-				$is_increase ? 'from' : 'to',
+				$is_increase ? 'increased' : 'decreased',
+				$cart_price->currency_code(),
+				CartHelper::format_price( $cart_price->value() ),
 				$cart_price->currency_code(),
 				CartHelper::format_price( $store_price )
 			),
