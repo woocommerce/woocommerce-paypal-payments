@@ -14,13 +14,13 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\CardFields\Service\CardCaptureValidator;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 
 /**
@@ -153,8 +153,8 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 					return $data;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
 
 				$experience_context_builder = $c->get( 'wcgateway.builder.experience-context' );
 				assert( $experience_context_builder instanceof ExperienceContextBuilder );
@@ -166,8 +166,8 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 				);
 
 				$three_d_secure_contingency =
-					$settings->has( '3d_secure_contingency' )
-						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->get( '3d_secure_contingency' ) )
+					$settings->three_d_secure()
+						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->three_d_secure() )
 						: '';
 
 				if (
