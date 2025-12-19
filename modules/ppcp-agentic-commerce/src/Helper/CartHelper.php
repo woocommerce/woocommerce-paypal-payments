@@ -55,6 +55,16 @@ class CartHelper {
 		);
 	}
 
+	/**
+	 * Formats a price value to two decimal places.
+	 *
+	 * @param float $value The price value to format.
+	 * @return string The formatted price (e.g., "123.45").
+	 */
+	public static function format_price( float $value ): string {
+		return number_format( $value, 2, '.', '' );
+	}
+
 	public static function full_customer_name( PayPalCart $cart, string $default = '' ): string {
 		$full_name = '';
 		$customer  = $cart->customer();
