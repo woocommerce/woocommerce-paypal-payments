@@ -243,11 +243,19 @@ class PaymentMethodsDefinition {
 				'description' => __( "Present custom credit and debit card fields to your payers so they can pay with credit and debit cards using your site's branding.", 'woocommerce-paypal-payments' ),
 				'icon'        => 'payment-method-advanced-cards',
 				'fields'      => array(
-					'cardholderName' => array(
+					'cardholderName'         => array(
 						'type'    => 'toggle',
 						'default' => $this->settings->get_cardholder_name(),
 						'label'   => __(
 							'Display cardholder name',
+							'woocommerce-paypal-payments'
+						),
+					),
+					'paymentLevelProcessing' => array(
+						'type'    => 'toggle',
+						'default' => $this->settings->get_payment_level_processing(),
+						'label'   => __(
+							'Enable Level 2/Level 3 data processing for eligible transactions',
 							'woocommerce-paypal-payments'
 						),
 					),
