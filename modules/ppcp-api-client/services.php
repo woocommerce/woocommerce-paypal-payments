@@ -69,6 +69,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelEligibility;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
@@ -389,6 +391,8 @@ return array(
 			$item_factory,
 			$shipping_factory,
 			$payments_factory,
+			$container->get( 'api.helpers.paymentLevelHelper' ),
+			$container->get( 'api.helpers.paymentLevelEligibility' ),
 			$prefix,
 			$soft_descriptor,
 			$sanitizer
@@ -1000,5 +1004,12 @@ return array(
 		return $container->get( 'settings.flag.is-connected' )
 			? $container->get( 'settings.data.general' )->get_merchant_country()
 			: $container->get( 'api.shop.country' );
+	},
+	'api.helpers.paymentLevelHelper'                 => static fn(): PaymentLevelHelper => new PaymentLevelHelper(),
+	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
+		return new PaymentLevelEligibility(
+			$container->get( 'settings.settings-provider' ),
+			$container->get( 'api.merchant.country' )
+		);
 	},
 );
