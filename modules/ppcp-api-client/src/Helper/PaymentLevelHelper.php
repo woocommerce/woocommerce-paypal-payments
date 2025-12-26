@@ -40,10 +40,7 @@ class PaymentLevelHelper {
 		);
 
 		if ( 'level_2' === $level ) {
-			$level_2_data = $this->build_level_2( $order );
-			if ( $level_2_data ) {
-				$data['supplementary_data']['card']['level_2'] = $level_2_data;
-			}
+			$data['supplementary_data']['card']['level_2'] = $this->build_level_2( $order );
 		}
 
 		/* phpcs:disable Squiz.PHP.CommentedOutCode.Found
@@ -85,7 +82,7 @@ class PaymentLevelHelper {
 		);
 
 		return array(
-			'customer_reference' => substr( $customer_reference, 0, 17 ),
+			'customer_reference' => (string) substr( $customer_reference, 0, 17 ),
 			'tax_total'          => array(
 				'currency_code' => $order->get_currency(),
 				'value'         => number_format( (float) $order->get_total_tax(), 2, '.', '' ),
