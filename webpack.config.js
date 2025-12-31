@@ -100,6 +100,7 @@ for ( const [ moduleId, assets ] of Object.entries( modulesAssets ) ) {
 			'-' +
 			relativePath
 				.replace( /\.jsx?$/g, '' )
+				.replace( /\.scss$/g, '' )
 				.split( '/' )
 				.filter( ( p ) => ! [ 'js' ].includes( p ) )
 				.join( '-' );
