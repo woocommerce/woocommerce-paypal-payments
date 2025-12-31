@@ -102,7 +102,6 @@ for ( const [ moduleId, assets ] of Object.entries( modulesAssets ) ) {
 				.replace( /\.jsx?$/g, '' )
 				.replace( /\.scss$/g, '' )
 				.split( '/' )
-				.filter( ( p ) => ! [ 'js' ].includes( p ) )
 				.join( '-' );
 		const assetPath = `./modules/${ moduleId }/resources/${ relativePath }`;
 
