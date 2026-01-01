@@ -202,6 +202,10 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			static function ( $passed_validation, $product_id ) use ( $c ) {
+				if ( ! WC()->cart ) {
+					return $passed_validation;
+				}
+
 				if ( WC()->cart->is_empty() || wcs_is_manual_renewal_enabled() ) {
 					return $passed_validation;
 				}
