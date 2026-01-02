@@ -70,12 +70,12 @@ return array(
 	},
 
 	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'settings.provider' );
+		$settings = $container->get( 'settings.settings-provider' );
 		return $settings->applepay_validated() !== false;
 	},
 
 	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'settings.provider' );
+		$settings = $container->get( 'settings.settings-provider' );
 		return $settings->applepay_validated();
 	},
 
@@ -140,11 +140,11 @@ return array(
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
 	'applepay.data_to_scripts'                 => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'settings.provider' ) );
+		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'settings.settings-provider' ) );
 	},
 	'applepay.button'                          => static function ( ContainerInterface $container ): ApplePayButton {
 		return new ApplePayButton(
-			$container->get( 'settings.provider' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.data.payment' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.order-processor' ),

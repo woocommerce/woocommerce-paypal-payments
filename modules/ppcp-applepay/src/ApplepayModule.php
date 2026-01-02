@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameI
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 
 /**
  * Class ApplepayModule
@@ -143,7 +144,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return $methods;
 				}
 
-				$settings = $c->get( 'settings.provider' );
+				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
 				if ( $settings->applepay_button_enabled() ) {
