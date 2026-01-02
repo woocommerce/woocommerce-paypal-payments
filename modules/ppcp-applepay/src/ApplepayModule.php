@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class ApplepayModule
@@ -143,10 +143,10 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.provider' );
+				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->has( 'applepay_button_enabled' ) && $settings->get( 'applepay_button_enabled' ) ) {
+				if ( $settings->applepay_button_enabled() ) {
 					$applepay_gateway = $c->get( 'applepay.wc-gateway' );
 					assert( $applepay_gateway instanceof WC_Payment_Gateway );
 

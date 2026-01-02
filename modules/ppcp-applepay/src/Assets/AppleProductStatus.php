@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 
@@ -30,20 +30,20 @@ class AppleProductStatus extends ProductStatus {
 	/**
 	 * The settings.
 	 *
-	 * @var Settings
+	 * @var PaymentSettings
 	 */
-	private Settings $settings;
+	private PaymentSettings $settings;
 
 	/**
 	 * AppleProductStatus constructor.
 	 *
-	 * @param Settings         $settings             The Settings.
+	 * @param PaymentSettings  $settings             The Payment Settings.
 	 * @param PartnersEndpoint $partners_endpoint    The Partner Endpoint.
 	 * @param bool             $is_connected         The onboarding state.
 	 * @param FailureRegistry  $api_failure_registry The API failure registry.
 	 */
 	public function __construct(
-		Settings $settings,
+		PaymentSettings $settings,
 		PartnersEndpoint $partners_endpoint,
 		bool $is_connected,
 		FailureRegistry $api_failure_registry
@@ -60,8 +60,9 @@ class AppleProductStatus extends ProductStatus {
 			return $status_override;
 		}
 
-		if ( $this->settings->has( self::SETTINGS_KEY ) && ( $this->settings->get( self::SETTINGS_KEY ) ) ) {
-			return wc_string_to_bool( $this->settings->get( self::SETTINGS_KEY ) );
+		$status = $this->settings->get_products_apple_enabled();
+		if ( $status !== '' ) {
+			return wc_string_to_bool( $status );
 		}
 
 		return null;
@@ -89,26 +90,23 @@ class AppleProductStatus extends ProductStatus {
 			}
 		}
 
-		// Settings used as a cache; `settings->set` is compatible with new UI.
 		if ( $has_capability ) {
-			$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
+			$this->settings->set_products_apple_enabled( self::SETTINGS_VALUE_ENABLED );
 		} else {
-			$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_DISABLED );
+			$this->settings->set_products_apple_enabled( self::SETTINGS_VALUE_DISABLED );
 		}
-		$this->settings->persist();
+		$this->settings->save();
 
 		return $has_capability;
 	}
 
 	/** {@inheritDoc} */
-	protected function clear_state( ?Settings $settings = null ): void {
+	protected function clear_state( ?PaymentSettings $settings = null ): void {
 		if ( null === $settings ) {
 			$settings = $this->settings;
 		}
 
-		if ( $settings->has( self::SETTINGS_KEY ) ) {
-			$settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_UNDEFINED );
-			$settings->persist();
-		}
+		$settings->set_products_apple_enabled( self::SETTINGS_VALUE_UNDEFINED );
+		$settings->save();
 	}
 }

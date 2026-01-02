@@ -14,10 +14,10 @@ use Psr\Log\LoggerInterface;
 use WC_Cart;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
 /**
@@ -27,11 +27,18 @@ class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
 
 	/**
-	 * The settings.
+	 * The settings provider.
 	 *
-	 * @var Settings
+	 * @var SettingsProvider
 	 */
-	private $settings;
+	private $settings_provider;
+
+	/**
+	 * The payment settings.
+	 *
+	 * @var PaymentSettings
+	 */
+	private $payment_settings;
 
 	/**
 	 * The logger.
@@ -121,7 +128,8 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * PayPalPaymentMethod constructor.
 	 *
-	 * @param Settings                 $settings The settings.
+	 * @param SettingsProvider         $settings_provider The settings provider.
+	 * @param PaymentSettings          $payment_settings The payment settings.
 	 * @param LoggerInterface          $logger The logger.
 	 * @param OrderProcessor           $order_processor The Order processor.
 	 * @param string                   $module_url The module URL.
@@ -131,7 +139,8 @@ class ApplePayButton implements ButtonInterface {
 	 * @param CartProductsHelper       $cart_products The cart products helper.
 	 */
 	public function __construct(
-		Settings $settings,
+		SettingsProvider $settings_provider,
+		PaymentSettings $payment_settings,
 		LoggerInterface $logger,
 		OrderProcessor $order_processor,
 		string $module_url,
@@ -140,7 +149,8 @@ class ApplePayButton implements ButtonInterface {
 		SettingsStatus $settings_status,
 		CartProductsHelper $cart_products
 	) {
-		$this->settings           = $settings;
+		$this->settings_provider  = $settings_provider;
+		$this->payment_settings   = $payment_settings;
 		$this->response_templates = new ResponsesToApple();
 		$this->logger             = $logger;
 		$this->id                 = 'applepay';
@@ -174,12 +184,8 @@ class ApplePayButton implements ButtonInterface {
 		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
-				try {
-					$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
-					if ( $onboard_with_apple !== '1' ) {
-						return $data;
-					}
-				} catch ( NotFoundException $exception ) {
+				$onboard_with_apple = $this->settings_provider->applepay_onboarding();
+				if ( $onboard_with_apple !== '1' ) {
 					return $data;
 				}
 
@@ -207,15 +213,8 @@ class ApplePayButton implements ButtonInterface {
 			return $options;
 		}
 
-		$checked = '';
-		try {
-			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
-			if ( $onboard_with_apple === '1' ) {
-				$checked = 'checked';
-			}
-		} catch ( NotFoundException $exception ) {
-			$checked = '';
-		}
+		$onboard_with_apple = $this->settings_provider->applepay_onboarding();
+		$checked            = ( $onboard_with_apple === '1' ) ? 'checked' : '';
 
 		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . ' data-onboarding-option="ppcp-onboarding-apple"> ' .
 			__( 'Onboard with ApplePay', 'woocommerce-paypal-payments' ) . '
@@ -271,9 +270,8 @@ class ApplePayButton implements ButtonInterface {
 			return;
 		}
 		$applepay_request_data_object->validation_data();
-		$settings = $this->settings;
-		$settings->set( 'applepay_validated', $applepay_request_data_object->validated_flag() );
-		$settings->persist();
+		$this->payment_settings->set_applepay_validated( $applepay_request_data_object->validated_flag() );
+		$this->payment_settings->save();
 		wp_send_json_success();
 	}
 	/**
@@ -1117,10 +1115,6 @@ class ApplePayButton implements ButtonInterface {
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		try {
-			return $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' );
-		} catch ( Exception $e ) {
-			return false;
-		}
+		return $this->settings_provider->applepay_button_enabled();
 	}
 }

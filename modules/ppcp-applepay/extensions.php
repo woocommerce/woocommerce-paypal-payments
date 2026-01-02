@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 
 return array(
@@ -86,7 +85,7 @@ return array(
 						State::STATE_ONBOARDED,
 					),
 					'requirements' => array(),
-					'gateway'      => Settings::CONNECTION_TAB_ID,
+					'gateway'      => 'ppcp-connection',
 				),
 			)
 		);
