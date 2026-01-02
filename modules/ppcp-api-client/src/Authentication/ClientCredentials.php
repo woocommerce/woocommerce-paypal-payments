@@ -37,7 +37,6 @@ class ClientCredentials {
 	 * Returns encoded client credentials.
 	 *
 	 * @return string
-	 * @throws NotFoundException If setting does not found.
 	 */
 	public function credentials(): string {
 		$merchant_data = $this->settings->merchant_data();
