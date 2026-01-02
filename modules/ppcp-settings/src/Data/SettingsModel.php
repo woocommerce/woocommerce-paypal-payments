@@ -322,7 +322,7 @@ class SettingsModel extends AbstractDataModel {
 	 * @return bool True if instant payments only setting is enabled, false otherwise.
 	 */
 	public function get_instant_payments_only(): bool {
-		return $this->data['instant_payments_only'];
+		return $this->data['instant_payments_only'] ?? false;
 	}
 
 	/**

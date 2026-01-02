@@ -11,8 +11,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use Mockery;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -24,6 +24,7 @@ class IdentityTokenTest extends TestCase
     private $settings;
     private $customer_repository;
     private $sut;
+    private string $subscription_mode;
 
     public function setUp(): void
     {
@@ -32,15 +33,17 @@ class IdentityTokenTest extends TestCase
         $this->host = 'https://example.com/';
         $this->bearer = Mockery::mock(Bearer::class);
         $this->logger = Mockery::mock(LoggerInterface::class);
-        $this->settings = Mockery::mock(Settings::class);
+        $this->settings = Mockery::mock(SettingsProvider::class);
         $this->customer_repository = Mockery::mock(CustomerRepository::class);
+        $this->subscription_mode = 'vaulting_api';
 
         $this->sut = new IdentityToken(
         	$this->host,
 			$this->bearer,
 			$this->logger,
 			$this->settings,
-			$this->customer_repository
+			$this->customer_repository,
+			$this->subscription_mode
 		);
     }
 
@@ -58,8 +61,8 @@ class IdentityTokenTest extends TestCase
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 		$this->logger->shouldReceive('debug');
-		$this->settings->shouldReceive('has')->andReturn(true);
-		$this->settings->shouldReceive('get')->andReturn(true);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
 		$this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
         expect('update_user_meta')->with($id, 'ppcp_customer_id', 'prefix1');
 
@@ -112,8 +115,8 @@ class IdentityTokenTest extends TestCase
         expect('is_wp_error')->andReturn(true);
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
-		$this->settings->shouldReceive('has')->andReturn(true);
-		$this->settings->shouldReceive('get')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
         $this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
         expect('update_user_meta')->with($id, 'ppcp_customer_id', 'prefix1');
 
@@ -140,8 +143,8 @@ class IdentityTokenTest extends TestCase
         expect('wp_remote_retrieve_response_code')->andReturn(500);
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
-		$this->settings->shouldReceive('has')->andReturn(true);
-		$this->settings->shouldReceive('get')->andReturn(true);
+		$this->settings->shouldReceive('save_paypal_and_venmo')->andReturn(true);
+		$this->settings->shouldReceive('save_card_details')->andReturn(true);
         $this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
         expect('update_user_meta')->with($id, 'ppcp_customer_id', 'prefix1');
 
