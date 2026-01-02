@@ -166,7 +166,7 @@ class CardFieldsModule implements ServiceModule, ExtendingModule, ExecutableModu
 				);
 
 				$three_d_secure_contingency =
-					$settings->three_d_secure()
+					$settings->three_d_secure_enum()
 						? apply_filters( 'woocommerce_paypal_payments_three_d_secure_contingency', $settings->three_d_secure() )
 						: '';
 
