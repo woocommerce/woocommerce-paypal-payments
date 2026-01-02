@@ -14,7 +14,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 
 /**
  * Class ProductStatus
@@ -111,10 +111,10 @@ abstract class ProductStatus {
 	 * Clears the eligibility status from the local cache/DB to enforce a new
 	 * API call on the next eligibility check.
 	 *
-	 * @param Settings|null $settings See description in {@see self::clear()}.
+	 * @param PaymentSettings|null $settings See description in {@see self::clear()}.
 	 * @return void
 	 */
-	abstract protected function clear_state( ?Settings $settings = null ): void;
+	abstract protected function clear_state( ?PaymentSettings $settings = null ): void;
 
 	/**
 	 * Whether the merchant has access to the feature.
@@ -193,13 +193,13 @@ abstract class ProductStatus {
 	/**
 	 * Clears the persisted result to force a recheck.
 	 *
-	 * Accepts a Settings object to don't override other sequential settings that are being updated
+	 * Accepts a PaymentSettings object to don't override other sequential settings that are being updated
 	 * elsewhere.
 	 *
-	 * @param Settings|null $settings The settings object.
+	 * @param PaymentSettings|null $settings The settings object.
 	 * @return void
 	 */
-	public function clear( ?Settings $settings = null ): void {
+	public function clear( ?PaymentSettings $settings = null ): void {
 		$this->is_eligible         = null;
 		$this->has_request_failure = false;
 
