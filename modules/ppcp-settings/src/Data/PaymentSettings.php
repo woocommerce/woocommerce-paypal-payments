@@ -149,6 +149,22 @@ class PaymentSettings extends AbstractDataModel {
 	}
 
 	/**
+	 * Gets the payment method title.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return string The method title, or an empty string if not found.
+	 */
+	public function get_method_title( string $method_id ): string {
+		$gateway = $this->get_gateway( $method_id );
+
+		if ( $gateway ) {
+			return $gateway->title;
+		}
+
+		return '';
+	}
+
+	/**
 	 * Get PayPal show logo.
 	 *
 	 * @return bool
