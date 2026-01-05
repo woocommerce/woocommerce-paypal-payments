@@ -7,12 +7,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Tests\Integration\TestCase;
 
 class PluginUpdateMigrationTest extends TestCase {
-	private $original_version;
-
 	public function setUp(): void {
 		parent::setUp();
-
-		$this->original_version = get_option( 'woocommerce-ppcp-version' );
 
 		$timeout_cache = new Cache( 'ppcp-timeout' );
 		$timeout_cache->delete( 'refresh_feature_status_timeout' );
@@ -25,14 +21,6 @@ class PluginUpdateMigrationTest extends TestCase {
 
 		$pui_cache = new Cache( 'ppcp-paypal-pui-status-cache' );
 		$pui_cache->delete( 'pui_status_cache' );
-	}
-
-	public function tearDown(): void {
-		if ( $this->original_version ) {
-			update_option( 'woocommerce-ppcp-version', $this->original_version );
-		}
-
-		parent::tearDown();
 	}
 
 	public function test_migration_on_update_clears_caches_and_resets_settings(): void {
