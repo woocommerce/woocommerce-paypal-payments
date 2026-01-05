@@ -21,11 +21,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 
 	/**
-	 * The URL of this module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -58,7 +58,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	protected CardPaymentsConfiguration $card_payments_configuration;
 
 	/**
-	 * @param string                        $module_url
+	 * @param callable(string):string       $asset_url_getter
 	 * @param string                        $version The assets version.
 	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
@@ -66,7 +66,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 * @param CardPaymentsConfiguration     $card_payments_configuration
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		CreditCardGateway $gateway,
 		$smart_button,
@@ -74,7 +74,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		CardPaymentsConfiguration $card_payments_configuration
 	) {
 		$this->name                        = CreditCardGateway::ID;
-		$this->module_url                  = $module_url;
+		$this->asset_url_getter            = $asset_url_getter;
 		$this->version                     = $version;
 		$this->gateway                     = $gateway;
 		$this->smart_button                = $smart_button;
@@ -100,7 +100,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-advanced-card-checkout-block',
-			trailingslashit( $this->module_url ) . 'assets/js/advanced-card-checkout-block.js',
+			( $this->asset_url_getter )( 'advanced-card-checkout-block.js' ),
 			array( 'wp-i18n' ),
 			$this->version,
 			true

@@ -111,7 +111,7 @@ return array(
 		$state                 = $container->get( 'onboarding.state' );
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
-			$container->get( 'onboarding.url' ),
+			$container->get( 'onboarding.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$state,
 			$container->get( 'settings.environment' ),
@@ -120,8 +120,13 @@ return array(
 		);
 	},
 
-	'onboarding.url'                     => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-onboarding/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'onboarding.get_module_asset_url'    => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-onboarding', $asset_name );
+		};
 	},
 
 	'onboarding.endpoint.login-seller'   => static function ( ContainerInterface $container ): LoginSellerEndpoint {

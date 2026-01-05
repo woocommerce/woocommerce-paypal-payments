@@ -109,9 +109,12 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 
 				$script_handle = 'ppcp-cart-paylater-block';
 
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'paylater-wc-blocks.get_module_asset_url' );
+
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block.js',
+					( $asset_url_getter )( 'CartPayLaterMessagesBlock/cart-paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -139,7 +142,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-wc-blocks.url' ) . 'assets/js/checkout-paylater-block.js',
+					( $asset_url_getter )( 'CheckoutPayLaterMessagesBlock/checkout-paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -269,7 +272,11 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 				'enqueue_block_editor_assets',
 				function () use ( $c ): void {
 					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
-					$path   = $c->get( 'paylater-wc-blocks.url' ) . 'assets/js/cart-paylater-block-inserter.js';
+
+					/** @var $asset_url_getter callable(string):string */
+					$asset_url_getter = $c->get( 'paylater-wc-blocks.get_module_asset_url' );
+
+					$path = ( $asset_url_getter )( 'CartPayLaterMessagesBlock/cart-paylater-block-inserter.js' );
 
 					wp_register_script(
 						$handle,

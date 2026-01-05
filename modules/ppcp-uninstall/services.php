@@ -82,13 +82,18 @@ return array(
 		);
 	},
 
-	'uninstall.module-url'                      => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'uninstall.get_module_asset_url'            => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-uninstall', $asset_name );
+		};
 	},
 
 	'uninstall.clear-db-assets'                 => function ( ContainerInterface $container ): ClearDatabaseAssets {
 		return new ClearDatabaseAssets(
-			$container->get( 'uninstall.module-url' ),
+			$container->get( 'uninstall.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			'ppcp-clear-db',
 			$container->get( 'uninstall.clear-database-script-data' )

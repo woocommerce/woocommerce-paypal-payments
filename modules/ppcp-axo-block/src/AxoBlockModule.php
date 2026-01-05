@@ -105,12 +105,13 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return;
 				}
 
-				$module_url    = $c->get( 'axoblock.url' );
-				$asset_version = $c->get( 'ppcp.asset-version' );
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'axoblock.get_module_asset_url' );
+				$asset_version    = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-axo-block',
-					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					( $asset_url_getter )( 'gateway.css' ),
 					array(),
 					$asset_version
 				);
@@ -144,12 +145,13 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 			return;
 		}
 
-		$module_url    = $c->get( 'axoblock.url' );
-		$asset_version = $c->get( 'ppcp.asset-version' );
+		/** @var $asset_url_getter callable(string):string */
+		$asset_url_getter = $c->get( 'axoblock.get_module_asset_url' );
+		$asset_version    = $c->get( 'ppcp.asset-version' );
 
 		wp_register_script(
 			'wc-ppcp-paypal-insights',
-			untrailingslashit( $module_url ) . '/assets/js/PayPalInsightsLoader.js',
+			( $asset_url_getter )( 'PayPalInsightsLoader.js' ),
 			array( 'wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry' ),
 			$asset_version,
 			true

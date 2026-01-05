@@ -26,11 +26,11 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
  */
 class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	/**
-	 * The URL of this module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -131,9 +131,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $all_funding_sources;
 
 	/**
-	 * Assets constructor.
-	 *
-	 * @param string                        $module_url The url of this module.
+	 * @param callable(string):string       $asset_url_getter
 	 * @param string                        $version    The assets version.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
 	 * @param Settings                      $plugin_settings The settings.
@@ -150,7 +148,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param array                         $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		$smart_button,
 		Settings $plugin_settings,
@@ -167,7 +165,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		array $all_funding_sources
 	) {
 		$this->name                           = PayPalGateway::ID;
-		$this->module_url                     = $module_url;
+		$this->asset_url_getter               = $asset_url_getter;
 		$this->version                        = $version;
 		$this->smart_button                   = $smart_button;
 		$this->plugin_settings                = $plugin_settings;
@@ -205,7 +203,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-checkout-block',
-			trailingslashit( $this->module_url ) . 'assets/js/checkout-block.js',
+			( $this->asset_url_getter )( 'checkout-block.js' ),
 			array(),
 			$this->version,
 			true

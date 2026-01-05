@@ -100,13 +100,18 @@ return array(
 		return class_exists( 'WC_Bookings' );
 	},
 
-	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-compat/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'compat.get_module_asset_url'                    => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-compat', $asset_name );
+		};
 	},
 
 	'compat.assets'                                  => function ( ContainerInterface $container ): CompatAssets {
 		return new CompatAssets(
-			$container->get( 'compat.module.url' ),
+			$container->get( 'compat.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'compat.gzd.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),

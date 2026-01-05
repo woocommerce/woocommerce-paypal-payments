@@ -17,11 +17,11 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 class OrderEditPageAssets {
 
 	/**
-	 * The URL to the module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -31,17 +31,15 @@ class OrderEditPageAssets {
 	private $version;
 
 	/**
-	 * WebhooksStatusPageAssets constructor.
-	 *
-	 * @param string $module_url                         The URL to the module.
-	 * @param string $version                            The assets version.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $version                            The assets version.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version
 	) {
-		$this->module_url = $module_url;
-		$this->version    = $version;
+		$this->asset_url_getter = $asset_url_getter;
+		$this->version          = $version;
 	}
 
 	/**
@@ -52,14 +50,14 @@ class OrderEditPageAssets {
 	public function register(): void {
 		wp_register_style(
 			'ppcp-webhooks-order-edit-page-style',
-			untrailingslashit( $this->module_url ) . '/assets/css/order-edit-page.css',
+			( $this->asset_url_getter )( 'order-edit-page.css' ),
 			array(),
 			$this->version
 		);
 
 		wp_register_script(
 			'ppcp-tracking',
-			untrailingslashit( $this->module_url ) . '/assets/js/order-edit-page.js',
+			( $this->asset_url_getter )( 'order-edit-page.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true

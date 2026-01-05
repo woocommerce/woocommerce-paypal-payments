@@ -18,8 +18,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'paylater-configurator.url'                  => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paylater-configurator', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'paylater-configurator.get_module_asset_url' => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-paylater-configurator', $asset_name );
+		};
 	},
 	'paylater-configurator.factory.config'       => static function ( ContainerInterface $container ): ConfigFactory {
 		return new ConfigFactory();

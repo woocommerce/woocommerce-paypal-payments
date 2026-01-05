@@ -17,13 +17,18 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\RepositoryInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Endpoint\MuteMessageEndpoint;
 
 return array(
-	'admin-notices.url'                   => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-admin-notices/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'admin-notices.get_module_asset_url'  => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-admin-notices', $asset_name );
+		};
 	},
 	'admin-notices.renderer'              => static function ( ContainerInterface $container ): RendererInterface {
 		return new Renderer(
 			$container->get( 'admin-notices.repository' ),
-			$container->get( 'admin-notices.url' ),
+			$container->get( 'admin-notices.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},

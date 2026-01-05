@@ -123,7 +123,7 @@ return array(
 		$environment         = $container->get( 'settings.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		return new SmartButton(
-			$container->get( 'button.url' ),
+			$container->get( 'button.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
@@ -154,8 +154,13 @@ return array(
 			$container->get( 'button.helper.context' ),
 		);
 	},
-	'button.url'                                  => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-button/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'button.get_module_asset_url'                 => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-button', $asset_name );
+		};
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
 		$defaults = array( 'checkout', 'pay-now' );

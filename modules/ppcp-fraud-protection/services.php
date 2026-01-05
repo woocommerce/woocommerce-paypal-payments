@@ -12,15 +12,20 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
-	'fraud-protection.url'                            => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-fraud-protection/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'fraud-protection.get_module_asset_url'           => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-fraud-protection', $asset_name );
+		};
 	},
 
 	'fraud-protection.recaptcha'                      => static function ( ContainerInterface $container ): Recaptcha {
 		return new Recaptcha(
 			$container->get( 'fraud-protection.recaptcha.integration' ),
 			$container->get( 'fraud-protection.recaptcha.payment-methods' ),
-			$container->get( 'fraud-protection.url' ),
+			$container->get( 'fraud-protection.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'fraud-protection.recaptcha.rejection-counter' )

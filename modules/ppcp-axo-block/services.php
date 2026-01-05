@@ -14,15 +14,20 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	// If AXO Block is configured and onboarded.
-	'axoblock.available' => static function ( ContainerInterface $container ): bool {
+	'axoblock.available'            => static function ( ContainerInterface $container ): bool {
 		return true;
 	},
-	'axoblock.url'       => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-axo-block/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'axoblock.get_module_asset_url' => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-axo-block', $asset_name );
+		};
 	},
-	'axoblock.method'    => static function ( ContainerInterface $container ): AxoBlockPaymentMethod {
+	'axoblock.method'               => static function ( ContainerInterface $container ): AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(
-			$container->get( 'axoblock.url' ),
+			$container->get( 'axoblock.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'axo.gateway' ),
 			fn(): SmartButtonInterface => $container->get( 'button.smart-button' ),

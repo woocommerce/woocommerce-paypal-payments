@@ -256,10 +256,12 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							return;
 						}
 
-						$module_url = $c->get( 'save-payment-methods.module.url' );
+						/** @var $asset_url_getter callable(string):string */
+						$asset_url_getter = $c->get( 'save-payment-methods.get_module_asset_url' );
+
 						wp_enqueue_script(
 							'ppcp-add-payment-method',
-							untrailingslashit( $module_url ) . '/assets/js/add-payment-method.js',
+							( $asset_url_getter )( 'add-payment-method.js' ),
 							array( 'jquery' ),
 							$c->get( 'ppcp.asset-version' ),
 							true

@@ -31,7 +31,12 @@ class Recaptcha {
 	 */
 	private array $payment_methods;
 
-	private string $module_url;
+	/**
+	 * The getter of the URLs for asset files.
+	 *
+	 * @var callable(string):string
+	 */
+	private $asset_url_getter;
 
 	private string $asset_version;
 
@@ -42,17 +47,17 @@ class Recaptcha {
 	private float $last_v3_score = 0;
 
 	/**
-	 * @param RecaptchaIntegration $integration
-	 * @param string[]             $payment_methods The methods that require captcha.
-	 * @param string               $module_url
-	 * @param string               $asset_version
-	 * @param LoggerInterface      $logger
-	 * @param PersistentCounter    $rejection_counter
+	 * @param RecaptchaIntegration    $integration
+	 * @param string[]                $payment_methods The methods that require captcha.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $asset_version
+	 * @param LoggerInterface         $logger
+	 * @param PersistentCounter       $rejection_counter
 	 */
 	public function __construct(
 		RecaptchaIntegration $integration,
 		array $payment_methods,
-		string $module_url,
+		callable $asset_url_getter,
 		string $asset_version,
 		LoggerInterface $logger,
 		PersistentCounter $rejection_counter
@@ -60,7 +65,7 @@ class Recaptcha {
 
 		$this->integration       = $integration;
 		$this->payment_methods   = $payment_methods;
-		$this->module_url        = $module_url;
+		$this->asset_url_getter  = $asset_url_getter;
 		$this->asset_version     = $asset_version;
 		$this->logger            = $logger;
 		$this->rejection_counter = $rejection_counter;
@@ -125,7 +130,7 @@ class Recaptcha {
 
 		wp_enqueue_script(
 			'ppcp-recaptcha-handler',
-			untrailingslashit( $this->module_url ) . '/assets/recaptcha-handler.js',
+			( $this->asset_url_getter )( 'recaptcha-handler.js' ),
 			$dependencies,
 			$this->asset_version,
 			true

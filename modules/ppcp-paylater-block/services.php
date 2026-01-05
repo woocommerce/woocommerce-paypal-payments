@@ -13,10 +13,15 @@ use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'paylater-block.url'      => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-paylater-block/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'paylater-block.get_module_asset_url' => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-paylater-block', $asset_name );
+		};
 	},
-	'paylater-block.renderer' => static function (): PayLaterBlockRenderer {
+	'paylater-block.renderer'             => static function (): PayLaterBlockRenderer {
 		return new PayLaterBlockRenderer();
 	},
 );

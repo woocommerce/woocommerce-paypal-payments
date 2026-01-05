@@ -17,11 +17,11 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 class P24PaymentMethod extends AbstractPaymentMethodType {
 
 	/**
-	 * The URL of this module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -38,20 +38,18 @@ class P24PaymentMethod extends AbstractPaymentMethodType {
 	private $gateway;
 
 	/**
-	 * P24PaymentMethod constructor.
-	 *
-	 * @param string     $module_url The URL of this module.
-	 * @param string     $version The assets version.
-	 * @param P24Gateway $gateway Przelewy24 WC gateway.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $version The assets version.
+	 * @param P24Gateway              $gateway Przelewy24 WC gateway.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		P24Gateway $gateway
 	) {
-		$this->module_url = $module_url;
-		$this->version    = $version;
-		$this->gateway    = $gateway;
+		$this->asset_url_getter = $asset_url_getter;
+		$this->version          = $version;
+		$this->gateway          = $gateway;
 
 		$this->name = P24Gateway::ID;
 	}
@@ -74,7 +72,7 @@ class P24PaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-p24-payment-method',
-			trailingslashit( $this->module_url ) . 'assets/js/p24-payment-method.js',
+			( $this->asset_url_getter )( 'p24-payment-method.js' ),
 			array(),
 			$this->version,
 			true

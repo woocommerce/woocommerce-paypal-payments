@@ -26,11 +26,11 @@ class Renderer implements RendererInterface {
 	private $repository;
 
 	/**
-	 * Used to enqueue assets.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * Used to enqueue assets.
@@ -47,20 +47,18 @@ class Renderer implements RendererInterface {
 	private $can_mute_message = false;
 
 	/**
-	 * Renderer constructor.
-	 *
-	 * @param RepositoryInterface $repository The message repository.
-	 * @param string              $module_url The module URL.
-	 * @param string              $version The module version.
+	 * @param RepositoryInterface     $repository The message repository.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $version The module version.
 	 */
 	public function __construct(
 		RepositoryInterface $repository,
-		string $module_url,
+		callable $asset_url_getter,
 		string $version
 	) {
-		$this->repository = $repository;
-		$this->module_url = untrailingslashit( $module_url );
-		$this->version    = $version;
+		$this->repository       = $repository;
+		$this->asset_url_getter = $asset_url_getter;
+		$this->version          = $version;
 	}
 
 	/**
@@ -102,13 +100,13 @@ class Renderer implements RendererInterface {
 
 		wp_register_style(
 			'wc-ppcp-admin-notice',
-			$this->module_url . '/assets/css/styles.css',
+			( $this->asset_url_getter )( 'styles.css' ),
 			array(),
 			$this->version
 		);
 		wp_register_script(
 			'wc-ppcp-admin-notice',
-			$this->module_url . '/assets/js/boot-admin.js',
+			( $this->asset_url_getter )( 'boot-admin.js' ),
 			array(),
 			$this->version,
 			true

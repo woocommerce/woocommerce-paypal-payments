@@ -111,12 +111,13 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 					return;
 				}
 
-				$module_url    = $c->get( 'blocks.url' );
-				$asset_version = $c->get( 'ppcp.asset-version' );
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'blocks.get_module_asset_url' );
+				$asset_version    = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-blocks',
-					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					( $asset_url_getter )( 'gateway.css' ),
 					array(),
 					$asset_version
 				);
@@ -128,12 +129,13 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 		add_action(
 			'enqueue_block_editor_assets',
 			static function () use ( $c ) {
-				$module_url    = $c->get( 'blocks.url' );
-				$asset_version = $c->get( 'ppcp.asset-version' );
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'blocks.get_module_asset_url' );
+				$asset_version    = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-blocks-editor',
-					untrailingslashit( $module_url ) . '/assets/css/gateway-editor.css',
+					( $asset_url_getter )( 'gateway-editor.css' ),
 					array(),
 					$asset_version
 				);

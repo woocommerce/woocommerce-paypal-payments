@@ -24,7 +24,7 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 return array(
 	'order-tracking.assets'                           => function ( ContainerInterface $container ): OrderEditPageAssets {
 		return new OrderEditPageAssets(
-			$container->get( 'order-tracking.module.url' ),
+			$container->get( 'order-tracking.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},
@@ -42,8 +42,13 @@ return array(
 			$container->get( 'order-tracking.should-use-second-version-of-api' )
 		);
 	},
-	'order-tracking.module.url'                       => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-order-tracking/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'order-tracking.get_module_asset_url'             => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-order-tracking', $asset_name );
+		};
 	},
 	'order-tracking.meta-box.renderer'                => static function ( ContainerInterface $container ): MetaBoxRenderer {
 		return new MetaBoxRenderer(

@@ -25,11 +25,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 
 	/**
-	 * The URL of this module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -95,9 +95,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	private $supported_country_card_type_matrix;
 
 	/**
-	 * AdvancedCardPaymentMethod constructor.
-	 *
-	 * @param string                        $module_url The URL of this module.
+	 * @param callable(string):string       $asset_url_getter
 	 * @param string                        $version The assets version.
 	 * @param WC_Payment_Gateway            $gateway Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
@@ -109,7 +107,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		WC_Payment_Gateway $gateway,
 		$smart_button,
@@ -121,7 +119,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		array $supported_country_card_type_matrix
 	) {
 		$this->name                               = AxoGateway::ID;
-		$this->module_url                         = $module_url;
+		$this->asset_url_getter                   = $asset_url_getter;
 		$this->version                            = $version;
 		$this->gateway                            = $gateway;
 		$this->smart_button                       = $smart_button;
@@ -149,15 +147,14 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_script_handles(): array {
-		$script_path       = 'assets/js/index.js';
-		$script_asset_path = trailingslashit( $this->module_url ) . 'assets/js/index.asset.php';
+		$script_asset_path = ( $this->asset_url_getter )( 'index.asset.php' );
 		$script_asset      = file_exists( $script_asset_path )
 			? require $script_asset_path
 			: array(
 				'dependencies' => array(),
 				'version'      => '1.0.0',
 			);
-		$script_url        = trailingslashit( $this->module_url ) . $script_path;
+		$script_url        = ( $this->asset_url_getter )( 'index.js' );
 
 		wp_register_script(
 			'ppcp-axo-block',

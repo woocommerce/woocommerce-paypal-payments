@@ -21,11 +21,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 class OnboardingAssets {
 
 	/**
-	 * The URL to the module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -63,17 +63,15 @@ class OnboardingAssets {
 	protected $page_id;
 
 	/**
-	 * OnboardingAssets constructor.
-	 *
-	 * @param string              $module_url                         The URL to the module.
-	 * @param string              $version                            The assets version.
-	 * @param State               $state                               The State object.
-	 * @param Environment         $environment  The Environment.
-	 * @param LoginSellerEndpoint $login_seller_endpoint The LoginSeller endpoint.
-	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $version                            The assets version.
+	 * @param State                   $state                               The State object.
+	 * @param Environment             $environment  The Environment.
+	 * @param LoginSellerEndpoint     $login_seller_endpoint The LoginSeller endpoint.
+	 * @param string                  $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		State $state,
 		Environment $environment,
@@ -81,7 +79,7 @@ class OnboardingAssets {
 		string $page_id
 	) {
 
-		$this->module_url            = untrailingslashit( $module_url );
+		$this->asset_url_getter      = $asset_url_getter;
 		$this->version               = $version;
 		$this->state                 = $state;
 		$this->environment           = $environment;
@@ -98,14 +96,14 @@ class OnboardingAssets {
 
 		wp_register_style(
 			'ppcp-onboarding',
-			$this->module_url . '/assets/css/onboarding.css',
+			( $this->asset_url_getter )( 'onboarding.css' ),
 			array(),
 			$this->version
 		);
 
 		wp_register_script(
 			'ppcp-settings',
-			$this->module_url . '/assets/js/settings.js',
+			( $this->asset_url_getter )( 'settings.js' ),
 			array(),
 			$this->version,
 			true
@@ -124,7 +122,7 @@ class OnboardingAssets {
 
 		wp_register_script(
 			'ppcp-onboarding',
-			$this->module_url . '/assets/js/onboarding.js',
+			( $this->asset_url_getter )( 'onboarding.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true

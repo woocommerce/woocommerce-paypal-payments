@@ -109,9 +109,12 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 					true
 				);
 
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'paylater-configurator.get_module_asset_url' );
+
 				wp_enqueue_script(
 					'ppcp-paylater-configurator',
-					$c->get( 'paylater-configurator.url' ) . '/assets/js/paylater-configurator.js',
+					( $asset_url_getter )( 'paylater-configurator.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -119,7 +122,7 @@ class PayLaterConfiguratorModule implements ServiceModule, ExtendingModule, Exec
 
 				wp_enqueue_style(
 					'ppcp-paylater-configurator-style',
-					$c->get( 'paylater-configurator.url' ) . '/assets/css/paylater-configurator.css',
+					( $asset_url_getter )( 'paylater-configurator.css' ),
 					array(),
 					$c->get( 'ppcp.asset-version' )
 				);

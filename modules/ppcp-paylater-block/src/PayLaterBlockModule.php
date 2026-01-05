@@ -77,10 +77,13 @@ class PayLaterBlockModule implements ServiceModule, ExtendingModule, ExecutableM
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'paylater-block.get_module_asset_url' );
+
 				$script_handle = 'ppcp-paylater-block';
 				wp_register_script(
 					$script_handle,
-					$c->get( 'paylater-block.url' ) . '/assets/js/paylater-block.js',
+					( $asset_url_getter )( 'paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true

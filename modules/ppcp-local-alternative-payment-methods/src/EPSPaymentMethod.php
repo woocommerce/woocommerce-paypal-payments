@@ -17,11 +17,11 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 class EPSPaymentMethod extends AbstractPaymentMethodType {
 
 	/**
-	 * The URL of this module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -38,20 +38,18 @@ class EPSPaymentMethod extends AbstractPaymentMethodType {
 	private $gateway;
 
 	/**
-	 * EPSPaymentMethod constructor.
-	 *
-	 * @param string     $module_url The URL of this module.
-	 * @param string     $version The assets version.
-	 * @param EPSGateway $gateway EPS WC gateway.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $version The assets version.
+	 * @param EPSGateway              $gateway EPS WC gateway.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		EPSGateway $gateway
 	) {
-		$this->module_url = $module_url;
-		$this->version    = $version;
-		$this->gateway    = $gateway;
+		$this->asset_url_getter = $asset_url_getter;
+		$this->version          = $version;
+		$this->gateway          = $gateway;
 
 		$this->name = EPSGateway::ID;
 	}
@@ -74,7 +72,7 @@ class EPSPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-eps-payment-method',
-			trailingslashit( $this->module_url ) . 'assets/js/eps-payment-method.js',
+			( $this->asset_url_getter )( 'eps-payment-method.js' ),
 			array(),
 			$this->version,
 			true

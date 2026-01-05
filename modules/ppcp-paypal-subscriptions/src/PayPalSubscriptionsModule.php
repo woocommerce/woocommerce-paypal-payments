@@ -515,10 +515,12 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					return;
 				}
 
-				$module_url = $c->get( 'paypal-subscriptions.module.url' );
+				/** @var $asset_url_getter callable(string):string */
+				$asset_url_getter = $c->get( 'paypal-subscriptions.get_module_asset_url' );
+
 				wp_enqueue_script(
 					'ppcp-paypal-subscription',
-					untrailingslashit( $module_url ) . '/assets/js/paypal-subscription.js',
+					( $asset_url_getter )( 'paypal-subscription.js' ),
 					array( 'jquery' ),
 					$c->get( 'ppcp.asset-version' ),
 					true

@@ -117,8 +117,11 @@ class OnboardingRESTController {
 
 		$environment = ( isset( $params['environment'] ) && in_array( $params['environment'], array( 'production', 'sandbox' ), true ) ) ? $params['environment'] : 'sandbox';
 
+		/** @var $asset_url_getter callable(string):string */
+		$asset_url_getter = $this->container->get( 'onboarding.get_module_asset_url' );
+
 		return array(
-			'scriptURL'               => trailingslashit( $this->container->get( 'onboarding.url' ) ) . 'assets/js/onboarding.js',
+			'scriptURL'               => ( $asset_url_getter )( 'onboarding.js' ),
 			'scriptData'              => $this->container->get( 'onboarding.assets' )->get_script_data(),
 			'environment'             => $environment,
 			'onboardCompleteCallback' => 'ppcp_onboarding_' . $environment . 'Callback',

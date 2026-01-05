@@ -16,12 +16,17 @@ use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WC_Cart;
 
 return array(
-	'blocks.url'                           => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-blocks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'blocks.get_module_asset_url'          => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-blocks', $asset_name );
+		};
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
 		return new PayPalPaymentMethod(
-			$container->get( 'blocks.url' ),
+			$container->get( 'blocks.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
@@ -42,7 +47,7 @@ return array(
 	},
 	'blocks.advanced-card-method'          => static function ( ContainerInterface $container ): AdvancedCardPaymentMethod {
 		return new AdvancedCardPaymentMethod(
-			$container->get( 'blocks.url' ),
+			$container->get( 'blocks.get_module_asset_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.credit-card-gateway' ),
 			function () use ( $container ): SmartButtonInterface {

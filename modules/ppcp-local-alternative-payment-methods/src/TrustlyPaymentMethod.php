@@ -17,11 +17,11 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 
 	/**
-	 * The URL of this module.
+	 * The getter of the URLs for asset files.
 	 *
-	 * @var string
+	 * @var callable(string):string
 	 */
-	private $module_url;
+	private $asset_url_getter;
 
 	/**
 	 * The assets version.
@@ -38,20 +38,18 @@ class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 	private $gateway;
 
 	/**
-	 * TrustlyPaymentMethod constructor.
-	 *
-	 * @param string         $module_url The URL of this module.
-	 * @param string         $version The assets version.
-	 * @param TrustlyGateway $gateway Trustly WC gateway.
+	 * @param callable(string):string $asset_url_getter
+	 * @param string                  $version The assets version.
+	 * @param TrustlyGateway          $gateway Trustly WC gateway.
 	 */
 	public function __construct(
-		string $module_url,
+		callable $asset_url_getter,
 		string $version,
 		TrustlyGateway $gateway
 	) {
-		$this->module_url = $module_url;
-		$this->version    = $version;
-		$this->gateway    = $gateway;
+		$this->asset_url_getter = $asset_url_getter;
+		$this->version          = $version;
+		$this->gateway          = $gateway;
 
 		$this->name = TrustlyGateway::ID;
 	}
@@ -74,7 +72,7 @@ class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-trustly-payment-method',
-			trailingslashit( $this->module_url ) . 'assets/js/trustly-payment-method.js',
+			( $this->asset_url_getter )( 'trustly-payment-method.js' ),
 			array(),
 			$this->version,
 			true

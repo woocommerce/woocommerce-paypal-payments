@@ -138,6 +138,14 @@ return array(
 	'applepay.url'                             => static function ( ContainerInterface $container ): string {
 		return plugins_url( '/modules/ppcp-applepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
 	},
+	'applepay.get_module_asset_url'            => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-applepay', $asset_name );
+		};
+	},
 	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},

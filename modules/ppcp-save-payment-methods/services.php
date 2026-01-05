@@ -87,8 +87,13 @@ return array(
 			)
 		);
 	},
-	'save-payment-methods.module.url'                    => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-save-payment-methods/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'save-payment-methods.get_module_asset_url'          => static function ( ContainerInterface $container ): callable {
+		/** @var $getter callable(string, string):string */
+		$getter = $container->get( 'assets.get_module_asset_url' );
+
+		return static function ( string $asset_name ) use ( $getter ): string {
+			return ( $getter )( 'ppcp-save-payment-methods', $asset_name );
+		};
 	},
 	'save-payment-methods.endpoint.create-setup-token'   => static function ( ContainerInterface $container ): CreateSetupToken {
 		return new CreateSetupToken(
