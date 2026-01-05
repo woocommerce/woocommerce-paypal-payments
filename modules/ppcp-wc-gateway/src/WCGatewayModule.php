@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\LocalApmProductStatus;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -328,6 +329,13 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			static function () use ( $c ) {
+				$timeout_cache = new Cache( 'ppcp-timeout' );
+				$timeout_cache->delete( 'refresh_feature_status_timeout' );
+
+				$failure_registry = $c->get( 'api.helper.failure-registry' );
+				assert( $failure_registry instanceof FailureRegistry );
+				$failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
+
 				$dcc_status_cache = $c->get( 'dcc.status-cache' );
 				assert( $dcc_status_cache instanceof Cache );
 				$pui_status_cache = $c->get( 'pui.status-cache' );
@@ -337,12 +345,11 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				$pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
 
 				$settings = $c->get( 'wcgateway.settings' );
-				$settings->set( 'products_dcc_enabled', false );
-				$settings->set( 'products_pui_enabled', false );
+				$settings->set( 'products_dcc_enabled', '' );
+				$settings->set( 'products_pui_enabled', '' );
 				$settings->persist();
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
 
-				// Update caches.
 				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_status instanceof DCCProductStatus );
 				$dcc_status->is_active();
