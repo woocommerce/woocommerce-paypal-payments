@@ -223,7 +223,6 @@ class AxoManager {
 				),
 			),
 			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
-			'module_url'                 => untrailingslashit( $this->module_url ),
 			'ajax'                       => array(
 				'frontend_logger'       => array(
 					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),
