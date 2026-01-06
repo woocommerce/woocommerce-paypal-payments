@@ -75,12 +75,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	private array $payment_method_selected_map;
 
-	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	private $wcgateway_module_url;
+	private AssetGetter $wcgateway_module_asset_getter;
 
 	/**
 	 * The supported country card type matrix.
@@ -97,7 +92,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param Settings                      $settings The settings.
 	 * @param CardPaymentsConfiguration     $dcc_configuration The DCC gateway settings.
 	 * @param Environment                   $environment The environment object.
-	 * @param string                        $wcgateway_module_url The WcGateway module URL.
+	 * @param AssetGetter                   $wcgateway_module_asset_getter
 	 * @param array                         $payment_method_selected_map Mapping of payment methods to the PayPal Insights 'payment_method_selected' types.
 	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
@@ -109,7 +104,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		Settings $settings,
 		CardPaymentsConfiguration $dcc_configuration,
 		Environment $environment,
-		string $wcgateway_module_url,
+		AssetGetter $wcgateway_module_asset_getter,
 		array $payment_method_selected_map,
 		array $supported_country_card_type_matrix
 	) {
@@ -121,7 +116,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		$this->settings                           = $settings;
 		$this->dcc_configuration                  = $dcc_configuration;
 		$this->environment                        = $environment;
-		$this->wcgateway_module_url               = $wcgateway_module_url;
+		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
 		$this->payment_method_selected_map        = $payment_method_selected_map;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
@@ -247,7 +242,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
+			'icons_directory'            => $this->wcgateway_module_asset_getter->get_static_asset_url( 'images/axo/' ),
 			'ajax'                       => array(
 				'frontend_logger'       => array(
 					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),

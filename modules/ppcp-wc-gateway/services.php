@@ -1385,12 +1385,6 @@ return array(
 
 		return $factory->for_module( 'ppcp-wc-gateway' );
 	},
-	'wcgateway.url'                                        => static function ( ContainerInterface $container ): string {
-		return plugins_url( $container->get( 'wcgateway.relative-path' ), $container->get( 'ppcp.path-to-plugin-main-file' ) );
-	},
-	'wcgateway.relative-path'                              => static function ( ContainerInterface $container ): string {
-		return 'modules/ppcp-wc-gateway/';
-	},
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ): ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );

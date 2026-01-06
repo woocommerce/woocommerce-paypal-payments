@@ -83,12 +83,7 @@ class AxoManager {
 	 */
 	private SessionHandler $session_handler;
 
-	/**
-	 * The WcGateway module URL.
-	 *
-	 * @var string
-	 */
-	private string $wcgateway_module_url;
+	private AssetGetter $wcgateway_module_asset_getter;
 	/**
 	 * The supported country card type matrix.
 	 *
@@ -106,7 +101,7 @@ class AxoManager {
 	 * @param SettingsStatus  $settings_status The Settings status helper.
 	 * @param CurrencyGetter  $currency The getter of the 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $wcgateway_module_url The WcGateway module URL.
+	 * @param AssetGetter     $wcgateway_module_asset_getter
 	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
@@ -119,7 +114,7 @@ class AxoManager {
 		SettingsStatus $settings_status,
 		CurrencyGetter $currency,
 		LoggerInterface $logger,
-		string $wcgateway_module_url,
+		AssetGetter $wcgateway_module_asset_getter,
 		array $supported_country_card_type_matrix
 	) {
 
@@ -132,7 +127,7 @@ class AxoManager {
 		$this->settings_status                    = $settings_status;
 		$this->currency                           = $currency;
 		$this->logger                             = $logger;
-		$this->wcgateway_module_url               = $wcgateway_module_url;
+		$this->wcgateway_module_asset_getter      = $wcgateway_module_asset_getter;
 		$this->supported_country_card_type_matrix = $supported_country_card_type_matrix;
 	}
 
@@ -215,7 +210,7 @@ class AxoManager {
 					'CA' => WC()->countries->get_states( 'CA' ),
 				),
 			),
-			'icons_directory'            => esc_url( $this->wcgateway_module_url ) . 'assets/images/axo/',
+			'icons_directory'            => $this->wcgateway_module_asset_getter->get_static_asset_url( 'images/axo/' ),
 			'ajax'                       => array(
 				'frontend_logger'       => array(
 					'endpoint' => \WC_AJAX::get_endpoint( FrontendLogger::ENDPOINT ),

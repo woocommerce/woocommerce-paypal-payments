@@ -80,7 +80,7 @@ return array(
 	},
 	'ppcp-local-apms.pwc.wc-gateway'            => static function ( ContainerInterface $container ): PWCGateway {
 		return new PWCGateway(
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'api.endpoint.orders' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.processor.refunds' ),

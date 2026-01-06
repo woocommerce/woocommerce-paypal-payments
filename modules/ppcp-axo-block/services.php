@@ -34,7 +34,7 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'settings.environment' ),
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'axo.payment_method_selected_map' ),
 			$container->get( 'axo.supported-country-card-type-matrix' )
 		);
