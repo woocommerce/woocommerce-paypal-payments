@@ -26,21 +26,28 @@ return array(
 			$notes,
 			array(
 				$inbox_note_factory->create_note(
-					__( 'Activate PayPal fraud management', 'woocommerce-paypal-payments' ),
+					__( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
 					__(
-						'PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.',
+						'Card Network Requirement: Enable Fraud Protection Card networks now require fraud prevention controls. Non-compliance may result in fines and processing restrictions. Please enable reCAPTCHA in your WooCommerce PayPal Payments settings immediately to help protect your store and maintain compliance.',
 						'woocommerce-paypal-payments'
 					),
 					Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
-					'ppcp-recaptcha-protection-note',
+					'ppcp-recaptcha-protection-note12',
 					Note::E_WC_ADMIN_NOTE_UNACTIONED,
 					! $is_recaptcha_enabled,
 					new InboxNoteAction(
 						'protect-paypal-with-recaptcha',
-						__( 'Activate Now', 'woocommerce-paypal-payments' ),
+						__( 'Enable reCAPTCHA →', 'woocommerce-paypal-payments' ),
 						admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
 						Note::E_WC_ADMIN_NOTE_UNACTIONED,
 						true
+					),
+					new InboxNoteAction(
+						'learn-more-paypal-recaptcha',
+						__( 'Learn more', 'woocommerce-paypal-payments' ),
+						'https://woocommerce.com/document/woocommerce-paypal-payments/fraud-and-disputes/#section-4',
+						Note::E_WC_ADMIN_NOTE_UNACTIONED,
+						false
 					)
 				),
 			)
