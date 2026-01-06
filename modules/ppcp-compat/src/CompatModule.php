@@ -72,8 +72,6 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
-		$this->add_blueprint_export_test_page( $c );
-
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
 		$this->migrate_three_d_secure_setting();
@@ -599,78 +597,5 @@ class CompatModule implements ServiceModule, ExtendingModule, ExecutableModule {
 				}
 			}
 		);
-	}
-
-	/**
-	 * Add temporary admin page for manual blueprint export testing.
-	 *
-	 * @param ContainerInterface $c The Container.
-	 */
-	private function add_blueprint_export_test_page( ContainerInterface $c ): void {
-		add_action('admin_menu', function() use ($c) {
-			add_submenu_page(
-				'woocommerce',
-				'PayPal Blueprint Export',
-				'PayPal Blueprint Export',
-				'manage_woocommerce',
-				'ppcp-blueprint-export',
-				function() use ($c) {
-					// Handle export BEFORE any output
-					if ( isset($_POST['export_blueprint']) && check_admin_referer('ppcp_export_blueprint') ) {
-
-						// Get all registered exporters
-						$all_exporters = apply_filters('wooblueprint_exporters', array());
-
-						$steps = array();
-
-						// Add PayPal Settings step
-						$paypal_exporter = $c->get('compat.blueprint.paypal_settings_exporter');
-						$steps[] = $paypal_exporter->export()->prepare_json_array();
-
-						// Find and add wcPaymentGateways step
-						foreach ($all_exporters as $exporter) {
-							if ($exporter->get_step_name() === 'wcPaymentGateways') {
-								$steps[] = $exporter->export()->prepare_json_array();
-								break;
-							}
-						}
-
-						// Create proper blueprint structure
-						$blueprint = array(
-							'landingPage' => '/wp-admin/admin.php?page=wc-settings&tab=checkout',
-							'steps' => $steps
-						);
-
-						if ( ob_get_level() ) {
-							ob_end_clean();
-						}
-
-						header('Content-Type: application/json');
-						header('Content-Disposition: attachment; filename="paypal-blueprint-' . date('Y-m-d-His') . '.json"');
-						echo wp_json_encode( $blueprint, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
-						exit;
-					}
-
-					// Only show UI if not exporting.
-					?>
-					<div class="wrap">
-						<h1>PayPal Settings Blueprint Export</h1>
-						<p>Export your PayPal Payments settings and WooCommerce payment gateways as a Blueprint file.</p>
-						<form method="post">
-							<?php wp_nonce_field('ppcp_export_blueprint'); ?>
-							<p><strong>This will export:</strong></p>
-							<ul>
-								<li>PayPal Payments settings (paypalSettings)</li>
-								<li>WooCommerce Payment Gateway settings (wcPaymentGateways)</li>
-							</ul>
-							<p>
-								<input type="submit" name="export_blueprint" class="button button-primary" value="Export Blueprint">
-							</p>
-						</form>
-					</div>
-					<?php
-				}
-			);
-		});
 	}
 }
