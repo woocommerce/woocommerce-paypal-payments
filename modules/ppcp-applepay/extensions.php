@@ -157,8 +157,8 @@ return array(
 				'applepay_button_enabled'             => array(
 					'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/applepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
-						$module_url,
+						'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						$asset_getter->get_static_asset_url( 'images/applepay.svg' ),
 						__( 'Apple Pay', 'woocommerce-paypal-payments' )
 					),
 					'type'              => 'checkbox',
