@@ -76,7 +76,7 @@ const modulesAssets = {
 	'ppcp-settings': [
 		'js/index.js',
 		'js/switchSettingsUi.js',
-		'css/style.scss',
+		'css/styles.scss',
 	],
 	'ppcp-uninstall': [ 'js/ppcp-clear-db.js' ],
 	'ppcp-wc-gateway': [
