@@ -131,8 +131,8 @@ class PayPalSettingsImporter implements StepProcessor {
 	 * @return bool
 	 */
 	private function is_valid_options_object( object $options ): bool {
-		// Check if it's a stdClass or similar object that can be cast to array.
-		return $options instanceof \stdClass || method_exists( $options, '__toString' ) || is_iterable( $options );
+		// Check if it's a stdClass or iterable object that can be cast to array.
+		return $options instanceof \stdClass || is_iterable( $options );
 	}
 
 	/**
@@ -153,7 +153,7 @@ class PayPalSettingsImporter implements StepProcessor {
 	 */
 	private function is_valid_option_value( $option_value ): bool {
 		// WordPress options should be scalar, array, or object (but not resources or closures).
-		if ( is_resource( $option_value ) || is_callable( $option_value ) ) {
+		if ( is_resource( $option_value ) || $option_value instanceof \Closure ) {
 			return false;
 		}
 
