@@ -228,6 +228,10 @@ class ScriptDataHandler {
 			'buttonLanguageChoices'           => $transformed_button_choices,
 			'disabledCardsChoices'            => $disabled_cards_choices,
 			'threeDSecureOptions'             => $three_d_secure_options,
+			'blueprint'                       => array(
+				'isActive'  => 'yes' === get_option( 'woocommerce_feature_blueprint_enabled', 'no' ),
+				'importUrl' => admin_url( 'admin.php?page=wc-settings&tab=advanced&section=blueprint' ),
+			),
 		);
 
 		if ( $is_pay_later_configurator_available ) {
