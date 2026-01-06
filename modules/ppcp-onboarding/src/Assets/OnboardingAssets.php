@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding\Assets;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -19,13 +20,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class OnboardingAssets
  */
 class OnboardingAssets {
-
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -63,15 +58,15 @@ class OnboardingAssets {
 	protected $page_id;
 
 	/**
-	 * @param callable(string):string $asset_url_getter
-	 * @param string                  $version                            The assets version.
-	 * @param State                   $state                               The State object.
-	 * @param Environment             $environment  The Environment.
-	 * @param LoginSellerEndpoint     $login_seller_endpoint The LoginSeller endpoint.
-	 * @param string                  $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param AssetGetter         $asset_getter
+	 * @param string              $version                            The assets version.
+	 * @param State               $state                               The State object.
+	 * @param Environment         $environment  The Environment.
+	 * @param LoginSellerEndpoint $login_seller_endpoint The LoginSeller endpoint.
+	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		State $state,
 		Environment $environment,
@@ -79,7 +74,7 @@ class OnboardingAssets {
 		string $page_id
 	) {
 
-		$this->asset_url_getter      = $asset_url_getter;
+		$this->asset_getter          = $asset_getter;
 		$this->version               = $version;
 		$this->state                 = $state;
 		$this->environment           = $environment;
@@ -96,14 +91,14 @@ class OnboardingAssets {
 
 		wp_register_style(
 			'ppcp-onboarding',
-			( $this->asset_url_getter )( 'onboarding.css' ),
+			$this->asset_getter->get_asset_url( 'onboarding.css' ),
 			array(),
 			$this->version
 		);
 
 		wp_register_script(
 			'ppcp-settings',
-			( $this->asset_url_getter )( 'settings.js' ),
+			$this->asset_getter->get_asset_url( 'settings.js' ),
 			array(),
 			$this->version,
 			true
@@ -122,7 +117,7 @@ class OnboardingAssets {
 
 		wp_register_script(
 			'ppcp-onboarding',
-			( $this->asset_url_getter )( 'onboarding.js' ),
+			$this->asset_getter->get_asset_url( 'onboarding.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true

@@ -10,18 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 
 /**
  * Class PWCPaymentMethod
  */
 class PWCPaymentMethod extends AbstractPaymentMethodType {
-
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -38,18 +33,18 @@ class PWCPaymentMethod extends AbstractPaymentMethodType {
 	private PWCGateway $gateway;
 
 	/**
-	 * @param callable(string):string $asset_url_getter
-	 * @param string                  $version The assets version.
-	 * @param PWCGateway              $gateway Pay with Crypto WC gateway.
+	 * @param AssetGetter $asset_getter
+	 * @param string      $version The assets version.
+	 * @param PWCGateway  $gateway Pay with Crypto WC gateway.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		PWCGateway $gateway
 	) {
-		$this->asset_url_getter = $asset_url_getter;
-		$this->version          = $version;
-		$this->gateway          = $gateway;
+		$this->asset_getter = $asset_getter;
+		$this->version      = $version;
+		$this->gateway      = $gateway;
 
 		$this->name = PWCGateway::ID;
 	}
@@ -72,7 +67,7 @@ class PWCPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles(): array {
 		wp_register_script(
 			'ppcp-pwc-payment-method',
-			( $this->asset_url_getter )( 'pwc-payment-method.js' ),
+			$this->asset_getter->get_asset_url( 'pwc-payment-method.js' ),
 			array(),
 			$this->version,
 			true

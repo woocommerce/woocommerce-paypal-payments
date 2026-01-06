@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\AxoBlock;
 
 use WC_Payment_Gateway;
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -23,13 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
  * Class AxoBlockPaymentMethod
  */
 class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
-
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -95,7 +90,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	private $supported_country_card_type_matrix;
 
 	/**
-	 * @param callable(string):string       $asset_url_getter
+	 * @param AssetGetter                   $asset_getter
 	 * @param string                        $version The assets version.
 	 * @param WC_Payment_Gateway            $gateway Credit card gateway.
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
@@ -107,7 +102,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * @param array                         $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		WC_Payment_Gateway $gateway,
 		$smart_button,
@@ -119,7 +114,7 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 		array $supported_country_card_type_matrix
 	) {
 		$this->name                               = AxoGateway::ID;
-		$this->asset_url_getter                   = $asset_url_getter;
+		$this->asset_getter                       = $asset_getter;
 		$this->version                            = $version;
 		$this->gateway                            = $gateway;
 		$this->smart_button                       = $smart_button;
@@ -147,14 +142,14 @@ class AxoBlockPaymentMethod extends AbstractPaymentMethodType {
 	 * {@inheritDoc}
 	 */
 	public function get_payment_method_script_handles(): array {
-		$script_asset_path = ( $this->asset_url_getter )( 'index.asset.php' );
+		$script_asset_path = $this->asset_getter->get_asset_php_path( 'index.js' );
 		$script_asset      = file_exists( $script_asset_path )
 			? require $script_asset_path
 			: array(
 				'dependencies' => array(),
 				'version'      => '1.0.0',
 			);
-		$script_url        = ( $this->asset_url_getter )( 'index.js' );
+		$script_url        = $this->asset_getter->get_asset_url( 'index.js' );
 
 		wp_register_script(
 			'ppcp-axo-block',

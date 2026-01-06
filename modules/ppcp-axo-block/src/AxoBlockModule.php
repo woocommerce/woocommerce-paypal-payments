@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\SdkClientToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -105,13 +106,14 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 					return;
 				}
 
-				/** @var $asset_url_getter callable(string):string */
-				$asset_url_getter = $c->get( 'axoblock.get_module_asset_url' );
-				$asset_version    = $c->get( 'ppcp.asset-version' );
+				$asset_getter = $c->get( 'axoblock.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
+				$asset_version = $c->get( 'ppcp.asset-version' );
 
 				wp_register_style(
 					'wc-ppcp-axo-block',
-					( $asset_url_getter )( 'gateway.css' ),
+					$asset_getter->get_asset_url( 'gateway.css' ),
 					array(),
 					$asset_version
 				);
@@ -145,13 +147,14 @@ class AxoBlockModule implements ServiceModule, ExtendingModule, ExecutableModule
 			return;
 		}
 
-		/** @var $asset_url_getter callable(string):string */
-		$asset_url_getter = $c->get( 'axoblock.get_module_asset_url' );
-		$asset_version    = $c->get( 'ppcp.asset-version' );
+		$asset_getter = $c->get( 'axoblock.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
+
+		$asset_version = $c->get( 'ppcp.asset-version' );
 
 		wp_register_script(
 			'wc-ppcp-paypal-insights',
-			( $asset_url_getter )( 'PayPalInsightsLoader.js' ),
+			$asset_getter->get_asset_url( 'PayPalInsightsLoader.js' ),
 			array( 'wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry' ),
 			$asset_version,
 			true

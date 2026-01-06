@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -29,13 +31,11 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'paypal-subscriptions.get_module_asset_url'     => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'paypal-subscriptions.asset_getter'             => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-paypal-subscriptions', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-paypal-subscriptions' );
 	},
 	'paypal-subscriptions.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		return new RenewalHandler( $container->get( 'woocommerce.logger.woocommerce' ) );

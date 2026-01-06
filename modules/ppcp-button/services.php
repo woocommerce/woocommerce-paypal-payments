@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -123,7 +125,7 @@ return array(
 		$environment         = $container->get( 'settings.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		return new SmartButton(
-			$container->get( 'button.get_module_asset_url' ),
+			$container->get( 'button.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
@@ -154,13 +156,11 @@ return array(
 			$container->get( 'button.helper.context' ),
 		);
 	},
-	'button.get_module_asset_url'                 => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'button.asset_getter'                         => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-button', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-button' );
 	},
 	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
 		$defaults = array( 'checkout', 'pay-now' );

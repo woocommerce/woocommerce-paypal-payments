@@ -4,6 +4,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\FraudProtection;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\RecaptchaIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -12,20 +14,18 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
-	'fraud-protection.get_module_asset_url'           => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'fraud-protection.asset_getter'                   => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-fraud-protection', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-fraud-protection' );
 	},
 
 	'fraud-protection.recaptcha'                      => static function ( ContainerInterface $container ): Recaptcha {
 		return new Recaptcha(
 			$container->get( 'fraud-protection.recaptcha.integration' ),
 			$container->get( 'fraud-protection.recaptcha.payment-methods' ),
-			$container->get( 'fraud-protection.get_module_asset_url' ),
+			$container->get( 'fraud-protection.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'fraud-protection.recaptcha.rejection-counter' )

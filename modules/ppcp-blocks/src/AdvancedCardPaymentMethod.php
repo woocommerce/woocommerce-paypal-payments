@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
@@ -19,13 +20,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class AdvancedCardPaymentMethod
  */
 class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
-
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -58,7 +53,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	protected CardPaymentsConfiguration $card_payments_configuration;
 
 	/**
-	 * @param callable(string):string       $asset_url_getter
+	 * @param AssetGetter                   $asset_getter
 	 * @param string                        $version The assets version.
 	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
@@ -66,7 +61,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	 * @param CardPaymentsConfiguration     $card_payments_configuration
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		CreditCardGateway $gateway,
 		$smart_button,
@@ -74,7 +69,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		CardPaymentsConfiguration $card_payments_configuration
 	) {
 		$this->name                        = CreditCardGateway::ID;
-		$this->asset_url_getter            = $asset_url_getter;
+		$this->asset_getter                = $asset_getter;
 		$this->version                     = $version;
 		$this->gateway                     = $gateway;
 		$this->smart_button                = $smart_button;
@@ -100,7 +95,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-advanced-card-checkout-block',
-			( $this->asset_url_getter )( 'advanced-card-checkout-block.js' ),
+			$this->asset_getter->get_asset_url( 'advanced-card-checkout-block.js' ),
 			array( 'wp-i18n' ),
 			$this->version,
 			true

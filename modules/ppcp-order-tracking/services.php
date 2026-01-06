@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\DhlShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
@@ -24,7 +26,7 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 return array(
 	'order-tracking.assets'                           => function ( ContainerInterface $container ): OrderEditPageAssets {
 		return new OrderEditPageAssets(
-			$container->get( 'order-tracking.get_module_asset_url' ),
+			$container->get( 'order-tracking.asset_getter' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},
@@ -42,13 +44,11 @@ return array(
 			$container->get( 'order-tracking.should-use-second-version-of-api' )
 		);
 	},
-	'order-tracking.get_module_asset_url'             => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'order-tracking.asset_getter'                     => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-order-tracking', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-order-tracking' );
 	},
 	'order-tracking.meta-box.renderer'                => static function ( ContainerInterface $container ): MetaBoxRenderer {
 		return new MetaBoxRenderer(

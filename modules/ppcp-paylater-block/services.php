@@ -9,19 +9,19 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'paylater-block.get_module_asset_url' => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'paylater-block.asset_getter' => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-paylater-block', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-paylater-block' );
 	},
-	'paylater-block.renderer'             => static function (): PayLaterBlockRenderer {
+	'paylater-block.renderer'     => static function (): PayLaterBlockRenderer {
 		return new PayLaterBlockRenderer();
 	},
 );

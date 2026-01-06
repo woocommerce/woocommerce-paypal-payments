@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -135,16 +137,11 @@ return array(
 		}
 		return false;
 	},
-	'applepay.url'                             => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-applepay/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
-	},
-	'applepay.get_module_asset_url'            => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'applepay.asset_getter'                    => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-applepay', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-applepay' );
 	},
 	'applepay.sdk_script_url'                  => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
@@ -157,7 +154,7 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.order-processor' ),
-			$container->get( 'applepay.url' ),
+			$container->get( 'applepay.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'applepay.data_to_scripts' ),
 			$container->get( 'wcgateway.settings.status' ),
@@ -167,7 +164,7 @@ return array(
 	'applepay.blocks-payment-method'           => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(
 			'ppcp-applepay',
-			$container->get( 'applepay.url' ),
+			$container->get( 'applepay.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'applepay.button' ),
 			$container->get( 'blocks.method' )
@@ -321,7 +318,7 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'applepay.url' ),
+			$container->get( 'applepay.asset_getter' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

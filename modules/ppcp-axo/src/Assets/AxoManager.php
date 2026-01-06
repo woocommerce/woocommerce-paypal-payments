@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Axo\Assets;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -24,13 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * @param string $module_url The URL to the module.
  */
 class AxoManager {
-
-	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private string $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -102,9 +97,7 @@ class AxoManager {
 	private array $supported_country_card_type_matrix;
 
 	/**
-	 * AxoManager constructor.
-	 *
-	 * @param string          $module_url The URL to the module.
+	 * @param AssetGetter     $asset_getter
 	 * @param string          $version The assets version.
 	 * @param SessionHandler  $session_handler The Session handler.
 	 * @param Settings        $settings The Settings.
@@ -117,7 +110,7 @@ class AxoManager {
 	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		SessionHandler $session_handler,
 		Settings $settings,
@@ -130,7 +123,7 @@ class AxoManager {
 		array $supported_country_card_type_matrix
 	) {
 
-		$this->module_url                         = $module_url;
+		$this->asset_getter                       = $asset_getter;
 		$this->version                            = $version;
 		$this->session_handler                    = $session_handler;
 		$this->settings                           = $settings;
@@ -153,7 +146,7 @@ class AxoManager {
 		// Register styles.
 		wp_register_style(
 			'wc-ppcp-axo',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -162,7 +155,7 @@ class AxoManager {
 		// Register scripts.
 		wp_register_script(
 			'wc-ppcp-axo',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
+			$this->asset_getter->get_asset_url( 'boot.js' ),
 			array(),
 			$this->version,
 			true

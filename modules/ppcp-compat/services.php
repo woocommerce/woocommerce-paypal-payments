@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\Compat\Settings\GeneralSettingsMapHelper;
 use WooCommerce\PayPalCommerce\Compat\Settings\PaymentMethodSettingsMapHelper;
@@ -100,18 +102,16 @@ return array(
 		return class_exists( 'WC_Bookings' );
 	},
 
-	'compat.get_module_asset_url'                    => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'compat.asset_getter'                            => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-compat', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-compat' );
 	},
 
 	'compat.assets'                                  => function ( ContainerInterface $container ): CompatAssets {
 		return new CompatAssets(
-			$container->get( 'compat.get_module_asset_url' ),
+			$container->get( 'compat.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'compat.gzd.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),

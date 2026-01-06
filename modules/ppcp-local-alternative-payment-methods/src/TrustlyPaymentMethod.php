@@ -10,18 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 
 /**
  * Class TrustlyPaymentMethod
  */
 class TrustlyPaymentMethod extends AbstractPaymentMethodType {
-
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -38,18 +33,18 @@ class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 	private $gateway;
 
 	/**
-	 * @param callable(string):string $asset_url_getter
-	 * @param string                  $version The assets version.
-	 * @param TrustlyGateway          $gateway Trustly WC gateway.
+	 * @param AssetGetter    $asset_getter
+	 * @param string         $version The assets version.
+	 * @param TrustlyGateway $gateway Trustly WC gateway.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		TrustlyGateway $gateway
 	) {
-		$this->asset_url_getter = $asset_url_getter;
-		$this->version          = $version;
-		$this->gateway          = $gateway;
+		$this->asset_getter = $asset_getter;
+		$this->version      = $version;
+		$this->gateway      = $gateway;
 
 		$this->name = TrustlyGateway::ID;
 	}
@@ -72,7 +67,7 @@ class TrustlyPaymentMethod extends AbstractPaymentMethodType {
 	public function get_payment_method_script_handles() {
 		wp_register_script(
 			'ppcp-trustly-payment-method',
-			( $this->asset_url_getter )( 'trustly-payment-method.js' ),
+			$this->asset_getter->get_asset_url( 'trustly-payment-method.js' ),
 			array(),
 			$this->version,
 			true

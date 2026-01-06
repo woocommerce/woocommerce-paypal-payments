@@ -9,19 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking\Assets;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 
 /**
  * Class OrderEditPageAssets
  */
 class OrderEditPageAssets {
-
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -31,15 +26,15 @@ class OrderEditPageAssets {
 	private $version;
 
 	/**
-	 * @param callable(string):string $asset_url_getter
-	 * @param string                  $version                            The assets version.
+	 * @param AssetGetter $asset_getter
+	 * @param string      $version                            The assets version.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version
 	) {
-		$this->asset_url_getter = $asset_url_getter;
-		$this->version          = $version;
+		$this->asset_getter = $asset_getter;
+		$this->version      = $version;
 	}
 
 	/**
@@ -50,14 +45,14 @@ class OrderEditPageAssets {
 	public function register(): void {
 		wp_register_style(
 			'ppcp-webhooks-order-edit-page-style',
-			( $this->asset_url_getter )( 'order-edit-page.css' ),
+			$this->asset_getter->get_asset_url( 'order-edit-page.css' ),
 			array(),
 			$this->version
 		);
 
 		wp_register_script(
 			'ppcp-tracking',
-			( $this->asset_url_getter )( 'order-edit-page.js' ),
+			$this->asset_getter->get_asset_url( 'order-edit-page.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true

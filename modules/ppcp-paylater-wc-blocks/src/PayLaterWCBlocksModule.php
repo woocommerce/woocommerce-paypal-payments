@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
@@ -109,12 +110,12 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 
 				$script_handle = 'ppcp-cart-paylater-block';
 
-				/** @var $asset_url_getter callable(string):string */
-				$asset_url_getter = $c->get( 'paylater-wc-blocks.get_module_asset_url' );
+				$asset_getter = $c->get( 'paylater-wc-blocks.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
 
 				wp_register_script(
 					$script_handle,
-					( $asset_url_getter )( 'CartPayLaterMessagesBlock/cart-paylater-block.js' ),
+					$asset_getter->get_asset_url( 'CartPayLaterMessagesBlock/cart-paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -142,7 +143,7 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 
 				wp_register_script(
 					$script_handle,
-					( $asset_url_getter )( 'CheckoutPayLaterMessagesBlock/checkout-paylater-block.js' ),
+					$asset_getter->get_asset_url( 'CheckoutPayLaterMessagesBlock/checkout-paylater-block.js' ),
 					array(),
 					$c->get( 'ppcp.asset-version' ),
 					true
@@ -273,10 +274,10 @@ class PayLaterWCBlocksModule implements ServiceModule, ExtendingModule, Executab
 				function () use ( $c ): void {
 					$handle = 'ppcp-checkout-paylater-block-editor-inserter';
 
-					/** @var $asset_url_getter callable(string):string */
-					$asset_url_getter = $c->get( 'paylater-wc-blocks.get_module_asset_url' );
+					$asset_getter = $c->get( 'paylater-wc-blocks.asset_getter' );
+					assert( $asset_getter instanceof AssetGetter );
 
-					$path = ( $asset_url_getter )( 'CartPayLaterMessagesBlock/cart-paylater-block-inserter.js' );
+					$path = $asset_getter->get_asset_url( 'CartPayLaterMessagesBlock/cart-paylater-block-inserter.js' );
 
 					wp_register_script(
 						$handle,

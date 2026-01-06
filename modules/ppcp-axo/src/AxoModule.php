@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Assets\AxoManager;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\AxoScriptAttributes;
 use WooCommerce\PayPalCommerce\Axo\Endpoint\FrontendLogger;
@@ -506,13 +507,15 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			return;
 		}
 
-		$module_url    = $c->get( 'axo.url' );
+		$asset_getter = $c->get( 'axo.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
+
 		$asset_version = $c->get( 'ppcp.asset-version' );
 		$insights_data = $c->get( 'axo.insights' );
 
 		wp_register_script(
 			'wc-ppcp-paypal-insights-end-checkout',
-			untrailingslashit( $module_url ) . '/assets/js/TrackEndCheckout.js',
+			$asset_getter->get_asset_url( 'Insights/EndCheckoutTracker.js' ),
 			array( 'wp-plugins', 'wp-data', 'wp-element', 'wc-blocks-registry' ),
 			$asset_version,
 			true

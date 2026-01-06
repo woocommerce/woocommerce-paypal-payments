@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
@@ -34,12 +35,8 @@ class Button implements ButtonInterface {
 	 * @var Context $context
 	 */
 	private Context $context;
-	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The URL to the SDK.
@@ -96,9 +93,7 @@ class Button implements ButtonInterface {
 	private ?SettingsModel $new_settings;
 
 	/**
-	 * SmartButton constructor.
-	 *
-	 * @param string             $module_url The URL to the module.
+	 * @param AssetGetter        $asset_getter
 	 * @param string             $sdk_url The URL to the SDK.
 	 * @param string             $version The assets version.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
@@ -110,7 +105,7 @@ class Button implements ButtonInterface {
 	 * @param SettingsModel|null $new_settings The new settings model.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $sdk_url,
 		string $version,
 		SubscriptionHelper $subscription_helper,
@@ -121,8 +116,7 @@ class Button implements ButtonInterface {
 		Context $context,
 		SettingsModel $new_settings = null
 	) {
-
-		$this->module_url          = $module_url;
+		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
 		$this->version             = $version;
 		$this->subscription_helper = $subscription_helper;
@@ -385,7 +379,7 @@ class Button implements ButtonInterface {
 
 		wp_register_script(
 			'wc-ppcp-googlepay',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
+			$this->asset_getter->get_asset_url( 'boot.js' ),
 			array(),
 			$this->version,
 			true
@@ -411,7 +405,7 @@ class Button implements ButtonInterface {
 
 		wp_register_style(
 			'wc-ppcp-googlepay',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -424,7 +418,7 @@ class Button implements ButtonInterface {
 	public function enqueue_admin(): void {
 		wp_register_style(
 			'wc-ppcp-googlepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -432,7 +426,7 @@ class Button implements ButtonInterface {
 
 		wp_register_script(
 			'wc-ppcp-googlepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
+			$this->asset_getter->get_asset_url( 'boot-admin.js' ),
 			array(),
 			$this->version,
 			true

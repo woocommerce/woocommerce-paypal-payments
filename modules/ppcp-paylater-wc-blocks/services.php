@@ -9,19 +9,19 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterWCBlocks;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'paylater-wc-blocks.get_module_asset_url' => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'paylater-wc-blocks.asset_getter'      => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-paylater-wc-blocks', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-paylater-wc-blocks' );
 	},
 
-	'paylater-wc-blocks.cart-renderer'        => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
+	'paylater-wc-blocks.cart-renderer'     => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
 		$settings = $container->get( 'wcgateway.settings' );
 		return new PayLaterWCBlocksRenderer(
 			array(
@@ -36,7 +36,7 @@ return array(
 			)
 		);
 	},
-	'paylater-wc-blocks.checkout-renderer'    => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
+	'paylater-wc-blocks.checkout-renderer' => static function ( ContainerInterface $container ): PayLaterWCBlocksRenderer {
 		$settings = $container->get( 'wcgateway.settings' );
 		return new PayLaterWCBlocksRenderer(
 			array(

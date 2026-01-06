@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Compat\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\OrderTracking\TrackingAvailabilityTrait;
 
 /**
@@ -19,12 +20,7 @@ class CompatAssets {
 
 	use TrackingAvailabilityTrait;
 
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -62,15 +58,15 @@ class CompatAssets {
 	protected $bearer;
 
 	/**
-	 * @param callable(string):string $asset_url_getter
-	 * @param string                  $version The assets version.
-	 * @param bool                    $is_gzd_active Whether Germanized plugin is active.
-	 * @param bool                    $is_wc_shipment_active Whether WC Shipments plugin is active.
-	 * @param bool                    $is_wc_shipping_tax_active Whether WC Shipping & Tax plugin is active.
-	 * @param Bearer                  $bearer The bearer.
+	 * @param AssetGetter $asset_getter
+	 * @param string      $version The assets version.
+	 * @param bool        $is_gzd_active Whether Germanized plugin is active.
+	 * @param bool        $is_wc_shipment_active Whether WC Shipments plugin is active.
+	 * @param bool        $is_wc_shipping_tax_active Whether WC Shipping & Tax plugin is active.
+	 * @param Bearer      $bearer The bearer.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		bool $is_gzd_active,
 		bool $is_wc_shipment_active,
@@ -78,7 +74,7 @@ class CompatAssets {
 		Bearer $bearer
 	) {
 
-		$this->asset_url_getter          = $asset_url_getter;
+		$this->asset_getter              = $asset_getter;
 		$this->version                   = $version;
 		$this->is_gzd_active             = $is_gzd_active;
 		$this->is_wc_shipment_active     = $is_wc_shipment_active;
@@ -95,7 +91,7 @@ class CompatAssets {
 		if ( $this->is_tracking_enabled( $this->bearer ) ) {
 			wp_register_script(
 				'ppcp-tracking-compat',
-				( $this->asset_url_getter )( 'tracking-compat.js' ),
+				$this->asset_getter->get_asset_url( 'tracking-compat.js' ),
 				array( 'jquery' ),
 				$this->version,
 				true

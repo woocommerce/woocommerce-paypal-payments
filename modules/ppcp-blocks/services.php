@@ -9,24 +9,22 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
-use WooCommerce\PayPalCommerce\Blocks\Endpoint\GetPayPalOrderFromSession;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use WC_Cart;
 
 return array(
-	'blocks.get_module_asset_url'          => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'blocks.asset_getter'                  => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-blocks', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-blocks' );
 	},
 	'blocks.method'                        => static function ( ContainerInterface $container ): PayPalPaymentMethod {
 		return new PayPalPaymentMethod(
-			$container->get( 'blocks.get_module_asset_url' ),
+			$container->get( 'blocks.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			function () use ( $container ): SmartButtonInterface {
 				return $container->get( 'button.smart-button' );
@@ -47,7 +45,7 @@ return array(
 	},
 	'blocks.advanced-card-method'          => static function ( ContainerInterface $container ): AdvancedCardPaymentMethod {
 		return new AdvancedCardPaymentMethod(
-			$container->get( 'blocks.get_module_asset_url' ),
+			$container->get( 'blocks.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.credit-card-gateway' ),
 			function () use ( $container ): SmartButtonInterface {

@@ -9,25 +9,25 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\AxoBlock;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	// If AXO Block is configured and onboarded.
-	'axoblock.available'            => static function ( ContainerInterface $container ): bool {
+	'axoblock.available'    => static function ( ContainerInterface $container ): bool {
 		return true;
 	},
-	'axoblock.get_module_asset_url' => static function ( ContainerInterface $container ): callable {
-		/** @var $getter callable(string, string):string */
-		$getter = $container->get( 'assets.get_module_asset_url' );
+	'axoblock.asset_getter' => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
 
-		return static function ( string $asset_name ) use ( $getter ): string {
-			return ( $getter )( 'ppcp-axo-block', $asset_name );
-		};
+		return $factory->for_module( 'ppcp-axo-block' );
 	},
-	'axoblock.method'               => static function ( ContainerInterface $container ): AxoBlockPaymentMethod {
+	'axoblock.method'       => static function ( ContainerInterface $container ): AxoBlockPaymentMethod {
 		return new AxoBlockPaymentMethod(
-			$container->get( 'axoblock.get_module_asset_url' ),
+			$container->get( 'axoblock.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'axo.gateway' ),
 			fn(): SmartButtonInterface => $container->get( 'button.smart-button' ),

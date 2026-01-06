@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
@@ -78,12 +79,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	protected Context $context;
 
-	/**
-	 * The getter of the URLs for asset files.
-	 *
-	 * @var callable(string):string
-	 */
-	private $asset_url_getter;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -269,7 +265,7 @@ class SmartButton implements SmartButtonInterface {
 	private bool $final_review_enabled;
 
 	/**
-	 * @param callable(string):string   $asset_url_getter
+	 * @param AssetGetter               $asset_getter
 	 * @param string                    $version                           The assets version.
 	 * @param SessionHandler            $session_handler                   The Session handler.
 	 * @param Settings                  $settings                          The Settings.
@@ -299,7 +295,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                      $final_review_enabled              Whether the final review is enabled in blocks settings.
 	 */
 	public function __construct(
-		callable $asset_url_getter,
+		AssetGetter $asset_getter,
 		string $version,
 		SessionHandler $session_handler,
 		Settings $settings,
@@ -329,7 +325,7 @@ class SmartButton implements SmartButtonInterface {
 		bool $final_review_enabled,
 		Context $context
 	) {
-		$this->asset_url_getter                      = $asset_url_getter;
+		$this->asset_getter                          = $asset_getter;
 		$this->version                               = $version;
 		$this->session_handler                       = $session_handler;
 		$this->settings                              = $settings;
@@ -751,7 +747,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		if ( $this->can_render_dcc() ) {
 			wp_enqueue_style(
 				'ppcp-hosted-fields',
-				( $this->asset_url_getter )( 'hosted-fields.css' ),
+				$this->asset_getter->get_asset_url( 'hosted-fields.css' ),
 				array(),
 				$this->version
 			);
@@ -759,14 +755,14 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 
 		wp_enqueue_style(
 			'gateway',
-			( $this->asset_url_getter )( 'gateway.css' ),
+			$this->asset_getter->get_asset_url( 'gateway.css' ),
 			array(),
 			$this->version
 		);
 
 		wp_enqueue_script(
 			'ppcp-smart-button',
-			( $this->asset_url_getter )( 'button.js' ),
+			$this->asset_getter->get_asset_url( 'button.js' ),
 			array( 'jquery' ),
 			$this->version,
 			true
