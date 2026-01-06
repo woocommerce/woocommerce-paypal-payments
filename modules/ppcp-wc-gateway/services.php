@@ -141,7 +141,6 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'wcgateway.credit-card-icons' ),
-			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
