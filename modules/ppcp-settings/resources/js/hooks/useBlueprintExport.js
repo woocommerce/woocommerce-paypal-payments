@@ -41,6 +41,10 @@ export const useBlueprintExport = () => {
 				},
 			} );
 
+			if ( ! response?.data ) {
+				throw new Error( 'Invalid response from server' );
+			}
+
 			const filename = `paypal-blueprint-${ generateTimestamp() }.json`;
 			const blueprintData = JSON.stringify( response.data, null, 2 );
 			const blob = new Blob( [ blueprintData ], {
