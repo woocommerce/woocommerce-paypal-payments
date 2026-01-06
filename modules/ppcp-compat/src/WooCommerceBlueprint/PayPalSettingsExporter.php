@@ -25,27 +25,26 @@ class PayPalSettingsExporter implements StepExporter, HasAlias {
 	private const OPTION_NOT_FOUND = '__PAYPAL_OPTION_NOT_FOUND__';
 
 	/**
-	 * PayPal-related options to export (excluding transients and core gateway settings).
+	 * PayPal-related options to export (excluding transients and plugin metadata).
 	 *
 	 * @var array<string>
 	 */
 	private const PAYPAL_OPTIONS = array(
-		// Core PPCP data settings.
+		// Core PPCP data settings (new settings).
 		'woocommerce-ppcp-data-common',
 		'woocommerce-ppcp-data-onboarding',
 		'woocommerce-ppcp-data-payment',
 		'woocommerce-ppcp-data-settings',
 		'woocommerce-ppcp-data-styling',
-		// Main PPCP configuration.
+		// Legacy settings (maintained for backward compatibility during migration).
 		'woocommerce-ppcp-settings',
-		'woocommerce-ppcp-version',
+		// Merchant state flags.
 		'woocommerce-ppcp-is-new-merchant',
-		// Admin and migration flags.
-		'woocommerce_ppcp-admin-notices',
+		// UI and migration state flags (prevent re-migration and control UI display).
+		'woocommerce_ppcp-settings-should-use-old-ui',
 		'woocommerce_ppcp-is_pay_later_settings_migrated',
 		'woocommerce_ppcp-is_smart_button_settings_migrated',
-		'woocommerce_ppcp-settings-should-use-old-ui',
-		// Individual payment method settings (non-gateway).
+		// Individual payment method settings (gateway titles/descriptions).
 		'woocommerce_venmo_settings',
 		'woocommerce_pay-later_settings',
 	);
