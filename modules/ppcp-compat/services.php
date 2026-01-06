@@ -221,13 +221,13 @@ return array(
 	'compat.blueprint.is_available'                  => function (): bool {
 		return interface_exists( 'Automattic\WooCommerce\Blueprint\Exporters\StepExporter' );
 	},
-	'compat.blueprint.paypal_settings_exporter'      => static function( ContainerInterface $container ) : PayPalSettingsExporter {
+	'compat.blueprint.paypal_settings_exporter'      => static function ( ContainerInterface $container ): PayPalSettingsExporter {
 		return new PayPalSettingsExporter();
 	},
-	'compat.blueprint.paypal_settings_importer'      => static function( ContainerInterface $container ) : PayPalSettingsImporter {
+	'compat.blueprint.paypal_settings_importer'      => static function ( ContainerInterface $container ): PayPalSettingsImporter {
 		return new PayPalSettingsImporter();
 	},
-	'compat.blueprint.bootstrap'                     => static function( ContainerInterface $container ) : PayPalBlueprintBootstrap {
+	'compat.blueprint.bootstrap'                     => static function ( ContainerInterface $container ): PayPalBlueprintBootstrap {
 		return new PayPalBlueprintBootstrap(
 			$container->get( 'compat.blueprint.paypal_settings_exporter' ),
 			$container->get( 'compat.blueprint.paypal_settings_importer' )
