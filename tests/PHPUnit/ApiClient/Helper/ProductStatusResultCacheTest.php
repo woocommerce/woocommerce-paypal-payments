@@ -20,4 +20,13 @@ class ProductStatusResultCacheTest extends TestCase {
 		$this->assertSame( '', $result );
 	}
 
+	public function test_set_stores_value_and_get_retrieves_it(): void {
+		$testee = new ProductStatusResultCache();
+
+		$testee->set( 'test_key', 'test_value' );
+		$result = $testee->get( 'test_key' );
+
+		$this->assertSame( 'test_value', $result );
+	}
+
 }
