@@ -29,4 +29,14 @@ class ProductStatusResultCacheTest extends TestCase {
 		$this->assertSame( 'test_value', $result );
 	}
 
+	public function test_clear_removes_value(): void {
+		$testee = new ProductStatusResultCache();
+
+		$testee->set( 'test_key', 'test_value' );
+		$testee->clear( 'test_key' );
+		$result = $testee->get( 'test_key' );
+
+		$this->assertSame( '', $result );
+	}
+
 }
