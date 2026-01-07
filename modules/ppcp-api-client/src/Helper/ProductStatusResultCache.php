@@ -22,26 +22,48 @@ class ProductStatusResultCache {
 	}
 
 	public function set( string $key, string $value ): void {
+		$this->load();
+
 		$this->cache[ $key ] = $value;
+		$this->save();
 	}
 
 	public function clear( string $key ): void {
+		$this->load();
+
 		unset( $this->cache[ $key ] );
+		$this->save();
 	}
 
 	private function load(): void {
 		if ( $this->loaded ) {
 			return;
 		}
-		$this->loaded = true;
 
+		$this->cache  = array_map(
+			static fn( $value ) => (string) $value,
+			$this->load_from_storage()
+		);
+		$this->loaded = true;
+	}
+
+	private function save(): void {
+		$this->save_to_storage( $this->cache );
+	}
+
+	/**
+	 * Low-level data retrieval; can be overridden for testing.
+	 */
+	protected function load_from_storage(): array {
 		$data = get_transient( self::CACHE_KEY );
 
-		if ( is_array( $data ) ) {
-			$this->cache = array_map(
-				static fn( $value ) => (string) $value,
-				$data
-			);
-		}
+		return is_array( $data ) ? $data : array();
+	}
+
+	/**
+	 * Low-level data storage; can be overridden for testing.
+	 */
+	protected function save_to_storage( array $data ): void {
+		set_transient( self::CACHE_KEY, $data );
 	}
 }
