@@ -18,7 +18,11 @@ class InboxNote implements InboxNoteInterface {
 	protected string $name;
 	protected string $status;
 	protected bool $is_enabled;
-	protected InboxNoteActionInterface $action;
+
+	/**
+	 * @var InboxNoteActionInterface[]
+	 */
+	protected array $actions;
 
 	public function __construct(
 		string $title,
@@ -27,7 +31,7 @@ class InboxNote implements InboxNoteInterface {
 		string $name,
 		string $status,
 		bool $is_enabled,
-		InboxNoteActionInterface $action
+		InboxNoteActionInterface ...$actions
 	) {
 		$this->title      = $title;
 		$this->content    = $content;
@@ -35,7 +39,7 @@ class InboxNote implements InboxNoteInterface {
 		$this->name       = $name;
 		$this->status     = $status;
 		$this->is_enabled = $is_enabled;
-		$this->action     = $action;
+		$this->actions    = $actions;
 	}
 
 	public function title(): string {
@@ -62,7 +66,10 @@ class InboxNote implements InboxNoteInterface {
 		return $this->is_enabled;
 	}
 
-	public function action(): InboxNoteActionInterface {
-		return $this->action;
+	/**
+	 * @return InboxNoteActionInterface[]
+	 */
+	public function actions(): array {
+		return $this->actions;
 	}
 }
