@@ -380,9 +380,8 @@ $services = array(
 		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
-		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
 
-		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
+		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),

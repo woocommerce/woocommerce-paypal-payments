@@ -141,7 +141,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 					assert( $asset_getter instanceof AssetGetter );
 
 					/** @psalm-suppress UnresolvableInclude */
-					$script_asset_file = require $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets/switchSettingsUi.asset.php';
+					$script_asset_file = require $asset_getter->get_asset_php_path( 'switchSettingsUi.js' );
 
 					wp_register_script(
 						'ppcp-switch-settings-ui',

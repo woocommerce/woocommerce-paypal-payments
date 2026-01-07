@@ -57,8 +57,6 @@ class ScriptDataHandler {
 	 */
 	protected PartnerAttribution $partner_attribution;
 
-	protected string $path_to_module_assets_folder;
-
 	/**
 	 * @param Settings           $settings The settings object.
 	 * @param AssetGetter        $asset_getter
@@ -67,7 +65,6 @@ class ScriptDataHandler {
 	 * @param string             $merchant_id The merchant ID.
 	 * @param array              $button_language_choices The button language choices.
 	 * @param PartnerAttribution $partner_attribution The partner attribution object.
-	 * @param string             $path_to_module_assets_folder The path to mpdule assets folder.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -76,17 +73,15 @@ class ScriptDataHandler {
 		string $store_country,
 		string $merchant_id,
 		array $button_language_choices,
-		PartnerAttribution $partner_attribution,
-		string $path_to_module_assets_folder
+		PartnerAttribution $partner_attribution
 	) {
-		$this->settings                     = $settings;
-		$this->asset_getter                 = $asset_getter;
-		$this->paylater_is_available        = $paylater_is_available;
-		$this->store_country                = $store_country;
-		$this->merchant_id                  = $merchant_id;
-		$this->button_language_choices      = $button_language_choices;
-		$this->partner_attribution          = $partner_attribution;
-		$this->path_to_module_assets_folder = $path_to_module_assets_folder;
+		$this->settings                = $settings;
+		$this->asset_getter            = $asset_getter;
+		$this->paylater_is_available   = $paylater_is_available;
+		$this->store_country           = $store_country;
+		$this->merchant_id             = $merchant_id;
+		$this->button_language_choices = $button_language_choices;
+		$this->partner_attribution     = $partner_attribution;
 	}
 
 	/**
@@ -110,7 +105,7 @@ class ScriptDataHandler {
 		 *
 		 * @psalm-suppress UnresolvableInclude
 		 */
-		$script_asset_file = require $this->path_to_module_assets_folder . '/index.asset.php';
+		$script_asset_file = require $this->asset_getter->get_asset_php_path( 'index.js' );
 
 		wp_register_script(
 			'ppcp-admin-settings',
@@ -127,7 +122,7 @@ class ScriptDataHandler {
 		);
 
 		/** @psalm-suppress UnresolvableInclude */
-		$style_asset_file = require $this->path_to_module_assets_folder . '/style.asset.php';
+		$style_asset_file = require $this->asset_getter->get_asset_php_path( 'styles.css' );
 
 		wp_register_style(
 			'ppcp-admin-settings',
