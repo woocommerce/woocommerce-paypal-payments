@@ -8,6 +8,11 @@ use function Brain\Monkey\Functions\when;
 
 class ProductStatusResultCacheTest extends TestCase {
 
+	public function setUp(): void {
+		when( 'get_transient' )->justReturn( array() );
+		when( 'set_transient' )->justReturn( true );
+	}
+
 	public function test_if_class_exists(): void {
 		$testee = new ProductStatusResultCache();
 		$this->assertInstanceOf( ProductStatusResultCache::class, $testee );
@@ -41,16 +46,25 @@ class ProductStatusResultCacheTest extends TestCase {
 	}
 
 	public function test_data_persists_across_instances(): void {
-		when( 'get_transient' )
-			->justReturn( array( 'test_key' => 'test_value' ) );
-
-		$cache1 = new ProductStatusResultCache();
+		$cache1 = new TestProductStatusResultCache();
 		$cache1->set( 'test_key', 'test_value' );
 
-		$cache2 = new ProductStatusResultCache();
+		$cache2 = new TestProductStatusResultCache();
 		$result = $cache2->get( 'test_key' );
 
 		$this->assertSame( 'test_value', $result );
 	}
 
+}
+
+class TestProductStatusResultCache extends ProductStatusResultCache {
+	private static array $storage = array();
+
+	protected function load_from_storage(): array {
+		return self::$storage;
+	}
+
+	protected function save_to_storage( array $data ): void {
+		self::$storage = $data;
+	}
 }
