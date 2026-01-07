@@ -4,6 +4,7 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 use WooCommerce\PayPalCommerce\TestCase;
+use function Brain\Monkey\Functions\when;
 
 class ProductStatusResultCacheTest extends TestCase {
 
@@ -37,6 +38,19 @@ class ProductStatusResultCacheTest extends TestCase {
 		$result = $testee->get( 'test_key' );
 
 		$this->assertSame( '', $result );
+	}
+
+	public function test_data_persists_across_instances(): void {
+		when( 'get_transient' )
+			->justReturn( array( 'test_key' => 'test_value' ) );
+
+		$cache1 = new ProductStatusResultCache();
+		$cache1->set( 'test_key', 'test_value' );
+
+		$cache2 = new ProductStatusResultCache();
+		$result = $cache2->get( 'test_key' );
+
+		$this->assertSame( 'test_value', $result );
 	}
 
 }
