@@ -130,7 +130,10 @@ module.exports = {
 		filename: '[name].js',
 	},
 	plugins: [
-		...defaultConfig.plugins,
+		...defaultConfig.plugins.filter(
+			( plugin ) =>
+				plugin.constructor.name !== 'DependencyExtractionWebpackPlugin'
+		),
 		new WooCommerceDependencyExtractionWebpackPlugin(),
 	],
 };
