@@ -19,4 +19,8 @@ class ProductStatusResultCache {
 	public function set( string $key, string $value ): void {
 		$this->cache[ $key ] = $value;
 	}
+
+	public function clear( string $key ): void {
+		unset( $this->cache[ $key ] );
+	}
 }
