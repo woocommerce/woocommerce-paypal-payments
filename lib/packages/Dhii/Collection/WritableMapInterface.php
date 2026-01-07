@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 /**
@@ -9,7 +8,6 @@ namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
  *
  * @since [*next-version*]
  */
-interface WritableMapInterface extends MapInterface, WritableContainerInterface
+interface WritableMapInterface extends \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\MapInterface, \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableContainerInterface
 {
-
 }

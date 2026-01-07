@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
 
 /**
@@ -11,11 +10,6 @@ namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Collection;
  *
  * @psalm-suppress UnusedClass
  */
-interface CountableSetInterface extends
-    /* @since 0.2 */
-    CountableListInterface,
-    /* @since 0.2 */
-    SetInterface
+interface CountableSetInterface extends \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\CountableListInterface, \WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\SetInterface
 {
-
 }
