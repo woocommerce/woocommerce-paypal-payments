@@ -313,6 +313,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the landing page setting as API enum value.
+	 *
+	 * @return string The landing page API enum ('NO_PREFERENCE', 'LOGIN', 'GUEST_CHECKOUT').
+	 */
+	public function landing_page_enum(): string {
+		return $this->settings_model->get_landing_page_enum();
+	}
+
+	/**
 	 * Gets the button language setting.
 	 *
 	 * @return string The button language.
