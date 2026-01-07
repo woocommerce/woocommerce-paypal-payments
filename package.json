@@ -9,8 +9,6 @@
     "ddev:setup": "ddev start && ddev orchestrate",
     "ddev:reset": "ddev orchestrate -f",
     "ddev:install": "ddev composer install && ddev npm ci",
-    "build-js": "npm run build:modules",
-    "watch-js": "npm run watch:modules",
     "lint-js": "wp-scripts lint-js",
     "test:unit-js": "wp-scripts test-unit-js --config ./tests/js/jest.config.json",
     "test:unit-js:coverage": "wp-scripts test-unit-js --config ./tests/js/jest.config.json --coverage",
@@ -25,7 +23,8 @@
     "phpcs": "vendor/bin/phpcs --parallel=8 -s --runtime-set ignore_warnings_on_exit 1",
     "psalm": "vendor/bin/psalm --show-info=false --threads=8 --diff",
     "fix-lint": "vendor/bin/phpcbf",
-    "build": "wp-scripts build"
+    "build": "wp-scripts build",
+    "watch-js": "wp-scripts start"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
