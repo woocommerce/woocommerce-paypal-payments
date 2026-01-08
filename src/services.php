@@ -9,28 +9,31 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce;
 
-use Dhii\Versions\StringVersionFactory;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Http\WpRedirector;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties\Properties;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WpOop\WordPress\Plugin\PluginInterface;
 
 return array(
-	'ppcp.plugin'                   => function ( ContainerInterface $container ): PluginInterface {
-		$factory = new FilePathPluginFactory( new StringVersionFactory() );
-		return $factory->createPluginFromFilePath( dirname( realpath( __FILE__ ), 2 ) . '/woocommerce-paypal-payments.php' );
-	},
 	'ppcp.asset-version'            => function ( ContainerInterface $container ): string {
-		$plugin = $container->get( 'ppcp.plugin' );
-		assert( $plugin instanceof PluginInterface );
-
-		return (string) $plugin->getVersion();
+		return $container->get( 'ppcp.plugin-version' );
 	},
 
 	'http.redirector'               => function ( ContainerInterface $container ): RedirectorInterface {
 		return new WpRedirector();
+	},
+	'ppcp.plugin-version'           => function ( ContainerInterface $container ): string {
+		/** @var Properties $properties */
+		$properties = $container->get( Package::PROPERTIES );
+
+		return $properties->version();
+	},
+	'ppcp.base-name'                => function ( ContainerInterface $container ): string {
+		/** @var Properties $properties */
+		$properties = $container->get( Package::PROPERTIES );
+
+		return $properties->baseName();
 	},
 	'ppcp.path-to-plugin-folder'    => function ( ContainerInterface $container ): string {
 		/** @var Properties $properties */
