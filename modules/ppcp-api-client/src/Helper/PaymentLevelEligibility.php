@@ -16,19 +16,21 @@ class PaymentLevelEligibility {
 
 	protected SettingsProvider $settings;
 	protected string $country;
+	protected CurrencyGetter $shop_currency;
 
-	public function __construct( SettingsProvider $settings, string $country ) {
-		$this->settings = $settings;
-		$this->country  = $country;
+	public function __construct( SettingsProvider $settings, string $country, CurrencyGetter $shop_currency ) {
+		$this->settings      = $settings;
+		$this->country       = $country;
+		$this->shop_currency = $shop_currency;
 	}
 
 	/**
-	 * Checks if order is eligible for Level 2/3 processing.
+	 * Checks if payment is eligible for Level 2/3 processing.
 	 *
-	 * @param WC_Order $order The WooCommerce order.
+	 * @param string $payment_method
 	 * @return bool True if eligible.
 	 */
-	public function is_eligible( WC_Order $order ): bool {
+	public function is_eligible( string $payment_method ): bool {
 		if ( ! $this->settings->payment_level_processing() ) {
 			return false;
 		}
@@ -37,24 +39,22 @@ class PaymentLevelEligibility {
 			return false;
 		}
 
-		if ( ! $this->is_valid_currency( $order ) ) {
+		if ( ! $this->is_valid_currency() ) {
 			return false;
 		}
 
-		if ( ! $this->is_valid_payment_method( $order ) ) {
+		if ( ! $this->is_valid_payment_method( $payment_method ) ) {
 			return false;
 		}
 
 		/**
-		 * Filters whether an order is eligible for Level 2/3 processing.
+		 * Filters whether the payment is eligible for Level 2/3 processing.
 		 *
-		 * @param bool     $is_eligible Whether the order is eligible.
-		 * @param WC_Order $order       The WooCommerce order.
+		 * @param bool $is_eligible Whether the payment is eligible.
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_level_processing_eligible',
 			true,
-			$order
 		);
 	}
 
@@ -72,7 +72,7 @@ class PaymentLevelEligibility {
 		return in_array( $this->country, $allowed_countries, true );
 	}
 
-	private function is_valid_currency( WC_Order $order ): bool {
+	private function is_valid_currency(): bool {
 		/**
 		 * Filters the allowed currencies for Level 2/3 processing.
 		 *
@@ -83,10 +83,10 @@ class PaymentLevelEligibility {
 			array( 'USD' )
 		);
 
-		return in_array( $order->get_currency(), $allowed_currencies, true );
+		return in_array( $this->shop_currency->get(), $allowed_currencies, true );
 	}
 
-	private function is_valid_payment_method( WC_Order $order ): bool {
+	private function is_valid_payment_method( string $payment_method ): bool {
 		/**
 		 * Filters the allowed payment methods for Level 2/3 processing.
 		 *
@@ -97,6 +97,6 @@ class PaymentLevelEligibility {
 			array( 'ppcp-credit-card-gateway' )
 		);
 
-		return in_array( $order->get_payment_method(), $allowed_methods, true );
+		return in_array( $payment_method, $allowed_methods, true );
 	}
 }
