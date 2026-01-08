@@ -24,7 +24,7 @@ class PaymentLevelHelper {
 	 *     supplementary_data: array{
 	 *         card: array{
 	 *             level_2?: array{
-	 *                 customer_reference: string,
+	 *                 invoice_id: string,
 	 *                 tax_total?: array{
 	 *                     currency_code: string,
 	 *                     value: string
