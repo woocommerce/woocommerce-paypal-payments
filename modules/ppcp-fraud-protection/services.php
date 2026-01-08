@@ -49,7 +49,7 @@ return array(
 			array(
 				'id'           => 'ppcp-recaptcha-protection-task',
 				'title'        => __( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Help protect your store and maintain compliance. Enable reCAPTCHA →', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Help protect your store and maintain compliance.', 'woocommerce-paypal-payments' ),
 				'redirect_url' => admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
 			),
 		);

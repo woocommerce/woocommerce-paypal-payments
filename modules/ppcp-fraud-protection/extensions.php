@@ -26,9 +26,9 @@ return array(
 			$notes,
 			array(
 				$inbox_note_factory->create_note(
-					__( 'Enable required fraud protection for PayPal Payments', 'woocommerce-paypal-payments' ),
+					__( 'Fraud protection is now required — enable today', 'woocommerce-paypal-payments' ),
 					__(
-						'Card Network Requirement: Enable Fraud Protection Card networks now require fraud prevention controls. Non-compliance may result in fines and processing restrictions. Please enable reCAPTCHA in your WooCommerce PayPal Payments settings immediately to help protect your store and maintain compliance.',
+						'Card networks like Visa, Mastercard and American Express now require fraud prevention controls, and non-compliance may result in fines and processing restrictions. Please enable reCAPTCHA in your PayPal Payments settings to help protect your store and maintain compliance.',
 						'woocommerce-paypal-payments'
 					),
 					Note::E_WC_ADMIN_NOTE_INFORMATIONAL,
