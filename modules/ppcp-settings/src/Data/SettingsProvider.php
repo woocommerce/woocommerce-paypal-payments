@@ -274,13 +274,7 @@ class SettingsProvider {
 	 * @return string The gateway title, defaults to 'PayPal' if not set.
 	 */
 	public function paypal_gateway_title(): string {
-		$title = $this->payment_settings->get_method_title( PayPalGateway::ID );
-
-		if ( empty( $title ) ) {
-			return __( 'PayPal', 'woocommerce-paypal-payments' );
-		}
-
-		return $title;
+		return $this->payment_settings->get_method_title( PayPalGateway::ID, 'PayPal' );
 	}
 
 	/**

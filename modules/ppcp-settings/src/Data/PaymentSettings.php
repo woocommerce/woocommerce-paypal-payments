@@ -152,16 +152,17 @@ class PaymentSettings extends AbstractDataModel {
 	 * Gets the payment method title.
 	 *
 	 * @param string $method_id ID of the payment method.
+	 * @param string $default_title Default title to return if method not found.
 	 * @return string The method title, or an empty string if not found.
 	 */
-	public function get_method_title( string $method_id ): string {
+	public function get_method_title( string $method_id, string $default_title = '' ): string {
 		$gateway = $this->get_gateway( $method_id );
 
 		if ( $gateway ) {
 			return $gateway->title;
 		}
 
-		return '';
+		return $default_title;
 	}
 
 	/**
