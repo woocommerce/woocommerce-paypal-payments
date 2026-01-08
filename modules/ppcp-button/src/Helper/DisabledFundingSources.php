@@ -104,20 +104,16 @@ class DisabledFundingSources {
 	 * @return array
 	 */
 	private function get_sources_from_settings(): array {
-		// Access gateway settings directly since disable_funding is stored in WooCommerce
-		// gateway configuration, not in SettingsProvider.
-		$gateways         = WC()->payment_gateways()->payment_gateways();
 		$disabled_funding = array();
-		if ( isset( $gateways['ppcp-gateway'] ) && isset( $gateways['ppcp-gateway']->settings['disable_funding'] ) ) {
-			$disabled_funding = (array) $gateways['ppcp-gateway']->settings['disable_funding'];
+
+		if ( ! $this->settings_provider->venmo_enabled() ) {
+			$disabled_funding[] = 'venmo';
 		}
 
 		/**
-		 * Filters the list of disabled funding methods. In the legacy UI, this
-		 * list was accessible via a settings field.
+		 * Filters the list of disabled funding methods.
 		 *
-		 * This filter allows merchants to programmatically disable funding sources
-		 * in the new UI.
+		 * This filter allows merchants to programmatically disable funding sources.
 		 */
 		return (array) apply_filters(
 			'woocommerce_paypal_payments_disabled_funding',

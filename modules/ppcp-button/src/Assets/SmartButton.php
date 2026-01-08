@@ -1664,64 +1664,76 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return null;
 		}
 
-		$parts = explode( '_', $key );
-		if ( count( $parts ) < 2 ) {
+		$key_without_prefix = substr( $key, strlen( 'button_' ) );
+
+		$property = $this->extract_style_property( $key_without_prefix );
+		if ( ! $property ) {
 			return null;
 		}
 
-		array_shift( $parts );
-		$property = array_pop( $parts );
-		$context  = implode( '_', $parts );
-
+		$context = substr( $key_without_prefix, 0, -strlen( "_{$property}" ) );
 		if ( empty( $context ) ) {
 			return null;
 		}
 
-		$location_styling = null;
-		switch ( $context ) {
-			case 'cart':
-				$location_styling = $this->settings_provider->styling_cart();
-				break;
-			case 'product':
-				$location_styling = $this->settings_provider->styling_product();
-				break;
-			case 'checkout':
-			case 'general':
-				$location_styling = $this->settings_provider->styling_classic_checkout();
-				break;
-			case 'express':
-				$location_styling = $this->settings_provider->styling_express_checkout();
-				break;
-			case 'mini-cart':
-			case 'minicart':
-				$location_styling = $this->settings_provider->styling_mini_cart();
-				break;
-		}
-
+		$location_styling = $this->get_location_styling_for_context( $context );
 		if ( ! $location_styling ) {
 			return null;
 		}
 
-		$value = null;
-		switch ( $property ) {
-			case 'shape':
-				$value = $location_styling->shape;
-				break;
-			case 'label':
-				$value = $location_styling->label;
-				break;
-			case 'color':
-				$value = $location_styling->color;
-				break;
-			case 'layout':
-				$value = $location_styling->layout;
-				break;
-			case 'tagline':
-				$value = $location_styling->tagline;
-				break;
-		}
+		$value = $location_styling->$property ?? null;
 
 		return $value !== null ? $this->normalize_style_value( $value ) : null;
+	}
+
+	/**
+	 * Extracts the style property from the key suffix.
+	 *
+	 * @param string $key_without_prefix The key without the 'button_' prefix.
+	 * @return string|null The property name or null if not found.
+	 */
+	private function extract_style_property( string $key_without_prefix ): ?string {
+		$valid_properties = array( 'shape', 'label', 'color', 'layout', 'tagline' );
+
+		foreach ( $valid_properties as $property ) {
+			if ( str_ends_with( $key_without_prefix, "_{$property}" ) ) {
+				return $property;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Gets the LocationStylingDTO for a given context.
+	 *
+	 * @param string $context The context name.
+	 * @return \WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO|null
+	 */
+	private function get_location_styling_for_context( string $context ) {
+		switch ( $context ) {
+			case 'cart':
+			case 'cart-block':
+				return $this->settings_provider->styling_cart();
+
+			case 'product':
+				return $this->settings_provider->styling_product();
+
+			case 'checkout':
+			case 'general':
+				return $this->settings_provider->styling_classic_checkout();
+
+			case 'checkout-block-express':
+			case 'express':
+				return $this->settings_provider->styling_express_checkout();
+
+			case 'mini-cart':
+			case 'minicart':
+				return $this->settings_provider->styling_mini_cart();
+
+			default:
+				return null;
+		}
 	}
 
 	/**
