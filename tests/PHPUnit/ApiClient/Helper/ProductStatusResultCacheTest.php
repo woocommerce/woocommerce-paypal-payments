@@ -6,6 +6,9 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 
+/**
+ * @covers \WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache
+ */
 class ProductStatusResultCacheTest extends TestCase {
 
 	public function setUp(): void {

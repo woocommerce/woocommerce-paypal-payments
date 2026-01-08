@@ -10,7 +10,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Mockery;
 
 /**
- * @covers ProductStatus
+ * @covers \WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus
  */
 class ProductStatusTest extends TestCase {
 
