@@ -127,10 +127,10 @@ class PurchaseUnitFactory {
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
+		$payment_level   = null;
 
-		$payment_level = null;
-		if ( $this->payment_level_eligibility->is_eligible( $order ) ) {
-			$payment_level = $this->payment_level_helper->build( $order, 'level_2' );
+		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) ) {
+			$payment_level = $this->payment_level_helper->build( $amount, 'level_2' );
 		}
 
 		$purchase_unit = new PurchaseUnit(
@@ -166,7 +166,7 @@ class PurchaseUnitFactory {
 	 *
 	 * @return PurchaseUnit
 	 */
-	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false ): PurchaseUnit {
+	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false, string $payment_method = '' ): PurchaseUnit {
 		if ( ! $cart ) {
 			$cart = WC()->cart ?? new \WC_Cart();
 		}
@@ -207,7 +207,13 @@ class PurchaseUnitFactory {
 		}
 		$invoice_id      = '';
 		$soft_descriptor = $this->sanitize_soft_descriptor( $this->soft_descriptor );
-		$purchase_unit   = new PurchaseUnit(
+		$payment_level   = null;
+
+		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) ) {
+			$payment_level = $this->payment_level_helper->build( $amount, 'level_2' );
+		}
+
+		$purchase_unit = new PurchaseUnit(
 			$amount,
 			$items,
 			$shipping,
@@ -215,7 +221,9 @@ class PurchaseUnitFactory {
 			$description,
 			$custom_id,
 			$invoice_id,
-			$soft_descriptor
+			$soft_descriptor,
+			null,
+			$payment_level['supplementary_data'] ?? null
 		);
 
 		$this->init_purchase_unit( $purchase_unit );
