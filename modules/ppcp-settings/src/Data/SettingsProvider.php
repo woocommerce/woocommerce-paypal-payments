@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class SettingsProvider {
 	private GeneralSettings $general_settings;
@@ -265,6 +266,15 @@ class SettingsProvider {
 	 */
 	public function paylater_enabled(): bool {
 		return $this->payment_settings->get_paylater_enabled();
+	}
+
+	/**
+	 * Gets the PayPal gateway title as configured in WooCommerce settings.
+	 *
+	 * @return string The gateway title, defaults to 'PayPal' if not set.
+	 */
+	public function paypal_gateway_title(): string {
+		return $this->payment_settings->get_method_title( PayPalGateway::ID, 'PayPal' );
 	}
 
 	/**
