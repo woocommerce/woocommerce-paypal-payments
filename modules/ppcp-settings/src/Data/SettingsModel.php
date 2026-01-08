@@ -206,6 +206,23 @@ class SettingsModel extends AbstractDataModel {
 	}
 
 	/**
+	 * Converts the landing page setting value to the corresponding API enum string.
+	 *
+	 * @return string The corresponding API enum string ('NO_PREFERENCE', 'LOGIN', 'GUEST_CHECKOUT').
+	 */
+	public function get_landing_page_enum(): string {
+		$landing_page = $this->get_landing_page();
+
+		$map = array(
+			'any'            => 'NO_PREFERENCE',
+			'login'          => 'LOGIN',
+			'guest_checkout' => 'GUEST_CHECKOUT',
+		);
+
+		return $map[ $landing_page ] ?? 'NO_PREFERENCE';
+	}
+
+	/**
 	 * Gets the button language setting.
 	 *
 	 * @return string The button language.
