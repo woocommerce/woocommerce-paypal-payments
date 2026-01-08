@@ -14,6 +14,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class SettingsProvider {
 	private GeneralSettings $general_settings;
@@ -268,6 +269,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the PayPal gateway title as configured in WooCommerce settings.
+	 *
+	 * @return string The gateway title, defaults to 'PayPal' if not set.
+	 */
+	public function paypal_gateway_title(): string {
+		return $this->payment_settings->get_method_title( PayPalGateway::ID, 'PayPal' );
+	}
+
+	/**
 	 * Gets the invoice prefix.
 	 *
 	 * @return string The invoice prefix.
@@ -310,6 +320,15 @@ class SettingsProvider {
 	 */
 	public function landing_page(): string {
 		return $this->settings_model->get_landing_page();
+	}
+
+	/**
+	 * Gets the landing page setting as API enum value.
+	 *
+	 * @return string The landing page API enum ('NO_PREFERENCE', 'LOGIN', 'GUEST_CHECKOUT').
+	 */
+	public function landing_page_enum(): string {
+		return $this->settings_model->get_landing_page_enum();
 	}
 
 	/**

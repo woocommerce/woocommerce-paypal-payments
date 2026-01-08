@@ -163,7 +163,7 @@ class ExperienceContextBuilder {
 	public function with_current_landing_page(): ExperienceContextBuilder {
 		$builder = clone $this;
 
-		$landing_page = $this->settings->landing_page();
+		$landing_page = $this->settings->landing_page_enum();
 		if ( empty( $landing_page ) ) {
 			$landing_page = ExperienceContext::LANDING_PAGE_NO_PREFERENCE;
 		}

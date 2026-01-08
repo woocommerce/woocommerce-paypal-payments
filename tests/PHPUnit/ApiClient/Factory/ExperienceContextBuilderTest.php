@@ -105,7 +105,7 @@ class ExperienceContextBuilderTest extends TestCase
 	public function testCurrentLandingPage($value, $expected)
 	{
 		$this->settings
-			->expects('landing_page')
+			->expects('landing_page_enum')
 			->andReturn($value);
 
 		$result = $this->sut
