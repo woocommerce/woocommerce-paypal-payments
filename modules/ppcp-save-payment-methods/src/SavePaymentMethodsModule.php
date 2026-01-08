@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentTokenForGuest;
@@ -256,10 +257,12 @@ class SavePaymentMethodsModule implements ServiceModule, ExtendingModule, Execut
 							return;
 						}
 
-						$module_url = $c->get( 'save-payment-methods.module.url' );
+						$asset_getter = $c->get( 'save-payment-methods.asset_getter' );
+						assert( $asset_getter instanceof AssetGetter );
+
 						wp_enqueue_script(
 							'ppcp-add-payment-method',
-							untrailingslashit( $module_url ) . '/assets/js/add-payment-method.js',
+							$asset_getter->get_asset_url( 'add-payment-method.js' ),
 							array( 'jquery' ),
 							$c->get( 'ppcp.asset-version' ),
 							true

@@ -9,6 +9,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
@@ -48,6 +49,7 @@ class WcGatewayTest extends TestCase
 	private $paymentTokensEndpoint;
 	private $vaultV3Enabled;
 	private $wcPaymentTokens;
+	private $assetGetter;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -74,6 +76,7 @@ class WcGatewayTest extends TestCase
 		);
 		$this->apiShopCountry = 'DE';
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
+		$this->assetGetter = new AssetGetter('http://example.com', '/plugin/', 'module');
 
 		$this->sessionHandler
 			->shouldReceive('funding_source')
@@ -121,7 +124,7 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokensEndpoint,
 			$this->vaultV3Enabled,
 			$this->wcPaymentTokens,
-			'',
+			$this->assetGetter,
 			false
 		);
 	}

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WC_Order;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -81,12 +82,14 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 					return;
 				}
 
-				$module_url    = $c->get( 'ppcp-local-apms.url' );
+				$asset_getter = $c->get( 'ppcp-local-apms.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				$asset_version = $c->get( 'ppcp.asset-version' );
 
 				wp_enqueue_style(
 					'ppcp-local-apms-gateway',
-					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					$asset_getter->get_asset_url( 'gateway.css' ),
 					array(),
 					$asset_version
 				);

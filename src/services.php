@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Http\WpRedirector;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
@@ -18,6 +19,16 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
 	'ppcp.asset-version'            => function ( ContainerInterface $container ): string {
 		return $container->get( 'ppcp.plugin-version' );
+	},
+
+	'assets.asset_getter_factory'   => function ( ContainerInterface $container ): AssetGetterFactory {
+		$properties = $container->get( Package::PROPERTIES );
+		assert( $properties instanceof Properties );
+
+		return new AssetGetterFactory(
+			(string) $properties->baseUrl(),
+			$properties->basePath()
+		);
 	},
 
 	'http.redirector'               => function ( ContainerInterface $container ): RedirectorInterface {

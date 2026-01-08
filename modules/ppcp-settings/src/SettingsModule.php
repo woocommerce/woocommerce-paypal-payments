@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Settings\Ajax\SwitchSettingsUiEndpoint;
@@ -136,14 +137,15 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 			add_action(
 				'admin_enqueue_scripts',
 				static function () use ( $container ) {
-					$module_url = $container->get( 'settings.url' );
+					$asset_getter = $container->get( 'settings.asset_getter' );
+					assert( $asset_getter instanceof AssetGetter );
 
 					/** @psalm-suppress UnresolvableInclude */
-					$script_asset_file = require $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets/switchSettingsUi.asset.php';
+					$script_asset_file = require $asset_getter->get_asset_php_path( 'switchSettingsUi.js' );
 
 					wp_register_script(
 						'ppcp-switch-settings-ui',
-						untrailingslashit( $module_url ) . '/assets/switchSettingsUi.js',
+						$asset_getter->get_asset_url( 'switchSettingsUi.js' ),
 						$script_asset_file['dependencies'],
 						$script_asset_file['version'],
 						true
