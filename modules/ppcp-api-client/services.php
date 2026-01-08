@@ -1009,7 +1009,8 @@ return array(
 	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
 		return new PaymentLevelEligibility(
 			$container->get( 'settings.settings-provider' ),
-			$container->get( 'api.merchant.country' )
+			$container->get( 'api.merchant.country' ),
+			$container->get( 'api.shop.currency.getter' )
 		);
 	},
 );
