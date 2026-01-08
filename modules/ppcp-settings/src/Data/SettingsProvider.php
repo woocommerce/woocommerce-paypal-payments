@@ -549,15 +549,6 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Get products Apple enabled status.
-	 *
-	 * @return string
-	 */
-	public function applepay_products_enabled(): string {
-		return $this->payment_settings->get_products_apple_enabled();
-	}
-
-	/**
 	 * Get PPCP onboarding Apple flag.
 	 *
 	 * @return string

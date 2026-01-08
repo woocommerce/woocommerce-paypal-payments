@@ -26,104 +26,21 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
 
-	/**
-	 * The settings provider.
-	 *
-	 * @var SettingsProvider
-	 */
-	private $settings_provider;
-
-	/**
-	 * The payment settings.
-	 *
-	 * @var PaymentSettings
-	 */
-	private $payment_settings;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
-	 * The response templates.
-	 *
-	 * @var ResponsesToApple
-	 */
-	private $response_templates;
-
-	/**
-	 * The old cart contents.
-	 *
-	 * @var array
-	 * @psalm-suppress PropertyNotSetInConstructor
-	 */
-	private $old_cart_contents;
-
-	/**
-	 * The method id.
-	 *
-	 * @var string
-	 */
-	protected $id;
-
-	/**
-	 * The method title.
-	 *
-	 * @var string
-	 */
-	protected $method_title;
-
-	/**
-	 * The processor for orders.
-	 *
-	 * @var OrderProcessor
-	 */
-	protected $order_processor;
-
-	/**
-	 * Whether to reload the cart after the order is processed.
-	 *
-	 * @var bool
-	 */
-	protected $reload_cart = false;
-
-	/**
-	 * The module version.
-	 *
-	 * @var string
-	 */
-	private $version;
-
-	/**
-	 * The module URL.
-	 *
-	 * @var string
-	 */
-	private $module_url;
-
-	/**
-	 * The data to send to the ApplePay button script.
-	 *
-	 * @var DataToAppleButtonScripts
-	 */
-	private $script_data;
-
-	/**
-	 * The Settings status helper.
-	 *
-	 * @var SettingsStatus
-	 */
-	private $settings_status;
-
-	/**
-	 * The cart products helper.
-	 *
-	 * @var CartProductsHelper
-	 */
-	protected $cart_products;
+	private SettingsProvider $settings_provider;
+	private PaymentSettings $payment_settings;
+	private LoggerInterface $logger;
+	private ResponsesToApple $response_templates;
+	/** @psalm-suppress PropertyNotSetInConstructor */
+	private array $old_cart_contents;
+	protected string $id;
+	protected string $method_title;
+	protected OrderProcessor $order_processor;
+	protected bool $reload_cart = false;
+	private string $version;
+	private string $module_url;
+	private DataToAppleButtonScripts $script_data;
+	private SettingsStatus $settings_status;
+	protected CartProductsHelper $cart_products;
 
 	/**
 	 * PayPalPaymentMethod constructor.

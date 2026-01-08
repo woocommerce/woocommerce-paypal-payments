@@ -18,25 +18,9 @@ use WC_Product;
  */
 class DataToAppleButtonScripts {
 
-	/**
-	 * The URL to the SDK.
-	 *
-	 * @var string
-	 */
-	private $sdk_url;
-	/**
-	 * The settings.
-	 *
-	 * @var SettingsProvider
-	 */
-	private $settings;
+	private string $sdk_url;
+	private SettingsProvider $settings;
 
-	/**
-	 * DataToAppleButtonScripts constructor.
-	 *
-	 * @param string           $sdk_url  The URL to the SDK.
-	 * @param SettingsProvider $settings The settings.
-	 */
 	public function __construct( string $sdk_url, SettingsProvider $settings ) {
 		$this->sdk_url  = $sdk_url;
 		$this->settings = $settings;

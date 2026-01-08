@@ -11,8 +11,8 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusCapability;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
-use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 
@@ -27,30 +27,17 @@ class AppleProductStatus extends ProductStatus {
 	public const SETTINGS_VALUE_DISABLED  = 'no';
 	public const SETTINGS_VALUE_UNDEFINED = '';
 
-	/**
-	 * The settings.
-	 *
-	 * @var PaymentSettings
-	 */
-	private PaymentSettings $settings;
+	private Cache $cache;
 
-	/**
-	 * AppleProductStatus constructor.
-	 *
-	 * @param PaymentSettings  $settings             The Payment Settings.
-	 * @param PartnersEndpoint $partners_endpoint    The Partner Endpoint.
-	 * @param bool             $is_connected         The onboarding state.
-	 * @param FailureRegistry  $api_failure_registry The API failure registry.
-	 */
 	public function __construct(
-		PaymentSettings $settings,
+		Cache $cache,
 		PartnersEndpoint $partners_endpoint,
 		bool $is_connected,
 		FailureRegistry $api_failure_registry
 	) {
 		parent::__construct( $is_connected, $partners_endpoint, $api_failure_registry );
 
-		$this->settings = $settings;
+		$this->cache = $cache;
 	}
 
 	/** {@inheritDoc} */
@@ -60,9 +47,8 @@ class AppleProductStatus extends ProductStatus {
 			return $status_override;
 		}
 
-		$status = $this->settings->get_products_apple_enabled();
-		if ( $status !== '' ) {
-			return wc_string_to_bool( $status );
+		if ( $this->cache->has( self::SETTINGS_KEY ) ) {
+			return wc_string_to_bool( $this->cache->get( self::SETTINGS_KEY ) );
 		}
 
 		return null;
@@ -70,7 +56,6 @@ class AppleProductStatus extends ProductStatus {
 
 	/** {@inheritDoc} */
 	protected function check_active_state( SellerStatus $seller_status ): bool {
-		// Check the seller status for the intended capability.
 		$has_capability = false;
 		foreach ( $seller_status->products() as $product ) {
 			if ( $product->name() !== 'PAYMENT_METHODS' ) {
@@ -90,23 +75,24 @@ class AppleProductStatus extends ProductStatus {
 			}
 		}
 
-		if ( $has_capability ) {
-			$this->settings->set_products_apple_enabled( self::SETTINGS_VALUE_ENABLED );
-		} else {
-			$this->settings->set_products_apple_enabled( self::SETTINGS_VALUE_DISABLED );
-		}
-		$this->settings->save();
+		$this->cache->set(
+			self::SETTINGS_KEY,
+			$has_capability ? self::SETTINGS_VALUE_ENABLED : self::SETTINGS_VALUE_DISABLED,
+			MONTH_IN_SECONDS
+		);
 
 		return $has_capability;
 	}
 
-	/** {@inheritDoc} */
-	protected function clear_state( ?PaymentSettings $settings = null ): void {
-		if ( null === $settings ) {
-			$settings = $this->settings;
-		}
-
-		$settings->set_products_apple_enabled( self::SETTINGS_VALUE_UNDEFINED );
-		$settings->save();
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @param Cache|null $cache The cache instance.
+	 * @psalm-suppress MethodSignatureMismatch
+	 * @psalm-suppress ImplementedParamTypeMismatch
+	 */
+	protected function clear_state( ?Cache $cache = null ): void {
+		$cache = $cache ?? $this->cache;
+		$cache->delete( self::SETTINGS_KEY );
 	}
 }

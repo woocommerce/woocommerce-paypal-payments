@@ -37,19 +37,18 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	protected function get_defaults(): array {
 		return array(
-			'paypal_show_logo'           => false,
-			'cardholder_name'            => false,
-			'fastlane_display_watermark' => false,
-			'venmo_enabled'              => false,
-			'paylater_enabled'           => false,
-			'applepay_button_enabled'    => false,
-			'applepay_validated'         => false,
-			'applepay_button_type'       => 'plain',
-			'applepay_button_color'      => 'black',
-			'applepay_button_language'   => '',
+			'paypal_show_logo'            => false,
+			'cardholder_name'             => false,
+			'fastlane_display_watermark'  => false,
+			'venmo_enabled'               => false,
+			'paylater_enabled'            => false,
+			'applepay_button_enabled'     => false,
+			'applepay_validated'          => false,
+			'applepay_button_type'        => 'plain',
+			'applepay_button_color'       => 'black',
+			'applepay_button_language'    => '',
 			'applepay_checkout_data_mode' => 'use_wc',
-			'products_apple_enabled'     => '',
-			'ppcp_onboarding_apple'      => '',
+			'ppcp_onboarding_apple'       => '',
 		);
 	}
 
@@ -413,25 +412,6 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	public function set_applepay_checkout_data_mode( string $value ): void {
 		$this->data['applepay_checkout_data_mode'] = $value;
-	}
-
-	/**
-	 * Get products Apple enabled.
-	 *
-	 * @return string
-	 */
-	public function get_products_apple_enabled(): string {
-		return (string) $this->data['products_apple_enabled'];
-	}
-
-	/**
-	 * Set products Apple enabled.
-	 *
-	 * @param string $value The value.
-	 * @return void
-	 */
-	public function set_products_apple_enabled( string $value ): void {
-		$this->data['products_apple_enabled'] = $value;
 	}
 
 	/**

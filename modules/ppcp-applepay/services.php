@@ -70,8 +70,9 @@ return array(
 	},
 
 	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'settings.settings-provider' );
-		return $settings->applepay_validated() !== false;
+		$cache = $container->get( 'applepay.status-cache' );
+		assert( $cache instanceof Cache );
+		return $cache->has( AppleProductStatus::SETTINGS_KEY );
 	},
 
 	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
@@ -82,7 +83,7 @@ return array(
 	'applepay.apple-product-status'            => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): AppleProductStatus {
 			return new AppleProductStatus(
-				$container->get( 'settings.data.payment' ),
+				$container->get( 'applepay.status-cache' ),
 				$container->get( 'api.endpoint.partners' ),
 				$container->get( 'settings.flag.is-connected' ),
 				$container->get( 'api.helper.failure-registry' )
