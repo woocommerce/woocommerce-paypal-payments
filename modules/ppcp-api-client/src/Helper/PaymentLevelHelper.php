@@ -1,6 +1,6 @@
 <?php
 /**
- * Helper for building Level 2/3 card processing data from WooCommerce orders.
+ * Helper for building Level 2/3 card processing data.
  *
  * @package WooCommerce\PayPalCommerce\ApiClient\Helper
  */
@@ -10,20 +10,22 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 
 class PaymentLevelHelper {
 
 	/**
-	 * Builds supplementary card data from WooCommerce order.
+	 * Builds supplementary card data.
 	 *
-	 * @param WC_Order $order The WooCommerce order.
-	 * @param string   $level The processing level ('level_2' or 'level_3').
+	 * @param Amount $amount The Amount object based off a WooCommerce cart.
+	 * @param string $level The processing level ('level_2' or 'level_3').
 	 * @return array{
 	 *     supplementary_data: array{
 	 *         card: array{
 	 *             level_2?: array{
 	 *                 customer_reference: string,
-	 *                 tax_total: array{
+	 *                 tax_total?: array{
 	 *                     currency_code: string,
 	 *                     value: string
 	 *                 }
@@ -32,7 +34,7 @@ class PaymentLevelHelper {
 	 *     }
 	 * }|null Supplementary data array ready for PurchaseUnit, or null if no data could be built.
 	 */
-	public function build( WC_Order $order, string $level ): ?array {
+	public function build( Amount $amount, string $level ): ?array {
 		$data = array(
 			'supplementary_data' => array(
 				'card' => array(),
@@ -40,7 +42,10 @@ class PaymentLevelHelper {
 		);
 
 		if ( 'level_2' === $level ) {
-			$data['supplementary_data']['card']['level_2'] = $this->build_level_2( $order );
+			$breakdown = $amount->breakdown();
+			$tax_total = $breakdown ? $breakdown->tax_total() : null;
+
+			$data['supplementary_data']['card']['level_2'] = $this->build_level_2( $tax_total );
 		}
 
 		/* phpcs:disable Squiz.PHP.CommentedOutCode.Found
@@ -59,34 +64,37 @@ class PaymentLevelHelper {
 	/**
 	 * Builds Level 2 card data.
 	 *
-	 * @param WC_Order $order The WooCommerce order.
+	 * @param Money|null $tax_total The tax total amount.
 	 * @return array{
-	 *     customer_reference: string,
-	 *     tax_total: array{
+	 *     invoice_id: string,
+	 *     tax_total?: array{
 	 *         currency_code: string,
 	 *         value: string
 	 *     }
 	 * } Level 2 data array.
 	 */
-	private function build_level_2( WC_Order $order ): array {
+	private function build_level_2( ?Money $tax_total ): array {
 		/**
-		 * Filters the Level 2 customer reference/PO number.
+		 * Filters the Level 2 invoice ID.
 		 *
-		 * @param string   $customer_reference The customer reference (default: order ID).
-		 * @param WC_Order $order              The WooCommerce order.
+		 * @param string $invoice_id The invoice ID (default: unique cart identifier).
 		 */
-		$customer_reference = apply_filters(
-			'woocommerce_paypal_payments_level2_customer_reference',
-			(string) $order->get_id(),
-			$order
+		$invoice_id = apply_filters(
+			'woocommerce_paypal_payments_level2_invoice_id',
+			'INV_' . strtoupper( uniqid() )
 		);
 
-		return array(
-			'customer_reference' => (string) substr( $customer_reference, 0, 17 ),
-			'tax_total'          => array(
-				'currency_code' => $order->get_currency(),
-				'value'         => number_format( (float) $order->get_total_tax(), 2, '.', '' ),
-			),
+		$level_2 = array(
+			'invoice_id' => (string) substr( $invoice_id, 0, 127 ),
 		);
+
+		if ( $tax_total ) {
+			$level_2['tax_total'] = array(
+				'currency_code' => $tax_total->currency_code(),
+				'value'         => $tax_total->value_str(),
+			);
+		}
+
+		return $level_2;
 	}
 }
