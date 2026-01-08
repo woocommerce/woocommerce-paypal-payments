@@ -507,6 +507,13 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			return;
 		}
 
+		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_key_from_url = isset( $_GET['key'] ) ? wc_clean( wp_unslash( $_GET['key'] ) ) : '';
+		//phpcs:ignore WordPress.WP.Capabilities.Unknown
+		if ( $order->get_order_key() !== $order_key_from_url && ! current_user_can( 'view_order', $order_id ) ) {
+			return;
+		}
+
 		$asset_getter = $c->get( 'axo.asset_getter' );
 		assert( $asset_getter instanceof AssetGetter );
 

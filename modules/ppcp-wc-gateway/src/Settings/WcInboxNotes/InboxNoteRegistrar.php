@@ -21,7 +21,7 @@ class InboxNoteRegistrar {
 	protected array $inbox_notes;
 	protected string $plugin_base_name;
 
-	public function __construct( array $inbox_notes, $plugin_base_name ) {
+	public function __construct( array $inbox_notes, string $plugin_base_name ) {
 		$this->inbox_notes      = $inbox_notes;
 		$this->plugin_base_name = $plugin_base_name;
 	}
