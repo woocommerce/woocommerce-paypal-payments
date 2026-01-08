@@ -56,6 +56,19 @@ class ProductStatusResultCacheTest extends TestCase {
 		$this->assertSame( 'test_value', $result );
 	}
 
+	public function test_handles_multiple_keys_independently(): void {
+		$testee = new TestProductStatusResultCache();
+
+		$testee->set( 'key1', 'dummy' );
+		$testee->set( 'key1', 'value1' );
+		$testee->set( 'key2', 'value2' );
+		$testee->set( 'key3', 'value3' );
+
+		$this->assertSame( 'value1', $testee->get( 'key1' ) );
+		$this->assertSame( 'value2', $testee->get( 'key2' ) );
+		$this->assertSame( 'value3', $testee->get( 'key3' ) );
+	}
+
 }
 
 class TestProductStatusResultCache extends ProductStatusResultCache {
