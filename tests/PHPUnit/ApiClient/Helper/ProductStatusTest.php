@@ -36,12 +36,41 @@ class ProductStatusTest extends TestCase {
 		$this->assertFalse( $result );
 	}
 
+	public function test_is_active_uses_local_state_when_available(): void {
+		$is_connected         = true;
+		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
+		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+
+		// PartnersEndpoint should never be called when local state is available
+		$partners_endpoint->shouldNotReceive( 'seller_status' );
+
+		$testee = new TestProductStatusWithLocalState( $is_connected, $partners_endpoint, $api_failure_registry );
+
+		$result = $testee->is_active();
+
+		$this->assertTrue( $result );
+	}
+
 }
 
 class TestProductStatus extends ProductStatus {
 
 	protected function check_local_state(): ?bool {
 		return null;
+	}
+
+	protected function check_active_state( SellerStatus $seller_status ): bool {
+		return true;
+	}
+
+	protected function clear_state( ?Settings $settings = null ): void {
+	}
+}
+
+class TestProductStatusWithLocalState extends ProductStatus {
+
+	protected function check_local_state(): ?bool {
+		return true;
 	}
 
 	protected function check_active_state( SellerStatus $seller_status ): bool {
