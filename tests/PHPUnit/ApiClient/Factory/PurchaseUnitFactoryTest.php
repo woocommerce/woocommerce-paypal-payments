@@ -15,6 +15,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\PaymentLevelHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use function Brain\Monkey\Functions\expect;
 
 class PurchaseUnitFactoryTest extends TestCase
@@ -39,6 +41,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
         $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+	    $wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
         $amountFactory
@@ -73,7 +76,7 @@ class PurchaseUnitFactoryTest extends TestCase
 	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
 	    $paymentLevelEligibility
 		    ->shouldReceive('is_eligible')
-		    ->with($wcOrder)
+		    ->with(PayPalGateway::ID)
 		    ->andReturn(false);
 
         $testee = new PurchaseUnitFactory(
@@ -98,16 +101,18 @@ class PurchaseUnitFactoryTest extends TestCase
     }
 
 	public function testWcOrderWithNegativeFees()
-    {
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
-        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->shouldReceive('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($amount);
+	{
+		$wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
+
+		$amount = Mockery::mock(Amount::class);
+		$amountFactory = Mockery::mock(AmountFactory::class);
+		$amountFactory
+			->shouldReceive('from_wc_order')
+			->with($wcOrder)
+			->andReturn($amount);
 
 		$fee = Mockery::mock(Item::class, [
 			'category' => Item::DIGITAL_GOODS,
@@ -117,51 +122,52 @@ class PurchaseUnitFactoryTest extends TestCase
 			'unit_amount' => new Money(-5, 'USD'),
 		]);
 
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->shouldReceive('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn([$this->item, $fee, $discount]);
+		$itemFactory = Mockery::mock(ItemFactory::class);
+		$itemFactory
+			->shouldReceive('from_wc_order')
+			->with($wcOrder)
+			->andReturn([$this->item, $fee, $discount]);
 
-        $address = Mockery::mock(Address::class);
-        $address->shouldReceive('country_code')->andReturn('DE');
-        $address->shouldReceive('postal_code')->andReturn('12345');
-	    $address->shouldReceive('address_line_1')->andReturn('Berlin Street');
+		$address = Mockery::mock(Address::class);
+		$address->shouldReceive('country_code')->andReturn('DE');
+		$address->shouldReceive('postal_code')->andReturn('12345');
+		$address->shouldReceive('address_line_1')->andReturn('Berlin Street');
 
-	    $shipping = Mockery::mock(Shipping::class);
-        $shipping->shouldReceive('address')->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->shouldReceive('from_wc_order')
-            ->with($wcOrder)
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
+		$shipping = Mockery::mock(Shipping::class);
+		$shipping->shouldReceive('address')->andReturn($address);
+		$shippingFactory = Mockery::mock(ShippingFactory::class);
+		$shippingFactory
+			->shouldReceive('from_wc_order')
+			->with($wcOrder)
+			->andReturn($shipping);
+		$paymentsFacory = Mockery::mock(PaymentsFactory::class);
 
-	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
-	    $paymentLevelEligibility
-		    ->shouldReceive('is_eligible')
-		    ->with($wcOrder)
-		    ->andReturn(false);
+		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+		$paymentLevelEligibility
+			->shouldReceive('is_eligible')
+			->with(PayPalGateway::ID)
+			->andReturn(false);
 
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory,
-	        Mockery::mock(PaymentLevelHelper::class),
-	        $paymentLevelEligibility
-        );
+		$testee = new PurchaseUnitFactory(
+			$amountFactory,
+			$itemFactory,
+			$shippingFactory,
+			$paymentsFacory,
+			Mockery::mock(PaymentLevelHelper::class),
+			$paymentLevelEligibility
+		);
 
-        $unit = $testee->from_wc_order($wcOrder);
-        $this->assertTrue(is_a($unit, PurchaseUnit::class));
-        $this->assertEquals([$this->item, $fee], $unit->items());
-    }
+		$unit = $testee->from_wc_order($wcOrder);
+		$this->assertTrue(is_a($unit, PurchaseUnit::class));
+		$this->assertEquals([$this->item, $fee], $unit->items());
+	}
 
     public function testWcOrderShippingGetsDroppedWhenNoPostalCode()
     {
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
         $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+	    $wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
         $amountFactory
@@ -198,7 +204,7 @@ class PurchaseUnitFactoryTest extends TestCase
 	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
 	    $paymentLevelEligibility
 		    ->shouldReceive('is_eligible')
-		    ->with($wcOrder)
+		    ->with(PayPalGateway::ID)
 		    ->andReturn(false);
 
         $testee = new PurchaseUnitFactory(
@@ -219,6 +225,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
         $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+	    $wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
         $amountFactory
@@ -249,7 +256,7 @@ class PurchaseUnitFactoryTest extends TestCase
 	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
 	    $paymentLevelEligibility
 		    ->shouldReceive('is_eligible')
-		    ->with($wcOrder)
+		    ->with(PayPalGateway::ID)
 		    ->andReturn(false);
 
         $testee = new PurchaseUnitFactory(
@@ -270,6 +277,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
 		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
 		$amount = Mockery::mock(Amount::class);
 		$amountFactory = Mockery::mock(AmountFactory::class);
 		$amountFactory
@@ -303,7 +311,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
 		$paymentLevelEligibility
 			->shouldReceive('is_eligible')
-			->with($wcOrder)
+			->with(PayPalGateway::ID)
 			->andReturn(false);
 
 		$testee = new PurchaseUnitFactory(
@@ -358,13 +366,19 @@ class PurchaseUnitFactoryTest extends TestCase
             ->andReturn($shipping);
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
 
+	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+	    $paymentLevelEligibility
+		    ->shouldReceive('is_eligible')
+		    ->with('')
+		    ->andReturn(false);
+
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        $paymentLevelEligibility
         );
 
         $unit = $testee->from_wc_cart($wcCart);
@@ -399,13 +413,20 @@ class PurchaseUnitFactoryTest extends TestCase
             ->andReturn([$this->item]);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
+
+	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+	    $paymentLevelEligibility
+		    ->shouldReceive('is_eligible')
+		    ->with('')
+		    ->andReturn(false);
+
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        $paymentLevelEligibility
         );
 
         $unit = $testee->from_wc_cart($wcCart);
@@ -443,13 +464,20 @@ class PurchaseUnitFactoryTest extends TestCase
             ->expects('from_wc_customer')
             ->andReturn($shipping);
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
+
+	    $paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
+	    $paymentLevelEligibility
+		    ->shouldReceive('is_eligible')
+		    ->with('')
+		    ->andReturn(false);
+
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory,
 	        Mockery::mock(PaymentLevelHelper::class),
-	        Mockery::mock(PaymentLevelEligibility::class)
+	        $paymentLevelEligibility
         );
 
         $unit = $testee->from_wc_cart($wcCart);
@@ -659,6 +687,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
 		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->shouldReceive('get_payment_method')->andReturn(CreditCardGateway::ID);
 
 		// Mock Amount with to_array() expectation
 		$amount = Mockery::mock(Amount::class);
@@ -721,7 +750,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
 		$paymentLevelEligibility
 			->shouldReceive('is_eligible')
-			->with($wcOrder)
+			->with(CreditCardGateway::ID)
 			->andReturn(true);
 
 		// Mock Level 2 data structure
@@ -729,7 +758,7 @@ class PurchaseUnitFactoryTest extends TestCase
 			'supplementary_data' => [
 				'card' => [
 					'level_2' => [
-						'customer_reference' => '12345',
+						'invoice_id' => 'INV_12345',
 						'tax_total' => [
 							'currency_code' => 'USD',
 							'value' => '8.50'
@@ -742,7 +771,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
 		$paymentLevelHelper
 			->shouldReceive('build')
-			->with($wcOrder, 'level_2')
+			->with($amount, 'level_2')
 			->andReturn($level2Data);
 
 		$testee = new PurchaseUnitFactory(
@@ -764,7 +793,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$this->assertArrayHasKey('supplementary_data', $unitArray);
 		$this->assertArrayHasKey('card', $unitArray['supplementary_data']);
 		$this->assertArrayHasKey('level_2', $unitArray['supplementary_data']['card']);
-		$this->assertEquals('12345', $unitArray['supplementary_data']['card']['level_2']['customer_reference']);
+		$this->assertEquals('INV_12345', $unitArray['supplementary_data']['card']['level_2']['invoice_id']);  // Changed field name
 		$this->assertEquals('USD', $unitArray['supplementary_data']['card']['level_2']['tax_total']['currency_code']);
 		$this->assertEquals('8.50', $unitArray['supplementary_data']['card']['level_2']['tax_total']['value']);
 	}
@@ -774,6 +803,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
 		$wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->shouldReceive('get_payment_method')->andReturn(PayPalGateway::ID);
 
 		// Mock Amount with to_array() expectation
 		$amount = Mockery::mock(Amount::class);
@@ -836,7 +866,7 @@ class PurchaseUnitFactoryTest extends TestCase
 		$paymentLevelEligibility = Mockery::mock(PaymentLevelEligibility::class);
 		$paymentLevelEligibility
 			->shouldReceive('is_eligible')
-			->with($wcOrder)
+			->with(PayPalGateway::ID)
 			->andReturn(false);
 
 		$paymentLevelHelper = Mockery::mock(PaymentLevelHelper::class);
