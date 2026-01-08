@@ -9,17 +9,18 @@ use function Brain\Monkey\Functions\when;
 class ProductStatusResultCacheTest extends TestCase {
 
 	public function setUp(): void {
+		parent::setUp();
 		when( 'get_transient' )->justReturn( array() );
 		when( 'set_transient' )->justReturn( true );
 	}
 
-	public function test_if_class_exists(): void {
-		$testee = new ProductStatusResultCache();
-		$this->assertInstanceOf( ProductStatusResultCache::class, $testee );
+	public function tearDown(): void {
+		TestProductStatusResultCache::reset_storage();
+		parent::tearDown();
 	}
 
 	public function test_get_returns_empty_string_for_non_existent_key(): void {
-		$testee = new ProductStatusResultCache();
+		$testee = new TestProductStatusResultCache();
 
 		$result = $testee->get( 'non_existent_key' );
 
@@ -27,7 +28,7 @@ class ProductStatusResultCacheTest extends TestCase {
 	}
 
 	public function test_set_stores_value_and_get_retrieves_it(): void {
-		$testee = new ProductStatusResultCache();
+		$testee = new TestProductStatusResultCache();
 
 		$testee->set( 'test_key', 'test_value' );
 		$result = $testee->get( 'test_key' );
@@ -36,7 +37,7 @@ class ProductStatusResultCacheTest extends TestCase {
 	}
 
 	public function test_clear_removes_value(): void {
-		$testee = new ProductStatusResultCache();
+		$testee = new TestProductStatusResultCache();
 
 		$testee->set( 'test_key', 'test_value' );
 		$testee->clear( 'test_key' );
@@ -59,6 +60,10 @@ class ProductStatusResultCacheTest extends TestCase {
 
 class TestProductStatusResultCache extends ProductStatusResultCache {
 	private static array $storage = array();
+
+	public static function reset_storage(): void {
+		self::$storage = array();
+	}
 
 	protected function load_from_storage(): array {
 		return self::$storage;
