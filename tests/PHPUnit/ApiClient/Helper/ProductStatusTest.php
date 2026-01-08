@@ -24,6 +24,18 @@ class ProductStatusTest extends TestCase {
 		$this->assertInstanceOf( ProductStatus::class, $testee );
 	}
 
+	public function test_is_active_returns_false_when_not_onboarded(): void {
+		$is_connected         = false;
+		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
+		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+
+		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry );
+
+		$result = $testee->is_active();
+
+		$this->assertFalse( $result );
+	}
+
 }
 
 class TestProductStatus extends ProductStatus {
