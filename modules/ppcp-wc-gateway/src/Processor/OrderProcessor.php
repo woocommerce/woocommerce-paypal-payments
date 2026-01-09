@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use Automattic\WooCommerce\Utilities\OrderUtil;
 
 /**
  * Class OrderProcessor
@@ -423,6 +424,7 @@ class OrderProcessor {
 	 *
 	 * Uses direct SQL to ensure atomic lock acquisition, preventing race conditions
 	 * where two concurrent processes could both acquire the lock.
+	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @return bool True if lock was acquired, false if already locked.
@@ -432,12 +434,20 @@ class OrderProcessor {
 
 		$order_id = $wc_order->get_id();
 
-		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$table     = $wpdb->prefix . 'wc_orders_meta';
+			$id_column = 'order_id';
+		} else {
+			$table     = $wpdb->postmeta;
+			$id_column = 'post_id';
+		}
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows_updated = $wpdb->query(
 			$wpdb->prepare(
-				"UPDATE {$wpdb->postmeta}
+				"UPDATE {$table}
 				SET meta_value = 'yes'
-				WHERE post_id = %d
+				WHERE {$id_column} = %d
 				AND meta_key = '_ppcp_processing'
 				AND meta_value != 'yes'",
 				$order_id
@@ -450,13 +460,13 @@ class OrderProcessor {
 
 		$current_value = $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT meta_value FROM {$wpdb->postmeta}
-				WHERE post_id = %d AND meta_key = '_ppcp_processing'
+				"SELECT meta_value FROM {$table}
+				WHERE {$id_column} = %d AND meta_key = '_ppcp_processing'
 				LIMIT 1",
 				$order_id
 			)
 		);
-		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 		if ( $current_value === 'yes' ) {
 			$this->logger->warning(
@@ -477,17 +487,27 @@ class OrderProcessor {
 	/**
 	 * Releases the processing lock for the order.
 	 *
+	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
+	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @return void
 	 */
 	private function release_processing_lock( WC_Order $wc_order ): void {
 		global $wpdb;
 
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$table     = $wpdb->prefix . 'wc_orders_meta';
+			$id_column = 'order_id';
+		} else {
+			$table     = $wpdb->postmeta;
+			$id_column = 'post_id';
+		}
+
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->delete(
-			$wpdb->postmeta,
+			$table,
 			array(
-				'post_id'  => $wc_order->get_id(),
+				$id_column => $wc_order->get_id(),
 				'meta_key' => '_ppcp_processing', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 			),
 			array( '%d', '%s' )
