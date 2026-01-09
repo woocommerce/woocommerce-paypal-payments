@@ -200,7 +200,7 @@ class SettingsModule implements ServiceModule, ExecutableModule {
 		assert( $loading_screen_service instanceof LoadingScreenService );
 		$loading_screen_service->register();
 
-		$this->apply_branded_only_limitations( $container );
+		add_action( 'init', fn() => $this->apply_branded_only_limitations( $container ), 1 );
 
 		/**
 		 * Override ACDC status with BCDC for eligible merchants.
