@@ -1,13 +1,13 @@
 import { __ } from '@wordpress/i18n';
 
-import SettingsCard from '../../../../ReusableComponents/SettingsCard';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import OrderIntent from './Blocks/OrderIntent';
 import SavePaymentMethods from './Blocks/SavePaymentMethods';
 import InvoicePrefix from './Blocks/InvoicePrefix';
 import PayNowExperience from './Blocks/PayNowExperience';
 import StayUpdated from './Blocks/StayUpdated';
 
-const CommonSettings = ( { ownBradOnly } ) => (
+const CommonSettings = ( { ownBrandOnly } ) => (
 	<SettingsCard
 		icon="icon-settings-common.svg"
 		title={ __( 'Common settings', 'woocommerce-paypal-payments' ) }
@@ -19,7 +19,7 @@ const CommonSettings = ( { ownBradOnly } ) => (
 	>
 		<InvoicePrefix />
 		<OrderIntent />
-		<SavePaymentMethods ownBradOnly={ ownBradOnly } />
+		<SavePaymentMethods ownBradOnly={ ownBrandOnly } />
 		<PayNowExperience />
 		<StayUpdated />
 	</SettingsCard>

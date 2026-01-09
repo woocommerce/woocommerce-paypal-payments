@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PaymentSettingsMigration
@@ -28,7 +27,10 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 
 	public const OPTION_NAME_BCDC_MIGRATION_OVERRIDE = 'woocommerce_paypal_payments_bcdc_migration_override';
 
-	protected Settings $settings;
+	/**
+	 * @var array<string, mixed>
+	 */
+	protected array $settings;
 	protected PaymentSettings $payment_settings;
 	protected DccApplies $dcc_applies;
 	protected DCCProductStatus $dcc_status;
@@ -42,7 +44,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	protected array $local_apms;
 
 	public function __construct(
-		Settings $settings,
+		array $settings,
 		PaymentSettings $payment_settings,
 		DccApplies $dcc_applies,
 		DCCProductStatus $dcc_status,
@@ -58,15 +60,13 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 	}
 
 	public function migrate(): void {
-		$allow_local_apm_gateways = $this->settings->has( 'allow_local_apm_gateways' ) && $this->settings->get( 'allow_local_apm_gateways' );
-
-		if ( $this->settings->has( 'disable_funding' ) ) {
-			$disable_funding = (array) $this->settings->get( 'disable_funding' );
+		if ( isset( $this->settings['disable_funding'] ) ) {
+			$disable_funding = (array) $this->settings['disable_funding'];
 			if ( ! in_array( 'venmo', $disable_funding, true ) ) {
 				$this->payment_settings->toggle_method_state( 'venmo', true );
 			}
 
-			if ( ! $allow_local_apm_gateways ) {
+			if ( ! empty( $this->settings['allow_local_apm_gateways'] ) ) {
 				foreach ( $this->local_apms as $apm ) {
 					if ( ! in_array( $apm['id'], $disable_funding, true ) ) {
 						$this->payment_settings->toggle_method_state( $apm['id'], true );
@@ -80,7 +80,7 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 		}
 
 		foreach ( $this->map() as $old_key => $method_name ) {
-			if ( $this->settings->has( $old_key ) && $this->settings->get( $old_key ) ) {
+			if ( ! empty( $this->settings[ $old_key ] ) ) {
 				$this->payment_settings->toggle_method_state( $method_name, true );
 			}
 		}
@@ -123,7 +123,6 @@ class PaymentSettingsMigration implements SettingsMigrationInterface {
 			return false;
 		}
 
-		$disabled_funding = $this->settings->has( 'disable_funding' ) ? $this->settings->get( 'disable_funding' ) : array();
-		return ! in_array( 'card', $disabled_funding, true );
+		return ! in_array( 'card', $this->settings['disable_funding'] ?? array(), true );
 	}
 }

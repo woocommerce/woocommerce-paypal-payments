@@ -1,6 +1,6 @@
 import { __ } from '@wordpress/i18n';
 
-import { CommonHooks, OnboardingHooks } from '../../../../data';
+import { CommonHooks, OnboardingHooks } from '@ppcp-settings/data';
 import StepWelcome from './StepWelcome';
 import StepBusiness from './StepBusiness';
 import StepProducts from './StepProducts';

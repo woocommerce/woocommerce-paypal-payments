@@ -4,18 +4,18 @@ import { useDispatch } from '@wordpress/data';
 import { store as noticesStore } from '@wordpress/notices';
 import FeatureItem from './FeatureItem';
 import FeatureDescription from './FeatureDescription';
-import { ContentWrapper } from '../../../../../ReusableComponents/Elements';
-import SettingsCard from '../../../../../ReusableComponents/SettingsCard';
+import { ContentWrapper } from '@ppcp-settings/Components/ReusableComponents/Elements';
+import SettingsCard from '@ppcp-settings/Components/ReusableComponents/SettingsCard';
 import {
 	useMerchantInfo,
 	useWooSettings,
-} from '../../../../../../data/common/hooks';
-import { STORE_NAME as COMMON_STORE_NAME } from '../../../../../../data/common';
+} from '@ppcp-settings/data/common/hooks';
+import { STORE_NAME as COMMON_STORE_NAME } from '@ppcp-settings/data/common';
 import {
 	NOTIFICATION_ERROR,
 	NOTIFICATION_SUCCESS,
-} from '../../../../../ReusableComponents/Icons';
-import { useFeatures } from '../../../../../../data/features/hooks';
+} from '@ppcp-settings/Components/ReusableComponents/Icons';
+import { useFeatures } from '@ppcp-settings/data/features/hooks';
 
 const Features = () => {
 	const [ isRefreshing, setIsRefreshing ] = useState( false );

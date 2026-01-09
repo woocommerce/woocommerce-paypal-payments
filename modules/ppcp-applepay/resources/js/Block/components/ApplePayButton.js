@@ -1,8 +1,8 @@
 import { useState, useEffect } from '@wordpress/element';
-import useApiToGenerateButton from '../hooks/useApiToGenerateButton';
-import usePayPalScript from '../hooks/usePayPalScript';
-import useApplepayScript from '../hooks/useApplepayScript';
-import useApplepayConfig from '../hooks/useApplepayConfig';
+import useApiToGenerateButton from '@ppcp-applepay/Block/hooks/useApiToGenerateButton';
+import usePayPalScript from '@ppcp-applepay/Block/hooks/usePayPalScript';
+import useApplepayScript from '@ppcp-applepay/Block/hooks/useApplepayScript';
+import useApplepayConfig from '@ppcp-applepay/Block/hooks/useApplepayConfig';
 
 const ApplepayButton = ( {
 	namespace,

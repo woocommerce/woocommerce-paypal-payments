@@ -11,9 +11,13 @@ namespace WooCommerce\PayPalCommerce\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BancontactGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\BlikGateway;
 use WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods\EPSGateway;
@@ -30,6 +34,7 @@ use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\OnboardingProfile;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Settings\Data\StylingSettings;
 use WooCommerce\PayPalCommerce\Settings\Data\TodosModel;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\TodosDefinition;
@@ -59,6 +64,7 @@ use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigrati
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\SettingsTabMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\StylingSettingsMigration;
 use WooCommerce\PayPalCommerce\Settings\Service\OnboardingUrlManager;
+use WooCommerce\PayPalCommerce\Settings\Service\PaymentMethodsEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\ScriptDataHandler;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosEligibilityService;
 use WooCommerce\PayPalCommerce\Settings\Service\TodosSortingAndFilteringService;
@@ -72,7 +78,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PWCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
@@ -81,8 +86,20 @@ use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 $services = array(
-	'settings.url'                                        => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'settings.asset_getter'                               => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-settings' );
+	},
+	'settings.settings-provider'                          => static function ( ContainerInterface $container ): SettingsProvider {
+		return new SettingsProvider(
+			$container->get( 'settings.data.general' ),
+			$container->get( 'settings.data.onboarding' ),
+			$container->get( 'settings.data.payment' ),
+			$container->get( 'settings.data.settings' ),
+			$container->get( 'settings.data.styling' ),
+		);
 	},
 	'settings.data.onboarding'                            => static function ( ContainerInterface $container ): OnboardingProfile {
 		$can_use_casual_selling      = $container->get( 'settings.casual-selling.eligible' );
@@ -357,15 +374,14 @@ $services = array(
 	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
 		$settings                     = $container->get( 'wcgateway.settings' );
-		$settings_url                 = $container->get( 'settings.url' );
+		$asset_getter                 = $container->get( 'settings.asset_getter' );
 		$paylater_is_available        = $container->get( 'paylater-configurator.is-available' );
 		$store_country                = $container->get( 'wcgateway.store-country' );
 		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
-		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
 
-		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
+		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),
@@ -374,16 +390,16 @@ $services = array(
 		$c->get( 'settings.service.data-migration.payment-settings' ),
 	),
 	'settings.service.data-migration.settings-tab'        => static fn( ContainerInterface $c ): SettingsTabMigration => new SettingsTabMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.settings' ),
 		$c->get( 'compat.settings.settings_tab_map_helper' ),
 	),
 	'settings.service.data-migration.styling'             => static fn( ContainerInterface $c ): StylingSettingsMigration => new StylingSettingsMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.styling' ),
 	),
 	'settings.service.data-migration.payment-settings'    => static fn( ContainerInterface $c ): PaymentSettingsMigration => new PaymentSettingsMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.payment' ),
 		$c->get( 'api.helpers.dccapplies' ),
 		$c->get( 'wcgateway.helper.dcc-product-status' ),
@@ -391,7 +407,7 @@ $services = array(
 		$c->get( 'ppcp-local-apms.payment-methods' ),
 	),
 	'settings.service.data-migration.general-settings'    => static fn( ContainerInterface $c ): SettingsMigration => new SettingsMigration(
-		$c->get( 'wcgateway.settings' ),
+		(array) get_option( 'woocommerce-ppcp-settings', array() ),
 		$c->get( 'settings.data.general' ),
 		$c->get( 'api.endpoint.partners' ),
 	),
@@ -541,6 +557,9 @@ $services = array(
 
 		$is_working_capital_eligible = $container->get( 'settings.data.general' )->get_merchant_country() === 'US' && $settings_model->get_stay_updated();
 
+		$recaptcha_settings = get_option( 'woocommerce_ppcp-recaptcha_settings', array() );
+		$is_recaptcha_enabled = isset( $recaptcha_settings['enabled'] ) && 'yes' === $recaptcha_settings['enabled'];
+
 		/**
 		 * Initializes TodosEligibilityService with eligibility conditions for various PayPal features.
 		 * Each parameter determines whether a specific feature should be shown in the Things To Do list.
@@ -567,7 +586,8 @@ $services = array(
 		 * @param bool $is_enable_google_pay_eligible - Show if merchant has Google Pay capability but hasn't enabled the gateway.
 		 * @param bool $is_enable_installments_eligible - Show if merchant has installments capability and merchant country is MX.
 		 * @param bool $is_working_capital_eligible - Show if feature flag is enabled, merchant country is US and "Stay Updated" is turned On.
-		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability.
+		 * @param bool $is_pwc_eligible                  - Show if merchant has Pay with Crypto capability and store currency is USD.
+		 * @param bool $is_recaptcha_protection_eligible - Show if reCAPTCHA is not already enabled.
 		 */
 		return new TodosEligibilityService(
 			$container->get( 'axo.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $gateways['axo'],                  // Enable Fastlane.
@@ -590,8 +610,9 @@ $services = array(
 			$container->get( 'googlepay.eligible' ) && $capabilities[ FeaturesDefinition::FEATURE_GOOGLE_PAY ] && ! $gateways[ FeaturesDefinition::FEATURE_GOOGLE_PAY ],
 			! $capabilities[ FeaturesDefinition::FEATURE_INSTALLMENTS ] && 'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Enable Installments for Mexico.
 			$is_working_capital_feature_flag_enabled && $is_working_capital_eligible, // Enable Working Capital.
-			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Enable Pay with Crypto.
-			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ], // Apply for Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && ! $gateways[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && $container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Enable Pay with Crypto.
+			$capabilities[ FeaturesDefinition::FEATURE_ADVANCED_CREDIT_AND_DEBIT_CARDS ] && ! $capabilities[ FeaturesDefinition::FEATURE_PAY_WITH_CRYPTO ] && $container->get( 'ppcp-local-apms.pwc.eligibility.check' ), // Apply for Pay with Crypto.
+			! $is_recaptcha_enabled,
 		);
 	},
 	'settings.rest.features'                              => static function ( ContainerInterface $container ): FeaturesRestEndpoint {
@@ -665,11 +686,28 @@ $services = array(
 			$container->get( 'googlepay.eligibility.check' ), // Google Pay eligibility.
 			$container->get( 'applepay.eligibility.check' ), // Apple Pay eligibility.
 			$pay_later_eligible, // Pay Later eligibility.
-			'MX' === $container->get( 'settings.data.general' )->get_merchant_country(), // Installments eligibility.
-			$apm_eligible  // Pay with Crypto eligibility.
+			'MX' === $container->get( 'api.merchant.country' ), // Installments eligibility.
+			$container->get( 'ppcp-local-apms.pwc.eligibility.check' ) // Pay with Crypto eligibility.
 		);
 	},
+	'settings.service.payment_methods_eligibilities'      => static function ( ContainerInterface $container ): PaymentMethodsEligibilityService {
+		$applepay_product_status = $container->get( 'applepay.apple-product-status' );
+		assert( $applepay_product_status instanceof AppleProductStatus );
 
+		$googlepay_product_status = $container->get( 'googlepay.helpers.apm-product-status' );
+		assert( $googlepay_product_status instanceof ApmProductStatus );
+
+		return new PaymentMethodsEligibilityService(
+			$container->get( 'api.merchant.country' ),
+			$container->get( 'ppcp-local-apms.eligibility.check' ),
+			$container->get( 'settings.service.merchant_capabilities' ),
+			$container->get( 'wcgateway.helper.dcc-product-status' ),
+			$container->get( 'axo.eligibility.check' ),
+			$container->get( 'card-fields.eligibility.check' ),
+			$applepay_product_status->is_active() && $container->get( 'applepay.eligible' ),
+			$googlepay_product_status->is_active() && $container->get( 'googlepay.eligible' ),
+		);
+	},
 	'settings.service.todos_sorting'                      => static function ( ContainerInterface $container ): TodosSortingAndFilteringService {
 		return new TodosSortingAndFilteringService(
 			$container->get( 'settings.data.todos' )

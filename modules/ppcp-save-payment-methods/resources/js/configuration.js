@@ -1,7 +1,7 @@
 import {
 	getCurrentPaymentMethod,
 	PaymentMethods,
-} from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+} from '@ppcp-button/Helper/CheckoutMethodState';
 
 const CONTEXTS = {
 	CHECKOUT: 'checkout',

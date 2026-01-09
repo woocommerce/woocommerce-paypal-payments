@@ -234,6 +234,12 @@ export class PcpApi extends WooCommerceApiBase {
 		);
 		await expect( response.ok() ).toBeTruthy();
 
-		return response.ok();
+		const response2 = await this.requestUtils.request.post(
+			urls.payPalWebhook,
+			{ data }
+		);
+		await expect( response2.ok() ).toBeTruthy();
+
+		return response.ok() && response2.ok();
 	};
 }

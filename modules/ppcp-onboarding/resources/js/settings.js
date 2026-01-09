@@ -1,7 +1,7 @@
 import {
 	setVisible,
 	setVisibleByClass,
-} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+} from '@ppcp-button/Helper/Hiding';
 
 document.addEventListener( 'DOMContentLoaded', () => {
 	const payLaterMessagingSelectableLocations = [

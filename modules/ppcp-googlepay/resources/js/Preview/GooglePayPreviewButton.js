@@ -1,5 +1,5 @@
-import GooglepayButton from '../GooglepayButton';
-import PreviewButton from '../../../../ppcp-button/resources/js/modules/Preview/PreviewButton';
+import GooglepayButton from '@ppcp-googlepay/GooglepayButton';
+import PreviewButton from '@ppcp-button/Preview/PreviewButton';
 
 /**
  * A single GooglePay preview button instance.

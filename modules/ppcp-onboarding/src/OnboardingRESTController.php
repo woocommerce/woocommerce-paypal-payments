@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -117,8 +118,11 @@ class OnboardingRESTController {
 
 		$environment = ( isset( $params['environment'] ) && in_array( $params['environment'], array( 'production', 'sandbox' ), true ) ) ? $params['environment'] : 'sandbox';
 
+		$asset_getter = $this->container->get( 'onboarding.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
+
 		return array(
-			'scriptURL'               => trailingslashit( $this->container->get( 'onboarding.url' ) ) . 'assets/js/onboarding.js',
+			'scriptURL'               => $asset_getter->get_asset_url( 'onboarding.js' ),
 			'scriptData'              => $this->container->get( 'onboarding.assets' )->get_script_data(),
 			'environment'             => $environment,
 			'onboardCompleteCallback' => 'ppcp_onboarding_' . $environment . 'Callback',
