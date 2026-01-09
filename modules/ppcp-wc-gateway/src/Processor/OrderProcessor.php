@@ -216,8 +216,9 @@ class OrderProcessor {
 			return;
 		}
 
-		$wc_order->update_meta_data( '_ppcp_processing', 'yes' );
-		$wc_order->save();
+		if ( ! $this->acquire_processing_lock( $wc_order ) ) {
+			return;
+		}
 
 		try {
 			$order = $this->session_handler->order();
@@ -299,8 +300,7 @@ class OrderProcessor {
 
 			do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
 		} finally {
-			$wc_order->delete_meta_data( '_ppcp_processing' );
-			$wc_order->save();
+			$this->release_processing_lock( $wc_order );
 		}
 	}
 
@@ -415,20 +415,83 @@ class OrderProcessor {
 
 			return false;
 		}
+		return true;
+	}
 
-		$processing_lock = $wc_order->get_meta( '_ppcp_processing', true );
-		if ( $processing_lock === 'yes' ) {
+	/**
+	 * Atomically acquires a processing lock for the order.
+	 *
+	 * Uses direct SQL to ensure atomic lock acquisition, preventing race conditions
+	 * where two concurrent processes could both acquire the lock.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return bool True if lock was acquired, false if already locked.
+	 */
+	private function acquire_processing_lock( WC_Order $wc_order ): bool {
+		global $wpdb;
+
+		$order_id = $wc_order->get_id();
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$rows_updated = $wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->postmeta}
+				SET meta_value = 'yes'
+				WHERE post_id = %d
+				AND meta_key = '_ppcp_processing'
+				AND meta_value != 'yes'",
+				$order_id
+			)
+		);
+
+		if ( $rows_updated > 0 ) {
+			return true;
+		}
+
+		$current_value = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT meta_value FROM {$wpdb->postmeta}
+				WHERE post_id = %d AND meta_key = '_ppcp_processing'
+				LIMIT 1",
+				$order_id
+			)
+		);
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+		if ( $current_value === 'yes' ) {
 			$this->logger->warning(
 				sprintf(
 					'Order #%d is already being processed (lock active), skipping payment processing.',
-					$wc_order->get_id()
+					$order_id
 				)
 			);
-
 			return false;
 		}
 
+		$wc_order->update_meta_data( '_ppcp_processing', 'yes' );
+		$wc_order->save();
+
 		return true;
+	}
+
+	/**
+	 * Releases the processing lock for the order.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return void
+	 */
+	private function release_processing_lock( WC_Order $wc_order ): void {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$wpdb->delete(
+			$wpdb->postmeta,
+			array(
+				'post_id'  => $wc_order->get_id(),
+				'meta_key' => '_ppcp_processing', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+			),
+			array( '%d', '%s' )
+		);
 	}
 
 	/**
