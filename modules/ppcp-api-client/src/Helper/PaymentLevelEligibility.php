@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
-use WC_Order;
 use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 class PaymentLevelEligibility {
