@@ -38,6 +38,7 @@ const TabPaymentMethods = () => {
 				'paypalShowLogo',
 				'threeDSecure',
 				'cardholderName',
+				'paymentLevelProcessing',
 				'fastlaneDisplayWatermark',
 			];
 
