@@ -115,7 +115,7 @@ class Button implements ButtonInterface {
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
 		Context $context,
-		SettingsModel $new_settings = null
+		?SettingsModel $new_settings = null
 	) {
 		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
