@@ -64,9 +64,11 @@ return array(
 		return ! $settings_provider->enable_pay_now();
 	},
 
-	'blocks.card-icons'                    => static function (): array {
-		$settings = get_option( 'woocommerce-ppcp-settings', array() );
-		return isset( $settings['card_icons'] ) ? (array) $settings['card_icons'] : array();
+	'blocks.card-icons'                    => static function ( ContainerInterface $container ): array {
+		$settings_provider = $container->get( 'settings.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
+
+		return $settings_provider->card_icons();
 	},
 
 	'blocks.endpoint.update-shipping'      => static function ( ContainerInterface $container ): UpdateShippingEndpoint {

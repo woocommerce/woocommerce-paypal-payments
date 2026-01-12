@@ -439,6 +439,14 @@ class SettingsProvider {
 		return $this->settings_model->get_disabled_cards();
 	}
 
+	/**
+	 * Gets the card icons.
+	 *
+	 * @return array The array of card icons.
+	 */
+	public function card_icons(): array {
+		return $this->settings_model->get_card_icons();
+	}
 
 	/**
 	 * Gets the Stay Updated setting.
