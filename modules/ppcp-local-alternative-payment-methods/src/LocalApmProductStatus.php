@@ -10,10 +10,11 @@ declare( strict_types = 1 );
 namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class LocalApmProductStatus
@@ -26,35 +27,36 @@ class LocalApmProductStatus extends ProductStatus {
 	public const SETTINGS_VALUE_UNDEFINED = '';
 
 	/**
-	 * The settings.
+	 * The settings model.
 	 *
-	 * @var Settings
+	 * @var SettingsModel
 	 */
-	private Settings $settings;
+	private SettingsModel $settings_model;
 
 	/**
 	 * ApmProductStatus constructor.
 	 *
-	 * @param Settings         $settings             The Settings.
+	 * @param SettingsModel    $settings_model       The Settings Model.
 	 * @param PartnersEndpoint $partners_endpoint    The Partner Endpoint.
 	 * @param bool             $is_connected         The onboarding state.
 	 * @param FailureRegistry  $api_failure_registry The API failure registry.
 	 */
 	public function __construct(
-		Settings $settings,
+		SettingsModel $settings_model,
 		PartnersEndpoint $partners_endpoint,
 		bool $is_connected,
 		FailureRegistry $api_failure_registry
 	) {
 		parent::__construct( $is_connected, $partners_endpoint, $api_failure_registry );
 
-		$this->settings = $settings;
+		$this->settings_model = $settings_model;
 	}
 
 	/** {@inheritDoc} */
 	protected function check_local_state(): ?bool {
-		if ( $this->settings->has( self::SETTINGS_KEY ) && ( $this->settings->get( self::SETTINGS_KEY ) ) ) {
-			return wc_string_to_bool( $this->settings->get( self::SETTINGS_KEY ) );
+		$cached_value = $this->settings_model->get_local_apms_enabled();
+		if ( $cached_value ) {
+			return wc_string_to_bool( $cached_value );
 		}
 
 		return null;
@@ -74,26 +76,22 @@ class LocalApmProductStatus extends ProductStatus {
 			}
 		}
 
-		// Settings used as a cache; `settings->set` is compatible with new UI.
 		if ( $has_capability ) {
-			$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
+			$this->settings_model->set_local_apms_enabled( self::SETTINGS_VALUE_ENABLED );
 		} else {
-			$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_DISABLED );
+			$this->settings_model->set_local_apms_enabled( self::SETTINGS_VALUE_DISABLED );
 		}
-		$this->settings->persist();
+		$this->settings_model->save();
 
 		return $has_capability;
 	}
 
 	/** {@inheritDoc} */
 	protected function clear_state( ?Settings $settings = null ): void {
-		if ( null === $settings ) {
-			$settings = $this->settings;
-		}
-
-		if ( $settings->has( self::SETTINGS_KEY ) ) {
-			$settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_UNDEFINED );
-			$settings->persist();
+		$cached_value = $this->settings_model->get_local_apms_enabled();
+		if ( $cached_value ) {
+			$this->settings_model->set_local_apms_enabled( self::SETTINGS_VALUE_UNDEFINED );
+			$this->settings_model->save();
 		}
 	}
 }

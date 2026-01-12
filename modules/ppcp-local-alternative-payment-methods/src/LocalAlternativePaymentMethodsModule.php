@@ -18,8 +18,9 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\FeesUpdater;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class LocalAlternativePaymentMethodsModule
@@ -368,16 +369,10 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			return $this->is_rest_request();
 		}
 
-		// The general plugin functionality must be enabled.
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-		if ( ! $settings->has( 'enabled' ) || ! $settings->get( 'enabled' ) ) {
-			return false;
-		}
+		$payment_settings = $container->get( 'settings.data.payment' );
+		assert( $payment_settings instanceof PaymentSettings );
 
-		// Register APM gateways, when the relevant setting is active.
-		return $settings->has( 'allow_local_apm_gateways' )
-			&& $settings->get( 'allow_local_apm_gateways' ) === true;
+		return $payment_settings->is_method_enabled( PayPalGateway::ID );
 	}
 
 	/**

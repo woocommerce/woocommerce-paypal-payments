@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\LocalAlternativePaymentMethods;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Settings\Data\GeneralSettings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -71,8 +72,11 @@ return array(
 		);
 	},
 	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
+		$settings_model = $container->get( 'settings.data.settings' );
+		assert( $settings_model instanceof SettingsModel );
+
 		return new LocalApmProductStatus(
-			$container->get( 'wcgateway.settings' ),
+			$settings_model,
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'api.helper.failure-registry' )

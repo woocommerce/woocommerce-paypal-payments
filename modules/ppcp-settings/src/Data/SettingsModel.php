@@ -86,29 +86,32 @@ class SettingsModel extends AbstractDataModel {
 	protected function get_defaults(): array {
 		return array(
 			// Free-form string values.
-			'invoice_prefix'         => $this->invoice_prefix,
-			'brand_name'             => '',
-			'soft_descriptor'        => '',
+			'invoice_prefix'              => $this->invoice_prefix,
+			'brand_name'                  => '',
+			'soft_descriptor'             => '',
 
 			// Enum-type string values.
-			'subtotal_adjustment'    => 'correction', // Options: [correction|no_details].
-			'landing_page'           => 'any',          // Options: [any|login|guest_checkout].
-			'button_language'        => '',             // empty or a language locale code.
-			'three_d_secure'         => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
+			'subtotal_adjustment'         => 'correction', // Options: [correction|no_details].
+			'landing_page'                => 'any',          // Options: [any|login|guest_checkout].
+			'button_language'             => '',             // empty or a language locale code.
+			'three_d_secure'              => 'no-3d-secure', // Options: [no-3d-secure|only-required-3d-secure|always-3d-secure].
 
 			// Boolean flags.
-			'authorize_only'         => false,
-			'capture_virtual_orders' => false,
+			'authorize_only'              => false,
+			'capture_virtual_orders'      => false,
 			FeaturesDefinition::FEATURE_SAVE_PAYPAL_AND_VENMO => false,
-			'instant_payments_only'  => false,
-			'enable_contact_module'  => true,
-			'save_card_details'      => false,
-			'enable_pay_now'         => false,
-			'enable_logging'         => false,
-			'stay_updated'           => true,
+			'instant_payments_only'       => false,
+			'enable_contact_module'       => true,
+			'save_card_details'           => false,
+			'enable_pay_now'              => false,
+			'enable_logging'              => false,
+			'stay_updated'                => true,
 
 			// Array of string values.
-			'disabled_cards'         => array(),
+			'disabled_cards'              => array(),
+
+			// Cache values for product status checks.
+			'products_local_apms_enabled' => '',
 		);
 	}
 
@@ -460,5 +463,23 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_stay_updated( bool $save ): void {
 		$this->data['stay_updated'] = $this->sanitizer->sanitize_bool( $save );
+	}
+
+	/**
+	 * Gets the local APMs enabled cache value.
+	 *
+	 * @return string The cached status ('yes', 'no', or '' if undefined).
+	 */
+	public function get_local_apms_enabled(): string {
+		return $this->data['products_local_apms_enabled'] ?? '';
+	}
+
+	/**
+	 * Sets the local APMs enabled cache value.
+	 *
+	 * @param string $value The status to cache ('yes', 'no', or '').
+	 */
+	public function set_local_apms_enabled( string $value ): void {
+		$this->data['products_local_apms_enabled'] = $this->sanitizer->sanitize_text( $value );
 	}
 }
