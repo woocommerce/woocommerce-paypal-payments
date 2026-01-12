@@ -17,6 +17,7 @@ use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -196,6 +197,10 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $passed_validation, $product_id ) use ( $c ) {
+				if ( ! WC()->cart ) {
+					return $passed_validation;
+				}
+
 				if ( WC()->cart->is_empty() || wcs_is_manual_renewal_enabled() ) {
 					return $passed_validation;
 				}
@@ -491,10 +496,12 @@ class PayPalSubscriptionsModule implements ServiceModule, ExtendingModule, Execu
 					return;
 				}
 
-				$module_url = $c->get( 'paypal-subscriptions.module.url' );
+				$asset_getter = $c->get( 'paypal-subscriptions.asset_getter' );
+				assert( $asset_getter instanceof AssetGetter );
+
 				wp_enqueue_script(
 					'ppcp-paypal-subscription',
-					untrailingslashit( $module_url ) . '/assets/js/paypal-subscription.js',
+					$asset_getter->get_asset_url( 'paypal-subscription.js' ),
 					array( 'jquery' ),
 					$c->get( 'ppcp.asset-version' ),
 					true

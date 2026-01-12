@@ -1,5 +1,5 @@
 import { show } from '../Helper/Hiding';
-import { renderFields } from '../../../../../ppcp-card-fields/resources/js/Render';
+import { renderFields } from '@ppcp-card-fields/Render';
 
 class CardFieldsRenderer {
 	constructor(

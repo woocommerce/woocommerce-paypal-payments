@@ -158,7 +158,7 @@ define( 'PPCP_PAYPAL_BN_CODE', 'Woo_PPCP' );
 			add_action(
 				'init',
 				function () {
-					$current_plugin_version   = (string) PPCP::container()->get( 'ppcp.plugin' )->getVersion();
+					$current_plugin_version   = PPCP::container()->get( 'ppcp.plugin-version' );
 					$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
 					if ( $installed_plugin_version !== $current_plugin_version ) {
 						update_option( 'woocommerce-ppcp-version', $current_plugin_version );
