@@ -4,17 +4,25 @@ import SettingsBlock from '@ppcp-settings/Components/ReusableComponents/Settings
 import {
 	ControlSelect,
 	ControlRadioGroup,
+	ControlTextInput,
 } from '@ppcp-settings/Components/ReusableComponents/Controls';
 import { SettingsHooks } from '@ppcp-settings/data';
 import { useMerchantInfo } from '@ppcp-settings/data/common/hooks';
 
 const OtherSettings = () => {
-	const { disabledCards, setDisabledCards, threeDSecure, setThreeDSecure } =
-		SettingsHooks.useSettings();
+	const {
+		disabledCards,
+		setDisabledCards,
+		threeDSecure,
+		setThreeDSecure,
+		shipsFromPostalCode,
+		setShipsFromPostalCode,
+	} = SettingsHooks.useSettings();
 	const { features } = useMerchantInfo();
 
 	const disabledCardChoices = window.ppcpSettings.disabledCardsChoices;
 	const threeDSecureOptions = window.ppcpSettings.threeDSecureOptions;
+	const storePostcode = window.ppcpSettings.storePostcode;
 
 	return (
 		<Accordion
@@ -63,6 +71,40 @@ const OtherSettings = () => {
 					value={ threeDSecure }
 					onChange={ setThreeDSecure }
 				/>
+			</SettingsBlock>
+
+			<SettingsBlock
+				title={ __(
+					'Level 2/Level 3 Payment Processing',
+					'woocommerce-paypal-payments'
+				) }
+				description={ __(
+					'Qualify for lower interchange rates on corporate and purchase card transactions by sending additional transaction details to PayPal. Level 2/3 processing is available for US merchants processing USD transactions with Visa and Mastercard.',
+					'woocommerce-paypal-payments'
+				) }
+			>
+				<SettingsBlock
+					title={ __(
+						'Ship-from ZIP code',
+						'woocommerce-paypal-payments'
+					) }
+					description={ __(
+						'Enter the postal code of the location where you ship products from. This is required for Level 3 processing and may differ from your store address if you use a warehouse or fulfillment center.',
+						'woocommerce-paypal-payments'
+					) }
+				>
+					<ControlTextInput
+						value={ shipsFromPostalCode }
+						onChange={ setShipsFromPostalCode }
+						placeholder={
+							storePostcode ||
+							__(
+								'Ship-from ZIP code',
+								'woocommerce-paypal-payments'
+							)
+						}
+					/>
+				</SettingsBlock>
 			</SettingsBlock>
 		</Accordion>
 	);

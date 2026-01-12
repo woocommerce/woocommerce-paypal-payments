@@ -214,6 +214,7 @@ class ScriptDataHandler {
 			'debug'                           => defined( 'WP_DEBUG' ) && WP_DEBUG,
 			'isPayLaterConfiguratorAvailable' => $is_pay_later_configurator_available,
 			'storeCountry'                    => $this->store_country,
+			'storePostcode'                   => get_option( 'woocommerce_store_postcode', '' ),
 			'buttonLanguageChoices'           => $transformed_button_choices,
 			'disabledCardsChoices'            => $disabled_cards_choices,
 			'threeDSecureOptions'             => $three_d_secure_options,
