@@ -108,6 +108,21 @@ class ProductStatusTest extends TestCase {
 
 		$this->assertNull( $result );
 	}
+
+	public function test_mark_as_enabled_stores_yes_in_cache(): void {
+		$is_connected         = true;
+		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
+		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
+
+		$result_cache->shouldReceive( 'set' )
+			->with( TestProductStatus::KEY, 'yes' )
+			->once();
+
+		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
+
+		$testee->public_mark_as_enabled();
+	}
 }
 
 class TestProductStatus extends ProductStatus {
@@ -116,6 +131,10 @@ class TestProductStatus extends ProductStatus {
 
 	protected function check_active_state( SellerStatus $seller_status ): bool {
 		return true;
+	}
+
+	public function public_mark_as_enabled(): void {
+		$this->mark_as_enabled();
 	}
 }
 
