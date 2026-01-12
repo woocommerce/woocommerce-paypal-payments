@@ -13,8 +13,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 class PaymentLevelHelper {
+
+	private SettingsProvider $settings;
+
+	public function __construct( SettingsProvider $settings ) {
+		$this->settings = $settings;
+	}
 
 	/**
 	 * Builds supplementary card data.
@@ -232,11 +239,14 @@ class PaymentLevelHelper {
 		/**
 		 * Filters the Level 3 ships from postal code.
 		 *
-		 * Store's ZIP code may differ from ship-from ZIP code, so merchant needs to set this.
+		 * Allows overriding the ships-from postal code set in settings.
 		 *
-		 * @param string $postal_code The postal code where items ship from (default: empty).
+		 * @param string $postal_code The postal code where items ship from (default: from settings).
 		 */
-		$ships_from_postal_code = apply_filters( 'woocommerce_paypal_payments_level3_ships_from_postal_code', '' );
+		$ships_from_postal_code = apply_filters(
+			'woocommerce_paypal_payments_level3_ships_from_postal_code',
+			$this->settings->ships_from_postal_code()
+		);
 		if ( $ships_from_postal_code ) {
 			$level_3['ships_from_postal_code'] = (string) substr( $ships_from_postal_code, 0, 60 );
 		}

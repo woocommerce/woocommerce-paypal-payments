@@ -1005,7 +1005,9 @@ return array(
 			? $container->get( 'settings.data.general' )->get_merchant_country()
 			: $container->get( 'api.shop.country' );
 	},
-	'api.helpers.paymentLevelHelper'                 => static fn(): PaymentLevelHelper => new PaymentLevelHelper(),
+	'api.helpers.paymentLevelHelper'                 => static function ( ContainerInterface $container ): PaymentLevelHelper {
+		return new PaymentLevelHelper( $container->get( 'settings.settings-provider' ) );
+	},
 	'api.helpers.paymentLevelEligibility'            => static function ( ContainerInterface $container ): PaymentLevelEligibility {
 		return new PaymentLevelEligibility(
 			$container->get( 'settings.settings-provider' ),
