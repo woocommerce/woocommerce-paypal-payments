@@ -1,21 +1,10 @@
 <?php
-/**
- * Handles migration of Fastlane settings from legacy format to new structure.
- *
- * @package WooCommerce\PayPalCommerce\Settings\Service\Migration
- */
-
 declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Service\Migration;
 
 use WooCommerce\PayPalCommerce\Settings\Data\FastlaneSettings;
 
-/**
- * Class FastlaneSettingsMigration
- *
- * Handles migration of Fastlane settings.
- */
 class FastlaneSettingsMigration implements SettingsMigrationInterface {
 
 	/**

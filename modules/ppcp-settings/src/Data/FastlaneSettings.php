@@ -1,19 +1,8 @@
 <?php
-/**
- * Fastlane settings data model.
- *
- * @package WooCommerce\PayPalCommerce\Settings\Data
- */
-
 declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
-/**
- * Class FastlaneSettings
- *
- * Stores Fastlane-specific styling and configuration settings.
- */
 class FastlaneSettings extends AbstractDataModel {
 
 	/**
