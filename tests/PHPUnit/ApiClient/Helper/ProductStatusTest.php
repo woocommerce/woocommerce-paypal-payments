@@ -7,6 +7,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use Mockery;
+use function Brain\Monkey\Functions\when;
 
 /**
  * @covers \WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatus
@@ -53,9 +54,29 @@ class ProductStatusTest extends TestCase {
 		$this->assertTrue( $result );
 	}
 
+	public function test_check_local_state_returns_true_when_cache_has_yes(): void {
+		$is_connected         = true;
+		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
+		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
+
+		$result_cache->shouldReceive( 'get' )
+			->with( TestProductStatus::KEY )
+			->andReturn( 'yes' );
+
+		when( 'wc_string_to_bool' )->justReturn( true );
+
+		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
+
+		$result = $testee->check_local_state();
+
+		$this->assertTrue( $result );
+	}
 }
 
 class TestProductStatus extends ProductStatus {
+
+	public const KEY = 'test_product';
 
 	protected function check_active_state( SellerStatus $seller_status ): bool {
 		return true;
