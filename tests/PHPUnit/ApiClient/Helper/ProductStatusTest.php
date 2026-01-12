@@ -6,7 +6,6 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Mockery;
 
 /**
@@ -18,8 +17,9 @@ class ProductStatusTest extends TestCase {
 		$is_connected         = true;
 		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
 		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
 
-		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry );
+		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
 
 		$this->assertInstanceOf( ProductStatus::class, $testee );
 	}
@@ -28,8 +28,9 @@ class ProductStatusTest extends TestCase {
 		$is_connected         = false;
 		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
 		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
 
-		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry );
+		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
 
 		$result = $testee->is_active();
 
@@ -40,11 +41,12 @@ class ProductStatusTest extends TestCase {
 		$is_connected         = true;
 		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
 		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
 
 		// PartnersEndpoint should never be called when local state is available
 		$partners_endpoint->shouldNotReceive( 'seller_status' );
 
-		$testee = new TestProductStatusWithLocalState( $is_connected, $partners_endpoint, $api_failure_registry );
+		$testee = new TestProductStatusWithLocalState( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
 
 		$result = $testee->is_active();
 
@@ -55,28 +57,18 @@ class ProductStatusTest extends TestCase {
 
 class TestProductStatus extends ProductStatus {
 
-	protected function check_local_state(): ?bool {
-		return null;
-	}
-
 	protected function check_active_state( SellerStatus $seller_status ): bool {
 		return true;
-	}
-
-	protected function clear_state( ?Settings $settings = null ): void {
 	}
 }
 
 class TestProductStatusWithLocalState extends ProductStatus {
 
-	protected function check_local_state(): ?bool {
+	public function check_local_state( bool $skip_filters = false ): ?bool {
 		return true;
 	}
 
 	protected function check_active_state( SellerStatus $seller_status ): bool {
 		return true;
-	}
-
-	protected function clear_state( ?Settings $settings = null ): void {
 	}
 }
