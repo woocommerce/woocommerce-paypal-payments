@@ -1,8 +1,8 @@
 const visa: WooCommerce.CreditCard = {
-	card_number: '4005519200000004',
+	card_number: '4444333322221111',
 	expiration_date: '12/30',
 	card_cvv: '029',
-	card_type: 'VISA',
+	card_type: 'Visa',
 };
 
 const visa3ds: WooCommerce.CreditCard = {
