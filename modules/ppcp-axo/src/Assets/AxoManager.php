@@ -92,17 +92,17 @@ class AxoManager {
 	private array $supported_country_card_type_matrix;
 
 	/**
-	 * @param AssetGetter     $asset_getter
-	 * @param string          $version The assets version.
-	 * @param SessionHandler  $session_handler The Session handler.
+	 * @param AssetGetter      $asset_getter
+	 * @param string           $version The assets version.
+	 * @param SessionHandler   $session_handler The Session handler.
 	 * @param SettingsProvider $settings_provider The Settings provider.
-	 * @param Environment     $environment The environment object.
-	 * @param array           $insights_data Data needed for the PayPal Insights.
-	 * @param SettingsStatus  $settings_status The Settings status helper.
-	 * @param CurrencyGetter  $currency The getter of the 3-letter currency code of the shop.
-	 * @param LoggerInterface $logger The logger.
-	 * @param AssetGetter     $wcgateway_module_asset_getter
-	 * @param array           $supported_country_card_type_matrix The supported country card type matrix for Axo.
+	 * @param Environment      $environment The environment object.
+	 * @param array            $insights_data Data needed for the PayPal Insights.
+	 * @param SettingsStatus   $settings_status The Settings status helper.
+	 * @param CurrencyGetter   $currency The getter of the 3-letter currency code of the shop.
+	 * @param LoggerInterface  $logger The logger.
+	 * @param AssetGetter      $wcgateway_module_asset_getter
+	 * @param array            $supported_country_card_type_matrix The supported country card type matrix for Axo.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
