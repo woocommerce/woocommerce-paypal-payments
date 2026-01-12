@@ -18,8 +18,9 @@ use WooCommerce\PayPalCommerce\Axo\Helper\CompatibilityChecker;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CardPaymentsConfiguration;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
+use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencyGetter;
 
 return array(
@@ -56,9 +57,9 @@ return array(
 
 	// If AXO is configured and onboarded.
 	'axo.available'                          => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-		return $settings->has( 'axo_enabled' ) && $settings->get( 'axo_enabled' );
+		$payment_settings = $container->get( 'settings.data.payment' );
+		assert( $payment_settings instanceof PaymentSettings );
+		return $payment_settings->is_method_enabled( AxoGateway::ID );
 	},
 
 	'axo.url'                                => static function ( ContainerInterface $container ): string {
@@ -70,7 +71,7 @@ return array(
 			$container->get( 'axo.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.data.settings-provider' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'axo.insights' ),
 			$container->get( 'wcgateway.settings.status' ),
@@ -103,8 +104,8 @@ return array(
 
 	// Data needed for the PayPal Insights.
 	'axo.insights'                           => static function ( ContainerInterface $container ): array {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
+		$settings_provider = $container->get( 'settings.data.settings-provider' );
+		assert( $settings_provider instanceof SettingsProvider );
 
 		$currency = $container->get( 'api.shop.currency.getter' );
 		assert( $currency instanceof CurrencyGetter );
@@ -120,7 +121,7 @@ return array(
 
 		return array(
 			'enabled'                     => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'client_id'                   => ( $settings->has( 'client_id' ) ? $settings->get( 'client_id' ) : null ),
+			'client_id'                   => $settings_provider->merchant_data()->client_id ?: null,
 			'session_id'                  => $session_id,
 			'amount'                      => array(
 				'currency_code' => $currency->get(),
