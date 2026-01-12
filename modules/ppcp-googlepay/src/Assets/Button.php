@@ -119,7 +119,7 @@ class Button implements ButtonInterface {
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
 		Context $context,
-		SettingsModel $new_settings = null
+		?SettingsModel $new_settings = null
 	) {
 
 		$this->module_url          = $module_url;
