@@ -13,6 +13,8 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
@@ -188,7 +190,7 @@ return array(
 
 	'webhook.status.assets'                   => function ( ContainerInterface $container ): WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
-			$container->get( 'webhook.module-url' ),
+			$container->get( 'webhook.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'settings.environment' )
 		);
@@ -228,7 +230,10 @@ return array(
 		return 'ppcp-last-webhook';
 	},
 
-	'webhook.module-url'                      => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-webhooks/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'webhook.asset_getter'                    => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-webhooks' );
 	},
 );

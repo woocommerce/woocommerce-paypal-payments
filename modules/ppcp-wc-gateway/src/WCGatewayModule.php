@@ -194,7 +194,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				if ( ! is_admin() || wp_doing_ajax() ) {
 					return;
 				}
-				if ( ! $c->has( 'wcgateway.url' ) ) {
+				if ( ! $c->has( 'wcgateway.asset_getter' ) ) {
 					return;
 				}
 				$settings_status = $c->get( 'wcgateway.settings.status' );
@@ -207,7 +207,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				assert( $dcc_configuration instanceof CardPaymentsConfiguration );
 
 				$assets = new SettingsPageAssets(
-					$c->get( 'wcgateway.url' ),
+					$c->get( 'wcgateway.asset_getter' ),
 					$c->get( 'ppcp.asset-version' ),
 					$c->get( 'wc-subscriptions.helper' ),
 					$c->get( 'button.client_id_for_admin' ),

@@ -12,6 +12,8 @@ namespace WooCommerce\PayPalCommerce\Settings;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
@@ -86,8 +88,11 @@ use WooCommerce\PayPalCommerce\Settings\Service\InternalRestService;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\MerchantDetails;
 
 $services = array(
-	'settings.url'                                        => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-settings/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'settings.asset_getter'                               => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-settings' );
 	},
 	'settings.settings-provider'                          => static function ( ContainerInterface $container ): SettingsProvider {
 		return new SettingsProvider(
@@ -375,15 +380,14 @@ $services = array(
 	},
 	'settings.service.script-data-handler'                => static function ( ContainerInterface $container ): ScriptDataHandler {
 		$settings                     = $container->get( 'wcgateway.settings' );
-		$settings_url                 = $container->get( 'settings.url' );
+		$asset_getter                 = $container->get( 'settings.asset_getter' );
 		$paylater_is_available        = $container->get( 'paylater-configurator.is-available' );
 		$store_country                = $container->get( 'wcgateway.store-country' );
 		$merchant_id                  = $container->get( 'api.partner_merchant_id' );
 		$button_language_choices      = $container->get( 'wcgateway.wp-paypal-locales-map' );
 		$partner_attribution          = $container->get( 'api.helper.partner-attribution' );
-		$path_to_module_assets_folder = $container->get( 'ppcp.path-to-plugin-folder' ) . 'modules/ppcp-settings/assets';
 
-		return new ScriptDataHandler( $settings, $settings_url, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution, $path_to_module_assets_folder );
+		return new ScriptDataHandler( $settings, $asset_getter, $paylater_is_available, $store_country, $merchant_id, $button_language_choices, $partner_attribution );
 	},
 	'settings.service.data-migration'                     => static fn( ContainerInterface $c ): MigrationManager => new MigrationManager(
 		$c->get( 'settings.service.data-migration.general-settings' ),

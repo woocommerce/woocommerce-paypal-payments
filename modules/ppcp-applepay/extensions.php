@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -71,7 +72,8 @@ return array(
 			$device_eligibility_notes = __( 'The Apple Pay button will be visible both in previews and below the PayPal buttons in the shop.', 'woocommerce-paypal-payments' );
 		}
 
-		$module_url = $container->get( 'applepay.url' );
+		$asset_getter = $container->get( 'applepay.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
 
 		// Connection tab fields.
 		$fields = $insert_after(
@@ -101,8 +103,8 @@ return array(
 					'applepay_button_enabled' => array(
 						'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 						'title_html'        => sprintf(
-							'<img src="%sassets/images/applepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
-							$module_url,
+							'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+							$asset_getter->get_static_asset_url( 'images/applepay.svg' ),
 							__( 'Apple Pay', 'woocommerce-paypal-payments' )
 						),
 						'type'              => 'checkbox',
@@ -155,8 +157,8 @@ return array(
 				'applepay_button_enabled'             => array(
 					'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/applepay.svg" alt="%s" style="max-width: 150px; max-height: 45px;" />',
-						$module_url,
+						'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						$asset_getter->get_static_asset_url( 'images/applepay.svg' ),
 						__( 'Apple Pay', 'woocommerce-paypal-payments' )
 					),
 					'type'              => 'checkbox',

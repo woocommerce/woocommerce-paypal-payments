@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Orders;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextBuilder;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\PaymentMethodsDefinition;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -26,13 +27,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 class PWCGateway extends WC_Payment_Gateway {
 
 	public const ID = 'ppcp-pwc';
-
-	/**
-	 * The URL to the WC Gateway module.
-	 *
-	 * @var string
-	 */
-	private string $wc_gateway_module_url;
 
 	/**
 	 * PayPal Orders endpoint.
@@ -79,7 +73,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	/**
 	 * PWCGateway constructor.
 	 *
-	 * @param string                    $wc_gateway_module_url The URL to the WC Gateway module.
+	 * @param AssetGetter               $wc_gateway_module_asset_getter
 	 * @param Orders                    $orders_endpoint PayPal Orders endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory Purchase unit factory.
 	 * @param RefundProcessor           $refund_processor The Refund Processor.
@@ -88,7 +82,7 @@ class PWCGateway extends WC_Payment_Gateway {
 	 * @param ExperienceContextBuilder  $experience_context_builder The ExperienceContextBuilder.
 	 */
 	public function __construct(
-		string $wc_gateway_module_url,
+		AssetGetter $wc_gateway_module_asset_getter,
 		Orders $orders_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		RefundProcessor $refund_processor,
@@ -105,10 +99,8 @@ class PWCGateway extends WC_Payment_Gateway {
 
 		$this->init_apm_defaults();
 
-		$this->wc_gateway_module_url = $wc_gateway_module_url;
-
 		// TODO: Change to the official svg asset when it's available: Something like https://www.paypalobjects.com/images/checkout/alternative_payments/paypal_crypto_color.svg.
-		$this->icon = esc_url( $this->wc_gateway_module_url ) . 'assets/images/pwc.svg';
+		$this->icon = $wc_gateway_module_asset_getter->get_static_asset_url( 'images/pwc.svg' );
 
 		$this->init_form_fields();
 		$this->init_settings();
