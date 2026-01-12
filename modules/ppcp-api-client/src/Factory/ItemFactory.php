@@ -73,7 +73,11 @@ class ItemFactory {
 					$image[0] ?? '',
 					0,
 					$cart_item_key,
-					$product->get_id()
+					$product->get_id(),
+					new Money(
+						(float) $item['line_subtotal'] - (float) $item['line_total'],
+						get_woocommerce_currency()
+					)
 				);
 			},
 			$cart->get_cart_contents()
@@ -151,7 +155,11 @@ class ItemFactory {
 			$image[0] ?? '',
 			0,
 			null,
-			$product->get_id()
+			$product->get_id(),
+			new Money(
+				(float) $item->get_subtotal() - (float) $item->get_total(),
+				$order->get_currency()
+			)
 		);
 	}
 

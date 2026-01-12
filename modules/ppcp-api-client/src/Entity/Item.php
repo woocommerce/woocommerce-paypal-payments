@@ -95,6 +95,7 @@ class Item {
 	protected $cart_item_key;
 
 	private ?int $product_id;
+	protected ?Money $discount;
 
 	/**
 	 * Item constructor.
@@ -123,7 +124,8 @@ class Item {
 		string $image_url = '',
 		float $tax_rate = 0,
 		?string $cart_item_key = null,
-		?int $product_id = null
+		?int $product_id = null,
+		?Money $discount = null
 	) {
 
 		$this->name          = $name;
@@ -138,6 +140,7 @@ class Item {
 		$this->tax_rate      = $tax_rate;
 		$this->cart_item_key = $cart_item_key;
 		$this->product_id    = $product_id;
+		$this->discount      = $discount;
 	}
 
 	/**
@@ -241,6 +244,10 @@ class Item {
 
 	public function product_id(): ?int {
 		return $this->product_id;
+	}
+
+	public function discount(): ?Money {
+		return $this->discount;
 	}
 
 	/**

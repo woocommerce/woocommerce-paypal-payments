@@ -224,7 +224,7 @@ class PaymentLevelHelper {
 		 * Duty amount (WooCommerce doesn't track customs duties by default)
 		 *
 		 * @param Money|null $duty_amount The duty amount (default: null).
-		 * @param Amount     $amount      The Amount object.
+		 * @param Amount $amount The Amount object.
 		 */
 		$duty_amount = apply_filters( 'woocommerce_paypal_payments_level3_duty_amount', null, $amount );
 		if ( $duty_amount instanceof Money ) {
@@ -307,7 +307,7 @@ class PaymentLevelHelper {
 			 * Uses SKU as fallback, filterable for custom codes.
 			 *
 			 * @param string $commodity_code The commodity code (default: SKU or empty).
-			 * @param Item   $item           The Item object.
+			 * @param Item $item The Item object.
 			 */
 			$commodity_code = apply_filters(
 				'woocommerce_paypal_payments_level3_commodity_code',
@@ -362,13 +362,17 @@ class PaymentLevelHelper {
 			/**
 			 * Filters the Level 3 line item discount amount.
 			 *
-			 * Order-level discount, filterable for item-level.
+			 * Defaults to item discount from WooCommerce (includes coupons and sale prices).
 			 *
-			 * @param Money|null $discount The discount amount (default: null).
-			 * @param Item       $item     The Item object.
+			 * @param Money|null $discount The discount amount (default: from Item entity).
+			 * @param Item $item The Item object.
 			 */
-			$discount = apply_filters( 'woocommerce_paypal_payments_level3_line_item_discount', null, $item );
-			if ( $discount instanceof Money && $discount->value() > 0 ) {
+			$discount = apply_filters(
+				'woocommerce_paypal_payments_level3_line_item_discount',
+				$item->discount(),
+				$item
+			);
+			if ( $discount instanceof Money ) {
 				$line_item['discount_amount'] = array(
 					'currency_code' => $discount->currency_code(),
 					'value'         => $discount->value_str(),
@@ -382,7 +386,7 @@ class PaymentLevelHelper {
 			 * Maps from WooCommerce weight units
 			 *
 			 * @param string|null $unit_of_measure The unit of measure (default: from WooCommerce weight unit).
-			 * @param Item        $item            The Item object.
+			 * @param Item $item The Item object.
 			 */
 			$unit_of_measure = apply_filters( 'woocommerce_paypal_payments_level3_unit_of_measure', $unit_of_measure, $item );
 			if ( $unit_of_measure ) {
