@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Axo;
 
-use WooCommerce\PayPalCommerce\Axo\Helper\NoticeRenderer;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
@@ -29,7 +29,8 @@ return array(
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
 
-		$module_url = $container->get( 'axo.url' );
+		$asset_getter = $container->get( 'axo.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
 
 		// Standard Payments tab fields.
 		return $insert_after(
@@ -62,8 +63,8 @@ return array(
 				'axo_enabled'                        => array(
 					'title'             => __( 'Fastlane', 'woocommerce-paypal-payments' ),
 					'title_html'        => sprintf(
-						'<img src="%sassets/images/fastlane.png" alt="%s" style="max-width: 150px; max-height: 45px;" />',
-						$module_url,
+						'<img src="%s" alt="%s" style="max-width: 150px; max-height: 45px;" />',
+						$asset_getter->get_static_asset_url( 'images/fastlane.png' ),
 						__( 'Fastlane', 'woocommerce-paypal-payments' )
 					),
 					'type'              => 'checkbox',
