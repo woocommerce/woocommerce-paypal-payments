@@ -16,16 +16,18 @@ class ProductStatusTest extends TestCase {
 
 	private $partners_endpoint;
 	private $api_failure_registry;
+	private $result_cache;
 
 	public function setUp(): void {
 		parent::setUp();
 		$this->partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
 		$this->api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$this->result_cache         = Mockery::mock( ProductStatusResultCache::class );
 	}
 
 	private function create_test_product_status( bool $is_connected, $result_cache = null ): TestProductStatus {
 		if ( null === $result_cache ) {
-			$result_cache = Mockery::mock( ProductStatusResultCache::class );
+			$result_cache = $this->result_cache;
 		}
 
 		return new TestProductStatus(
@@ -36,14 +38,11 @@ class ProductStatusTest extends TestCase {
 		);
 	}
 
-	public function test_can_instantiate_concrete_implementation(): void {
-		$testee = $this->create_test_product_status( true );
-
-		$this->assertInstanceOf( ProductStatus::class, $testee );
-	}
-
 	public function test_is_active_returns_false_when_not_onboarded(): void {
 		$testee = $this->create_test_product_status( false );
+
+		// Mock that every cache::get() returns true. Should never be called.
+		$this->result_cache->allows( 'get' )->andReturn( true );
 
 		$result = $testee->is_active();
 
@@ -51,15 +50,17 @@ class ProductStatusTest extends TestCase {
 	}
 
 	public function test_is_active_uses_local_state_when_available(): void {
+		// Mock cache returning "yes" so check_local_state() returns true
+		$this->result_cache->shouldReceive( 'get' )
+			->with( TestProductStatus::KEY )
+			->andReturn( 'yes' );
+
+		when( 'wc_string_to_bool' )->justReturn( true );
+
 		// PartnersEndpoint should never be called when local state is available
 		$this->partners_endpoint->shouldNotReceive( 'seller_status' );
 
-		$testee = new TestProductStatusWithLocalState(
-			true,
-			$this->partners_endpoint,
-			$this->api_failure_registry,
-			Mockery::mock( ProductStatusResultCache::class )
-		);
+		$testee = $this->create_test_product_status( true );
 
 		$result = $testee->is_active();
 
@@ -135,16 +136,5 @@ class TestProductStatus extends ProductStatus {
 
 	public function public_mark_as_enabled(): void {
 		$this->mark_as_enabled();
-	}
-}
-
-class TestProductStatusWithLocalState extends ProductStatus {
-
-	public function check_local_state( bool $skip_filters = false ): ?bool {
-		return true;
-	}
-
-	protected function check_active_state( SellerStatus $seller_status ): bool {
-		return true;
 	}
 }
