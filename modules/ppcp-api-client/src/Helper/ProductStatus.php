@@ -86,14 +86,14 @@ abstract class ProductStatus {
 			return $this->is_eligible;
 		}
 
+		$local_state = $this->check_local_state();
+		if ( is_bool( $local_state ) ) {
+			$this->is_eligible = $local_state;
+
+			return $this->is_eligible;
+		}
+
 		try {
-			$local_state = $this->check_local_state();
-			if ( is_bool( $local_state ) ) {
-				$this->is_eligible = $local_state;
-
-				return $this->is_eligible;
-			}
-
 			// Check using the merchant-API.
 			$seller_status     = $this->get_seller_status_object();
 			$this->is_eligible = $this->check_active_state( $seller_status );
