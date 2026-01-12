@@ -91,6 +91,23 @@ class ProductStatusTest extends TestCase {
 
 		$this->assertFalse( $result );
 	}
+
+	public function test_check_local_state_returns_null_when_cache_is_empty(): void {
+		$is_connected         = true;
+		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
+		$api_failure_registry = Mockery::mock( FailureRegistry::class );
+		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
+
+		$result_cache->shouldReceive( 'get' )
+			->with( TestProductStatus::KEY )
+			->andReturn( '' );
+
+		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
+
+		$result = $testee->check_local_state();
+
+		$this->assertNull( $result );
+	}
 }
 
 class TestProductStatus extends ProductStatus {
