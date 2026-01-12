@@ -1440,17 +1440,12 @@ return array(
 	},
 
 	'wcgateway.helper.dcc-product-status'                  => static function ( ContainerInterface $container ): DCCProductStatus {
-
-		$settings         = $container->get( 'wcgateway.settings' );
-		$partner_endpoint = $container->get( 'api.endpoint.partners' );
-
 		return new DCCProductStatus(
-			$settings,
-			$partner_endpoint,
-			$container->get( 'dcc.status-cache' ),
-			$container->get( 'api.helpers.dccapplies' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.helper.product-status-result-cache' ),
+			$container->get( 'api.helpers.dccapplies' )
 		);
 	},
 
