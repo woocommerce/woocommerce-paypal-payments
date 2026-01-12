@@ -1540,11 +1540,10 @@ return array(
 	},
 	'wcgateway.installments-product-status'                => static function ( ContainerInterface $container ): InstallmentsProductStatus {
 		return new InstallmentsProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'installments.status-cache' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.helper.product-status-result-cache' )
 		);
 	},
 	'wcgateway.pwc-product-status'                         => static function ( ContainerInterface $container ): PWCProductStatus {
