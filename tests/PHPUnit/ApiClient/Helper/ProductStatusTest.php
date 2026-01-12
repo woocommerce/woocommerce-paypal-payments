@@ -23,6 +23,12 @@ class ProductStatusTest extends TestCase {
 		$this->partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
 		$this->api_failure_registry = Mockery::mock( FailureRegistry::class );
 		$this->result_cache         = Mockery::mock( ProductStatusResultCache::class );
+
+		when( 'wc_string_to_bool' )->alias( static fn( $value ) => 'yes' === strtolower( $value ) );
+
+		if ( ! defined( 'MINUTE_IN_SECONDS' ) ) {
+			define( 'MINUTE_IN_SECONDS', 60 );
+		}
 	}
 
 	private function create_test_product_status( bool $is_connected, $result_cache = null ): TestProductStatus {
@@ -55,8 +61,6 @@ class ProductStatusTest extends TestCase {
 			->with( TestProductStatus::KEY )
 			->andReturn( 'yes' );
 
-		when( 'wc_string_to_bool' )->justReturn( true );
-
 		// PartnersEndpoint should never be called when local state is available
 		$this->partners_endpoint->shouldNotReceive( 'seller_status' );
 
@@ -72,17 +76,12 @@ class ProductStatusTest extends TestCase {
 	 */
 	public function test_check_local_state_returns_expected_value(
 		string $cache_value,
-		?bool $wc_string_result,
 		?bool $expected_result
 	): void {
 		$result_cache = Mockery::mock( ProductStatusResultCache::class );
 		$result_cache->shouldReceive( 'get' )
 			->with( TestProductStatus::KEY )
 			->andReturn( $cache_value );
-
-		if ( null !== $wc_string_result ) {
-			when( 'wc_string_to_bool' )->justReturn( $wc_string_result );
-		}
 
 		$testee = $this->create_test_product_status( true, $result_cache );
 
@@ -94,35 +93,98 @@ class ProductStatusTest extends TestCase {
 	public function check_local_state_provider(): array {
 		return array(
 			'cache_has_yes'  => array(
-				'cache_value'      => 'yes',
-				'wc_string_result' => true,
-				'expected_result'  => true,
+				'cache_value'    => 'yes',
+				'expected_result' => true,
 			),
 			'cache_has_no'   => array(
-				'cache_value'      => 'no',
-				'wc_string_result' => false,
-				'expected_result'  => false,
+				'cache_value'    => 'no',
+				'expected_result' => false,
 			),
 			'cache_is_empty' => array(
-				'cache_value'      => '',
-				'wc_string_result' => null,
-				'expected_result'  => null,
+				'cache_value'    => '',
+				'expected_result' => null,
 			),
 		);
 	}
 
-	public function test_mark_as_enabled_stores_yes_in_cache(): void {
+	/**
+	 * @dataProvider api_result_provider
+	 */
+	public function test_is_active_calls_api_once_and_caches_in_memory(
+		bool $api_result
+	): void {
+		// Reset static seller_status cache between dataProvider iterations
+		TestProductStatus::reset_seller_status();
+
+		// Mock cache as empty so API will be called
+		$this->result_cache->shouldReceive( 'get' )
+			->with( TestProductStatus::KEY )
+			->andReturn( '' );
+
+		// Mock failure registry to allow API call
+		$this->api_failure_registry->shouldReceive( 'has_failure_in_timeframe' )
+			->andReturn( false );
+
+		// Mock API response - should be called ONCE
+		$seller_status = Mockery::mock( SellerStatus::class );
+		$this->partners_endpoint->shouldReceive( 'seller_status' )
+			->once()
+			->andReturn( $seller_status );
+
+		$testee = $this->create_test_product_status( true );
+		$testee->set_active_state_result( $api_result );
+
+		// First call: triggers API and caches result in memory
+		$result = $testee->is_active();
+		$this->assertSame( $api_result, $result );
+
+		// Second call: served from memory cache, API not called again
+		$result = $testee->is_active();
+		$this->assertSame( $api_result, $result );
+	}
+
+	public function api_result_provider(): array {
+		return array(
+			'api_returns_true'  => array( 'api_result' => true ),
+			'api_returns_false' => array( 'api_result' => false ),
+		);
+	}
+
+	/**
+	 * @dataProvider state_change_provider
+	 */
+	public function test_state_change_methods_update_cache(
+		string $method_name,
+		?bool $expected_state
+	): void {
+		TestProductStatusResultCache::reset_storage();
+
 		$result_cache = new TestProductStatusResultCache();
 		$testee       = $this->create_test_product_status( true, $result_cache );
 
 		// Before: cache is empty, check_local_state returns null
 		$this->assertNull( $testee->check_local_state() );
 
-		$testee->public_mark_as_enabled();
+		$testee->$method_name();
 
-		// After: check_local_state returns true
-		when( 'wc_string_to_bool' )->justReturn( true );
-		$this->assertTrue( $testee->check_local_state() );
+		$this->assertSame( $expected_state, $testee->check_local_state() );
+	}
+
+	public function state_change_provider(): array {
+		return array(
+			'mark_as_enabled'  => array(
+				'method_name'    => 'test_mark_as_enabled',
+				'expected_state' => true,
+			),
+			'mark_as_disabled' => array(
+				'method_name'    => 'test_mark_as_disabled',
+				'expected_state' => false,
+			),
+			'clear'            => array(
+				'method_name'    => 'clear',
+				'expected_state' => null,
+			),
+		);
 	}
 }
 
@@ -130,11 +192,27 @@ class TestProductStatus extends ProductStatus {
 
 	public const KEY = 'test_product';
 
+	private bool $active_state_result = true;
+
 	protected function check_active_state( SellerStatus $seller_status ): bool {
-		return true;
+		return $this->active_state_result;
 	}
 
-	public function public_mark_as_enabled(): void {
+	public function set_active_state_result( bool $result ): void {
+		$this->active_state_result = $result;
+	}
+
+	public static function reset_seller_status(): void {
+		$reflection = new \ReflectionClass( ProductStatus::class );
+		$property   = $reflection->getProperty( 'seller_status' );
+		$property->setValue( null, null );
+	}
+
+	public function test_mark_as_enabled(): void {
 		$this->mark_as_enabled();
+	}
+
+	public function test_mark_as_disabled(): void {
+		$this->mark_as_disabled();
 	}
 }
