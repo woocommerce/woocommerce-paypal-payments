@@ -83,25 +83,30 @@ abstract class ProductStatus {
 		$this->has_request_failure = false;
 
 		if ( ! $this->is_onboarded() ) {
-			return $this->is_eligible;
+			return false;
 		}
 
 		$local_state = $this->check_local_state();
 		if ( is_bool( $local_state ) ) {
 			$this->is_eligible = $local_state;
 
-			return $this->is_eligible;
+			return $local_state;
 		}
 
+		// Check using the merchant-API.
 		try {
-			// Check using the merchant-API.
-			$seller_status     = $this->get_seller_status_object();
-			$this->is_eligible = $this->check_active_state( $seller_status );
+			$seller_status = $this->get_seller_status_object();
+
+			if ( $this->check_api_response( $seller_status ) ) {
+				$this->mark_as_enabled();
+			} else {
+				$this->mark_as_disabled();
+			}
 		} catch ( Exception $exception ) {
 			$this->has_request_failure = true;
 		}
 
-		return $this->is_eligible;
+		return (bool) $this->is_eligible;
 	}
 
 	/**
@@ -125,7 +130,7 @@ abstract class ProductStatus {
 	 * @return bool
 	 * @throws RuntimeException When the check failed.
 	 */
-	abstract protected function check_active_state( SellerStatus $seller_status ): bool;
+	abstract protected function check_api_response( SellerStatus $seller_status ): bool;
 
 	/**
 	 * Can be overwritten by child classes to filter the local state.
@@ -143,10 +148,12 @@ abstract class ProductStatus {
 	}
 
 	protected function mark_as_enabled(): void {
+		$this->is_eligible = true;
 		$this->result_cache->set( static::KEY, self::STATE_IS_ENABLED );
 	}
 
 	protected function mark_as_disabled(): void {
+		$this->is_eligible = false;
 		$this->result_cache->set( static::KEY, self::STATE_IS_DISABLED );
 	}
 

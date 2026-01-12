@@ -139,7 +139,7 @@ class TestProductStatus extends ProductStatus {
 	private bool $dummy_api_result = false;
 
 	// Sample "API check."
-	protected function check_active_state( SellerStatus $seller_status ): bool {
+	protected function check_api_response( SellerStatus $seller_status ): bool {
 		return $this->dummy_api_result;
 	}
 
