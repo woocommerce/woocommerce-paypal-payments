@@ -1532,11 +1532,10 @@ return array(
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function ( ContainerInterface $container ): PayUponInvoiceProductStatus {
 		return new PayUponInvoiceProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'pui.status-cache' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.helper.product-status-result-cache' )
 		);
 	},
 	'wcgateway.installments-product-status'                => static function ( ContainerInterface $container ): InstallmentsProductStatus {
