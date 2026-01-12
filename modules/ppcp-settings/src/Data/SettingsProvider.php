@@ -493,4 +493,14 @@ class SettingsProvider {
 	public function styling_product(): LocationStylingDTO {
 		return $this->styling_settings->get_product();
 	}
+
+	/**
+	 * Checks if the provided payment method is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool True if the method is enabled, false otherwise.
+	 */
+	public function is_method_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
 }
