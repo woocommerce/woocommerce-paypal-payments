@@ -156,7 +156,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 3.3.2 - XXXX-XX-XX =
+= 3.3.2 - 2026-01-12 =
 * Enhancement - Improved reCAPTCHA configuration to help protect your store and maintain compliance #3980, #3984
 * Fix - Advanced Card Processing may temporarily become unavailable after updating the plugin #3983
 
