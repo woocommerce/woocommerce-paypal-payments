@@ -78,10 +78,10 @@ return array(
 	'googlepay.helpers.apm-product-status'      => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): ApmProductStatus {
 			return new ApmProductStatus(
-				$container->get( 'wcgateway.settings' ),
-				$container->get( 'api.endpoint.partners' ),
 				$container->get( 'settings.flag.is-connected' ),
-				$container->get( 'api.helper.failure-registry' )
+				$container->get( 'api.endpoint.partners' ),
+				$container->get( 'api.helper.failure-registry' ),
+				$container->get( 'api.helper.product-status-result-cache' )
 			);
 		}
 	),
