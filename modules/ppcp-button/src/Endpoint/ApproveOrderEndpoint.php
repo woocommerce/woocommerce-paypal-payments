@@ -69,19 +69,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 */
 	private $threed_secure;
 
-	/**
-	 * The settings provider.
-	 *
-	 * @var SettingsProvider
-	 */
-	private $settings_provider;
+	private SettingsProvider $settings_provider;
 
-	/**
-	 * The settings model.
-	 *
-	 * @var SettingsModel
-	 */
-	private $settings_model;
+	private SettingsModel $settings_model;
 
 	/**
 	 * The DCC applies object.

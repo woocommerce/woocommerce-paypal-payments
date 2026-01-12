@@ -21,11 +21,6 @@ class DisabledFundingSources {
 
 	use FreeTrialHandlerTrait;
 
-	/**
-	 * The settings provider.
-	 *
-	 * @var SettingsProvider
-	 */
 	private SettingsProvider $settings_provider;
 
 	/**

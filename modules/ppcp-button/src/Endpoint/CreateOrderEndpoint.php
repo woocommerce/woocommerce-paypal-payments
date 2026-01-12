@@ -108,12 +108,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 */
 	private $session_handler;
 
-	/**
-	 * The settings provider.
-	 *
-	 * @var SettingsProvider
-	 */
-	private $settings_provider;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The early order handler.

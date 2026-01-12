@@ -87,12 +87,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private $version;
 
-	/**
-	 * The settings provider.
-	 *
-	 * @var SettingsProvider
-	 */
-	private $settings_provider;
+	private SettingsProvider $settings_provider;
 
 	/**
 	 * The Payer Factory.
@@ -129,11 +124,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private $subscription_helper;
 
-	/**
-	 * Callable to get subscriptions mode.
-	 *
-	 * @var callable
-	 */
+	/** @var callable */
 	private $get_subscriptions_mode;
 
 	/**
