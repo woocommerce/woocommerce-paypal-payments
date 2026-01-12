@@ -1549,11 +1549,10 @@ return array(
 	},
 	'wcgateway.pwc-product-status'                         => static function ( ContainerInterface $container ): PWCProductStatus {
 		return new PWCProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'pwc.status-cache' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.helper.product-status-result-cache' )
 		);
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
