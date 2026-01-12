@@ -113,15 +113,18 @@ class ProductStatusTest extends TestCase {
 		$is_connected         = true;
 		$partners_endpoint    = Mockery::mock( PartnersEndpoint::class );
 		$api_failure_registry = Mockery::mock( FailureRegistry::class );
-		$result_cache         = Mockery::mock( ProductStatusResultCache::class );
-
-		$result_cache->shouldReceive( 'set' )
-			->with( TestProductStatus::KEY, 'yes' )
-			->once();
+		$result_cache         = new TestProductStatusResultCache();
 
 		$testee = new TestProductStatus( $is_connected, $partners_endpoint, $api_failure_registry, $result_cache );
 
+		// Before: cache is empty, check_local_state returns null
+		$this->assertNull( $testee->check_local_state() );
+
 		$testee->public_mark_as_enabled();
+
+		// After: check_local_state returns true
+		when( 'wc_string_to_bool' )->justReturn( true );
+		$this->assertTrue( $testee->check_local_state() );
 	}
 }
 
