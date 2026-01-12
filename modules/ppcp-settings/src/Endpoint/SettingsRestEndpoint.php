@@ -106,6 +106,10 @@ class SettingsRestEndpoint extends RestEndpoint {
 			'js_name'  => 'threeDSecure',
 			'sanitize' => 'sanitize_text_field',
 		),
+		'ships_from_postal_code'                          => array(
+			'js_name'  => 'shipsFromPostalCode',
+			'sanitize' => 'sanitize_text_field',
+		),
 	);
 
 	/**

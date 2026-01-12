@@ -109,6 +109,7 @@ class SettingsModel extends AbstractDataModel {
 
 			// Array of string values.
 			'disabled_cards'         => array(),
+			'ships_from_postal_code' => '',
 		);
 	}
 
@@ -260,6 +261,24 @@ class SettingsModel extends AbstractDataModel {
 	 */
 	public function set_three_d_secure( string $setting ): void {
 		$this->data['three_d_secure'] = $this->sanitizer->sanitize_enum( $setting, self::THREE_D_SECURE_OPTIONS );
+	}
+
+	/**
+	 * Gets the Ship-from ZIP code.
+	 *
+	 * @return string The Ship-from ZIP code.
+	 */
+	public function get_ships_from_postal_code(): string {
+		return ! empty( $this->data['ships_from_postal_code'] ) ? $this->data['ships_from_postal_code'] : get_option( 'woocommerce_store_postcode', '' );
+	}
+
+	/**
+	 * Sets the Ship-from ZIP code.
+	 *
+	 * @param string $zip_code The Ship-from ZIP code to set.
+	 */
+	public function set_ships_from_postal_code( string $zip_code ): void {
+		$this->data['ships_from_postal_code'] = $this->sanitizer->sanitize_text( $zip_code );
 	}
 
 	/**
