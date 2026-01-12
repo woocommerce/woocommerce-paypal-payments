@@ -75,6 +75,7 @@ class PaymentLevelHelper {
 	 *                     },
 	 *                     description?: string,
 	 *                     commodity_code?: string,
+	 *                     upc?: array{type: string, code: string},
 	 *                     tax?: array{
 	 *                         currency_code: string,
 	 *                         value: string
@@ -186,6 +187,7 @@ class PaymentLevelHelper {
 	 *         total_amount: array{currency_code: string, value: string},
 	 *         description?: string,
 	 *         commodity_code?: string,
+	 *         upc?: array{type: string, code: string},
 	 *         tax?: array{currency_code: string, value: string},
 	 *         discount_amount?: array{currency_code: string, value: string},
 	 *         unit_of_measure?: string
@@ -272,6 +274,7 @@ class PaymentLevelHelper {
 	 *     total_amount: array{currency_code: string, value: string},
 	 *     description?: string,
 	 *     commodity_code?: string,
+	 *     upc?: array{type: string, code: string},
 	 *     tax?: array{currency_code: string, value: string},
 	 *     discount_amount?: array{currency_code: string, value: string},
 	 *     unit_of_measure?: string
@@ -313,6 +316,40 @@ class PaymentLevelHelper {
 			);
 			if ( $commodity_code ) {
 				$line_item['commodity_code'] = substr( $commodity_code, 0, 12 );
+			}
+
+			$gtin = '';
+			if ( $item->product_id() ) {
+				$product = wc_get_product( $item->product_id() );
+				if ( $product ) {
+					$gtin = $product->get_meta( '_wc_gtin' );
+				}
+			}
+
+			/**
+			 * Filters the Level 3 UPC data.
+			 *
+			 * Defaults to WooCommerce GTIN field if product ID is available.
+			 * Use this filter to provide UPC data for custom implementations or different barcode types.
+			 *
+			 * @param array{type: string, code: string}|null $upc  The UPC data (default: from GTIN field or null).
+			 * @param Item $item The Item object.
+			 * @param string $gtin The GTIN value from product meta (empty if not found).
+			 */
+			$upc = apply_filters(
+				'woocommerce_paypal_payments_level3_upc',
+				$gtin ? array(
+					'type' => 'UPC-A',
+					'code' => $gtin,
+				) : null,
+				$item,
+				$gtin
+			);
+			if ( is_array( $upc ) && isset( $upc['type'], $upc['code'] ) && $upc['code'] ) {
+				$line_item['upc'] = array(
+					'type' => substr( $upc['type'], 0, 5 ),
+					'code' => substr( $upc['code'], 0, 17 ),
+				);
 			}
 
 			if ( $item->tax() ) {

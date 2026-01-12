@@ -72,7 +72,8 @@ class ItemFactory {
 					$product->get_permalink(),
 					$image[0] ?? '',
 					0,
-					$cart_item_key
+					$cart_item_key,
+					$product->get_id()
 				);
 			},
 			$cart->get_cart_contents()
@@ -147,7 +148,10 @@ class ItemFactory {
 			$product instanceof WC_Product ? $this->prepare_sku( $product->get_sku() ) : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 			$product instanceof WC_Product ? $product->get_permalink() : '',
-			$image[0] ?? ''
+			$image[0] ?? '',
+			0,
+			null,
+			$product->get_id()
 		);
 	}
 
