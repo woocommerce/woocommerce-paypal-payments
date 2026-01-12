@@ -11,14 +11,18 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 
 class PaymentLevelHelper {
 
 	/**
 	 * Builds supplementary card data.
 	 *
-	 * @param Amount $amount The Amount object based off a WooCommerce cart.
-	 * @param string $level The processing level ('level_2' or 'level_3').
+	 * @param Amount        $amount   The Amount object based off a WooCommerce cart.
+	 * @param string        $level    The processing level ('level_2' or 'level_3').
+	 * @param Item[]|null   $items    Array of Item objects for Level 3.
+	 * @param Shipping|null $shipping Shipping object for Level 3.
 	 * @return array{
 	 *     supplementary_data: array{
 	 *         card: array{
@@ -28,12 +32,58 @@ class PaymentLevelHelper {
 	 *                     currency_code: string,
 	 *                     value: string
 	 *                 }
+	 *             },
+	 *             level_3?: array{
+	 *                 shipping_amount?: array{
+	 *                     currency_code: string,
+	 *                     value: string
+	 *                 },
+	 *                 discount_amount?: array{
+	 *                     currency_code: string,
+	 *                     value: string
+	 *                 },
+	 *                 duty_amount?: array{
+	 *                     currency_code: string,
+	 *                     value: string
+	 *                 },
+	 *                 shipping_address?: array{
+	 *                     address_line_1?: string,
+	 *                     address_line_2?: string,
+	 *                     admin_area_1?: string,
+	 *                     admin_area_2?: string,
+	 *                     postal_code?: string,
+	 *                     country_code: string
+	 *                 },
+	 *                 ships_from_postal_code?: string,
+	 *                 line_items?: array<int, array{
+	 *                     name: string,
+	 *                     quantity: string,
+	 *                     unit_amount: array{
+	 *                         currency_code: string,
+	 *                         value: string
+	 *                     },
+	 *                     total_amount: array{
+	 *                         currency_code: string,
+	 *                         value: string
+	 *                     },
+	 *                     description?: string,
+	 *                     commodity_code?: string,
+	 *                     tax?: array{
+	 *                         currency_code: string,
+	 *                         value: string
+	 *                     },
+	 *                     discount_amount?: array{
+	 *                         currency_code: string,
+	 *                         value: string
+	 *                     },
+	 *                     unit_of_measure?: string
+	 *                 }>
 	 *             }
 	 *         }
 	 *     }
 	 * }|null Supplementary data array ready for PurchaseUnit, or null if no data could be built.
 	 */
-	public function build( Amount $amount, string $level ): ?array {
+	public function build( Amount $amount, string $level, ?array $items = null, ?Shipping $shipping = null ): ?array {
 		$data = array(
 			'supplementary_data' => array(
 				'card' => array(),
@@ -47,15 +97,12 @@ class PaymentLevelHelper {
 			$data['supplementary_data']['card']['level_2'] = $this->build_level_2( $tax_total );
 		}
 
-		/* phpcs:disable Squiz.PHP.CommentedOutCode.Found
-			Future: level_3 support
-			if ( 'level_3' === $level ) {
-				$level_3_data = $this->build_level_3( $order );
-				if ( $level_3_data ) {
-					$data['supplementary_data']['card']['level_3'] = $level_3_data;
-				}
+		if ( 'level_3' === $level ) {
+			$level_3_data = $this->build_level_3( $amount, $items, $shipping );
+			if ( $level_3_data ) {
+				$data['supplementary_data']['card']['level_3'] = $level_3_data;
 			}
-		*/
+		}
 
 		return ! empty( $data['supplementary_data']['card'] ) ? $data : null;
 	}
@@ -95,5 +142,227 @@ class PaymentLevelHelper {
 		}
 
 		return $level_2;
+	}
+
+	/**
+	 * Builds Level 3 card data.
+	 *
+	 * @param Amount        $amount   The Amount object.
+	 * @param Item[]|null   $items    Array of Item objects.
+	 * @param Shipping|null $shipping Shipping object.
+	 * @return array{
+	 *     shipping_amount?: array{
+	 *         currency_code: string,
+	 *         value: string
+	 *     },
+	 *     discount_amount?: array{
+	 *         currency_code: string,
+	 *         value: string
+	 *     },
+	 *     duty_amount?: array{
+	 *         currency_code: string,
+	 *         value: string
+	 *     },
+	 *     shipping_address?: array{
+	 *         address_line_1?: string,
+	 *         address_line_2?: string,
+	 *         admin_area_1?: string,
+	 *         admin_area_2?: string,
+	 *         postal_code?: string,
+	 *         country_code: string
+	 *     },
+	 *     ships_from_postal_code?: string,
+	 *     line_items?: array<int, array{
+	 *         name: string,
+	 *         quantity: string,
+	 *         unit_amount: array{currency_code: string, value: string},
+	 *         total_amount: array{currency_code: string, value: string},
+	 *         description?: string,
+	 *         commodity_code?: string,
+	 *         tax?: array{currency_code: string, value: string},
+	 *         discount_amount?: array{currency_code: string, value: string},
+	 *         unit_of_measure?: string
+	 *     }>
+	 * }|null Level 3 data array, or null if insufficient data.
+	 */
+	private function build_level_3( Amount $amount, ?array $items, ?Shipping $shipping ): ?array {
+		$breakdown = $amount->breakdown();
+		if ( ! $breakdown ) {
+			return null;
+		}
+
+		$level_3 = array();
+
+		$shipping_amount = $breakdown->shipping();
+		if ( $shipping_amount ) {
+			$level_3['shipping_amount'] = array(
+				'currency_code' => $shipping_amount->currency_code(),
+				'value'         => $shipping_amount->value_str(),
+			);
+		}
+
+		$discount_amount = $breakdown->discount();
+		if ( $discount_amount ) {
+			$level_3['discount_amount'] = array(
+				'currency_code' => $discount_amount->currency_code(),
+				'value'         => $discount_amount->value_str(),
+			);
+		}
+
+		/**
+		 * Filters the Level 3 duty amount.
+		 *
+		 * Duty amount (WooCommerce doesn't track customs duties by default)
+		 *
+		 * @param Money|null $duty_amount The duty amount (default: null).
+		 * @param Amount     $amount      The Amount object.
+		 */
+		$duty_amount = apply_filters( 'woocommerce_paypal_payments_level3_duty_amount', null, $amount );
+		if ( $duty_amount instanceof Money ) {
+			$level_3['duty_amount'] = array(
+				'currency_code' => $duty_amount->currency_code(),
+				'value'         => $duty_amount->value_str(),
+			);
+		}
+
+		if ( $shipping && $shipping->address() ) {
+			$level_3['shipping_address'] = $shipping->address()->to_array();
+		}
+
+		/**
+		 * Filters the Level 3 ships from postal code.
+		 *
+		 * Store's ZIP code may differ from ship-from ZIP code, so merchant needs to set this.
+		 *
+		 * @param string $postal_code The postal code where items ship from (default: empty).
+		 */
+		$ships_from_postal_code = apply_filters( 'woocommerce_paypal_payments_level3_ships_from_postal_code', '' );
+		if ( $ships_from_postal_code ) {
+			$level_3['ships_from_postal_code'] = (string) substr( $ships_from_postal_code, 0, 60 );
+		}
+
+		if ( $items && count( $items ) > 0 ) {
+			$line_items = $this->build_level_3_line_items( $items );
+			if ( ! empty( $line_items ) ) {
+				$level_3['line_items'] = $line_items;
+			}
+		}
+
+		return ! empty( $level_3 ) ? $level_3 : null;
+	}
+
+	/**
+	 * Builds Level 3 line items data.
+	 *
+	 * @param Item[] $items Array of Item objects.
+	 * @return array<int, array{
+	 *     name: string,
+	 *     quantity: string,
+	 *     unit_amount: array{currency_code: string, value: string},
+	 *     total_amount: array{currency_code: string, value: string},
+	 *     description?: string,
+	 *     commodity_code?: string,
+	 *     tax?: array{currency_code: string, value: string},
+	 *     discount_amount?: array{currency_code: string, value: string},
+	 *     unit_of_measure?: string
+	 * }> Array of Level 3 line items.
+	 */
+	private function build_level_3_line_items( array $items ): array {
+		$line_items = array();
+
+		foreach ( $items as $item ) {
+			$line_item = array(
+				'name'         => substr( $item->name(), 0, 127 ),
+				'quantity'     => (string) $item->quantity(),
+				'unit_amount'  => array(
+					'currency_code' => $item->unit_amount()->currency_code(),
+					'value'         => $item->unit_amount()->value_str(),
+				),
+				'total_amount' => array(
+					'currency_code' => $item->unit_amount()->currency_code(),
+					'value'         => number_format( (float) $item->unit_amount()->value() * $item->quantity(), 2, '.', '' ),
+				),
+			);
+
+			if ( $item->description() ) {
+				$line_item['description'] = substr( $item->description(), 0, 127 );
+			}
+
+			/**
+			 * Filters the Level 3 commodity code.
+			 *
+			 * Uses SKU as fallback, filterable for custom codes.
+			 *
+			 * @param string $commodity_code The commodity code (default: SKU or empty).
+			 * @param Item   $item           The Item object.
+			 */
+			$commodity_code = apply_filters(
+				'woocommerce_paypal_payments_level3_commodity_code',
+				$item->sku() ?? '',
+				$item
+			);
+			if ( $commodity_code ) {
+				$line_item['commodity_code'] = substr( $commodity_code, 0, 12 );
+			}
+
+			if ( $item->tax() ) {
+				$line_item['tax'] = array(
+					'currency_code' => $item->tax()->currency_code(),
+					'value'         => $item->tax()->value_str(),
+				);
+			}
+
+			/**
+			 * Filters the Level 3 line item discount amount.
+			 *
+			 * Order-level discount, filterable for item-level.
+			 *
+			 * @param Money|null $discount The discount amount (default: null).
+			 * @param Item       $item     The Item object.
+			 */
+			$discount = apply_filters( 'woocommerce_paypal_payments_level3_line_item_discount', null, $item );
+			if ( $discount instanceof Money && $discount->value() > 0 ) {
+				$line_item['discount_amount'] = array(
+					'currency_code' => $discount->currency_code(),
+					'value'         => $discount->value_str(),
+				);
+			}
+
+			$unit_of_measure = $this->get_unit_of_measure();
+			/**
+			 * Filters the Level 3 unit of measure.
+			 *
+			 * Maps from WooCommerce weight units
+			 *
+			 * @param string|null $unit_of_measure The unit of measure (default: from WooCommerce weight unit).
+			 * @param Item        $item            The Item object.
+			 */
+			$unit_of_measure = apply_filters( 'woocommerce_paypal_payments_level3_unit_of_measure', $unit_of_measure, $item );
+			if ( $unit_of_measure ) {
+				$line_item['unit_of_measure'] = substr( $unit_of_measure, 0, 12 );
+			}
+
+			$line_items[] = $line_item;
+		}
+
+		return $line_items;
+	}
+
+	/**
+	 * Gets PayPal unit of measure from WooCommerce weight unit.
+	 *
+	 * @return string|null PayPal unit of measure or null if not mapped.
+	 */
+	private function get_unit_of_measure(): ?string {
+		$wc_weight_unit = get_option( 'woocommerce_weight_unit', 'lbs' );
+
+		$unit_map = array(
+			'kg'  => 'KILOGRAM',
+			'g'   => 'GRAM',
+			'lbs' => 'POUND_GB_US',
+			'oz'  => 'OUNCE',
+		);
+
+		return $unit_map[ $wc_weight_unit ] ?? null;
 	}
 }
