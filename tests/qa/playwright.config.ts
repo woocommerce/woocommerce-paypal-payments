@@ -119,6 +119,12 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
+			testIgnore: /stress\.spec\.ts/,
+		},
+		{
+			name: 'stress',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /stress\.spec\.ts/,
 		},
 	],
 } );

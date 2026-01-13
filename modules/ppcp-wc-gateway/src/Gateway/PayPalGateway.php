@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\WooCommercePaymentTokens;
@@ -210,13 +211,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $wc_payment_tokens;
 
 	/**
-	 * The module URL
-	 *
-	 * @var string
-	 */
-	private $module_url;
-
-	/**
 	 * Whether settings module is enabled.
 	 *
 	 * @var bool
@@ -287,8 +281,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public $order_button_text;
 
 	/**
-	 * PayPalGateway constructor.
-	 *
 	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
 	 * @param FundingSourceRenderer    $funding_source_renderer The funding source renderer.
 	 * @param OrderProcessor           $order_processor The Order Processor.
@@ -309,7 +301,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param PaymentTokensEndpoint    $payment_tokens_endpoint Payment tokens endpoint.
 	 * @param bool                     $vault_v3_enabled Whether Vault v3 module is enabled.
 	 * @param WooCommercePaymentTokens $wc_payment_tokens WooCommerce payment tokens.
-	 * @param string                   $module_url The module URL.
+	 * @param AssetGetter              $asset_getter
 	 * @param bool                     $admin_settings_enabled Whether settings module is enabled.
 	 */
 	public function __construct(
@@ -333,7 +325,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		PaymentTokensEndpoint $payment_tokens_endpoint,
 		bool $vault_v3_enabled,
 		WooCommercePaymentTokens $wc_payment_tokens,
-		string $module_url,
+		AssetGetter $asset_getter,
 		bool $admin_settings_enabled
 	) {
 		$this->id                          = self::ID;
@@ -357,8 +349,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->payment_tokens_endpoint     = $payment_tokens_endpoint;
 		$this->vault_v3_enabled            = $vault_v3_enabled;
 		$this->wc_payment_tokens           = $wc_payment_tokens;
-		$this->module_url                  = $module_url;
-		$this->icon                        = apply_filters( 'woocommerce_paypal_payments_paypal_gateway_icon', esc_url( $this->module_url ) . 'assets/images/paypal.svg' );
+		$this->icon                        = apply_filters( 'woocommerce_paypal_payments_paypal_gateway_icon', $asset_getter->get_static_asset_url( 'images/paypal.svg' ) );
 		$this->admin_settings_enabled      = $admin_settings_enabled;
 
 		$default_support = array(

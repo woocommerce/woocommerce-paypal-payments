@@ -55,7 +55,6 @@ class CreditCardGatewayTest extends TestCase
 		$this->config = Mockery::mock(ContainerInterface::class);
 		$this->dcc_configuration = Mockery::mock(CardPaymentsConfiguration::class);
 		$this->creditCardIcons = [];
-		$this->moduleUrl = '';
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
 		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
@@ -85,7 +84,6 @@ class CreditCardGatewayTest extends TestCase
 			$this->config,
 			$this->dcc_configuration,
 			$this->creditCardIcons,
-			$this->moduleUrl,
 			$this->sessionHandler,
 			$this->refundProcessor,
 			$this->transactionUrlProvider,

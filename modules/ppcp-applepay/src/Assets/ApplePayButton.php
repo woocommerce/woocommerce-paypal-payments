@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Settings\Data\PaymentSettings;
@@ -49,7 +50,7 @@ class ApplePayButton implements ButtonInterface {
 	 * @param PaymentSettings          $payment_settings The payment settings.
 	 * @param LoggerInterface          $logger The logger.
 	 * @param OrderProcessor           $order_processor The Order processor.
-	 * @param string                   $module_url The module URL.
+	 * @param AssetGetter              $asset_getter
 	 * @param string                   $version The module version.
 	 * @param DataToAppleButtonScripts $data The data to send to the ApplePay button script.
 	 * @param SettingsStatus           $settings_status The settings status helper.
@@ -60,7 +61,7 @@ class ApplePayButton implements ButtonInterface {
 		PaymentSettings $payment_settings,
 		LoggerInterface $logger,
 		OrderProcessor $order_processor,
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		DataToAppleButtonScripts $data,
 		SettingsStatus $settings_status,
@@ -73,7 +74,7 @@ class ApplePayButton implements ButtonInterface {
 		$this->id                 = 'applepay';
 		$this->method_title       = __( 'Apple Pay', 'woocommerce-paypal-payments' );
 		$this->order_processor    = $order_processor;
-		$this->module_url         = $module_url;
+		$this->asset_getter       = $asset_getter;
 		$this->version            = $version;
 		$this->script_data        = $data;
 		$this->settings_status    = $settings_status;
@@ -936,7 +937,7 @@ class ApplePayButton implements ButtonInterface {
 
 		wp_register_script(
 			'wc-ppcp-applepay',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
+			$this->asset_getter->get_asset_url( 'boot.js' ),
 			array(),
 			$this->version,
 			true
@@ -968,7 +969,7 @@ class ApplePayButton implements ButtonInterface {
 
 		wp_register_style(
 			'wc-ppcp-applepay',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);
@@ -981,7 +982,7 @@ class ApplePayButton implements ButtonInterface {
 	public function enqueue_admin(): void {
 		wp_register_script(
 			'wc-ppcp-applepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
+			$this->asset_getter->get_asset_url( 'boot-admin.js' ),
 			array(),
 			$this->version,
 			true
@@ -1001,7 +1002,7 @@ class ApplePayButton implements ButtonInterface {
 	public function enqueue_admin_styles(): void {
 		wp_register_style(
 			'wc-ppcp-applepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			$this->asset_getter->get_asset_url( 'styles.css' ),
 			array(),
 			$this->version
 		);

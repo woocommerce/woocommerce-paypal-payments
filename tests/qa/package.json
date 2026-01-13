@@ -14,7 +14,7 @@
     },
     "homepage": "https://github.com/woocommerce/woocommerce-paypal-payments#readme",
     "dependencies": {
-        "@inpsyde/playwright-utils": "^2.8.0",
+        "@inpsyde/playwright-utils": "^2.9.0",
         "dotenv": "^16.3.1",
         "dotenv-cli": "^7.3.0",
         "playwright": "^1.49.1",
@@ -42,7 +42,7 @@
         "lint:js": "wp-scripts lint-js  --resolve-plugins-relative-to ./ **/*.{ts,tsx,mjs}",
         "lint:js:fix": "wp-scripts lint-js --resolve-plugins-relative-to ./ --fix **/*.{ts,tsx,mjs}",
         "tests:all": "npx playwright test --workers=1 --project \"all\"",
-        "tests:onboarding": "npx playwright test 02-onboarding/",
+        "tests:stress": "npx playwright test --project=\"stress\"",
         "tests:critical": "npx playwright test --grep=\"@Critical\"",
         "setup:store:default": "npx playwright test woocommerce.setup",
         "setup:checkout:block": "npx playwright test --grep=\"setup:checkout:block;\"",
