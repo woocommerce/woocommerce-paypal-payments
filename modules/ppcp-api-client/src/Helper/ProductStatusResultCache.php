@@ -23,6 +23,10 @@ class ProductStatusResultCache {
 		}
 
 		$entry = $this->cache[ $key ];
+		$now   = $this->get_time();
+		if ( ! empty( $entry['expires_at'] ) && $entry['expires_at'] < $now ) {
+			return '';
+		}
 
 		return $entry['value'] ?? '';
 	}

@@ -72,16 +72,74 @@ class ProductStatusResultCacheTest extends TestCase {
 		$this->assertSame( 'value3', $testee->get( 'key3' ) );
 	}
 
-	public function test_value_accessible_before_expiration(): void {
+	public function test_multiple_keys_with_different_expirations(): void {
 		TestProductStatusResultCache::set_time( 1000 );
 		$testee = new TestProductStatusResultCache();
 
-		$testee->set( 'test_key', 'test_value', 100 );
+		$testee->set( 'short_ttl', 'value1', 30 );
+		$testee->set( 'long_ttl', 'value2', 120 );
 
 		TestProductStatusResultCache::set_time( 1050 );
+
+		$this->assertSame( '', $testee->get( 'short_ttl' ) );
+		$this->assertSame( 'value2', $testee->get( 'long_ttl' ) );
+	}
+
+	/**
+	 * @dataProvider expiration_data_provider
+	 */
+	public function test_value_expiration_behavior( int $expiration, int $test_delay, string $value, string $expected_value ): void {
+		$start_time = 1000;
+		TestProductStatusResultCache::set_time( $start_time );
+		$testee = new TestProductStatusResultCache();
+
+		$testee->set( 'test_key', $value, $expiration );
+
+		TestProductStatusResultCache::set_time( $start_time + $test_delay );
 		$result = $testee->get( 'test_key' );
 
-		$this->assertSame( 'test_value', $result );
+		$this->assertSame( $expected_value, $result );
+	}
+
+	public function expiration_data_provider(): array {
+		return [
+			'no delay'       => [
+				'expiration'     => 100,
+				'test_delay'     => 0,
+				'value'          => 'yes',
+				'expected_value' => 'yes',
+			],
+			'short delay'    => [
+				'expiration'     => 100,
+				'test_delay'     => 1,
+				'value'          => 'yes',
+				'expected_value' => 'yes',
+			],
+			'long delay'     => [
+				'expiration'     => 100,
+				'test_delay'     => 99,
+				'value'          => 'yes',
+				'expected_value' => 'yes',
+			],
+			'full delay'     => [
+				'expiration'     => 100,
+				'test_delay'     => 100,
+				'value'          => 'yes',
+				'expected_value' => 'yes',
+			],
+			'after delay'    => [
+				'expiration'     => 100,
+				'test_delay'     => 101,
+				'value'          => 'yes',
+				'expected_value' => '',
+			],
+			'no expiration'  => [
+				'expiration'     => 0,
+				'test_delay'     => 999999,
+				'value'          => 'permanent',
+				'expected_value' => 'permanent',
+			],
+		];
 	}
 
 }
