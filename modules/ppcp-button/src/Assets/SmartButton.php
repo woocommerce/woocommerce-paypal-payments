@@ -1681,7 +1681,8 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 		$valid_properties = array( 'shape', 'label', 'color', 'layout', 'tagline' );
 
 		foreach ( $valid_properties as $property ) {
-			if ( str_ends_with( $key_without_prefix, "_{$property}" ) ) {
+			$suffix = "_{$property}";
+			if ( substr( $key_without_prefix, -strlen( $suffix ) ) === $suffix ) {
 				return $property;
 			}
 		}
