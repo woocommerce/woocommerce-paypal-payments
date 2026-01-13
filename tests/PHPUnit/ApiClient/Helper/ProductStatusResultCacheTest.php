@@ -72,6 +72,21 @@ class ProductStatusResultCacheTest extends TestCase {
 		$this->assertSame( 'value3', $testee->get( 'key3' ) );
 	}
 
+	public function test_value_expiration_logic(): void {
+		when( 'time' )->justReturn( 1000 );
+		$testee = new TestProductStatusResultCache();
+
+		$testee->set( 'test_key', 'test_value', 100 );
+
+		when( 'time' )->justReturn( 1050 );
+		$result1 = $testee->get( 'test_key' );
+		when( 'time' )->justReturn( 1150 );
+		$result2 = $testee->get( 'test_key' );
+
+		$this->assertSame( 'test_value', $result1 );
+		$this->assertSame( '', $result2 );
+	}
+
 }
 
 class TestProductStatusResultCache extends ProductStatusResultCache {
