@@ -950,15 +950,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 				break;
 		}
 
-		$setting_name_prefix = "pay_later_{$location}_message";
-
-		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
-		$logo_type     = $this->settings->has( "{$setting_name_prefix}_logo" ) ? $this->settings->get( "{$setting_name_prefix}_logo" ) : 'primary';
-		$logo_position = $this->settings->has( "{$setting_name_prefix}_position" ) ? $this->settings->get( "{$setting_name_prefix}_position" ) : 'left';
-		$text_color    = $this->settings->has( "{$setting_name_prefix}_color" ) ? $this->settings->get( "{$setting_name_prefix}_color" ) : 'black';
-		$style_color   = $this->settings->has( "{$setting_name_prefix}_flex_color" ) ? $this->settings->get( "{$setting_name_prefix}_flex_color" ) : 'blue';
-		$ratio         = $this->settings->has( "{$setting_name_prefix}_flex_ratio" ) ? $this->settings->get( "{$setting_name_prefix}_flex_ratio" ) : '1x1';
-		$text_size     = $this->settings->has( "{$setting_name_prefix}_text_size" ) ? $this->settings->get( "{$setting_name_prefix}_text_size" ) : '12';
+		$messaging_style = $this->settings_provider->pay_later_messaging_style( $location );
 
 		return array(
 			'wrapper'   => '.ppcp-messages',
@@ -969,17 +961,17 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			'amount'    => $amount,
 			'placement' => $placement,
 			'style'     => array(
-				'layout' => $layout,
+				'layout' => $messaging_style['layout'],
 				'logo'   => array(
-					'type'     => $logo_type,
-					'position' => $logo_position,
+					'type'     => $messaging_style['logo_type'],
+					'position' => $messaging_style['logo_position'],
 				),
 				'text'   => array(
-					'color' => $text_color,
-					'size'  => $text_size,
+					'color' => $messaging_style['text_color'],
+					'size'  => $messaging_style['text_size'],
 				),
-				'color'  => $style_color,
-				'ratio'  => $ratio,
+				'color'  => $messaging_style['flex_color'],
+				'ratio'  => $messaging_style['ratio'],
 			),
 		);
 	}
@@ -1649,7 +1641,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			return null;
 		}
 
-		$key_without_prefix = substr( $key, strlen( 'button_' ) );
+		$key_without_prefix = (string) substr( $key, strlen( 'button_' ) );
 
 		$property = $this->extract_style_property( $key_without_prefix );
 		if ( ! $property ) {
