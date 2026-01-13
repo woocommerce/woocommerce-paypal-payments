@@ -381,7 +381,7 @@ class PaymentLevelHelper {
 				$item->discount(),
 				$item
 			);
-			if ( $discount instanceof Money ) {
+			if ( $discount ) {
 				$line_item['discount_amount'] = array(
 					'currency_code' => $discount->currency_code(),
 					'value'         => $discount->value_str(),
