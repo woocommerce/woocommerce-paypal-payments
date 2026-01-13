@@ -105,11 +105,9 @@ class PaymentLevelHelper {
 			$data['supplementary_data']['card']['level_2'] = $level_2_data;
 		}
 
-		if ( $items ) {
-			$level_3_data = $this->build_level_3( $amount, $items, $shipping );
-			if ( $level_3_data ) {
-				$data['supplementary_data']['card']['level_3'] = $level_3_data;
-			}
+		$level_3_data = $this->build_level_3( $amount, $items, $shipping );
+		if ( $level_3_data ) {
+			$data['supplementary_data']['card']['level_3'] = $level_3_data;
 		}
 
 		return ! empty( $data['supplementary_data']['card'] ) ? $data : null;
