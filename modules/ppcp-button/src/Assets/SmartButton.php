@@ -935,7 +935,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
-		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
+		$styling_per_location = $this->settings_provider->pay_later_styling_per_location();
 		$location             = $styling_per_location ? $location : 'general';
 
 		// Map checkout-block and cart-block message options to checkout and cart options.
