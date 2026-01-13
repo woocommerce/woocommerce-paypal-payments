@@ -48,6 +48,11 @@ class MigrationManagerTest extends TestCase {
 		// Arrange: Set up legacy options
 		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
 		update_option('woocommerce-ppcp-is-new-merchant', '0');
+
+		// Assert pre-conditions
+		$this->assertSame('yes', get_option('woocommerce_ppcp-settings-should-use-old-ui'));
+		$this->assertSame('0', get_option('woocommerce-ppcp-is-new-merchant'));
+
 		$this->assertNotSame('1', get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE));
 
 		// Act: Run migration (will fail due to missing API connection in tests)
