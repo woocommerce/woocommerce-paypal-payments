@@ -91,26 +91,23 @@ class PaymentLevelHelper {
 	 * }|null Supplementary data array ready for PurchaseUnit, or null if no data could be built.
 	 */
 	public function build( Amount $amount, ?array $items = null, ?Shipping $shipping = null ): ?array {
-		$data = array(
-			'supplementary_data' => array(
-				'card' => array(),
-			),
-		);
-
 		$breakdown = $amount->breakdown();
 		$tax_total = $breakdown ? $breakdown->tax_total() : null;
 
-		$level_2_data = $this->build_level_2( $tax_total );
-		if ( $level_2_data ) {
-			$data['supplementary_data']['card']['level_2'] = $level_2_data;
-		}
+		$data = array(
+			'supplementary_data' => array(
+				'card' => array(
+					'level_2' => $this->build_level_2( $tax_total ),
+				),
+			),
+		);
 
 		$level_3_data = $this->build_level_3( $amount, $items, $shipping );
 		if ( $level_3_data ) {
 			$data['supplementary_data']['card']['level_3'] = $level_3_data;
 		}
 
-		return ! empty( $data['supplementary_data']['card'] ) ? $data : null;
+		return $data;
 	}
 
 	/**
@@ -232,8 +229,21 @@ class PaymentLevelHelper {
 			);
 		}
 
-		if ( $shipping && $shipping->address() ) {
-			$level_3['shipping_address'] = $shipping->address()->to_array();
+		if ( $shipping ) {
+			$address = $shipping->address();
+			if ( $address ) {
+				/** @var array{
+				 *     address_line_1?: string,
+				 *     address_line_2?: string,
+				 *     admin_area_1?: string,
+				 *     admin_area_2?: string,
+				 *     postal_code?: string,
+				 *     country_code: string
+				 * } $shipping_address
+				 */
+				$shipping_address            = $address->to_array();
+				$level_3['shipping_address'] = $shipping_address;
+			}
 		}
 
 		/**
@@ -283,7 +293,7 @@ class PaymentLevelHelper {
 
 		foreach ( $items as $item ) {
 			$line_item = array(
-				'name'         => substr( $item->name(), 0, 127 ),
+				'name'         => (string) substr( $item->name(), 0, 127 ),
 				'quantity'     => (string) $item->quantity(),
 				'unit_amount'  => array(
 					'currency_code' => $item->unit_amount()->currency_code(),
@@ -291,12 +301,12 @@ class PaymentLevelHelper {
 				),
 				'total_amount' => array(
 					'currency_code' => $item->unit_amount()->currency_code(),
-					'value'         => number_format( (float) $item->unit_amount()->value() * $item->quantity(), 2, '.', '' ),
+					'value'         => number_format( $item->unit_amount()->value() * (float) $item->quantity(), 2, '.', '' ),
 				),
 			);
 
 			if ( $item->description() ) {
-				$line_item['description'] = substr( $item->description(), 0, 127 );
+				$line_item['description'] = (string) substr( $item->description(), 0, 127 );
 			}
 
 			/**
@@ -309,11 +319,11 @@ class PaymentLevelHelper {
 			 */
 			$commodity_code = apply_filters(
 				'woocommerce_paypal_payments_level3_commodity_code',
-				$item->sku() ?? '',
+				$item->sku(),
 				$item
 			);
 			if ( $commodity_code ) {
-				$line_item['commodity_code'] = substr( $commodity_code, 0, 12 );
+				$line_item['commodity_code'] = (string) substr( $commodity_code, 0, 12 );
 			}
 
 			$gtin = '';
@@ -345,15 +355,16 @@ class PaymentLevelHelper {
 			);
 			if ( is_array( $upc ) && isset( $upc['type'], $upc['code'] ) && $upc['code'] ) {
 				$line_item['upc'] = array(
-					'type' => substr( $upc['type'], 0, 5 ),
-					'code' => substr( $upc['code'], 0, 17 ),
+					'type' => (string) substr( $upc['type'], 0, 5 ),
+					'code' => (string) substr( $upc['code'], 0, 17 ),
 				);
 			}
 
-			if ( $item->tax() ) {
+			$tax = $item->tax();
+			if ( $tax ) {
 				$line_item['tax'] = array(
-					'currency_code' => $item->tax()->currency_code(),
-					'value'         => $item->tax()->value_str(),
+					'currency_code' => $tax->currency_code(),
+					'value'         => $tax->value_str(),
 				);
 			}
 
@@ -388,7 +399,7 @@ class PaymentLevelHelper {
 			 */
 			$unit_of_measure = apply_filters( 'woocommerce_paypal_payments_level3_unit_of_measure', $unit_of_measure, $item );
 			if ( $unit_of_measure ) {
-				$line_item['unit_of_measure'] = substr( $unit_of_measure, 0, 12 );
+				$line_item['unit_of_measure'] = (string) substr( $unit_of_measure, 0, 12 );
 			}
 
 			$line_items[] = $line_item;
