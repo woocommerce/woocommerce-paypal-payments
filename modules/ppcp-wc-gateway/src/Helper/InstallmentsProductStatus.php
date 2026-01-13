@@ -29,7 +29,7 @@ class InstallmentsProductStatus extends ProductStatus {
 		return false;
 	}
 
-	protected function get_cache_lifespan(): int {
+	protected function get_cache_lifespan( bool $is_eligible ): int {
 		return MONTH_IN_SECONDS;
 	}
 }
