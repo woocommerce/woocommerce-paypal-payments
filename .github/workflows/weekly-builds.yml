@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 env:
-  SOURCE_REF: develop
+  SOURCE_REF: dev/develop
 
 jobs:
   create-tag:
@@ -66,15 +66,15 @@ jobs:
     if: github.repository_owner == 'woocommerce'
     name: Build package
     needs: create-tag
-    uses: inpsyde/reusable-workflows/.github/workflows/build-plugin-archive.yml@a9af34f34e95cbe18703198c7e972e97ebcd7473
+    uses: inpsyde/reusable-workflows/.github/workflows/build-and-distribute.yml@main
+    secrets:
+      GITHUB_USER_EMAIL: ${{ secrets.DEPLOYBOT_EMAIL }}
+      GITHUB_USER_NAME: ${{ secrets.DEPLOYBOT_USER }}
+      GITHUB_USER_SSH_KEY: ${{ secrets.DEPLOYBOT_SSH_PRIVATE_KEY }}
+      GITHUB_USER_SSH_PUBLIC_KEY: ${{ secrets.DEPLOYBOT_SSH_PUBLIC_KEY }}
     with:
-      PHP_VERSION: 7.4
+      PACKAGE_VERSION: ${{ needs.create-tag.outputs.weekly_tag }}
       NODE_VERSION: 22
-      PLUGIN_MAIN_FILE: ./woocommerce-paypal-payments.php
-      PLUGIN_VERSION: ${{ needs.create-tag.outputs.weekly_tag }}
-      PLUGIN_FOLDER_NAME: woocommerce-paypal-payments
-      ARCHIVE_NAME: woocommerce-paypal-payments
-      COMPILE_ASSETS_ARGS: '-vv --env=root'
 
   deploy:
     if: github.repository_owner == 'woocommerce'
@@ -85,13 +85,13 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: woocommerce-paypal-payments
+          name: woocommerce-paypal-payments-${{ needs.create-tag.outputs.weekly_tag }}
           path: ./artifacts
 
       - name: Create and upload zip file
         working-directory: ./artifacts
         run: |
-          zip -r ./woocommerce-paypal-payments-weekly.zip ./woocommerce-paypal-payments
+          zip -r ./woocommerce-paypal-payments-${{ needs.create-tag.outputs.weekly_tag }}.zip ./woocommerce-paypal-payments
 
       - name: Upload to release
         uses: actions/upload-release-asset@v1
@@ -99,8 +99,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ needs.create-tag.outputs.release_upload_url }}
-          asset_path: ./artifacts/woocommerce-paypal-payments-weekly.zip
-          asset_name: woocommerce-paypal-payments-weekly.zip
+          asset_path: ./artifacts/woocommerce-paypal-payments-${{ needs.create-tag.outputs.weekly_tag }}.zip
+          asset_name: woocommerce-paypal-payments-${{ needs.create-tag.outputs.weekly_tag }}.zip
           asset_content_type: application/zip
 
   notify-slack:
