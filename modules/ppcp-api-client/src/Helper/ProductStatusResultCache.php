@@ -66,4 +66,11 @@ class ProductStatusResultCache {
 	protected function save_to_storage( array $data ): void {
 		set_transient( self::CACHE_KEY, $data );
 	}
+
+	/**
+	 * Low-level time access for expiration control; can be overridden for testing.
+	 */
+	protected function get_time(): int {
+		return time();
+	}
 }
