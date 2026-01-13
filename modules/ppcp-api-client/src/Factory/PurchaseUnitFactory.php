@@ -130,7 +130,7 @@ class PurchaseUnitFactory {
 		$payment_level   = null;
 
 		if ( $this->payment_level_eligibility->is_eligible( $order->get_payment_method() ) ) {
-			$payment_level = $this->payment_level_helper->build( $amount, 'level_2' );
+			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
 		}
 
 		$purchase_unit = new PurchaseUnit(
@@ -210,7 +210,7 @@ class PurchaseUnitFactory {
 		$payment_level   = null;
 
 		if ( $this->payment_level_eligibility->is_eligible( $payment_method ) ) {
-			$payment_level = $this->payment_level_helper->build( $amount, 'level_2' );
+			$payment_level = $this->payment_level_helper->build( $amount, $items, $shipping );
 		}
 
 		$purchase_unit = new PurchaseUnit(

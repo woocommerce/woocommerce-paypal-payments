@@ -27,7 +27,6 @@ class PaymentLevelHelper {
 	 * Builds supplementary card data.
 	 *
 	 * @param Amount        $amount   The Amount object based off a WooCommerce cart.
-	 * @param string        $level    The processing level ('level_2' or 'level_3').
 	 * @param Item[]|null   $items    Array of Item objects for Level 3.
 	 * @param Shipping|null $shipping Shipping object for Level 3.
 	 * @return array{
@@ -91,21 +90,22 @@ class PaymentLevelHelper {
 	 *     }
 	 * }|null Supplementary data array ready for PurchaseUnit, or null if no data could be built.
 	 */
-	public function build( Amount $amount, string $level, ?array $items = null, ?Shipping $shipping = null ): ?array {
+	public function build( Amount $amount, ?array $items = null, ?Shipping $shipping = null ): ?array {
 		$data = array(
 			'supplementary_data' => array(
 				'card' => array(),
 			),
 		);
 
-		if ( 'level_2' === $level ) {
-			$breakdown = $amount->breakdown();
-			$tax_total = $breakdown ? $breakdown->tax_total() : null;
+		$breakdown = $amount->breakdown();
+		$tax_total = $breakdown ? $breakdown->tax_total() : null;
 
-			$data['supplementary_data']['card']['level_2'] = $this->build_level_2( $tax_total );
+		$level_2_data = $this->build_level_2( $tax_total );
+		if ( $level_2_data ) {
+			$data['supplementary_data']['card']['level_2'] = $level_2_data;
 		}
 
-		if ( 'level_3' === $level ) {
+		if ( $items ) {
 			$level_3_data = $this->build_level_3( $amount, $items, $shipping );
 			if ( $level_3_data ) {
 				$data['supplementary_data']['card']['level_3'] = $level_3_data;
