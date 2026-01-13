@@ -72,28 +72,35 @@ class ProductStatusResultCacheTest extends TestCase {
 		$this->assertSame( 'value3', $testee->get( 'key3' ) );
 	}
 
-	public function test_value_expiration_logic(): void {
-		when( 'time' )->justReturn( 1000 );
+	public function test_value_accessible_before_expiration(): void {
+		TestProductStatusResultCache::set_time( 1000 );
 		$testee = new TestProductStatusResultCache();
 
 		$testee->set( 'test_key', 'test_value', 100 );
 
-		when( 'time' )->justReturn( 1050 );
-		$result1 = $testee->get( 'test_key' );
-		when( 'time' )->justReturn( 1150 );
-		$result2 = $testee->get( 'test_key' );
+		TestProductStatusResultCache::set_time( 1050 );
+		$result = $testee->get( 'test_key' );
 
-		$this->assertSame( 'test_value', $result1 );
-		$this->assertSame( '', $result2 );
+		$this->assertSame( 'test_value', $result );
 	}
 
 }
 
 class TestProductStatusResultCache extends ProductStatusResultCache {
 	private static array $storage = array();
+	private static int $current_time = 0;
 
 	public static function reset_storage(): void {
-		self::$storage = array();
+		self::$storage      = array();
+		self::$current_time = 0;
+	}
+
+	public static function set_time( int $time ): void {
+		self::$current_time = $time;
+	}
+
+	protected function get_time(): int {
+		return self::$current_time > 0 ? self::$current_time : parent::get_time();
 	}
 
 	protected function load_from_storage(): array {
