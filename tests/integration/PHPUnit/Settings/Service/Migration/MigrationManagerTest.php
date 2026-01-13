@@ -78,10 +78,6 @@ class MigrationManagerTest extends TestCase {
 		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
 		update_option('woocommerce-ppcp-is-new-merchant', '1');
 
-		// Verify they exist
-		$this->assertSame('yes', get_option('woocommerce_ppcp-settings-should-use-old-ui'));
-		$this->assertSame('1', get_option('woocommerce-ppcp-is-new-merchant'));
-
 		// Act: Run migration
 		$this->migration_manager->migrate();
 
