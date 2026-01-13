@@ -149,12 +149,20 @@ abstract class ProductStatus {
 
 	protected function mark_as_enabled(): void {
 		$this->is_eligible = true;
-		$this->result_cache->set( static::KEY, self::STATE_IS_ENABLED );
+		$this->result_cache->set( static::KEY, self::STATE_IS_ENABLED, $this->get_cache_lifespan( true ) );
 	}
 
 	protected function mark_as_disabled(): void {
 		$this->is_eligible = false;
-		$this->result_cache->set( static::KEY, self::STATE_IS_DISABLED );
+		$this->result_cache->set( static::KEY, self::STATE_IS_DISABLED, $this->get_cache_lifespan( false ) );
+	}
+
+	/**
+	 * Defines the result-cache lifespan, in seconds. By default, the result does not expire,
+	 * but child classes can override this to define custom TTLs.
+	 */
+	protected function get_cache_lifespan( bool $is_eligible ): int {
+		return 0;
 	}
 
 	/**
