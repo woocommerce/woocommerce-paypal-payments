@@ -414,22 +414,6 @@ export class PayPalUi {
 	};
 
 	/**
-	 * Asserts Fastlane input field and button
-	 * Inputs fastlane email and clicks Continue
-	 *
-	 * @param email
-	 */
-	provideFastlaneEmail = async ( email: string ) => {
-		await expect( this.fastlaneEmailInput() ).toBeVisible();
-		await this.fastlaneEmailInput().fill( email );
-
-		await expect( this.fastlaneContinueButton() ).toBeVisible();
-		await this.fastlaneContinueButton().click();
-
-		await this.page.waitForLoadState( 'networkidle' );
-	};
-
-	/**
 	 * Types in Fastlane OPT for Ryan's flow
 	 */
 	provideFastlaneOtp = async () => {

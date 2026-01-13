@@ -2,15 +2,15 @@ import {
 	getCurrentPaymentMethod,
 	ORDER_BUTTON_SELECTOR,
 	PaymentMethods,
-} from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
-import { loadPayPalScript } from '../../../ppcp-button/resources/js/modules/Helper/PayPalScriptLoading';
-import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
+} from '@ppcp-button/Helper/CheckoutMethodState';
+import { loadPayPalScript } from '@ppcp-button/Helper/PayPalScriptLoading';
+import ErrorHandler from '@ppcp-button/ErrorHandler';
 import { buttonConfiguration, cardFieldsConfiguration } from './configuration';
-import { renderFields } from '../../../ppcp-card-fields/resources/js/Render';
+import { renderFields } from '@ppcp-card-fields/Render';
 import {
 	setVisible,
 	setVisibleByClass,
-} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+} from '@ppcp-button/Helper/Hiding';
 
 /**
  * Handles payment method change by updating visibility of buttons.

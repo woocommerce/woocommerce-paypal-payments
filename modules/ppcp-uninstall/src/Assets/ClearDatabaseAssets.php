@@ -9,17 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Uninstall\Assets;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+
 /**
  * Class ClearDatabaseAssets
  */
 class ClearDatabaseAssets {
-
-	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
+	private AssetGetter $asset_getter;
 
 	/**
 	 * The assets version.
@@ -43,23 +39,21 @@ class ClearDatabaseAssets {
 	protected $script_data;
 
 	/**
-	 * ClearDatabaseAssets constructor.
-	 *
-	 * @param string $module_url The URL to the module.
-	 * @param string $version The assets version.
-	 * @param string $script_name The script name.
-	 * @param array  $script_data A map of script data.
+	 * @param AssetGetter $asset_getter
+	 * @param string      $version The assets version.
+	 * @param string      $script_name The script name.
+	 * @param array       $script_data A map of script data.
 	 */
 	public function __construct(
-		string $module_url,
+		AssetGetter $asset_getter,
 		string $version,
 		string $script_name,
 		array $script_data
 	) {
-		$this->module_url  = $module_url;
-		$this->version     = $version;
-		$this->script_data = $script_data;
-		$this->script_name = $script_name;
+		$this->asset_getter = $asset_getter;
+		$this->version      = $version;
+		$this->script_data  = $script_data;
+		$this->script_name  = $script_name;
 	}
 
 	/**
@@ -68,11 +62,9 @@ class ClearDatabaseAssets {
 	 * @return void
 	 */
 	public function register(): void {
-		$module_url = untrailingslashit( $this->module_url );
-
 		wp_register_script(
 			$this->script_name,
-			"{$module_url}/assets/js/{$this->script_name}.js",
+			$this->asset_getter->get_asset_url( "{$this->script_name}.js" ),
 			array( 'jquery' ),
 			$this->version,
 			true

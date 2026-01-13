@@ -3,10 +3,6 @@ name: E2E Tests
 on:
   workflow_dispatch:
     inputs:
-      update-snapshots:
-        description: 'Weather generate new snapshots'
-        type: boolean
-        default: false
       wp-rc-version:
         description: 'WordPress version for Release Candidate (i.e. 6.3-RC3)'
       wc-rc-version:
@@ -18,8 +14,13 @@ on:
         type: choice
         options:
           - critical
-          - onboarding
+          - stress
           - all
+          - grep
+      grep-pattern:
+        description: 'Grep pattern (only used when "Test suite to run" == "grep")'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -106,24 +107,21 @@ jobs:
         working-directory: ./tests/qa
         run: |
           echo "${{ secrets.QA_ENV_FILE }}" > .env
+          
+      - name: Validate grep pattern
+        if: github.event.inputs.test-suite == 'grep' && github.event.inputs.grep-pattern == ''
+        run: |
+          echo "::error::Grep pattern is required when test-suite is 'grep'"
+          exit 1
 
       - name: Run E2E tests
         working-directory: ./tests/qa
         run: |
-          if [ "${{ github.event.inputs.update-snapshots }}" == "true" ]; then
-            npm run tests:${{ github.event.inputs.test-suite }} -- --update-snapshots
+          if [ "${{ github.event.inputs.test-suite }}" == "grep" ]; then
+            npx playwright test --project="all" --grep "${{ github.event.inputs.grep-pattern }}"
           else
             npm run tests:${{ github.event.inputs.test-suite }}
           fi
-
-      - name: Archive updated snapshots
-        if: github.event.inputs.update-snapshots == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: snapshots
-          path: tests/qa/snapshots
-          if-no-files-found: warn
-          retention-days: 5
 
       - name: Archive Playwright Report
         if: ${{ always() }}

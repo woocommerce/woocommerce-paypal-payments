@@ -10,7 +10,7 @@
 import { useCallback, useMemo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 
-import { createHooksForStore } from '../utils';
+import { createHooksForStore } from '@ppcp-settings/data/utils';
 import { STORE_NAME } from './constants';
 import {
 	STYLING_COLORS,

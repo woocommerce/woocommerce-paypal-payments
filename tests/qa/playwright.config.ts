@@ -9,7 +9,7 @@ require( 'dotenv' ).config();
  */
 import { BaseExtend } from './utils';
 
-const viewportSize: ViewportSize = { width: 1280, height: 1000 };
+const viewportSize: ViewportSize = { width: 1280, height: 850 };
 
 export default defineConfig< BaseExtend >( {
 	testDir: 'tests',
@@ -119,6 +119,12 @@ export default defineConfig< BaseExtend >( {
 		{
 			name: 'all',
 			dependencies: [ 'setup-woocommerce' ],
+			testIgnore: /stress\.spec\.ts/,
+		},
+		{
+			name: 'stress',
+			dependencies: [ 'setup-woocommerce' ],
+			testMatch: /stress\.spec\.ts/,
 		},
 	],
 } );

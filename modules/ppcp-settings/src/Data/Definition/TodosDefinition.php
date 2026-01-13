@@ -266,6 +266,16 @@ class TodosDefinition {
 				),
 				'priority'    => 16,
 			),
+			'enable_recaptcha_protection'          => array(
+				'title'       => __( 'Activate PayPal fraud management', 'woocommerce-paypal-payments' ),
+				'description' => __( 'PayPal detected increased suspicious card activity in market. Please enable fraud protection in your PayPal Payment settings by enabling CAPTCHA for PayPal Payments.', 'woocommerce-paypal-payments' ),
+				'isEligible'  => $eligibility_checks['enable_recaptcha_protection'],
+				'action'      => array(
+					'type' => 'external',
+					'url'  => admin_url( 'admin.php?page=wc-settings&tab=integration&section=ppcp-recaptcha' ),
+				),
+				'priority'    => 2,
+			),
 		);
 
 		$todo_items['check_settings_after_migration'] = array(

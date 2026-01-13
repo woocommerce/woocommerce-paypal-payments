@@ -6,7 +6,7 @@ import {
 	ButtonLabel,
 	ButtonColor,
 } from './Content';
-import { StylingHooks } from '../../../../../data';
+import { StylingHooks } from '@ppcp-settings/data';
 
 const SettingsPanel = ( { location, setLocation } ) => {
 	const { isActive } = StylingHooks.useLocationProps( location );

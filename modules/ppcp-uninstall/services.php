@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Uninstall;
 
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\FraudProtection\Recaptcha\Recaptcha;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\MigrationManager;
 use WooCommerce\PayPalCommerce\Settings\Service\Migration\PaymentSettingsMigration;
@@ -80,13 +82,16 @@ return array(
 		);
 	},
 
-	'uninstall.module-url'                      => static function ( ContainerInterface $container ): string {
-		return plugins_url( '/modules/ppcp-uninstall/', $container->get( 'ppcp.path-to-plugin-main-file' ) );
+	'uninstall.asset_getter'                    => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-uninstall' );
 	},
 
 	'uninstall.clear-db-assets'                 => function ( ContainerInterface $container ): ClearDatabaseAssets {
 		return new ClearDatabaseAssets(
-			$container->get( 'uninstall.module-url' ),
+			$container->get( 'uninstall.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			'ppcp-clear-db',
 			$container->get( 'uninstall.clear-database-script-data' )

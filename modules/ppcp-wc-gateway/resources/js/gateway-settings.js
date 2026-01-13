@@ -4,14 +4,14 @@ import {
 	buttonRefreshTriggerFactory,
 	buttonSettingsGetterFactory,
 } from './helper/preview-button';
-import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer';
-import MessageRenderer from '../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer';
+import Renderer from '@ppcp-button/Renderer/Renderer';
+import MessageRenderer from '@ppcp-button/Renderer/MessageRenderer';
 import {
 	setVisibleByClass,
 	isVisible,
-} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
-import widgetBuilder from '../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder';
-import { PaymentContext } from '../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState';
+} from '@ppcp-button/Helper/Hiding';
+import widgetBuilder from '@ppcp-button/Renderer/WidgetBuilder';
+import { PaymentContext } from '@ppcp-button/Helper/CheckoutMethodState';
 
 document.addEventListener( 'DOMContentLoaded', () => {
 	function disableAll( nodeList ) {

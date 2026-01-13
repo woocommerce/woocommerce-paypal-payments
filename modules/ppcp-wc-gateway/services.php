@@ -19,6 +19,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
+use WooCommerce\PayPalCommerce\Assets\AssetGetter;
+use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
@@ -127,7 +129,7 @@ return array(
 			$container->get( 'api.endpoint.payment-tokens' ),
 			$container->get( 'vaulting.vault-v3-enabled' ),
 			$container->get( 'vaulting.wc-payment-tokens' ),
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'wcgateway.settings.admin-settings-enabled' )
 		);
 	},
@@ -138,7 +140,6 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.configuration.card-configuration' ),
 			$container->get( 'wcgateway.credit-card-icons' ),
-			$container->get( 'wcgateway.url' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
@@ -200,8 +201,10 @@ return array(
 		$icons  = $settings->has( 'card_icons' ) ? (array) $settings->get( 'card_icons' ) : array();
 		$labels = $container->get( 'wcgateway.credit-card-labels' );
 
-		$module_url = $container->get( 'wcgateway.url' );
-		$url_root   = esc_url( $module_url ) . 'assets/images/';
+		$asset_getter = $container->get( 'wcgateway.asset_getter' );
+		assert( $asset_getter instanceof AssetGetter );
+
+		$url_root   = $asset_getter->get_static_asset_url( 'images/' );
 
 		$icons_with_label = array();
 		foreach ( $icons as $icon ) {
@@ -526,7 +529,7 @@ return array(
 	'wcgateway.settings.header-renderer'                   => static function ( ContainerInterface $container ): HeaderRenderer {
 		return new HeaderRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'wcgateway.url' )
+			$container->get( 'wcgateway.asset_getter' )
 		);
 	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
@@ -1319,7 +1322,7 @@ return array(
 		$fields['disable_cards']['options'] = $card_options;
 		$fields['card_icons']['options']    = array_merge( $dark_versions, $card_options );
 
-		if ( $container->get( 'api.shop.country' ) !== 'MX' ) {
+		if ( $container->get( 'api.merchant.country' ) !== 'MX' ) {
 			unset( $fields['mexico_installments'] );
 			unset( $fields['mexico_installments_action_link'] );
 		}
@@ -1375,14 +1378,11 @@ return array(
 			$container->get( 'session.handler' )
 		);
 	},
-	'wcgateway.url'                                        => static function ( ContainerInterface $container ): string {
-		return plugins_url( $container->get( 'wcgateway.relative-path' ), $container->get( 'ppcp.path-to-plugin-main-file' ) );
-	},
-	'wcgateway.relative-path'                              => static function ( ContainerInterface $container ): string {
-		return 'modules/ppcp-wc-gateway/';
-	},
-	'wcgateway.absolute-path'                              => static function ( ContainerInterface $container ): string {
-		return plugin_dir_path( $container->get( 'ppcp.path-to-plugin-main-file' ) ) . $container->get( 'wcgateway.relative-path' );
+	'wcgateway.asset_getter'                               => static function ( ContainerInterface $container ): AssetGetter {
+		$factory = $container->get( 'assets.asset_getter_factory' );
+		assert( $factory instanceof AssetGetterFactory );
+
+		return $factory->for_module( 'ppcp-wc-gateway' );
 	},
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ): ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
@@ -1510,7 +1510,7 @@ return array(
 			$container->get( 'wcgateway.checkout-helper' ),
 			$container->get( 'settings.flag.is-connected' ),
 			$container->get( 'wcgateway.processor.refunds' ),
-			$container->get( 'wcgateway.url' )
+			$container->get( 'wcgateway.asset_getter' )
 		);
 	},
 	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
@@ -1572,7 +1572,7 @@ return array(
 	'wcgateway.oxxo'                                       => static function ( ContainerInterface $container ): OXXO {
 		return new OXXO(
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -1585,7 +1585,7 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.builder.experience-context' ),
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
@@ -1969,7 +1969,7 @@ return array(
 	},
 	'wcgateway.fraudnet-assets'                            => function ( ContainerInterface $container ): FraudNetAssets {
 		return new FraudNetAssets(
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'settings.environment' ),
@@ -2183,7 +2183,7 @@ return array(
 	},
 
 	'wcgateway.settings.inbox-note-registrar'              => static function ( ContainerInterface $container ): InboxNoteRegistrar {
-		return new InboxNoteRegistrar( $container->get( 'wcgateway.settings.inbox-notes' ), $container->get( 'ppcp.plugin' ) );
+		return new InboxNoteRegistrar( $container->get( 'wcgateway.settings.inbox-notes' ), $container->get( 'ppcp.base-name' ) );
 	},
 
 	/**
@@ -2231,7 +2231,7 @@ return array(
 
 	'wcgateway.void-button.assets'                         => function ( ContainerInterface $container ): VoidButtonAssets {
 		return new VoidButtonAssets(
-			$container->get( 'wcgateway.url' ),
+			$container->get( 'wcgateway.asset_getter' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'wcgateway.processor.refunds' )
@@ -2247,7 +2247,7 @@ return array(
 	},
 
 	'wcgateway.settings.admin-settings-enabled'            => static function ( ContainerInterface $container ): bool {
-		return $container->has( 'settings.url' );
+		return $container->has( 'settings.asset_getter' );
 	},
 
 	'wcgateway.contact-module.eligibility.check'           => static function ( ContainerInterface $container ): callable {

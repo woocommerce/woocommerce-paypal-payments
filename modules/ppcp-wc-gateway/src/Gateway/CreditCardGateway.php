@@ -93,13 +93,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $vaulted_credit_card_handler;
 
 	/**
-	 * The URL to the module.
-	 *
-	 * @var string
-	 */
-	private $module_url;
-
-	/**
 	 * The Session Handler.
 	 *
 	 * @var SessionHandler
@@ -247,14 +240,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	public $enabled = 'yes';
 
 	/**
-	 * CreditCardGateway constructor.
-	 *
 	 * @param SettingsRenderer          $settings_renderer           The Settings Renderer.
 	 * @param OrderProcessor            $order_processor             The Order processor.
 	 * @param ContainerInterface        $config                      The settings.
 	 * @param CardPaymentsConfiguration $dcc_configuration           The DCC Gateway Configuration.
 	 * @param array                     $card_icons                  The card icons.
-	 * @param string                    $module_url                  The URL to the module.
 	 * @param SessionHandler            $session_handler             The Session Handler.
 	 * @param RefundProcessor           $refund_processor            The refund processor.
 	 * @param TransactionUrlProvider    $transaction_url_provider    Service able to provide view transaction url base.
@@ -275,7 +265,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		ContainerInterface $config,
 		CardPaymentsConfiguration $dcc_configuration,
 		array $card_icons,
-		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		TransactionUrlProvider $transaction_url_provider,
@@ -295,7 +284,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->order_processor             = $order_processor;
 		$this->config                      = $config;
 		$this->dcc_configuration           = $dcc_configuration;
-		$this->module_url                  = $module_url;
 		$this->session_handler             = $session_handler;
 		$this->refund_processor            = $refund_processor;
 		$this->transaction_url_provider    = $transaction_url_provider;
