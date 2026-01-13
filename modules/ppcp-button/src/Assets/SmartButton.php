@@ -1639,7 +1639,7 @@ document.querySelector("#payment").before(document.querySelector(".ppcp-messages
 	 * @return string|int|null
 	 */
 	private function get_style_value( string $key ) {
-		if ( ! str_starts_with( $key, 'button_' ) ) {
+		if ( substr( $key, 0, 7 ) !== 'button_' ) {
 			return null;
 		}
 
