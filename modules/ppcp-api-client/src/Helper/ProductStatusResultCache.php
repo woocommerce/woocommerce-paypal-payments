@@ -18,13 +18,23 @@ class ProductStatusResultCache {
 	public function get( string $key ): string {
 		$this->load();
 
-		return $this->cache[ $key ] ?? '';
+		if ( ! isset( $this->cache[ $key ] ) ) {
+			return '';
+		}
+
+		$entry = $this->cache[ $key ];
+
+		return $entry['value'] ?? '';
 	}
 
-	public function set( string $key, string $value ): void {
+	public function set( string $key, string $value, int $expiration = 0 ): void {
 		$this->load();
 
-		$this->cache[ $key ] = $value;
+		$this->cache[ $key ] = array(
+			'value'      => $value,
+			'expires_at' => $expiration > 0 ? $this->get_time() + $expiration : 0,
+		);
+
 		$this->save();
 	}
 
@@ -41,7 +51,7 @@ class ProductStatusResultCache {
 		}
 
 		$this->cache  = array_map(
-			static fn( $value ) => (string) $value,
+			static fn( $value ) => (array) $value,
 			$this->load_from_storage()
 		);
 		$this->loaded = true;
