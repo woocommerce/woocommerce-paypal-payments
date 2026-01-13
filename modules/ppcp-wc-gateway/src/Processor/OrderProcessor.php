@@ -424,6 +424,8 @@ class OrderProcessor {
 	 *
 	 * Uses direct SQL to ensure atomic lock acquisition, preventing race conditions
 	 * where two concurrent processes could both acquire the lock.
+	 * Stores an expiration timestamp instead of a simple flag, allowing stale locks
+	 * from crashed processes to automatically expire.
 	 * Supports both HPOS (wc_orders_meta) and legacy (postmeta) storage.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
@@ -432,7 +434,9 @@ class OrderProcessor {
 	private function acquire_processing_lock( WC_Order $wc_order ): bool {
 		global $wpdb;
 
-		$order_id = $wc_order->get_id();
+		$order_id     = $wc_order->get_id();
+		$current_time = time();
+		$expiration   = $current_time + 5 * MINUTE_IN_SECONDS;
 
 		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
 			$table     = $wpdb->prefix . 'wc_orders_meta';
@@ -446,11 +450,13 @@ class OrderProcessor {
 		$rows_updated = $wpdb->query(
 			$wpdb->prepare(
 				"UPDATE {$table}
-				SET meta_value = 'yes'
+				SET meta_value = %d
 				WHERE {$id_column} = %d
 				AND meta_key = '_ppcp_processing'
-				AND meta_value != 'yes'",
-				$order_id
+				AND meta_value < %d",
+				$expiration,
+				$order_id,
+				$current_time
 			)
 		);
 
@@ -458,30 +464,32 @@ class OrderProcessor {
 			return true;
 		}
 
-		$current_value = $wpdb->get_var(
+		$rows_inserted = $wpdb->query(
 			$wpdb->prepare(
-				"SELECT meta_value FROM {$table}
-				WHERE {$id_column} = %d AND meta_key = '_ppcp_processing'
-				LIMIT 1",
+				"INSERT INTO {$table} ({$id_column}, meta_key, meta_value)
+				SELECT %d, '_ppcp_processing', %d
+				FROM (SELECT 1) AS dummy
+				WHERE NOT EXISTS (
+					SELECT 1 FROM {$table} AS t WHERE t.{$id_column} = %d AND t.meta_key = '_ppcp_processing'
+				)",
+				$order_id,
+				$expiration,
 				$order_id
 			)
 		);
 		// phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
-		if ( $current_value === 'yes' ) {
-			$this->logger->warning(
-				sprintf(
-					'Order #%d is already being processed (lock active), skipping payment processing.',
-					$order_id
-				)
-			);
-			return false;
+		if ( $rows_inserted > 0 ) {
+			return true;
 		}
 
-		$wc_order->update_meta_data( '_ppcp_processing', 'yes' );
-		$wc_order->save();
-
-		return true;
+		$this->logger->warning(
+			sprintf(
+				'Order #%d is already being processed (lock active), skipping payment processing.',
+				$order_id
+			)
+		);
+		return false;
 	}
 
 	/**
