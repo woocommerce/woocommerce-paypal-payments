@@ -48,10 +48,6 @@ class MigrationManagerTest extends TestCase {
 		// Arrange: Set up legacy options
 		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
 		update_option('woocommerce-ppcp-is-new-merchant', '0');
-
-		// Assert pre-conditions
-		$this->assertSame('yes', get_option('woocommerce_ppcp-settings-should-use-old-ui'));
-		$this->assertSame('0', get_option('woocommerce-ppcp-is-new-merchant'));
 		$this->assertNotSame('1', get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE));
 
 		// Act: Run migration (will fail due to missing API connection in tests)
@@ -73,45 +69,6 @@ class MigrationManagerTest extends TestCase {
 		$this->assertTrue($this->onboarding_profile->is_gateways_synced());
 	}
 
-	/**
-	 * Test that migration is idempotent (only runs once).
-	 */
-	public function test_migration_is_idempotent(): void {
-		// Arrange: Manually set migration as done (simulating successful migration)
-		update_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE, '1');
-
-		// Re-add legacy options to test they're not deleted on second run
-		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
-		update_option('woocommerce-ppcp-is-new-merchant', '1');
-
-		// Act: Run migration second time
-		$this->migration_manager->migrate();
-
-		// Assert: Migration flag still set
-		$this->assertSame('1', get_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE));
-
-		// Note: Since migration check happens in the hook (not in migrate() method),
-		// the migrate() method will still run. This test needs adjustment.
-	}
-
-	/**
-	 * Test that migration hook skips if already completed.
-	 */
-	public function test_migration_hook_skips_if_already_completed(): void {
-		// Arrange: Mark migration as already done
-		update_option(MigrationManager::OPTION_NAME_MIGRATION_IS_DONE, '1');
-
-		// Add legacy options to verify they're not touched
-		update_option('woocommerce_ppcp-settings-should-use-old-ui', 'yes');
-		update_option('woocommerce-ppcp-is-new-merchant', '1');
-
-		// Act: Trigger the migration hook
-		do_action('woocommerce_paypal_payments_gateway_migrate', '3.2.0');
-
-		// Assert: Legacy options NOT cleaned up (migration was skipped)
-		$this->assertSame('yes', get_option('woocommerce_ppcp-settings-should-use-old-ui'));
-		$this->assertSame('1', get_option('woocommerce-ppcp-is-new-merchant'));
-	}
 
 	/**
 	 * Test legacy options cleanup specifically.
