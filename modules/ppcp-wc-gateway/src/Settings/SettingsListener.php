@@ -515,13 +515,13 @@ class SettingsListener {
 			$this->client_credentials_cache->delete( SdkClientToken::CACHE_KEY );
 		}
 
-		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY ) ) {
-			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
-		}
-
-		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
-			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
-		}
+		/**
+		 * TODO: Legacy code cleanup:
+		 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
+		 * - Removed DCCProductStatus::clear() logic without replacement
+		 *
+		 * This class is not migrated and will be dropped soon.
+		 */
 
 		/**
 		 * The hook fired during listening the request so a module can remove also the cache or other logic.
