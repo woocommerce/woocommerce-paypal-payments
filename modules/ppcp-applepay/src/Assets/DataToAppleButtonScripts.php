@@ -77,7 +77,7 @@ class DataToAppleButtonScripts {
 		$color      = $this->settings->applepay_button_color();
 		$lang       = $this->settings->applepay_button_language();
 		$lang       = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
-		$is_enabled = $this->settings->applepay_button_enabled();
+		$is_enabled = $this->settings->applepay_enabled();
 
 		return array(
 			'sdk_url'               => $this->sdk_url,

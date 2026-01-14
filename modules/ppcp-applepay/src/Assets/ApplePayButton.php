@@ -1037,6 +1037,6 @@ class ApplePayButton implements ButtonInterface {
 	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		return $this->settings_provider->applepay_button_enabled();
+		return $this->settings_provider->applepay_enabled();
 	}
 }

@@ -42,7 +42,6 @@ class PaymentSettings extends AbstractDataModel {
 			'fastlane_display_watermark'  => false,
 			'venmo_enabled'               => false,
 			'paylater_enabled'            => false,
-			'applepay_button_enabled'     => false,
 			'applepay_validated'          => false,
 			'applepay_button_type'        => 'plain',
 			'applepay_button_color'       => 'black',
@@ -260,20 +259,6 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	private function modified_gateway( WC_Payment_Gateway $gateway ): void {
 		$this->unsaved_gateways[ $gateway->id ] = $gateway;
-	}
-
-	/**
-	 * Get Apple Pay button enabled.
-	 */
-	public function get_applepay_button_enabled(): bool {
-		return (bool) $this->data['applepay_button_enabled'];
-	}
-
-	/**
-	 * @see self::get_applepay_button_enabled()
-	 */
-	public function set_applepay_button_enabled( bool $value ): void {
-		$this->data['applepay_button_enabled'] = $value;
 	}
 
 	/**

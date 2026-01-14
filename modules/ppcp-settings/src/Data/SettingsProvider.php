@@ -16,6 +16,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 
 class SettingsProvider {
 	private GeneralSettings $general_settings;
@@ -536,10 +537,10 @@ class SettingsProvider {
 	// ----- APPLE PAY -----
 
 	/**
-	 * Get if Apple Pay button is enabled.
+	 * Whether the plugin accepts payments via Apple Pay.
 	 */
-	public function applepay_button_enabled(): bool {
-		return $this->payment_settings->get_applepay_button_enabled();
+	public function applepay_enabled(): bool {
+		return $this->payment_settings->is_method_enabled( ApplePayGateway::ID );
 	}
 
 	/**

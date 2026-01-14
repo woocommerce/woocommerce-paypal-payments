@@ -147,7 +147,7 @@ class ApplepayModule implements ServiceModule, ExtendingModule, ExecutableModule
 				$settings = $c->get( 'settings.settings-provider' );
 				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->applepay_button_enabled() ) {
+				if ( $settings->applepay_enabled() ) {
 					$applepay_gateway = $c->get( 'applepay.wc-gateway' );
 					assert( $applepay_gateway instanceof WC_Payment_Gateway );
 
