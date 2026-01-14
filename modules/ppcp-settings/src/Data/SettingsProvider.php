@@ -556,4 +556,53 @@ class SettingsProvider {
 	public function applepay_onboarding(): string {
 		return $this->payment_settings->get_ppcp_onboarding_apple();
 	}
+
+	/**
+	 * Whether Pay Later messaging styling should be customized per location.
+	 *
+	 * @return bool
+	 */
+	public function pay_later_styling_per_location(): bool {
+		return $this->styling_settings->get_pay_later_styling_per_location();
+	}
+
+	/**
+	 * Whether the given gateway is enabled.
+	 *
+	 * @param string $method_id ID of the payment method.
+	 * @return bool
+	 */
+	public function gateway_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	/**
+	 * Gets the payment intent (authorize or capture).
+	 *
+	 * @return string The payment intent ('authorize' or 'capture').
+	 */
+	public function payment_intent(): string {
+		return $this->authorize_only() ? 'authorize' : 'capture';
+	}
+
+	/**
+	 * Gets Pay Later messaging style settings for a given location.
+	 *
+	 * @param string $location The location (general, cart, checkout, product, etc.).
+	 * @return array The messaging style settings.
+	 */
+	public function pay_later_messaging_style( string $location ): array {
+		$settings = (array) get_option( 'woocommerce-ppcp-settings', array() );
+		$prefix   = "pay_later_{$location}_message";
+
+		return array(
+			'layout'        => $settings[ "{$prefix}_layout" ] ?? 'text',
+			'logo_type'     => $settings[ "{$prefix}_logo" ] ?? 'primary',
+			'logo_position' => $settings[ "{$prefix}_position" ] ?? 'left',
+			'text_color'    => $settings[ "{$prefix}_color" ] ?? 'black',
+			'flex_color'    => $settings[ "{$prefix}_flex_color" ] ?? 'blue',
+			'ratio'         => $settings[ "{$prefix}_flex_ratio" ] ?? '1x1',
+			'text_size'     => $settings[ "{$prefix}_text_size" ] ?? '12',
+		);
+	}
 }

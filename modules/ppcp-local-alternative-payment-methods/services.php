@@ -72,10 +72,10 @@ return array(
 	},
 	'ppcp-local-apms.product-status'            => static function ( ContainerInterface $container ): LocalApmProductStatus {
 		return new LocalApmProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'settings.flag.is-connected' ),
-			$container->get( 'api.helper.failure-registry' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'api.helper.failure-registry' ),
+			$container->get( 'api.helper.product-status-result-cache' )
 		);
 	},
 	'ppcp-local-apms.pwc.wc-gateway'            => static function ( ContainerInterface $container ): PWCGateway {
