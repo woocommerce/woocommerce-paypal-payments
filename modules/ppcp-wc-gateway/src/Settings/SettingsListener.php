@@ -103,13 +103,6 @@ class SettingsListener {
 	protected $signup_link_ids;
 
 	/**
-	 * The PUI status cache.
-	 *
-	 * @var Cache
-	 */
-	protected $pui_status_cache;
-
-	/**
 	 * The HTTP redirector.
 	 *
 	 * @var RedirectorInterface
@@ -174,7 +167,6 @@ class SettingsListener {
 	 * @param string                     $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Cache                      $signup_link_cache The signup link cache.
 	 * @param array                      $signup_link_ids Signup link ids.
-	 * @param Cache                      $pui_status_cache The PUI status cache.
 	 * @param RedirectorInterface        $redirector The HTTP redirector.
 	 * @param string                     $partner_merchant_id_production Partner merchant ID production.
 	 * @param string                     $partner_merchant_id_sandbox Partner merchant ID sandbox.
@@ -193,7 +185,6 @@ class SettingsListener {
 		string $page_id,
 		Cache $signup_link_cache,
 		array $signup_link_ids,
-		Cache $pui_status_cache,
 		RedirectorInterface $redirector,
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
@@ -214,7 +205,6 @@ class SettingsListener {
 		$this->page_id                            = $page_id;
 		$this->signup_link_cache                  = $signup_link_cache;
 		$this->signup_link_ids                    = $signup_link_ids;
-		$this->pui_status_cache                   = $pui_status_cache;
 		$this->redirector                         = $redirector;
 		$this->partner_merchant_id_production     = $partner_merchant_id_production;
 		$this->partner_merchant_id_sandbox        = $partner_merchant_id_sandbox;

@@ -330,14 +330,6 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			static function () use ( $c ) {
-				$pui_status_cache = $c->get( 'pui.status-cache' );
-				assert( $pui_status_cache instanceof Cache );
-
-				$pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
-
-				$settings = $c->get( 'wcgateway.settings' );
-				$settings->set( 'products_pui_enabled', false );
-				$settings->persist();
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
 
 				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
@@ -347,6 +339,7 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 
 				$pui_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
 				assert( $pui_status instanceof PayUponInvoiceProductStatus );
+				$pui_status->clear();
 				$pui_status->is_active();
 			}
 		);
