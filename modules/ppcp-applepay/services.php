@@ -86,10 +86,10 @@ return array(
 	'applepay.apple-product-status'            => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): AppleProductStatus {
 			return new AppleProductStatus(
-				$container->get( 'wcgateway.settings' ),
-				$container->get( 'api.endpoint.partners' ),
 				$container->get( 'settings.flag.is-connected' ),
-				$container->get( 'api.helper.failure-registry' )
+				$container->get( 'api.endpoint.partners' ),
+				$container->get( 'api.helper.failure-registry' ),
+				$container->get( 'api.helper.product-status-result-cache' )
 			);
 		}
 	),
