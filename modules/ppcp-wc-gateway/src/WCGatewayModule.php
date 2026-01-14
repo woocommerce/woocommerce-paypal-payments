@@ -327,11 +327,17 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 			}
 		);
 
+		// Clear the cached ProductStatus information on plugin update.
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function () use ( $c ) {
-				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
+			static function () {
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
+			}
+		);
 
+		add_action(
+			'woocommerce_paypal_payments_clear_apm_product_status',
+			static function () use ( $c ) {
 				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				assert( $dcc_status instanceof DCCProductStatus );
 				$dcc_status->clear();
@@ -470,24 +476,23 @@ class WCGatewayModule implements ServiceModule, ExtendingModule, ExecutableModul
 		// Clears product status when appropriate.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function ( ?Settings $settings = null ) use ( $c ): void {
-
+			static function () use ( $c ): void {
 				// Clear DCC Product status.
 				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
 				if ( $dcc_product_status instanceof DCCProductStatus ) {
-					$dcc_product_status->clear( $settings );
+					$dcc_product_status->clear();
 				}
 
 				// Clear Pay Upon Invoice status.
 				$pui_product_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
 				if ( $pui_product_status instanceof PayUponInvoiceProductStatus ) {
-					$pui_product_status->clear( $settings );
+					$pui_product_status->clear();
 				}
 
 				// Clear PWC status.
 				$pwc_product_status = $c->get( 'wcgateway.pwc-product-status' );
 				if ( $pwc_product_status instanceof PWCProductStatus ) {
-					$pwc_product_status->clear( $settings );
+					$pwc_product_status->clear();
 				}
 
 				$reference_transaction_status_cache = $c->get( 'api.reference-transaction-status-cache' );

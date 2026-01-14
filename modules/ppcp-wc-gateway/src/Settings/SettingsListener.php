@@ -465,9 +465,15 @@ class SettingsListener {
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( $credentials_change_status ) {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
-				$this->settings->set( 'products_dcc_enabled', null );
-				$this->settings->set( 'products_pui_enabled', null );
-				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
+				/**
+				 * TODO: Legacy code cleanup:
+				 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
+				 * - Removed DCCProductStatus::clear() logic without replacement
+				 *
+				 * This class is not migrated and will be dropped soon.
+				 */
+
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 			}
 
 			if ( in_array(

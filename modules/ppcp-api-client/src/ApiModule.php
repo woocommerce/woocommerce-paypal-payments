@@ -104,7 +104,7 @@ class ApiModule implements ServiceModule, FactoryModule, ExtendingModule, Execut
 		);
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function () use ( $c ) {
+			static function () use ( $c ) {
 				$failure_registry = $c->has( 'api.helper.failure-registry' ) ? $c->get( 'api.helper.failure-registry' ) : null;
 
 				if ( $failure_registry instanceof FailureRegistry ) {

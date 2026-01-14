@@ -242,9 +242,15 @@ class OnboardingRESTController {
 			return array();
 		}
 
-		$settings->set( 'products_dcc_enabled', null );
-		$settings->set( 'products_pui_enabled', null );
-		do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
+		/**
+		 * TODO: Legacy code cleanup:
+		 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
+		 * - Removed DCCProductStatus::clear() logic without replacement
+		 *
+		 * This class is not migrated and will be dropped soon.
+		 */
+
+		do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 
 		if ( ! $settings->persist() ) {
 			return new \WP_Error(
