@@ -74,7 +74,7 @@ return array(
 	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
 		$cache = $container->get( 'applepay.status-cache' );
 		assert( $cache instanceof Cache );
-		return $cache->has( AppleProductStatus::SETTINGS_KEY );
+		return $cache->has( AppleProductStatus::KEY );
 	},
 
 	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
