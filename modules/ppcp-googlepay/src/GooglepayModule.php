@@ -24,7 +24,7 @@ use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class GooglepayModule
@@ -194,10 +194,10 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 					return $methods;
 				}
 
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
+				$settings = $c->get( 'settings.settings-provider' );
+				assert( $settings instanceof SettingsProvider );
 
-				if ( $settings->has( 'googlepay_button_enabled' ) && $settings->get( 'googlepay_button_enabled' ) ) {
+				if ( $settings->googlepay_enabled() ) {
 					$googlepay_gateway = $c->get( 'googlepay.wc-gateway' );
 					assert( $googlepay_gateway instanceof WC_Payment_Gateway );
 

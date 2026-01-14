@@ -16,6 +16,7 @@ namespace WooCommerce\PayPalCommerce\Settings\Data;
 use WooCommerce\PayPalCommerce\Settings\DTO\LocationStylingDTO;
 use WooCommerce\PayPalCommerce\Settings\DTO\MerchantConnectionDTO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Googlepay\GooglePayGateway;
 use WooCommerce\PayPalCommerce\Applepay\ApplePayGateway;
 
 class SettingsProvider {
@@ -584,6 +585,16 @@ class SettingsProvider {
 	public function applepay_onboarding(): string {
 		return $this->payment_settings->get_ppcp_onboarding_apple();
 	}
+
+	// ----- GOOGLE PAY -----
+
+	/**
+	 * Whether the plugin accepts payments via Google Pay.
+	 */
+	public function googlepay_enabled(): bool {
+		return $this->payment_settings->is_method_enabled( GooglePayGateway::ID );
+	}
+
 
 	// ----- PAY LATER -----
 

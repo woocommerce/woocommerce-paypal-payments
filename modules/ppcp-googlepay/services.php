@@ -258,6 +258,7 @@ return array(
 			? $container->get( 'googlepay.enable-url-live' )
 			: $container->get( 'googlepay.enable-url-sandbox' );
 
+		// TODO: #legcy-ui code cleanup. This service can be dropped.
 		$button_url = $enabled
 			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway#ppcp-googlepay_button_enabled' )
 			: $enable_url;

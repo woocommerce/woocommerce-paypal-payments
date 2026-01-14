@@ -21,8 +21,8 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsModel;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 /**
  * Class Button
@@ -52,12 +52,7 @@ class Button implements ButtonInterface {
 	 */
 	private $version;
 
-	/**
-	 * The settings.
-	 *
-	 * @var Settings
-	 */
-	private $settings;
+	private SettingsProvider $settings;
 
 	/**
 	 * The environment object.
@@ -94,22 +89,22 @@ class Button implements ButtonInterface {
 
 	/**
 	 * @param AssetGetter        $asset_getter
-	 * @param string             $sdk_url The URL to the SDK.
-	 * @param string             $version The assets version.
+	 * @param string             $sdk_url             The URL to the SDK.
+	 * @param string             $version             The assets version.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @param Settings           $settings The legacy settings.
-	 * @param Environment        $environment The environment object.
-	 * @param SettingsStatus     $settings_status The Settings status helper.
-	 * @param LoggerInterface    $logger The logger.
-	 * @param Context            $context Context data provider.
-	 * @param SettingsModel|null $new_settings The new settings model.
+	 * @param SettingsProvider   $settings            The legacy settings.
+	 * @param Environment        $environment         The environment object.
+	 * @param SettingsStatus     $settings_status     The Settings status helper.
+	 * @param LoggerInterface    $logger              The logger.
+	 * @param Context            $context             Context data provider.
+	 * @param SettingsModel|null $new_settings        The new settings model.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
 		string $sdk_url,
 		string $version,
 		SubscriptionHelper $subscription_helper,
-		Settings $settings,
+		SettingsProvider $settings,
 		Environment $environment,
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
@@ -214,15 +209,9 @@ class Button implements ButtonInterface {
 
 	/**
 	 * Returns if Google Pay button is enabled
-	 *
-	 * @return bool
 	 */
 	public function is_enabled(): bool {
-		try {
-			return $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
-		} catch ( Exception $e ) {
-			return false;
-		}
+		$this->settings->googlepay_enabled();
 	}
 
 	/**
@@ -472,15 +461,13 @@ class Button implements ButtonInterface {
 			$shipping['countries'] = array_keys( $this->wc_countries()->get_shipping_countries() );
 		}
 
-		$is_enabled = $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
-
 		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
 		$is_wc_gateway_enabled = isset( $available_gateways[ GooglePayGateway::ID ] );
 
 		return array(
 			'environment'           => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
 			'is_debug'              => defined( 'WP_DEBUG' ) && WP_DEBUG,
-			'is_enabled'            => $is_enabled,
+			'is_enabled'            => $this->is_enabled(),
 			'is_wc_gateway_enabled' => $is_wc_gateway_enabled,
 			'sdk_url'               => $this->sdk_url,
 			'button'                => array(
