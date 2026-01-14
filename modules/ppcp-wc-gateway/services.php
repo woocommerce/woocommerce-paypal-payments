@@ -1868,9 +1868,6 @@ return array(
 	'installments.status-cache'                            => static function ( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-installments-status-cache' );
 	},
-	'pwc.status-cache'                                     => static function ( ContainerInterface $container ): Cache {
-		return new Cache( 'ppcp-paypal-pwc-status-cache' );
-	},
 	'wcgateway.button.locations'                           => static function ( ContainerInterface $container ): array {
 		return array(
 			'product'   => 'Single Product',
