@@ -243,7 +243,7 @@ class OnboardingRESTController {
 		}
 
 		/**
-		 * TODO: Legacy code cleanup:
+		 * TODO: #legacy-ui code cleanup:
 		 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
 		 * - Removed DCCProductStatus::clear() logic without replacement
 		 *

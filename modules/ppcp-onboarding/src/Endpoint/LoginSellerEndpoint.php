@@ -146,7 +146,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 			$this->settings->persist();
 
 			/**
-			 * TODO: Legacy code cleanup:
+			 * TODO: #legacy-ui code cleanup:
 			 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
 			 * - Removed DCCProductStatus::clear() logic without replacement
 			 *

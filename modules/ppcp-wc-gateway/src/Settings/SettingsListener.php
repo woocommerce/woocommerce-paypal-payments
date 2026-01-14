@@ -466,7 +466,7 @@ class SettingsListener {
 		if ( $credentials_change_status ) {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				/**
-				 * TODO: Legacy code cleanup:
+				 * TODO: #legacy-ui code cleanup:
 				 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
 				 * - Removed DCCProductStatus::clear() logic without replacement
 				 *
@@ -502,7 +502,7 @@ class SettingsListener {
 		}
 
 		/**
-		 * TODO: Legacy code cleanup:
+		 * TODO: #legacy-ui code cleanup:
 		 * - Removed PayUponInvoiceProductStatus::clear() logic without replacement
 		 * - Removed DCCProductStatus::clear() logic without replacement
 		 *
