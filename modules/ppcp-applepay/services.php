@@ -67,15 +67,9 @@ return array(
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
 			$container->get( 'applepay.server_supported' ),
-			$container->get( 'applepay.is_validated' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'applepay.button' )
 		);
-	},
-
-	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'settings.settings-provider' );
-		assert( $settings instanceof  SettingsProvider );
-		return $settings->applepay_validated();
 	},
 
 	'applepay.apple-product-status'            => SingletonDecorator::make(
