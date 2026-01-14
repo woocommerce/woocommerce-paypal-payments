@@ -38,7 +38,9 @@ class ApplePayButton implements ButtonInterface {
 	protected OrderProcessor $order_processor;
 	protected bool $reload_cart = false;
 	private string $version;
+	/** @psalm-suppress PropertyNotSetInConstructor */
 	private string $module_url;
+	private AssetGetter $asset_getter;
 	private DataToAppleButtonScripts $script_data;
 	private SettingsStatus $settings_status;
 	protected CartProductsHelper $cart_products;
