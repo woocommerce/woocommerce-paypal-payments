@@ -71,6 +71,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PartnerAttribution;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ProductStatusResultCache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -863,6 +864,9 @@ return array(
 			return new PurchaseUnitSanitizer( $subtotal_adjustment );
 		}
 	),
+	'api.helper.product-status-result-cache'         => static function (): ProductStatusResultCache {
+		return new ProductStatusResultCache();
+	},
 	'api.client-credentials'                         => static function ( ContainerInterface $container ): ClientCredentials {
 		return new ClientCredentials(
 			$container->get( 'settings.settings-provider' )
