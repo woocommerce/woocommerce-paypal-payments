@@ -504,9 +504,7 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Get if Apple Pay is validated.
-	 *
-	 * @return bool
+	 * Whether the domain verification for ApplePay completed successfully.
 	 */
 	public function applepay_validated(): bool {
 		return $this->payment_settings->get_applepay_validated();
