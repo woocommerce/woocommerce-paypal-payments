@@ -110,13 +110,6 @@ class SettingsListener {
 	protected $pui_status_cache;
 
 	/**
-	 * The DCC status cache.
-	 *
-	 * @var Cache
-	 */
-	protected $dcc_status_cache;
-
-	/**
 	 * The HTTP redirector.
 	 *
 	 * @var RedirectorInterface
@@ -182,7 +175,6 @@ class SettingsListener {
 	 * @param Cache                      $signup_link_cache The signup link cache.
 	 * @param array                      $signup_link_ids Signup link ids.
 	 * @param Cache                      $pui_status_cache The PUI status cache.
-	 * @param Cache                      $dcc_status_cache The DCC status cache.
 	 * @param RedirectorInterface        $redirector The HTTP redirector.
 	 * @param string                     $partner_merchant_id_production Partner merchant ID production.
 	 * @param string                     $partner_merchant_id_sandbox Partner merchant ID sandbox.
@@ -202,7 +194,6 @@ class SettingsListener {
 		Cache $signup_link_cache,
 		array $signup_link_ids,
 		Cache $pui_status_cache,
-		Cache $dcc_status_cache,
 		RedirectorInterface $redirector,
 		string $partner_merchant_id_production,
 		string $partner_merchant_id_sandbox,
@@ -224,7 +215,6 @@ class SettingsListener {
 		$this->signup_link_cache                  = $signup_link_cache;
 		$this->signup_link_ids                    = $signup_link_ids;
 		$this->pui_status_cache                   = $pui_status_cache;
-		$this->dcc_status_cache                   = $dcc_status_cache;
 		$this->redirector                         = $redirector;
 		$this->partner_merchant_id_production     = $partner_merchant_id_production;
 		$this->partner_merchant_id_sandbox        = $partner_merchant_id_sandbox;
