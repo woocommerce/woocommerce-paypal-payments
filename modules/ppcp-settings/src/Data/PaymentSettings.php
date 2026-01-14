@@ -37,11 +37,18 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	protected function get_defaults(): array {
 		return array(
-			'paypal_show_logo'           => false,
-			'cardholder_name'            => false,
-			'fastlane_display_watermark' => false,
-			'venmo_enabled'              => false,
-			'paylater_enabled'           => false,
+			'paypal_show_logo'            => false,
+			'cardholder_name'             => false,
+			'fastlane_display_watermark'  => false,
+			'venmo_enabled'               => false,
+			'paylater_enabled'            => false,
+			'applepay_button_enabled'     => false,
+			'applepay_validated'          => false,
+			'applepay_button_type'        => 'plain',
+			'applepay_button_color'       => 'black',
+			'applepay_button_language'    => '',
+			'applepay_checkout_data_mode' => 'use_wc',
+			'ppcp_onboarding_apple'       => '',
 		);
 	}
 
@@ -291,5 +298,138 @@ class PaymentSettings extends AbstractDataModel {
 	 */
 	private function modified_gateway( WC_Payment_Gateway $gateway ): void {
 		$this->unsaved_gateways[ $gateway->id ] = $gateway;
+	}
+
+	/**
+	 * Get Apple Pay button enabled.
+	 *
+	 * @return bool
+	 */
+	public function get_applepay_button_enabled(): bool {
+		return (bool) $this->data['applepay_button_enabled'];
+	}
+
+	/**
+	 * Set Apple Pay button enabled.
+	 *
+	 * @param bool $value The value.
+	 * @return void
+	 */
+	public function set_applepay_button_enabled( bool $value ): void {
+		$this->data['applepay_button_enabled'] = $value;
+	}
+
+	/**
+	 * Get Apple Pay validated.
+	 *
+	 * @return bool
+	 */
+	public function get_applepay_validated(): bool {
+		return (bool) $this->data['applepay_validated'];
+	}
+
+	/**
+	 * Set Apple Pay validated.
+	 *
+	 * @param bool $value The value.
+	 * @return void
+	 */
+	public function set_applepay_validated( bool $value ): void {
+		$this->data['applepay_validated'] = $value;
+	}
+
+	/**
+	 * Get Apple Pay button type.
+	 *
+	 * @return string
+	 */
+	public function get_applepay_button_type(): string {
+		return (string) $this->data['applepay_button_type'];
+	}
+
+	/**
+	 * Set Apple Pay button type.
+	 *
+	 * @param string $value The value.
+	 * @return void
+	 */
+	public function set_applepay_button_type( string $value ): void {
+		$this->data['applepay_button_type'] = $value;
+	}
+
+	/**
+	 * Get Apple Pay button color.
+	 *
+	 * @return string
+	 */
+	public function get_applepay_button_color(): string {
+		return (string) $this->data['applepay_button_color'];
+	}
+
+	/**
+	 * Set Apple Pay button color.
+	 *
+	 * @param string $value The value.
+	 * @return void
+	 */
+	public function set_applepay_button_color( string $value ): void {
+		$this->data['applepay_button_color'] = $value;
+	}
+
+	/**
+	 * Get Apple Pay button language.
+	 *
+	 * @return string
+	 */
+	public function get_applepay_button_language(): string {
+		return (string) $this->data['applepay_button_language'];
+	}
+
+	/**
+	 * Set Apple Pay button language.
+	 *
+	 * @param string $value The value.
+	 * @return void
+	 */
+	public function set_applepay_button_language( string $value ): void {
+		$this->data['applepay_button_language'] = $value;
+	}
+
+	/**
+	 * Get Apple Pay checkout data mode.
+	 *
+	 * @return string
+	 */
+	public function get_applepay_checkout_data_mode(): string {
+		return (string) $this->data['applepay_checkout_data_mode'];
+	}
+
+	/**
+	 * Set Apple Pay checkout data mode.
+	 *
+	 * @param string $value The value.
+	 * @return void
+	 */
+	public function set_applepay_checkout_data_mode( string $value ): void {
+		$this->data['applepay_checkout_data_mode'] = $value;
+	}
+
+	/**
+	 * Get PPCP onboarding Apple.
+	 *
+	 * @return string
+	 */
+	public function get_ppcp_onboarding_apple(): string {
+		return (string) $this->data['ppcp_onboarding_apple'];
+	}
+
+	/**
+	 * Set PPCP onboarding Apple.
+	 *
+	 * @param string $value The value.
+	 * @return void
+	 */
+	public function set_ppcp_onboarding_apple( string $value ): void {
+		$this->data['ppcp_onboarding_apple'] = $value;
 	}
 }

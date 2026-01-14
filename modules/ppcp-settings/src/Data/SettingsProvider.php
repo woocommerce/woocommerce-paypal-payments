@@ -513,6 +513,69 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Get if Apple Pay button is enabled.
+	 *
+	 * @return bool
+	 */
+	public function applepay_button_enabled(): bool {
+		return $this->payment_settings->get_applepay_button_enabled();
+	}
+
+	/**
+	 * Get if Apple Pay is validated.
+	 *
+	 * @return bool
+	 */
+	public function applepay_validated(): bool {
+		return $this->payment_settings->get_applepay_validated();
+	}
+
+	/**
+	 * Get Apple Pay button type.
+	 *
+	 * @return string
+	 */
+	public function applepay_button_type(): string {
+		return $this->payment_settings->get_applepay_button_type();
+	}
+
+	/**
+	 * Get Apple Pay button color.
+	 *
+	 * @return string
+	 */
+	public function applepay_button_color(): string {
+		return $this->payment_settings->get_applepay_button_color();
+	}
+
+	/**
+	 * Get Apple Pay button language.
+	 *
+	 * @return string
+	 */
+	public function applepay_button_language(): string {
+		return $this->payment_settings->get_applepay_button_language();
+	}
+
+	/**
+	 * Get Apple Pay checkout data mode.
+	 *
+	 * @return string
+	 */
+	public function applepay_checkout_data_mode(): string {
+		return $this->payment_settings->get_applepay_checkout_data_mode();
+	}
+
+	/**
+	 * Get PPCP onboarding Apple flag.
+	 *
+	 * @return string
+	 */
+	public function applepay_onboarding(): string {
+		return $this->payment_settings->get_ppcp_onboarding_apple();
+	}
+
+	/**
 	 * Whether Pay Later messaging styling should be customized per location.
 	 *
 	 * @return bool
