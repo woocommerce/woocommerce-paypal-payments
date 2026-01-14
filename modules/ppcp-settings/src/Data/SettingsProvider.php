@@ -2,13 +2,14 @@
 /**
  * PayPal Commerce Provider Class
  *
- * The goal of the class is to have all new settings UI classes injected and serve as settings provider from one single place.
- * Modules would use this SettingsProvider class to update the code from using the legacy Settings class to use the new settings.
+ * The goal of the class is to have all new settings UI classes injected and serve as settings
+ * provider from one single place. Modules would use this SettingsProvider class to update the code
+ * from using the legacy Settings class to use the new settings.
  *
  * @package WooCommerce\PayPalCommerce\Settings\Data
  */
 
-declare( strict_types=1 );
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Settings\Data;
 
@@ -151,6 +152,7 @@ class SettingsProvider {
 	public function installation_path(): string {
 		return $this->general_settings->get_installation_path();
 	}
+
 	/**
 	 * Gets the Onboarding 'completed' flag.
 	 *
@@ -503,6 +505,15 @@ class SettingsProvider {
 	}
 
 	/**
+	 * Gets the payment intent (authorize or capture).
+	 *
+	 * @return string The payment intent ('authorize' or 'capture').
+	 */
+	public function payment_intent(): string {
+		return $this->authorize_only() ? 'authorize' : 'capture';
+	}
+
+	/**
 	 * Checks if the provided payment method is enabled.
 	 *
 	 * @param string $method_id ID of the payment method.
@@ -513,9 +524,19 @@ class SettingsProvider {
 	}
 
 	/**
-	 * Get if Apple Pay button is enabled.
+	 * Whether the given gateway is enabled.
 	 *
+	 * @param string $method_id ID of the payment method.
 	 * @return bool
+	 */
+	public function gateway_enabled( string $method_id ): bool {
+		return $this->payment_settings->is_method_enabled( $method_id );
+	}
+
+	// ----- APPLE PAY -----
+
+	/**
+	 * Get if Apple Pay button is enabled.
 	 */
 	public function applepay_button_enabled(): bool {
 		return $this->payment_settings->get_applepay_button_enabled();
@@ -530,8 +551,6 @@ class SettingsProvider {
 
 	/**
 	 * Get Apple Pay button type.
-	 *
-	 * @return string
 	 */
 	public function applepay_button_type(): string {
 		return $this->payment_settings->get_applepay_button_type();
@@ -539,8 +558,6 @@ class SettingsProvider {
 
 	/**
 	 * Get Apple Pay button color.
-	 *
-	 * @return string
 	 */
 	public function applepay_button_color(): string {
 		return $this->payment_settings->get_applepay_button_color();
@@ -548,8 +565,6 @@ class SettingsProvider {
 
 	/**
 	 * Get Apple Pay button language.
-	 *
-	 * @return string
 	 */
 	public function applepay_button_language(): string {
 		return $this->payment_settings->get_applepay_button_language();
@@ -557,48 +572,25 @@ class SettingsProvider {
 
 	/**
 	 * Get Apple Pay checkout data mode.
-	 *
-	 * @return string
 	 */
 	public function applepay_checkout_data_mode(): string {
 		return $this->payment_settings->get_applepay_checkout_data_mode();
 	}
 
 	/**
-	 * Get PPCP onboarding Apple flag.
-	 *
-	 * @return string
+	 * Get onboarding flag for Apple Pay.
 	 */
 	public function applepay_onboarding(): string {
 		return $this->payment_settings->get_ppcp_onboarding_apple();
 	}
 
+	// ----- PAY LATER -----
+
 	/**
 	 * Whether Pay Later messaging styling should be customized per location.
-	 *
-	 * @return bool
 	 */
 	public function pay_later_styling_per_location(): bool {
 		return $this->styling_settings->get_pay_later_styling_per_location();
-	}
-
-	/**
-	 * Whether the given gateway is enabled.
-	 *
-	 * @param string $method_id ID of the payment method.
-	 * @return bool
-	 */
-	public function gateway_enabled( string $method_id ): bool {
-		return $this->payment_settings->is_method_enabled( $method_id );
-	}
-
-	/**
-	 * Gets the payment intent (authorize or capture).
-	 *
-	 * @return string The payment intent ('authorize' or 'capture').
-	 */
-	public function payment_intent(): string {
-		return $this->authorize_only() ? 'authorize' : 'capture';
 	}
 
 	/**
