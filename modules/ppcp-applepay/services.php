@@ -23,7 +23,6 @@ use WooCommerce\PayPalCommerce\Assets\AssetGetterFactory;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 
 return array(
 	// @deprecated - use `applepay.eligibility.check` instead.
@@ -67,9 +66,20 @@ return array(
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
 			$container->get( 'applepay.server_supported' ),
-			$container->get( 'settings.settings-provider' ),
+			$container->get( 'applepay.is_validated' ),
 			$container->get( 'applepay.button' )
 		);
+	},
+
+	'applepay.has_validated'                   => static function ( ContainerInterface $container ): bool {
+		$cache = $container->get( 'applepay.status-cache' );
+		assert( $cache instanceof Cache );
+		return $cache->has( AppleProductStatus::KEY );
+	},
+
+	'applepay.is_validated'                    => static function ( ContainerInterface $container ): bool {
+		$settings = $container->get( 'settings.settings-provider' );
+		return $settings->applepay_validated();
 	},
 
 	'applepay.apple-product-status'            => SingletonDecorator::make(
