@@ -53,18 +53,12 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 	protected CardPaymentsConfiguration $card_payments_configuration;
 
 	/**
-	 * @var array
-	 */
-	protected array $card_icons;
-
-	/**
 	 * @param AssetGetter                   $asset_getter
 	 * @param string                        $version The assets version.
 	 * @param CreditCardGateway             $gateway
 	 * @param SmartButtonInterface|callable $smart_button The smart button script loading handler.
 	 * @param SettingsProvider              $settings_provider The settings provider.
 	 * @param CardPaymentsConfiguration     $card_payments_configuration
-	 * @param array                         $card_icons The card icons.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -72,8 +66,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		CreditCardGateway $gateway,
 		$smart_button,
 		SettingsProvider $settings_provider,
-		CardPaymentsConfiguration $card_payments_configuration,
-		array $card_icons
+		CardPaymentsConfiguration $card_payments_configuration
 	) {
 		$this->name                        = CreditCardGateway::ID;
 		$this->asset_getter                = $asset_getter;
@@ -82,7 +75,6 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 		$this->smart_button                = $smart_button;
 		$this->plugin_settings             = $settings_provider;
 		$this->card_payments_configuration = $card_payments_configuration;
-		$this->card_icons                  = $card_icons;
 	}
 
 	/**
@@ -132,7 +124,7 @@ class AdvancedCardPaymentMethod extends AbstractPaymentMethodType {
 			'supports'            => $this->gateway->supports,
 			'save_card_text'      => esc_html__( 'Save your card', 'woocommerce-paypal-payments' ),
 			'is_vaulting_enabled' => $this->plugin_settings->save_card_details(),
-			'card_icons'          => $this->card_icons,
+			'card_icons'          => $this->plugin_settings->card_icons(),
 			'name_on_card'        => $this->card_payments_configuration->show_name_on_card(),
 		);
 	}

@@ -53,8 +53,7 @@ return array(
 				return $container->get( 'button.smart-button' );
 			},
 			$container->get( 'settings.settings-provider' ),
-			$container->get( 'wcgateway.configuration.card-configuration' ),
-			$container->get( 'blocks.card-icons' )
+			$container->get( 'wcgateway.configuration.card-configuration' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
@@ -62,13 +61,6 @@ return array(
 		assert( $settings_provider instanceof SettingsProvider );
 
 		return ! $settings_provider->enable_pay_now();
-	},
-
-	'blocks.card-icons'                    => static function ( ContainerInterface $container ): array {
-		$settings_provider = $container->get( 'settings.settings-provider' );
-		assert( $settings_provider instanceof SettingsProvider );
-
-		return $settings_provider->card_icons();
 	},
 
 	'blocks.endpoint.update-shipping'      => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
