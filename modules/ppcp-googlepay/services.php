@@ -188,7 +188,7 @@ return array(
 			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'wc-subscriptions.helper' ),
-			$container->get( 'wcgateway.settings' ),
+			$container->get( 'settings.settings-provider' ),
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -233,6 +233,7 @@ return array(
 	},
 
 	'googlepay.settings.connection.status-text' => static function ( ContainerInterface $container ): string {
+		// todo: #legacy-ui code cleanup - this service is  not used in the new UI.
 		$is_connected = $container->get( 'settings.flag.is-connected' );
 		if ( ! $is_connected ) {
 			return '';
