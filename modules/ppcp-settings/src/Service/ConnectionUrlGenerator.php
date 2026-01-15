@@ -146,23 +146,18 @@ class ConnectionUrlGenerator {
 	 * @return string The cached URL, or an empty string if no URL is found.
 	 */
 	protected function try_get_from_cache( OnboardingUrl $onboarding_url, string $cache_key ): string {
-		try {
-			if ( $onboarding_url->load() ) {
-				$this->logger->debug( 'Loaded onboarding URL from cache: ' . $cache_key );
+		if ( $onboarding_url->load() ) {
+			$this->logger->debug( 'Loaded onboarding URL from cache: ' . $cache_key );
 
-				/**
-				 * Filters the cached onboarding URL. Used for cache control
-				 * when testing or development.
-				 */
-				return apply_filters(
-					'woocommerce_paypal_payments_cached_onboarding_url',
-					$onboarding_url->get(),
-					$onboarding_url
-				);
-			}
-		} catch ( Exception $e ) {
-			// No problem, return an empty string to generate a new URL.
-			$this->logger->warning( 'Failed to load onboarding URL from cache: ' . $cache_key );
+			/**
+			 * Filters the cached onboarding URL. Used for cache control
+			 * when testing or development.
+			 */
+			return apply_filters(
+				'woocommerce_paypal_payments_cached_onboarding_url',
+				$onboarding_url->get_onboarding_url(),
+				$onboarding_url
+			);
 		}
 
 		return '';
@@ -182,10 +177,9 @@ class ConnectionUrlGenerator {
 	protected function generate_new_url( bool $for_sandbox, array $products, array $flags, OnboardingUrl $onboarding_url, string $cache_key ): string {
 		$query_args = array( 'displayMode' => 'minibrowser' );
 		$onboarding_url->init();
+		$onboarding_token = $onboarding_url->onboarding_token();
 
-		try {
-			$onboarding_token = $onboarding_url->token();
-		} catch ( Exception $e ) {
+		if ( ! $onboarding_token ) {
 			$this->logger->warning( 'Could not generate an onboarding token for: ' . $cache_key );
 
 			return '';
@@ -230,7 +224,7 @@ class ConnectionUrlGenerator {
 	 * @param string        $url            The URL to persist.
 	 */
 	protected function persist_url( OnboardingUrl $onboarding_url, string $url ): void {
-		$onboarding_url->set( $url );
+		$onboarding_url->set_onboarding_url( $url );
 		$onboarding_url->persist();
 	}
 }

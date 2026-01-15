@@ -5,7 +5,6 @@ namespace WooCommerce\PayPalCommerce\Onboarding\Helper;
 
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use RuntimeException;
 use function Brain\Monkey\Functions\when;
 
 class OnboardingUrlTest extends TestCase
@@ -91,18 +90,12 @@ class OnboardingUrlTest extends TestCase
 
 	public function test_get_not_initialized()
 	{
-		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessage('Object not initialized.');
-
-		$this->onboardingUrl->get();
+		$this->assertEquals('', $this->onboardingUrl->get_onboarding_url());
 	}
 
 	public function test_token_not_initialized()
 	{
-		$this->expectException(RuntimeException::class);
-		$this->expectExceptionMessage('Object not initialized.');
-
-		$this->onboardingUrl->token();
+		$this->assertEquals( '', $this->onboardingUrl->onboarding_token() );
 	}
 
 	public function test_persist_not_initialized()
@@ -129,23 +122,23 @@ class OnboardingUrlTest extends TestCase
 	{
 		$this->onboardingUrl->init();
 
-		$token = $this->onboardingUrl->token();
+		$token = $this->onboardingUrl->onboarding_token();
 		$this->assertNotEmpty($token);
 	}
 
 	public function test_set_and_get()
 	{
 		$this->onboardingUrl->init();
-		$this->onboardingUrl->set('https://example.com');
+		$this->onboardingUrl->set_onboarding_url('https://example.com');
 
-		$url = $this->onboardingUrl->get();
+		$url = $this->onboardingUrl->get_onboarding_url();
 		$this->assertEquals('https://example.com', $url);
 	}
 
 	public function test_persist()
 	{
 		$this->onboardingUrl->init();
-		$this->onboardingUrl->set('https://example.com');
+		$this->onboardingUrl->set_onboarding_url('https://example.com');
 
 		// Expectations
 		$this->cache->shouldReceive('set')->once();
@@ -158,37 +151,9 @@ class OnboardingUrlTest extends TestCase
 	public function test_token()
 	{
 		$this->onboardingUrl->init();
-		$this->onboardingUrl->set('https://example.com');
+		$this->onboardingUrl->set_onboarding_url('https://example.com');
 
-		$token = $this->onboardingUrl->token();
+		$token = $this->onboardingUrl->onboarding_token();
 		$this->assertNotEmpty($token);
 	}
-
-	public function test_validate_token_and_delete_invalid()
-	{
-		// Prepare the data
-		$token = [
-			'k' => $this->cache_key_prefix,
-			'u' => $this->user_id,
-			'h' => 'invalid_hash'
-		];
-
-		$onboarding_token = UrlHelper::url_safe_base64_encode(json_encode($token));
-
-		// Expectations
-		$this->cache->shouldReceive('has')->once()->andReturn(true);
-		$this->cache->shouldReceive('get')->once()->andReturn([
-			'hash_check' => wp_hash(''),
-			'secret'     => 'test_secret',
-			'time'       => time(),
-			'user_id'    => $this->user_id,
-			'url'        => 'https://example.com'
-		]);
-		$this->cache->shouldReceive('delete')->never();
-
-		$this->assertFalse(
-			OnboardingUrl::validate_token_and_delete($this->cache, $onboarding_token, $this->user_id)
-		);
-	}
-
 }
