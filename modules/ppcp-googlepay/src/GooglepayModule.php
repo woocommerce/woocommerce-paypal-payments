@@ -18,13 +18,11 @@ use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
-use WooCommerce\PayPalCommerce\Settings\SettingsModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -151,10 +149,6 @@ class GooglepayModule implements ServiceModule, ExtendingModule, ExecutableModul
 				add_action(
 					'woocommerce_blocks_payment_method_type_registration',
 					function ( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
-						if ( SettingsModule::should_use_the_old_ui() && ! $button->is_enabled() ) {
-							return;
-						}
-
 						$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
 					}
 				);

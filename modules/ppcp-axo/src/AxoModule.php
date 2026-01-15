@@ -187,7 +187,7 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			function () use ( $c ) {
 				$this->session_handler = $c->get( 'session.handler' );
 
-				$settings_provider = $c->get( 'wcgateway.settings.provider.payment' );
+				$settings_provider = $c->get( 'settings.settings-provider' );
 				assert( $settings_provider instanceof SettingsProvider );
 
 				$is_paypal_enabled = $settings_provider->is_method_enabled( PayPalGateway::ID );
