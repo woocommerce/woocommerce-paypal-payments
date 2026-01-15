@@ -13,6 +13,7 @@ use WC_Order;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Settings\Data\Definition\FeaturesDefinition;
+use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
@@ -369,10 +370,10 @@ class LocalAlternativePaymentMethodsModule implements ServiceModule, ExtendingMo
 			return $this->is_rest_request();
 		}
 
-		$payment_settings = $container->get( 'settings.data.payment' );
-		assert( $payment_settings instanceof PaymentSettings );
+		$settings_provider = $container->get( 'settings.provider.payment' );
+		assert( $settings_provider instanceof SettingsProvider );
 
-		return $payment_settings->is_method_enabled( PayPalGateway::ID );
+		return $settings_provider->is_method_enabled( PayPalGateway::ID );
 	}
 
 	/**
