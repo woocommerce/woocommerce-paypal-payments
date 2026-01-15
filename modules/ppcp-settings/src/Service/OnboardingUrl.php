@@ -3,15 +3,14 @@
  * Manages an Onboarding Url / Token to preserve /v2/customer/partner-referrals action_url
  * integrity.
  *
- * @package WooCommerce\PayPalCommerce\Onboarding\Helper
+ * @package WooCommerce\PayPalCommerce\Settings\Service
  */
 
 declare( strict_types = 1 );
 
-namespace WooCommerce\PayPalCommerce\Onboarding\Helper;
+namespace WooCommerce\PayPalCommerce\Settings\Service;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use RuntimeException;
 use Throwable;
 
 class OnboardingUrl {

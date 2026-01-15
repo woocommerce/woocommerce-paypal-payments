@@ -18,7 +18,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ReferenceTransactionStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
-use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -458,18 +457,6 @@ class SettingsListener {
 
 				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
 			}
-
-			if ( in_array(
-				$credentials_change_status,
-				array( self::CREDENTIALS_REMOVED, self::CREDENTIALS_CHANGED ),
-				true
-			) ) {
-				$this->webhook_registrar->unregister();
-
-				foreach ( $this->signup_link_ids as $key ) {
-					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
-				}
-			}
 		}
 
 		foreach ( $settings as $id => $value ) {
@@ -735,10 +722,6 @@ class SettingsListener {
 	 * Handles onboarding URLs deletion
 	 */
 	public function listen_for_uninstall(): void {
-		// Clear onboarding links from cache.
-		foreach ( $this->signup_link_ids as $key ) {
-			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
-		}
 	}
 
 	/**

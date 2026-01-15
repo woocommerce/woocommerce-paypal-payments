@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\Axo\Gateway\AxoGateway;
 use WooCommerce\PayPalCommerce\Axo\Service\AxoApplies;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
-use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
 use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
@@ -284,31 +283,6 @@ class AxoModule implements ServiceModule, ExtendingModule, ExecutableModule {
 							$this->add_feature_detection_tag( false );
 						}
 					}
-				);
-
-				add_filter(
-					'ppcp_onboarding_dcc_table_rows',
-					/**
-					 * Param types removed to avoid third-party issues.
-					 *
-					 * @psalm-suppress MissingClosureParamType
-					 */
-					function ( $rows, $renderer ): array {
-						if ( ! is_array( $rows ) ) {
-							return $rows;
-						}
-
-						if ( $renderer instanceof OnboardingOptionsRenderer ) {
-							$rows[] = $renderer->render_table_row(
-								__( 'Fastlane by PayPal', 'woocommerce-paypal-payments' ),
-								__( 'Yes', 'woocommerce-paypal-payments' ),
-								__( 'Help accelerate guest checkout with PayPal\'s autofill solution.', 'woocommerce-paypal-payments' )
-							);
-						}
-						return $rows;
-					},
-					10,
-					2
 				);
 
 				// Set Axo as the default payment method on checkout for guest customers.
