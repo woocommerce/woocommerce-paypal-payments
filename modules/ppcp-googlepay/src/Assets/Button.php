@@ -87,6 +87,7 @@ class Button implements ButtonInterface {
 	 * Initializes the button.
 	 */
 	public function initialize(): void {
+		// todo: #legacy-ui code cleanup - the following 3 filters are only relevant for the legacy onboarding and can be removed.
 		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ) );
 		add_filter(
 			'ppcp_partner_referrals_option',
@@ -101,10 +102,10 @@ class Button implements ButtonInterface {
 	 * @param string $options The options.
 	 * @return string
 	 *
-	 * todo: #legacy-ui code cleanup - remove this function after dropping the onboarding module.
 	 * @psalm-suppress MissingClosureParamType
 	 */
 	public function add_onboarding_options( $options ): string {
+		// todo: #legacy-ui code cleanup - this logic is only relevant for the legacy onboarding and can be removed.
 		if ( ! apply_filters( 'woocommerce_paypal_payments_google_pay_onboarding_option', false ) ) {
 			return $options;
 		}
@@ -128,10 +129,14 @@ class Button implements ButtonInterface {
 	/**
 	 * Filters a partner referrals option.
 	 *
+	 * Note: This filter will store the data provided via "value" in a setting called "field"
+	 * Specific: $setting->set( 'ppcp-onboarding-google', true/false )
+	 *
 	 * @param array $option The option data.
 	 * @return array
 	 */
 	public function filter_partner_referrals_option( array $option ): array {
+		// todo: #legacy-ui code cleanup - this logic is only relevant for the legacy onboarding and can be removed.
 		if ( $option['valid'] ) {
 			return $option;
 		}
@@ -150,6 +155,7 @@ class Button implements ButtonInterface {
 	 * @return array
 	 */
 	public function add_partner_referrals_data( array $data ): array {
+		// todo: #legacy-ui code cleanup - this logic is only relevant for the legacy onboarding and can be removed.
 		try {
 			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
 			if ( ! wc_string_to_bool( $onboard_with_google ) ) {
