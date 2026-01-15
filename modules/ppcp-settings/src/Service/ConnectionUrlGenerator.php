@@ -16,9 +16,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\EnvironmentConfig;
 
-// TODO: Replace the OnboardingUrl with a new implementation for this module.
-use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
-
 /**
  * Generator that builds the ISU connection URL.
  */

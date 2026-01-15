@@ -2,6 +2,7 @@
 /**
  * Listens to requests and updates the settings if necessary.
  *
+ * todo: #legacy-ui code cleanup. Remove this file.
  * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
@@ -258,22 +259,7 @@ class SettingsListener {
 			}
 		}
 
-		// Process token validation.
-		$onboarding_token_sample = ( (string) substr( $onboarding_token, 0, 2 ) ) . '...' . ( (string) substr( $onboarding_token, - 6 ) );
-		$this->logger->debug( 'Validating onboarding ppcpToken: ' . $onboarding_token_sample );
-
-		if ( ! OnboardingUrl::validate_token_and_delete( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
-			if ( OnboardingUrl::validate_previous_token( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
-				// It's a valid token used previously, don't do anything but silently redirect.
-				$this->logger->info( 'Validated previous token, silently redirecting: ' . $onboarding_token_sample );
-				$this->onboarding_redirect();
-			} else {
-				$this->logger->error( 'Failed to validate onboarding ppcpToken: ' . $onboarding_token_sample );
-				$this->onboarding_redirect( false );
-			}
-		}
-
-		$this->logger->info( 'Validated onboarding ppcpToken: ' . $onboarding_token_sample );
+		// todo: #legacy-ui code cleanup. Removed legacy onboarding logic without replacement.
 
 		// Save the merchant data.
 		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
