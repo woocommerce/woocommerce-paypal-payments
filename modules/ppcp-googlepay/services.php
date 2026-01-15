@@ -192,8 +192,7 @@ return array(
 			$container->get( 'settings.environment' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'button.helper.context' ),
-			$container->has( 'settings.data.settings' ) ? $container->get( 'settings.data.settings' ) : null
+			$container->get( 'button.helper.context' )
 		);
 	},
 

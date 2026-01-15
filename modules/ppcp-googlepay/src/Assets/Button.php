@@ -48,8 +48,6 @@ class Button implements ButtonInterface {
 
 	private SubscriptionHelper $subscription_helper;
 
-	private ?SettingsModel $new_settings;
-
 	/**
 	 * @param AssetGetter        $asset_getter
 	 * @param string             $sdk_url             The URL to the SDK.
@@ -60,7 +58,6 @@ class Button implements ButtonInterface {
 	 * @param SettingsStatus     $settings_status     The Settings status helper.
 	 * @param LoggerInterface    $logger              The logger.
 	 * @param Context            $context             Context data provider.
-	 * @param SettingsModel|null $new_settings        The new settings model.
 	 */
 	public function __construct(
 		AssetGetter $asset_getter,
@@ -71,8 +68,7 @@ class Button implements ButtonInterface {
 		Environment $environment,
 		SettingsStatus $settings_status,
 		LoggerInterface $logger,
-		Context $context,
-		SettingsModel $new_settings = null
+		Context $context
 	) {
 		$this->asset_getter        = $asset_getter;
 		$this->sdk_url             = $sdk_url;
@@ -81,7 +77,6 @@ class Button implements ButtonInterface {
 		$this->settings            = $settings;
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
-		$this->new_settings        = $new_settings;
 		$this->context             = $context;
 
 		// TODO: remove this dependency.
