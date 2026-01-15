@@ -62,9 +62,6 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 				$settings_provider = $c->get( 'settings.data.provider' );
 				assert( $settings_provider instanceof SettingsProvider );
 
-				$payment_settings = $c->get( 'settings.data.payment' );
-				assert( $payment_settings instanceof PaymentSettings );
-
 				$subscriptions_mode_settings = $c->get( 'wcgateway.settings.fields.subscriptions_mode' ) ?: array();
 
 				/* @var bool $is_connected Whether onboarding is complete. */
@@ -220,7 +217,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Apple Pay',
 						'description'    => esc_html__( 'Whether Apple Pay is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$payment_settings->is_method_enabled( ApplePayGateway::ID )
+							$settings_provider->is_method_enabled( ApplePayGateway::ID )
 						),
 					),
 					array(
@@ -228,7 +225,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Google Pay',
 						'description'    => esc_html__( 'Whether Google Pay is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$payment_settings->is_method_enabled( GooglePayGateway::ID )
+							$settings_provider->is_method_enabled( GooglePayGateway::ID )
 						),
 					),
 					array(
@@ -236,7 +233,7 @@ class StatusReportModule implements ServiceModule, ExtendingModule, ExecutableMo
 						'exported_label' => 'Fastlane',
 						'description'    => esc_html__( 'Whether Fastlane is enabled.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$payment_settings->is_method_enabled( AxoGateway::ID )
+							$settings_provider->is_method_enabled( AxoGateway::ID )
 						),
 					),
 				);
