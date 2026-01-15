@@ -1,17 +1,18 @@
 <?php
 /**
- * Registers and configures the necessary Javascript for the button, credit messaging and DCC fields.
+ * Registers and configures the necessary Javascript for the button, credit messaging and DCC
+ * fields.
  *
  * @package WooCommerce\PayPalCommerce\Googlepay\Assets
  */
 
-declare(strict_types=1);
+declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
-use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
+use WC_AJAX;
 use WooCommerce\PayPalCommerce\Assets\AssetGetter;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Helper\Context;
@@ -29,62 +30,24 @@ use WooCommerce\PayPalCommerce\Settings\Data\SettingsProvider;
  */
 class Button implements ButtonInterface {
 
-	/**
-	 * Context data provider.
-	 *
-	 * @var Context $context
-	 */
 	private Context $context;
 
 	private AssetGetter $asset_getter;
 
-	/**
-	 * The URL to the SDK.
-	 *
-	 * @var string
-	 */
-	private $sdk_url;
+	private string $sdk_url;
 
-	/**
-	 * The assets version.
-	 *
-	 * @var string
-	 */
-	private $version;
+	private string $version;
 
 	private SettingsProvider $settings;
 
-	/**
-	 * The environment object.
-	 *
-	 * @var Environment
-	 */
-	private $environment;
+	private Environment $environment;
 
-	/**
-	 * The Settings status helper.
-	 *
-	 * @var SettingsStatus
-	 */
-	private $settings_status;
+	private SettingsStatus $settings_status;
 
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
+	private LoggerInterface $logger;
 
-	/**
-	 * The Subscription Helper.
-	 *
-	 * @var SubscriptionHelper
-	 */
-	private $subscription_helper;
+	private SubscriptionHelper $subscription_helper;
 
-	/**
-	 * @var SettingsModel|null New settings UI model.
-	 */
 	private ?SettingsModel $new_settings;
 
 	/**
@@ -118,18 +81,23 @@ class Button implements ButtonInterface {
 		$this->settings            = $settings;
 		$this->environment         = $environment;
 		$this->settings_status     = $settings_status;
-		$this->logger              = $logger;
 		$this->new_settings        = $new_settings;
 		$this->context             = $context;
+
+		// TODO: remove this dependency.
+		$this->logger = $logger;
 	}
 
 	/**
 	 * Initializes the button.
 	 */
 	public function initialize(): void {
-		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ), 10, 1 );
-		add_filter( 'ppcp_partner_referrals_option', array( $this, 'filter_partner_referrals_option' ), 10, 1 );
-		add_filter( 'ppcp_partner_referrals_data', array( $this, 'add_partner_referrals_data' ), 10, 1 );
+		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ) );
+		add_filter(
+			'ppcp_partner_referrals_option',
+			array( $this, 'filter_partner_referrals_option' )
+		);
+		add_filter( 'ppcp_partner_referrals_data', array( $this, 'add_partner_referrals_data' ) );
 	}
 
 	/**
@@ -138,6 +106,7 @@ class Button implements ButtonInterface {
 	 * @param string $options The options.
 	 * @return string
 	 *
+	 * todo: #legacy-ui code cleanup - remove this function after dropping the onboarding module.
 	 * @psalm-suppress MissingClosureParamType
 	 */
 	public function add_onboarding_options( $options ): string {
@@ -175,6 +144,7 @@ class Button implements ButtonInterface {
 			$option['valid'] = true;
 			$option['value'] = ( $option['value'] ? '1' : '' );
 		}
+
 		return $option;
 	}
 
@@ -228,8 +198,8 @@ class Button implements ButtonInterface {
 
 		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = true;
-		$button_enabled_payorder = true;
+		$button_enabled_checkout = true; // todo - why is this hardcoded as true?
+		$button_enabled_payorder = true; // todo - why is this hardcoded as true?
 		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
 		if (
@@ -256,6 +226,7 @@ class Button implements ButtonInterface {
 			'woocommerce_paypal_payments_sdk_components_hook',
 			function ( $components ) {
 				$components[] = 'googlepay';
+
 				return $components;
 			}
 		);
@@ -472,14 +443,15 @@ class Button implements ButtonInterface {
 			'sdk_url'               => $this->sdk_url,
 			'button'                => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
-				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
+				// style: For now we use cart. Pass the context if necessary.
+				'style'             => $this->button_styles_for_context( 'cart' ),
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
 			'shipping'              => $shipping,
 			'ajax'                  => array(
 				'update_payment_data' => array(
-					'endpoint' => \WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
+					'endpoint' => WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdatePaymentDataEndpoint::nonce() ),
 				),
 			),
