@@ -333,6 +333,7 @@ class PaymentSettings extends AbstractDataModel {
 
 	/**
 	 * Get PPCP onboarding Apple.
+	 * todo: #legacy-ui flag that most likely can be removed without replacement.
 	 */
 	public function get_ppcp_onboarding_apple(): string {
 		return (string) $this->data['ppcp_onboarding_apple'];
