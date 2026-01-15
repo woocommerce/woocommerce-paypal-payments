@@ -1,14 +1,12 @@
 <?php
 
-declare(strict_types=1);
-
+declare (strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception;
 
 use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerExceptionInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Throwable;
-
 /**
  * Basic implementation of container exception.
  *
@@ -20,7 +18,6 @@ class ContainerException extends Exception implements ContainerExceptionInterfac
      * @var ContainerInterface|null
      */
     protected $container;
-
     /**
      * @param string         $message  The exception message.
      * @param int            $code     The exception code.
